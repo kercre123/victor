@@ -2404,12 +2404,16 @@ namespace Cozmo {
   } // Update() [Real]
   
   
-  void VisionSystem::SetParams(const s32 integerCountsIncrement,
-                               const f32 minExposureTime,
-                               const f32 maxExposureTime,
-                               const u8 highValue,
-                               const f32 percentileToMakeHigh)
+  void VisionSystem::SetParams(const bool autoExposureOn,
+                     const f32 exposureTime,
+                     const s32 integerCountsIncrement,
+                     const f32 minExposureTime,
+                     const f32 maxExposureTime,
+                     const u8 highValue,
+                     const f32 percentileToMakeHigh)
   {
+    _autoExposure_enabled = autoExposureOn;
+    _exposureTime = exposureTime;
     _autoExposure_integerCountsIncrement = integerCountsIncrement;
     _autoExposure_minExposureTime = minExposureTime;
     _autoExposure_maxExposureTime = maxExposureTime;

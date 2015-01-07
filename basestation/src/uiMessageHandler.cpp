@@ -379,6 +379,19 @@ namespace Anki {
       return robot->StopFaceTracking();
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetVisionSystemParams const& msg)
+    {
+      VisionSystemParams_t p;
+      p.autoexposureOn = msg.autoexposureOn;
+      p.exposureTime = msg.exposureTime;
+      p.integerCountsIncrement = msg.integerCountsIncrement;
+      p.minExposureTime = msg.minExposureTime;
+      p.maxExposureTime = msg.maxExposureTime;
+      p.percentileToMakeHigh = msg.percentileToMakeHigh;
+      p.highValue = msg.highValue;
+      return robot->SendVisionSystemParams(p);
+    }
+   
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetFaceDetectParams const& msg)
     {
       FaceDetectParams_t p;

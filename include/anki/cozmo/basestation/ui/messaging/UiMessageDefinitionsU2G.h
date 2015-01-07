@@ -228,6 +228,17 @@ END_MESSAGE_DEFINITION(U2G_StartLookingForMarkers)
 START_MESSAGE_DEFINITION(U2G_StopLookingForMarkers, 1)
 END_MESSAGE_DEFINITION(U2G_StopLookingForMarkers)
 
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(U2G_SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, autoexposureOn)
+ADD_MESSAGE_MEMBER(f32, exposureTime)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(U2G_SetVisionSystemParams)
+
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(U2G_SetFaceDetectParams, 1)
 ADD_MESSAGE_MEMBER(f32, scaleFactor)

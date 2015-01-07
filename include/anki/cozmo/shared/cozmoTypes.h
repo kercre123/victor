@@ -178,6 +178,8 @@ namespace Anki {
 
     // For DEV only
     typedef struct {
+      s32 autoexposureOn;
+      f32 exposureTime;      
       s32 integerCountsIncrement;
       f32 minExposureTime;
       f32 maxExposureTime;

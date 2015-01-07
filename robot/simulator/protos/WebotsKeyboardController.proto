@@ -15,11 +15,14 @@ PROTO WebotsKeyboardController [
   field SFFloat liftMaxErrorSum 10
 
   # Vision system params
-  field SFInt32 integerCountsIncrement 3
-  field SFFloat minExposureTime 0.02
-  field SFFloat maxExposureTime 0.98
-  field SFInt32 highValue 250  
-  field SFFloat percentileToMakeHigh 0.97
+  field SFInt32 camera_autoexposureOn 1
+  field SFInt32 camera_exposureTime 0.2
+  field SFInt32 camera_integerCountsIncrement 3
+  field SFFloat camera_minExposureTime 0.02
+  field SFFloat camera_maxExposureTime 0.98
+  field SFInt32 camera_highValue 250  
+  field SFFloat camera_percentileToMakeHigh 0.97
+
 
   # Face detect params
   field SFFloat fd_scaleFactor 1.1

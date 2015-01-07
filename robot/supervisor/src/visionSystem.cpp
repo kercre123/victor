@@ -143,7 +143,7 @@ namespace Anki {
 
         // Camera parameters
         // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
-        static f32 exposureTime;
+        static f32 exposureTime_;
 
 #ifdef SIMULATOR
         // Simulator doesn't need vignetting correction on by default
@@ -159,7 +159,7 @@ namespace Anki {
         static const f32 vignettingCorrectionParameters[5] = {0,0,0,0,0};
 
         static s32 frameNumber;
-        static const bool autoExposure_enabled = true;
+        static bool autoExposure_enabled = true;
         
         // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
         /*
@@ -1484,7 +1484,7 @@ namespace Anki {
           headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo_->ncols) /
             (2.f * headCamInfo_->focalLength_x));
 
-          exposureTime = 0.2f; // TODO: pick a reasonable start value
+          exposureTime_ = 0.2f; // TODO: pick a reasonable start value
           frameNumber = 0;
 
           detectionParameters_.Initialize();
@@ -2087,13 +2087,13 @@ namespace Anki {
               autoExposure_percentileToMakeHigh,
               autoExposure_minExposureTime, autoExposure_maxExposureTime,
               autoExposure_tooHighPercentMultiplier,
-              exposureTime,
+              exposureTime_,
               VisionMemory::ccmScratch_);
 
             EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
           }
 
-          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
 
           EndBenchmark("VisionSystem_CameraImagingPipeline");
 
@@ -2247,7 +2247,7 @@ namespace Anki {
 
           EndBenchmark("VisionSystem_CameraImagingPipeline");
 
-          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
 
           DownsampleAndSendImage(grayscaleImage);
           
@@ -2395,13 +2395,13 @@ namespace Anki {
                                         autoExposure_percentileToMakeHigh,
                                         autoExposure_minExposureTime, autoExposure_maxExposureTime,
                                         autoExposure_tooHighPercentMultiplier,
-                                        exposureTime,
+                                        exposureTime_,
                                         VisionMemory::ccmScratch_);
             
             EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
           }
           
-          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
           
           EndBenchmark("VisionSystem_CameraImagingPipeline");
           
@@ -2552,13 +2552,13 @@ namespace Anki {
                                         autoExposure_percentileToMakeHigh,
                                         autoExposure_minExposureTime, autoExposure_maxExposureTime,
                                         autoExposure_tooHighPercentMultiplier,
-                                        exposureTime,
+                                        exposureTime_,
                                         VisionMemory::ccmScratch_);
             
             EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
           }
           
-          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
           
           EndBenchmark("VisionSystem_CameraImagingPipeline");
           
@@ -2583,12 +2583,16 @@ namespace Anki {
 #endif // #ifdef SEND_IMAGE_ONLY
       
       
-      void SetParams(const s32 integerCountsIncrement,
+      void SetParams(const bool autoExposureOn,
+                     const f32 exposureTime,
+                     const s32 integerCountsIncrement,
                      const f32 minExposureTime,
                      const f32 maxExposureTime,
                      const u8 highValue,
                      const f32 percentileToMakeHigh)
       {
+        autoExposure_enabled = autoExposureOn;
+        exposureTime_ = exposureTime;
         autoExposure_integerCountsIncrement = integerCountsIncrement;
         autoExposure_minExposureTime = minExposureTime;
         autoExposure_maxExposureTime = maxExposureTime;
