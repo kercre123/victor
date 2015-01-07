@@ -241,11 +241,20 @@ namespace Cozmo {
     robotMgr_.Init(&msgHandler_);
     uiMsgHandler_.Init(ui_comms, &robotMgr_);
     
-    if(config.isMember("VizHostIP")) {
-      VizManager::getInstance()->Connect(config["VizHostIP"].asCString(), VIZ_SERVER_PORT);
+    if(config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+      VizManager::getInstance()->Connect(config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+      
+      // Only send images if the viz host is the same as the robot advertisement service
+      // (so we don't waste bandwidth sending (uncompressed) viz data over the network
+      //  to be displayed on another machine)
+      if(config[AnkiUtil::kP_VIZ_HOST_IP] == config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
+        VizManager::getInstance()->EnableImageSend(true);
+      }
+      
     } else {
       PRINT_NAMED_WARNING("BasestationInit.NoVizHostIP", "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
     }
+
 
     
     // Instantiate and init connected robots
