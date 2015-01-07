@@ -2525,6 +2525,43 @@ namespace Anki {
           HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
                               captureResolution_, false);
           
+          BeginBenchmark("VisionSystem_CameraImagingPipeline");
+          
+          if(vignettingCorrection == VignettingCorrection_Software) {
+            BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+            
+            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+            FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+            
+            for(s32 i=0; i<5; i++)
+              polynomialParameters[i] = vignettingCorrectionParameters[i];
+            
+            CorrectVignetting(grayscaleImage, polynomialParameters);
+            
+            EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+          } // if(vignettingCorrection == VignettingCorrection_Software)
+          
+          if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+            BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+            
+            ComputeBestCameraParameters(
+                                        grayscaleImage,
+                                        Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+                                        autoExposure_integerCountsIncrement,
+                                        autoExposure_highValue,
+                                        autoExposure_percentileToMakeHigh,
+                                        autoExposure_minExposureTime, autoExposure_maxExposureTime,
+                                        autoExposure_tooHighPercentMultiplier,
+                                        exposureTime,
+                                        VisionMemory::ccmScratch_);
+            
+            EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+          }
+          
+          HAL::CameraSetParameters(exposureTime, vignettingCorrection == VignettingCorrection_CameraHardware);
+          
+          EndBenchmark("VisionSystem_CameraImagingPipeline");
+          
           //SetImageSendMode(ISM_STREAM, captureResolution_);
           
 #if USE_COMPRESSION_FOR_SENDING_IMAGES
