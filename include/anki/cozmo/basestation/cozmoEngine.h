@@ -36,6 +36,9 @@
 
 #include "anki/vision/basestation/image.h"
 
+// TODO: Remove dependence on this include
+#include "anki/cozmo/basestation/basestation.h"
+
 #include "json/json.h"
 
 namespace Anki {
@@ -74,7 +77,7 @@ namespace Cozmo {
     
     // Request a connection to a specific robot / UI device from the list returned above.
     // Returns true on successful connection, false otherwise.
-    bool ConnectToRobot(AdvertisingRobot whichRobot);
+    virtual bool ConnectToRobot(AdvertisingRobot whichRobot); // virtual so Host can do something different for force-added robots
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     // TODO: Add IsConnected methods
@@ -84,10 +87,16 @@ namespace Cozmo {
     bool IsUiDeviceConnected(AdvertisingUiDevice whichDevice) const;
     */
     
-    // TODO: Remove this in favor of it being handled via messages instead of direct API polling
+    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
+    virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
+    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) = 0;
+    
   protected:
+    
+    // This will just point at either the host or client impl pointer in a
+    // derived class
     CozmoEngineImpl* _impl;
     
   }; // class CozmoEngine
@@ -103,9 +112,21 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return true; }
     
+    void ForceAddRobot(AdvertisingRobot robotID,
+                       const char*      robotIP,
+                       bool             robotIsSimulated);
+    
+    // Overload to specially handle robot added by ForceAddRobot
+    // TODO: Remove once we no longer need forced adds
+    virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
+    
+    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
+    // TODO: Or promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
+    virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
+    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) override;
     
   protected:
-    CozmoEngineHostImpl* GetHostImpl();
+    CozmoEngineHostImpl* _hostImpl;
     
   }; // class CozmoEngineHost
   
@@ -118,8 +139,11 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return false; }
     
+    virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
+    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) override;
+    
   protected:
-    CozmoEngineClientImpl* GetClientImpl();
+    CozmoEngineClientImpl* _clientImpl;
     
   }; // class CozmoEngineClient
   

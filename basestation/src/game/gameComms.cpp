@@ -323,7 +323,7 @@ namespace Cozmo {
         // Does address start with 192?
         if (strncmp(host, "192.", 4) == 0)
         {
-          printf("Local host IP: %s\n", host);
+          printf("GameComms: Local host IP = %s\n", host);
           break;
         }
       }

@@ -28,10 +28,6 @@
 namespace Anki {
 namespace Cozmo {
   
-  // Helper macro to only free non-null pointers and then set them to nullptr:
-#define FREE_HELPER(__ptr__) if(__ptr__ != nullptr) { delete __ptr__; __ptr__ = nullptr; }
-
-  
 #if 0
 #pragma mark -
 #pragma mark Base Class Implementations
@@ -58,7 +54,7 @@ namespace Cozmo {
     void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
     void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
     
-    bool ConnectToRobot(AdvertisingRobot whichRobot);
+    virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     // TODO: Remove this in favor of it being handled via messages instead of direct API polling
@@ -230,9 +226,10 @@ namespace Cozmo {
     return _deviceVisionThread.CheckMailbox(msg);
   }
   
-  //
-  // Non-Impl Wrappers:
-  //
+#if 0
+#pragma mark -
+#pragma mark Derived Host Class Impl Wrappers
+#endif
   
   CozmoEngine::CozmoEngine()
   : _impl(nullptr)
@@ -292,6 +289,17 @@ namespace Cozmo {
  
     Result StartBasestation();
     
+    void ForceAddRobot(AdvertisingRobot robotID,
+                       const char*      robotIP,
+                       bool             robotIsSimulated);
+    
+    // TODO: Remove once we don't have to specially handle forced adds
+    virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
+    
+    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
+    bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
+    bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations);
+    
   protected:
     
     virtual Result InitInternal() override;
@@ -303,6 +311,8 @@ namespace Cozmo {
     Comms::AdvertisementService  _robotAdvertisementService;
     Comms::AdvertisementService  _uiAdvertisementService;
     
+    std::map<AdvertisingRobot, bool> _forceAddedRobots;
+    
   }; // class CozmoEngineHostImpl
   
   
@@ -311,9 +321,17 @@ namespace Cozmo {
   , _robotAdvertisementService("RobotAdvertisementService")
   , _uiAdvertisementService("UIAdvertisementService")
   {
+    
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
+                     "Starting RobotAdvertisementService, reg port %d, ad port %d\n",
+                     ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
 
     _robotAdvertisementService.StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
                                             ROBOT_ADVERTISING_PORT);
+    
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
+                     "Starting UIAdvertisementService, reg port %d, ad port %d\n",
+                     UI_ADVERTISEMENT_REGISTRATION_PORT, UI_ADVERTISING_PORT);
     
     _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
                                          UI_ADVERTISING_PORT);
@@ -357,6 +375,38 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
+                                          const char*      robotIP,
+                                          bool             robotIsSimulated)
+  {
+    // Force add physical robot since it's not registering by itself yet.
+    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+    forcedRegistrationMsg.id = robotID;
+    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
+    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+    forcedRegistrationMsg.enableAdvertisement = 1;
+    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
+    
+    _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
+    
+    // Mark this robot as force-added so we can deregister it from the advertising
+    // service manually once we connect to it.
+    _forceAddedRobots[robotID] = true;
+  }
+  
+  bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
+  {
+    // Connection is the same as normal except that we have to remove forcefully-added
+    // robots from the advertising service manually (if they could do this, they also
+    // could have registered itself)
+    bool result = CozmoEngineImpl::ConnectToRobot(whichRobot);
+    if(_forceAddedRobots.count(whichRobot) > 0) {
+      PRINT_NAMED_INFO("CozmoEngineHostImpl.ConnectToRobot",
+                       "Manually deregistering force-added robot %d from advertising service.\n", whichRobot);
+      _robotAdvertisementService.DeregisterAllAdvertisers();
+    }
+    return result;
+  }
   
   Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   {
@@ -377,20 +427,48 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateInternal()
   
-  //
-  // Non-Impl Wrappers:
-  //
-  CozmoEngineHost::CozmoEngineHost()
+  bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
   {
-    _impl = new CozmoEngineHostImpl();
-    assert(_impl != nullptr);
+    return _basestation.GetCurrentRobotImage(robotId, img, newerThanTime);
   }
   
-  CozmoEngineHostImpl* CozmoEngineHost::GetHostImpl()
+  bool CozmoEngineHostImpl::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
   {
-    CozmoEngineHostImpl* hostImpl = reinterpret_cast<CozmoEngineHostImpl*>(_impl);
-    assert(hostImpl != nullptr); // was new'd in the constructor, so this should not happen!
-    return hostImpl;
+    return _basestation.GetCurrentVisionMarkers(robotId, observations);
+  }
+  
+#if 0
+#pragma mark -
+#pragma mark Derived Host Class Impl Wrappers
+#endif
+  
+  CozmoEngineHost::CozmoEngineHost()
+  {
+    _hostImpl = new CozmoEngineHostImpl();
+    assert(_hostImpl != nullptr);
+    _impl = _hostImpl;
+  }
+  
+  void CozmoEngineHost::ForceAddRobot(AdvertisingRobot robotID,
+                                      const char*      robotIP,
+                                      bool             robotIsSimulated)
+  {
+    return _hostImpl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
+  }
+  
+  bool CozmoEngineHost::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  {
+    return _hostImpl->GetCurrentRobotImage(robotId, img, newerThanTime);
+  }
+  
+  bool CozmoEngineHost::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
+  {
+    return _hostImpl->GetCurrentVisionMarkers(robotId, observations);
+  }
+  
+  bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)
+  {
+    return _hostImpl->ConnectToRobot(whichRobot);
   }
   
 #if 0
@@ -430,25 +508,30 @@ namespace Cozmo {
   } // UpdateInternal()
   
   
-  //
-  // Non-Impl Wrappers:
-  //
+  
+#if 0
+#pragma mark -
+#pragma mark Derived Client Class Impl Wrappers
+#endif
   
   CozmoEngineClient::CozmoEngineClient()
   {
-    _impl = new CozmoEngineClientImpl();
-    assert(_impl != nullptr);
+    _clientImpl = new CozmoEngineClientImpl();
+    assert(_clientImpl != nullptr);
+    _impl = _clientImpl;
   }
   
-  CozmoEngineClientImpl* CozmoEngineClient::GetClientImpl()
+  bool CozmoEngineClient::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
   {
-    CozmoEngineClientImpl* clientImpl = reinterpret_cast<CozmoEngineClientImpl*>(_impl);
-    assert(clientImpl != nullptr); // was new'd in the constructor, so this should not happen!
-    return clientImpl;
+    PRINT_NAMED_WARNING("CozmoEngineClient.GetCurrentRobotImage", "Cannot yet request an image from robot on client.\n");
+    return false;
   }
   
-  
-#undef FREE_HELPER
+  bool CozmoEngineClient::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
+  {
+    PRINT_NAMED_WARNING("CozmoEngineClient.GetCurrentVisionMarkers", "Cannot yet request vision markers from robot on client.\n");
+    return false;
+  }
   
 } // namespace Cozmo
 } // namespace Anki
