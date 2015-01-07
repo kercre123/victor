@@ -65,7 +65,7 @@ const char* forcedRobotIP = "192.168.19.238";
 
 // Config
 @property (strong, nonatomic) NSString* _hostAdvertisingIP;
-@property (strong, nonatomic) NSString* _basestationIP;
+@property (strong, nonatomic) NSString* _vizIP;
 @property (assign, nonatomic) NSTimeInterval _heartbeatRate;
 @property (assign, nonatomic) NSTimeInterval _heartbeatPeriod;
 
@@ -126,7 +126,7 @@ const char* forcedRobotIP = "192.168.19.238";
   self._connectedRobots = [NSMutableDictionary new]; // { robotId: NSNumber, robot: ??}
 
   self._hostAdvertisingIP = [NSString stringWithUTF8String:DEFAULT_ADVERTISING_HOST_IP];
-  self._basestationIP = [NSString stringWithUTF8String:DEFAULT_BASESTATION_IP];
+  self._vizIP = [NSString stringWithUTF8String:DEFAULT_VIZ_HOST_IP];
   [self setHeartbeatRate:DEFAULT_HEARTBEAT_RATE];
   
   return self;
@@ -155,15 +155,15 @@ const char* forcedRobotIP = "192.168.19.238";
   return NO;
 }
 
-- (NSString*)basestationIP
+- (NSString*)vizIP
 {
-  return self._basestationIP;
+  return self._vizIP;
 }
 
-- (BOOL)setBasestationIP:(NSString*)basestationIP
+- (BOOL)setVizIP:(NSString *)vizIP
 {
-  if (self.runState == CozmoBasestationRunStateNone && basestationIP.length > 0) {
-    self._basestationIP = basestationIP;
+  if (self.runState == CozmoBasestationRunStateNone && vizIP.length > 0) {
+    self._vizIP = vizIP;
     return YES;
   }
   return NO;
