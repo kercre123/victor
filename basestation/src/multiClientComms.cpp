@@ -54,6 +54,8 @@ namespace Cozmo {
     numRecvRdyMsgs_ = 0;
     #endif
     
+    isInitialized_ = true;
+    
     return RESULT_OK;
   }
   
