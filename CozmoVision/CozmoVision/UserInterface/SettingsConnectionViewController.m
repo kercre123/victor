@@ -17,7 +17,7 @@
 
 
 @property (weak, nonatomic) IBOutlet UITextField* hostAddressTextField;
-@property (weak, nonatomic) IBOutlet UITextField* basestationAddressTextField;
+@property (weak, nonatomic) IBOutlet UITextField* vizAddressTextField;
 @property (weak, nonatomic) IBOutlet UITextField* basestationHeartbeatRateTextField;
 
 @property (weak, nonatomic) IBOutlet UIButton* basestationStartStopButton;
@@ -41,7 +41,7 @@
   self._basestation = [CozmoBasestation defaultBasestation];
 
   // Setup TextField handling
-  self._orderedTextFields = @[ self.hostAddressTextField, self.basestationAddressTextField, self.basestationHeartbeatRateTextField ];
+  self._orderedTextFields = @[ self.hostAddressTextField, self.vizAddressTextField, self.basestationHeartbeatRateTextField ];
 
   self.basestationStartStopButton.layer.cornerRadius = 10.0;
   self.basestationStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
@@ -96,9 +96,9 @@
   [self._basestation setHostAdvertisingIP:ipAddress];
   [NSUserDefaults setLastHostAdvertisingIP:ipAddress];
 
-  ipAddress = self.basestationAddressTextField.text;
-  [self._basestation setBasestationIP:ipAddress];
-  [NSUserDefaults setLastBasestationIP:ipAddress];
+  ipAddress = self.vizAddressTextField.text;
+  [self._basestation setVizIP:ipAddress];
+  [NSUserDefaults setLastVizIP:ipAddress];
   
   float heartbeatRate = [self.basestationHeartbeatRateTextField.text floatValue];
   [self._basestation setHeartbeatRate:(NSTimeInterval)heartbeatRate];
@@ -111,7 +111,7 @@
 {
   self.basestationStateLabel.text = [self basestatoinStateStringWithState:self._basestation.runState];
   self.hostAddressTextField.text = self._basestation.hostAdvertisingIP;
-  self.basestationAddressTextField.text = self._basestation.basestationIP;
+  self.vizAddressTextField.text  = self._basestation.vizIP;
   self.basestationHeartbeatRateTextField.text = [self basestationHeartbeatRateStringWithValue:self._basestation.heartbeatRate];
   [self updateCameraResolutionLabel];
 }
@@ -191,7 +191,7 @@
 - (void)setAllowConfig:(BOOL)allow
 {
   self.hostAddressTextField.enabled = allow;
-  self.basestationAddressTextField.enabled = allow;
+  self.vizAddressTextField.enabled = allow;
   self.basestationHeartbeatRateTextField.enabled = allow;
 }
 

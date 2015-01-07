@@ -88,8 +88,8 @@ return numberVal.boolValue; \
 NSString* const DefaultKeyLastHostAdvertisingIP = @"lastHostAdvertisingIP";
 RHUserDefaultDefinePropertyObj(NSString, lastHostAdvertisingIP, setLastHostAdvertisingIP, DefaultKeyLastHostAdvertisingIP)
 
-NSString* const DefaultKeyLastBasestationIP = @"lastBasestationIP";
-RHUserDefaultDefinePropertyObj(NSString, lastBasestationIP, setLastBasestationIP, DefaultKeyLastBasestationIP)
+NSString* const DefaultKeyLastVizIP = @"lastVizIP";
+RHUserDefaultDefinePropertyObj(NSString, lastVizIP, setLastVizIP, DefaultKeyLastVizIP)
 
 NSString* const DefaultKeyAutoConnectRobot = @"autoConnectRobot";
 RHUserDefaultDefinePropertyBool(autoConnectRobot, setAutoConnectRobot, DefaultKeyAutoConnectRobot, YES)

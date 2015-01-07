@@ -26,9 +26,9 @@
   if (ipAddress) {
     [self.basestation setHostAdvertisingIP:ipAddress];
   }
-  ipAddress = [NSUserDefaults lastBasestationIP];
+  ipAddress = [NSUserDefaults lastVizIP];
   if (ipAddress) {
-    [self.basestation setBasestationIP:ipAddress];
+    [self.basestation setVizIP:ipAddress];
   }
 
   /*

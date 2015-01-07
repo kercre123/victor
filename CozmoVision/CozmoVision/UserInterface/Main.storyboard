@@ -285,8 +285,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Host IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eGz-MJ-PPq">
-                                <rect key="frame" x="148" y="105" width="125" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Host IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eGz-MJ-PPq">
+                                <rect key="frame" x="148" y="106" width="125" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -302,8 +302,8 @@
                                     <outlet property="delegate" destination="ujg-tq-Qyj" id="zYa-wW-pNF"/>
                                 </connections>
                             </textField>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Basestation IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cKF-Yw-8ir">
-                                <rect key="frame" x="148" y="138" width="179" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Visualizer IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cKF-Yw-8ir">
+                                <rect key="frame" x="148" y="139" width="161" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -316,8 +316,8 @@
                                     <outlet property="delegate" destination="ujg-tq-Qyj" id="RbE-GW-b7z"/>
                                 </connections>
                             </textField>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Basestation Heartbeat Rate" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NL0-S1-H3w">
-                                <rect key="frame" x="148" y="171" width="212" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Basestation Heartbeat Rate" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NL0-S1-H3w">
+                                <rect key="frame" x="148" y="172" width="212" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -331,95 +331,115 @@
                                 </connections>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Basestation State: NONE" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="U2h-zF-t7Y">
-                                <rect key="frame" x="203" y="28" width="194" height="21"/>
+                                <rect key="frame" x="204" y="28" width="194" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="YkH-Nj-fYK">
-                                <rect key="frame" x="150" y="234" width="300" height="44"/>
-                                <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MTK-u2-NKc">
+                                <rect key="frame" x="304" y="212" width="280" height="44"/>
+                                <color key="backgroundColor" red="0.0" green="1" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="300" id="3DL-RA-1fb"/>
-                                    <constraint firstAttribute="height" constant="44" id="Y4F-cx-uAJ"/>
+                                    <constraint firstAttribute="height" constant="44" id="R9d-90-MRV"/>
+                                    <constraint firstAttribute="width" constant="300" id="cBc-iP-7Ow"/>
                                 </constraints>
                                 <color key="tintColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                <state key="normal" title="Basestation Start/Stop">
+                                <state key="normal" title="Start as Client">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <variation key="default">
+                                    <mask key="constraints">
+                                        <exclude reference="cBc-iP-7Ow"/>
+                                    </mask>
+                                </variation>
                                 <connections>
-                                    <action selector="handleBasestationStartStopButtonPress:" destination="ujg-tq-Qyj" eventType="touchUpInside" id="aeG-hy-C6v"/>
+                                    <action selector="handleBasestationStartStopButtonPress:" destination="ujg-tq-Qyj" eventType="touchUpInside" id="Qmj-in-hl1"/>
                                 </connections>
                             </button>
-                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SI9-OE-LAh">
-                                <rect key="frame" x="16" y="200" width="51" height="31"/>
-                                <connections>
-                                    <action selector="handleAutoConnectSwitchToggle:" destination="ujg-tq-Qyj" eventType="valueChanged" id="caC-vQ-169"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Auto Connect" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="416-s6-czb">
-                                <rect key="frame" x="73" y="205" width="106" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9Wy-7V-CQs">
-                                <rect key="frame" x="16" y="284" width="51" height="31"/>
+                                <rect key="frame" x="16" y="272" width="51" height="31"/>
                                 <connections>
                                     <action selector="handleCameraResolutionSwitch:" destination="ujg-tq-Qyj" eventType="valueChanged" id="aB1-zd-YoF"/>
                                 </connections>
                             </switch>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Resolution" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wvx-KD-y58">
-                                <rect key="frame" x="73" y="289" width="82" height="21"/>
+                                <rect key="frame" x="73" y="278" width="82" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="YkH-Nj-fYK">
+                                <rect key="frame" x="16" y="212" width="280" height="44"/>
+                                <color key="backgroundColor" red="0.0" green="0.50196081399917603" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="300" id="3DL-RA-1fb"/>
+                                    <constraint firstAttribute="height" constant="44" id="Y4F-cx-uAJ"/>
+                                </constraints>
+                                <color key="tintColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <state key="normal" title="Start as Host">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <variation key="default">
+                                    <mask key="constraints">
+                                        <exclude reference="3DL-RA-1fb"/>
+                                    </mask>
+                                </variation>
+                                <connections>
+                                    <action selector="handleBasestationStartStopButtonPress:" destination="ujg-tq-Qyj" eventType="touchUpInside" id="aeG-hy-C6v"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="SI9-OE-LAh" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="06M-kc-NpC"/>
                             <constraint firstItem="wvx-KD-y58" firstAttribute="leading" secondItem="9Wy-7V-CQs" secondAttribute="trailing" constant="8" id="0j6-eE-SLj"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="leading" secondItem="RSY-Vq-qhJ" secondAttribute="leading" id="2zW-5E-7mk"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="U2h-zF-t7Y" secondAttribute="trailing" id="38M-EB-z3r"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="NL0-S1-H3w" secondAttribute="trailing" id="5Fo-al-Cr3"/>
+                            <constraint firstItem="9Wy-7V-CQs" firstAttribute="top" secondItem="YkH-Nj-fYK" secondAttribute="bottom" constant="16" id="63P-7X-Vx3"/>
                             <constraint firstItem="U2h-zF-t7Y" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="6d0-XI-QtN"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="centerY" secondItem="cKF-Yw-8ir" secondAttribute="centerY" id="75m-26-MY6"/>
                             <constraint firstAttribute="centerX" secondItem="U2h-zF-t7Y" secondAttribute="centerX" id="92h-b4-GCE"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="eGz-MJ-PPq" secondAttribute="trailing" id="9Jg-nu-uNb"/>
-                            <constraint firstItem="SI9-OE-LAh" firstAttribute="top" secondItem="EBq-Ir-POu" secondAttribute="bottom" constant="4" id="9q8-ky-HAf"/>
+                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="height" secondItem="MTK-u2-NKc" secondAttribute="height" id="AWG-Pb-TCs"/>
                             <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="cKF-Yw-8ir" secondAttribute="trailing" id="Awj-QP-MPl"/>
                             <constraint firstItem="cKF-Yw-8ir" firstAttribute="leading" secondItem="NL0-S1-H3w" secondAttribute="leading" id="DTw-Rk-hgE"/>
                             <constraint firstItem="cKF-Yw-8ir" firstAttribute="leading" secondItem="eGz-MJ-PPq" secondAttribute="leading" id="JkR-YJ-uDl"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="top" secondItem="RSY-Vq-qhJ" secondAttribute="bottom" constant="3" id="MeD-AT-hpy"/>
+                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="centerY" secondItem="MTK-u2-NKc" secondAttribute="centerY" id="NZe-46-IY6"/>
                             <constraint firstItem="eGz-MJ-PPq" firstAttribute="leading" secondItem="RSY-Vq-qhJ" secondAttribute="trailing" constant="2" id="PwK-q0-1J5"/>
                             <constraint firstItem="RSY-Vq-qhJ" firstAttribute="top" secondItem="OJN-Yg-2fd" secondAttribute="bottom" constant="80" id="QAv-tP-lec"/>
                             <constraint firstItem="wvx-KD-y58" firstAttribute="centerY" secondItem="9Wy-7V-CQs" secondAttribute="centerY" id="Qkc-lz-Yl6"/>
+                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="width" secondItem="MTK-u2-NKc" secondAttribute="width" id="RTK-li-u5Q"/>
                             <constraint firstItem="EBq-Ir-POu" firstAttribute="top" secondItem="XSP-Vn-Hbv" secondAttribute="bottom" constant="3" id="Rbv-AG-5EW"/>
+                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="X3Z-qj-nNg"/>
                             <constraint firstAttribute="centerX" secondItem="YkH-Nj-fYK" secondAttribute="centerX" id="YWf-cm-cyl"/>
+                            <constraint firstItem="MTK-u2-NKc" firstAttribute="leading" secondItem="YkH-Nj-fYK" secondAttribute="trailing" constant="8" id="ZbD-Y6-h9U"/>
                             <constraint firstItem="eGz-MJ-PPq" firstAttribute="centerY" secondItem="RSY-Vq-qhJ" secondAttribute="centerY" id="fc1-nL-RF0"/>
-                            <constraint firstItem="9Wy-7V-CQs" firstAttribute="top" secondItem="SI9-OE-LAh" secondAttribute="bottom" constant="53" id="kby-qE-RVL"/>
-                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="top" secondItem="416-s6-czb" secondAttribute="bottom" constant="8" id="khB-1q-OAZ"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="leading" secondItem="EBq-Ir-POu" secondAttribute="leading" id="mMI-b5-1vT"/>
                             <constraint firstItem="RSY-Vq-qhJ" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="mpV-Kj-FAH"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="MTK-u2-NKc" secondAttribute="trailing" id="nTw-ff-poW"/>
                             <constraint firstItem="9Wy-7V-CQs" firstAttribute="leading" secondItem="Hlq-m6-V2v" secondAttribute="leadingMargin" id="oWy-Fj-TJN"/>
-                            <constraint firstItem="416-s6-czb" firstAttribute="centerY" secondItem="SI9-OE-LAh" secondAttribute="centerY" id="sii-1A-N6d"/>
                             <constraint firstItem="NL0-S1-H3w" firstAttribute="centerY" secondItem="EBq-Ir-POu" secondAttribute="centerY" id="uKz-oT-WUF"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="width" secondItem="EBq-Ir-POu" secondAttribute="width" id="xeG-Uu-rdN"/>
                             <constraint firstItem="XSP-Vn-Hbv" firstAttribute="width" secondItem="RSY-Vq-qhJ" secondAttribute="width" id="xfq-j8-ks7"/>
-                            <constraint firstItem="416-s6-czb" firstAttribute="leading" secondItem="SI9-OE-LAh" secondAttribute="trailing" constant="8" id="z0G-Vl-e6X"/>
+                            <constraint firstItem="YkH-Nj-fYK" firstAttribute="top" secondItem="EBq-Ir-POu" secondAttribute="bottom" constant="16" id="yQ8-3v-sjD"/>
                             <constraint firstItem="U2h-zF-t7Y" firstAttribute="top" secondItem="OJN-Yg-2fd" secondAttribute="bottom" constant="8" id="zDZ-9v-TZe"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="YWf-cm-cyl"/>
+                            </mask>
+                        </variation>
                     </view>
                     <tabBarItem key="tabBarItem" title="Connection" image="SettingsIcon" id="ifh-P2-opu"/>
                     <connections>
-                        <outlet property="basestationAddressTextField" destination="XSP-Vn-Hbv" id="T9o-FO-Bd3"/>
                         <outlet property="basestationHeartbeatRateTextField" destination="EBq-Ir-POu" id="VLw-t9-onU"/>
                         <outlet property="basestationStartStopButton" destination="YkH-Nj-fYK" id="YOV-e5-iff"/>
                         <outlet property="basestationStateLabel" destination="U2h-zF-t7Y" id="2Nb-Ws-WVy"/>
                         <outlet property="cameraResolutionLabel" destination="wvx-KD-y58" id="HB3-j1-Lu8"/>
                         <outlet property="cameraResolutionSwitch" destination="9Wy-7V-CQs" id="sxF-M2-dHB"/>
                         <outlet property="hostAddressTextField" destination="RSY-Vq-qhJ" id="wBW-Y1-6Di"/>
+                        <outlet property="vizAddressTextField" destination="XSP-Vn-Hbv" id="mMG-bW-2kq"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SOk-8d-1UD" userLabel="First Responder" sceneMemberID="firstResponder"/>

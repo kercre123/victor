@@ -14,8 +14,8 @@
 + (void)setLastHostAdvertisingIP:(NSString*)hostAdvertisingIP;
 
 // Default value is "127.0.0.1"
-+ (NSString*)lastBasestationIP;
-+ (void)setLastBasestationIP:(NSString*)basestationIP;
++ (NSString*)lastVizIP;
++ (void)setLastVizIP:(NSString*)vizIP;
 
 + (BOOL)autoConnectRobot;
 + (void)setAutoConnectRobot:(BOOL)autoConnect;
