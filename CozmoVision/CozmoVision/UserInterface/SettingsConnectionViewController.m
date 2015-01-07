@@ -16,6 +16,7 @@
 @property (weak, nonatomic) IBOutlet UILabel* basestationStateLabel;
 
 
+@property (weak, nonatomic) IBOutlet UILabel *hostAddressLabel;
 @property (weak, nonatomic) IBOutlet UITextField* hostAddressTextField;
 @property (weak, nonatomic) IBOutlet UITextField* vizAddressTextField;
 @property (weak, nonatomic) IBOutlet UITextField* basestationHeartbeatRateTextField;
@@ -26,6 +27,9 @@
 @property (weak, nonatomic) UIResponder* _currentUIResponder;
 
 @property (weak, nonatomic) CozmoBasestation* _basestation;
+
+@property (weak, nonatomic) IBOutlet UISwitch *asHostSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *asHostLabel;
 
 @property (weak, nonatomic) IBOutlet UISwitch *cameraResolutionSwitch;
 @property (weak, nonatomic) IBOutlet UILabel *cameraResolutionLabel;
@@ -169,7 +173,7 @@
       break;
   }
 
-  [self.basestationStartStopButton setTitle:title forState:UIControlStateNormal];
+  //[self.basestationStartStopButton setTitle:title forState:UIControlStateNormal];
   self.basestationStartStopButton.backgroundColor = color;
 }
 
@@ -190,7 +194,12 @@
 
 - (void)setAllowConfig:(BOOL)allow
 {
-  self.hostAddressTextField.enabled = allow;
+  self.asHostSwitch.enabled = allow;
+  self.asHostLabel.enabled = allow;
+  
+  self.hostAddressTextField.enabled = !self.asHostSwitch.isOn;
+  self.hostAddressLabel.enabled = !self.asHostSwitch.isOn;
+  
   self.vizAddressTextField.enabled = allow;
   self.basestationHeartbeatRateTextField.enabled = allow;
 }
@@ -233,18 +242,11 @@
   [self._currentUIResponder resignFirstResponder];
 }
 
-- (IBAction)handleAutoConnectSwitchToggle:(UISwitch*)sender
-{
-  self._basestation.autoConnect = sender.isOn;
-  [NSUserDefaults setAutoConnectRobot:sender.isOn];
-}
-
 - (IBAction)handleBasestationStartStopButtonPress:(id)sender
 {
   // Toggle Basestation states
 
-  // TODO: Get whether host from UI
-  BOOL isHost = YES;
+  BOOL isHost = self.asHostSwitch.isOn;
   
   [self updateBasestationConfig];
   [self._basestation start:isHost];
@@ -289,5 +291,16 @@
   [self._basestation.cozmoOperator sendCameraResolution:sender.isOn];
 }
 
+- (IBAction)handleAsHostSwitch:(UISwitch *)sender {
+  if(sender.isOn == NO) {
+    self.asHostLabel.text = @"As Client";
+    self.hostAddressTextField.enabled = YES;
+    self.hostAddressLabel.enabled = YES;
+  } else {
+    self.asHostLabel.text = @"As Host";
+    self.hostAddressTextField.enabled = NO;
+    self.hostAddressLabel.enabled = NO;
+  }
+}
 
 @end
