@@ -1096,6 +1096,8 @@ static int ov2686_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
   struct v4l2_rect *crop;
   struct ov2686_info *info = to_state(sd);
 
+  printk(KERN_INFO, "OV2686 Open\n");
+
   crop = v4l2_subdev_get_try_crop(fh, 0);
   crop->left = 0;
   crop->top = 0;
@@ -1115,6 +1117,7 @@ static int ov2686_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 
 static int ov2686_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 {
+  printk(KERN_INFO, "OV2686 close\n");
   return ov2686_s_power(sd, 0);
 }
 
@@ -1167,6 +1170,9 @@ static int ov2686_probe(struct i2c_client *client,
   int i;
   struct ov2686_platform_data *pdata = client->dev.platform_data;
   struct i2c_adapter *adapter = to_i2c_adapter(client->dev.parent);
+
+  printk(KERN_INFO, "OV2686 module probe\n");
+
   if (pdata == NULL) {
     dev_err(&client->dev, "No platform data\n");
   }
@@ -1264,6 +1270,8 @@ static int ov2686_remove(struct i2c_client *client)
 {
   struct v4l2_subdev *sd = i2c_get_clientdata(client);
   struct ov2686_info *info = to_state(sd);
+
+  printk(KERN_INFO, "OV2686 module remove\n");
 
   v4l2_ctrl_handler_free(&info->ctrls);
   v4l2_device_unregister_subdev(sd);
