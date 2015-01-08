@@ -491,6 +491,7 @@
                         <outlet property="asHostSwitch" destination="dP6-SP-okV" id="XJR-ih-UQG"/>
                         <outlet property="cameraResolutionLabel" destination="wvx-KD-y58" id="HB3-j1-Lu8"/>
                         <outlet property="cameraResolutionSwitch" destination="9Wy-7V-CQs" id="sxF-M2-dHB"/>
+                        <outlet property="engineHeartBeatLabel" destination="NL0-S1-H3w" id="vjP-oX-0LB"/>
                         <outlet property="engineHeartbeatRateTextField" destination="EBq-Ir-POu" id="PBe-K8-kLa"/>
                         <outlet property="engineStartStopButton" destination="YkH-Nj-fYK" id="Z8d-lQ-Zz3"/>
                         <outlet property="engineStateLabel" destination="U2h-zF-t7Y" id="NRr-CM-hnJ"/>
@@ -498,6 +499,7 @@
                         <outlet property="hostAddressTextField" destination="RSY-Vq-qhJ" id="wBW-Y1-6Di"/>
                         <outlet property="numRobotsSelector" destination="obc-8E-98R" id="xGf-EQ-fGW"/>
                         <outlet property="numUiDevicesSelector" destination="LRk-SJ-v5O" id="SKP-n0-Zy6"/>
+                        <outlet property="vizAddressLabel" destination="cKF-Yw-8ir" id="H1o-bG-uqt"/>
                         <outlet property="vizAddressTextField" destination="XSP-Vn-Hbv" id="mMG-bW-2kq"/>
                     </connections>
                 </viewController>
