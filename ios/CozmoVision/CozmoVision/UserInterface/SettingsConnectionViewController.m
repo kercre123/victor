@@ -18,8 +18,12 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *hostAddressLabel;
 @property (weak, nonatomic) IBOutlet UITextField* hostAddressTextField;
+
 @property (weak, nonatomic) IBOutlet UITextField* vizAddressTextField;
+@property (weak, nonatomic) IBOutlet UILabel *vizAddressLabel;
+
 @property (weak, nonatomic) IBOutlet UITextField* engineHeartbeatRateTextField;
+@property (weak, nonatomic) IBOutlet UILabel *engineHeartBeatLabel;
 
 @property (weak, nonatomic) IBOutlet UIButton* engineStartStopButton;
 
@@ -212,9 +216,13 @@
   self.hostAddressLabel.enabled = !self.asHostSwitch.isOn;
   
   self.vizAddressTextField.enabled = allow;
+  self.vizAddressLabel.enabled = allow;
+  
   self.engineHeartbeatRateTextField.enabled = allow;
+  self.engineHeartBeatLabel.enabled = allow;
   
   self.cameraResolutionSwitch.enabled = allow;
+  self.cameraResolutionLabel.enabled = allow;
   
   self.numRobotsSelector.enabled = allow;
   self.numUiDevicesSelector.enabled = allow;
