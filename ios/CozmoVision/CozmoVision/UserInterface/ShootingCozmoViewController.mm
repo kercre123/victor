@@ -29,7 +29,7 @@
 @interface ShootingCozmoViewController () <CvVideoCameraDelegate>
 {
   CvVideoCamera*                        _videoCamera;
-  Anki::Cozmo::VisionProcessingThread*  _visionThread;
+  //Anki::Cozmo::VisionProcessingThread*  _visionThread;
 }
 @property (weak, nonatomic) IBOutlet UIView* cameraView;
 @property (weak, nonatomic) IBOutlet BulletOverlayView* bulletOverlayView;
@@ -45,6 +45,7 @@
 @property (assign, nonatomic) int points;
 
 @property (weak, nonatomic) CozmoOperator* _operator;
+@property (weak, nonatomic) CozmoBasestation* basestation;
 @end
 
 @implementation ShootingCozmoViewController
@@ -55,7 +56,10 @@
   [super viewDidLoad];
 
   self.view.backgroundColor = [UIColor blackColor];
-  self._operator = [[CozmoBasestation defaultBasestation] cozmoOperator];
+  
+  self.basestation = [CozmoBasestation defaultBasestation];
+  self._operator = [self.basestation cozmoOperator];
+
 
   self.crosshairTopImageView.image = [self.crosshairTopImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
   self.crosshairTopImageView.tintColor = [UIColor redColor];
@@ -75,9 +79,11 @@
 
 
   // Start up the vision thread for processing device camera images
+  // TODO: Get calibration of device camera somehow
   Anki::Vision::CameraCalibration deviceCamCalib;
-  _visionThread = new Anki::Cozmo::VisionProcessingThread();
-  _visionThread->Start(deviceCamCalib); // TODO: Only start when device camera selected?
+  //_visionThread = new Anki::Cozmo::VisionProcessingThread();
+  //_visionThread->Start(deviceCamCalib); // TODO: Only start when device camera selected?
+  
 
   [_videoCamera start];
 
@@ -171,36 +177,29 @@
   Point2i   detectRectPt1(160,120);
   Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
 
-  if(!calledOnce || _visionThread->WasLastImageProcessed())
+  //if(!calledOnce || _visionThread->WasLastImageProcessed())
+  if(!calledOnce || [self.basestation wasLastDeviceImageProcessed])
   {
     calledOnce = YES;
     cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
 
     // Detection rectangle is red and label says "No Marker" unless we find a
     // vision marker below
-    Cozmo::MessageVisionMarker msg;
+    //Cozmo::MessageVisionMarker msg;
     float markerDistanceFromCenter = 100000.0;
     BOOL markerInCrosshairs = NO;
-    while(true == _visionThread->CheckMailbox(msg)) {
-
-      Float32 xMin = min(min(msg.x_imgLowerLeft, msg.x_imgLowerRight),
-                         min(msg.x_imgUpperLeft, msg.x_imgUpperRight));
-      Float32 yMin = min(min(msg.y_imgLowerLeft, msg.y_imgLowerRight),
-                         min(msg.y_imgUpperLeft, msg.y_imgUpperRight));
-      
-      Float32 xMax = max(max(msg.x_imgLowerLeft, msg.x_imgLowerRight),
-                         max(msg.x_imgUpperLeft, msg.x_imgUpperRight));
-      Float32 yMax = max(max(msg.y_imgLowerLeft, msg.y_imgLowerRight),
-                         max(msg.y_imgUpperLeft, msg.y_imgUpperRight));
-      
-      
-      CGRect marker = CGRectMake(xMin, yMin, xMax-xMin, yMax-yMin);
-      
+    
+    CGRect marker;
+    int markerTypeOut;
+    
+    while(YES == [self.basestation checkDeviceVisionMailbox:&marker
+                                                      :&markerTypeOut])
+    {
       // See if the crosshairs at center of image is within the marker's
       // bounding box
       markerInCrosshairs =  CGRectContainsPoint(marker, CGPointMake(160,120));
       if(markerInCrosshairs) {
-        self.markerType = msg.markerType;
+        self.markerType = markerTypeOut; //msg.markerType;
         self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
         
         Float32 xDistance = CGRectGetMidX(marker) - 160.0;
@@ -229,7 +228,8 @@
     // Last image was processed (or this is the first call), so the vision
     // thread is ready for a new image:
     Vision::Image ankiImage(imageGrayROI);
-    _visionThread->SetNextImage(imageGrayROI, bogusState);
+    //_visionThread->SetNextImage(imageGrayROI, bogusState);
+    [self.basestation processDeviceImage:ankiImage];
 
   }
 
