@@ -2420,7 +2420,9 @@ namespace Cozmo {
     _autoExposure_highValue = highValue;
     _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
     
-    PRINT_INFO("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+    PRINT_INFO("Changed VisionSystem params: autoExposureOn d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+               _autoExposure_enabled,
+               _exposureTime,
                _autoExposure_integerCountsIncrement,
                _autoExposure_minExposureTime,
                _autoExposure_maxExposureTime,

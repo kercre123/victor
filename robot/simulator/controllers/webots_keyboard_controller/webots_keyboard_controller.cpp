@@ -518,7 +518,23 @@ namespace Anki {
                   }
                   streamOn = !streamOn;
                 }
-                SendImageRequest(mode, IMG_STREAM_RES);
+                
+                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
+                
+                if (root_) {
+                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
+                  if(camera_horizontalResolution == 320) {
+                    localStreamRes = Vision::CAMERA_RES_QVGA;
+                  } else if(camera_horizontalResolution == 160) {
+                    localStreamRes = Vision::CAMERA_RES_QQVGA;
+                  } else if(camera_horizontalResolution == 80) {
+                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                  } else if(camera_horizontalResolution == 40) {
+                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  }
+                }
+                
+                SendImageRequest(mode, localStreamRes);
                 break;
               }
                 

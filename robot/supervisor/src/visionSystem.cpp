@@ -2599,7 +2599,9 @@ namespace Anki {
         autoExposure_highValue = highValue;
         autoExposure_percentileToMakeHigh = percentileToMakeHigh;
         
-        PRINT("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+        PRINT("Changed VisionSystem params: autoExposureOn d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+              autoExposure_enabled,
+              exposureTime_,
               autoExposure_integerCountsIncrement,
               autoExposure_minExposureTime,
               autoExposure_maxExposureTime,
