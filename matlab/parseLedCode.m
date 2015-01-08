@@ -34,6 +34,7 @@ function parseLedCode()
     images(:,:,1) = image;
     
     for i = 2:numImages
+        imshow(uint8(images(:,:,i-1)));
         images(:,:,i) = getNextImage();
     end
     
@@ -65,7 +66,7 @@ function parseLedCode()
             quadRefinementMinCornerChange = .005;
             returnInvalidMarkers = 0;
 
-            [quads, markerTypes, markerNames] = mexDetectFiducialMarkers(uint8(images(:,:,iImage)), useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
+            [quads, ~, markerNames] = mexDetectFiducialMarkers(uint8(images(:,:,iImage)), useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
             
             markers{iImage} = cell(length(markerNames), 1);
             
@@ -117,7 +118,7 @@ function parseLedCode()
         
     % 2. Compute which images are per-pixel above the mean, and which are below
     amountAboveMeanThreshold = 10;
-    percentAboveMeanThreshold = 0.002;
+    percentAboveMeanThreshold = 0.05;
     
     meanImage = zeros([templateRectangle(4)-templateRectangle(3)+1, templateRectangle(2)-templateRectangle(1)+1]);
     numValidFaces = 0;
@@ -149,7 +150,7 @@ function parseLedCode()
     areWhite = zeros(numImages, 1);
     for iImage = 1:numImages
 %         imshow(uint8(images(:,:,iImage)));
-        imshow(monsterFaces{iImage})
+%         imshow(monsterFaces{iImage})
 
         if isempty(monsterFaces{iImage})
             areWhite(iImage) = 2;
