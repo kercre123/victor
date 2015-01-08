@@ -8,7 +8,7 @@
 
 #import "AppDelegate.h"
 #import "Foundation/Foundation.h"
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "NSUserDefaults+UI.h"
 
 @interface AppDelegate ()
@@ -20,22 +20,22 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Override point for customization after application launch.
 
-  self.basestation = [CozmoBasestation new];
+  self.cozmoEngineWrapper = [CozmoEngineWrapper new];
 
   NSString* ipAddress = [NSUserDefaults lastHostAdvertisingIP];
   if (ipAddress) {
-    [self.basestation setHostAdvertisingIP:ipAddress];
+    [self.cozmoEngineWrapper setHostAdvertisingIP:ipAddress];
   }
   ipAddress = [NSUserDefaults lastVizIP];
   if (ipAddress) {
-    [self.basestation setVizIP:ipAddress];
+    [self.cozmoEngineWrapper setVizIP:ipAddress];
   }
 
-  NSInteger N = [NSUserDefaults lastNumRobots];
-  [self.basestation setNumRobotsToWaitFor:N];
+  int N = [NSUserDefaults lastNumRobots];
+  [self.cozmoEngineWrapper setNumRobotsToWaitFor:N];
   
   N = [NSUserDefaults lastNumUiDevices];
-  [self.basestation setNumUiDevicesToWaitFor:N];
+  [self.cozmoEngineWrapper setNumUiDevicesToWaitFor:N];
   
 
   return YES;

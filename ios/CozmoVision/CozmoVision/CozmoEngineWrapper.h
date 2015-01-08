@@ -1,5 +1,5 @@
 //
-//  CozmoBasestation.h
+//  CozmoEngineWrapper.h
 //  CozmoVision
 //
 //  Created by Andrew Stein on 12/5/14.
@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "CozmoBasestationTypes.h"
+#import "CozmoEngineWrapperTypes.h"
 
 #ifdef __cplusplus
 #import <anki/vision/basestation/image.h>
@@ -18,17 +18,17 @@
 
 // IP Address of wherever the robot's advertising service is running
 #define DEFAULT_ADVERTISING_HOST_IP     "127.0.0.1"
-// Tick the basestation rate, ticks per second
+// Tick the cozmoeEngine rate, ticks per second
 #define DEFAULT_HEARTBEAT_RATE          40.0
 // IP Address of wherever the visualization (Webots) is running
 #define DEFAULT_VIZ_HOST_IP             "192.168.19.238"
 
-@interface CozmoBasestation : NSObject
+@interface CozmoEngineWrapper : NSObject
 
-@property (readonly) CozmoBasestationRunState runState;
+@property (readonly) CozmoEngineRunState runState;
 
-// Return the Basestation instance held onto by the AppDelegate
-+ (instancetype)defaultBasestation;
+// Return the CozmoEngineWrapper instance held onto by the AppDelegate
++ (instancetype)defaultEngine;
 
 // Config Parameters
 // Can only set config properties when the runState == stopped
@@ -48,19 +48,18 @@
 - (BOOL)setNumUiDevicesToWaitFor:(int)N;
 
 // Listeners
-// Basestation Heartbeat
-- (void)addListener:(id<CozmoBasestationHeartbeatListener>)listener;
-- (void)removeListener:(id<CozmoBasestationHeartbeatListener>)listener;
+// CozmoeEngine Heartbeat
+- (void)addListener:(id<CozmoEngineHeartbeatListener>)listener;
+- (void)removeListener:(id<CozmoEngineHeartbeatListener>)listener;
 
 @property (readonly) CozmoOperator *cozmoOperator;
 
 // Finite control
 - (BOOL)start:(BOOL)asHost;
 
-// Change Basestation run state
+// Change engine's run state
 // Wait for 1 or more robots to connect before calling
-//- (BOOL)startBasestation;
-- (void)stopCommsAndBasestation;
+- (void)stop;
 
 - (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId;
 

@@ -20,10 +20,10 @@
 + (BOOL)cameraIsHighResolution;
 + (void)setCameraIsHighResolution:(BOOL)isHighResolution;
 
-+ (NSInteger)lastNumRobots;
-+ (void)setLastNumRobots:(NSInteger)N;
++ (int)lastNumRobots;
++ (void)setLastNumRobots:(int)N;
 
-+ (NSInteger)lastNumUiDevices;
-+ (void)setLastNumUiDevices:(NSInteger)N;
++ (int)lastNumUiDevices;
++ (void)setLastNumUiDevices:(int)N;
 
 @end
