@@ -9,6 +9,11 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "CozmoBasestationTypes.h"
+
+#ifdef __cplusplus
+#import <anki/vision/basestation/image.h>
+#endif
+
 @class CozmoOperator;
 
 // IP Address of wherever the robot's advertising service is running
@@ -42,15 +47,6 @@
 - (void)addListener:(id<CozmoBasestationHeartbeatListener>)listener;
 - (void)removeListener:(id<CozmoBasestationHeartbeatListener>)listener;
 
-- (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId;
-- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId;
-
-// Change Basestation State
-
-// After setting autoConnect call -startComms to begin connnection
-// This method waits for a robot to connect then start basestation automatically
-@property (assign, nonatomic) BOOL autoConnect;
-
 @property (readonly) CozmoOperator *cozmoOperator;
 
 // Finite control
@@ -61,5 +57,17 @@
 //- (BOOL)startBasestation;
 - (void)stopCommsAndBasestation;
 
+- (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId;
+
+- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId;
+
+
+-(BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBoxOut :(int*)markerTypeOut;
+
+#ifdef __cplusplus
+-(void)processDeviceImage:(Anki::Vision::Image&)image;
+#endif
+
+-(BOOL) wasLastDeviceImageProcessed;
 
 @end

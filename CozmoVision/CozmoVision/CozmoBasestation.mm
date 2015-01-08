@@ -200,9 +200,12 @@ const char* forcedRobotIP = "192.168.19.238";
     _cozmoEngine = nullptr;
   }
   
+  // TODO: Get device camera calibration from somewhere. For now this is bogus.
+  Anki::Vision::CameraCalibration deviceCamCalib;
+  
   if(asHost) {
     Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
-    cozmoEngineHost->Init(_config);
+    cozmoEngineHost->Init(_config, deviceCamCalib);
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
@@ -213,7 +216,7 @@ const char* forcedRobotIP = "192.168.19.238";
     
   } else { // as Client
     Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
-    cozmoEngineClient->Init(_config);
+    cozmoEngineClient->Init(_config, deviceCamCalib);
     _cozmoEngine = cozmoEngineClient;
   }
   
@@ -409,6 +412,45 @@ const char* forcedRobotIP = "192.168.19.238";
   }
   
   return boundingBoxes;
+}
+
+- (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
+{
+  Anki::Cozmo::MessageVisionMarker msg;
+  if(true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
+    
+    Float32 xMin = fmin(fmin(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                        fmin(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+    Float32 yMin = fmin(fmin(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                        fmin(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+    
+    Float32 xMax = fmax(fmax(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                        fmax(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+    Float32 yMax = fmax(fmax(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                        fmax(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+    
+    *markerBBox = CGRectMake(xMin, yMin, xMax-xMin, yMax-yMin);
+    
+    *markerType = msg.markerType;
+    
+    return YES;
+  } else {
+    return NO;
+  }
+}
+
+- (void) processDeviceImage:(Anki::Vision::Image&)image
+{
+  _cozmoEngine->ProcessDeviceImage(image);
+}
+
+- (BOOL) wasLastDeviceImageProcessed
+{
+  if(true == _cozmoEngine->WasLastDeviceImageProcessed()) {
+    return YES;
+  } else {
+    return NO;
+  }
 }
 
 @end
