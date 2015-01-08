@@ -31,14 +31,12 @@
     [self.basestation setVizIP:ipAddress];
   }
 
-  /*
-  // If autoConnect - Start comms, connect robot & start basestation
-  self.basestation.autoConnect = [NSUserDefaults autoConnectRobot];
-  if (self.basestation.autoConnect) {
-    [self.basestation startComms];
-  }
-   */
-
+  NSInteger N = [NSUserDefaults lastNumRobots];
+  [self.basestation setNumRobotsToWaitFor:N];
+  
+  N = [NSUserDefaults lastNumUiDevices];
+  [self.basestation setNumUiDevicesToWaitFor:N];
+  
 
   return YES;
 }
