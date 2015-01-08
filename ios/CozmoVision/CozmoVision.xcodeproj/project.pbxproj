@@ -29,6 +29,7 @@
 		499F451A1A25672E0050A530 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45111A25672E0050A530 /* Foundation.framework */; };
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
+		49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */ = {isa = PBXBuildFile; fileRef = 49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
 		49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */; };
 		49C305E71A42437000CCA87B /* ObservedObjectSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C305E61A42437000CCA87B /* ObservedObjectSelector.m */; };
@@ -80,6 +81,8 @@
 		499F45111A25672E0050A530 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CvVideoCameraReorient.m; sourceTree = "<group>"; };
+		49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CvVideoCameraReorient.h; sourceTree = "<group>"; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
 		49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoObsObjectBBox.h; sourceTree = "<group>"; };
 		49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CozmoObsObjectBBox.m; sourceTree = "<group>"; };
@@ -313,6 +316,8 @@
 		4E9798571A42BBED000D06DE /* System */ = {
 			isa = PBXGroup;
 			children = (
+				49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */,
+				49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */,
 				4E9798581A42BD2F000D06DE /* SoundCoordinator.h */,
 				4E9798591A42BD2F000D06DE /* SoundCoordinator.m */,
 			);
@@ -467,6 +472,7 @@
 				4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */,
 				4E161EF01A39710100E08F41 /* VirtualDirectionPadView.m in Sources */,
 				4E9798651A43C5E5000D06DE /* ShootingCozmoViewController.mm in Sources */,
+				49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */,
 				4967D9D71A326C8A00EF0E90 /* CozmoEngineWrapper.mm in Sources */,
 				4E1B72E71A40C62F00C61B61 /* VerticalSliderView.m in Sources */,
 				4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */,
