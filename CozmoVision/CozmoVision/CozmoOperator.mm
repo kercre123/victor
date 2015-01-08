@@ -115,11 +115,11 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
   
 }
 
-- (void)disconnectToBasestation
+- (void)disconnectFromEngine
 {
   if (_gameComms->HasClient()) {
     _gameComms->DisconnectClient();
-    NSLog(@"Successfully disconnected from basestatoin");
+    NSLog(@"Successfully disconnected from CozmoeEngine");
   }
 }
 
@@ -295,7 +295,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
 {
   if(objectID) {
     Cozmo::MessageU2G_PickAndPlaceObject message;
-    message.objectID = objectID.integerValue;
+    message.objectID = (int)objectID.integerValue;
     message.usePreDockPose = false;
     [self sendMessage:message];
   }

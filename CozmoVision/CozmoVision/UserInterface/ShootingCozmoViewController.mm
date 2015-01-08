@@ -20,7 +20,7 @@
 #import <anki/vision/MarkerCodeDefinitions.h>
 
 #import "SoundCoordinator.h"
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "CozmoOperator.h"
 
 #endif
@@ -45,7 +45,7 @@
 @property (assign, nonatomic) int points;
 
 @property (weak, nonatomic) CozmoOperator* _operator;
-@property (weak, nonatomic) CozmoBasestation* basestation;
+@property (weak, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
 @end
 
 @implementation ShootingCozmoViewController
@@ -57,8 +57,8 @@
 
   self.view.backgroundColor = [UIColor blackColor];
   
-  self.basestation = [CozmoBasestation defaultBasestation];
-  self._operator = [self.basestation cozmoOperator];
+  self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
+  self._operator = [self.cozmoEngineWrapper cozmoOperator];
 
 
   self.crosshairTopImageView.image = [self.crosshairTopImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -178,7 +178,7 @@
   Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
 
   //if(!calledOnce || _visionThread->WasLastImageProcessed())
-  if(!calledOnce || [self.basestation wasLastDeviceImageProcessed])
+  if(!calledOnce || [self.cozmoEngineWrapper wasLastDeviceImageProcessed])
   {
     calledOnce = YES;
     cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
@@ -192,7 +192,7 @@
     CGRect marker;
     int markerTypeOut;
     
-    while(YES == [self.basestation checkDeviceVisionMailbox:&marker
+    while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
                                                       :&markerTypeOut])
     {
       // See if the crosshairs at center of image is within the marker's
@@ -229,7 +229,7 @@
     // thread is ready for a new image:
     Vision::Image ankiImage(imageGrayROI);
     //_visionThread->SetNextImage(imageGrayROI, bogusState);
-    [self.basestation processDeviceImage:ankiImage];
+    [self.cozmoEngineWrapper processDeviceImage:ankiImage];
 
   }
 

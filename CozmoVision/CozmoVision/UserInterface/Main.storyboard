@@ -58,10 +58,10 @@
                                 <action selector="handleAnimationButtonPress:" destination="alu-Be-WEk" id="Gun-82-sn7"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" title="Basestation State" id="sz0-FT-IXY"/>
+                        <barButtonItem key="rightBarButtonItem" title="Engine State" id="sz0-FT-IXY"/>
                     </navigationItem>
                     <connections>
-                        <outlet property="basestationStateBarItem" destination="sz0-FT-IXY" id="5ab-ck-VW9"/>
+                        <outlet property="engineStateBarItem" destination="sz0-FT-IXY" id="nOX-H9-Y70"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fAA-iZ-yhA" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -195,8 +195,8 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bCj-tu-47g" customClass="BulletOverlayView">
                                 <rect key="frame" x="16" y="0.0" width="568" height="600"/>
                                 <subviews>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Points: 0" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="78z-d7-pr7">
-                                        <rect key="frame" x="8" y="561" width="95" height="31"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Points: 0" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="78z-d7-pr7">
+                                        <rect key="frame" x="8" y="566" width="82" height="27"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="21"/>
                                         <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                         <nil key="highlightedColor"/>
@@ -286,7 +286,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Host IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eGz-MJ-PPq">
-                                <rect key="frame" x="148" y="125" width="125" height="21"/>
+                                <rect key="frame" x="148" y="126" width="125" height="21"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <bool key="isElement" value="NO"/>
                                 </accessibility>
@@ -309,7 +309,7 @@
                                 </connections>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Visualizer IP Address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cKF-Yw-8ir">
-                                <rect key="frame" x="148" y="171" width="161" height="21"/>
+                                <rect key="frame" x="148" y="172" width="161" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -322,8 +322,8 @@
                                     <outlet property="delegate" destination="ujg-tq-Qyj" id="RbE-GW-b7z"/>
                                 </connections>
                             </textField>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Basestation Heartbeat Rate" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NL0-S1-H3w">
-                                <rect key="frame" x="148" y="204" width="212" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Engine Heartbeat Rate" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NL0-S1-H3w">
+                                <rect key="frame" x="148" y="204" width="174" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -371,7 +371,7 @@
                                     </mask>
                                 </variation>
                                 <connections>
-                                    <action selector="handleBasestationStartStopButtonPress:" destination="ujg-tq-Qyj" eventType="touchUpInside" id="aeG-hy-C6v"/>
+                                    <action selector="handleEngineStartStopButtonPress:" destination="ujg-tq-Qyj" eventType="touchUpInside" id="gTG-XC-o9D"/>
                                 </connections>
                             </button>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dP6-SP-okV">
@@ -381,7 +381,7 @@
                                 </connections>
                             </switch>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="As Host" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xji-Qu-iUd">
-                                <rect key="frame" x="464" y="80" width="61" height="21"/>
+                                <rect key="frame" x="464" y="81" width="61" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -412,14 +412,14 @@
                                     <segment title="4"/>
                                 </segments>
                             </segmentedControl>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Robots" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Yzc-6P-KEo">
-                                <rect key="frame" x="150" y="314" width="56" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Robots" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Yzc-6P-KEo">
+                                <rect key="frame" x="150" y="313" width="56" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="UI Devices" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jjB-fS-wLd">
-                                <rect key="frame" x="150" y="346" width="83" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="UI Devices" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jjB-fS-wLd">
+                                <rect key="frame" x="150" y="345" width="83" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
@@ -489,11 +489,11 @@
                     <connections>
                         <outlet property="asHostLabel" destination="Xji-Qu-iUd" id="xvA-eE-Vw2"/>
                         <outlet property="asHostSwitch" destination="dP6-SP-okV" id="XJR-ih-UQG"/>
-                        <outlet property="basestationHeartbeatRateTextField" destination="EBq-Ir-POu" id="VLw-t9-onU"/>
-                        <outlet property="basestationStartStopButton" destination="YkH-Nj-fYK" id="YOV-e5-iff"/>
-                        <outlet property="basestationStateLabel" destination="U2h-zF-t7Y" id="2Nb-Ws-WVy"/>
                         <outlet property="cameraResolutionLabel" destination="wvx-KD-y58" id="HB3-j1-Lu8"/>
                         <outlet property="cameraResolutionSwitch" destination="9Wy-7V-CQs" id="sxF-M2-dHB"/>
+                        <outlet property="engineHeartbeatRateTextField" destination="EBq-Ir-POu" id="PBe-K8-kLa"/>
+                        <outlet property="engineStartStopButton" destination="YkH-Nj-fYK" id="Z8d-lQ-Zz3"/>
+                        <outlet property="engineStateLabel" destination="U2h-zF-t7Y" id="NRr-CM-hnJ"/>
                         <outlet property="hostAddressLabel" destination="eGz-MJ-PPq" id="yjs-z0-xCR"/>
                         <outlet property="hostAddressTextField" destination="RSY-Vq-qhJ" id="wBW-Y1-6Di"/>
                         <outlet property="numRobotsSelector" destination="obc-8E-98R" id="xGf-EQ-fGW"/>
