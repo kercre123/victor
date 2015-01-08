@@ -64,7 +64,7 @@ function image = webotsCameraCapture(varargin)
         if foundNewImage
             lastTimestamp = datenums(lastIndex);
             inputFilename = [filenameDirectory, files(lastIndex).name];
-            disp(sprintf('Loading %s', inputFilename));
+%             disp(sprintf('Loading %s', inputFilename));
             image = imread(inputFilename);
             break;
         end
