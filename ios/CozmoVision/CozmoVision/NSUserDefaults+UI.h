@@ -17,10 +17,13 @@
 + (NSString*)lastVizIP;
 + (void)setLastVizIP:(NSString*)vizIP;
 
-+ (BOOL)autoConnectRobot;
-+ (void)setAutoConnectRobot:(BOOL)autoConnect;
-
 + (BOOL)cameraIsHighResolution;
 + (void)setCameraIsHighResolution:(BOOL)isHighResolution;
+
++ (NSInteger)lastNumRobots;
++ (void)setLastNumRobots:(NSInteger)N;
+
++ (NSInteger)lastNumUiDevices;
++ (void)setLastNumUiDevices:(NSInteger)N;
 
 @end

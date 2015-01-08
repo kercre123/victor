@@ -91,13 +91,14 @@ RHUserDefaultDefinePropertyObj(NSString, lastHostAdvertisingIP, setLastHostAdver
 NSString* const DefaultKeyLastVizIP = @"lastVizIP";
 RHUserDefaultDefinePropertyObj(NSString, lastVizIP, setLastVizIP, DefaultKeyLastVizIP)
 
-NSString* const DefaultKeyAutoConnectRobot = @"autoConnectRobot";
-RHUserDefaultDefinePropertyBool(autoConnectRobot, setAutoConnectRobot, DefaultKeyAutoConnectRobot, YES)
-
-
 NSString* const DefaultKeyCameraResolution = @"cameraResolution";
 RHUserDefaultDefinePropertyBool(cameraIsHighResolution, setCameraIsHighResolution, DefaultKeyCameraResolution, YES)
 
+NSString* const DefaultKeyLastNumRobots = @"lastNumRobots";
+RHUserDefaultDefinePropertyInt(lastNumRobots, setLastNumRobots, DefaultKeyLastNumRobots, 1)
+
+NSString* const DefaultKeyLastNumUiDevices = @"lastNumUiDevices";
+RHUserDefaultDefinePropertyInt(lastNumUiDevices, setLastNumUiDevices, DefaultKeyLastNumUiDevices, 1)
 
 
 @end

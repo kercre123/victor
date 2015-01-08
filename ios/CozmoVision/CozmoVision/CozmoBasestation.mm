@@ -58,16 +58,15 @@ const char* forcedRobotIP = "192.168.19.238";
 
 @interface CozmoBasestation ()
 
-//@property (assign, nonatomic) CozmoBasestationRunState runState;
-@property (assign, nonatomic) BOOL engineRunning;
-@property (assign, nonatomic) BOOL robotConnected;
-@property (assign, nonatomic) BOOL uiConnected;
+@property (assign, nonatomic) CozmoBasestationRunState runState;
 
 // Config
 @property (strong, nonatomic) NSString* _hostAdvertisingIP;
 @property (strong, nonatomic) NSString* _vizIP;
 @property (assign, nonatomic) NSTimeInterval _heartbeatRate;
 @property (assign, nonatomic) NSTimeInterval _heartbeatPeriod;
+@property (assign, nonatomic) NSInteger _numRobotsToWaitFor;
+@property (assign, nonatomic) NSInteger _numUiDevicesToWaitFor;
 
 @property (strong, nonatomic) NSTimer* _heartbeatTimer;
 // Listeners
@@ -117,10 +116,8 @@ const char* forcedRobotIP = "192.168.19.238";
     return self;
   
   _cozmoEngine = nullptr;
-  
-  //self.runState = CozmoBasestationRunStateNone;
-  self.engineRunning  = NO;
-  self.robotConnected = NO;
+
+  self.runState = CozmoBasestationRunStateNone;
 
   self._heartbeatListeners = [NSMutableArray new];
   self._connectedRobots = [NSMutableDictionary new]; // { robotId: NSNumber, robot: ??}
@@ -128,6 +125,9 @@ const char* forcedRobotIP = "192.168.19.238";
   self._hostAdvertisingIP = [NSString stringWithUTF8String:DEFAULT_ADVERTISING_HOST_IP];
   self._vizIP = [NSString stringWithUTF8String:DEFAULT_VIZ_HOST_IP];
   [self setHeartbeatRate:DEFAULT_HEARTBEAT_RATE];
+  
+  self._numRobotsToWaitFor = 1;
+  self._numUiDevicesToWaitFor = 1;
   
   return self;
 }
@@ -185,6 +185,33 @@ const char* forcedRobotIP = "192.168.19.238";
   return NO;
 }
 
+-(int)numRobotsToWaitFor
+{
+  return self._numRobotsToWaitFor;
+}
+
+-(BOOL)setNumRobotsToWaitFor:(int)N
+{
+  if (self.runState == CozmoBasestationRunStateNone) {
+    self._numRobotsToWaitFor = N;
+    return YES;
+  }
+  return NO;
+}
+
+-(int)numUiDevicesToWaitFor
+{
+  return self._numUiDevicesToWaitFor;
+}
+
+-(BOOL)setNumUiDevicesToWaitFor:(int)N
+{
+  if (self.runState == CozmoBasestationRunStateNone) {
+    self._numUiDevicesToWaitFor = N;
+    return YES;
+  }
+  return NO;
+}
 
 #pragma mark - Basestation state methods
 
@@ -222,7 +249,7 @@ const char* forcedRobotIP = "192.168.19.238";
   
   [self resetHeartbeatTimer];
   
-  self.engineRunning = YES;
+  self.runState = CozmoBasestationRunStateRunning;
   
   return YES;
 }
@@ -249,14 +276,12 @@ const char* forcedRobotIP = "192.168.19.238";
   _config[AnkiUtil::kP_ADVERTISING_HOST_IP] = self._hostAdvertisingIP.UTF8String;
   _config[AnkiUtil::kP_VIZ_HOST_IP] = self._hostAdvertisingIP.UTF8String;
   
+  _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = self._numRobotsToWaitFor;
+  _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = self._numUiDevicesToWaitFor;
+  
   // TODO: Provide ability to set these from app?
   _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
   _config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = Anki::Cozmo::UI_ADVERTISING_PORT;
-  _config[AnkiUtil::kP_VIZ_HOST_IP]            = DEFAULT_VIZ_HOST_IP;
-  
-  _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = 1;
-  _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
-  
 }
 
 
@@ -287,8 +312,7 @@ const char* forcedRobotIP = "192.168.19.238";
   
   self.cozmoOperator = nil;
   
-  //self.runState = CozmoBasestationRunStateNone;
-  self.engineRunning = NO;
+  self.runState = CozmoBasestationRunStateNone;
   
   [self._heartbeatTimer invalidate];
   self._heartbeatTimer = nil;
@@ -302,7 +326,7 @@ const char* forcedRobotIP = "192.168.19.238";
 {
   CFTimeInterval thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent() - _firstHeartbeatTimestamp;
   CFTimeInterval thisHeartbeatDelta = thisHeartbeatTimestamp - _lastHeartbeatTimestamp;
-  if(thisHeartbeatDelta > (__heartbeatPeriod + 0.003)) {
+  if(thisHeartbeatDelta > (self._heartbeatPeriod + 0.003)) {
     DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
   }
   _lastHeartbeatTimestamp = thisHeartbeatTimestamp;

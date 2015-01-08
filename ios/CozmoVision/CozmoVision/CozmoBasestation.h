@@ -41,6 +41,11 @@
 - (double)heartbeatRate;  // Run loop frequency (Ticks per second)
 - (BOOL)setHeartbeatRate:(NSTimeInterval)rate;
 
+- (int)numRobotsToWaitFor;
+- (BOOL)setNumRobotsToWaitFor:(int)N;
+
+- (int)numUiDevicesToWaitFor;
+- (BOOL)setNumUiDevicesToWaitFor:(int)N;
 
 // Listeners
 // Basestation Heartbeat

@@ -34,6 +34,9 @@
 @property (weak, nonatomic) IBOutlet UISwitch *cameraResolutionSwitch;
 @property (weak, nonatomic) IBOutlet UILabel *cameraResolutionLabel;
 
+@property (weak, nonatomic) IBOutlet UISegmentedControl *numRobotsSelector;
+@property (weak, nonatomic) IBOutlet UISegmentedControl *numUiDevicesSelector;
+
 @end
 
 @implementation SettingsConnectionViewController
@@ -106,6 +109,14 @@
   
   float heartbeatRate = [self.basestationHeartbeatRateTextField.text floatValue];
   [self._basestation setHeartbeatRate:(NSTimeInterval)heartbeatRate];
+  
+  NSInteger N = self.numRobotsSelector.selectedSegmentIndex;
+  [self._basestation setNumRobotsToWaitFor:N];
+  [NSUserDefaults setLastNumRobots:N];
+  
+  N = self.numUiDevicesSelector.selectedSegmentIndex;
+  [self._basestation setNumUiDevicesToWaitFor:N];
+  [NSUserDefaults setLastNumUiDevices:N];
 }
 
 
@@ -118,6 +129,8 @@
   self.vizAddressTextField.text  = self._basestation.vizIP;
   self.basestationHeartbeatRateTextField.text = [self basestationHeartbeatRateStringWithValue:self._basestation.heartbeatRate];
   [self updateCameraResolutionLabel];
+  self.numRobotsSelector.selectedSegmentIndex = self._basestation.numRobotsToWaitFor;
+  self.numUiDevicesSelector.selectedSegmentIndex = self._basestation.numUiDevicesToWaitFor;
 }
 
 - (void)updateUIWithBasestionState:(CozmoBasestationRunState)state
@@ -127,8 +140,6 @@
 
   // Only allow config when state is None
   [self setAllowConfig:(CozmoBasestationRunStateNone == state)];
-
-  self.cameraResolutionSwitch.enabled = (CozmoBasestationRunStateRunning == state);
 }
 
 - (void)updateCameraResolutionLabel
@@ -143,28 +154,28 @@
   switch (state) {
     case CozmoBasestationRunStateNone:
     {
-      title = @"Start Comms";
+      title = @"Start Cozmo Engine";
       color = [UIColor greenColor];
     }
       break;
 
     case CozmoBasestationRunStateCommsReady:
     {
-      title = @"Stop Comms";
+      title = @"Stop Cozmo Engine";
       color = [UIColor yellowColor];
     }
       break;
 
     case CozmoBasestationRunStateRobotConnected:
     {
-      title = @"Start Basestation";
+      title = @"Start Cozmo Engine";
       color = [UIColor orangeColor];
     }
       break;
 
     case CozmoBasestationRunStateRunning:
     {
-      title = @"Stop Basestation";
+      title = @"Stop Cozmo Engine";
       color = [UIColor redColor];
     }
       break;
@@ -173,7 +184,7 @@
       break;
   }
 
-  //[self.basestationStartStopButton setTitle:title forState:UIControlStateNormal];
+  [self.basestationStartStopButton setTitle:title forState:UIControlStateNormal];
   self.basestationStartStopButton.backgroundColor = color;
 }
 
@@ -202,6 +213,11 @@
   
   self.vizAddressTextField.enabled = allow;
   self.basestationHeartbeatRateTextField.enabled = allow;
+  
+  self.cameraResolutionSwitch.enabled = allow;
+  
+  self.numRobotsSelector.enabled = allow;
+  self.numUiDevicesSelector.enabled = allow;
 }
 
 
@@ -246,29 +262,13 @@
 {
   // Toggle Basestation states
 
-  BOOL isHost = self.asHostSwitch.isOn;
-  
-  [self updateBasestationConfig];
-  [self._basestation start:isHost];
-  
-  /*
   switch (self._basestation.runState) {
     case CozmoBasestationRunStateNone:
     {
+      BOOL isHost = self.asHostSwitch.isOn;
+      
       [self updateBasestationConfig];
-      [self._basestation startComms];
-    }
-      break;
-
-    case CozmoBasestationRunStateCommsReady:
-    {
-      [self._basestation stopCommsAndBasestation];
-    }
-      break;
-
-    case CozmoBasestationRunStateRobotConnected:
-    {
-      [self._basestation startBasestation];
+      [self._basestation start:isHost];
     }
       break;
 
@@ -279,9 +279,9 @@
       break;
 
     default:
+      NSLog(@"Unknown CozmoBasestation run state.\n");
       break;
   }
-   */
 }
 
 - (IBAction)handleCameraResolutionSwitch:(UISwitch*)sender
