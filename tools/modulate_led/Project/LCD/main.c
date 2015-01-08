@@ -38,8 +38,7 @@
 /* Private variables ---------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
 uint8_t BlinkSpeed = 0;
-typedef unsigned long       u32;
-typedef unsigned short      u16;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -249,6 +248,9 @@ int main(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure); /* GPIOA */
 
+  BlinkLed();
+  
+  /*
 	while(1)
 	{
 		for(j = 0; j<1001; j++)
@@ -271,7 +273,7 @@ int main(void)
 				//MicroWait(300);
 			}
 		}
-	}
+	}*/
 	
 	////////////
 	

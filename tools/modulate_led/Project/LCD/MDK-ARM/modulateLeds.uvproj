@@ -399,9 +399,14 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
-              <FileName>system_stm32f0xx.c</FileName>
+              <FileName>blinkLed.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\system_stm32f0xx.c</FilePath>
+              <FilePath>..\blinkLed.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\main.h</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>
@@ -412,6 +417,11 @@
               <FileName>stm32f0xx_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\stm32f0xx_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>system_stm32f0xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\system_stm32f0xx.c</FilePath>
             </File>
           </Files>
         </Group>

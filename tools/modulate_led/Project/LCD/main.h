@@ -34,12 +34,18 @@
 #include "stm32f0_discovery.h"
 
 /* Exported types ------------------------------------------------------------*/
+typedef unsigned long       u32;
+typedef unsigned short      u16;
 /* Private define ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void TimingDelay_Decrement(void);
 void Delay(__IO uint32_t nTime);
+
+void MicroWait(u32 us);
+void BlinkLed(void);
+
 #endif /* __MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
