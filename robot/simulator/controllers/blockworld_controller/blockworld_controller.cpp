@@ -108,8 +108,11 @@ int main(int argc, char **argv)
     
   } // if (bm != BM_PLAYBACK_SESSION)
   
+  // There is no "device" (e.g. phone) with a camera so we can just use a bogus camera calibration
+  Vision::CameraCalibration bogusDeviceCamCalib;
   
-  cozmoEngine.Init(config);
+  // Initialize the engine
+  cozmoEngine.Init(config, bogusDeviceCamCalib);
   
   
   //

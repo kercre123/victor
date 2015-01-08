@@ -35,6 +35,7 @@
 #include "anki/cozmo/basestation/messages.h"
 
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/cameraCalibration.h"
 
 // TODO: Remove dependence on this include
 #include "anki/cozmo/basestation/basestation.h"
@@ -57,7 +58,8 @@ namespace Cozmo {
     
     virtual bool IsHost() const = 0;
     
-    Result Init(const Json::Value& config);
+    Result Init(const Json::Value& config,
+                const Vision::CameraCalibration& deviceCamCalib);
     
     // Hook this up to whatever is ticking the game "heartbeat"
     using Time = unsigned long long int;
@@ -66,6 +68,8 @@ namespace Cozmo {
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
+    
+    bool WasLastDeviceImageProcessed();
     
     // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
     using AdvertisingRobot = int;

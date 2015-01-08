@@ -39,7 +39,8 @@ namespace Cozmo {
     CozmoEngineImpl();
     virtual ~CozmoEngineImpl();
     
-    virtual Result Init(const Json::Value& config);
+    virtual Result Init(const Json::Value& config,
+                        const Vision::CameraCalibration& deviceCamCalib);
     
     // Hook this up to whatever is ticking the game "heartbeat"
     Result Update(const BaseStationTime_t currTime_ns);
@@ -47,6 +48,8 @@ namespace Cozmo {
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
+    
+    bool WasLastDeviceImageProcessed();
     
     using AdvertisingRobot    = CozmoEngine::AdvertisingRobot;
     using AdvertisingUiDevice = CozmoEngine::AdvertisingUiDevice;
@@ -100,7 +103,8 @@ namespace Cozmo {
     
   }
   
-  Result CozmoEngineImpl::Init(const Json::Value& config)
+  Result CozmoEngineImpl::Init(const Json::Value& config,
+                               const Vision::CameraCalibration& deviceCamCalib)
   {
     if(_isInitialized) {
       PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.\n");
@@ -143,6 +147,11 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
       return lastResult;
     }
+    
+    //_deviceVisionThread.SetCameraCalibration(deviceCamCalib);
+    
+    // TODO: Only start when needed?
+    _deviceVisionThread.Start(deviceCamCalib);
     
     _isInitialized = true;
     
@@ -221,6 +230,11 @@ namespace Cozmo {
     _deviceVisionThread.SetNextImage(image, bogusState);
   }
   
+  bool CozmoEngineImpl::WasLastDeviceImageProcessed()
+  {
+    return _deviceVisionThread.WasLastImageProcessed();
+  }
+  
   bool CozmoEngineImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
   {
     return _deviceVisionThread.CheckMailbox(msg);
@@ -244,8 +258,9 @@ namespace Cozmo {
     }
   }
   
-  Result CozmoEngine::Init(const Json::Value& config) {
-    return _impl->Init(config);
+  Result CozmoEngine::Init(const Json::Value& config,
+                           const Vision::CameraCalibration& deviceCamCalib) {
+    return _impl->Init(config, deviceCamCalib);
   }
   
   Result CozmoEngine::Update(const Time currTime_sec) {
@@ -270,6 +285,10 @@ namespace Cozmo {
   
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
+  }
+  
+  bool CozmoEngine::WasLastDeviceImageProcessed() {
+    return _impl->WasLastDeviceImageProcessed();
   }
   
   bool CozmoEngine::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg) {
