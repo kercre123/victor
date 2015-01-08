@@ -1,16 +1,32 @@
 % function parseLedCode()
 
 function parseLedCode()
+    global g_cameraType;
+    global g_filenamePattern;
+    global g_whichImages;
+    global g_processingSize;
 
     numImages = 20;
+    g_cameraType = 'offline'; % 'webots', 'usbcam', 'offline'
+    
+    g_filenamePattern = '/Users/pbarnum/tmp/image_%d.png';
+    g_whichImages = 0:99;
+    
+    g_processingSize = [240,320];    
 
-    image = webotsCameraCapture();
+    image = getNextImage();
 
     % 1. Capture N images
     images = zeros([size(image),numImages]);
     images(:,:,1) = image;
+    
     for i = 2:numImages
-        images(:,:,i) = webotsCameraCapture();
+        images(:,:,i) = getNextImage();
+    end
+    
+    markers = cell(numImages, 1);
+    for i = 1:numImages
+        markers{i} = simpleDetector(images(:,:,i)/255);
     end
 
     % 2. Compute which images are per-pixel above the mean, and which are below
@@ -33,6 +49,11 @@ function parseLedCode()
     % 3. Compute transitions from bright to dark
     firstDifferentIndex = find(areWhite ~= areWhite(1), 1, 'first');
     lastDifferentIndex = find(areWhite ~= areWhite(end), 1, 'last');
+    
+    if isempty(firstDifferentIndex) || isempty(lastDifferentIndex)
+        disp('Insufficient number of segments');
+        return;
+    end
     
     segments = zeros(0,2);
     
@@ -67,5 +88,42 @@ function parseLedCode()
     estimatedPercent = totalValue / totalNum;
     
     disp(sprintf('Estimated percent = %0.2f', estimatedPercent));
+end % function parseLedCode()
     
 %     keyboard
+function image = getNextImage()
+    global g_cameraType;
+    global g_filenamePattern;
+    global g_whichImages;
+    global g_processingSize;
+    
+    if strcmpi(g_cameraType, 'webots')
+        image = webotsCameraCapture();
+    elseif strcmpi(g_cameraType, 'usbcam')
+        persistent usbcamStarted;
+        
+        if isempty(usbcamStarted)
+            usbcamStarted = false;
+        end
+        
+        if ~usbcamStarted
+            cameraId = 0;
+            mexCameraCapture(0, cameraId);
+            usbcamStarted = true;
+        end
+        
+        image = imresize(rgb2gray2(mexCameraCapture(1, cameraId)), g_processingSize);
+    elseif strcmpi(g_cameraType, 'offline')
+        persistent curImageIndex;
+        
+        if isempty(curImageIndex)
+            curImageIndex = 1;
+        end
+        
+        image = imresize(rgb2gray2(imread(sprintf(g_filenamePattern, g_whichImages(curImageIndex)))), g_processingSize);
+        curImageIndex = curImageIndex + 1;
+    else
+        assert(false);
+    end
+
+end
