@@ -22,13 +22,14 @@
 #import "SoundCoordinator.h"
 #import "CozmoEngineWrapper.h"
 #import "CozmoOperator.h"
+#import "CvVideoCameraReorient.h"
 
 #endif
 
 
-@interface ShootingCozmoViewController () <CvVideoCameraDelegate>
+@interface ShootingCozmoViewController () <CvVideoCameraDelegateReorient>
 {
-  CvVideoCamera*                        _videoCamera;
+  CvVideoCameraReorient*                        _videoCamera;
   //Anki::Cozmo::VisionProcessingThread*  _visionThread;
 }
 @property (weak, nonatomic) IBOutlet UIView* cameraView;
@@ -50,7 +51,6 @@
 
 @implementation ShootingCozmoViewController
 
-
 - (void)viewDidLoad
 {
   [super viewDidLoad];
@@ -69,11 +69,11 @@
 
   // Set up videoCamera for displaying device's on-board camera, but don't start it
   self.cameraView.contentMode = UIViewContentModeCenter;
-  _videoCamera = [[CvVideoCamera alloc] initWithParentView:_cameraView];
+  _videoCamera = [[CvVideoCameraReorient alloc] initWithParentView:_cameraView];
   _videoCamera.delegate = self;
   _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
   _videoCamera.defaultAVCaptureSessionPreset  = AVCaptureSessionPreset640x480;
-//  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
+  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeRight;
   _videoCamera.defaultFPS = 30;
   _videoCamera.grayscaleMode = NO;
 
