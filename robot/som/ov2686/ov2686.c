@@ -13,6 +13,13 @@
 
 #include "ov2686.h"
 
+/*** Register definitions */
+
+static const u16 OV2686_REG_CHIP_ID_L = 0x300A; static const u8 OV2686_CHIP_ID_L_VALUE = 0x26;
+static const u16 OV2686_REG_CHIP_ID_M = 0x300B; static const u8 OV2686_CHIP_ID_M_VALUE = 0x85;
+static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H_VALUE = 0x00;
+
+
 /*** Type definitions */
 
 struct ov2686_info {
@@ -76,6 +83,77 @@ out:
   return ret;
 }
 
+static int ov2686_reg_read(struct i2c_client * client, u16 reg, u8* val) {
+  int ret;
+  struct i2c_msg msg[] = {
+    {
+      .addr	= client->addr,
+      .flags	= 0,
+      .len	= 2,
+      .buf	= (u8 *)&reg,
+    },
+    {
+      .addr	= client->addr,
+      .flags	= I2C_M_RD,
+      .len	= 1,
+      .buf	= val,
+    },
+  };
+
+  reg = swab16(reg);
+
+  ret = i2c_transfer(client->adapter, msg, 2);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686 failed reading register 0x%04x!\n", reg);
+    return ret;
+  }
+
+  return 0;
+}
+
+static int ov2686_reg_write(struct i2c_client *client, u16 reg, u8 val)
+{
+  struct i2c_msg msg;
+  struct {
+    u16 reg;
+    u8 val;
+  } __packed buf;
+  int ret;
+
+  reg = swab16(reg);
+
+  buf.reg = reg;
+  buf.val = val;
+
+  msg.addr	= client->addr;
+  msg.flags	= 0;
+  msg.len		= 3;
+  msg.buf		= (u8 *)&buf;
+
+  ret = i2c_transfer(client->adapter, &msg, 1);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686 failed writing %02x to register 0x%04x!\n", val, reg);
+    return ret;
+  }
+
+  return 0;
+}
+
+// Returns 1 if the register equals value, 0 if it is not equal or a negative error number
+static int __ov2686_reg_equals(struct i2c_client *client, u16 reg, u8 value) {
+  u8 data;
+  int ret = ov2686_reg_read(client, reg, &data);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686_reg_equals read failed\n");
+    return ret;
+  }
+  else if (data == value) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
 
 static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
   struct ov2686_info * info = to_state(subdev);
@@ -155,6 +233,66 @@ static int ov2686_set_crop(struct v4l2_subdev *subdev,
   return 0;
 }
 
+static int ov2686_registered(struct v4l2_subdev *subdev) {
+  struct i2c_client *client;
+  struct ov2686_info *info;
+  u8 data;
+  int ret = 0;
+
+  printk(KERN_INFO "ov2686_registered\n");
+
+  client = v4l2_get_subdevdata(subdev);
+  info   = to_state(subdev);
+
+  // Power on
+  ret = __ov2686_set_power(info, 1);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686 register, couldn't power up chip\n");
+    return ret;
+  }
+
+  // Read version information
+  ret = __ov2686_reg_equals(client, OV2686_REG_CHIP_ID_L, OV2686_CHIP_ID_L_VALUE);
+  if (ret == 1) {
+    ret = __ov2686_reg_equals(client, OV2686_REG_CHIP_ID_M, OV2686_CHIP_ID_M_VALUE);
+    if (ret == 1) {
+      ret = __ov2686_reg_equals(client, OV2686_REG_CHIP_ID_H, OV2686_CHIP_ID_H_VALUE);
+    }
+  }
+  if (ret == 1) {
+    printk(KERN_INFO "ov2686 detected at address 0x%02x\n", client->addr);
+  }
+  else {
+    printk(KERN_INFO "ov2686 not detected at address 0x02x\n", client->addr);
+    return -ENODEV;
+  }
+
+  // Power off chip
+  ret = __ov2686_set_power(info, 0);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686 register, couldn't power down chip\n");
+    return ret;
+  }
+
+  return ret;
+}
+
+static int ov2686_open(struct v4l2_subdev *subdev, struct v4l2_subdev_fh *fh) {
+  struct ov2686_info *info;
+
+  printk(KERN_INFO "ov2686_open called\n");
+
+  info = to_state(subdev);
+
+  // Do stuff to set up camera, format, crop, etc.
+  return ov2686_s_power(subdev, 1);
+}
+
+static int ov2686_close(struct v4l2_subdev *subdev, struct v4l2_subdev_fh *fh) {
+  printk(KERN_INFO "ov2686_close called\n");
+  return ov2686_s_power(subdev, 0);
+}
+
 
 /*** Static data */
 
@@ -181,12 +319,17 @@ static struct v4l2_subdev_ops ov2686_subdev_ops = {
   .pad   = &ov2686_subdev_pad_ops,
 };
 
+static struct v4l2_subdev_internal_ops ov2686_subdev_internal_ops = {
+  .registered = &ov2686_registered,
+  .open       = &ov2686_open,
+  .close      = &ov2686_close,
+};
+
 /*** I2C module functions */
 
 static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *device) {
   struct ov2686_info *info;
   struct ov2686_platform_data *pdata;
-  struct i2c_adapter *adapter;
   int ret = 0;
 
   printk(KERN_INFO "ov2686 i2c probe\n");
@@ -195,15 +338,6 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
   if (pdata == NULL) {
     printk(KERN_WARNING "No platform data\n");
     return -EINVAL;
-  }
-
-  printk(KERN_INFO "Getting Adapter info\n");
-
-  adapter = to_i2c_adapter(client->dev.parent);
-
-  if ( !i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
-    printk(KERN_WARNING "I2C-Adapter doesn't support I2C_FUNC_SMBUS_BYTE_DATA\n");
-    return -EIO;
   }
 
   printk(KERN_INFO "Allocating driver memory\n");
@@ -221,6 +355,7 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
   printk(KERN_INFO "Initalizing V4L2 I2C subdevice\n");
 
   v4l2_i2c_subdev_init(&info->subdev, client, &ov2686_subdev_ops);
+  info->subdev.internal_ops = &ov2686_subdev_internal_ops;
 
   printk(KERN_INFO "Initalizing media controller\n");
 
