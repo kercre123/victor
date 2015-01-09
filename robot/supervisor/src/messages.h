@@ -53,7 +53,7 @@ namespace Anki {
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).  
 #     define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
-#     include "anki/cozmo/shared/MessageDefinitionsB2R.h"
+#     include "anki/cozmo/shared/MessageDefinitionsB2R.def"
       
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
