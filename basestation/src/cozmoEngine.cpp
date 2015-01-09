@@ -75,15 +75,21 @@ namespace Cozmo {
     
     Json::Value               _config;
     
-    VisionProcessingThread    _robotVisionThread;
-    VisionProcessingThread    _deviceVisionThread;
-    
     MultiClientComms          _robotComms;
     
-    MessageHandler            _robotVisionMsgHandler;
+    // Each engine can potetnailly talk to multiple physical robots.
+    // Package up the stuff req'd to deal with one robot and store a map
+    // of them keyed by robot ID.
+    struct RobotContainer {
+      VisionProcessingThread    visionThread;
+      MessageHandler            visionMsgHandler;
+    };
+    std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
+    
+    VisionProcessingThread    _deviceVisionThread;
     UiMessageHandler          _deviceVisionMsgHandler;
     
-    std::vector<AdvertisingRobot>    _connectedRobots;
+    //std::vector<AdvertisingRobot>    _connectedRobots;
     std::vector<AdvertisingUiDevice> _connectedUiDevices;
     
   }; // class CozmoEngine
@@ -158,7 +164,9 @@ namespace Cozmo {
   {
     const bool success = _robotComms.ConnectToDeviceByID(whichRobot);
     if(success) {
-      _connectedRobots.push_back(whichRobot);
+      _connectedRobots[whichRobot];
+      //_connectedRobots[whichRobot].visionThread.Start();
+      //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
     BSE_RobotConnect::RaiseEvent(whichRobot, success);
     return success;
@@ -173,8 +181,10 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    // TODO: Handle images coming from a connected robot
-    //_robotVisionMsgHandler.ProcessMessages();
+    // TODO: Handle images coming from connected robots
+    for(auto & robotKeyPair : _connectedRobots) {
+      //robotKeyPair.second.visionMsgHandler.ProcessMessages();
+    }
     
     // TODO: Handle anything produced by device image processing
     /*
@@ -328,7 +338,8 @@ namespace Cozmo {
     {
       // Add connected_robots' IDs to config for basestation to use
       _config[AnkiUtil::kP_CONNECTED_ROBOTS].clear();
-      for(auto robotID : _connectedRobots) {
+      for(auto & robotKeyPair : _connectedRobots) {
+        const int robotID = robotKeyPair.first;
         _config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
       }
       
