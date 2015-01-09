@@ -77,12 +77,11 @@ namespace Cozmo {
     
     // Get list of available robots / UI devices
     void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
-    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
+
     
     // Request a connection to a specific robot / UI device from the list returned above.
     // Returns true on successful connection, false otherwise.
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot); // virtual so Host can do something different for force-added robots
-    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     // TODO: Add IsConnected methods
     /*
@@ -115,6 +114,9 @@ namespace Cozmo {
     CozmoEngineHost();
     
     virtual bool IsHost() const override { return true; }
+    
+    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
+    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     void ForceAddRobot(AdvertisingRobot robotID,
                        const char*      robotIP,

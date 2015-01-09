@@ -55,10 +55,8 @@ namespace Cozmo {
     using AdvertisingUiDevice = CozmoEngine::AdvertisingUiDevice;
     
     void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
-    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
     
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
-    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     // TODO: Remove this in favor of it being handled via messages instead of direct API polling
     bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
@@ -81,7 +79,6 @@ namespace Cozmo {
     VisionProcessingThread    _deviceVisionThread;
     
     MultiClientComms          _robotComms;
-    MultiClientComms          _uiComms;
     
     MessageHandler            _robotVisionMsgHandler;
     UiMessageHandler          _deviceVisionMsgHandler;
@@ -135,13 +132,6 @@ namespace Cozmo {
       return lastResult;
     }
     
-    lastResult = _uiComms.Init(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                _config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize GameComms.\n");
-      return lastResult;
-    }
-    
     lastResult = InitInternal();
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
@@ -164,12 +154,6 @@ namespace Cozmo {
     _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
   }
   
-  void CozmoEngineImpl::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices)
-  {
-    _uiComms.Update();
-    _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
-  }
-  
   bool CozmoEngineImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
     const bool success = _robotComms.ConnectToDeviceByID(whichRobot);
@@ -179,31 +163,13 @@ namespace Cozmo {
     return success;
   }
   
-  bool CozmoEngineImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
-  {
-    const bool success = _uiComms.ConnectToDeviceByID(whichDevice);
-    if(success) {
-      _connectedUiDevices.push_back(whichDevice);
-    }
 
-    return success;
-  }
   
   Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
   {
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "Cannot update CozmoEngine before it is initialized.\n");
       return RESULT_FAIL;
-    }
-    
-    // Update robot comms
-    if(_robotComms.IsInitialized()) {
-      _robotComms.Update();
-    }
-    
-    // Update ui comms
-    if(_uiComms.IsInitialized()) {
-      _uiComms.Update();
     }
     
     // TODO: Handle images coming from a connected robot
@@ -271,17 +237,10 @@ namespace Cozmo {
     _impl->GetAdvertisingRobots(advertisingRobots);
   }
   
-  void CozmoEngine::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices) {
-    _impl->GetAdvertisingUiDevices(advertisingUiDevices);
-  }
-  
   bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot) {
     return _impl->ConnectToRobot(whichRobot);
   }
-  
-  bool CozmoEngine::ConnectToUiDevice(AdvertisingUiDevice whichDevice) {
-    return _impl->ConnectToUiDevice(whichDevice);
-  }
+
   
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
@@ -308,6 +267,9 @@ namespace Cozmo {
  
     Result StartBasestation();
     
+    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
+    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+
     void ForceAddRobot(AdvertisingRobot robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
@@ -329,6 +291,8 @@ namespace Cozmo {
     
     Comms::AdvertisementService  _robotAdvertisementService;
     Comms::AdvertisementService  _uiAdvertisementService;
+    
+    MultiClientComms             _uiComms;
     
     std::map<AdvertisingRobot, bool> _forceAddedRobots;
     
@@ -391,7 +355,30 @@ namespace Cozmo {
       _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
     }
     
+    Result lastResult = _uiComms.Init(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
+                                      _config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
+    if(lastResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize host uiComms.\n");
+      return lastResult;
+    }
+    
     return RESULT_OK;
+  }
+  
+  void CozmoEngineHostImpl::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices)
+  {
+    _uiComms.Update();
+    _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
+  }
+  
+  bool CozmoEngineHostImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
+  {
+    const bool success = _uiComms.ConnectToDeviceByID(whichDevice);
+    if(success) {
+      _connectedUiDevices.push_back(whichDevice);
+    }
+    
+    return success;
   }
   
   void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
@@ -429,6 +416,15 @@ namespace Cozmo {
   
   Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   {
+    // Update ui comms
+    if(_uiComms.IsInitialized()) {
+      _uiComms.Update();
+    }
+
+    // Update robot comms
+    if(_robotComms.IsInitialized()) {
+      _robotComms.Update();
+    }
     
     if(_isBasestationStarted) {
       // TODO: Handle different basestation return codes
@@ -488,6 +484,14 @@ namespace Cozmo {
   bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)
   {
     return _hostImpl->ConnectToRobot(whichRobot);
+  }
+  
+  void CozmoEngineHost::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices) {
+    _hostImpl->GetAdvertisingUiDevices(advertisingUiDevices);
+  }
+  
+  bool CozmoEngineHost::ConnectToUiDevice(AdvertisingUiDevice whichDevice) {
+    return _hostImpl->ConnectToUiDevice(whichDevice);
   }
   
 #if 0
