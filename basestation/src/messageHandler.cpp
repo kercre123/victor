@@ -380,6 +380,8 @@ namespace Anki {
             
             imgToSend = rawImg.data;
           }
+          // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
+          // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
           VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
                                                    (Vision::CameraResolution)msg.resolution);
 

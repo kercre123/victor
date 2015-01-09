@@ -1360,7 +1360,7 @@ namespace Cozmo {
       
       //_headCamInfo = HAL::GetHeadCamInfo();
       _headCamInfo = new CameraInfo(camCalib);
-      if(_headCamInfo == NULL) {
+      if(_headCamInfo == nullptr) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
         return RESULT_FAIL;
       }

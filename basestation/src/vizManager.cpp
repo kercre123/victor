@@ -61,6 +61,7 @@ namespace Anki {
     
     VizManager::VizManager()
     : _isInitialized(false)
+    , _sendImages(false)
     , _saveImages(false)
     {
       // Compute the max IDs permitted by VizObject type
@@ -79,7 +80,7 @@ namespace Anki {
       _sendBuf[0] = vizMsgID;
       memcpy(_sendBuf + 1, msg, msgSize);
       if (_vizClient.Send(_sendBuf, msgSize+1) <= 0) {
-        printf("Send msg %d of size %d failed\n", vizMsgID, msgSize+1);
+        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %d of size %d failed\n", vizMsgID, msgSize+1);
       }
     }
 
@@ -541,6 +542,10 @@ namespace Anki {
 
     void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
     {
+      if(!_sendImages) {
+        return;
+      }
+      
       VizImageChunk v;
       v.resolution = res;
       v.imgId = ++(_imgID[robotID]);

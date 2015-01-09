@@ -1,33 +1,33 @@
 //
-//  CozmoBasestation+UI.m
+//  CozmoEngineWrapper+UI.m
 //  CozmoVision
 //
 //  Created by Jordan Rivas on 12/16/14.
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#import "CozmoBasestation+UI.h"
+#import "CozmoEngineWrapper+UI.h"
 
-@implementation CozmoBasestation (UI)
+@implementation CozmoEngineWrapper (UI)
 
-- (NSString*)basestationStateString
+- (NSString*)engineStateString
 {
   NSString* stateStr;
 
   switch (self.runState) {
-    case CozmoBasestationRunStateNone:
+    case CozmoEngineRunStateNone:
       stateStr = @"None";
       break;
 
-    case CozmoBasestationRunStateCommsReady:
+    case CozmoEngineRunStateCommsReady:
       stateStr = @"Searching";
       break;
 
-    case CozmoBasestationRunStateRobotConnected:
+    case CozmoEngineRunStateRobotConnected:
       stateStr = @"Connected";
       break;
 
-    case CozmoBasestationRunStateRunning:
+    case CozmoEngineRunStateRunning:
       stateStr = @"Running";
       break;
 

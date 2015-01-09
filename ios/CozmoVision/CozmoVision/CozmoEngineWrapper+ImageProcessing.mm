@@ -1,16 +1,16 @@
 //
-//  CozmoBasestation+ImageProcessing.m
+//  CozmoEngineWrapper+ImageProcessing.m
 //  CozmoVision
 //
 //  Created by Jordan Rivas on 12/12/14.
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#import "CozmoBasestation+ImageProcessing.h"
+#import "CozmoEngineWrapper+ImageProcessing.h"
 // Coretech-Vision includes
 #import <anki/vision/basestation/image_impl.h>
 
-@implementation CozmoBasestation (ImageProcessing)
+@implementation CozmoEngineWrapper (ImageProcessing)
 
 - (UIImage*)UIImageFromCVMat:(cv::Mat)cvMat
 {

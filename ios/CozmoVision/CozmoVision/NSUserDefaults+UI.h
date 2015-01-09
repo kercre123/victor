@@ -14,13 +14,22 @@
 + (void)setLastHostAdvertisingIP:(NSString*)hostAdvertisingIP;
 
 // Default value is "127.0.0.1"
-+ (NSString*)lastBasestationIP;
-+ (void)setLastBasestationIP:(NSString*)basestationIP;
-
-+ (BOOL)autoConnectRobot;
-+ (void)setAutoConnectRobot:(BOOL)autoConnect;
++ (NSString*)lastVizIP;
++ (void)setLastVizIP:(NSString*)vizIP;
 
 + (BOOL)cameraIsHighResolution;
 + (void)setCameraIsHighResolution:(BOOL)isHighResolution;
+
++ (int)lastNumRobots;
++ (void)setLastNumRobots:(int)N;
+
++ (int)lastNumUiDevices;
++ (void)setLastNumUiDevices:(int)N;
+
++ (BOOL)lastUseVisualTargeting;
++ (void)setLastUseVisualTargeting:(BOOL)use;
+
++ (BOOL)lastUseAudioTargeting;
++ (void)setLastUseAudioTargeting:(BOOL)use;
 
 @end

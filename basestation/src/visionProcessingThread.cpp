@@ -35,8 +35,13 @@ namespace Cozmo {
     
   } // VisionSystem()
 
-  void VisionProcessingThread::Start(Vision::CameraCalibration& camCalib)
+  void VisionProcessingThread::Start()
   {
+    if(!_isCamCalibSet) {
+      PRINT_NAMED_ERROR("VisionProcessingThread.Start", "Camera calibration must be set to start VisionProcessingThread.\n");
+      return;
+    }
+    
     if(_running) {
       PRINT_NAMED_INFO("VisionProcessingThread.Start.Restarting",
                        "Thread already started, call Stop() and then restarting.\n");
@@ -44,13 +49,18 @@ namespace Cozmo {
     }
     
     _running = true;
-    _camCalib = camCalib;
     
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
     _processingThread = std::thread(&VisionProcessingThread::Processor, this);
     _processingThread.detach();
     
+  }
+  
+  void VisionProcessingThread::Start(const Vision::CameraCalibration& camCalib)
+  {
+    SetCameraCalibration(camCalib);
+    Start();
   }
 
   void VisionProcessingThread::Stop()

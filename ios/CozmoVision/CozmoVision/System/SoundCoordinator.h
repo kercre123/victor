@@ -14,6 +14,9 @@
 
 - (void)playSoundWithFilename:(NSString*)filename;
 
-- (void)playSoundWithFilename:(NSString*)filename volume:(float)volume;
+- (void)playSoundWithFilename:(NSString*)filename
+                       volume:(float)volume
+                    withDelay:(NSTimeInterval)delay_sec
+                     numLoops:(NSInteger)numLoops; // -1 for infinite
 
 @end

@@ -8,7 +8,7 @@
 
 #import "AppDelegate.h"
 #import "Foundation/Foundation.h"
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "NSUserDefaults+UI.h"
 
 @interface AppDelegate ()
@@ -20,25 +20,23 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Override point for customization after application launch.
 
-  self.basestation = [CozmoBasestation new];
+  self.cozmoEngineWrapper = [CozmoEngineWrapper new];
 
   NSString* ipAddress = [NSUserDefaults lastHostAdvertisingIP];
   if (ipAddress) {
-    [self.basestation setHostAdvertisingIP:ipAddress];
+    [self.cozmoEngineWrapper setHostAdvertisingIP:ipAddress];
   }
-  ipAddress = [NSUserDefaults lastBasestationIP];
+  ipAddress = [NSUserDefaults lastVizIP];
   if (ipAddress) {
-    [self.basestation setBasestationIP:ipAddress];
+    [self.cozmoEngineWrapper setVizIP:ipAddress];
   }
 
-  /*
-  // If autoConnect - Start comms, connect robot & start basestation
-  self.basestation.autoConnect = [NSUserDefaults autoConnectRobot];
-  if (self.basestation.autoConnect) {
-    [self.basestation startComms];
-  }
-   */
-
+  int N = [NSUserDefaults lastNumRobots];
+  [self.cozmoEngineWrapper setNumRobotsToWaitFor:N];
+  
+  N = [NSUserDefaults lastNumUiDevices];
+  [self.cozmoEngineWrapper setNumUiDevicesToWaitFor:N];
+  
 
   return YES;
 }

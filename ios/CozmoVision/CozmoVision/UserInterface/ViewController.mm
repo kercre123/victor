@@ -10,7 +10,7 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "CozmoDirectionController.h"
 
 #ifdef __cplusplus

@@ -87,8 +87,11 @@ public:
     if (cozmoEngine_)
       return;
 
+    // There is no "device" (e.g. phone) with a camera so we can just use a bogus camera calibration
+    Vision::CameraCalibration bogusDeviceCamCalib;
+    
     cozmoEngine_ = new CozmoEngineHost();
-    cozmoEngine_->Init(config);
+    cozmoEngine_->Init(config, bogusDeviceCamCalib);
   }
   
   void Update() {
@@ -189,6 +192,7 @@ int main(int argc, char **argv)
     
   } // if (bm != BM_PLAYBACK_SESSION)
   
+  // Initialize the engine
   CozmoGameHost cozmoGame;
   cozmoGame.Init(config);
   

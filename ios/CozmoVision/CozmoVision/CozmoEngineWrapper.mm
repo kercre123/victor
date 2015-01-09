@@ -1,5 +1,5 @@
 //
-//  CozmoBasestation.m
+//  CozmoEngineWrapper.mm
 //  CozmoVision
 //
 //  Created by Andrew Stein on 12/5/14.
@@ -10,9 +10,9 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import "AppDelegate.h"
 
-#import "CozmoBasestation+ImageProcessing.h"
+#import "CozmoEngineWrapper+ImageProcessing.h"
 
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "CozmoOperator.h"
 
 #import "CozmoObsObjectBBox.h"
@@ -56,18 +56,17 @@ const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.19.238";
 
 
-@interface CozmoBasestation ()
+@interface CozmoEngineWrapper ()
 
-//@property (assign, nonatomic) CozmoBasestationRunState runState;
-@property (assign, nonatomic) BOOL engineRunning;
-@property (assign, nonatomic) BOOL robotConnected;
-@property (assign, nonatomic) BOOL uiConnected;
+@property (assign, nonatomic) CozmoEngineRunState runState;
 
 // Config
 @property (strong, nonatomic) NSString* _hostAdvertisingIP;
-@property (strong, nonatomic) NSString* _basestationIP;
+@property (strong, nonatomic) NSString* _vizIP;
 @property (assign, nonatomic) NSTimeInterval _heartbeatRate;
 @property (assign, nonatomic) NSTimeInterval _heartbeatPeriod;
+@property (assign, nonatomic) int _numRobotsToWaitFor;
+@property (assign, nonatomic) int _numUiDevicesToWaitFor;
 
 @property (strong, nonatomic) NSTimer* _heartbeatTimer;
 // Listeners
@@ -82,7 +81,7 @@ const char* forcedRobotIP = "192.168.19.238";
 @end
 
 
-@implementation CozmoBasestation {
+@implementation CozmoEngineWrapper {
 
   Json::Value    _config;
   CFAbsoluteTime _firstHeartbeatTimestamp;
@@ -106,9 +105,9 @@ const char* forcedRobotIP = "192.168.19.238";
 
 
 
-+ (instancetype)defaultBasestation
++ (instancetype)defaultEngine
 {
-  return ((AppDelegate*)[[UIApplication sharedApplication] delegate]).basestation;
+  return ((AppDelegate*)[[UIApplication sharedApplication] delegate]).cozmoEngineWrapper;
 }
 
 - (instancetype)init
@@ -117,24 +116,25 @@ const char* forcedRobotIP = "192.168.19.238";
     return self;
   
   _cozmoEngine = nullptr;
-  
-  //self.runState = CozmoBasestationRunStateNone;
-  self.engineRunning  = NO;
-  self.robotConnected = NO;
+
+  self.runState = CozmoEngineRunStateNone;
 
   self._heartbeatListeners = [NSMutableArray new];
   self._connectedRobots = [NSMutableDictionary new]; // { robotId: NSNumber, robot: ??}
 
   self._hostAdvertisingIP = [NSString stringWithUTF8String:DEFAULT_ADVERTISING_HOST_IP];
-  self._basestationIP = [NSString stringWithUTF8String:DEFAULT_BASESTATION_IP];
+  self._vizIP = [NSString stringWithUTF8String:DEFAULT_VIZ_HOST_IP];
   [self setHeartbeatRate:DEFAULT_HEARTBEAT_RATE];
+  
+  self._numRobotsToWaitFor = 1;
+  self._numUiDevicesToWaitFor = 1;
   
   return self;
 }
 
 - (void)dealloc
 {
-  [self stopCommsAndBasestation];
+  [self stop];
 }
 
 
@@ -148,22 +148,22 @@ const char* forcedRobotIP = "192.168.19.238";
 
 - (BOOL)setHostAdvertisingIP:(NSString*)advertisingIP
 {
-  if (self.runState == CozmoBasestationRunStateNone && advertisingIP.length > 0) {
+  if (self.runState == CozmoEngineRunStateNone && advertisingIP.length > 0) {
     self._hostAdvertisingIP = advertisingIP;
     return YES;
   }
   return NO;
 }
 
-- (NSString*)basestationIP
+- (NSString*)vizIP
 {
-  return self._basestationIP;
+  return self._vizIP;
 }
 
-- (BOOL)setBasestationIP:(NSString*)basestationIP
+- (BOOL)setVizIP:(NSString *)vizIP
 {
-  if (self.runState == CozmoBasestationRunStateNone && basestationIP.length > 0) {
-    self._basestationIP = basestationIP;
+  if (self.runState == CozmoEngineRunStateNone && vizIP.length > 0) {
+    self._vizIP = vizIP;
     return YES;
   }
   return NO;
@@ -177,7 +177,7 @@ const char* forcedRobotIP = "192.168.19.238";
 
 - (BOOL)setHeartbeatRate:(NSTimeInterval)rate
 {
-  if (self.runState == CozmoBasestationRunStateNone) {
+  if (self.runState == CozmoEngineRunStateNone) {
     self._heartbeatRate = rate;
     self._heartbeatPeriod = PERIOD(self._heartbeatRate);
     return YES;
@@ -185,8 +185,35 @@ const char* forcedRobotIP = "192.168.19.238";
   return NO;
 }
 
+-(int)numRobotsToWaitFor
+{
+  return self._numRobotsToWaitFor;
+}
 
-#pragma mark - Basestation state methods
+-(BOOL)setNumRobotsToWaitFor:(int)N
+{
+  if (self.runState == CozmoEngineRunStateNone) {
+    self._numRobotsToWaitFor = N;
+    return YES;
+  }
+  return NO;
+}
+
+-(int)numUiDevicesToWaitFor
+{
+  return self._numUiDevicesToWaitFor;
+}
+
+-(BOOL)setNumUiDevicesToWaitFor:(int)N
+{
+  if (self.runState == CozmoEngineRunStateNone) {
+    self._numUiDevicesToWaitFor = N;
+    return YES;
+  }
+  return NO;
+}
+
+#pragma mark - Engine state methods
 
 - (BOOL) start:(BOOL)asHost
 {
@@ -200,9 +227,12 @@ const char* forcedRobotIP = "192.168.19.238";
     _cozmoEngine = nullptr;
   }
   
+  // TODO: Get device camera calibration from somewhere. For now this is bogus.
+  Anki::Vision::CameraCalibration deviceCamCalib;
+  
   if(asHost) {
     Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
-    cozmoEngineHost->Init(_config);
+    cozmoEngineHost->Init(_config, deviceCamCalib);
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
@@ -213,13 +243,13 @@ const char* forcedRobotIP = "192.168.19.238";
     
   } else { // as Client
     Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
-    cozmoEngineClient->Init(_config);
+    cozmoEngineClient->Init(_config, deviceCamCalib);
     _cozmoEngine = cozmoEngineClient;
   }
   
   [self resetHeartbeatTimer];
   
-  self.engineRunning = YES;
+  self.runState = CozmoEngineRunStateRunning;
   
   return YES;
 }
@@ -246,17 +276,16 @@ const char* forcedRobotIP = "192.168.19.238";
   _config[AnkiUtil::kP_ADVERTISING_HOST_IP] = self._hostAdvertisingIP.UTF8String;
   _config[AnkiUtil::kP_VIZ_HOST_IP] = self._hostAdvertisingIP.UTF8String;
   
+  _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = self._numRobotsToWaitFor;
+  _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = self._numUiDevicesToWaitFor;
+  
   // TODO: Provide ability to set these from app?
   _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
   _config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = Anki::Cozmo::UI_ADVERTISING_PORT;
-  
-  _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR]     = 1;
-  _config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
-  
 }
 
 
-#pragma mark - Change Basestation run state
+#pragma mark - Change engine run state
 
 - (void)resetHeartbeatTimer
 {
@@ -265,16 +294,16 @@ const char* forcedRobotIP = "192.168.19.238";
     self._heartbeatTimer = nil;
   }
 
-  // Once done initializing, this will start the basestation timer loop
+  // Once done initializing, this will start the engine timer loop (heartbeat)
   _firstHeartbeatTimestamp = _lastHeartbeatTimestamp = CFAbsoluteTimeGetCurrent();
   self._heartbeatTimer = [NSTimer scheduledTimerWithTimeInterval:self._heartbeatPeriod
                                                           target:self
-                                                        selector:@selector(gameHeartbeat:)
+                                                        selector:@selector(engineHeartbeat:)
                                                         userInfo:nil
                                                          repeats:YES];
 }
 
-- (void)stopCommsAndBasestation
+- (void)stop
 {
   if(_cozmoEngine != nullptr) {
     delete _cozmoEngine;
@@ -283,8 +312,7 @@ const char* forcedRobotIP = "192.168.19.238";
   
   self.cozmoOperator = nil;
   
-  //self.runState = CozmoBasestationRunStateNone;
-  self.engineRunning = NO;
+  self.runState = CozmoEngineRunStateNone;
   
   [self._heartbeatTimer invalidate];
   self._heartbeatTimer = nil;
@@ -292,13 +320,13 @@ const char* forcedRobotIP = "192.168.19.238";
 
 
 
-#pragma mark - Main Game Update Loop
-// Main Game Update Loop
-- (void)gameHeartbeat:(NSTimer*)timer
+#pragma mark - Main Engine Update Loop
+// Main Engine Update Loop
+- (void)engineHeartbeat:(NSTimer*)timer
 {
   CFTimeInterval thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent() - _firstHeartbeatTimestamp;
   CFTimeInterval thisHeartbeatDelta = thisHeartbeatTimestamp - _lastHeartbeatTimestamp;
-  if(thisHeartbeatDelta > (__heartbeatPeriod + 0.003)) {
+  if(thisHeartbeatDelta > (self._heartbeatPeriod + 0.003)) {
     DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
   }
   _lastHeartbeatTimestamp = thisHeartbeatTimestamp;
@@ -338,18 +366,22 @@ const char* forcedRobotIP = "192.168.19.238";
     if (status != Anki::RESULT_OK) {
       DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
     }
+
+    // Call all listeners:
+    [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoEngineWrapperHeartbeat:) withObject:self];
+
   }
 }
 
 
 #pragma mark - Listeners
 
-- (void)addListener:(id<CozmoBasestationHeartbeatListener>)listener
+- (void)addListener:(id<CozmoEngineHeartbeatListener>)listener
 {
   [self._heartbeatListeners addObject:listener];
 }
 
-- (void)removeListener:(id<CozmoBasestationHeartbeatListener>)listener
+- (void)removeListener:(id<CozmoEngineHeartbeatListener>)listener
 {
   [self._heartbeatListeners removeObject:listener];
 }
@@ -404,6 +436,45 @@ const char* forcedRobotIP = "192.168.19.238";
   }
   
   return boundingBoxes;
+}
+
+- (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
+{
+  Anki::Cozmo::MessageVisionMarker msg;
+  if(true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
+    
+    Float32 xMin = fmin(fmin(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                        fmin(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+    Float32 yMin = fmin(fmin(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                        fmin(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+    
+    Float32 xMax = fmax(fmax(msg.x_imgLowerLeft, msg.x_imgLowerRight),
+                        fmax(msg.x_imgUpperLeft, msg.x_imgUpperRight));
+    Float32 yMax = fmax(fmax(msg.y_imgLowerLeft, msg.y_imgLowerRight),
+                        fmax(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+    
+    *markerBBox = CGRectMake(xMin, yMin, xMax-xMin, yMax-yMin);
+    
+    *markerType = msg.markerType;
+    
+    return YES;
+  } else {
+    return NO;
+  }
+}
+
+- (void) processDeviceImage:(Anki::Vision::Image&)image
+{
+  _cozmoEngine->ProcessDeviceImage(image);
+}
+
+- (BOOL) wasLastDeviceImageProcessed
+{
+  if(true == _cozmoEngine->WasLastDeviceImageProcessed()) {
+    return YES;
+  } else {
+    return NO;
+  }
 }
 
 @end

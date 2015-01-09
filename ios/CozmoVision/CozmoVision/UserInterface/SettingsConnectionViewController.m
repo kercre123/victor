@@ -7,28 +7,39 @@
 //
 
 #import "SettingsConnectionViewController.h"
-#import "CozmoBasestation.h"
-#import "CozmoBasestation+UI.h"
+#import "CozmoEngineWrapper.h"
+#import "CozmoEngineWrapper+UI.h"
 #import "CozmoOperator.h"
 #import "NSUserDefaults+UI.h"
 
 @interface SettingsConnectionViewController () <UITextFieldDelegate>
-@property (weak, nonatomic) IBOutlet UILabel* basestationStateLabel;
+@property (weak, nonatomic) IBOutlet UILabel* engineStateLabel;
 
 
+@property (weak, nonatomic) IBOutlet UILabel *hostAddressLabel;
 @property (weak, nonatomic) IBOutlet UITextField* hostAddressTextField;
-@property (weak, nonatomic) IBOutlet UITextField* basestationAddressTextField;
-@property (weak, nonatomic) IBOutlet UITextField* basestationHeartbeatRateTextField;
 
-@property (weak, nonatomic) IBOutlet UIButton* basestationStartStopButton;
+@property (weak, nonatomic) IBOutlet UITextField* vizAddressTextField;
+@property (weak, nonatomic) IBOutlet UILabel *vizAddressLabel;
+
+@property (weak, nonatomic) IBOutlet UITextField* engineHeartbeatRateTextField;
+@property (weak, nonatomic) IBOutlet UILabel *engineHeartBeatLabel;
+
+@property (weak, nonatomic) IBOutlet UIButton* engineStartStopButton;
 
 @property (strong, nonatomic) NSArray* _orderedTextFields;
 @property (weak, nonatomic) UIResponder* _currentUIResponder;
 
-@property (weak, nonatomic) CozmoBasestation* _basestation;
+@property (weak, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
+
+@property (weak, nonatomic) IBOutlet UISwitch *asHostSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *asHostLabel;
 
 @property (weak, nonatomic) IBOutlet UISwitch *cameraResolutionSwitch;
 @property (weak, nonatomic) IBOutlet UILabel *cameraResolutionLabel;
+
+@property (weak, nonatomic) IBOutlet UISegmentedControl *numRobotsSelector;
+@property (weak, nonatomic) IBOutlet UISegmentedControl *numUiDevicesSelector;
 
 @end
 
@@ -38,14 +49,14 @@
   [super viewDidLoad];
   // Do any additional setup after loading the view.
 
-  self._basestation = [CozmoBasestation defaultBasestation];
+  self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
 
   // Setup TextField handling
-  self._orderedTextFields = @[ self.hostAddressTextField, self.basestationAddressTextField, self.basestationHeartbeatRateTextField ];
+  self._orderedTextFields = @[ self.hostAddressTextField, self.vizAddressTextField, self.engineHeartbeatRateTextField ];
 
-  self.basestationStartStopButton.layer.cornerRadius = 10.0;
-  self.basestationStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
-  self.basestationStartStopButton.layer.borderWidth = 2.0;
+  self.engineStartStopButton.layer.cornerRadius = 10.0;
+  self.engineStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
+  self.engineStartStopButton.layer.borderWidth = 2.0;
 
 //  [self.cameraResolutionSwitch setOn:[NSUserDefaults cameraIsHighResolution]];
   [self.cameraResolutionSwitch setOn:YES];
@@ -61,15 +72,15 @@
 
   // Setup default settings
   [self updateUIObjects];
-  [self updateUIWithBasestionState:self._basestation.runState];
+  [self updateUIWithBasestionState:self.cozmoEngineWrapper.runState];
   // KVO
-  [self._basestation addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
+  [self.cozmoEngineWrapper addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
   // KVO
-  [self._basestation removeObserver:self forKeyPath:@"runState" context:nil];
+  [self.cozmoEngineWrapper removeObserver:self forKeyPath:@"runState" context:nil];
 
   [super viewWillDisappear:animated];
 }
@@ -79,10 +90,10 @@
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-  if ([object isEqual:self._basestation] && [keyPath isEqualToString:@"runState"]) {
+  if ([object isEqual:self.cozmoEngineWrapper] && [keyPath isEqualToString:@"runState"]) {
 
     if ([keyPath isEqualToString:@"runState"]) {
-      [self updateUIWithBasestionState:self._basestation.runState];
+      [self updateUIWithBasestionState:self.cozmoEngineWrapper.runState];
     }
   }
 }
@@ -93,15 +104,23 @@
 - (void)updateBasestationConfig
 {
   NSString* ipAddress = self.hostAddressTextField.text;
-  [self._basestation setHostAdvertisingIP:ipAddress];
+  [self.cozmoEngineWrapper setHostAdvertisingIP:ipAddress];
   [NSUserDefaults setLastHostAdvertisingIP:ipAddress];
 
-  ipAddress = self.basestationAddressTextField.text;
-  [self._basestation setBasestationIP:ipAddress];
-  [NSUserDefaults setLastBasestationIP:ipAddress];
+  ipAddress = self.vizAddressTextField.text;
+  [self.cozmoEngineWrapper setVizIP:ipAddress];
+  [NSUserDefaults setLastVizIP:ipAddress];
   
-  float heartbeatRate = [self.basestationHeartbeatRateTextField.text floatValue];
-  [self._basestation setHeartbeatRate:(NSTimeInterval)heartbeatRate];
+  float heartbeatRate = [self.engineHeartbeatRateTextField.text floatValue];
+  [self.cozmoEngineWrapper setHeartbeatRate:(NSTimeInterval)heartbeatRate];
+  
+  int N = (int)self.numRobotsSelector.selectedSegmentIndex;
+  [self.cozmoEngineWrapper setNumRobotsToWaitFor:N];
+  [NSUserDefaults setLastNumRobots:N];
+  
+  N = (int)self.numUiDevicesSelector.selectedSegmentIndex;
+  [self.cozmoEngineWrapper setNumUiDevicesToWaitFor:N];
+  [NSUserDefaults setLastNumUiDevices:N];
 }
 
 
@@ -109,22 +128,22 @@
 
 - (void)updateUIObjects
 {
-  self.basestationStateLabel.text = [self basestatoinStateStringWithState:self._basestation.runState];
-  self.hostAddressTextField.text = self._basestation.hostAdvertisingIP;
-  self.basestationAddressTextField.text = self._basestation.basestationIP;
-  self.basestationHeartbeatRateTextField.text = [self basestationHeartbeatRateStringWithValue:self._basestation.heartbeatRate];
+  self.engineStateLabel.text = [self basestatoinStateStringWithState:self.cozmoEngineWrapper.runState];
+  self.hostAddressTextField.text = self.cozmoEngineWrapper.hostAdvertisingIP;
+  self.vizAddressTextField.text  = self.cozmoEngineWrapper.vizIP;
+  self.engineHeartbeatRateTextField.text = [self engineHeartbeatRateStringWithValue:self.cozmoEngineWrapper.heartbeatRate];
   [self updateCameraResolutionLabel];
+  self.numRobotsSelector.selectedSegmentIndex = self.cozmoEngineWrapper.numRobotsToWaitFor;
+  self.numUiDevicesSelector.selectedSegmentIndex = self.cozmoEngineWrapper.numUiDevicesToWaitFor;
 }
 
-- (void)updateUIWithBasestionState:(CozmoBasestationRunState)state
+- (void)updateUIWithBasestionState:(CozmoEngineRunState)state
 {
-  self.basestationStateLabel.text = [self basestatoinStateStringWithState:state];
+  self.engineStateLabel.text = [self basestatoinStateStringWithState:state];
   [self updateBasestationStartStopButtonWithState:state];
 
   // Only allow config when state is None
-  [self setAllowConfig:(CozmoBasestationRunStateNone == state)];
-
-  self.cameraResolutionSwitch.enabled = (CozmoBasestationRunStateRunning == state);
+  [self setAllowConfig:(CozmoEngineRunStateNone == state)];
 }
 
 - (void)updateCameraResolutionLabel
@@ -132,35 +151,35 @@
   self.cameraResolutionLabel.text = self.cameraResolutionSwitch.isOn ? @"High Resolution" : @"Low Resolution";
 }
 
-- (void)updateBasestationStartStopButtonWithState:(CozmoBasestationRunState)state
+- (void)updateBasestationStartStopButtonWithState:(CozmoEngineRunState)state
 {
   NSString *title;
   UIColor *color;
   switch (state) {
-    case CozmoBasestationRunStateNone:
+    case CozmoEngineRunStateNone:
     {
-      title = @"Start Comms";
+      title = @"Start Cozmo Engine";
       color = [UIColor greenColor];
     }
       break;
 
-    case CozmoBasestationRunStateCommsReady:
+    case CozmoEngineRunStateCommsReady:
     {
-      title = @"Stop Comms";
+      title = @"Stop Cozmo Engine";
       color = [UIColor yellowColor];
     }
       break;
 
-    case CozmoBasestationRunStateRobotConnected:
+    case CozmoEngineRunStateRobotConnected:
     {
-      title = @"Start Basestation";
+      title = @"Start Cozmo Engine";
       color = [UIColor orangeColor];
     }
       break;
 
-    case CozmoBasestationRunStateRunning:
+    case CozmoEngineRunStateRunning:
     {
-      title = @"Stop Basestation";
+      title = @"Stop Cozmo Engine";
       color = [UIColor redColor];
     }
       break;
@@ -169,16 +188,16 @@
       break;
   }
 
-  [self.basestationStartStopButton setTitle:title forState:UIControlStateNormal];
-  self.basestationStartStopButton.backgroundColor = color;
+  [self.engineStartStopButton setTitle:title forState:UIControlStateNormal];
+  self.engineStartStopButton.backgroundColor = color;
 }
 
-- (NSString*)basestatoinStateStringWithState:(CozmoBasestationRunState)state
+- (NSString*)basestatoinStateStringWithState:(CozmoEngineRunState)state
 {
-  return [NSString stringWithFormat:@"Basestation State: %@", [self._basestation basestationStateString]];
+  return [NSString stringWithFormat:@"CozmoEngine State: %@", [self.cozmoEngineWrapper engineStateString]];
 }
 
-- (NSString*)basestationHeartbeatRateStringWithValue:(double)value
+- (NSString*)engineHeartbeatRateStringWithValue:(double)value
 {
   return [NSString stringWithFormat:@"%.2f Hz", value];
 }
@@ -190,9 +209,23 @@
 
 - (void)setAllowConfig:(BOOL)allow
 {
-  self.hostAddressTextField.enabled = allow;
-  self.basestationAddressTextField.enabled = allow;
-  self.basestationHeartbeatRateTextField.enabled = allow;
+  self.asHostSwitch.enabled = allow;
+  self.asHostLabel.enabled = allow;
+  
+  self.hostAddressTextField.enabled = !self.asHostSwitch.isOn;
+  self.hostAddressLabel.enabled = !self.asHostSwitch.isOn;
+  
+  self.vizAddressTextField.enabled = allow;
+  self.vizAddressLabel.enabled = allow;
+  
+  self.engineHeartbeatRateTextField.enabled = allow;
+  self.engineHeartBeatLabel.enabled = allow;
+  
+  self.cameraResolutionSwitch.enabled = allow;
+  self.cameraResolutionLabel.enabled = allow;
+  
+  self.numRobotsSelector.enabled = allow;
+  self.numUiDevicesSelector.enabled = allow;
 }
 
 
@@ -206,9 +239,9 @@
 - (void)textFieldDidEndEditing:(UITextField *)textField
 {
   // Handle label special cases
-  if ([textField isEqual:self.basestationHeartbeatRateTextField]) {
-    double heartbeatRate = [self.basestationHeartbeatRateTextField.text floatValue];
-    self.basestationHeartbeatRateTextField.text = [self basestationHeartbeatRateStringWithValue:heartbeatRate];
+  if ([textField isEqual:self.engineHeartbeatRateTextField]) {
+    double heartbeatRate = [self.engineHeartbeatRateTextField.text floatValue];
+    self.engineHeartbeatRateTextField.text = [self engineHeartbeatRateStringWithValue:heartbeatRate];
   }
 
   [self._currentUIResponder resignFirstResponder];
@@ -233,61 +266,49 @@
   [self._currentUIResponder resignFirstResponder];
 }
 
-- (IBAction)handleAutoConnectSwitchToggle:(UISwitch*)sender
-{
-  self._basestation.autoConnect = sender.isOn;
-  [NSUserDefaults setAutoConnectRobot:sender.isOn];
-}
-
-- (IBAction)handleBasestationStartStopButtonPress:(id)sender
+- (IBAction)handleEngineStartStopButtonPress:(id)sender
 {
   // Toggle Basestation states
 
-  // TODO: Get whether host from UI
-  BOOL isHost = YES;
-  
-  [self updateBasestationConfig];
-  [self._basestation start:isHost];
-  
-  /*
-  switch (self._basestation.runState) {
-    case CozmoBasestationRunStateNone:
+  switch (self.cozmoEngineWrapper.runState) {
+    case CozmoEngineRunStateNone:
     {
+      BOOL isHost = self.asHostSwitch.isOn;
+      
       [self updateBasestationConfig];
-      [self._basestation startComms];
+      [self.cozmoEngineWrapper start:isHost];
     }
       break;
 
-    case CozmoBasestationRunStateCommsReady:
+    case CozmoEngineRunStateRunning:
     {
-      [self._basestation stopCommsAndBasestation];
-    }
-      break;
-
-    case CozmoBasestationRunStateRobotConnected:
-    {
-      [self._basestation startBasestation];
-    }
-      break;
-
-    case CozmoBasestationRunStateRunning:
-    {
-      [self._basestation stopCommsAndBasestation];
+      [self.cozmoEngineWrapper stop];
     }
       break;
 
     default:
+      NSLog(@"Unknown CozmoBasestation run state.\n");
       break;
   }
-   */
 }
 
 - (IBAction)handleCameraResolutionSwitch:(UISwitch*)sender
 {
 //  [NSUserDefaults setCameraIsHighResolution:sender.isOn];
   [self updateCameraResolutionLabel];
-  [self._basestation.cozmoOperator sendCameraResolution:sender.isOn];
+  [self.cozmoEngineWrapper.cozmoOperator sendCameraResolution:sender.isOn];
 }
 
+- (IBAction)handleAsHostSwitch:(UISwitch *)sender {
+  if(sender.isOn == NO) {
+    self.asHostLabel.text = @"As Client";
+    self.hostAddressTextField.enabled = YES;
+    self.hostAddressLabel.enabled = YES;
+  } else {
+    self.asHostLabel.text = @"As Host";
+    self.hostAddressTextField.enabled = NO;
+    self.hostAddressLabel.enabled = NO;
+  }
+}
 
 @end
