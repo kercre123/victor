@@ -263,7 +263,7 @@ static int ov2686_registered(struct v4l2_subdev *subdev) {
     printk(KERN_INFO "ov2686 detected at address 0x%02x\n", client->addr);
   }
   else {
-    printk(KERN_INFO "ov2686 not detected at address 0x02x\n", client->addr);
+    printk(KERN_INFO "ov2686 not detected at address 0x%02x\n", client->addr);
     return -ENODEV;
   }
 
