@@ -1005,13 +1005,12 @@ static int omap3logic_set_xclk(struct v4l2_subdev *subdev, int hz)
 }
 #endif /* defined(CONFIG_VIDEO_OMAP3) */
 
-#if defined(CONFIG_VIDEO_OV2686)
-static int omap3_logic_ov2686_s_xclk(struct v4l2_subdev *s, u32 on) {
+static int omap3logic_ov2686_s_xclk(struct v4l2_subdev *s, u32 on) {
   omap3logic_enable_vaux4(s, on);
   return omap3logic_set_xclk(s, on ? 24000000 : 0);
 }
 
-static struct ov2686_platform_data omap3_logic_ov2686_platform_data = {
+static struct ov2686_platform_data omap3logic_ov2686_platform_data = {
   .s_xclk = omap3logic_ov2686_s_xclk,
 };
 
@@ -1022,13 +1021,12 @@ static struct i2c_board_info omap3logic_ov2686_board_info = {
 
 static struct isp_subdev_i2c_board_info omap3logic_ov2686_subdevs[] = {
   {
-    .board_info = &omap3_logic_ov2686_board_info,
+    .board_info = &omap3logic_ov2686_board_info,
     .i2c_adapter_id = 2, // This is the camera I2C on the Zoom dev board and the Cozmo 3 head board
   },
   { NULL, 0 },
 };
 
-#endif
 
 #if defined(CONFIG_VIDEO_OV7690)
 static int omap3logic_ov7690_s_xclk(struct v4l2_subdev *s, u32 on) {
@@ -1120,12 +1118,11 @@ static int __init omap3logic_i2c_init(void)
 
 #if defined(CONFIG_VIDEO_OMAP3)
 static struct isp_v4l2_subdevs_group omap3logic_camera_subdevs[] = {
-#if defined(CONFIG_VIDEO_OV2686)
   {
-    .subdevs = omap3_logic_ov2686_subdevs,
+    .subdevs = omap3logic_ov2686_subdevs,
     .interface = ISP_INTERFACE_PARALLEL,
     .bus = {
-      .parralel = {
+      .parallel = {
 	.data_lane_shift = ISPCTRL_SHIFT_0 >> ISPCTRL_SHIFT_SHIFT, //3.3+ISP_LANE_SHIFT_0,
 	.clk_pol = 0,
 	.hs_pol  = 0,
@@ -1134,7 +1131,6 @@ static struct isp_v4l2_subdevs_group omap3logic_camera_subdevs[] = {
       },
     },
   },
-#endif
 #if defined(CONFIG_VIDEO_OV7690)
 	{
 		.subdevs = omap3logic_ov7690_subdevs,

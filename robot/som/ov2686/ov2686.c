@@ -99,12 +99,16 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
     return -EINVAL;
   }
 
+  printk(KERN_INFO "Getting Adapter info\n");
+
   adapter = to_i2c_adapter(client->dev.parent);
 
   if ( !i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
     printk(KERN_WARNING "I2C-Adapter doesn't support I2C_FUNC_SMBUS_BYTE_DATA\n");
     return -EIO;
   }
+
+  printk(KERN_INFO "Allocating driver memory\n");
 
   info = kzalloc(sizeof(struct ov2686_info), GFP_KERNEL);
   if (info == NULL) {
@@ -116,10 +120,12 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
 
   // Do some initial i2c camera communication here if nessisary
 
+  printk(KERN_INFO "Initalizing V4L2 I2C subdevice\n");
 
   v4l2_i2c_subdev_init(&info->subdev, client, &ov2686_subdev_ops);
 
   // Do more setup here
+  printk(KERN_INFO "i2c probe complete\n");
 
   return 0;
 }
