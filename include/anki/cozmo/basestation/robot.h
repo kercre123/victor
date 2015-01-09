@@ -41,7 +41,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "actionContainers.h"
@@ -56,7 +56,7 @@ namespace Anki {
   namespace Cozmo {
     
     // Forward declarations:
-    class IMessageHandler;
+    class IRobotMessageHandler;
     class IUiMessageHandler;
     class IPathPlanner;
     class MatPiece;
@@ -68,7 +68,7 @@ namespace Anki {
     {
     public:
       
-      Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
       ~Robot();
       
       
@@ -400,7 +400,7 @@ namespace Anki {
       RobotID_t        _ID;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
-      IMessageHandler* _msgHandler;
+      IRobotMessageHandler* _msgHandler;
       
       // Until we have Events, robot has a UI message handler so it can trigger
       // things out in UI world.  Note this must be set by a call to SetUiMessageHandler()

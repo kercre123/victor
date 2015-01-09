@@ -16,7 +16,7 @@
 
 #include "visionSystem.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/shared/mailbox_impl.h"

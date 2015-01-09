@@ -29,7 +29,7 @@
 
 #include "anki/vision/basestation/camera.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 

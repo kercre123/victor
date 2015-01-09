@@ -1,10 +1,10 @@
 /**
- * File: messages.cpp  (Basestation)
+ * File: robotMessages.cpp  (Basestation)
  *
  * Author: Andrew Stein
  * Date:   1/21/2014
  *
- * Description: Defines a base Message class from which all the other messages
+ * Description: Defines a base RobotMessage class from which all the other messages
  *              inherit.  The inherited classes are auto-generated via multiple
  *              re-includes of the MessageDefinitions.h file, with specific
  *              "mode" flags set.
@@ -19,7 +19,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 
 
@@ -27,19 +27,19 @@
 namespace Anki {
   namespace Cozmo {
     
-#define MESSAGE_BASECLASS_NAME Message
+#define MESSAGE_BASECLASS_NAME RobotMessage
     
-    Message::~Message()
+    RobotMessage::~RobotMessage()
     {
       
     }
     
-    Message* Message::CreateFromJson(const Json::Value &jsonRoot)
+    RobotMessage* RobotMessage::CreateFromJson(const Json::Value &jsonRoot)
     {
-      Message* msg = nullptr;
+      RobotMessage* msg = nullptr;
       
       if(!jsonRoot.isMember("Name")) {
-        PRINT_NAMED_ERROR("Message.CreateFromJson.MissingName", "No 'Name' member for Message in Json file.\n");
+        PRINT_NAMED_ERROR("RobotMessage.CreateFromJson.MissingName", "No 'Name' member for RobotMessage in Json file.\n");
       } else {
         
         const std::string msgType = jsonRoot["Name"].asString();
@@ -47,8 +47,8 @@ namespace Anki {
 #define MESSAGE_DEFINITION_MODE MESSAGE_CREATEFROMJSON_LADDER_MODE
 #include "anki/cozmo/shared/MessageDefinitions.h"
         {
-          PRINT_NAMED_WARNING("Message.CreateFromJson.UnknownMessageType",
-                              "Encountered unknown Message type '%s' in Json file.\n",
+          PRINT_NAMED_WARNING("RobotMessage.CreateFromJson.UnknownMessageType",
+                              "Encountered unknown RobotMessage type '%s' in Json file.\n",
                               msgType.c_str());
         } // if/else kfMsgType matches each string
         

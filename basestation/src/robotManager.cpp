@@ -9,7 +9,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -19,7 +19,7 @@ namespace Anki {
       
     }
     
-    Result RobotManager::Init(IMessageHandler* msgHandler)
+    Result RobotManager::Init(IRobotMessageHandler* msgHandler)
     {
       _msgHandler  = msgHandler;
       //_pathPlanner = pathPlanner;

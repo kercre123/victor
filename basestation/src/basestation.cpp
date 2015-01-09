@@ -28,9 +28,9 @@
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
+#include "robotMessageHandler.h"
 #include "multiClientComms.h"
 #include "recording/playback.h"
-#include "messageHandler.h"
 #include "uiMessageHandler.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
@@ -95,7 +95,7 @@ namespace Cozmo {
     // Instantiate all the modules we need
     //BlockWorld blockWorld_;
     RobotManager robotMgr_;
-    MessageHandler msgHandler_;
+    RobotMessageHandler msgHandler_;
     //BehaviorManager behaviorMgr_;
     UiMessageHandler uiMsgHandler_;
     

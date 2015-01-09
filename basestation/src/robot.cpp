@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
@@ -26,8 +26,8 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
-#include "messageHandler.h"
 #include "uiMessageHandler.h"
 #include "ramp.h"
 #include "vizManager.h"
@@ -43,7 +43,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
     , _uiMsgHandler(nullptr)  // To be removed once we have Events

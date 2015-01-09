@@ -15,14 +15,15 @@
 #include <assert.h>
 
 #include "anki/common/basestation/utils/logging/logging.h"
-#include "anki/cozmo/basestation/messages.h"
-#include "messageHandler.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+
+#include "robotMessageHandler.h"
 #include "pathDolerOuter.h"
 
 namespace Anki {
 namespace Cozmo {
 
-PathDolerOuter::PathDolerOuter(IMessageHandler* msgHandler, RobotID_t robotID)
+PathDolerOuter::PathDolerOuter(IRobotMessageHandler* msgHandler, RobotID_t robotID)
   : pathSizeOnBasestation_(0)
   , lastDoledSegmentIdx_(-1)
   , msgHandler_(msgHandler)

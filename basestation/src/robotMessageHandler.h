@@ -1,17 +1,17 @@
 /**
- * File: messageHandler.h
+ * File: robotMessageHandler.h
  *
  * Author: Andrew Stein
  * Date:   1/22/2014
  *
- * Description: Defines a singleton MessageHandler object to serve as the 
+ * Description: Defines a singleton RobotMessageHandler object to serve as the
  *              middle man between a communications object, which provides
  *              raw byte buffers sent over some kind of communications channel,
  *              and robots.  The handler processes all available messages from
  *              the communications channel (without knowing the means of 
- *              transmission), turns the buffers into a Message objects, and 
+ *              transmission), turns the buffers into a RobotMessage objects, and
  *              doles them out to their respective Robot objects.  It also does
- *              the reverse, creating byte buffers from Message objects, and 
+ *              the reverse, creating byte buffers from RobotMessage objects, and
  *              passing them along to the communications channel.
  *
  *
@@ -23,21 +23,21 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/messaging/basestation/IComms.h"
 
 namespace Anki {
   namespace Cozmo {
     
-#define MESSAGE_BASECLASS_NAME Message
+#define MESSAGE_BASECLASS_NAME RobotMessage
 #include "anki/cozmo/shared/MessageDefinitions.h"
     
     class Robot;
     class RobotManager;
     class BlockWorld;
     
-    class IMessageHandler
+    class IRobotMessageHandler
     {
     public:
       
@@ -47,16 +47,16 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const RobotID_t robotID, const Message& msg) = 0;
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) = 0;
       
-    }; // IMessageHandler
+    }; // IRobotMessageHandler
     
     
-    class MessageHandler : public IMessageHandler
+    class RobotMessageHandler : public IRobotMessageHandler
     {
     public:
       
-      MessageHandler(); // Force construction with stuff in Init()?
+      RobotMessageHandler(); // Force construction with stuff in Init()?
 
       // Set the message handler's communications manager
       virtual Result Init(Comms::IComms* comms,
@@ -67,7 +67,7 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      virtual Result SendMessage(const RobotID_t robotID, const Message& msg);
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg);
       
     protected:
       
@@ -91,14 +91,14 @@ namespace Anki {
       struct {
         u8 priority;
         u16 size;
-        Result (MessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+        Result (RobotMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
       } lookupTable_[NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
 #include "anki/cozmo/shared/MessageDefinitionsB2R.h"
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#define MESSAGE_HANDLER_CLASSNAME MessageHandler
+#define MESSAGE_HANDLER_CLASSNAME RobotMessageHandler
 #include "anki/cozmo/shared/MessageDefinitionsR2B.h"
 #undef MESSAGE_HANDLER_CLASSNAME
         {0, 0, 0} // Final dummy entry without comma at end
@@ -107,7 +107,7 @@ namespace Anki {
     }; // class MessageHandler
     
     
-    class MessageHandlerStub : public IMessageHandler
+    class MessageHandlerStub : public IRobotMessageHandler
     {
     public:
       MessageHandlerStub() { }
@@ -125,7 +125,7 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const RobotID_t robotID, const Message& msg) {
+      Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) {
         return RESULT_OK;
       }
       

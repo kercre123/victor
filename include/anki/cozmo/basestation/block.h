@@ -14,7 +14,7 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 

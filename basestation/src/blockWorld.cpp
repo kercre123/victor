@@ -12,7 +12,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "bridge.h"
@@ -20,7 +20,7 @@
 #include "platform.h"
 #include "ramp.h"
 
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "vizManager.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection

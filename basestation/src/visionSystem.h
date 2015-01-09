@@ -43,7 +43,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"

@@ -22,7 +22,7 @@
 #include "anki/common/basestation/jsonTools.h"
 
 #include "multiClientComms.h"
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "uiMessageHandler.h"
 
 namespace Anki {
@@ -83,7 +83,7 @@ namespace Cozmo {
     MultiClientComms          _robotComms;
     MultiClientComms          _uiComms;
     
-    MessageHandler            _robotVisionMsgHandler;
+    RobotMessageHandler       _robotVisionMsgHandler;
     UiMessageHandler          _deviceVisionMsgHandler;
     
     std::vector<AdvertisingRobot>    _connectedRobots;

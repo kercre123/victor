@@ -5,7 +5,7 @@
  * Date:   7/11/2014
  *
  * Description: Handles messages between UI and basestation just as
- *              MessageHandler handles messages between basestation and robot.
+ *              RobotMessageHandler handles messages between basestation and robot.
  *
  * Copyright: Anki, Inc. 2014
  **/
