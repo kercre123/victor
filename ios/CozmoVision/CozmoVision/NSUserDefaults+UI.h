@@ -26,4 +26,10 @@
 + (int)lastNumUiDevices;
 + (void)setLastNumUiDevices:(int)N;
 
++ (BOOL)lastUseVisualTargeting;
++ (void)setLastUseVisualTargeting:(BOOL)use;
+
++ (BOOL)lastUseAudioTargeting;
++ (void)setLastUseAudioTargeting:(BOOL)use;
+
 @end

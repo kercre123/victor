@@ -100,5 +100,11 @@ RHUserDefaultDefinePropertyInt(lastNumRobots, setLastNumRobots, DefaultKeyLastNu
 NSString* const DefaultKeyLastNumUiDevices = @"lastNumUiDevices";
 RHUserDefaultDefinePropertyInt(lastNumUiDevices, setLastNumUiDevices, DefaultKeyLastNumUiDevices, 1)
 
+NSString* const DefaultKeyLastUseVisualTargeting = @"lastUseVisualTargeting";
+RHUserDefaultDefinePropertyBool(lastUseVisualTargeting, setLastUseVisualTargeting, DefaultKeyLastUseVisualTargeting, YES);
+
+NSString* const DefaultKeyLastUseAudioTargeting = @"lastUseAudioTargeting";
+RHUserDefaultDefinePropertyBool(lastUseAudioTargeting, setLastUseAudioTargeting, DefaultKeyLastUseAudioTargeting, YES);
+
 
 @end
