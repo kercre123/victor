@@ -220,7 +220,11 @@ const char* forcedRobotIP = "192.168.19.238";
   // Put all the settings in the Json config file
   [self setupConfig];
   
-  self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP];
+  // TODO: Need real way to choose device ID for comms
+  // For now, host will have ID=1, client will have ID=2
+  int uiDeviceID = (asHost ? 1 : 2);
+  self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP
+                                                               withDeviceID:uiDeviceID];
   
   if(_cozmoEngine != nullptr) {
     delete _cozmoEngine;
@@ -338,25 +342,32 @@ const char* forcedRobotIP = "192.168.19.238";
   {
     using namespace Anki::Cozmo;
     
-    // Connect to any robots we see:
-    static bool haveRobot = false;
-    if(!haveRobot) {
-      std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-      _cozmoEngine->GetAdvertisingRobots(advertisingRobots);
-      for(auto robot : advertisingRobots) {
-        if(_cozmoEngine->ConnectToRobot(robot)) {
-          NSLog(@"Connected to robot %d\n", robot);
-          haveRobot = true;
+    // TODO: Fix so we don't have to check IsHost() and do reinterpret_cast here
+    if(_cozmoEngine->IsHost()) {
+      
+      // Connect to any robots we see:
+      static bool haveRobot = false;
+      if(!haveRobot) {
+        std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
+        _cozmoEngine->GetAdvertisingRobots(advertisingRobots);
+        for(auto robot : advertisingRobots) {
+          if(_cozmoEngine->ConnectToRobot(robot)) {
+            NSLog(@"Connected to robot %d\n", robot);
+            haveRobot = true;
+          }
         }
       }
-    }
     
-    // Connect to any UI devices we see:
-    std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-    _cozmoEngine->GetAdvertisingUiDevices(advertisingUiDevices);
-    for(auto device : advertisingUiDevices) {
-      if(_cozmoEngine->ConnectToUiDevice(device)) {
-        NSLog(@"Connected to UI device %d\n", device);
+    
+      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+      assert(cozmoEngineHost != nullptr);
+      // Connect to any UI devices we see:
+      std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
+      cozmoEngineHost->GetAdvertisingUiDevices(advertisingUiDevices);
+      for(auto device : advertisingUiDevices) {
+        if(cozmoEngineHost->ConnectToUiDevice(device)) {
+          NSLog(@"Connected to UI device %d\n", device);
+        }
       }
     }
     

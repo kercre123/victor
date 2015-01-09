@@ -13,10 +13,12 @@
 
 @property (readonly) BOOL isConnected;
 
-+ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address;
++ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
+                                         withDeviceID:(int)deviceID;
 
 // Connection Methods
-- (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress;
+- (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress
+                                    withDeviceID:(int)deviceID;
 //- (void)disconnect;
 
 

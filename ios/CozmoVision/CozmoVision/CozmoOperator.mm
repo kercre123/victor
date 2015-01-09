@@ -28,9 +28,11 @@ using namespace Anki;
 }
 
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
+                                         withDeviceID:(int)deviceID
 {
   CozmoOperator* instance = [CozmoOperator new];
-  [instance registerToAvertisingServiceWithIPAddress:address];
+  [instance registerToAvertisingServiceWithIPAddress:address
+                                        withDeviceID:deviceID];
 
   return instance;
 }
@@ -87,6 +89,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
 #pragma mark - Connection & Message Methds
 
 - (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress
+                                    withDeviceID:(int)deviceID
 {
   /*
   if (!_uiClient->IsConnected()) {
@@ -104,7 +107,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
    */
   
   if (!_gameComms) {
-    _gameComms = new Cozmo::GameComms(Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
+    _gameComms = new Cozmo::GameComms(deviceID, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
                                       [ipAddress UTF8String], Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
     _gameMsgHandler = new Cozmo::GameMessageHandler();
     _gameMsgHandler->Init(_gameComms);

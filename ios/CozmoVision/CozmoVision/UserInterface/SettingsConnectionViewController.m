@@ -12,6 +12,10 @@
 #import "CozmoOperator.h"
 #import "NSUserDefaults+UI.h"
 
+// For querying IP address
+#import <ifaddrs.h>
+#import <arpa/inet.h>
+
 @interface SettingsConnectionViewController () <UITextFieldDelegate>
 @property (weak, nonatomic) IBOutlet UILabel* engineStateLabel;
 
@@ -99,14 +103,49 @@
 }
 
 
+- (NSString *)getIPAddress
+{
+  
+  NSString* deviceString = (TARGET_IPHONE_SIMULATOR ? @"en1" : @"en0");
+  
+  NSString *address = @"error";
+  struct ifaddrs *interfaces = NULL;
+  struct ifaddrs *temp_addr = NULL;
+  int success = 0;
+  // retrieve the current interfaces - returns 0 on success
+  success = getifaddrs(&interfaces);
+  if (success == 0) {
+    // Loop through linked list of interfaces
+    temp_addr = interfaces;
+    while(temp_addr != NULL) {
+      if(temp_addr->ifa_addr->sa_family == AF_INET) {
+        // Check if interface is en0 which is the wifi connection on the iPhone
+        // TODO: what about on simulator??
+        if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:deviceString]) {
+          // Get NSString from C String
+          address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+          
+        }
+        
+      }
+      
+      temp_addr = temp_addr->ifa_next;
+    }
+  }
+  // Free memory
+  freeifaddrs(interfaces);
+  return address;
+  
+}
+
 #pragma mark - Config Basestation
 
 - (void)updateBasestationConfig
 {
   NSString* ipAddress = self.hostAddressTextField.text;
-  [self.cozmoEngineWrapper setHostAdvertisingIP:ipAddress];
   [NSUserDefaults setLastHostAdvertisingIP:ipAddress];
-
+  [self.cozmoEngineWrapper setHostAdvertisingIP:ipAddress];
+  
   ipAddress = self.vizAddressTextField.text;
   [self.cozmoEngineWrapper setVizIP:ipAddress];
   [NSUserDefaults setLastVizIP:ipAddress];
@@ -304,10 +343,12 @@
     self.asHostLabel.text = @"As Client";
     self.hostAddressTextField.enabled = YES;
     self.hostAddressLabel.enabled = YES;
+    self.hostAddressTextField.text = self.cozmoEngineWrapper.hostAdvertisingIP;
   } else {
     self.asHostLabel.text = @"As Host";
     self.hostAddressTextField.enabled = NO;
     self.hostAddressLabel.enabled = NO;
+    self.hostAddressTextField.text = [self getIPAddress];
   }
 }
 
