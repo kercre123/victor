@@ -47,7 +47,7 @@ namespace Anki {
 #  define USE_COMPRESSION_FOR_SENDING_IMAGES 0 // Leave this one alone
 #endif
       
-#define IMAGE_SEND_JPEG_COMPRESSION_QUALITY 90 // 0 to 100
+#define IMAGE_SEND_JPEG_COMPRESSION_QUALITY 80 // 0 to 100
       
 //#define USE_HEADER_TEMPLATE //< Currently only supported for binary tracker and battery marker
       
