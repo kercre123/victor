@@ -130,7 +130,8 @@ namespace Anki {
 
         
         GameMessageHandler msgHandler_;
-        GameComms gameComms_(UI_MESSAGE_SERVER_LISTEN_PORT,
+        const int deviceID = 1;
+        GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
                              UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP, UI_ADVERTISEMENT_REGISTRATION_PORT);
         
       } // private namespace
