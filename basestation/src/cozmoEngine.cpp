@@ -13,7 +13,6 @@
 
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/multiClientComms.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/events/BaseStationEvent.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -22,6 +21,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
+#include "multiClientComms.h"
 #include "messageHandler.h"
 #include "uiMessageHandler.h"
 
