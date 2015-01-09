@@ -21,7 +21,7 @@
 // For communicating UI Messages
 #define COZMO_BASESTATION // to make uiMessages definitions happy
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/messaging/shared/TcpClient.h"
 
 #include "anki/cozmo/basestation/visionProcessingThread.h"

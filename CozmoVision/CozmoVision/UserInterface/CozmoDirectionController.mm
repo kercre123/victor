@@ -9,7 +9,7 @@
 #import "CozmoDirectionController.h"
 
 #import <anki/common/types.h>
-#import <anki/cozmo/robot/cozmoConfig.h>
+#import <anki/cozmo/shared/cozmoConfig.h>
 
 #define DEBUG_GAMEPAD 0
 
