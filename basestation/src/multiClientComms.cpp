@@ -11,13 +11,13 @@
  *
  **/
 
-#include "anki/cozmo/basestation/multiClientComms.h"
-
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/robot/cozmoConfig.h"
+
+#include "multiClientComms.h"
 
 // The number of bytes that can be sent out per call to Update(),
 // the assumption being Update() is called once per basestation tic.
