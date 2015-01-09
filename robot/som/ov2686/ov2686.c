@@ -20,6 +20,7 @@ struct ov2686_info {
   struct ov2686_platform_data *pdata;
   struct mutex power_lock;
   int power_count;
+  int streaming;
   int ident;
 };
 
@@ -50,6 +51,8 @@ static int ov2686_s_power(struct v4l2_subdev *sd, int on)
   struct ov2686_info *info = to_state(sd);
   int ret = 0;
 
+  printk(KERN_INFO "ov2686_s_power %d\n", on);
+
   mutex_lock(&info->power_lock);
 
   /* If the power count is modified from 0 to != 0 or from != 0 to 0,
@@ -66,8 +69,91 @@ static int ov2686_s_power(struct v4l2_subdev *sd, int on)
 
 out:
   mutex_unlock(&info->power_lock);
+
+  printk(KERN_INFO "\ts_power done\n");
+
   return ret;
 }
+
+
+static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
+  struct ov2686_info * info = to_state(subdev);
+  int ret = 0;
+
+  printk(KERN_INFO "ov2686_s_stream %d\n", enable);
+
+  if (info->power_count == 0) {
+    printk(KERN_INFO "\tpower count (%d) invalid\n", info->power_count);
+    return -EINVAL;
+  }
+  if (enable == 0) {
+    // TODO Do something to disable streaming
+    info->streaming = 0;
+  }
+  else {
+    // TODO Do something to enable streaming
+    info->streaming = 1;
+  }
+  return ret;
+}
+
+static int ov2686_enum_mbus_code(struct v4l2_subdev *subdev,
+                                 struct v4l2_subdev_fh *fh,
+                                 struct v4l2_subdev_mbus_code_enum *code) {
+  printk(KERN_INFO "ov2686_enum_mbus_code\n");
+
+  // TODO populate code structure
+  return 0;
+}
+
+static int ov2686_enum_frame_size(struct v4l2_subdev *subdev,
+                                  struct v4l2_subdev_fh *fh,
+                                  struct v4l2_subdev_frame_size_enum *fse) {
+  printk(KERN_INFO "ov2686_enum_frame_size\n");
+
+  // TODO populate fse structure
+  return 0;
+}
+
+static int ov2686_get_format(struct v4l2_subdev *subdev,
+                             struct v4l2_subdev_fh *fh,
+                             struct v4l2_subdev_format *fmt) {
+  printk(KERN_INFO "ov2686_get_format\n");
+
+  // TODO populate fmt structure;
+  return 0;
+}
+
+static int ov2686_set_format(struct v4l2_subdev *subdev,
+                             struct v4l2_subdev_fh *fh,
+                             struct v4l2_subdev_format *fmt) {
+  printk(KERN_INFO "ov2686_set_format\n");
+
+  // TODO execute format set
+  // TODO populate fmt structure
+  return 0;
+}
+
+static int ov2686_get_crop(struct v4l2_subdev *subdev,
+                           struct v4l2_subdev_fh *fh,
+                           struct v4l2_subdev_crop *crop) {
+  printk(KERN_INFO "ov2686_get_crop\n");
+
+  // TODO populate crop strucuture.
+  return 0;
+}
+
+static int ov2686_set_crop(struct v4l2_subdev *subdev,
+                           struct v4l2_subdev_fh *fh,
+                           struct v4l2_subdev_crop *crop) {
+  printk(KERN_INFO "ov2686_set_crop\n");
+
+  // TODO change crop
+  // TODO populate crop strucutre
+
+  return 0;
+}
+
 
 /*** Static data */
 
@@ -75,13 +161,23 @@ static const struct v4l2_subdev_core_ops ov2686_subdev_core_ops = {
   .s_power      = ov2686_s_power,
 };
 
-/*static const struct v4l2_subdev_video_ops ov2686_subdev_video_ops = {
-  .s_stream       = ov2686_s_stream, TODO
-};*/
+static const struct v4l2_subdev_video_ops ov2686_subdev_video_ops = {
+  .s_stream       = ov2686_s_stream,
+};
+
+static const struct v4l2_subdev_pad_ops ov2686_subdev_pad_ops = {
+  .enum_mbus_code  = ov2686_enum_mbus_code,
+  .enum_frame_size = ov2686_enum_frame_size,
+  .get_fmt         = ov2686_get_format,
+  .set_fmt         = ov2686_set_format,
+  .get_crop        = ov2686_get_crop,
+  .set_crop        = ov2686_set_crop,
+};
 
 static struct v4l2_subdev_ops ov2686_subdev_ops = {
   .core	 = &ov2686_subdev_core_ops,
-  .video = NULL, // TODO &ov2686_subdev_video_ops,
+  .video = &ov2686_subdev_video_ops,
+  .pad   = &ov2686_subdev_pad_ops,
 };
 
 /*** I2C module functions */
