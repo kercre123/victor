@@ -17,7 +17,7 @@
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {

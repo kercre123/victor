@@ -9,7 +9,7 @@
  * Modifications:
  */
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"

@@ -3,7 +3,7 @@
 #include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h" // for calibration parameters
+#include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/benchmarking.h"
 

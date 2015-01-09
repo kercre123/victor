@@ -10,7 +10,7 @@
  *
  */
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/messaging/shared/utilMessaging.h"

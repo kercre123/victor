@@ -25,7 +25,7 @@
 
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #else
 #include "anki/cozmo/basestation/ui/messaging/messageQueue.h"
 #endif

@@ -24,7 +24,7 @@
 #include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "robotPoseHistory.h"
 #include "messageHandler.h"

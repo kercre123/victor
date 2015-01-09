@@ -39,7 +39,7 @@
 #include "anki/vision/CameraSettings.h"
 #include "messages.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #define HAVE_ACTIVE_GRIPPER 0

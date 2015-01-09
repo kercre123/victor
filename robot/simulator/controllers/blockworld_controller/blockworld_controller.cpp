@@ -10,7 +10,7 @@
 
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
 
 #include "anki/common/basestation/jsonTools.h"

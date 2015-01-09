@@ -10,7 +10,7 @@
  *
  **/
 #include "anki/cozmo/basestation/game/gameComms.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"

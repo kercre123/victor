@@ -17,7 +17,7 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "platform.h"
 

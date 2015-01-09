@@ -21,7 +21,7 @@
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 // Set to 1 to simulate a send/receive latencies
 // beyond the actual latency of TCP.

@@ -1,5 +1,5 @@
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/debug.h"
 #include "pickAndPlaceController.h"

@@ -21,7 +21,7 @@
 #include "anki/common/basestation/platformPathManager.h"
 
 #include "anki/cozmo/basestation/basestation.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
