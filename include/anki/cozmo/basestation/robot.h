@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/messages.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "actionContainers.h"
@@ -62,6 +61,8 @@ namespace Anki {
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
+    class RobotPoseHistory;
+    class RobotPoseStamp;
     
     class Robot
     {
@@ -488,7 +489,7 @@ namespace Anki {
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
       Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
-      RobotPoseHistory _poseHistory;
+      RobotPoseHistory* _poseHistory;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle
