@@ -28,7 +28,7 @@ namespace Cozmo {
   public:
     
     // Default constructor
-    GameComms(int serverListenPort, const char* advertisementRegIP_, int advertisementRegPort_);
+    GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP_, int advertisementRegPort_);
     
     // The destructor will automatically cleans up
     virtual ~GameComms();
@@ -76,6 +76,10 @@ namespace Cozmo {
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
 
     bool           isInitialized_;
+
+    // Device ID to use for registering with advertisement service
+    int            deviceID_;
+    
     int            serverListenPort_;
     const char*    advertisementRegIP_;
     int            advertisementRegPort_;

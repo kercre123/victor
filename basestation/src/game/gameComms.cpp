@@ -34,8 +34,9 @@ namespace Cozmo {
   
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
   
-  GameComms::GameComms(int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
+  GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
   : isInitialized_(false)
+  , deviceID_(deviceID)
   , serverListenPort_(serverListenPort)
   , advertisementRegIP_(advertisementRegIP)
   , advertisementRegPort_(advertisementRegPort)
@@ -96,7 +97,7 @@ namespace Cozmo {
     if(!IsInitialized()) {
       // Register with advertisement service
       if (regClient_.Connect(advertisementRegIP_, advertisementRegPort_)) {
-        regMsg_.id = 1; // TODO: Get this ID from somewhere...
+        regMsg_.id = deviceID_;
         strcpy((char*)regMsg_.ip, GetLocalIP());
         regMsg_.port = serverListenPort_;
         regMsg_.protocol = Anki::Comms::TCP;
