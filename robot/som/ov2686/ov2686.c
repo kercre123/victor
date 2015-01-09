@@ -17,6 +17,7 @@
 
 struct ov2686_info {
   struct v4l2_subdev subdev;
+  struct media_pad pad;
   struct ov2686_platform_data *pdata;
   struct mutex power_lock;
   int power_count;
@@ -186,6 +187,7 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
   struct ov2686_info *info;
   struct ov2686_platform_data *pdata;
   struct i2c_adapter *adapter;
+  int ret = 0;
 
   printk(KERN_INFO "ov2686 i2c probe\n");
 
@@ -220,10 +222,19 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
 
   v4l2_i2c_subdev_init(&info->subdev, client, &ov2686_subdev_ops);
 
+  printk(KERN_INFO "Initalizing media controller\n");
+
+  info->pad.flags = MEDIA_PAD_FL_SOURCE;
+  ret = media_entity_init(&info->subdev.entity, 1, &info->pad, 0);
+  if (ret < 0) {
+    printk(KERN_WARNING "ov2686 media_entity_init failed: %d\n", ret);
+    return ret;
+  }
+
   // Do more setup here
   printk(KERN_INFO "i2c probe complete\n");
 
-  return 0;
+  return ret;
 }
 
 static int ov2686_remove(struct i2c_client *client)
