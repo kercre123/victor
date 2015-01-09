@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-
+#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/messaging/basestation/advertisementService.h"
@@ -167,6 +167,7 @@ namespace Cozmo {
     if(success) {
       _connectedRobots.push_back(whichRobot);
     }
+    BSE_RobotConnect::RaiseEvent(whichRobot, success);
     return success;
   }
   
