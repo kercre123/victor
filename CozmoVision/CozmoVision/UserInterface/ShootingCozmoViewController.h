@@ -10,4 +10,8 @@
 
 @interface ShootingCozmoViewController : UIViewController
 
+@property(assign, nonatomic) float   maxTargetingSoundPeriod_sec;
+@property(assign, nonatomic) BOOL    useAudioTargeting;
+@property(assign, nonatomic) BOOL    useVisualTargeting;
+
 @end
