@@ -16,6 +16,8 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 
+#include "anki/cozmo/basestation/uiMessageHandler.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -45,7 +47,7 @@ namespace Cozmo {
     virtual void OnEventRaised( const IBaseStationEventInterface* event ) override;
     
     CozmoEngineHost *_cozmoEngine;
-    //UiMessageHandler uiMsgHandler_;
+    UiMessageHandler _uiMsgHandler;
     
   }; // class CozmoGameHostImpl
   
