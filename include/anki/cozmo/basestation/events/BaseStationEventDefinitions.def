@@ -65,8 +65,8 @@ class Vehicle;
 // Fired when the actual race/battle/etc is completed and post game functionality begins.
 // successful: is false if the game ended prematurely (eg. user dc'd or quit)
 EVENT_BEGIN( RobotConnect, uint8_t robotID, bool successful )
-EVENT_ARG( RobotID_t, robotID )
-EVENT_ARG( bool, successful )
+  EVENT_ARG( RobotID_t, robotID )
+  EVENT_ARG( bool, successful )
 EVENT_END( RobotConnect )
 
 
@@ -74,6 +74,26 @@ EVENT_END( RobotConnect )
 //----------------------------------------------------------------------------------------------------------------------
 // Game State Events ...
 
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// Vision System Events
+EVENT_BEGIN(DeviceDetectedVisionMarker, uint8_t engineID, uint32_t markerType,
+                                        float x_upperLeft,  float y_upperLeft,
+                                        float x_lowerLeft,  float y_lowerLeft,
+                                        float x_upperRight, float y_upperRight,
+                                        float x_lowerRight, float y_lowerRight)
+  EVENT_ARG( uint8_t,  engineID)
+  EVENT_ARG( uint32_t, markerType)
+  EVENT_ARG( float,  x_upperLeft)
+  EVENT_ARG( float,  y_upperLeft)
+  EVENT_ARG( float,  x_lowerLeft)
+  EVENT_ARG( float,  y_lowerLeft)
+  EVENT_ARG( float,  x_upperRight)
+  EVENT_ARG( float,  y_upperRight)
+  EVENT_ARG( float,  x_lowerRight)
+  EVENT_ARG( float,  y_lowerRight)
+EVENT_END(VisionMarkerDetected)
 
 
 #endif
