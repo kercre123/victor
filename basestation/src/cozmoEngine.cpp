@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/events/BaseStationEvent.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -23,7 +24,7 @@
 
 #include "multiClientComms.h"
 #include "robotMessageHandler.h"
-#include "uiMessageHandler.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -83,7 +84,7 @@ namespace Cozmo {
     // of them keyed by robot ID.
     struct RobotContainer {
       VisionProcessingThread    visionThread;
-      MessageHandler            visionMsgHandler;
+      RobotMessageHandler       visionMsgHandler;
     };
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
     

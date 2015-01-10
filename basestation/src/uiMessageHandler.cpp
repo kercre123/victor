@@ -15,10 +15,11 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/uiMessageHandler.h" 
 
 #include "behaviorManager.h"
 #include "cozmoActions.h"
-#include "uiMessageHandler.h"
+
 #include "vizManager.h"
 #include "soundManager.h"
 
