@@ -60,29 +60,50 @@ namespace Anki {
     
     CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
     {
-      CORETECH_ASSERT(jsonNode.isMember("nrows"));
+      CORETECH_ASSERT(Set(jsonNode) == RESULT_OK);
+    }
+    
+    Result CameraCalibration::Set(const Json::Value& jsonNode)
+    {
+      if(!jsonNode.isMember("nrows")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _nrows = JsonTools::GetValue<u16>(jsonNode["nrows"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("ncols"));
+      if(!jsonNode.isMember("ncols")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _ncols = JsonTools::GetValue<u16>(jsonNode["ncols"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("focalLength_x"));
+      if(!jsonNode.isMember("focalLength_x")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _focalLength_x = JsonTools::GetValue<f32>(jsonNode["focalLength_x"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("focalLength_y"))
+      if(!jsonNode.isMember("focalLength_y")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _focalLength_y = JsonTools::GetValue<f32>(jsonNode["focalLength_y"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("center_x"))
+      if(!jsonNode.isMember("center_x")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _center.x() = JsonTools::GetValue<f32>(jsonNode["center_x"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("center_y"))
+      if(!jsonNode.isMember("center_y")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _center.y() = JsonTools::GetValue<f32>(jsonNode["center_y"]);
       
-      CORETECH_ASSERT(jsonNode.isMember("skew"))
+      if(!jsonNode.isMember("skew")) {
+        return RESULT_FAIL_INVALID_PARAMETER;
+      }
       _skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
-      
+
       // TODO: Add distortion coefficients
-    }
+      
+      return RESULT_OK;
+    } // Set()
 
     
     void CameraCalibration::CreateJson(Json::Value& jsonNode) const

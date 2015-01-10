@@ -49,6 +49,8 @@ namespace Anki {
       // Construct from a Json node
       CameraCalibration(const Json::Value& jsonNode);
       
+      // Set from a Json node
+      Result Set(const Json::Value& jsonNode);
       
       // Accessors:
       u16     GetNrows()         const;
