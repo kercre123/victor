@@ -12,17 +12,15 @@
 #ifndef ANKI_COZMO_GAME_HOST_H
 #define ANKI_COZMO_GAME_HOST_H
 
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
-
 #include "json/json.h"
 
 namespace Anki {
 namespace Cozmo {
 
   // Forward declarations:
-  class CozmoEngineHost;
+  class CozmoGameHostImpl;
   
-  class CozmoGameHost : public IBaseStationEventListener
+  class CozmoGameHost
   {
   public:
     enum PlaybackMode {
@@ -39,14 +37,11 @@ namespace Cozmo {
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
     
-    // Process raised events from CozmoEngine.
-    // Req'd by IBaseStationEventListener
-    virtual void OnEventRaised( const IBaseStationEventInterface* event ) override;
-    
   private:
-    CozmoEngineHost *cozmoEngine_;
     
-  };
+    CozmoGameHostImpl* _impl;
+    
+  }; // class CozmoGameHost
   
 } // namespace Cozmo
 } // namespace Anki
