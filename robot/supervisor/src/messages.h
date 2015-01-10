@@ -29,18 +29,18 @@ namespace Anki {
     namespace Messages {
       
       // 1. Initial include just defines the definition modes for use below
-#     include "anki/cozmo/shared/MessageDefinitions.h"
+#     include "anki/cozmo/shared/RobotMessageDefinitions.h"
       
       // 2. Define all the message structs:
 #     define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#     include "anki/cozmo/shared/MessageDefinitions.h"
+#     include "anki/cozmo/shared/RobotMessageDefinitions.h"
       
       // 3. Create the enumerated message IDs:
       typedef enum {
         NO_MESSAGE_ID = 0,
 #       undef MESSAGE_DEFINITION_MODE
 #       define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#       include "anki/cozmo/shared/MessageDefinitions.h"
+#       include "anki/cozmo/shared/RobotMessageDefinitions.h"
         NUM_MSG_IDS // Final entry without comma at end
       } ID;
       

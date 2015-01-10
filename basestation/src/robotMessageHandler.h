@@ -31,7 +31,7 @@ namespace Anki {
   namespace Cozmo {
     
 #define MESSAGE_BASECLASS_NAME RobotMessage
-#include "anki/cozmo/shared/MessageDefinitions.h"
+#include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
     class Robot;
     class RobotManager;
