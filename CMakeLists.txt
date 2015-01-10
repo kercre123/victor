@@ -43,11 +43,15 @@ endif(ANKI_IOS_BUILD)
 set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/shared/*.h")
 
+# NOTE: This will eventually get pulled out of this repo
+set(COZMO_GAME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/game/include)
+
 # This sets the root path for the PlatformPathManager when not on iOS
 add_definitions(-DSYSTEM_ROOT_PATH=${PROJECT_SOURCE_DIR})
 
 include_directories(
   ${COZMO_INCLUDE_DIR}
+  ${COZMO_GAME_INCLUDE_DIR}
   coretech/common/include
   coretech/messaging/include
   coretech/vision/include
@@ -57,6 +61,9 @@ include_directories(
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(basestation)
 add_subdirectory(coretech)
+
+# TODO: This will be pulled out into its own repo
+add_subdirectory(game)
 
 # Don't build these if ANKI_IOS_BUILD is defined:
 if(NOT ANKI_IOS_BUILD)

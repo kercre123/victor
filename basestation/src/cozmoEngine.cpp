@@ -62,7 +62,7 @@ namespace Cozmo {
     bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
   protected:
-    
+  
     // Derived classes must implement any special initialization in this method,
     // which is called by Init().
     virtual Result InitInternal() = 0;
@@ -71,7 +71,9 @@ namespace Cozmo {
     // Public Update() calls this automatically.
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) = 0;
     
-    bool _isInitialized;
+    bool                      _isInitialized;
+    
+    int                       _engineID;
     
     Json::Value               _config;
     
@@ -98,7 +100,7 @@ namespace Cozmo {
   CozmoEngineImpl::CozmoEngineImpl()
   : _isInitialized(false)
   {
-    
+
   }
   
   CozmoEngineImpl::~CozmoEngineImpl()
@@ -186,14 +188,15 @@ namespace Cozmo {
       //robotKeyPair.second.visionMsgHandler.ProcessMessages();
     }
     
-    // TODO: Handle anything produced by device image processing
-    /*
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
-      _deviceVisionMsgHandler.SendMessage(<#const UserDeviceID_t devID#>, msg);
+      BSE_DeviceDetectedVisionMarker::RaiseEvent(_engineID, msg.markerType,
+                                                 msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+                                                 msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+                                                 msg.x_imgUpperRight, msg.y_imgUpperRight,
+                                                 msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
-     */
     
     Result lastResult = UpdateInternal(currTime_ns);
     
@@ -217,6 +220,7 @@ namespace Cozmo {
     return _deviceVisionThread.CheckMailbox(msg);
   }
   
+  
 #if 0
 #pragma mark -
 #pragma mark Derived Host Class Impl Wrappers
@@ -225,7 +229,7 @@ namespace Cozmo {
   CozmoEngine::CozmoEngine()
   : _impl(nullptr)
   {
-    
+
   }
   
   CozmoEngine::~CozmoEngine() {

@@ -49,14 +49,6 @@ typedef enum {
   BS_LAST_VALUE
 } BasestationStatus;
 
-// Basestation run modes
-typedef enum {
-  BM_DEFAULT = 0,
-  BM_RECORD_SESSION,
-  BM_PLAYBACK_SESSION
-} BasestationMode;
-
-
 class BasestationMainImpl;
   
 // Main base station class that maintains the state of the system, calls update
@@ -75,8 +67,6 @@ public:
   // RETURNS: BS_OK, or BS_END_INIT_ERROR
   //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
   BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config);
-
-  BasestationMode GetMode();
 
   // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
   BasestationStatus UnInit();

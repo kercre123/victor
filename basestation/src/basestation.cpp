@@ -56,8 +56,6 @@ namespace Cozmo {
     //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
     BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config);
     
-    BasestationMode GetMode();
-    
     // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
     BasestationStatus UnInit();
      
@@ -108,7 +106,7 @@ namespace Cozmo {
      // process message queue
      void ProcessUiMessages();
      */
-    BasestationMode mode_;
+
     Json::Value config_;
     IRecordingPlaybackModule *recordingPlaybackModule_;
     IRecordingPlaybackModule *uiRecordingPlaybackModule_;
@@ -132,20 +130,14 @@ namespace Cozmo {
 
   }
 
-    
-  BasestationMode BasestationMainImpl::GetMode()
-  {
-    return mode_;
-  }
-
-
   BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
   {
     BasestationStatus status = BS_OK;
     
     // Copy config
     config_ = config;
-    
+
+    /*
     // Get basestation mode out of the config
     int modeInt;
     if(JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, modeInt)) {
@@ -235,6 +227,7 @@ namespace Cozmo {
       case BM_DEFAULT:
         break;
     }
+     */
     
     // Initialize the modules by telling them about each other:
     msgHandler_.Init(robot_comms, &robotMgr_);
@@ -440,11 +433,6 @@ namespace Cozmo {
   BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
   {
     return impl_->Init(robot_comms, ui_comms, config);
-  }
-
-  BasestationMode BasestationMain::GetMode()
-  {
-    return impl_->GetMode();
   }
 
   BasestationStatus BasestationMain::UnInit()

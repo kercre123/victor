@@ -111,6 +111,7 @@ namespace Cozmo {
   class CozmoEngineHost : public CozmoEngine
   {
   public:
+    
     CozmoEngineHost();
     
     virtual bool IsHost() const override { return true; }
@@ -121,6 +122,8 @@ namespace Cozmo {
     void ForceAddRobot(AdvertisingRobot robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
+    
+    // TODO: Add ability to playback/record
     
     // Overload to specially handle robot added by ForceAddRobot
     // TODO: Remove once we no longer need forced adds

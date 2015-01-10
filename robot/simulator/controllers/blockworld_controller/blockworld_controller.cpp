@@ -6,7 +6,7 @@
  * Modifications: 
  */
 
-#include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/game/cozmoGame.h"
 
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
@@ -16,10 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
-
 #include <fstream>
-
 
 
 #define USE_WEBOTS_TIMESTEP 1
@@ -58,90 +55,6 @@ BSTimer basestationController;
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-
-// Example game class built around a CozmoEngine
-class CozmoGameHost : public IBaseStationEventListener
-{
-public:
-  
-  CozmoGameHost() :
-  cozmoEngine_(nullptr)
-  {
-    // Register for all events of interest
-    BSE_RobotConnect::Register( this );
-  }
-  ~CozmoGameHost()
-  {
-    // Unregister for all events
-    BSE_RobotConnect::Unregister( this );
-    
-    if(cozmoEngine_) {
-      delete cozmoEngine_;
-    }
-  }
-  
-  void Init(const Json::Value& config) {
-    
-    if (cozmoEngine_)
-      return;
-
-    // There is no "device" (e.g. phone) with a camera so we can just use a bogus camera calibration
-    Vision::CameraCalibration bogusDeviceCamCalib;
-    
-    cozmoEngine_ = new CozmoEngineHost();
-    cozmoEngine_->Init(config, bogusDeviceCamCalib);
-  }
-  
-  void Update() {
-    // Connect to any robots we see:
-    std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-    cozmoEngine_->GetAdvertisingRobots(advertisingRobots);
-    for(auto robot : advertisingRobots) {
-      cozmoEngine_->ConnectToRobot(robot);
-    }
-    
-    // Connect to any UI devices we see:
-    std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-    cozmoEngine_->GetAdvertisingUiDevices(advertisingUiDevices);
-    for(auto device : advertisingUiDevices) {
-      cozmoEngine_->ConnectToUiDevice(device);
-    }
-    
-    Result status = cozmoEngine_->Update(SEC_TO_NANOS(basestationController.getTime()));
-    if (status != RESULT_OK) {
-      PRINT_NAMED_WARNING("CozmoEngine.Update.NotOK","Status %d\n", status);
-    }
-    
-    /*
-     std::vector<BasestationMain::ObservedObjectBoundingBox> boundingQuads;
-     if(true == bs.GetCurrentVisionMarkers(1, boundingQuads) ) {
-     // TODO: stuff?
-     }
-     */
-  }
-  
-  // Process raised events from CozmoEngine
-  virtual void OnEventRaised( const IBaseStationEventInterface* event )
-  {
-    switch( event->GetEventType() ) {
-        
-      case BSETYPE_RobotConnect:
-      {
-        BSE_RobotConnect *rcEvent = (BSE_RobotConnect*)event;
-        printf("CozmoGame: Robot %d connect: %s !!!!!!\n", rcEvent->robotID_, rcEvent->successful_ ? "SUCCESS" : "FAILED");
-        break;
-      }
-      default:
-        printf("CozmoGame: Received unknown event %d\n", event->GetEventType());
-        break;
-    }
-  }
-  
-private:
-  CozmoEngineHost *cozmoEngine_;
-};
-
-
 int main(int argc, char **argv)
 {
   // Start with a step so that we can attach to the process here for debugging
@@ -169,15 +82,15 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
   
-  // Get basestation mode
-  BasestationMode bm = BM_DEFAULT;
-  int bmInt;
-  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, bmInt)) {
-    BasestationMode bm = (BasestationMode)bmInt;
-    assert(bm <= BM_PLAYBACK_SESSION);
+  // Get engine playback mode mode
+  CozmoGameHost::PlaybackMode playbackMode = CozmoGameHost::LIVE_SESSION_NO_RECORD;
+  int pmInt;
+  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
+    playbackMode = (CozmoGameHost::PlaybackMode)pmInt;
+    assert(playbackMode <= CozmoGameHost::PLAYBACK_SESSION);
   } 
   
-  if (bm != BM_PLAYBACK_SESSION) {
+  if (playbackMode != CozmoGameHost::PLAYBACK_SESSION) {
     
     // Wait for at least one robot and UI device to connect
     config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
@@ -200,7 +113,7 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-    cozmoGame.Update();
+    cozmoGame.Update(basestationController.getTime());
   } // while still stepping
   
   return 0;
