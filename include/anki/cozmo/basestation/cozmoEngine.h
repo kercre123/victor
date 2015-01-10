@@ -58,8 +58,7 @@ namespace Cozmo {
     
     virtual bool IsHost() const = 0;
     
-    Result Init(const Json::Value& config,
-                const Vision::CameraCalibration& deviceCamCalib);
+    Result Init(const Json::Value& config);
     
     // Hook this up to whatever is ticking the game "heartbeat"
     using Time = unsigned long long int;

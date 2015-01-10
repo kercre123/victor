@@ -39,8 +39,7 @@ namespace Cozmo {
     CozmoEngineImpl();
     virtual ~CozmoEngineImpl();
     
-    virtual Result Init(const Json::Value& config,
-                        const Vision::CameraCalibration& deviceCamCalib);
+    virtual Result Init(const Json::Value& config);
     
     // Hook this up to whatever is ticking the game "heartbeat"
     Result Update(const BaseStationTime_t currTime_ns);
@@ -108,8 +107,7 @@ namespace Cozmo {
     
   }
   
-  Result CozmoEngineImpl::Init(const Json::Value& config,
-                               const Vision::CameraCalibration& deviceCamCalib)
+  Result CozmoEngineImpl::Init(const Json::Value& config)
   {
     if(_isInitialized) {
       PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.\n");
@@ -130,6 +128,14 @@ namespace Cozmo {
     if(!_config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.\n");
       return RESULT_FAIL;
+    }
+    
+    Vision::CameraCalibration deviceCamCalib;
+    if(!_config.isMember(AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION)) {
+      PRINT_NAMED_WARNING("CozmoEngine.Init",
+                          "No DeviceCameraCalibration defined in Json config. Using bogus settings.\n");
+    } else {
+      deviceCamCalib.Set(_config[AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION]);
     }
     
     Result lastResult = RESULT_OK;
@@ -239,9 +245,8 @@ namespace Cozmo {
     }
   }
   
-  Result CozmoEngine::Init(const Json::Value& config,
-                           const Vision::CameraCalibration& deviceCamCalib) {
-    return _impl->Init(config, deviceCamCalib);
+  Result CozmoEngine::Init(const Json::Value& config) {
+    return _impl->Init(config);
   }
   
   Result CozmoEngine::Update(const Time currTime_sec) {
