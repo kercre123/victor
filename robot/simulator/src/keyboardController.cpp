@@ -1,6 +1,6 @@
 
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "pathFollower.h"
 #include "steeringController.h"

@@ -20,7 +20,7 @@
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
-#import <anki/cozmo/robot/cozmoConfig.h>
+#import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
 #import <anki/cozmo/basestation/cozmoEngine.h>
 

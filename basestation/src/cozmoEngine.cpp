@@ -9,7 +9,7 @@
  * Modifications:
  */
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
@@ -22,7 +22,7 @@
 #include "anki/common/basestation/jsonTools.h"
 
 #include "multiClientComms.h"
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "uiMessageHandler.h"
 
 namespace Anki {

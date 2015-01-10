@@ -35,7 +35,7 @@
 #include "speedController.h"
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/robot/utilities_c.h"
 

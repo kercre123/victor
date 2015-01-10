@@ -5,7 +5,7 @@
  * Date:   12/15/2014
  *
  * Description: Handles messages from basestation (eventually, game) to UI, 
- *              analogously to the way MessageHandler handles messages from
+ *              analogously to the way RobotMessageHandler handles messages from
  *              robot to basestation and UiMessageHandler handles messages
  *              from basestation to UI.
  *

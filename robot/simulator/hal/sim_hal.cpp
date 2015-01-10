@@ -6,7 +6,7 @@
 #include "anki/common/robot/errorHandling.h"
 
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "messages.h"
 #include "wheelController.h"
 

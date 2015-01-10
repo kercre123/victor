@@ -13,7 +13,7 @@
 #import <anki/cozmo/basestation/game/gameComms.h>
 #import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
-#import <anki/cozmo/robot/cozmoConfig.h>
+#import <anki/cozmo/shared/cozmoConfig.h>
 
 using namespace Anki;
 
