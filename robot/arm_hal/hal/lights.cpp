@@ -33,16 +33,20 @@ namespace Anki
 
       // Make some nice array handles into macro defined GPIOs
       static const int NUM_EYEnEN = 2;
-      static const int EYEnEN_PIN[2]  = {PIN_EYE1nEN, PIN_EYE2nEN};
-      static const int EYEnEN_GPIO[2] = {GPIO_EYE1nEN, GPIO_EYE2nEN};
+      static GPIO_TypeDef* const EYEnEN_GPIO[2] = {GPIO_EYE1nEN, GPIO_EYE2nEN};
+      static const u32 EYEnEN_PIN[2] = {PIN_EYE1nEN, PIN_EYE2nEN};
+      static const u8 EYEnEN_SOURCE[2] = {SOURCE_EYE1nEN, SOURCE_EYE2nEN};
 
-      static const int NUM_COLLOR_CHANNELS = 4;
-      static const int RED_GPIO[4] = {GPIO_RED1, GPIO_RED2, GPIO_RED3, GPIO_RED4}; // These must imeediately follow one
-      static const int GRN_GPIO[4] = {GPIO_GRN1, GPIO_GRN2, GPIO_GRN3, GPIO_GRN4}; // another for below concatination
-      static const int BLU_GPIO[4] = {GPIO_BLU1, GPIO_BLU2, GPIO_BLU3, GPIO_BLU4}; // hack
-      static const int RED_PIN[4]  = {PIN_RED1, PIN_RED2, PIN_RED3, PIN_RED4}; // These also need to concatinate
-      static const int GRN_PIN[4]  = {PIN_GRN1, PIN_GRN2, PIN_GRN3, PIN_GRN4};
-      static const int BLU_PIN[4]  = {PIN_BLU1, PIN_BLU2, PIN_BLU4, PIN_BLU4};
+      static const int NUM_COLOR_CHANNELS = 4;
+      static GPIO_TypeDef* const RED_GPIO[4] = {GPIO_RED1, GPIO_RED2, GPIO_RED3, GPIO_RED4}; // These must imeediately follow one
+      static GPIO_TypeDef* const GRN_GPIO[4] = {GPIO_GRN1, GPIO_GRN2, GPIO_GRN3, GPIO_GRN4}; // another for below concatination
+      static GPIO_TypeDef* const BLU_GPIO[4] = {GPIO_BLU1, GPIO_BLU2, GPIO_BLU3, GPIO_BLU4}; // hack
+      static const u32 RED_PIN[4] = {PIN_RED1, PIN_RED2, PIN_RED3, PIN_RED4}; // These also need to concatinate
+      static const u32 GRN_PIN[4] = {PIN_GRN1, PIN_GRN2, PIN_GRN3, PIN_GRN4};
+      static const u32 BLU_PIN[4] = {PIN_BLU1, PIN_BLU2, PIN_BLU4, PIN_BLU4};
+      static const u8 RED_SOURCE[4] = {SOURCE_RED1, SOURCE_RED2, SOURCE_RED3, SOURCE_RED4}; // And these
+      static const u8 GRN_SOURCE[4] = {SOURCE_GRN1, SOURCE_GRN2, SOURCE_GRN3, SOURCE_GRN4};
+      static const u8 BLU_SOURCE[4] = {SOURCE_BLU1, SOURCE_BLU2, SOURCE_BLU3, SOURCE_BLU4};
 
 
       static const int CH_RED = 2, CH_GREEN = 1, CH_BLUE = 0;
@@ -56,20 +60,20 @@ namespace Anki
         for (i=0; i<NUM_EYEnEN; ++i)
         {
           GPIO_SET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
-          GPIO_OD(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
-          GPIO_OUT(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
+          PIN_OD(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
+          PIN_OUT(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
         }
 
         // Initialize all face LED colors to OFF
         // Low side drivers must be open drain to allow voltages > VDD
         // Above arrays concatinate so starting with red and indexing past it
-        const int num_color_gpio = NUM_COLLOR_CHANNELS * 3;
+        const int num_color_gpio = NUM_COLOR_CHANNELS * 3;
         for (i=0; i<num_color_gpio; ++i)
         {
           GPIO_SET(RED_GPIO[i], RED_PIN[i]);
-          PIN_NOPULL(RED_GPIO[i], RED_PIN[i]);
-          PIN_OD(RED_GPIO[i], RED_PIN[i]);
-          PIN_OUT(RED_GPIO[i], RED_PIN[i]);
+          PIN_NOPULL(RED_GPIO[i], RED_SOURCE[i]);
+          PIN_OD(RED_GPIO[i], RED_SOURCE[i]);
+          PIN_OUT(RED_GPIO[i], RED_SOURCE[i]);
         }
 
         // Initialize timer to rapidly blink LEDs, simulating dimming
@@ -168,6 +172,8 @@ extern "C" void TIM8_TRG_COM_TIM14_IRQHandler(void)
   */
   // Schedule the next timer interrupt
   TIM14->SR = 0;        // Acknowledge interrupt
+  /*
   TIM14->ARR = howlong; // Next time to trigger
   TIM14->CR1 = TIM_CR1_CEN | TIM_CR1_URS | TIM_CR1_OPM; // Fire off one pulse
+  */
 }
