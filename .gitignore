@@ -149,3 +149,4 @@ build_ios
 ios/build
 ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata
 coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
+*.saved_uv4
