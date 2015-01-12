@@ -19,6 +19,7 @@ matlab.mat
 *.so
 *.la
 *.a
+*.ko
 *.pbxuser
 *.mode1v3
 *.mode2v3
