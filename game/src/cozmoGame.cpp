@@ -302,29 +302,19 @@ namespace Cozmo {
     {
       case BSETYPE_RobotAvailable:
       {
+        // Notify UI that robot is available and let it issue message to connect
         MessageG2U_RobotAvailable msg;
         msg.robotID = reinterpret_cast<const BSE_RobotAvailable*>(event)->robotID_;
-        
-        // TODO: Notify UI that robot is availale and let it issue message to connect
-        //_uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
-
-        // For now, just connect any robot we see
-        BSE_ConnectToRobot::RaiseEvent(msg.robotID);
-        
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
         break;
       }
         
       case BSETYPE_UiDeviceAvailable:
       {
+        // Notify UI that a UI device is available and let it issue message to connect
         MessageG2U_UiDeviceAvailable msg;
         msg.deviceID = reinterpret_cast<const BSE_UiDeviceAvailable*>(event)->deviceID_;
-        
-        // TODO: Notify UI that a UI device is availale and let it issue message to connect
-        //_uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
-        
-        // For now, just connect to any UI device we see:
-        BSE_ConnectToUiDevice::RaiseEvent(msg.deviceID);
-        
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
         break;
       }
         

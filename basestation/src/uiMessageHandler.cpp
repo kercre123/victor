@@ -100,11 +100,12 @@ namespace Anki {
         }
         else {
           
+          /*
           if(cozmoEngine_->GetNumRobots() == 0) {
             PRINT_NAMED_ERROR("UiMessageHandler.NoRobotsToControl", "\n");
           }
           else {
-           
+           */
             // TODO: Look up the robotID associated with this UI device
             const RobotID_t robotID = 1;
             Robot* robot = cozmoEngine_->GetRobotByID(robotID);
@@ -124,7 +125,7 @@ namespace Anki {
               // method.
               retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
             //}
-          }
+          //}
         }
       } // if(robotMgr_ != NULL)
       
