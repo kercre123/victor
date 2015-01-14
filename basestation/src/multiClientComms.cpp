@@ -17,7 +17,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "multiClientComms.h"
+#include "anki/cozmo/basestation/multiClientComms.h"
 
 // The number of bytes that can be sent out per call to Update(),
 // the assumption being Update() is called once per basestation tic.

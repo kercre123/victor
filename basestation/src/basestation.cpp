@@ -26,11 +26,11 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
+#include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "robotMessageHandler.h"
-#include "multiClientComms.h"
 #include "recording/playback.h"
 #include "pathPlanner.h"
 #include "behaviorManager.h"
