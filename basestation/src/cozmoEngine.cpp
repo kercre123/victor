@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/messaging/basestation/advertisementService.h"
@@ -179,7 +179,8 @@ namespace Cozmo {
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
-    BSE_RobotConnect::RaiseEvent(whichRobot, success);
+    CozmoEngineSignals::GetRobotConnectSignal().emit(whichRobot, success);
+    
     return success;
   }
   
@@ -196,7 +197,7 @@ namespace Cozmo {
     std::vector<int> advertisingRobots;
     _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
     for(auto & robot : advertisingRobots) {
-      BSE_RobotAvailable::RaiseEvent(robot);
+      CozmoEngineSignals::GetRobotAvailableSignal().emit(robot);
     }
   
     // TODO: Handle images coming from connected robots
@@ -207,11 +208,11 @@ namespace Cozmo {
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
-      BSE_DeviceDetectedVisionMarker::RaiseEvent(_engineID, msg.markerType,
-                                                 msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                                                 msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                                                 msg.x_imgUpperRight, msg.y_imgUpperRight,
-                                                 msg.x_imgLowerRight, msg.y_imgLowerRight);
+      CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
+                                                                     msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+                                                                     msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+                                                                     msg.x_imgUpperRight, msg.y_imgUpperRight,
+                                                                     msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
     
     Result lastResult = UpdateInternal(currTime_ns);

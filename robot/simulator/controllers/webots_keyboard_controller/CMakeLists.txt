@@ -29,6 +29,7 @@ add_executable(webots_keyboard_controller
 
 target_link_libraries(webots_keyboard_controller 
   Cozmo_Basestation
+  Cozmo_Game
   CoreTech_Common_Basestation
   CoreTech_Messaging_Basestation
   CppController # Webots C++ Controller
