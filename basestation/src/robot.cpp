@@ -46,7 +46,6 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
-    , _uiMsgHandler(nullptr)  // To be removed once we have Events
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
@@ -156,12 +155,6 @@ namespace Anki {
       ++_frameId;
     }
 
-    void Robot::SetUiMessageHandler(IUiMessageHandler *uiMsgHandler)
-    {
-      _uiMsgHandler = uiMsgHandler;
-    }
-    
-    
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
@@ -862,6 +855,10 @@ namespace Anki {
     {
 #     if ANKI_IOS_BUILD
       // Use iOS device to play the sound
+      
+      // TODO: Trigger event to play the sound
+      
+      /*
       if(_uiMsgHandler != nullptr)
       {
         // TODO: Need to assign the right device ID
@@ -873,10 +870,12 @@ namespace Anki {
         
         return _uiMsgHandler->SendMessage(1, msg);
       } else {
+       */
         PRINT_NAMED_ERROR("Robot.PlaySound.NoUiMessageHandler",
                           "Must set UI Message Handler before calling PlaySound.");
         return RESULT_FAIL;
-      }
+
+       
 #     else
       
       // Use SoundManager::
@@ -893,6 +892,9 @@ namespace Anki {
     void Robot::StopSound()
     {
 #     if ANKI_IOS_BUILD
+      
+      // TODO: Make this an event
+      /*
       // Use iOS device to play the sound
       if(_uiMsgHandler != nullptr)
       {
@@ -900,9 +902,10 @@ namespace Anki {
         MessageG2U_StopSound msg;
         _uiMsgHandler->SendMessage(1, msg);
       } else {
+       */
         PRINT_NAMED_ERROR("Robot.StopSound.NoUiMessageHandler",
                           "Must set UI Message Handler before calling StopSound.");
-      }
+      
 #     else
       SoundManager::getInstance()->Stop();
 #     endif

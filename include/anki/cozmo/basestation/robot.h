@@ -57,7 +57,6 @@ namespace Anki {
     
     // Forward declarations:
     class IRobotMessageHandler;
-    class IUiMessageHandler;
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
@@ -70,11 +69,6 @@ namespace Anki {
       
       Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
       ~Robot();
-      
-      
-      // Until we have Events, Robot needs a UI Message handler to trigger things
-      // out in UI land. This must be provided by this temporary Set method:
-      void SetUiMessageHandler(IUiMessageHandler* uiMsgHandler);
       
       Result Update();
       
@@ -401,11 +395,7 @@ namespace Anki {
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IRobotMessageHandler* _msgHandler;
-      
-      // Until we have Events, robot has a UI message handler so it can trigger
-      // things out in UI world.  Note this must be set by a call to SetUiMessageHandler()
-      IUiMessageHandler* _uiMsgHandler;
-      
+            
       // A reference to the BlockWorld the robot lives in
       BlockWorld       _blockWorld;
       

@@ -15,7 +15,9 @@
 
 #include "anki/common/types.h"
 #include <anki/messaging/basestation/IComms.h>
+
 #include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/basestation/cozmoEngine.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts
@@ -40,8 +42,8 @@ namespace Anki {
     public:
       
       // TODO: Change these to interface references so they can be stubbed as well
-      virtual Result Init(Comms::IComms* comms,
-                          RobotManager*  robotMgr) = 0;
+      virtual Result Init(Comms::IComms*   comms,
+                          CozmoEngineHost* robotMgr) = 0;
       
       virtual Result ProcessMessages() = 0;
       
@@ -57,8 +59,8 @@ namespace Anki {
       UiMessageHandler(); // Force construction with stuff in Init()?
       
       // Set the message handler's communications manager
-      virtual Result Init(Comms::IComms* comms,
-                          RobotManager*  robotMgr);
+      virtual Result Init(Comms::IComms*    comms,
+                          CozmoEngineHost*  cozmoEngine);
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -70,7 +72,7 @@ namespace Anki {
     protected:
       
       Comms::IComms* comms_;
-      RobotManager* robotMgr_;
+      CozmoEngineHost* cozmoEngine_;
       
       bool isInitialized_;
       
@@ -110,8 +112,8 @@ namespace Anki {
     public:
       UiMessageHandlerStub() { }
       
-      Result Init(Comms::IComms* comms,
-                  RobotManager*  robotMgr)
+      Result Init(Comms::IComms*    comms,
+                  CozmoEngineHost*  cozmoEngine)
       {
         return RESULT_OK;
       }

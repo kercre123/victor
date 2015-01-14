@@ -54,11 +54,13 @@ namespace Cozmo {
     // Initializes components of basestation
     // RETURNS: BS_OK, or BS_END_INIT_ERROR
     //BasestationStatus Init(const MetaGame::GameParameters& params, IComms* comms, boost::property_tree::ptree &config, BasestationMode mode);
-    BasestationStatus Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config);
+    BasestationStatus Init(Comms::IComms* robot_comms, Json::Value& config);
     
     // unintializes basestation. returns BS_END_CLEAN_EXIT if all ok
     BasestationStatus UnInit();
-     
+    
+    Result AddRobot(RobotID_t robotID);
+    
     // Removes / cleans up all singletons
     static void RemoveSingletons();
     
@@ -79,12 +81,16 @@ namespace Cozmo {
      // stops game
      static void StopGame();
      */
+    
+    int  GetNumRobots() const;
+    
+    Robot* GetRobotByID(const RobotID_t robotID);
 
     bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
 
     bool GetCurrentVisionMarkers(const RobotID_t robotID,
                                  std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuad);
-    s32 GetAnimationID(const RobotID_t robotID,
+    s32  GetAnimationID(const RobotID_t robotID,
                        const std::string& animationName);
     
     bool GetRobotPose(const RobotID_t robotID, Pose3d& pose, Radians& headAngle, f32& liftHeight);
@@ -93,9 +99,9 @@ namespace Cozmo {
     // Instantiate all the modules we need
     //BlockWorld blockWorld_;
     RobotManager robotMgr_;
-    RobotMessageHandler msgHandler_;
+    RobotMessageHandler robotMsgHandler_;
     //BehaviorManager behaviorMgr_;
-    UiMessageHandler uiMsgHandler_;
+    //UiMessageHandler uiMsgHandler_;
     
     //LatticePlanner *pathPlanner_;
     
@@ -130,7 +136,7 @@ namespace Cozmo {
 
   }
 
-  BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
+  BasestationStatus BasestationMainImpl::Init(Comms::IComms* robot_comms, Json::Value& config)
   {
     BasestationStatus status = BS_OK;
     
@@ -230,9 +236,9 @@ namespace Cozmo {
      */
     
     // Initialize the modules by telling them about each other:
-    msgHandler_.Init(robot_comms, &robotMgr_);
-    robotMgr_.Init(&msgHandler_);
-    uiMsgHandler_.Init(ui_comms, &robotMgr_);
+    robotMsgHandler_.Init(robot_comms, &robotMgr_);
+    robotMgr_.Init(&robotMsgHandler_);
+    //uiMsgHandler_.Init(ui_comms, &robotMgr_);
     
     if(config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
       VizManager::getInstance()->Connect(config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
@@ -249,30 +255,28 @@ namespace Cozmo {
     }
 
 
-    
-    // Instantiate and init connected robots
-    for (auto robotIDVal : config_[AnkiUtil::kP_CONNECTED_ROBOTS]) {
-      RobotID_t robotID = (RobotID_t)robotIDVal.asInt();
-      robotMgr_.AddRobot(robotID);
-      
-      Robot* robot = robotMgr_.GetRobotByID(robotID);
-      
-      assert(robot != nullptr);
-      
-      robot->SyncTime();
-      
-      // Have to do this until we have Events triggering inside the robot:
-      robot->SetUiMessageHandler(&uiMsgHandler_);
-      
-      // Uncomment to Test "reactions":
-      // TODO: Make a keypress for switching to this behavior mode
-      // robotMgr_.GetRobotByID(robotID)->StartBehaviorMode(BehaviorManager::ReactToMarkers);
-    }
 
     
     return status;
   }
+  
+  Result BasestationMainImpl::AddRobot(RobotID_t robotID)
+  {
+    Result lastResult = RESULT_OK;
     
+    robotMgr_.AddRobot(robotID);
+    Robot* robot = robotMgr_.GetRobotByID(robotID);
+    if(nullptr == robot) {
+      PRINT_NAMED_ERROR("BasestationMainImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).\n", robotID);
+      lastResult = RESULT_FAIL;
+    } else {
+      lastResult = robot->SyncTime();
+    }
+    
+    return lastResult;
+  }
+  
+  
   BasestationStatus BasestationMainImpl::UnInit()
   {
     try {
@@ -319,9 +323,9 @@ namespace Cozmo {
     BaseStationTimer::getInstance()->UpdateTime(currTime);
     
     // Read UI messages
-    uiMsgHandler_.ProcessMessages();
+    //uiMsgHandler_.ProcessMessages();
     
-    msgHandler_.ProcessMessages();
+    robotMsgHandler_.ProcessMessages();
       
     // Let the robot manager do whatever it's gotta do to update the
     // robots in the world.
@@ -350,6 +354,16 @@ namespace Cozmo {
       case RPMS_VERSION_MISMATCH:
         return BS_PLAYBACK_VERSION_MISMATCH;
     }
+  }
+  
+  int BasestationMainImpl::GetNumRobots() const
+  {
+    return robotMgr_.GetNumRobots();
+  }
+  
+  Robot* BasestationMainImpl::GetRobotByID(const RobotID_t robotID)
+  {
+    return robotMgr_.GetRobotByID(robotID);
   }
 
   bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan)
@@ -430,14 +444,19 @@ namespace Cozmo {
     delete impl_;
   }
 
-  BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Comms::IComms* ui_comms, Json::Value& config)
+  BasestationStatus BasestationMain::Init(Comms::IComms* robot_comms, Json::Value& config)
   {
-    return impl_->Init(robot_comms, ui_comms, config);
+    return impl_->Init(robot_comms, config);
   }
 
   BasestationStatus BasestationMain::UnInit()
   {
     return impl_->UnInit();
+  }
+  
+  Result BasestationMain::AddRobot(RobotID_t robotID)
+  {
+    return impl_->AddRobot(robotID);
   }
     
   BasestationStatus BasestationMain::Update(BaseStationTime_t currTime)
@@ -466,7 +485,14 @@ namespace Cozmo {
   {
     return impl_->GetRobotPose(robotID, pose, headAngle, liftHeight);
   }
+  
+  int BasestationMain::GetNumRobots() const {
+    return impl_->GetNumRobots();
+  }
 
+  Robot* BasestationMain::GetRobotByID(const RobotID_t robotID) {
+    return impl_->GetRobotByID(robotID);
+  }
   
 } // namespace Cozmo
 } // namespace Anki
