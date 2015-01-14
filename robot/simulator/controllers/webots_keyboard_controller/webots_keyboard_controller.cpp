@@ -37,6 +37,10 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Slow down keyboard polling to avoid duplicate commands?
+    const s32 KB_TIME_STEP = BS_TIME_STEP;
+
     namespace WebotsKeyboardController {
       
       webots::Supervisor inputController;
@@ -132,7 +136,8 @@ namespace Anki {
         GameMessageHandler msgHandler_;
         const int deviceID = 1;
         GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
-                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP, UI_ADVERTISEMENT_REGISTRATION_PORT);
+                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP,
+                             UI_ADVERTISEMENT_REGISTRATION_PORT);
         
       } // private namespace
       
@@ -178,12 +183,32 @@ namespace Anki {
       
       
       // ======== Message handler callbacks =======
+      
+      // TODO: Update these not to need robotID
+      
       void ProcessMessageObjectVisionMarker(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
       {
         // TODO: Do something with this message to notify UI
         printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
       }
 
+      void HandleRobotConnection(RobotID_t temp, const MessageG2U_RobotAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any robot that's
+        // advertising (since we don't have a selection mechanism here)
+        MessageU2G_ConnectToRobot msgOut;
+        msgOut.robotID = msgIn.robotID;
+        SendMessage(msgOut);
+      }
+      
+      void HandleUiDeviceConnection(RobotID_t temp, const MessageG2U_UiDeviceAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any UI device that's
+        // advertising (since we don't have a selection mechanism here)
+        MessageU2G_ConnectToUiDevice msgOut;
+        msgOut.deviceID = msgIn.deviceID;
+        SendMessage(msgOut);
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -192,11 +217,18 @@ namespace Anki {
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         
+        while(!gameComms_.IsInitialized()) {
+          PRINT_NAMED_INFO("KeyboardController.Init",
+                           "Waiting for gameComms to initialize...\n");
+          inputController.step(KB_TIME_STEP);
+          gameComms_.Update();
+        }
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
         msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
-        
+        msgHandler_.RegisterCallbackForMessageG2U_UiDeviceAvailable(HandleUiDeviceConnection);
+        msgHandler_.RegisterCallbackForMessageG2U_RobotAvailable(HandleRobotConnection);
         
         inputController.keyboardEnable(BS_TIME_STEP);
         
@@ -261,7 +293,6 @@ namespace Anki {
         printf("                      Print help:  ?\n");
         printf("\n");
       }
-      
       
       //Check the keyboard keys and issue robot commands
       void ProcessKeystroke()
@@ -1429,12 +1460,10 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-// Slow down keyboard polling to avoid duplicate commands?
-const s32 KB_TIME_STEP = BS_TIME_STEP;
-
 int main(int argc, char **argv)
 {
   WebotsKeyboardController::inputController.step(KB_TIME_STEP);
+  
   WebotsKeyboardController::Init();
 
   while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)

@@ -64,12 +64,28 @@ class Vehicle;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Fired when the actual race/battle/etc is completed and post game functionality begins.
 // successful: is false if the game ended prematurely (eg. user dc'd or quit)
-EVENT_BEGIN( RobotConnect, uint8_t robotID, bool successful )
+EVENT_BEGIN( RobotConnect, RobotID_t robotID, bool successful )
   EVENT_ARG( RobotID_t, robotID )
   EVENT_ARG( bool, successful )
 EVENT_END( RobotConnect )
 
+EVENT_BEGIN( RobotAvailable, RobotID_t robotID )
+  EVENT_ARG( RobotID_t, robotID )
+EVENT_END( RobotAvailable )
 
+EVENT_BEGIN( UiDeviceAvailable, u32 deviceID )
+  EVENT_ARG( u32, deviceID )
+EVENT_END( UiDeviceAvailable )
+
+// Tell game host to connect to robot
+EVENT_BEGIN( ConnectToRobot, RobotID_t robotID )
+  EVENT_ARG( RobotID_t, robotID )
+EVENT_END( ConnectToRobot )
+
+// Tell game host to connect to a UI device
+EVENT_BEGIN( ConnectToUiDevice, u32 deviceID )
+  EVENT_ARG( u32, deviceID )
+EVENT_END( ConnectToUiDevice )
 
 //----------------------------------------------------------------------------------------------------------------------
 // Game State Events ...
@@ -93,6 +109,17 @@ EVENT_BEGIN(DeviceDetectedVisionMarker, uint8_t engineID, uint32_t markerType,
   EVENT_ARG( float,  y_upperRight)
   EVENT_ARG( float,  x_lowerRight)
   EVENT_ARG( float,  y_lowerRight)
+EVENT_END(VisionMarkerDetected)
+
+EVENT_BEGIN(RobotObservedObject, uint8_t robotID, uint32_t objectID,
+                                 float x_upperLeft,  float y_upperLeft,
+                                 float width,  float height)
+EVENT_ARG( uint8_t,  robotID)
+EVENT_ARG( uint32_t, objectID)
+EVENT_ARG( float,  x_upperLeft)
+EVENT_ARG( float,  y_upperLeft)
+EVENT_ARG( float,  width)
+EVENT_ARG( float,  height)
 EVENT_END(VisionMarkerDetected)
 
 

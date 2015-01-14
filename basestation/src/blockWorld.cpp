@@ -6,6 +6,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 
 
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -14,6 +15,7 @@
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include "bridge.h"
 #include "flatMat.h"
@@ -39,7 +41,7 @@ namespace Anki
     const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
     const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
     const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA _robotBOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
+    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
     const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
   }
   
@@ -1092,6 +1094,20 @@ namespace Anki
         
         // TODO: Deal with unknown markers?
         
+        // Notify any listeners with the bounding boxes and IDs of any objects we
+        // observed
+        if(numObjectsObserved > 0) {
+          for(auto & obsObject : _obsProjectedObjects) {
+            const Rectangle<f32>& bbox = obsObject.second;
+            BSE_RobotObservedObject::RaiseEvent(_robot->GetID(), obsObject.first.GetValue(),
+                                                bbox.GetX(), bbox.GetY(), bbox.GetWidth(), bbox.GetHeight());
+            
+            // Display
+            Quad2f quad;
+            obsObject.second.GetQuad(quad);
+            VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
+          }
+        }
         
         // Keep track of how many markers went unused by either robot or block
         // pose updating processes above

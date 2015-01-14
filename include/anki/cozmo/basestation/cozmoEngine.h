@@ -45,6 +45,7 @@
 namespace Anki {
 namespace Cozmo {
   
+  class Robot;
   class CozmoEngineImpl;
   class CozmoEngineHostImpl;
   class CozmoEngineClientImpl;
@@ -70,13 +71,12 @@ namespace Cozmo {
     
     bool WasLastDeviceImageProcessed();
     
-    // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
-    using AdvertisingRobot = int;
-    using AdvertisingUiDevice = int;
     
-    // Get list of available robots / UI devices
-    void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
+    // Get list of available robots
+    //void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
 
+    using AdvertisingRobot = RobotID_t;
+    using AdvertisingUiDevice = int;
     
     // Request a connection to a specific robot / UI device from the list returned above.
     // Returns true on successful connection, false otherwise.
@@ -115,14 +115,21 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return true; }
     
-    void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
-    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+    //void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
+    
+    //using AdvertisingUiDevice = int;
+    //bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     void ForceAddRobot(AdvertisingRobot robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
     
+    void ListenForRobotConnections(bool listen);
+    
     // TODO: Add ability to playback/record
+    
+    int    GetNumRobots() const;
+    Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
     
     // Overload to specially handle robot added by ForceAddRobot
     // TODO: Remove once we no longer need forced adds

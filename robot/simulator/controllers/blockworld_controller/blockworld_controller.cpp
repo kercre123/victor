@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include <fstream>
 
@@ -54,6 +55,60 @@ BSTimer basestationController;
 
 using namespace Anki;
 using namespace Anki::Cozmo;
+
+/*
+// Helper object to listen for advertising robots/devices and tell the game
+// to connect to them. This is here since we don't need/have a UI to instruct
+// the game to make these connections. (I.e., just connect to everything that
+// advertises.)
+class DeviceConnector : IBaseStationEventListener
+{
+public:
+  DeviceConnector(CozmoGameHost* game)
+  : _game(game)
+  {
+    BSE_RobotAvailable::Register(this);
+    BSE_UiDeviceAvailable::Register(this);
+  }
+  
+  ~DeviceConnector()
+  {
+    BSE_RobotAvailable::Unregister(this);
+    BSE_UiDeviceAvailable::Unregister(this);
+  }
+  
+protected:
+  
+  CozmoGameHost* _game;
+  
+  virtual void OnEventRaised( const IBaseStationEventInterface* event )
+  {
+    switch(event->GetEventType())
+    {
+      case BSETYPE_RobotAvailable:
+      {
+        const BSE_RobotAvailable* raEvent = reinterpret_cast<const BSE_RobotAvailable*>(event);
+        if(true == _game->ConnectToRobot(raEvent->robotID_)) {
+          printf("Connected to robot %d!\n", raEvent->robotID_);
+        }
+        break;
+      }
+        
+      case BSETYPE_UiDeviceAvailable:
+      {
+        const BSE_UiDeviceAvailable* daEvent = reinterpret_cast<const BSE_UiDeviceAvailable*>(event);
+        if(true == _game->ConnectToUiDevice(daEvent->deviceID_)) {
+          printf("Connected to UI device %d!\n", daEvent->deviceID_);
+        }
+        break;
+      }
+        
+      default:
+        break;
+    }
+  }
+}; // class DeviceConnector
+*/
 
 int main(int argc, char **argv)
 {
@@ -106,8 +161,7 @@ int main(int argc, char **argv)
   // Initialize the engine
   CozmoGameHost cozmoGame;
   cozmoGame.Init(config);
-  
-  
+
   //
   // Main Execution loop: step the world forward forever
   //

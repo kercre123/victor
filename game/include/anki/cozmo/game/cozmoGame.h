@@ -32,7 +32,18 @@ namespace Cozmo {
     CozmoGameHost();
     ~CozmoGameHost();
     
-    void Init(const Json::Value& config);
+    // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
+    using AdvertisingRobot    = int;
+    using AdvertisingUiDevice = int;
+    
+    bool Init(const Json::Value& config);
+    
+    void ForceAddRobot(int              robotID,
+                       const char*      robotIP,
+                       bool             robotIsSimulated);
+    
+    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+    bool ConnectToRobot(AdvertisingRobot whichRobot);
     
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
