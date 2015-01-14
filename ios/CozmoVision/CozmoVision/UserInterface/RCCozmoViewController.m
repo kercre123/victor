@@ -127,7 +127,7 @@
 - (void)cozmoEngineWrapperHeartbeat:(CozmoEngineWrapper *)basestation
 {
   // Update Image Frame
-  UIImage *updatedFrame = [self.cozmoEngineWrapper imageFrameWtihRobotId:1];
+  UIImage *updatedFrame = [self.cozmoEngineWrapper imageFrameWithRobotId:1];
   if (updatedFrame) {
     
     NSArray *objectBBoxes = [self.cozmoEngineWrapper boundingBoxesObservedByRobotId:1];

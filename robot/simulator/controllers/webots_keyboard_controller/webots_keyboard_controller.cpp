@@ -196,6 +196,7 @@ namespace Anki {
       {
         // Just send a message back to the game to connect to any robot that's
         // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
         MessageU2G_ConnectToRobot msgOut;
         msgOut.robotID = msgIn.robotID;
         SendMessage(msgOut);
@@ -205,6 +206,7 @@ namespace Anki {
       {
         // Just send a message back to the game to connect to any UI device that's
         // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
         MessageU2G_ConnectToUiDevice msgOut;
         msgOut.deviceID = msgIn.deviceID;
         SendMessage(msgOut);

@@ -17,14 +17,14 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/uiMessageHandler.h"
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
+#include "anki/cozmo/basestation/soundManager.h"
+
+#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include "behaviorManager.h"
 #include "cozmoActions.h"
 
 #include "vizManager.h"
-#include "soundManager.h"
-
-
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -100,11 +100,12 @@ namespace Anki {
         }
         else {
           
+          /*
           if(cozmoEngine_->GetNumRobots() == 0) {
             PRINT_NAMED_ERROR("UiMessageHandler.NoRobotsToControl", "\n");
           }
           else {
-           
+           */
             // TODO: Look up the robotID associated with this UI device
             const RobotID_t robotID = 1;
             Robot* robot = cozmoEngine_->GetRobotByID(robotID);
@@ -124,7 +125,7 @@ namespace Anki {
               // method.
               retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
             //}
-          }
+          //}
         }
       } // if(robotMgr_ != NULL)
       

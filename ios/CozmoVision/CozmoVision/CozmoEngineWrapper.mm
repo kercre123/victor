@@ -20,8 +20,8 @@
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
-#import <anki/cozmo/basestation/game/gameComms.h>
-#import <anki/cozmo/basestation/game/gameMessageHandler.h>
+//#import <anki/cozmo/basestation/game/gameComms.h>
+//#import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
@@ -93,16 +93,8 @@ using namespace Anki;
   CFAbsoluteTime _firstHeartbeatTimestamp;
   CFAbsoluteTime _lastHeartbeatTimestamp;
 
-  BOOL                      _iAmHost;
-  Cozmo::CozmoEngine*       _cozmoEngine;
-  Cozmo::CozmoGameHost*     _cozmoGame;
+  Cozmo::CozmoGame*         _cozmoGame;
   
-  // For handling communications coming from the game:
-  Cozmo::GameMessageHandler* _gameMsgHandler;
-  Cozmo::GameComms*          _gameComms;
-  
-  //Anki::Cozmo::BasestationMain*   _basestation;
-
   // Timestamp of last image we asked for from the robot
   // TODO: need one per robot?
   TimeStamp_t               _lastImageTimestamp;
@@ -129,8 +121,6 @@ using namespace Anki;
   if (!(self = [super init]))
     return self;
   
-  _cozmoEngine = nullptr;
-
   self.runState = CozmoEngineRunStateNone;
 
   self._heartbeatListeners = [NSMutableArray new];
@@ -226,28 +216,7 @@ using namespace Anki;
   return NO;
 }
 
-#pragma mark - Game Message Callbacks
 
-- (void) handleRobotAvailable:(const Cozmo::MessageG2U_RobotAvailable&) msg
-{
-  // For now, just add all robots that advertise
-  // TODO: Probably want to display available robots in the UI somewhere and only connect once selected
-  if(true == _cozmoEngine->ConnectToRobot(msg.robotID)) {
-    NSLog(@"Connected to robot with ID=%d.\n", msg.robotID);
-  }
-}
-
-- (void) handleUiDeviceAvailable:(const Cozmo::MessageG2U_UiDeviceAvailable&) msg
-{
-  if(true == _cozmoGame->ConnectToUiDevice(msg.deviceID)) {
-    NSLog(@"Connected to UI device with ID=%d.\n", msg.deviceID);
-  }
-}
-
-- (void) handlePlayRobotSound:(const Cozmo::MessageG2U_PlaySound&) msg
-{
-  
-}
 
 
 #pragma mark - Engine state methods
@@ -262,36 +231,13 @@ using namespace Anki;
   int uiDeviceID = (asHost ? 1 : 2);
   self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP
                                                                withDeviceID:uiDeviceID];
-
-  if(_cozmoEngine != nullptr) {
-    delete _cozmoEngine;
-    _cozmoEngine = nullptr;
-  }
   
   if(_cozmoGame != nullptr) {
     delete _cozmoGame;
     _cozmoGame = nullptr;
   }
   
-  if (_gameComms) {
-    delete _gameComms;
-    _gameComms = nil;
-  }
-  if (_gameMsgHandler) {
-    delete _gameMsgHandler;
-    _gameMsgHandler = nil;
-  }
-  
-  _gameComms = new Cozmo::GameComms(uiDeviceID, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
-                                    [self._hostAdvertisingIP UTF8String],
-                                    Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
-  
-  _gameMsgHandler = new Cozmo::GameMessageHandler();
-  _gameMsgHandler->Init(_gameComms);
-  
   if(asHost) {
-    _iAmHost = YES;
-    
     //Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
     //cozmoEngineHost->Init(_config);
     
@@ -300,35 +246,12 @@ using namespace Anki;
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
-      _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+      //_cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
     }
     
-    auto robotAvailableCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_RobotAvailable& msg) {
-      [self handleRobotAvailable:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
-   
-    auto playRobotSoundCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_PlaySound& msg) {
-      [self handlePlayRobotSound:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
-    
-    auto uiDeviceAvailaleCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
-      [self handleUiDeviceAvailable:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailaleCallbackLambda);
-    
-    //_cozmoEngine = cozmoEngineHost;
-    
   } else { // as Client
-    _iAmHost = NO;
-    
-    Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
-    cozmoEngineClient->Init(_config);
-    _cozmoEngine = cozmoEngineClient;
+    _cozmoGame = new Anki::Cozmo::CozmoGameClient();
+    _cozmoGame->Init(_config);
   }
   
   [self resetHeartbeatTimer];
@@ -418,47 +341,8 @@ using namespace Anki;
   
   {
     using namespace Anki::Cozmo;
-    
-    // TODO: Fix so we don't have to check IsHost() and do reinterpret_cast here
-    if(_iAmHost) {
-      // Host Mode Update
-      _cozmoGame->Update(thisHeartbeatTimestamp);
-      
-    } else {
-      // Client Mode Update
-      Anki::Result status = _cozmoEngine->Update(thisHeartbeatTimestamp);
-      if (status != Anki::RESULT_OK) {
-        DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
-      }
-    }
-  
-    /*
-      // Connect to any robots we see:
-      static bool haveRobot = false;
-      if(!haveRobot) {
-        std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-        _cozmoEngine->GetAdvertisingRobots(advertisingRobots);
-        for(auto robot : advertisingRobots) {
-          if(_cozmoEngine->ConnectToRobot(robot)) {
-            NSLog(@"Connected to robot %d\n", robot);
-            haveRobot = true;
-          }
-        }
-      }
-    
-    
-      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
-      assert(cozmoEngineHost != nullptr);
-      // Connect to any UI devices we see:
-      std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-      cozmoEngineHost->GetAdvertisingUiDevices(advertisingUiDevices);
-      for(auto device : advertisingUiDevices) {
-        if(cozmoEngineHost->ConnectToUiDevice(device)) {
-          NSLog(@"Connected to UI device %d\n", device);
-        }
-      }
-    }
-     */
+
+    _cozmoGame->Update(thisHeartbeatTimestamp);
     
     [self.cozmoOperator update];
   
@@ -484,13 +368,14 @@ using namespace Anki;
 
 #pragma mark - Public methods
 
-- (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
+- (UIImage*)imageFrameWithRobotId:(uint8_t)robotId
 {
   using namespace Anki;
   
   UIImage *imageFrame = nil;
   Vision::Image img;
-  if (true == _cozmoEngine->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
+  
+  if(true == _cozmoGame->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
@@ -508,6 +393,8 @@ using namespace Anki;
   
   NSMutableArray* boundingBoxes = nil;
   
+  // TODO: Put this back
+  /*
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
   if( true == _cozmoEngine->GetCurrentVisionMarkers(robotId, observations))
   {
@@ -529,14 +416,14 @@ using namespace Anki;
       }
     } // if(!observations.empty())
   }
-  
+  */
   return boundingBoxes;
 }
 
 - (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
 {
   Anki::Cozmo::MessageVisionMarker msg;
-  if(true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
+  if(true == _cozmoGame->CheckDeviceVisionProcessingMailbox(msg)) {
     
     Float32 xMin = fmin(fmin(msg.x_imgLowerLeft, msg.x_imgLowerRight),
                         fmin(msg.x_imgUpperLeft, msg.x_imgUpperRight));
@@ -560,12 +447,12 @@ using namespace Anki;
 
 - (void) processDeviceImage:(Anki::Vision::Image&)image
 {
-  _cozmoEngine->ProcessDeviceImage(image);
+  _cozmoGame->ProcessDeviceImage(image);
 }
 
 - (BOOL) wasLastDeviceImageProcessed
 {
-  if(true == _cozmoEngine->WasLastDeviceImageProcessed()) {
+  if(true == _cozmoGame->WasLastDeviceImageProcessed()) {
     return YES;
   } else {
     return NO;

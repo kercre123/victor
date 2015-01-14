@@ -8,6 +8,7 @@ namespace Cozmo {
 
   GameMessageHandler::GameMessageHandler()
   : comms_(NULL)
+  , isInitialized_(false)
   {
     
   }
@@ -29,6 +30,11 @@ namespace Cozmo {
     
     return retVal;
   }
+  
+  bool GameMessageHandler::IsInitialized() const {
+    return isInitialized_;
+  }
+  
   
       Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const UiMessage& msg)
       {

@@ -304,10 +304,7 @@
     NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
     BOOL soundPlayed = [self.targetingSoundPlayer playAtTime:nextPlayTime];
     if(soundPlayed == YES) {
-      NSLog(@"Think i played targeting sound\n");
       self.targetingSoundCurrentlyPlaying = YES;
-    } else {
-      NSLog(@"Failed to play targeting sound.\n");
     }
   }
 }

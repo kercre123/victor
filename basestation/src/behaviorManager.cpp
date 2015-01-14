@@ -14,7 +14,6 @@
 #include "cozmoActions.h"
 #include "pathPlanner.h"
 #include "vizManager.h"
-#include "soundManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
@@ -23,6 +22,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 // The angle wrt the mat at which the user is expected to be.

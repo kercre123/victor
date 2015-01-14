@@ -40,6 +40,8 @@ namespace Cozmo {
     // TODO: Change these to interface references so they can be stubbed as well
     virtual Result Init(Comms::IComms* comms) = 0;
     
+    virtual bool IsInitialized() const = 0;
+    
     virtual Result ProcessMessages() = 0;
     
     virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) = 0;
@@ -55,6 +57,8 @@ namespace Cozmo {
     
     // Set the message handler's communications manager
     virtual Result Init(Comms::IComms* comms);
+    
+    virtual bool IsInitialized() const override;
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
@@ -112,19 +116,23 @@ namespace Cozmo {
   {
     GameMessageHandlerStub() { }
     
-    Result Init(Comms::IComms* comms)
+    virtual Result Init(Comms::IComms* comms) override
     {
       return RESULT_OK;
     }
     
+    virtual bool IsInitialized() const override {
+      return true;
+    }
+    
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
-    Result ProcessMessages() {
+    virtual Result ProcessMessages() override {
       return RESULT_OK;
     }
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) {
+    virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) override {
       return RESULT_OK;
     }
 

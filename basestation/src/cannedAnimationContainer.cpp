@@ -13,10 +13,11 @@
 
 #include "cannedAnimationContainer.h"
 #include "robotMessageHandler.h"
-#include "soundManager.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "anki/cozmo/basestation/soundManager.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
