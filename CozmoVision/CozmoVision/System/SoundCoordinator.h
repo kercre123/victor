@@ -19,4 +19,6 @@
                     withDelay:(NSTimeInterval)delay_sec
                      numLoops:(NSInteger)numLoops; // -1 for infinite
 
+- (void) stop;
+
 @end

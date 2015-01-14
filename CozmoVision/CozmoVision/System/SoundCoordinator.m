@@ -78,5 +78,9 @@
   [self._activePlayers removeObject:player];
 }
 
+- (void) stop
+{
+  // TODO: Implement
+}
 
 @end
