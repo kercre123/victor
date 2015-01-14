@@ -16,15 +16,14 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/uiMessageHandler.h"
+#include "anki/cozmo/basestation/soundManager.h"
+
 #include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include "behaviorManager.h"
 #include "cozmoActions.h"
 
 #include "vizManager.h"
-#include "soundManager.h"
-
-
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"

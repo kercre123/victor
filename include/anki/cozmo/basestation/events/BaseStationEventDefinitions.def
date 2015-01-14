@@ -90,6 +90,16 @@ EVENT_END( ConnectToUiDevice )
 //----------------------------------------------------------------------------------------------------------------------
 // Game State Events ...
 
+//----------------------------------------------------------------------------------------------------------------------
+// Robot Events
+
+// TODO: This should not longer be necessary once robot has a speaker
+EVENT_BEGIN( PlaySoundForRobot, u32 soundID, u8 numLoops, u8 volume )
+  EVENT_ARG(u32, soundID)
+  EVENT_ARG(u8, numLoops)
+  EVENT_ARG(u8, volume)
+EVENT_END( PlaySoundForRobot )
+
 
 
 //----------------------------------------------------------------------------------------------------------------------

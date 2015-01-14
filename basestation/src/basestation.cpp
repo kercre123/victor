@@ -35,7 +35,6 @@
 #include "pathPlanner.h"
 #include "behaviorManager.h"
 #include "vizManager.h"
-#include "soundManager.h"
 
 
 namespace Anki {
@@ -310,7 +309,7 @@ namespace Cozmo {
   void BasestationMainImpl::RemoveSingletons()
   {
     VizManager::removeInstance();
-    SoundManager::removeInstance();
+    //SoundManager::removeInstance();
   }
 
     

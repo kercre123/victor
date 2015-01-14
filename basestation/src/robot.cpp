@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -853,39 +854,8 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-#     if ANKI_IOS_BUILD
-      // Use iOS device to play the sound
-      
-      // TODO: Trigger event to play the sound
-      
-      /*
-      if(_uiMsgHandler != nullptr)
-      {
-        // TODO: Need to assign the right device ID
-        MessageG2U_PlaySound msg;
-        msg.numLoops = 1;
-        msg.volume   = volume;
-        const std::string& filename = SoundManager::getInstance()->GetSoundFile(soundID);
-        strncpy(&(msg.animationFilename[0]), filename.c_str(), msg.animationFilename.size());
-        
-        return _uiMsgHandler->SendMessage(1, msg);
-      } else {
-       */
-        PRINT_NAMED_ERROR("Robot.PlaySound.NoUiMessageHandler",
-                          "Must set UI Message Handler before calling PlaySound.");
-        return RESULT_FAIL;
-
-       
-#     else
-      
-      // Use SoundManager::
-      Result lastResult = RESULT_FAIL;
-      if(true == SoundManager::getInstance()->Play(soundID, numLoops, volume)) {
-        lastResult = RESULT_OK;
-      }
-      return lastResult;
-      
-#     endif
+      BSE_PlaySoundForRobot::RaiseEvent(soundID, numLoops, volume);
+      return RESULT_OK;
     } // PlaySound()
       
       

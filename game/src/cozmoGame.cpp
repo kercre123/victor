@@ -12,6 +12,7 @@
 #include "anki/cozmo/game/cozmoGame.h"
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/events/BaseStationEvent.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
@@ -113,6 +114,9 @@ namespace Cozmo {
     BSE_RobotAvailable::Unregister( this );
     BSE_ConnectToRobot::Unregister( this );
     BSE_ConnectToUiDevice::Unregister( this );
+    
+    // Other tear-down:
+    SoundManager::removeInstance();
   }
   
   Result CozmoGameHostImpl::Init(const Json::Value& config)
@@ -339,6 +343,35 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaised", "Failed to connected to UI device %d!\n", deviceID);
         }
       }
+        
+      case BSETYPE_PlaySoundForRobot:
+      {
+        const BSE_PlaySoundForRobot* playEvent = reinterpret_cast<const BSE_PlaySoundForRobot*>(event);
+        
+#if     ANKI_IOS_BUILD
+        // Tell the host UI device to play a sound:
+        MessageG2U_PlaySound msg;
+        msg.numLoops = playEvent->numLoops_;
+        msg.volume   = playEvent->volume_;
+        const std::string& filename = SoundManager::getInstance()->GetSoundFile((SoundID_t)playEvent->soundID_);
+        strncpy(&(msg.soundFilename[0]), filename.c_str(), msg.soundFilename.size());
+        
+        bool success = RESULT_OK == _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+        
+#       else
+        // Use SoundManager::
+        bool success = SoundManager::getInstance()->Play((SoundID_t)playEvent->soundID_,
+                                                         playEvent->numLoops_,
+                                                         playEvent->volume_);
+#       endif
+        
+        if(!success) {
+          PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaise.PlaySoundForRobot",
+                            "SoundManager failed to play sound ID %d.\n", playEvent->soundID_);
+        }
+        
+        break;
+      } // BSETYPE_PlaySoundForRobot
         
         /*
       case BSETYPE_DeviceDetectedVisionMarker:
