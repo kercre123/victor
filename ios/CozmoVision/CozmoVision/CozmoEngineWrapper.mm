@@ -93,9 +93,7 @@ using namespace Anki;
   CFAbsoluteTime _firstHeartbeatTimestamp;
   CFAbsoluteTime _lastHeartbeatTimestamp;
 
-  BOOL                      _iAmHost;
-  Cozmo::CozmoEngine*       _cozmoEngine;
-  Cozmo::CozmoGameHost*     _cozmoGame;
+  Cozmo::CozmoGame*         _cozmoGame;
   
   // Timestamp of last image we asked for from the robot
   // TODO: need one per robot?
@@ -123,8 +121,6 @@ using namespace Anki;
   if (!(self = [super init]))
     return self;
   
-  _cozmoEngine = nullptr;
-
   self.runState = CozmoEngineRunStateNone;
 
   self._heartbeatListeners = [NSMutableArray new];
@@ -235,11 +231,6 @@ using namespace Anki;
   int uiDeviceID = (asHost ? 1 : 2);
   self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP
                                                                withDeviceID:uiDeviceID];
-
-  if(_cozmoEngine != nullptr) {
-    delete _cozmoEngine;
-    _cozmoEngine = nullptr;
-  }
   
   if(_cozmoGame != nullptr) {
     delete _cozmoGame;
@@ -247,8 +238,6 @@ using namespace Anki;
   }
   
   if(asHost) {
-    _iAmHost = YES;
-    
     //Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
     //cozmoEngineHost->Init(_config);
     
@@ -257,17 +246,12 @@ using namespace Anki;
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
-      _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+      //_cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
     }
     
-    _cozmoEngine = _cozmoGame->GetEngine();
-    
   } else { // as Client
-    _iAmHost = NO;
-    
-    Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
-    cozmoEngineClient->Init(_config);
-    _cozmoEngine = cozmoEngineClient;
+    _cozmoGame = new Anki::Cozmo::CozmoGameClient();
+    _cozmoGame->Init(_config);
   }
   
   [self resetHeartbeatTimer];
@@ -357,47 +341,8 @@ using namespace Anki;
   
   {
     using namespace Anki::Cozmo;
-    
-    // TODO: Fix so we don't have to check IsHost() and do reinterpret_cast here
-    if(_iAmHost) {
-      // Host Mode Update
-      _cozmoGame->Update(thisHeartbeatTimestamp);
-      
-    } else {
-      // Client Mode Update
-      Anki::Result status = _cozmoEngine->Update(thisHeartbeatTimestamp);
-      if (status != Anki::RESULT_OK) {
-        DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
-      }
-    }
-  
-    /*
-      // Connect to any robots we see:
-      static bool haveRobot = false;
-      if(!haveRobot) {
-        std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-        _cozmoEngine->GetAdvertisingRobots(advertisingRobots);
-        for(auto robot : advertisingRobots) {
-          if(_cozmoEngine->ConnectToRobot(robot)) {
-            NSLog(@"Connected to robot %d\n", robot);
-            haveRobot = true;
-          }
-        }
-      }
-    
-    
-      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
-      assert(cozmoEngineHost != nullptr);
-      // Connect to any UI devices we see:
-      std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-      cozmoEngineHost->GetAdvertisingUiDevices(advertisingUiDevices);
-      for(auto device : advertisingUiDevices) {
-        if(cozmoEngineHost->ConnectToUiDevice(device)) {
-          NSLog(@"Connected to UI device %d\n", device);
-        }
-      }
-    }
-     */
+
+    _cozmoGame->Update(thisHeartbeatTimestamp);
     
     [self.cozmoOperator update];
   
@@ -430,7 +375,7 @@ using namespace Anki;
   UIImage *imageFrame = nil;
   Vision::Image img;
   
-  if(true == _cozmoEngine->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
+  if(true == _cozmoGame->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
@@ -478,8 +423,7 @@ using namespace Anki;
 - (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
 {
   Anki::Cozmo::MessageVisionMarker msg;
-  if(_cozmoEngine != nullptr &&
-     true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
+  if(true == _cozmoGame->CheckDeviceVisionProcessingMailbox(msg)) {
     
     Float32 xMin = fmin(fmin(msg.x_imgLowerLeft, msg.x_imgLowerRight),
                         fmin(msg.x_imgUpperLeft, msg.x_imgUpperRight));
@@ -503,12 +447,12 @@ using namespace Anki;
 
 - (void) processDeviceImage:(Anki::Vision::Image&)image
 {
-  _cozmoEngine->ProcessDeviceImage(image);
+  _cozmoGame->ProcessDeviceImage(image);
 }
 
 - (BOOL) wasLastDeviceImageProcessed
 {
-  if(true == _cozmoEngine->WasLastDeviceImageProcessed()) {
+  if(true == _cozmoGame->WasLastDeviceImageProcessed()) {
     return YES;
   } else {
     return NO;
