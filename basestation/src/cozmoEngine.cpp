@@ -350,13 +350,6 @@ namespace Cozmo {
   {
     if(!_isBasestationStarted)
     {
-      // Add connected_robots' IDs to config for basestation to use
-      _config[AnkiUtil::kP_CONNECTED_ROBOTS].clear();
-      for(auto & robotKeyPair : _connectedRobots) {
-        const int robotID = robotKeyPair.first;
-        _config[AnkiUtil::kP_CONNECTED_ROBOTS].append(robotID);
-      }
-      
       BasestationStatus status = _basestation.Init(&_robotComms, _config);
       if (status != BS_OK) {
         PRINT_NAMED_ERROR("Basestation.Init.Fail","Status = %d\n", status);
