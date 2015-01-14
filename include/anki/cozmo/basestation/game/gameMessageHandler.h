@@ -93,7 +93,7 @@ namespace Cozmo {
     struct {
       u8 priority;
       u8 size;
-      Result (GameMessageHandler::*ProcessPacketAs)(RobotID_t id, const u8* );
+      Result (GameMessageHandler::*ProcessPacketAs)(const u8* );
     } lookupTable_[NUM_UI_MSG_IDS+1] = {
       {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
       

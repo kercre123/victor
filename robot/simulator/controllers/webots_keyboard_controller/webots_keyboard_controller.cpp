@@ -186,13 +186,13 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void ProcessMessageObjectVisionMarker(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
+      void ProcessMessageObjectVisionMarker(MessageG2U_ObjectVisionMarker const& msg)
       {
         // TODO: Do something with this message to notify UI
         printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
       }
 
-      void HandleRobotConnection(RobotID_t temp, const MessageG2U_RobotAvailable& msgIn)
+      void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any robot that's
         // advertising (since we don't have a selection mechanism here)
@@ -202,7 +202,7 @@ namespace Anki {
         SendMessage(msgOut);
       }
       
-      void HandleUiDeviceConnection(RobotID_t temp, const MessageG2U_UiDeviceAvailable& msgIn)
+      void HandleUiDeviceConnection(const MessageG2U_UiDeviceAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any UI device that's
         // advertising (since we don't have a selection mechanism here)
