@@ -55,6 +55,11 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:filename];
 }
 
+void drawObservedVisionMarker(RobotID_t robotID, const Cozmo::MessageG2U_ObjectVisionMarker& msg)
+{
+  
+}
+
 - (void)commonInit
 {
 #ifdef __cplusplus
@@ -114,6 +119,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
     
     
     _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(&playSoundWrapper);
+    _gameMsgHandler->RegisterCallbackForMessageG2U_ObjectVisionMarker(&drawObservedVisionMarker);
   }
   
 }
