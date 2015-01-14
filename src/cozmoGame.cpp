@@ -23,17 +23,123 @@
 
 namespace Anki {
 namespace Cozmo {
-
-#pragma mark - CozmoGameHost Implementation
   
-  class CozmoGameHostImpl : public IBaseStationEventListener
+#pragma mark - CozmoGame Implementation
+  class CozmoGameImpl : public IBaseStationEventListener
   {
   public:
-    enum PlaybackMode {
-      LIVE_SESSION_NO_RECORD = 0,
-      RECORD_SESSION,
-      PLAYBACK_SESSION
-    };
+    using RunState = CozmoGame::RunState;
+    
+    CozmoGameImpl();
+    virtual ~CozmoGameImpl();
+    
+    RunState GetRunState() const;
+    
+    //
+    // Vision API
+    //
+    bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
+    
+    void ProcessDeviceImage(const Vision::Image& image);
+    
+    bool WasLastDeviceImageProcessed();
+    
+    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
+    
+  protected:
+
+    // Derived classes must be able to provide a pointer to a CozmoEngine
+    virtual CozmoEngine* GetCozmoEngine() = 0;
+    
+    RunState         _runState;
+  };
+  
+  CozmoGameImpl::CozmoGameImpl()
+  : _runState(CozmoGame::STOPPED)
+  {
+    
+  }
+  
+  CozmoGameImpl::~CozmoGameImpl()
+  {
+    // NOTE: Do not delete _cozmoEngine pointer here. It's just a pointer to an
+    // engine living in the derived class, and its memory should be handled there.
+  }
+  
+  CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
+  {
+    return _runState;
+  }
+  
+  bool CozmoGameImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  {
+    return GetCozmoEngine()->GetCurrentRobotImage(robotId, img, newerThanTime);
+  }
+  
+  void CozmoGameImpl::ProcessDeviceImage(const Vision::Image& image)
+  {
+    GetCozmoEngine()->ProcessDeviceImage(image);
+  }
+  
+  bool CozmoGameImpl::WasLastDeviceImageProcessed()
+  {
+    return GetCozmoEngine()->WasLastDeviceImageProcessed();
+  }
+  
+  bool CozmoGameImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
+  {
+    return GetCozmoEngine()->CheckDeviceVisionProcessingMailbox(msg);
+  }
+  
+#pragma mark - CozmoGame Wrappers
+  
+  CozmoGame::CozmoGame()
+  : _impl(nullptr)
+  {
+    // NOTE: _impl should be set by the derived classes' constructors
+  }
+  
+  CozmoGame::~CozmoGame()
+  {
+    // Let it be derived class's problem to delete their implementations
+    _impl = nullptr;
+  }
+  
+  bool CozmoGame::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  {
+    assert(_impl != nullptr);
+    return _impl->GetCurrentRobotImage(robotId, img, newerThanTime);
+  }
+  
+  void CozmoGame::ProcessDeviceImage(const Vision::Image& image)
+  {
+    _impl->ProcessDeviceImage(image);
+  }
+  
+  bool CozmoGame::WasLastDeviceImageProcessed()
+  {
+    return _impl->WasLastDeviceImageProcessed();
+  }
+  
+  CozmoGame::RunState CozmoGame::GetRunState() const
+  {
+    assert(_impl != nullptr);
+    return _impl->GetRunState();
+  }
+  
+  bool CozmoGame::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
+  {
+    return _impl->CheckDeviceVisionProcessingMailbox(msg);
+  }
+  
+#pragma mark - CozmoGameHost Implementation
+  
+  class CozmoGameHostImpl : public CozmoGameImpl
+  {
+  public:
+    
+    using RunState = CozmoGameHost::RunState;
+    using PlaybackMode = CozmoGameHost::PlaybackMode;
     
     using AdvertisingUiDevice = CozmoGameHost::AdvertisingUiDevice;
     using AdvertisingRobot    = CozmoGameHost::AdvertisingRobot;
@@ -53,22 +159,15 @@ namespace Cozmo {
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
     
-    CozmoEngineHost* GetEngine();
-    
-  private:
+  protected:
     
     // Process raised events from CozmoEngine.
     // Req'd by IBaseStationEventListener
     virtual void OnEventRaised( const IBaseStationEventInterface* event ) override;
     
-    enum RunState {
-      STOPPED = 0
-      ,WAITING_FOR_UI_DEVICES
-      ,WAITING_FOR_ROBOTS
-      ,ENGINE_RUNNING
-    };
+    // Req'd by CozmoGameImpl
+    virtual CozmoEngine* GetCozmoEngine() { return &_cozmoEngine; }
     
-    RunState                     _runState;
     int                          _desiredNumUiDevices = 1;
     int                          _desiredNumRobots = 1;
     
@@ -86,8 +185,7 @@ namespace Cozmo {
   
   
   CozmoGameHostImpl::CozmoGameHostImpl()
-  : _runState(STOPPED)
-  , _uiAdvertisementService("UIAdvertisementService")
+  : _uiAdvertisementService("UIAdvertisementService")
   , _hostUiDeviceID(1)
   {
     // Register for all events of interest here:
@@ -169,7 +267,7 @@ namespace Cozmo {
       _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
     }
     
-    _runState = WAITING_FOR_UI_DEVICES;
+    _runState = CozmoGameHost::WAITING_FOR_UI_DEVICES;
 
       return RESULT_OK;
   }
@@ -224,11 +322,11 @@ namespace Cozmo {
     
     switch(_runState)
     {
-      case STOPPED:
+      case CozmoGameHost::STOPPED:
         // Nothing to do
         break;
         
-      case WAITING_FOR_UI_DEVICES:
+      case CozmoGameHost::WAITING_FOR_UI_DEVICES:
       {
         _uiAdvertisementService.Update();
 
@@ -257,12 +355,12 @@ namespace Cozmo {
                            "Enough UI devices connected (%d), will wait for %d robots.\n",
                            _desiredNumUiDevices, _desiredNumRobots);
           _cozmoEngine.ListenForRobotConnections(true);
-          _runState = WAITING_FOR_ROBOTS;
+          _runState = CozmoGameHost::WAITING_FOR_ROBOTS;
         }
         break;
       }
     
-      case WAITING_FOR_ROBOTS:
+      case CozmoGameHost::WAITING_FOR_ROBOTS:
       {
         Result status = _cozmoEngine.Update(SEC_TO_NANOS(currentTime_sec));
         if (status != RESULT_OK) {
@@ -277,12 +375,12 @@ namespace Cozmo {
                            _desiredNumRobots);
           // TODO: We could keep listening for others to join mid-game...
           _cozmoEngine.ListenForRobotConnections(false);
-          _runState = ENGINE_RUNNING;
+          _runState = CozmoGameHost::ENGINE_RUNNING;
         }
         break;
       }
         
-      case ENGINE_RUNNING:
+      case CozmoGameHost::ENGINE_RUNNING:
       {
         Result status = _cozmoEngine.Update(SEC_TO_NANOS(currentTime_sec));
         if (status != RESULT_OK) {
@@ -303,11 +401,6 @@ namespace Cozmo {
      }
      */
   } // Update()
-  
-  CozmoEngineHost* CozmoGameHostImpl::GetEngine()
-  {
-    return &_cozmoEngine;
-  }
   
   // Process raised events from CozmoEngine
   void CozmoGameHostImpl::OnEventRaised( const IBaseStationEventInterface* event )
@@ -358,7 +451,7 @@ namespace Cozmo {
       {
         const BSE_PlaySoundForRobot* playEvent = reinterpret_cast<const BSE_PlaySoundForRobot*>(event);
         
-#if     ANKI_IOS_BUILD
+#       if ANKI_IOS_BUILD
         // Tell the host UI device to play a sound:
         MessageG2U_PlaySound msg;
         msg.numLoops = playEvent->numLoops_;
@@ -442,45 +535,133 @@ namespace Cozmo {
   
   CozmoGameHost::CozmoGameHost()
   {
-    _impl = new CozmoGameHostImpl();
+    _hostImpl = new CozmoGameHostImpl();
+    
+    // Set base class's impl pointer
+    _impl = _hostImpl;
   }
   
   CozmoGameHost::~CozmoGameHost()
   {
-    delete _impl;
+    delete _hostImpl;
   }
   
   bool CozmoGameHost::Init(const Json::Value &config)
   {
-    return _impl->Init(config) == RESULT_OK;
+    return _hostImpl->Init(config) == RESULT_OK;
   }
   
   void CozmoGameHost::ForceAddRobot(int              robotID,
                                     const char*      robotIP,
                                     bool             robotIsSimulated)
   {
-    _impl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
+    _hostImpl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
   }
   
+  /*
   bool CozmoGameHost::ConnectToRobot(AdvertisingRobot whichRobot)
   {
-    return _impl->ConnectToRobot(whichRobot);
+    return _hostImpl->ConnectToRobot(whichRobot);
   }
   
   bool CozmoGameHost::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
   {
-    return _impl->ConnectToUiDevice(whichDevice);
+    return _hostImpl->ConnectToUiDevice(whichDevice);
   }
+   */
   
   void CozmoGameHost::Update(const float currentTime_sec)
   {
-    _impl->Update(currentTime_sec);
+    _hostImpl->Update(currentTime_sec);
   }
   
-  CozmoEngineHost* CozmoGameHost::GetEngine()
+  
+#pragma mark - CozmoGameClient Implementation
+  
+  class CozmoGameClientImpl : public CozmoGameImpl
   {
-    return _impl->GetEngine();
+  public:
+    using RunState = CozmoGame::RunState;
+    
+    CozmoGameClientImpl();
+    virtual ~CozmoGameClientImpl();
+    
+    Result Init(const Json::Value& config);
+    void Update(const float currentTime_sec);
+    RunState GetRunState() const;
+    
+  protected:
+    
+    // Process raised events from CozmoEngine.
+    // Req'd by IBaseStationEventListener
+    virtual void OnEventRaised( const IBaseStationEventInterface* event ) override;
+
+    // Req'd by CozmoGameImpl
+    virtual CozmoEngine* GetCozmoEngine() { return &_cozmoEngine; }
+    
+    RunState           _runState;
+    CozmoEngineClient  _cozmoEngine;
+    
+  }; // class CozmoGameClientImpl
+  
+  CozmoGameClientImpl::CozmoGameClientImpl()
+  : _runState(CozmoGame::STOPPED)
+  {
+    
   }
+  
+  CozmoGameClientImpl::~CozmoGameClientImpl()
+  {
+
+  }
+  
+  Result CozmoGameClientImpl::Init(const Json::Value& config)
+  {
+    
+    return RESULT_OK;
+  }
+  
+  void CozmoGameClientImpl::Update(const float currentTime_sec)
+  {
+    _cozmoEngine.Update(currentTime_sec);
+  }
+  
+  CozmoGameClientImpl::RunState CozmoGameClientImpl::GetRunState() const
+  {
+    return _runState;
+  }
+  
+  void CozmoGameClientImpl::OnEventRaised( const IBaseStationEventInterface* event )
+  {
+    // TODO: Implement
+  }
+  
+#pragma mark - CozmoGameClient Wrappers
+  
+  CozmoGameClient::CozmoGameClient()
+  {
+    _clientImpl = new CozmoGameClientImpl();
+    
+    // Set base class's impl pointer
+    _impl = _clientImpl;
+  }
+  
+  CozmoGameClient::~CozmoGameClient()
+  {
+    delete _impl;
+  }
+  
+  bool CozmoGameClient::Init(const Json::Value& config)
+  {
+    return RESULT_OK == _clientImpl->Init(config);
+  }
+  
+  void CozmoGameClient::Update(const float currentTime_sec)
+  {
+    _clientImpl->Update(currentTime_sec);
+  }
+
+  
   
 } // namespace Cozmo
 } // namespace Anki
