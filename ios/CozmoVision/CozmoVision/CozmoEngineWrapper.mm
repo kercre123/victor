@@ -20,9 +20,14 @@
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
+#import <anki/cozmo/basestation/game/gameComms.h>
+#import <anki/cozmo/basestation/game/gameMessageHandler.h>
+#import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
 #import <anki/cozmo/basestation/cozmoEngine.h>
+#import <anki/cozmo/game/cozmoGame.h>
+
 
 // Comms
 //#import <anki/cozmo/basestation/multiClientComms.h>
@@ -55,6 +60,7 @@ const bool FORCED_ROBOT_IS_SIM = true;
 const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.19.238";
 
+using namespace Anki;
 
 @interface CozmoEngineWrapper ()
 
@@ -87,13 +93,19 @@ const char* forcedRobotIP = "192.168.19.238";
   CFAbsoluteTime _firstHeartbeatTimestamp;
   CFAbsoluteTime _lastHeartbeatTimestamp;
 
-  Anki::Cozmo::CozmoEngine*       _cozmoEngine;
+  BOOL                      _iAmHost;
+  Cozmo::CozmoEngine*       _cozmoEngine;
+  Cozmo::CozmoGameHost*     _cozmoGame;
+  
+  // For handling communications coming from the game:
+  Cozmo::GameMessageHandler* _gameMsgHandler;
+  Cozmo::GameComms*          _gameComms;
   
   //Anki::Cozmo::BasestationMain*   _basestation;
 
   // Timestamp of last image we asked for from the robot
   // TODO: need one per robot?
-  Anki::TimeStamp_t               _lastImageTimestamp;
+  TimeStamp_t               _lastImageTimestamp;
   
   // Comms
   //Anki::Cozmo::MultiClientComms*        _robotComms;
@@ -101,6 +113,8 @@ const char* forcedRobotIP = "192.168.19.238";
  
   //Anki::Comms::AdvertisementService*    _robotAdService;
   //Anki::Comms::AdvertisementService*    _uiAdService;
+  
+
 }
 
 
@@ -136,7 +150,6 @@ const char* forcedRobotIP = "192.168.19.238";
 {
   [self stop];
 }
-
 
 #pragma mark - Config Parameters
 
@@ -213,6 +226,30 @@ const char* forcedRobotIP = "192.168.19.238";
   return NO;
 }
 
+#pragma mark - Game Message Callbacks
+
+- (void) handleRobotAvailable:(const Cozmo::MessageG2U_RobotAvailable&) msg
+{
+  // For now, just add all robots that advertise
+  // TODO: Probably want to display available robots in the UI somewhere and only connect once selected
+  if(true == _cozmoEngine->ConnectToRobot(msg.robotID)) {
+    NSLog(@"Connected to robot with ID=%d.\n", msg.robotID);
+  }
+}
+
+- (void) handleUiDeviceAvailable:(const Cozmo::MessageG2U_UiDeviceAvailable&) msg
+{
+  if(true == _cozmoGame->ConnectToUiDevice(msg.deviceID)) {
+    NSLog(@"Connected to UI device with ID=%d.\n", msg.deviceID);
+  }
+}
+
+- (void) handlePlayRobotSound:(const Cozmo::MessageG2U_PlaySound&) msg
+{
+  
+}
+
+
 #pragma mark - Engine state methods
 
 - (BOOL) start:(BOOL)asHost
@@ -225,29 +262,72 @@ const char* forcedRobotIP = "192.168.19.238";
   int uiDeviceID = (asHost ? 1 : 2);
   self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP
                                                                withDeviceID:uiDeviceID];
-  
+
   if(_cozmoEngine != nullptr) {
     delete _cozmoEngine;
     _cozmoEngine = nullptr;
   }
   
-  // TODO: Get device camera calibration from somewhere. For now this is bogus.
-  Anki::Vision::CameraCalibration deviceCamCalib;
+  if(_cozmoGame != nullptr) {
+    delete _cozmoGame;
+    _cozmoGame = nullptr;
+  }
+  
+  if (_gameComms) {
+    delete _gameComms;
+    _gameComms = nil;
+  }
+  if (_gameMsgHandler) {
+    delete _gameMsgHandler;
+    _gameMsgHandler = nil;
+  }
+  
+  _gameComms = new Cozmo::GameComms(uiDeviceID, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
+                                    [self._hostAdvertisingIP UTF8String],
+                                    Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
+  
+  _gameMsgHandler = new Cozmo::GameMessageHandler();
+  _gameMsgHandler->Init(_gameComms);
   
   if(asHost) {
-    Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
-    cozmoEngineHost->Init(_config, deviceCamCalib);
+    _iAmHost = YES;
+    
+    //Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
+    //cozmoEngineHost->Init(_config);
+    
+    _cozmoGame = new Anki::Cozmo::CozmoGameHost();
+    _cozmoGame->Init(_config);
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
-      cozmoEngineHost->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+      _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
     }
-  
-    _cozmoEngine = cozmoEngineHost;
+    
+    auto robotAvailableCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_RobotAvailable& msg) {
+      [self handleRobotAvailable:msg];
+    };
+    
+    _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
+   
+    auto playRobotSoundCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_PlaySound& msg) {
+      [self handlePlayRobotSound:msg];
+    };
+    
+    _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
+    
+    auto uiDeviceAvailaleCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
+      [self handleUiDeviceAvailable:msg];
+    };
+    
+    _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailaleCallbackLambda);
+    
+    //_cozmoEngine = cozmoEngineHost;
     
   } else { // as Client
+    _iAmHost = NO;
+    
     Anki::Cozmo::CozmoEngineClient* cozmoEngineClient = new Anki::Cozmo::CozmoEngineClient();
-    cozmoEngineClient->Init(_config, deviceCamCalib);
+    cozmoEngineClient->Init(_config);
     _cozmoEngine = cozmoEngineClient;
   }
   
@@ -286,6 +366,8 @@ const char* forcedRobotIP = "192.168.19.238";
   // TODO: Provide ability to set these from app?
   _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = Anki::Cozmo::ROBOT_ADVERTISING_PORT;
   _config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = Anki::Cozmo::UI_ADVERTISING_PORT;
+  
+  // TODO: Set device camera calibration parameters in the config file
 }
 
 
@@ -309,11 +391,6 @@ const char* forcedRobotIP = "192.168.19.238";
 
 - (void)stop
 {
-  if(_cozmoEngine != nullptr) {
-    delete _cozmoEngine;
-    _cozmoEngine = nullptr;
-  }
-  
   self.cozmoOperator = nil;
   
   self.runState = CozmoEngineRunStateNone;
@@ -331,7 +408,7 @@ const char* forcedRobotIP = "192.168.19.238";
   CFTimeInterval thisHeartbeatTimestamp = CFAbsoluteTimeGetCurrent() - _firstHeartbeatTimestamp;
   CFTimeInterval thisHeartbeatDelta = thisHeartbeatTimestamp - _lastHeartbeatTimestamp;
   if(thisHeartbeatDelta > (self._heartbeatPeriod + 0.003)) {
-    DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
+    //DASWarn("RHLocalGame.heartBeatMissedByMS_f", "%lf", thisHeartbeatDelta * 1000.0);
   }
   _lastHeartbeatTimestamp = thisHeartbeatTimestamp;
 
@@ -343,8 +420,19 @@ const char* forcedRobotIP = "192.168.19.238";
     using namespace Anki::Cozmo;
     
     // TODO: Fix so we don't have to check IsHost() and do reinterpret_cast here
-    if(_cozmoEngine->IsHost()) {
+    if(_iAmHost) {
+      // Host Mode Update
+      _cozmoGame->Update(thisHeartbeatTimestamp);
       
+    } else {
+      // Client Mode Update
+      Anki::Result status = _cozmoEngine->Update(thisHeartbeatTimestamp);
+      if (status != Anki::RESULT_OK) {
+        DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
+      }
+    }
+  
+    /*
       // Connect to any robots we see:
       static bool haveRobot = false;
       if(!haveRobot) {
@@ -370,14 +458,10 @@ const char* forcedRobotIP = "192.168.19.238";
         }
       }
     }
+     */
     
     [self.cozmoOperator update];
-    
-    Anki::Result status = _cozmoEngine->Update(thisHeartbeatTimestamp);
-    if (status != Anki::RESULT_OK) {
-      DASWarn("CozmoEngine.Update.NotOK","Status %d\n", status);
-    }
-
+  
     // Call all listeners:
     [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoEngineWrapperHeartbeat:) withObject:self];
 

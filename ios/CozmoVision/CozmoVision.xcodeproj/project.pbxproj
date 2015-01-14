@@ -30,6 +30,7 @@
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
 		49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */ = {isa = PBXBuildFile; fileRef = 49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */; };
+		49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AD65681A64853200376685 /* libCozmo_Game.a */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
 		49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */; };
 		49C305E71A42437000CCA87B /* ObservedObjectSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C305E61A42437000CCA87B /* ObservedObjectSelector.m */; };
@@ -83,6 +84,7 @@
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CvVideoCameraReorient.m; sourceTree = "<group>"; };
 		49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CvVideoCameraReorient.h; sourceTree = "<group>"; };
+		49AD65681A64853200376685 /* libCozmo_Game.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Game.a; path = ../../build_ios/multiArchLibs/libCozmo_Game.a; sourceTree = "<group>"; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
 		49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoObsObjectBBox.h; sourceTree = "<group>"; };
 		49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CozmoObsObjectBBox.m; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */,
 				4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */,
 				4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */,
 				4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */,
@@ -189,6 +192,7 @@
 		499F44D41A255B120050A530 = {
 			isa = PBXGroup;
 			children = (
+				49AD65681A64853200376685 /* libCozmo_Game.a */,
 				4967D9DF1A32902D00EF0E90 /* JSON Config */,
 				499F44DF1A255B120050A530 /* CozmoVision */,
 				499F44DE1A255B120050A530 /* Products */,
@@ -612,14 +616,15 @@
 					"\"$(SRCROOT)/../../coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include",
+					"\"$(SRCROOT)/../../game/include\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -648,14 +653,15 @@
 					"\"$(SRCROOT)/../../coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include",
+					"\"$(SRCROOT)/../../game/include\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";

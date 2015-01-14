@@ -128,6 +128,8 @@
 {
   [NSUserDefaults setLastUseVisualTargeting:self.useAudioTargeting];
   [NSUserDefaults setLastUseAudioTargeting:self.useVisualTargeting];
+  
+  [_videoCamera stop];
 }
 
 - (NSUInteger)supportedInterfaceOrientations
@@ -239,7 +241,8 @@
     
     CGRect marker;
     int markerTypeOut;
-    
+
+
     while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
                                                       :&markerTypeOut])
     {
