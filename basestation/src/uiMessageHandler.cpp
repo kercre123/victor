@@ -19,8 +19,6 @@
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
-
 #include "behaviorManager.h"
 #include "cozmoActions.h"
 

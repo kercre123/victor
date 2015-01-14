@@ -28,6 +28,10 @@ namespace Anki {
     DEF_SIGNAL(CozmoEngineSignals,RobotConnect)
     DEF_SIGNAL(CozmoEngineSignals,RobotAvailable)
     DEF_SIGNAL(CozmoEngineSignals,UiDeviceAvailable)
+    
+    DEF_SIGNAL(CozmoEngineSignals,PlaySoundForRobot)
+    DEF_SIGNAL(CozmoEngineSignals,StopSoundForRobot)
+    
     DEF_SIGNAL(CozmoEngineSignals,DeviceDetectedVisionMarker)
     DEF_SIGNAL(CozmoEngineSignals,RobotObservedObject)
     

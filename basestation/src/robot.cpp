@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -854,15 +854,14 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-      BSE_PlaySoundForRobot::RaiseEvent(GetID(), soundID, numLoops, volume);
+      CozmoEngineSignals::GetPlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      BSE_StopSoundForRobot::RaiseEvent(GetID());
-      
+      CozmoEngineSignals::GetStopSoundForRobotSignal().emit(GetID());
     } // StopSound()
       
       

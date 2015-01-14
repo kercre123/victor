@@ -47,6 +47,14 @@ namespace Anki {
       DECL_SIGNAL(RobotConnect, RobotID_t robotID, bool successful)
       DECL_SIGNAL(RobotAvailable, RobotID_t robotID)
       DECL_SIGNAL(UiDeviceAvailable, UserDeviceID_t deviceID)
+      
+      
+      // Robot signals
+      DECL_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+      DECL_SIGNAL(StopSoundForRobot, RobotID_t robotID)
+      
+      
+      // Vision signals
       DECL_SIGNAL(DeviceDetectedVisionMarker,
                   uint8_t engineID, uint32_t markerType,
                   float x_upperLeft,  float y_upperLeft,
