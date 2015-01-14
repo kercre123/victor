@@ -61,7 +61,7 @@
 // Wait for 1 or more robots to connect before calling
 - (void)stop;
 
-- (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId;
+- (UIImage*)imageFrameWithRobotId:(uint8_t)robotId;
 
 - (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId;
 

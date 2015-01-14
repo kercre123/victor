@@ -20,8 +20,8 @@
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
-#import <anki/cozmo/basestation/game/gameComms.h>
-#import <anki/cozmo/basestation/game/gameMessageHandler.h>
+//#import <anki/cozmo/basestation/game/gameComms.h>
+//#import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
@@ -97,12 +97,6 @@ using namespace Anki;
   Cozmo::CozmoEngine*       _cozmoEngine;
   Cozmo::CozmoGameHost*     _cozmoGame;
   
-  // For handling communications coming from the game:
-  Cozmo::GameMessageHandler* _gameMsgHandler;
-  Cozmo::GameComms*          _gameComms;
-  
-  //Anki::Cozmo::BasestationMain*   _basestation;
-
   // Timestamp of last image we asked for from the robot
   // TODO: need one per robot?
   TimeStamp_t               _lastImageTimestamp;
@@ -226,28 +220,7 @@ using namespace Anki;
   return NO;
 }
 
-#pragma mark - Game Message Callbacks
 
-- (void) handleRobotAvailable:(const Cozmo::MessageG2U_RobotAvailable&) msg
-{
-  // For now, just add all robots that advertise
-  // TODO: Probably want to display available robots in the UI somewhere and only connect once selected
-  if(true == _cozmoEngine->ConnectToRobot(msg.robotID)) {
-    NSLog(@"Connected to robot with ID=%d.\n", msg.robotID);
-  }
-}
-
-- (void) handleUiDeviceAvailable:(const Cozmo::MessageG2U_UiDeviceAvailable&) msg
-{
-  if(true == _cozmoGame->ConnectToUiDevice(msg.deviceID)) {
-    NSLog(@"Connected to UI device with ID=%d.\n", msg.deviceID);
-  }
-}
-
-- (void) handlePlayRobotSound:(const Cozmo::MessageG2U_PlaySound&) msg
-{
-  
-}
 
 
 #pragma mark - Engine state methods
@@ -273,22 +246,6 @@ using namespace Anki;
     _cozmoGame = nullptr;
   }
   
-  if (_gameComms) {
-    delete _gameComms;
-    _gameComms = nil;
-  }
-  if (_gameMsgHandler) {
-    delete _gameMsgHandler;
-    _gameMsgHandler = nil;
-  }
-  
-  _gameComms = new Cozmo::GameComms(uiDeviceID, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
-                                    [self._hostAdvertisingIP UTF8String],
-                                    Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
-  
-  _gameMsgHandler = new Cozmo::GameMessageHandler();
-  _gameMsgHandler->Init(_gameComms);
-  
   if(asHost) {
     _iAmHost = YES;
     
@@ -303,25 +260,7 @@ using namespace Anki;
       _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
     }
     
-    auto robotAvailableCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_RobotAvailable& msg) {
-      [self handleRobotAvailable:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
-   
-    auto playRobotSoundCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_PlaySound& msg) {
-      [self handlePlayRobotSound:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
-    
-    auto uiDeviceAvailaleCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
-      [self handleUiDeviceAvailable:msg];
-    };
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailaleCallbackLambda);
-    
-    //_cozmoEngine = cozmoEngineHost;
+    _cozmoEngine = _cozmoGame->GetEngine();
     
   } else { // as Client
     _iAmHost = NO;
@@ -484,13 +423,14 @@ using namespace Anki;
 
 #pragma mark - Public methods
 
-- (UIImage*)imageFrameWtihRobotId:(uint8_t)robotId
+- (UIImage*)imageFrameWithRobotId:(uint8_t)robotId
 {
   using namespace Anki;
   
   UIImage *imageFrame = nil;
   Vision::Image img;
-  if (true == _cozmoEngine->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
+  
+  if(true == _cozmoEngine->GetCurrentRobotImage(robotId, img, _lastImageTimestamp))
   {
     // TODO: Somehow get rid of this copy, but still be threadsafe
     //cv::Mat_<u8> cvMatImg(nrows, ncols, const_cast<unsigned char*>(imageDataPtr));
@@ -508,6 +448,8 @@ using namespace Anki;
   
   NSMutableArray* boundingBoxes = nil;
   
+  // TODO: Put this back
+  /*
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
   if( true == _cozmoEngine->GetCurrentVisionMarkers(robotId, observations))
   {
@@ -529,14 +471,15 @@ using namespace Anki;
       }
     } // if(!observations.empty())
   }
-  
+  */
   return boundingBoxes;
 }
 
 - (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
 {
   Anki::Cozmo::MessageVisionMarker msg;
-  if(true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
+  if(_cozmoEngine != nullptr &&
+     true == _cozmoEngine->CheckDeviceVisionProcessingMailbox(msg)) {
     
     Float32 xMin = fmin(fmin(msg.x_imgLowerLeft, msg.x_imgLowerRight),
                         fmin(msg.x_imgUpperLeft, msg.x_imgUpperRight));
