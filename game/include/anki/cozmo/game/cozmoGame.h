@@ -12,12 +12,20 @@
 #ifndef ANKI_COZMO_GAME_HOST_H
 #define ANKI_COZMO_GAME_HOST_H
 
+#include "anki/common/types.h"
 #include "json/json.h"
 
 namespace Anki {
+  
+  // Forward declarations:
+  namespace Vision {
+    class Image;
+  }
+  
 namespace Cozmo {
 
   // Forward declarations:
+  class CozmoEngineHost;
   class CozmoGameHostImpl;
   
   class CozmoGameHost
@@ -47,6 +55,9 @@ namespace Cozmo {
     
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
+    
+    // TODO: Exposing the internal engine is probably not the right approach...
+    CozmoEngineHost* GetEngine();
     
   private:
     

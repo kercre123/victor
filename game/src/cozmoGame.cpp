@@ -53,6 +53,8 @@ namespace Cozmo {
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
     
+    CozmoEngineHost* GetEngine();
+    
   private:
     
     // Process raised events from CozmoEngine.
@@ -91,11 +93,12 @@ namespace Cozmo {
     // Register for all events of interest here:
     BSE_RobotConnect::Register( this );
     BSE_DeviceDetectedVisionMarker::Register( this );
-   
     BSE_RobotAvailable::Register( this );
     BSE_UiDeviceAvailable::Register( this );
     BSE_ConnectToRobot::Register( this );
     BSE_ConnectToUiDevice::Register( this );
+    BSE_PlaySoundForRobot::Register( this );
+    BSE_StopSoundForRobot::Register( this );
     
     PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
                      "Starting UIAdvertisementService, reg port %d, ad port %d\n",
@@ -114,6 +117,8 @@ namespace Cozmo {
     BSE_RobotAvailable::Unregister( this );
     BSE_ConnectToRobot::Unregister( this );
     BSE_ConnectToUiDevice::Unregister( this );
+    BSE_PlaySoundForRobot::Unregister( this );
+    BSE_StopSoundForRobot::Unregister( this );
     
     // Other tear-down:
     SoundManager::removeInstance();
@@ -297,6 +302,11 @@ namespace Cozmo {
      // TODO: stuff?
      }
      */
+  } // Update()
+  
+  CozmoEngineHost* CozmoGameHostImpl::GetEngine()
+  {
+    return &_cozmoEngine;
   }
   
   // Process raised events from CozmoEngine
@@ -359,7 +369,7 @@ namespace Cozmo {
         bool success = RESULT_OK == _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
         
 #       else
-        // Use SoundManager::
+        // Use SoundManager:
         bool success = SoundManager::getInstance()->Play((SoundID_t)playEvent->soundID_,
                                                          playEvent->numLoops_,
                                                          playEvent->volume_);
@@ -372,6 +382,21 @@ namespace Cozmo {
         
         break;
       } // BSETYPE_PlaySoundForRobot
+        
+      case BSETYPE_StopSoundForRobot:
+      {
+#       if ANKI_IOS_BUILD
+        // Tell the host UI device to stop the sound
+        // TODO: somehow use the robot ID?
+        MessageG2U_StopSound msg;
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+#       else
+        // Use SoundManager:
+        SoundManager::getInstance()->Stop();
+#       endif
+        
+        break;
+      }
         
         /*
       case BSETYPE_DeviceDetectedVisionMarker:
@@ -450,6 +475,11 @@ namespace Cozmo {
   void CozmoGameHost::Update(const float currentTime_sec)
   {
     _impl->Update(currentTime_sec);
+  }
+  
+  CozmoEngineHost* CozmoGameHost::GetEngine()
+  {
+    return _impl->GetEngine();
   }
   
 } // namespace Cozmo

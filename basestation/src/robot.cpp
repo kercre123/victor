@@ -854,31 +854,15 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-      BSE_PlaySoundForRobot::RaiseEvent(soundID, numLoops, volume);
+      BSE_PlaySoundForRobot::RaiseEvent(GetID(), soundID, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-#     if ANKI_IOS_BUILD
+      BSE_StopSoundForRobot::RaiseEvent(GetID());
       
-      // TODO: Make this an event
-      /*
-      // Use iOS device to play the sound
-      if(_uiMsgHandler != nullptr)
-      {
-        // TODO: Need to assign the right device ID
-        MessageG2U_StopSound msg;
-        _uiMsgHandler->SendMessage(1, msg);
-      } else {
-       */
-        PRINT_NAMED_ERROR("Robot.StopSound.NoUiMessageHandler",
-                          "Must set UI Message Handler before calling StopSound.");
-      
-#     else
-      SoundManager::getInstance()->Stop();
-#     endif
     } // StopSound()
       
       
