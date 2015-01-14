@@ -6,6 +6,8 @@ import os
 cameraId = 0
 captureBaseFilename = '/Users/pbarnum/tmp/image_'
 
+saveColor = True
+
 print('Starting camera...')
 
 cap0 = cv2.VideoCapture(cameraId)
@@ -32,7 +34,8 @@ while(True):
 
     ret, leftImage = cap0.read()
 
-    leftImage = cv2.cvtColor(leftImage, cv2.COLOR_BGR2GRAY)
+    if not saveColor:
+      leftImage = cv2.cvtColor(leftImage, cv2.COLOR_BGR2GRAY)
 
     cv2.imshow('leftImage', leftImage)
 
