@@ -76,6 +76,11 @@ void updateTimings()
       }
     }
     
+    // If we received too many bytes, just throw the rest out
+    while(Serial.available()) {
+      Serial.read();
+    }
+    
     for(int iLed=0; iLed<numLeds; iLed++) {
       ledIsOn[iLed] = false;
       nextLedSwitchTime[iLed] = 0;
