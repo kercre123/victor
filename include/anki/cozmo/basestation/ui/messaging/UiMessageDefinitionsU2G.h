@@ -44,6 +44,16 @@ ADD_MESSAGE_MEMBER(u8,  fooMember3)
 END_MESSAGE_DEFINITION(Foo)
 #endif
 
+// ConnectToRobot
+START_MESSAGE_DEFINITION(U2G_ConnectToRobot, 1)
+ADD_MESSAGE_MEMBER(u8, robotID)
+END_MESSAGE_DEFINITION(U2G_ConnectToRobot)
+
+// ConnectToUiDevice
+START_MESSAGE_DEFINITION(U2G_ConnectToUiDevice, 1)
+ADD_MESSAGE_MEMBER(u8, deviceID)
+END_MESSAGE_DEFINITION(U2G_ConnectToUiDevice)
+
 // DriveWheels
 START_MESSAGE_DEFINITION(U2G_DriveWheels, 1)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
@@ -227,6 +237,17 @@ END_MESSAGE_DEFINITION(U2G_StartLookingForMarkers)
 // StopLookingForMarkers
 START_MESSAGE_DEFINITION(U2G_StopLookingForMarkers, 1)
 END_MESSAGE_DEFINITION(U2G_StopLookingForMarkers)
+
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(U2G_SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, autoexposureOn)
+ADD_MESSAGE_MEMBER(f32, exposureTime)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(U2G_SetVisionSystemParams)
 
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(U2G_SetFaceDetectParams, 1)

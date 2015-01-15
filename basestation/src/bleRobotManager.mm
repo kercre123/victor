@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/bleRobotManager.h"
+#include "bleRobotManager.h"
 #include "BLEManager/BLEVehicleManager.h"
 
 

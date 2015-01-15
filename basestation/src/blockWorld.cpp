@@ -1,26 +1,28 @@
 
 // TODO: this include is shared b/w BS and Robot.  Move up a level.
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
 #include "ramp.h"
 
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "vizManager.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
@@ -39,7 +41,7 @@ namespace Anki
     const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
     const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
     const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA _robotBOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
+    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
     const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
   }
   
@@ -1092,6 +1094,21 @@ namespace Anki
         
         // TODO: Deal with unknown markers?
         
+        // Notify any listeners with the bounding boxes and IDs of any objects we
+        // observed
+        if(numObjectsObserved > 0) {
+          for(auto & obsObject : _obsProjectedObjects) {
+            const Rectangle<f32>& bbox = obsObject.second;
+            CozmoEngineSignals::GetRobotObservedObjectSignal().emit(_robot->GetID(), obsObject.first.GetValue(),
+                                                                    bbox.GetX(), bbox.GetY(),
+                                                                    bbox.GetWidth(), bbox.GetHeight());
+            
+            // Display
+            Quad2f quad;
+            obsObject.second.GetQuad(quad);
+            VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
+          }
+        }
         
         // Keep track of how many markers went unused by either robot or block
         // pose updating processes above

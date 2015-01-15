@@ -10,7 +10,7 @@
  *
  **/
 #include "anki/cozmo/basestation/game/gameComms.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
@@ -34,25 +34,18 @@ namespace Cozmo {
   
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
   
-  GameComms::GameComms(int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
+  GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
   : isInitialized_(false)
+  , deviceID_(deviceID)
+  , serverListenPort_(serverListenPort)
+  , advertisementRegIP_(advertisementRegIP)
+  , advertisementRegPort_(advertisementRegPort)
   {
-    // Start server
-    if (server_.StartListening(serverListenPort)) {
-
-      // Register with advertisement service
-      if (regClient_.Connect(advertisementRegIP, advertisementRegPort)) {
-        regMsg_.id = 1; // TODO: Get this ID from somewhere...
-        strcpy((char*)regMsg_.ip, GetLocalIP());
-        regMsg_.port = serverListenPort;
-        regMsg_.protocol = Anki::Comms::TCP;
-        
-        isInitialized_ = true;
-      } else {
-        printf("GameComms: failed to connect to advertisement service\n");
-      }
+    if (false == server_.StartListening(serverListenPort_)) {
+      PRINT_NAMED_ERROR("GameComms.Constructor", "Failed to start listening on port %d\n", serverListenPort_);
     }
   }
+ 
   
   GameComms::~GameComms()
   {
@@ -101,6 +94,20 @@ namespace Cozmo {
   
   void GameComms::Update()
   {
+    if(!IsInitialized()) {
+      // Register with advertisement service
+      if (regClient_.Connect(advertisementRegIP_, advertisementRegPort_)) {
+        regMsg_.id = deviceID_;
+        strcpy((char*)regMsg_.ip, GetLocalIP());
+        regMsg_.port = serverListenPort_;
+        regMsg_.protocol = Anki::Comms::TCP;
+        
+        isInitialized_ = true;
+      } else {
+        printf("GameComms: waiting to connect to advertisement service...\n");
+        return;
+      }
+    }
     
     // Listen for client if don't already have one.
     if (!server_.HasClient()) {
@@ -317,7 +324,7 @@ namespace Cozmo {
         // Does address start with 192?
         if (strncmp(host, "192.", 4) == 0)
         {
-          printf("Local host IP: %s\n", host);
+          printf("GameComms: Local host IP = %s\n", host);
           break;
         }
       }

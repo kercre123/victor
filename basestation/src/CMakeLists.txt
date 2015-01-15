@@ -8,6 +8,10 @@ file(GLOB HEADER_FILES_ROOT "*.h")
 file(GLOB SOURCE_FILES_COMMS "comms/*.cpp")
 file(GLOB HEADER_FILES_COMMS "comms/*.h")
 
+# comms/robot subdirectory
+file(GLOB SOURCE_FILES_COMMS_ROBOT "comms/robot/*.cpp")
+file(GLOB HEADER_FILES_COMMS_ROBOT "comms/robot/*.h")
+
 # ui subdirectory
 file(GLOB SOURCE_FILES_UI "ui/*.cpp")
 file(GLOB HEADER_FILES_UI "ui/*.h")
@@ -19,6 +23,14 @@ file(GLOB HEADER_FILES_UI_MSG "ui/messaging/*.h")
 # game subdirectory
 file(GLOB SOURCE_FILES_GAME "game/*.cpp")
 file(GLOB HEADER_FILES_GAME "game/*.h")
+
+# events subdirectory
+file(GLOB SOURCE_FILES_EVENTS "events/*.cpp")
+file(GLOB HEADER_FILES_EVENTS "events/*.h")
+
+# signals subdirectory
+file(GLOB SOURCE_FILES_SIGNALS "signals/*.cpp")
+file(GLOB HEADER_FILES_SIGNALS "signals/*.h")
 
 # recording subdirectory
 file(GLOB SOURCE_FILES_RECORDING "recording/*.cpp")
@@ -44,9 +56,12 @@ endif(NOT ANKI_IOS_BUILD)
 set(PRIVATE_HEADER_FILES 
   ${HEADER_FILES_ROOT} 
   ${HEADER_FILES_COMMS}
+  ${HEADER_FILES_COMMS_ROBOT}
   ${HEADER_FILES_UI}
   ${HEADER_FILES_UI_MSG}
   ${HEADER_FILES_GAME}
+  ${HEADER_FILES_EVENTS}
+  ${HEADER_FILES_SIGNALS}
   ${HEADER_FILES_RECORDING}
   ${HEADER_FILES_UTILS}
   ${HEADER_FILES_UTILS_PARSECONSTS}
@@ -56,9 +71,12 @@ set(PRIVATE_HEADER_FILES
 set(SOURCE_FILES
   ${SOURCE_FILES_ROOT}
   ${SOURCE_FILES_COMMS}
+  ${SOURCE_FILES_COMMS_ROBOT}
   ${SOURCE_FILES_UI}
   ${SOURCE_FILES_UI_MSG}
   ${SOURCE_FILES_GAME}
+  ${SOURCE_FILES_EVENTS}
+  ${SOURCE_FILES_SIGNALS}
   ${SOURCE_FILES_RECORDING}
   ${SOURCE_FILES_UTILS}
   ${SOURCE_FILES_UTILS_PARSECONSTS}

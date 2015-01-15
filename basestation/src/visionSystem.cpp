@@ -16,7 +16,7 @@
 
 #include "visionSystem.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/shared/mailbox_impl.h"
@@ -44,7 +44,7 @@
 #include "anki/common/robot/utilities.h"
 
 // Cozmo-Specific Library Includes
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 //#include "anki/cozmo/robot/hal.h"
 
 // Local Cozmo Includes
@@ -1360,7 +1360,7 @@ namespace Cozmo {
       
       //_headCamInfo = HAL::GetHeadCamInfo();
       _headCamInfo = new CameraInfo(camCalib);
-      if(_headCamInfo == NULL) {
+      if(_headCamInfo == nullptr) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
         return RESULT_FAIL;
       }
@@ -2404,19 +2404,25 @@ namespace Cozmo {
   } // Update() [Real]
   
   
-  void VisionSystem::SetParams(const s32 integerCountsIncrement,
-                               const f32 minExposureTime,
-                               const f32 maxExposureTime,
-                               const u8 highValue,
-                               const f32 percentileToMakeHigh)
+  void VisionSystem::SetParams(const bool autoExposureOn,
+                     const f32 exposureTime,
+                     const s32 integerCountsIncrement,
+                     const f32 minExposureTime,
+                     const f32 maxExposureTime,
+                     const u8 highValue,
+                     const f32 percentileToMakeHigh)
   {
+    _autoExposure_enabled = autoExposureOn;
+    _exposureTime = exposureTime;
     _autoExposure_integerCountsIncrement = integerCountsIncrement;
     _autoExposure_minExposureTime = minExposureTime;
     _autoExposure_maxExposureTime = maxExposureTime;
     _autoExposure_highValue = highValue;
     _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
     
-    PRINT_INFO("Changed VisionSystem params: integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+    PRINT_INFO("Changed VisionSystem params: autoExposureOn d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+               _autoExposure_enabled,
+               _exposureTime,
                _autoExposure_integerCountsIncrement,
                _autoExposure_minExposureTime,
                _autoExposure_maxExposureTime,

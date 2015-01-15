@@ -56,7 +56,7 @@
 #define MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE 6
 #define MESSAGE_ENUM_DEFINITION_MODE          7
 #define MESSAGE_PROCESS_METHODS_MODE          8
-#define MESSAGE_UI_REG_CALLBACK_METHODS_MODE       9
+#define MESSAGE_UI_REG_CALLBACK_METHODS_MODE  9
 #define MESSAGE_UI_PROCESS_METHODS_MODE       10
 #define MESSAGE_CREATE_JSON_MODE              11
 #define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   12
@@ -352,8 +352,8 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 //
 //   Result ProcessMessage(Robot* robot, const MessageFooBar& msg);
 //
-//   inline Result MessageHandler::ProcessBufferAs_MessageFooBar(Robot* robot,
-//                                                                   const u8* buffer)
+//   Result MessageHandler::ProcessBufferAs_MessageFooBar(Robot* robot,
+//                                                        const u8* buffer)
 //   {
 //      const MessageFooBar msg(buffer);
 //      return ProcessMessage(robot, msg);
@@ -363,11 +363,11 @@ buffer += __LENGTH__*sizeof(__TYPE__);
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
 Result ProcessMessage(Robot* robot, const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
-inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
+Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
 { \
   const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
   return ProcessMessage(robot, msg); \
-} \
+}
 
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
@@ -376,12 +376,13 @@ inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer
 
 
 
+//inline void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(void(*fPtr)(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&))
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_REG_CALLBACK_METHODS_MODE
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-inline void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(void(*fPtr)(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&)) \
+void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&)> callbackFcn) \
 { \
-  GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = fPtr; \
+  GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = callbackFcn; \
 }
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
@@ -391,12 +392,12 @@ inline void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(void(*fPtr)(RobotID_t, GET_MESSA
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_PROCESS_METHODS_MODE
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-void (*GET_CALLBACK_FCN_NAME(__MSG_TYPE__))(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&) = NULL; \
-inline Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(RobotID_t id, const u8* buffer) \
+std::function<void(GET_MESSAGE_CLASSNAME(__MSG_TYPE__)const&)> GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = nullptr; \
+Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer) \
 { \
-  if (GET_CALLBACK_FCN_NAME(__MSG_TYPE__)) { \
+  if (nullptr != GET_CALLBACK_FCN_NAME(__MSG_TYPE__)) { \
     const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
-    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(id, msg); \
+    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(msg); \
     return RESULT_OK; \
   } \
   return RESULT_FAIL; \

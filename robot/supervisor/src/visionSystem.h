@@ -140,8 +140,9 @@ namespace Anki {
       
       const FaceDetectionParameters& GetFaceDetectionParams();
       
-      
-      void SetParams(const s32 integerCountsIncrement,
+      void SetParams(const bool autoExposureOn,
+                     const f32 exposureTime,
+                     const s32 integerCountsIncrement,
                      const f32 minExposureTime,
                      const f32 maxExposureTime,
                      const u8 highValue,

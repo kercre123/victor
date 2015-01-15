@@ -5,7 +5,7 @@
  * Date:   7/11/2014
  *
  * Description: Handles messages between UI and basestation just as
- *              MessageHandler handles messages between basestation and robot.
+ *              RobotMessageHandler handles messages between basestation and robot.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -15,17 +15,17 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/uiMessageHandler.h"
+#include "anki/cozmo/game/signals/cozmoGameSignals.h"
+#include "anki/cozmo/basestation/soundManager.h"
 
 #include "behaviorManager.h"
 #include "cozmoActions.h"
-#include "uiMessageHandler.h"
+
 #include "vizManager.h"
-#include "soundManager.h"
-
-
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #else
 #include "anki/cozmo/basestation/ui/messaging/messageQueue.h"
 #endif
@@ -34,20 +34,22 @@ namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), robotMgr_(NULL), isInitialized_(false)
+    : comms_(NULL), cozmoEngine_(NULL), isInitialized_(false)
     {
       
     }
     Result UiMessageHandler::Init(Comms::IComms*   comms,
-                                  RobotManager*    robotMgr)
+                                  CozmoEngineHost*  cozmoEngine)
     {
       Result retVal = RESULT_FAIL;
       
-      comms_ = comms;
-      robotMgr_ = robotMgr;
-      
-      isInitialized_ = true;
-      retVal = RESULT_OK;
+      if(comms != nullptr && cozmoEngine != nullptr) {
+        comms_ = comms;
+        cozmoEngine_ = cozmoEngine;
+        
+        isInitialized_ = true;
+        retVal = RESULT_OK;
+      }
       
       return retVal;
     }
@@ -79,9 +81,9 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("UiMessageHandler.NullRobotManager",
-                          "RobotManager NULL when MessageHandler::ProcessPacket() called.\n");
+      if(cozmoEngine_ == NULL) {
+        PRINT_NAMED_ERROR("UiMessageHandler.NullCozmoEngine",
+                          "CozmoEngine NULL when MessageHandler::ProcessPacket() called.\n");
       }
       else {
         const u8 msgID = packet.data[0];
@@ -96,22 +98,32 @@ namespace Anki {
         }
         else {
           
-          if(robotMgr_->GetNumRobots() == 0) {
+          /*
+          if(cozmoEngine_->GetNumRobots() == 0) {
             PRINT_NAMED_ERROR("UiMessageHandler.NoRobotsToControl", "\n");
           }
           else {
-            // TODO: For now, assuming that whatever ui is attached, it is going to control whatever robot is connected.
-            // Will eventually need a better way to map UI device to robot.
-            std::vector<RobotID_t> robotList = robotMgr_->GetRobotIDList();
-            Robot* robot = robotMgr_->GetRobotByID(robotList[0]);
+           */
+            // TODO: Look up the robotID associated with this UI device
+            const RobotID_t robotID = 1;
+            Robot* robot = cozmoEngine_->GetRobotByID(robotID);
 
-            
-            // This calls the (macro-generated) ProcessPacketAs_MessageX() method
-            // indicated by the lookup table, which will cast the buffer as the
-            // correct message type and call the specified robot's ProcessMessage(MessageX)
-            // method.
-            retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
-          }
+            // TODO: Move robot pointer stuff above into the ProcessMessage methods below
+            // For now, note that robot could be a nullptr!
+            /*
+            if(robot == nullptr) {
+              PRINT_NAMED_ERROR("UiMessageHandler.ProcessPacket",
+                                "RobotManager could not find robot with ID=%d.\n", robotID);
+              retVal = RESULT_FAIL;
+            } else {
+             */
+              // This calls the (macro-generated) ProcessPacketAs_MessageX() method
+              // indicated by the lookup table, which will cast the buffer as the
+              // correct message type and call the specified robot's ProcessMessage(MessageX)
+              // method.
+              retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
+            //}
+          //}
         }
       } // if(robotMgr_ != NULL)
       
@@ -139,6 +151,19 @@ namespace Anki {
       return retVal;
     } // ProcessMessages()
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToRobot const& msg)
+    {
+      // Tell the game to connect to a robot, using an event
+      CozmoGameSignals::GetConnectToRobotSignal().emit(msg.robotID);
+      return RESULT_OK;
+    }
+    
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToUiDevice const& msg)
+    {
+      // Tell the game to connect to a UI device, using an event
+      CozmoGameSignals::GetConnectToUiDeviceSignal().emit(msg.deviceID);
+      return RESULT_OK;
+    }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DriveWheels const& msg)
     {
@@ -379,6 +404,19 @@ namespace Anki {
       return robot->StopFaceTracking();
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetVisionSystemParams const& msg)
+    {
+      VisionSystemParams_t p;
+      p.autoexposureOn = msg.autoexposureOn;
+      p.exposureTime = msg.exposureTime;
+      p.integerCountsIncrement = msg.integerCountsIncrement;
+      p.minExposureTime = msg.minExposureTime;
+      p.maxExposureTime = msg.maxExposureTime;
+      p.percentileToMakeHigh = msg.percentileToMakeHigh;
+      p.highValue = msg.highValue;
+      return robot->SendVisionSystemParams(p);
+    }
+   
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetFaceDetectParams const& msg)
     {
       FaceDetectParams_t p;

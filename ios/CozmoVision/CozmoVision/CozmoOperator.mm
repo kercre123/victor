@@ -10,11 +10,10 @@
 #import "CozmoOperator.h"
 #import "SoundCoordinator.h"
 
-#define COZMO_BASESTATION // to make uiMessages definitions happy
 #import <anki/cozmo/basestation/game/gameComms.h>
 #import <anki/cozmo/basestation/game/gameMessageHandler.h>
 #import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
-#import <anki/cozmo/robot/cozmoConfig.h>
+#import <anki/cozmo/shared/cozmoConfig.h>
 
 using namespace Anki;
 
@@ -29,9 +28,11 @@ using namespace Anki;
 }
 
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
+                                         withDeviceID:(int)deviceID
 {
   CozmoOperator* instance = [CozmoOperator new];
-  [instance registerToAvertisingServiceWithIPAddress:address];
+  [instance registerToAvertisingServiceWithIPAddress:address
+                                        withDeviceID:deviceID];
 
   return instance;
 }
@@ -47,11 +48,41 @@ using namespace Anki;
 }
 
 
-void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
+#pragma mark - Game Message Callbacks
+
+- (void) handleRobotAvailable:(const Cozmo::MessageG2U_RobotAvailable&) msg
 {
-  std::string str(std::begin(msg.animationFilename), std::end(msg.animationFilename));
+  // For now, just tell the game to connect to all robots that advertise
+  // TODO: Probably want to display available robots in the UI somewhere and only connect once selected
+  Cozmo::MessageU2G_ConnectToRobot msgOut;
+  msgOut.robotID = msg.robotID;
+  [self sendMessage:msgOut];
+}
+
+- (void) handleUiDeviceAvailable:(const Cozmo::MessageG2U_UiDeviceAvailable&) msg
+{
+  // For now, just tell the game to connect to all UI devices that advertise
+  // TODO: Probably want to display available devices in the UI somewhere and only connect once selected
+  Cozmo::MessageU2G_ConnectToUiDevice msgOut;
+  msgOut.deviceID = msg.deviceID;
+  [self sendMessage:msgOut];
+}
+
+- (void) handlePlayRobotSound:(const Cozmo::MessageG2U_PlaySound&) msg
+{
+  std::string str(std::begin(msg.soundFilename), std::end(msg.soundFilename));
   NSString* filename = [NSString stringWithUTF8String:str.c_str()];
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:filename];
+}
+
+- (void) handleStopRobotSound:(const Cozmo::MessageG2U_StopSound&) msg
+{
+  [[SoundCoordinator defaultCoordinator] stop];
+}
+
+- (void) drawObservedVisionMarker:(const Cozmo::MessageG2U_ObjectVisionMarker&) msg
+{
+  // TODO: Fill in
 }
 
 - (void)commonInit
@@ -88,6 +119,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
 #pragma mark - Connection & Message Methds
 
 - (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress
+                                    withDeviceID:(int)deviceID
 {
   /*
   if (!_uiClient->IsConnected()) {
@@ -105,22 +137,48 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
    */
   
   if (!_gameComms) {
-    _gameComms = new Cozmo::GameComms(Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
+    _gameComms = new Cozmo::GameComms(deviceID, Cozmo::UI_MESSAGE_SERVER_LISTEN_PORT,
                                       [ipAddress UTF8String], Cozmo::UI_ADVERTISEMENT_REGISTRATION_PORT);
     _gameMsgHandler = new Cozmo::GameMessageHandler();
-    _gameMsgHandler->Init(_gameComms);
-    
-    
-    _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(&playSoundWrapper);
   }
   
 }
 
-- (void)disconnectToBasestation
+- (void)initMessageHandler
+{
+  _gameMsgHandler->Init(_gameComms);
+  
+  auto robotAvailableCallbackLambda = [self](const Cozmo::MessageG2U_RobotAvailable& msg) {
+    [self handleRobotAvailable:msg];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
+  
+  auto playRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_PlaySound& msg) {
+    [self handlePlayRobotSound:msg];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
+  
+  auto uiDeviceAvailableCallbackLambda = [self](const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
+    [self handleUiDeviceAvailable:msg];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailableCallbackLambda);
+  
+  auto stopRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_StopSound& msg) {
+    [self handleStopRobotSound:msg];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_StopSound(stopRobotSoundCallbackLambda);
+  
+}
+
+- (void)disconnectFromEngine
 {
   if (_gameComms->HasClient()) {
     _gameComms->DisconnectClient();
-    NSLog(@"Successfully disconnected from basestatoin");
+    NSLog(@"Successfully disconnected from CozmoeEngine");
   }
 }
 
@@ -139,7 +197,15 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
 - (void)update
 {
   _gameComms->Update();
-  _gameMsgHandler->ProcessMessages();
+  
+    // Wait for _gameComms to initialize before trying to process game messages
+  if(!_gameMsgHandler->IsInitialized()) {
+    if(_gameComms->IsInitialized()) {
+      [self initMessageHandler];
+    }
+  } else {
+    _gameMsgHandler->ProcessMessages();
+  }
 }
 
 
@@ -296,7 +362,7 @@ void playSoundWrapper(RobotID_t robotID, const Cozmo::MessageG2U_PlaySound& msg)
 {
   if(objectID) {
     Cozmo::MessageU2G_PickAndPlaceObject message;
-    message.objectID = objectID.integerValue;
+    message.objectID = (int)objectID.integerValue;
     message.usePreDockPose = false;
     [self sendMessage:message];
   }

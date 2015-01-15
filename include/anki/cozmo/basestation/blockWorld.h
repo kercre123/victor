@@ -52,7 +52,7 @@ namespace Anki
     // Forward declarations:
     class Robot;
     class RobotManager;
-    class MessageHandler;
+    class RobotMessageHandler;
     
     class BlockWorld
     {

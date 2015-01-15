@@ -12,7 +12,7 @@
 #include "pathPlanner.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/math/quad_impl.h"
-//#include "anki/cozmo/robot/cozmoConfig.h"
+//#include "anki/cozmo/shared/cozmoConfig.h"
 
 #define DUBINS_TARGET_SPEED_MMPS 50
 #define DUBINS_ACCEL_MMPS2 200

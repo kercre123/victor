@@ -48,7 +48,7 @@ bool UdpServer::StartListening(const unsigned short port)
     // empty. Therefor we use the memset function to make sure all fields are NULL.
     memset(&host_info, 0, sizeof host_info);
 
-    host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
+    host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
     host_info.ai_socktype = SOCK_DGRAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
     host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 

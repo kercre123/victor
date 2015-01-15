@@ -7,7 +7,7 @@
 //
 
 #import "RCCozmoViewController.h"
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "CozmoOperator.h"
 #import "CozmoObsObjectBBox.h"
 
@@ -16,7 +16,7 @@
 #import "VirtualDirectionPadView.h"
 #import "ObservedObjectSelector.h"
 
-@interface RCCozmoViewController () <CozmoBasestationHeartbeatListener>
+@interface RCCozmoViewController () <CozmoEngineHeartbeatListener>
 @property (weak, nonatomic) IBOutlet UIImageView *cozmoVisionImageView;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *headSlider;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
@@ -26,7 +26,7 @@
 
 @property (strong, nonatomic) ObservedObjectSelector *obsObjSelector;
 
-@property (weak, nonatomic) CozmoBasestation *_basestation;
+@property (weak, nonatomic) CozmoEngineWrapper *cozmoEngineWrapper;
 @property (strong, nonatomic) CozmoOperator *_operator;
 
 @end
@@ -37,8 +37,8 @@
 {
   [super viewDidLoad];
 
-  self._basestation = [CozmoBasestation defaultBasestation];
-  self._operator = self._basestation.cozmoOperator;
+  self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
+  self._operator = self.cozmoEngineWrapper.cozmoOperator;
 
 
   // Setup UI
@@ -89,12 +89,12 @@
 {
   [super viewDidAppear:animated];
 
-  [self._basestation addListener:self];
+  [self.cozmoEngineWrapper addListener:self];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
-  [self._basestation removeListener:self];
+  [self.cozmoEngineWrapper removeListener:self];
 
   [super viewWillDisappear:animated];
 }
@@ -124,13 +124,13 @@
 
 #pragma mark - CozmoBasestationHeartbeatListener Methods
 
-- (void)cozmoBasestationHearbeat:(CozmoBasestation *)basestation
+- (void)cozmoEngineWrapperHeartbeat:(CozmoEngineWrapper *)basestation
 {
   // Update Image Frame
-  UIImage *updatedFrame = [self._basestation imageFrameWtihRobotId:1];
+  UIImage *updatedFrame = [self.cozmoEngineWrapper imageFrameWithRobotId:1];
   if (updatedFrame) {
     
-    NSArray *objectBBoxes = [self._basestation boundingBoxesObservedByRobotId:1];
+    NSArray *objectBBoxes = [self.cozmoEngineWrapper boundingBoxesObservedByRobotId:1];
     
     self.obsObjSelector.observedObjects = objectBBoxes;
     
@@ -166,7 +166,7 @@
 
       for(CozmoObsObjectBBox *object in objectBBoxes)
       {
-        NSString* label = [NSString stringWithFormat:@"%ld", object.objectID];
+        NSString* label = [NSString stringWithFormat:@"%ld", (long)object.objectID];
 
         [label drawInRect:CGRectIntegral(object.boundingBox) withAttributes:attributes];
         

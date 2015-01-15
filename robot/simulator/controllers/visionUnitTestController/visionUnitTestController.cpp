@@ -29,9 +29,9 @@
 
 #include "anki/vision/basestation/camera.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/vision/robot/visionMarkerDecisionTrees.h"
 

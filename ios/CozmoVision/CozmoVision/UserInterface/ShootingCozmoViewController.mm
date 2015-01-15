@@ -9,27 +9,31 @@
 #import "ShootingCozmoViewController.h"
 #import <CoreGraphics/CoreGraphics.h>
 
+#import <AVFoundation/AVFoundation.h>
+
 #import "BulletOverlayView.h"
 #ifdef __cplusplus
 // For OpenCV Video processing of phone's camera:
 #import <opencv2/opencv.hpp>
 #import <opencv2/highgui/cap_ios.h>
 
-#import <anki/cozmo/basestation/visionProcessingThread.h>
 #import <anki/vision/basestation/image_impl.h>
+#import <anki/vision/basestation/cameraCalibration.h>
 #import <anki/vision/MarkerCodeDefinitions.h>
+#import <anki/common/basestation/platformPathManager_iOS_interface.h>
 
 #import "SoundCoordinator.h"
-#import "CozmoBasestation.h"
+#import "CozmoEngineWrapper.h"
 #import "CozmoOperator.h"
+#import "CvVideoCameraReorient.h"
+#import "NSUserDefaults+UI.h"
 
 #endif
 
 
-@interface ShootingCozmoViewController () <CvVideoCameraDelegate>
+@interface ShootingCozmoViewController () <CvVideoCameraDelegateReorient, AVAudioPlayerDelegate>
 {
-  CvVideoCamera*                        _videoCamera;
-  Anki::Cozmo::VisionProcessingThread*  _visionThread;
+  CvVideoCameraReorient*                        _videoCamera;
 }
 @property (weak, nonatomic) IBOutlet UIView* cameraView;
 @property (weak, nonatomic) IBOutlet BulletOverlayView* bulletOverlayView;
@@ -44,18 +48,36 @@
 
 @property (assign, nonatomic) int points;
 
-@property (weak, nonatomic) CozmoOperator* _operator;
+// Audio targeting:
+@property (strong, nonatomic) NSURL*          targetingSoundURL;
+@property (strong, nonatomic) NSURL*          lockSoundURL;
+@property (strong, nonatomic) AVAudioPlayer*  targetingSoundPlayer;
+@property (assign, nonatomic) NSTimeInterval  targetingSoundPeriod_sec;
+@property (assign, nonatomic) BOOL            targetingSoundCurrentlyPlaying;
+
+@property (strong, nonatomic) AVAudioPlayer*  lockSoundPlayer;
+@property (assign, nonatomic) BOOL            targetLocked;
+
+@property (weak, nonatomic) CozmoOperator*      cozmoOperator;
+@property (weak, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
+
+@property (weak, nonatomic) IBOutlet UISwitch *useVisualTargetingSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *useAudioTargetingSwitch;
+
+- (void)playTargetingSound;
+  
 @end
 
 @implementation ShootingCozmoViewController
 
-
 - (void)viewDidLoad
 {
   [super viewDidLoad];
-
+  
   self.view.backgroundColor = [UIColor blackColor];
-  self._operator = [[CozmoBasestation defaultBasestation] cozmoOperator];
+  
+  self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
+  self.cozmoOperator      = [self.cozmoEngineWrapper cozmoOperator];
 
   self.crosshairTopImageView.image = [self.crosshairTopImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
   self.crosshairTopImageView.tintColor = [UIColor redColor];
@@ -65,24 +87,64 @@
 
   // Set up videoCamera for displaying device's on-board camera, but don't start it
   self.cameraView.contentMode = UIViewContentModeCenter;
-  _videoCamera = [[CvVideoCamera alloc] initWithParentView:_cameraView];
+  _videoCamera = [[CvVideoCameraReorient alloc] initWithParentView:self.cameraView];
   _videoCamera.delegate = self;
   _videoCamera.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
   _videoCamera.defaultAVCaptureSessionPreset  = AVCaptureSessionPreset640x480;
-//  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
+  _videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeRight;
   _videoCamera.defaultFPS = 30;
   _videoCamera.grayscaleMode = NO;
 
-
+  // Create players for targeting and lock sounds
+  NSString* platformSoundRootDir = [PlatformPathManager_iOS getPathWithScope:PlatformPathManager_iOS_Scope_Sound];
+  self.targetingSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"demo/WaitingForDice1.wav"]];
+  NSError *error = nil;
+  self.targetingSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.targetingSoundURL error:&error];
+  if (!error) {
+    self.targetingSoundPlayer.volume = 0.5;
+    self.targetingSoundPlayer.delegate = self;
+    self.targetingSoundPlayer.numberOfLoops = 0;
+  }
+  
+  self.lockSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"laser/TargetLock.mp3"]];
+  error = nil;
+  /*
+  self.lockSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.lockSoundURL error:&error];
+  if (!error) {
+    self.lockSoundPlayer.delegate = nil;
+    self.lockSoundPlayer.volume = 0.5;
+    self.targetingSoundPlayer.numberOfLoops = -1;
+  }
+  */
+  
+  _targetingSoundPeriod_sec = 0;
+  _targetingSoundCurrentlyPlaying = NO;
+  _targetLocked = NO;
+  
   // Start up the vision thread for processing device camera images
+  // TODO: Get calibration of device camera somehow
   Anki::Vision::CameraCalibration deviceCamCalib;
-  _visionThread = new Anki::Cozmo::VisionProcessingThread();
-  _visionThread->Start(deviceCamCalib); // TODO: Only start when device camera selected?
+  
+  // Reload last setup
+  self.useVisualTargeting = [NSUserDefaults lastUseVisualTargeting];
+  self.useAudioTargeting  = [NSUserDefaults lastUseAudioTargeting];
+  self.useAudioTargetingSwitch.on = self.useAudioTargeting;
+  self.useVisualTargetingSwitch.on = self.useVisualTargeting;
+  self.cameraView.hidden = !self.useVisualTargeting;
 
-  [_videoCamera start];
-
+  
   UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
   [self.view addGestureRecognizer:tapGesture];
+  
+  [_videoCamera start];
+}
+
+- (void) viewDidDisappear:(BOOL)animated
+{
+  [NSUserDefaults setLastUseVisualTargeting:self.useAudioTargeting];
+  [NSUserDefaults setLastUseAudioTargeting:self.useVisualTargeting];
+  
+  [_videoCamera stop];
 }
 
 - (NSUInteger)supportedInterfaceOrientations
@@ -98,17 +160,34 @@
 - (void)updateCrosshairsWithMarkerDetected:(BOOL)markerDetected distance:(Float32)distance
 {
   #define maxDistance 130.0
-  Float32 intensity;
+  #define lockIntensity 0.9
+  
+  Float32 intensity  = 0.f;
+  Float32 period_sec = 0.f;
+  
   if (markerDetected) {
-    intensity = (distance > maxDistance) ? 1.0 : 1 - (distance / maxDistance);
-  }
-  else {
-    intensity = 0.0;
+    intensity = (distance > maxDistance) ? 0.0 : 1 - (distance / maxDistance);
+    
+    period_sec = distance/maxDistance + 0.01;
   }
 
-  // Average prev & new intensity
-  self.markerIntensity = (intensity + self.markerIntensity) / 2.0;
-
+  // Average prev & new intensity/period
+  self.markerIntensity = 0.5f * (intensity + self.markerIntensity);
+  self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
+  
+  //BOOL wasTargetLocked = self.targetLocked;
+  self.targetLocked = self.markerIntensity >= lockIntensity;
+  /*
+  if(!wasTargetLocked && self.targetLocked) {
+    [self playLockSound];
+  } else if(wasTargetLocked && !self.targetLocked) {
+    [self stopLockSound];
+  }
+   */
+  
+  // Won't do anything if period==0, nor if not using audio targeting
+  [self playTargetingSound];
+  
   dispatch_async(dispatch_get_main_queue(), ^{
     self.crosshairTopImageView.alpha = self.markerIntensity;
   });
@@ -170,37 +249,36 @@
   // TODO: Make smaller or square?
   Point2i   detectRectPt1(160,120);
   Point2i   detectRectPt2(detectRectPt1.x + 320, detectRectPt1.y + 240);
-
-  if(!calledOnce || _visionThread->WasLastImageProcessed())
+/*
+  if(!calledOnce || [self.cozmoEngineWrapper wasLastDeviceImageProcessed])
   {
     calledOnce = YES;
-    cv::Rect  detectionRect(detectRectPt1, detectRectPt2);
-
+ 
     // Detection rectangle is red and label says "No Marker" unless we find a
     // vision marker below
-    Cozmo::MessageVisionMarker msg;
     float markerDistanceFromCenter = 100000.0;
     BOOL markerInCrosshairs = NO;
-    while(true == _visionThread->CheckMailbox(msg)) {
+    
+    self.markerType = Anki::Vision::MARKER_UNKNOWN;
+    
+    CGRect marker;
+    int markerTypeOut;
 
-      Float32 xMin = min(min(msg.x_imgLowerLeft, msg.x_imgLowerRight),
-                         min(msg.x_imgUpperLeft, msg.x_imgUpperRight));
-      Float32 yMin = min(min(msg.y_imgLowerLeft, msg.y_imgLowerRight),
-                         min(msg.y_imgUpperLeft, msg.y_imgUpperRight));
+    while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
+                                                      :&markerTypeOut])
+    {
+      if (self.useAudioTargeting ) {
+        // For audio targeting, it is sufficient for the marker to be visible
+        // at all in the image.
+        markerInCrosshairs = YES;
+      } else {
+        // See if the crosshairs at center of image is within the marker's
+        // bounding box
+        markerInCrosshairs = CGRectContainsPoint(marker, CGPointMake(160,120));
+      }
       
-      Float32 xMax = max(max(msg.x_imgLowerLeft, msg.x_imgLowerRight),
-                         max(msg.x_imgUpperLeft, msg.x_imgUpperRight));
-      Float32 yMax = max(max(msg.y_imgLowerLeft, msg.y_imgLowerRight),
-                         max(msg.y_imgUpperLeft, msg.y_imgUpperRight));
-      
-      
-      CGRect marker = CGRectMake(xMin, yMin, xMax-xMin, yMax-yMin);
-      
-      // See if the crosshairs at center of image is within the marker's
-      // bounding box
-      markerInCrosshairs =  CGRectContainsPoint(marker, CGPointMake(160,120));
       if(markerInCrosshairs) {
-        self.markerType = msg.markerType;
+        self.markerType = markerTypeOut; //msg.markerType;
         self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
         
         Float32 xDistance = CGRectGetMidX(marker) - 160.0;
@@ -211,27 +289,77 @@
     }
 
     [self updateCrosshairsWithMarkerDetected:markerInCrosshairs distance:markerDistanceFromCenter];
-
-    // Process image within the detection rectangle with vision processing thread:
-    static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
-
-    // TODO: Use ROI feature of cv::Mat instead of copying the data out
-    // (this will require support for non-continuous image data inside the VisionSystem)
+*/
     Mat_<u8> imageGrayROI(240,320);
-    for(s32 i=0; i<240; ++i) {
-      u8* imageGrayROI_i = imageGrayROI[i];
-      u8* imageGray_i = imageGray[detectRectPt1.y + i];
-      for(s32 j=0; j<320; ++j) {
-        imageGrayROI_i[j] =imageGray_i[detectRectPt1.x + j];
+    if (self.useAudioTargeting) {
+      // Detect the marker from anywhere in the field of view (using lower-res image for now)
+      cv::resize(imageGray, imageGrayROI, cv::Size(320,240));
+    } else {
+      // Only detect the marker in a central ROI of the image
+      
+      // TODO: Use ROI feature of cv::Mat instead of copying the data out
+      // (this will require support for non-continuous image data inside the VisionSystem)
+      
+      for(s32 i=0; i<240; ++i) {
+        u8* imageGrayROI_i = imageGrayROI[i];
+        u8* imageGray_i = imageGray[detectRectPt1.y + i];
+        for(s32 j=0; j<320; ++j) {
+          imageGrayROI_i[j] =imageGray_i[detectRectPt1.x + j];
+        }
       }
     }
 
-    // Last image was processed (or this is the first call), so the vision
-    // thread is ready for a new image:
+    // Last image was processed (or this is the first call), so the engine
+    // is ready for a new image:
     Vision::Image ankiImage(imageGrayROI);
-    _visionThread->SetNextImage(imageGrayROI, bogusState);
+    [self.cozmoEngineWrapper processDeviceImage:ankiImage];
 
+  
+  // Detection rectangle is red and label says "No Marker" unless we find a
+  // vision marker below
+  Float32 markerDistanceFromCenter = 100000.0;
+  BOOL markerInCrosshairs = NO;
+  
+  self.markerType = Anki::Vision::MARKER_UNKNOWN;
+  
+  CGRect marker;
+  int markerTypeOut;
+  
+  while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
+                                                                :&markerTypeOut])
+  {
+    BOOL inCrosshairs = NO;
+    
+    if (self.useAudioTargeting ) {
+      // For audio targeting, it is sufficient for the marker to be visible
+      // at all in the image.
+      inCrosshairs = YES;
+    } else {
+      // See if the crosshairs at center of image is within the marker's
+      // bounding box
+      inCrosshairs = CGRectContainsPoint(marker, CGPointMake(160,120));
+    }
+    
+    if(inCrosshairs) {
+      markerInCrosshairs = YES;
+      
+      Float32 xDistance = CGRectGetMidX(marker) - 160.0;
+      Float32 yDistance = CGRectGetMidY(marker) - 120.0;
+      Float32 currentDistance = sqrt(xDistance * xDistance + yDistance * yDistance);
+      
+      // Keep the marker in view that's closest to center
+      if(currentDistance < markerDistanceFromCenter) {
+        self.markerType = markerTypeOut; //msg.markerType;
+        self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
+        markerDistanceFromCenter = currentDistance;
+      }
+    }
   }
+  
+  [self updateCrosshairsWithMarkerDetected:markerInCrosshairs distance:markerDistanceFromCenter];
+  
+  
+//}
 
   // Invert image - why? just cause it looks neat.
 //  bitwise_not(imageGray, imageGray);
@@ -245,6 +373,63 @@
 }
 #endif
 
+
+#pragma mark - Audio Targeting
+
+- (void)playTargetingSound
+{
+  if(self.useAudioTargeting)
+  {
+    if(self.targetLocked) {
+      [self.targetingSoundPlayer stop];
+      self.targetingSoundCurrentlyPlaying = NO;
+      
+    }
+    else {
+      if(self.lockSoundPlayer.isPlaying) {
+        [self.lockSoundPlayer pause];
+      }
+      
+      if(self.targetingSoundPeriod_sec > 0 &&
+         self.targetingSoundCurrentlyPlaying == NO)
+      {
+        NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
+        BOOL soundPlayed = [self.targetingSoundPlayer playAtTime:nextPlayTime];
+        if(soundPlayed == YES) {
+          self.targetingSoundCurrentlyPlaying = YES;
+        }
+      }
+    }
+  }
+  
+}
+
+/*
+- (void)playLockSound
+{
+  [self.targetingSoundPlayer stop];
+  [self.lockSoundPlayer play];
+}
+
+- (void)stopLockSound
+{
+  [self.lockSoundPlayer pause];
+}
+*/
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
+{
+  if(player == self.targetingSoundPlayer) {
+    // Keep playing with current frequency
+    self.targetingSoundCurrentlyPlaying = NO;
+    if(self.targetingSoundPeriod_sec > 0) {
+      [self playTargetingSound];
+    } else {
+      [self.targetingSoundPlayer stop];
+    }
+  }
+}
+
+
 #pragma mark - Action Methods
 
 
@@ -254,10 +439,10 @@
     Float32 pointsMultiplier = 1.0;
     if(self.markerType == Anki::Vision::MARKER_SPIDER) {
       // Special animation for spider
-      [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
+      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
       pointsMultiplier = 100.0;
-    } else {
-      [self._operator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+    } else if(self.markerType != Anki::Vision::MARKER_UNKNOWN) {
+      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
       pointsMultiplier = 25;
     }
     [self animateTargetHit];
@@ -267,7 +452,10 @@
     self.points += pointsMultiplier*(1.0 - self.markerSize / (320*240));
     self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
-  [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav" volume:0.5];
+  [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav"
+                                                        volume:0.5
+                                                     withDelay:0
+                                                      numLoops:0];
   [self.bulletOverlayView fireLaserButtlet];
   [self animateCrossHairsFire];
 }
@@ -277,5 +465,15 @@
   [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (IBAction)handleUseVisualTargetingSwitch:(UISwitch *)sender {
+  self.useVisualTargeting = sender.isOn;
+
+  // Hide camera view if not using visual targeting
+  self.cameraView.hidden = !self.useVisualTargeting;
+}
+
+- (IBAction)handleUseAudioTargetingSwitch:(UISwitch *)sender {
+  self.useAudioTargeting = sender.isOn;
+}
 
 @end

@@ -266,6 +266,7 @@ namespace Anki {
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
+      void EnableImageSend(bool tf) { _sendImages = tf; }
       void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
       
       void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
@@ -296,6 +297,7 @@ namespace Anki {
       // Image sending
       std::map<RobotID_t, u8> _imgID;
       
+      bool               _sendImages;
       bool               _saveImages;
     
       // Stores the maximum ID permitted for a given VizObject type

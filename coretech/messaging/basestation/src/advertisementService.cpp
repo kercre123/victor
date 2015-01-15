@@ -89,13 +89,13 @@ namespace Anki {
                     << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising devices\n";
           
           for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
-            /*
+            
             std::cout << serviceName_ << ": "
                       << "Advertising: Device " << it->second.id
                       << " on host " << it->second.ip
                       << " at port " << it->second.port
                       << "(size=" << sizeof(AdvertisementMsg) << ")\n";
-             */
+             
             advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
             
 //            lastAdvertisingTime = advertisementController.getTime();

@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <string>
 #include <webots/Supervisor.hpp>
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"

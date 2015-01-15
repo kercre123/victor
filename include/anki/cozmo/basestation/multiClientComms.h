@@ -21,7 +21,7 @@
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 // Set to 1 to simulate a send/receive latencies
 // beyond the actual latency of TCP.
@@ -63,8 +63,10 @@ namespace Cozmo {
   class MultiClientComms : public Comms::IComms {
   public:
     
-    // Construct with the IP address to use as the advertising host
-    MultiClientComms(const char* advertisingHostIP, int advertisingPort);
+    MultiClientComms();
+    
+    // Init with the IP address to use as the advertising host
+    Result Init(const char* advertisingHostIP, int advertisingPort);
     
     // The destructor will automatically cleans up
     virtual ~MultiClientComms();
@@ -117,6 +119,8 @@ namespace Cozmo {
 
     
   private:
+    
+    bool isInitialized_;
     
     const char* advertisingHostIP_;
     // Connects to "advertising" server to view available unconnected devices.

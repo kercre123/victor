@@ -14,7 +14,7 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {

@@ -7,7 +7,7 @@
  */
 
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 
@@ -37,6 +37,10 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Slow down keyboard polling to avoid duplicate commands?
+    const s32 KB_TIME_STEP = BS_TIME_STEP;
+
     namespace WebotsKeyboardController {
       
       webots::Supervisor inputController;
@@ -130,8 +134,10 @@ namespace Anki {
 
         
         GameMessageHandler msgHandler_;
-        GameComms gameComms_(UI_MESSAGE_SERVER_LISTEN_PORT,
-                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP, UI_ADVERTISEMENT_REGISTRATION_PORT);
+        const int deviceID = 1;
+        GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
+                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP,
+                             UI_ADVERTISEMENT_REGISTRATION_PORT);
         
       } // private namespace
       
@@ -173,16 +179,39 @@ namespace Anki {
       void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
+      void SendVisionSystemParams();
       void SendFaceDetectParams();
       
       
       // ======== Message handler callbacks =======
-      void ProcessMessageObjectVisionMarker(RobotID_t id, MessageG2U_ObjectVisionMarker const& msg)
+      
+      // TODO: Update these not to need robotID
+      
+      void ProcessMessageObjectVisionMarker(MessageG2U_ObjectVisionMarker const& msg)
       {
         // TODO: Do something with this message to notify UI
         printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
       }
 
+      void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any robot that's
+        // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
+        MessageU2G_ConnectToRobot msgOut;
+        msgOut.robotID = msgIn.robotID;
+        SendMessage(msgOut);
+      }
+      
+      void HandleUiDeviceConnection(const MessageG2U_UiDeviceAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any UI device that's
+        // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
+        MessageU2G_ConnectToUiDevice msgOut;
+        msgOut.deviceID = msgIn.deviceID;
+        SendMessage(msgOut);
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -191,11 +220,18 @@ namespace Anki {
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         
+        while(!gameComms_.IsInitialized()) {
+          PRINT_NAMED_INFO("KeyboardController.Init",
+                           "Waiting for gameComms to initialize...\n");
+          inputController.step(KB_TIME_STEP);
+          gameComms_.Update();
+        }
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
         msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
-        
+        msgHandler_.RegisterCallbackForMessageG2U_UiDeviceAvailable(HandleUiDeviceConnection);
+        msgHandler_.RegisterCallbackForMessageG2U_RobotAvailable(HandleRobotConnection);
         
         inputController.keyboardEnable(BS_TIME_STEP);
         
@@ -245,6 +281,7 @@ namespace Anki {
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
+        printf("                      Creep mode:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -260,7 +297,6 @@ namespace Anki {
         printf("                      Print help:  ?\n");
         printf("\n");
       }
-      
       
       //Check the keyboard keys and issue robot commands
       void ProcessKeystroke()
@@ -516,7 +552,23 @@ namespace Anki {
                   }
                   streamOn = !streamOn;
                 }
-                SendImageRequest(mode, IMG_STREAM_RES);
+                
+                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
+                
+                if (root_) {
+                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
+                  if(camera_horizontalResolution == 320) {
+                    localStreamRes = Vision::CAMERA_RES_QVGA;
+                  } else if(camera_horizontalResolution == 160) {
+                    localStreamRes = Vision::CAMERA_RES_QQVGA;
+                  } else if(camera_horizontalResolution == 80) {
+                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                  } else if(camera_horizontalResolution == 40) {
+                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  }
+                }
+                
+                SendImageRequest(mode, localStreamRes);
                 break;
               }
                 
@@ -653,19 +705,7 @@ namespace Anki {
               }
               case CKEY_SET_VISIONSYSTEM_PARAMS:
               {
-                /*
-                 if (root_) {
-                 // Vision system params
-                 VisionSystemParams_t p;
-                 p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
-                 p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
-                 p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
-                 p.highValue = root_->getField("highValue")->getSFInt32();
-                 p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
-                 printf("New VisionSystems params\n");
-                 robot_->SendSetVisionSystemParams(p);
-                 }
-                 */
+                SendVisionSystemParams();
                 
                 SendFaceDetectParams();
                 
@@ -788,7 +828,7 @@ namespace Anki {
                 }
                 break;
               }
-                
+              
               default:
               {
                 // Unsupported key: ignore.
@@ -1401,6 +1441,24 @@ namespace Anki {
         SendMessage(m2);
       }
 
+      void SendVisionSystemParams()
+      {
+        if (root_) {
+           // Vision system params
+           MessageU2G_SetVisionSystemParams p;
+           p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
+           p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
+           p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
+           p.minExposureTime = root_->getField("camera_minExposureTime")->getSFFloat();
+           p.maxExposureTime = root_->getField("camera_maxExposureTime")->getSFFloat();
+           p.highValue = root_->getField("camera_highValue")->getSFInt32();
+           p.percentileToMakeHigh = root_->getField("camera_percentileToMakeHigh")->getSFFloat();
+           
+           printf("New Camera params\n");
+           SendMessage(p);
+         }
+      }
+
       void SendFaceDetectParams()
       {
         if (root_) {
@@ -1428,12 +1486,10 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-// Slow down keyboard polling to avoid duplicate commands?
-const s32 KB_TIME_STEP = BS_TIME_STEP;
-
 int main(int argc, char **argv)
 {
   WebotsKeyboardController::inputController.step(KB_TIME_STEP);
+  
   WebotsKeyboardController::Init();
 
   while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
