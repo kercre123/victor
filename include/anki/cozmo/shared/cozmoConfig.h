@@ -291,7 +291,7 @@ namespace Anki {
 #endif
 
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QVGA;
+    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
     
     // Number of frames to skip when streaming images to basestation
     const u8 IMG_STREAM_SKIP_FRAMES = 2;

@@ -231,15 +231,6 @@ ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
 
-// SetVisionSystemParams
-START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
-ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
-ADD_MESSAGE_MEMBER(f32, minExposureTime)
-ADD_MESSAGE_MEMBER(f32, maxExposureTime)
-ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
-ADD_MESSAGE_MEMBER(u8, highValue)
-END_MESSAGE_DEFINITION(SetVisionSystemParams)
-
 // DockingErrorSignal
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
 ADD_MESSAGE_MEMBER(f32, x_distErr)
@@ -249,6 +240,17 @@ ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
 ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
+
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, autoexposureOn)
+ADD_MESSAGE_MEMBER(f32, exposureTime)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
 // FaceDetection
 START_MESSAGE_DEFINITION(FaceDetection, 1)

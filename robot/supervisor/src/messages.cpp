@@ -422,7 +422,9 @@ namespace Anki {
       }
       
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
-        VisionSystem::SetParams(msg.integerCountsIncrement,
+        VisionSystem::SetParams(msg.autoexposureOn,
+                                msg.exposureTime,
+                                msg.integerCountsIncrement,
                                 msg.minExposureTime,
                                 msg.maxExposureTime,
                                 msg.highValue,

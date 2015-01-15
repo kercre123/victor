@@ -145,7 +145,7 @@ namespace Anki
       while(rawMessageQueue.Size_unsafe() > 0) {
         DebugStreamClient::RawBuffer object = rawMessageQueue.Front_unsafe();
         rawMessageQueue.Pop_unsafe();
-        free(object.data);
+        free(object.rawDataPointer);
       }
       rawMessageQueue.Unlock();
 
