@@ -77,6 +77,7 @@ void updateTimings()
     }
     
     for(int iLed=0; iLed<numLeds; iLed++) {
+      ledIsOn[iLed] = false;
       nextLedSwitchTime[iLed] = 0;
       microsecondsOn[iLed] = local_microsecondsOn[iLed];
       microsecondsOff[iLed] = local_microsecondsOff[iLed];
