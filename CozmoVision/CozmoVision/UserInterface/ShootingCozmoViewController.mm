@@ -162,20 +162,18 @@
   #define maxDistance 130.0
   #define lockIntensity 0.9
   
-  Float32 intensity;
-
+  Float32 intensity  = 0.f;
+  Float32 period_sec = 0.f;
+  
   if (markerDetected) {
     intensity = (distance > maxDistance) ? 0.0 : 1 - (distance / maxDistance);
     
-    self.targetingSoundPeriod_sec = distance/maxDistance + 0.01;
-  }
-  else {
-    intensity = 0.0;
-    self.targetingSoundPeriod_sec = 0;
+    period_sec = distance/maxDistance + 0.01;
   }
 
-  // Average prev & new intensity
-  self.markerIntensity = (intensity + self.markerIntensity) / 2.0;
+  // Average prev & new intensity/period
+  self.markerIntensity = 0.5f * (intensity + self.markerIntensity);
+  self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
   
   //BOOL wasTargetLocked = self.targetLocked;
   self.targetLocked = self.markerIntensity >= lockIntensity;
