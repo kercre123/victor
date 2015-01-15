@@ -826,5 +826,17 @@ namespace Anki {
       return;
     } // GetProximity_INT()
     
+    namespace HAL {
+      int UARTGetFreeSpace()
+      {
+        return 100000000;
+      }
+      
+      int UARTGetWriteBufferSize()
+      {
+        return 100000000;
+      }
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
