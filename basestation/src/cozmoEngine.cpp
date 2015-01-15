@@ -27,6 +27,7 @@
 
 #include "robotMessageHandler.h"
 
+#define ASYNCHRONOUS_DEVICE_VISION 0
 
 namespace Anki {
 namespace Cozmo {
@@ -152,10 +153,12 @@ namespace Cozmo {
       return lastResult;
     }
     
-    //_deviceVisionThread.SetCameraCalibration(deviceCamCalib);
-    
+#   if ASYNCHRONOUS_DEVICE_VISION
     // TODO: Only start when needed?
     _deviceVisionThread.Start(deviceCamCalib);
+#   else 
+    _deviceVisionThread.SetCameraCalibration(deviceCamCalib);
+#   endif
     
     _isInitialized = true;
     
@@ -223,7 +226,12 @@ namespace Cozmo {
   {
     // Process image within the detection rectangle with vision processing thread:
     static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
+    
+#   if ASYNCHRONOUS_DEVICE_VISION
     _deviceVisionThread.SetNextImage(image, bogusState);
+#   else
+    _deviceVisionThread.Update(image, bogusState);
+#   endif
   }
   
   bool CozmoEngineImpl::WasLastDeviceImageProcessed()
