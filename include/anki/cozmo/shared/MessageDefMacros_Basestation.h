@@ -380,7 +380,7 @@ Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_REG_CALLBACK_METHODS_MODE
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&)> callbackFcn) \
+void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&)> callbackFcn) \
 { \
   GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = callbackFcn; \
 }
@@ -392,12 +392,12 @@ void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(RobotID_t, GET_MESSA
 
 #elif MESSAGE_DEFINITION_MODE == MESSAGE_UI_PROCESS_METHODS_MODE
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-std::function<void(RobotID_t,GET_MESSAGE_CLASSNAME(__MSG_TYPE__)const&)> GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = nullptr; \
-Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(RobotID_t id, const u8* buffer) \
+std::function<void(GET_MESSAGE_CLASSNAME(__MSG_TYPE__)const&)> GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = nullptr; \
+Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer) \
 { \
   if (nullptr != GET_CALLBACK_FCN_NAME(__MSG_TYPE__)) { \
     const GET_MESSAGE_CLASSNAME(__MSG_TYPE__) msg(buffer); \
-    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(id, msg); \
+    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(msg); \
     return RESULT_OK; \
   } \
   return RESULT_FAIL; \

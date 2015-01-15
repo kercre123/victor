@@ -16,9 +16,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/uiMessageHandler.h"
+#include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "anki/cozmo/basestation/soundManager.h"
-
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include "behaviorManager.h"
 #include "cozmoActions.h"
@@ -155,14 +154,14 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToRobot const& msg)
     {
       // Tell the game to connect to a robot, using an event
-      BSE_ConnectToRobot::RaiseEvent(msg.robotID);
+      CozmoGameSignals::GetConnectToRobotSignal().emit(msg.robotID);
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToUiDevice const& msg)
     {
       // Tell the game to connect to a UI device, using an event
-      BSE_ConnectToUiDevice::RaiseEvent(msg.deviceID);
+      CozmoGameSignals::GetConnectToUiDeviceSignal().emit(msg.deviceID);
       return RESULT_OK;
     }
     

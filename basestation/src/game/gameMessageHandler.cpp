@@ -73,14 +73,8 @@ namespace Cozmo {
                             );
         }
         else {
-        
-          RobotID_t robotID = packet.destId;
-          
-          // This calls the (macro-generated) ProcessPacketAs_MessageX() method
-          // indicated by the lookup table, which will cast the buffer as the
-          // correct message type and call the specified robot's ProcessMessage(MessageX)
-          // method.
-          retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(robotID, packet.data+1);
+          // This calls the registered callback for the message
+          retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.data+1);
 
         }
         

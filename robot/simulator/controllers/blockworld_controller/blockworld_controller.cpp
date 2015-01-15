@@ -15,7 +15,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
 
 #include <fstream>
 

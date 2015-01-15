@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/events/BaseStationEvent.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "bridge.h"
 #include "flatMat.h"
@@ -1099,8 +1099,9 @@ namespace Anki
         if(numObjectsObserved > 0) {
           for(auto & obsObject : _obsProjectedObjects) {
             const Rectangle<f32>& bbox = obsObject.second;
-            BSE_RobotObservedObject::RaiseEvent(_robot->GetID(), obsObject.first.GetValue(),
-                                                bbox.GetX(), bbox.GetY(), bbox.GetWidth(), bbox.GetHeight());
+            CozmoEngineSignals::GetRobotObservedObjectSignal().emit(_robot->GetID(), obsObject.first.GetValue(),
+                                                                    bbox.GetX(), bbox.GetY(),
+                                                                    bbox.GetWidth(), bbox.GetHeight());
             
             // Display
             Quad2f quad;
