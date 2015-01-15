@@ -389,6 +389,7 @@ namespace Anki {
       p.maxExposureTime = msg.maxExposureTime;
       p.percentileToMakeHigh = msg.percentileToMakeHigh;
       p.highValue = msg.highValue;
+      p.limitFramerate = msg.limitFramerate;
       return robot->SendVisionSystemParams(p);
     }
    

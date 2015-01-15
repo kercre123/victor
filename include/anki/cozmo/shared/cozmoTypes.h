@@ -184,6 +184,7 @@ namespace Anki {
       f32 minExposureTime;
       f32 maxExposureTime;
       f32 percentileToMakeHigh;
+      s32 limitFramerate;
       u8 highValue;
     } VisionSystemParams_t;
 

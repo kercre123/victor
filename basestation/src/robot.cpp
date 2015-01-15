@@ -1960,6 +1960,7 @@ namespace Anki {
       m.percentileToMakeHigh = p.percentileToMakeHigh;
       m.integerCountsIncrement = p.integerCountsIncrement;
       m.highValue = p.highValue;
+      m.limitFramerate = p.limitFramerate;
       return _msgHandler->SendMessage(_ID,m);
     }
     

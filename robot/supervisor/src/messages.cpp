@@ -428,7 +428,8 @@ namespace Anki {
                                 msg.minExposureTime,
                                 msg.maxExposureTime,
                                 msg.highValue,
-                                msg.percentileToMakeHigh);
+                                msg.percentileToMakeHigh,
+                                msg.limitFramerate);
       }
 
       void ProcessSetFaceDetectParamsMessage(const SetFaceDetectParams& msg) {
