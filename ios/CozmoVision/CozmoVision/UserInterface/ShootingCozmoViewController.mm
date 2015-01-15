@@ -53,7 +53,6 @@
 @property (strong, nonatomic) NSURL*          lockSoundURL;
 @property (strong, nonatomic) AVAudioPlayer*  targetingSoundPlayer;
 @property (assign, nonatomic) NSTimeInterval  targetingSoundPeriod_sec;
-@property (assign, nonatomic) BOOL            targetingSoundCurrentlyPlaying;
 
 @property (strong, nonatomic) AVAudioPlayer*  lockSoundPlayer;
 @property (assign, nonatomic) BOOL            targetLocked;
@@ -108,17 +107,14 @@
   
   self.lockSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"laser/TargetLock.mp3"]];
   error = nil;
-  /*
   self.lockSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.lockSoundURL error:&error];
   if (!error) {
     self.lockSoundPlayer.delegate = nil;
     self.lockSoundPlayer.volume = 0.5;
-    self.targetingSoundPlayer.numberOfLoops = -1;
+    self.lockSoundPlayer.numberOfLoops = -1;
   }
-  */
   
   _targetingSoundPeriod_sec = 0;
-  _targetingSoundCurrentlyPlaying = NO;
   _targetLocked = NO;
   
   // Start up the vision thread for processing device camera images
@@ -169,21 +165,16 @@
     intensity = (distance > maxDistance) ? 0.0 : 1 - (distance / maxDistance);
     
     period_sec = distance/maxDistance + 0.01;
+    self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
+    self.targetLocked = self.targetingSoundPeriod_sec < .05f;
+  } else {
+    // Want this to be exactly zero when marker wasn't detected to disable targeting sound
+    self.targetingSoundPeriod_sec = 0.f;
+    self.targetLocked = NO;
   }
 
   // Average prev & new intensity/period
   self.markerIntensity = 0.5f * (intensity + self.markerIntensity);
-  self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
-  
-  //BOOL wasTargetLocked = self.targetLocked;
-  self.targetLocked = self.markerIntensity >= lockIntensity;
-  /*
-  if(!wasTargetLocked && self.targetLocked) {
-    [self playLockSound];
-  } else if(wasTargetLocked && !self.targetLocked) {
-    [self stopLockSound];
-  }
-   */
   
   // Won't do anything if period==0, nor if not using audio targeting
   [self playTargetingSound];
@@ -382,22 +373,20 @@
   {
     if(self.targetLocked) {
       [self.targetingSoundPlayer stop];
-      self.targetingSoundCurrentlyPlaying = NO;
-      
+      [self.lockSoundPlayer play];
     }
     else {
       if(self.lockSoundPlayer.isPlaying) {
         [self.lockSoundPlayer pause];
       }
       
-      if(self.targetingSoundPeriod_sec > 0 &&
-         self.targetingSoundCurrentlyPlaying == NO)
-      {
-        NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
-        BOOL soundPlayed = [self.targetingSoundPlayer playAtTime:nextPlayTime];
-        if(soundPlayed == YES) {
-          self.targetingSoundCurrentlyPlaying = YES;
+      if(self.targetingSoundPeriod_sec > 0) {
+        if(self.targetingSoundPlayer.isPlaying == NO) {
+          NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
+          [self.targetingSoundPlayer playAtTime:nextPlayTime];
         }
+      } else {
+        [self.targetingSoundPlayer stop];
       }
     }
   }
@@ -416,16 +405,19 @@
   [self.lockSoundPlayer pause];
 }
 */
+
+
 - (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
 {
   if(player == self.targetingSoundPlayer) {
     // Keep playing with current frequency
-    self.targetingSoundCurrentlyPlaying = NO;
-    if(self.targetingSoundPeriod_sec > 0) {
-      [self playTargetingSound];
-    } else {
-      [self.targetingSoundPlayer stop];
-    }
+    //self.targetingSoundCurrentlyPlaying = NO;
+    //if(self.targetingSoundPeriod_sec > 0) {
+      NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
+      [self.targetingSoundPlayer playAtTime:nextPlayTime];
+    //} else {
+    //  [self.targetingSoundPlayer stop];
+    //}
   }
 }
 
