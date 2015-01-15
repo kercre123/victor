@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/common/basestation/math/rect_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/cozmo/basestation/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
@@ -491,19 +493,31 @@ namespace Cozmo {
         break;
       }
         
-        /*
+        
       case BSETYPE_DeviceDetectedVisionMarker:
       {
         // Send a message out to UI that the device found a vision marker
         const BSE_DeviceDetectedVisionMarker *vmEvent = reinterpret_cast<const BSE_DeviceDetectedVisionMarker*>(event);
         assert(vmEvent != nullptr);
         
+        Quadrilateral<2,u16> markerQuad({static_cast<u16>(vmEvent->x_upperLeft_),  static_cast<u16>(vmEvent->y_upperLeft_)},
+                                        {static_cast<u16>(vmEvent->x_lowerLeft_),  static_cast<u16>(vmEvent->y_lowerLeft_)},
+                                        {static_cast<u16>(vmEvent->x_upperRight_), static_cast<u16>(vmEvent->y_upperRight_)},
+                                        {static_cast<u16>(vmEvent->x_lowerRight_), static_cast<u16>(vmEvent->y_lowerRight_)});
+        
+        Rectangle<u16> markerBBox(markerQuad);
+        
         MessageG2U_ObjectVisionMarker msg;
         msg.objectID = vmEvent->markerType_;
+        msg.topLeft_x = markerBBox.GetX();
+        msg.topLeft_y = markerBBox.GetY();
+        msg.width     = markerBBox.GetWidth();
+        msg.height    = markerBBox.GetHeight();
         
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
         break;
       }
-       */
+       
       case BSETYPE_RobotObservedObject:
       {
         // Send a message out to UI that the device found a vision marker
