@@ -148,25 +148,25 @@ using namespace Anki;
 {
   _gameMsgHandler->Init(_gameComms);
   
-  auto robotAvailableCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_RobotAvailable& msg) {
+  auto robotAvailableCallbackLambda = [self](const Cozmo::MessageG2U_RobotAvailable& msg) {
     [self handleRobotAvailable:msg];
   };
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
   
-  auto playRobotSoundCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_PlaySound& msg) {
+  auto playRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_PlaySound& msg) {
     [self handlePlayRobotSound:msg];
   };
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
   
-  auto uiDeviceAvailableCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
+  auto uiDeviceAvailableCallbackLambda = [self](const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
     [self handleUiDeviceAvailable:msg];
   };
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailableCallbackLambda);
   
-  auto stopRobotSoundCallbackLambda = [self](RobotID_t, const Cozmo::MessageG2U_StopSound& msg) {
+  auto stopRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_StopSound& msg) {
     [self handleStopRobotSound:msg];
   };
   
