@@ -96,10 +96,6 @@ CozmoMat {
 }
 WebotsKeyboardController {
 }
-RobotAdvertisementService {
-}
-XYaxesDisplay {
-}
 DEF BeeBlock Block1x1 {
   name "Bee"
   translation 0.213051 0.44651 0.0219929

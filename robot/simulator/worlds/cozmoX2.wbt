@@ -131,8 +131,6 @@ Bridge {
 WebotsKeyboardController {
 }
 
-RobotAdvertisementService {
-}
 XYaxesDisplay {
 }
 

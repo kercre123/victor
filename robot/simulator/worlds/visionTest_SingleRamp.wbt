@@ -101,9 +101,6 @@ DirectionalLight {
 CozmoMat {
 }
 
-XYaxesDisplay {
-}
-
 Ramp2x1 {
   name "Ramp"
   type "BASIC_RAMP"

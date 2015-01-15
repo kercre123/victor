@@ -131,9 +131,6 @@ Bridge {
 #WebotsKeyboardController {
 #}
 
-XYaxesDisplay {
-}
-
 DEF FireBlock Block1x1 {
   name "Fire_01"
   translation 0.15 .02 0.0219929

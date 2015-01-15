@@ -123,8 +123,6 @@ DEF Cozmo_1 CozmoBot {
 #}
 
 
-RobotAdvertisementService {
-}
 DEF WorldComms BlockWorldComms {
 }
 CozmoVizDisplay{

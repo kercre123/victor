@@ -131,13 +131,6 @@ Face {
   translation -0.10613 -0.310172 0.17
 }
 
-
-#RobotAdvertisementService {
-#}
-
-XYaxesDisplay {
-}
-
 DEF FireBlock Block1x1 {
   name "Fire_01"
   translation 0.15 .02 0.0219929

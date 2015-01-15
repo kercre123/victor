@@ -96,10 +96,6 @@ DirectionalLight {
 }
 CozmoMat {
 }
-RobotAdvertisementService {
-}
-XYaxesDisplay {
-}
 Block1x1 {
   name "Number1"
   translation 0.0823477 0.154984 0.0219935

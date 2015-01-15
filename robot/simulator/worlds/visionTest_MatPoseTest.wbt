@@ -101,9 +101,6 @@ DirectionalLight {
 CozmoMat {
 }
 
-XYaxesDisplay {
-}
-
 DEF Cozmo_1 CozmoBot {
   name "Cozmo_1"
   translation  -0.066000 -0.231000 0.000000

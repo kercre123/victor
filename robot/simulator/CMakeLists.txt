@@ -15,7 +15,6 @@ if(APPLE)
     add_subdirectory(controllers/blockworld_controller)
     add_subdirectory(controllers/cozmo_c_controller)
     add_subdirectory(controllers/cozmo_viz_controller)
-    add_subdirectory(controllers/robot_advertisement_controller)
     add_subdirectory(controllers/webots_keyboard_controller)
 
      if (ANKICORETECH_USE_MATLAB)

@@ -34,8 +34,7 @@ DirectionalLight {
 }
 CozmoMat {
 }
-XYaxesDisplay {
-}
+
 DEF CozmoViz_1 CozmoBot {
   name "CozmoBot_1"
   
@@ -44,8 +43,6 @@ DEF CozmoViz_1 CozmoBot {
 
   # Enable vizMode
   vizMode TRUE
-}
-RobotAdvertisementService {
 }
 DEF WorldComms BlockWorldComms {
 }

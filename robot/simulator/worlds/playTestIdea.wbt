@@ -203,10 +203,6 @@ Bridge {
 WebotsKeyboardController {
   translation 0.422657 0.388531 0.08
 }
-RobotAdvertisementService {
-}
-XYaxesDisplay {
-}
 Block1x1 {
   name "Arrow1"
   translation -0.249886 0.356287 0.0219983
