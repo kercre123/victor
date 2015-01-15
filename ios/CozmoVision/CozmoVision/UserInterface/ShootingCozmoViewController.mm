@@ -114,8 +114,9 @@
     self.lockSoundPlayer.numberOfLoops = -1;
   }
   
-  _targetingSoundPeriod_sec = 0;
-  _targetLocked = NO;
+  self.targetingSoundPeriod_sec = 0;
+  self.targetLocked = NO;
+  [self playTargetingSound];
   
   // Start up the vision thread for processing device camera images
   // TODO: Get calibration of device camera somehow
@@ -140,6 +141,9 @@
   [NSUserDefaults setLastUseVisualTargeting:self.useAudioTargeting];
   [NSUserDefaults setLastUseAudioTargeting:self.useVisualTargeting];
   
+  self.targetingSoundPeriod_sec = 0;
+  [self.targetingSoundPlayer stop];
+  
   [_videoCamera stop];
 }
 
@@ -147,7 +151,7 @@
 {
   return UIInterfaceOrientationMaskLandscapeRight;
 }
-//
+
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
   return UIInterfaceOrientationLandscapeRight;
@@ -166,18 +170,13 @@
     
     period_sec = distance/maxDistance + 0.01;
     self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
-    self.targetLocked = self.targetingSoundPeriod_sec < .05f;
   } else {
     // Want this to be exactly zero when marker wasn't detected to disable targeting sound
     self.targetingSoundPeriod_sec = 0.f;
-    self.targetLocked = NO;
   }
 
   // Average prev & new intensity/period
   self.markerIntensity = 0.5f * (intensity + self.markerIntensity);
-  
-  // Won't do anything if period==0, nor if not using audio targeting
-  [self playTargetingSound];
   
   dispatch_async(dispatch_get_main_queue(), ^{
     self.crosshairTopImageView.alpha = self.markerIntensity;
@@ -308,8 +307,8 @@
   
   // Detection rectangle is red and label says "No Marker" unless we find a
   // vision marker below
-  Float32 markerDistanceFromCenter = 100000.0;
-  BOOL markerInCrosshairs = NO;
+  Float32 markerDistanceFromCenterSq = 1000000.0;
+  BOOL markerFound = NO;
   
   self.markerType = Anki::Vision::MARKER_UNKNOWN;
   
@@ -319,35 +318,36 @@
   while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
                                                                 :&markerTypeOut])
   {
-    BOOL inCrosshairs = NO;
+    markerFound = YES;
     
-    if (self.useAudioTargeting ) {
-      // For audio targeting, it is sufficient for the marker to be visible
-      // at all in the image.
-      inCrosshairs = YES;
-    } else {
-      // See if the crosshairs at center of image is within the marker's
-      // bounding box
-      inCrosshairs = CGRectContainsPoint(marker, CGPointMake(160,120));
-    }
+    Float32 xDistance = CGRectGetMidX(marker) - 160.0;
+    Float32 yDistance = CGRectGetMidY(marker) - 120.0;
+    Float32 currentDistanceSq = xDistance * xDistance + yDistance * yDistance;
     
-    if(inCrosshairs) {
-      markerInCrosshairs = YES;
-      
-      Float32 xDistance = CGRectGetMidX(marker) - 160.0;
-      Float32 yDistance = CGRectGetMidY(marker) - 120.0;
-      Float32 currentDistance = sqrt(xDistance * xDistance + yDistance * yDistance);
-      
-      // Keep the marker in view that's closest to center
-      if(currentDistance < markerDistanceFromCenter) {
-        self.markerType = markerTypeOut; //msg.markerType;
-        self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
-        markerDistanceFromCenter = currentDistance;
-      }
+    // Keep the marker in view that's closest to center
+    if(currentDistanceSq < markerDistanceFromCenterSq) {
+      self.markerType = markerTypeOut; //msg.markerType;
+      self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
+      markerDistanceFromCenterSq = currentDistanceSq;
     }
   }
   
-  [self updateCrosshairsWithMarkerDetected:markerInCrosshairs distance:markerDistanceFromCenter];
+  if(markerFound) {
+    // If we found a marker, the crosshairs must be within it to be in "lock"
+    // TODO: Use a scaled rectangle to add slop - see CGRectInset
+    self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
+    
+    if(self.useAudioTargeting == NO) {
+      // For audio targeting, it is sufficient for the marker to be visible
+      // at all in the image, but otherwise, the marker must also be in lock.
+      markerFound = self.targetLocked;
+    }
+  } else {
+    // If we lost the marker, make sure we turn off "lock"
+    self.targetLocked = NO;
+  }
+  
+  [self updateCrosshairsWithMarkerDetected:markerFound distance:sqrt(markerDistanceFromCenterSq)];
   
   
 //}
@@ -367,57 +367,34 @@
 
 #pragma mark - Audio Targeting
 
-- (void)playTargetingSound
+- (void) playTargetingSound
 {
-  if(self.useAudioTargeting)
-  {
-    if(self.targetLocked) {
+  if(self.targetLocked == YES) {
+    // If the targeting sound is currently playing, stop it
+    if(self.targetingSoundPlayer.isPlaying) {
       [self.targetingSoundPlayer stop];
+    }
+    // If the lock sound isn't already playing, start it
+    if(self.lockSoundPlayer.isPlaying == NO) {
       [self.lockSoundPlayer play];
     }
-    else {
-      if(self.lockSoundPlayer.isPlaying) {
-        [self.lockSoundPlayer pause];
-      }
-      
-      if(self.targetingSoundPeriod_sec > 0) {
-        if(self.targetingSoundPlayer.isPlaying == NO) {
-          NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
-          [self.targetingSoundPlayer playAtTime:nextPlayTime];
-        }
-      } else {
-        [self.targetingSoundPlayer stop];
-      }
+  } else if(self.targetingSoundPeriod_sec > 0) {
+    // If the lock sound is playing, pause it
+    if(self.lockSoundPlayer.isPlaying) {
+      [self.lockSoundPlayer pause];
+    }
+    // If the targeting sound isn't already playing, play it
+    if(self.targetingSoundPlayer.isPlaying == NO) {
+      NSLog(@"TargetingSoundPeriod = %.2f sec\n", self.targetingSoundPeriod_sec);
+      [self.targetingSoundPlayer play];
     }
   }
   
-}
-
-/*
-- (void)playLockSound
-{
-  [self.targetingSoundPlayer stop];
-  [self.lockSoundPlayer play];
-}
-
-- (void)stopLockSound
-{
-  [self.lockSoundPlayer pause];
-}
-*/
-
-
-- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
-{
-  if(player == self.targetingSoundPlayer) {
-    // Keep playing with current frequency
-    //self.targetingSoundCurrentlyPlaying = NO;
-    //if(self.targetingSoundPeriod_sec > 0) {
-      NSTimeInterval nextPlayTime = self.targetingSoundPlayer.deviceCurrentTime+self.targetingSoundPeriod_sec;
-      [self.targetingSoundPlayer playAtTime:nextPlayTime];
-    //} else {
-    //  [self.targetingSoundPlayer stop];
-    //}
+  // Keep the timers running as long as the shooter view is up and running,
+  // just use the current period
+  if(self.isViewLoaded) {
+    double nextTime = fmin(3.0, fmax(self.targetingSoundPeriod_sec, self.targetingSoundPlayer.duration));
+    [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
   }
 }
 
