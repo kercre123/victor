@@ -332,7 +332,15 @@
     }
   }
   
+  // Use a bit hysteresis on the marker being found
+  static int framesSinceMarkerFound = 0;
+  static Float32 lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+  
   if(markerFound) {
+    // Reset hysteresis stuff
+    framesSinceMarkerFound = 0;
+    lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+    
     // If we found a marker, the crosshairs must be within it to be in "lock"
     // TODO: Use a scaled rectangle to add slop - see CGRectInset
     self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
@@ -343,8 +351,22 @@
       markerFound = self.targetLocked;
     }
   } else {
-    // If we lost the marker, make sure we turn off "lock"
-    self.targetLocked = NO;
+    
+    ++framesSinceMarkerFound;
+    
+    if(framesSinceMarkerFound > 5) {
+      // It's been long enough that we haven't seen a marker to consider it lost
+      markerFound = NO;
+      lastMarkerDistanceFromCenterSq = 100000.f;
+      
+      // If we lost the marker, make sure we turn off "lock"
+      self.targetLocked = NO;
+    } else {
+      // Still within the hysteresis, so pretend we're still seeing the marker
+      // at the last known distance
+      markerFound = YES;
+      markerDistanceFromCenterSq = lastMarkerDistanceFromCenterSq;
+    }
   }
   
   [self updateCrosshairsWithMarkerDetected:markerFound distance:sqrt(markerDistanceFromCenterSq)];
