@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-include(coretech/anki.cmake)
+include(../coretech-external/anki.cmake)
 
 if(NOT DEFINED ANKI_IOS_BUILD)
   set(ANKI_IOS_BUILD 0)
