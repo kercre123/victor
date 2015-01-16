@@ -130,9 +130,10 @@
   Anki::Vision::CameraCalibration deviceCamCalib;
   
   self.targetingSlopSlider.title = @"Slop";
+  [self.targetingSlopSlider setValueRange:1.0:3.0];
   self.targetingSlopSlider.valueChangedThreshold = 0.025;
   [self.targetingSlopSlider setActionBlock:^(float value) {
-    self.targetingSlopFactor = value*3.f + 1.f;
+    self.targetingSlopFactor = value;
   }];
   
   // Reload last setup
@@ -142,7 +143,7 @@
   self.useAudioTargetingSwitch.on = self.useAudioTargeting;
   self.useVisualTargetingSwitch.on = self.useVisualTargeting;
   self.cameraView.hidden = !self.useVisualTargeting;
-  [self.targetingSlopSlider setValue:(self.targetingSlopFactor-1.f)/3.f];
+  [self.targetingSlopSlider setValue:self.targetingSlopFactor];
 
   
   UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
