@@ -26,7 +26,7 @@
 
 //#if ANKI_IOS_BUILD
 
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 
 //#endif
 

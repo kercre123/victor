@@ -16,7 +16,7 @@
 #include "anki/common/types.h"
 #include <anki/messaging/basestation/IComms.h>
 
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
 
 // Enable this if you want to receive/send messages via socket connection.
@@ -32,7 +32,7 @@ namespace Anki {
   namespace Cozmo {
     
 #define MESSAGE_BASECLASS_NAME UiMessage
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
     
     class Robot;
     class RobotManager;
@@ -82,7 +82,7 @@ namespace Anki {
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
       
       // Fill in the message information lookup table for getting size and
       // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -96,11 +96,11 @@ namespace Anki {
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME UiMessageHandler
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
 #undef MESSAGE_HANDLER_CLASSNAME
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
         {0, 0, 0} // Final dummy entry without comma at end
       };
       

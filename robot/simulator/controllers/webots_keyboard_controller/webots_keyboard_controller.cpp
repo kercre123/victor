@@ -11,10 +11,10 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
-#include "anki/cozmo/basestation/game/gameMessageHandler.h"
-#include "anki/cozmo/basestation/game/gameComms.h"
+#include "anki/cozmo/game/comms/gameMessageHandler.h"
+#include "anki/cozmo/game/comms/gameComms.h"
 
 #include "behaviorManager.h"
 

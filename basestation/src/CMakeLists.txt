@@ -12,14 +12,6 @@ file(GLOB HEADER_FILES_COMMS "comms/*.h")
 file(GLOB SOURCE_FILES_COMMS_ROBOT "comms/robot/*.cpp")
 file(GLOB HEADER_FILES_COMMS_ROBOT "comms/robot/*.h")
 
-# ui subdirectory
-file(GLOB SOURCE_FILES_UI "ui/*.cpp")
-file(GLOB HEADER_FILES_UI "ui/*.h")
-
-# ui/messaging subdirectory
-file(GLOB SOURCE_FILES_UI_MSG "ui/messaging/*.cpp")
-file(GLOB HEADER_FILES_UI_MSG "ui/messaging/*.h")
-
 # game subdirectory
 file(GLOB SOURCE_FILES_GAME "game/*.cpp")
 file(GLOB HEADER_FILES_GAME "game/*.h")
@@ -57,8 +49,6 @@ set(PRIVATE_HEADER_FILES
   ${HEADER_FILES_ROOT} 
   ${HEADER_FILES_COMMS}
   ${HEADER_FILES_COMMS_ROBOT}
-  ${HEADER_FILES_UI}
-  ${HEADER_FILES_UI_MSG}
   ${HEADER_FILES_GAME}
   ${HEADER_FILES_EVENTS}
   ${HEADER_FILES_SIGNALS}
@@ -72,8 +62,6 @@ set(SOURCE_FILES
   ${SOURCE_FILES_ROOT}
   ${SOURCE_FILES_COMMS}
   ${SOURCE_FILES_COMMS_ROBOT}
-  ${SOURCE_FILES_UI}
-  ${SOURCE_FILES_UI_MSG}
   ${SOURCE_FILES_GAME}
   ${SOURCE_FILES_EVENTS}
   ${SOURCE_FILES_SIGNALS}

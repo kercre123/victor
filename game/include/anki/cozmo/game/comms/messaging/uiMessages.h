@@ -20,13 +20,13 @@ namespace Anki {
     
     // 1. Initial include just defines the definition modes for use below
 #undef MESSAGE_DEFINITION_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
     
     // Create the enumerated message IDs from the MessageDefinitions file:
     typedef enum {
       NO_UI_MESSAGE_ID = 0,
 #define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
       NUM_UI_MSG_IDS // Final entry without comma at end
     } UI_MSG_ID;
     
@@ -49,7 +49,7 @@ namespace Anki {
     
     // 2. Define all the ui message classes:
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
     
 #undef MESSAGE_BASECLASS_NAME
 

@@ -1,4 +1,4 @@
-#include "anki/cozmo/basestation/game/gameMessageHandler.h"
+#include "anki/cozmo/game/comms/gameMessageHandler.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 

@@ -16,7 +16,7 @@
 #include "anki/messaging/basestation/IComms.h"
 #include "comms/commsPlayback.h"
 #include "playback.h"
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 //#include "basestation/ui/messaging/messageQueue.h"
 //#include "basestation/ui/messaging/messages/inputControllerMessage.h"
 //#include "basestation/ui/messaging/messages/reproducibilityMessage.h"

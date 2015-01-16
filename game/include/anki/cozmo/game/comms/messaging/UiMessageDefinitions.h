@@ -2,9 +2,9 @@
 
 #define SKIP_MESSAGE_DEFINITION_MODE_UNDEF
 
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
 
 #undef SKIP_MESSAGE_DEFINITION_MODE_UNDEF
 
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
 

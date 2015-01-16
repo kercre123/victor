@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2014
  *
  **/
-#include "anki/cozmo/basestation/game/gameComms.h"
+#include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"

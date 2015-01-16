@@ -18,7 +18,7 @@
 #include "anki/common/types.h"
 
 #include <anki/messaging/basestation/IComms.h>
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 
 namespace Anki {
   
@@ -30,7 +30,7 @@ namespace Cozmo {
   
   
 #define MESSAGE_BASECLASS_NAME UiMessage
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitions.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
   
   // Define interface for a GameMessage handler
   class IGameMessageHandler
@@ -70,7 +70,7 @@ namespace Cozmo {
     
     // Declare registration functions for message handling callbacks
     #define MESSAGE_DEFINITION_MODE MESSAGE_UI_REG_CALLBACK_METHODS_MODE
-    #include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"    
+    #include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
     
   protected:
     
@@ -85,7 +85,7 @@ namespace Cozmo {
     
     // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
     
     // Fill in the message information lookup table for getting size and
     // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -98,11 +98,11 @@ namespace Cozmo {
       {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
       
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
       
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME GameMessageHandler
-#include "anki/cozmo/basestation/ui/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
 #undef MESSAGE_HANDLER_CLASSNAME
 
       {0, 0, 0} // Final dummy entry without comma at end
