@@ -14,7 +14,6 @@
  **/
 
 #include "anki/cozmo/basestation/actionableObject.h"
-#include "anki/cozmo/basestation/preActionPose.h"
 
 namespace Anki {
   namespace Cozmo {
