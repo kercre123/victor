@@ -32,4 +32,7 @@
 + (BOOL)lastUseAudioTargeting;
 + (void)setLastUseAudioTargeting:(BOOL)use;
 
++ (float)lastTargetingSlopFactor;
++ (void)setLastTargetingSlopFactor:(float)factor;
+
 @end

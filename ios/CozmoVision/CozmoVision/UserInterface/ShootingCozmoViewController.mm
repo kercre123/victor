@@ -28,6 +28,8 @@
 #import "CvVideoCameraReorient.h"
 #import "NSUserDefaults+UI.h"
 
+#import "VerticalSliderView.h"
+
 #endif
 
 
@@ -56,12 +58,16 @@
 
 @property (strong, nonatomic) AVAudioPlayer*  lockSoundPlayer;
 @property (assign, nonatomic) BOOL            targetLocked;
+@property (assign, nonatomic) BOOL            runTimer;
+
+@property (assign, nonatomic) Float32         targetingSlopFactor;
 
 @property (weak, nonatomic) CozmoOperator*      cozmoOperator;
 @property (weak, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
 
 @property (weak, nonatomic) IBOutlet UISwitch *useVisualTargetingSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *useAudioTargetingSwitch;
+@property (weak, nonatomic) IBOutlet VerticalSliderView *targetingSlopSlider;
 
 - (void)playTargetingSound;
   
@@ -116,18 +122,27 @@
   
   self.targetingSoundPeriod_sec = 0;
   self.targetLocked = NO;
+  self.runTimer = YES;
   [self playTargetingSound];
   
   // Start up the vision thread for processing device camera images
   // TODO: Get calibration of device camera somehow
   Anki::Vision::CameraCalibration deviceCamCalib;
   
+  self.targetingSlopSlider.title = @"Slop";
+  self.targetingSlopSlider.valueChangedThreshold = 0.025;
+  [self.targetingSlopSlider setActionBlock:^(float value) {
+    self.targetingSlopFactor = value*3.f + 1.f;
+  }];
+  
   // Reload last setup
   self.useVisualTargeting = [NSUserDefaults lastUseVisualTargeting];
   self.useAudioTargeting  = [NSUserDefaults lastUseAudioTargeting];
+  self.targetingSlopFactor = [NSUserDefaults lastTargetingSlopFactor];
   self.useAudioTargetingSwitch.on = self.useAudioTargeting;
   self.useVisualTargetingSwitch.on = self.useVisualTargeting;
   self.cameraView.hidden = !self.useVisualTargeting;
+  [self.targetingSlopSlider setValue:(self.targetingSlopFactor-1.f)/3.f];
 
   
   UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
@@ -140,9 +155,12 @@
 {
   [NSUserDefaults setLastUseVisualTargeting:self.useAudioTargeting];
   [NSUserDefaults setLastUseAudioTargeting:self.useVisualTargeting];
+  [NSUserDefaults setLastTargetingSlopFactor:self.targetingSlopFactor];
   
+  self.runTimer = NO;
   self.targetingSoundPeriod_sec = 0;
   [self.targetingSoundPlayer stop];
+  [self.lockSoundPlayer stop];
   
   [_videoCamera stop];
 }
@@ -170,6 +188,7 @@
     
     period_sec = distance/maxDistance + 0.01;
     self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
+    self.targetingSoundPeriod_sec /= self.targetingSlopFactor;
   } else {
     // Want this to be exactly zero when marker wasn't detected to disable targeting sound
     self.targetingSoundPeriod_sec = 0.f;
@@ -335,29 +354,38 @@
   // Use a bit hysteresis on the marker being found
   static int framesSinceMarkerFound = 0;
   static Float32 lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+  static BOOL wasTargetLocked = NO;
+  const int numHysteresisFrames = 5;
   
   if(markerFound) {
-    // Reset hysteresis stuff
-    framesSinceMarkerFound = 0;
-    lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
-    
+
     // If we found a marker, the crosshairs must be within it to be in "lock"
     // TODO: Use a scaled rectangle to add slop - see CGRectInset
-    self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
+    const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
+    Float32 dx = CGRectGetWidth(marker)*adjustment;
+    Float32 dy = CGRectGetHeight(marker)*adjustment;
+    self.targetLocked = CGRectContainsPoint(CGRectInset(marker, -dx, -dy), CGPointMake(160,120));
     
     if(self.useAudioTargeting == NO) {
       // For audio targeting, it is sufficient for the marker to be visible
       // at all in the image, but otherwise, the marker must also be in lock.
       markerFound = self.targetLocked;
     }
+    
+    // Reset hysteresis stuff
+    framesSinceMarkerFound = 0;
+    lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+    wasTargetLocked = self.targetLocked;
+    
   } else {
     
     ++framesSinceMarkerFound;
     
-    if(framesSinceMarkerFound > 5) {
+    if(framesSinceMarkerFound > numHysteresisFrames) {
       // It's been long enough that we haven't seen a marker to consider it lost
       markerFound = NO;
       lastMarkerDistanceFromCenterSq = 100000.f;
+      wasTargetLocked = NO;
       
       // If we lost the marker, make sure we turn off "lock"
       self.targetLocked = NO;
@@ -365,8 +393,13 @@
       // Still within the hysteresis, so pretend we're still seeing the marker
       // at the last known distance
       markerFound = YES;
+      self.targetLocked = wasTargetLocked;
       markerDistanceFromCenterSq = lastMarkerDistanceFromCenterSq;
     }
+  }
+  
+  if(self.lockSoundPlayer.isPlaying && self.targetLocked == NO) {
+    [self.lockSoundPlayer pause];
   }
   
   [self updateCrosshairsWithMarkerDetected:markerFound distance:sqrt(markerDistanceFromCenterSq)];
@@ -407,14 +440,13 @@
     }
     // If the targeting sound isn't already playing, play it
     if(self.targetingSoundPlayer.isPlaying == NO) {
-      NSLog(@"TargetingSoundPeriod = %.2f sec\n", self.targetingSoundPeriod_sec);
       [self.targetingSoundPlayer play];
     }
   }
   
   // Keep the timers running as long as the shooter view is up and running,
   // just use the current period
-  if(self.isViewLoaded) {
+  if(self.runTimer) {
     double nextTime = fmin(3.0, fmax(self.targetingSoundPeriod_sec, self.targetingSoundPlayer.duration));
     [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
   }
