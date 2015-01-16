@@ -77,5 +77,7 @@ if __name__ == '__main__':
   if len(sys.argv) > 3:
     saveColor = bool(int(sys.argv[3]))
     
+  print('cameraId: ' + str(cameraId) + '   captureBaseFilename: ' + captureBaseFilename + '   saveColor: ' + str(saveColor))
+    
   captureImages(cameraId, captureBaseFilename, saveColor)
   
