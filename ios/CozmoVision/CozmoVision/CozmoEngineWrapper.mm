@@ -20,9 +20,7 @@
 
 // Cozmo includes
 #import <anki/cozmo/basestation/basestation.h>
-//#import <anki/cozmo/basestation/game/gameComms.h>
-//#import <anki/cozmo/basestation/game/gameMessageHandler.h>
-#import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
+#import <anki/cozmo/game/comms/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
 #import <anki/cozmo/basestation/cozmoEngine.h>
