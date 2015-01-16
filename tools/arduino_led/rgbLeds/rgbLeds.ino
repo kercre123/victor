@@ -4,12 +4,14 @@ Modulate LED based on input from serial communication
 
 #include <stdio.h>
 
-const int numLeds = 1;
+const int numLeds = 2;
 
-const int ledPins[numLeds][3] = {{31, 33, 35}};
+const int ledPins[numLeds][3] = {{31, 33, 35}, {37, 39, 41}};
 
-const int modulationPeriodMicroseconds = 5000;
-const int brightnessPeriodMicroseconds = 1000000;
+const int modulationPeriodMicroseconds = 1000;
+const int brightnessPeriodMicroseconds = 10000000;
+const int inverseMax = 16; // 2 is half, 3 is 1/3, etc
+
 //const int deltaModulationPeriodMicroseconds = 5;
 unsigned long startTime = 0;
 
@@ -119,7 +121,7 @@ void loop()
     }
   } else {
     const int inversePeriod = brightnessPeriodMicroseconds / modulationPeriodMicroseconds;
-    const int curOnMicroseconds = timeSinceStart / inversePeriod;
+    const int curOnMicroseconds = timeSinceStart / inversePeriod / inverseMax;
     // TODO: adjust brightness
     for(int iLed=0; iLed<numLeds; iLed++) {
       for(int iChannel=0; iChannel<3; iChannel++) {
@@ -127,6 +129,8 @@ void loop()
         //ledOnMicroseconds[iLed][iChannel] = 0;
       }
     }
+       
+    //ledOnMicroseconds[0][1] = modulationPeriodMicroseconds / inverseMax;
        
     //Serial.print(curOnMicroseconds, DEC);
     //Serial.println();
