@@ -10,9 +10,9 @@
 #import "CozmoOperator.h"
 #import "SoundCoordinator.h"
 
-#import <anki/cozmo/basestation/game/gameComms.h>
-#import <anki/cozmo/basestation/game/gameMessageHandler.h>
-#import <anki/cozmo/basestation/ui/messaging/uiMessages.h>
+#import <anki/cozmo/game/comms/gameComms.h>
+#import <anki/cozmo/game/comms/gameMessageHandler.h>
+#import <anki/cozmo/game/comms/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 
 using namespace Anki;
