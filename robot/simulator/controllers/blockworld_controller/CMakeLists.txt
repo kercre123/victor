@@ -39,6 +39,7 @@ add_executable(blockworld_controller
 
 target_link_libraries(blockworld_controller 
   Cozmo_Basestation
+  Cozmo_Game
   CoreTech_Common_Basestation
   CoreTech_Vision_Basestation
   CoreTech_Vision_Robot  # For using embedded vision implementations on Basestation

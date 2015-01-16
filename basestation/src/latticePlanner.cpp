@@ -18,7 +18,7 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "json/json.h"

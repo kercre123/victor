@@ -1,10 +1,10 @@
 /**
- * File: messageHandler.cpp
+ * File: robotMessageHandler.cpp
  *
  * Author: Andrew Stein
  * Date:   1/22/2014
  *
- * Description: Implements the singleton MessageHandler object. See 
+ * Description: Implements the singleton RobotMessageHandler object. See 
  *              corresponding header for more detail.
  *
  * Copyright: Anki, Inc. 2014
@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "vizManager.h"
 
 #include <fstream>
@@ -37,24 +37,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    MessageHandler::MessageHandler()
+    RobotMessageHandler::RobotMessageHandler()
     : comms_(NULL), robotMgr_(NULL)
     {
       
     }
-    Result MessageHandler::Init(Comms::IComms* comms,
-                                    RobotManager*  robotMgr)
+    Result RobotMessageHandler::Init(Comms::IComms* comms,
+                                RobotManager*  robotMgr)
     {
       Result retVal = RESULT_FAIL;
       
-      //TODO: PRINT_NAMED_DEBUG("MessageHandler", "Initializing comms");
+      //TODO: PRINT_NAMED_DEBUG("RobotMessageHandler", "Initializing comms");
       comms_ = comms;
       robotMgr_ = robotMgr;
       
       if(comms_) {
         isInitialized_ = comms_->IsInitialized();
         if (isInitialized_ == false) {
-          // TODO: PRINT_NAMED_ERROR("MessageHandler", "Unable to initialize comms!");
+          // TODO: PRINT_NAMED_ERROR("RobotMessageHandler", "Unable to initialize comms!");
           retVal = RESULT_OK;
         }
       }
@@ -63,7 +63,7 @@ namespace Anki {
     }
     
 
-    Result MessageHandler::SendMessage(const RobotID_t robotID, const Message& msg)
+    Result RobotMessageHandler::SendMessage(const RobotID_t robotID, const RobotMessage& msg)
     {
       Comms::MsgPacket p;
       p.data[0] = msg.GetID();
@@ -75,20 +75,20 @@ namespace Anki {
     }
 
     
-    Result MessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
+    Result RobotMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
       Result retVal = RESULT_FAIL;
       
       if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("MessageHandler.NullRobotManager",
-                          "RobotManager NULL when MessageHandler::ProcessPacket() called.\n");
+        PRINT_NAMED_ERROR("RobotMessageHandler.NullRobotManager",
+                          "RobotManager NULL when RobotMessageHandler::ProcessPacket() called.\n");
       }
       else {
         const u8 msgID = packet.data[0];
         
         // Check for invalid msgID
         if (msgID >= NUM_MSG_IDS || msgID == 0) {
-          PRINT_NAMED_ERROR("MessageHandler.InvalidMsgId",
+          PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
                             "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
                             msgID,
                             NUM_MSG_IDS
@@ -98,7 +98,7 @@ namespace Anki {
         
         // Check that the msg size matches expected size
         if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("MessageHandler.MessageBufferWrongSize",
+          PRINT_NAMED_ERROR("RobotMessageHandler.MessageBufferWrongSize",
                             "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
                             msgID,
                             lookupTable_[msgID].size,
@@ -115,7 +115,7 @@ namespace Anki {
                               msgID, robotID);
           }
           else if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
-            PRINT_NAMED_ERROR("MessageHandler.ProcessPacket.NullProcessPacketFcn",
+            PRINT_NAMED_ERROR("RobotMessageHandler.ProcessPacket.NullProcessPacketFcn",
                               "Message %d received by robot %d, but no ProcessPacketAs function defined for it.\n",
                               msgID, robotID);
           }
@@ -132,7 +132,7 @@ namespace Anki {
       return retVal;
     } // ProcessBuffer()
     
-    Result MessageHandler::ProcessMessages()
+    Result RobotMessageHandler::ProcessMessages()
     {
       Result retVal = RESULT_FAIL;
       
@@ -156,7 +156,7 @@ namespace Anki {
     
     // Convert a MessageVisionMarker into a VisionMarker object and hand it off
     // to the BlockWorld
-    Result MessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
     {
       Result retVal = RESULT_FAIL;
       
@@ -168,7 +168,7 @@ namespace Anki {
     } // ProcessMessage(MessageVisionMarker)
     
     /*
-    Result MessageHandler::ProcessMessage(Robot* robot, const MessageFaceDetection& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, const MessageFaceDetection& msg)
     {
       Result retVal = RESULT_OK;
       
@@ -195,7 +195,7 @@ namespace Anki {
     } // ProcessMessage(MessageFaceDetection)
     */
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
       // Convert calibration message into a calibration object to pass to
       // the robot
@@ -212,7 +212,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRobotState const& msg)
     {
       /*
       PRINT_NAMED_INFO("RobotStateMsgRecvd",
@@ -233,7 +233,7 @@ namespace Anki {
       return robot->UpdateFullRobotState(msg);
     }
 
-    Result MessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePrintText const& msg)
     {
       const u32 MAX_PRINT_STRING_LENGTH = 1024;
       static char text[MAX_PRINT_STRING_LENGTH];  // Local storage for large messages which may come across in multiple packets
@@ -272,7 +272,7 @@ namespace Anki {
     
     // For visualization of docking error signal
     /*
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageDockingErrorSignal const& msg)
     {
       VizManager::getInstance()->SetDockingError(msg.x_distErr, msg.y_horErr, msg.angleErr);
       return RESULT_OK;
@@ -282,7 +282,7 @@ namespace Anki {
 
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
       static u32 imgID = 0;
       static u32 totalImgSize = 0;
@@ -386,6 +386,8 @@ namespace Anki {
             
             imgToSend = rawImg.data;
           }
+          // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
+          // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
           VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
                                                    (Vision::CameraResolution)msg.resolution);
 
@@ -423,7 +425,7 @@ namespace Anki {
     }
     
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
     {
       /*
       PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
@@ -442,7 +444,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
       PRINT_INFO("Robot %d reported it %s picking up block.\n", robot->GetID(), successStr);
@@ -458,7 +460,7 @@ namespace Anki {
       return lastResult;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
       PRINT_INFO("Robot %d reported it %s placing block.\n", robot->GetID(), successStr);
@@ -474,7 +476,7 @@ namespace Anki {
       return lastResult;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
     {
       PRINT_INFO("Robot %d reported it started traversing a ramp.\n", robot->GetID());
 
@@ -483,7 +485,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
     {
       PRINT_INFO("Robot %d reported it completed traversing a ramp.\n", robot->GetID());
 
@@ -492,7 +494,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
     {
       PRINT_INFO("Robot %d reported it started traversing a bridge.\n", robot->GetID());
       
@@ -502,7 +504,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
     {
       PRINT_INFO("Robot %d reported it completed traversing a bridge.\n", robot->GetID());
       
@@ -512,7 +514,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageMainCycleTimeError const& msg)
     {
       Result lastResult = RESULT_OK;
     
@@ -531,7 +533,7 @@ namespace Anki {
     // Writes the entire log of 3-axis accelerometer and 3-axis
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageIMUDataChunk const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageIMUDataChunk const& msg)
     {
       static u8 imuSeqID = 0;
       static u32 dataSize = 0;
@@ -584,19 +586,19 @@ namespace Anki {
     }
     
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRobotAvailable const&)
     {
       return RESULT_OK;
     }
 
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
       robot->PlaySound(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
       return RESULT_OK;
     }
     
-    Result MessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)
     {
       robot->StopSound();
       return RESULT_OK;

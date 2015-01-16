@@ -15,7 +15,7 @@
 		4967D9D31A32447800EF0E90 /* libCoreTech_Vision_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */; };
 		4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */; };
 		4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9CC1A32429800EF0E90 /* libjsoncpp.a */; };
-		4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */; };
+		4967D9D71A326C8A00EF0E90 /* CozmoEngineWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9D61A326C8900EF0E90 /* CozmoEngineWrapper.mm */; };
 		499F44E31A255B120050A530 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E21A255B120050A530 /* main.m */; };
 		499F44E61A255B120050A530 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E51A255B120050A530 /* AppDelegate.m */; };
 		499F44EE1A255B120050A530 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 499F44ED1A255B120050A530 /* Images.xcassets */; };
@@ -29,14 +29,16 @@
 		499F451A1A25672E0050A530 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45111A25672E0050A530 /* Foundation.framework */; };
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
+		49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */ = {isa = PBXBuildFile; fileRef = 49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */; };
+		49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AD65681A64853200376685 /* libCozmo_Game.a */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
 		49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */; };
 		49C305E71A42437000CCA87B /* ObservedObjectSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C305E61A42437000CCA87B /* ObservedObjectSelector.m */; };
 		4E161EED1A396F4400E08F41 /* DevAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */; };
 		4E161EF01A39710100E08F41 /* VirtualDirectionPadView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E161EEF1A39710100E08F41 /* VirtualDirectionPadView.m */; };
-		4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */; };
+		4E1B72E41A40BCAB00C61B61 /* CozmoEngineWrapper+UI.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E1B72E31A40BCAB00C61B61 /* CozmoEngineWrapper+UI.m */; };
 		4E1B72E71A40C62F00C61B61 /* VerticalSliderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E1B72E61A40C62F00C61B61 /* VerticalSliderView.m */; };
-		4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */; };
+		4E3D45821A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D45811A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.mm */; };
 		4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */; };
 		4E7D27921A3F81F8007A9D45 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E7D27911A3F81F8007A9D45 /* Main.storyboard */; };
 		4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E7D27951A3F84DB007A9D45 /* SettingsConnectionViewController.m */; };
@@ -58,8 +60,8 @@
 		4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Vision_Robot.a; path = "../../products-cozmo/build_ios/multiArchLibs/libCoreTech_Vision_Robot.a"; sourceTree = "<group>"; };
 		4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Basestation.a; path = "../../products-cozmo/build_ios/multiArchLibs/libCozmo_Basestation.a"; sourceTree = "<group>"; };
 		4967D9CC1A32429800EF0E90 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = "../../products-cozmo/build_ios/multiArchLibs/libjsoncpp.a"; sourceTree = "<group>"; };
-		4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoBasestation.mm; sourceTree = "<group>"; };
-		4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoBasestation.h; sourceTree = "<group>"; };
+		4967D9D61A326C8900EF0E90 /* CozmoEngineWrapper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoEngineWrapper.mm; sourceTree = "<group>"; };
+		4967D9D81A326CA200EF0E90 /* CozmoEngineWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoEngineWrapper.h; sourceTree = "<group>"; };
 		4967D9E01A36272F00EF0E90 /* CozmoDirectionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoDirectionController.h; sourceTree = "<group>"; };
 		4967D9E11A36272F00EF0E90 /* CozmoDirectionController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoDirectionController.mm; sourceTree = "<group>"; };
 		499F44DD1A255B120050A530 /* CozmoVision.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CozmoVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +82,9 @@
 		499F45111A25672E0050A530 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CvVideoCameraReorient.m; sourceTree = "<group>"; };
+		49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CvVideoCameraReorient.h; sourceTree = "<group>"; };
+		49AD65681A64853200376685 /* libCozmo_Game.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Game.a; path = ../../build_ios/multiArchLibs/libCozmo_Game.a; sourceTree = "<group>"; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
 		49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoObsObjectBBox.h; sourceTree = "<group>"; };
 		49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CozmoObsObjectBBox.m; sourceTree = "<group>"; };
@@ -88,13 +93,13 @@
 		4E161EEC1A396F4400E08F41 /* DevAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevAssets.xcassets; sourceTree = "<group>"; };
 		4E161EEE1A39710100E08F41 /* VirtualDirectionPadView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VirtualDirectionPadView.h; sourceTree = "<group>"; };
 		4E161EEF1A39710100E08F41 /* VirtualDirectionPadView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualDirectionPadView.m; sourceTree = "<group>"; };
-		4E1B72E21A40BCAB00C61B61 /* CozmoBasestation+UI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoBasestation+UI.h"; sourceTree = "<group>"; };
-		4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CozmoBasestation+UI.m"; sourceTree = "<group>"; };
+		4E1B72E21A40BCAB00C61B61 /* CozmoEngineWrapper+UI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoEngineWrapper+UI.h"; sourceTree = "<group>"; };
+		4E1B72E31A40BCAB00C61B61 /* CozmoEngineWrapper+UI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CozmoEngineWrapper+UI.m"; sourceTree = "<group>"; };
 		4E1B72E51A40C62F00C61B61 /* VerticalSliderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VerticalSliderView.h; sourceTree = "<group>"; };
 		4E1B72E61A40C62F00C61B61 /* VerticalSliderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VerticalSliderView.m; sourceTree = "<group>"; };
-		4E3D457F1A3BAC63000F5829 /* CozmoBasestationTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoBasestationTypes.h; sourceTree = "<group>"; };
-		4E3D45801A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoBasestation+ImageProcessing.h"; sourceTree = "<group>"; };
-		4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "CozmoBasestation+ImageProcessing.mm"; sourceTree = "<group>"; };
+		4E3D457F1A3BAC63000F5829 /* CozmoEngineWrapperTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CozmoEngineWrapperTypes.h; sourceTree = "<group>"; };
+		4E3D45801A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CozmoEngineWrapper+ImageProcessing.h"; sourceTree = "<group>"; };
+		4E3D45811A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "CozmoEngineWrapper+ImageProcessing.mm"; sourceTree = "<group>"; };
 		4E528F1E1A3A20FB00552314 /* CozmoOperator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoOperator.h; sourceTree = "<group>"; };
 		4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CozmoOperator.mm; sourceTree = "<group>"; };
 		4E7D27911A3F81F8007A9D45 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
@@ -121,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */,
 				4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */,
 				4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */,
 				4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */,
@@ -161,13 +167,13 @@
 		4967D94A1A311BC500EF0E90 /* Basestation */ = {
 			isa = PBXGroup;
 			children = (
-				4E3D457F1A3BAC63000F5829 /* CozmoBasestationTypes.h */,
-				4967D9D81A326CA200EF0E90 /* CozmoBasestation.h */,
-				4967D9D61A326C8900EF0E90 /* CozmoBasestation.mm */,
-				4E3D45801A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.h */,
-				4E3D45811A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm */,
-				4E1B72E21A40BCAB00C61B61 /* CozmoBasestation+UI.h */,
-				4E1B72E31A40BCAB00C61B61 /* CozmoBasestation+UI.m */,
+				4E3D457F1A3BAC63000F5829 /* CozmoEngineWrapperTypes.h */,
+				4967D9D81A326CA200EF0E90 /* CozmoEngineWrapper.h */,
+				4967D9D61A326C8900EF0E90 /* CozmoEngineWrapper.mm */,
+				4E3D45801A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.h */,
+				4E3D45811A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.mm */,
+				4E1B72E21A40BCAB00C61B61 /* CozmoEngineWrapper+UI.h */,
+				4E1B72E31A40BCAB00C61B61 /* CozmoEngineWrapper+UI.m */,
 				4E528F1E1A3A20FB00552314 /* CozmoOperator.h */,
 				4E528F1F1A3A20FB00552314 /* CozmoOperator.mm */,
 				49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */,
@@ -186,6 +192,7 @@
 		499F44D41A255B120050A530 = {
 			isa = PBXGroup;
 			children = (
+				49AD65681A64853200376685 /* libCozmo_Game.a */,
 				4967D9DF1A32902D00EF0E90 /* JSON Config */,
 				499F44DF1A255B120050A530 /* CozmoVision */,
 				499F44DE1A255B120050A530 /* Products */,
@@ -313,6 +320,8 @@
 		4E9798571A42BBED000D06DE /* System */ = {
 			isa = PBXGroup;
 			children = (
+				49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */,
+				49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */,
 				4E9798581A42BD2F000D06DE /* SoundCoordinator.h */,
 				4E9798591A42BD2F000D06DE /* SoundCoordinator.m */,
 			);
@@ -457,17 +466,18 @@
 				4E97985A1A42BD2F000D06DE /* SoundCoordinator.m in Sources */,
 				4E97985E1A43A62E000D06DE /* RobotAnimationSelectTableViewController.m in Sources */,
 				4E528F201A3A20FB00552314 /* CozmoOperator.mm in Sources */,
-				4E1B72E41A40BCAB00C61B61 /* CozmoBasestation+UI.m in Sources */,
+				4E1B72E41A40BCAB00C61B61 /* CozmoEngineWrapper+UI.m in Sources */,
 				49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */,
 				4E7D27961A3F84DB007A9D45 /* SettingsConnectionViewController.m in Sources */,
 				4EBD981B1A3FD69E00CEBC78 /* RCCozmoViewController.m in Sources */,
 				49C305E71A42437000CCA87B /* ObservedObjectSelector.m in Sources */,
-				4E3D45821A3BCEF0000F5829 /* CozmoBasestation+ImageProcessing.mm in Sources */,
+				4E3D45821A3BCEF0000F5829 /* CozmoEngineWrapper+ImageProcessing.mm in Sources */,
 				499F44E61A255B120050A530 /* AppDelegate.m in Sources */,
 				4E7D279D1A3FC89F007A9D45 /* NSUserDefaults+UI.m in Sources */,
 				4E161EF01A39710100E08F41 /* VirtualDirectionPadView.m in Sources */,
 				4E9798651A43C5E5000D06DE /* ShootingCozmoViewController.mm in Sources */,
-				4967D9D71A326C8A00EF0E90 /* CozmoBasestation.mm in Sources */,
+				49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */,
+				4967D9D71A326C8A00EF0E90 /* CozmoEngineWrapper.mm in Sources */,
 				4E1B72E71A40C62F00C61B61 /* VerticalSliderView.m in Sources */,
 				4EBD98171A3FD3FF00CEBC78 /* GameSelectViewController.m in Sources */,
 				499F44E31A255B120050A530 /* main.m in Sources */,
@@ -606,14 +616,15 @@
 					"\"$(SRCROOT)/../../coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include",
+					"\"$(SRCROOT)/../../game/include\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -642,14 +653,15 @@
 					"\"$(SRCROOT)/../../coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include",
+					"\"$(SRCROOT)/../../game/include\"",
+					"\"$(SRCROOT)/../../coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../build_ios/multiArchLibs",
+					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";

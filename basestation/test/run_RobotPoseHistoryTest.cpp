@@ -6,7 +6,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "robotPoseHistory.h"
 
 #define DIST_EQ_THRESH 0.00001
 #define ANGLE_EQ_THRESH 0.00001

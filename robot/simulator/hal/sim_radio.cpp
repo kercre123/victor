@@ -11,7 +11,7 @@
 #error This file (sim_radio.cpp) should not be used without SIMULATOR defined.
 #endif
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include <stdio.h>
 #include <string>

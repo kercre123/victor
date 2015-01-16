@@ -43,10 +43,13 @@
 
 - (void)playSoundWithFilename:(NSString*)filename
 {
-  [self playSoundWithFilename:filename volume:1.0];
+  [self playSoundWithFilename:filename volume:1.0 withDelay:0 numLoops:0];
 }
 
-- (void)playSoundWithFilename:(NSString*)filename volume:(float)volume
+- (void)playSoundWithFilename:(NSString*)filename
+                       volume:(float)volume
+                    withDelay:(NSTimeInterval)delay_sec
+                     numLoops:(NSInteger)numLoops
 {
   // Create Player and play sound
   NSString* urlStr = [self._platformSoundRootDir stringByAppendingString:filename];
@@ -56,10 +59,16 @@
     // Created, add to active players
     player.volume = volume;
     player.delegate = self;
+    player.numberOfLoops = numLoops;
     [self._activePlayers addObject:player];
-    [player play];
+    if(delay_sec==0) {
+      [player play];
+    } else {
+      [player playAtTime:player.deviceCurrentTime + delay_sec];
+    }
   }
 }
+
 
 #pragma mark - AVAudioPlayer Delegate Methods
 
@@ -69,5 +78,9 @@
   [self._activePlayers removeObject:player];
 }
 
+- (void) stop
+{
+  // TODO: Implement
+}
 
 @end

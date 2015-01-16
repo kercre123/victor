@@ -21,7 +21,7 @@ namespace Anki {
     
     // Forward declarations:
     class Robot;
-    class IMessageHandler;
+    class IRobotMessageHandler;
     
     class RobotManager
     {
@@ -31,7 +31,7 @@ namespace Anki {
 
       // Sets pointers to other managers
       // TODO: Change these to interface pointers so they can't be NULL
-      Result Init(IMessageHandler* msgHandler);
+      Result Init(IRobotMessageHandler* msgHandler);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -55,7 +55,7 @@ namespace Anki {
       
     protected:
       
-      IMessageHandler* _msgHandler;
+      IRobotMessageHandler* _msgHandler;
       //BlockWorld*      _blockWorld;
       //IPathPlanner*    _pathPlanner;
       

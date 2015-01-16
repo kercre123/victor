@@ -13,8 +13,8 @@
  **/
 
 #include <string.h>
-#include "anki/cozmo/basestation/bleComms.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "bleComms.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 //#import <BaseStation/baseStation.h>
 //#import <BLEManager/BLEVehicleManager.h>
 #import "BLEManager/BLEVehicleManager.h"

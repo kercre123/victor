@@ -7,7 +7,7 @@
 #include "imuFilter.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "speedController.h"
 #include "steeringController.h"

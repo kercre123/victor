@@ -17,7 +17,7 @@
 
 #include "ramp.h"
 
-#include "messageHandler.h"
+#include "robotMessageHandler.h"
 #include "pathPlanner.h"
 
 TEST(Cozmo, SimpleCozmoTest)

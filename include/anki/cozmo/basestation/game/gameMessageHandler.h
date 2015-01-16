@@ -5,7 +5,7 @@
  * Date:   12/15/2014
  *
  * Description: Handles messages from basestation (eventually, game) to UI, 
- *              analogously to the way MessageHandler handles messages from
+ *              analogously to the way RobotMessageHandler handles messages from
  *              robot to basestation and UiMessageHandler handles messages
  *              from basestation to UI.
  *
@@ -40,6 +40,8 @@ namespace Cozmo {
     // TODO: Change these to interface references so they can be stubbed as well
     virtual Result Init(Comms::IComms* comms) = 0;
     
+    virtual bool IsInitialized() const = 0;
+    
     virtual Result ProcessMessages() = 0;
     
     virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) = 0;
@@ -55,6 +57,8 @@ namespace Cozmo {
     
     // Set the message handler's communications manager
     virtual Result Init(Comms::IComms* comms);
+    
+    virtual bool IsInitialized() const override;
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
@@ -89,7 +93,7 @@ namespace Cozmo {
     struct {
       u8 priority;
       u8 size;
-      Result (GameMessageHandler::*ProcessPacketAs)(RobotID_t id, const u8* );
+      Result (GameMessageHandler::*ProcessPacketAs)(const u8* );
     } lookupTable_[NUM_UI_MSG_IDS+1] = {
       {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
       
@@ -112,19 +116,23 @@ namespace Cozmo {
   {
     GameMessageHandlerStub() { }
     
-    Result Init(Comms::IComms* comms)
+    virtual Result Init(Comms::IComms* comms) override
     {
       return RESULT_OK;
     }
     
+    virtual bool IsInitialized() const override {
+      return true;
+    }
+    
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
-    Result ProcessMessages() {
+    virtual Result ProcessMessages() override {
       return RESULT_OK;
     }
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) {
+    virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) override {
       return RESULT_OK;
     }
 

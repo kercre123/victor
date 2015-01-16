@@ -12,8 +12,9 @@
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -24,10 +25,11 @@
 #include "anki/vision/CameraSettings.h"
 
 // TODO: This is shared between basestation and robot and should be moved up
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "messageHandler.h"
-#include "uiMessageHandler.h"
+#include "robotMessageHandler.h"
+#include "robotPoseHistory.h"
+#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "ramp.h"
 #include "vizManager.h"
 
@@ -42,10 +44,9 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IMessageHandler* msgHandler)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
     , _msgHandler(msgHandler)
-    , _uiMsgHandler(nullptr)  // To be removed once we have Events
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
@@ -73,6 +74,8 @@ namespace Anki {
     , _isAnimating(false)
     , _carryingMarker(nullptr)
     {
+      _poseHistory = new RobotPoseHistory();
+      
       _pose.SetName("Robot_" + std::to_string(_ID));
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
@@ -110,6 +113,9 @@ namespace Anki {
 
     Robot::~Robot()
     {
+      delete _poseHistory;
+      _poseHistory = nullptr;
+      
       delete _pdo;
       _pdo = nullptr;
 
@@ -146,16 +152,10 @@ namespace Anki {
       _pose.SetTranslation({{0.f, 0.f, 0.f}});
       _pose.SetParent(_worldOrigin);
       
-      _poseHistory.Clear();
+      _poseHistory->Clear();
       ++_frameId;
     }
 
-    void Robot::SetUiMessageHandler(IUiMessageHandler *uiMsgHandler)
-    {
-      _uiMsgHandler = uiMsgHandler;
-    }
-    
-    
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
@@ -291,7 +291,7 @@ namespace Anki {
           // pose history, it will already be w.r.t. world origin, since that's
           // how we store everything in pose history.
           RobotPoseStamp p;
-          lastResult = _poseHistory.GetLastPoseWithFrameID(msg.pose_frame_id, p);
+          lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
                               "Failed to get last pose from history with frame ID=%d.\n", msg.pose_frame_id);
@@ -378,8 +378,8 @@ namespace Anki {
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
-                            msg.timestamp, _poseHistory.GetOldestTimeStamp(),
-                            _poseHistory.GetNewestTimeStamp());
+                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
+                            _poseHistory->GetNewestTimeStamp());
         return lastResult;
       }
       
@@ -854,52 +854,14 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-#     if ANKI_IOS_BUILD
-      // Use iOS device to play the sound
-      if(_uiMsgHandler != nullptr)
-      {
-        // TODO: Need to assign the right device ID
-        MessageG2U_PlaySound msg;
-        msg.numLoops = 1;
-        msg.volume   = volume;
-        const std::string& filename = SoundManager::getInstance()->GetSoundFile(soundID);
-        strncpy(&(msg.animationFilename[0]), filename.c_str(), msg.animationFilename.size());
-        
-        return _uiMsgHandler->SendMessage(1, msg);
-      } else {
-        PRINT_NAMED_ERROR("Robot.PlaySound.NoUiMessageHandler",
-                          "Must set UI Message Handler before calling PlaySound.");
-        return RESULT_FAIL;
-      }
-#     else
-      
-      // Use SoundManager::
-      Result lastResult = RESULT_FAIL;
-      if(true == SoundManager::getInstance()->Play(soundID, numLoops, volume)) {
-        lastResult = RESULT_OK;
-      }
-      return lastResult;
-      
-#     endif
+      CozmoEngineSignals::GetPlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
+      return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-#     if ANKI_IOS_BUILD
-      // Use iOS device to play the sound
-      if(_uiMsgHandler != nullptr)
-      {
-        // TODO: Need to assign the right device ID
-        MessageG2U_StopSound msg;
-        _uiMsgHandler->SendMessage(1, msg);
-      } else {
-        PRINT_NAMED_ERROR("Robot.StopSound.NoUiMessageHandler",
-                          "Must set UI Message Handler before calling StopSound.");
-      }
-#     else
-      SoundManager::getInstance()->Stop();
-#     endif
+      CozmoEngineSignals::GetStopSoundForRobotSignal().emit(GetID());
     } // StopSound()
       
       
@@ -1260,7 +1222,7 @@ namespace Anki {
         
         _rampDirection = Ramp::UNKNOWN;
         
-        const TimeStamp_t timeStamp = _poseHistory.GetNewestTimeStamp();
+        const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
         
         PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOffRamp",
                          "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d\n",
@@ -1734,7 +1696,7 @@ namespace Anki {
       // Look in history for the last vis pose and send it.
       TimeStamp_t t;
       RobotPoseStamp p;
-      if (_poseHistory.GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
+      if (_poseHistory->GetLatestVisionOnlyPose(t, p) == RESULT_FAIL) {
         PRINT_NAMED_WARNING("Robot.SendAbsLocUpdate.NoVizPoseFound", "");
         return RESULT_FAIL;
       }
@@ -1799,8 +1761,8 @@ namespace Anki {
       
       RobotPoseStamp p;
       TimeStamp_t actualTimestamp;
-      lastResult = _poseHistory.GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
-      //lastResult = _poseHistory.ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      lastResult = _poseHistory->GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
+      //lastResult = _poseHistory->ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
       if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
                         "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
@@ -2024,7 +1986,7 @@ namespace Anki {
                                           const f32 head_angle,
                                           const f32 lift_angle)
     {
-      return _poseHistory.AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
+      return _poseHistory->AddRawOdomPose(t, frameID, pose_x, pose_y, pose_z, pose_angle, head_angle, lift_angle);
     }
     
     
@@ -2085,7 +2047,7 @@ namespace Anki {
       //IncrementPoseFrameID();
       ++_frameId;
       
-      return _poseHistory.AddVisionOnlyPose(t, _frameId,
+      return _poseHistory->AddVisionOnlyPose(t, _frameId,
                                             pose_x, pose_y, pose_z,
                                             pose_angle,
                                             head_angle,
@@ -2097,12 +2059,12 @@ namespace Anki {
                                                   HistPoseKey* key,
                                                   bool withInterpolation)
     {
-      return _poseHistory.ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
+      return _poseHistory->ComputeAndInsertPoseAt(t_request, t, p, key, withInterpolation);
     }
 
     Result Robot::GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p)
     {
-      return _poseHistory.GetVisionOnlyPoseAt(t_request, p);
+      return _poseHistory->GetVisionOnlyPoseAt(t_request, p);
     }
 
     Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose)
@@ -2121,17 +2083,17 @@ namespace Anki {
     
     Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
-      return _poseHistory.GetComputedPoseAt(t_request, p, key);
+      return _poseHistory->GetComputedPoseAt(t_request, p, key);
     }
 
     TimeStamp_t Robot::GetLastMsgTimestamp() const
     {
-      return _poseHistory.GetNewestTimeStamp();
+      return _poseHistory->GetNewestTimeStamp();
     }
     
     bool Robot::IsValidPoseKey(const HistPoseKey key) const
     {
-      return _poseHistory.IsValidPoseKey(key);
+      return _poseHistory->IsValidPoseKey(key);
     }
     
     bool Robot::UpdateCurrPoseFromHistory(const Pose3d& wrtParent)
@@ -2140,7 +2102,7 @@ namespace Anki {
       
       TimeStamp_t t;
       RobotPoseStamp p;
-      if (_poseHistory.ComputePoseAt(_poseHistory.GetNewestTimeStamp(), t, p) == RESULT_OK) {
+      if (_poseHistory->ComputePoseAt(_poseHistory->GetNewestTimeStamp(), t, p) == RESULT_OK) {
         if (p.GetFrameId() == GetPoseFrameID()) {
           
           // Grab a copy of the pose from history, which has been flattened (i.e.,

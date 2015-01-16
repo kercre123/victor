@@ -12,11 +12,12 @@
  **/
 
 #include "cannedAnimationContainer.h"
-#include "messageHandler.h"
-#include "soundManager.h"
+#include "robotMessageHandler.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "anki/cozmo/basestation/soundManager.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
@@ -34,14 +35,14 @@ namespace Cozmo {
       
   CannedAnimationContainer::KeyFrameList::~KeyFrameList()
   {
-    for(Message* msg : _keyFrameMessages) {
+    for(RobotMessage* msg : _keyFrameMessages) {
       if(msg != nullptr) {
         delete msg;
       }
     }
   }
 
-  void CannedAnimationContainer::KeyFrameList::AddKeyFrame(Message* msg)
+  void CannedAnimationContainer::KeyFrameList::AddKeyFrame(RobotMessage* msg)
   {
     if(msg != nullptr) {
       _keyFrameMessages.push_back(msg);
@@ -112,7 +113,7 @@ namespace Cozmo {
   } // GetLengthInMilliSeconds()
    */
    
-  Result CannedAnimationContainer::Send(RobotID_t robotID, IMessageHandler* msgHandler)
+  Result CannedAnimationContainer::Send(RobotID_t robotID, IRobotMessageHandler* msgHandler)
   {
     Result lastResult = RESULT_OK;
     
@@ -369,7 +370,7 @@ namespace Cozmo {
           GetColor(jsonFrame["color"]);
         }
         
-        Message* kfMessage = Message::CreateFromJson(jsonRoot[animationName][iFrame]); 
+        RobotMessage* kfMessage = RobotMessage::CreateFromJson(jsonRoot[animationName][iFrame]); 
         if(kfMessage != nullptr) {
           KeyFrameList* keyFrames = GetKeyFrameList(animationName);
           if(keyFrames == nullptr) {

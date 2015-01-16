@@ -17,7 +17,7 @@
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {
@@ -28,7 +28,7 @@ namespace Cozmo {
   public:
     
     // Default constructor
-    GameComms(int serverListenPort, const char* advertisementRegIP_, int advertisementRegPort_);
+    GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP_, int advertisementRegPort_);
     
     // The destructor will automatically cleans up
     virtual ~GameComms();
@@ -75,7 +75,14 @@ namespace Cozmo {
     // 'Queue' of received messages from all connected user devices with their received times.
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
 
-    bool isInitialized_;
+    bool           isInitialized_;
+
+    // Device ID to use for registering with advertisement service
+    int            deviceID_;
+    
+    int            serverListenPort_;
+    const char*    advertisementRegIP_;
+    int            advertisementRegPort_;
     
     static const int MAX_RECV_BUF_SIZE = 1920000;
     u8 recvBuf[MAX_RECV_BUF_SIZE];

@@ -7,17 +7,17 @@
 //
 
 #import "GameSelectViewController.h"
-#import "CozmoBasestation.h"
-#import "CozmoBasestation+UI.h"
+#import "CozmoEngineWrapper.h"
+#import "CozmoEngineWrapper+UI.h"
 #import "CozmoOperator.h"
 #import "RobotAnimationSelectTableViewController.h"
 
 
 @interface GameSelectViewController ()
 
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *basestationStateBarItem;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *engineStateBarItem;
 
-@property (weak, nonatomic) CozmoBasestation *_basestation;
+@property (weak, nonatomic) CozmoEngineWrapper *cozmoEngineWrapper;
 
 @end
 
@@ -27,20 +27,20 @@
 {
   [super viewDidLoad];
 
-  self._basestation = [CozmoBasestation defaultBasestation];
+  self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
   [super viewDidAppear:animated];
 
-  [self.basestationStateBarItem setTitle:[self._basestation basestationStateString]];
-  [self._basestation addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
+  [self.engineStateBarItem setTitle:[self.cozmoEngineWrapper engineStateString]];
+  [self.cozmoEngineWrapper addObserver:self forKeyPath:@"runState" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
-  [self._basestation removeObserver:self forKeyPath:@"runState" context:nil];
+  [self.cozmoEngineWrapper removeObserver:self forKeyPath:@"runState" context:nil];
   [super viewWillDisappear:animated];
 }
 
@@ -49,10 +49,10 @@
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-  if ([object isEqual:self._basestation]) {
+  if ([object isEqual:self.cozmoEngineWrapper]) {
 
     if ([keyPath isEqualToString:@"runState"]) {
-      [self.basestationStateBarItem setTitle:[self._basestation basestationStateString]];
+      [self.engineStateBarItem setTitle:[self.cozmoEngineWrapper engineStateString]];
     }
   }
 }
@@ -64,7 +64,7 @@
 {
   RobotAnimationSelectTableViewController *vc = [RobotAnimationSelectTableViewController new];
   [vc setDidSelectAnimationAction:^(NSString *name) {
-    [[[CozmoBasestation defaultBasestation] cozmoOperator] sendAnimationWithName:name];
+    [[[CozmoEngineWrapper defaultEngine] cozmoOperator] sendAnimationWithName:name];
   }];
   [self.navigationController pushViewController:vc animated:YES];
 }

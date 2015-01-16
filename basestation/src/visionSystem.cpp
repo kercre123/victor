@@ -16,7 +16,7 @@
 
 #include "visionSystem.h"
 
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/shared/mailbox_impl.h"
@@ -44,7 +44,7 @@
 #include "anki/common/robot/utilities.h"
 
 // Cozmo-Specific Library Includes
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 //#include "anki/cozmo/robot/hal.h"
 
 // Local Cozmo Includes
@@ -1360,7 +1360,7 @@ namespace Cozmo {
       
       //_headCamInfo = HAL::GetHeadCamInfo();
       _headCamInfo = new CameraInfo(camCalib);
-      if(_headCamInfo == NULL) {
+      if(_headCamInfo == nullptr) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
         return RESULT_FAIL;
       }

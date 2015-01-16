@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Anki, Inc. All rights reserved.
 //
 
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "robotPoseHistory.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/math/point_impl.h"

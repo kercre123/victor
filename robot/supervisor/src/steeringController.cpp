@@ -7,7 +7,7 @@
 
 #include <math.h>
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "dockingController.h"
 #include "localization.h"
 #include "pathFollower.h"

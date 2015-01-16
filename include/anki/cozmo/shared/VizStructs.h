@@ -123,7 +123,7 @@ namespace Anki {
 /*
 #elif defined(COZMO_BASESTATION)
     
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
     
     // 1. Initial include just defines the definition modes for use below
 #undef MESSAGE_DEFINITION_MODE

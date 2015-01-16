@@ -16,7 +16,7 @@
 #include <stdio.h>
 
 #include "anki/messaging/basestation/advertisementService.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <webots/Supervisor.hpp>
 

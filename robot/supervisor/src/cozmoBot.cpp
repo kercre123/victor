@@ -1,7 +1,7 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"

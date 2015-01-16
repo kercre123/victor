@@ -9,7 +9,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "soundManager.h"
+#include "anki/cozmo/basestation/soundManager.h"
+
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/platformPathManager.h"

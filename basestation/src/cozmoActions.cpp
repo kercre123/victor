@@ -21,7 +21,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 
-#include "anki/cozmo/robot/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
   

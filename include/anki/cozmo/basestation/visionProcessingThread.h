@@ -14,8 +14,7 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#define COZMO_BASESTATION // Make sure we get Basestation messages from the definitions file
-#include "anki/cozmo/basestation/messages.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
@@ -39,7 +38,8 @@ namespace Cozmo {
     //
     // Asynchronous operation
     //
-    void Start(Vision::CameraCalibration& camCalib);
+    void Start(); // SetCameraCalibration() must have been called already
+    void Start(const Vision::CameraCalibration& camCalib);
     void Stop();
     
     void SetNextImage(const Vision::Image& image,
@@ -48,7 +48,7 @@ namespace Cozmo {
     //
     // Synchronous operation
     //
-    void SetCameraCalibration(Vision::CameraCalibration& camCalib);
+    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
     void Update(const Vision::Image& image,
                 const MessageRobotState& robotState);
@@ -121,7 +121,7 @@ namespace Cozmo {
     return _wasLastImageProcessed;
   }
   
-  inline void VisionProcessingThread::SetCameraCalibration(Vision::CameraCalibration& camCalib) {
+  inline void VisionProcessingThread::SetCameraCalibration(const Vision::CameraCalibration& camCalib) {
     _camCalib = camCalib;
     _isCamCalibSet = true;
   }

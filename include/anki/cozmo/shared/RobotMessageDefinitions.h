@@ -2,9 +2,9 @@
 
 #define SKIP_MESSAGE_DEFINITION_MODE_UNDEF
 
-#include "anki/cozmo/shared/MessageDefinitionsB2R.h"
+#include "anki/cozmo/shared/MessageDefinitionsB2R.def"
 
 #undef SKIP_MESSAGE_DEFINITION_MODE_UNDEF
 
-#include "anki/cozmo/shared/MessageDefinitionsR2B.h"
+#include "anki/cozmo/shared/MessageDefinitionsR2B.def"
 

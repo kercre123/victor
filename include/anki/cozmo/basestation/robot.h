@@ -41,8 +41,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/cozmo/basestation/messages.h"
-#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "actionContainers.h"
@@ -57,23 +56,19 @@ namespace Anki {
   namespace Cozmo {
     
     // Forward declarations:
-    class IMessageHandler;
-    class IUiMessageHandler;
+    class IRobotMessageHandler;
     class IPathPlanner;
     class MatPiece;
     class PathDolerOuter;
+    class RobotPoseHistory;
+    class RobotPoseStamp;
     
     class Robot
     {
     public:
       
-      Robot(const RobotID_t robotID, IMessageHandler* msgHandler);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
       ~Robot();
-      
-      
-      // Until we have Events, Robot needs a UI Message handler to trigger things
-      // out in UI land. This must be provided by this temporary Set method:
-      void SetUiMessageHandler(IUiMessageHandler* uiMsgHandler);
       
       Result Update();
       
@@ -399,12 +394,8 @@ namespace Anki {
       RobotID_t        _ID;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
-      IMessageHandler* _msgHandler;
-      
-      // Until we have Events, robot has a UI message handler so it can trigger
-      // things out in UI world.  Note this must be set by a call to SetUiMessageHandler()
-      IUiMessageHandler* _uiMsgHandler;
-      
+      IRobotMessageHandler* _msgHandler;
+            
       // A reference to the BlockWorld the robot lives in
       BlockWorld       _blockWorld;
       
@@ -488,7 +479,7 @@ namespace Anki {
       Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
       Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
-      RobotPoseHistory _poseHistory;
+      RobotPoseHistory* _poseHistory;
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle

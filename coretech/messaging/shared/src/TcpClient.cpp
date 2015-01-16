@@ -91,7 +91,7 @@ int TcpClient::Send(const char* data, int size)
   DEBUG_TCP_CLIENT("TcpClient: sending " << size << " bytes: " << data << "\n");
 
   ssize_t bytes_sent = send(socketfd, data, size, 0);
-  if (bytes_sent <= 0) {
+  if (bytes_sent < 0) {
     if (errno != EWOULDBLOCK) {
       DEBUG_TCP_CLIENT("TcpClient: Send error (" << errno << "), disconnecting. (bytes_sent = " << bytes_sent << ")\n");
       Disconnect();
