@@ -1,6 +1,6 @@
 
 % function warpProjective()
-
+%
 % image: input image (must be type double)
 % H: 3x3 projective transform matrix
 % outputImageSize: A 2x1 vector of the size of result, such as outputImageSize=[768,1024]
@@ -9,10 +9,10 @@
 % result: output image
 %
 % If a transformed point is outside of the volume, NaN is used
-
+%
 % Simple case
 % result = warpProjective(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80]);
-
+%
 % Add a horizontal box as a regionOfInterest
 % result = warpProjective(ones(60,80), [cos(.1), -sin(.1), 20; sin(.1), cos(.1), 20; 0,0,1], 2*[60,80], [30,30;60,30;60,40;30,40]);
 

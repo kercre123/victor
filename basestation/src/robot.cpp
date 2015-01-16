@@ -1915,6 +1915,8 @@ namespace Anki {
     Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
     {
       MessageSetVisionSystemParams m;
+      m.autoexposureOn = p.autoexposureOn;
+      m.exposureTime = p.exposureTime;
       m.minExposureTime = p.minExposureTime;
       m.maxExposureTime = p.maxExposureTime;
       m.percentileToMakeHigh = p.percentileToMakeHigh;

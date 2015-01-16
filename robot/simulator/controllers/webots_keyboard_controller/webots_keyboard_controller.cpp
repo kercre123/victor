@@ -179,6 +179,7 @@ namespace Anki {
       void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
+      void SendVisionSystemParams();
       void SendFaceDetectParams();
       
       
@@ -280,6 +281,7 @@ namespace Anki {
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
+        printf("                      Creep mode:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -550,7 +552,23 @@ namespace Anki {
                   }
                   streamOn = !streamOn;
                 }
-                SendImageRequest(mode, IMG_STREAM_RES);
+                
+                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
+                
+                if (root_) {
+                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
+                  if(camera_horizontalResolution == 320) {
+                    localStreamRes = Vision::CAMERA_RES_QVGA;
+                  } else if(camera_horizontalResolution == 160) {
+                    localStreamRes = Vision::CAMERA_RES_QQVGA;
+                  } else if(camera_horizontalResolution == 80) {
+                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                  } else if(camera_horizontalResolution == 40) {
+                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  }
+                }
+                
+                SendImageRequest(mode, localStreamRes);
                 break;
               }
                 
@@ -687,19 +705,7 @@ namespace Anki {
               }
               case CKEY_SET_VISIONSYSTEM_PARAMS:
               {
-                /*
-                 if (root_) {
-                 // Vision system params
-                 VisionSystemParams_t p;
-                 p.integerCountsIncrement = root_->getField("integerCountsIncrement")->getSFInt32();
-                 p.minExposureTime = root_->getField("minExposureTime")->getSFFloat();
-                 p.maxExposureTime = root_->getField("maxExposureTime")->getSFFloat();
-                 p.highValue = root_->getField("highValue")->getSFInt32();
-                 p.percentileToMakeHigh = root_->getField("percentileToMakeHigh")->getSFFloat();
-                 printf("New VisionSystems params\n");
-                 robot_->SendSetVisionSystemParams(p);
-                 }
-                 */
+                SendVisionSystemParams();
                 
                 SendFaceDetectParams();
                 
@@ -822,7 +828,7 @@ namespace Anki {
                 }
                 break;
               }
-                
+              
               default:
               {
                 // Unsupported key: ignore.
@@ -1433,6 +1439,24 @@ namespace Anki {
         // tracking will have stopped it:
         MessageU2G_StartLookingForMarkers m2;
         SendMessage(m2);
+      }
+
+      void SendVisionSystemParams()
+      {
+        if (root_) {
+           // Vision system params
+           MessageU2G_SetVisionSystemParams p;
+           p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
+           p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
+           p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
+           p.minExposureTime = root_->getField("camera_minExposureTime")->getSFFloat();
+           p.maxExposureTime = root_->getField("camera_maxExposureTime")->getSFFloat();
+           p.highValue = root_->getField("camera_highValue")->getSFInt32();
+           p.percentileToMakeHigh = root_->getField("camera_percentileToMakeHigh")->getSFFloat();
+           
+           printf("New Camera params\n");
+           SendMessage(p);
+         }
       }
 
       void SendFaceDetectParams()

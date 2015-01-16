@@ -236,6 +236,11 @@ Result Socket::Open(
   target.sin_port = htons(port); //Port to connect on
 
   struct hostent *host = gethostbyname(ipAddress);
+  
+  if(!host) {
+    return RESULT_FAIL;
+  }
+  
   memcpy(&(target.sin_addr.s_addr), host->h_addr, host->h_length);
 
   socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); //Create socket

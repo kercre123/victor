@@ -187,7 +187,9 @@ namespace Cozmo {
     
     const std::string& GetCurrentModeName() const;
     
-    void SetParams(const s32 integerCountsIncrement,
+    void SetParams(const bool autoExposureOn,
+                   const f32 exposureTime,
+                   const s32 integerCountsIncrement,
                    const f32 minExposureTime,
                    const f32 maxExposureTime,
                    const u8 highValue,
@@ -273,7 +275,7 @@ namespace Cozmo {
     const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
     
     s32 _frameNumber;
-    const bool _autoExposure_enabled = true;
+    bool _autoExposure_enabled = true;
     
     // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
     /*

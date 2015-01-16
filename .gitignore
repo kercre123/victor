@@ -19,6 +19,7 @@ matlab.mat
 *.so
 *.la
 *.a
+*.ko
 *.pbxuser
 *.mode1v3
 *.mode2v3
@@ -148,3 +149,5 @@ build_ios
 ios/build
 ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata
 coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
+tools/modulate_led/Project/LCD/MDK-ARM/Demo/
+*.uvgui.*
