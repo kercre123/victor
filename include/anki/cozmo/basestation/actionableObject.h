@@ -19,8 +19,8 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "preActionPose.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/preActionPose.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
   namespace Cozmo {

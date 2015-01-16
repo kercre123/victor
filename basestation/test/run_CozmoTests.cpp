@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
-#include "ramp.h"
+#include "anki/cozmo/basestation/ramp.h"
 
 #include "robotMessageHandler.h"
 #include "pathPlanner.h"

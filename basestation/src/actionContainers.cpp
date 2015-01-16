@@ -11,8 +11,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "actionContainers.h"
-#include "actionInterface.h"
+#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/actionInterface.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 

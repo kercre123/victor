@@ -30,8 +30,8 @@
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h" // TODO: Remove?
-#include "ramp.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include <fstream>
 

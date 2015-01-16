@@ -17,7 +17,7 @@
 #define ANKI_COZMO_MARKERLESSOBJECT_H
 
 #include "anki/vision/basestation/observableObject.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
   

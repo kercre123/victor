@@ -13,9 +13,9 @@
 #ifndef ANKI_COZMO_ACTIONS_H
 #define ANKI_COZMO_ACTIONS_H
 
-#include "actionableObject.h"
-#include "actionInterface.h"
-#include "compoundActions.h"
+#include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/actionInterface.h"
+#include "anki/cozmo/basestation/compoundActions.h"
 
 #include "anki/common/types.h"
 

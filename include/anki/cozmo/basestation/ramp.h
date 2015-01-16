@@ -22,8 +22,8 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "actionableObject.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
   

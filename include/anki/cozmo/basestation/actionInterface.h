@@ -19,7 +19,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "actionableObject.h"
+#include "anki/cozmo/basestation/actionableObject.h"
 
 #include <list>
 

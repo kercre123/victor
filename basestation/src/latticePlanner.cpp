@@ -23,7 +23,7 @@
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "json/json.h"
 #include "pathPlanner.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 
 // base padding on the robot footprint

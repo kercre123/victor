@@ -33,8 +33,8 @@
 #include "robotMessageHandler.h"
 #include "recording/playback.h"
 #include "pathPlanner.h"
-#include "behaviorManager.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 
 namespace Anki {

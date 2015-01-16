@@ -20,10 +20,10 @@
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
-#include "ramp.h"
+#include "anki/cozmo/basestation/ramp.h"
 
 #include "robotMessageHandler.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000

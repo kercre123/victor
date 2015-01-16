@@ -15,14 +15,14 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h"
+#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "behaviorManager.h"
-#include "cozmoActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"

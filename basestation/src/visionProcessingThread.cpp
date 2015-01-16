@@ -20,7 +20,7 @@
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {

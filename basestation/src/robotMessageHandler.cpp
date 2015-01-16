@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "robotMessageHandler.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include <fstream>
 

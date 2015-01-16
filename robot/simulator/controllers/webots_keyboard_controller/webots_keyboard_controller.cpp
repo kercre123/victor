@@ -16,7 +16,7 @@
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
-#include "behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 
 #include <stdio.h>
 
