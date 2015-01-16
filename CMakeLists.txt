@@ -26,7 +26,7 @@ if(ANKI_IOS_BUILD)
   set(EMBEDDED_USE_MATLAB 0)
   message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
   
-  ankiProject(Cozmo_iOS)
+  ankiProject(CozmoEngine_iOS)
   
   # TODO: this is a weird place for this, but until we have an external iOS build, it's the only
   #       thing we need from coretech-external for the iOS build, so i'm just doing it here for simplicity
@@ -34,7 +34,7 @@ if(ANKI_IOS_BUILD)
   
 else()
   
-  ankiProject(Cozmo)
+  ankiProject(CozmoEngine)
     
 endif(ANKI_IOS_BUILD)
 
