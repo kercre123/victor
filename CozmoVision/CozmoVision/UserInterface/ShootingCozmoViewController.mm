@@ -65,7 +65,9 @@
 @property (weak, nonatomic) CozmoOperator*      cozmoOperator;
 @property (weak, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
 
+@property (weak, nonatomic) IBOutlet UILabel *useVisualTargetingLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *useVisualTargetingSwitch;
+@property (weak, nonatomic) IBOutlet UILabel *useAudioTargetingLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *useAudioTargetingSwitch;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *targetingSlopSlider;
 
@@ -136,6 +138,9 @@
     self.targetingSlopFactor = value;
   }];
   
+  self.useAudioTargetingLabel.textColor = self.useAudioTargetingLabel.tintColor;
+  self.useVisualTargetingLabel.textColor = self.useVisualTargetingLabel.tintColor;
+  
   // Reload last setup
   self.useVisualTargeting = [NSUserDefaults lastUseVisualTargeting];
   self.useAudioTargeting  = [NSUserDefaults lastUseAudioTargeting];
@@ -145,9 +150,14 @@
   self.cameraView.hidden = !self.useVisualTargeting;
   [self.targetingSlopSlider setValue:self.targetingSlopFactor];
 
-  
+  // Set up taps for firing
   UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
   [self.view addGestureRecognizer:tapGesture];
+  
+  // Set up swipe right to exit (in addition to exit button)
+  UISwipeGestureRecognizer *swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self  action:@selector(handleExitButtonPress:)];
+  swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
+  [self.view addGestureRecognizer:swipeGesture];
   
   [_videoCamera start];
 }
@@ -333,19 +343,21 @@
   self.markerType = Anki::Vision::MARKER_UNKNOWN;
   
   CGRect marker;
+  CGRect currentMarker;
   int markerTypeOut;
   
-  while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&marker
+  while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&currentMarker
                                                                 :&markerTypeOut])
   {
     markerFound = YES;
     
-    Float32 xDistance = CGRectGetMidX(marker) - 160.0;
-    Float32 yDistance = CGRectGetMidY(marker) - 120.0;
+    Float32 xDistance = CGRectGetMidX(currentMarker) - 160.0;
+    Float32 yDistance = CGRectGetMidY(currentMarker) - 120.0;
     Float32 currentDistanceSq = xDistance * xDistance + yDistance * yDistance;
     
     // Keep the marker in view that's closest to center
     if(currentDistanceSq < markerDistanceFromCenterSq) {
+      marker = currentMarker;
       self.markerType = markerTypeOut; //msg.markerType;
       self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
       markerDistanceFromCenterSq = currentDistanceSq;
