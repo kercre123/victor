@@ -119,6 +119,11 @@
   }
 }
 
+- (void)setValue:(float)newValue
+{
+  self.slider.value = newValue;
+}
+
 - (void)handleSliderValueChange:(UISlider*)slider
 {
 //  NSLog(@"handleSliderValueChange Threshold %@ - %@", (_valueChangedThreshold != kNoSliderValue && ABS(self._touchDownSliderValue - slider.value) > _valueChangedThreshold) ? @"Y" : @"N", slider);
