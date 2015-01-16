@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/cozmo/basestation/uiMessageHandler.h"
+#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
