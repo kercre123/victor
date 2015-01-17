@@ -54,9 +54,9 @@
 // For connecting to physical robot
 // TODO: Expose these to UI
 const bool FORCE_ADD_ROBOT = false;
-const bool FORCED_ROBOT_IS_SIM = true;
+const bool FORCED_ROBOT_IS_SIM = false;
 const u8 forcedRobotId = 1;
-const char* forcedRobotIP = "192.168.19.238";
+const char* forcedRobotIP = "192.168.3.34";
 
 using namespace Anki;
 
@@ -239,13 +239,15 @@ using namespace Anki;
     //Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
     //cozmoEngineHost->Init(_config);
     
-    _cozmoGame = new Anki::Cozmo::CozmoGameHost();
-    _cozmoGame->Init(_config);
+    Cozmo::CozmoGameHost* cozmoGameHost = new Cozmo::CozmoGameHost();
+    cozmoGameHost->Init(_config);
     
     // Force add a robot
     if (FORCE_ADD_ROBOT) {
-      //_cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+      cozmoGameHost->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
     }
+    
+    _cozmoGame = cozmoGameHost;
     
   } else { // as Client
     _cozmoGame = new Anki::Cozmo::CozmoGameClient();

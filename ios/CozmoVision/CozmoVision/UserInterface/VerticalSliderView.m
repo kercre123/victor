@@ -15,6 +15,7 @@
 @property (strong, nonatomic) UILabel* titleLabel;
 @property (strong, nonatomic) UILabel* valueLabel;
 @property (strong, nonatomic) UISlider* slider;
+@property (assign, nonatomic) BOOL displayPercent;
 
 @property (assign, nonatomic) float _touchDownSliderValue;
 
@@ -66,6 +67,9 @@
   self.slider.transform = CGAffineTransformMakeRotation(-M_PI_2);
   [self addSubview:self.slider];
 
+  // Display value in percent by default (unless manual range is set)
+  self.displayPercent = YES;
+  
   self._touchDownSliderValue = kNoSliderValue;
 
   // Auto Layout
@@ -119,14 +123,19 @@
   }
 }
 
+
 - (void)handleSliderValueChange:(UISlider*)slider
 {
 //  NSLog(@"handleSliderValueChange Threshold %@ - %@", (_valueChangedThreshold != kNoSliderValue && ABS(self._touchDownSliderValue - slider.value) > _valueChangedThreshold) ? @"Y" : @"N", slider);
 
   // Display value
   float sliderValue = slider.value;
-  float percentVal = sliderValue * 100.0;
-  self.valueLabel.text = [NSString stringWithFormat:@"%.0f%%", percentVal];
+  if(self.displayPercent) {
+    float percentVal = sliderValue * 100.0;
+    self.valueLabel.text = [NSString stringWithFormat:@"%.0f%%", percentVal];
+  } else {
+    self.valueLabel.text = [NSString stringWithFormat:@"%.2f", sliderValue];
+  }
 
   // Check Threshold
   float diffVal = (_valueChangedThreshold != kNoSliderValue) ? ABS(self._touchDownSliderValue - sliderValue) : 0.0;
@@ -158,6 +167,19 @@
   return self.slider.value;
 }
 
+- (void)setValue:(float)newValue
+{
+  self.slider.value = newValue;
+  [self handleSliderValueChange:self.slider];
+}
 
+- (void)setValueRange:(float)minValue
+                     :(float)maxValue
+{
+  self.slider.minimumValue = minValue;
+  self.slider.maximumValue = maxValue;
+  self.displayPercent = NO;
+  [self setValue:fmax(minValue, fmin(maxValue, self.slider.value))];
+}
 
 @end

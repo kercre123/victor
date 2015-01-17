@@ -177,6 +177,7 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   usbChannel 10
   #advertisementHost "192.168.18.244" # iPhone5 162 on Anki5GHz
+  advertisementHost "192.168.16.226" # iPhone5S 321 on Anki5GHz
 }
 
 CozmoVizDisplay{
