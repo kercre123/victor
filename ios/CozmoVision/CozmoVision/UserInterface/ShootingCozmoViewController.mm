@@ -208,42 +208,50 @@
   // Average prev & new intensity/period
   self.markerIntensity = 0.5f * (intensity + self.markerIntensity);
   
-  dispatch_async(dispatch_get_main_queue(), ^{
-    self.crosshairTopImageView.alpha = self.markerIntensity;
-  });
+  if(self.useVisualTargeting) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.crosshairTopImageView.alpha = self.markerIntensity;
+    });
+  }
 }
 
 - (void)animateCrossHairsFire
 {
-  CABasicAnimation* animation = [CABasicAnimation animationWithKeyPath:@"transform"];
-  animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
-  animation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.1, 1.1, 1.0)];
-  animation.duration = 0.1;
-  [animation setFillMode:kCAFillModeRemoved];
-
-  [self.crosshairsImageView.layer addAnimation:animation forKey:@"transform"];
+  // Only show firing animation while using visual targeting
+  if(self.useVisualTargeting) {
+    CABasicAnimation* animation = [CABasicAnimation animationWithKeyPath:@"transform"];
+    animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
+    animation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.1, 1.1, 1.0)];
+    animation.duration = 0.1;
+    [animation setFillMode:kCAFillModeRemoved];
+    
+    [self.crosshairsImageView.layer addAnimation:animation forKey:@"transform"];
+  }
 }
 
 - (void)animateTargetHit
 {
-  // Delay explostion
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.22 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-  // Transform
-  CABasicAnimation* animationTransform = [CABasicAnimation animationWithKeyPath:@"transform"];
-  animationTransform.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.20, 0.20, 1.0)];
-  animationTransform.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
-  animationTransform.duration = 0.2;
-  [animationTransform setFillMode:kCAFillModeRemoved];
-
-  CABasicAnimation* animationOpacity = [CABasicAnimation animationWithKeyPath:@"opacity"];
-  animationOpacity.fromValue = @1.0;
-  animationOpacity.toValue = @0.0;
-  animationOpacity.duration = 0.4;
-  [animationOpacity setFillMode:kCAFillModeRemoved];
-
-  [self.targetHitImageView.layer addAnimation:animationTransform forKey:@"transfrom"];
-  [self.targetHitImageView.layer addAnimation:animationOpacity forKey:@"opacity"];
-  });
+  // Only show hit explosion when using visual targeting
+  if(self.useVisualTargeting) {
+    // Delay explostion
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.22 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+      // Transform
+      CABasicAnimation* animationTransform = [CABasicAnimation animationWithKeyPath:@"transform"];
+      animationTransform.fromValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.20, 0.20, 1.0)];
+      animationTransform.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.0, 1.0, 1.0)];
+      animationTransform.duration = 0.2;
+      [animationTransform setFillMode:kCAFillModeRemoved];
+      
+      CABasicAnimation* animationOpacity = [CABasicAnimation animationWithKeyPath:@"opacity"];
+      animationOpacity.fromValue = @1.0;
+      animationOpacity.toValue = @0.0;
+      animationOpacity.duration = 0.4;
+      [animationOpacity setFillMode:kCAFillModeRemoved];
+      
+      [self.targetHitImageView.layer addAnimation:animationTransform forKey:@"transfrom"];
+      [self.targetHitImageView.layer addAnimation:animationOpacity forKey:@"opacity"];
+    });
+  }
 }
 
 #pragma mark - Protocol CvVideoCameraDelegate
@@ -492,8 +500,10 @@
                                                         volume:0.5
                                                      withDelay:0
                                                       numLoops:0];
-  [self.bulletOverlayView fireLaserButtlet];
-  [self animateCrossHairsFire];
+  if(self.useVisualTargeting) {
+    [self.bulletOverlayView fireLaserButtlet];
+    [self animateCrossHairsFire];
+  }
 }
 
 - (IBAction)handleExitButtonPress:(id)sender
@@ -506,6 +516,12 @@
 
   // Hide camera view if not using visual targeting
   self.cameraView.hidden = !self.useVisualTargeting;
+  
+  // Set to full alpha for crosshairs if not using visual targeting (since we
+  // won't be animating it)
+  if(self.useVisualTargeting == NO) {
+    self.crosshairTopImageView.alpha = 1.0;
+  }
 }
 
 - (IBAction)handleUseAudioTargetingSwitch:(UISwitch *)sender {
