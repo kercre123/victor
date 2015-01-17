@@ -94,4 +94,6 @@
 
 - (void)sendCameraResolution:(BOOL)isHigh;
 
+- (void)sendEnableRobotImageStreaming:(BOOL)enable;
+
 @end
