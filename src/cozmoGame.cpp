@@ -714,8 +714,8 @@ namespace Cozmo {
   
   Result CozmoGameClientImpl::Init(const Json::Value& config)
   {
-    
-    return RESULT_OK;
+    // TODO: Any other initialization needed on the client?
+    return _cozmoEngine.Init(config);
   }
   
   void CozmoGameClientImpl::Update(const float currentTime_sec)
