@@ -208,6 +208,7 @@ namespace Cozmo {
       //robotKeyPair.second.visionMsgHandler.ProcessMessages();
     }
     
+    /*
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
@@ -217,6 +218,7 @@ namespace Cozmo {
                                                                      msg.x_imgUpperRight, msg.y_imgUpperRight,
                                                                      msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
+     */
     
     Result lastResult = UpdateInternal(currTime_ns);
     
