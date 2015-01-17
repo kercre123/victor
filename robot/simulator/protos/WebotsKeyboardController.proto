@@ -23,6 +23,7 @@ PROTO WebotsKeyboardController [
   field SFFloat camera_maxExposureTime 0.98
   field SFInt32 camera_highValue 250  
   field SFFloat camera_percentileToMakeHigh 0.97
+  field SFInt32 camera_limitFramerate 1
 
 
   # Face detect params

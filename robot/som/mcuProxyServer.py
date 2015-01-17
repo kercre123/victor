@@ -24,32 +24,52 @@ class MCUInterface(serial.Serial):
                                parity   = serial.PARITY_NONE,
                                stopbits = serial.STOPBITS_ONE,
                                bytesize = serial.EIGHTBITS,
-                               timeout  = 0.001 + float(MTU)/self.BAUD_RATE)
+                               timeout  = 0.001 + (float(MTU)/self.BAUD_RATE))
+        # TODO configure GPIO pin
 
     def xfer(self, toMcu):
         "Transfer data to and from the MCU"
         self.read() # Throw away anything lingering in the receive buffer to maintain sync
         self.slaveSelect(True) # Set the sync line
-        self.write(toMcu) # Write outgoing data
-        self.flush()      # Make sure it's all writen
+        if toMcu:
+            self.write(toMcu) # Write outgoing data
+            self.flush()      # Make sure it's all writen
+        else:
+            time.sleep(0.001)
         self.slaveSelect(False) # Deassert the sync
-        return self.read() # Read and return the resposne
+        fromMcu = self.read() # Read and return the resposne
+        if len(fromMcu):
+            return fromMcu
+        else:
+            return None
 
 
-class MCUProxyServer(socket.socket):
+class MCUProxyServer(object):
     "Proxy server class"
 
     PORT = 9001
     CLIENT_TIMEOUT = 60.0 # One minute for right now
 
-    def __init__(self, networkPort=self.PORT, serialDevice=MCUInterface.SERIAL_DEVICE):
+    def __init__(self, poller, serialDevice=MCUInterface.SERIAL_DEVICE):
         "Sets up the server instance"
-        socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
-        self.bind(('', networkPort))
-        self.settimeout(0.002) # 2 ms
         self.mcu = MCUInterface(serialDevice)
-        self.client = None
-        self.lastRecvTime = 0.0
+        self.radioConnected = False
+
+    def __del__(self):
+        "Send closeout messages"
+        self.standby()
+
+    def standby(self):
+        "Put the sub server into standby mode"
+        self.radioConnected = False
+        self.mcu.xfer(messages.SoMRadioSate(0,0).serialize())
+
+    def poll(self, message=None):
+        "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
+        # Handle incoming messages if any
+        if message and self.radioConnected is False: # If first message of connection
+            self.mcu.xfer(messages.SoMRadioState(1, 0).serialize()) # Tell the MCU we have a connection
+        return self.mcu.xfer(message)
 
     def recv(self):
         try:
