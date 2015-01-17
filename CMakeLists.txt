@@ -68,6 +68,7 @@ add_subdirectory(game)
 # Don't build these if ANKI_IOS_BUILD is defined:
 if(NOT ANKI_IOS_BUILD)
   add_subdirectory(robot)
+  add_subdirectory(simulator)
   #add_subdirectory(test)
   add_subdirectory(matlab/mex)
 

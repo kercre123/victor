@@ -7,7 +7,7 @@
 
 #include "gripController.h"
 #include "headController.h"
-#include "keyboardController.h"
+#include "anki/cozmo/simulator/keyboardController.h"
 #include "liftController.h"
 #include "dockingController.h"
 

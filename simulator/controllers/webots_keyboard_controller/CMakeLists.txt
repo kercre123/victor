@@ -3,14 +3,18 @@
 remove_definitions(-DCOZMO_ROBOT -DSIMULATOR)
 add_definitions(-DCOZMO_BASESTATION)
 
+
+
 # Include paths
   include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
-  ${PROJECT_SOURCE_DIR}/basestation/src
-  ${PROJECT_SOURCE_DIR}/robot/simulator/src
+  ${COZMO_INCLUDE_DIR}/anki/cozmo/basestation
+  #${PROJECT_SOURCE_DIR}/basestation/src
+  #${PROJECT_SOURCE_DIR}/simulator/src
 )
 
-file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
+#file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
+#file(GLOB COZMO_BASESTATION_SRC ${PROJECT_SOURCE_DIR}/basestation/src/*.c*)
 
 
 # Link paths
@@ -20,7 +24,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 # Source files
 set(SOURCE_FILES
   webots_keyboard_controller.cpp
-  ${COZMO_BASESTATION_SRC}
+  #${COZMO_BASESTATION_SRC}
 )
 
 add_executable(webots_keyboard_controller 
