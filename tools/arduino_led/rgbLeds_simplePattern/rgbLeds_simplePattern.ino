@@ -102,6 +102,7 @@ void updateTimings()
       Serial.print(local_ledOnMicroseconds[iLed], DEC);
       Serial.print("  ");
     }
+    Serial.print("\n");
     
     if(!isValid) {
       Serial.println("Invalid input. Use format: modulationPeriodMicroseconds, modulationOnMicroseconds, totalPeriodMicroseconds, ledOnMicroseconds[0], ledOnMicroseconds[1], ledOnMicroseconds[2], ledOnMicroseconds[3], ledOnMicroseconds[4], ledOnMicroseconds[5]");
@@ -113,9 +114,9 @@ void updateTimings()
       Serial.read();
     }
     
-    local_modulationPeriodMicroseconds = modulationPeriodMicroseconds;
-    local_modulationOnMicroseconds = modulationOnMicroseconds;
-    local_totalPeriodMicroseconds = totalPeriodMicroseconds;
+    modulationPeriodMicroseconds = local_modulationPeriodMicroseconds;
+    modulationOnMicroseconds = local_modulationOnMicroseconds;
+    totalPeriodMicroseconds = local_totalPeriodMicroseconds;
   } // if(Serial.available()) {
 } // void updateTimings()
 
