@@ -1,0 +1,1504 @@
+/*
+ * File:          webots_keyboard_controller.cpp
+ * Date:
+ * Description:   
+ * Author:        
+ * Modifications: 
+ */
+
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/common/basestation/math/pose.h"
+
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
+#include "anki/messaging/shared/TcpClient.h"
+#include "anki/cozmo/game/comms/gameMessageHandler.h"
+#include "anki/cozmo/game/comms/gameComms.h"
+
+#include "anki/cozmo/basestation/behaviorManager.h"
+
+#include <stdio.h>
+
+// Webots includes
+#include <webots/Supervisor.hpp>
+
+
+// SDL for gamepad control (specifically Logitech Rumblepad F510)
+// Gamepad should be in Direct mode (switch on back)
+#define ENABLE_GAMEPAD_SUPPORT 1
+#if(ENABLE_GAMEPAD_SUPPORT)
+#include <SDL.h>
+#define DEBUG_GAMEPAD 0
+#endif
+
+#define BASESTATION_IP "127.0.0.1"
+#define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
+
+namespace Anki {
+  namespace Cozmo {
+    
+    // Slow down keyboard polling to avoid duplicate commands?
+    const s32 KB_TIME_STEP = BS_TIME_STEP;
+
+    namespace WebotsKeyboardController {
+      
+      webots::Supervisor inputController;
+      
+      // Private memers:
+      namespace {
+        // Constants for Webots:
+        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 10.f; // mm/s
+        
+        const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
+        const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
+        
+        const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
+        
+        std::set<int> lastKeysPressed_;
+        
+        bool wasMovingWheels_ = false;
+        bool wasMovingHead_   = false;
+        bool wasMovingLift_   = false;
+        
+        webots::GPS* gps_;
+        webots::Compass* compass_;
+        
+        webots::Node* root_ = nullptr;
+        
+        u8 poseMarkerMode_ = 0;
+        Anki::Pose3d prevPoseMarkerPose_;
+        Anki::Pose3d poseMarkerPose_;
+        webots::Field* poseMarkerDiffuseColor_ = nullptr;
+        double poseMarkerColor_[2][3] = { {0.1, 0.8, 0.1} // Goto pose color
+          ,{0.8, 0.1, 0.1} // Place object color
+        };
+        
+        BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
+        
+        // Socket connection to basestation
+        TcpClient bsClient;
+        char sendBuf[128];
+        
+        double lastKeyPressTime_;
+        
+        #if(ENABLE_GAMEPAD_SUPPORT)
+        SDL_GameController* js_;
+        
+        //Event handler
+        SDL_Event sdlEvent_;
+        
+        //Normalized direction
+        typedef enum {
+          GC_ANALOG_LEFT_X,
+          GC_ANALOG_LEFT_Y,
+          GC_ANALOG_RIGHT_X,
+          GC_ANALOG_RIGHT_Y,
+          GC_LT_BUTTON,
+          GC_RT_BUTTON,
+          GC_NUM_AXES
+        } GameControllerAxis_t;
+        
+        s16 gc_axisValues_[GC_NUM_AXES] = {0};
+        
+        typedef enum {
+          GC_BUTTON_A = 0,
+          GC_BUTTON_B,
+          GC_BUTTON_X,
+          GC_BUTTON_Y,
+          GC_BUTTON_BACK,
+          
+          GC_BUTTON_START = 6,
+          GC_BUTTON_ANALOG_LEFT,
+          GC_BUTTON_ANALOG_RIGHT,
+          
+          GC_BUTTON_LB = 9,
+          GC_BUTTON_RB,
+          
+          GC_BUTTON_DIR_UP = 11,
+          GC_BUTTON_DIR_DOWN,
+          GC_BUTTON_DIR_LEFT,
+          GC_BUTTON_DIR_RIGHT,
+          
+          GC_NUM_BUTTONS
+        } GameControllerButton_t;
+        
+        bool gc_buttonPressed_[GC_NUM_BUTTONS];
+        
+        const s16 ANALOG_INPUT_DEAD_ZONE_THRESH = 1000;
+        const f32 ANALOG_INPUT_MAX_DRIVE_SPEED = 100; // mm/s
+        const f32 MAX_ANALOG_RADIUS = 300;
+        #endif // ENABLE_GAMEPAD_SUPPORT
+
+        
+        GameMessageHandler msgHandler_;
+        const int deviceID = 1;
+        GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
+                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP,
+                             UI_ADVERTISEMENT_REGISTRATION_PORT);
+        
+      } // private namespace
+      
+      // Forward declarations
+      void ProcessKeystroke(void);
+      void ProcessJoystick(void);
+      void PrintHelp(void);
+      void SendMessage(const UiMessage& msg);
+      void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
+      void SendMoveHead(const f32 speed_rad_per_sec);
+      void SendMoveLift(const f32 speed_rad_per_sec);
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
+      void SendStopAllMotors();
+      void SendImageRequest(u8 mode, u8 resolution);
+      void SendSaveImages(bool on);
+      void SendEnableDisplay(bool on);
+      void SendSetHeadlights(u8 intensity);
+      void SendExecutePathToPose(const Pose3d& p);
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p);
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose);
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose);
+      void SendTraverseSelectedObject();
+      void SendExecuteTestPlan();
+      void SendClearAllBlocks();
+      void SendSelectNextObject();
+      void SendExecuteBehavior(BehaviorManager::Mode mode);
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
+      void SendAbortPath();
+      void SendAbortAll();
+      void SendDrawPoseMarker(const Pose3d& p);
+      void SendErasePoseMarker();
+      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
+      void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
+      void SendSelectNextSoundScheme();
+      void SendStartTestMode(TestMode mode);
+      void SendIMURequest(u32 length_ms);
+      void SendAnimation(const char* animName, u32 numLoops);
+      void SendReadAnimationFile();
+      void SendStartFaceTracking(u8 timeout_sec);
+      void SendStopFaceTracking();
+      void SendVisionSystemParams();
+      void SendFaceDetectParams();
+      
+      
+      // ======== Message handler callbacks =======
+      
+      // TODO: Update these not to need robotID
+      
+      void ProcessMessageObjectVisionMarker(MessageG2U_ObjectVisionMarker const& msg)
+      {
+        // TODO: Do something with this message to notify UI
+        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
+      }
+
+      void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any robot that's
+        // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
+        MessageU2G_ConnectToRobot msgOut;
+        msgOut.robotID = msgIn.robotID;
+        SendMessage(msgOut);
+      }
+      
+      void HandleUiDeviceConnection(const MessageG2U_UiDeviceAvailable& msgIn)
+      {
+        // Just send a message back to the game to connect to any UI device that's
+        // advertising (since we don't have a selection mechanism here)
+        printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
+        MessageU2G_ConnectToUiDevice msgOut;
+        msgOut.deviceID = msgIn.deviceID;
+        SendMessage(msgOut);
+      }
+      
+      // ===== End of message handler callbacks ====
+      
+      
+      void Init()
+      {
+        memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
+        
+        while(!gameComms_.IsInitialized()) {
+          PRINT_NAMED_INFO("KeyboardController.Init",
+                           "Waiting for gameComms to initialize...\n");
+          inputController.step(KB_TIME_STEP);
+          gameComms_.Update();
+        }
+        msgHandler_.Init(&gameComms_);
+        
+        // Register callbacks for incoming messages from game
+        msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
+        msgHandler_.RegisterCallbackForMessageG2U_UiDeviceAvailable(HandleUiDeviceConnection);
+        msgHandler_.RegisterCallbackForMessageG2U_RobotAvailable(HandleRobotConnection);
+        
+        inputController.keyboardEnable(BS_TIME_STEP);
+        
+        gps_ = inputController.getGPS("gps");
+        compass_ = inputController.getCompass("compass");
+        
+        gps_->enable(BS_TIME_STEP);
+        compass_->enable(BS_TIME_STEP);
+        
+        // Make root point to WebotsKeyBoardController node
+        root_ = inputController.getSelf();
+        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+        #if(ENABLE_GAMEPAD_SUPPORT)
+        // Look for gamepad
+        if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
+          printf("ERROR: Failed to init SDL\n");
+          return;
+        }
+        if (SDL_NumJoysticks() > 0) {
+          // Open first joystick. Assuming it's the Logitech Rumble Gamepad F510.
+          js_ = SDL_GameControllerOpen(0);
+          if (js_ == NULL) {
+            printf("ERROR: Unable to open gamepad\n");
+          }
+        }
+        #endif
+
+
+      }
+      
+      void PrintHelp()
+      {
+        printf("\nBasestation keyboard control\n");
+        printf("===============================\n");
+        printf("                           Drive:  arrows  (Hold shift for slower speeds)\n");
+        printf("               Move lift up/down:  a/z\n");
+        printf("               Move head up/down:  s/x\n");
+        printf("             Lift low/high/carry:  1/2/3\n");
+        printf("            Head down/forward/up:  4/5/6\n");
+        printf("                Toggle headlight:  h\n");
+        printf("                   Request image:  i\n");
+        printf("             Toggle image stream:  Shift+i\n");
+        printf("              Toggle save images:  e\n");
+        printf("        Toggle VizObject display:  d\n");
+        printf("Goto/place object at pose marker:  g\n");
+        printf("         Toggle pose marker mode:  Shift+g\n");
+        printf("              Cycle block select:  .\n");
+        printf("              Clear known blocks:  c\n");
+        printf("                      Creep mode:  Shift+c\n");
+        printf("          Dock to selected block:  p\n");
+        printf("          Dock from current pose:  Shift+p\n");
+        printf("    Travel up/down selected ramp:  r\n");
+        printf("       Start June 2014 dice demo:  j\n");
+        printf("              Abort current path:  q\n");
+        printf("                Abort everything:  Shift+q\n");
+        printf("         Update controller gains:  k\n");
+        printf("             Cycle sound schemes:  m\n");
+        printf("                 Request IMU log:  o\n");
+        printf("            Toggle face tracking:  f (Shift+f)\n");
+        printf("                      Test modes:  Alt + Testmode#\n");
+        printf("                Follow test plan:  t\n");
+        printf("                      Print help:  ?\n");
+        printf("\n");
+      }
+      
+      //Check the keyboard keys and issue robot commands
+      void ProcessKeystroke()
+      {
+        
+        // these are the ascii codes for the capital letter
+        //Numbers, spacebar etc. work, letters are different, why?
+        //a, z, s, x, Space
+        const s32 CKEY_CANCEL_PATH = 81;  // q
+        const s32 CKEY_LIFT_UP     = 65;  // a
+        const s32 CKEY_LIFT_DOWN   = 90;  // z
+        //const s32 CKEY_HEAD_UPUP  = 87;  // w
+        const s32 CKEY_HEAD_UP     = 83;  // s
+        const s32 CKEY_HEAD_DOWN   = 88;  // x
+        const s32 CKEY_UNLOCK      = 32;  // space
+        const s32 CKEY_REQUEST_IMG = 73;  // i
+        const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
+        const s32 CKEY_HEADLIGHT   = 72;  // h
+        const s32 CKEY_GOTO_POSE   = 71;  // g
+        const s32 CKEY_CLEAR_BLOCKS = 67; // c
+        //const s32 CKEY_COMMA   = 44;  // ,
+        const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
+        //const s32 CKEY_FWDSLASH    = 47; // '/'
+        //const s32 CKEY_BACKSLASH   = 92 // '\'
+        const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
+        const s32 CKEY_USE_RAMP = 82; // r
+        const s32 CKEY_QUESTION_MARK  = 63; // '/'
+        
+        const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
+        const s32 CKEY_SET_GAINS   = 75;  // 'k'
+        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
+        
+        const s32 CKEY_TEST_PLAN = (s32)'T';
+        const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
+        const s32 CKEY_EXPORT_IMAGES = (s32)'E';
+        const s32 CKEY_IMU_REQUEST = (s32)'O';
+        
+        const s32 CKEY_ANIMATION_NOD = (s32)'!';
+        const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
+        const s32 CKEY_ANIMATION_BLINK = (s32)'#';
+        const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
+        const s32 CKEY_ANIMATION_SEND_FILE = 197; // ALT+A
+        
+        const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
+        
+        // For CREEP test
+        const s32 CKEY_BEHAVIOR_EXCITED   = (s32)'7';
+        const s32 CKEY_BEHAVIOR_FLEE      = (s32)'8';
+        const s32 CKEY_BEHAVIOR_SCAN      = (s32)'9';
+        const s32 CKEY_BEHAVIOR_DANCE     = (s32)'0';
+        const s32 CKEY_BEHAVIOR_HELPME    = (s32)'-';
+        const s32 CKEY_BEHAVIOR_WHAT_NEXT = (s32)'=';
+        const s32 CKEY_BEHAVIOR_IDLE      = (s32)'&';
+        
+        bool movingHead   = false;
+        bool movingLift   = false;
+        bool movingWheels = false;
+        s8 steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
+        s8 throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
+        
+        f32 leftSpeed = 0.f;
+        f32 rightSpeed = 0.f;
+        
+        f32 commandedLiftSpeed = 0.f;
+        f32 commandedHeadSpeed = 0.f;
+        
+        f32 wheelSpeed = DRIVE_VELOCITY_FAST;
+        
+        static bool keyboardRestart = false;
+        if (keyboardRestart) {
+          inputController.keyboardDisable();
+          inputController.keyboardEnable(BS_TIME_STEP);
+          keyboardRestart = false;
+        }
+        
+        // Get all keys pressed this tic
+        std::set<int> keysPressed_;
+        while(1) {
+          int key = inputController.keyboardGetKey();
+          if (key == 0)
+            break;
+          
+          keysPressed_.insert(key);
+        }
+        
+        // If exact same keys were pressed last tic, do nothing.
+        if (lastKeysPressed_ == keysPressed_) {
+          return;
+        }
+        lastKeysPressed_ = keysPressed_;
+        
+        
+        for(auto key : keysPressed_)
+        {
+          // Extract modifier key(s)
+          int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          
+          // Set key to its modifier-less self
+          key &= webots::Supervisor::KEYBOARD_KEY;
+          
+          lastKeyPressTime_ = inputController.getTime();
+          
+          // DEBUG: Display modifier key information
+          /*
+          printf("Key = '%c'", char(key));
+          if(modifier_key) {
+            printf(", with modifier keys: ");
+            if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+              printf("ALT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+              printf("SHIFT ");
+            }
+            if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
+              printf("CTRL/CMD ");
+            }
+           
+          }
+          printf("\n");
+          */
+          
+          // Use slow motor speeds if SHIFT is pressed
+          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
+          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
+          if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+            wheelSpeed = DRIVE_VELOCITY_SLOW;
+            liftSpeed *= 0.4;
+            headSpeed *= 0.5;
+          }
+          
+          
+          //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
+          //       key, modifier_key, key | modifier_key, lastKeyPressed_);
+          
+          // Check for test mode (alt + key)
+          bool testMode = false;
+          if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+            if (key >= '0' && key <= '9') {
+              TestMode m = TestMode(key - '0');
+              printf("Sending test mode %d\n", m);
+              SendStartTestMode(m);
+              testMode = true;
+            }
+          }
+          
+          if(!testMode) {
+            // Check for (mostly) single key commands
+            switch (key)
+            {
+              case webots::Robot::KEYBOARD_UP:
+              {
+                ++throttleDir;
+                break;
+              }
+                
+              case webots::Robot::KEYBOARD_DOWN:
+              {
+                --throttleDir;
+                break;
+              }
+                
+              case webots::Robot::KEYBOARD_LEFT:
+              {
+                --steeringDir;
+                break;
+              }
+                
+              case webots::Robot::KEYBOARD_RIGHT:
+              {
+                ++steeringDir;
+                break;
+              }
+                
+              case CKEY_HEAD_UP: //s-key: move head UP
+              {
+                commandedHeadSpeed += headSpeed;
+                movingHead = true;
+                break;
+              }
+                
+              case CKEY_HEAD_DOWN: //x-key: move head DOWN
+              {
+                commandedHeadSpeed -= headSpeed;
+                movingHead = true;
+                break;
+              }
+                
+              case CKEY_LIFT_UP: //a-key: move lift up
+              {
+                commandedLiftSpeed += liftSpeed;
+                movingLift = true;
+                break;
+              }
+                
+              case CKEY_LIFT_DOWN: //z-key: move lift down
+              {
+                commandedLiftSpeed -= liftSpeed;
+                movingLift = true;
+                break;
+              }
+                
+              case '1': //set lift to low dock height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '2': //set lift to high dock height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '3': //set lift to carry height
+              {
+                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '4': //set head to look all the way down
+              {
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '5': //set head to straight ahead
+              {
+                SendMoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case '6': //set head to look all the way up
+              {
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                break;
+              }
+                
+              case CKEY_UNLOCK: // Stop all motors
+              {
+                SendStopAllMotors();
+                break;
+              }
+                
+              case CKEY_REQUEST_IMG:
+              {
+                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool streamOn = false;
+                  if (streamOn) {
+                    mode = ISM_OFF;
+                  } else {
+                    mode = ISM_STREAM;
+                  }
+                  streamOn = !streamOn;
+                }
+                
+                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
+                
+                if (root_) {
+                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
+                  if(camera_horizontalResolution == 320) {
+                    localStreamRes = Vision::CAMERA_RES_QVGA;
+                  } else if(camera_horizontalResolution == 160) {
+                    localStreamRes = Vision::CAMERA_RES_QQVGA;
+                  } else if(camera_horizontalResolution == 80) {
+                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                  } else if(camera_horizontalResolution == 40) {
+                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  }
+                }
+                
+                SendImageRequest(mode, localStreamRes);
+                break;
+              }
+                
+              case CKEY_EXPORT_IMAGES:
+              {
+                // Toggle saving of images to pgm
+                static bool saveImages = true;
+                SendSaveImages(saveImages);
+                saveImages = !saveImages;
+                break;
+              }
+                
+              case CKEY_DISPLAY_TOGGLE:
+              {
+                static bool showObjects = false;
+                SendEnableDisplay(showObjects);
+                showObjects = !showObjects;
+                break;
+              }
+                
+              case CKEY_HEADLIGHT:
+              {
+                static bool headlightsOn = false;
+                headlightsOn = !headlightsOn;
+                SendSetHeadlights(headlightsOn ? 128 : 0);
+                break;
+              }
+              case CKEY_GOTO_POSE:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  poseMarkerMode_ = !poseMarkerMode_;
+                  printf("Pose marker mode: %d\n", poseMarkerMode_);
+                  poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
+                  SendErasePoseMarker();
+                  break;
+                }
+                
+                if (poseMarkerMode_ == 0) {
+                  // Execute path to pose
+                  SendExecutePathToPose(poseMarkerPose_);
+                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                } else {
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_);
+                  // Make sure head is tilted down so that it can localize well
+                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  
+                }
+                break;
+              }
+                
+              case CKEY_TEST_PLAN:
+              {
+                SendExecuteTestPlan();
+                break;
+              }
+                
+              case CKEY_CYCLE_BLOCK_SELECT:
+              {
+                SendSelectNextObject();
+                break;
+              }
+              case CKEY_CLEAR_BLOCKS:
+              {
+                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  if(BehaviorManager::CREEP == behaviorMode_) {
+                    behaviorMode_ = BehaviorManager::None;
+                  } else {
+                    behaviorMode_ = BehaviorManager::CREEP;
+                  }
+                  
+                  SendExecuteBehavior(behaviorMode_);
+                } else {
+                  // 'c' without SHIFT
+                  SendClearAllBlocks();
+                }
+                break;
+              }
+              case CKEY_DOCK_TO_BLOCK:
+              {
+                bool usePreDockPose = true;
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  // Don't go to predock pose first. I.e., just try to dock from
+                  // right there.
+                  usePreDockPose = false;
+                }
+                SendPickAndPlaceSelectedObject(usePreDockPose);
+                break;
+              }
+              case CKEY_USE_RAMP:
+              {
+                SendTraverseSelectedObject();
+                break;
+              }
+              case CKEY_START_DICE_DEMO:
+              {
+                if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
+                  SendExecuteBehavior(BehaviorManager::None);
+                } else {
+                  SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
+                }
+                break;
+              }
+              case CKEY_CANCEL_PATH:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
+                  SendAbortAll();
+                } else {
+                  // Just Q: Just cancel path
+                  SendAbortPath();
+                }
+                break;
+              }
+                
+              case CKEY_SET_GAINS:
+              {
+                if (root_) {
+                  // Head and lift gains
+                  f32 kp = root_->getField("headKp")->getSFFloat();
+                  f32 ki = root_->getField("headKi")->getSFFloat();
+                  f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                  printf("New head gains: %f %f %f\n", kp, ki, maxErrorSum);
+                  SendHeadControllerGains(kp, ki, maxErrorSum);
+                  
+                  kp = root_->getField("liftKp")->getSFFloat();
+                  ki = root_->getField("liftKi")->getSFFloat();
+                  maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
+                  printf("New lift gains: %f %f %f\n", kp, ki, maxErrorSum);
+                  SendLiftControllerGains(kp, ki, maxErrorSum);
+                } else {
+                  printf("No WebotsKeyboardController was found in world\n");
+                }
+                break;
+              }
+              case CKEY_SET_VISIONSYSTEM_PARAMS:
+              {
+                SendVisionSystemParams();
+                
+                SendFaceDetectParams();
+                
+                break;
+              }
+              case CKEY_CYCLE_SOUND_SCHEME:
+              {
+                SendSelectNextSoundScheme();
+                break;
+              }
+              case CKEY_IMU_REQUEST:
+              {
+                SendIMURequest(2000);
+                break;
+              }
+                
+              // Animations
+              case CKEY_ANIMATION_SEND_FILE:
+              {
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReadAnimationFile();
+                }
+                break;
+              }
+              case CKEY_ANIMATION_BACK_AND_FORTH:
+              {
+                SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
+                break;
+              }
+              case CKEY_ANIMATION_BLINK:
+              {
+                SendAnimation("ANIM_BLINK", 0);
+                break;
+              }
+              case (s32)'$':
+              {
+                SendAnimation("ANIM_LIFT_NOD", 1);
+                break;
+              }
+              case (s32) '%':
+              {
+                SendAnimation("ANIM_ALERT", 1);
+                break;
+              }
+              case CKEY_ANIMATION_TOGGLE:
+              {
+                //const s32 NUM_ANIM_TESTS = 4;
+                //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
+                
+                const s32 NUM_ANIM_TESTS = 4;
+                const char* testAnims[NUM_ANIM_TESTS] = {"ANIM_BLINK", "ANIM_HEAD_NOD", "ANIM_HEAD_NOD_SLOW", "ANIM_LIFT_NOD"};
+                
+                static s32 iAnimTest = 0;
+                
+                SendAnimation(testAnims[iAnimTest++], 1);
+                
+                if(iAnimTest == NUM_ANIM_TESTS) {
+                  iAnimTest = 0;
+                }
+                break;
+              }
+
+              //
+              // CREEP Behavior States:
+              //
+              case CKEY_BEHAVIOR_DANCE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
+                break;
+              }
+              case CKEY_BEHAVIOR_EXCITED:
+              {
+                SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
+                break;
+              }
+              case CKEY_BEHAVIOR_FLEE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
+                break;
+              }
+              case CKEY_BEHAVIOR_HELPME:
+              {
+                SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
+                break;
+              }
+              case CKEY_BEHAVIOR_WHAT_NEXT:
+              {
+                SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
+                break;
+              }
+              case CKEY_BEHAVIOR_SCAN:
+              {
+                SendSetNextBehaviorState(BehaviorManager::SCAN);
+                break;
+              }
+              case CKEY_BEHAVIOR_IDLE:
+              {
+                SendSetNextBehaviorState(BehaviorManager::IDLE);
+                break;
+              }
+              case CKEY_ANIMATION_NOD:
+              {
+                SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
+                break;
+              }
+                
+              case CKEY_QUESTION_MARK:
+              {
+                PrintHelp();
+                break;
+              }
+                
+              case CKEY_TOGGLE_FACE_TRACKING:
+              {
+                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  SendStopFaceTracking();
+                } else {
+                  SendStartFaceTracking(5);
+                }
+                break;
+              }
+              
+              default:
+              {
+                // Unsupported key: ignore.
+                break;
+              }
+                
+            } // switch
+          } // if/else testMode
+          
+        } // for(auto key : keysPressed_)
+        
+        movingWheels = throttleDir || steeringDir;
+
+        if(movingWheels) {
+          
+          // Set wheel speeds based on drive commands
+          if (throttleDir > 0) {
+            leftSpeed = wheelSpeed + steeringDir * wheelSpeed;
+            rightSpeed = wheelSpeed - steeringDir * wheelSpeed;
+          } else if (throttleDir < 0) {
+            leftSpeed = -wheelSpeed - steeringDir * wheelSpeed;
+            rightSpeed = -wheelSpeed + steeringDir * wheelSpeed;
+          } else {
+            leftSpeed = steeringDir * wheelSpeed;
+            rightSpeed = -steeringDir * wheelSpeed;
+          }
+          
+          SendDriveWheels(leftSpeed, rightSpeed);
+          wasMovingWheels_ = true;
+        } else if(wasMovingWheels_ && !movingWheels) {
+          // If we just stopped moving the wheels:
+          SendDriveWheels(0, 0);
+          wasMovingWheels_ = false;
+        }
+        
+        // If the last key pressed was a move lift key then stop it.
+        if(movingLift) {
+          SendMoveLift(commandedLiftSpeed);
+          wasMovingLift_ = true;
+        } else if (wasMovingLift_ && !movingLift) {
+          // If we just stopped moving the lift:
+          SendMoveLift(0);
+          wasMovingLift_ = false;
+        }
+        
+        if(movingHead) {
+          SendMoveHead(commandedHeadSpeed);
+          wasMovingHead_ = true;
+        } else if (wasMovingHead_ && !movingHead) {
+          // If we just stopped moving the head:
+          SendMoveHead(0);
+          wasMovingHead_ = false;
+        }
+       
+        
+      } // BSKeyboardController::ProcessKeyStroke()
+      
+      void ProcessJoystick()
+      {
+#if(ENABLE_GAMEPAD_SUPPORT)
+        //Handle events on queue
+        while( SDL_PollEvent( &sdlEvent_ ) != 0 )
+        {
+          switch(sdlEvent_.type) {
+              
+            case SDL_CONTROLLERAXISMOTION:
+              
+              if (sdlEvent_.caxis.which == 0) {
+              
+                if (sdlEvent_.caxis.which >= GC_NUM_AXES) {
+                  printf("WARN: Invalid GameController axis event detected\n");
+                  break;
+                }
+
+                // Update value
+                gc_axisValues_[sdlEvent_.caxis.axis] = sdlEvent_.caxis.value;
+
+                // Send message depending on axis that was activated
+                switch(sdlEvent_.caxis.axis)
+                {
+                  case GC_ANALOG_LEFT_X:
+                  case GC_ANALOG_LEFT_Y:
+                  {
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogLeft X %d  Y %d\n", gc_axisValues_[GC_ANALOG_LEFT_X], gc_axisValues_[GC_ANALOG_LEFT_Y]);
+                    #endif
+                    
+                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_X]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
+                      gc_axisValues_[GC_ANALOG_LEFT_X] = 0;
+                    }
+                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_Y]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
+                      gc_axisValues_[GC_ANALOG_LEFT_Y] = 0;
+                    }
+                    
+                    // Compute speed
+                    f32 xyMag = MIN(1.0,
+                                    sqrtf( gc_axisValues_[GC_ANALOG_LEFT_X]*gc_axisValues_[GC_ANALOG_LEFT_X] + gc_axisValues_[GC_ANALOG_LEFT_Y]*gc_axisValues_[GC_ANALOG_LEFT_Y]) / (f32)s16_MAX
+                                    );
+                    
+                    // Stop wheels if magnitude of input is low
+                    if (xyMag < 0.01f) {
+                      SendDriveWheels(0,0);
+                      break;
+                    }
+                    
+                    // Driving forward?
+                    f32 fwd = gc_axisValues_[GC_ANALOG_LEFT_Y] < 0 ? 1 : -1;
+                    
+                    // Curving right?
+                    f32 right = gc_axisValues_[GC_ANALOG_LEFT_X] > 0 ? 1 : -1;
+                  
+                    // Base wheel speed based on magnitude of input and whether or not robot is driving forward
+                    f32 baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * xyMag * fwd;
+                  
+            
+                    // Angle of xy input used to determine curvature
+                    f32 xyAngle = fabsf(atanf(-(f32)gc_axisValues_[GC_ANALOG_LEFT_Y] / (f32)gc_axisValues_[GC_ANALOG_LEFT_X])) * (right);
+                    
+                    // Compute radius of curvature
+                    f32 roc = (xyAngle / PIDIV2_F) * MAX_ANALOG_RADIUS;
+                    
+                    
+                    // Compute individual wheel speeds
+                    f32 lwheel_speed_mmps = 0;
+                    f32 rwheel_speed_mmps = 0;
+                    if (fabsf(xyAngle) > PIDIV2_F - 0.1f) {
+                      // Straight fwd/back
+                      lwheel_speed_mmps = baseWheelSpeed;
+                      rwheel_speed_mmps = baseWheelSpeed;
+                    } else if (fabsf(xyAngle) < 0.1f) {
+                      // Turn in place
+                      lwheel_speed_mmps = right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
+                      rwheel_speed_mmps = -right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
+                    } else {
+                      
+                      lwheel_speed_mmps = baseWheelSpeed * (roc + (right * WHEEL_DIST_HALF_MM)) / roc;
+                      rwheel_speed_mmps = baseWheelSpeed * (roc - (right * WHEEL_DIST_HALF_MM)) / roc;
+                      
+                      // Swap wheel speeds
+                      if (fwd * right < 0) {
+                        f32 temp = lwheel_speed_mmps;
+                        lwheel_speed_mmps = rwheel_speed_mmps;
+                        rwheel_speed_mmps = temp;
+                      }
+                    }
+                    
+                    
+                    // Cap wheel speed at max
+                    if (fabsf(lwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+                      f32 correction = lwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (lwheel_speed_mmps >= 0 ? 1 : -1));
+                      f32 correctionFactor = 1.f - fabsf(correction / lwheel_speed_mmps);
+                      lwheel_speed_mmps *= correctionFactor;
+                      rwheel_speed_mmps *= correctionFactor;
+                      //printf("lcorrectionFactor: %f\n", correctionFactor);
+                    }
+                    if (fabsf(rwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
+                      f32 correction = rwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (rwheel_speed_mmps >= 0 ? 1 : -1));
+                      f32 correctionFactor = 1.f - fabsf(correction / rwheel_speed_mmps);
+                      lwheel_speed_mmps *= correctionFactor;
+                      rwheel_speed_mmps *= correctionFactor;
+                      //printf("rcorrectionFactor: %f\n", correctionFactor);
+                    }
+                    
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", xyMag, xyAngle, roc, fwd, right, lwheel_speed_mmps, rwheel_speed_mmps );
+                    #endif
+                    
+                    SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
+                    
+                    break;
+                  }
+                  case GC_ANALOG_RIGHT_X:
+                  case GC_ANALOG_RIGHT_Y:
+                  {
+                    #if(DEBUG_GAMEPAD)
+                    printf("AnalogRight X %d  Y %d\n", gc_axisValues_[GC_ANALOG_RIGHT_X], gc_axisValues_[GC_ANALOG_RIGHT_Y]);
+                    #endif
+                    
+                    // Compute head speed
+                    f32 speed_rad_per_s = HEAD_SPEED_RAD_PER_SEC * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
+                    
+                    SendMoveHead(speed_rad_per_s);
+                    
+                    break;
+                  }
+                  case GC_LT_BUTTON:
+                  case GC_RT_BUTTON:
+                    #if(DEBUG_GAMEPAD)
+                    printf("Top buttons: LT %d  RT %d\n", gc_axisValues_[GC_LT_BUTTON], gc_axisValues_[GC_RT_BUTTON]);
+                    #endif
+                    break;
+                  default:
+                    printf("WARNING: Unrecognized axis %d\n", sdlEvent_.caxis.axis);
+                    break;
+                }
+                
+              } else {
+                printf("WARNING: Unrecognized source of SDL event (%d)\n", sdlEvent_.caxis.which);
+              }
+              break;
+              
+            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_CONTROLLERBUTTONUP:
+            {
+              u8 buttonID = sdlEvent_.jbutton.button;
+              gc_buttonPressed_[sdlEvent_.jbutton.button] = sdlEvent_.jbutton.state;
+              
+              bool pressed = sdlEvent_.jbutton.state; // If false, then this is a release event
+              
+              bool LT_held = gc_axisValues_[GC_LT_BUTTON];
+              bool RT_held = gc_axisValues_[GC_RT_BUTTON];
+              
+              // Process buttons that matter only when pressed
+              if (pressed) {
+                switch(buttonID) {
+                  case GC_BUTTON_A:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::DANCE_WITH_BLOCK : BehaviorManager::EXCITABLE_CHASE);
+                    break;
+                  case GC_BUTTON_B:
+                    SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
+                    break;
+                  case GC_BUTTON_X:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::SCAN : BehaviorManager::IDLE);
+                    break;
+                  case GC_BUTTON_Y:
+                    SendSetNextBehaviorState(LT_held ? BehaviorManager::WHAT_NEXT : BehaviorManager::HELP_ME_STATE);
+                    break;
+                  case GC_BUTTON_BACK:
+                    break;
+                    
+                  case GC_BUTTON_START:
+                    // Toggle CREEP mode
+                    if(BehaviorManager::CREEP == behaviorMode_) {
+                      behaviorMode_ = BehaviorManager::None;
+                    } else {
+                      behaviorMode_ = BehaviorManager::CREEP;
+                    }
+                    SendExecuteBehavior(behaviorMode_);
+                    break;
+                  default:
+                    break;
+                }
+              }
+              
+              // Process buttons that matter both when pressed and released.
+              switch(buttonID) {
+                      
+                case GC_BUTTON_ANALOG_LEFT:
+                  break;
+                case GC_BUTTON_ANALOG_RIGHT:
+                  break;
+                  
+                case GC_BUTTON_LB:
+                  if (LT_held) {
+                    SendClearAllBlocks();
+                  } else {
+                    SendSelectNextObject();
+                  }
+                  break;
+                case GC_BUTTON_RB:
+                {
+                  bool usePreDockPose = !LT_held;
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
+                  break;
+                }
+                case GC_BUTTON_DIR_UP:
+                case GC_BUTTON_DIR_DOWN:
+                {
+                  // Move lift up/down. Open-loop velocity commands.
+                  f32 speed_rad_per_sec = 0;
+                  if (pressed) {
+                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * LIFT_SPEED_RAD_PER_SEC;
+                  }
+                  SendMoveLift(speed_rad_per_sec);
+                  break;
+                }
+                case GC_BUTTON_DIR_LEFT:
+                case GC_BUTTON_DIR_RIGHT:
+                {
+                  // Move lift to fixed position.
+                  if (pressed) {
+                    
+                    // Figure out appropriate fixed position
+                    f32 height_mm = LIFT_HEIGHT_LOWDOCK;
+                    if (buttonID == GC_BUTTON_DIR_RIGHT) {
+                      height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
+                    }
+                    
+                    SendMoveLiftToHeight(height_mm, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+                  }
+                  break;
+                }
+                default:
+                  //printf("WARNING: Unrecognized button %d\n", sdlEvent_.jbutton.button);
+                  break;
+              }
+              
+              #if(DEBUG_GAMEPAD)
+              printf("Button: %d  State %d, button %d, padding %d %d\n", sdlEvent_.jbutton.type, sdlEvent_.jbutton.state, sdlEvent_.jbutton.button, sdlEvent_.jbutton.padding1, sdlEvent_.jbutton.padding2);
+              #endif
+              break;
+            }
+            default:
+              break;
+          } // end switch
+        } // end while
+#endif
+      }
+      
+      void Update()
+      {
+        gameComms_.Update();
+        
+        if (!gameComms_.HasClient()) {
+          return;
+        }
+        
+        msgHandler_.ProcessMessages();
+        
+        
+        // Update poseMarker pose
+        const double* trans = gps_->getValues();
+        const double* northVec = compass_->getValues();
+        
+        // Convert to mm
+        Vec3f transVec;
+        transVec.x() = trans[0] * 1000;
+        transVec.y() = trans[1] * 1000;
+        transVec.z() = trans[2] * 1000;
+        
+        // Compute orientation from north vector
+        f32 angle = atan2f(-northVec[1], northVec[0]);
+        
+        poseMarkerPose_.SetTranslation(transVec);
+        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+        
+        
+        // Update pose marker if different from last time
+        if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
+          if (poseMarkerMode_ != 0) {
+            // Place object mode
+            SendDrawPoseMarker(poseMarkerPose_);
+          }
+        }
+        
+        ProcessKeystroke();
+        ProcessJoystick();
+        
+        prevPoseMarkerPose_ = poseMarkerPose_;
+      }
+      
+      void SendMessage(const UiMessage& msg)
+      {
+        UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
+        msgHandler_.SendMessage(devID, msg); 
+      }
+      
+      void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+      {
+        MessageU2G_DriveWheels m;
+        m.lwheel_speed_mmps = lwheel_speed_mmps;
+        m.rwheel_speed_mmps = rwheel_speed_mmps;
+        SendMessage(m);
+      }
+      
+      void SendMoveHead(const f32 speed_rad_per_sec)
+      {
+        MessageU2G_MoveHead m;
+        m.speed_rad_per_sec = speed_rad_per_sec;
+        SendMessage(m);
+      }
+      
+      void SendMoveLift(const f32 speed_rad_per_sec)
+      {
+        MessageU2G_MoveLift m;
+        m.speed_rad_per_sec = speed_rad_per_sec;
+        SendMessage(m);
+      }
+      
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel)
+      {
+        MessageU2G_SetHeadAngle m;
+        m.angle_rad = rad;
+        m.max_speed_rad_per_sec = speed;
+        m.accel_rad_per_sec2 = accel;
+        SendMessage(m);
+      }
+      
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel)
+      {
+        MessageU2G_SetLiftHeight m;
+        m.height_mm = mm;
+        m.max_speed_rad_per_sec = speed;
+        m.accel_rad_per_sec2 = accel;
+        SendMessage(m);
+      }
+      
+      void SendStopAllMotors()
+      {
+        MessageU2G_StopAllMotors m;
+        SendMessage(m);
+      }
+      
+      void SendImageRequest(u8 mode, u8 resolution)
+      {
+        MessageU2G_ImageRequest m;
+        m.mode = mode;
+        m.resolution = resolution;
+        SendMessage(m);
+      }
+      
+      void SendSaveImages(bool on)
+      {
+        MessageU2G_SaveImages m;
+        m.enableSave = on;
+        SendMessage(m);
+      }
+      
+      void SendEnableDisplay(bool on)
+      {
+        MessageU2G_EnableDisplay m;
+        m.enable = on;
+        SendMessage(m);
+      }
+      
+      void SendSetHeadlights(u8 intensity)
+      {
+        MessageU2G_SetHeadlights m;
+        m.intensity = intensity;
+        SendMessage(m);
+      }
+      
+      void SendExecutePathToPose(const Pose3d& p)
+      {
+        MessageU2G_GotoPose m;
+        m.x_mm = p.GetTranslation().x();
+        m.y_mm = p.GetTranslation().y();
+        m.rad = p.GetRotationAngle<'Z'>().ToFloat();
+        m.level = 0;
+        SendMessage(m);
+      }
+      
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p)
+      {
+        MessageU2G_PlaceObjectOnGround m;
+        m.x_mm = p.GetTranslation().x();
+        m.y_mm = p.GetTranslation().y();
+        m.rad = p.GetRotationAngle<'Z'>().ToFloat();
+        m.level = 0;
+        SendMessage(m);
+      }
+      
+      void SendExecuteTestPlan()
+      {
+        MessageU2G_ExecuteTestPlan m;
+        SendMessage(m);
+      }
+      
+      void SendClearAllBlocks()
+      {
+        MessageU2G_ClearAllBlocks m;
+        SendMessage(m);
+      }
+      
+      void SendSelectNextObject()
+      {
+        MessageU2G_SelectNextObject m;
+        SendMessage(m);
+      }
+      
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose)
+      {
+        MessageU2G_PickAndPlaceObject m;
+        m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.objectID = -1;
+        SendMessage(m);
+      }
+      
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      {
+        SendPickAndPlaceObject(-1, usePreDockPose);
+      }
+      
+      void SendTraverseSelectedObject()
+      {
+        MessageU2G_TraverseObject m;
+        SendMessage(m);
+      }
+      
+      void SendExecuteBehavior(BehaviorManager::Mode mode)
+      {
+        MessageU2G_ExecuteBehavior m;
+        m.behaviorMode = mode;
+        SendMessage(m);
+      }
+      
+      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
+      {
+        MessageU2G_SetBehaviorState m;
+        m.behaviorState = nextState;
+        SendMessage(m);
+      }
+      
+      void SendAbortPath()
+      {
+        MessageU2G_AbortPath m;
+        SendMessage(m);
+      }
+      
+      void SendAbortAll()
+      {
+        MessageU2G_AbortAll m;
+        SendMessage(m);
+      }
+      
+      void SendDrawPoseMarker(const Pose3d& p)
+      {
+        MessageU2G_DrawPoseMarker m;
+        m.x_mm = p.GetTranslation().x();
+        m.y_mm = p.GetTranslation().y();
+        m.rad = p.GetRotationAngle<'Z'>().ToFloat();
+        m.level = 0;
+        SendMessage(m);
+      }
+      
+      void SendErasePoseMarker()
+      {
+        MessageU2G_ErasePoseMarker m;
+        SendMessage(m);
+      }
+      
+      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
+      {
+        MessageU2G_SetHeadControllerGains m;
+        m.kp = kp;
+        m.ki = ki;
+        m.maxIntegralError = maxErrorSum;
+        SendMessage(m);
+      }
+      
+      void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
+      {
+        MessageU2G_SetLiftControllerGains m;
+        m.kp = kp;
+        m.ki = ki;
+        m.maxIntegralError = maxErrorSum;
+        SendMessage(m);
+      }
+      
+      void SendSelectNextSoundScheme()
+      {
+        MessageU2G_SelectNextSoundScheme m;
+        SendMessage(m);
+      }
+      
+      void SendStartTestMode(TestMode mode)
+      {
+        MessageU2G_StartTestMode m;
+        m.mode = mode;
+        SendMessage(m);
+      }
+      
+      void SendIMURequest(u32 length_ms)
+      {
+        MessageU2G_IMURequest m;
+        m.length_ms = length_ms;
+        SendMessage(m);
+      }
+      
+      void SendAnimation(const char* animName, u32 numLoops)
+      {
+        static bool lastSendTime_sec = -1e6;
+        
+        // Don't send repeated animation commands within a half second
+        if(inputController.getTime() > lastSendTime_sec + 0.5f)
+        {
+          MessageU2G_PlayAnimation m;
+          //m.animationID = animId;
+          strncpy(&(m.animationName[0]), animName, 32);
+          m.numLoops = numLoops;
+          SendMessage(m);
+          lastSendTime_sec = inputController.getTime();
+        } else {
+          printf("Ignoring duplicate SendAnimation keystroke.\n");
+        }
+        
+      }
+      
+      void SendReadAnimationFile()
+      {
+        MessageU2G_ReadAnimationFile m;
+        SendMessage(m);
+      }
+      
+      void SendStartFaceTracking(u8 timeout_sec)
+      {
+        MessageU2G_StartFaceTracking m;
+        m.timeout_sec = timeout_sec;
+        SendMessage(m);
+      }
+      
+      void SendStopFaceTracking()
+      {
+        MessageU2G_StopFaceTracking m;
+        SendMessage(m);
+        
+        // For now, have to re-enable marker finding b/c turning on face
+        // tracking will have stopped it:
+        MessageU2G_StartLookingForMarkers m2;
+        SendMessage(m2);
+      }
+
+      void SendVisionSystemParams()
+      {
+        if (root_) {
+           // Vision system params
+           MessageU2G_SetVisionSystemParams p;
+           p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
+           p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
+           p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
+           p.minExposureTime = root_->getField("camera_minExposureTime")->getSFFloat();
+           p.maxExposureTime = root_->getField("camera_maxExposureTime")->getSFFloat();
+           p.highValue = root_->getField("camera_highValue")->getSFInt32();
+           p.percentileToMakeHigh = root_->getField("camera_percentileToMakeHigh")->getSFFloat();
+           p.limitFramerate = root_->getField("camera_limitFramerate")->getSFInt32();
+           
+           printf("New Camera params\n");
+           SendMessage(p);
+         }
+      }
+
+      void SendFaceDetectParams()
+      {
+        if (root_) {
+          // Face Detect params
+          MessageU2G_SetFaceDetectParams p;
+          p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
+          p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
+          p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
+          p.minObjectWidth = root_->getField("fd_minObjectWidth")->getSFInt32();
+          p.maxObjectHeight = root_->getField("fd_maxObjectHeight")->getSFInt32();
+          p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
+          
+          printf("New Face detect params\n");
+          SendMessage(p);
+        }
+      }
+      
+    } // namespace WebotsKeyboardController
+  } // namespace Cozmo
+} // namespace Anki
+
+
+// =======================================================================
+
+using namespace Anki;
+using namespace Anki::Cozmo;
+
+int main(int argc, char **argv)
+{
+  WebotsKeyboardController::inputController.step(KB_TIME_STEP);
+  
+  WebotsKeyboardController::Init();
+
+  while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
+  {
+    // Process keyboard input
+    WebotsKeyboardController::Update();
+  }
+  
+  return 0;
+}
+
