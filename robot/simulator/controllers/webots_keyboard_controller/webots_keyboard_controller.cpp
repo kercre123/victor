@@ -1453,6 +1453,7 @@ namespace Anki {
            p.maxExposureTime = root_->getField("camera_maxExposureTime")->getSFFloat();
            p.highValue = root_->getField("camera_highValue")->getSFInt32();
            p.percentileToMakeHigh = root_->getField("camera_percentileToMakeHigh")->getSFFloat();
+           p.limitFramerate = root_->getField("camera_limitFramerate")->getSFInt32();
            
            printf("New Camera params\n");
            SendMessage(p);

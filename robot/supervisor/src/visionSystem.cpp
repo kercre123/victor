@@ -51,8 +51,16 @@
 
 static bool isInitialized_ = false;
 
+
+
 namespace Anki {
   namespace Cozmo {
+    // Hack for hardware version 2
+    namespace HAL {
+      extern int UARTGetFreeSpace();
+      extern int UARTGetWriteBufferSize();
+    }
+  
     namespace VisionSystem {
       using namespace Embedded;
 
@@ -177,6 +185,8 @@ namespace Anki {
         static f32 autoExposure_percentileToMakeHigh = 0.95f;
         static f32 autoExposure_tooHighPercentMultiplier = 0.7f;
         static s32 autoExposure_adjustEveryNFrames = 2;
+        
+        static bool wifiCamera_limitFramerate = true;
 
         // Tracking marker related members
         struct MarkerToTrack {
@@ -477,6 +487,15 @@ namespace Anki {
       
       void DownsampleAndSendImage(const Array<u8> &img)
       {
+        // If limiting framerate and the buffer is not empty, then silently fail and return
+        if(wifiCamera_limitFramerate) {
+          const int freeSpace = HAL::UARTGetFreeSpace();
+          const int bufferSize = HAL::UARTGetWriteBufferSize();
+          
+          if(freeSpace < (bufferSize-5))  // Hack, case of off-by-some errors
+            return;
+        }
+      
         // Only downsample if normal capture res is QVGA
         if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
           
@@ -2589,7 +2608,8 @@ namespace Anki {
                      const f32 minExposureTime,
                      const f32 maxExposureTime,
                      const u8 highValue,
-                     const f32 percentileToMakeHigh)
+                     const f32 percentileToMakeHigh,
+                     const bool limitFramerate)
       {
         autoExposure_enabled = autoExposureOn;
         exposureTime_ = exposureTime;
@@ -2598,6 +2618,7 @@ namespace Anki {
         autoExposure_maxExposureTime = maxExposureTime;
         autoExposure_highValue = highValue;
         autoExposure_percentileToMakeHigh = percentileToMakeHigh;
+        wifiCamera_limitFramerate = limitFramerate;
         
         PRINT("Changed VisionSystem params: autoExposureOn d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
               autoExposure_enabled,

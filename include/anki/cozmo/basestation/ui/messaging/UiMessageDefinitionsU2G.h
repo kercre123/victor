@@ -246,6 +246,7 @@ ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
 ADD_MESSAGE_MEMBER(f32, minExposureTime)
 ADD_MESSAGE_MEMBER(f32, maxExposureTime)
 ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(s32, limitFramerate)
 ADD_MESSAGE_MEMBER(u8, highValue)
 END_MESSAGE_DEFINITION(U2G_SetVisionSystemParams)
 

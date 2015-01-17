@@ -146,7 +146,8 @@ namespace Anki {
                      const f32 minExposureTime,
                      const f32 maxExposureTime,
                      const u8 highValue,
-                     const f32 percentileToMakeHigh);
+                     const f32 percentileToMakeHigh,
+                     const bool limitFramerate);
 
       void SetFaceDetectParams(const f32 scaleFactor,
                                const s32 minNeighbors,

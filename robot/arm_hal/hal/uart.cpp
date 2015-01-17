@@ -75,6 +75,11 @@ namespace Anki
         else
           return sizeof(m_bufferWrite) - (head - tail);
       }
+      
+      int UARTGetWriteBufferSize()
+      {
+        return sizeof(m_bufferWrite);
+      }
 
       void UARTConfigure()
       {
