@@ -17,5 +17,9 @@
 @property (copy, nonatomic) void(^actionBlock)(float value);
 // Current Value
 @property (readonly) float sliderValue;
-
+// Update slider position
+- (void)setValue:(float)newValue;
+// Set limits
+- (void)setValueRange:(float)minValue
+                     :(float)maxValue;
 @end

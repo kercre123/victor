@@ -187,7 +187,8 @@
 
 - (void)updateCameraResolutionLabel
 {
-  self.cameraResolutionLabel.text = self.cameraResolutionSwitch.isOn ? @"High Resolution" : @"Low Resolution";
+  //self.cameraResolutionLabel.text = self.cameraResolutionSwitch.isOn ? @"High Resolution" : @"Low Resolution";
+  self.cameraResolutionLabel.text = self.cameraResolutionSwitch.isOn ? @"Robot Vision ON" : @"Robot Vision OFF";
 }
 
 - (void)updateBasestationStartStopButtonWithState:(CozmoEngineRunState)state
@@ -260,8 +261,11 @@
   self.engineHeartbeatRateTextField.enabled = allow;
   self.engineHeartBeatLabel.enabled = allow;
   
-  self.cameraResolutionSwitch.enabled = allow;
-  self.cameraResolutionLabel.enabled = allow;
+  // Note that resolution switch to operate only while engine is running
+  // (i.e. reverse of the others) because it actually sends a message to the
+  // robot (though it will only have an effect if a robot has connected of course)
+  self.cameraResolutionSwitch.enabled = !allow;
+  self.cameraResolutionLabel.enabled = !allow;
   
   self.numRobotsSelector.enabled = allow;
   self.numUiDevicesSelector.enabled = allow;
@@ -335,7 +339,8 @@
 {
 //  [NSUserDefaults setCameraIsHighResolution:sender.isOn];
   [self updateCameraResolutionLabel];
-  [self.cozmoEngineWrapper.cozmoOperator sendCameraResolution:sender.isOn];
+  //[self.cozmoEngineWrapper.cozmoOperator sendCameraResolution:sender.isOn];
+  [self.cozmoEngineWrapper.cozmoOperator sendEnableRobotImageStreaming:sender.isOn];
 }
 
 - (IBAction)handleAsHostSwitch:(UISwitch *)sender {

@@ -414,6 +414,16 @@ using namespace Anki;
   [self sendMessage:message];
 }
 
+- (void)sendEnableRobotImageStreaming:(BOOL)enable
+{
+  Cozmo::MessageU2G_ImageRequest message;
+  // HACK
+  message.mode = (enable ? 1 : 0); // 1 is ISM_STREAM, 0 is ISM_OFF
+  message.resolution = Vision::CAMERA_RES_QQQVGA;
+  
+  [self sendMessage:message];
+}
+
 @end
 
 
