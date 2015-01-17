@@ -55,7 +55,7 @@
 
 // For connecting to physical robot
 // TODO: Expose these to UI
-const bool FORCE_ADD_ROBOT = true;
+const bool FORCE_ADD_ROBOT = false;
 const bool FORCED_ROBOT_IS_SIM = false;
 const u8 forcedRobotId = 1;
 const char* forcedRobotIP = "192.168.3.34";
