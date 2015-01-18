@@ -1,0 +1,3 @@
+[submodule "lib/anki/cozmo-engine"]
+	path = lib/anki/cozmo-engine
+	url = git@github.com:anki/products-cozmo.git
