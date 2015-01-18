@@ -1,0 +1,80 @@
+PROTO WebotsKeyboardController [
+  field SFString name "WebotsKeyboardController"
+  field SFVec3f translation 0 0 0.08
+  field SFRotation rotation 0 0 1 0
+
+  field SFColor poseMarkerDiffuseColor 0.1 0.8 0.1
+
+  # Hacky way for me to modify values that I want to send to robot via keyboard controller
+  field SFFloat headKp 2.0
+  field SFFloat headKi 0.05
+  field SFFloat headMaxErrorSum 2
+
+  field SFFloat liftKp 20
+  field SFFloat liftKi 0.03
+  field SFFloat liftMaxErrorSum 10
+
+  # Vision system params
+  field SFInt32 camera_horizontalResolution 80
+  field SFInt32 camera_autoexposureOn 1
+  field SFFloat camera_exposureTime 0.2
+  field SFInt32 camera_integerCountsIncrement 3
+  field SFFloat camera_minExposureTime 0.02
+  field SFFloat camera_maxExposureTime 0.98
+  field SFInt32 camera_highValue 250  
+  field SFFloat camera_percentileToMakeHigh 0.97
+  field SFInt32 camera_limitFramerate 1
+
+
+  # Face detect params
+  field SFFloat fd_scaleFactor 1.1
+  field SFInt32 fd_minNeighbors 2
+  field SFInt32 fd_minObjectHeight 30
+  field SFInt32 fd_minObjectWidth 30
+  field SFInt32 fd_maxObjectHeight 240
+  field SFInt32 fd_maxObjectWidth 320
+]
+{
+Supervisor {
+
+  translation IS translation
+  rotation IS rotation
+
+  # Need to reference one of fields for some reason
+  # to avoid error messages on startup
+  %{junk = fields.headKp}%
+  
+  children [
+
+    GPS {
+      name "gps"
+      translation 0 0 0
+    }    
+    Compass {
+      name "compass"
+    }
+    
+    Transform {
+      translation -0.015 0 0
+      rotation 0 0 1 -1.5707963
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor IS poseMarkerDiffuseColor
+            }
+          }
+          geometry Cone {
+            bottomRadius 0.01
+            height 0.03
+          }
+        }
+      ]
+    }
+      
+
+  ]
+  name IS name
+  controller "webots_keyboard_controller"
+} # Supervisor definition
+} # PROTO definition

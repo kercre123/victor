@@ -1,0 +1,9 @@
+PROTO BlockWorldComms [
+  field SFString name "BlockWorldComms"
+]
+{
+Supervisor {
+  name IS name
+  controller "blockworld_controller"
+} # Supervisor definition
+} # PROTO definition
