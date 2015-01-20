@@ -55,6 +55,8 @@ namespace Anki {
       
       
       // Vision signals
+      DECL_SIGNAL(RobotImageAvailable,
+                  uint8_t robotID)
       DECL_SIGNAL(DeviceDetectedVisionMarker,
                   uint8_t engineID, uint32_t markerType,
                   float x_upperLeft,  float y_upperLeft,
