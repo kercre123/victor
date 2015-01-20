@@ -36,5 +36,7 @@ namespace Anki {
     DEF_SIGNAL(CozmoEngineSignals,DeviceDetectedVisionMarker)
     DEF_SIGNAL(CozmoEngineSignals,RobotObservedObject)
     
+    DEF_SIGNAL(CozmoEngineSignals,RobotVisionUpdate)
+    
   } // namespace Cozmo
 } // namespace Anki
