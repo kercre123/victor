@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
@@ -92,7 +91,6 @@ namespace Cozmo {
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
     
     VisionProcessingThread    _deviceVisionThread;
-    UiMessageHandler          _deviceVisionMsgHandler;
     
   }; // class CozmoEngineImpl
 
@@ -208,6 +206,7 @@ namespace Cozmo {
       //robotKeyPair.second.visionMsgHandler.ProcessMessages();
     }
     
+    /*
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
@@ -217,6 +216,7 @@ namespace Cozmo {
                                                                      msg.x_imgUpperRight, msg.y_imgUpperRight,
                                                                      msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
+     */
     
     Result lastResult = UpdateInternal(currTime_ns);
     

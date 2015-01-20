@@ -24,12 +24,6 @@
 
 #define DEBUG_SOUND_MANAGER 0
 
-//#if ANKI_IOS_BUILD
-
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
-
-//#endif
-
 namespace Anki {
   namespace Cozmo {
     

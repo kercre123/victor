@@ -22,7 +22,7 @@
 
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
-#include "sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/sim_overlayDisplay.h"
 #endif
 
 namespace Anki {

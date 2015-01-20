@@ -44,11 +44,11 @@
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
-#include "actionContainers.h"
-#include "cannedAnimationContainer.h"
-#include "behaviorManager.h"
-#include "ramp.h"
-#include "soundManager.h"
+#include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/soundManager.h"
 
 #define ASYNC_VISION_PROCESSING 0
 

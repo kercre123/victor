@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"

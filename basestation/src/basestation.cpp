@@ -25,7 +25,6 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -33,8 +32,8 @@
 #include "robotMessageHandler.h"
 #include "recording/playback.h"
 #include "pathPlanner.h"
-#include "behaviorManager.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 
 namespace Anki {

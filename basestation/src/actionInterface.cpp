@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "actionInterface.h"
+#include "anki/cozmo/basestation/actionInterface.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"

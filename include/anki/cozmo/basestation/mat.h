@@ -21,9 +21,9 @@
 #ifndef __Products_Cozmo__Mat__
 #define __Products_Cozmo__Mat__
 
-#include "actionableObject.h"
+#include "anki/cozmo/basestation/actionableObject.h"
 
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
   

@@ -24,8 +24,17 @@
 //
 
 // For now at least, Viz uses Robot-style message structures
-#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
+#ifdef COZMO_BASESTATION
+#define COZMO_BASESTATION_IS_DEFINED
+#undef COZMO_BASESTATION
+#endif
 
+#ifndef COZMO_ROBOT
+#define COZMO_ROBOT_IS_UNDEFINED
+#define COZMO_ROBOT
+#endif
+
+#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
 
 // VizObject
 START_MESSAGE_DEFINITION(VizObject, 1)
@@ -210,4 +219,15 @@ ADD_MESSAGE_MEMBER(u16, bottomRight_y)
 ADD_MESSAGE_MEMBER(u16, bottomLeft_x)
 ADD_MESSAGE_MEMBER(u16, bottomLeft_y)
 END_MESSAGE_DEFINITION(VizTrackerQuad)
+
+
+#ifdef COZMO_BASESTATION_IS_DEFINED
+#define COZMO_BASESTATION
+#undef COZMO_BASESTATION_IS_DEFINED
+#endif
+
+#ifdef COZMO_ROBOT_IS_UNDEFINED
+#undef COZMO_ROBOT_IS_UNDEFINED
+#undef COZMO_ROBOT
+#endif
 
