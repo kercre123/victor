@@ -77,14 +77,14 @@ os.system("lipo -create " + " ".join(inputLibsList) + " -o " + multiArchDir + "/
 ##
 ## Cozmo_Game
 ##
-print "Building universal fat lib of Cozmo_Game"
-
-inputLibsList = []
-for iArch in range(len(archs)):
-  inputLibsList.append(dstRoot + "/game/src/CozmoEngine_iOS.build/" + config + "-" + targets[iArch].lower() + 
-                      "/Cozmo_Game.build/Objects-normal/" + archs[iArch] + "/libCozmo_Game.a")
-                                             
-os.system("lipo -create " + " ".join(inputLibsList) + " -o " + multiArchDir + "/libCozmo_Game.a")
+#print "Building universal fat lib of Cozmo_Game"
+#
+#inputLibsList = []
+#for iArch in range(len(archs)):
+#  inputLibsList.append(dstRoot + "/game/src/CozmoEngine_iOS.build/" + config + "-" + targets[iArch].lower() + 
+#                      "/Cozmo_Game.build/Objects-normal/" + archs[iArch] + "/libCozmo_Game.a")
+#                                             
+#os.system("lipo -create " + " ".join(inputLibsList) + " -o " + multiArchDir + "/libCozmo_Game.a")
 
 ##
 ## jsoncpp
