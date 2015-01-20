@@ -454,7 +454,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../../scripts/build/CopyResources.sh\" \"${SRCROOT}/../../resources\" \"${SRCROOT}/../../../products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
+			shellScript = "\"${SRCROOT}/../../lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${SRCROOT}/../../lib/anki/cozmo-engine/resources\" \"${SRCROOT}/../../../products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -612,12 +612,12 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"\"$(SRCROOT)/../../coretech/vision/include\"",
-					"\"$(SRCROOT)/../../coretech/common/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/vision/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../game/include\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -649,12 +649,12 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"\"$(SRCROOT)/../../coretech/vision/include\"",
-					"\"$(SRCROOT)/../../coretech/common/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/vision/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/common/include\"",
 					"\"$(SRCROOT)/../../include\"",
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
-					"\"$(SRCROOT)/../../game/include\"",
-					"\"$(SRCROOT)/../../coretech/messaging/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/messaging/include\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
