@@ -10,11 +10,10 @@ config = "Debug"
 scriptdir = os.path.dirname(os.path.realpath(__file__))
 
 # Build cozmo-engine libs first
-#os.chdir("lib/anki/cozmo-engine")
-#os.system("./make_iOS_libs.py")
-#os.chdir(scriptdir)
+os.chdir("lib/anki/cozmo-engine")
+os.system("./make_iOS_libs.py")
+os.chdir(scriptdir)
 
-#sys.exit()
 
 # Get build directory if passed in
 if len(sys.argv) > 1:
