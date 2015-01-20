@@ -167,31 +167,56 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DriveWheels const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_DriveWheels for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_MoveHead const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_MoveHead for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->MoveHead(msg.speed_rad_per_sec);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_MoveLift const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_MoveLift for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->MoveLift(msg.speed_rad_per_sec);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetHeadAngle const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetHeadAngle for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopAllMotors const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StopAllMotors for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->StopAllMotors();
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetLiftHeight const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetLiftHeight for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       // Special case if commanding low dock height
       if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
         if(robot->IsCarryingObject()) {
@@ -205,6 +230,11 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ImageRequest const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_ImageRequest for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       if (msg.mode == ISM_OFF) {
         robot->GetBlockWorld().EnableDraw(false);
       } else if (msg.mode == ISM_STREAM) {
@@ -230,11 +260,21 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetHeadlights const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetHeadlights for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->SetHeadlight(msg.intensity);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_GotoPose const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_GotoPose for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       // TODO: Add ability to indicate z too!
       // TODO: Better way to specify the target pose's parent
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
@@ -245,6 +285,11 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGround const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_PlaceObjectOnGround for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       // Create an action to drive to specied pose and then put down the carried
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
@@ -256,18 +301,33 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlaceObjectOnGroundHere const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_PlaceObjectOnGroundHere for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->GetActionList().AddAction(new PlaceObjectOnGroundAction());
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteTestPlan const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_ExecuteTestPlan for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->ExecuteTestPath();
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ClearAllBlocks const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_ClearAllBlocks for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       VizManager::getInstance()->EraseAllVizObjects();
       robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
       robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
@@ -276,12 +336,22 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SelectNextObject const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SelectNextObject for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->GetBlockWorld().CycleSelectedObject();
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PickAndPlaceObject const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_PickAndPlaceObject for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       const u8 numRetries = 0;
       
       ObjectID selectedObjectID;
@@ -304,6 +374,11 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_TraverseObject const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_TraverseObject for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       const u8 numRetries = 0;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
@@ -315,29 +390,54 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ExecuteBehavior const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_ExecuteBehavior for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetBehaviorState const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetBehaviorState for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->SetBehaviorState(static_cast<BehaviorManager::BehaviorState>(msg.behaviorState));
       return RESULT_OK;
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortPath const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_AbortPath for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       robot->ClearPath();
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_AbortAll const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_AbortAll for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->AbortAll();
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DrawPoseMarker const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_DrawPoseMarker for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       if (robot->IsCarryingObject()) {
         Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
         Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
@@ -355,11 +455,21 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetHeadControllerGains const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetHeadControllerGains for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->SetHeadControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetLiftControllerGains const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetLiftControllerGains for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->SetLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
     }
     
@@ -376,36 +486,66 @@ namespace Anki {
 
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartTestMode const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StartTestMode for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->StartTestMode((TestMode)msg.mode);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_IMURequest for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->RequestIMU(msg.length_ms);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_PlayAnimation const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_PlayAnimation for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
     }
   
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ReadAnimationFile const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_ReadAnimationFile for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->ReadAnimationFile();
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartFaceTracking const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StartFaceTracking for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->StartFaceTracking(msg.timeout_sec);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopFaceTracking const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StopFaceTracking for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->StopFaceTracking();
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetVisionSystemParams const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetVisionSystemParams for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       VisionSystemParams_t p;
       p.autoexposureOn = msg.autoexposureOn;
       p.exposureTime = msg.exposureTime;
@@ -420,6 +560,11 @@ namespace Anki {
    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_SetFaceDetectParams const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_SetFaceDetectParams for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       FaceDetectParams_t p;
       p.scaleFactor = msg.scaleFactor;
       p.minNeighbors = msg.minNeighbors;
@@ -432,11 +577,20 @@ namespace Anki {
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StartLookingForMarkers const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StartLookingForMarkers for null robot.\n");
+        return RESULT_FAIL;
+      }
+      
       return robot->StartLookingForMarkers();
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_StopLookingForMarkers const& msg)
     {
+      if(robot == nullptr) {
+        PRINT_NAMED_ERROR("UiMessageHandler.ProcessMessage", "Cannot process MessageU2G_StopLookingForMarkers for null robot.\n");
+        return RESULT_FAIL;
+      }
       return robot->StopLookingForMarkers();
     }
     
