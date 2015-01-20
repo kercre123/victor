@@ -25,18 +25,6 @@
 namespace Anki {  
 namespace Cozmo {
   
-  class VisionResults
-  {
-  public:
-    
-    
-  protected:
-    
-    std::vector<ObjectID> _observedObjectIDs;
-    
-  }; // class VisionResults
-  
-  
   // Forward declaration
   class VisionSystem;
   
