@@ -563,6 +563,10 @@ namespace Anki {
         uint32_t numBlocksObserved = 0;
         _blockWorld.Update(numBlocksObserved);
         
+        // Notify any listeners that the robot has processed an image and updated
+        // its world
+        CozmoEngineSignals::GetRobotVisionUpdateSignal().emit(GetID());
+
       } // if(_visionProcessor.WasLastImageProcessed())
       
       // Send ping to keep connection alive.

@@ -349,13 +349,13 @@ namespace Anki
         // bounding quads of all the observed objects in this Update
         _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
         
-        Rectangle<f32> boundingBox(projectedCorners);
-        
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
         }
-        _obsProjectedObjects.emplace_back(obsID, boundingBox);
+        //Rectangle<f32> boundingBox(projectedCorners);
+        //_obsProjectedObjects.emplace_back(obsID, boundingBox);
+        _currentObservedObjectIDs.push_back(obsID);
 
         _didObjectsChange = true;
       } // for each object seen
@@ -1034,7 +1034,8 @@ namespace Anki
       _robot->GetCamera().ClearOccluders();
       
       // New timestep, clear list of observed object bounding boxes
-      _obsProjectedObjects.clear();
+      //_obsProjectedObjects.clear();
+      _currentObservedObjectIDs.clear();
       
       static TimeStamp_t lastObsMarkerTime = 0;
       
@@ -1096,6 +1097,7 @@ namespace Anki
         
         // Notify any listeners with the bounding boxes and IDs of any objects we
         // observed
+        /*
         if(numObjectsObserved > 0) {
           for(auto & obsObject : _obsProjectedObjects) {
             const Rectangle<f32>& bbox = obsObject.second;
@@ -1109,6 +1111,7 @@ namespace Anki
             VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
           }
         }
+         */
         
         // Keep track of how many markers went unused by either robot or block
         // pose updating processes above

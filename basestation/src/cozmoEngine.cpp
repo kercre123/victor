@@ -208,18 +208,6 @@ namespace Cozmo {
       //robotKeyPair.second.visionMsgHandler.ProcessMessages();
     }
     
-    /*
-    MessageVisionMarker msg;
-    while(_deviceVisionThread.CheckMailbox(msg)) {
-      // Pass marker detections along to UI/game for use
-      CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
-                                                                     msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                                                                     msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                                                                     msg.x_imgUpperRight, msg.y_imgUpperRight,
-                                                                     msg.x_imgLowerRight, msg.y_imgLowerRight);
-    }
-     */
-    
     Result lastResult = UpdateInternal(currTime_ns);
     
     return lastResult;
@@ -234,6 +222,18 @@ namespace Cozmo {
     _deviceVisionThread.SetNextImage(image, bogusState);
 #   else
     _deviceVisionThread.Update(image, bogusState);
+    
+    /*
+    MessageVisionMarker msg;
+    while(_deviceVisionThread.CheckMailbox(msg)) {
+      // Pass marker detections along to UI/game for use
+      CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
+                                                                     msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+                                                                     msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+                                                                     msg.x_imgUpperRight, msg.y_imgUpperRight,
+                                                                     msg.x_imgLowerRight, msg.y_imgLowerRight);
+    }
+     */
 #   endif
   }
   
@@ -324,7 +324,9 @@ namespace Cozmo {
     
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
-    bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations);
+    bool GetCurrentObservedObjectIDs(const RobotID_t robotID,
+                                     std::vector<ObjectID>& observedObjectIDs);
+    bool GetObservedVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations);
     
   protected:
     

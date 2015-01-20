@@ -395,8 +395,6 @@ using namespace Anki;
   
   NSMutableArray* boundingBoxes = nil;
   
-  // TODO: Put this back
-  /*
   std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
   if( true == _cozmoEngine->GetCurrentVisionMarkers(robotId, observations))
   {
@@ -418,7 +416,7 @@ using namespace Anki;
       }
     } // if(!observations.empty())
   }
-  */
+
   return boundingBoxes;
 }
 
