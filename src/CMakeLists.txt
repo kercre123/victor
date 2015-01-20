@@ -1,5 +1,8 @@
 # products-cozmo/game/src/CMakeLists.txt
 
+add_definitions(-DCOZMO_BASESTATION)
+add_definitions(-DCORETECH_BASESTATION)
+
 # root src dir
 file(GLOB SOURCE_FILES_ROOT "*.cpp")
 file(GLOB HEADER_FILES_ROOT "*.h")

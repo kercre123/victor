@@ -7,22 +7,22 @@ set(SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/simulator)
 set(SIMULATOR_SRC_DIR ${SIMULATOR_DIR}/src)
 set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
-set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
-set(ROBOT_SIM_HAL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/robot/sim_hal)
+set(ROBOT_SRC_DIR ${COZMO_ENGINE_DIR}/robot/supervisor/src)
+set(ROBOT_SIM_HAL_SOURCE_DIR ${COZMO_ENGINE_DIR}/robot/sim_hal)
 
 file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 
-file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/robot/*.h")
+file(GLOB COZMO_ROBOT_HEADER_FILES "${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/robot/*.h")
 file(GLOB COZMO_ROBOT_PRIV_HEADER_FILES "${ROBOT_SRC_DIR}/*.h")
 
 file(GLOB COZMO_SIMULATOR_SOURCE_FILES "${SIMULATOR_SRC_DIR}/*.cpp")
-file(GLOB COZMO_SIMULATOR_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/simulator/*.h")
+file(GLOB COZMO_SIMULATOR_HEADER_FILES "${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/simulator/*.h")
 
 include_directories( 
   ${ROBOT_SRC_DIR}
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/robot
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/simulator
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/shared
+  ${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/robot
+  ${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/simulator
+  ${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/shared
   ${PHYSICS_PLUGIN_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
