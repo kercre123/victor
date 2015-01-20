@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
@@ -92,7 +91,6 @@ namespace Cozmo {
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
     
     VisionProcessingThread    _deviceVisionThread;
-    UiMessageHandler          _deviceVisionMsgHandler;
     
   }; // class CozmoEngineImpl
 

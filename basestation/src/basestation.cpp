@@ -25,7 +25,6 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"

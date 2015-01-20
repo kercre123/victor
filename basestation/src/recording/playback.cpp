@@ -16,7 +16,7 @@
 #include "anki/messaging/basestation/IComms.h"
 #include "comms/commsPlayback.h"
 #include "playback.h"
-#include "anki/cozmo/game/comms/messaging/uiMessages.h"
+//#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 //#include "basestation/ui/messaging/messageQueue.h"
 //#include "basestation/ui/messaging/messages/inputControllerMessage.h"
 //#include "basestation/ui/messaging/messages/reproducibilityMessage.h"
@@ -48,8 +48,8 @@ Playback::~Playback()
   if (replacementComms_ != NULL)
     delete replacementComms_;
 
-  for (unsigned int i = 0; i < _postTick.size(); ++i)
-    delete _postTick[i]._message;
+  //for (unsigned int i = 0; i < _postTick.size(); ++i)
+  //  delete _postTick[i]._message;
 
   _postTick.clear();
   _preTick.clear();
