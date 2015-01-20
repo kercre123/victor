@@ -529,6 +529,13 @@ namespace Anki {
           }
           
           _msgHandler->SendMessage(_ID, faceDetection);
+          
+          // Signal the detection of a face
+          CozmoEngineSignals::GetRobotObservedFaceSignal().emit(GetID(),
+                                                                faceDetection.x_upperLeft,
+                                                                faceDetection.y_upperLeft,
+                                                                faceDetection.width,
+                                                                faceDetection.height);
         }
         
         MessageTrackerQuad trackerQuad;

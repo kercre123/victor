@@ -67,6 +67,10 @@ namespace Anki {
                   uint8_t robotID, uint32_t objectID,
                   float x_upperLeft,  float y_upperLeft,
                   float width,  float height)
+      DECL_SIGNAL(RobotObservedFace,
+                  uint8_t robotID,
+                  float x_upperLeft, float y_upperLeft,
+                  float width, float height)
     };
     
     
