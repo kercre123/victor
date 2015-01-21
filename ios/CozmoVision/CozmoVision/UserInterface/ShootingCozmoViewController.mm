@@ -104,7 +104,7 @@
 
   // Create players for targeting and lock sounds
   NSString* platformSoundRootDir = [PlatformPathManager_iOS getPathWithScope:PlatformPathManager_iOS_Scope_Sound];
-  self.targetingSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"demo/WaitingForDice1.wav"]];
+  self.targetingSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"laser/blip.wav"]];
   NSError *error = nil;
   self.targetingSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.targetingSoundURL error:&error];
   if (!error) {
@@ -199,7 +199,7 @@
     
     period_sec = distance/maxDistance + 0.01;
     self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
-    self.targetingSoundPeriod_sec /= self.targetingSlopFactor;
+    
   } else {
     // Want this to be exactly zero when marker wasn't detected to disable targeting sound
     self.targetingSoundPeriod_sec = 0.f;
@@ -359,9 +359,22 @@
   {
     markerFound = YES;
     
-    Float32 xDistance = CGRectGetMidX(currentMarker) - 160.0;
-    Float32 yDistance = CGRectGetMidY(currentMarker) - 120.0;
-    Float32 currentDistanceSq = xDistance * xDistance + yDistance * yDistance;
+    // Add targeting slop, if any
+    if(self.targetingSlopFactor > 1.f) {
+      const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
+      Float32 dx = CGRectGetWidth(currentMarker)*adjustment;
+      Float32 dy = CGRectGetHeight(currentMarker)*adjustment;
+      currentMarker = CGRectInset(currentMarker, -dx, -dy);
+    }
+     
+    // Distance of the targeting point (center of image) to the rectangle's border
+    const Float32 xCen = CGRectGetMidX(currentMarker);
+    const Float32 yCen = CGRectGetMidY(currentMarker);
+    const Float32 halfWidth = 0.5f*CGRectGetWidth(currentMarker);
+    const Float32 halfHeight = 0.5f*CGRectGetHeight(currentMarker);
+    const Float32 xDistance = fmaxf(0.f, fabsf(160.f-xCen) - halfWidth);
+    const Float32 yDistance = fmaxf(0.f, fabsf(120.f-yCen) - halfHeight);
+    const Float32 currentDistanceSq = xDistance*xDistance + yDistance*yDistance;
     
     // Keep the marker in view that's closest to center
     if(currentDistanceSq < markerDistanceFromCenterSq) {
@@ -381,11 +394,7 @@
   if(markerFound) {
 
     // If we found a marker, the crosshairs must be within it to be in "lock"
-    // TODO: Use a scaled rectangle to add slop - see CGRectInset
-    const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
-    Float32 dx = CGRectGetWidth(marker)*adjustment;
-    Float32 dy = CGRectGetHeight(marker)*adjustment;
-    self.targetLocked = CGRectContainsPoint(CGRectInset(marker, -dx, -dy), CGPointMake(160,120));
+    self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
     
     if(self.useAudioTargeting == NO) {
       // For audio targeting, it is sufficient for the marker to be visible
@@ -468,7 +477,9 @@
   // Keep the timers running as long as the shooter view is up and running,
   // just use the current period
   if(self.runTimer) {
-    double nextTime = fmin(3.0, fmax(self.targetingSoundPeriod_sec, self.targetingSoundPlayer.duration));
+    // NOTE: Due to innaccuracy of NSTimer (I think?), can't let sound period get
+    //  arbitrarily low. So I'm using an empirical minimum value here.
+    double nextTime = fmax(self.targetingSoundPeriod_sec, 0.07) + self.targetingSoundPlayer.duration;
     [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
   }
 }
