@@ -45,10 +45,11 @@ static int __ov2686_set_power(struct ov2686_info *info, bool on)
 {
   if (!on) {
     if (info->pdata->s_xclk) info->pdata->s_xclk(&info->subdev, 0);
+    msleep(5);
   }
   else {
     if (info->pdata->s_xclk) info->pdata->s_xclk(&info->subdev, 1);
-    msleep(1);
+    msleep(5);
   }
 
   return 0;
@@ -103,8 +104,8 @@ static int ov2686_reg_read(struct i2c_client * client, u16 reg, u8* val) {
   reg = swab16(reg);
 
   ret = i2c_transfer(client->adapter, msg, 2);
-  if (ret < 0) {
-    printk(KERN_WARNING "ov2686 failed reading register 0x%04x!\n", reg);
+  if (ret != 2) {
+    printk(KERN_WARNING "ov2686 failed reading register 0x%04x: %d\n", reg, ret);
     return ret;
   }
 

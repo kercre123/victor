@@ -24,6 +24,8 @@ namespace Anki
       GPIO_PIN_SOURCE(BLU2, GPIOA,  6);
       GPIO_PIN_SOURCE(BLU3, GPIOB,  8);
       GPIO_PIN_SOURCE(BLU4, GPIOB,  4);
+      
+      GPIO_PIN_SOURCE(IRLED, GPIOA, 12);
 
       // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
       // See schematic if you care about why the LEDs are swizzled
@@ -62,6 +64,7 @@ namespace Anki
           GPIO_SET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
           PIN_OD(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
           PIN_OUT(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
+          GPIO_RESET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
         }
 
         // Initialize all face LED colors to OFF
@@ -72,10 +75,16 @@ namespace Anki
         {
           GPIO_SET(RED_GPIO[i], RED_PIN[i]);
           PIN_NOPULL(RED_GPIO[i], RED_SOURCE[i]);
-          PIN_OD(RED_GPIO[i], RED_SOURCE[i]);
+          PIN_OD(RED_GPIO[i], RED_SOURCE[i]); 
           PIN_OUT(RED_GPIO[i], RED_SOURCE[i]);
         }
 
+        // IR LED is controlled by N-FET so positive polarity unlike everything else
+        GPIO_RESET(GPIO_IRLED, PIN_IRLED);
+        PIN_PULLDOWN(GPIO_IRLED, SOURCE_IRLED);
+        PIN_PP(GPIO_IRLED, SOURCE_IRLED);
+        PIN_OUT(GPIO_IRLED, SOURCE_IRLED);
+        
         // Initialize timer to rapidly blink LEDs, simulating dimming
         NVIC_InitTypeDef NVIC_InitStructure;
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
@@ -115,7 +124,8 @@ namespace Anki
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state)
       {
-        // No headlights on Cozmo 3
+        if (state) GPIO_SET(GPIO_IRLED, PIN_IRLED);
+        else GPIO_RESET(GPIO_IRLED, PIN_IRLED);
         return;
       }
     }
