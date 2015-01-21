@@ -322,9 +322,6 @@ namespace Cozmo {
     
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
-    bool GetCurrentObservedObjectIDs(const RobotID_t robotID,
-                                     std::vector<ObjectID>& observedObjectIDs);
-    bool GetObservedVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations);
     
   protected:
     
@@ -377,14 +374,6 @@ namespace Cozmo {
   {
     return RESULT_OK;
   }
-  
-  /*
-  void CozmoEngineHostImpl::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices)
-  {
-    _uiComms.Update();
-    _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
-  }*/
- 
   
   void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
                                           const char*      robotIP,
@@ -477,11 +466,6 @@ namespace Cozmo {
     return _basestation.GetCurrentRobotImage(robotId, img, newerThanTime);
   }
   
-  bool CozmoEngineHostImpl::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    return _basestation.GetCurrentVisionMarkers(robotId, observations);
-  }
-  
 #if 0
 #pragma mark -
 #pragma mark Derived Host Class Impl Wrappers
@@ -511,21 +495,10 @@ namespace Cozmo {
     return _hostImpl->GetCurrentRobotImage(robotId, img, newerThanTime);
   }
   
-  bool CozmoEngineHost::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    return _hostImpl->GetCurrentVisionMarkers(robotId, observations);
-  }
-  
   bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)
   {
     return _hostImpl->ConnectToRobot(whichRobot);
   }
-  
-  /*
-  void CozmoEngineHost::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices) {
-    _hostImpl->GetAdvertisingUiDevices(advertisingUiDevices);
-  }
-   */
   
   int    CozmoEngineHost::GetNumRobots() const {
     return _hostImpl->GetNumRobots();
@@ -591,11 +564,6 @@ namespace Cozmo {
     return false;
   }
   
-  bool CozmoEngineClient::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    PRINT_NAMED_WARNING("CozmoEngineClient.GetCurrentVisionMarkers", "Cannot yet request vision markers from robot on client.\n");
-    return false;
-  }
   
 } // namespace Cozmo
 } // namespace Anki

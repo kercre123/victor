@@ -353,9 +353,16 @@ namespace Anki
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
         }
-        //Rectangle<f32> boundingBox(projectedCorners);
+        Rectangle<f32> boundingBox(projectedCorners);
         //_obsProjectedObjects.emplace_back(obsID, boundingBox);
         _currentObservedObjectIDs.push_back(obsID);
+        
+        // Signal the observation of this object, with its bounding box:
+        CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(), obsID,
+                                                             boundingBox.GetX(),
+                                                             boundingBox.GetY(),
+                                                             boundingBox.GetWidth(),
+                                                             boundingBox.GetHeight());
 
         _didObjectsChange = true;
       } // for each object seen

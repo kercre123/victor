@@ -489,7 +489,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
+        // CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -572,9 +572,6 @@ namespace Anki {
         
         uint32_t numBlocksObserved = 0;
         _blockWorld.Update(numBlocksObserved);
-        
-        // Signal the observation of any objects:
-        std::vector _blockWorld.GetProjectedObservedObjects();
 
       } // if(_visionProcessor.WasLastImageProcessed())
       
