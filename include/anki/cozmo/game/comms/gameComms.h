@@ -56,7 +56,11 @@ namespace Cozmo {
   private:
     
     // For connection from game
+#if(USE_UDP_UI_COMMS)
+    UdpServer server_;
+#else
     TcpServer server_;
+#endif
     
     // For connecting to advertisement service
     UdpClient regClient_;
@@ -76,6 +80,7 @@ namespace Cozmo {
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
 
     bool           isInitialized_;
+    bool           wasConnected_;
 
     // Device ID to use for registering with advertisement service
     int            deviceID_;

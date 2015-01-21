@@ -36,6 +36,7 @@ namespace Cozmo {
   
   GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
   : isInitialized_(false)
+  , wasConnected_(true)
   , deviceID_(deviceID)
   , serverListenPort_(serverListenPort)
   , advertisementRegIP_(advertisementRegIP)
@@ -49,7 +50,7 @@ namespace Cozmo {
   
   GameComms::~GameComms()
   {
-    server_.DisconnectClient();
+    DisconnectClient();
   }
  
   
@@ -68,6 +69,11 @@ namespace Cozmo {
       // TODO: Include timestamp too?
       char sendBuf[128];
       int sendBufLen = 0;
+      
+#if(USE_UDP_UI_COMMS)
+      memcpy(sendBuf, p.data, p.dataLen);
+      sendBufLen = p.dataLen;
+#else
       memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
       sendBufLen += sizeof(RADIO_PACKET_HEADER);
       sendBuf[sendBufLen++] = p.dataLen;
@@ -76,7 +82,7 @@ namespace Cozmo {
       sendBuf[sendBufLen++] = 0;
       memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
       sendBufLen += p.dataLen;
-
+#endif
       /*
       printf("SENDBUF (hex): ");
       PrintBytesHex(sendBuf, sendBufLen);
@@ -100,7 +106,7 @@ namespace Cozmo {
         regMsg_.id = deviceID_;
         strcpy((char*)regMsg_.ip, GetLocalIP());
         regMsg_.port = serverListenPort_;
-        regMsg_.protocol = Anki::Comms::TCP;
+        regMsg_.protocol = USE_UDP_UI_COMMS ? Anki::Comms::UDP : Anki::Comms::TCP;
         
         isInitialized_ = true;
       } else {
@@ -109,16 +115,28 @@ namespace Cozmo {
       }
     }
     
+#if(USE_UDP_UI_COMMS)
+    // Listen for client if don't already have one.
+    if (!server_.HasClient() && wasConnected_) {
+      RegisterWithAdvertisementService();
+      wasConnected_ = false;
+    } else if (server_.HasClient() && !wasConnected_){
+      printf("GameComms: User input device connected!\n");
+      DeregisterFromAdvertisementService();
+      wasConnected_ = true;
+    }
+#else
     // Listen for client if don't already have one.
     if (!server_.HasClient()) {
       if (server_.Accept()) {
-        DeregisterFromAdvertisementService();
         printf("GameComms: User input device connected!\n");
+        DeregisterFromAdvertisementService();
       } else if (!IsRegistered()) {
         printf("GameComms: Registering with advertisement service\n");
         RegisterWithAdvertisementService();
       }
     }
+#endif
     
     // Read all messages from all connected robots
     ReadAllMsgPackets();
@@ -140,7 +158,7 @@ namespace Cozmo {
     
     // Read from all connected clients.
     // Enqueue complete messages.
-
+#if(!USE_UDP_UI_COMMS)
     if ( HasClient() ) {
       
       int bytes_recvd = server_.Recv((char*)(recvBuf + recvDataSize), MAX_RECV_BUF_SIZE - recvDataSize);
@@ -222,6 +240,27 @@ namespace Cozmo {
       } // end while (there are still messages in the recvBuf)
       
     } // end if (HasClient)
+#else
+    
+    
+    // Process all datagrams
+    while( (recvDataSize = server_.Recv((char*)(recvBuf), MAX_RECV_BUF_SIZE)) > 0) {
+      recvdMsgPackets_.emplace_back( (s32)(0),  // Source device ID. Not used for anything now so just 0.
+                                    (s32)-1,
+                                    recvDataSize,
+                                    (u8*)(recvBuf));
+      
+    }
+    
+    if (recvDataSize < 0) {
+      // Disconnect client
+      printf("GameComms: Recv failed. Disconnecting client\n");
+      server_.DisconnectClient();
+      RegisterWithAdvertisementService();
+    }
+    
+#endif
+    
   }
   
   
