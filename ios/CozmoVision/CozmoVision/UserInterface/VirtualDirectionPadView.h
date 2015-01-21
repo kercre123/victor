@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface VirtualDirectionPadView : UIView
+@interface VirtualDirectionPadView : UIView <UIGestureRecognizerDelegate>
 
 #define kDefaultMagnitudeRadius     140.0
 #define kDefaultPuckRadius          30.0

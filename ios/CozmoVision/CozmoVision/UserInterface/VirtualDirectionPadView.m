@@ -10,6 +10,7 @@
 
 
 @interface VirtualDirectionPadView ()
+
 // Public properties
 @property (readwrite, nonatomic) BOOL isDirty;
 
@@ -21,8 +22,7 @@
 @property (readwrite, nonatomic) CGFloat rightWheelSpeed_mmps;
 
 // Direction Pad Gesture
-@property (strong, nonatomic) UILongPressGestureRecognizer* longPressGesture;
-
+@property (strong, nonatomic) UIPanGestureRecognizer* panGesture;
 @property (strong, nonatomic) UITapGestureRecognizer* tapGesture;
 
 // View objects
@@ -132,18 +132,16 @@
   // Set size in -layoutSubviews
   [self addSubview:self.thumbPuckView];
 
-
-
-  self.longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
-  self.longPressGesture.minimumPressDuration = 0.2;
-  self.longPressGesture.cancelsTouchesInView = NO;
-  [self addGestureRecognizer:self.longPressGesture];
-
-
+  
   self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
   self.tapGesture.cancelsTouchesInView = NO;
   self.tapGesture.numberOfTapsRequired = 2; // look for double-tap
   [self addGestureRecognizer:self.tapGesture];
+
+  self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+  self.panGesture.cancelsTouchesInView = NO;
+  [self addGestureRecognizer:self.panGesture];
+
   
   // Initial State
   [self showJoystickView:NO animated:NO];
@@ -170,6 +168,12 @@
 
 
 #pragma mark - Pan Guesture Methods
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+  // Allow both gesture recognizers (pan and tap) to work simultaneously!
+  return YES;
+}
 
 - (void)handlePanGesture:(UIPanGestureRecognizer*)gesture
 {
