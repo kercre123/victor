@@ -487,6 +487,10 @@ namespace Anki {
       if(_visionProcessor.WasLastImageProcessed())
       {
 #endif
+        
+        // Signal the availability of an image
+        // CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
+        
         ////////// Check for any messages from the Vision Thread ////////////
         
         MessageVisionMarker visionMarker;
@@ -525,6 +529,13 @@ namespace Anki {
           }
           
           _msgHandler->SendMessage(_ID, faceDetection);
+          
+          // Signal the detection of a face
+          CozmoEngineSignals::GetRobotObservedFaceSignal().emit(GetID(),
+                                                                faceDetection.x_upperLeft,
+                                                                faceDetection.y_upperLeft,
+                                                                faceDetection.width,
+                                                                faceDetection.height);
         }
         
         MessageTrackerQuad trackerQuad;
@@ -561,7 +572,7 @@ namespace Anki {
         
         uint32_t numBlocksObserved = 0;
         _blockWorld.Update(numBlocksObserved);
-        
+
       } // if(_visionProcessor.WasLastImageProcessed())
       
       // Send ping to keep connection alive.

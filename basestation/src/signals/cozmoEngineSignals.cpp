@@ -32,8 +32,10 @@ namespace Anki {
     DEF_SIGNAL(CozmoEngineSignals,PlaySoundForRobot)
     DEF_SIGNAL(CozmoEngineSignals,StopSoundForRobot)
     
+    DEF_SIGNAL(CozmoEngineSignals,RobotImageAvailable)
     DEF_SIGNAL(CozmoEngineSignals,DeviceDetectedVisionMarker)
     DEF_SIGNAL(CozmoEngineSignals,RobotObservedObject)
+    DEF_SIGNAL(CozmoEngineSignals,RobotObservedFace)
     
   } // namespace Cozmo
 } // namespace Anki

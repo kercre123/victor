@@ -138,8 +138,11 @@ namespace Anki
       void GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const;
       
       // Get objects newly-observed or re-observed objects in the last Update.
+      /*
       using ObservedObjectBoundingBoxes = std::vector<std::pair<ObjectID, Rectangle<f32> > >;
       const ObservedObjectBoundingBoxes& GetProjectedObservedObjects() const;
+       */
+      const std::vector<ObjectID>& GetObservedObjectIDs() const;
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last call to Update().
@@ -241,7 +244,8 @@ namespace Anki
       
       // A place to keep up with all objects' IDs and bounding boxes observed
       // in a single call to Update()
-      ObservedObjectBoundingBoxes _obsProjectedObjects;
+      //ObservedObjectBoundingBoxes _obsProjectedObjects;
+      std::vector<ObjectID> _currentObservedObjectIDs;
       
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
@@ -364,9 +368,14 @@ namespace Anki
       AddNewObject(_existingObjects[toFamily], object);
     }
 
+    /*
     inline const BlockWorld::ObservedObjectBoundingBoxes& BlockWorld::GetProjectedObservedObjects() const
     {
       return _obsProjectedObjects;
+    }
+     */
+    inline const std::vector<ObjectID>& BlockWorld::GetObservedObjectIDs() const {
+      return _currentObservedObjectIDs;
     }
     
   } // namespace Cozmo

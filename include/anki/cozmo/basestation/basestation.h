@@ -101,25 +101,6 @@ namespace Cozmo {
     // *Copies* into the given image object. Returns true if successful.
     bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
     
-    // Get the list of bounding boxes of objects a robot is "currently" seeing,
-    // paired with the object IDs they belong to. The given vector is augmented,
-    // not cleared, so it is the caller's responsibility to empty it if desired.
-    // The quad's corners are in image coordinates.
-    struct ObservedObjectBoundingBox {
-      s32                objectID;
-      Rectangle<f32>     boundingBox;
-      
-      ObservedObjectBoundingBox(s32 Id, Rectangle<f32>& rect)
-      : objectID(Id)
-      , boundingBox(rect)
-      {
-        
-      }
-    };
-    
-    bool GetCurrentVisionMarkers(const RobotID_t robotID,
-                                 std::vector<ObservedObjectBoundingBox>& boundingQuads);
-    
     // Return the animation ID for the given robot and animation name.
     // A negative result means failure: -1 means animation name was unknown. -2 means
     // the robotID was invalid.
