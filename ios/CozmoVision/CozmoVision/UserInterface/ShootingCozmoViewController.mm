@@ -278,7 +278,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 #pragma mark - Protocol CvVideoCameraDelegate
 
-- (void) queueObservedMarker:(CozmoVisionMarkerBBox *)currentMarker
+- (void) processVisionMarker:(CozmoVisionMarkerBBox *) currentMarker
 {
   self.markerFound = YES;
   
