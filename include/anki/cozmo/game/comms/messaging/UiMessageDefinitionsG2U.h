@@ -6,16 +6,16 @@
 
 
 
-// ObjectVisionMarker for telling the UI that a VisionMarker from an object
+// ObjectVisionMarker for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
-START_MESSAGE_DEFINITION(G2U_ObjectVisionMarker, 1)
+START_MESSAGE_DEFINITION(G2U_RobotObservedObject, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
 ADD_MESSAGE_MEMBER(u32, objectID)
 ADD_MESSAGE_MEMBER(u16, topLeft_x)
 ADD_MESSAGE_MEMBER(u16, topLeft_y)
 ADD_MESSAGE_MEMBER(u16, width)
 ADD_MESSAGE_MEMBER(u16, height)
-END_MESSAGE_DEFINITION(G2U_ObjectVisionMarker)
+END_MESSAGE_DEFINITION(G2U_RobotObservedObject)
 
 
 START_MESSAGE_DEFINITION(G2U_PlaySound, 1)

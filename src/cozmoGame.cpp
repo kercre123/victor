@@ -502,12 +502,6 @@ namespace Cozmo {
         
     }
     
-    /*
-     std::vector<BasestationMain::ObservedObjectBoundingBox> boundingQuads;
-     if(true == bs.GetCurrentVisionMarkers(1, boundingQuads) ) {
-     // TODO: stuff?
-     }
-     */
   } // Update()
   
   ///////////////////////////////////////////////
@@ -577,36 +571,21 @@ namespace Cozmo {
   }
 
   
-  
+
   void CozmoGameHostImpl::HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
                                                                  float x_upperLeft,  float y_upperLeft,
                                                                  float x_lowerLeft,  float y_lowerLeft,
                                                                  float x_upperRight, float y_upperRight,
                                                                  float x_lowerRight, float y_lowerRight)
   {
-    // Send a message out to UI that the device found a vision marker
-    Quadrilateral<2,u16> markerQuad({static_cast<u16>(x_upperLeft),  static_cast<u16>(y_upperLeft)},
-                                    {static_cast<u16>(x_lowerLeft),  static_cast<u16>(y_lowerLeft)},
-                                    {static_cast<u16>(x_upperRight), static_cast<u16>(y_upperRight)},
-                                    {static_cast<u16>(x_lowerRight), static_cast<u16>(y_lowerRight)});
-    
-    Rectangle<u16> markerBBox(markerQuad);
-    
-    MessageG2U_ObjectVisionMarker msg;
-    msg.objectID = markerType;
-    msg.topLeft_x = markerBBox.GetX();
-    msg.topLeft_y = markerBBox.GetY();
-    msg.width     = markerBBox.GetWidth();
-    msg.height    = markerBBox.GetHeight();
-    
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+
   }
   
   void CozmoGameHostImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                                           float x_upperLeft,  float y_upperLeft,
                                                           float width,  float height) {
     // Send a message out to UI that the device found a vision marker
-    MessageG2U_ObjectVisionMarker msg;
+    MessageG2U_RobotObservedObject msg;
     msg.robotID   = robotID;
     msg.objectID  = objectID;
     msg.topLeft_x = x_upperLeft;
