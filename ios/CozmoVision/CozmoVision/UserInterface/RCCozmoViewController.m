@@ -22,12 +22,14 @@
 @property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
 @property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadView;
 @property (weak, nonatomic) IBOutlet UISwitch *detectFacesSwitch;
+
 - (IBAction)handelDetectFacesSwitch:(id)sender;
 
 @property (strong, nonatomic) ObservedObjectSelector *obsObjSelector;
 
 @property (weak, nonatomic) CozmoEngineWrapper *cozmoEngineWrapper;
 @property (strong, nonatomic) CozmoOperator *_operator;
+@property (strong, nonatomic) NSMutableArray* objectBoundingBoxes;
 
 @end
 
@@ -76,7 +78,17 @@
     }
   }];
   
-}
+
+  self.objectBoundingBoxes = [[NSMutableArray alloc] init];
+  
+  __weak RCCozmoViewController* weakSelf = self;
+  [self._operator setHandleRobotObservedObject:^(CozmoObsObjectBBox* observation) {
+    //[weakSelf drawObservedObjectBoundingBox:observation];
+    [weakSelf.objectBoundingBoxes addObject:observation];
+  }];
+  
+  
+} // viewDidLoad()
 
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -128,13 +140,12 @@
 {
   // Update Image Frame
   UIImage *updatedFrame = [self.cozmoEngineWrapper imageFrameWithRobotId:1];
+  
   if (updatedFrame) {
     
-    NSArray *objectBBoxes = [self.cozmoEngineWrapper boundingBoxesObservedByRobotId:1];
+    self.obsObjSelector.observedObjects = self.objectBoundingBoxes;
     
-    self.obsObjSelector.observedObjects = objectBBoxes;
-    
-    if(objectBBoxes && objectBBoxes.count > 0) {
+    if(self.objectBoundingBoxes.count > 0) {
       ///////
       // TODO: This is temporary drawing code
       // Drawing code
@@ -164,7 +175,7 @@
 
       CGContextSetRGBStrokeColor(ctx, 0.0, 1.0, 0.0, 1.0);
 
-      for(CozmoObsObjectBBox *object in objectBBoxes)
+      for(CozmoObsObjectBBox *object in self.objectBoundingBoxes)
       {
         NSString* label = [NSString stringWithFormat:@"%ld", (long)object.objectID];
 
@@ -186,10 +197,13 @@
 
       // End of temporary drawing code
       //////
+      
+      [self.objectBoundingBoxes removeAllObjects];
     }
     
     self.cozmoVisionImageView.image = updatedFrame;
   }
+  
   static BOOL wasActivelyControlling = NO;
   if(self.dPadView.isActivelyControlling)
   {

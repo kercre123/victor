@@ -12,7 +12,7 @@
 
 @interface ObservedObjectSelector : NSObject
 
-@property NSArray* observedObjects;
+@property (copy, nonatomic) NSArray* observedObjects;
 
 -(NSNumber*)checkForSelectedObject:(CGPoint)normalizedPoint;
 

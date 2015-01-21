@@ -80,10 +80,21 @@ using namespace Anki;
   [[SoundCoordinator defaultCoordinator] stop];
 }
 
-- (void) drawObservedVisionMarker:(const Cozmo::MessageG2U_ObjectVisionMarker&) msg
+- (void) handleRobotObservedObjectWrapper:(const Cozmo::MessageG2U_RobotObservedObject&) msg
 {
-  // TODO: Fill in
+  if(self.handleRobotObservedObject) {
+    CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
+    
+    observation.objectID = msg.objectID;
+    observation.boundingBox = CGRectMake(msg.topLeft_x,
+                                         msg.topLeft_y,
+                                         msg.width,
+                                         msg.height);
+    
+    self.handleRobotObservedObject(observation);
+  }
 }
+
 
 - (void)commonInit
 {
@@ -171,6 +182,22 @@ using namespace Anki;
   };
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_StopSound(stopRobotSoundCallbackLambda);
+  
+  auto robotObservedObjectLamda = [self](const Cozmo::MessageG2U_RobotObservedObject& msg) {
+    if(self.handleRobotObservedObject) {
+      CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
+      
+      observation.objectID = msg.objectID;
+      observation.boundingBox = CGRectMake(msg.topLeft_x,
+                                           msg.topLeft_y,
+                                           msg.width,
+                                           msg.height);
+      
+      self.handleRobotObservedObject(observation);
+    }
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotObservedObject(robotObservedObjectLamda);
   
 }
 

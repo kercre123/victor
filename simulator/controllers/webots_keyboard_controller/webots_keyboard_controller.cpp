@@ -187,10 +187,10 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void ProcessMessageObjectVisionMarker(MessageG2U_ObjectVisionMarker const& msg)
+      void ProcessMessageObjectVisionMarker(MessageG2U_RobotObservedObject const& msg)
       {
         // TODO: Do something with this message to notify UI
-        printf("RECEIVED OBJECT VISION MARKER: objectID %d\n", msg.objectID);
+        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
       }
 
       void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
@@ -229,7 +229,7 @@ namespace Anki {
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
-        msgHandler_.RegisterCallbackForMessageG2U_ObjectVisionMarker(ProcessMessageObjectVisionMarker);
+        msgHandler_.RegisterCallbackForMessageG2U_RobotObservedObject(ProcessMessageObjectVisionMarker);
         msgHandler_.RegisterCallbackForMessageG2U_UiDeviceAvailable(HandleUiDeviceConnection);
         msgHandler_.RegisterCallbackForMessageG2U_RobotAvailable(HandleRobotConnection);
         

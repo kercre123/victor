@@ -11,6 +11,8 @@
 
 #import <AVFoundation/AVFoundation.h>
 
+#import <UIKit/UIKit.h>
+
 #import "BulletOverlayView.h"
 #ifdef __cplusplus
 // For OpenCV Video processing of phone's camera:
@@ -32,6 +34,10 @@
 
 #endif
 
+// TODO: Hook these up to settings?
+const int GAME_LENGTH_SEC = 30;
+const int START_NUM_HEALTH = 10;
+const float SHOT_RELOAD_TIME = 0.5f;
 
 @interface ShootingCozmoViewController () <CvVideoCameraDelegateReorient, AVAudioPlayerDelegate>
 {
@@ -43,12 +49,17 @@
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairTopImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *targetHitImageView;
 @property (weak, nonatomic) IBOutlet UILabel     *pointsLabel;
+@property (weak, nonatomic) IBOutlet UIButton *gameTimerButton;
 
 @property (assign, nonatomic) Float32 markerIntensity;
 @property (assign, nonatomic) int markerType;
 @property (assign, nonatomic) Float32 markerSize;
 
+// Shooting game:
+@property (assign, nonatomic) BOOL gameRunning;
 @property (assign, nonatomic) int points;
+@property (assign, nonatomic) int gameTimeRemaining;
+@property (assign, nonatomic) BOOL isReloading;
 
 // Audio targeting:
 @property (strong, nonatomic) NSURL*          targetingSoundURL;
@@ -72,7 +83,8 @@
 @property (weak, nonatomic) IBOutlet VerticalSliderView *targetingSlopSlider;
 
 - (void)playTargetingSound;
-  
+- (void)resetGame;
+
 @end
 
 @implementation ShootingCozmoViewController
@@ -104,7 +116,7 @@
 
   // Create players for targeting and lock sounds
   NSString* platformSoundRootDir = [PlatformPathManager_iOS getPathWithScope:PlatformPathManager_iOS_Scope_Sound];
-  self.targetingSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"demo/WaitingForDice1.wav"]];
+  self.targetingSoundURL = [NSURL URLWithString:[platformSoundRootDir stringByAppendingString:@"laser/blip.wav"]];
   NSError *error = nil;
   self.targetingSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.targetingSoundURL error:&error];
   if (!error) {
@@ -159,6 +171,7 @@
   swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
   [self.view addGestureRecognizer:swipeGesture];
   
+  [self resetGame];
   [_videoCamera start];
 }
 
@@ -199,7 +212,7 @@
     
     period_sec = distance/maxDistance + 0.01;
     self.targetingSoundPeriod_sec = 0.5f * (period_sec + self.targetingSoundPeriod_sec);
-    self.targetingSoundPeriod_sec /= self.targetingSlopFactor;
+    
   } else {
     // Want this to be exactly zero when marker wasn't detected to disable targeting sound
     self.targetingSoundPeriod_sec = 0.f;
@@ -263,7 +276,7 @@
   using namespace cv;
 
   // Make sure we at least call VisionThread->SetNextImage the first call!
-  static BOOL calledOnce = NO;
+  //static BOOL calledOnce = NO;
 
   // Create an OpenCV grayscale image from the incoming data
   Mat_<u8> imageGray;
@@ -359,9 +372,22 @@
   {
     markerFound = YES;
     
-    Float32 xDistance = CGRectGetMidX(currentMarker) - 160.0;
-    Float32 yDistance = CGRectGetMidY(currentMarker) - 120.0;
-    Float32 currentDistanceSq = xDistance * xDistance + yDistance * yDistance;
+    // Add targeting slop, if any
+    if(self.targetingSlopFactor > 1.f) {
+      const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
+      Float32 dx = CGRectGetWidth(currentMarker)*adjustment;
+      Float32 dy = CGRectGetHeight(currentMarker)*adjustment;
+      currentMarker = CGRectInset(currentMarker, -dx, -dy);
+    }
+     
+    // Distance of the targeting point (center of image) to the rectangle's border
+    const Float32 xCen = CGRectGetMidX(currentMarker);
+    const Float32 yCen = CGRectGetMidY(currentMarker);
+    const Float32 halfWidth = 0.5f*CGRectGetWidth(currentMarker);
+    const Float32 halfHeight = 0.5f*CGRectGetHeight(currentMarker);
+    const Float32 xDistance = fmaxf(0.f, fabsf(160.f-xCen) - halfWidth);
+    const Float32 yDistance = fmaxf(0.f, fabsf(120.f-yCen) - halfHeight);
+    const Float32 currentDistanceSq = xDistance*xDistance + yDistance*yDistance;
     
     // Keep the marker in view that's closest to center
     if(currentDistanceSq < markerDistanceFromCenterSq) {
@@ -381,11 +407,7 @@
   if(markerFound) {
 
     // If we found a marker, the crosshairs must be within it to be in "lock"
-    // TODO: Use a scaled rectangle to add slop - see CGRectInset
-    const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
-    Float32 dx = CGRectGetWidth(marker)*adjustment;
-    Float32 dy = CGRectGetHeight(marker)*adjustment;
-    self.targetLocked = CGRectContainsPoint(CGRectInset(marker, -dx, -dy), CGPointMake(160,120));
+    self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
     
     if(self.useAudioTargeting == NO) {
       // For audio targeting, it is sufficient for the marker to be visible
@@ -468,17 +490,38 @@
   // Keep the timers running as long as the shooter view is up and running,
   // just use the current period
   if(self.runTimer) {
-    double nextTime = fmin(3.0, fmax(self.targetingSoundPeriod_sec, self.targetingSoundPlayer.duration));
+    // NOTE: Due to innaccuracy of NSTimer (I think?), can't let sound period get
+    //  arbitrarily low. So I'm using an empirical minimum value here.
+    double nextTime = fmax(self.targetingSoundPeriod_sec, 0.07) + self.targetingSoundPlayer.duration;
     [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
   }
 }
 
+- (void) resetGame
+{
+  self.gameRunning = NO;
+  [self.gameTimerButton setTitle:@"Start" forState:UIControlStateNormal];
+  self.gameTimeRemaining = GAME_LENGTH_SEC + 1;
+  self.points = START_NUM_HEALTH;
+  self.pointsLabel.hidden = YES;
+  self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+  self.isReloading = NO;
+}
+
+- (void)reloadCompleted:(NSTimer*)timer
+{
+  self.isReloading = NO;
+}
 
 #pragma mark - Action Methods
 
-
 - (void)handleTapGesture:(UITapGestureRecognizer*)gesture
 {
+  // Can't shoot while reloading
+  if(self.isReloading == YES)
+    return;
+  
+  /*
   if (self.markerIntensity > 0.5) {
     Float32 pointsMultiplier = 1.0;
     if(self.markerType == Anki::Vision::MARKER_SPIDER) {
@@ -496,10 +539,42 @@
     self.points += pointsMultiplier*(1.0 - self.markerSize / (320*240));
     self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
+   */
+  
+  // Trigger a reload so we can't fire again until it is done
+  self.isReloading = YES;
+  [NSTimer scheduledTimerWithTimeInterval:SHOT_RELOAD_TIME target:self selector:@selector(reloadCompleted:) userInfo:nil repeats:NO];
+  
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav"
                                                         volume:0.5
                                                      withDelay:0
                                                       numLoops:0];
+  
+  if(self.gameRunning && self.targetLocked) {
+    --self.points;
+    self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+    if(self.points == 0) {
+      self.gameRunning = NO;
+      
+      UIAlertController * alert=   [UIAlertController
+                                    alertControllerWithTitle:@"Game Over"
+                                    message:@"Code monster destroyed!"
+                                    preferredStyle:UIAlertControllerStyleAlert];
+      
+      UIAlertAction* ok = [UIAlertAction
+                           actionWithTitle:@"OK"
+                           style:UIAlertActionStyleDefault
+                           handler:^(UIAlertAction * action)
+                           {
+                             [self resetGame];
+                             [alert dismissViewControllerAnimated:YES completion:nil];
+                           }];
+      
+      [alert addAction:ok];
+      [self presentViewController:alert animated:YES completion:nil];
+    }
+  }
+  
   if(self.useVisualTargeting) {
     [self.bulletOverlayView fireLaserButtlet];
     [self animateCrossHairsFire];
@@ -526,6 +601,43 @@
 
 - (IBAction)handleUseAudioTargetingSwitch:(UISwitch *)sender {
   self.useAudioTargeting = sender.isOn;
+}
+
+- (void) gameTimerCountdown {
+
+  self.gameTimeRemaining -= 1;
+  [self.gameTimerButton setTitle:[NSString stringWithFormat:@"%d",self.gameTimeRemaining] forState:UIControlStateNormal];
+  
+  if(self.gameTimeRemaining > 0) {
+    if(self.gameRunning) {
+      [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(gameTimerCountdown) userInfo:nil repeats:NO];
+    }
+  } else {
+    self.gameRunning = NO;
+    
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Game Over"
+                                  message:@"Code monster exhausted Cozmo!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction* ok = [UIAlertAction
+                         actionWithTitle:@"OK"
+                         style:UIAlertActionStyleDefault
+                         handler:^(UIAlertAction * action)
+                         {
+                           [self resetGame];
+                           [alert dismissViewControllerAnimated:YES completion:nil];
+                         }];
+    
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+  }
+}
+
+- (IBAction)handleGameTimerButtonPress:(UIButton *)sender {
+  self.gameRunning = YES;
+  self.pointsLabel.hidden = NO;
+  [self gameTimerCountdown];
 }
 
 @end
