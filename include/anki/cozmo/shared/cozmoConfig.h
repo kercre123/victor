@@ -236,6 +236,9 @@ namespace Anki {
     // 1: Use UDP
     #define USE_UDP_ROBOT_COMMS 0
     
+    // Comms types for UI-game comms
+    #define USE_UDP_UI_COMMS 1
+    
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
