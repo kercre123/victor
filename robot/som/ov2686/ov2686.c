@@ -12,6 +12,7 @@
 #include <media/v4l2-mediabus.h>
 
 #include "ov2686.h"
+#include "ov2686_reg_script.h"
 
 /*** Register definitions */
 
