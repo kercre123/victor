@@ -45,10 +45,6 @@ namespace Cozmo {
     
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
-    
   protected:
 
     // Derived classes must be able to provide a pointer to a CozmoEngine
@@ -83,16 +79,7 @@ namespace Cozmo {
   {
     GetCozmoEngine()->ProcessDeviceImage(image);
   }
-  
-  bool CozmoGameImpl::WasLastDeviceImageProcessed()
-  {
-    return GetCozmoEngine()->WasLastDeviceImageProcessed();
-  }
-  
-  bool CozmoGameImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return GetCozmoEngine()->CheckDeviceVisionProcessingMailbox(msg);
-  }
+
   
 #pragma mark - CozmoGame Wrappers
   
@@ -119,21 +106,12 @@ namespace Cozmo {
     _impl->ProcessDeviceImage(image);
   }
   
-  bool CozmoGame::WasLastDeviceImageProcessed()
-  {
-    return _impl->WasLastDeviceImageProcessed();
-  }
-  
   CozmoGame::RunState CozmoGame::GetRunState() const
   {
     assert(_impl != nullptr);
     return _impl->GetRunState();
   }
   
-  bool CozmoGame::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return _impl->CheckDeviceVisionProcessingMailbox(msg);
-  }
   
 #pragma mark - CozmoGameHost Implementation
   
@@ -578,7 +556,20 @@ namespace Cozmo {
                                                                  float x_upperRight, float y_upperRight,
                                                                  float x_lowerRight, float y_lowerRight)
   {
-
+    // Notify the UI that the device camera saw a VisionMarker
+    MessageG2U_DeviceDetectedVisionMarker msg;
+    msg.markerType = markerType;
+    msg.x_upperLeft = x_upperLeft;
+    msg.y_upperLeft = y_upperLeft;
+    msg.x_lowerLeft = x_lowerLeft;
+    msg.y_lowerLeft = y_lowerLeft;
+    msg.x_upperRight = x_upperRight;
+    msg.y_upperRight = y_upperRight;
+    msg.x_lowerRight = x_lowerRight;
+    msg.y_lowerRight = y_lowerRight;
+    
+    // TODO: Look up which UI device to notify based on the robotID that saw the object
+    _uiMsgHandler.SendMessage(1, msg);
   }
   
   void CozmoGameHostImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,

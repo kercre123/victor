@@ -386,6 +386,7 @@ using namespace Anki;
   return imageFrame;
 }
 
+/*
 - (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
 {
   Anki::Cozmo::MessageVisionMarker msg;
@@ -410,12 +411,14 @@ using namespace Anki;
     return NO;
   }
 }
+ */
 
 - (void) processDeviceImage:(Anki::Vision::Image&)image
 {
   _cozmoGame->ProcessDeviceImage(image);
 }
 
+/*
 - (BOOL) wasLastDeviceImageProcessed
 {
   if(true == _cozmoGame->WasLastDeviceImageProcessed()) {
@@ -424,5 +427,6 @@ using namespace Anki;
     return NO;
   }
 }
+ */
 
 @end

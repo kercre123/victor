@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #import "CozmoObsObjectBBox.h"
+#import "CozmoVisionMarkerBBox.h"
 
 @interface CozmoOperator : NSObject
 
@@ -16,6 +17,7 @@
 
 // Callback handlers
 @property (copy, nonatomic) void (^handleRobotObservedObject)(CozmoObsObjectBBox*);
+@property (copy, nonatomic) void (^handleDeviceDetectedVisionMarker)(CozmoVisionMarkerBBox*);
 
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
                                          withDeviceID:(int)deviceID;

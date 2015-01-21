@@ -63,12 +63,12 @@
 
 - (UIImage*)imageFrameWithRobotId:(uint8_t)robotId;
 
--(BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBoxOut :(int*)markerTypeOut;
+//-(BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBoxOut :(int*)markerTypeOut;
 
 #ifdef __cplusplus
 -(void)processDeviceImage:(Anki::Vision::Image&)image;
 #endif
 
--(BOOL) wasLastDeviceImageProcessed;
+//-(BOOL) wasLastDeviceImageProcessed;
 
 @end

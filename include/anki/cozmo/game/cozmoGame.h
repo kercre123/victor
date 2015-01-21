@@ -71,11 +71,7 @@ namespace Cozmo {
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
-    
-    bool WasLastDeviceImageProcessed();
-    
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
-    
+        
   protected:
     
     CozmoGameImpl* _impl;

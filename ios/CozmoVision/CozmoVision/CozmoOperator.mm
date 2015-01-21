@@ -80,22 +80,6 @@ using namespace Anki;
   [[SoundCoordinator defaultCoordinator] stop];
 }
 
-- (void) handleRobotObservedObjectWrapper:(const Cozmo::MessageG2U_RobotObservedObject&) msg
-{
-  if(self.handleRobotObservedObject) {
-    CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
-    
-    observation.objectID = msg.objectID;
-    observation.boundingBox = CGRectMake(msg.topLeft_x,
-                                         msg.topLeft_y,
-                                         msg.width,
-                                         msg.height);
-    
-    self.handleRobotObservedObject(observation);
-  }
-}
-
-
 - (void)commonInit
 {
 #ifdef __cplusplus
@@ -199,6 +183,21 @@ using namespace Anki;
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_RobotObservedObject(robotObservedObjectLamda);
   
+  auto deviceDetectedVisionMarkerLambda = [self](const Cozmo::MessageG2U_DeviceDetectedVisionMarker& msg) {
+    if(self.handleDeviceDetectedVisionMarker) {
+      CozmoVisionMarkerBBox* marker = [[CozmoVisionMarkerBBox alloc] init];
+      
+      marker.markerType = msg.markerType;
+      [marker setBoundingBoxFromCornersWithXupperLeft:msg.x_upperLeft  YupperLeft: msg.y_upperLeft
+                                           XlowerLeft:msg.x_lowerLeft  YlowerLeft: msg.y_lowerLeft
+                                          XupperRight:msg.x_upperRight YupperRight:msg.y_upperRight
+                                          XlowerRight:msg.x_lowerRight YlowerRight:msg.y_lowerRight];
+      
+      self.handleDeviceDetectedVisionMarker(marker);
+    }
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_DeviceDetectedVisionMarker(deviceDetectedVisionMarkerLambda);
 }
 
 - (void)disconnectFromEngine
