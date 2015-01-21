@@ -358,11 +358,11 @@ namespace Anki
         _currentObservedObjectIDs.push_back(obsID);
         
         // Signal the observation of this object, with its bounding box:
-        CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(), obsID,
-                                                             boundingBox.GetX(),
-                                                             boundingBox.GetY(),
-                                                             boundingBox.GetWidth(),
-                                                             boundingBox.GetHeight());
+        CozmoEngineSignals::GetRobotObservedObjectSignal().emit(_robot->GetID(), obsID,
+                                                                boundingBox.GetX(),
+                                                                boundingBox.GetY(),
+                                                                boundingBox.GetWidth(),
+                                                                boundingBox.GetHeight());
 
         _didObjectsChange = true;
       } // for each object seen
@@ -1033,7 +1033,6 @@ namespace Anki
     
     void BlockWorld::Update(uint32_t& numObjectsObserved)
     {
-      
       numObjectsObserved = 0;
       
       // New timestep, new set of occluders.  Get rid of anything registered as
