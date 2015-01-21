@@ -11,6 +11,8 @@
 
 #import <AVFoundation/AVFoundation.h>
 
+#import <UIKit/UIKit.h>
+
 #import "BulletOverlayView.h"
 #ifdef __cplusplus
 // For OpenCV Video processing of phone's camera:
@@ -32,6 +34,10 @@
 
 #endif
 
+// TODO: Hook these up to settings?
+const int GAME_LENGTH_SEC = 30;
+const int START_NUM_HEALTH = 10;
+const float SHOT_RELOAD_TIME = 0.5f;
 
 @interface ShootingCozmoViewController () <CvVideoCameraDelegateReorient, AVAudioPlayerDelegate>
 {
@@ -43,12 +49,17 @@
 @property (weak, nonatomic) IBOutlet UIImageView *crosshairTopImageView;
 @property (weak, nonatomic) IBOutlet UIImageView *targetHitImageView;
 @property (weak, nonatomic) IBOutlet UILabel     *pointsLabel;
+@property (weak, nonatomic) IBOutlet UIButton *gameTimerButton;
 
 @property (assign, nonatomic) Float32 markerIntensity;
 @property (assign, nonatomic) int markerType;
 @property (assign, nonatomic) Float32 markerSize;
 
+// Shooting game:
+@property (assign, nonatomic) BOOL gameRunning;
 @property (assign, nonatomic) int points;
+@property (assign, nonatomic) int gameTimeRemaining;
+@property (assign, nonatomic) BOOL isReloading;
 
 // Audio targeting:
 @property (strong, nonatomic) NSURL*          targetingSoundURL;
@@ -72,7 +83,8 @@
 @property (weak, nonatomic) IBOutlet VerticalSliderView *targetingSlopSlider;
 
 - (void)playTargetingSound;
-  
+- (void)resetGame;
+
 @end
 
 @implementation ShootingCozmoViewController
@@ -159,6 +171,7 @@
   swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
   [self.view addGestureRecognizer:swipeGesture];
   
+  [self resetGame];
   [_videoCamera start];
 }
 
@@ -263,7 +276,7 @@
   using namespace cv;
 
   // Make sure we at least call VisionThread->SetNextImage the first call!
-  static BOOL calledOnce = NO;
+  //static BOOL calledOnce = NO;
 
   // Create an OpenCV grayscale image from the incoming data
   Mat_<u8> imageGray;
@@ -484,12 +497,31 @@
   }
 }
 
+- (void) resetGame
+{
+  self.gameRunning = NO;
+  [self.gameTimerButton setTitle:@"Start" forState:UIControlStateNormal];
+  self.gameTimeRemaining = GAME_LENGTH_SEC + 1;
+  self.points = START_NUM_HEALTH;
+  self.pointsLabel.hidden = YES;
+  self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+  self.isReloading = NO;
+}
+
+- (void)reloadCompleted:(NSTimer*)timer
+{
+  self.isReloading = NO;
+}
 
 #pragma mark - Action Methods
 
-
 - (void)handleTapGesture:(UITapGestureRecognizer*)gesture
 {
+  // Can't shoot while reloading
+  if(self.isReloading == YES)
+    return;
+  
+  /*
   if (self.markerIntensity > 0.5) {
     Float32 pointsMultiplier = 1.0;
     if(self.markerType == Anki::Vision::MARKER_SPIDER) {
@@ -507,10 +539,42 @@
     self.points += pointsMultiplier*(1.0 - self.markerSize / (320*240));
     self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
+   */
+  
+  // Trigger a reload so we can't fire again until it is done
+  self.isReloading = YES;
+  [NSTimer scheduledTimerWithTimeInterval:SHOT_RELOAD_TIME target:self selector:@selector(reloadCompleted:) userInfo:nil repeats:NO];
+  
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav"
                                                         volume:0.5
                                                      withDelay:0
                                                       numLoops:0];
+  
+  if(self.gameRunning && self.targetLocked) {
+    --self.points;
+    self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+    if(self.points == 0) {
+      self.gameRunning = NO;
+      
+      UIAlertController * alert=   [UIAlertController
+                                    alertControllerWithTitle:@"Game Over"
+                                    message:@"Code monster destroyed!"
+                                    preferredStyle:UIAlertControllerStyleAlert];
+      
+      UIAlertAction* ok = [UIAlertAction
+                           actionWithTitle:@"OK"
+                           style:UIAlertActionStyleDefault
+                           handler:^(UIAlertAction * action)
+                           {
+                             [self resetGame];
+                             [alert dismissViewControllerAnimated:YES completion:nil];
+                           }];
+      
+      [alert addAction:ok];
+      [self presentViewController:alert animated:YES completion:nil];
+    }
+  }
+  
   if(self.useVisualTargeting) {
     [self.bulletOverlayView fireLaserButtlet];
     [self animateCrossHairsFire];
@@ -537,6 +601,43 @@
 
 - (IBAction)handleUseAudioTargetingSwitch:(UISwitch *)sender {
   self.useAudioTargeting = sender.isOn;
+}
+
+- (void) gameTimerCountdown {
+
+  self.gameTimeRemaining -= 1;
+  [self.gameTimerButton setTitle:[NSString stringWithFormat:@"%d",self.gameTimeRemaining] forState:UIControlStateNormal];
+  
+  if(self.gameTimeRemaining > 0) {
+    if(self.gameRunning) {
+      [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(gameTimerCountdown) userInfo:nil repeats:NO];
+    }
+  } else {
+    self.gameRunning = NO;
+    
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Game Over"
+                                  message:@"Code monster exhausted Cozmo!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction* ok = [UIAlertAction
+                         actionWithTitle:@"OK"
+                         style:UIAlertActionStyleDefault
+                         handler:^(UIAlertAction * action)
+                         {
+                           [self resetGame];
+                           [alert dismissViewControllerAnimated:YES completion:nil];
+                         }];
+    
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+  }
+}
+
+- (IBAction)handleGameTimerButtonPress:(UIButton *)sender {
+  self.gameRunning = YES;
+  self.pointsLabel.hidden = NO;
+  [self gameTimerCountdown];
 }
 
 @end
