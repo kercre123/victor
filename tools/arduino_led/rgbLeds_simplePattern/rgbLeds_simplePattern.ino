@@ -5,12 +5,13 @@ Modulate LED based on input from serial communication
 #include <stdio.h>
 
 // Each RGB LED counts as three LEDs
-const int numLeds = 6;
+const int numLeds = 3;
 
-const int ledPins[numLeds] = {31, 33, 35, 37, 39, 41};
+//const int ledPins[numLeds] = {31, 33, 35, 37, 39, 41};
+const int ledPins[numLeds] = {31, 33, 35};
 
 int modulationPeriodMicroseconds;
-int modulationOnMicroseconds; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+int modulationOnMicroseconds[numLeds]; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
 
 int totalPeriodMicroseconds;
 int ledOnMicroseconds[numLeds]; 
@@ -18,11 +19,11 @@ int ledOnMicroseconds[numLeds];
 void setDefaultTimings()
 { 
   modulationPeriodMicroseconds = 1000;
-  modulationOnMicroseconds = 100;
   totalPeriodMicroseconds = 1000000;
 
   for(int iLed=0; iLed<numLeds; iLed++) {
     ledOnMicroseconds[iLed] = totalPeriodMicroseconds / 2;
+    modulationOnMicroseconds[iLed] = 100;
   }
 } // void setDefaultTimings()
 
@@ -45,7 +46,7 @@ void updateTimings()
     char buffer[bufferLength];
     
     int local_modulationPeriodMicroseconds = -1;
-    int local_modulationOnMicroseconds = -1;
+    int local_modulationOnMicroseconds[numLeds];
     int local_totalPeriodMicroseconds = -1;
     int local_ledOnMicroseconds[numLeds];
     
@@ -65,47 +66,47 @@ void updateTimings()
     //Serial.println(buffer);
     
     for(int iLed=0; iLed<numLeds; iLed++) {
+      local_modulationOnMicroseconds[iLed] = -1;
       local_ledOnMicroseconds[iLed] = -1;
     }
     
-    // Example 1000,100,1000000,500000,500000,500000,250000,250000,250000
-    sscanf(buffer, "%d,%d,%d,%d,%d,%d,%d,%d,%d", &local_modulationPeriodMicroseconds, &local_modulationOnMicroseconds, &local_totalPeriodMicroseconds, &local_ledOnMicroseconds[0], &local_ledOnMicroseconds[1], &local_ledOnMicroseconds[2], &local_ledOnMicroseconds[3], &local_ledOnMicroseconds[4], &local_ledOnMicroseconds[5]);
+    // Example 1000000,1000,100,500000,100,500000,100,500000
+    sscanf(buffer, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &local_totalPeriodMicroseconds, &local_modulationPeriodMicroseconds, &local_modulationOnMicroseconds[0], &local_ledOnMicroseconds[0], &local_modulationOnMicroseconds[1], &local_ledOnMicroseconds[1], &local_modulationOnMicroseconds[2], &local_ledOnMicroseconds[2], &local_modulationOnMicroseconds[3], &local_ledOnMicroseconds[3], &local_modulationOnMicroseconds[4], &local_ledOnMicroseconds[4], &local_modulationOnMicroseconds[5], &local_ledOnMicroseconds[5]);
     
     bool isValid = true;
     
-    if(local_modulationPeriodMicroseconds < 0 || local_modulationPeriodMicroseconds > 100000 || local_modulationPeriodMicroseconds > totalPeriodMicroseconds ||
-      local_modulationOnMicroseconds < 0 || local_modulationOnMicroseconds > local_modulationOnMicroseconds ||
-      local_totalPeriodMicroseconds < 0 || local_totalPeriodMicroseconds > 10000000) {
+    if(local_modulationPeriodMicroseconds < 0 || local_modulationPeriodMicroseconds > 100000 || local_modulationPeriodMicroseconds > totalPeriodMicroseconds || local_totalPeriodMicroseconds < 0 || local_totalPeriodMicroseconds > 10000000) {
         isValid = false;
     }
     
     for(int iLed=0; iLed<numLeds; iLed++) {
-      if(ledOnMicroseconds[iLed] < 0 || ledOnMicroseconds[iLed] > totalPeriodMicroseconds) {
-        isValid = false;
+      if(local_ledOnMicroseconds[iLed] < 0 || local_ledOnMicroseconds[iLed] > totalPeriodMicroseconds || local_modulationOnMicroseconds[iLed] < 0 || local_modulationOnMicroseconds[iLed] > local_modulationPeriodMicroseconds) {
+          isValid = false;
         break;
       }
     }
     
     Serial.print("(");
-    Serial.print(local_modulationPeriodMicroseconds, DEC);
-    Serial.print(", ");
-    Serial.print(local_modulationOnMicroseconds, DEC);
-    Serial.print(", ");
     Serial.print(local_totalPeriodMicroseconds, DEC);
+    Serial.print(", ");
+    Serial.print(local_modulationPeriodMicroseconds, DEC);
     Serial.print(") ");
     
     for(int iLed=0; iLed<numLeds; iLed++) {
+      modulationOnMicroseconds[iLed] = local_modulationOnMicroseconds[iLed];
       ledOnMicroseconds[iLed] = local_ledOnMicroseconds[iLed];
       
       Serial.print(iLed, DEC);
       Serial.print(":");
+      Serial.print(local_modulationOnMicroseconds[iLed], DEC);
+      Serial.print(",");
       Serial.print(local_ledOnMicroseconds[iLed], DEC);
       Serial.print("  ");
     }
     Serial.print("\n");
     
     if(!isValid) {
-      Serial.println("Invalid input. Use format: modulationPeriodMicroseconds, modulationOnMicroseconds, totalPeriodMicroseconds, ledOnMicroseconds[0], ledOnMicroseconds[1], ledOnMicroseconds[2], ledOnMicroseconds[3], ledOnMicroseconds[4], ledOnMicroseconds[5]");
+      Serial.println("Invalid input. Use format: totalPeriodMicroseconds, modulationPeriodMicroseconds, modulationOnMicroseconds[0], ledOnMicroseconds[0], ..., modulationOnMicroseconds[5], ledOnMicroseconds[5]");
       return;
     }
 
@@ -115,7 +116,6 @@ void updateTimings()
     }
     
     modulationPeriodMicroseconds = local_modulationPeriodMicroseconds;
-    modulationOnMicroseconds = local_modulationOnMicroseconds;
     totalPeriodMicroseconds = local_totalPeriodMicroseconds;
   } // if(Serial.available()) {
 } // void updateTimings()
@@ -153,7 +153,7 @@ void loop()
       }
       
       for(int iLed=0; iLed<numLeds; iLed++) {
-        if(ledIsOn[iLed] && (deltaTime > modulationOnMicroseconds)) {
+        if(ledIsOn[iLed] && (deltaTime > modulationOnMicroseconds[iLed])) {
           digitalWrite(ledPins[iLed], LOW);
           ledIsOn[iLed] = false;
         }
