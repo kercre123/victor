@@ -8,10 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+#import "CozmoObsObjectBBox.h"
 
 @interface CozmoOperator : NSObject
 
 @property (readonly) BOOL isConnected;
+
+// Callback handlers
+@property (copy, nonatomic) void (^handleRobotObservedObject)(CozmoObsObjectBBox*);
 
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
                                          withDeviceID:(int)deviceID;
@@ -95,5 +99,6 @@
 - (void)sendCameraResolution:(BOOL)isHigh;
 
 - (void)sendEnableRobotImageStreaming:(BOOL)enable;
+
 
 @end

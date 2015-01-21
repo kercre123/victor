@@ -386,40 +386,6 @@ using namespace Anki;
   return imageFrame;
 }
 
-
-- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId
-{
-  using namespace Anki;
-  
-  NSMutableArray* boundingBoxes = nil;
-  
-  // TODO: Put this back
-  /*
-  std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox> observations;
-  if( true == _cozmoEngine->GetCurrentVisionMarkers(robotId, observations))
-  {
-    if(!observations.empty())
-    {
-      boundingBoxes = [[NSMutableArray alloc] init];
-      
-      // Turn each Basestation observed object into an Objective-C "CozmoObsObjectBBox" object
-      for(auto & observation : observations) {
-        CozmoObsObjectBBox* output = [[CozmoObsObjectBBox alloc] init];
-        
-        output.objectID = observation.objectID;
-        output.boundingBox = CGRectMake(observation.boundingBox.GetX(),
-                                        observation.boundingBox.GetY(),
-                                        observation.boundingBox.GetWidth(),
-                                        observation.boundingBox.GetHeight());
-        
-        [boundingBoxes addObject:output];
-      }
-    } // if(!observations.empty())
-  }
-  */
-  return boundingBoxes;
-}
-
 - (BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBox :(int*)markerType
 {
   Anki::Cozmo::MessageVisionMarker msg;

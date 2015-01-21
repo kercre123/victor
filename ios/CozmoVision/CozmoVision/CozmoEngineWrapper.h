@@ -63,9 +63,6 @@
 
 - (UIImage*)imageFrameWithRobotId:(uint8_t)robotId;
 
-- (NSArray*)boundingBoxesObservedByRobotId:(uint8_t)robotId;
-
-
 -(BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBoxOut :(int*)markerTypeOut;
 
 #ifdef __cplusplus
