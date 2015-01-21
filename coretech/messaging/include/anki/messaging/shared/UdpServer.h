@@ -19,6 +19,7 @@ public:
   void StopListening();
 
   bool HasClient();
+  void DisconnectClient();
   
   int GetNumClients();
 

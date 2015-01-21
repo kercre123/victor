@@ -193,6 +193,11 @@ bool UdpServer::HasClient()
   return !client_list.empty();
 }
 
+void UdpServer::DisconnectClient()
+{
+  client_list.clear();
+}
+
 int UdpServer::GetNumClients()
 {
   const ssize_t numClients = client_list.size();
