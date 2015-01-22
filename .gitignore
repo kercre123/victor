@@ -152,3 +152,4 @@ coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
 *.saved_uv4
 tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 *.uvgui.*
+uImage
