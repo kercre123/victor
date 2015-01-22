@@ -16,7 +16,8 @@
 #include "json/json.h"
 
 // TODO: Remove dependency on this
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+//#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "anki/cozmo/game/comms/messaging/uiMessages.h"
 
 namespace Anki {
   
@@ -71,6 +72,15 @@ namespace Cozmo {
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
+    
+    // Get the list of vision markers seen by the device camera on the last call
+    // to ProcessDeviceImage().
+    // NOTE: this will only be useful if the device vision processor is running
+    //  synchronously!
+    // TODO: Remove in favor of sending these messages to the UI
+    //  (For now, this doesn't work on a client device because its game can't
+    //   talk straight to the UI on the device it is running on)
+    const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
   protected:
     

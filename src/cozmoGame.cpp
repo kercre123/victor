@@ -45,18 +45,47 @@ namespace Cozmo {
     
     void ProcessDeviceImage(const Vision::Image& image);
     
+    const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    
   protected:
 
     // Derived classes must be able to provide a pointer to a CozmoEngine
     virtual CozmoEngine* GetCozmoEngine() = 0;
     
     RunState         _runState;
+    
+    
+  private:
+    // Signal causes the additin of a MessageG2U_DeviceDetectedVisionMarker message to
+    // the vector below.
+    void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
+                                                float x_upperLeft,  float y_upperLeft,
+                                                float x_lowerLeft,  float y_lowerLeft,
+                                                float x_upperRight, float y_upperRight,
+                                                float x_lowerRight, float y_lowerRight);
+
+    std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
+    
+    // Signal handler handles
+    std::vector<Signal::SmartHandle> _signalHandles;
   };
   
   CozmoGameImpl::CozmoGameImpl()
   : _runState(CozmoGame::STOPPED)
   {
+    auto cbDeviceDetectedVisionMarkerSignal = [this](uint8_t engineID, uint32_t markerType,
+                                                     float x_upperLeft,  float y_upperLeft,
+                                                     float x_lowerLeft,  float y_lowerLeft,
+                                                     float x_upperRight, float y_upperRight,
+                                                     float x_lowerRight, float y_lowerRight) {
+      this->HandleDeviceDetectedVisionMarkerSignal(engineID, markerType,
+                                                   x_upperLeft,  y_upperLeft,
+                                                   x_lowerLeft,  y_lowerLeft,
+                                                   x_upperRight, y_upperRight,
+                                                   x_lowerRight, y_lowerRight);
+    };
     
+    _signalHandles.emplace_back( CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().ScopedSubscribe(cbDeviceDetectedVisionMarkerSignal));
   }
   
   CozmoGameImpl::~CozmoGameImpl()
@@ -77,9 +106,39 @@ namespace Cozmo {
   
   void CozmoGameImpl::ProcessDeviceImage(const Vision::Image& image)
   {
+    _visionMarkersDetectedByDevice.clear();
+    
     GetCozmoEngine()->ProcessDeviceImage(image);
   }
 
+  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
+  {
+    return _visionMarkersDetectedByDevice;
+  }
+  
+  void CozmoGameImpl::HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
+                                                             float x_upperLeft,  float y_upperLeft,
+                                                             float x_lowerLeft,  float y_lowerLeft,
+                                                             float x_upperRight, float y_upperRight,
+                                                             float x_lowerRight, float y_lowerRight)
+  {
+    // Notify the UI that the device camera saw a VisionMarker
+    MessageG2U_DeviceDetectedVisionMarker msg;
+    msg.markerType = markerType;
+    msg.x_upperLeft = x_upperLeft;
+    msg.y_upperLeft = y_upperLeft;
+    msg.x_lowerLeft = x_lowerLeft;
+    msg.y_lowerLeft = y_lowerLeft;
+    msg.x_upperRight = x_upperRight;
+    msg.y_upperRight = y_upperRight;
+    msg.x_lowerRight = x_lowerRight;
+    msg.y_lowerRight = y_lowerRight;
+    
+    // TODO: Look up which UI device to notify based on the robotID that saw the object
+    // TODO: go back to actually sending this as a message instead of storing it for polling
+    //_uiMsgHandler.SendMessage(1, msg);
+    _visionMarkersDetectedByDevice.push_back(msg);
+  }
   
 #pragma mark - CozmoGame Wrappers
   
@@ -112,6 +171,10 @@ namespace Cozmo {
     return _impl->GetRunState();
   }
   
+  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
+  {
+    return _impl->GetVisionMarkersDetectedByDevice();
+  }
   
 #pragma mark - CozmoGameHost Implementation
   
@@ -151,11 +214,6 @@ namespace Cozmo {
     void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
     void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
-    void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
-                                                float x_upperLeft,  float y_upperLeft,
-                                                float x_lowerLeft,  float y_lowerLeft,
-                                                float x_upperRight, float y_upperRight,
-                                                float x_lowerRight, float y_lowerRight);
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                          float x_upperLeft,  float y_upperLeft,
                                          float width,  float height);
@@ -267,19 +325,6 @@ namespace Cozmo {
       this->HandleStopSoundForRobotSignal(robotID);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::StopSoundForRobotSignal().ScopedSubscribe(cbStopSoundForRobotSignal));
-    
-    auto cbDeviceDetectedVisionMarkerSignal = [this](uint8_t engineID, uint32_t markerType,
-                                                     float x_upperLeft,  float y_upperLeft,
-                                                     float x_lowerLeft,  float y_lowerLeft,
-                                                     float x_upperRight, float y_upperRight,
-                                                     float x_lowerRight, float y_lowerRight) {
-      this->HandleDeviceDetectedVisionMarkerSignal(engineID, markerType,
-                                                   x_upperLeft,  y_upperLeft,
-                                                   x_lowerLeft,  y_lowerLeft,
-                                                   x_upperRight, y_upperRight,
-                                                   x_lowerRight, y_lowerRight);
-    };
-    _signalHandles.emplace_back( CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().ScopedSubscribe(cbDeviceDetectedVisionMarkerSignal));
     
     auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectID,
                                               float x_upperLeft,  float y_upperLeft,
@@ -570,29 +615,6 @@ namespace Cozmo {
 #   endif
   }
 
-  
-
-  void CozmoGameHostImpl::HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
-                                                                 float x_upperLeft,  float y_upperLeft,
-                                                                 float x_lowerLeft,  float y_lowerLeft,
-                                                                 float x_upperRight, float y_upperRight,
-                                                                 float x_lowerRight, float y_lowerRight)
-  {
-    // Notify the UI that the device camera saw a VisionMarker
-    MessageG2U_DeviceDetectedVisionMarker msg;
-    msg.markerType = markerType;
-    msg.x_upperLeft = x_upperLeft;
-    msg.y_upperLeft = y_upperLeft;
-    msg.x_lowerLeft = x_lowerLeft;
-    msg.y_lowerLeft = y_lowerLeft;
-    msg.x_upperRight = x_upperRight;
-    msg.y_upperRight = y_upperRight;
-    msg.x_lowerRight = x_lowerRight;
-    msg.y_lowerRight = y_lowerRight;
-    
-    // TODO: Look up which UI device to notify based on the robotID that saw the object
-    _uiMsgHandler.SendMessage(1, msg);
-  }
   
   void CozmoGameHostImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                                           float x_upperLeft,  float y_upperLeft,

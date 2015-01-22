@@ -127,7 +127,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   NSError *error = nil;
   self.targetingSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.targetingSoundURL error:&error];
   if (!error) {
-    self.targetingSoundPlayer.volume = 0.5;
+    self.targetingSoundPlayer.volume = 0.25;
     self.targetingSoundPlayer.delegate = self;
     self.targetingSoundPlayer.numberOfLoops = 0;
   }
@@ -137,7 +137,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.lockSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.lockSoundURL error:&error];
   if (!error) {
     self.lockSoundPlayer.delegate = nil;
-    self.lockSoundPlayer.volume = 0.5;
+    self.lockSoundPlayer.volume = 0.75;
     self.lockSoundPlayer.numberOfLoops = -1;
   }
   
@@ -403,8 +403,18 @@ const float SHOT_RELOAD_TIME = 0.5f;
   Vision::Image ankiImage(imageGrayROI);
   [self.cozmoEngineWrapper processDeviceImage:ankiImage];
   
-  // Once processing completes, check to see if we found a marker (this flag
-  // would be set by signals/messages from within the engine)
+  // TODO: get rid of this polling
+  NSArray* markers = [self.cozmoEngineWrapper getVisionMarkersDetectedByDevice];
+  if(markers) {
+    for(CozmoVisionMarkerBBox* marker in markers) {
+      [self processVisionMarker:marker];
+    }
+  }
+  
+  
+  // Once processing completes, check to see if we found a marker (this flag gets
+  // set by the calls to processVisionMarker() above.)
+  // TODO: set this flag by signals/messages from within the engine
   if(self.markerFound) {
 
     // If we found a marker, the crosshairs must be within it to be in "lock"

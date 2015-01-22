@@ -67,6 +67,8 @@
 -(void)processDeviceImage:(Anki::Vision::Image&)image;
 #endif
 
+-(NSArray*)getVisionMarkersDetectedByDevice;
+
 //-(BOOL) wasLastDeviceImageProcessed;
 
 @end
