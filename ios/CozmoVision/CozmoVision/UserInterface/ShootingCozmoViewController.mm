@@ -553,6 +553,10 @@ const float SHOT_RELOAD_TIME = 0.5f;
                                                       numLoops:0];
   
   if(self.gameRunning && self.targetLocked) {
+    
+    [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+    [self animateTargetHit];
+
     --self.points;
     self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
     if(self.points == 0) {
