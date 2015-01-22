@@ -7,25 +7,11 @@
 
 #include "anki/cozmo/game/signals/CozmoGameSignals.h"
 
-// Macro for creating signal defintion
-// e.g.
-// DEF_SIGNAL(CozmoEngineSignals, RobotConnect) creates
-//
-//  static CozmoEngineSignals::RobotConnectSignal _RobotConnectSignal;
-//  CozmoEngineSignals::RobotConnectSignal& CozmoEngineSignals::GetRobotConnectSignal() { return _RobotConnectSignal; }
-//
-#define DEF_SIGNAL(__CLASSNAME__,__SIGNAME__) \
-static __CLASSNAME__::__SIGNAME__##Signal _##__SIGNAME__##Signal; \
-__CLASSNAME__::__SIGNAME__##Signal& __CLASSNAME__::Get##__SIGNAME__##Signal() { return _##__SIGNAME__##Signal; } \
-
-
 namespace Anki {
   namespace Cozmo {
 
-    DEF_SIGNAL(CozmoGameSignals,ConnectToRobot)
-    DEF_SIGNAL(CozmoGameSignals,ConnectToUiDevice)
-    DEF_SIGNAL(CozmoGameSignals,UiDeviceAvailable)
-    DEF_SIGNAL(CozmoGameSignals,UiDeviceConnected)
+    #define SIGNAL_DEFINITION_MODE SIGNAL_CLASS_DEFINITION_MODE
+    #include "anki/cozmo/game/signals/cozmoGameSignals.def"
     
   } // namespace Cozmo
 } // namespace Anki

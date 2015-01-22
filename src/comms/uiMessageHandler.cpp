@@ -154,14 +154,14 @@ namespace Anki {
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToRobot const& msg)
     {
       // Tell the game to connect to a robot, using an event
-      CozmoGameSignals::GetConnectToRobotSignal().emit(msg.robotID);
+      CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
       return RESULT_OK;
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ConnectToUiDevice const& msg)
     {
       // Tell the game to connect to a UI device, using an event
-      CozmoGameSignals::GetConnectToUiDeviceSignal().emit(msg.deviceID);
+      CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
       return RESULT_OK;
     }
     
