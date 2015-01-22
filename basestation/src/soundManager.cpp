@@ -154,7 +154,7 @@ namespace Anki {
       
       if (system(NULL)) {
         _hasCmdProcessor = true;
-        SetRootDir("basestation/cozmo_sounds");
+        SetRootDir("");
       } else {
         PRINT_NAMED_WARNING("SoundManager.NoCmdProc","\n");
       }
@@ -170,7 +170,7 @@ namespace Anki {
     {
       _hasRootDir = false;
       
-      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Resource, dir));
+      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Sound, dir));
       
       // Check if directory exists
       struct stat info;

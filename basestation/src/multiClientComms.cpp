@@ -21,7 +21,7 @@
 
 // The number of bytes that can be sent out per call to Update(),
 // the assumption being Update() is called once per basestation tic.
-#define MAX_SENT_BYTES_PER_TIC 10000  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
+#define MAX_SENT_BYTES_PER_TIC 1000  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
 
 
 #define DEBUG_COMMS 0
@@ -447,6 +447,8 @@ namespace Cozmo {
         
         return true;
       }
+      printf("WARN: Connection attempt to device %d at %s:%d failed\n",
+             it->second.devInfo.id, it->second.devInfo.ip, it->second.devInfo.port);
     }
     
     return false;

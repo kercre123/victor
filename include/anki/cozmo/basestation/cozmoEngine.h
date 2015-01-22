@@ -62,15 +62,11 @@ namespace Cozmo {
     Result Init(const Json::Value& config);
     
     // Hook this up to whatever is ticking the game "heartbeat"
-    using Time = unsigned long long int;
-    Result Update(const Time currTime_sec);
+    Result Update(const float currTime_sec);
     
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
-    
-    bool WasLastDeviceImageProcessed();
-    
     
     // Get list of available robots
     //void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
@@ -89,11 +85,7 @@ namespace Cozmo {
     bool IsUiDeviceConnected(AdvertisingUiDevice whichDevice) const;
     */
     
-    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
-    
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
-    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) = 0;
     
   protected:
     
@@ -138,7 +130,6 @@ namespace Cozmo {
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     // TODO: Or promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
-    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) override;
     
   protected:
     CozmoEngineHostImpl* _hostImpl;
@@ -155,7 +146,6 @@ namespace Cozmo {
     virtual bool IsHost() const override { return false; }
     
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
-    virtual bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations) override;
     
   protected:
     CozmoEngineClientImpl* _clientImpl;

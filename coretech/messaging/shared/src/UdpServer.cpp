@@ -157,7 +157,11 @@ int UdpServer::Recv(char* data, int maxSize)
     DEBUG_UDP_SERVER("UdpServer: " << bytes_received << " bytes received : " << data);
 
     // Add client to list
-    AddClient(cliaddr);
+    if (AddClient(cliaddr) && bytes_received == 1) {
+      // If client was newly added, the first datagram (as long as it's only 1 byte long)
+      // is assumed to be a "connection packet".
+      return 0;
+    }
   }
 
   if(bytes_received > std::numeric_limits<int>::max()) {
@@ -176,21 +180,27 @@ int UdpServer::GetNumBytesAvailable()
 */
 
 
-void UdpServer::AddClient(struct sockaddr_in &c) 
+bool UdpServer::AddClient(struct sockaddr_in &c)
 {
   for (client_list_it it = client_list.begin(); it != client_list.end(); it++) {
     if ( memcmp(&(*it),&c, sizeof(c)) == 0) 
-      return;
+      return false;
   }
 
   DEBUG_UDP_SERVER("UdpServer: Adding client\n");
   client_list.push_back(c);
+  return true;
 }
 
 
 bool UdpServer::HasClient() 
 {
   return !client_list.empty();
+}
+
+void UdpServer::DisconnectClient()
+{
+  client_list.clear();
 }
 
 int UdpServer::GetNumClients()
