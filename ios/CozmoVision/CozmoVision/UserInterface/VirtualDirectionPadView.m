@@ -301,7 +301,6 @@
       self.lockoutTimer = DPAD_LOCKOUT_COUNT;
     }
   }
-  }
 }
 
 - (void)calculateWheelSpeeds:(CGPoint)point
