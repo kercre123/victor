@@ -36,8 +36,9 @@
 // Check if Direction Pad is active
 @property (readonly) BOOL    isActivelyControlling;
 
-
-
+// Decrements the lockout timer
+// (Call this every UI heartbeat)
+- (void)decrementLockoutTimer;
 
 
 @property (readonly) BOOL isDirty;  // Joystick vaule hadn't changed over threshold

@@ -22,4 +22,7 @@
 // Set limits
 - (void)setValueRange:(float)minValue
                      :(float)maxValue;
+// Decrements the lockout timer
+// (Call this every UI heartbeat)
+-(void)decrementLockoutTimer;
 @end

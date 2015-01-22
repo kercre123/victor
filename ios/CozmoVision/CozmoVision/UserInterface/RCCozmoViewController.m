@@ -204,6 +204,12 @@
     self.cozmoVisionImageView.image = updatedFrame;
   }
   
+  // Decrement the lockout timer on dpad, head, and lift
+  [self.dPadView decrementLockoutTimer];
+  [self.headSlider decrementLockoutTimer];
+  [self.liftSlider decrementLockoutTimer];
+  
+  
   static BOOL wasActivelyControlling = NO;
   if(self.dPadView.isActivelyControlling)
   {

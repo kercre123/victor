@@ -8,11 +8,15 @@
 
 #import "VirtualDirectionPadView.h"
 
+// The number of heartbeats that must pass before the next dpad
+// message can be sent. Prevents spamming in the event of a fast changing dpad input.
+#define DPAD_LOCKOUT_COUNT 1
 
 @interface VirtualDirectionPadView ()
 
 // Public properties
 @property (readwrite, nonatomic) BOOL isDirty;
+@property (readwrite, nonatomic) int lockoutTimer;
 
 @property (readwrite, nonatomic) CGFloat angleInDegrees;
 @property (readwrite, nonatomic) CGFloat magnitude;
@@ -70,6 +74,7 @@
 
 - (void)commonInit
 {
+  self.lockoutTimer = 0;
   self.backgroundColor = [UIColor clearColor];
   self.magnitudeRadius = kDefaultMagnitudeRadius;
   self.thumbPuckRadius = kDefaultPuckRadius;
@@ -233,6 +238,13 @@
 }
 
 
+-(void)decrementLockoutTimer
+{
+  if (self.lockoutTimer > 0)
+    self.lockoutTimer--;
+}
+
+
 - (void)clearDirtyFlag
 {
   // Clear flag set current point as last point
@@ -281,12 +293,14 @@
   CGFloat angleInRads = atan2f(-pointY, pointX);
   _angleInDegrees = angleInRads * oneEightyOverPi;
 
-  if (ABS(__previousAngle - _angleInDegrees) > _angleThreshold || ABS(__previousMagnitude - _magnitude) > _magnitudeThreshold) {
+  if (!self.lockoutTimer && (ABS(__previousAngle - _angleInDegrees) > _angleThreshold || ABS(__previousMagnitude - _magnitude) > _magnitudeThreshold)) {
     __previousAngle = _angleInDegrees;
     __previousMagnitude = _magnitude;
     if (self.joystickMovementAction) {
       self.joystickMovementAction(_angleInDegrees, _magnitude);
+      self.lockoutTimer = DPAD_LOCKOUT_COUNT;
     }
+  }
   }
 }
 

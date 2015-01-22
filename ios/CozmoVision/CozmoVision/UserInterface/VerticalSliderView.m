@@ -10,6 +10,11 @@
 
 #define kMinViewWidth       44.0
 #define kNoSliderValue      NAN
+
+// The number of heartbeats that must pass before the next slider
+// message can be sent. Prevents spamming in the event of a fast changing input.
+#define SLIDER_LOCKOUT_COUNT 1
+
 @interface VerticalSliderView ()
 
 @property (strong, nonatomic) UILabel* titleLabel;
@@ -18,6 +23,8 @@
 @property (assign, nonatomic) BOOL displayPercent;
 
 @property (assign, nonatomic) float _touchDownSliderValue;
+
+@property (readwrite, nonatomic) int lockoutTimer;
 
 @end
 
@@ -46,6 +53,7 @@
 
 - (void)commonInit
 {
+  self.lockoutTimer = 0;
   self.backgroundColor = [UIColor clearColor];
 
   self.titleLabel = [UILabel new];
@@ -143,9 +151,10 @@
 
 //  NSLog(@"handleSliderValueChange val %f dif %f threshold %s", sliderValue, diffVal, passedThreshold ? "Y" : "N" );
 
-  if (self.actionBlock && passedThreshold ) {
+  if (!self.lockoutTimer && self.actionBlock && passedThreshold ) {
     self.actionBlock(sliderValue);
     self._touchDownSliderValue = sliderValue;
+    self.lockoutTimer = SLIDER_LOCKOUT_COUNT;
   }
 }
 
@@ -180,6 +189,12 @@
   self.slider.maximumValue = maxValue;
   self.displayPercent = NO;
   [self setValue:fmax(minValue, fmin(maxValue, self.slider.value))];
+}
+
+- (void)decrementLockoutTimer
+{
+  if (self.lockoutTimer > 0)
+    self.lockoutTimer--;
 }
 
 @end
