@@ -40,7 +40,7 @@
   [super viewDidLoad];
 
   self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
-  self._operator = self.cozmoEngineWrapper.cozmoOperator;
+  self._operator = [CozmoOperator defaultOperator];
 
 
   // Setup UI
@@ -101,12 +101,12 @@
 {
   [super viewDidAppear:animated];
 
-  [self.cozmoEngineWrapper addListener:self];
+  [self.cozmoEngineWrapper addHeartbeatListener:self];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
 {
-  [self.cozmoEngineWrapper removeListener:self];
+  [self.cozmoEngineWrapper removeHeartbeatListener:self];
 
   [super viewWillDisappear:animated];
 }

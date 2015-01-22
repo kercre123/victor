@@ -45,10 +45,6 @@ namespace Cozmo {
     
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
-    
   protected:
 
     // Derived classes must be able to provide a pointer to a CozmoEngine
@@ -83,16 +79,7 @@ namespace Cozmo {
   {
     GetCozmoEngine()->ProcessDeviceImage(image);
   }
-  
-  bool CozmoGameImpl::WasLastDeviceImageProcessed()
-  {
-    return GetCozmoEngine()->WasLastDeviceImageProcessed();
-  }
-  
-  bool CozmoGameImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return GetCozmoEngine()->CheckDeviceVisionProcessingMailbox(msg);
-  }
+
   
 #pragma mark - CozmoGame Wrappers
   
@@ -119,21 +106,12 @@ namespace Cozmo {
     _impl->ProcessDeviceImage(image);
   }
   
-  bool CozmoGame::WasLastDeviceImageProcessed()
-  {
-    return _impl->WasLastDeviceImageProcessed();
-  }
-  
   CozmoGame::RunState CozmoGame::GetRunState() const
   {
     assert(_impl != nullptr);
     return _impl->GetRunState();
   }
   
-  bool CozmoGame::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return _impl->CheckDeviceVisionProcessingMailbox(msg);
-  }
   
 #pragma mark - CozmoGameHost Implementation
   
@@ -159,15 +137,18 @@ namespace Cozmo {
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     bool ConnectToRobot(AdvertisingRobot whichRobot);
     
+    int GetNumRobots() const;
+    
     // Tick with game heartbeat:
     void Update(const float currentTime_sec);
     
   protected:
     
     // Process raised events from CozmoEngine.
-    void HandleRobotConnectSignal(RobotID_t robotID, bool successful);
     void HandleRobotAvailableSignal(RobotID_t robotID);
     void HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID);
+    void HandleRobotConnectedSignal(RobotID_t robotID, bool successful);
+    void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
     void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
     void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
@@ -257,10 +238,15 @@ namespace Cozmo {
                 std::placeholders::_1)));
  */
     
-    auto cbRobotConnectSignal = [this](RobotID_t robotID, bool successful) {
-      this->HandleRobotConnectSignal(robotID, successful);
+    auto cbRobotConnectedSignal = [this](RobotID_t robotID, bool successful) {
+      this->HandleRobotConnectedSignal(robotID, successful);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetRobotConnectSignal().ScopedSubscribe(cbRobotConnectSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::GetRobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
+    
+    auto cbUiDeviceConnectedSignal = [this](UserDeviceID_t deviceID, bool successful) {
+      this->HandleUiDeviceConnectedSignal(deviceID, successful);
+    };
+    _signalHandles.emplace_back( CozmoGameSignals::GetUiDeviceConnectedSignal().ScopedSubscribe(cbUiDeviceConnectedSignal));
     
     auto cbRobotAvailableSignal = [this](RobotID_t robotID) {
       this->HandleRobotAvailableSignal(robotID);
@@ -270,7 +256,7 @@ namespace Cozmo {
     auto cbUiDeviceAvailableSignal = [this](UserDeviceID_t deviceID) {
       this->HandleUiDeviceAvailableSignal(deviceID);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetUiDeviceAvailableSignal().ScopedSubscribe(cbUiDeviceAvailableSignal));
+    _signalHandles.emplace_back( CozmoGameSignals::GetUiDeviceAvailableSignal().ScopedSubscribe(cbUiDeviceAvailableSignal));
     
     auto cbPlaySoundForRobotSignal = [this](RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume) {
       this->HandlePlaySoundForRobotSignal(robotID, soundID, numLoops, volume);
@@ -394,13 +380,18 @@ namespace Cozmo {
     if(success) {
       _connectedUiDevices.push_back(whichDevice);
     }
-    
+    CozmoGameSignals::GetUiDeviceConnectedSignal().emit(whichDevice, success);
     return success;
   }
 
   bool CozmoGameHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
     return _cozmoEngine.ConnectToRobot(whichRobot);
+  }
+  
+  int CozmoGameHostImpl::GetNumRobots() const
+  {
+    return _cozmoEngine.GetNumRobots();
   }
 
   void CozmoGameHostImpl::Update(const float currentTime_sec) {
@@ -449,7 +440,7 @@ namespace Cozmo {
               PRINT_NAMED_INFO("CozmoGameHostImpl.Update", "Automatically connected to local UI device %d!\n", device);
             }
           } else {
-            CozmoEngineSignals::GetUiDeviceAvailableSignal().emit(device);
+            CozmoGameSignals::GetUiDeviceAvailableSignal().emit(device);
           }
           /*
           MessageG2U_UiDeviceAvailable msg;
@@ -507,12 +498,6 @@ namespace Cozmo {
   ///////////////////////////////////////////////
   // Signal handlers
   ///////////////////////////////////////////////
-  void CozmoGameHostImpl::HandleRobotConnectSignal(RobotID_t robotID, bool successful)
-  {
-    // TODO
-    PRINT_NAMED_WARNING("CozmoGameHost.EmptyHandler.RobotConnectSignal","");
-  }
-
   
   void CozmoGameHostImpl::HandleRobotAvailableSignal(RobotID_t robotID) {
     
@@ -529,7 +514,22 @@ namespace Cozmo {
     msg.deviceID = deviceID;
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
+  
+  void CozmoGameHostImpl::HandleRobotConnectedSignal(RobotID_t robotID, bool successful)
+  {
+    MessageG2U_RobotConnected msg;
+    msg.robotID = robotID;
+    msg.successful = successful;
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
 
+  void CozmoGameHostImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
+  {
+    MessageG2U_UiDeviceConnected msg;
+    msg.deviceID = deviceID;
+    msg.successful = successful;
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
   
   void CozmoGameHostImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
   {
@@ -578,7 +578,20 @@ namespace Cozmo {
                                                                  float x_upperRight, float y_upperRight,
                                                                  float x_lowerRight, float y_lowerRight)
   {
-
+    // Notify the UI that the device camera saw a VisionMarker
+    MessageG2U_DeviceDetectedVisionMarker msg;
+    msg.markerType = markerType;
+    msg.x_upperLeft = x_upperLeft;
+    msg.y_upperLeft = y_upperLeft;
+    msg.x_lowerLeft = x_lowerLeft;
+    msg.y_lowerLeft = y_lowerLeft;
+    msg.x_upperRight = x_upperRight;
+    msg.y_upperRight = y_upperRight;
+    msg.x_lowerRight = x_lowerRight;
+    msg.y_lowerRight = y_lowerRight;
+    
+    // TODO: Look up which UI device to notify based on the robotID that saw the object
+    _uiMsgHandler.SendMessage(1, msg);
   }
   
   void CozmoGameHostImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
@@ -645,6 +658,10 @@ namespace Cozmo {
     _hostImpl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
   }
   
+  int CozmoGameHost::GetNumRobots() const
+  {
+    return _hostImpl->GetNumRobots();
+  }
   
   void CozmoGameHost::Update(const float currentTime_sec)
   {

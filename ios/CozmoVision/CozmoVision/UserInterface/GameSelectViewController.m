@@ -64,7 +64,7 @@
 {
   RobotAnimationSelectTableViewController *vc = [RobotAnimationSelectTableViewController new];
   [vc setDidSelectAnimationAction:^(NSString *name) {
-    [[[CozmoEngineWrapper defaultEngine] cozmoOperator] sendAnimationWithName:name];
+    [[CozmoOperator defaultOperator] sendAnimationWithName:name];
   }];
   [self.navigationController pushViewController:vc animated:YES];
 }

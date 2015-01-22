@@ -49,10 +49,10 @@
 
 // Listeners
 // CozmoeEngine Heartbeat
-- (void)addListener:(id<CozmoEngineHeartbeatListener>)listener;
-- (void)removeListener:(id<CozmoEngineHeartbeatListener>)listener;
+- (void)addHeartbeatListener:(id<CozmoEngineHeartbeatListener>)listener;
+- (void)removeHeartbeatListener:(id<CozmoEngineHeartbeatListener>)listener;
 
-@property (readonly) CozmoOperator *cozmoOperator;
+//@property (readonly) CozmoOperator *cozmoOperator;
 
 // Finite control
 - (BOOL)start:(BOOL)asHost;
@@ -63,12 +63,10 @@
 
 - (UIImage*)imageFrameWithRobotId:(uint8_t)robotId;
 
--(BOOL)checkDeviceVisionMailbox:(CGRect*)markerBBoxOut :(int*)markerTypeOut;
-
 #ifdef __cplusplus
 -(void)processDeviceImage:(Anki::Vision::Image&)image;
 #endif
 
--(BOOL) wasLastDeviceImageProcessed;
+//-(BOOL) wasLastDeviceImageProcessed;
 
 @end

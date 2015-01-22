@@ -8,12 +8,13 @@
 
 #import <UIKit/UIKit.h>
 @class CozmoEngineWrapper;
-
+@class CozmoOperator;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow* window;
 @property (strong, nonatomic) CozmoEngineWrapper* cozmoEngineWrapper;
+@property (strong, nonatomic) CozmoOperator*      cozmoOperator;
 
 
 @end

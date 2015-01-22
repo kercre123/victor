@@ -16,9 +16,10 @@
 #import <ifaddrs.h>
 #import <arpa/inet.h>
 
-@interface SettingsConnectionViewController () <UITextFieldDelegate>
+@interface SettingsConnectionViewController () <UITextFieldDelegate, CozmoRobotConnectedListener, CozmoUiDeviceConnectedListener>
 @property (weak, nonatomic) IBOutlet UILabel* engineStateLabel;
 
+@property (weak, nonatomic) CozmoOperator* cozmoOperator;
 
 @property (weak, nonatomic) IBOutlet UILabel *hostAddressLabel;
 @property (weak, nonatomic) IBOutlet UITextField* hostAddressTextField;
@@ -45,22 +46,40 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numRobotsSelector;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *numUiDevicesSelector;
 
+@property (strong, nonatomic) NSMutableSet* connectedRobotIDs;
+@property (strong, nonatomic) NSMutableSet* connectedDeviceIDs;
+
 @end
 
 @implementation SettingsConnectionViewController
+
+/*
+- (instancetype)init
+{
+  if (!(self = [super init]))
+    return self;
+ 
+  return self;
+}
+ */
+
+
 
 - (void)viewDidLoad {
   [super viewDidLoad];
   // Do any additional setup after loading the view.
 
   self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
-
+  
   // Setup TextField handling
   self._orderedTextFields = @[ self.hostAddressTextField, self.vizAddressTextField, self.engineHeartbeatRateTextField ];
 
   self.engineStartStopButton.layer.cornerRadius = 10.0;
   self.engineStartStopButton.layer.borderColor = [UIColor blackColor].CGColor;
   self.engineStartStopButton.layer.borderWidth = 2.0;
+  
+  self.connectedRobotIDs = [[NSMutableSet alloc] init];
+  self.connectedDeviceIDs = [[NSMutableSet alloc] init];
 
 //  [self.cameraResolutionSwitch setOn:[NSUserDefaults cameraIsHighResolution]];
   [self.cameraResolutionSwitch setOn:YES];
@@ -302,6 +321,26 @@
 }
 
 
+#pragma mark - Listener Methods
+
+- (void) robotConnectedWithID:(int)robotID
+{
+  [self.connectedRobotIDs addObject:[NSNumber numberWithInt:robotID]];
+  
+  if(self.connectedRobotIDs.count == self.numRobotsSelector.selectedSegmentIndex) {
+    self.numRobotsSelector.backgroundColor = [UIColor greenColor];
+  }
+}
+
+- (void) uiDeviceConnectedWithID:(int)deviceID
+{
+  [self.connectedDeviceIDs addObject:[NSNumber numberWithInt:deviceID]];
+  
+  if(self.connectedDeviceIDs.count == self.numUiDevicesSelector.selectedSegmentIndex) {
+    self.numUiDevicesSelector.backgroundColor = [UIColor greenColor];
+  }
+}
+
 #pragma mark - Handle Action Methods
 
 - (void)handleResignFirstResponderTapGesture:(UITapGestureRecognizer*)gesture
@@ -319,13 +358,36 @@
       BOOL isHost = self.asHostSwitch.isOn;
       
       [self updateBasestationConfig];
+      
+      // TODO: Need real way to choose device ID for comms
+      // For now, host will have ID=1, client will have ID=2
+      int uiDeviceID = (isHost ? 1 : 2);
+//      self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self.hostAddressTextField.text
+//                                                                   withDeviceID:uiDeviceID];
+      
+      [[CozmoOperator defaultOperator] registerToAvertisingServiceWithIPAddress:self.hostAddressTextField.text
+                                                                   withDeviceID:uiDeviceID];
+      
+      self.cozmoOperator = [CozmoOperator defaultOperator];
+      [self.cozmoOperator addRobotConnectedListener:self];
+      [self.cozmoOperator addUiDeviceConnectedListener:self];
+      
       [self.cozmoEngineWrapper start:isHost];
+      
+      [self.cozmoEngineWrapper addHeartbeatListener:self.cozmoOperator];
     }
       break;
 
     case CozmoEngineRunStateRunning:
     {
       [self.cozmoEngineWrapper stop];
+      
+      [self.cozmoOperator removeRobotConnectedListener:self];
+      [self.cozmoOperator removeUiDeviceConnectedListener:self];
+      
+      [self.connectedRobotIDs removeAllObjects];
+      self.numRobotsSelector.backgroundColor = [UIColor clearColor];
+      self.numUiDevicesSelector.backgroundColor = [UIColor clearColor];
     }
       break;
 
@@ -337,10 +399,12 @@
 
 - (IBAction)handleCameraResolutionSwitch:(UISwitch*)sender
 {
-//  [NSUserDefaults setCameraIsHighResolution:sender.isOn];
-  [self updateCameraResolutionLabel];
-  //[self.cozmoEngineWrapper.cozmoOperator sendCameraResolution:sender.isOn];
-  [self.cozmoEngineWrapper.cozmoOperator sendEnableRobotImageStreaming:sender.isOn];
+  if(self.cozmoEngineWrapper.runState == CozmoEngineRunStateRunning) {
+    //  [NSUserDefaults setCameraIsHighResolution:sender.isOn];
+    [self updateCameraResolutionLabel];
+    //[self.cozmoEngineWrapper.cozmoOperator sendCameraResolution:sender.isOn];
+    [self.cozmoOperator sendEnableRobotImageStreaming:sender.isOn];
+  }
 }
 
 - (IBAction)handleAsHostSwitch:(UISwitch *)sender {

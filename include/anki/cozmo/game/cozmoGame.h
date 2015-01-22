@@ -72,10 +72,6 @@ namespace Cozmo {
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
-    
   protected:
     
     CozmoGameImpl* _impl;
@@ -107,6 +103,9 @@ namespace Cozmo {
     void ForceAddRobot(int              robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
+    
+    // Return number of robots connected
+    int GetNumRobots() const;
     
     //bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     //bool ConnectToRobot(AdvertisingRobot whichRobot);

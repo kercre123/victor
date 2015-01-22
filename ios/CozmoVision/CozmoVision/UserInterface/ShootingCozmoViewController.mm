@@ -29,7 +29,7 @@
 #import "CozmoOperator.h"
 #import "CvVideoCameraReorient.h"
 #import "NSUserDefaults+UI.h"
-
+#import "CozmoVisionMarkerBBox.h"
 #import "VerticalSliderView.h"
 
 #endif
@@ -53,7 +53,9 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 @property (assign, nonatomic) Float32 markerIntensity;
 @property (assign, nonatomic) int markerType;
-@property (assign, nonatomic) Float32 markerSize;
+@property (assign, nonatomic) Float32 markerDistanceFromCenterSq;
+@property (assign, nonatomic) BOOL markerFound;
+@property (assign, nonatomic) CGRect marker;
 
 // Shooting game:
 @property (assign, nonatomic) BOOL gameRunning;
@@ -84,6 +86,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 - (void)playTargetingSound;
 - (void)resetGame;
+- (void)processVisionMarker:(CozmoVisionMarkerBBox*)marker;
 
 @end
 
@@ -96,7 +99,11 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.view.backgroundColor = [UIColor blackColor];
   
   self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
-  self.cozmoOperator      = [self.cozmoEngineWrapper cozmoOperator];
+  self.cozmoOperator      = [CozmoOperator defaultOperator];
+  
+  [self.cozmoOperator setHandleDeviceDetectedVisionMarker:^(CozmoVisionMarkerBBox* marker){
+    [self processVisionMarker:marker];
+  }];
 
   self.crosshairTopImageView.image = [self.crosshairTopImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
   self.crosshairTopImageView.tintColor = [UIColor redColor];
@@ -269,6 +276,36 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 #pragma mark - Protocol CvVideoCameraDelegate
 
+- (void) processVisionMarker:(CozmoVisionMarkerBBox *) currentMarker
+{
+  self.markerFound = YES;
+  
+  // Add targeting slop, if any
+  if(self.targetingSlopFactor > 1.f) {
+    const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
+    Float32 dx = CGRectGetWidth(currentMarker.boundingBox)*adjustment;
+    Float32 dy = CGRectGetHeight(currentMarker.boundingBox)*adjustment;
+    currentMarker.boundingBox = CGRectInset(currentMarker.boundingBox, -dx, -dy);
+  }
+  
+  // Distance of the targeting point (center of image) to the rectangle's border
+  const Float32 xCen = CGRectGetMidX(currentMarker.boundingBox);
+  const Float32 yCen = CGRectGetMidY(currentMarker.boundingBox);
+  const Float32 halfWidth = 0.5f*CGRectGetWidth(currentMarker.boundingBox);
+  const Float32 halfHeight = 0.5f*CGRectGetHeight(currentMarker.boundingBox);
+  const Float32 xDistance = fmaxf(0.f, fabsf(160.f-xCen) - halfWidth);
+  const Float32 yDistance = fmaxf(0.f, fabsf(120.f-yCen) - halfHeight);
+  const Float32 currentDistanceSq = xDistance*xDistance + yDistance*yDistance;
+  
+  // Keep the marker in view that's closest to center
+  if(currentDistanceSq < self.markerDistanceFromCenterSq) {
+    self.marker = currentMarker.boundingBox;
+    self.markerType = currentMarker.markerType; //msg.markerType;
+    self.markerDistanceFromCenterSq = currentDistanceSq;
+  }
+  
+}
+
 #ifdef __cplusplus
 - (void)processImage:(cv::Mat&)imageBGR
 {
@@ -320,8 +357,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
       
       if(markerInCrosshairs) {
         self.markerType = markerTypeOut; //msg.markerType;
-        self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
-        
+ 
         Float32 xDistance = CGRectGetMidX(marker) - 160.0;
         Float32 yDistance = CGRectGetMidY(marker) - 120.0;
         markerDistanceFromCenter = sqrt(xDistance * xDistance + yDistance * yDistance);
@@ -350,74 +386,39 @@ const float SHOT_RELOAD_TIME = 0.5f;
       }
     }
 
-    // Last image was processed (or this is the first call), so the engine
-    // is ready for a new image:
-    Vision::Image ankiImage(imageGrayROI);
-    [self.cozmoEngineWrapper processDeviceImage:ankiImage];
-
-  
   // Detection rectangle is red and label says "No Marker" unless we find a
   // vision marker below
-  Float32 markerDistanceFromCenterSq = 1000000.0;
-  BOOL markerFound = NO;
-  
+  self.markerDistanceFromCenterSq = 1000000.0;
+  self.markerFound = NO;
   self.markerType = Anki::Vision::MARKER_UNKNOWN;
-  
-  CGRect marker;
-  CGRect currentMarker;
-  int markerTypeOut;
-  
-  while(YES == [self.cozmoEngineWrapper checkDeviceVisionMailbox:&currentMarker
-                                                                :&markerTypeOut])
-  {
-    markerFound = YES;
-    
-    // Add targeting slop, if any
-    if(self.targetingSlopFactor > 1.f) {
-      const Float32 adjustment = (self.targetingSlopFactor - 1.f)*0.5f;
-      Float32 dx = CGRectGetWidth(currentMarker)*adjustment;
-      Float32 dy = CGRectGetHeight(currentMarker)*adjustment;
-      currentMarker = CGRectInset(currentMarker, -dx, -dy);
-    }
-     
-    // Distance of the targeting point (center of image) to the rectangle's border
-    const Float32 xCen = CGRectGetMidX(currentMarker);
-    const Float32 yCen = CGRectGetMidY(currentMarker);
-    const Float32 halfWidth = 0.5f*CGRectGetWidth(currentMarker);
-    const Float32 halfHeight = 0.5f*CGRectGetHeight(currentMarker);
-    const Float32 xDistance = fmaxf(0.f, fabsf(160.f-xCen) - halfWidth);
-    const Float32 yDistance = fmaxf(0.f, fabsf(120.f-yCen) - halfHeight);
-    const Float32 currentDistanceSq = xDistance*xDistance + yDistance*yDistance;
-    
-    // Keep the marker in view that's closest to center
-    if(currentDistanceSq < markerDistanceFromCenterSq) {
-      marker = currentMarker;
-      self.markerType = markerTypeOut; //msg.markerType;
-      self.markerSize = CGRectGetHeight(marker) * CGRectGetWidth(marker);
-      markerDistanceFromCenterSq = currentDistanceSq;
-    }
-  }
   
   // Use a bit hysteresis on the marker being found
   static int framesSinceMarkerFound = 0;
-  static Float32 lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+  static Float32 lastMarkerDistanceFromCenterSq = self.markerDistanceFromCenterSq;
   static BOOL wasTargetLocked = NO;
   const int numHysteresisFrames = 5;
+
+  // Process the image. The vision marker, if any, closest to center will be
+  // left in self.marker, thanks to signals/callbacks.
+  Vision::Image ankiImage(imageGrayROI);
+  [self.cozmoEngineWrapper processDeviceImage:ankiImage];
   
-  if(markerFound) {
+  // Once processing completes, check to see if we found a marker (this flag
+  // would be set by signals/messages from within the engine)
+  if(self.markerFound) {
 
     // If we found a marker, the crosshairs must be within it to be in "lock"
-    self.targetLocked = CGRectContainsPoint(marker, CGPointMake(160,120));
+    self.targetLocked = CGRectContainsPoint(self.marker, CGPointMake(160,120));
     
     if(self.useAudioTargeting == NO) {
       // For audio targeting, it is sufficient for the marker to be visible
       // at all in the image, but otherwise, the marker must also be in lock.
-      markerFound = self.targetLocked;
+      self.markerFound = self.targetLocked;
     }
     
     // Reset hysteresis stuff
     framesSinceMarkerFound = 0;
-    lastMarkerDistanceFromCenterSq = markerDistanceFromCenterSq;
+    lastMarkerDistanceFromCenterSq = self.markerDistanceFromCenterSq;
     wasTargetLocked = self.targetLocked;
     
   } else {
@@ -426,7 +427,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
     
     if(framesSinceMarkerFound > numHysteresisFrames) {
       // It's been long enough that we haven't seen a marker to consider it lost
-      markerFound = NO;
+      self.markerFound = NO;
       lastMarkerDistanceFromCenterSq = 100000.f;
       wasTargetLocked = NO;
       
@@ -435,9 +436,9 @@ const float SHOT_RELOAD_TIME = 0.5f;
     } else {
       // Still within the hysteresis, so pretend we're still seeing the marker
       // at the last known distance
-      markerFound = YES;
+      self.markerFound = YES;
       self.targetLocked = wasTargetLocked;
-      markerDistanceFromCenterSq = lastMarkerDistanceFromCenterSq;
+      self.markerDistanceFromCenterSq = lastMarkerDistanceFromCenterSq;
     }
   }
   
@@ -445,7 +446,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
     [self.lockSoundPlayer pause];
   }
   
-  [self updateCrosshairsWithMarkerDetected:markerFound distance:sqrt(markerDistanceFromCenterSq)];
+  [self updateCrosshairsWithMarkerDetected:self.markerFound distance:sqrt(self.markerDistanceFromCenterSq)];
   
   
 //}
@@ -536,7 +537,8 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
     // Get points based on size (if you hit a larger marker, you get fewer points
     // because it's easier)
-    self.points += pointsMultiplier*(1.0 - self.markerSize / (320*240));
+    Float32 markerSize = CGRectGetHeight(self.marker) * CGRectGetWidth(self.marker);
+    self.points += pointsMultiplier*(1.0 - markerSize / (320*240));
     self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
    */
@@ -551,6 +553,10 @@ const float SHOT_RELOAD_TIME = 0.5f;
                                                       numLoops:0];
   
   if(self.gameRunning && self.targetLocked) {
+    
+    [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+    [self animateTargetHit];
+
     --self.points;
     self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
     if(self.points == 0) {

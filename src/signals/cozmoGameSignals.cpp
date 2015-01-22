@@ -24,6 +24,8 @@ namespace Anki {
 
     DEF_SIGNAL(CozmoGameSignals,ConnectToRobot)
     DEF_SIGNAL(CozmoGameSignals,ConnectToUiDevice)
+    DEF_SIGNAL(CozmoGameSignals,UiDeviceAvailable)
+    DEF_SIGNAL(CozmoGameSignals,UiDeviceConnected)
     
   } // namespace Cozmo
 } // namespace Anki

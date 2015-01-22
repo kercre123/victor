@@ -7,6 +7,8 @@
 //
 // This Clas abstracts all the messages to drive and operate Cozmo's
 
+#import "AppDelegate.h"
+
 #import "CozmoOperator.h"
 #import "SoundCoordinator.h"
 
@@ -19,6 +21,9 @@ using namespace Anki;
 
 @interface CozmoOperator ()
 
+@property (strong, nonatomic) NSMutableArray* robotConnectedListeners;
+@property (strong, nonatomic) NSMutableArray* uiDeviceConnectedListeners;
+
 @end
 
 @implementation CozmoOperator
@@ -27,6 +32,7 @@ using namespace Anki;
   Cozmo::GameComms* _gameComms;
 }
 
+/*
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
                                          withDeviceID:(int)deviceID
 {
@@ -36,6 +42,7 @@ using namespace Anki;
 
   return instance;
 }
+ */
 
 - (instancetype)init
 {
@@ -47,6 +54,37 @@ using namespace Anki;
   return self;
 }
 
+- (void) cozmoEngineWrapperHeartbeat:(CozmoEngineWrapper *)cozmoEngine
+{
+  [self update];
+}
+
++ (instancetype)defaultOperator
+{
+  return ((AppDelegate*)[[UIApplication sharedApplication] delegate]).cozmoOperator;
+}
+
+#pragma mark - Game Message Listeners
+
+- (void)addRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener
+{
+  [self.robotConnectedListeners addObject:listener];
+}
+
+- (void)removeRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener
+{
+  [self.robotConnectedListeners removeObject:listener];
+}
+
+- (void)addUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener
+{
+  [self.uiDeviceConnectedListeners addObject:listener];
+}
+
+- (void)removeUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener
+{
+  [self.uiDeviceConnectedListeners removeObject:listener];
+}
 
 #pragma mark - Game Message Callbacks
 
@@ -80,29 +118,10 @@ using namespace Anki;
   [[SoundCoordinator defaultCoordinator] stop];
 }
 
-- (void) handleRobotObservedObjectWrapper:(const Cozmo::MessageG2U_RobotObservedObject&) msg
-{
-  if(self.handleRobotObservedObject) {
-    CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
-    
-    observation.objectID = msg.objectID;
-    observation.boundingBox = CGRectMake(msg.topLeft_x,
-                                         msg.topLeft_y,
-                                         msg.width,
-                                         msg.height);
-    
-    self.handleRobotObservedObject(observation);
-  }
-}
-
-
 - (void)commonInit
 {
-#ifdef __cplusplus
-  //_uiClient = new TcpClient();
-  
-#endif
-
+  self.robotConnectedListeners = [[NSMutableArray alloc] init];
+  self.uiDeviceConnectedListeners = [[NSMutableArray alloc] init];
 }
 
 - (void)dealloc
@@ -116,6 +135,7 @@ using namespace Anki;
     _gameMsgHandler = nil;
   }
   
+  [self.robotConnectedListeners removeAllObjects];
 }
 
 - (BOOL)isConnected
@@ -199,6 +219,36 @@ using namespace Anki;
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_RobotObservedObject(robotObservedObjectLamda);
   
+  auto deviceDetectedVisionMarkerLambda = [self](const Cozmo::MessageG2U_DeviceDetectedVisionMarker& msg) {
+    if(self.handleDeviceDetectedVisionMarker) {
+      CozmoVisionMarkerBBox* marker = [[CozmoVisionMarkerBBox alloc] init];
+      
+      marker.markerType = msg.markerType;
+      [marker setBoundingBoxFromCornersWithXupperLeft:msg.x_upperLeft  YupperLeft: msg.y_upperLeft
+                                           XlowerLeft:msg.x_lowerLeft  YlowerLeft: msg.y_lowerLeft
+                                          XupperRight:msg.x_upperRight YupperRight:msg.y_upperRight
+                                          XlowerRight:msg.x_lowerRight YlowerRight:msg.y_lowerRight];
+      
+      self.handleDeviceDetectedVisionMarker(marker);
+    }
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_DeviceDetectedVisionMarker(deviceDetectedVisionMarkerLambda);
+  
+  auto robotConnectedLambda = [self](const Cozmo::MessageG2U_RobotConnected& msg) {
+    NSNumber* robotID = [NSNumber numberWithInt:msg.robotID];
+    [self.robotConnectedListeners makeObjectsPerformSelector:@selector(robotConnectedWithID:) withObject:robotID];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotConnected(robotConnectedLambda);
+
+
+  auto uiDeviceConnectedLambda = [self](const Cozmo::MessageG2U_UiDeviceConnected& msg) {
+    NSNumber* deviceID = [NSNumber numberWithInt:msg.deviceID];
+    [self.uiDeviceConnectedListeners makeObjectsPerformSelector:@selector(uiDeviceConnectedWithID:) withObject:deviceID];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceConnected(uiDeviceConnectedLambda);
 }
 
 - (void)disconnectFromEngine
