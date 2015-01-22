@@ -13,6 +13,7 @@
 
 #include "ov2686.h"
 #include "ov2686_reg_script.h"
+#include "ov2686_code_timestamp.h"
 
 /*** Register definitions */
 
@@ -289,7 +290,7 @@ static int ov2686_set_format(struct v4l2_subdev *subdev,
                              struct v4l2_subdev_format *fmt) {
   struct ov2686_info * info = to_state(subdev);
 
-  printk(KERN_INFO "ov2686_set_format[15:02]\n");
+  printk(KERN_INFO "ov2686_set_format\n");
 
   if ((fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) && (info->streaming)) {
     printk(KERN_WARNING "ov2686 device busy\n");
@@ -512,7 +513,7 @@ static struct i2c_driver ov2686_driver = {
 };
 
 static __init int init_ov2686(void) {
-  printk(KERN_INFO "init_ov2686() called\n");
+  printk(KERN_INFO "ov2686() driver init. TS=" CODE_TIMESTAMP "\n");
   return i2c_add_driver(&ov2686_driver);
 }
 
