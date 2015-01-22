@@ -16,6 +16,8 @@ function parseLedCode_lightOnly()
     g_processingSize = [240,320];
     g_curImageIndex = 1;
     
+    saturationThreshold = 250; % Ignore pixels where any color is higher than this
+    
 %     templateQuad = [158,68; 158,97; 191,67; 192,98];
 %     templateRectangle = [min(templateQuad(:,1)), max(templateQuad(:,1)), min(templateQuad(:,2)), max(templateQuad(:,2))]; % [left, right, top, bottom]
     
@@ -26,7 +28,7 @@ function parseLedCode_lightOnly()
     images(:,:,:,1) = image;
     
     for i = 2:numImages
-        imshows(uint8(images(:,:,:,i-1)), 3);
+%         imshows(uint8(images(:,:,:,i-1)), 3);
         images(:,:,:,i) = getNextImage();
     end
     
@@ -35,50 +37,38 @@ function parseLedCode_lightOnly()
     
     blurredImages = imfilter(images, blurKernel);
     
-%     thresholdImage = mean(images, 4);
-
-%     minImage = min(images, [], 4);
-%     maxImage = max(images, [], 4);
-%     thresholdImage = (maxImage + minImage) / 2;
-    
     minImageBlurred = double(min(blurredImages, [], 4));
     maxImageBlurred = double(max(blurredImages, [], 4));
-    thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
+    %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
+    thresholdImageBlurred = minImageBlurred;
 
-%     diffImages = zeros(size(images));
-    diffImagesBlurred = zeros(size(images));
-%     diffImagesBlurred2 = zeros(size(images));
+    grayMaxImageBlurred = max(maxImageBlurred, [], 3);
+    saturatedInds = find(grayMaxImageBlurred > saturationThreshold);
+    unsaturatedInds = find(grayMaxImageBlurred <= saturationThreshold);
     
-%     binaryImages = zeros(size(images));
-%     thresholdFraction = 0.99;
-%     downsampleFactor = 2;
-%     maxSmoothingFraction = 0.025;
+    diffImagesBlurred = zeros(size(images), 'uint8');
 
     % Find the per-pixel difference from the threshold
+    colors = zeros(3, size(images,4));
     for iImage = 1:size(images,4)
         curBlurred = double(blurredImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
-        diffImagesBlurred(:,:,:,iImage) = curBlurred + 128;
         
-%         curBlurredSome = curBlurred;
-%         curBlurredSome(abs(curBlurredSome) < 5) = 0;
-        
-%         diffImagesBlurred2(:,:,:,iImage) = curBlurredSome + 128;
-        
-%         for iColor = 1:3
-%             binaryImages(:,:,iColor,iImage) = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, size(blurredImages,1), size(blurredImages,2), downsampleFactor, diffImagesBlurred(:,:,iColor,iImage), thresholdFraction, true, EmbeddedConversionsManager(), false, false);
-%         end
-        
-%         imshows(uint8(diffImage));
-%         pause();
-    end
+        for iChannel = 1:3
+            curChannelImage = curBlurred(:,:,iChannel);
+            colors(iChannel, iImage) = mean(curChannelImage(unsaturatedInds));
+            
+            curChannelImage(saturatedInds) = 0;
+            diffImagesBlurred(:,:,iChannel,iImage) = curChannelImage + 128;
+        end
+    end % for iImage = 1:size(images,4)
     
     % Find which pixels are mostly white (possible shadow on a white-light reflection)
 %     grayDiffImagesBlurred = repmat(mean(diffImagesBlurred, 3), [1,1,3,1]);
-    
 %     differenceFromGray = squeeze(mean(abs(diffImagesBlurred - grayDiffImagesBlurred), 3));
     
-    colors = squeeze(mean(mean(diffImagesBlurred(100:140,140:180,:,:))));
-%     plot(colors(3:-1:1,:)')
+    colorsWithSaturated = squeeze(mean(mean(diffImagesBlurred(100:140,140:180,:,:))));
+    
+    figure(); subplot(1,2,1); plot(colors(3:-1:1,:)'); subplot(1,2,2); plot(colorsWithSaturated(3:-1:1,:)');
     
     keyboard
     

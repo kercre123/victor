@@ -2,11 +2,11 @@
 
 function playVideo(images, pauseSeconds, loopForever)
     
-    if ~exist('pauseSeconds', 'var')
+    if ~exist('pauseSeconds', 'var') || isempty(pauseSeconds)
         pauseSeconds = 0.03;
     end
     
-    if ~exist('loopForever', 'var')
+    if ~exist('loopForever', 'var') || isempty(loopForever)
         loopForever = false;
     end
     
