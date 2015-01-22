@@ -32,7 +32,7 @@ if cap0.isOpened():
   print('Capture0 initialized')
 else:
   print('Capture0 initialization failure')
-  exit(1)
+  exit()
   pdb.set_trace()
 
 cap1 = cv2.VideoCapture(rightCameraId)
@@ -40,7 +40,7 @@ if cap1.isOpened():
   print('Capture1 initialized')
 else:
   print('Capture1 initialization failure')
-  exit(1)
+  exit()
   pdb.set_trace()
 
 for i in range(0,1):

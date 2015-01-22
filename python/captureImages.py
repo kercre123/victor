@@ -3,6 +3,7 @@ import cv2
 import pdb
 import os
 import sys
+from cameraControl import *
 
 def captureImages(cameraId, captureBaseFilename, saveColor, drawCrosshair):
   #cameraId = 0
@@ -16,8 +17,11 @@ def captureImages(cameraId, captureBaseFilename, saveColor, drawCrosshair):
       print('Capture0 initialized')
   else:
       print('Capture0 initialization failure')
-      exit(1)
+      exit()
       pdb.set_trace()
+
+  #validProperties = getProperties(cap0)
+  #print(validProperties)
 
   for i in range(0,10):
       ret, frame = cap0.read()

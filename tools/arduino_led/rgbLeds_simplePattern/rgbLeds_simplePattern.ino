@@ -23,8 +23,11 @@ void setDefaultTimings()
 
   for(int iLed=0; iLed<numLeds; iLed++) {
     ledOnMicroseconds[iLed] = totalPeriodMicroseconds / 2;
-    modulationOnMicroseconds[iLed] = 100;
+    modulationOnMicroseconds[iLed] = 60;
   }
+  
+  // Approximately red
+  modulationOnMicroseconds[0] = 250;
 } // void setDefaultTimings()
 
 // the setup function runs once when you press reset or power the board
@@ -70,7 +73,7 @@ void updateTimings()
       local_ledOnMicroseconds[iLed] = -1;
     }
     
-    // Example 1000000,1000,100,500000,100,500000,100,500000
+    // Example for approximately even RGB for one LED: 1000000,1000,250,1000000,60,1000000,60,1000000
     sscanf(buffer, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &local_totalPeriodMicroseconds, &local_modulationPeriodMicroseconds, &local_modulationOnMicroseconds[0], &local_ledOnMicroseconds[0], &local_modulationOnMicroseconds[1], &local_ledOnMicroseconds[1], &local_modulationOnMicroseconds[2], &local_ledOnMicroseconds[2], &local_modulationOnMicroseconds[3], &local_ledOnMicroseconds[3], &local_modulationOnMicroseconds[4], &local_ledOnMicroseconds[4], &local_modulationOnMicroseconds[5], &local_ledOnMicroseconds[5]);
     
     bool isValid = true;
