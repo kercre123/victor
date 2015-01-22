@@ -76,11 +76,10 @@ using namespace Anki;
 // Listeners
 // TODO: Make this a SET with weak references
 @property (strong, nonatomic) NSMutableArray* _heartbeatListeners;
+@property (strong, nonatomic) NSMutableArray* _robotConnectedListeners;
 
 
 @property (strong, nonatomic) NSDictionary *_connectedRobots;
-
-@property (strong, nonatomic) CozmoOperator *cozmoOperator;
 
 @end
 
@@ -224,12 +223,6 @@ using namespace Anki;
   // Put all the settings in the Json config file
   [self setupConfig];
   
-  // TODO: Need real way to choose device ID for comms
-  // For now, host will have ID=1, client will have ID=2
-  int uiDeviceID = (asHost ? 1 : 2);
-  self.cozmoOperator = [CozmoOperator operatorWithAdvertisingtHostIPAddress:self._hostAdvertisingIP
-                                                               withDeviceID:uiDeviceID];
-  
   if(_cozmoGame != nullptr) {
     delete _cozmoGame;
     _cozmoGame = nullptr;
@@ -293,7 +286,6 @@ using namespace Anki;
   // TODO: Set device camera calibration parameters in the config file
 }
 
-
 #pragma mark - Change engine run state
 
 - (void)resetHeartbeatTimer
@@ -314,8 +306,6 @@ using namespace Anki;
 
 - (void)stop
 {
-  self.cozmoOperator = nil;
-  
   self.runState = CozmoEngineRunStateNone;
   
   [self._heartbeatTimer invalidate];
@@ -344,9 +334,7 @@ using namespace Anki;
 
     _cozmoGame->Update(thisHeartbeatTimestamp);
     
-    [self.cozmoOperator update];
-  
-    // Call all listeners:
+    // Call all listeners (including operator):
     [self._heartbeatListeners makeObjectsPerformSelector:@selector(cozmoEngineWrapperHeartbeat:) withObject:self];
 
   }
@@ -355,15 +343,16 @@ using namespace Anki;
 
 #pragma mark - Listeners
 
-- (void)addListener:(id<CozmoEngineHeartbeatListener>)listener
+- (void)addHeartbeatListener:(id<CozmoEngineHeartbeatListener>)listener
 {
   [self._heartbeatListeners addObject:listener];
 }
 
-- (void)removeListener:(id<CozmoEngineHeartbeatListener>)listener
+- (void)removeHeartbeatListener:(id<CozmoEngineHeartbeatListener>)listener
 {
   [self._heartbeatListeners removeObject:listener];
 }
+
 
 
 #pragma mark - Public methods

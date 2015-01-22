@@ -10,8 +10,18 @@
 
 #import "CozmoObsObjectBBox.h"
 #import "CozmoVisionMarkerBBox.h"
+#import "CozmoEngineWrapperTypes.h"
 
-@interface CozmoOperator : NSObject
+// Listener protocols:
+@protocol CozmoRobotConnectedListener <NSObject>
+- (void)robotConnectedWithID:(int)robotID;
+@end
+@protocol CozmoUiDeviceConnectedListener <NSObject>
+- (void)uiDeviceConnectedWithID:(int)deviceID;
+@end
+
+
+@interface CozmoOperator : NSObject <CozmoEngineHeartbeatListener>
 
 @property (readonly) BOOL isConnected;
 
@@ -19,13 +29,22 @@
 @property (copy, nonatomic) void (^handleRobotObservedObject)(CozmoObsObjectBBox*);
 @property (copy, nonatomic) void (^handleDeviceDetectedVisionMarker)(CozmoVisionMarkerBBox*);
 
-+ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
-                                         withDeviceID:(int)deviceID;
++ (instancetype)defaultOperator;
+
+//+ (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
+//                                         withDeviceID:(int)deviceID;
 
 // Connection Methods
 - (void)registerToAvertisingServiceWithIPAddress:(NSString*)ipAddress
                                     withDeviceID:(int)deviceID;
 //- (void)disconnect;
+
+// Listeners for messages coming from the game
+- (void)addRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener;
+- (void)removeRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener;
+
+- (void)addUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener;
+- (void)removeUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener;
 
 
 - (void)update;

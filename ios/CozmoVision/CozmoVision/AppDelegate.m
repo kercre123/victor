@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "Foundation/Foundation.h"
 #import "CozmoEngineWrapper.h"
+#import "CozmoOperator.h"
 #import "NSUserDefaults+UI.h"
 
 @interface AppDelegate ()
@@ -21,6 +22,7 @@
   // Override point for customization after application launch.
 
   self.cozmoEngineWrapper = [CozmoEngineWrapper new];
+  self.cozmoOperator      = [CozmoOperator new];
 
   NSString* ipAddress = [NSUserDefaults lastHostAdvertisingIP];
   if (ipAddress) {

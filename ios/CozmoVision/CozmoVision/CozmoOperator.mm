@@ -7,6 +7,8 @@
 //
 // This Clas abstracts all the messages to drive and operate Cozmo's
 
+#import "AppDelegate.h"
+
 #import "CozmoOperator.h"
 #import "SoundCoordinator.h"
 
@@ -19,6 +21,9 @@ using namespace Anki;
 
 @interface CozmoOperator ()
 
+@property (strong, nonatomic) NSMutableArray* robotConnectedListeners;
+@property (strong, nonatomic) NSMutableArray* uiDeviceConnectedListeners;
+
 @end
 
 @implementation CozmoOperator
@@ -27,6 +32,7 @@ using namespace Anki;
   Cozmo::GameComms* _gameComms;
 }
 
+/*
 + (instancetype)operatorWithAdvertisingtHostIPAddress:(NSString*)address
                                          withDeviceID:(int)deviceID
 {
@@ -36,6 +42,7 @@ using namespace Anki;
 
   return instance;
 }
+ */
 
 - (instancetype)init
 {
@@ -47,6 +54,37 @@ using namespace Anki;
   return self;
 }
 
+- (void) cozmoEngineWrapperHeartbeat:(CozmoEngineWrapper *)cozmoEngine
+{
+  [self update];
+}
+
++ (instancetype)defaultOperator
+{
+  return ((AppDelegate*)[[UIApplication sharedApplication] delegate]).cozmoOperator;
+}
+
+#pragma mark - Game Message Listeners
+
+- (void)addRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener
+{
+  [self.robotConnectedListeners addObject:listener];
+}
+
+- (void)removeRobotConnectedListener:(id<CozmoRobotConnectedListener>)listener
+{
+  [self.robotConnectedListeners removeObject:listener];
+}
+
+- (void)addUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener
+{
+  [self.uiDeviceConnectedListeners addObject:listener];
+}
+
+- (void)removeUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener
+{
+  [self.uiDeviceConnectedListeners removeObject:listener];
+}
 
 #pragma mark - Game Message Callbacks
 
@@ -82,11 +120,8 @@ using namespace Anki;
 
 - (void)commonInit
 {
-#ifdef __cplusplus
-  //_uiClient = new TcpClient();
-  
-#endif
-
+  self.robotConnectedListeners = [[NSMutableArray alloc] init];
+  self.uiDeviceConnectedListeners = [[NSMutableArray alloc] init];
 }
 
 - (void)dealloc
@@ -100,6 +135,7 @@ using namespace Anki;
     _gameMsgHandler = nil;
   }
   
+  [self.robotConnectedListeners removeAllObjects];
 }
 
 - (BOOL)isConnected
@@ -198,6 +234,21 @@ using namespace Anki;
   };
   
   _gameMsgHandler->RegisterCallbackForMessageG2U_DeviceDetectedVisionMarker(deviceDetectedVisionMarkerLambda);
+  
+  auto robotConnectedLambda = [self](const Cozmo::MessageG2U_RobotConnected& msg) {
+    NSNumber* robotID = [NSNumber numberWithInt:msg.robotID];
+    [self.robotConnectedListeners makeObjectsPerformSelector:@selector(robotConnectedWithID:) withObject:robotID];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotConnected(robotConnectedLambda);
+
+
+  auto uiDeviceConnectedLambda = [self](const Cozmo::MessageG2U_UiDeviceConnected& msg) {
+    NSNumber* deviceID = [NSNumber numberWithInt:msg.deviceID];
+    [self.uiDeviceConnectedListeners makeObjectsPerformSelector:@selector(uiDeviceConnectedWithID:) withObject:deviceID];
+  };
+  
+  _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceConnected(uiDeviceConnectedLambda);
 }
 
 - (void)disconnectFromEngine

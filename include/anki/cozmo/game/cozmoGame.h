@@ -71,7 +71,7 @@ namespace Cozmo {
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
-        
+    
   protected:
     
     CozmoGameImpl* _impl;
@@ -103,6 +103,9 @@ namespace Cozmo {
     void ForceAddRobot(int              robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
+    
+    // Return number of robots connected
+    int GetNumRobots() const;
     
     //bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     //bool ConnectToRobot(AdvertisingRobot whichRobot);

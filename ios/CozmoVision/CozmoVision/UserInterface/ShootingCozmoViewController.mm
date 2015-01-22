@@ -86,8 +86,6 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 - (void)playTargetingSound;
 - (void)resetGame;
-
-@property (strong, nonatomic) NSMutableArray* detectedMarkers;
 - (void)processVisionMarker:(CozmoVisionMarkerBBox*)marker;
 
 @end
@@ -101,7 +99,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.view.backgroundColor = [UIColor blackColor];
   
   self.cozmoEngineWrapper = [CozmoEngineWrapper defaultEngine];
-  self.cozmoOperator      = [self.cozmoEngineWrapper cozmoOperator];
+  self.cozmoOperator      = [CozmoOperator defaultOperator];
   
   [self.cozmoOperator setHandleDeviceDetectedVisionMarker:^(CozmoVisionMarkerBBox* marker){
     [self processVisionMarker:marker];

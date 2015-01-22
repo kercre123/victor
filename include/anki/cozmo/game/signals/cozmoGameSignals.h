@@ -44,6 +44,13 @@ namespace Anki {
     
       // Tell game host to connect to a UI device
       DECL_SIGNAL(ConnectToUiDevice, UserDeviceID_t deviceID)
+      
+      // Signal that a UI device is available for connection
+      DECL_SIGNAL(UiDeviceAvailable, UserDeviceID_t deviceID)
+      
+      // Signal that a UI device actually connected
+      DECL_SIGNAL(UiDeviceConnected, UserDeviceID_t deviceID, bool successful)
+      
     };
     
   } // namespace Cozmo
