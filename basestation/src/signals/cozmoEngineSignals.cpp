@@ -25,9 +25,8 @@ __CLASSNAME__::__SIGNAME__##Signal& __CLASSNAME__::Get##__SIGNAME__##Signal() { 
 namespace Anki {
   namespace Cozmo {
 
-    DEF_SIGNAL(CozmoEngineSignals,RobotConnect)
+    DEF_SIGNAL(CozmoEngineSignals,RobotConnected)
     DEF_SIGNAL(CozmoEngineSignals,RobotAvailable)
-    DEF_SIGNAL(CozmoEngineSignals,UiDeviceAvailable)
     
     DEF_SIGNAL(CozmoEngineSignals,PlaySoundForRobot)
     DEF_SIGNAL(CozmoEngineSignals,StopSoundForRobot)

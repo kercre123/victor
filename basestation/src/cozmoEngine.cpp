@@ -176,7 +176,7 @@ namespace Cozmo {
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
-    CozmoEngineSignals::GetRobotConnectSignal().emit(whichRobot, success);
+    CozmoEngineSignals::GetRobotConnectedSignal().emit(whichRobot, success);
     
     return success;
   }
