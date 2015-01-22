@@ -1183,7 +1183,7 @@
       "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
       "relTime_ms" : 750, 
       "transitionIn" :  100,
-      "transitionOut" : 50,
+      "transitionOut" : 0,
       "height_mm"     : "HIGH_DOCK"
     }, 
     {
@@ -1206,7 +1206,7 @@
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle",
       "relTime_ms" : 600, 
       "transitionIn" : 100,
-      "transitionOut" : 50,
+      "transitionOut" : 0,
       "angle_deg"     : 0, 
       "variability_deg" : 0
     }, 
@@ -1268,7 +1268,7 @@
       "Name" : "MessageAddAnimKeyFrame_SetLiftHeight",
       "relTime_ms" : 500, 
       "transitionIn" :  100,
-      "transitionOut" : 50,
+      "transitionOut" : 0,
       "height_mm"     : "HIGH_DOCK"
     }, 
     {
@@ -1291,7 +1291,7 @@
       "Name" : "MessageAddAnimKeyFrame_SetHeadAngle",
       "relTime_ms" : 600, 
       "transitionIn" : 100,
-      "transitionOut" : 50,
+      "transitionOut" : 0,
       "angle_deg"     : 0, 
       "variability_deg" : 0
     }, 

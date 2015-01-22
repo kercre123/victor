@@ -26,7 +26,7 @@ namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
-      const s32 MAX_CANNED_ANIMATIONS = 16;
+      const s32 MAX_CANNED_ANIMATIONS = 20;
       
       Result Init();
       
