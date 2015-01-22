@@ -127,7 +127,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   NSError *error = nil;
   self.targetingSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.targetingSoundURL error:&error];
   if (!error) {
-    self.targetingSoundPlayer.volume = 0.5;
+    self.targetingSoundPlayer.volume = 0.25;
     self.targetingSoundPlayer.delegate = self;
     self.targetingSoundPlayer.numberOfLoops = 0;
   }
@@ -137,7 +137,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.lockSoundPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:self.lockSoundURL error:&error];
   if (!error) {
     self.lockSoundPlayer.delegate = nil;
-    self.lockSoundPlayer.volume = 0.5;
+    self.lockSoundPlayer.volume = 0.75;
     self.lockSoundPlayer.numberOfLoops = -1;
   }
   
