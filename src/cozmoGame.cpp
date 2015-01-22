@@ -461,7 +461,7 @@ namespace Cozmo {
     
       case CozmoGameHost::WAITING_FOR_ROBOTS:
       {
-        Result status = _cozmoEngine.Update(SEC_TO_NANOS(currentTime_sec));
+        Result status = _cozmoEngine.Update(currentTime_sec);
         if (status != RESULT_OK) {
           PRINT_NAMED_WARNING("CozmoGameHostImpl.Update","Bad engine update: status = %d\n", status);
         }
@@ -481,7 +481,7 @@ namespace Cozmo {
         
       case CozmoGameHost::ENGINE_RUNNING:
       {
-        Result status = _cozmoEngine.Update(SEC_TO_NANOS(currentTime_sec));
+        Result status = _cozmoEngine.Update(currentTime_sec);
         if (status != RESULT_OK) {
           PRINT_NAMED_WARNING("CozmoGameHostImpl.Update","Bad engine update: status = %d\n", status);
         }
