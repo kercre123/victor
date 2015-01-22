@@ -186,17 +186,17 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
 
   printk(KERN_INFO "ov2686_s_stream %d\n", enable);
 
+  client = v4l2_get_subdevdata(subdev);
+
   if (info->power_count == 0) {
-    printk(KERN_INFO "\tpower count (%d) invalid\n", info->power_count);
-    return -EINVAL;
+    printk(KERN_WARNING "ov2686_s_stream called with power count = %d\n", info->power_count);
   }
   if (enable == 0) {
-    // TODO Do something to disable streaming
     info->streaming = 0;
+    ret = ov2686_reg_write(client, 0x0100, 0x00); // Software standby
   }
   else {
     printk(KERN_INFO "\tSending register script to OV2686\n");
-    client = v4l2_get_subdevdata(subdev);
     for (r=0; r<REG_SCRIPT_LEN; r++) {
       ret = ov2686_reg_write(client, REG_SCRIPT[r].reg, REG_SCRIPT[r].val);
       if (ret < 0) return ret;
@@ -268,13 +268,18 @@ static int ov2686_get_format(struct v4l2_subdev *subdev,
   switch (fmt->which) {
     case V4L2_SUBDEV_FORMAT_TRY:
       fmt->format = *v4l2_subdev_get_try_format(fh, fmt->pad);
+      printk(KERN_INFO "\tTry format\n");
       break;
     case V4L2_SUBDEV_FORMAT_ACTIVE:
       fmt->format = FORMATS[0]; // Only one format supported TODO unstub this if nessisary
+      printk(KERN_INFO "\tActive format\n");
       break;
     default:
+      printk(KERN_WARNING "ov2686_get_format invalid\n");
       return -EINVAL;
   }
+
+  printk(KERN_INFO "ov2686 format: %dx%d code=%x colorspace=%x field=%x\n", fmt->format.width, fmt->format.height, fmt->format.code, fmt->format.colorspace, fmt->format.field);
 
   return 0;
 }
@@ -284,9 +289,10 @@ static int ov2686_set_format(struct v4l2_subdev *subdev,
                              struct v4l2_subdev_format *fmt) {
   struct ov2686_info * info = to_state(subdev);
 
-  printk(KERN_INFO "ov2686_set_format\n");
+  printk(KERN_INFO "ov2686_set_format[15:02]\n");
 
   if ((fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) && (info->streaming)) {
+    printk(KERN_WARNING "ov2686 device busy\n");
     return -EBUSY;
   }
 
