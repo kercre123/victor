@@ -497,7 +497,7 @@ namespace Anki {
         }
       
         // Only downsample if normal capture res is QVGA
-        if (imageSendMode_ != ISM_OFF && captureResolution_ == Vision::CAMERA_RES_QVGA) {
+        if (captureResolution_ == Vision::CAMERA_RES_QVGA) {
           
           // Time to send frame?
           static u8 streamFrameCnt = 0;
@@ -557,11 +557,6 @@ namespace Anki {
                 HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
               }
             }
-          }
-
-          // Turn off image sending if sending single image only.
-          if (imageSendMode_ == ISM_SINGLE_SHOT) {
-            imageSendMode_ = ISM_OFF;
           }
         }
       }
@@ -2583,11 +2578,19 @@ namespace Anki {
           
           //SetImageSendMode(ISM_STREAM, captureResolution_);
           
+          
+          if (imageSendMode_ != ISM_OFF) {
+
 #if USE_COMPRESSION_FOR_SENDING_IMAGES
           CompressAndSendImage(grayscaleImage);
 #else
           DownsampleAndSendImage(grayscaleImage);
 #endif
+            // Turn off image sending if sending single image only.
+            if (imageSendMode_ == ISM_SINGLE_SHOT) {
+              imageSendMode_ = ISM_OFF;
+            }
+          }
           
           //PRINT("Sent image to basestation.\n");
           
