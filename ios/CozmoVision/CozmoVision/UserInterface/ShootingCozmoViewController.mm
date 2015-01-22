@@ -403,8 +403,18 @@ const float SHOT_RELOAD_TIME = 0.5f;
   Vision::Image ankiImage(imageGrayROI);
   [self.cozmoEngineWrapper processDeviceImage:ankiImage];
   
-  // Once processing completes, check to see if we found a marker (this flag
-  // would be set by signals/messages from within the engine)
+  // TODO: get rid of this polling
+  NSArray* markers = [self.cozmoEngineWrapper getVisionMarkersDetectedByDevice];
+  if(markers) {
+    for(CozmoVisionMarkerBBox* marker in markers) {
+      [self processVisionMarker:marker];
+    }
+  }
+  
+  
+  // Once processing completes, check to see if we found a marker (this flag gets
+  // set by the calls to processVisionMarker() above.)
+  // TODO: set this flag by signals/messages from within the engine
   if(self.markerFound) {
 
     // If we found a marker, the crosshairs must be within it to be in "lock"

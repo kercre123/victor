@@ -407,6 +407,31 @@ using namespace Anki;
   _cozmoGame->ProcessDeviceImage(image);
 }
 
+-(NSArray*)getVisionMarkersDetectedByDevice
+{
+  const std::vector<Anki::Cozmo::MessageG2U_DeviceDetectedVisionMarker>& markers = _cozmoGame->GetVisionMarkersDetectedByDevice();
+  
+  if(!markers.empty()) {
+    
+    NSMutableArray* mutableArray = [[NSMutableArray alloc] init];
+    
+    for(auto & marker : markers) {
+      CozmoVisionMarkerBBox* visMarkerBBox = [[CozmoVisionMarkerBBox alloc] init];
+      visMarkerBBox.markerType = marker.markerType;
+      [visMarkerBBox setBoundingBoxFromCornersWithXupperLeft:marker.x_upperLeft YupperLeft:marker.y_upperLeft
+                                                  XlowerLeft:marker.x_lowerLeft YlowerLeft:marker.y_lowerLeft
+                                                 XupperRight:marker.x_upperRight YupperRight:marker.y_upperRight
+                                                 XlowerRight:marker.x_lowerRight YlowerRight:marker.y_lowerRight];
+      [mutableArray addObject:visMarkerBBox];
+    }
+    
+    return mutableArray;
+  } else {
+    return nil;
+  }
+  
+}
+
 /*
 - (BOOL) wasLastDeviceImageProcessed
 {
