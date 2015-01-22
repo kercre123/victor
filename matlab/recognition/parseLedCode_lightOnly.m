@@ -10,8 +10,8 @@ function parseLedCode_lightOnly()
     numImages = 30;
     g_cameraType = 'offline'; % 'webots', 'usbcam', 'offline'
     
-    g_filenamePattern = '~/Documents/Anki/products-cozmo-large-files/blinkyImages9/image_%d.png';
-    g_whichImages = 0:99;
+    g_filenamePattern = 'c:/tmp/red_%05d.png';
+    g_whichImages = 1:100;
     
     g_processingSize = [240,320];
     g_curImageIndex = 1;
@@ -22,11 +22,11 @@ function parseLedCode_lightOnly()
     image = getNextImage();
     
     % 1. Capture N images
-    images = zeros([size(image), numImages]);
+    images = zeros([size(image), numImages], 'uint8');
     images(:,:,:,1) = image;
     
     for i = 2:numImages
-        imshow(uint8(images(:,:,:,i-1)));
+        imshows(uint8(images(:,:,:,i-1)), 3);
         images(:,:,:,i) = getNextImage();
     end
     
@@ -41,13 +41,13 @@ function parseLedCode_lightOnly()
 %     maxImage = max(images, [], 4);
 %     thresholdImage = (maxImage + minImage) / 2;
     
-    minImageBlurred = min(blurredImages, [], 4);
-    maxImageBlurred = max(blurredImages, [], 4);
+    minImageBlurred = double(min(blurredImages, [], 4));
+    maxImageBlurred = double(max(blurredImages, [], 4));
     thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
 
 %     diffImages = zeros(size(images));
     diffImagesBlurred = zeros(size(images));
-    diffImagesBlurred2 = zeros(size(images));
+%     diffImagesBlurred2 = zeros(size(images));
     
 %     binaryImages = zeros(size(images));
 %     thresholdFraction = 0.99;
@@ -56,13 +56,13 @@ function parseLedCode_lightOnly()
 
     % Find the per-pixel difference from the threshold
     for iImage = 1:size(images,4)
-        curBlurred = blurredImages(:,:,:,iImage)/2 - thresholdImageBlurred/2;
+        curBlurred = double(blurredImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
         diffImagesBlurred(:,:,:,iImage) = curBlurred + 128;
         
-        curBlurredSome = curBlurred;
-        curBlurredSome(abs(curBlurredSome) < 5) = 0;
+%         curBlurredSome = curBlurred;
+%         curBlurredSome(abs(curBlurredSome) < 5) = 0;
         
-        diffImagesBlurred2(:,:,:,iImage) = curBlurredSome + 128;
+%         diffImagesBlurred2(:,:,:,iImage) = curBlurredSome + 128;
         
 %         for iColor = 1:3
 %             binaryImages(:,:,iColor,iImage) = simpleDetector_step1_computeCharacteristicScale(maxSmoothingFraction, size(blurredImages,1), size(blurredImages,2), downsampleFactor, diffImagesBlurred(:,:,iColor,iImage), thresholdFraction, true, EmbeddedConversionsManager(), false, false);
@@ -73,10 +73,12 @@ function parseLedCode_lightOnly()
     end
     
     % Find which pixels are mostly white (possible shadow on a white-light reflection)
-    grayDiffImagesBlurred = repmat(mean(diffImagesBlurred, 3), [1,1,3,1]);
+%     grayDiffImagesBlurred = repmat(mean(diffImagesBlurred, 3), [1,1,3,1]);
     
-    differenceFromGray = squeeze(mean(abs(diffImagesBlurred - grayDiffImagesBlurred), 3));
+%     differenceFromGray = squeeze(mean(abs(diffImagesBlurred - grayDiffImagesBlurred), 3));
     
+    colors = squeeze(mean(mean(diffImagesBlurred(100:140,140:180,:,:))));
+%     plot(colors(3:-1:1,:)')
     
     keyboard
     
