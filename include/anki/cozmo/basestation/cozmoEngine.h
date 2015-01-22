@@ -69,9 +69,6 @@ namespace Cozmo {
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
-    
     // Get list of available robots
     //void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
 
@@ -88,9 +85,6 @@ namespace Cozmo {
     bool IsRobotConnected(AdvertisingRobot whichRobot) const;
     bool IsUiDeviceConnected(AdvertisingUiDevice whichDevice) const;
     */
-    
-    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
     

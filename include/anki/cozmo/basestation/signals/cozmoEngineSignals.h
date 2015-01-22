@@ -43,11 +43,8 @@ namespace Anki {
       
     public:
 
-      //DECL_SIGNAL(RobotConnect, RobotID_t robotID, bool successful)
-      DECL_SIGNAL(RobotConnect, RobotID_t robotID, bool successful)
+      DECL_SIGNAL(RobotConnected, RobotID_t robotID, bool successful)
       DECL_SIGNAL(RobotAvailable, RobotID_t robotID)
-      DECL_SIGNAL(UiDeviceAvailable, UserDeviceID_t deviceID)
-      
       
       // Robot signals
       DECL_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)

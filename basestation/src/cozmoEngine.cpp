@@ -51,8 +51,6 @@ namespace Cozmo {
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
     using AdvertisingRobot    = CozmoEngine::AdvertisingRobot;
     //using AdvertisingUiDevice = CozmoEngine::AdvertisingUiDevice;
     
@@ -60,8 +58,6 @@ namespace Cozmo {
     
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
-    // TODO: Remove this in favor of it being handled via messages instead of direct API polling
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
   protected:
   
@@ -180,7 +176,7 @@ namespace Cozmo {
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
-    CozmoEngineSignals::GetRobotConnectSignal().emit(whichRobot, success);
+    CozmoEngineSignals::GetRobotConnectedSignal().emit(whichRobot, success);
     
     return success;
   }
@@ -221,7 +217,6 @@ namespace Cozmo {
 #   else
     _deviceVisionThread.Update(image, bogusState);
     
-    /*
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
@@ -231,18 +226,8 @@ namespace Cozmo {
                                                                      msg.x_imgUpperRight, msg.y_imgUpperRight,
                                                                      msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
-     */
+    
 #   endif
-  }
-  
-  bool CozmoEngineImpl::WasLastDeviceImageProcessed()
-  {
-    return _deviceVisionThread.WasLastImageProcessed();
-  }
-  
-  bool CozmoEngineImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return _deviceVisionThread.CheckMailbox(msg);
   }
   
   
@@ -285,14 +270,6 @@ namespace Cozmo {
   
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
-  }
-  
-  bool CozmoEngine::WasLastDeviceImageProcessed() {
-    return _impl->WasLastDeviceImageProcessed();
-  }
-  
-  bool CozmoEngine::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg) {
-    return _impl->CheckDeviceVisionProcessingMailbox(msg);
   }
   
 #if 0
