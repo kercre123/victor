@@ -253,7 +253,7 @@ namespace Cozmo {
     return _impl->Init(config);
   }
   
-  Result CozmoEngine::Update(const Time currTime_sec) {
+  Result CozmoEngine::Update(const float currTime_sec) {
     return _impl->Update(SEC_TO_NANOS(currTime_sec));
   }
   

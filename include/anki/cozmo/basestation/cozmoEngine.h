@@ -62,8 +62,7 @@ namespace Cozmo {
     Result Init(const Json::Value& config);
     
     // Hook this up to whatever is ticking the game "heartbeat"
-    using Time = unsigned long long int;
-    Result Update(const Time currTime_sec);
+    Result Update(const float currTime_sec);
     
     // Provide an image from the device's camera for processing with the engine's
     // DeviceVisionProcessor
