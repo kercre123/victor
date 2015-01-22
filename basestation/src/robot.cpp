@@ -531,7 +531,7 @@ namespace Anki {
           _msgHandler->SendMessage(_ID, faceDetection);
           
           // Signal the detection of a face
-          CozmoEngineSignals::GetRobotObservedFaceSignal().emit(GetID(),
+          CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
                                                                 faceDetection.x_upperLeft,
                                                                 faceDetection.y_upperLeft,
                                                                 faceDetection.width,
@@ -864,14 +864,14 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::GetPlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
+      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::GetStopSoundForRobotSignal().emit(GetID());
+      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
     } // StopSound()
       
       

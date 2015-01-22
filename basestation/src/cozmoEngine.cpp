@@ -176,7 +176,7 @@ namespace Cozmo {
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
-    CozmoEngineSignals::GetRobotConnectedSignal().emit(whichRobot, success);
+    CozmoEngineSignals::RobotConnectedSignal().emit(whichRobot, success);
     
     return success;
   }
@@ -194,7 +194,7 @@ namespace Cozmo {
     std::vector<int> advertisingRobots;
     _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
     for(auto & robot : advertisingRobots) {
-      CozmoEngineSignals::GetRobotAvailableSignal().emit(robot);
+      CozmoEngineSignals::RobotAvailableSignal().emit(robot);
     }
   
     // TODO: Handle images coming from connected robots
@@ -220,7 +220,7 @@ namespace Cozmo {
     MessageVisionMarker msg;
     while(_deviceVisionThread.CheckMailbox(msg)) {
       // Pass marker detections along to UI/game for use
-      CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
+      CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
                                                                      msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
                                                                      msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
                                                                      msg.x_imgUpperRight, msg.y_imgUpperRight,

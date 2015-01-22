@@ -52,7 +52,7 @@
 #if SIGNAL_DEFINITION_MODE == SIGNAL_CLASS_DECLARATION_MODE
 
 #define DEF_SIGNAL(__SIGNAME__, ...) \
-static Signal::Signal<void (__VA_ARGS__)>& Get##__SIGNAME__##Signal();
+static Signal::Signal<void (__VA_ARGS__)>& __SIGNAME__##Signal();
 
 
 // Macro for creating signal defintion
@@ -67,7 +67,7 @@ static Signal::Signal<void (__VA_ARGS__)>& Get##__SIGNAME__##Signal();
 
 #define DEF_SIGNAL(__SIGNAME__, ...) \
 static Signal::Signal<void (__VA_ARGS__)> _##__SIGNAME__##Signal; \
-Signal::Signal<void (__VA_ARGS__)>& SIGNAL_CLASS_NAME::Get##__SIGNAME__##Signal() { return _##__SIGNAME__##Signal; } \
+Signal::Signal<void (__VA_ARGS__)>& SIGNAL_CLASS_NAME::__SIGNAME__##Signal() { return _##__SIGNAME__##Signal; } \
 
 
 //
