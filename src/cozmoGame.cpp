@@ -241,32 +241,32 @@ namespace Cozmo {
     auto cbRobotConnectedSignal = [this](RobotID_t robotID, bool successful) {
       this->HandleRobotConnectedSignal(robotID, successful);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetRobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
     
     auto cbUiDeviceConnectedSignal = [this](UserDeviceID_t deviceID, bool successful) {
       this->HandleUiDeviceConnectedSignal(deviceID, successful);
     };
-    _signalHandles.emplace_back( CozmoGameSignals::GetUiDeviceConnectedSignal().ScopedSubscribe(cbUiDeviceConnectedSignal));
+    _signalHandles.emplace_back( CozmoGameSignals::UiDeviceConnectedSignal().ScopedSubscribe(cbUiDeviceConnectedSignal));
     
     auto cbRobotAvailableSignal = [this](RobotID_t robotID) {
       this->HandleRobotAvailableSignal(robotID);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetRobotAvailableSignal().ScopedSubscribe(cbRobotAvailableSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotAvailableSignal().ScopedSubscribe(cbRobotAvailableSignal));
     
     auto cbUiDeviceAvailableSignal = [this](UserDeviceID_t deviceID) {
       this->HandleUiDeviceAvailableSignal(deviceID);
     };
-    _signalHandles.emplace_back( CozmoGameSignals::GetUiDeviceAvailableSignal().ScopedSubscribe(cbUiDeviceAvailableSignal));
+    _signalHandles.emplace_back( CozmoGameSignals::UiDeviceAvailableSignal().ScopedSubscribe(cbUiDeviceAvailableSignal));
     
     auto cbPlaySoundForRobotSignal = [this](RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume) {
       this->HandlePlaySoundForRobotSignal(robotID, soundID, numLoops, volume);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetPlaySoundForRobotSignal().ScopedSubscribe(cbPlaySoundForRobotSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::PlaySoundForRobotSignal().ScopedSubscribe(cbPlaySoundForRobotSignal));
 
     auto cbStopSoundForRobotSignal = [this](RobotID_t robotID) {
       this->HandleStopSoundForRobotSignal(robotID);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetStopSoundForRobotSignal().ScopedSubscribe(cbStopSoundForRobotSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::StopSoundForRobotSignal().ScopedSubscribe(cbStopSoundForRobotSignal));
     
     auto cbDeviceDetectedVisionMarkerSignal = [this](uint8_t engineID, uint32_t markerType,
                                                      float x_upperLeft,  float y_upperLeft,
@@ -279,25 +279,25 @@ namespace Cozmo {
                                                    x_upperRight, y_upperRight,
                                                    x_lowerRight, y_lowerRight);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().ScopedSubscribe(cbDeviceDetectedVisionMarkerSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().ScopedSubscribe(cbDeviceDetectedVisionMarkerSignal));
     
     auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectID,
                                               float x_upperLeft,  float y_upperLeft,
                                               float width,  float height) {
       this->HandleRobotObservedObjectSignal(robotID, objectID, x_upperLeft, y_upperLeft, width, height);
     };
-    _signalHandles.emplace_back( CozmoEngineSignals::GetRobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
 
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
       this->HandleConnectToRobotSignal(robotID);
     };
-    _signalHandles.emplace_back( CozmoGameSignals::GetConnectToRobotSignal().ScopedSubscribe(cbConnectToRobotSignal));
+    _signalHandles.emplace_back( CozmoGameSignals::ConnectToRobotSignal().ScopedSubscribe(cbConnectToRobotSignal));
 
     auto cbConnectToUiDeviceSignal = [this](UserDeviceID_t deviceID) {
       this->HandleConnectToUiDeviceSignal(deviceID);
     };
-    _signalHandles.emplace_back( CozmoGameSignals::GetConnectToUiDeviceSignal().ScopedSubscribe(cbConnectToUiDeviceSignal));
+    _signalHandles.emplace_back( CozmoGameSignals::ConnectToUiDeviceSignal().ScopedSubscribe(cbConnectToUiDeviceSignal));
 
     
     
@@ -380,7 +380,7 @@ namespace Cozmo {
     if(success) {
       _connectedUiDevices.push_back(whichDevice);
     }
-    CozmoGameSignals::GetUiDeviceConnectedSignal().emit(whichDevice, success);
+    CozmoGameSignals::UiDeviceConnectedSignal().emit(whichDevice, success);
     return success;
   }
 
@@ -440,7 +440,7 @@ namespace Cozmo {
               PRINT_NAMED_INFO("CozmoGameHostImpl.Update", "Automatically connected to local UI device %d!\n", device);
             }
           } else {
-            CozmoGameSignals::GetUiDeviceAvailableSignal().emit(device);
+            CozmoGameSignals::UiDeviceAvailableSignal().emit(device);
           }
           /*
           MessageG2U_UiDeviceAvailable msg;
