@@ -1,43 +1,32 @@
 
 function parseLedCode_dutyCycle()
-    
-    global g_cameraType;
-    global g_filenamePattern;
-    global g_whichImages;
-    global g_processingSize;
-    global g_curImageIndex;
-    
     numImages = 15;
-    g_cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
+    cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
     
-    g_filenamePattern = '~/Documents/Anki/product-cozmo-large-files/blinkyImages10/red_%05d.png';
-    g_whichImages = 1:100;
+    filenamePattern = '~/Documents/Anki/product-cozmo-large-files/blinkyImages10/red_%05d.png';
+    whichImages = 1:100;
     
-    g_processingSize = [120,160];
-    g_curImageIndex = 1;
+    processingSize = [120,160];
+    curImageIndex = 1;
     
-    centerPoint = ceil(g_processingSize / 2);
+    centerPoint = ceil(processingSize / 2);
     
     expectedFps = 30;
     
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
-%     templateQuad = [158,68; 158,97; 191,67; 192,98];
-%     lightRectangle = [min(templateQuad(:,1)), max(templateQuad(:,1)), min(templateQuad(:,2)), max(templateQuad(:,2))]; % [left, right, top, bottom]
-    lightRectangle = round([140,180, 100,140] * (g_processingSize(1) / 240));
-    carRectangle = round([100,220, 60,180] * (g_processingSize(1) / 240));
+    lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
+    carRectangle = round([100,220, 60,180] * (processingSize(1) / 240));
     
-%     image = getNextImage();
-    
-    image = getNextImage();
+    [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
 
     % 1. Capture N images
-    images = zeros([g_processingSize, 3, numImages], 'uint8');
+    images = zeros([processingSize, 3, numImages], 'uint8');
     images(:,:,:,1) = image;
     
     tic
     for i = 1:numImages
-        curImage = getNextImage();
+        [curImage, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
         images(:,:,:,i) = curImage;
         
         curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
@@ -96,10 +85,6 @@ function parseLedCode_dutyCycle()
 %     
 %         [warpedImages(:,:,:,iImage), ~, ~] = warpProjective(images(:,:,:,iImage), inv(translationHomographies{iImage}), size(curImage));
 %     end
-    
-%     return
-
-%     keyboard
 
     colorPatches = blurredImages(lightRectangle(3):lightRectangle(4),lightRectangle(1):lightRectangle(2),:,:);
     
@@ -132,10 +117,6 @@ function parseLedCode_dutyCycle()
     figure(3); plot(colorsHsv(3:-1:1,:)');
     pause(0.05);
     
-%     colorsWithSaturated = squeeze(mean(mean(diffImagesBlurred)));
-    
-%     figure(); subplot(1,2,1); plot(colors(3:-1:1,:)'); subplot(1,2,2); plot(colorsWithSaturated(3:-1:1,:)');
-    
 %     keyboard
     
 end % function parseLedCode_lightOnly()
@@ -147,15 +128,12 @@ function [colors, colorsHsv] = extractColors(colorImages, saturationThreshold)
     thresholdImageBlurred = minImageBlurred;
 
     grayMaxImageBlurred = max(maxImageBlurred, [], 3);
-%     saturatedInds = (grayMaxImageBlurred > saturationThreshold);
     unsaturatedInds = (grayMaxImageBlurred <= saturationThreshold);
-    
-%     diffImagesBlurred = zeros(size(blurredColorPatches), 'uint8');
-
+   
     % Find the per-pixel difference from the threshold
     colors = zeros(3, size(colorImages,4));
     colorsHsv = zeros(3, size(colorImages,4));
-%     numMax = zeros(3,1);
+    
     for iImage = 1:size(colorImages,4)
         curBlurred = double(colorImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
         curBlurredHsv = rgb2hsv(curBlurred);
@@ -166,48 +144,29 @@ function [colors, colorsHsv] = extractColors(colorImages, saturationThreshold)
             
             curChannelImageHsv = curBlurredHsv(:,:,iChannel);
             colorsHsv(iChannel, iImage) = mean(curChannelImageHsv(unsaturatedInds));
-            
-%             curChannelImage(saturatedInds) = 0;
-%             diffImagesBlurred(:,:,iChannel,iImage) = curChannelImage + 128; 
         end
     end % for iImage = 1:size(colorImages,4)
 end % function colors = extractColors()
     
-function image = getNextImage()
-    global g_cameraType;
-    global g_filenamePattern;
-    global g_whichImages;
-    global g_processingSize;
-    global g_curImageIndex;
-    persistent cap;
-    
-    if strcmpi(g_cameraType, 'webots')
+function [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex)
+    if strcmpi(cameraType, 'webots')
         image = webotsCameraCapture();
-    elseif strcmpi(g_cameraType, 'usbcam')
-        persistent usbcamStarted; %#ok<TLEV>
+    elseif strcmpi(cameraType, 'usbcam')
+        persistent cap; %#ok<TLEV>
         
         cameraId = 0;
-        
-        if isempty(usbcamStarted)
-            usbcamStarted = false;
-        end
-        
-        if ~usbcamStarted
+       
+        if isempty(cap)
             cap = cv.VideoCapture(cameraId);
-            usbcamStarted = true;
-            cap.set('framewidth', g_processingSize(2));
-            cap.set('frameheight', g_processingSize(1));
+            cap.set('framewidth', processingSize(2));
+            cap.set('frameheight', processingSize(1));
             cap.set('whitebalanceblueu', 4000);
-            
-%             for i = 1:5
-%                 cap.read();
-%             end
         end
         
         image = cap.read();
-    elseif strcmpi(g_cameraType, 'offline')
-        image = imresize((imread(sprintf(g_filenamePattern, g_whichImages(g_curImageIndex)))), g_processingSize);
-        g_curImageIndex = g_curImageIndex + 1;
+    elseif strcmpi(cameraType, 'offline')
+        image = imresize((imread(sprintf(filenamePattern, whichImages(curImageIndex)))), processingSize);
+        curImageIndex = curImageIndex + 1;
     else
         assert(false);
     end
