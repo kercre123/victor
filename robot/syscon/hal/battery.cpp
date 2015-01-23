@@ -6,17 +6,17 @@
 
 namespace
 {
-  // Updated to 2.1
-  const u8 PIN_V_SENSE = 2;
-  const u8 PIN_I_SENSE = 0;
-  const u8 ANALOG_V_SENSE = ADC_CONFIG_PSEL_AnalogInput2;
-  // XXX - Broken in 2.1 - not valid
-  const u8 ANALOG_I_SENSE = ADC_CONFIG_PSEL_AnalogInput2;
+  // Updated to 3.0
+  // XXX: No distinction 
+  const u8 PIN_V_SENSE = 26;
+  const u8 PIN_I_SENSE = 6;
+  const u8 ANALOG_V_SENSE = ADC_CONFIG_PSEL_AnalogInput0;
+  const u8 ANALOG_I_SENSE = ADC_CONFIG_PSEL_AnalogInput7;
   
-  const u8 PIN_CHARGE_S1 = 25;
+  const u8 PIN_CHARGE_S1 = 9;
   //const u8 PIN_CHARGE_S2 = 14;
-  const u8 PIN_CHARGE_HC = 23;
-  const u8 PIN_CHARGE_EN = 24;
+  const u8 PIN_CHARGE_HC = 29;
+  const u8 PIN_CHARGE_EN = 5;
   
   const u8 ANALOG_PINS[2] =
   {
@@ -89,17 +89,17 @@ void BatteryUpdate()
 void PowerInit()
 {
   // Syscon power - this should always be on until battery fail
-  const u8 PIN_VDD_EN = 0;             // 2.1.xx MODLEVEL moved VDD to 0 from 26
+  const u8 PIN_VDD_EN = 3;             // 3.0
   nrf_gpio_pin_set(PIN_VDD_EN);        // On
   nrf_gpio_cfg_output(PIN_VDD_EN);
   
   // Motor and headboard power
-  const u8 PIN_VBATs_EN = 29;
+  const u8 PIN_VBATs_EN = 12;
   nrf_gpio_pin_clear(PIN_VBATs_EN);    // Off
   nrf_gpio_cfg_output(PIN_VBATs_EN);
   
   // Encoder and headboard power
-  const u8 PIN_VDDs_EN = 22;
+  const u8 PIN_VDDs_EN = 8;
   nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
   nrf_gpio_cfg_output(PIN_VDDs_EN);
   

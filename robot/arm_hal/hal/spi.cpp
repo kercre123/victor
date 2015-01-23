@@ -27,25 +27,25 @@ namespace Anki
       
       #define BAUDRATE 350000
 
-      #define RCC_GPIO        RCC_AHB1Periph_GPIOD
-      #define RCC_DMA         RCC_AHB1Periph_DMA1
-      #define RCC_UART        RCC_APB1Periph_USART2
-      #define GPIO_AF         GPIO_AF_USART2
-      #define UART            USART2
+      #define RCC_GPIO        RCC_AHB1Periph_GPIOA
+      #define RCC_DMA         RCC_AHB1Periph_DMA2
+      #define RCC_UART        RCC_APB2Periph_USART6
+      #define GPIO_AF         GPIO_AF_USART6
+      #define UART            USART6
 
-      #define DMA_STREAM_RX   DMA1_Stream5
-      #define DMA_CHANNEL_RX  DMA_Channel_4
-      #define DMA_FLAG_RX     DMA_FLAG_TCIF5    // Stream 5
-      #define DMA_IRQ_RX      DMA1_Stream5_IRQn
-      #define DMA_HANDLER_RX  DMA1_Stream5_IRQHandler
+      #define DMA_STREAM_RX   DMA2_Stream1
+      #define DMA_CHANNEL_RX  DMA_Channel_5
+      #define DMA_FLAG_RX     DMA_FLAG_TCIF1    // Stream 1
+      #define DMA_IRQ_RX      DMA2_Stream1_IRQn
+      #define DMA_HANDLER_RX  DMA2_Stream1_IRQHandler
 
-      #define DMA_STREAM_TX   DMA1_Stream6
-      #define DMA_CHANNEL_TX  DMA_Channel_4
+      #define DMA_STREAM_TX   DMA2_Stream6
+      #define DMA_CHANNEL_TX  DMA_Channel_5
       #define DMA_FLAG_TX     DMA_FLAG_TCIF6    // Stream 6
-      #define DMA_IRQ_TX      DMA1_Stream6_IRQn
-      #define DMA_HANDLER_TX  DMA1_Stream6_IRQHandler
+      #define DMA_IRQ_TX      DMA2_Stream6_IRQn
+      #define DMA_HANDLER_TX  DMA2_Stream6_IRQHandler
       
-      GPIO_PIN_SOURCE(TRX, GPIOD, 5);
+      GPIO_PIN_SOURCE(TRX, GPIOA, 11);
 
       void PrintCrap()
       {
@@ -63,7 +63,7 @@ namespace Anki
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
-        RCC_APB1PeriphClockCmd(RCC_UART, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_UART, ENABLE);
         
         // Configure the pins for UART in AF mode
         GPIO_InitTypeDef GPIO_InitStructure;
@@ -233,7 +233,7 @@ void DMA_HANDLER_RX(void)
   {
     if (++s_failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
     {
-      NVIC_SystemReset();
+      //NVIC_SystemReset();
     }
   }
   

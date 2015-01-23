@@ -4,18 +4,20 @@
 
 #define BAUDRATE 2000000
 
-#define RCC_GPIO        RCC_AHB1Periph_GPIOC
-#define RCC_DMA         RCC_AHB1Periph_DMA1
-#define RCC_UART        RCC_APB1Periph_UART4
-#define GPIO_AF         GPIO_AF_UART4
-#define UART            UART4
+#define RCC_GPIO        RCC_AHB1Periph_GPIOB
+#define RCC_DMA         RCC_AHB1Periph_DMA2
+#define RCC_UART        RCC_APB2Periph_USART1
+#define GPIO_AF         GPIO_AF_USART1
+#define UART            USART1
 
-#define DMA_STREAM_RX   DMA1_Stream2
+#define DMA_STREAM_RX   DMA2_Stream5
 #define DMA_CHANNEL_RX  DMA_Channel_4
 
-#define DMA_STREAM_TX   DMA1_Stream4
+#define DMA_STREAM_TX   DMA2_Stream7
 #define DMA_CHANNEL_TX  DMA_Channel_4
-#define DMA_IRQ_TX      DMA1_Stream4_IRQn
+#define DMA_IRQ_TX      DMA2_Stream7_IRQn
+#define DMA_FLAG_TX     DMA_FLAG_TCIF7    // Stream 7
+#define DMA_HANDLER_TX  DMA2_Stream7_IRQHandler
 
 namespace Anki
 {
@@ -43,9 +45,9 @@ namespace Anki
       s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
       
       // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 1024 * 4;
+      int BUFFER_WRITE_SIZE = 1024 * 4;
       int BUFFER_READ_SIZE = 1024;
-      OFFCHIP u8 m_bufferWrite[1024 * 1024 * 4];
+      OFFCHIP u8 m_bufferWrite[1024 * 4];
       OFFCHIP u8 m_bufferRead[1024];
       
       static void UARTStartTransfer()
@@ -83,21 +85,21 @@ namespace Anki
 
       void UARTConfigure()
       {
-        // Supporting 2.1
-        GPIO_PIN_SOURCE(TX, GPIOC, 10);
-        GPIO_PIN_SOURCE(RX, GPIOC, 11);
+        // Supporting 3.0
+        GPIO_PIN_SOURCE(TX, GPIOB, 6);
+        GPIO_PIN_SOURCE(RX, GPIOB, 7);
         
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
-        RCC_APB1PeriphClockCmd(RCC_UART, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_UART, ENABLE);
         
         // Configure the pins for UART in AF mode
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = PIN_TX;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;  // XXX - why not OD to interface with 3V3 PropPlug?
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIO_TX, &GPIO_InitStructure);
         
@@ -187,11 +189,7 @@ namespace Anki
       
       void UARTInit()
       {
-        // Try to configure wifi
-        if (WifiInit())   // On success, return
-          return;
-        
-        // Otherwise, configure the UART - and light up purple to indicate UART
+        // Configure the UART - and light up purple to indicate UART
         SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
         UARTConfigure();
       }
@@ -352,12 +350,12 @@ int std::fgetc(FILE* f)
 extern "C"
 {
   // Used for UART transfer-complete
-  void DMA1_Stream4_IRQHandler()
+  void DMA_HANDLER_TX()
   {
     using namespace Anki::Cozmo::HAL;
     
     // Clear DMA Transfer Complete flag
-    DMA_ClearFlag(DMA1_Stream4, DMA_FLAG_TCIF4);
+    DMA_ClearFlag(DMA_STREAM_TX, DMA_FLAG_TCIF7); // Stream 7
     
     m_writeTail += m_writeLength;
     if (m_writeTail >= sizeof(m_bufferWrite))

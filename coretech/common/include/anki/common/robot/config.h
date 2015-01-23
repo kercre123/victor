@@ -18,7 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 //
 
 // Section directives to allocate memory in specific places
-#ifdef ROBOT_HARDWARE  // STM32F4 version
+#ifdef STM32F429_439xx  // Early version with external memory
 // NOTE: If you don't define a location, read-only will go to IROM, and read-write will go to RW_IRAM2 (Core-coupled memory)
 #define OFFCHIP __attribute__((section("OFFCHIP")))
 #define ONCHIP __attribute__((section("ONCHIP")))
