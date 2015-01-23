@@ -459,7 +459,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../../lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${SRCROOT}/../../lib/anki/cozmo-engine/resources\" \"${SRCROOT}/../../../products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
+			shellScript = "\"${SRCROOT}/../../lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${SRCROOT}/../../lib/anki/cozmo-engine/resources\" \"${SRCROOT}/../../lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 

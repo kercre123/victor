@@ -58,7 +58,7 @@ set(COZMO_GAME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 # This sets the root path for the PlatformPathManager when not on iOS
 if (NOT SYSTEM_ROOT_PATH_DEFINED)
-  add_definitions(-DSYSTEM_ROOT_PATH=${PROJECT_SOURCE_DIR})
+  add_definitions(-DSYSTEM_ROOT_PATH=${COZMO_ENGINE_DIR})
   set(SYSTEM_ROOT_PATH_DEFINED 1)
 endif(NOT SYSTEM_ROOT_PATH_DEFINED)
 
