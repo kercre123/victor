@@ -3,6 +3,12 @@ if(APPLE)
   # Defines
   add_definitions(-DSIMULATOR)
 
+  # Copy protos from cozmo-engine to protos
+  file(COPY ${COZMO_ENGINE_DIR}/simulator/protos/
+       DESTINATION ${PROJECT_SOURCE_DIR}/simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
+       FILE_PERMISSIONS OWNER_READ GROUP_READ
+  )
+
   # TODO: Get this from an environment variable?
   set(WEBOTS_APP_DIR /Applications/Webots)
   set(WEBOTS_CPP_INCLUDE_DIR ${WEBOTS_APP_DIR}/include/controller/cpp)

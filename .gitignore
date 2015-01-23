@@ -9,6 +9,7 @@ matlab.mat
 
 # Webots
 *.wbproj
+simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
 
 # Mac OS
 *.DS_Store
