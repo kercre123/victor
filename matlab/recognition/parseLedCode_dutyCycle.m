@@ -13,7 +13,7 @@ function parseLedCode_dutyCycle()
     g_filenamePattern = '~/Documents/Anki/product-cozmo-large-files/blinkyImages10/red_%05d.png';
     g_whichImages = 1:100;
     
-    g_processingSize = [240,320];
+    g_processingSize = [120,160];
     g_curImageIndex = 1;
     
     expectedFps = 30;
@@ -22,7 +22,7 @@ function parseLedCode_dutyCycle()
     
 %     templateQuad = [158,68; 158,97; 191,67; 192,98];
 %     templateRectangle = [min(templateQuad(:,1)), max(templateQuad(:,1)), min(templateQuad(:,2)), max(templateQuad(:,2))]; % [left, right, top, bottom]
-    templateRectangle = [140,180, 100,140];
+    templateRectangle = round([140,180, 100,140] * (g_processingSize(1) / 240));
 
 %     image = getNextImage();
     
@@ -34,8 +34,8 @@ function parseLedCode_dutyCycle()
     
     tic
     for i = 1:numImages
-%         imshows(uint8(images(:,:,:,i-1)), 3);
         images(:,:,:,i) = getNextImage();
+        figure(2); imshow(uint8(images(:,:,:,i)));
     end
     timeElapsed = toc();
     
@@ -100,7 +100,7 @@ function parseLedCode_dutyCycle()
     
     disp(sprintf('%s is at %0.2f', colorNames{maxInd}, numImages*percentPositive));
     
-    plot(colors(3:-1:1,:)');
+    figure(1); plot(colors(3:-1:1,:)');
     pause(0.05);
     
 %     colorsWithSaturated = squeeze(mean(mean(diffImagesBlurred)));
@@ -133,9 +133,16 @@ function image = getNextImage()
         if ~usbcamStarted
             cap = cv.VideoCapture(cameraId);
             usbcamStarted = true;
+            cap.set('framewidth', g_processingSize(2));
+            cap.set('frameheight', g_processingSize(1));
+            cap.set('whitebalanceblueu', 4000);
+            
+%             for i = 1:5
+%                 cap.read();
+%             end
         end
         
-        image = imresize((cap.read()), g_processingSize);
+        image = cap.read();
     elseif strcmpi(g_cameraType, 'offline')
         image = imresize((imread(sprintf(g_filenamePattern, g_whichImages(g_curImageIndex)))), g_processingSize);
         g_curImageIndex = g_curImageIndex + 1;
