@@ -7,7 +7,7 @@ function playVideo(images, pauseSeconds, loopForever)
     end
     
     if ~exist('loopForever', 'var') || isempty(loopForever)
-        loopForever = false;
+        loopForever = true;
     end
     
     while true

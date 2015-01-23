@@ -8,7 +8,7 @@ Modulate LED based on input from serial communication
 const int numLeds = 3;
 const int ledPins[numLeds] = {31, 33, 35};
 
-const int modulationPeriodMicroseconds = 1000;
+const int modulationPeriodMicroseconds = 2000;
 const int modulationOnMicroseconds[numLeds] = {250, 60, 60}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
 
 const int microsecondsPerFrame = 33333;
@@ -39,7 +39,7 @@ void setup()
 void updateTimings()
 {
   if(Serial.available()) {
-    const int bufferLength = 128;
+    const int bufferLength = 32;
     char buffer[bufferLength];
 
     int local_whichLed = -1;
