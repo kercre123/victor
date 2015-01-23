@@ -426,7 +426,7 @@ using namespace Anki;
 - (void)sendLiftCommandWithHeightRatio:(float)height
 {
   // TODO: Fix acceleration & max speed
-  [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:0 maxSpeedRatio:0];
+  [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:2 maxSpeedRatio:5];
 }
 
 - (void)sendStopAllMotorsCommand

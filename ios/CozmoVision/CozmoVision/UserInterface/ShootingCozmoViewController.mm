@@ -144,7 +144,6 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.targetingSoundPeriod_sec = 0;
   self.targetLocked = NO;
   self.runTimer = YES;
-  [self playTargetingSound];
   
   // Start up the vision thread for processing device camera images
   // TODO: Get calibration of device camera somehow
@@ -178,6 +177,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
   [self.view addGestureRecognizer:swipeGesture];
   
+  [self playTargetingSound];
   [self resetGame];
   [_videoCamera start];
 }
@@ -478,34 +478,36 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 - (void) playTargetingSound
 {
-  if(self.targetLocked == YES) {
-    // If the targeting sound is currently playing, stop it
-    if(self.targetingSoundPlayer.isPlaying) {
-      [self.targetingSoundPlayer stop];
+  if(self.useAudioTargeting && self.gameRunning) {
+    if(self.targetLocked == YES) {
+      // If the targeting sound is currently playing, stop it
+      if(self.targetingSoundPlayer.isPlaying) {
+        [self.targetingSoundPlayer stop];
+      }
+      // If the lock sound isn't already playing, start it
+      if(self.lockSoundPlayer.isPlaying == NO) {
+        [self.lockSoundPlayer play];
+      }
+    } else if(self.targetingSoundPeriod_sec > 0) {
+      // If the lock sound is playing, pause it
+      if(self.lockSoundPlayer.isPlaying) {
+        [self.lockSoundPlayer pause];
+      }
+      // If the targeting sound isn't already playing, play it
+      if(self.targetingSoundPlayer.isPlaying == NO) {
+        [self.targetingSoundPlayer play];
+      }
     }
-    // If the lock sound isn't already playing, start it
-    if(self.lockSoundPlayer.isPlaying == NO) {
-      [self.lockSoundPlayer play];
+    
+    // Keep the timers running as long as the shooter view is up and running,
+    // just use the current period
+    if(self.runTimer) {
+      // NOTE: Due to innaccuracy of NSTimer (I think?), can't let sound period get
+      //  arbitrarily low. So I'm using an empirical minimum value here.
+      double nextTime = fmax(self.targetingSoundPeriod_sec, 0.07) + self.targetingSoundPlayer.duration;
+      [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
     }
-  } else if(self.targetingSoundPeriod_sec > 0) {
-    // If the lock sound is playing, pause it
-    if(self.lockSoundPlayer.isPlaying) {
-      [self.lockSoundPlayer pause];
-    }
-    // If the targeting sound isn't already playing, play it
-    if(self.targetingSoundPlayer.isPlaying == NO) {
-      [self.targetingSoundPlayer play];
-    }
-  }
-  
-  // Keep the timers running as long as the shooter view is up and running,
-  // just use the current period
-  if(self.runTimer) {
-    // NOTE: Due to innaccuracy of NSTimer (I think?), can't let sound period get
-    //  arbitrarily low. So I'm using an empirical minimum value here.
-    double nextTime = fmax(self.targetingSoundPeriod_sec, 0.07) + self.targetingSoundPlayer.duration;
-    [NSTimer scheduledTimerWithTimeInterval:nextTime target:self selector:@selector(playTargetingSound) userInfo:nil repeats:NO];
-  }
+  } // if self.useAudioTargeting
 }
 
 - (void) resetGame
@@ -557,39 +559,49 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.isReloading = YES;
   [NSTimer scheduledTimerWithTimeInterval:SHOT_RELOAD_TIME target:self selector:@selector(reloadCompleted:) userInfo:nil repeats:NO];
   
-  [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"laser/LaserFire.wav"
+  [[SoundCoordinator defaultCoordinator] playSoundWithFilename:@"codeMonsterShooter/shoot.wav" // "laser/LaserFire.wav"
                                                         volume:0.5
                                                      withDelay:0
                                                       numLoops:0];
   
-  if(self.gameRunning && self.targetLocked) {
-    
-    [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
-    [self animateTargetHit];
-
-    --self.points;
-    self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
-    if(self.points == 0) {
-      self.gameRunning = NO;
+  if(self.gameRunning) {
+    if(self.targetLocked) {
+      // Got a hit!
       
-      UIAlertController * alert=   [UIAlertController
-                                    alertControllerWithTitle:@"Game Over"
-                                    message:@"Code monster destroyed!"
-                                    preferredStyle:UIAlertControllerStyleAlert];
+      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+      [self animateTargetHit];
       
-      UIAlertAction* ok = [UIAlertAction
-                           actionWithTitle:@"OK"
-                           style:UIAlertActionStyleDefault
-                           handler:^(UIAlertAction * action)
-                           {
-                             [self resetGame];
-                             [alert dismissViewControllerAnimated:YES completion:nil];
-                           }];
+      --self.points;
+      self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+      if(self.points == 0) {
+        self.gameRunning = NO;
+        
+        UIAlertController * alert=   [UIAlertController
+                                      alertControllerWithTitle:@"Game Over"
+                                      message:@"Code monster destroyed!"
+                                      preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction* ok = [UIAlertAction
+                             actionWithTitle:@"OK"
+                             style:UIAlertActionStyleDefault
+                             handler:^(UIAlertAction * action)
+                             {
+                               [self resetGame];
+                               [alert dismissViewControllerAnimated:YES completion:nil];
+                             }];
+        
+        [alert addAction:ok];
+        [self presentViewController:alert animated:YES completion:nil];
+        
+        [self.cozmoOperator sendAnimationWithName:@"ANIM_DANCING"];
+      } // if(self.points==0)
       
-      [alert addAction:ok];
-      [self presentViewController:alert animated:YES completion:nil];
+    } else {
+      // Missed!
+      
+      [self.cozmoOperator sendAnimationWithName:@"ANIM_SHOT_MISSED"];
     }
-  }
+  } // if(self.gameRunning)
   
   if(self.useVisualTargeting) {
     [self.bulletOverlayView fireLaserButtlet];
@@ -617,6 +629,13 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 - (IBAction)handleUseAudioTargetingSwitch:(UISwitch *)sender {
   self.useAudioTargeting = sender.isOn;
+  
+  if(self.useAudioTargeting == YES) {
+    [self playTargetingSound];
+  } else {
+    [self.targetingSoundPlayer stop];
+    [self.lockSoundPlayer stop];
+  }
 }
 
 - (void) gameTimerCountdown {
@@ -647,6 +666,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
     
     [alert addAction:ok];
     [self presentViewController:alert animated:YES completion:nil];
+    [self.cozmoOperator sendAnimationWithName:@"ANIM_POWER_DOWN"];
   }
 }
 
@@ -654,6 +674,9 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.gameRunning = YES;
   self.pointsLabel.hidden = NO;
   [self gameTimerCountdown];
+  
+  [self.cozmoOperator sendAnimationWithName:@"ANIM_WAKE_UP"];
+  [self.cozmoOperator sendLiftCommandWithHeightRatio:75];
 }
 
 @end
