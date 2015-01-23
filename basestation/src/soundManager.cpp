@@ -239,6 +239,10 @@ namespace Anki {
           ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
           ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
           ,{SOUND_SINGING,     "creep/Robot-Singing1Part1-2.mp3"}
+          ,{SOUND_SHOOT,       "codeMonsterShooter/shoot.wav"}
+          ,{SOUND_SHOT_HIT,    "codeMonsterShooter/hit.wav"}
+          ,{SOUND_SHOT_MISSED, "codeMonsterShooter/miss.wav"}
+          
         }
       };
       
@@ -274,7 +278,10 @@ namespace Anki {
         {"HELP_ME",       SOUND_HELP_ME},
         {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
         {"FLEES",         SOUND_FLEES},
-        {"SINGING",       SOUND_SINGING}
+        {"SINGING",       SOUND_SINGING},
+        {"SHOT_HIT",      SOUND_SHOT_HIT},
+        {"SHOT_MISSED",   SOUND_SHOT_MISSED},
+        {"SHOOT",         SOUND_SHOOT}
       };
 
       auto result = LUT.find(name);

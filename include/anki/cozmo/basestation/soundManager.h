@@ -54,6 +54,9 @@ namespace Anki {
       ,SOUND_HAPPY_CHASE
       ,SOUND_FLEES
       ,SOUND_SINGING
+      ,SOUND_SHOOT
+      ,SOUND_SHOT_HIT
+      ,SOUND_SHOT_MISSED
       ,NUM_SOUNDS
     } SoundID_t;
     
