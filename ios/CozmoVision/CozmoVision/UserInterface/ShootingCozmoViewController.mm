@@ -177,7 +177,6 @@ const float SHOT_RELOAD_TIME = 0.5f;
   swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
   [self.view addGestureRecognizer:swipeGesture];
   
-  [self playTargetingSound];
   [self resetGame];
   [_videoCamera start];
 }
@@ -674,6 +673,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.gameRunning = YES;
   self.pointsLabel.hidden = NO;
   [self gameTimerCountdown];
+  [self playTargetingSound]; // will only play if audio targeting is on
   
   [self.cozmoOperator sendAnimationWithName:@"ANIM_WAKE_UP"];
   [self.cozmoOperator sendLiftCommandWithHeightRatio:75];
