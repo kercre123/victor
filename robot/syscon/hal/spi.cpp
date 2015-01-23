@@ -7,7 +7,7 @@
 #define NRF_BAUD(x) (int)(x * 268.435456)   // 2^28/1MHz
 
 const u32 UART_BAUDRATE = NRF_BAUD(350000);
-const u8 PIN_TX = 8;   // 2.1
+const u8 PIN_TX = 2;   // 3.0
 
 // Don't speak until spoken to (part of handshaking)
 static u8 m_spokenTo = 0;

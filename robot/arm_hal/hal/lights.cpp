@@ -31,6 +31,8 @@ namespace Anki
       // Initialize LED head/face light hardware
       void LightsInit()
       {
+        return; // XXX
+        
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
@@ -107,6 +109,8 @@ namespace Anki
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state)
       {
+        return; // XXX
+        
         if (state) {
           GPIO_RESET(GPIO_HEADLIGHT1, PIN_HEADLIGHT1);
           GPIO_RESET(GPIO_HEADLIGHT2, PIN_HEADLIGHT2);

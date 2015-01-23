@@ -5,28 +5,23 @@
 /* #define VECT_TAB_SRAM */
 #define VECT_TAB_OFFSET  0x0
 
-// Uncomment the following to put Cozmo on overclocking steroids (180MHz)
-#define COZMOROIDS
-
 /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
 #define PLL_M      16
-#ifdef COZMOROIDS
-#define PLL_N      360   // 360/2 = 180MHz
-#else
-#define PLL_N      336    // 336/2 = 168MHz
-#endif
+#define PLL_N      360   // 360/4 = 90MHz
 
 /* SYSCLK = PLL_VCO / PLL_P */
-#define PLL_P      2
+#define PLL_P      4
 
 /* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
 #define PLL_Q      7
 
-uint32_t SystemCoreClock = 180000000;
+uint32_t SystemCoreClock = 90000000;
 
 static void SetSysClock(void);
 static void SystemInit_ExtMemCtl(void); 
 
+// Only used on older model Cozmo CPUs
+#ifdef STM32F429_439xx
 static void SetAFBitmask(GPIO_TypeDef* gpio, u32 bitmask)
 {
   int i;
@@ -59,6 +54,7 @@ static u16 GetSwizzledAddress(u16 a)
     (BIT(a, 12) << 11) |
     (BIT(a, 11) << 12);
 }
+#endif
 
 void SystemInit(void)
 {
@@ -77,8 +73,8 @@ void SystemInit(void)
   RCC->CR &= (uint32_t)0xFEF6FFFF;
 
   /* Reset PLLCFGR register */
-  // 180 MHz from 16 MHz HSI == PLL @ 360 / 32
-  RCC->PLLCFGR = 0x24002D20;
+  RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
+                   (RCC_PLLCFGR_PLLSRC_HSI) | (PLL_Q << 24);
   
   /* Reset HSEBYP bit */
   RCC->CR &= (uint32_t)0xFFFBFFFF;
@@ -120,11 +116,11 @@ static void SetSysClock(void)
     /* HCLK = SYSCLK / 1*/
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
       
-    /* PCLK2 = HCLK / 2*/
-    RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
+    /* PCLK2 = HCLK / 1*/
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
     
-    /* PCLK1 = HCLK / 4*/
-    RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
+    /* PCLK1 = HCLK / 2*/
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
 
     /* Enable the main PLL */
     RCC->CR |= RCC_CR_PLLON;
@@ -166,6 +162,8 @@ static void SetSysClock(void)
   */
 void SystemInit_ExtMemCtl(void)
 {
+// Only used on older model Cozmo CPUs
+#ifdef STM32F429_439xx
   register uint32_t tmpreg = 0, timeout = 0xFFFF;
   register uint32_t index;
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -273,4 +271,5 @@ void SystemInit_ExtMemCtl(void)
   /* Disable write protection */
   tmpreg = FMC_Bank5_6->SDCR[0]; 
   FMC_Bank5_6->SDCR[0] = (tmpreg & 0xFFFFFDFF);
+#endif
 }
