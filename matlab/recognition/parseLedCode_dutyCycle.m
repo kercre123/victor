@@ -15,9 +15,12 @@ function parseLedCode_dutyCycle()
     
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
-    lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
-    carRectangle = round([100,220, 60,180] * (processingSize(1) / 240));
-    
+    lightSquareCenter = [160, 120] * (processingSize(1) / 240);
+    lightSquareWidths = [10, 20, 30, 40, 50, 60, 70, 80] * (processingSize(1) / 240);
+%     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
+    alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
+
+
     [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
 
     % 1. Capture N images
@@ -41,7 +44,6 @@ function parseLedCode_dutyCycle()
         figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
 %         figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
 
-
 %         curImageHsv = rgb2hsv(curImage);
 %         figure(3); imshow(curImageHsv(:,:,1));
 %         figure(4); imshow(curImageHsv(:,:,2));
@@ -63,42 +65,63 @@ function parseLedCode_dutyCycle()
         return;
     end
     
-    blurKernel = ones(11, 11);
-    blurKernel = blurKernel / sum(blurKernel(:));
+    smallBlurKernel = ones(11, 11);
+    smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
+    blurredImages = imfilter(images, smallBlurKernel);
     
-    blurredImages = imfilter(images, blurKernel);
+    figure(3); imshow(blurredImages(:,:,:,1));
     
-%     % Translationally align the images
-%     templateImage = rgb2gray(images(:,:,:,ceil(size(blurredImages,4)/2)));
+    % Align the images
+%     largeBlurKernel = ones(31, 31);
+%     largeBlurKernel = largeBlurKernel / sum(largeBlurKernel(:));
+%     toTrackImages = imfilter(blurredImages, largeBlurKernel);
+%     
+%     templateImage = rgb2gray(toTrackImages(:,:,:,ceil(size(toTrackImages,4)/2)));
 %     numPyramidLevels = 2;
-%     transformType = bitshift(2,8); %translation
+%     transformType = bitshift(6,8); % bitshift(2,8); %translation
 %     ridgeWeight = 1e-3;
 %     maxIterations = 50;
 %     convergenceTolerance = 0.05;
 %     homography = eye(3,3);
 % 
 %     translationHomographies = cell(size(images,4), 1);
-%     warpedImages = zeros(size(images), 'uint8');
-%     for iImage = 1:size(images,4)
-%         curImage = rgb2gray(images(:,:,:,iImage));
-%         translationHomographies{iImage} = mexTrackLucasKanade(templateImage, double(carRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), curImage, double(maxIterations), double(convergenceTolerance), double(homography));
+%     warpedImages = zeros(size(toTrackImages), 'uint8');
+%     for iImage = 1:size(toTrackImages,4)
+%         curImage = rgb2gray(toTrackImages(:,:,:,iImage));
+%         translationHomographies{iImage} = mexTrackLucasKanade(templateImage, double(alignmentRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), curImage, double(maxIterations), double(convergenceTolerance), double(homography));
 %     
 %         [warpedImages(:,:,:,iImage), ~, ~] = warpProjective(images(:,:,:,iImage), inv(translationHomographies{iImage}), size(curImage));
 %     end
 
-    colorPatches = blurredImages(lightRectangle(3):lightRectangle(4),lightRectangle(1):lightRectangle(2),:,:);
+    colors = cell(length(lightSquareWidths), 1);
+    colorsHsv = cell(length(lightSquareWidths), 1);
     
-    [colors, colorsHsv] = extractColors(colorPatches, saturationThreshold);
+    for iWidth = 1:length(lightSquareWidths)
+        curWidth = lightSquareWidths(iWidth) / 2;
+        yLimits = round([lightSquareCenter(2)-curWidth, lightSquareCenter(2)+curWidth]);
+        xLimits = round([lightSquareCenter(1)-curWidth, lightSquareCenter(1)+curWidth]);
+        
+        colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
+        
+        [colors{iWidth}, colorsHsv{iWidth}] = extractColors(colorPatches, saturationThreshold);
+        
+        figure(1);
+        subplot(3, ceil(length(lightSquareWidths)/3), iWidth);
+        plot(colors{iWidth}(3:-1:1,:)');
+    end
+    pause(0.05);
+    
+%     return;
     
     % Finding the single max may not be the most robust?
-    maxRangeRgb = max(colors, [] ,2) - min(colors, [] ,2); 
-    rgbThresholds = (max(colors, [] ,2) + min(colors, [] ,2)) / 2;
+    maxRangeRgb = max(colors{4}, [] ,2) - min(colors{4}, [] ,2); 
+    rgbThresholds = (max(colors{4}, [] ,2) + min(colors{4}, [] ,2)) / 2;
     
     [maxVal, maxInd] = max(maxRangeRgb);
     
     colorNames = {'red', 'green', 'blue'};
     
-    percentPositive = length(find(colors(maxInd,:) > rgbThresholds(maxInd))) / size(colors,2);
+    percentPositive = length(find(colors{4}(maxInd,:) > rgbThresholds(maxInd))) / size(colors{4},2);
     
     % Rejection heuristics
     isValid = true;
@@ -112,10 +135,6 @@ function parseLedCode_dutyCycle()
     else
         disp('Unknown color and number');
     end
-    
-    figure(1); plot(colors(3:-1:1,:)');
-    figure(3); plot(colorsHsv(3:-1:1,:)');
-    pause(0.05);
     
 %     keyboard
     
