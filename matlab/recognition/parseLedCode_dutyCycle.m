@@ -16,14 +16,17 @@ function parseLedCode_dutyCycle()
     g_processingSize = [120,160];
     g_curImageIndex = 1;
     
+    centerPoint = ceil(g_processingSize / 2);
+    
     expectedFps = 30;
     
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
 %     templateQuad = [158,68; 158,97; 191,67; 192,98];
-%     templateRectangle = [min(templateQuad(:,1)), max(templateQuad(:,1)), min(templateQuad(:,2)), max(templateQuad(:,2))]; % [left, right, top, bottom]
-    templateRectangle = round([140,180, 100,140] * (g_processingSize(1) / 240));
-
+%     lightRectangle = [min(templateQuad(:,1)), max(templateQuad(:,1)), min(templateQuad(:,2)), max(templateQuad(:,2))]; % [left, right, top, bottom]
+    lightRectangle = round([140,180, 100,140] * (g_processingSize(1) / 240));
+    carRectangle = round([100,220, 60,180] * (g_processingSize(1) / 240));
+    
 %     image = getNextImage();
     
     image = getNextImage();
@@ -34,8 +37,26 @@ function parseLedCode_dutyCycle()
     
     tic
     for i = 1:numImages
-        images(:,:,:,i) = getNextImage();
-        figure(2); imshow(uint8(images(:,:,:,i)));
+        curImage = getNextImage();
+        images(:,:,:,i) = curImage;
+        
+        curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
+        curImage(:, (centerPoint(2)-1):(centerPoint(2)+1), :) = 0;
+        curImage(centerPoint(1), :, :) = 255;
+        curImage(:, centerPoint(2), :) = 255;
+                
+%         [gradient, or] = canny(rgb2gray(curImage), 1);
+        
+%         figure(2); imshows(imresize(gradient/20, [240,320], 'nearest'), 2);
+        
+        figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
+%         figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
+
+
+%         curImageHsv = rgb2hsv(curImage);
+%         figure(3); imshow(curImageHsv(:,:,1));
+%         figure(4); imshow(curImageHsv(:,:,2));
+%         figure(5); imshow(curImageHsv(:,:,3));
     end
     timeElapsed = toc();
     
@@ -53,40 +74,36 @@ function parseLedCode_dutyCycle()
         return;
     end
     
-%     return
-    
-    colorPatches = images(templateRectangle(3):templateRectangle(4),templateRectangle(1):templateRectangle(2),:,:);
-    
     blurKernel = ones(11, 11);
     blurKernel = blurKernel / sum(blurKernel(:));
     
-    blurredColorPatches = imfilter(colorPatches, blurKernel);
+    blurredImages = imfilter(images, blurKernel);
     
-    minImageBlurred = double(min(blurredColorPatches, [], 4));
-    maxImageBlurred = double(max(blurredColorPatches, [], 4));
-    %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
-    thresholdImageBlurred = minImageBlurred;
-
-    grayMaxImageBlurred = max(maxImageBlurred, [], 3);
-    saturatedInds = (grayMaxImageBlurred > saturationThreshold);
-    unsaturatedInds = (grayMaxImageBlurred <= saturationThreshold);
+%     % Translationally align the images
+%     templateImage = rgb2gray(images(:,:,:,ceil(size(blurredImages,4)/2)));
+%     numPyramidLevels = 2;
+%     transformType = bitshift(2,8); %translation
+%     ridgeWeight = 1e-3;
+%     maxIterations = 50;
+%     convergenceTolerance = 0.05;
+%     homography = eye(3,3);
+% 
+%     translationHomographies = cell(size(images,4), 1);
+%     warpedImages = zeros(size(images), 'uint8');
+%     for iImage = 1:size(images,4)
+%         curImage = rgb2gray(images(:,:,:,iImage));
+%         translationHomographies{iImage} = mexTrackLucasKanade(templateImage, double(carRectangle), double(numPyramidLevels), double(transformType), double(ridgeWeight), curImage, double(maxIterations), double(convergenceTolerance), double(homography));
+%     
+%         [warpedImages(:,:,:,iImage), ~, ~] = warpProjective(images(:,:,:,iImage), inv(translationHomographies{iImage}), size(curImage));
+%     end
     
-    diffImagesBlurred = zeros(size(blurredColorPatches), 'uint8');
+%     return
 
-    % Find the per-pixel difference from the threshold
-    colors = zeros(3, size(images,4));
-    numMax = zeros(3,1);
-    for iImage = 1:size(images,4)
-        curBlurred = double(blurredColorPatches(:,:,:,iImage))/2 - thresholdImageBlurred/2;
-        
-        for iChannel = 1:3
-            curChannelImage = curBlurred(:,:,iChannel);
-            colors(iChannel, iImage) = mean(curChannelImage(unsaturatedInds));
-            
-            curChannelImage(saturatedInds) = 0;
-            diffImagesBlurred(:,:,iChannel,iImage) = curChannelImage + 128; 
-        end
-    end % for iImage = 1:size(images,4)
+%     keyboard
+
+    colorPatches = blurredImages(lightRectangle(3):lightRectangle(4),lightRectangle(1):lightRectangle(2),:,:);
+    
+    [colors, colorsHsv] = extractColors(colorPatches, saturationThreshold);
     
     % Finding the single max may not be the most robust?
     maxRangeRgb = max(colors, [] ,2) - min(colors, [] ,2); 
@@ -98,9 +115,21 @@ function parseLedCode_dutyCycle()
     
     percentPositive = length(find(colors(maxInd,:) > rgbThresholds(maxInd))) / size(colors,2);
     
-    disp(sprintf('%s is at %0.2f', colorNames{maxInd}, numImages*percentPositive));
+    % Rejection heuristics
+    isValid = true;
+    
+%     if maxVal < 5
+%         isValid = false;
+%     end
+    
+    if isValid
+        disp(sprintf('%s is at %0.2f', colorNames{maxInd}, numImages*percentPositive));
+    else
+        disp('Unknown color and number');
+    end
     
     figure(1); plot(colors(3:-1:1,:)');
+    figure(3); plot(colorsHsv(3:-1:1,:)');
     pause(0.05);
     
 %     colorsWithSaturated = squeeze(mean(mean(diffImagesBlurred)));
@@ -111,6 +140,39 @@ function parseLedCode_dutyCycle()
     
 end % function parseLedCode_lightOnly()
 
+function [colors, colorsHsv] = extractColors(colorImages, saturationThreshold)
+    minImageBlurred = double(min(colorImages, [], 4));
+    maxImageBlurred = double(max(colorImages, [], 4));
+    %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
+    thresholdImageBlurred = minImageBlurred;
+
+    grayMaxImageBlurred = max(maxImageBlurred, [], 3);
+%     saturatedInds = (grayMaxImageBlurred > saturationThreshold);
+    unsaturatedInds = (grayMaxImageBlurred <= saturationThreshold);
+    
+%     diffImagesBlurred = zeros(size(blurredColorPatches), 'uint8');
+
+    % Find the per-pixel difference from the threshold
+    colors = zeros(3, size(colorImages,4));
+    colorsHsv = zeros(3, size(colorImages,4));
+%     numMax = zeros(3,1);
+    for iImage = 1:size(colorImages,4)
+        curBlurred = double(colorImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
+        curBlurredHsv = rgb2hsv(curBlurred);
+        
+        for iChannel = 1:3
+            curChannelImage = curBlurred(:,:,iChannel);
+            colors(iChannel, iImage) = mean(curChannelImage(unsaturatedInds));
+            
+            curChannelImageHsv = curBlurredHsv(:,:,iChannel);
+            colorsHsv(iChannel, iImage) = mean(curChannelImageHsv(unsaturatedInds));
+            
+%             curChannelImage(saturatedInds) = 0;
+%             diffImagesBlurred(:,:,iChannel,iImage) = curChannelImage + 128; 
+        end
+    end % for iImage = 1:size(colorImages,4)
+end % function colors = extractColors()
+    
 function image = getNextImage()
     global g_cameraType;
     global g_filenamePattern;

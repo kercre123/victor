@@ -12,7 +12,7 @@ const int modulationPeriodMicroseconds = 2000;
 const int modulationOnMicroseconds[numLeds] = {250, 60, 60}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
 
 const int microsecondsPerFrame = 33333;
-const int microsecondPause = 3333; // TODO: pick a good value
+const int microsecondPause = microsecondsPerFrame/2; // TODO: pick a good value
 const int totalPeriodFrames = 15;
 const int totalPeriodMicroseconds = totalPeriodFrames * microsecondsPerFrame; //500000;
 
