@@ -10,8 +10,9 @@ matlab.mat
 # Webots
 *.wbproj
 simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
-simulator/plugins/physics
+simulator/plugins/physics/cozmo_physics
 simulator/controllers/cozmo_viz_controller
+simulator/controllers/cozmo_c_controller
 
 # Mac OS
 *.DS_Store
