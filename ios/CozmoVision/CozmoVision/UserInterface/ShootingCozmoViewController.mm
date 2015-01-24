@@ -34,10 +34,13 @@
 
 #endif
 
+const BOOL USE_PRESS_TO_AIM_RELEASE_TO_FIRE = YES;
+
 // TODO: Hook these up to settings?
 const int GAME_LENGTH_SEC = 30;
 const int START_NUM_HEALTH = 10;
 const float SHOT_RELOAD_TIME = 0.5f;
+const float SHOT_TRAVEL_TIME = 0.5f;
 
 @interface ShootingCozmoViewController () <CvVideoCameraDelegateReorient, AVAudioPlayerDelegate>
 {
@@ -167,10 +170,23 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.useVisualTargetingSwitch.on = self.useVisualTargeting;
   self.cameraView.hidden = !self.useVisualTargeting;
   [self.targetingSlopSlider setValue:self.targetingSlopFactor];
+  
+  if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE) {
+    // Set up press-to-aim / release-to-fire gesture:
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc]
+                                                      initWithTarget:self
+                                                      action:@selector(handleLongPressGesture:)];
+    longPressGesture.minimumPressDuration = 0.25;
+    [self.view addGestureRecognizer:longPressGesture];
 
-  // Set up taps for firing
-  UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
-  [self.view addGestureRecognizer:tapGesture];
+  } else {
+    // Set up taps for firing
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc]
+                                          initWithTarget:self
+                                          action:@selector(handleTapGesture:)];
+    [self.view addGestureRecognizer:tapGesture];
+  }
+  
   
   // Set up swipe right to exit (in addition to exit button)
   UISwipeGestureRecognizer *swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self  action:@selector(handleExitButtonPress:)];
@@ -246,6 +262,18 @@ const float SHOT_RELOAD_TIME = 0.5f;
     
     [self.crosshairsImageView.layer addAnimation:animation forKey:@"transform"];
   }
+}
+
+- (void)animateMuzzleFlash
+{
+  UIWindow* wnd = [UIApplication sharedApplication].keyWindow;
+  UIView* v = [[UIView alloc] initWithFrame: CGRectMake(0, 0, wnd.frame.size.width, wnd.frame.size.height)];
+  [wnd addSubview: v];
+  v.backgroundColor = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.5];
+  [UIView beginAnimations: nil context: nil];
+  [UIView setAnimationDuration: 0.25];
+  v.alpha = 0.0f;
+  [UIView commitAnimations];
 }
 
 - (void)animateTargetHit
@@ -477,7 +505,7 @@ const float SHOT_RELOAD_TIME = 0.5f;
 
 - (void) playTargetingSound
 {
-  if(self.useAudioTargeting && self.gameRunning) {
+  if(self.useAudioTargeting && self.gameRunning && self.cameraView.hidden==NO) {
     if(self.targetLocked == YES) {
       // If the targeting sound is currently playing, stop it
       if(self.targetingSoundPlayer.isPlaying) {
@@ -518,6 +546,13 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.pointsLabel.hidden = YES;
   self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
   self.isReloading = NO;
+  
+  // can't see the image or crosshairs until you press, when using press-to-aim mode
+  if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE ) {
+    self.cameraView.hidden = YES;
+    self.crosshairsImageView.hidden = YES;
+    self.crosshairTopImageView.hidden = YES;
+  }
 }
 
 - (void)reloadCompleted:(NSTimer*)timer
@@ -525,33 +560,70 @@ const float SHOT_RELOAD_TIME = 0.5f;
   self.isReloading = NO;
 }
 
-#pragma mark - Action Methods
-
-- (void)handleTapGesture:(UITapGestureRecognizer*)gesture
+- (void)shotHit
 {
-  // Can't shoot while reloading
-  if(self.isReloading == YES)
-    return;
+  // Got a hit!
   
-  /*
-  if (self.markerIntensity > 0.5) {
-    Float32 pointsMultiplier = 1.0;
-    if(self.markerType == Anki::Vision::MARKER_SPIDER) {
-      // Special animation for spider
-      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
-      pointsMultiplier = 100.0;
-    } else if(self.markerType != Anki::Vision::MARKER_UNKNOWN) {
-      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
-      pointsMultiplier = 25;
-    }
+  [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+  
+  if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE == NO) {
+    // Don't play explosion animation if we're trying to keep focus _off_ the screen
     [self animateTargetHit];
-
-    // Get points based on size (if you hit a larger marker, you get fewer points
-    // because it's easier)
-    Float32 markerSize = CGRectGetHeight(self.marker) * CGRectGetWidth(self.marker);
-    self.points += pointsMultiplier*(1.0 - markerSize / (320*240));
-    self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
   }
+  
+  --self.points;
+  self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
+  if(self.points == 0) {
+    self.gameRunning = NO;
+    
+    UIAlertController * alert=   [UIAlertController
+                                  alertControllerWithTitle:@"Game Over"
+                                  message:@"Code monster destroyed!"
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction* ok = [UIAlertAction
+                         actionWithTitle:@"OK"
+                         style:UIAlertActionStyleDefault
+                         handler:^(UIAlertAction * action)
+                         {
+                           [self resetGame];
+                           [alert dismissViewControllerAnimated:YES completion:nil];
+                         }];
+    
+    [alert addAction:ok];
+    [self presentViewController:alert animated:YES completion:nil];
+    
+    [self.cozmoOperator sendAnimationWithName:@"ANIM_DANCING"];
+  } // if(self.points==0)
+  
+}
+
+- (void) shotMissed
+{
+  [self.cozmoOperator sendAnimationWithName:@"ANIM_SHOT_MISSED"];
+}
+
+-(void) fireShot
+{
+  /*
+   if (self.markerIntensity > 0.5) {
+   Float32 pointsMultiplier = 1.0;
+   if(self.markerType == Anki::Vision::MARKER_SPIDER) {
+   // Special animation for spider
+   [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT2"];
+   pointsMultiplier = 100.0;
+   } else if(self.markerType != Anki::Vision::MARKER_UNKNOWN) {
+   [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
+   pointsMultiplier = 25;
+   }
+   [self animateTargetHit];
+   
+   // Get points based on size (if you hit a larger marker, you get fewer points
+   // because it's easier)
+   Float32 markerSize = CGRectGetHeight(self.marker) * CGRectGetWidth(self.marker);
+   self.points += pointsMultiplier*(1.0 - markerSize / (320*240));
+   self.pointsLabel.text = [NSString stringWithFormat:@"Points: %d", self.points];
+   }
    */
   
   // Trigger a reload so we can't fire again until it is done
@@ -563,49 +635,93 @@ const float SHOT_RELOAD_TIME = 0.5f;
                                                      withDelay:0
                                                       numLoops:0];
   
-  if(self.gameRunning) {
-    if(self.targetLocked) {
-      // Got a hit!
-      
-      [self.cozmoOperator sendAnimationWithName:@"ANIM_GOT_SHOT"];
-      [self animateTargetHit];
-      
-      --self.points;
-      self.pointsLabel.text = [NSString stringWithFormat:@"Health: %d", self.points];
-      if(self.points == 0) {
-        self.gameRunning = NO;
-        
-        UIAlertController * alert=   [UIAlertController
-                                      alertControllerWithTitle:@"Game Over"
-                                      message:@"Code monster destroyed!"
-                                      preferredStyle:UIAlertControllerStyleAlert];
-        
-        UIAlertAction* ok = [UIAlertAction
-                             actionWithTitle:@"OK"
-                             style:UIAlertActionStyleDefault
-                             handler:^(UIAlertAction * action)
-                             {
-                               [self resetGame];
-                               [alert dismissViewControllerAnimated:YES completion:nil];
-                             }];
-        
-        [alert addAction:ok];
-        [self presentViewController:alert animated:YES completion:nil];
-        
-        [self.cozmoOperator sendAnimationWithName:@"ANIM_DANCING"];
-      } // if(self.points==0)
-      
+  if(self.useVisualTargeting) {
+    
+    if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE) {
+      // Trying to keep focus off screen, so just use a simple muzzle flash
+      // animation when a shot is fired
+      [self animateMuzzleFlash];
     } else {
-      // Missed!
-      
-      [self.cozmoOperator sendAnimationWithName:@"ANIM_SHOT_MISSED"];
+      [self.bulletOverlayView fireLaserButtlet];
+      [self animateCrossHairsFire];
+    }
+    
+  }
+  
+  if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE) {
+
+    // Don't check for hit or miss until shot has traveled to target
+    // TODO: Base shot travel time on distance to target
+    if(self.targetLocked) {
+      [NSTimer scheduledTimerWithTimeInterval:SHOT_TRAVEL_TIME
+                                       target:self
+                                     selector:@selector(shotHit)
+                                     userInfo:nil
+                                      repeats:NO];
+    } else {
+      [NSTimer scheduledTimerWithTimeInterval:SHOT_TRAVEL_TIME
+                                       target:self
+                                     selector:@selector(shotMissed)
+                                     userInfo:nil
+                                      repeats:NO];
+    }
+    
+  } else {
+    
+    if(self.targetLocked) {
+      [self shotHit];
+    } else {
+      [self shotMissed];
+    }
+  }
+  
+
+  
+} // fireShot
+
+#pragma mark - Action Methods
+
+- (void)handleTapGesture:(UITapGestureRecognizer*)gesture
+{
+  // Can't shoot while reloading
+  if(self.gameRunning && self.isReloading == NO) {
+    [self fireShot];
+  }
+}
+
+- (void)handleLongPressGesture:(UILongPressGestureRecognizer*)gesture
+{
+  // Can't shoot while reloading
+  if(self.gameRunning && self.isReloading == NO) {
+    switch(gesture.state)
+    {
+      case UIGestureRecognizerStateBegan:
+      {
+        if(self.useAudioTargeting) {
+          [self playTargetingSound];
+        }
+        self.cameraView.hidden = NO;
+        self.crosshairsImageView.hidden = NO;
+        self.crosshairTopImageView.hidden = NO;
+        break;
+      }
+        
+      case UIGestureRecognizerStateEnded:
+      {
+        self.cameraView.hidden = YES;
+        self.crosshairsImageView.hidden = YES;
+        self.crosshairTopImageView.hidden = YES;
+        
+        [self fireShot];
+        
+        break;
+      }
+        
+      default:
+        // Nothing to do
+        break;
     }
   } // if(self.gameRunning)
-  
-  if(self.useVisualTargeting) {
-    [self.bulletOverlayView fireLaserButtlet];
-    [self animateCrossHairsFire];
-  }
 }
 
 - (IBAction)handleExitButtonPress:(id)sender
