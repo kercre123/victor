@@ -48,10 +48,6 @@ set(SOURCE_FILES
 
   ${COZMO_SIMULATOR_SOURCE_FILES}
   ${COZMO_ROBOT_SUPERVISOR_SRC}
-  
-#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_encoders.cpp
-#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_motors.cpp
-#  ${COZMO_ROBOT_SRC_DIR}/hal/simhal/sim_timers.cpp
 )
 
 source_group(Supervisor FILES ${COZMO_ROBOT_SUPERVISOR_SRC})
@@ -90,7 +86,16 @@ set_target_properties(
 add_custom_command(
   TARGET cozmo_c_controller
   POST_BUILD
-  #COMMAND cp cozmo_c_controller ${CMAKE_CURRENT_SOURCE_DIR}/
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_c_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_c_controller>
+#  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_c_controller>
 )
+
+# Copy into cozmo-game simulator controllers also
+if (COZMO_GAME_SIMULATOR_DIR)
+add_custom_command(
+  TARGET cozmo_c_controller
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${COZMO_GAME_SIMULATOR_DIR}/controllers/cozmo_c_controller/
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_c_controller> ${COZMO_GAME_SIMULATOR_DIR}/controllers/cozmo_c_controller/
+)  
+endif (COZMO_GAME_SIMULATOR_DIR)  

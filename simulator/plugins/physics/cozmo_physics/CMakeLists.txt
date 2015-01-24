@@ -59,5 +59,15 @@ add_custom_command(
   TARGET cozmo_physics
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_physics> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_physics>
+#  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_physics>
 )
+
+# Copy into cozmo-game simulator plugins also
+if (COZMO_GAME_SIMULATOR_DIR)
+add_custom_command(
+  TARGET cozmo_physics
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${COZMO_GAME_SIMULATOR_DIR}/plugins/physics/cozmo_physics
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_physics> ${COZMO_GAME_SIMULATOR_DIR}/plugins/physics/cozmo_physics
+)  
+endif (COZMO_GAME_SIMULATOR_DIR)  
