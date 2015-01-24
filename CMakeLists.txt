@@ -53,8 +53,11 @@ endif(ANKI_IOS_BUILD)
 set(COZMO_ENGINE_INCLUDE_DIR ${COZMO_ENGINE_DIR}/include)
 file(GLOB COZMO_ENGINE_INCLUDE_FILES "${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/shared/*.h")
 
-# NOTE: This will eventually get pulled out of this repo
 set(COZMO_GAME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+
+# Defining this will make Webots controller and plugins targets in cozmo-engine 
+# get copied to cozmo-game/simulator
+set(COZMO_GAME_SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/simulator)
 
 # This sets the root path for the PlatformPathManager when not on iOS
 if (NOT SYSTEM_ROOT_PATH_DEFINED)
