@@ -38,5 +38,15 @@ add_custom_command(
   TARGET cozmo_viz_controller
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_viz_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_viz_controller>
+#  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_viz_controller>
 )
+
+# Copy into cozmo-game simulator controllers also
+if (COZMO_GAME_SIMULATOR_DIR)
+add_custom_command(
+  TARGET cozmo_viz_controller
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${COZMO_GAME_SIMULATOR_DIR}/controllers/cozmo_viz_controller/
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_viz_controller> ${COZMO_GAME_SIMULATOR_DIR}/controllers/cozmo_viz_controller/
+)  
+endif (COZMO_GAME_SIMULATOR_DIR)  
