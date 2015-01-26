@@ -17,7 +17,7 @@ const int totalPeriodFrames = 15;
 const int totalPeriodMicroseconds = totalPeriodFrames * microsecondsPerFrame; //500000;
 
 int whichLed = 0;
-int numOnFrames = totalPeriodFrames / 2;
+int numOnFrames = 6;
 
 void setDefaultTimings()
 {
