@@ -21,6 +21,9 @@
 @property (weak, nonatomic) IBOutlet VerticalSliderView *headSlider;
 @property (weak, nonatomic) IBOutlet VerticalSliderView *liftSlider;
 @property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadView;
+@property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadHeadView;
+@property (weak, nonatomic) IBOutlet VirtualDirectionPadView *dPadLiftView;
+
 @property (weak, nonatomic) IBOutlet UISwitch *detectFacesSwitch;
 
 - (IBAction)handelDetectFacesSwitch:(id)sender;
@@ -60,8 +63,13 @@
 
   self.obsObjSelector = [ObservedObjectSelector new];
   
+  // D-pad for cozmo position
   [self.view insertSubview:self.dPadView aboveSubview:self.cozmoVisionImageView];
-
+  self.dPadView.backgroundColor = [UIColor colorWithRed:11.0/255.0
+                                                  green:10.0/255.0
+                                                   blue:51.0/255.0
+                                                  alpha:0.8];
+  
   [self.dPadView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
     [self._operator sendWheelCommandWithAngleInDegrees:angle magnitude:magnitude];
   }];
@@ -76,6 +84,30 @@
       NSLog(@"Selected Object %d\n", objectID.intValue);
       [self._operator sendPickOrPlaceObject:objectID];
     }
+  }];
+  
+  // D-pad for Head
+  [self.view insertSubview:self.dPadHeadView aboveSubview:self.cozmoVisionImageView];
+  self.dPadHeadView.backgroundColor = [UIColor colorWithRed:18.0/255.0
+                                                      green:33.0/255.0
+                                                       blue:55.0/255.0
+                                                      alpha:0.8];
+  
+  [self.dPadHeadView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
+    float speed = 2*magnitude*sinf(angle * M_PI / 180.f);
+    [self._operator sendMoveHeadCommandWithSpeed:speed];
+  }];
+  
+  // D-pad for Lift
+  [self.view insertSubview:self.dPadLiftView aboveSubview:self.cozmoVisionImageView];
+  self.dPadLiftView.backgroundColor = [UIColor colorWithRed:25.0/255.0
+                                                      green:40.0/255.0
+                                                       blue:65.0/255.0
+                                                      alpha:0.8];
+  
+  [self.dPadLiftView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
+    float speed = 2*magnitude*sinf(angle * M_PI / 180.f);
+    [self._operator sendMoveLiftCommandWithSpeed:speed];
   }];
   
 
@@ -206,8 +238,11 @@
   
   // Decrement the lockout timer on dpad, head, and lift
   [self.dPadView decrementLockoutTimer];
-  [self.headSlider decrementLockoutTimer];
-  [self.liftSlider decrementLockoutTimer];
+  [self.dPadLiftView decrementLockoutTimer];
+  [self.dPadHeadView decrementLockoutTimer];
+  
+  //[self.headSlider decrementLockoutTimer];
+  //[self.liftSlider decrementLockoutTimer];
   
   
   static BOOL wasActivelyControlling = NO;
@@ -215,8 +250,27 @@
   {
     wasActivelyControlling = YES;
   } else if(wasActivelyControlling) {
-    [self._operator sendStopAllMotorsCommand];
+    //[self._operator sendStopAllMotorsCommand];
+    [self._operator sendWheelCommandWithLeftSpeed:0 right:0];
     wasActivelyControlling = NO;
+  }
+  
+  static BOOL wasActivelyControllingLift = NO;
+  if(self.dPadLiftView.isActivelyControlling)
+  {
+    wasActivelyControllingLift = YES;
+  } else if(wasActivelyControllingLift) {
+    [self._operator sendMoveLiftCommandWithSpeed:0];
+    wasActivelyControllingLift = NO;
+  }
+  
+  static BOOL wasActivelyControllingHead = NO;
+  if(self.dPadHeadView.isActivelyControlling)
+  {
+    wasActivelyControllingHead = YES;
+  } else if(wasActivelyControllingHead) {
+    [self._operator sendMoveHeadCommandWithSpeed:0];
+    wasActivelyControllingHead = NO;
   }
 }
 

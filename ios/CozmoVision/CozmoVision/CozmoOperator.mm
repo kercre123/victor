@@ -429,6 +429,22 @@ using namespace Anki;
   [self sendLiftCommandWithHeightRatio:height accelerationSpeedRatio:2 maxSpeedRatio:5];
 }
 
+- (void)sendMoveLiftCommandWithSpeed:(float)speed
+{
+  NSLog(@"Commanding lift with speed = %f\n", speed);
+  Cozmo::MessageU2G_MoveLift message;
+  message.speed_rad_per_sec = speed;
+  [self sendMessage:message];
+}
+
+- (void)sendMoveHeadCommandWithSpeed:(float)speed
+{
+  NSLog(@"Commanding head with speed = %f\n", speed);
+  Cozmo::MessageU2G_MoveHead message;
+  message.speed_rad_per_sec = speed;
+  [self sendMessage:message];
+}
+
 - (void)sendStopAllMotorsCommand
 {
   Cozmo::MessageU2G_StopAllMotors message;

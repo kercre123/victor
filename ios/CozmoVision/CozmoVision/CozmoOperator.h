@@ -96,6 +96,19 @@
  */
 - (void)sendLiftCommandWithHeightRatio:(float)height;
 
+/*!
+ * @discussion Send move lift command with specified speed.
+ * @param Speed [-1.0(down) - 1.0(up)]
+ * @return void
+ */
+- (void)sendMoveLiftCommandWithSpeed:(float)speed;
+
+/*!
+ * @discussion Send move head command with specified speed.
+ * @param Speed [-1.0(down) - 1.0(up)]
+ * @return void
+ */
+- (void)sendMoveHeadCommandWithSpeed:(float)speed;
 
 /*!
  * @discussion Send Stop All Motors command.
