@@ -441,6 +441,8 @@ namespace Anki
       // Initialize SPI6, set up accelerometer and gyro
       void IMUInit()
       {  
+        return; // XXX
+        
         // Initialize CS pin values
         IMUDeselectAll();
         // Enable CS pins and SPI
@@ -454,6 +456,8 @@ namespace Anki
       // Assuming GYRO +/- 500 deg range
       void IMUReadData(IMU_DataStructure &IMUData)
       {
+        return; // XXX
+        
         static uint8_t temp_data_msb, temp_data_lsb;
         static s16 temp_data;
         

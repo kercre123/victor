@@ -28,10 +28,10 @@ void SystemInit(void)
   }
 }
 
-const u8 PIN_CHGEN = 24;  // 2.1
+const u8 PIN_CHGEN = 5;  // 3.0
 
-const u8 PIN_LED1 = 10;
-const u8 PIN_LED2 = 11;
+const u8 PIN_LED1 = 18;
+const u8 PIN_LED2 = 19;
 
 void encoderAnalyzer(void);
 int main(void)
@@ -52,8 +52,8 @@ int main(void)
 
   // Finish booting up
   SPIInit();
-  PowerInit();    
-
+  PowerInit(); 
+  
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
   
@@ -74,7 +74,7 @@ int main(void)
   {
     UARTPutString("\nForward ends with...");
     for (int i = 0; i < 4; i++)
-      MotorsSetPower(i, 0x3fff);   
+      MotorsSetPower(i, 0x1fff);   
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();
@@ -87,7 +87,7 @@ int main(void)
     UARTPutString("\nBackward ends with...");
     
     for (int i = 0; i < 4; i++)    
-      MotorsSetPower(i, -0x3fff);
+      MotorsSetPower(i, -0x1fff);
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();

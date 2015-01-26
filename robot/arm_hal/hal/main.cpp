@@ -37,7 +37,27 @@ namespace Anki
 
       int UARTGetFreeSpace();
       
-      //const CameraInfo* GetHeadCamInfo(){ return 0; }
+      const CameraInfo* GetHeadCamInfo(void)
+      {
+        static CameraInfo s_headCamInfo = {
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
+        };
+
+        return &s_headCamInfo;
+      }
+      
+      // XXX: This needs to work in a new way with 3.0+
+      bool WifiHasClient() {
+        return false;
+      }
+      // XXX: This needs to work in a new way with 3.0+
+      void GetProximity(ProximityValues *prox) { }
       
       //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
       //bool RadioIsConnected(){ return false; }
@@ -104,16 +124,10 @@ int main(void)
   printf("UART..");
   GetId();
   
-  FrontCameraInit();
-  printf("camera..");
-  
   IMUInit();  // The IMU must be configured before spineport  
   printf("IMU..");
   SPIInit();  
   printf("spine..");
-  
-  SharpInit();
-  printf("sharp..");
   
 #if 0 
   // Prox sensor testing
@@ -129,15 +143,15 @@ int main(void)
   // Motor testing...
   while (1)
   {
-    MotorSetPower(MOTOR_LEFT_WHEEL, 0.6f);
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.3f);
     Wait();
-    MotorSetPower(MOTOR_LEFT_WHEEL, -0.6f);
+    MotorSetPower(MOTOR_LEFT_WHEEL, -0.3f);
     Wait();
     MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
     
-    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.6f);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.3f);
     Wait();
-    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.6f);
+    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.3f);
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
     
@@ -158,38 +172,13 @@ int main(void)
   
 #else
   
-#ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
   printf("init complete!\r\n");
    
-  while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
+  while (1) // XXX: Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {
   }
-#else
-  while(true)
-  {
-    CameraGetFrame(buffer, Anki::Vision::CAMERA_RES_QVGA, false);
-    
-    if (UARTGetFreeSpace() < (1024 * 1024 * 4) - (320*240+5))
-      continue;
-    
-    UARTPutChar(0xbe);
-    UARTPutChar(0xef);
-    UARTPutChar(0xf0);
-    UARTPutChar(0xff);
-    UARTPutChar(0xbd);
-    
-    for (int y = 0; y < 240; y++)
-    {
-      for (int x = 0; x < 320; x++)
-      {
-        //buffer[y*320 + x ] = (buffer[y*320 + x] * ((x & 255) ^ y)) >> 8;
-        UARTPutChar(buffer[y*320 + x]); // + buffer[y*320 + x+320] + buffer[y*320 + x+1] + buffer[y*320 + x+321])/4);
-      }
-    }
-  }
-#endif // #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION  
 #endif
 }
 

@@ -136,11 +136,10 @@ namespace Anki {
         lastResult = Localization::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Localization System init failed.\n");
-        
+    
         lastResult = VisionSystem::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Vision System init failed.\n");
-
         
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -187,10 +186,11 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
 
+#ifndef OFFBOARD_VISION    
         lastResult = FaceTrackingController::Init(VisionSystem::GetFaceDetectionParams());
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "FaceTrackingController init failed.\n");
-
+#endif
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -287,7 +287,9 @@ namespace Anki {
         IMUFilter::Update();
 #endif        
         
+#ifdef HAVE_PROX_SENSORS // Most robots don't have these right now
         ProxSensors::Update();
+#endif        
         
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -424,7 +426,7 @@ namespace Anki {
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
-        
+                   
         // IMPORTANT: The static robot state message is being passed in here
         //   *by value*, NOT by reference.  This is because step_LongExecution()
         //   can be interupted by step_MainExecution().

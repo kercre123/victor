@@ -12,13 +12,13 @@
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F439NI</Device>
+          <Device>STM32F401RC</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <Cpu>IRAM(0x20000000-0x2002FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x81FFFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
+          <Cpu>IRAM(0x20000000-0x2000FFFF) IROM(0x08000000-0x0803FFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f429x.s" ("STM32F439 Startup Code")</StartupFile>
-          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_2048 -FS08000000 -FL0200000)</FlashDriverDll>
-          <DeviceId>7022</DeviceId>
+          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f40xx.s" ("STM32F40xx Startup Code")</StartupFile>
+          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_256 -FS08000000 -FL040000)</FlashDriverDll>
+          <DeviceId>7383</DeviceId>
           <RegisterFile>stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -26,10 +26,10 @@
           <Linker></Linker>
           <OHString></OHString>
           <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc>-DSTM32F429X</SLE66CMisc>
+          <SLE66CMisc>-DSTM32F40XX</SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>SFD\ST\STM32F4xx\STM32F439x.SFR</SFDFile>
+          <SFDFile>SFD\ST\STM32F4xx\STM32F40x.SFR</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -215,7 +215,7 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
-            <hadIRAM2>1</hadIRAM2>
+            <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
             <useUlib>0</useUlib>
@@ -233,12 +233,12 @@
             <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
-            <Ir1Chk>0</Ir1Chk>
+            <Ir1Chk>1</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
             <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
-            <Im1Chk>0</Im1Chk>
+            <Im1Chk>1</Im1Chk>
             <Im2Chk>0</Im2Chk>
             <OnChipMemories>
               <Ocm1>
@@ -274,12 +274,12 @@
               <IRAM>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x30000</Size>
+                <Size>0x10000</Size>
               </IRAM>
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x200000</Size>
+                <Size>0x40000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -303,8 +303,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0xa</Size>
+                <StartAddress>0x8000000</StartAddress>
+                <Size>0x80000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -328,13 +328,13 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20000000</StartAddress>
-                <Size>0x30000</Size>
+                <StartAddress>0x20004100</StartAddress>
+                <Size>0x1bf00</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
-                <StartAddress>0x10000000</StartAddress>
-                <Size>0x10000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0x0</Size>
               </OCR_RVCT10>
             </OnChipMemories>
             <RvctStartVector></RvctStartVector>
@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,OFFBOARD_VISION</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -377,7 +377,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>0</umfTarg>
+            <umfTarg>1</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -398,11 +398,6 @@
         <Group>
           <GroupName>hal</GroupName>
           <Files>
-            <File>
-              <FileName>frontCamera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
-            </File>
             <File>
               <FileName>hal.h</FileName>
               <FileType>5</FileType>
@@ -459,19 +454,9 @@
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
             </File>
             <File>
-              <FileName>wifi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
-            </File>
-            <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>sharp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\sharp.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -552,11 +537,6 @@
               <FileName>stm32f4xx_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\stm32f4xx_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_fmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_fmc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_gpio.c</FileName>
@@ -694,16 +674,6 @@
               <FilePath>.\supervisor\src\localization.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabVisionProcessor.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabVisualization.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
-            </File>
-            <File>
               <FileName>messages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
@@ -749,11 +719,6 @@
               <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionSystem.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -792,6 +757,11 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>offboardVisionSystem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -923,6 +893,11 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
             </File>
+            <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -932,166 +907,6 @@
               <FileName>path.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-vision</GroupName>
-          <Files>
-            <File>
-              <FileName>binaryTracker.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cameraImagingPipeline.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cascadeClassifier.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>colorConversion.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>connectedComponents.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeQuadrilaterals.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeQuadrilaterals.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeCharacteristicScale.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeCharacteristicScale_binomial.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale_binomial.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>decisionTree_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>detectFiducialMarkers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>distanceTransform.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\distanceTransform.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>draw_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>edgeDetection.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fiducialMarkerDefinitionType0.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\coretech\vision\robot\src\fiducialMarkerDefinitionType0.h</FilePath>
-            </File>
-            <File>
-              <FileName>fiducialMarkers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\fiducialMarkers.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>filtering.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>histogram.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\histogram.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>integralImage.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\integralImage.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>laplacianPeaks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Affine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_General.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Projective.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_SampledPlanar6dof.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledPlanar6dof.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_SampledProjective.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Slow.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>opencvLight_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\opencvLight_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>perspectivePoseEstimation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>quadRefinement.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\quadRefinement.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>traceBoundary.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>transformations.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1577,11 +1392,6 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>frontCamera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
-            </File>
-            <File>
               <FileName>hal.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
@@ -1637,19 +1447,9 @@
               <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
             </File>
             <File>
-              <FileName>wifi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\wifi.cpp</FilePath>
-            </File>
-            <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>sharp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\sharp.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1730,11 +1530,6 @@
               <FileName>stm32f4xx_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\lib\stm32f4xx_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_fmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_fmc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_gpio.c</FileName>
@@ -1929,16 +1724,6 @@
               <FilePath>.\supervisor\src\localization.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabVisionProcessor.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabVisualization.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
-            </File>
-            <File>
               <FileName>messages.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\messages.cpp</FilePath>
@@ -1984,11 +1769,6 @@
               <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionSystem.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -2027,6 +1807,11 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>offboardVisionSystem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -2158,6 +1943,11 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
             </File>
+            <File>
+              <FileName>perspectivePoseEstimation.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2224,166 +2014,6 @@
               <FileName>path.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>coretech-vision</GroupName>
-          <Files>
-            <File>
-              <FileName>binaryTracker.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\binaryTracker.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cameraImagingPipeline.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\cameraImagingPipeline.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cascadeClassifier.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\cascadeClassifier.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>colorConversion.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\colorConversion.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>connectedComponents.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\connectedComponents.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeQuadrilaterals.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeQuadrilaterals.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeCharacteristicScale.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>computeCharacteristicScale_binomial.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\computeCharacteristicScale_binomial.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>decisionTree_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\decisionTree_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>detectFiducialMarkers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\detectFiducialMarkers.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>distanceTransform.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\distanceTransform.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>draw_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\draw_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>edgeDetection.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\edgeDetection.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fiducialMarkerDefinitionType0.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\coretech\vision\robot\src\fiducialMarkerDefinitionType0.h</FilePath>
-            </File>
-            <File>
-              <FileName>fiducialMarkers.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\fiducialMarkers.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>filtering.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\filtering.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>histogram.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\histogram.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>integralImage.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\integralImage.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>laplacianPeaks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\laplacianPeaks.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Affine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Affine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Fast.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_General.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_General.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Projective.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Projective.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_SampledPlanar6dof.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledPlanar6dof.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_SampledProjective.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_SampledProjective.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lucasKanade_Slow.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\lucasKanade_Slow.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>opencvLight_vision.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\opencvLight_vision.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>perspectivePoseEstimation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>quadRefinement.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\quadRefinement.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>traceBoundary.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\traceBoundary.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>transformations.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\transformations.cpp</FilePath>
             </File>
           </Files>
         </Group>

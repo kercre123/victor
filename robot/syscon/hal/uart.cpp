@@ -3,9 +3,10 @@
 #include "nrf_gpio.h"
 
 // It looks like we might not be able to go above 1Mbaud with this chip.
-const u32 UART_BAUDRATE = 1000000;
+#define NRF_BAUD(x) (int)(x * 268.435456)   // 2^28/1MHz
+const u32 UART_BAUDRATE = NRF_BAUD(1000000);
 
-const u8 PIN_TX = 21;   // 2.1
+const u8 PIN_TX = 1;   // 3.0
 
 bool m_isInitialized = false;
 
@@ -23,7 +24,7 @@ void UARTInit()
   NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
 
   // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = UART_BAUDRATE * 268;
+  NRF_UART0->BAUDRATE = UART_BAUDRATE;
   
   // Disable parity and hardware flow-control
   NRF_UART0->CONFIG = 0;
