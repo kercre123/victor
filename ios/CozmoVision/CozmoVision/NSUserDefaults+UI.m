@@ -104,7 +104,7 @@ NSString* const DefaultKeyLastUseVisualTargeting = @"lastUseVisualTargeting";
 RHUserDefaultDefinePropertyBool(lastUseVisualTargeting, setLastUseVisualTargeting, DefaultKeyLastUseVisualTargeting, YES);
 
 NSString* const DefaultKeyLastUseAudioTargeting = @"lastUseAudioTargeting";
-RHUserDefaultDefinePropertyBool(lastUseAudioTargeting, setLastUseAudioTargeting, DefaultKeyLastUseAudioTargeting, YES);
+RHUserDefaultDefinePropertyBool(lastUseAudioTargeting, setLastUseAudioTargeting, DefaultKeyLastUseAudioTargeting, NO);
 
 NSString* const DefaultKeyLastTargetingSlopFactor = @"lastTargetingSlopFactor";
 RHUserDefaultDefinePropertyFloat(lastTargetingSlopFactor, setLastTargetingSlopFactor, DefaultKeyLastTargetingSlopFactor, 1.f);

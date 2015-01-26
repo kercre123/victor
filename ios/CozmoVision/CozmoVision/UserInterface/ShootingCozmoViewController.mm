@@ -168,8 +168,12 @@ const float SHOT_TRAVEL_TIME = 0.5f;
   self.targetingSlopFactor = [NSUserDefaults lastTargetingSlopFactor];
   self.useAudioTargetingSwitch.on = self.useAudioTargeting;
   self.useVisualTargetingSwitch.on = self.useVisualTargeting;
-  self.cameraView.hidden = !self.useVisualTargeting;
   [self.targetingSlopSlider setValue:self.targetingSlopFactor];
+  
+  // Camera view now always starts hidden:
+  // - for audio tareting, it is simply unused, period
+  // - for visual targeting, it only appears when the screen is pressed (for aiming)
+  self.cameraView.hidden = YES;
   
   if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE) {
     // Set up press-to-aim / release-to-fire gesture:
@@ -199,8 +203,8 @@ const float SHOT_TRAVEL_TIME = 0.5f;
 
 - (void) viewDidDisappear:(BOOL)animated
 {
-  [NSUserDefaults setLastUseVisualTargeting:self.useAudioTargeting];
-  [NSUserDefaults setLastUseAudioTargeting:self.useVisualTargeting];
+  [NSUserDefaults setLastUseAudioTargeting:self.useAudioTargeting];
+  [NSUserDefaults setLastUseVisualTargeting:self.useVisualTargeting];
   [NSUserDefaults setLastTargetingSlopFactor:self.targetingSlopFactor];
   
   self.runTimer = NO;
@@ -732,9 +736,6 @@ const float SHOT_TRAVEL_TIME = 0.5f;
 - (IBAction)handleUseVisualTargetingSwitch:(UISwitch *)sender {
   self.useVisualTargeting = sender.isOn;
 
-  // Hide camera view if not using visual targeting
-  self.cameraView.hidden = !self.useVisualTargeting;
-  
   // Set to full alpha for crosshairs if not using visual targeting (since we
   // won't be animating it)
   if(self.useVisualTargeting == NO) {
