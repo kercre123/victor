@@ -94,7 +94,7 @@
                                                       alpha:0.8];
   
   [self.dPadHeadView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
-    float speed = 2*magnitude*sinf(angle * M_PI / 180.f);
+    float speed = 5*magnitude*sinf(angle * M_PI / 180.f);
     [self._operator sendMoveHeadCommandWithSpeed:speed];
   }];
   
