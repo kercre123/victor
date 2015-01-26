@@ -12,6 +12,15 @@
 // message can be sent. Prevents spamming in the event of a fast changing dpad input.
 #define DPAD_LOCKOUT_COUNT 1
 
+// The number of degrees from vertical that the dpad input must be in order
+// to not be snapped to the vertical.
+#define VERTICAL_SNAP_ANGLE_DEG 20
+
+// The number of degrees from horizontal that the dpad input must be in order
+// to not be snapped to the horizontal.
+#define HORIZONTAL_SNAP_ANGLE_DEG 20
+
+
 @interface VirtualDirectionPadView ()
 
 // Public properties
@@ -292,6 +301,22 @@
 
   CGFloat angleInRads = atan2f(-pointY, pointX);
   _angleInDegrees = angleInRads * oneEightyOverPi;
+  
+  
+  // Snap angle if within snapping range
+  if (ABS(_angleInDegrees - 90) < VERTICAL_SNAP_ANGLE_DEG) {
+    _angleInDegrees = 90;
+  }
+  if (ABS(_angleInDegrees + 90) < VERTICAL_SNAP_ANGLE_DEG) {
+    _angleInDegrees = -90;
+  }
+  if (ABS(_angleInDegrees) < HORIZONTAL_SNAP_ANGLE_DEG)  {
+    _angleInDegrees = 0;
+  }
+  if (180-ABS(_angleInDegrees) < HORIZONTAL_SNAP_ANGLE_DEG) {
+    _angleInDegrees = 180;
+  }
+  
 
   if (!self.lockoutTimer && (ABS(__previousAngle - _angleInDegrees) > _angleThreshold || ABS(__previousMagnitude - _magnitude) > _magnitudeThreshold)) {
     __previousAngle = _angleInDegrees;
