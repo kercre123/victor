@@ -62,7 +62,6 @@ class CozmoServer(socket.socket):
             if outMsg:
                 self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
-
             for ss in self.subServers:
                 ss.standby()
             self.client = None
