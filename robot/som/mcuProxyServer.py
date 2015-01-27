@@ -4,7 +4,7 @@ Python UDP server to proxy messages to / from the MCU and the WiFi radio
 __author__  = "Daniel Canser"
 __version__ = "0.0.1"
 
-import sys, os, socket, time, serial
+import sys, os, socket, time, serial, select
 import messages
 
 
@@ -15,12 +15,13 @@ class MCUProxyServer(object):
     PORT = 9001
     CLIENT_TIMEOUT = 60.0 # One minute for right now
     SERIAL_DEVICE = "/dev/ttyO2"
-    BAUD_RATE = 1000000
+    BAUD_RATE = 3000000
     MTU = 1500
     SERIAL_HEADER = "\xbe\xef"
 
-    def __init__(self, poller):
+    def __init__(self, poller, verbose=False):
         "Sets up the server instance"
+        self.v=verbose
         self.poller = poller
         self.mcu = serial.Serial(port     = self.SERIAL_DEVICE,
                                  baudrate = self.BAUD_RATE,
@@ -36,7 +37,7 @@ class MCUProxyServer(object):
 
     def __del__(self):
         "Send closeout messages"
-        self.standby()
+        self.sendToMcu(messages.SoMRadioState(0,0).serialize())
 
     def __addToMcuQ(self, msg):
         self._toMcuQ.append(msg)
@@ -68,7 +69,7 @@ class MCUProxyServer(object):
     def standby(self):
         "Put the sub server into standby mode"
         self.radioConnected = False
-        self.toMcuQ = messages.SoMRadioSate(0,0).serialize()
+        self.toMcuQ = messages.SoMRadioState(0,0).serialize()
 
     def poll(self, message=None):
         "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
@@ -94,6 +95,7 @@ class MCUProxyServer(object):
         "Read the serial connection to the MCU and append any messages to the receive queue"
         self.rawSerData += self.mcu.read(self.MTU)
         while len(self.rawSerData):
+            if self.v: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
                 return

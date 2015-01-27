@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 Implements UDP server for robot comms and includes some useful library classes
 """
@@ -5,7 +6,7 @@ __author__ = "Daniel Casner"
 
 
 import sys, os, time, socket, select
-import camServer
+import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
@@ -26,7 +27,8 @@ class CozmoServer(socket.socket):
         self.settimeout(0)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
-        self.subServers = [camServer.CameraSubServer(self.poller)] # Add MCU proxy sub server to list
+        self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
+                           mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
         self.client = None
         self.lastClientRecvTime = 0.0
 

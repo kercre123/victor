@@ -31,9 +31,9 @@ class CameraSubServer(object):
     ENCODER_SOCK_PORT     = 6000
 
 
-    def __init__(self, poller):
+    def __init__(self, poller, verbose=False):
         "Initalize server for specified camera on given port"
-
+        self.v = verbose
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         # Setup local jpeg data receive socket
@@ -94,6 +94,7 @@ class CameraSubServer(object):
         # Handle incoming messages if any
         if message and ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
+            if self.v: sys.stdout.write("New image request: %s\n" % str(inMsg))
             self.sendMode = inMsg.imageSendMode
             if inMsg.imageSendMode == messages.ISM_OFF:
                 self.stopEncoder()
@@ -122,6 +123,7 @@ class CameraSubServer(object):
         # Get a new frame if any from encoder
         try:
             self.nextFrame = self.encoderSocket.recv(MTU)
+            if self.v: sys.stdout.write("New frame from encoder\n")
         except:
             pass
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
