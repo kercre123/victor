@@ -18,7 +18,7 @@
 
 // The number of degrees from horizontal that the dpad input must be in order
 // to not be snapped to the horizontal.
-#define HORIZONTAL_SNAP_ANGLE_DEG 20
+#define HORIZONTAL_SNAP_ANGLE_DEG 10
 
 
 @interface VirtualDirectionPadView ()
@@ -294,14 +294,20 @@
   // Compute speed
   CGFloat pointX = MIN(point.x, _magnitudeRadius);
   CGFloat pointY = MIN(point.y, _magnitudeRadius);
-
-  _magnitude = MIN(1.0, sqrt( (double)(pointX * pointX) + (double)(pointY * pointY) ));
+  _magnitude = sqrt( (double)(pointX * pointX) + (double)(pointY * pointY) );
 
   const CGFloat oneEightyOverPi = 180.0 / M_PI;
 
   CGFloat angleInRads = atan2f(-pointY, pointX);
   _angleInDegrees = angleInRads * oneEightyOverPi;
   
+  // Scale magnitude quadratically with both magnitude and angle
+  CGFloat angleScaler = ABS(_angleInDegrees) <= 90 ? ABS(_angleInDegrees/90) : (180-ABS(_angleInDegrees))/(90);
+  _magnitude = (_magnitude * _magnitude) * (0.2 + (0.8 * angleScaler * angleScaler));
+  _magnitude = MIN(1.0, _magnitude);
+  
+  // Crop low magnitude deadzone
+  _magnitude += 0.15;
   
   // Snap angle if within snapping range
   if (ABS(_angleInDegrees - 90) < VERTICAL_SNAP_ANGLE_DEG) {
@@ -317,8 +323,9 @@
     _angleInDegrees = 180;
   }
   
-
+  
   if (!self.lockoutTimer && (ABS(__previousAngle - _angleInDegrees) > _angleThreshold || ABS(__previousMagnitude - _magnitude) > _magnitudeThreshold)) {
+      //printf("angle: %f, mag %f, (point %f,%f)\n", _angleInDegrees, _magnitude, pointX, pointY );
     __previousAngle = _angleInDegrees;
     __previousMagnitude = _magnitude;
     if (self.joystickMovementAction) {
