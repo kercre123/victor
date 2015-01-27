@@ -7,6 +7,9 @@ __author__ = "Daniel Casner"
 import sys, os, time, socket, select
 import camServer
 
+VERBOSE = False
+PRINT_INTERVAL = False
+
 MTU = 1500
 
 CLIENT_IDLE_TIMEOUT = 100.0
@@ -62,7 +65,6 @@ class CozmoServer(socket.socket):
             if outMsg:
                 self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
-
             for ss in self.subServers:
                 ss.standby()
             self.client = None
@@ -70,23 +72,18 @@ class CozmoServer(socket.socket):
     def run(self, loopHz):
         "Run main loop with target frequency"
         targetPeriod = 1.0/loopHz
-        st = time.time()
         while True:
-            self.step(max(0, targetPeriod - (time.time()-st)))
             st = time.time()
+            self.step(targetPeriod)
+            if PRINT_INTERVAL: sys.stdout.write('%d ms\n' % int((time.time()-st)*1000))
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        port = int(sys.argv[1])
-    else:
-        port = 9000
-    if len(sys.argv) > 2:
-        host = sys.argv[2]
-    else:
-        host = ''
-    server = CozmoServer((host, port))
-    sys.stdout.write("Starting server listening at ('%s', %d)\n" % (host, port))
+    if '-v' in sys.argv: VERBOSE = True
+    if '-i' in sys.argv: PRINT_INTERVAL = True
+    address = ('', 9000)
+    server = CozmoServer(address)
+    sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
     try:
         server.run(200)
     except KeyboardInterrupt:

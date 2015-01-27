@@ -12,6 +12,8 @@
 #include <media/v4l2-mediabus.h>
 
 #include "ov2686.h"
+#include "ov2686_reg_script.h"
+#include "ov2686_code_timestamp.h"
 
 /*** Register definitions */
 
@@ -19,6 +21,27 @@ static const u16 OV2686_REG_CHIP_ID_L = 0x300A; static const u8 OV2686_CHIP_ID_L
 static const u16 OV2686_REG_CHIP_ID_M = 0x300B; static const u8 OV2686_CHIP_ID_M_VALUE = 0x85;
 static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H_VALUE = 0x00;
 
+/*** Camera format definitions */
+
+#define OV2686_WIDTH 1600
+#define OV2686_HEIGHT 1200
+
+static struct v4l2_mbus_framefmt FORMATS[] = {
+  {
+    .width  = OV2686_WIDTH,
+    .height = OV2686_HEIGHT,
+    .code   = V4L2_MBUS_FMT_SBGGR8_1X8,
+    .colorspace = V4L2_COLORSPACE_SRGB,
+    .field      = V4L2_FIELD_NONE,
+  },
+};
+
+static const u32 NUM_FORMATS = 1;
+
+static const u32 OV2686_WINDOW_MAX_WIDTH  = OV2686_WIDTH;
+static const u32 OV2686_WINDOW_MIN_WIDTH  = OV2686_WIDTH;
+static const u32 OV2686_WINDOW_MAX_HEIGHT = OV2686_HEIGHT;
+static const u32 OV2686_WINDOW_MIN_HEIGHT = OV2686_HEIGHT;
 
 /*** Type definitions */
 
@@ -45,10 +68,11 @@ static int __ov2686_set_power(struct ov2686_info *info, bool on)
 {
   if (!on) {
     if (info->pdata->s_xclk) info->pdata->s_xclk(&info->subdev, 0);
+    msleep(5);
   }
   else {
     if (info->pdata->s_xclk) info->pdata->s_xclk(&info->subdev, 1);
-    msleep(1);
+    msleep(5);
   }
 
   return 0;
@@ -103,8 +127,8 @@ static int ov2686_reg_read(struct i2c_client * client, u16 reg, u8* val) {
   reg = swab16(reg);
 
   ret = i2c_transfer(client->adapter, msg, 2);
-  if (ret < 0) {
-    printk(KERN_WARNING "ov2686 failed reading register 0x%04x!\n", reg);
+  if (ret != 2) {
+    printk(KERN_WARNING "ov2686 failed reading register 0x%04x: %d\n", reg, ret);
     return ret;
   }
 
@@ -156,21 +180,28 @@ static int __ov2686_reg_equals(struct i2c_client *client, u16 reg, u8 value) {
 }
 
 static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
+  struct i2c_client *client;
   struct ov2686_info * info = to_state(subdev);
   int ret = 0;
+  size_t r;
 
   printk(KERN_INFO "ov2686_s_stream %d\n", enable);
 
+  client = v4l2_get_subdevdata(subdev);
+
   if (info->power_count == 0) {
-    printk(KERN_INFO "\tpower count (%d) invalid\n", info->power_count);
-    return -EINVAL;
+    printk(KERN_WARNING "ov2686_s_stream called with power count = %d\n", info->power_count);
   }
   if (enable == 0) {
-    // TODO Do something to disable streaming
     info->streaming = 0;
+    ret = ov2686_reg_write(client, 0x0100, 0x00); // Software standby
   }
   else {
-    // TODO Do something to enable streaming
+    printk(KERN_INFO "\tSending register script to OV2686\n");
+    for (r=0; r<REG_SCRIPT_LEN; r++) {
+      ret = ov2686_reg_write(client, REG_SCRIPT[r].reg, REG_SCRIPT[r].val);
+      if (ret < 0) return ret;
+    }
     info->streaming = 1;
   }
   return ret;
@@ -181,44 +212,117 @@ static int ov2686_enum_mbus_code(struct v4l2_subdev *subdev,
                                  struct v4l2_subdev_mbus_code_enum *code) {
   printk(KERN_INFO "ov2686_enum_mbus_code\n");
 
-  // TODO populate code structure
+  if ((code->pad) || (code->index >= NUM_FORMATS)) {
+    return -EINVAL;
+  }
+
+  code->code = FORMATS[code->index].code;
+
+
   return 0;
 }
 
 static int ov2686_enum_frame_size(struct v4l2_subdev *subdev,
                                   struct v4l2_subdev_fh *fh,
                                   struct v4l2_subdev_frame_size_enum *fse) {
+  int i = NUM_FORMATS;
   printk(KERN_INFO "ov2686_enum_frame_size\n");
 
-  // TODO populate fse structure
+  if (fse->code > 0) return -EINVAL;
+
+  while(--i) {
+    if (fse->code == FORMATS[i].code) break;
+  }
+  fse->code = FORMATS[0].code;
+  fse->min_width  = OV2686_WINDOW_MIN_WIDTH;
+  fse->max_width  = OV2686_WINDOW_MAX_WIDTH;
+  fse->min_height = OV2686_WINDOW_MIN_HEIGHT;
+  fse->max_height = OV2686_WINDOW_MAX_HEIGHT;
+
+  return 0;
+}
+
+static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
+                                      struct v4l2_subdev_fh *fh,
+                                      struct v4l2_subdev_frame_interval_enum *fie) {
+  printk(KERN_INFO "ov2686_enum_frame_interval\n");
+
+  // Function stubbed out to only return 15 fps
+
+  if (fie->index >= 1) {
+    return -EINVAL;
+  }
+
+  fie->interval.numerator   = 15000;
+  fie->interval.denominator = 1000000;
+
   return 0;
 }
 
 static int ov2686_get_format(struct v4l2_subdev *subdev,
                              struct v4l2_subdev_fh *fh,
                              struct v4l2_subdev_format *fmt) {
+  //struct ov2686_info * info = to_state(subdev);
+
   printk(KERN_INFO "ov2686_get_format\n");
 
-  // TODO populate fmt structure;
+  switch (fmt->which) {
+    case V4L2_SUBDEV_FORMAT_TRY:
+      fmt->format = *v4l2_subdev_get_try_format(fh, fmt->pad);
+      printk(KERN_INFO "\tTry format\n");
+      break;
+    case V4L2_SUBDEV_FORMAT_ACTIVE:
+      fmt->format = FORMATS[0]; // Only one format supported TODO unstub this if nessisary
+      printk(KERN_INFO "\tActive format\n");
+      break;
+    default:
+      printk(KERN_WARNING "ov2686_get_format invalid\n");
+      return -EINVAL;
+  }
+
+  printk(KERN_INFO "ov2686 format: %dx%d code=%x colorspace=%x field=%x\n", fmt->format.width, fmt->format.height, fmt->format.code, fmt->format.colorspace, fmt->format.field);
+
   return 0;
 }
 
 static int ov2686_set_format(struct v4l2_subdev *subdev,
                              struct v4l2_subdev_fh *fh,
                              struct v4l2_subdev_format *fmt) {
+  struct ov2686_info * info = to_state(subdev);
+
   printk(KERN_INFO "ov2686_set_format\n");
 
-  // TODO execute format set
-  // TODO populate fmt structure
-  return 0;
+  if ((fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) && (info->streaming)) {
+    printk(KERN_WARNING "ov2686 device busy\n");
+    return -EBUSY;
+  }
+
+  // Only support the one format so dumb stub TODO unstub this if nessisary
+  return ov2686_get_format(subdev, fh, fmt);
 }
 
 static int ov2686_get_crop(struct v4l2_subdev *subdev,
                            struct v4l2_subdev_fh *fh,
                            struct v4l2_subdev_crop *crop) {
+  //struct ov2686_info * info = to_state(subdev);
+
   printk(KERN_INFO "ov2686_get_crop\n");
 
-  // TODO populate crop strucuture.
+  // Don't support cropping so stubout TODO unstub if nessisary
+  switch(crop->which) {
+    case V4L2_SUBDEV_FORMAT_TRY:
+      crop->rect = *v4l2_subdev_get_try_crop(fh, crop->pad);
+      break;
+    case V4L2_SUBDEV_FORMAT_ACTIVE:
+      crop->rect.left   = 0;
+      crop->rect.top    = 0;
+      crop->rect.width  = OV2686_WIDTH;
+      crop->rect.height = OV2686_HEIGHT;
+      break;
+    default:
+      return -EINVAL;
+  }
+
   return 0;
 }
 
@@ -227,16 +331,14 @@ static int ov2686_set_crop(struct v4l2_subdev *subdev,
                            struct v4l2_subdev_crop *crop) {
   printk(KERN_INFO "ov2686_set_crop\n");
 
-  // TODO change crop
-  // TODO populate crop strucutre
-
-  return 0;
+  // Don't support changing the crop so just stubout
+  // TODO unstub if nessisary
+  return ov2686_get_crop(subdev, fh, crop);
 }
 
 static int ov2686_registered(struct v4l2_subdev *subdev) {
   struct i2c_client *client;
   struct ov2686_info *info;
-  u8 data;
   int ret = 0;
 
   printk(KERN_INFO "ov2686_registered\n");
@@ -305,12 +407,13 @@ static const struct v4l2_subdev_video_ops ov2686_subdev_video_ops = {
 };
 
 static const struct v4l2_subdev_pad_ops ov2686_subdev_pad_ops = {
-  .enum_mbus_code  = ov2686_enum_mbus_code,
-  .enum_frame_size = ov2686_enum_frame_size,
-  .get_fmt         = ov2686_get_format,
-  .set_fmt         = ov2686_set_format,
-  .get_crop        = ov2686_get_crop,
-  .set_crop        = ov2686_set_crop,
+  .enum_mbus_code      = ov2686_enum_mbus_code,
+  .enum_frame_size     = ov2686_enum_frame_size,
+  .enum_frame_interval = ov2686_enum_frame_interval,
+  .get_fmt             = ov2686_get_format,
+  .set_fmt             = ov2686_set_format,
+  .get_crop            = ov2686_get_crop,
+  .set_crop            = ov2686_set_crop,
 };
 
 static struct v4l2_subdev_ops ov2686_subdev_ops = {
@@ -354,6 +457,7 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
 
   printk(KERN_INFO "Initalizing V4L2 I2C subdevice\n");
 
+  mutex_init(&info->power_lock);
   v4l2_i2c_subdev_init(&info->subdev, client, &ov2686_subdev_ops);
   info->subdev.internal_ops = &ov2686_subdev_internal_ops;
 
@@ -366,6 +470,8 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
     return ret;
   }
 
+  info->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+
   // Do more setup here
   printk(KERN_INFO "i2c probe complete\n");
 
@@ -377,6 +483,9 @@ static int ov2686_remove(struct i2c_client *client)
   struct ov2686_info *info = i2c_get_clientdata(client);
 
   printk(KERN_INFO "ov2686 i2c remove\n");
+
+  v4l2_device_unregister_subdev(&info->subdev);
+  media_entity_cleanup(&info->subdev.entity);
 
   kfree(info);
 
@@ -404,7 +513,7 @@ static struct i2c_driver ov2686_driver = {
 };
 
 static __init int init_ov2686(void) {
-  printk(KERN_INFO "init_ov2686() called\n");
+  printk(KERN_INFO "ov2686() driver init. TS=" CODE_TIMESTAMP "\n");
   return i2c_add_driver(&ov2686_driver);
 }
 
