@@ -34,14 +34,14 @@ class CameraSubServer(object):
     def __init__(self, poller):
         "Initalize server for specified camera on given port"
 
+        subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
+
         # Setup local jpeg data receive socket
         self.encoderProcess = None
         self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.encoderSocket.bind((self.ENCODER_SOCK_HOSTNAME, self.ENCODER_SOCK_PORT))
         self.encoderSocket.settimeout(0) # Set non-blocking
         poller.register(self.encoderSocket, select.POLLIN)
-
-        subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"ov2686":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, "media-ctl ISP links setup failure"
 
