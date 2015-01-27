@@ -22,6 +22,7 @@ class MCUProxyServer(object):
     def __init__(self, poller, verbose=False):
         "Sets up the server instance"
         self.v=verbose
+        if self.v: sys.stdout.write("MCUProxyServer will be verbose\n")
         self.poller = poller
         self.mcu = serial.Serial(port     = self.SERIAL_DEVICE,
                                  baudrate = self.BAUD_RATE,
@@ -95,7 +96,7 @@ class MCUProxyServer(object):
         "Read the serial connection to the MCU and append any messages to the receive queue"
         self.rawSerData += self.mcu.read(self.MTU)
         while len(self.rawSerData):
-            if self.v: sys.stdout.write("serRx: %s\n" % self.rawSerData)
+            if self.v > 10: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
                 return
@@ -104,11 +105,12 @@ class MCUProxyServer(object):
             if len(self.rawSerData) < 4: # Somethings wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return
-            length = sum([ord(d) << i for d, i in zip(data, (0, 8, 16, 24))]) # Calculate message length
+            length = sum([ord(d) << i for d, i in zip(self.rawSerData, (0, 8, 16, 24))]) # Calculate message length
             self.rawSerData = self.rawSerData[4:]
             if len(self.rawSerData) < length: self.rawSerData += self.mcu.read(length - len(data))
             if len(self.rawSerData) < length: # Something is wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return
+            if self.v: sys.stdout.write("New packet from mcu: %s\n" % self.rawSerData[:length])
             self.fromMcuQ = self.rawSerData[:length]
             self.rawSerData = self.rawSerData[length:]

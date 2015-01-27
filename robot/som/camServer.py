@@ -34,6 +34,7 @@ class CameraSubServer(object):
     def __init__(self, poller, verbose=False):
         "Initalize server for specified camera on given port"
         self.v = verbose
+        if self.v: sys.stdout.write("CameraSubServer will be verbose\n")
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         # Setup local jpeg data receive socket
