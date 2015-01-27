@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
@@ -42,9 +42,9 @@ namespace Anki {
       
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_INFO("Failed to init VizManager client (%s:%d)\n", udp_host_address, port);
-        _isInitialized = false;
+        //_isInitialized = false;
       }
-          
+     
       _isInitialized = true;
       
       return _isInitialized ? RESULT_OK : RESULT_FAIL;
@@ -72,6 +72,9 @@ namespace Anki {
 
     void VizManager::SendMessage(u8 vizMsgID, void* msg)
     {
+      if (!_isInitialized)
+        return;
+      
       //printf("Sending viz msg %d with %d bytes\n", vizMsgID, msgSize + 1);
       
       // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?

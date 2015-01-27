@@ -17,7 +17,7 @@ namespace Anki
     namespace HAL
     {
       extern u8 g_halInitComplete;
-
+      
       // Forward declarations
       void Startup();
       void SPIInit();
@@ -36,9 +36,29 @@ namespace Anki
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
 
       int UARTGetFreeSpace();
+      
+      const CameraInfo* GetHeadCamInfo(void)
+      {
+        static CameraInfo s_headCamInfo = {
+          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+          HEAD_CAM_CALIB_CENTER_X,
+          HEAD_CAM_CALIB_CENTER_Y,
+          0.f,
+          HEAD_CAM_CALIB_HEIGHT,
+          HEAD_CAM_CALIB_WIDTH
+        };
 
-      //const CameraInfo* GetHeadCamInfo(){ return 0; }
-
+        return &s_headCamInfo;
+      }
+      
+      // XXX: This needs to work in a new way with 3.0+
+      bool WifiHasClient() {
+        return false;
+      }
+      // XXX: This needs to work in a new way with 3.0+
+      void GetProximity(ProximityValues *prox) { }
+      
       //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
       //bool RadioIsConnected(){ return false; }
       static IDCard m_idCard;
@@ -60,7 +80,7 @@ namespace Anki
 static void Wait()
 {
   using namespace Anki::Cozmo::HAL;
-
+  
   u32 start = GetMicroCounter();
   while ((GetMicroCounter() - start) < 500000)
   {}
@@ -79,51 +99,91 @@ static void Wait()
 static void MemTest()
 {
   using namespace Anki::Cozmo::HAL;
-  // Memory test
+  // Memory test  
   UARTPutString("Testing 64MB...");
   MicroWait(1000);
   for (int* pp = (int*)0xC0000000; pp < (int*)0xC4000000; pp++)
     *pp = ((int)pp)*11917;
   for (int* pp = (int*)0xC0000000; pp < (int*)0xC4000000; pp++)
     if (*pp != ((int)pp)*11917)
-      UARTPutString("error");
+      UARTPutString("error");  
   UARTPutString("Done\r\n");
 }
 
 int main(void)
 {
   using namespace Anki::Cozmo::HAL;
-
+  
   // Timer, than Startup, must be called FIRST in main() to do hardware sanity check
   TimerInit();
   Startup();
-
+  
   // Initialize the hardware
   LightsInit();
-
-  // Disable for now
-  //UARTInit();
-  //printf("UART..");
+  UARTInit();
+  printf("UART..");
   GetId();
-
-  IMUInit();  // The IMU must be configured before spineport
+  
+  IMUInit();  // The IMU must be configured before spineport  
   printf("IMU..");
+  SPIInit();  
+  printf("spine..");
+  
+#if 0 
+  // Prox sensor testing
+  ProximityValues prox;
+  while(1)
+  {
+    GetProximity(&prox);
+    MicroWait(5000);
+  }
+#endif
+  
+#if 0
+  // Motor testing...
+  while (1)
+  {
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.3f);
+    Wait();
+    MotorSetPower(MOTOR_LEFT_WHEEL, -0.3f);
+    Wait();
+    MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.3f);
+    Wait();
+    MotorSetPower(MOTOR_RIGHT_WHEEL, -0.3f);
+    Wait();
+    MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
+    
+    MotorSetPower(MOTOR_LIFT, 0.6f);
+    Wait();
+    MotorSetPower(MOTOR_LIFT, -0.6f);
+    Wait();
+    MotorSetPower(MOTOR_LIFT, 0.0f);
 
-  // Disable for now
-  //SPIInit();
-  //printf("spine..");
+    MotorSetPower(MOTOR_HEAD, 0.5f);
+    Wait();
+    MotorSetPower(MOTOR_HEAD, -0.5f);
+    Wait();
+    MotorSetPower(MOTOR_HEAD, -0.0f);
 
+    MicroWait(500000);
+  }
+  
+#else
+  
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
   printf("init complete!\r\n");
-
-  while (true); // No long execution in cozmo 3
+   
+  while (1) // XXX: Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
   {
-    // Add main loop here...
   }
+#endif
 }
 
 extern "C"
 void __aeabi_assert(const char* s1, const char* s2, int s3)
 {
 }
+

@@ -11,8 +11,10 @@ namespace Anki
     {
       void Startup()
       {
-        // No thing to do here on the Cozmo 3 
-        return;
+        // If you get stuck here, you are trying to run a 3.0 build on non-3.0 hardware!
+        while (0x431 != (DBGMCU->IDCODE & DBGMCU_IDCODE_DEV_ID))  // STM32F411
+        {
+        }          
       }
     }
   }

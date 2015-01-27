@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
@@ -52,8 +51,6 @@ namespace Cozmo {
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
-    bool WasLastDeviceImageProcessed();
-    
     using AdvertisingRobot    = CozmoEngine::AdvertisingRobot;
     //using AdvertisingUiDevice = CozmoEngine::AdvertisingUiDevice;
     
@@ -61,8 +58,6 @@ namespace Cozmo {
     
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
-    // TODO: Remove this in favor of it being handled via messages instead of direct API polling
-    bool CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg);
     
   protected:
   
@@ -92,7 +87,6 @@ namespace Cozmo {
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
     
     VisionProcessingThread    _deviceVisionThread;
-    UiMessageHandler          _deviceVisionMsgHandler;
     
   }; // class CozmoEngineImpl
 
@@ -182,7 +176,7 @@ namespace Cozmo {
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
-    CozmoEngineSignals::GetRobotConnectSignal().emit(whichRobot, success);
+    CozmoEngineSignals::RobotConnectedSignal().emit(whichRobot, success);
     
     return success;
   }
@@ -200,22 +194,12 @@ namespace Cozmo {
     std::vector<int> advertisingRobots;
     _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
     for(auto & robot : advertisingRobots) {
-      CozmoEngineSignals::GetRobotAvailableSignal().emit(robot);
+      CozmoEngineSignals::RobotAvailableSignal().emit(robot);
     }
   
     // TODO: Handle images coming from connected robots
     for(auto & robotKeyPair : _connectedRobots) {
       //robotKeyPair.second.visionMsgHandler.ProcessMessages();
-    }
-    
-    MessageVisionMarker msg;
-    while(_deviceVisionThread.CheckMailbox(msg)) {
-      // Pass marker detections along to UI/game for use
-      CozmoEngineSignals::GetDeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
-                                                                     msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                                                                     msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                                                                     msg.x_imgUpperRight, msg.y_imgUpperRight,
-                                                                     msg.x_imgLowerRight, msg.y_imgLowerRight);
     }
     
     Result lastResult = UpdateInternal(currTime_ns);
@@ -232,17 +216,18 @@ namespace Cozmo {
     _deviceVisionThread.SetNextImage(image, bogusState);
 #   else
     _deviceVisionThread.Update(image, bogusState);
+    
+    MessageVisionMarker msg;
+    while(_deviceVisionThread.CheckMailbox(msg)) {
+      // Pass marker detections along to UI/game for use
+      CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
+                                                                     msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+                                                                     msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+                                                                     msg.x_imgUpperRight, msg.y_imgUpperRight,
+                                                                     msg.x_imgLowerRight, msg.y_imgLowerRight);
+    }
+    
 #   endif
-  }
-  
-  bool CozmoEngineImpl::WasLastDeviceImageProcessed()
-  {
-    return _deviceVisionThread.WasLastImageProcessed();
-  }
-  
-  bool CozmoEngineImpl::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg)
-  {
-    return _deviceVisionThread.CheckMailbox(msg);
   }
   
   
@@ -268,7 +253,7 @@ namespace Cozmo {
     return _impl->Init(config);
   }
   
-  Result CozmoEngine::Update(const Time currTime_sec) {
+  Result CozmoEngine::Update(const float currTime_sec) {
     return _impl->Update(SEC_TO_NANOS(currTime_sec));
   }
   
@@ -285,14 +270,6 @@ namespace Cozmo {
   
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
-  }
-  
-  bool CozmoEngine::WasLastDeviceImageProcessed() {
-    return _impl->WasLastDeviceImageProcessed();
-  }
-  
-  bool CozmoEngine::CheckDeviceVisionProcessingMailbox(MessageVisionMarker& msg) {
-    return _impl->CheckDeviceVisionProcessingMailbox(msg);
   }
   
 #if 0
@@ -322,7 +299,6 @@ namespace Cozmo {
     
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
-    bool GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations);
     
   protected:
     
@@ -375,14 +351,6 @@ namespace Cozmo {
   {
     return RESULT_OK;
   }
-  
-  /*
-  void CozmoEngineHostImpl::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices)
-  {
-    _uiComms.Update();
-    _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
-  }*/
- 
   
   void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
                                           const char*      robotIP,
@@ -475,11 +443,6 @@ namespace Cozmo {
     return _basestation.GetCurrentRobotImage(robotId, img, newerThanTime);
   }
   
-  bool CozmoEngineHostImpl::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    return _basestation.GetCurrentVisionMarkers(robotId, observations);
-  }
-  
 #if 0
 #pragma mark -
 #pragma mark Derived Host Class Impl Wrappers
@@ -509,21 +472,10 @@ namespace Cozmo {
     return _hostImpl->GetCurrentRobotImage(robotId, img, newerThanTime);
   }
   
-  bool CozmoEngineHost::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    return _hostImpl->GetCurrentVisionMarkers(robotId, observations);
-  }
-  
   bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)
   {
     return _hostImpl->ConnectToRobot(whichRobot);
   }
-  
-  /*
-  void CozmoEngineHost::GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices) {
-    _hostImpl->GetAdvertisingUiDevices(advertisingUiDevices);
-  }
-   */
   
   int    CozmoEngineHost::GetNumRobots() const {
     return _hostImpl->GetNumRobots();
@@ -589,11 +541,6 @@ namespace Cozmo {
     return false;
   }
   
-  bool CozmoEngineClient::GetCurrentVisionMarkers(RobotID_t robotId, std::vector<Cozmo::BasestationMain::ObservedObjectBoundingBox>& observations)
-  {
-    PRINT_NAMED_WARNING("CozmoEngineClient.GetCurrentVisionMarkers", "Cannot yet request vision markers from robot on client.\n");
-    return false;
-  }
   
 } // namespace Cozmo
 } // namespace Anki

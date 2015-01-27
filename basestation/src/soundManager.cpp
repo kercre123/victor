@@ -24,12 +24,6 @@
 
 #define DEBUG_SOUND_MANAGER 0
 
-//#if ANKI_IOS_BUILD
-
-#include "anki/cozmo/basestation/ui/messaging/uiMessages.h"
-
-//#endif
-
 namespace Anki {
   namespace Cozmo {
     
@@ -160,7 +154,7 @@ namespace Anki {
       
       if (system(NULL)) {
         _hasCmdProcessor = true;
-        SetRootDir("basestation/cozmo_sounds");
+        SetRootDir("");
       } else {
         PRINT_NAMED_WARNING("SoundManager.NoCmdProc","\n");
       }
@@ -176,7 +170,7 @@ namespace Anki {
     {
       _hasRootDir = false;
       
-      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Resource, dir));
+      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Sound, dir));
       
       // Check if directory exists
       struct stat info;
@@ -245,6 +239,10 @@ namespace Anki {
           ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
           ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
           ,{SOUND_SINGING,     "creep/Robot-Singing1Part1-2.mp3"}
+          ,{SOUND_SHOOT,       "codeMonsterShooter/shoot.wav"}
+          ,{SOUND_SHOT_HIT,    "codeMonsterShooter/hit.wav"}
+          ,{SOUND_SHOT_MISSED, "codeMonsterShooter/miss.wav"}
+          
         }
       };
       
@@ -280,7 +278,10 @@ namespace Anki {
         {"HELP_ME",       SOUND_HELP_ME},
         {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
         {"FLEES",         SOUND_FLEES},
-        {"SINGING",       SOUND_SINGING}
+        {"SINGING",       SOUND_SINGING},
+        {"SHOT_HIT",      SOUND_SHOT_HIT},
+        {"SHOT_MISSED",   SOUND_SHOT_MISSED},
+        {"SHOOT",         SOUND_SHOOT}
       };
 
       auto result = LUT.find(name);

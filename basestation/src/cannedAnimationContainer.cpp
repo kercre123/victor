@@ -11,7 +11,7 @@
  *
  **/
 
-#include "cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "robotMessageHandler.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"

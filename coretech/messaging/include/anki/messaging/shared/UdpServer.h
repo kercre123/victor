@@ -19,6 +19,7 @@ public:
   void StopListening();
 
   bool HasClient();
+  void DisconnectClient();
   
   int GetNumClients();
 
@@ -31,7 +32,9 @@ private:
   struct sockaddr_in cliaddr;
 
   void set_nonblock(int socket);
-  void AddClient(struct sockaddr_in &c);
+  
+  // Returns true if client successfully added
+  bool AddClient(struct sockaddr_in &c);
 
   typedef std::vector<struct sockaddr_in>::iterator client_list_it;
   std::vector<struct sockaddr_in> client_list;

@@ -13,7 +13,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "actionableObject.h"
+#include "anki/cozmo/basestation/actionableObject.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -10,10 +10,10 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "behaviorManager.h"
-#include "cozmoActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "pathPlanner.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"

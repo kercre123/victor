@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "ramp.h"
+#include "anki/cozmo/basestation/ramp.h"
 
 #include "anki/common/basestation/utils/logging/logging.h"
 

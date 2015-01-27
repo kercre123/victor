@@ -56,7 +56,7 @@ if cap1.isOpened():
     print('Capture1 initialized')
 else:
     print('Capture1 initialization failure')
-    exit(1)
+    exit()
     pdb.set_trace()
 
 for i in range(0,10):

@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "compoundActions.h"
+#include "anki/cozmo/basestation/compoundActions.h"
 
 #include "anki/common/basestation/utils/timer.h"
 

@@ -29,9 +29,8 @@
 
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
-#include "ramp.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include <fstream>
 
@@ -488,6 +487,10 @@ namespace Anki {
       if(_visionProcessor.WasLastImageProcessed())
       {
 #endif
+        
+        // Signal the availability of an image
+        // CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
+        
         ////////// Check for any messages from the Vision Thread ////////////
         
         MessageVisionMarker visionMarker;
@@ -526,6 +529,13 @@ namespace Anki {
           }
           
           _msgHandler->SendMessage(_ID, faceDetection);
+          
+          // Signal the detection of a face
+          CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
+                                                                faceDetection.x_upperLeft,
+                                                                faceDetection.y_upperLeft,
+                                                                faceDetection.width,
+                                                                faceDetection.height);
         }
         
         MessageTrackerQuad trackerQuad;
@@ -562,7 +572,7 @@ namespace Anki {
         
         uint32_t numBlocksObserved = 0;
         _blockWorld.Update(numBlocksObserved);
-        
+
       } // if(_visionProcessor.WasLastImageProcessed())
       
       // Send ping to keep connection alive.
@@ -854,14 +864,14 @@ namespace Anki {
       
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::GetPlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
+      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::GetStopSoundForRobotSignal().emit(GetID());
+      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
     } // StopSound()
       
       
@@ -1566,14 +1576,15 @@ namespace Anki {
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
       Result result = _msgHandler->SendMessage(_ID, m);
-      
+
+      /*
       // For specifying resolution for basestation vision:
       // (Start with QVGA)
       MessageImageRequest mImg;
       mImg.imageSendMode = ISM_STREAM;
       mImg.resolution    = Vision::CAMERA_RES_QVGA;
       _msgHandler->SendMessage(_ID, mImg);
-      
+      */
       return result;
     }
     
@@ -1922,6 +1933,7 @@ namespace Anki {
       m.percentileToMakeHigh = p.percentileToMakeHigh;
       m.integerCountsIncrement = p.integerCountsIncrement;
       m.highValue = p.highValue;
+      m.limitFramerate = p.limitFramerate;
       return _msgHandler->SendMessage(_ID,m);
     }
     

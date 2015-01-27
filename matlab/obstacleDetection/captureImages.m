@@ -1,5 +1,5 @@
+%function images = captureImages(videoCaptures, undistortMaps)
 
-%function images = captureImages(videoCaptures, undistortMaps, rightImageWarpHomography)
 function images = captureImages(videoCaptures, undistortMaps)
     images =  {};
     for i = 1:length(videoCaptures)

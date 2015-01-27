@@ -12,7 +12,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "preActionPose.h"
+#include "anki/cozmo/basestation/preActionPose.h"
 
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/visionMarker.h"

@@ -10,11 +10,11 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "cozmoActions.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 
 #include "bridge.h"
 #include "pathPlanner.h"
-#include "ramp.h"
+#include "anki/cozmo/basestation/ramp.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"

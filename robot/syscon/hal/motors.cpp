@@ -12,11 +12,6 @@
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
-// Early robot #2 had miswired connectors
-// XXX - change battery.c pin 26 too!
-// Note that quadrature encoders are wired properly, it's the motors that are wrong
-// #define EARLY_ROBO2
-
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
@@ -57,32 +52,32 @@ extern GlobalDataToBody g_dataToBody;
   
   const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
   
-  // Updated for 2.1
+  // Updated for 3.0
   // N1+N2 are 0 when off, 1 when on
   // P is 0 for P2+N1, P 1 is 1 for P1+N2
-  const u8 LEFT_P_PIN = 12;
-  const u8 LEFT_N1_PIN = 18;   // M1/Left on schematic
-  const u8 LEFT_N2_PIN = 19;
+  const u8 LEFT_P_PIN = 17;
+  const u8 LEFT_N1_PIN = 16;   // M1/Left on schematic
+  const u8 LEFT_N2_PIN = 15;
   
-  const u8 RIGHT_P_PIN = 30;
-  const u8 RIGHT_N1_PIN = 4;   // M3/Right on schematic
-  const u8 RIGHT_N2_PIN = 5;
+  const u8 RIGHT_P_PIN = 23;
+  const u8 RIGHT_N1_PIN = 22;  // M3/Right on schematic
+  const u8 RIGHT_N2_PIN = 21;
+    
+  const u8 HEAD_P_PIN = 7; 
+  const u8 HEAD_N1_PIN = 13;   // M2/Head on schematic
+  const u8 HEAD_N2_PIN = 14;
   
-  const u8 LIFT_P_PIN = 28;
-  const u8 LIFT_N1_PIN = 7;    // M4/Lift on schematic
-  const u8 LIFT_N2_PIN = 6;
-  
-  const u8 HEAD_P_PIN = 13;
-  const u8 HEAD_N1_PIN = 14;   // M2/Head on schematic
-  const u8 HEAD_N2_PIN = 17;
-  
+  const u8 LIFT_P_PIN = 0;
+  const u8 LIFT_N1_PIN = 30;   // M4/Lift on schematic
+  const u8 LIFT_N2_PIN = 25;
+
   const u8 ENCODER_NONE = 0xFF;
-  const u8 ENCODER_LEFT_PIN = 15;    // M1/Left on schematic
-  const u8 ENCODER_RIGHT_PIN = 27;    // M3/Right on schematic
-  const u8 ENCODER_LIFTA_PIN = 3;    // M4/Lift on schematic
-  const u8 ENCODER_LIFTB_PIN = 9;
-  const u8 ENCODER_HEADA_PIN = 16;   // M2/Head on schematic
-  const u8 ENCODER_HEADB_PIN = 20;
+  const u8 ENCODER_LEFT_PIN = 20;    // M1/Left on schematic
+  const u8 ENCODER_RIGHT_PIN = 24;   // M3/Right on schematic
+  const u8 ENCODER_LIFTA_PIN = 4;    // M4/Lift on schematic
+  const u8 ENCODER_LIFTB_PIN = 28;
+  const u8 ENCODER_HEADA_PIN = 11;   // M2/Head on schematic
+  const u8 ENCODER_HEADB_PIN = 10;
   
   // Given a gear ratio of 283.5:1 and 88mm wheel circumference and 4 encoder
   // ticks per revolution, we compute the meters per tick as:
@@ -108,12 +103,8 @@ extern GlobalDataToBody g_dataToBody;
     {
       LEFT_N1_PIN,
       LEFT_N2_PIN,
-      LEFT_P_PIN,
-#ifndef EARLY_ROBO2      
+      LEFT_P_PIN,     
       true,   // Wired backward
-#else      
-      false,
-#endif        
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -146,11 +137,7 @@ extern GlobalDataToBody g_dataToBody;
       HEAD_N1_PIN,
       HEAD_N2_PIN,
       HEAD_P_PIN,
-#ifndef EARLY_ROBO2      
       true,   // Wired backward
-#else      
-      false,
-#endif        
       0,
       ENCODER_HEADA_PIN,
       ENCODER_HEADB_PIN,

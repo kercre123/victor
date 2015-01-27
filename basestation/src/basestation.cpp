@@ -25,7 +25,6 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/uiMessageHandler.h" // TODO: Remove?
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
 #include "anki/cozmo/basestation/utils/exceptions.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -33,8 +32,8 @@
 #include "robotMessageHandler.h"
 #include "recording/playback.h"
 #include "pathPlanner.h"
-#include "behaviorManager.h"
-#include "vizManager.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 
 namespace Anki {
@@ -87,8 +86,6 @@ namespace Cozmo {
 
     bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
 
-    bool GetCurrentVisionMarkers(const RobotID_t robotID,
-                                 std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuad);
     s32  GetAnimationID(const RobotID_t robotID,
                        const std::string& animationName);
     
@@ -378,29 +375,6 @@ namespace Cozmo {
     }
   }
     
-    
-  bool BasestationMainImpl::GetCurrentVisionMarkers(const RobotID_t robotID,
-                                                    std::vector<BasestationMain::ObservedObjectBoundingBox>& boundingQuads)
-  {
-    Robot* robot = robotMgr_.GetRobotByID(robotID);
-    if(robot != nullptr) {
-      const BlockWorld::ObservedObjectBoundingBoxes& obsObjects = robot->GetBlockWorld().GetProjectedObservedObjects();
-      for(auto obsObject : obsObjects) {
-        boundingQuads.emplace_back(obsObject.first.GetValue(), obsObject.second);
-        
-        // Display
-        Quad2f quad;
-        obsObject.second.GetQuad(quad);
-        VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
-      }
-      return true;
-    } else {
-      PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentVisionMarkers.InvalidRobotID",
-                        "Image requested for invalid robot ID = %d.\n", robotID);
-      return false;
-    }
-  }
-    
   s32 BasestationMainImpl::GetAnimationID(const RobotID_t robotID,
                                           const std::string& animationName)
   {
@@ -467,13 +441,7 @@ namespace Cozmo {
   {
     return impl_->GetCurrentRobotImage(robotID, img, newerThan);
   }
-    
-  bool BasestationMain::GetCurrentVisionMarkers(const RobotID_t robotID,
-                                                std::vector<ObservedObjectBoundingBox>& boundingQuads)
-  {
-    return impl_->GetCurrentVisionMarkers(robotID, boundingQuads);
-  }
-
+  
   s32 BasestationMain::GetAnimationID(const RobotID_t robotID,
                      const std::string& animationName)
   {
