@@ -2,7 +2,12 @@
 #include "anki/cozmo/robot/hal.h"
 #include "portable.h"
 
-#define BAUDRATE 2000000
+// Comment this out to use the Torpedo UART (currently broken on 3.0)
+#define DEBUG_UART
+
+#ifdef DEBUG_UART
+// Use the head debug cable UART
+#define BAUDRATE 3000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -18,6 +23,25 @@
 #define DMA_IRQ_TX      DMA2_Stream7_IRQn
 #define DMA_FLAG_TX     DMA_FLAG_TCIF7    // Stream 7
 #define DMA_HANDLER_TX  DMA2_Stream7_IRQHandler
+#else
+// Use the Torpedo UART
+#define BAUDRATE 1000000
+
+#define RCC_GPIO        RCC_AHB1Periph_GPIOA
+#define RCC_DMA         RCC_AHB1Periph_DMA1
+#define RCC_UART        RCC_APB2Periph_USART2
+#define GPIO_AF         GPIO_AF_USART2
+#define UART            USART2
+
+#define DMA_STREAM_RX   DMA1_Stream5
+#define DMA_CHANNEL_RX  DMA_Channel_4
+
+#define DMA_STREAM_TX   DMA1_Stream6
+#define DMA_CHANNEL_TX  DMA_Channel_4
+#define DMA_IRQ_TX      DMA1_Stream6_IRQn
+#define DMA_FLAG_TX     DMA_FLAG_TCIF6    // Stream 6
+#define DMA_HANDLER_TX  DMA1_Stream6_IRQHandler
+#endif
 
 namespace Anki
 {
@@ -86,8 +110,13 @@ namespace Anki
       void UARTConfigure()
       {
         // Supporting 3.0
+      #ifdef DEBUG_UART
         GPIO_PIN_SOURCE(TX, GPIOB, 6);
         GPIO_PIN_SOURCE(RX, GPIOB, 7);
+      #else
+        GPIO_PIN_SOURCE(TX, GPIOA, 2);
+        GPIO_PIN_SOURCE(RX, GPIOA, 3);
+      #endif
         
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);

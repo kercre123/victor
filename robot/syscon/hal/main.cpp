@@ -73,8 +73,8 @@ int main(void)
   while (1)
   {
     UARTPutString("\nForward ends with...");
-    for (int i = 0; i < 4; i++)
-      MotorsSetPower(i, 0x1fff);   
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, 0x5fff);   
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();
@@ -86,8 +86,8 @@ int main(void)
     
     UARTPutString("\nBackward ends with...");
     
-    for (int i = 0; i < 4; i++)    
-      MotorsSetPower(i, -0x1fff);
+    for (int i = 2; i < 4; i++)    
+      MotorsSetPower(i, -0x5fff);
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();

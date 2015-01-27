@@ -197,16 +197,15 @@ namespace Anki
     namespace HAL
     {
       // Define SPI pins with macros
-      // Updated for 2.1
-      GPIO_PIN_SOURCE(IMU_SCK, GPIOG, 13);
-      GPIO_PIN_SOURCE(IMU_MISO, GPIOG, 12);
-      GPIO_PIN_SOURCE(IMU_MOSI, GPIOG, 14);
-      GPIO_PIN_SOURCE(IMU_CS_ACC, GPIOF, 10);
-      GPIO_PIN_SOURCE(IMU_CS_GYRO, GPIOH, 1);
-      GPIO_PIN_SOURCE(IMU_INT, GPIOB, 4);
+      // Updated for 3.0
+      GPIO_PIN_SOURCE(IMU_SCK, GPIOB, 13);
+      GPIO_PIN_SOURCE(IMU_MISO, GPIOB, 14);
+      GPIO_PIN_SOURCE(IMU_MOSI, GPIOB, 15);
+      GPIO_PIN_SOURCE(IMU_CS_ACC, GPIOA, 10);
+      GPIO_PIN_SOURCE(IMU_CS_GYRO, GPIOA, 8);
+      GPIO_PIN_SOURCE(IMU_INT, GPIOA, 9);
       
-      
-      // SPI6 Read/Write routine
+      // SPI2 Read/Write routine
       // Pipelined SPI interface
       // If no value is passed in, we assume we're at the end of the pipeline,
       //    so we only read the last value, and reset begin_pipeline to 1
@@ -217,7 +216,7 @@ namespace Anki
         // Just send data the first time through
         if(begin_pipeline)
         {
-            SPI_I2S_SendData(SPI6, value);
+            SPI_I2S_SendData(SPI2, value);
             begin_pipeline = 0;
             return 0xAA;
         }
@@ -226,11 +225,11 @@ namespace Anki
         if(value != -1)
         {
           // Wait until TXE = 1 (wait until transmit buffer is empty)
-          while(!(SPI_I2S_GetFlagStatus(SPI6, SPI_I2S_FLAG_TXE)))
+          while(!(SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_TXE)))
           {
           }
           // Send Data, TXE = 0
-          SPI_I2S_SendData(SPI6, value);
+          SPI_I2S_SendData(SPI2, value);
         }
         else
         {
@@ -238,12 +237,12 @@ namespace Anki
         }
         
         // Wait until RXNE = 1 (wait for receive buffer to have data)
-        while(!SPI_I2S_GetFlagStatus(SPI6, SPI_I2S_FLAG_RXNE))
+        while(!SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_RXNE))
         {
         }
         
         // Receive data
-        return SPI_I2S_ReceiveData(SPI6);
+        return SPI_I2S_ReceiveData(SPI2);
       }
           
       
@@ -251,7 +250,7 @@ namespace Anki
       static void IMUDeselectAll()
       {
         // Wait for data transfer to finish
-        while(SPI_I2S_GetFlagStatus(SPI6, SPI_I2S_FLAG_BSY))
+        while(SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_BSY))
         {
         }
         // deselect accelerometer and gyro      
@@ -284,18 +283,16 @@ namespace Anki
       static void InitSPI()
       {
         // Enable peripheral clock
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI6, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
         
         // Enable SCK, MOSI, MISO and NSS GPIO clocks
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
-        
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
         // Peripherals alternate function
-        GPIO_PinAFConfig(GPIO_IMU_SCK, SOURCE_IMU_SCK, GPIO_AF_SPI6);
-        GPIO_PinAFConfig(GPIO_IMU_MISO, SOURCE_IMU_MISO, GPIO_AF_SPI6);
-        GPIO_PinAFConfig(GPIO_IMU_MOSI, SOURCE_IMU_MOSI, GPIO_AF_SPI6);
+        GPIO_PinAFConfig(GPIO_IMU_SCK, SOURCE_IMU_SCK, GPIO_AF_SPI2);
+        GPIO_PinAFConfig(GPIO_IMU_MISO, SOURCE_IMU_MISO, GPIO_AF_SPI2);
+        GPIO_PinAFConfig(GPIO_IMU_MOSI, SOURCE_IMU_MOSI, GPIO_AF_SPI2);
 
         // Initalize Pins
         GPIO_InitTypeDef GPIO_InitStructure;
@@ -306,12 +303,14 @@ namespace Anki
         // Set SPI alternate function pins
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
         GPIO_InitStructure.GPIO_Pin = PIN_IMU_MISO;
-        GPIO_Init(GPIO_IMU_MISO, &GPIO_InitStructure);  // GPIOG
+        GPIO_Init(GPIO_IMU_MISO, &GPIO_InitStructure);
         
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         //GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_SCK | PIN_IMU_MOSI;
-        GPIO_Init(GPIO_IMU_SCK, &GPIO_InitStructure);  // GPIOG
+        GPIO_InitStructure.GPIO_Pin = PIN_IMU_SCK;
+        GPIO_Init(GPIO_IMU_SCK, &GPIO_InitStructure);
+        GPIO_InitStructure.GPIO_Pin = PIN_IMU_MOSI;
+        GPIO_Init(GPIO_IMU_MOSI, &GPIO_InitStructure);
         
         // Set CS output pins
         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
@@ -344,10 +343,10 @@ namespace Anki
         SPI_InitStructure.SPI_FirstBit              =      SPI_FirstBit_MSB;
         SPI_InitStructure.SPI_CRCPolynomial         =      0;
         
-        SPI_Init(SPI6, &SPI_InitStructure);
+        SPI_Init(SPI2, &SPI_InitStructure);
         
         // Enable the SPI
-        SPI_Cmd(SPI6, ENABLE);
+        SPI_Cmd(SPI2, ENABLE);
       }
 
 
@@ -438,11 +437,9 @@ namespace Anki
       }
       
 
-      // Initialize SPI6, set up accelerometer and gyro
+      // Initialize SPI2, set up accelerometer and gyro
       void IMUInit()
       {  
-        return; // XXX
-        
         // Initialize CS pin values
         IMUDeselectAll();
         // Enable CS pins and SPI
@@ -456,8 +453,6 @@ namespace Anki
       // Assuming GYRO +/- 500 deg range
       void IMUReadData(IMU_DataStructure &IMUData)
       {
-        return; // XXX
-        
         static uint8_t temp_data_msb, temp_data_lsb;
         static s16 temp_data;
         
