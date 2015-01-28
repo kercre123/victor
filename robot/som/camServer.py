@@ -147,7 +147,7 @@ class CameraSubServer(object):
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
+    def __init__(self, host, port=5551, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":

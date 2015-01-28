@@ -19,4 +19,4 @@ if __name__ == '__main__':
         interval = float(sys.argv[3])
     except:
         interval = 1.0
-    ping((sys.argv[1], 9000), count, interval)
+    ping((sys.argv[1], 5551), count, interval)
