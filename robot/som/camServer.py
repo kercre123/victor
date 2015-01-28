@@ -10,11 +10,6 @@ import messages
 
 MTU = 65535
 
-def yavta_w(address, value):
-    "Subprocess call to yavta process"
-    return subprocess.call(['yavta', '-w', '0x%08x %d' % (address, value), '/dev/v4l-subdev8']) == 0
-
-
 class CameraSubServer(object):
     "imageChunk server base class"
 
@@ -32,25 +27,31 @@ class CameraSubServer(object):
         messages.CAMERA_RES_NONE: (0, 0)
     }
 
-    def __init__(self, poller):
+    ENCODER_SOCK_HOSTNAME = '127.0.0.1'
+    ENCODER_SOCK_PORT     = 6000
+
+
+    def __init__(self, poller, verbose=False):
         "Initalize server for specified camera on given port"
+        self.v = verbose
+        if self.v: sys.stdout.write("CameraSubServer will be verbose\n")
+        subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         # Setup local jpeg data receive socket
         self.encoderProcess = None
         self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.encoderSocket.bind(('127.0.0.1', 6000))
+        self.encoderSocket.bind((self.ENCODER_SOCK_HOSTNAME, self.ENCODER_SOCK_PORT))
         self.encoderSocket.settimeout(0) # Set non-blocking
         poller.register(self.encoderSocket, select.POLLIN)
 
-        # Initalize camera hardware?
-        for params in [(0x00980911, 720),
-                       (0x00980911, 720),
-                       (0x0098090e, 125),
-                       (0x0098090f, 175)]:
-            assert yavta_w(*params), "yavta failure"
+        hostname = socket.gethostname()
+        assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
+        if hostname == 'cozmo':
+            self.camDev = "mt9p031"
+        else:
+            self.camDev = "ov2686"
 
-        #assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]']) == 0, \
-        #    "media-ctl ISP setup failure"
+        assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"%s":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]' % self.camDev]) == 0, "media-ctl ISP links setup failure"
 
         # Set ISP camera resizer
         self.resolution = messages.CAMERA_RES_NONE
@@ -69,19 +70,23 @@ class CameraSubServer(object):
         self.encoderSocket.close()
 
     def setResolution(self, resolutionEnum):
-        if resolutionEnum != self.resolution:
+        if resolutionEnum == self.resolution:
+            return True
+        else:
             self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"mt9p031":0 [SGRBG8 1298x970 (664,541)/1298x970], "OMAP3 ISP CCDC":2 [SGRBG10 1298x970], "OMAP3 ISP preview":1 [UYVY 1298x970], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % self.RESOLUTION_TUPLES[resolutionEnum]]) == 0:
+            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR8 1600x1200], "OMAP3 ISP CCDC":2 [SBGGR10 1600x1200], "OMAP3 ISP preview":1 [UYVY 1600x1200], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % (self.camDev, self.RESOLUTION_TUPLES[resolutionEnum][0], self.RESOLUTION_TUPLES[resolutionEnum][1])]) == 0:
                 self.resolution = resolutionEnum
                 self.startEncoder()
                 return True
-        return False
+            else:
+                return False
 
 
     def startEncoder(self):
         "Starts the encoder subprocess"
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            self.encoderProcess = subprocess.Popen(['./launch-gst-subprocess.sh', '127.0.0.1', '6000'])
+            #self.encoderProcess = subprocess.Popen(['./launch-gst-subprocess.sh', '127.0.0.1', '6000'])
+            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', 'ffmpegcolorspace', '!', 'jpegenc', '!', 'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
 
     def stopEncoder(self):
         "Stop the encoder subprocess if it is running"
@@ -97,6 +102,7 @@ class CameraSubServer(object):
         # Handle incoming messages if any
         if message and ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
+            if self.v: sys.stdout.write("New image request: %s\n" % str(inMsg))
             self.sendMode = inMsg.imageSendMode
             if inMsg.imageSendMode == messages.ISM_OFF:
                 self.stopEncoder()
@@ -125,6 +131,7 @@ class CameraSubServer(object):
         # Get a new frame if any from encoder
         try:
             self.nextFrame = self.encoderSocket.recv(MTU)
+            if self.v: sys.stdout.write("New frame from encoder\n")
         except:
             pass
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
@@ -140,7 +147,7 @@ class CameraSubServer(object):
 class Client(object):
     "Client for UDP camera server for testing"
 
-    def __init__(self, host, port=9000, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
+    def __init__(self, host, port=5551, resolution=messages.CAMERA_RES_SVGA, socketType="UDP"):
         "Connect to server"
         self.resolution = resolution
         if socketType == "UDP":

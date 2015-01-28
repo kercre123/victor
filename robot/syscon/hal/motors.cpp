@@ -55,13 +55,13 @@ extern GlobalDataToBody g_dataToBody;
   // Updated for 3.0
   // N1+N2 are 0 when off, 1 when on
   // P is 0 for P2+N1, P 1 is 1 for P1+N2
-  const u8 LEFT_P_PIN = 17;
-  const u8 LEFT_N1_PIN = 16;   // M1/Left on schematic
-  const u8 LEFT_N2_PIN = 15;
+  const u8 LEFT_P_PIN = 23;
+  const u8 LEFT_N1_PIN = 22;   // M1/incorrectly Left on schematic
+  const u8 LEFT_N2_PIN = 21;
   
-  const u8 RIGHT_P_PIN = 23;
-  const u8 RIGHT_N1_PIN = 22;  // M3/Right on schematic
-  const u8 RIGHT_N2_PIN = 21;
+  const u8 RIGHT_P_PIN = 17;
+  const u8 RIGHT_N1_PIN = 16;  // M3/incorrectly Right on schematic
+  const u8 RIGHT_N2_PIN = 15;
     
   const u8 HEAD_P_PIN = 7; 
   const u8 HEAD_N1_PIN = 13;   // M2/Head on schematic
@@ -104,7 +104,7 @@ extern GlobalDataToBody g_dataToBody;
       LEFT_N1_PIN,
       LEFT_N2_PIN,
       LEFT_P_PIN,     
-      true,   // Wired backward
+      false,   // Wired forward
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -522,15 +522,15 @@ void GPIOTE_IRQHandler()
       {
         fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
         if (state & (1 << ENCODER_HEADB_PIN))    // Forward vs backward
-          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK; // Inverted due to miswiring
+          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;
         else
-          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
+          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
       } else {
         fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_LOW);
         if (state & (1 << ENCODER_HEADB_PIN))   // Forward vs backward
-          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK; // Inverted due to miswiring
+          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;
         else
-          m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
+          m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
       }    
     }           
     // Lift encoder (next fastest)

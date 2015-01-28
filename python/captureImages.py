@@ -3,8 +3,9 @@ import cv2
 import pdb
 import os
 import sys
+from cameraControl import *
 
-def captureImages(cameraId, captureBaseFilename, saveColor):
+def captureImages(cameraId, captureBaseFilename, saveColor, drawCrosshair):
   #cameraId = 0
   #captureBaseFilename = '/Users/pbarnum/tmp/image_'
   #saveColor = True
@@ -16,8 +17,11 @@ def captureImages(cameraId, captureBaseFilename, saveColor):
       print('Capture0 initialized')
   else:
       print('Capture0 initialization failure')
-      exit(1)
+      exit()
       pdb.set_trace()
+
+  #validProperties = getProperties(cap0)
+  #print(validProperties)
 
   for i in range(0,10):
       ret, frame = cap0.read()
@@ -35,10 +39,23 @@ def captureImages(cameraId, captureBaseFilename, saveColor):
 
       ret, leftImage = cap0.read()
 
-      if not saveColor:
+      if saveColor:
+        leftImageToShow = leftImage.copy()
+      else:
         leftImage = cv2.cvtColor(leftImage, cv2.COLOR_BGR2GRAY)
+        leftImageToShow = cv2.merge([leftImage,leftImage,leftImage])
 
-      cv2.imshow('leftImage', leftImage)
+      if drawCrosshair:
+        centerX = leftImageToShow.shape[1]/2
+        centerY = leftImageToShow.shape[0]/2
+        
+        leftImageToShow[(centerY-1):(centerY+2), :, :] = 0;
+        leftImageToShow[:, (centerX-1):(centerX+2), :] = 0;
+        
+        leftImageToShow[centerY, :, :] = 255;
+        leftImageToShow[:, centerX, :] = 255;
+        
+      cv2.imshow('leftImage', leftImageToShow)
 
       c = cv2.waitKey(50)
 
@@ -64,6 +81,7 @@ def captureImages(cameraId, captureBaseFilename, saveColor):
   cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+  drawCrosshair = True
   cameraId = 0
   captureBaseFilename = '/Users/pbarnum/tmp/image_'
   saveColor = True
@@ -79,5 +97,5 @@ if __name__ == '__main__':
     
   print('cameraId: ' + str(cameraId) + '   captureBaseFilename: ' + captureBaseFilename + '   saveColor: ' + str(saveColor))
     
-  captureImages(cameraId, captureBaseFilename, saveColor)
+  captureImages(cameraId, captureBaseFilename, saveColor, drawCrosshair)
   
