@@ -1,1 +1,1 @@
-rsync -avz --exclude='*.pyc' --exclude='*.jpg' --exclude=uImage ./ cozmo:som/
+rsync -avz --exclude='*.pyc' --exclude='*.jpg' --exclude=uImage ./ $1:som/
