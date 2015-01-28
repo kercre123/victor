@@ -34,7 +34,7 @@
 
 #endif
 
-const BOOL USE_PRESS_TO_AIM_RELEASE_TO_FIRE = YES;
+const BOOL USE_PRESS_TO_AIM_RELEASE_TO_FIRE = NO;
 
 // TODO: Hook these up to settings?
 const int GAME_LENGTH_SEC = 30;
@@ -170,11 +170,6 @@ const float SHOT_TRAVEL_TIME = 0.5f;
   self.useVisualTargetingSwitch.on = self.useVisualTargeting;
   [self.targetingSlopSlider setValue:self.targetingSlopFactor];
   
-  // Camera view now always starts hidden:
-  // - for audio tareting, it is simply unused, period
-  // - for visual targeting, it only appears when the screen is pressed (for aiming)
-  self.cameraView.hidden = YES;
-  
   if(USE_PRESS_TO_AIM_RELEASE_TO_FIRE) {
     // Set up press-to-aim / release-to-fire gesture:
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc]
@@ -182,6 +177,11 @@ const float SHOT_TRAVEL_TIME = 0.5f;
                                                       action:@selector(handleLongPressGesture:)];
     longPressGesture.minimumPressDuration = 0.25;
     [self.view addGestureRecognizer:longPressGesture];
+    
+    // Camera view now always starts hidden:
+    // - for audio tareting, it is simply unused, period
+    // - for visual targeting, it only appears when the screen is pressed (for aiming)
+    self.cameraView.hidden = YES;
 
   } else {
     // Set up taps for firing
@@ -189,6 +189,8 @@ const float SHOT_TRAVEL_TIME = 0.5f;
                                           initWithTarget:self
                                           action:@selector(handleTapGesture:)];
     [self.view addGestureRecognizer:tapGesture];
+    
+    self.cameraView.hidden = !self.useVisualTargeting;
   }
   
   
