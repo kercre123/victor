@@ -12,8 +12,8 @@
 
 #define kDefaultMagnitudeRadius     140.0
 #define kDefaultPuckRadius          30.0
-#define kDefaultAngleThreshold      5.0
-#define kDefaultMagnitudeThreshold  0.10
+#define kDefaultAngleThreshold      2.5
+#define kDefaultMagnitudeThreshold  0.025
 
 // Config Direction Pad
 
