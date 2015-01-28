@@ -52,62 +52,18 @@ BSTimer basestationController;
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
 #define VIZ_HOST_IP               "127.0.0.1"
 
+
+// For connecting to physical robot
+// TODO: Expose these to UI
+const bool FORCE_ADD_ROBOT = false;
+const bool FORCED_ROBOT_IS_SIM = false;
+const u8 forcedRobotId = 1;
+const char* forcedRobotIP = "192.168.3.34";
+//const char* forcedRobotIP = "172.31.1.1";
+
 using namespace Anki;
 using namespace Anki::Cozmo;
 
-/*
-// Helper object to listen for advertising robots/devices and tell the game
-// to connect to them. This is here since we don't need/have a UI to instruct
-// the game to make these connections. (I.e., just connect to everything that
-// advertises.)
-class DeviceConnector : IBaseStationEventListener
-{
-public:
-  DeviceConnector(CozmoGameHost* game)
-  : _game(game)
-  {
-    BSE_RobotAvailable::Register(this);
-    BSE_UiDeviceAvailable::Register(this);
-  }
-  
-  ~DeviceConnector()
-  {
-    BSE_RobotAvailable::Unregister(this);
-    BSE_UiDeviceAvailable::Unregister(this);
-  }
-  
-protected:
-  
-  CozmoGameHost* _game;
-  
-  virtual void OnEventRaised( const IBaseStationEventInterface* event )
-  {
-    switch(event->GetEventType())
-    {
-      case BSETYPE_RobotAvailable:
-      {
-        const BSE_RobotAvailable* raEvent = reinterpret_cast<const BSE_RobotAvailable*>(event);
-        if(true == _game->ConnectToRobot(raEvent->robotID_)) {
-          printf("Connected to robot %d!\n", raEvent->robotID_);
-        }
-        break;
-      }
-        
-      case BSETYPE_UiDeviceAvailable:
-      {
-        const BSE_UiDeviceAvailable* daEvent = reinterpret_cast<const BSE_UiDeviceAvailable*>(event);
-        if(true == _game->ConnectToUiDevice(daEvent->deviceID_)) {
-          printf("Connected to UI device %d!\n", daEvent->deviceID_);
-        }
-        break;
-      }
-        
-      default:
-        break;
-    }
-  }
-}; // class DeviceConnector
-*/
 
 int main(int argc, char **argv)
 {
@@ -160,6 +116,12 @@ int main(int argc, char **argv)
   // Initialize the engine
   CozmoGameHost cozmoGame;
   cozmoGame.Init(config);
+  
+  // Force add a robot
+  if (FORCE_ADD_ROBOT) {
+    cozmoGame.ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+  }
+  
 
   //
   // Main Execution loop: step the world forward forever
