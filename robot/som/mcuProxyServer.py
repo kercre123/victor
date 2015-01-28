@@ -12,7 +12,6 @@ import messages
 class MCUProxyServer(object):
     "Proxy server class"
 
-    PORT = 9001
     CLIENT_TIMEOUT = 60.0 # One minute for right now
     SERIAL_DEVICE = "/dev/ttyO2"
     BAUD_RATE = 3000000
@@ -38,7 +37,7 @@ class MCUProxyServer(object):
 
     def __del__(self):
         "Send closeout messages"
-        self.sendToMcu(messages.SoMRadioState(0,0).serialize())
+        self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
 
     def __addToMcuQ(self, msg):
         self._toMcuQ.append(msg)
@@ -70,14 +69,14 @@ class MCUProxyServer(object):
     def standby(self):
         "Put the sub server into standby mode"
         self.radioConnected = False
-        self.toMcuQ = messages.SoMRadioState(0,0).serialize()
+        self.toMcuQ = messages.ClientConnectionStatus(0,0).serialize()
 
     def poll(self, message=None):
         "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
         # Handle incoming messages if any
         if message:
             if self.radioConnected is False: # If first message of connection
-                self.toMcuQ = messages.SoMRadioState(1, 0).serialize() # Queue message to tell the MCU we have a connection
+                self.toMcuQ = messages.ClientConnectionStatus(1, 0).serialize() # Queue message to tell the MCU we have a connection
             self.toMcuQ = message # Queue the message
         # Handle serial port
         self.sendToMcu(self.toMcuQ)
@@ -96,18 +95,18 @@ class MCUProxyServer(object):
         "Read the serial connection to the MCU and append any messages to the receive queue"
         self.rawSerData += self.mcu.read(self.MTU)
         while len(self.rawSerData):
-            if self.v > 10: sys.stdout.write("serRx: %s\n" % self.rawSerData)
+            if self.v > 9: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
                 return
             self.rawSerData = self.rawSerData[messageStart + len(self.SERIAL_HEADER):]
-            if len(self.rawSerData) < 4: self.rawSerData += self.mcu.read(4 - len(data))
+            if len(self.rawSerData) < 4: self.rawSerData += self.mcu.read(4 - len(self.rawSerData))
             if len(self.rawSerData) < 4: # Somethings wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return
             length = sum([ord(d) << i for d, i in zip(self.rawSerData, (0, 8, 16, 24))]) # Calculate message length
             self.rawSerData = self.rawSerData[4:]
-            if len(self.rawSerData) < length: self.rawSerData += self.mcu.read(length - len(data))
+            if len(self.rawSerData) < length: self.rawSerData += self.mcu.read(length - len(self.rawSerData))
             if len(self.rawSerData) < length: # Something is wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return

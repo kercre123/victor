@@ -20,8 +20,9 @@ class CozmoServer(socket.socket):
 
     CLIENT_IDLE_TIMEOUT = 100.0
 
-    def __init__(self, address=('', 9000)):
+    def __init__(self, address):
         "Initalize the server and start listening on UDP"
+        if VERBOSE: sys.stdout.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.bind(address)
         self.settimeout(0)
@@ -48,6 +49,7 @@ class CozmoServer(socket.socket):
     def clientRecv(self, maxLen):
         try:
             data, self.client = self.recvfrom(maxLen)
+            if VERBOSE: sys.stdout.write("Received message: %s\n" % data)
         except:
             return None
         else:
@@ -83,7 +85,7 @@ class CozmoServer(socket.socket):
 if __name__ == '__main__':
     if '-v' in sys.argv: VERBOSE = True
     if '-i' in sys.argv: PRINT_INTERVAL = True
-    address = ('', 9000)
+    address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
     try:
