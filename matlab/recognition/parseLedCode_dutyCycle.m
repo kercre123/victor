@@ -20,6 +20,16 @@ function parseLedCode_dutyCycle()
     %     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
+    useBoxFilter = false;
+    
+    if useBoxFilter
+        smallBlurKernel = ones(11, 11);
+        smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
+    else
+%         smallBlurKernel = fspecial('gaussian',[11,11],3);
+        smallBlurKernel = fspecial('gaussian',[21,21],6);
+    end
+    
     [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
     
     % 1. Capture N images
@@ -31,6 +41,9 @@ function parseLedCode_dutyCycle()
         [curImage, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
         images(:,:,:,i) = curImage;
         
+%         figure(3); imshow(imfilter(curImage, smallBlurKernel))
+%         figure(4); imshow(imfilter(curImage, gaussianFilter))
+
         curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
         curImage(:, (centerPoint(2)-1):(centerPoint(2)+1), :) = 0;
         curImage(centerPoint(1), :, :) = 255;
@@ -42,7 +55,7 @@ function parseLedCode_dutyCycle()
         
         figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
         %         figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
-        
+
         %         curImageHsv = rgb2hsv(curImage);
         %         figure(3); imshow(curImageHsv(:,:,1));
         %         figure(4); imshow(curImageHsv(:,:,2));
@@ -64,8 +77,6 @@ function parseLedCode_dutyCycle()
         return;
     end
     
-    smallBlurKernel = ones(11, 11);
-    smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
     blurredImages = imfilter(images, smallBlurKernel);
     
 %     figure(3); imshow(blurredImages(:,:,:,1));

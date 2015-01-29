@@ -7,7 +7,7 @@
 % savePattern = 'c:/tmp/image_%05d.png'; images = captureShortSequence('resolution', [120,160], 'numImagesToCapture', 100, 'showImages', false); for i=1:size(images,4) imwrite(images(:,:,:,i), sprintf(savePattern,i-1)); end;
 
 function images = captureShortSequence(varargin)
-    captureId = 0;
+    captureId = 1;
     resolution = [240,320];
     settingsGui = false; % If true, just set the settings, but don't return the images
     whiteBalanceTemperature = 4000;
