@@ -3,15 +3,10 @@ function parseLedCode_dutyCycle()
     numImages = 15;
     cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
     
-    filenamePattern = '~/Documents/Anki/product-cozmo-large-files/blinkyImages10/red_%05d.png';
+    filenamePattern = '~/Documents/Anki/products-cozmo-large-files/blinkyImages10/red_%05d.png';
     whichImages = 1:100;
     
     processingSize = [120,160];
-    curImageIndex = 1;
-    
-    centerPoint = ceil(processingSize / 2);
-    
-    expectedFps = 30;
     
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
@@ -30,50 +25,9 @@ function parseLedCode_dutyCycle()
         smallBlurKernel = fspecial('gaussian',[21,21],6);
     end
     
-    [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
+    images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages);
     
-    % 1. Capture N images
-    images = zeros([processingSize, 3, numImages], 'uint8');
-    images(:,:,:,1) = image;
-    
-    tic
-    for i = 1:numImages
-        [curImage, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
-        images(:,:,:,i) = curImage;
-        
-%         figure(3); imshow(imfilter(curImage, smallBlurKernel))
-%         figure(4); imshow(imfilter(curImage, gaussianFilter))
-
-        curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
-        curImage(:, (centerPoint(2)-1):(centerPoint(2)+1), :) = 0;
-        curImage(centerPoint(1), :, :) = 255;
-        curImage(:, centerPoint(2), :) = 255;
-        
-        %         [gradient, or] = canny(rgb2gray(curImage), 1);
-        
-        %         figure(2); imshows(imresize(gradient/20, [240,320], 'nearest'), 2);
-        
-        figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
-        %         figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
-
-        %         curImageHsv = rgb2hsv(curImage);
-        %         figure(3); imshow(curImageHsv(:,:,1));
-        %         figure(4); imshow(curImageHsv(:,:,2));
-        %         figure(5); imshow(curImageHsv(:,:,3));
-    end
-    timeElapsed = toc();
-    
-    %     expectedElapsedTime = numImages * (1/expectedFps);
-    expectedElapsedTimeRange = [(numImages-0.75) * (1/expectedFps), (numImages+0.75) * (1/expectedFps)];
-    %     expectedFpsRange = expectedFps * (expectedFps/numImages) * [expectedElapsedTime - (0.5/expectedFps), expectedElapsedTime + (0.5/expectedFps)];
-    %
-    disp(sprintf('Captured %d images at %0.2f FPS.', numImages, 1/(timeElapsed/numImages)))
-    
-    if expectedElapsedTimeRange(1) <= timeElapsed && expectedElapsedTimeRange(2) >= timeElapsed
-        disp(sprintf('Good: %0.3f <= %0.3f <= %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
-    else
-        disp(sprintf('Bad: %0.3f X %0.3f X %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
-        disp(' ');
+    if isempty(images)
         return;
     end
     
@@ -154,7 +108,6 @@ function parseLedCode_dutyCycle()
    [percentPositive1, colorIndex1, colorName1] = computeDutyCycle(colors{4});
    [percentPositive2, colorIndex2, colorName2] = computeDutyCycle(weightedDifferenceFromMean);
     
-   
    disp(sprintf('\n\n'));
    
 %     keyboard
@@ -269,28 +222,3 @@ function plotSpatialHistogram(reorderedHistograms)
         end
     end
 end % function plotSpatialHistogram()
-
-function [image, curImageIndex] = getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex)
-    if strcmpi(cameraType, 'webots')
-        image = webotsCameraCapture();
-    elseif strcmpi(cameraType, 'usbcam')
-        persistent cap; %#ok<TLEV>
-        
-        cameraId = 0;
-        
-        if isempty(cap)
-            cap = cv.VideoCapture(cameraId);
-            cap.set('framewidth', processingSize(2));
-            cap.set('frameheight', processingSize(1));
-            cap.set('whitebalanceblueu', 4000);
-        end
-        
-        image = cap.read();
-    elseif strcmpi(cameraType, 'offline')
-        image = imresize((imread(sprintf(filenamePattern, whichImages(curImageIndex)))), processingSize);
-        curImageIndex = curImageIndex + 1;
-    else
-        assert(false);
-    end
-    
-end % function getNextImage()
