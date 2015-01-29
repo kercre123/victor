@@ -117,7 +117,13 @@ namespace Anki {
       
       return host;
     }
-    
+
+    // A little hacky, but this is technically not a message that supervisor level code needs to worry about
+    // since it comes from the torpedo rather than basestation.
+    void Messages::ProcessClientConnectionStatusMessage(const Messages::ClientConnectionStatus& msg) {
+      
+    }
+
     
     Result InitSimRadio(const char* advertisementIP)
     {
