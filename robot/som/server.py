@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 Implements UDP server for robot comms and includes some useful library classes
 """
@@ -5,7 +6,10 @@ __author__ = "Daniel Casner"
 
 
 import sys, os, time, socket, select
-import camServer
+import camServer, mcuProxyServer
+
+VERBOSE = False
+PRINT_INTERVAL = False
 
 MTU = 1500
 
@@ -16,14 +20,16 @@ class CozmoServer(socket.socket):
 
     CLIENT_IDLE_TIMEOUT = 100.0
 
-    def __init__(self, address=('', 9000)):
+    def __init__(self, address):
         "Initalize the server and start listening on UDP"
+        if VERBOSE: sys.stdout.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.bind(address)
         self.settimeout(0)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
-        self.subServers = [camServer.CameraSubServer(self.poller)] # Add MCU proxy sub server to list
+        self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
+                           mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
         self.client = None
         self.lastClientRecvTime = 0.0
 
@@ -43,6 +49,7 @@ class CozmoServer(socket.socket):
     def clientRecv(self, maxLen):
         try:
             data, self.client = self.recvfrom(maxLen)
+            if VERBOSE: sys.stdout.write("Received message: %s\n" % data)
         except:
             return None
         else:
@@ -62,7 +69,6 @@ class CozmoServer(socket.socket):
             if outMsg:
                 self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
-
             for ss in self.subServers:
                 ss.standby()
             self.client = None
@@ -70,23 +76,18 @@ class CozmoServer(socket.socket):
     def run(self, loopHz):
         "Run main loop with target frequency"
         targetPeriod = 1.0/loopHz
-        st = time.time()
         while True:
-            self.step(max(0, targetPeriod - (time.time()-st)))
             st = time.time()
+            self.step(targetPeriod)
+            if PRINT_INTERVAL: sys.stdout.write('%d ms\n' % int((time.time()-st)*1000))
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        port = int(sys.argv[1])
-    else:
-        port = 9000
-    if len(sys.argv) > 2:
-        host = sys.argv[2]
-    else:
-        host = ''
-    server = CozmoServer((host, port))
-    sys.stdout.write("Starting server listening at ('%s', %d)\n" % (host, port))
+    if '-v' in sys.argv: VERBOSE = True
+    if '-i' in sys.argv: PRINT_INTERVAL = True
+    address = ('', 5551)
+    server = CozmoServer(address)
+    sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
     try:
         server.run(200)
     except KeyboardInterrupt:

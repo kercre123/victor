@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "3d2303be1f2e2073d4d9f0884c1af575efe46c42" # Hash for the revision these python definitions are based on
+__version__ = "29210a1860673f109936598fd58cf6757c52e719" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -144,12 +144,24 @@ class ImageChunk(MessageBase):
             dataRepr = self.data
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
+class PingMessage(MessageBase):
+    ID = 56
+    FORMAT = []
 
-class SoMRadioState(MessageBase):
+    def _getMembers(self):
+        return tuple()
+
+    def _setMembers(self, *members):
+        pass
+
+    def __repr__(self):
+        return "PingMessage"
+
+class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""
 
-    ID = 129
+    ID = 58
     FORMAT = ["u8", # wifi state
               "u8", # bluetooth state
               ]

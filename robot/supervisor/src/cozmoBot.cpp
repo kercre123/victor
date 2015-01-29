@@ -305,8 +305,10 @@ namespace Anki {
         
         PathFollower::Update();
         PickAndPlaceController::Update();
+#ifndef OFFBOARD_VISION
         DockingController::Update();
         FaceTrackingController::Update();
+#endif
         
         //////////////////////////////////////////////////////////////
         // State Machine
