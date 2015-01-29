@@ -899,7 +899,7 @@ namespace Anki {
       std::ifstream jsonFile(jsonFilename);
       if(reader.parse(jsonFile, animDefs) == false) {
         PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
-                          "Failed to parse Json animation file.\n");
+                          "Failed to parse Json animation file %s.\n", jsonFilename.c_str());
 //        lastResult = RESULT_FAIL;
       }
       jsonFile.close();
