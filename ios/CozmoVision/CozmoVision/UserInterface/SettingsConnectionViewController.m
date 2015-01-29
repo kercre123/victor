@@ -151,6 +151,13 @@
       temp_addr = temp_addr->ifa_next;
     }
   }
+  
+  if([address  isEqual: @"error"])
+  {
+    NSLog(@"Failed to get local IP address, defaulting to 127.0.0.1\n");
+    address = @"127.0.0.1";
+  }
+  
   // Free memory
   freeifaddrs(interfaces);
   return address;
