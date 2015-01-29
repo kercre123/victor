@@ -17,6 +17,8 @@ function images = captureShortSequence(varargin)
     
     parseVarargin(varargin)
     
+    disp('Warning: if your needs are time critical, use the C version, captureImages.cpp');
+    
     cap = cv.VideoCapture(captureId);
     
     cap.set('framewidth', resolution(2));

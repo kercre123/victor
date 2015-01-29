@@ -81,6 +81,8 @@ if(NOT ANKI_IOS_BUILD)
   if(APPLE)
     add_subdirectory(tools/showVoxels)
   endif()
+  
+  add_subdirectory(tools/captureImages)
 
 endif()
 
