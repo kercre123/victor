@@ -1,7 +1,7 @@
 
 % function parseLedCode_dutyCycle(varargin)
 
-function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_dutyCycle(varargin)
+function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     numFramesToTest = 15;
     cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
     
@@ -18,6 +18,9 @@ function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_d
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     useBoxFilter = false;
+    alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation'}
+    
+    parsingType = 'blur'; % {'blur', 'histogram'}
     
     showFigures = true;
     
@@ -38,9 +41,7 @@ function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_d
 %         smallBlurKernel = fspecial('gaussian',[11,11],3);
         smallBlurKernel = fspecial('gaussian',[21,21],6);
     end
-    
-    blurredImages = imfilter(images, smallBlurKernel);
-    
+        
 %     figure(3); imshow(blurredImages(:,:,:,1));
     
     % Align the images
@@ -65,6 +66,33 @@ function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_d
     %         [warpedImages(:,:,:,iImage), ~, ~] = warpProjective(images(:,:,:,iImage), inv(translationHomographies{iImage}), size(curImage));
     %     end
     
+    if strcmpi(alignmentType, 'exhaustiveTranslation')
+        shiftedImages = zeros(size(images), 'uint8');
+        maxOffset = 9;
+        offsetImageSize = [60,80];
+        offsetImageScale = processingSize(1) / offsetImageSize(1);
+        middleImageIndex = ceil(size(images,4)/2);
+        smallImages = imresize(images, offsetImageSize);
+        bestDys = zeros(size(images,4), 1);
+        bestDxs = zeros(size(images,4), 1);
+        for iImage = 1:size(images,4)
+            if iImage == middleImageIndex
+                bestDy = 0;
+                bestDx = 0;
+            else
+                [bestDy, bestDx, ~, ~, ~] = exhaustiveAlignment(smallImages(:,:,:,middleImageIndex), smallImages(:,:,:,iImage), maxOffset);
+            end
+
+            bestDys(iImage) = bestDy;
+            bestDxs(iImage) = bestDx;
+
+            shiftedImages(:,:,:,iImage) = exhuastiveAlignment_shiftImage(images(:,:,:,iImage), bestDy, bestDx, offsetImageScale*maxOffset);
+        end
+        images = shiftedImages;
+    end % if strcmpu(alignmentType, 'exhaustiveTranslation')
+    
+    blurredImages = imfilter(images, smallBlurKernel);
+    
     colors = cell(length(lightSquareWidths), 1);
     colorsHsv = cell(length(lightSquareWidths), 1);
     
@@ -84,46 +112,50 @@ function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_d
         end
     end
     
-    numHistogramBins = 16;
-    histogramBlockSize = [24,32];
-    [tmp_rawBlockHistogram, ~, ~, ~] = getBlockHistograms(blurredImages(:,:,:,1), numHistogramBins, histogramBlockSize);
+    if strcmpi(parsingType, 'blur')
+        [percentPositive, colorIndex, ~] = computeDutyCycle(colors{4}, knownLedColor);   
+    elseif strcmpi(parsingType, 'histogram')
+        numHistogramBins = 16;
+        histogramBlockSize = [24,32];
+        [tmp_rawBlockHistogram, ~, ~, ~] = getBlockHistograms(blurredImages(:,:,:,1), numHistogramBins, histogramBlockSize);
 
-    rawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
-    normalizedRawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
-    maxPooledBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
-    normalizedMaxPooledBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
-    for iImage = 1:size(blurredImages,4)
-        [rawBlockHistograms(:,:,:,:,iImage), normalizedRawBlockHistograms(:,:,:,:,iImage), maxPooledBlockHistograms(:,:,:,:,iImage), normalizedMaxPooledBlockHistograms(:,:,:,:,iImage)] = getBlockHistograms(blurredImages(:,:,:,iImage), 16, [24,32]);
-    end
-    
-    %     for iImage = 1:size(blurredImages,4)
-    %         figure(10+iImage);
-    %         plotSpatialHistogram(reorderedHistograms);
-    %     end
-    
-%     figure(4); plotSpatialHistogram(reorderedHistograms(:,1,:,:,1) - reorderedHistograms(:,1,:,:,6));
-%     figure(4); plotSpatialHistogram(squeeze(reorderedHistograms(:, :, ceil(end/2), ceil(end/2), :)));
+        rawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
+        normalizedRawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
+        maxPooledBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
+        normalizedMaxPooledBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
+        for iImage = 1:size(blurredImages,4)
+            [rawBlockHistograms(:,:,:,:,iImage), normalizedRawBlockHistograms(:,:,:,:,iImage), maxPooledBlockHistograms(:,:,:,:,iImage), normalizedMaxPooledBlockHistograms(:,:,:,:,iImage)] = getBlockHistograms(blurredImages(:,:,:,iImage), 16, [24,32]);
+        end
 
-    centerHists = squeeze(normalizedRawBlockHistograms(:, :, ceil(end/2), ceil(end/2), :));
-    minHist = min(centerHists, [], 3);
-    differenceFromMin = centerHists - repmat(minHist, [1,1,size(normalizedRawBlockHistograms,5)]);
-%     figure(4); plotSpatialHistogram(differenceFromMin);
-    
-    weightedDifferenceFromMean = squeeze(sum(differenceFromMin .* repmat((1:size(differenceFromMin,1))', [1,size(differenceFromMin,2),size(differenceFromMin,3)])));
-    
-    if showFigures
-        figure(4); plot(weightedDifferenceFromMean(3:-1:1,:)');
-        curAxis = axis();
-        axis([curAxis(1), curAxis(2), 0, curAxis(4)]);
-    end
-    
-   [percentPositive1, colorIndex1, colorName1] = computeDutyCycle(colors{4}, knownLedColor);
-   [percentPositive2, colorIndex2, colorName2] = computeDutyCycle(weightedDifferenceFromMean, knownLedColor);
-    
+        %     for iImage = 1:size(blurredImages,4)
+        %         figure(10+iImage);
+        %         plotSpatialHistogram(reorderedHistograms);
+        %     end
+
+    %     figure(4); plotSpatialHistogram(reorderedHistograms(:,1,:,:,1) - reorderedHistograms(:,1,:,:,6));
+    %     figure(4); plotSpatialHistogram(squeeze(reorderedHistograms(:, :, ceil(end/2), ceil(end/2), :)));
+
+        centerHists = squeeze(normalizedRawBlockHistograms(:, :, ceil(end/2), ceil(end/2), :));
+        minHist = min(centerHists, [], 3);
+        differenceFromMin = centerHists - repmat(minHist, [1,1,size(normalizedRawBlockHistograms,5)]);
+    %     figure(4); plotSpatialHistogram(differenceFromMin);
+
+        weightedDifferenceFromMean = squeeze(sum(differenceFromMin .* repmat((1:size(differenceFromMin,1))', [1,size(differenceFromMin,2),size(differenceFromMin,3)])));
+
+        if showFigures
+            figure(4); plot(weightedDifferenceFromMean(3:-1:1,:)');
+            curAxis = axis();
+            axis([curAxis(1), curAxis(2), 0, curAxis(4)]);
+        end
+        
+        [percentPositive, colorIndex, ~] = computeDutyCycle(weightedDifferenceFromMean, knownLedColor);
+    else
+        assert(false);
+    end % if strcmpi(parsingType, 'blur') ... else
+
 %    disp(sprintf('\n\n'));
    
-    numPositive1 = round(numFramesToTest*percentPositive1);
-    numPositive2 = round(numFramesToTest*percentPositive2);
+    numPositive = round(numFramesToTest*percentPositive);
 
 %     keyboard
     

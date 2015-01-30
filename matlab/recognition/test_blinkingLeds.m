@@ -1,5 +1,7 @@
 % function test_blinkingLeds()
 
+% [accuracy, results] = test_blinkingLeds();
+
 function [accuracy, results] = test_blinkingLeds()
     
     filenamePatterns = {...
@@ -18,67 +20,83 @@ function [accuracy, results] = test_blinkingLeds()
     
     numFramesToTest = 15;
     
-    results = cell(length(filenamePatterns), 1);
-    accuracy = cell(length(filenamePatterns), 1);
+    alignmentTypes = {'none', 'exhaustiveTranslation'};
+    parsingTypes = {'blur', 'histogram'};
     
-    numTestTypes = 4;
+    results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
+    accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     
-    for iPattern = 1:length(filenamePatterns)
-        whichFirstFrames = filenamePatterns{iPattern}{2}(1):(filenamePatterns{iPattern}{2}(2)-numFramesToTest+1);
-        results{iPattern} = zeros(length(whichFirstFrames), 2, numTestTypes);
-        accuracy{iPattern} = zeros(length(whichFirstFrames), numTestTypes);
-        
-%         for iFirstFrame = 1:length(whichFirstFrames)
-        for iFirstFrame = 1:10
-            firstFrame = whichFirstFrames(iFirstFrame);
-            
-            colorIndexes = zeros(numTestTypes, 1);
-            numPositives = zeros(numTestTypes, 1);
-            
-            % Unknown LED color
-            [colorIndexes(1), numPositives(1), colorIndexes(2), numPositives(2)] = parseLedCode_dutyCycle(...
-                'showFigures', false,...
-                'numFramesToTest', numFramesToTest,...
-                'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
-                'cameraType', 'offline',...
-                'filenamePattern', filenamePatterns{iPattern}{1});
-            
-            % Ground truth LED color
-            [colorIndexes(3), numPositives(3), colorIndexes(4), numPositives(4)] = parseLedCode_dutyCycle(...
-                'showFigures', false,...
-                'numFramesToTest', numFramesToTest,...
-                'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
-                'cameraType', 'offline',...
-                'filenamePattern', filenamePatterns{iPattern}{1},...
-                'knownLedColor', filenamePatterns{iPattern}{3});
-            
-            for iType = 1:numTestTypes
-                results{iPattern}(iFirstFrame, :, iType) = [colorIndexes(iType), colorIndexes(iType)];
+    numTestTypes = 2;
+    
+    for iAlignmentType = length(alignmentTypes):-1:1
+        for iParsingType = 1:length(parsingTypes)
+            for iPattern = 1:length(filenamePatterns)
+        %     for iPattern = 3
+                whichFirstFrames = filenamePatterns{iPattern}{2}(1):(filenamePatterns{iPattern}{2}(2)-numFramesToTest+1);
+                results{iPattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
+                accuracy{iPattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
+
+                for iFirstFrame = 1:length(whichFirstFrames)
+                    firstFrame = whichFirstFrames(iFirstFrame);
+
+                    colorIndexes = zeros(numTestTypes, 1);
+                    numPositives = zeros(numTestTypes, 1);
+
+                    % Unknown LED color
+                    [colorIndexes(1), numPositives(1)] = parseLedCode_dutyCycle(...
+                        'showFigures', false,...
+                        'numFramesToTest', numFramesToTest,...
+                        'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
+                        'cameraType', 'offline',...
+                        'filenamePattern', filenamePatterns{iPattern}{1},...
+                        'alignmentType', alignmentTypes{iAlignmentType},...
+                        'parsingType', parsingTypes{iParsingType});
+
+                    % Ground truth LED color
+                    [colorIndexes(2), numPositives(2)] = parseLedCode_dutyCycle(...
+                        'showFigures', false,...
+                        'numFramesToTest', numFramesToTest,...
+                        'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
+                        'cameraType', 'offline',...
+                        'filenamePattern', filenamePatterns{iPattern}{1},...
+                        'alignmentType', alignmentTypes{iAlignmentType},...
+                        'knownLedColor', filenamePatterns{iPattern}{3},...
+                        'parsingType', parsingTypes{iParsingType});
+
+                    for iType = 1:numTestTypes
+                        results{iPattern}{iParsingType}{iAlignmentType}(iFirstFrame, :, iType) = [colorIndexes(iType), colorIndexes(iType)];
+
+                        if colorIndexes(iType) == filenamePatterns{iPattern}{3}
+                            accuracy{iPattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = abs(filenamePatterns{iPattern}{4} - numPositives(iType));
+                        else
+                            accuracy{iPattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = numFramesToTest;
+                        end
+                    end
+                end % for iFirstFrame = 1:length(whichFirstFrames)
+
+                figureIndex = length(parsingTypes)*(iAlignmentType-1) + iParsingType;
                 
-                if colorIndexes(iType) == filenamePatterns{iPattern}{3}
-                    accuracy{iPattern}(iFirstFrame,iType) = abs(filenamePatterns{iPattern}{4} - numPositives(iType));
-                else
-                    accuracy{iPattern}(iFirstFrame,iType) = numFramesToTest;
-                end
-            end
-        end % for iFirstFrame = 1:length(whichFirstFrames)
-        
-        figure(1);
-        subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iPattern);
-        plot(accuracy{iPattern}(:,1:2))
-        title(sprintf('FilenamePattern %d (unknown color)', iPattern))
-        a = axis();
-        axis([a(1:2),-1,numFramesToTest+1]);
-        
-        figure(2);
-        subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iPattern);
-        plot(accuracy{iPattern}(:,3:4))
-        title(sprintf('FilenamePattern %d (known color)', iPattern))
-        a = axis();
-        axis([a(1:2),-1,numFramesToTest+1]);
-        
-        pause(0.01);
-    end % for iPattern = 1:length(filenamePatterns)
+                figureHandle = figure(figureIndex);
+                subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iPattern);
+                plot(accuracy{iPattern}{iParsingType}{iAlignmentType})
+                title(sprintf('FilenamePattern %d (unknown color)', iPattern))
+                a = axis();
+                axis([a(1:2),-1,numFramesToTest+1]);
+                set(figureHandle, 'name', sprintf('ParsingType:%d AlignmentType:%d', iParsingType, iAlignmentType))
+                figurePosition = get(figureHandle,'Position');
+                set(figureHandle,'Position', [figurePosition(1:2),900,800])
+
+%                 figure(2*iAlignmentType + 2);
+%                 subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iPattern);
+%                 plot(accuracy{iPattern}{iParsingType}{iAlignmentType}(:,3:4))
+%                 title(sprintf('FilenamePattern %d (known color)', iPattern))
+%                 a = axis();
+%                 axis([a(1:2),-1,numFramesToTest+1]);
+
+                pause(0.01);
+            end % for iPattern = 1:length(filenamePatterns)
+        end % for iParsingType = 1:length(parsingTypes)
+    end % for iAlignmentType = 1:length(alignmentTypes)
     
     
     keyboard
