@@ -45,11 +45,13 @@
 namespace Anki {
 namespace Cozmo {
   
+  // Forward declarations
   class Robot;
   class CozmoEngineImpl;
   class CozmoEngineHostImpl;
   class CozmoEngineClientImpl;
   
+  // Abstract base engine class
   class CozmoEngine
   {
   public:
@@ -68,22 +70,22 @@ namespace Cozmo {
     // DeviceVisionProcessor
     void ProcessDeviceImage(const Vision::Image& image);
     
+    // Removing this now that robot availability emits a signal.
     // Get list of available robots
     //void GetAdvertisingRobots(std::vector<AdvertisingRobot>& advertisingRobots);
 
+    // The advertising robot could specify more information eventually, but for
+    // now, it's just the Robot's ID.
     using AdvertisingRobot = RobotID_t;
-    using AdvertisingUiDevice = int;
     
     // Request a connection to a specific robot / UI device from the list returned above.
     // Returns true on successful connection, false otherwise.
-    virtual bool ConnectToRobot(AdvertisingRobot whichRobot); // virtual so Host can do something different for force-added robots
+    // NOTE: This is virtual for now so derived Host can do something different for force-added robots.
+    virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
     // TODO: Add IsConnected methods
-    /*
     // Check to see if a specified robot / UI device is connected
-    bool IsRobotConnected(AdvertisingRobot whichRobot) const;
-    bool IsUiDeviceConnected(AdvertisingUiDevice whichDevice) const;
-    */
+    // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
     
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
     
@@ -98,7 +100,8 @@ namespace Cozmo {
   
   // TODO: Move derived classes to their own files
   
-  
+  // Derived Host class to run on the host device and deal with advertising and
+  // world state.
   class CozmoEngineHost : public CozmoEngine
   {
   public:
@@ -127,7 +130,6 @@ namespace Cozmo {
     // TODO: Remove once we no longer need forced adds
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
     
-    // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     // TODO: Or promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
     
@@ -137,6 +139,7 @@ namespace Cozmo {
   }; // class CozmoEngineHost
   
   
+  // Simple derived Client class
   class CozmoEngineClient : public CozmoEngine
   {
   public:
