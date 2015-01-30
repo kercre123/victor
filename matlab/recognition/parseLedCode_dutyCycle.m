@@ -1,6 +1,8 @@
 
-function parseLedCode_dutyCycle()
-    numImages = 15;
+% function parseLedCode_dutyCycle(varargin)
+
+function [colorIndex1, numPositive1, colorIndex2, numPositive2] = parseLedCode_dutyCycle(varargin)
+    numFramesToTest = 15;
     cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
     
     filenamePattern = '~/Documents/Anki/products-cozmo-large-files/blinkyImages10/red_%05d.png';
@@ -10,12 +12,24 @@ function parseLedCode_dutyCycle()
     
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
-    lightSquareCenter = [160, 120] * (processingSize(1) / 240);
+    lightSquareCenter = [120, 160] * (processingSize(1) / 240);
     lightSquareWidths = [10, 20, 30, 40, 50, 60, 70, 80] * (processingSize(1) / 240);
     %     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     useBoxFilter = false;
+    
+    showFigures = true;
+    
+    knownLedColor = [];
+    
+    parseVarargin(varargin);
+    
+    images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numFramesToTest, showFigures);
+    
+    if isempty(images)
+        return;
+    end
     
     if useBoxFilter
         smallBlurKernel = ones(11, 11);
@@ -23,12 +37,6 @@ function parseLedCode_dutyCycle()
     else
 %         smallBlurKernel = fspecial('gaussian',[11,11],3);
         smallBlurKernel = fspecial('gaussian',[21,21],6);
-    end
-    
-    images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages);
-    
-    if isempty(images)
-        return;
     end
     
     blurredImages = imfilter(images, smallBlurKernel);
@@ -62,16 +70,18 @@ function parseLedCode_dutyCycle()
     
     for iWidth = 1:length(lightSquareWidths)
         curWidth = lightSquareWidths(iWidth) / 2;
-        yLimits = round([lightSquareCenter(2)-curWidth, lightSquareCenter(2)+curWidth]);
-        xLimits = round([lightSquareCenter(1)-curWidth, lightSquareCenter(1)+curWidth]);
+        yLimits = round([lightSquareCenter(1)-curWidth, lightSquareCenter(1)+curWidth]);
+        xLimits = round([lightSquareCenter(2)-curWidth, lightSquareCenter(2)+curWidth]);
         
         colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
         
         [colors{iWidth}, colorsHsv{iWidth}] = extractColors(colorPatches, saturationThreshold);
         
-        figure(1);
-        subplot(3, ceil(length(lightSquareWidths)/3), iWidth);
-        plot(colors{iWidth}(3:-1:1,:)');
+        if showFigures
+            figure(1);
+            subplot(3, ceil(length(lightSquareWidths)/3), iWidth);
+            plot(colors{iWidth}(3:-1:1,:)');
+        end
     end
     
     numHistogramBins = 16;
@@ -101,27 +111,36 @@ function parseLedCode_dutyCycle()
     
     weightedDifferenceFromMean = squeeze(sum(differenceFromMin .* repmat((1:size(differenceFromMin,1))', [1,size(differenceFromMin,2),size(differenceFromMin,3)])));
     
-    figure(4); plot(weightedDifferenceFromMean(3:-1:1,:)');
-    curAxis = axis();
-    axis([curAxis(1), curAxis(2), 0, curAxis(4)]);
+    if showFigures
+        figure(4); plot(weightedDifferenceFromMean(3:-1:1,:)');
+        curAxis = axis();
+        axis([curAxis(1), curAxis(2), 0, curAxis(4)]);
+    end
     
-   [percentPositive1, colorIndex1, colorName1] = computeDutyCycle(colors{4});
-   [percentPositive2, colorIndex2, colorName2] = computeDutyCycle(weightedDifferenceFromMean);
+   [percentPositive1, colorIndex1, colorName1] = computeDutyCycle(colors{4}, knownLedColor);
+   [percentPositive2, colorIndex2, colorName2] = computeDutyCycle(weightedDifferenceFromMean, knownLedColor);
     
-   disp(sprintf('\n\n'));
+%    disp(sprintf('\n\n'));
    
+    numPositive1 = round(numFramesToTest*percentPositive1);
+    numPositive2 = round(numFramesToTest*percentPositive2);
+
 %     keyboard
     
 end % function parseLedCode_lightOnly()
 
-function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors)
+function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, knownLedColor)
     colorNames = {'red', 'green', 'blue'};
     
      % Finding the single max may not be the most robust?
-    maxRangeRgb = max(colors, [] ,2) - min(colors, [] ,2);
     rgbThresholds = (max(colors, [] ,2) + min(colors, [] ,2)) / 2;
     
-    [maxVal, colorIndex] = max(maxRangeRgb);
+    if isempty(knownLedColor)
+        maxRangeRgb = max(colors, [] ,2) - min(colors, [] ,2);
+        [~, colorIndex] = max(maxRangeRgb);
+    else
+        colorIndex = knownLedColor;
+    end
     
     percentPositive = length(find(colors(colorIndex,:) > rgbThresholds(colorIndex))) / size(colors,2);
     
@@ -134,9 +153,9 @@ function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors)
     %     end
     
     if isValid
-        numImages = size(colors,2);
+        numFramesToTest = size(colors,2);
         colorName = colorNames{colorIndex};
-        disp(sprintf('%s is at %0.2f', colorName, numImages*percentPositive));
+        disp(sprintf('%s is at %0.2f', colorName, numFramesToTest*percentPositive));
     else
         colorName = 'unknown';
         disp('Unknown color and number');

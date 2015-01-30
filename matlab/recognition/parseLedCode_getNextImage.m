@@ -15,7 +15,8 @@ function [image, curImageIndex] = parseLedCode_getNextImage(cameraType, filename
         
         image = cap.read();
     elseif strcmpi(cameraType, 'offline')
-        image = imresize((imread(sprintf(filenamePattern, whichImages(curImageIndex)))), processingSize);
+        inFilename = sprintf(filenamePattern, whichImages(curImageIndex));
+        image = imresize(imread(inFilename), processingSize);
         curImageIndex = curImageIndex + 1;
     else
         assert(false);

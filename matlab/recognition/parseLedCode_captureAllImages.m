@@ -1,29 +1,31 @@
-function images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages)
+function images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages, showFigures)
 
     expectedFps = 30;
     
     curImageIndex = 1;
     
-    [image, curImageIndex] = parseLedCode_getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
+    [curImage, curImageIndex] = parseLedCode_getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
     
     centerPoint = ceil(processingSize / 2);
     
     % 1. Capture N images
     images = zeros([processingSize, 3, numImages], 'uint8');
-    images(:,:,:,1) = image;
+    images(:,:,:,1) = curImage;
     
     tic
-    for i = 1:numImages
+    for i = 2:numImages
         [curImage, curImageIndex] = parseLedCode_getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
         images(:,:,:,i) = curImage;
         
-        curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
-        curImage(:, (centerPoint(2)-1):(centerPoint(2)+1), :) = 0;
-        curImage(centerPoint(1), :, :) = 255;
-        curImage(:, centerPoint(2), :) = 255;
-        
-        figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
-        %         figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
+        if showFigures
+            curImage((centerPoint(1)-1):(centerPoint(1)+1), :, :) = 0;
+            curImage(:, (centerPoint(2)-1):(centerPoint(2)+1), :) = 0;
+            curImage(centerPoint(1), :, :) = 255;
+            curImage(:, centerPoint(2), :) = 255;
+
+            figure(2); imshow(imresize(curImage, [240,320], 'nearest'));
+            % figure(2); imshows(imresize(curImage, [240,320], 'nearest'), 2);
+        end
     end
     timeElapsed = toc();
     
