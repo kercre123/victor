@@ -21,18 +21,23 @@ function [accuracy, results] = test_blinkingLeds()
     numFramesToTest = 15;
     
     alignmentTypes = {'none', 'exhaustiveTranslation'};
-    parsingTypes = {'blur', 'histogram'};
+    parsingTypes = {'blur', 'histogram', 'spatialBlur'};
     
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     
-    testUnknownLedColor = true;
+%     testUnknownLedColor = true;
+    testUnknownLedColor = false;
+
     testKnownLedColor = true;
     
     numTestTypes = 2;
     
-    for iAlignmentType = length(alignmentTypes):-1:1
-        for iParsingType = 1:length(parsingTypes)
+%     for iAlignmentType = length(alignmentTypes):-1:1
+%         for iParsingType = 1:length(parsingTypes)
+%             for iPattern = 1:length(filenamePatterns)
+    for iAlignmentType = length(alignmentTypes)
+        for iParsingType = 1
             for iPattern = 1:length(filenamePatterns)
 %     for iAlignmentType = 2
 %         for iParsingType = 1
@@ -45,8 +50,8 @@ function [accuracy, results] = test_blinkingLeds()
 %                 for iFirstFrame = 1
                     firstFrame = whichFirstFrames(iFirstFrame);
 
-                    colorIndexes = zeros(numTestTypes, 1);
-                    numPositives = zeros(numTestTypes, 1);
+                    colorIndexes = -ones(numTestTypes, 1);
+                    numPositives = -ones(numTestTypes, 1);
 
                     % Unknown LED color
                     if testUnknownLedColor
@@ -70,7 +75,8 @@ function [accuracy, results] = test_blinkingLeds()
                             'filenamePattern', filenamePatterns{iPattern}{1},...
                             'alignmentType', alignmentTypes{iAlignmentType},...
                             'knownLedColor', filenamePatterns{iPattern}{3},...
-                            'parsingType', parsingTypes{iParsingType});
+                            'parsingType', parsingTypes{iParsingType},...
+                            'smallBlurKernel', fspecial('gaussian',[11,11],1.5));
                     end
 
                     for iType = 1:numTestTypes
@@ -88,8 +94,20 @@ function [accuracy, results] = test_blinkingLeds()
                 
                 figureHandle = figure(figureIndex);
                 subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iPattern);
-                plot(accuracy{iPattern}{iParsingType}{iAlignmentType})
-                title(sprintf('FilenamePattern %d (unknown color)', iPattern))
+%                 plot(accuracy{iPattern}{iParsingType}{iAlignmentType})
+                hold off
+                if testUnknownLedColor
+                    markerSizes1 = 20 * ones(size(accuracy{iPattern}{iParsingType}{iAlignmentType},1),1);
+                    scatter(1:size(accuracy{iPattern}{iParsingType}{iAlignmentType},1), accuracy{iPattern}{iParsingType}{iAlignmentType}(:,1), markerSizes1, 'bo', 'filled');
+                    hold on;
+                end
+                
+                if testKnownLedColor
+                    markerSizes2 = 5 * ones(size(accuracy{iPattern}{iParsingType}{iAlignmentType},1),1);
+                    scatter(1:size(accuracy{iPattern}{iParsingType}{iAlignmentType},1), accuracy{iPattern}{iParsingType}{iAlignmentType}(:,2), markerSizes2, 'go', 'filled');
+                end
+                
+                title(sprintf('FilenamePattern %d', iPattern))
                 a = axis();
                 axis([a(1:2),-1,numFramesToTest+1]);
                 set(figureHandle, 'name', sprintf('ParsingType:%d AlignmentType:%d', iParsingType, iAlignmentType))

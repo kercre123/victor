@@ -13,18 +13,27 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     saturationThreshold = 254; % Ignore pixels where any color is higher than this
     
     lightSquareCenter = [120, 160] * (processingSize(1) / 240);
-    lightSquareWidths = [10, 20, 30, 40, 50, 60, 70, 80] * (processingSize(1) / 240);
+    %     lightSquareWidths = [10, 20, 30, 40, 50, 60, 70, 80] * (processingSize(1) / 240);
+    lightSquareWidths = [60] * (processingSize(1) / 240);
     %     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     useBoxFilter = false;
     alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation'}
     
-    parsingType = 'blur'; % {'blur', 'histogram'}
+    parsingType = 'blur'; % {'spatialBlur', 'blur', 'histogram'}
     
     showFigures = true;
     
     knownLedColor = [];
+    
+    if useBoxFilter
+        smallBlurKernel = ones(11, 11);
+        smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
+    else
+        %         smallBlurKernel = fspecial('gaussian',[11,11],3);
+        smallBlurKernel = fspecial('gaussian',[21,21],6);
+    end
     
     parseVarargin(varargin);
     
@@ -34,15 +43,7 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         return;
     end
     
-    if useBoxFilter
-        smallBlurKernel = ones(11, 11);
-        smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
-    else
-%         smallBlurKernel = fspecial('gaussian',[11,11],3);
-        smallBlurKernel = fspecial('gaussian',[21,21],6);
-    end
-        
-%     figure(3); imshow(blurredImages(:,:,:,1));
+    %     figure(3); imshow(blurredImages(:,:,:,1));
     
     % Align the images
     %     largeBlurKernel = ones(31, 31);
@@ -67,28 +68,15 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     %     end
     
     if strcmpi(alignmentType, 'exhaustiveTranslation')
-        shiftedImages = zeros(size(images), 'uint8');
         maxOffset = 9;
         offsetImageSize = [60,80];
         offsetImageScale = processingSize(1) / offsetImageSize(1);
-        middleImageIndex = ceil(size(images,4)/2);
-        smallImages = imresize(images, offsetImageSize);
-        bestDys = zeros(size(images,4), 1);
-        bestDxs = zeros(size(images,4), 1);
+        
+        [bestDys,bestDxs] = computeBestTranslations(images, offsetImageSize, maxOffset);
+        
         for iImage = 1:size(images,4)
-            if iImage == middleImageIndex
-                bestDy = 0;
-                bestDx = 0;
-            else
-                [bestDy, bestDx, ~, ~, ~] = exhaustiveAlignment(smallImages(:,:,:,middleImageIndex), smallImages(:,:,:,iImage), maxOffset);
-            end
-
-            bestDys(iImage) = bestDy;
-            bestDxs(iImage) = bestDx;
-
-            shiftedImages(:,:,:,iImage) = exhuastiveAlignment_shiftImage(images(:,:,:,iImage), bestDy, bestDx, offsetImageScale*maxOffset);
+            images(:,:,:,iImage) = exhuastiveAlignment_shiftImage(images(:,:,:,iImage), bestDys(iImage), bestDxs(iImage), offsetImageScale*maxOffset);
         end
-        images = shiftedImages;
     end % if strcmpu(alignmentType, 'exhaustiveTranslation')
     
     blurredImages = imfilter(images, smallBlurKernel);
@@ -103,7 +91,22 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         
         colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
         
-        [colors{iWidth}, colorsHsv{iWidth}] = extractColors(colorPatches, saturationThreshold);
+        if strcmpi(alignmentType, 'exhaustiveTranslation')
+            maxOffsetLocal = 5;
+            [bestDys,bestDxs] = computeBestTranslations(colorPatches, [size(colorPatches,1),size(colorPatches,2)], maxOffsetLocal);
+            
+            for iImage = 1:size(images,4)
+                moreShifted = uint8(exhuastiveAlignment_shiftImage(blurredImages(:,:,:,iImage), bestDys(iImage), bestDxs(iImage), maxOffsetLocal));
+                colorPatches(:,:,:,iImage) = moreShifted(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :);
+            end
+        end
+        
+        if strcmpi(parsingType, 'spatialBlur')
+            keyboard
+            colors = extractColorsChangingCenter(colorPatches, linspace(1,10,10));
+        else
+            [colors{iWidth}, colorsHsv{iWidth}] = extractColorsAverage(colorPatches, saturationThreshold);
+        end
         
         if showFigures
             figure(1);
@@ -112,13 +115,13 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         end
     end
     
-    if strcmpi(parsingType, 'blur')
-        [percentPositive, colorIndex, ~] = computeDutyCycle(colors{4}, knownLedColor);   
+    if strcmpi(parsingType, 'blur') || strcmpi(parsingType, 'spatialBlur')
+        [percentPositive, colorIndex, ~] = computeDutyCycle(colors{1}, knownLedColor);
     elseif strcmpi(parsingType, 'histogram')
         numHistogramBins = 16;
         histogramBlockSize = [24,32];
         [tmp_rawBlockHistogram, ~, ~, ~] = getBlockHistograms(blurredImages(:,:,:,1), numHistogramBins, histogramBlockSize);
-
+        
         rawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
         normalizedRawBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
         maxPooledBlockHistograms = zeros([size(tmp_rawBlockHistogram), size(blurredImages,4)]);
@@ -126,22 +129,22 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         for iImage = 1:size(blurredImages,4)
             [rawBlockHistograms(:,:,:,:,iImage), normalizedRawBlockHistograms(:,:,:,:,iImage), maxPooledBlockHistograms(:,:,:,:,iImage), normalizedMaxPooledBlockHistograms(:,:,:,:,iImage)] = getBlockHistograms(blurredImages(:,:,:,iImage), 16, [24,32]);
         end
-
+        
         %     for iImage = 1:size(blurredImages,4)
         %         figure(10+iImage);
         %         plotSpatialHistogram(reorderedHistograms);
         %     end
-
-    %     figure(4); plotSpatialHistogram(reorderedHistograms(:,1,:,:,1) - reorderedHistograms(:,1,:,:,6));
-    %     figure(4); plotSpatialHistogram(squeeze(reorderedHistograms(:, :, ceil(end/2), ceil(end/2), :)));
-
+        
+        %     figure(4); plotSpatialHistogram(reorderedHistograms(:,1,:,:,1) - reorderedHistograms(:,1,:,:,6));
+        %     figure(4); plotSpatialHistogram(squeeze(reorderedHistograms(:, :, ceil(end/2), ceil(end/2), :)));
+        
         centerHists = squeeze(normalizedRawBlockHistograms(:, :, ceil(end/2), ceil(end/2), :));
         minHist = min(centerHists, [], 3);
         differenceFromMin = centerHists - repmat(minHist, [1,1,size(normalizedRawBlockHistograms,5)]);
-    %     figure(4); plotSpatialHistogram(differenceFromMin);
-
+        %     figure(4); plotSpatialHistogram(differenceFromMin);
+        
         weightedDifferenceFromMean = squeeze(sum(differenceFromMin .* repmat((1:size(differenceFromMin,1))', [1,size(differenceFromMin,2),size(differenceFromMin,3)])));
-
+        
         if showFigures
             figure(4); plot(weightedDifferenceFromMean(3:-1:1,:)');
             curAxis = axis();
@@ -152,19 +155,19 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     else
         assert(false);
     end % if strcmpi(parsingType, 'blur') ... else
-
-%    disp(sprintf('\n\n'));
-   
+    
+    %    disp(sprintf('\n\n'));
+    
     numPositive = round(numFramesToTest*percentPositive);
-
-%     keyboard
+    
+    %     keyboard
     
 end % function parseLedCode_lightOnly()
 
 function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, knownLedColor)
     colorNames = {'red', 'green', 'blue'};
     
-     % Finding the single max may not be the most robust?
+    % Finding the single max may not be the most robust?
     rgbThresholds = (max(colors, [] ,2) + min(colors, [] ,2)) / 2;
     
     if isempty(knownLedColor)
@@ -194,7 +197,7 @@ function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, kno
     end
 end
 
-function [colors, colorsHsv] = extractColors(colorImages, saturationThreshold)
+function [colors, colorsHsv] = extractColorsAverage(colorImages, saturationThreshold)
     minImageBlurred = double(min(colorImages, [], 4));
     maxImageBlurred = double(max(colorImages, [], 4));
     %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
@@ -219,7 +222,57 @@ function [colors, colorsHsv] = extractColors(colorImages, saturationThreshold)
             colorsHsv(iChannel, iImage) = mean(curChannelImageHsv(unsaturatedInds));
         end
     end % for iImage = 1:size(colorImages,4)
-end % function colors = extractColors()
+end % function colors = extractColorsAverage()
+
+function colors = extractColorsChangingCenter(colorImages, blurSigmas)
+    
+    %     blurSigmas = linspace(1,10,10);
+    blurKernels = cell(length(blurSigmas), 3);
+    for iBlur = 1:length(blurSigmas)
+        filterWidth = blurSigmas(iBlur) * 4;
+        blurKernels{iBlur,1} = fspecial('gaussian', 2*[filterWidth,filterWidth], blurSigmas(iBlur));
+        blurKernels{iBlur,2} = fspecial('gaussian', 2*[filterWidth,filterWidth], 2*blurSigmas(iBlur));
+        
+        blurKernels{iBlur,3} = blurKernels{iBlur,2} - blurKernels{iBlur,1};
+        blurKernels{iBlur,3}(blurKernels{iBlur,3} < 0) = 0;
+        blurKernels{iBlur,3} = blurKernels{iBlur,3} / sum(sum(blurKernels{iBlur,3}));
+    end % for iBlur = 1:length(blurSigmas)
+    
+    for iBlur = 1:length(blurSigmas)
+        blurredImages = zeros([size(colorImages),3], 'uint8');
+        
+        blurredImages(:,:,:,:,1) = imfilter(colorImages, blurKernels{iBlur,1});
+        blurredImages(:,:,:,:,2) = imfilter(colorImages, blurKernels{iBlur,2});
+        blurredImages(:,:,:,:,3) = imfilter(colorImages, blurKernels{iBlur,3});
+        
+        keyboard
+    end % for iBlur = 1:length(blurSigmas)
+    
+    minImageBlurred = double(min(colorImages, [], 4));
+    maxImageBlurred = double(max(colorImages, [], 4));
+    %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
+    thresholdImageBlurred = minImageBlurred;
+    
+    grayMaxImageBlurred = max(maxImageBlurred, [], 3);
+    unsaturatedInds = (grayMaxImageBlurred <= saturationThreshold);
+    
+    % Find the per-pixel difference from the threshold
+    colors = zeros(3, size(colorImages,4));
+    colorsHsv = zeros(3, size(colorImages,4));
+    
+    for iImage = 1:size(colorImages,4)
+        curBlurred = double(colorImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
+        curBlurredHsv = rgb2hsv(curBlurred);
+        
+        for iChannel = 1:3
+            curChannelImage = curBlurred(:,:,iChannel);
+            colors(iChannel, iImage) = mean(curChannelImage(unsaturatedInds));
+            
+            curChannelImageHsv = curBlurredHsv(:,:,iChannel);
+            colorsHsv(iChannel, iImage) = mean(curChannelImageHsv(unsaturatedInds));
+        end
+    end % for iImage = 1:size(colorImages,4)
+end % function colors = extractColorsChangingCenter()
 
 function [rawBlockHistogram, normalizedRawBlockHistogram, maxPooledBlockHistogram, normalizedMaxPooledBlockHistogram] = getBlockHistograms(colorImage, numBinsPerColor, blockWidth)
     
@@ -268,8 +321,28 @@ function plotSpatialHistogram(reorderedHistograms)
             subplot(size(reorderedHistograms, 3), size(reorderedHistograms, 4), ci);
             
             plot(reorderedHistograms(:,3:-1:1,iy,ix,1))
-%             axis([0, 16, -0.02, 0.02]);
+            %             axis([0, 16, -0.02, 0.02]);
             ci = ci + 1;
         end
     end
 end % function plotSpatialHistogram()
+
+function [bestDys,bestDxs] = computeBestTranslations(images, offsetImageSize, maxOffset)
+    middleImageIndex = ceil(size(images,4) / 2);
+    smallImages = imresize(images, offsetImageSize);
+    bestDys = zeros(size(images,4), 1);
+    bestDxs = zeros(size(images,4), 1);
+    for iImage = 1:size(images,4)
+        if iImage == middleImageIndex
+            bestDy = 0;
+            bestDx = 0;
+        else
+            [bestDy, bestDx, ~, ~, ~] = exhaustiveAlignment(smallImages(:,:,:,middleImageIndex), smallImages(:,:,:,iImage), maxOffset);
+        end
+        
+        bestDys(iImage) = bestDy;
+        bestDxs(iImage) = bestDx;
+    end
+end % function computeBestTranslations()
+
+
