@@ -110,11 +110,10 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return true; }
     
-    //void GetAdvertisingUiDevices(std::vector<AdvertisingUiDevice>& advertisingUiDevices);
-    
-    //using AdvertisingUiDevice = int;
-    //bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
-    
+    // For adding a real robot to the list of availale ones advertising, using its
+    // known IP address. This is only necessary until we have real advertising
+    // capability on real robots.
+    // TODO: Remove this once we have sorted out the advertising process for real robots
     void ForceAddRobot(AdvertisingRobot robotID,
                        const char*      robotIP,
                        bool             robotIsSimulated);
@@ -130,7 +129,7 @@ namespace Cozmo {
     // TODO: Remove once we no longer need forced adds
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
     
-    // TODO: Or promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
+    // TODO: Promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
     
   protected:
@@ -148,6 +147,9 @@ namespace Cozmo {
     
     virtual bool IsHost() const override { return false; }
     
+    // Currently just a stub: can't get a robot's image on a client because all
+    // the images are still going to the host device right now. So this will
+    // just return false for now.
     virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
     
   protected:
