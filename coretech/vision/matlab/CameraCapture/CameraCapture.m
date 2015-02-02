@@ -106,6 +106,8 @@ if isempty(displayAxes)
     end
 end
 
+frame = [];
+
 OPEN  = 0;
 GRAB  = 1;
 CLOSE = 2;
@@ -135,7 +137,7 @@ CLOSE = 2;
 % Can be redefined below depending on device type.
 closeCameraFcn = @()[];
 
-try
+% try
     
     % Initialize and grab first frame
     if ischar(device)
@@ -237,12 +239,12 @@ try
         title(displayAxes, sprintf('%.1f FPS', 1/toc(t)));
     end
     
-catch E
-
-    closeCameraFcn();    
-    rethrow(E)
-    
-end
+% catch E
+% 
+%     closeCameraFcn();    
+%     rethrow(E)
+%     
+% end
 
 closeCameraFcn();
 
