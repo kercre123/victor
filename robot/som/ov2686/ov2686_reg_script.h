@@ -9,7 +9,7 @@ struct OVRegSettings
   u8  val;
 };
 
-static struct OVRegSettings REG_SCRIPT[94] = {
+static struct OVRegSettings REG_SCRIPT[95] = {
   { 0x0103, 0x01 },
   { 0x3000, 0x03 },
   { 0x3001, 0xff },
@@ -101,9 +101,10 @@ static struct OVRegSettings REG_SCRIPT[94] = {
   { 0x5003, 0x04 },
   { 0x5004, 0x00 },
   { 0x5005, 0x0c },
+  { 0x5080, 0x84 },
   { 0x3106, 0x21 },
   { 0x3784, 0x08 },
   { 0x0100, 0x01 },
 };
 
-const size_t REG_SCRIPT_LEN = 94;
+const size_t REG_SCRIPT_LEN = 95;

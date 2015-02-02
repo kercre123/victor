@@ -30,7 +30,7 @@ static struct v4l2_mbus_framefmt FORMATS[] = {
   {
     .width  = OV2686_WIDTH,
     .height = OV2686_HEIGHT,
-    .code   = V4L2_MBUS_FMT_SBGGR8_1X8,
+    .code   = V4L2_MBUS_FMT_SBGGR12_1X12,
     .colorspace = V4L2_COLORSPACE_SRGB,
     .field      = V4L2_FIELD_NONE,
   },
@@ -183,6 +183,7 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
   struct i2c_client *client;
   struct ov2686_info * info = to_state(subdev);
   int ret = 0;
+  u8 readVal;
   size_t r;
 
   printk(KERN_INFO "ov2686_s_stream %d\n", enable);
@@ -202,6 +203,24 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
       ret = ov2686_reg_write(client, REG_SCRIPT[r].reg, REG_SCRIPT[r].val);
       if (ret < 0) return ret;
     }
+
+    ret = ov2686_reg_read(client, 0x5080, &readVal);
+    if (ret < 0) {
+      printk(KERN_WARNING "\tCouldn't read back register 0x5080, err %d\n", ret);
+      return ret;
+    }
+    else {
+      printk(KERN_INFO "\tReg 0x5080 = 0x%02x\n", readVal);
+    }
+    ret = ov2686_reg_read(client, 0x0100, &readVal);
+    if (ret < 0) {
+      printk(KERN_WARNING "\tCouldn't read back register 0x0100, err %d\n", ret);
+      return ret;
+    }
+    else {
+      printk(KERN_INFO "\tReg 0x0100 = 0x%02x\n", readVal);
+    }
+
     info->streaming = 1;
   }
   return ret;
