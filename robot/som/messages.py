@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "29210a1860673f109936598fd58cf6757c52e719" # Hash for the revision these python definitions are based on
+__version__ = "b707b5d84f90a4f04b85ba714ca25195d1ad925c" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -156,6 +156,31 @@ class PingMessage(MessageBase):
 
     def __repr__(self):
         return "PingMessage"
+
+class DriveWheelsMessage(MessageBase):
+    ID = 1
+    FORMAT = ["f32", # Left wheel speed mmps
+              "f32", # Right wheel speed mmps
+             ]
+
+    def __init__(self, *rest):
+        "Create drive wheels message from either a buffer or left and right wheel speeds"
+        MessageBase.__init__(self)
+        self.lws = 0.0
+        self.rws = 0.0
+        if len(rest) == 1: # Deserialize from buffer
+            self.deserialize(rest[0])
+        elif len(rest) == 2:
+            self._setMembers(*rest)
+
+    def _getMembers(self):
+        return self.lws, self.rws
+
+    def _setMembers(self, *members):
+        self.lws, self.rws = members
+
+    def __repr__(self):
+        return "DriveWheelsMessage(%f, %f)" % self._getMembers()
 
 class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
