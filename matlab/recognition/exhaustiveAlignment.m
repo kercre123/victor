@@ -1,23 +1,31 @@
 % function exhaustiveAlignment()
 
-% [bestDy, bestDx, bestDyIndex, bestDxIndex, meanDifferences] = exhaustiveAlignment(ims(:,:,1), ims(:,:,2), 9);
+% maxOffset = 9;
+% [bestDy, bestDx, bestDyIndex, bestDxIndex, meanDifferences] = exhaustiveAlignment(ims(:,:,1), ims(:,:,2), (-maxOffset):maxOffset, (-maxOffset):maxOffset, maxOffset);
 
-function [bestDy, bestDx, bestDyIndex, bestDxIndex, meanDifferences] = exhaustiveAlignment(templateImage, queryImage, maxOffset)
+function [bestDy, bestDx, bestDyIndex, bestDxIndex, meanDifferences] = exhaustiveAlignment(templateImage, queryImage, offsetsY, offsetsX, borderWidth, validRectangle)
     
+    if ~exist('validRectangle', 'var') || isempty(validRectangle)
+        validRectangle = [1, size(templateImage,2), 1, size(templateImage,1)];
+    end
+        
     templateImage = rgb2gray2(templateImage);
     queryImage = rgb2gray2(queryImage);
     
-    offsets = (-maxOffset):maxOffset;
+    assert(max(abs(offsetsX)) <= borderWidth)
+    assert(max(abs(offsetsY)) <= borderWidth)
     
-    differences = zeros([size(templateImage), length(offsets), length(offsets)], 'int16');
-    
-    for idy = 1:length(offsets)
-        dy = offsets(idy);
+%     differences = zeros([size(templateImage), length(offsets), length(offsets)], 'int16');
+    differences = zeros([size(templateImage(validRectangle(1):validRectangle(2),validRectangle(3):validRectangle(4),:)), length(offsetsY), length(offsetsX)], 'int16');
+
+    for idy = 1:length(offsetsY)
+        dy = offsetsY(idy);
         
-        for idx = 1:length(offsets)
-            dx = offsets(idx);
+        for idx = 1:length(offsetsX)
+            dx = offsetsX(idx);
             
-            differences(:,:,idy,idx) = exhuastiveAlignment_shiftImage(templateImage, 0, 0, maxOffset) - exhuastiveAlignment_shiftImage(queryImage, dy, dx, maxOffset);
+            curDifferences = exhuastiveAlignment_shiftImage(templateImage, 0, 0, borderWidth) - exhuastiveAlignment_shiftImage(queryImage, dy, dx, borderWidth);            
+            differences(:,:,idy,idx) = curDifferences(validRectangle(3):validRectangle(4), validRectangle(1):validRectangle(2), :);
         end
     end
     
@@ -27,8 +35,8 @@ function [bestDy, bestDx, bestDyIndex, bestDxIndex, meanDifferences] = exhaustiv
     
     [bestDyIndex, bestDxIndex] = find(meanDifferences == minDifference);
     
-    bestDy = offsets(bestDyIndex);
-    bestDx = offsets(bestDxIndex);
+    bestDy = offsetsY(bestDyIndex);
+    bestDx = offsetsX(bestDxIndex);
 end % function exhaustiveAlignment()
 
 

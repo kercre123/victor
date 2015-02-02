@@ -43,6 +43,15 @@ function [accuracy, results] = test_blinkingLeds()
                 %     for iAlignmentType = 2
                 %         for iParsingType = 1
                 %             for iFilenamePattern = 1
+            if iParsingType == 3
+                processingSize = [120,160];
+                lightSquareWidths = [80] * (processingSize(1) / 240);
+            else
+                processingSize = [120,160];
+                lightSquareWidths = [40] * (processingSize(1) / 240);
+            end
+            
+            for iFilenamePattern = 1:length(filenamePatterns)
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
                 results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
@@ -63,7 +72,10 @@ function [accuracy, results] = test_blinkingLeds()
                             'cameraType', 'offline',...
                             'filenamePattern', filenamePatterns{iFilenamePattern}{1},...
                             'alignmentType', alignmentTypes{iAlignmentType},...
-                            'parsingType', parsingTypes{iParsingType});
+                            'parsingType', parsingTypes{iParsingType},...
+                            'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
+                            'processingSize', processingSize,...
+                            'lightSquareWidths', lightSquareWidths);
                     end
                     
                     % Ground truth LED color
@@ -77,7 +89,9 @@ function [accuracy, results] = test_blinkingLeds()
                             'alignmentType', alignmentTypes{iAlignmentType},...
                             'knownLedColor', filenamePatterns{iFilenamePattern}{3},...
                             'parsingType', parsingTypes{iParsingType},...
-                            'smallBlurKernel', fspecial('gaussian',[11,11],1.5));
+                            'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
+                            'processingSize', processingSize,...
+                            'lightSquareWidths', lightSquareWidths);
                     end
                     
                     for iType = 1:numTestTypes
