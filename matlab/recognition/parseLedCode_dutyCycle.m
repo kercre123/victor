@@ -14,12 +14,12 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     
     lightSquareCenter = [120, 160] * (processingSize(1) / 240);
     %     lightSquareWidths = [10, 20, 30, 40, 50, 60, 70, 80] * (processingSize(1) / 240);
-    lightSquareWidths = [60] * (processingSize(1) / 240);
+    lightSquareWidths = [40] * (processingSize(1) / 240);
     %     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     useBoxFilter = false;
-    alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation'}
+    alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'}
     
     parsingType = 'blur'; % {'spatialBlur', 'blur', 'histogram'}
     
@@ -67,7 +67,7 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     %         [warpedImages(:,:,:,iImage), ~, ~] = warpProjective(images(:,:,:,iImage), inv(translationHomographies{iImage}), size(curImage));
     %     end
     
-    if strcmpi(alignmentType, 'exhaustiveTranslation')
+    if strcmpi(alignmentType, 'exhaustiveTranslation') || strcmpi(alignmentType, 'exhaustiveTranslation-double')
         maxOffset = 9;
         offsetImageSize = [60,80];
         offsetImageScale = processingSize(1) / offsetImageSize(1);
@@ -91,7 +91,7 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         
         colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
         
-        if strcmpi(alignmentType, 'exhaustiveTranslation')
+        if strcmpi(alignmentType, 'exhaustiveTranslation-double')
             maxOffsetLocal = 5;
             [bestDys,bestDxs] = computeBestTranslations(colorPatches, [size(colorPatches,1),size(colorPatches,2)], maxOffsetLocal);
             
