@@ -12,6 +12,8 @@ public class Intro : MonoBehaviour
 	protected Toggle simulated;
 	[SerializeField]
 	protected Button play;
+	[SerializeField]
+	protected Text error;
 
 	protected void Awake()
 	{
@@ -23,5 +25,14 @@ public class Intro : MonoBehaviour
 		Debug.Log( "ID: " + id.text );
 		Debug.Log( "IP: " + ip.text );
 		Debug.Log( "Simulated: " + simulated.isOn );
+
+		//if(  )
+		{
+			Application.LoadLevel( 1 );
+		}
+		//else
+		{
+			//error.text = 
+		}
 	}
 }
