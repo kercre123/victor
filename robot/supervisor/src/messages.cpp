@@ -384,7 +384,7 @@ namespace Anki {
       void ProcessStartTestModeMessage(const StartTestMode& msg)
       {
         if (msg.mode < TM_NUM_TESTS) {
-          TestModeController::Start((TestMode)(msg.mode));
+          TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
         } else {
           PRINT("Unknown test mode %d received\n", msg.mode);
         }

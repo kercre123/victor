@@ -1742,11 +1742,14 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendStartTestMode(const TestMode mode) const
+    Result Robot::SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
     {
       MessageStartTestMode m;
       
       m.mode = mode;
+      m.p1 = p1;
+      m.p2 = p2;
+      m.p3 = p3;
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1972,9 +1975,9 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
-    Result Robot::StartTestMode(const TestMode mode) const
+    Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
     {
-      return SendStartTestMode(mode);
+      return SendStartTestMode(mode, p1, p2, p3);
     }
     
     Result Robot::RequestImage(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const

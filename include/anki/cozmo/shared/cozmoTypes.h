@@ -88,6 +88,15 @@ namespace Anki {
       TM_NUM_TESTS
     } TestMode;
 
+    typedef enum {
+      DTF_ENABLE_DIRECT_HAL_TEST = 0x01,
+      DTF_ENABLE_TOGGLE_DIR = 0x02
+    } DriveTestFlags;
+    
+    typedef enum {
+      LTF_CYCLE_ALL = 0x01
+    } LightTestFlags;
+    
 
     // Bit flags for RobotState message
     typedef enum {
