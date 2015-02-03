@@ -21,7 +21,7 @@
 // Tick the cozmoeEngine rate, ticks per second
 #define DEFAULT_HEARTBEAT_RATE          40.0
 // IP Address of wherever the visualization (Webots) is running
-#define DEFAULT_VIZ_HOST_IP             "192.168.19.238"
+#define DEFAULT_VIZ_HOST_IP             "127.0.0.1"
 
 @interface CozmoEngineWrapper : NSObject
 
