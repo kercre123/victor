@@ -114,8 +114,22 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         end
         
         if strcmpi(parsingType, 'spatialBlur')
-            %             colors = extractColorsChangingCenter(colorPatches, linspace(1,10,10));
-            colors = extractColorsChangingCenter(colorPatches, linspace(1,10,9));
+            if isempty(knownLedColor)
+                numPositives = zeros(3,1);
+                peakValues = zeros(3,1);
+                
+                for iColor = 1:3
+                    [numPositives(iColor), peakValues(iColor)] = dutyCycle_changingCenter(colorPatches, linspace(1,10,9), iColor);
+                end
+                
+                [~, colorIndex] = max(peakValues);                
+                numPositive = numPositives(colorIndex);
+            else
+                [numPositive, peakValue] = dutyCycle_changingCenter(colorPatches, linspace(1,10,9), knownLedColor);
+                colorIndex = knownLedColor;
+            end
+            
+            return;
         else
             [colors{iWidth}, colorsHsv{iWidth}] = extractColorsAverage(colorPatches, saturationThreshold);
         end
@@ -199,13 +213,21 @@ function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, kno
     %         isValid = false;
     %     end
     
+%     if isValid
+%         numFramesToTest = size(colors,2);
+%         colorName = colorNames{colorIndex};
+%         disp(sprintf('%s is at %0.2f', colorName, numFramesToTest*percentPositive));
+%     else
+%         colorName = 'unknown';
+%         disp('Unknown color and number');
+%     end
+
     if isValid
-        numFramesToTest = size(colors,2);
         colorName = colorNames{colorIndex};
-        disp(sprintf('%s is at %0.2f', colorName, numFramesToTest*percentPositive));
     else
+        percentPositive = 0;
+        colorIndex = -1;
         colorName = 'unknown';
-        disp('Unknown color and number');
     end
 end
 
@@ -236,82 +258,108 @@ function [colors, colorsHsv] = extractColorsAverage(colorImages, saturationThres
     end % for iImage = 1:size(colorImages,4)
 end % function colors = extractColorsAverage()
 
-function colors = extractColorsChangingCenter(colorImages, blurSigmas)
+function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSigmas, whichColor)
+    
+    grayImages = squeeze(colorImages(:,:,whichColor,:));
     
     %     blurSigmas = linspace(1,10,10);
-    blurKernels = cell(length(blurSigmas), 3);
+    blurKernels_small = cell(length(blurSigmas), 1);
+    blurKernels_large = cell(length(blurSigmas), 1);
+    blurKernels_outsideRing = cell(length(blurSigmas), 1);
     for iBlur = 1:length(blurSigmas)
         filterWidth = blurSigmas(iBlur) * 4;
-        blurKernels{iBlur,1} = fspecial('gaussian', 2*[filterWidth,filterWidth], blurSigmas(iBlur));
-        blurKernels{iBlur,2} = fspecial('gaussian', 2*[filterWidth,filterWidth], 2*blurSigmas(iBlur));
+        blurKernels_small{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], blurSigmas(iBlur));
+        blurKernels_large{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], 2*blurSigmas(iBlur));
         
-        blurKernels{iBlur,3} = blurKernels{iBlur,2} - blurKernels{iBlur,1};
-        blurKernels{iBlur,3}(blurKernels{iBlur,3} < 0) = 0;
-        blurKernels{iBlur,3} = blurKernels{iBlur,3} / sum(sum(blurKernels{iBlur,3}));
+        blurKernels_outsideRing{iBlur} = blurKernels_large{iBlur} - blurKernels_small{iBlur};
+        blurKernels_outsideRing{iBlur}(blurKernels_outsideRing{iBlur} < 0) = 0;
+        blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(sum(blurKernels_outsideRing{iBlur}));
     end % for iBlur = 1:length(blurSigmas)
     
-    blurredImages = zeros([size(colorImages),3,length(blurSigmas)], 'uint8');
+    blurredImages_small = zeros([size(grayImages),length(blurSigmas)], 'uint8');
+    blurredImages_large = zeros([size(grayImages),length(blurSigmas)], 'uint8');
+    blurredImages_outsideRing = zeros([size(grayImages),length(blurSigmas)], 'uint8');
     
     %     figure(1);
     %     hold off
     for iBlur = 1:length(blurSigmas)
-        blurredImages(:,:,:,:,1,iBlur) = imfilter(colorImages, blurKernels{iBlur,1});
-        blurredImages(:,:,:,:,2,iBlur) = imfilter(colorImages, blurKernels{iBlur,2});
-        blurredImages(:,:,:,:,3,iBlur) = imfilter(colorImages, blurKernels{iBlur,3});
+        blurredImages_small(:,:,:,iBlur) = imfilter(grayImages, blurKernels_small{iBlur});
+        blurredImages_large(:,:,:,iBlur) = imfilter(grayImages, blurKernels_large{iBlur});
+        blurredImages_outsideRing(:,:,:,iBlur) = imfilter(grayImages, blurKernels_outsideRing{iBlur});
     end % for iBlur = 1:length(blurSigmas)
     
-    while true
-        figure(1);
-        imshow(colorImages(:,:,:,1))
+    blurredImages_inside = blurredImages_small - blurredImages_outsideRing;
+    blurredImages_inside(blurredImages_inside<0) = 0;
+
+    stepUpFilter = [-1, 0, 1]';
+    
+    blurredImages_inside_reshaped = double(permute(blurredImages_inside, [3,1,2,4]));
+    steps = imfilter(blurredImages_inside_reshaped, stepUpFilter, 'circular');
+
+    % Per x,y,blur, what is the minimum of: the positive peaks and the negative peaks
+    maxSteps = squeeze(min(max(steps), max(-steps)));
+    peakValue = max(maxSteps(:));
+    inds = find(maxSteps == peakValue, 1);
+    [y,x,b] = ind2sub(size(maxSteps), inds);
+    
+    [~, startPoint] = max(steps(:,y,x,b));
+    [~, endPoint] = min(steps(:,y,x,b));
+    numPositive = mod(endPoint - startPoint, size(colorImages,4));
         
-        [x,y] = ginput(1);
-        x = round(x);
-        y = round(y);
-        
-        figure(2);
-        for iBlur = 1:length(blurSigmas)
-            subplot(3,3,iBlur);
-            hold off
-            plot(squeeze(blurredImages(y, x, 1, :, 1, iBlur))', 'b')
-            hold on
-            plot(squeeze(blurredImages(y, x, 1, :, 2, iBlur))', 'g')
-            plot(squeeze(blurredImages(y, x, 1, :, 3, iBlur))', 'r')
-            
-            a = axis();
-            a(3:4) = [0,200];
-            axis(a);
-        end
-    end % while true
+    clickGui = false;    
+    if clickGui
+        disp('Click a point');
+
+        while true
+            figure(1);
+            imshows(colorImages(:,:,:,ceil(end/2)))
+
+            [x,y] = ginput(1);
+            x = round(x);
+            y = round(y);
+
+            disp(sprintf('Clicked (%d,%d)', x, y));
+
+            figure(2);
+            for iBlur = 1:length(blurSigmas)
+                subplot(3,3,iBlur);
+                hold off
+                plot(squeeze(blurredImages_small(y, x, :, iBlur))', 'b')
+                hold on
+                plot(squeeze(blurredImages_large(y, x, :, iBlur))', 'g')
+                plot(squeeze(blurredImages_outsideRing(y, x, :, iBlur))', 'r')
+                plot(squeeze(blurredImages_inside(y, x, :, iBlur))', 'k')
+
+                a = axis();
+                a(3:4) = [0,200];
+                axis(a);
+            end
+
+            figure(3);
+            maxAxis = 0;
+            for iBlur = 1:length(blurSigmas)
+                curRing = double(squeeze(blurredImages_inside(y,x,:,iBlur)));
+                curSteps = imfilter(curRing, stepUpFilter, 'circular');
+
+                curSteps2 = steps(:,y,x,iBlur);
+
+                subplot(3,3,iBlur);
+                hold off
+                plot(curSteps);
+                curAxis = axis();
+
+                maxAxis = max(maxAxis, max(abs(curAxis(3:4))));
+            end
+
+            for iBlur = 1:length(blurSigmas)
+                subplot(3,3,iBlur);
+                axis([curAxis(1:2), -maxAxis, maxAxis])
+            end
+        end % while true
+    end % if clickGui
     
     %     playVideo({blurredImages(:,:,:,:,a,1), blurredImages(:,:,:,:,a,2), blurredImages(:,:,:,:,a,3)})
-    
-    keyboard
-    
-    %     minImageBlurred = double(min(colorImages, [], 4));
-    %     maxImageBlurred = double(max(colorImages, [], 4));
-    %     %thresholdImageBlurred = (maxImageBlurred + minImageBlurred) / 2;
-    %     thresholdImageBlurred = minImageBlurred;
-    %
-    %     grayMaxImageBlurred = max(maxImageBlurred, [], 3);
-    %     unsaturatedInds = (grayMaxImageBlurred <= saturationThreshold);
-    %
-    %     % Find the per-pixel difference from the threshold
-    %     colors = zeros(3, size(colorImages,4));
-    %     colorsHsv = zeros(3, size(colorImages,4));
-    %
-    %     for iImage = 1:size(colorImages,4)
-    %         curBlurred = double(colorImages(:,:,:,iImage))/2 - thresholdImageBlurred/2;
-    %         curBlurredHsv = rgb2hsv(curBlurred);
-    %
-    %         for iChannel = 1:3
-    %             curChannelImage = curBlurred(:,:,iChannel);
-    %             colors(iChannel, iImage) = mean(curChannelImage(unsaturatedInds));
-    %
-    %             curChannelImageHsv = curBlurredHsv(:,:,iChannel);
-    %             colorsHsv(iChannel, iImage) = mean(curChannelImageHsv(unsaturatedInds));
-    %         end
-    %     end % for iImage = 1:size(colorImages,4)
-end % function colors = extractColorsChangingCenter()
+end % function colors = dutyCycle_changingCenter()
 
 function [rawBlockHistogram, normalizedRawBlockHistogram, maxPooledBlockHistogram, normalizedMaxPooledBlockHistogram] = getBlockHistograms(colorImage, numBinsPerColor, blockWidth)
     

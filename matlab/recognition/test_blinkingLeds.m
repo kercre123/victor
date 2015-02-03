@@ -21,28 +21,31 @@ function [accuracy, results] = test_blinkingLeds()
     numFramesToTest = 15;
     
     alignmentTypes = {'none', 'exhaustiveTranslation'};
-    parsingTypes = {'blur', 'histogram'};
-    %     parsingTypes = {'blur', 'histogram', 'spatialBlur'};
+%     parsingTypes = {'blur', 'histogram'};
+    
+%     alignmentTypes = {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
+%     parsingTypes = {'blur', 'histogram'};
+    parsingTypes = {'blur', 'histogram', 'spatialBlur'};
     
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     
     testUnknownLedColor = true;
-    %     testUnknownLedColor = false;
+%     testUnknownLedColor = false;
     
     testKnownLedColor = true;
     
     numTestTypes = 2; % testUnknownLedColor and testKnownLedColor
     
+    colorNames = {'red', 'green', 'blue'};
+    
     for iAlignmentType = length(alignmentTypes):-1:1
-        for iParsingType = 1:length(parsingTypes)
-            for iFilenamePattern = 1:length(filenamePatterns)
-                %     for iAlignmentType = length(alignmentTypes)
-                %         for iParsingType = 1
-                %             for iFilenamePattern = 1:length(filenamePatterns)
-                %     for iAlignmentType = 2
-                %         for iParsingType = 1
-                %             for iFilenamePattern = 1
+        for iParsingType = length(parsingTypes):-1:1
+%     for iAlignmentType = length(alignmentTypes)
+%         for iParsingType = 1
+%     for iAlignmentType = 2
+%         for iParsingType = 3
+            
             if iParsingType == 3
                 processingSize = [120,160];
                 lightSquareWidths = [80] * (processingSize(1) / 240);
@@ -52,16 +55,19 @@ function [accuracy, results] = test_blinkingLeds()
             end
             
             for iFilenamePattern = 1:length(filenamePatterns)
+%             for iFilenamePattern = 5
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
                 results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
                 
                 for iFirstFrame = 1:length(whichFirstFrames)
-                    %                 for iFirstFrame = 3
+%                 for iFirstFrame = 1
                     firstFrame = whichFirstFrames(iFirstFrame);
                     
                     colorIndexes = -ones(numTestTypes, 1);
                     numPositives = -ones(numTestTypes, 1);
+                    
+                    outString = sprintf('test:%d.%d method%d.%d)', iFilenamePattern, iFirstFrame, iAlignmentType, iParsingType);
                     
                     % Unknown LED color
                     if testUnknownLedColor
@@ -76,6 +82,8 @@ function [accuracy, results] = test_blinkingLeds()
                             'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
                             'processingSize', processingSize,...
                             'lightSquareWidths', lightSquareWidths);
+                        
+                        outString = [outString, sprintf(' unknown:%s %d', colorNames{colorIndexes(1)}, numPositives(1))];
                     end
                     
                     % Ground truth LED color
@@ -92,7 +100,11 @@ function [accuracy, results] = test_blinkingLeds()
                             'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
                             'processingSize', processingSize,...
                             'lightSquareWidths', lightSquareWidths);
+                        
+                        outString = [outString, sprintf(' known:%s %d', colorNames{colorIndexes(2)}, numPositives(2))];
                     end
+                    
+                    disp(outString)
                     
                     for iType = 1:numTestTypes
                         results{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame, :, iType) = [colorIndexes(iType), colorIndexes(iType)];

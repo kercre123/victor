@@ -1,8 +1,12 @@
-function images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages, showFigures)
+function images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numImages, showFigures, displayText)
 
     expectedFps = 30;
     
     curImageIndex = 1;
+    
+    if ~exist('displayText', 'var') || isempty(displayText);
+        displayText = false;
+    end
     
     [curImage, curImageIndex] = parseLedCode_getNextImage(cameraType, filenamePattern, whichImages, processingSize, curImageIndex);
     
@@ -34,15 +38,23 @@ function images = parseLedCode_captureAllImages(cameraType, filenamePattern, whi
     %     expectedFpsRange = expectedFps * (expectedFps/numImages) * [expectedElapsedTime - (0.5/expectedFps), expectedElapsedTime + (0.5/expectedFps)];
     
     if strcmpi(cameraType, 'offline')
-        disp(sprintf('Captured %d images from offline.', numImages));
+        if displayText
+            disp(sprintf('Captured %d images from offline.', numImages));
+        end
     else
-        disp(sprintf('Captured %d images at %0.2f FPS.', numImages, 1/(timeElapsed/numImages)))
+        if displayText
+            disp(sprintf('Captured %d images at %0.2f FPS.', numImages, 1/(timeElapsed/numImages)))
+        end
 
         if expectedElapsedTimeRange(1) <= timeElapsed && expectedElapsedTimeRange(2) >= timeElapsed
-            disp(sprintf('Good: %0.3f <= %0.3f <= %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
+            if displayText
+                disp(sprintf('Good: %0.3f <= %0.3f <= %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
+            end
         else
-            disp(sprintf('Bad: %0.3f X %0.3f X %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
-            disp(' ');
+            if displayText
+                disp(sprintf('Bad: %0.3f X %0.3f X %0.3f', expectedElapsedTimeRange(1), timeElapsed, expectedElapsedTimeRange(2)));
+                disp(' ');
+            end
             images = [];
             return;
         end    
