@@ -160,6 +160,7 @@ int main(void)
          
     // Only call every loop through - not all the time
     MotorsUpdate();
+    //BatteryUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms

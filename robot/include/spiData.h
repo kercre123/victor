@@ -7,7 +7,12 @@
 // Definition of the data structures being transferred between SYSCON and
 // the vision processor
 
+// A 16.16 fixed bit number
 typedef s32 Fixed;
+#define TO_FIXED(x) ((x) * 65535)
+#define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
+#define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
+
 
 enum SPISource
 {
@@ -27,8 +32,12 @@ struct GlobalDataToHead
   GlobalCommon common;
   Fixed speeds[4];
   Fixed positions[4];
+  Fixed IBat;
+  Fixed VBat;
+  Fixed Vusb;
+  u8    chargeStat;
   
-  uint8_t RESERVED[27];  // Pad out to 64 bytes
+  uint8_t RESERVED[14];  // Pad out to 64 bytes
   char tail;
 };
 

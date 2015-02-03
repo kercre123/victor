@@ -8,10 +8,6 @@
 
 #include "uart.h"
 
-#define TO_FIXED(x) ((x) * 65535)
-#define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
-#define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
-
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
