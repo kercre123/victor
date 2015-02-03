@@ -17,8 +17,11 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
     lightSquareWidths = [40] * (processingSize(1) / 240);
     %     lightRectangle = round([140,180, 100,140] * (processingSize(1) / 240));
     
-        alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
-%     alignmentRectangle = [120, 200, 80, 160] * (processingSize(1) / 240);
+    alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
+    %     alignmentRectangle = [120, 200, 80, 160] * (processingSize(1) / 240);
+    
+    %             spatialBlurSigmas = linspace(1,10,9);
+    spatialBlurSigmas = linspace(2,6,5);
     
     useBoxFilter = false;
     alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'}
@@ -119,13 +122,13 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
                 peakValues = zeros(3,1);
                 
                 for iColor = 1:3
-                    [numPositives(iColor), peakValues(iColor)] = dutyCycle_changingCenter(colorPatches, linspace(1,10,9), iColor);
+                    [numPositives(iColor), peakValues(iColor)] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, iColor);
                 end
                 
-                [~, colorIndex] = max(peakValues);                
+                [~, colorIndex] = max(peakValues);
                 numPositive = numPositives(colorIndex);
             else
-                [numPositive, peakValue] = dutyCycle_changingCenter(colorPatches, linspace(1,10,9), knownLedColor);
+                [numPositive, peakValue] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, knownLedColor);
                 colorIndex = knownLedColor;
             end
             
@@ -213,15 +216,15 @@ function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, kno
     %         isValid = false;
     %     end
     
-%     if isValid
-%         numFramesToTest = size(colors,2);
-%         colorName = colorNames{colorIndex};
-%         disp(sprintf('%s is at %0.2f', colorName, numFramesToTest*percentPositive));
-%     else
-%         colorName = 'unknown';
-%         disp('Unknown color and number');
-%     end
-
+    %     if isValid
+    %         numFramesToTest = size(colors,2);
+    %         colorName = colorNames{colorIndex};
+    %         disp(sprintf('%s is at %0.2f', colorName, numFramesToTest*percentPositive));
+    %     else
+    %         colorName = 'unknown';
+    %         disp('Unknown color and number');
+    %     end
+    
     if isValid
         colorName = colorNames{colorIndex};
     else
@@ -290,76 +293,81 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     
     blurredImages_inside = blurredImages_small - blurredImages_outsideRing;
     blurredImages_inside(blurredImages_inside<0) = 0;
-
+    
     stepUpFilter = [-1, 0, 1]';
     
     blurredImages_inside_reshaped = double(permute(blurredImages_inside, [3,1,2,4]));
     steps = imfilter(blurredImages_inside_reshaped, stepUpFilter, 'circular');
-
+    
     % Per x,y,blur, what is the minimum of: the positive peaks and the negative peaks
     maxSteps = squeeze(min(max(steps), max(-steps)));
     peakValue = max(maxSteps(:));
     inds = find(maxSteps == peakValue, 1);
-    [y,x,b] = ind2sub(size(maxSteps), inds);
+    [bestY,bestX,bestB] = ind2sub(size(maxSteps), inds);
     
-    [~, startPoint] = max(steps(:,y,x,b));
-    [~, endPoint] = min(steps(:,y,x,b));
+    [~, startPoint] = max(steps(:,bestY,bestX,bestB));
+    [~, endPoint] = min(steps(:,bestY,bestX,bestB));
     numPositive = mod(endPoint - startPoint, size(colorImages,4));
-        
-    clickGui = false;    
+    
+%     clickGui = true;
+    clickGui = false;
     if clickGui
         disp('Click a point');
-
+        
         while true
             figure(1);
             imshows(colorImages(:,:,:,ceil(end/2)))
-
+            
             [x,y] = ginput(1);
             x = round(x);
             y = round(y);
-
+            
             disp(sprintf('Clicked (%d,%d)', x, y));
-
-            figure(2);
-            for iBlur = 1:length(blurSigmas)
-                subplot(3,3,iBlur);
-                hold off
-                plot(squeeze(blurredImages_small(y, x, :, iBlur))', 'b')
-                hold on
-                plot(squeeze(blurredImages_large(y, x, :, iBlur))', 'g')
-                plot(squeeze(blurredImages_outsideRing(y, x, :, iBlur))', 'r')
-                plot(squeeze(blurredImages_inside(y, x, :, iBlur))', 'k')
-
-                a = axis();
-                a(3:4) = [0,200];
-                axis(a);
-            end
-
-            figure(3);
-            maxAxis = 0;
-            for iBlur = 1:length(blurSigmas)
-                curRing = double(squeeze(blurredImages_inside(y,x,:,iBlur)));
-                curSteps = imfilter(curRing, stepUpFilter, 'circular');
-
-                curSteps2 = steps(:,y,x,iBlur);
-
-                subplot(3,3,iBlur);
-                hold off
-                plot(curSteps);
-                curAxis = axis();
-
-                maxAxis = max(maxAxis, max(abs(curAxis(3:4))));
-            end
-
-            for iBlur = 1:length(blurSigmas)
-                subplot(3,3,iBlur);
-                axis([curAxis(1:2), -maxAxis, maxAxis])
-            end
+            
+            plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
         end % while true
     end % if clickGui
     
     %     playVideo({blurredImages(:,:,:,:,a,1), blurredImages(:,:,:,:,a,2), blurredImages(:,:,:,:,a,3)})
 end % function colors = dutyCycle_changingCenter()
+
+function plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps)
+    figure(2);
+    for iBlur = 1:length(blurSigmas)
+        subplot(3,3,iBlur);
+        hold off
+        plot(squeeze(blurredImages_small(y, x, :, iBlur))', 'b')
+        hold on
+        plot(squeeze(blurredImages_large(y, x, :, iBlur))', 'g')
+        plot(squeeze(blurredImages_outsideRing(y, x, :, iBlur))', 'r')
+        plot(squeeze(blurredImages_inside(y, x, :, iBlur))', 'k')
+
+        a = axis();
+        a(3:4) = [0,200];
+        axis(a);
+    end
+
+    figure(3);
+    maxAxis = 0;
+    for iBlur = 1:length(blurSigmas)
+%         curRing = double(squeeze(blurredImages_inside(y,x,:,iBlur)));
+%         curSteps = imfilter(curRing, stepUpFilter, 'circular');
+
+        curSteps = steps(:,y,x,iBlur);
+
+        subplot(3,3,iBlur);
+        hold off
+        plot(curSteps);
+        curAxis = axis();
+
+        maxAxis = max(maxAxis, max(abs(curAxis(3:4))));
+    end
+
+    for iBlur = 1:length(blurSigmas)
+        subplot(3,3,iBlur);
+        axis([curAxis(1:2), -maxAxis, maxAxis])
+    end
+end
 
 function [rawBlockHistogram, normalizedRawBlockHistogram, maxPooledBlockHistogram, normalizedMaxPooledBlockHistogram] = getBlockHistograms(colorImage, numBinsPerColor, blockWidth)
     
@@ -428,8 +436,8 @@ function [bestDys, bestDxs, offsetImageScale] = computeBestTranslations(images, 
             bestDy = 0;
             bestDx = 0;
         else
-            % First, find the best for the small image  
-            scaledMaxOffset = round(offsetImageScale*maxOffset);            
+            % First, find the best for the small image
+            scaledMaxOffset = round(offsetImageScale*maxOffset);
             [coarseBestDy, coarseBestDx, ~, ~, ~] = exhaustiveAlignment(smallImages(:,:,:,middleImageIndex), smallImages(:,:,:,iImage), (-scaledMaxOffset):scaledMaxOffset, (-scaledMaxOffset):scaledMaxOffset, scaledMaxOffset, round(offsetImageScale*validRegion));
             coarseBestDy = (1/offsetImageScale)*coarseBestDy(1);
             coarseBestDx = (1/offsetImageScale)*coarseBestDx(1);
