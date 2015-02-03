@@ -105,8 +105,11 @@ class MCUProxyServer(object):
                 self.rawSerData = "" # Throw everything out and start over
                 return
             length = sum([ord(d) << i for d, i in zip(self.rawSerData, (0, 8, 16, 24))]) # Calculate message length
+            length = min(self.MTU, max(length, 4))
             self.rawSerData = self.rawSerData[4:]
-            if len(self.rawSerData) < length: self.rawSerData += self.mcu.read(length - len(self.rawSerData))
+            if len(self.rawSerData) < length:
+                #if self.v: sys.stdout.write("sr read %d\n" % length)
+                self.rawSerData += self.mcu.read(length - len(self.rawSerData))
             if len(self.rawSerData) < length: # Something is wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return

@@ -15,9 +15,10 @@ namespace
   const Fixed VUSB_SCALE  = TO_FIXED(3.128); // Cozmo 3 voltage divider
   const Fixed VBAT_SCALE  = TO_FIXED(3.128); // Cozmo 3 voltage divider
   
-  const Fixed VBAT_CHARGED_THRESHOLD = TO_FIXED(4.0); // V
-  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(3.4); // V
-  const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.4); // V
+  const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
+  const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
+  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(3.40); // V
+  const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
   
   const u8 PIN_I_SENSE     = 6;
   const u8 PIN_V_BAT_SENSE = 26;
@@ -130,7 +131,7 @@ void BatteryUpdate()
           nrf_gpio_pin_clear(PIN_VDDs_EN);
           nrf_gpio_pin_clear(PIN_VDD_EN);
         }
-        else if (g_dataToHead.VBat > VBAT_CHARGED_THRESHOLD) // Battery charged
+        else if (g_dataToHead.VBat > VBAT_CHGD_HI_THRESHOLD) // Battery charged
         {
           nrf_gpio_pin_set(PIN_CHARGE_EN); // Disable charging
           // Enable power if it was shut down
@@ -145,7 +146,7 @@ void BatteryUpdate()
       case 2:
       {
         g_dataToHead.Vusb = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VUSB_SCALE);
-        if ((g_dataToHead.Vusb > VUSB_DETECT_THRESHOLD) && (g_dataToHead.VBat < VBAT_CHARGED_THRESHOLD))
+        if ((g_dataToHead.Vusb > VUSB_DETECT_THRESHOLD) && (g_dataToHead.VBat < VBAT_CHGD_LO_THRESHOLD))
         {
           nrf_gpio_pin_set(PIN_CHARGE_EN); // Enable charging
         }
