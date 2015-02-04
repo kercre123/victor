@@ -307,29 +307,32 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     
     [~, startPoint] = max(steps(:,bestY,bestX,bestB));
     [~, endPoint] = min(steps(:,bestY,bestX,bestB));
-    numPositive = mod(endPoint - startPoint, size(colorImages,4));
+    numPositive = mod(endPoint - startPoint, size(colorImages,4)) + 0.5;
     
 %     clickGui = true;
     clickGui = false;
     if clickGui
-        disp('Click a point');
-        
-        while true
-            figure(1);
-            imshows(colorImages(:,:,:,ceil(end/2)))
-            
-            [x,y] = ginput(1);
-            x = round(x);
-            y = round(y);
-            
-            disp(sprintf('Clicked (%d,%d)', x, y));
-            
-            plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
-        end % while true
+        plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
     end % if clickGui
-    
     %     playVideo({blurredImages(:,:,:,:,a,1), blurredImages(:,:,:,:,a,2), blurredImages(:,:,:,:,a,3)})
 end % function colors = dutyCycle_changingCenter()
+
+function plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps)
+    disp('Click a point');
+
+    while true
+        figure(1);
+        imshows(colorImages(:,:,:,ceil(end/2)))
+
+        [x,y] = ginput(1);
+        x = round(x);
+        y = round(y);
+
+        disp(sprintf('Clicked (%d,%d)', x, y));
+
+        plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
+    end % while true
+end
 
 function plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps)
     figure(2);

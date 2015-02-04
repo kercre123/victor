@@ -20,18 +20,22 @@ function [accuracy, results] = test_blinkingLeds()
     
     numFramesToTest = 15;
     
-    alignmentTypes = {'none', 'exhaustiveTranslation'};
-%     parsingTypes = {'blur', 'histogram'};
+    %     compositeVideo = createCompositeSampleVideo(filenamePatterns);
+    %     save /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat compositeVideo
+    %     load /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat
     
-%     alignmentTypes = {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
-%     parsingTypes = {'blur', 'histogram'};
+    alignmentTypes = {'none', 'exhaustiveTranslation'};
+    %     parsingTypes = {'blur', 'histogram'};
+    
+    %     alignmentTypes = {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
+    %     parsingTypes = {'blur', 'histogram'};
     parsingTypes = {'blur', 'histogram', 'spatialBlur'};
     
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     
-    testUnknownLedColor = true;
-%     testUnknownLedColor = false;
+    %     testUnknownLedColor = true;
+    testUnknownLedColor = false;
     
     testKnownLedColor = true;
     
@@ -39,12 +43,12 @@ function [accuracy, results] = test_blinkingLeds()
     
     colorNames = {'red', 'green', 'blue'};
     
-    for iAlignmentType = length(alignmentTypes):-1:1
-        for iParsingType = length(parsingTypes):-1:1
-%     for iAlignmentType = length(alignmentTypes)
-%         for iParsingType = 1
-%     for iAlignmentType = 2
-%         for iParsingType = 3
+    %     for iAlignmentType = length(alignmentTypes):-1:1
+    %         for iParsingType = length(parsingTypes):-1:1
+    %     for iAlignmentType = length(alignmentTypes)
+    %         for iParsingType = 1
+    for iAlignmentType = 2
+        for iParsingType = 3
             
             if iParsingType == 3
                 processingSize = [120,160];
@@ -54,20 +58,20 @@ function [accuracy, results] = test_blinkingLeds()
                 lightSquareWidths = [40] * (processingSize(1) / 240);
             end
             
-            for iFilenamePattern = 1:length(filenamePatterns)
-%             for iFilenamePattern = 5
+            %             for iFilenamePattern = 1:length(filenamePatterns)
+            for iFilenamePattern = 1
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
                 results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
                 
-                for iFirstFrame = 1:length(whichFirstFrames)
-%                 for iFirstFrame = 1
+                %                 for iFirstFrame = 1:length(whichFirstFrames)
+                for iFirstFrame = 84
                     firstFrame = whichFirstFrames(iFirstFrame);
                     
                     colorIndexes = -ones(numTestTypes, 1);
                     numPositives = -ones(numTestTypes, 1);
                     
-                    outString = sprintf('test:%d.%d method%d.%d)', iFilenamePattern, iFirstFrame, iAlignmentType, iParsingType);
+                    outString = sprintf('test:(%d,%d) method:(%d,%d)', iFilenamePattern, iFirstFrame, iAlignmentType, iParsingType);
                     
                     % Unknown LED color
                     if testUnknownLedColor
@@ -83,7 +87,7 @@ function [accuracy, results] = test_blinkingLeds()
                             'processingSize', processingSize,...
                             'lightSquareWidths', lightSquareWidths);
                         
-                        outString = [outString, sprintf(' unknown:%s %d', colorNames{colorIndexes(1)}, numPositives(1))];
+                        outString = [outString, sprintf(' unknown:(%s,%0.1f)', colorNames{colorIndexes(1)}, numPositives(1))];
                     end
                     
                     % Ground truth LED color
@@ -101,20 +105,39 @@ function [accuracy, results] = test_blinkingLeds()
                             'processingSize', processingSize,...
                             'lightSquareWidths', lightSquareWidths);
                         
-                        outString = [outString, sprintf(' known:%s %d', colorNames{colorIndexes(2)}, numPositives(2))];
+                        outString = [outString, sprintf(' known:(%s,%0.1f)', colorNames{colorIndexes(2)}, numPositives(2))];
                     end
                     
-                    disp(outString)
-                    
-                    for iType = 1:numTestTypes
+                    isBadValue = false;
+                    for iType = [1,2]
+                        if iType == 1 && ~testUnknownLedColor
+                            continue;
+                        end
+                        
+                        if iType == 2 && ~testKnownLedColor
+                            continue;
+                        end
+                        
                         results{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame, :, iType) = [colorIndexes(iType), colorIndexes(iType)];
                         
                         if colorIndexes(iType) == filenamePatterns{iFilenamePattern}{3}
                             accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = abs(filenamePatterns{iFilenamePattern}{4} - numPositives(iType));
+                            
+                            if accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) > 1
+                                isBadValue = true;
+                            end
                         else
                             accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = numFramesToTest;
+                            isBadValue = true;
                         end
                     end % for iType = 1:numTestTypes
+                    
+                    if isBadValue
+                        outString = [outString, ' *****'];
+                    end
+                    
+                    disp(outString)
+                    
                 end % for iFirstFrame = 1:length(whichFirstFrames)
                 
                 figureIndex = length(parsingTypes)*(iAlignmentType-1) + iParsingType;
@@ -155,4 +178,26 @@ function [accuracy, results] = test_blinkingLeds()
     
     
     keyboard
+end % function test_blinkingLeds()
+
+function compositeVideo = createCompositeSampleVideo(filenamePatterns)
+    numImages = Inf;
+    for iFilenamePattern = 1:length(filenamePatterns)
+        imageNumbers = filenamePatterns{iFilenamePattern}{2}(1):filenamePatterns{iFilenamePattern}{2}(2);
+        numImages = min(numImages, length(imageNumbers));
+    end
     
+    compositeVideo = cell(numImages, 1);
+    for iImage = 1:numImages
+        images = cell(length(filenamePatterns), 1);
+        for iFilenamePattern = 1:length(filenamePatterns)
+            imageNumbers = filenamePatterns{iFilenamePattern}{2}(1):filenamePatterns{iFilenamePattern}{2}(2);
+            curFilename = sprintf(filenamePatterns{iFilenamePattern}{1}, imageNumbers(iImage));
+            images{iFilenamePattern} = imread(curFilename);
+        end
+        
+        compositeVideo{iImage} = drawCollage(images);
+    end
+end % function createCompositeSampleVideo()
+
+

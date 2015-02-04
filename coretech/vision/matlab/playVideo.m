@@ -70,6 +70,10 @@ function playVideo(images, pauseSeconds, loopForever)
         
         set(gcf, 'name', textTitle, 'NumberTitle', 'off')
         
-        pause(pauseSeconds);
+        if pauseSeconds >= 0
+            pause(pauseSeconds);
+        else
+            pause();
+        end
     end % while true
 end % function playVideo()
