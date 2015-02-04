@@ -127,6 +127,9 @@ namespace Anki
 
         // Set up first "hello" message to body
         g_dataToBody.common.source = SPI_SOURCE_HEAD;
+        g_dataToBody.common.SYNC[0] = 0xfa;
+        g_dataToBody.common.SYNC[1] = 0xf3;
+        g_dataToBody.common.SYNC[2] = 0x20;
         memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
         
         // Configure DMA For transmitting
