@@ -46,9 +46,9 @@ public class RobotEngineManager : MonoBehaviour {
 			return;
 		}
 		
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_create (configuration.text);
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text);
 		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_enginehost_create error: " + result.ToString());
+			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
@@ -59,9 +59,9 @@ public class RobotEngineManager : MonoBehaviour {
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
 			
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_destroy();
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_destroy();
 			if (result != CozmoResult.OK) {
-				Debug.LogError("cozmo_enginehost_forceaddrobot error: " + result.ToString());
+				Debug.LogError("cozmo_engine_host_destroy error: " + result.ToString());
 			}
 		}
 	}
@@ -72,8 +72,8 @@ public class RobotEngineManager : MonoBehaviour {
 			logBuilder = new StringBuilder (1024);
 		}
 		
-		int length = 0;
-		while (CozmoBinding.cozmo_has_log(ref length)) {
+		int length;
+		while (CozmoBinding.cozmo_has_log(out length)) {
 			if (logBuilder.Capacity < length) {
 				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
 			}
@@ -83,9 +83,9 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_update (Time.realtimeSinceStartup);
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_update (Time.realtimeSinceStartup);
 			if (result != CozmoResult.OK) {
-				Debug.LogError ("cozmo_enginehost_update error: " + result.ToString ());
+				Debug.LogError ("cozmo_engine_update error: " + result.ToString ());
 			}
 		}
 	}
@@ -97,17 +97,12 @@ public class RobotEngineManager : MonoBehaviour {
 	/// <param name="robotId">The robot identifier.</param>
 	/// <param name="robotIP">The ip address the robot is connected to.</param>
 	/// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
-	public CozmoResult ForceAddRobot(int robotId, string robotIP, bool robotIsSimulated)
+	public CozmoResult ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
 	{
-		if (!engineHostInitialized) {
-			Debug.LogError("Error forcibly adding robot: Cannot add a robot when the host is not initialized.");
-			return CozmoResult.BINDING_ERROR_NOT_INITIALIZED;
-		}
-
 #if UNITY_IOS && !UNITY_EDITOR
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_forceaddrobot (robotId, robotIP, robotIsSimulated);
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_force_add_robot (robotID, robotIP, robotIsSimulated);
 		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_enginehost_forceaddrobot error: " + result.ToString());
+			Debug.LogError("cozmo_engine_host_force_add_robot error: " + result.ToString());
 		}
 		return result;
 #else
@@ -115,4 +110,46 @@ public class RobotEngineManager : MonoBehaviour {
 #endif
 	}
 
+	public bool IsRobotConnected(int robotID)
+	{
+#if UNITY_IOS && !UNITY_EDITOR
+		Update();
+
+    	bool isConnected;
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_is_robot_connected (out isConnected, robotID);
+		if (result != CozmoResult.OK) {
+			Debug.LogError("cozmo_engine_get_number_of_robots error: " + result.ToString());
+			return false;
+		}
+		return isConnected;
+#else
+		return false;
+#endif
+
+	}
+
+    /// <summary>
+    /// Set wheel speed.
+    /// </summary>
+    /// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
+	/// <param name="right_wheel_speed_mmps">Right wheel speed in millimeters per second.</param>
+	public void DriveWheels(int robotID, float leftWheelSpeedMmps, float rightWheelSpeedMmps)
+	{
+#if UNITY_IOS && !UNITY_EDITOR
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_drive_wheels (robotID, leftWheelSpeedMmps, rightWheelSpeedMmps);
+		if (result != CozmoResult.OK) {
+			Debug.LogError ("cozmo_robot_drive_wheels error: " + result.ToString());
+		}
+#endif
+	}
+
+	public void StopAllMotors(int robotID)
+	{
+#if UNITY_IOS && !UNITY_EDITOR
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_stop_all_motors (robotID);
+		if (result != CozmoResult.OK) {
+			Debug.LogError ("cozmo_robot_stop_all_motors error: " + result.ToString());
+		}
+#endif
+	}
 }

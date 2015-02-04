@@ -88,4 +88,5 @@ if(NOT ANKI_IOS_BUILD)
 
 endif()
 
+add_subdirectory(unity/CSharpBinding)
 
