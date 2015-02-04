@@ -46,7 +46,7 @@ public class RobotEngineManager : MonoBehaviour {
 			return;
 		}
 		
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_create (configuration.text);
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text);
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_enginehost_create error: " + result.ToString());
 		} else {
@@ -59,7 +59,7 @@ public class RobotEngineManager : MonoBehaviour {
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
 			
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_destroy();
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_destroy();
 			if (result != CozmoResult.OK) {
 				Debug.LogError("cozmo_enginehost_forceaddrobot error: " + result.ToString());
 			}
@@ -83,7 +83,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_update (Time.realtimeSinceStartup);
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_update (Time.realtimeSinceStartup);
 			if (result != CozmoResult.OK) {
 				Debug.LogError ("cozmo_enginehost_update error: " + result.ToString ());
 			}
@@ -99,13 +99,8 @@ public class RobotEngineManager : MonoBehaviour {
 	/// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
 	public CozmoResult ForceAddRobot(int robotId, string robotIP, bool robotIsSimulated)
 	{
-		if (!engineHostInitialized) {
-			Debug.LogError("Error forcibly adding robot: Cannot add a robot when the host is not initialized.");
-			return CozmoResult.BINDING_ERROR_NOT_INITIALIZED;
-		}
-
 #if UNITY_IOS && !UNITY_EDITOR
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_enginehost_forceaddrobot (robotId, robotIP, robotIsSimulated);
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_force_add_robot (robotId, robotIP, robotIsSimulated);
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_enginehost_forceaddrobot error: " + result.ToString());
 		}
@@ -115,4 +110,28 @@ public class RobotEngineManager : MonoBehaviour {
 #endif
 	}
 
+    /// <summary>
+    /// Set wheel speed.
+    /// </summary>
+    /// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
+	/// <param name="right_wheel_speed_mmps">Right wheel speed in millimeters per second.</param>
+	public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
+	{
+#if UNITY_IOS && !UNITY_EDITOR
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_drive_wheels (leftWheelSpeedMmps, rightWheelSpeedMmps);
+		if (result != CozmoResult.OK) {
+			Debug.LogError ("cozmo_robot_drive_wheels error: " + result.ToString());
+		}
+#endif
+	}
+
+	public void StopAllMotors()
+	{
+#if UNITY_IOS && !UNITY_EDITOR
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_stop_all_motors ();
+		if (result != CozmoResult.OK) {
+			Debug.LogError ("cozmo_robot_stop_all_motors error: " + result.ToString());
+		}
+#endif
+	}
 }

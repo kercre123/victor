@@ -17,7 +17,6 @@ set(SOURCE_FILES
 
 # Enable ARC
 add_compile_options(-fobjc-arc)
-set(CMAKE_CXX_FLAGS “${CMAKE_CXX_FLAGS} -v -stdlib=libstdc++”)
 
 set(PUBLIC_HEADER_FILES
   ${PUBLIC_HEADER_FILES_ROOT}
