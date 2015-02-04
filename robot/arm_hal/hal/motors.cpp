@@ -2,6 +2,9 @@
 #include "spiData.h"
 #include <limits.h>
 
+// Change this value to a number between 0.25 and 1.0 to limit the wheel's max speed
+#define MAX_WHEEL_SPEED 0.5
+
 namespace Anki
 {
   namespace Cozmo
@@ -23,7 +26,8 @@ namespace Anki
         else if (power < -1.0f)
           power = -1.0f;
         
-        g_dataToBody.motorPWM[motor] = (s16)(power * (f32)SHRT_MAX);
+        g_dataToBody.motorPWM[motor] =(s16)(power * 
+          ((motor > MOTOR_RIGHT_WHEEL) ? (f32)SHRT_MAX : (f32)(SHRT_MAX*MAX_WHEEL_SPEED)));
       }
       
       void MotorResetPosition(MotorID motor)

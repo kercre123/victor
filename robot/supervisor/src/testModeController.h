@@ -25,7 +25,7 @@ namespace Anki {
     namespace TestModeController {
       
       // Sets up controller to run specified test mode
-      Result Start(const TestMode mode);
+      Result Start(const TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
 
       Result Update();
       

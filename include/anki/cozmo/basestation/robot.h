@@ -325,7 +325,7 @@ namespace Anki {
       Result RequestIMU(const u32 length_ms) const;
 
       // Tell the robot to start a given test mode
-      Result StartTestMode(const TestMode mode) const;
+      Result StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
 
       // Start a Behavior in BehaviorManager
       void StartBehaviorMode(BehaviorManager::Mode mode);
@@ -584,7 +584,7 @@ namespace Anki {
       Result SendIMURequest(const u32 length_ms) const;
       
       // Run a test mode
-      Result SendStartTestMode(const TestMode mode) const;
+      Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
       
       Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
       

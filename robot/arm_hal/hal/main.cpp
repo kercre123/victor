@@ -6,6 +6,8 @@
 
 //#define SEND_IMAGE_ONLY_TEST_BASESTATION
 
+//#define DO_MOTOR_TESTING
+
 #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
 OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
 #endif
@@ -76,6 +78,7 @@ namespace Anki
   }
 }
 
+#ifdef DO_MOTOR_TESTING
 // Belongs in motortest.cpp
 static void Wait()
 {
@@ -94,7 +97,9 @@ static void Wait()
   printf("\n");
   PrintCrap();
 }
+#endif
 
+#if defined(DO_MEM_TEST)
 // Belongs in powerontest.cpp
 static void MemTest()
 {
@@ -109,6 +114,7 @@ static void MemTest()
       UARTPutString("error");  
   UARTPutString("Done\r\n");
 }
+#endif
 
 int main(void)
 {
@@ -123,13 +129,13 @@ int main(void)
   UARTInit();
   printf("UART..");
   GetId();
-  
+    
   IMUInit();  // The IMU must be configured before spineport  
   printf("IMU..");
   SPIInit();  
   printf("spine..");
   
-#if 0 
+#if defined(DO_PROX_SENSOR_TESTING)
   // Prox sensor testing
   ProximityValues prox;
   while(1)
@@ -137,9 +143,7 @@ int main(void)
     GetProximity(&prox);
     MicroWait(5000);
   }
-#endif
-  
-#if 0
+#elif defined(DO_MOTOR_TESTING)
   // Motor testing...
   while (1)
   {

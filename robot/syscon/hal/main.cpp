@@ -7,6 +7,8 @@
 #include "nrf_gpio.h"
 #include "spiData.h"
 
+//#define DO_MOTOR_TESTING
+
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -36,7 +38,9 @@ const u8 PIN_LED2 = 19;
 void encoderAnalyzer(void);
 int main(void)
 {
+#ifndef DO_MOTOR_TESTING
   u32 failedTransferCount = 0;
+#endif
   
   // Initialize the hardware peripherals
   BatteryInit();
@@ -68,13 +72,15 @@ int main(void)
   nrf_gpio_pin_clear(PIN_LED2);
   nrf_gpio_pin_set(PIN_LED1);    
 
-#if 0
+#if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
+  nrf_gpio_pin_clear(PIN_LED1);
+  nrf_gpio_pin_set(PIN_LED2);
   while (1)
   {
     UARTPutString("\nForward ends with...");
-    for (int i = 2; i < 4; i++)
-      MotorsSetPower(i, 0x5fff);   
+    for (int i = 0; i < 2; i++)
+      MotorsSetPower(i, 0x2000);   
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();
@@ -82,12 +88,12 @@ int main(void)
 
     MicroWait(500000);
 //    encoderAnalyzer();
-    MotorsPrintEncodersRaw();
+//    MotorsPrintEncodersRaw();
     
-    UARTPutString("\nBackward ends with...");
+    //UARTPutString("\nBackward ends with...");
     
-    for (int i = 2; i < 4; i++)    
-      MotorsSetPower(i, -0x5fff);
+    for (int i = 0; i < 2; i++)    
+      MotorsSetPower(i, -0x2000);
     MotorsUpdate();
     MicroWait(5000);
 //    encoderAnalyzer();
@@ -95,9 +101,9 @@ int main(void)
 
     MicroWait(500000);
 //    encoderAnalyzer();
-    MotorsPrintEncodersRaw();
+//    MotorsPrintEncodersRaw();
     
-    BatteryUpdate();
+//    BatteryUpdate();
   }
   
 #else
@@ -154,6 +160,7 @@ int main(void)
          
     // Only call every loop through - not all the time
     MotorsUpdate();
+    //BatteryUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms

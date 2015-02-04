@@ -34,11 +34,11 @@ namespace Anki {
         
         
         //////// DriveTest /////////
-        #define TOGGLE_DIRECTION_TEST 1   // 0: Only drive forward
-                                          // 1: Switch between driving forward and reverse
+        bool enableToggleDir_ = false;   // false: Only drive forward
+                                         // true: Switch between driving forward and reverse
         
-        #define DIRECT_HAL_MOTOR_TEST 0   // 0: Test WheelController
-                                          // 1: Test direct drive via HAL::MotorSetPower
+        bool enableDirectHALTest_ = false;  // false: Test WheelController
+                                            // true:  Test direct drive via HAL::MotorSetPower
         
         const u32 WHEEL_TOGGLE_DIRECTION_PERIOD_MS = 2000;
         
@@ -59,11 +59,16 @@ namespace Anki {
         // 0.4     38      39
         // 0.3     25      25
         // 0.25    -       -
-#if DIRECT_HAL_MOTOR_TEST
+        
         f32 wheelPower_ = 0;
-        const f32 WHEEL_POWER_CMD = 0.2;
-#endif
+        f32 wheelPowerStep_ = 0.05;
+        const f32 DEFAULT_WHEEL_POWER_STEP = 0.05;
         const f32 WHEEL_SPEED_CMD_MMPS = 60;
+        
+        f32 wheelSpeed_mmps_ = WHEEL_SPEED_CMD_MMPS;
+        
+        bool firstSpeedCommanded_ = false;
+        
         ////// End of DriveTest ////////
         
         
@@ -192,10 +197,12 @@ namespace Anki {
         
         
         /////// LightTest ////////
-        LEDId ledID = (LEDId)0;
-        u8 ledColorIdx = 0;
+        LEDId ledID_ = (LEDId)0;
+        u8 ledColorIdx_ = 0;
         const u8 LED_COLOR_LIST_SIZE = 3;
-        const LEDColor LEDColorList[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
+        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
+        
+        bool ledCycleTest_ = true;
         ///// End of LightTest ///
         
         // Current test mode
@@ -467,13 +474,19 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      
-      Result DriveTestInit()
+      // flags: See DriveTestFlags
+      // powerStepPercent: The percent amount by which to increase power (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
+      // wheelSpeed_mmps: Wheel speed to command in mm/s (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
+      Result DriveTestInit(s32 flags, s32 powerStepPercent, s32 wheelSpeed_mmps)
       {
-        PRINT("\n=== Starting DirectDriveTest ===\n");
-        #if DIRECT_HAL_MOTOR_TEST
-        wheelPower_ = WHEEL_POWER_CMD;
-        #endif
+        PRINT("\n=== Starting DirectDriveTest (%x, %d, %d) ===\n", flags, powerStepPercent, wheelSpeed_mmps);
+        enableDirectHALTest_ = flags & DTF_ENABLE_DIRECT_HAL_TEST;
+        enableToggleDir_ = flags & DTF_ENABLE_TOGGLE_DIR;
+        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent * 0.01 : DEFAULT_WHEEL_POWER_STEP;
+        wheelSpeed_mmps_ = wheelSpeed_mmps != 0 ? wheelSpeed_mmps : WHEEL_SPEED_CMD_MMPS;
+
+        wheelPower_ = 0;
+        firstSpeedCommanded_ = false;
         ticCnt_ = 0;
         return RESULT_OK;
       }
@@ -481,7 +494,6 @@ namespace Anki {
       Result DriveTestUpdate()
       {
         static bool fwd = false;
-        static bool firstSpeedCommanded = false;
 
         // Change direction (or at least print speed
         if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
@@ -493,57 +505,57 @@ namespace Anki {
           WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
 
 
-          if (firstSpeedCommanded){
-#if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_POWER_CMD, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-#else
-            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-#endif
+          if (firstSpeedCommanded_){
+            if (enableDirectHALTest_) {
+              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            } else {
+              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+            }
             ticCnt_ = 0;
             return RESULT_OK;
           }
           
           
-          
           fwd = !fwd;
           if (fwd) {
-#if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, wheelPower_);
-            WheelController::Disable();
-#else
-            PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(WHEEL_SPEED_CMD_MMPS,WHEEL_SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
-#endif
+            if (enableDirectHALTest_) {
+              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, wheelPower_);
+              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, wheelPower_);
+              WheelController::Disable();
+            } else {
+              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+              SteeringController::ExecuteDirectDrive(wheelSpeed_mmps_,wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
+            }
           } else {
-#if(DIRECT_HAL_MOTOR_TEST)
-            PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -wheelPower_);
-            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -wheelPower_);
-            WheelController::Disable();
-#else
-            PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", WHEEL_SPEED_CMD_MMPS, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            SteeringController::ExecuteDirectDrive(-WHEEL_SPEED_CMD_MMPS,-WHEEL_SPEED_CMD_MMPS,accel_mmps2,accel_mmps2);
-#endif
+            if (enableDirectHALTest_) {
+              PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -wheelPower_);
+              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -wheelPower_);
+              WheelController::Disable();
+            } else {
+              PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+              SteeringController::ExecuteDirectDrive(-wheelSpeed_mmps_,-wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
+            }
             
           }
           ticCnt_ = 0;
           
-#if(TOGGLE_DIRECTION_TEST == 0)
-          firstSpeedCommanded = true;
-#endif
+          if (enableToggleDir_) {
+            firstSpeedCommanded_ = true;
+          }
 
-          #if(DIRECT_HAL_MOTOR_TEST)
+
           // Cycle through different power levels
-          if (!fwd) {
-            wheelPower_ += 0.1;
-            if (wheelPower_ >=1.01f) {
-              wheelPower_ = WHEEL_POWER_CMD;
+          if (enableDirectHALTest_) {
+            if (!fwd) {
+              wheelPower_ += 0.05;
+              if (wheelPower_ >=1.01f) {
+                wheelPower_ = 0;
+              }
             }
           }
-          #endif
-          
+
        }
 
        return RESULT_OK;
@@ -848,31 +860,48 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result LightTestInit()
+      // flags: See LightTestFlags
+      // ledID: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
+      // color: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
+      Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
-        PRINT("\n==== Starting LightTest =====\n");
+        PRINT("\n==== Starting LightTest  (flags = %x, ledID = %d, color = %x) =====\n", flags, ledID, color);
+        
+        ledCycleTest_ = flags & LTF_CYCLE_ALL;
+
+        if (ledCycleTest_) {
+          ledID_ = (LEDId)0;
+          ledColorIdx_ = 0;
+        } else {
+          HAL::SetLED((LEDId)ledID, color);
+        }
+        
         ticCnt_ = 0;
-        ledID = (LEDId)0;
-        ledColorIdx = 0;
         return RESULT_OK;
       }
       
       
       Result LightTestUpdate()
       {
+        if (!ledCycleTest_) {
+          Start(TM_NONE);
+          return RESULT_OK;
+        }
+        
+        // Cycle through all channels
         if (ticCnt_++ > 2000 / TIME_STEP) {
           
-          PRINT("LED channel %d, color 0x%x\n", ledID, LEDColorList[ledColorIdx]);
-          HAL::SetLED(ledID, LEDColorList[ledColorIdx]);
+          PRINT("LED channel %d, color 0x%x\n", ledID_, LEDColorList_[ledColorIdx_]);
+          HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
           
           // Increment led
-          ledID = (LEDId)((u8)ledID+1);
-          if (ledID == NUM_LEDS) {
-            ledID = (LEDId)0;
+          ledID_ = (LEDId)((u8)ledID_+1);
+          if (ledID_ == NUM_LEDS) {
+            ledID_ = (LEDId)0;
             
             // Increment color
-            if (++ledColorIdx == LED_COLOR_LIST_SIZE) {
-              ledColorIdx = 0;
+            if (++ledColorIdx_ == LED_COLOR_LIST_SIZE) {
+              ledColorIdx_ = 0;
             }
           }
           
@@ -976,7 +1005,7 @@ namespace Anki {
       }
       
       
-      Result Start(const TestMode mode)
+      Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         Result ret = RESULT_OK;
 #if(!FREE_DRIVE_DUBINS_TEST)
@@ -1004,7 +1033,7 @@ namespace Anki {
             updateFunc = PathFollowConvenienceFuncTestUpdate;
             break;
           case TM_DIRECT_DRIVE:
-            ret = DriveTestInit();
+            ret = DriveTestInit(p1,p2,p3);
             updateFunc = DriveTestUpdate;
             break;
           case TM_LIFT:
@@ -1034,7 +1063,7 @@ namespace Anki {
             break;
 #endif
           case TM_LIGHTS:
-            ret = LightTestInit();
+            ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;
             break;
           case TM_STOP_TEST:
