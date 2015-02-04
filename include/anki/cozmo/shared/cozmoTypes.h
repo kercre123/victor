@@ -94,6 +94,10 @@ namespace Anki {
     } DriveTestFlags;
     
     typedef enum {
+      ITF_DO_TURNS = 0x01
+    } IMUTestFlags;
+    
+    typedef enum {
       LTF_CYCLE_ALL = 0x01
     } LightTestFlags;
     

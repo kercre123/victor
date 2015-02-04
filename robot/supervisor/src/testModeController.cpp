@@ -185,6 +185,7 @@ namespace Anki {
 
         
         ///////// IMUTest ////////
+        bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
         const f32 IT_TARGET_ANGLE = 3.14;
         const f32 IT_MAX_ROT_VEL = 1.5f;
@@ -746,9 +747,10 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result IMUTestInit()
+      Result IMUTestInit(s32 flags)
       {
         PRINT("\n==== Starting IMUTest =====\n");
+        imuTestDoTurns_ = flags & ITF_DO_TURNS;
         ticCnt_ = 0;
         IT_turnLeft = false;
         return RESULT_OK;
@@ -756,7 +758,7 @@ namespace Anki {
       
       Result IMUTestUpdate()
       {
-        
+        if (imuTestDoTurns_) {
         if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
           if (IT_turnLeft) {
             // Turn left 180 degrees
@@ -769,7 +771,7 @@ namespace Anki {
           }
           IT_turnLeft = !IT_turnLeft;
         }
-
+        }
         
         // Print gyro readings
         if (++ticCnt_ >= 200 / TIME_STEP) {
@@ -1049,7 +1051,7 @@ namespace Anki {
             updateFunc = HeadTestUpdate;
             break;
           case TM_IMU:
-            ret = IMUTestInit();
+            ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:
