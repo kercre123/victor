@@ -173,7 +173,7 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendSelectNextSoundScheme();
-      void SendStartTestMode(TestMode mode);
+      void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
       void SendReadAnimationFile();
@@ -433,11 +433,42 @@ namespace Anki {
           
           // Check for test mode (alt + key)
           bool testMode = false;
-          if (modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+          if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
             if (key >= '0' && key <= '9') {
+              if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                // Hold shift down too to add 10 to the pressed key
+                key += 10;
+              }
+              
               TestMode m = TestMode(key - '0');
+
+              // Set parameters for special test cases
+              s32 p1 = 0, p2 = 0, p3 = 0;
+              switch(m) {
+                case TM_DIRECT_DRIVE:
+                  // p1: flags (See DriveTestFlags)
+                  // p2: wheelPowerStepPercent (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
+                  // p3: wheelSpeed_mmps (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
+                  p1 = DTF_ENABLE_DIRECT_HAL_TEST;
+                  p2 = 0.05;
+                  p3 = 30;
+                  break;
+                  
+                case TM_LIGHTS:
+                  // p1: flags (See LightTestFlags)
+                  // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
+                  // p3: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
+                  p1 = LTF_CYCLE_ALL;
+                  p2 = LED_RIGHT_EYE_RIGHT;
+                  p3 = LED_GREEN;
+                  break;
+                default:
+                  break;
+              }
+              
               printf("Sending test mode %d\n", m);
-              SendStartTestMode(m);
+              SendStartTestMode(m,p1,p2,p3);
+
               testMode = true;
             }
           }
@@ -1384,10 +1415,13 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendStartTestMode(TestMode mode)
+      void SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         MessageU2G_StartTestMode m;
         m.mode = mode;
+        m.p1 = p1;
+        m.p2 = p2;
+        m.p3 = p3;
         SendMessage(m);
       }
       
