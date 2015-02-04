@@ -491,7 +491,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      return robot->StartTestMode((TestMode)msg.mode);
+      return robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
     }
     
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_IMURequest const& msg)
