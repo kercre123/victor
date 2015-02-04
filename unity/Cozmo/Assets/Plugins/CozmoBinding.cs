@@ -37,7 +37,7 @@ public static class CozmoBinding {
 
 #if UNITY_IOS && !UNITY_EDITOR
 	[DllImport ("__Internal")]
-	public static extern bool cozmo_has_log(ref int receive_length);
+	public static extern bool cozmo_has_log(out int receive_length);
 
 	[DllImport ("__Internal")]
 	public static extern void cozmo_pop_log(StringBuilder buffer, int max_length);
@@ -52,13 +52,16 @@ public static class CozmoBinding {
 	public static extern int cozmo_engine_host_force_add_robot(int robot_id, string robot_ip, bool robot_is_simulated);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_engine_update(float currentTime);
+	public static extern int cozmo_engine_host_is_robot_connected(out bool is_connected, int robot_id);
 	
 	[DllImport("__Internal")]
-	public static extern int cozmo_robot_drive_wheels(float left_wheel_speed_mmps, float right_wheel_speed_mmps);
+	public static extern int cozmo_engine_update(float currentTime);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_robot_stop_all_motors();
+	public static extern int cozmo_robot_drive_wheels(int robot_id, float left_wheel_speed_mmps, float right_wheel_speed_mmps);
+
+	[DllImport("__Internal")]
+	public static extern int cozmo_robot_stop_all_motors(int robot_id);
 #endif
 }
 

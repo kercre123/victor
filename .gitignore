@@ -162,4 +162,4 @@ unity/Cozmo/Temp
 unity/Cozmo/*.sln
 unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
-
+unity/Cozmo/*.userprefs

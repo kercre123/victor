@@ -15,17 +15,34 @@ public class Intro : MonoBehaviour
 	[SerializeField]
 	protected Text error;
 
+	private bool connecting = false;
+
+	public int CurrentRobotID { get; private set; }
+
 	protected void Awake()
 	{
 		play.onClick.AddListener( Play );
 	}
 
+	protected void Update()
+	{
+		if (connecting) {
+			if (RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
+				connecting = false;
+				error.text = "";
+				Application.LoadLevel ("Main");
+			}
+		}
+	}
+
 	protected void Play()
 	{
+		CurrentRobotID = 0;
+
 		string errorText = null;
 		int idInteger;
-		if (!int.TryParse (id.text, out idInteger)) {
-			errorText = "You must enter a valid id.";
+		if (!int.TryParse (id.text, out idInteger) || idInteger == 0) {
+			errorText = "You must enter a nonzero id.";
 		}
 		if (string.IsNullOrEmpty (errorText) && string.IsNullOrEmpty (ip.text)) {
 			errorText = "You must enter an ip address.";
@@ -36,7 +53,9 @@ public class Intro : MonoBehaviour
 				errorText = "Error attempting to add robot: " + result.ToString();
 			}
 			else {
-				Application.LoadLevel ("Main");
+				connecting = true;
+				CurrentRobotID = idInteger;
+				errorText = "Connecting...";
 			}
 		}
 

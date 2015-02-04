@@ -18,7 +18,6 @@ using namespace Anki::Cozmo;
 
 CozmoEngineHost* host = nullptr;
 CozmoEngine* engine = nullptr;
-Robot* robot = nullptr;
 std::deque<std::string> error_messages;
 
 void add_log(std::string log_string)
@@ -63,9 +62,20 @@ int cozmo_engine_host_create(const char* configurationData)
         return (int)BINDING_ERROR_INVALID_CONFIGURATION;
     }
     
-    host = new CozmoEngineHost();
+    CozmoEngineHost* created_host = new CozmoEngineHost();
+    
+    Result result = created_host->Init(config);
+    if (result == RESULT_OK) {
+        created_host->ListenForRobotConnections(true);
+    }
+    if (result != RESULT_OK) {
+        delete created_host;
+        return result;
+    }
+    
+    host = created_host;
     engine = host;
-    return (int)engine->Init(config);
+    return RESULT_OK;
 }
 
 int cozmo_engine_host_destroy()
@@ -83,15 +93,24 @@ int cozmo_engine_host_force_add_robot(int robot_id, const char* robot_ip, bool r
     if (host == nullptr) {
         return (int)BINDING_ERROR_NOT_INITIALIZED;
     }
-    if (robot != nullptr) {
-        return (int)BINDING_ERROR_ALREADY_INITIALIZED;
-    }
     
     host->ForceAddRobot((u32)robot_id, robot_ip, robot_is_simulated);
-    robot = host->GetRobotByID((u32)robot_id);
-    if (robot == nullptr) {
-        return (int)BINDING_ERROR_ROBOT_NOT_FOUND;
+    return (int)BINDING_OK;
+}
+
+int cozmo_engine_host_is_robot_connected(bool* is_connected, int robot_id)
+{
+    if (host == nullptr) {
+        return (int)BINDING_ERROR_NOT_INITIALIZED;
     }
+    Robot* robot = host->GetRobotByID((u32)robot_id);
+    *is_connected = (robot != nullptr);
+    
+    if (host->ConnectToRobot((u32)robot_id)) {
+        robot = host->GetRobotByID((u32)robot_id);
+        *is_connected = (robot != nullptr);
+    }
+    
     return (int)BINDING_OK;
 }
 
@@ -103,18 +122,20 @@ int cozmo_engine_update(float currentTime)
     return (int)engine->Update(currentTime);
 }
 
-int cozmo_robot_drive_wheels(float left_wheel_speed_mmps, float right_wheel_speed_mmps)
+int cozmo_robot_drive_wheels(int robot_id, float left_wheel_speed_mmps, float right_wheel_speed_mmps)
 {
+    Robot* robot = host->GetRobotByID((u32)robot_id);
     if (robot == nullptr) {
-        return (int)BINDING_ERROR_NOT_INITIALIZED;
+        return (int)BINDING_ERROR_ROBOT_NOT_READY;
     }
     return (int)robot->DriveWheels((f32)left_wheel_speed_mmps, (f32)right_wheel_speed_mmps);
 }
 
-int cozmo_robot_stop_all_motors()
+int cozmo_robot_stop_all_motors(int robot_id)
 {
+    Robot* robot = host->GetRobotByID((u32)robot_id);
     if (robot == nullptr) {
-        return (int)BINDING_ERROR_NOT_INITIALIZED;
+        return (int)BINDING_ERROR_ROBOT_NOT_READY;
     }
     return (int)robot->StopAllMotors();
 }
