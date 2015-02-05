@@ -157,6 +157,9 @@ tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 *.uvgui.*
 
 # Unity
+unity_build
+unity/Cozmo/Assets/Plugins/iOS.meta
+unity/Cozmo/Builds
 unity/Cozmo/Library
 unity/Cozmo/Temp
 unity/Cozmo/*.sln
