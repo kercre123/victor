@@ -58,8 +58,8 @@ BSTimer basestationController;
 const bool FORCE_ADD_ROBOT = false;
 const bool FORCED_ROBOT_IS_SIM = false;
 const u8 forcedRobotId = 1;
-const char* forcedRobotIP = "192.168.3.34";
-//const char* forcedRobotIP = "172.31.1.1";
+//const char* forcedRobotIP = "192.168.3.34";   // cozmo2
+const char* forcedRobotIP = "172.31.1.1";     // cozmo3
 
 using namespace Anki;
 using namespace Anki::Cozmo;
