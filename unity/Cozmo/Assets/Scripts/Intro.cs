@@ -15,6 +15,9 @@ public class Intro : MonoBehaviour
 	[SerializeField]
 	protected Text error;
 
+	[SerializeField]
+	protected Button fakeTest;
+
 	private bool connecting = false;
 
 	public int CurrentRobotID { get; private set; }
@@ -22,6 +25,7 @@ public class Intro : MonoBehaviour
 	protected void Awake()
 	{
 		play.onClick.AddListener( Play );
+		fakeTest.onClick.AddListener( FakeTest );
 	}
 
 	protected void Update()
@@ -30,7 +34,7 @@ public class Intro : MonoBehaviour
 			if (RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
 				connecting = false;
 				error.text = "";
-				Application.LoadLevel ("Main");
+				Application.LoadLevel ("ControlSchemeTest");
 			}
 		}
 	}
@@ -61,4 +65,11 @@ public class Intro : MonoBehaviour
 
 		error.text = errorText;
 	}
+
+	protected void FakeTest()
+	{
+		CurrentRobotID = 0;
+		Application.LoadLevel ("ControlSchemeTest");
+	}
+
 }

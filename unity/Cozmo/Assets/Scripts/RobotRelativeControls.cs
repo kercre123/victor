@@ -15,11 +15,19 @@ public class RobotRelativeControls : MonoBehaviour {
 		Debug.Log ("RobotRelativeControls OnEnable");
 	}
 
+
 	void Update () {
 		//take our v-pad control axes and calc translate to robot
 		
-		float x = moveStick.Horizontal;//Input.GetAxis ("Horizontal");
-		float z = moveStick.Vertical; //Input.GetAxis ("Vertical");
+		float x = moveStick.Horizontal;
+		float z = moveStick.Vertical;
+
+		if (x == 0f && z == 0f) {
+
+			x = Input.GetAxis ("Horizontal");
+			z = Input.GetAxis ("Vertical");
+		}
+
 		if (x == 0f && z == 0f) return;
 
 		float turn = Mathf.Min (maxTurn * Time.deltaTime, Mathf.Abs(x) * maxTurn);

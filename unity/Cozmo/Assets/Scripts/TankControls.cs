@@ -18,11 +18,11 @@ public class TankControls : MonoBehaviour {
 
 	void Update () {
 
-
-
 		//take our two control axes and if changed, send them to the robot
 		float left = sliderLeft.value;
 		float right = sliderRight.value;
+
+
 		float speed = (left + right) * 0.5f * maxVel;
 		float turn = (left - right) * 0.5f * maxTurn;
 

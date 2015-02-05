@@ -20,8 +20,15 @@ public class PlayerRelativeControls : MonoBehaviour {
 		//compare desired movement vector to robot's current transform and wheel status
 		//send updated wheel commands to robot if necessary
 
-		float x = moveStick.Horizontal;//Input.GetAxis ("Horizontal");
-		float z = moveStick.Vertical; //Input.GetAxis ("Vertical");
+		float x = moveStick.Horizontal;
+		float z = moveStick.Vertical; 
+
+		if (x == 0f && z == 0f) {
+			x = Input.GetAxis ("Horizontal");
+			z = Input.GetAxis ("Vertical");
+		}
+
+
 		if (x == 0f && z == 0f) return;
 
 		Vector3 camForwardFlat = Camera.main.transform.forward;
