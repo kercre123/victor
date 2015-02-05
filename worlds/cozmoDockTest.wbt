@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.3 utf8
+#VRML_SIM V8.0.5 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -168,7 +168,6 @@ DEF DoubleBlock Block2x1 {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  advertisementHost "192.168.16.242"
   name "CozmoBot_1"
   usbChannel 10
 }
