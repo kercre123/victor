@@ -258,6 +258,9 @@ namespace Anki
       };
 
       // Read acceleration and rate
+      // x-axis points out cozmo's face
+      // y-axis points out of cozmo's left
+      // z-axis points out the top of cozmo's head
       void IMUReadData(IMU_DataStructure &IMUData);
 
 // #pragma mark --- UART/Wifi ---
