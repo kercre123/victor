@@ -8,6 +8,9 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+    // Uncomment if using COZMO v2
+    //#define COZMO2
 
     /***************************************************************************
      *
@@ -234,7 +237,11 @@ namespace Anki {
     // Comms type for Basestation-robot comms
     // 0: Use TCP
     // 1: Use UDP
+#ifdef COZMO2
     #define USE_UDP_ROBOT_COMMS 0
+#else
+    #define USE_UDP_ROBOT_COMMS 1
+#endif
     
     // Comms types for UI-game comms
     #define USE_UDP_UI_COMMS 1

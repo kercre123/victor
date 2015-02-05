@@ -66,13 +66,21 @@ namespace Anki {
     _scopePrefixes[Sound]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/sounds/";
     _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     
+#   else
+#   error PlatformPathManager scopes will not be set.
 #   endif
-  }
+  } // PlatformPathManager() Constructor
   
   std::string PlatformPathManager::PrependPath(const Scope scope,
                                               const std::string& name) const
   {
+    auto scopeIter = _scopePrefixes.find(scope);
+    if(scopeIter != _scopePrefixes.end()) {
     return _scopePrefixes.at(scope) /*+ this->GetLibraryPath()*/ + name;
+    } else {
+      static const std::string missing("MISSING_SCOPE_PATH/");
+      return missing + name;
+    }
   }
   
   void PlatformPathManager::OverridePath(const Scope scope, const std::string& newPath)

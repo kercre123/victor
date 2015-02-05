@@ -68,7 +68,8 @@ bool UdpClient::Connect(const char *host_address, const unsigned short port)
   set_nonblock(socketfd);
 
   // Send connection packet (i.e. something so that the server adds us to the client list)
-  Send("1", 1);
+  const char zero = 0;
+  Send(&zero, 1);
   
   return true;
 }

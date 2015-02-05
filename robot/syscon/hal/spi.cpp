@@ -61,15 +61,46 @@ void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
   u32 startTime = GetCounter();
   
   NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
-  for (int i = 0; i < length; i++)
+  
+  dataRX[0] = 0;
+  
+  int i = 0;
+  while (i < length)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1)
-      if (m_spokenTo && GetCounter() - startTime > 41666) // 5ms
+      if (m_spokenTo && GetCounter() - startTime > 41666*2) // 5ms
         return;
     NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
-    dataRX[i] = (u8)NRF_UART0->RXD;
+    u8 byte = NRF_UART0->RXD;
+    switch (i) {
+      case 0:
+      {
+        i = (byte == 'H') ? 1 : 0;
+        break;
+      }
+      case 1:
+      {
+        i = (byte == 0xFA) ? 2 : 0;
+        break;
+      }
+      case 2:
+      {
+        i = (byte == 0xF3) ? 3 : 0;
+        break;
+      }
+      case 3:
+      {
+        i = (byte == 0x20) ? 4 : 0;
+        break;
+      }
+      default:
+      {
+        dataRX[i++] = byte;
+      }
+    }
   }
+  dataRX[0] = 'H';
   
   // Wait before first reply
   if (!m_spokenTo) {

@@ -40,6 +40,10 @@ namespace Anki {
         bool enableDirectHALTest_ = false;  // false: Test WheelController
                                             // true:  Test direct drive via HAL::MotorSetPower
         
+        bool enableCycleSpeedsTest_ = false; // false: Drive motors at the commanded speed/power
+                                             // true: Cycle through different power levels increasing by wheelPowerStep each time
+        
+        
         const u32 WHEEL_TOGGLE_DIRECTION_PERIOD_MS = 2000;
         
         // Acceleration
@@ -185,6 +189,7 @@ namespace Anki {
 
         
         ///////// IMUTest ////////
+        bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
         const f32 IT_TARGET_ANGLE = 3.14;
         const f32 IT_MAX_ROT_VEL = 1.5f;
@@ -475,17 +480,26 @@ namespace Anki {
       }
       
       // flags: See DriveTestFlags
-      // powerStepPercent: The percent amount by which to increase power (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
-      // wheelSpeed_mmps: Wheel speed to command in mm/s (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
-      Result DriveTestInit(s32 flags, s32 powerStepPercent, s32 wheelSpeed_mmps)
+      // powerStepPercent: The percent amount by which to increase power
+      //                   (Only applies if DTF_ENABLE_DIRECT_HAL_TEST and DTF_ENABLE_CYCLE_SPEED_TESTS are set)
+      // wheelSpeedOrPower: Wheel speed to command in mm/s (when DTF_ENABLE_DIRECT_HAL_TEST is not set)
+      //                    or power to command as a percent (when DTF_ENABLE_DIRECT_HAL_TEST is set)
+      Result DriveTestInit(s32 flags, s32 powerStepPercent, s32 wheelSpeedOrPower)
       {
-        PRINT("\n=== Starting DirectDriveTest (%x, %d, %d) ===\n", flags, powerStepPercent, wheelSpeed_mmps);
+        PRINT("\n=== Starting DirectDriveTest (%x, %d, %d) ===\n", flags, powerStepPercent, wheelSpeedOrPower);
         enableDirectHALTest_ = flags & DTF_ENABLE_DIRECT_HAL_TEST;
+        enableCycleSpeedsTest_ = flags & DTF_ENABLE_CYCLE_SPEEDS_TEST;
         enableToggleDir_ = flags & DTF_ENABLE_TOGGLE_DIR;
-        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent * 0.01 : DEFAULT_WHEEL_POWER_STEP;
-        wheelSpeed_mmps_ = wheelSpeed_mmps != 0 ? wheelSpeed_mmps : WHEEL_SPEED_CMD_MMPS;
-
-        wheelPower_ = 0;
+        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent * 0.01f : DEFAULT_WHEEL_POWER_STEP;
+        wheelSpeed_mmps_ = wheelSpeedOrPower != 0 ? wheelSpeedOrPower : WHEEL_SPEED_CMD_MMPS;
+        wheelPower_ = enableCycleSpeedsTest_ ? 0 : wheelSpeedOrPower * 0.01f;
+        
+        // If CycleSpeedsTest is on, then enableToggleDir is on by default
+        if (enableCycleSpeedsTest_) {
+          enableToggleDir_ = true;
+        }
+        
+        
         firstSpeedCommanded_ = false;
         ticCnt_ = 0;
         return RESULT_OK;
@@ -493,7 +507,7 @@ namespace Anki {
       
       Result DriveTestUpdate()
       {
-        static bool fwd = false;
+        static bool fwd = true;
 
         // Change direction (or at least print speed
         if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
@@ -515,8 +529,6 @@ namespace Anki {
             return RESULT_OK;
           }
           
-          
-          fwd = !fwd;
           if (fwd) {
             if (enableDirectHALTest_) {
               PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
@@ -541,15 +553,18 @@ namespace Anki {
           }
           ticCnt_ = 0;
           
-          if (enableToggleDir_) {
+          if (enableCycleSpeedsTest_ || enableToggleDir_) {
+            fwd = !fwd;
+          }
+          if (!enableToggleDir_) {
             firstSpeedCommanded_ = true;
           }
 
 
           // Cycle through different power levels
-          if (enableDirectHALTest_) {
+          if (enableCycleSpeedsTest_) {
             if (!fwd) {
-              wheelPower_ += 0.05;
+              wheelPower_ += wheelPowerStep_;
               if (wheelPower_ >=1.01f) {
                 wheelPower_ = 0;
               }
@@ -746,9 +761,10 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result IMUTestInit()
+      Result IMUTestInit(s32 flags)
       {
         PRINT("\n==== Starting IMUTest =====\n");
+        imuTestDoTurns_ = flags & ITF_DO_TURNS;
         ticCnt_ = 0;
         IT_turnLeft = false;
         return RESULT_OK;
@@ -756,20 +772,20 @@ namespace Anki {
       
       Result IMUTestUpdate()
       {
-        
-        if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
-          if (IT_turnLeft) {
-            // Turn left 180 degrees
-            PRINT("Turning to 180\n");
-            SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
-          } else {
-            // Turn right 180 degrees
-            PRINT("Turning to 0\n");
-            SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+        if (imuTestDoTurns_) {
+          if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
+            if (IT_turnLeft) {
+              // Turn left 180 degrees
+              PRINT("Turning to 180\n");
+              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+            } else {
+              // Turn right 180 degrees
+              PRINT("Turning to 0\n");
+              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+            }
+            IT_turnLeft = !IT_turnLeft;
           }
-          IT_turnLeft = !IT_turnLeft;
         }
-
         
         // Print gyro readings
         if (++ticCnt_ >= 200 / TIME_STEP) {
@@ -1049,7 +1065,7 @@ namespace Anki {
             updateFunc = HeadTestUpdate;
             break;
           case TM_IMU:
-            ret = IMUTestInit();
+            ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:

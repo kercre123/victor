@@ -29,8 +29,12 @@ namespace Anki {
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {
-      _robots[withID] = new Robot(withID, _msgHandler);
-      _IDs.push_back(withID);
+      if (_robots.find(withID) == _robots.end()) {
+        _robots[withID] = new Robot(withID, _msgHandler);
+        _IDs.push_back(withID);
+      } else {
+        PRINT_NAMED_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID %d already exists. Ignoring.\n");
+      }
     }
     
     std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const

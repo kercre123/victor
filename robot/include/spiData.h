@@ -24,7 +24,7 @@ enum SPISource
 struct GlobalCommon
 {
   SPISource source;
-  uint8_t RESERVED[3];
+  uint8_t SYNC[3];
 };
 
 struct GlobalDataToHead
