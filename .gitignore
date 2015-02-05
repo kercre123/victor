@@ -163,3 +163,5 @@ unity/Cozmo/*.sln
 unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
+*.a.meta
+
