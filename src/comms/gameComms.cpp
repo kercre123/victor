@@ -366,6 +366,13 @@ namespace Cozmo {
           printf("GameComms: Local host IP = %s\n", host);
           break;
         }
+        // Does address start with 172? (Cozmo3)
+        if (strncmp(host, "172.", 4) == 0)
+        {
+          printf("GameComms: Local host IP = %s\n", host);
+          break;
+        }
+
       }
     }
     freeifaddrs(ifaddr);

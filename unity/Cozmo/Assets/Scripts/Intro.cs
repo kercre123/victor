@@ -15,26 +15,25 @@ public class Intro : MonoBehaviour
 	[SerializeField]
 	protected Text error;
 
-	[SerializeField]
-	protected Button fakeTest;
-
 	private bool connecting = false;
+	private float hackWait = 0.0f;
 
 	public int CurrentRobotID { get; private set; }
 
 	protected void Awake()
 	{
 		play.onClick.AddListener( Play );
-		fakeTest.onClick.AddListener( FakeTest );
 	}
 
 	protected void Update()
 	{
-		if (connecting) {
+		if (connecting && Time.time < hackWait) {
 			if (RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
 				connecting = false;
 				error.text = "";
-				Application.LoadLevel ("ControlSchemeTest");
+				RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
+
+				Application.LoadLevel ("Main");
 			}
 		}
 	}
@@ -59,17 +58,11 @@ public class Intro : MonoBehaviour
 			else {
 				connecting = true;
 				CurrentRobotID = idInteger;
+				hackWait = Time.time + 5.0f;
 				errorText = "Connecting...";
 			}
 		}
 
 		error.text = errorText;
 	}
-
-	protected void FakeTest()
-	{
-		CurrentRobotID = 0;
-		Application.LoadLevel ("ControlSchemeTest");
-	}
-
 }
