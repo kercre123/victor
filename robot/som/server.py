@@ -49,7 +49,7 @@ class CozmoServer(socket.socket):
     def clientRecv(self, maxLen):
         try:
             data, self.client = self.recvfrom(maxLen)
-            if VERBOSE: sys.stdout.write("Received message: %d[%d]\n" % (ord(data[0]), len(data)))
+            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
         except:
             return None
         else:
