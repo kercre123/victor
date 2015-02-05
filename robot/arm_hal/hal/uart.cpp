@@ -79,9 +79,12 @@ namespace Anki
         int tail = m_writeTail;
         int length = m_writeHead - tail;
         if (length < 0)
+        {
           length = sizeof(m_bufferWrite) - tail;
-        if (length > 65535)
-          length = 65535;
+        }
+        if (length > 25) {
+          length = 25;
+        }
         
         DMA_STREAM_TX->NDTR = length;                     // Buffer size
         DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[tail];  // Buffer address
@@ -393,6 +396,7 @@ extern "C"
     // Check if there's more data to be transferred
     if (m_writeHead != m_writeTail)
     {
+      MicroWait(1);
       StartTransfer();
     } else {
       m_isTransferring = false;
