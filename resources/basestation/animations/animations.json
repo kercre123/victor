@@ -269,7 +269,7 @@
       "whichEye"        : "BOTH"
     },
     {
-      "Name" : "MessageAddAnimKeyFrame_HoldHead",
+      "Name" : "MessageAddAnimKeyFrame_HoldHeadAngle",
       "relTime_ms"    : 900, 
       "transitionIn"  : 0,
       "transitionOut" : 0
