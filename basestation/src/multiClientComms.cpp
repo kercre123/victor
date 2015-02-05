@@ -47,9 +47,6 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    // TODO: Should this be done inside the poorly named Connect()?
-    advertisingChannelClient_.Send("1", 1);  // Send anything just to get recognized as a client for advertising service.
-    
     #if(DO_SIM_COMMS_LATENCY)
     numRecvRdyMsgs_ = 0;
     #endif
@@ -227,10 +224,12 @@ namespace Cozmo {
     }
     #endif  // #if(DO_SIM_COMMS_LATENCY)
     
-    static u8 pingTimer = 10;
-    if (pingTimer-- == 0) {
-      advertisingChannelClient_.Send("1",1);
-      pingTimer = 10;
+    // Ping the advertisement channel in case it wasn't present at Init()
+    static u8 pingTimer = 0;
+    if (pingTimer++ == 10) {
+      const char zero = 0;
+      advertisingChannelClient_.Send(&zero,1);
+      pingTimer = 0;
     }
   }
   
