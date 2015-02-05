@@ -49,12 +49,15 @@ class CozmoServer(socket.socket):
     def clientRecv(self, maxLen):
         try:
             data, self.client = self.recvfrom(maxLen)
-            if VERBOSE: sys.stdout.write("Received message: %s\n" % data)
+            if VERBOSE: sys.stdout.write("Received message: %d[%d]\n" % (ord(data[0]), len(data)))
         except:
             return None
         else:
             self.lastClientRecvTime = time.time()
-            return data
+            if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
+                return None # Establish that we have a connection but don't pass the packet along
+            else:
+                return data
 
     def clientSend(self, data):
         if self.client:

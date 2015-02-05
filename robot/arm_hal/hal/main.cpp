@@ -125,7 +125,7 @@ int main(void)
   Startup();
   
   // Initialize the hardware
-  //LightsInit();
+  LightsInit();
   UARTInit();
   printf("UART..");
   GetId();

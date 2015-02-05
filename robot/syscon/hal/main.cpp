@@ -132,6 +132,7 @@ int main(void)
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
       nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
+      nrf_gpio_pin_clear(PIN_LED2);   // Force LED on to indicate problems
       // TODO: Remove 0. For now, needed to do head debugging
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -152,8 +153,9 @@ int main(void)
       
       static u8 s_blink = 0;
       nrf_gpio_pin_clear(PIN_LED1);
+      nrf_gpio_pin_clear(PIN_LED2);
       if (++s_blink > 40) {
-        nrf_gpio_pin_set(PIN_LED1);      
+        nrf_gpio_pin_set(PIN_LED2);      
         s_blink = 0;
       }
     }

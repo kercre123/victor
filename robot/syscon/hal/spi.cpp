@@ -61,46 +61,37 @@ void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
   u32 startTime = GetCounter();
   
   NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
-  int syncPhase = 0;
+  
+  dataRX[0] = 0;
+  
   int i = 0;
   while (i < length)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1)
-      if (m_spokenTo && GetCounter() - startTime > 41666) // 5ms
+      if (m_spokenTo && GetCounter() - startTime > 41666*2) // 5ms
         return;
     NRF_UART0->EVENTS_RXDRDY = 0;   // XXX: Needed?
     u8 byte = NRF_UART0->RXD;
-    switch (syncPhase) {
+    switch (i) {
       case 0:
       {
-        syncPhase = (byte == 'H') ? 1 : 0;
+        i = (byte == 'H') ? 1 : 0;
         break;
       }
       case 1:
       {
-        syncPhase = (byte == 0xFA) ? 2 : 0;
+        i = (byte == 0xFA) ? 2 : 0;
         break;
       }
       case 2:
       {
-        syncPhase = (byte == 0xF3) ? 3 : 0;
+        i = (byte == 0xF3) ? 3 : 0;
         break;
       }
       case 3:
       {
-        if (byte == 0x20) // Final header byte
-        {
-          dataRX[i++] = 'H';
-          dataRX[i++] = 0xFA;
-          dataRX[i++] = 0xF3;
-          dataRX[i++] = 0x20;
-          syncPhase = 4;
-        }
-        else
-        {
-          syncPhase = 0;
-        }
+        i = (byte == 0x20) ? 4 : 0;
         break;
       }
       default:
@@ -109,6 +100,7 @@ void SPITransmitReceive(u16 length, const u8* dataTX, u8* dataRX)
       }
     }
   }
+  dataRX[0] = 'H';
   
   // Wait before first reply
   if (!m_spokenTo) {

@@ -47,6 +47,8 @@ namespace Anki
       
       GPIO_PIN_SOURCE(TRX, GPIOA, 11);
 
+      extern void UARTPutHex(u8 c);
+
       void PrintCrap()
       {
         printf("\nTX: %d  RX: %d\n", DMA_STREAM_TX->NDTR, DMA_STREAM_RX->NDTR);
