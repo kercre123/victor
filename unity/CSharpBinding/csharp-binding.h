@@ -10,7 +10,9 @@
 #define __CozmoGame__csharp_binding__
 
 extern "C" {
-    
+
+#include "anki/common/types.h"
+  
     enum BindingError {
         BINDING_OK = 0,
         BINDING_ERROR_NOT_INITIALIZED = 0x8001,
@@ -19,7 +21,7 @@ extern "C" {
         BINDING_ERROR_ROBOT_NOT_READY = 0x8004,
         // also include Anki::Result values
     };
-    
+  
     // Determine if any logs are available; if so, set length
     bool cozmo_has_log(int* receive_length);
     
@@ -44,8 +46,22 @@ extern "C" {
     // Set the speed of each wheel
     int cozmo_robot_drive_wheels(int robot_id, float left_wheel_speed_mmps, float right_wheel_speed_mmps);
     
-    // not 100% sure what this does. set all motor speeds to 0?
+    // Stops wheel, head, and lift motors (sets their speeds to zero)
     int cozmo_robot_stop_all_motors(int robot_id);
+  
+    // Define the message types via macros
+    // TODO: Replace with Mark Pauley's auto-generated message types
+#   undef MESSAGE_DEFINITION_MODE
+#   include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
+#   include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
+  
+    // Functions for checking for available messages.
+    // Each of these returns true as long as there is a message available and
+    // populates the passed-in struct if so.
+    bool cozmo_engine_check_for_robot_available(MessageG2U_RobotAvailable* msg);
+    bool cozmo_engine_check_for_robot_connected(MessageG2U_RobotConnected* msg);
+    bool cozmo_engine_check_for_observed_object(MessageG2U_RobotObservedObject* msg);
 }
 
 #endif /* defined(__CozmoGame__csharp_binding__) */
