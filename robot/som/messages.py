@@ -182,6 +182,9 @@ class DriveWheelsMessage(MessageBase):
     def __repr__(self):
         return "DriveWheelsMessage(%f, %f)" % self._getMembers()
 
+class TestModeMessage(MessageBase):
+    pass
+
 class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""

@@ -7,10 +7,6 @@
 % imshows(im1, im2, 4); % start figure numbering at 4. In this example, imshow on figures 4 and 5.
 
 function imshows(varargin)
-    
-%     maxCollageSize = [950,1800];
-    maxCollageSize = [5000,5000];
-    
     figNums = 1:length(varargin);
     
     maximizeWindows = false;
@@ -46,82 +42,10 @@ function imshows(varargin)
             numImages = length(curIms);
             
             if collage
-                numImagesX = ceil(sqrt(numImages));
-                numImagesY = ceil(numImages / numImagesX);
-                
-                twoD = cell(numImagesY, numImagesX);
-                
-                imageWidths = zeros(numImagesY, numImagesX);
-                imageHeights = zeros(numImagesY, numImagesX);
-                
-                cx = 1;
-                cy = 1;
-                for j = 1:length(curIms)
-                    twoD{cy,cx} = curIms{j};
-                    imageHeights(cy,cx) = size(curIms{j},1);
-                    imageWidths(cy,cx) = size(curIms{j},2);
-                    cx = cx + 1;
-                    if cx > numImagesX
-                        cy = cy + 1;
-                        cx = 1;
-                    end
-                end  % for j = 1:length(curIms)
-                
-                bigImHeightOriginal = max(sum(imageHeights, 1));
-                bigImWidthOriginal = max(sum(imageWidths, 2));
-                
-                bigImHeight = bigImHeightOriginal;
-                bigImWidth = bigImWidthOriginal;
-                
-                scale = 1;
-                if bigImHeight > maxCollageSize(1)
-                    scale = maxCollageSize(1) / bigImHeight;
-                    bigImHeight = bigImHeight * scale;
-                    bigImWidth = bigImWidth * scale;
-                end
-                
-                if bigImWidth > maxCollageSize(2)
-                    scaleMultiplier = maxCollageSize(2) / bigImWidth;
-                    scale = scale * scaleMultiplier;
-                    bigImHeight = bigImHeight * scaleMultiplier;
-                    bigImWidth = bigImWidth * scaleMultiplier;
-                end
-                
-                bigImHeight = ceil(bigImHeight);
-                bigImWidth = ceil(bigImWidth);
-                
-                bigIm = zeros([bigImHeight, bigImWidth, 3], 'uint8');
-                
-                cy = 1;
-                for y = 1:numImagesY
-                    cx = 1;
-                    for x = 1:numImagesX
-                        smallImage = twoD{y,x};
-                        
-                        if isempty(smallImage)
-                            break;
-                        end
-                        
-                        if ndims(smallImage) == 2
-                            smallImage = repmat(smallImage, [1,1,3]);
-                        end
-                        
-                        smallImage = im2uint8(smallImage);
-                        
-                        if scale ~= 1
-                            smallImage = imresize(smallImage, floor([size(smallImage,1),size(smallImage,2)]*scale));
-                        end
-                        
-                        bigIm(cy:(cy+size(smallImage,1)-1), cx:(cx+size(smallImage,2)-1), :) = smallImage;
-                        
-                        cx = cx + size(smallImage,2);
-                    end % for x = 1:numImagesX
-                    
-                    cy = cy + ceil(max(imageHeights(y,:))*scale);
-                end % for y = 1:numImagesY
+                [bigImage, bigImageArray, numImagesY, numImagesX, imageHeights, ~] = drawCollage(curIms);
                 
                 hold off;
-                imshow(bigIm);
+                imshow(bigImage);
                 hold on;
                 
                 if collageTitles
@@ -130,7 +54,7 @@ function imshows(varargin)
                     for y = 1:numImagesY
                         cx = 1;
                         for x = 1:numImagesX
-                            smallImage = twoD{y,x};
+                            smallImage = bigImageArray{y,x};
 
                             if isempty(smallImage)
                                 break;

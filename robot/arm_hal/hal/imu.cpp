@@ -179,6 +179,8 @@
 // 16 bits, +/- 500 deg 1000/2^16 ~= 0.01526 deg / LSB = 2.663E-4 rad/LSB
 #define RANGE_CONST_500D    2.663E-4f
 
+#define POST_WRITE_DELAY_US 20
+
 //-8.5
 //10.9
 
@@ -372,15 +374,15 @@ namespace Anki
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect      
         IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_RANGE);
         IMUWriteReadPipelined(RANGE_2G);
-        MicroWait(2);  // 2 us delay required after write
+        MicroWait(POST_WRITE_DELAY_US);
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect              
         IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_BW); 
         IMUWriteReadPipelined(BW_250);
-        MicroWait(2);  // 2 us delay required after write
+        MicroWait(POST_WRITE_DELAY_US);
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect              
         IMUWriteReadPipelined(IMU_WRITE | ACC_INT_OUT_CTRL);  // Set all I/O to open drain
         IMUWriteReadPipelined(ACC_INT_OPEN_DRAIN);
-        MicroWait(2);  // 2 us delay required after write
+        MicroWait(POST_WRITE_DELAY_US);
 
         // Verify everything that was just written
         IMUSelectDevice(IMU_ACC);  // Deselect and reselect 
