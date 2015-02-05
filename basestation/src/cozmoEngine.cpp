@@ -383,6 +383,13 @@ namespace Cozmo {
   
   bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
+    // Check if already connected
+    Robot* robot = CozmoEngineHostImpl::GetRobotByID(whichRobot);
+    if (robot != nullptr) {
+      PRINT_NAMED_INFO("CozmoEngineHost.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
+      return true;
+    }
+    
     // Connection is the same as normal except that we have to remove forcefully-added
     // robots from the advertising service manually (if they could do this, they also
     // could have registered itself)
