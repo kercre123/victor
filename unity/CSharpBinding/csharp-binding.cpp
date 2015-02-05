@@ -33,7 +33,7 @@ template<class MSG_TYPE>
 class MessageQueue
 {
 public:
-  MessageQueue();
+    MessageQueue() { }
   
   void add(MSG_TYPE msg) {
     _queue.emplace(msg);
