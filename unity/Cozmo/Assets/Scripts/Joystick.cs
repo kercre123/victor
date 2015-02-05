@@ -3,10 +3,8 @@ using System.Collections;
 using UnityEngine.EventSystems;
 
 public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
-	[SerializeField]
-	RectTransform stick = null;
-	[SerializeField]
-	Vector2 deadZone = new Vector2(0.01f, 0.01f);
+	[SerializeField] RectTransform stick = null;
+	[SerializeField] Vector2 deadZone = new Vector2(0.01f, 0.01f);
 
 	public Vector2 JoystickData {
 		get {

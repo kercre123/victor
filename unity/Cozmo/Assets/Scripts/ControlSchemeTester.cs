@@ -4,14 +4,10 @@ using System.Collections;
 
 public class ControlSchemeTester : MonoBehaviour {
 
-	[SerializeField]
-	GameObject[] schemes = null;
-	[SerializeField]
-	int defaultIndex = 0;
-	[SerializeField]
-	Text label = null;
-	[SerializeField]
-	Text orientationLabel = null;
+	[SerializeField] GameObject[] schemes = null;
+	[SerializeField] int defaultIndex = 0;
+	[SerializeField] Text label = null;
+	[SerializeField] Text orientationLabel = null;
 	int index = 0;
 	ScreenOrientation orientation = ScreenOrientation.Portrait;
 
