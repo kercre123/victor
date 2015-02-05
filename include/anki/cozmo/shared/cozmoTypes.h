@@ -89,8 +89,9 @@ namespace Anki {
     } TestMode;
 
     typedef enum {
-      DTF_ENABLE_DIRECT_HAL_TEST = 0x01,
-      DTF_ENABLE_TOGGLE_DIR = 0x02
+      DTF_ENABLE_DIRECT_HAL_TEST = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
+      DTF_ENABLE_CYCLE_SPEEDS_TEST = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
+      DTF_ENABLE_TOGGLE_DIR = 0x04          // When enabled, toggles direction going at the specified speed (p3)
     } DriveTestFlags;
     
     typedef enum {
