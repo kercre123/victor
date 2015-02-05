@@ -34,6 +34,12 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    // This is a Cozmo3-specific message.
+    // Since this is a Cozmo2 file, just putting empty definition here.
+    void Messages::ProcessClientConnectionStatusMessage(const Messages::ClientConnectionStatus& msg) {
+      
+    }
+    
     namespace HAL {
       extern bool WifiHasClient();
     }
