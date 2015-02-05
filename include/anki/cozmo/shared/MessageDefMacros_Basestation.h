@@ -46,6 +46,7 @@
 #undef MESSAGE_CREATE_JSON_MODE
 #undef MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
 #undef MESSAGE_CREATEFROMJSON_LADDER_MODE
+#undef MESSAGE_STRUCT_DEFINITION_MODE // For simple C-struct definitions
 
 #define MESSAGE_CLASS_DEFINITION_MODE         0
 #define MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE 1
@@ -61,6 +62,7 @@
 #define MESSAGE_CREATE_JSON_MODE              11
 #define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   12
 #define MESSAGE_CREATEFROMJSON_LADDER_MODE    13
+#define MESSAGE_STRUCT_DEFINITION_MODE        14
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -70,7 +72,7 @@
 
 #else // We have a message definition mode set
 
-#ifndef MESSAGE_BASECLASS_NAME
+#if !defined(MESSAGE_BASECLASS_NAME) && MESSAGE_DEFINITION_MODE != MESSAGE_STRUCT_DEFINITION_MODE
 #error MESSAGE_BASECLASS_NAME must be defined
 #endif
 
@@ -560,6 +562,30 @@ if(QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__)) == msgType) { \
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 
+
+//
+// Define simple C-style typedef'd struct
+//
+// This is for creating a simple C-struct with the same name in places where
+// COZMO_BASESTATION is defined. Note that the struct name will conflict with the
+// class name (both are "MessageFooBar"), so use carefully.
+//
+//   For example:
+//
+//     typedef struct {
+//        f32 foo;
+//        u16 bar;
+//     } MessageFooBar;
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_STRUCT_DEFINITION_MODE
+// TODO: Is it possible, using a macro, to verify the type sizes are correctly ordered?
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) typedef struct {
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) } GET_MESSAGE_CLASSNAME(__MSG_TYPE__);
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) __TYPE__ __NAME__;
+
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __TYPE__ __NAME__[__LENGTH__];
 
 
 //
