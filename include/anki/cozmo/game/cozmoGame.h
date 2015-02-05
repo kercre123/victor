@@ -1,5 +1,5 @@
 /*
- * File:          cozmoEngine.h
+ * File:          cozmoGame.h
  * Date:          1/9/2015
  *
  * Description:   Example game class built around a CozmoEngine
