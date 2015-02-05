@@ -26,36 +26,41 @@ function [accuracy, results] = test_rgb()
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     
-    %     testUnknownLedColor = true;
-    testUnknownLedColor = false;
+        testUnknownLedColor = true;
+%     testUnknownLedColor = false;
     
-    testKnownLedColor = true;
+%     testKnownLedColor = true;
+    testKnownLedColor = false;
     
     numTestTypes = 2; % testUnknownLedColor and testKnownLedColor
     
-    colorNames = {'red', 'green', 'blue'};
+%     colorNames = {'red', 'green', 'blue'};
+    colorNames = {'R', 'G', 'B'};
     
-    for iAlignmentType = length(alignmentTypes):-1:1
+%     for iAlignmentType = length(alignmentTypes):-1:1
+    for iAlignmentType = length(alignmentTypes)
         for iParsingType = length(parsingTypes):-1:1
             processingSize = [120,160];
-            lightSquareWidths = [80] * (processingSize(1) / 240);
+            lightSquareWidth = [80] * (processingSize(1) / 240);
            
             for iFilenamePattern = 1:length(filenamePatterns)
+%             for iFilenamePattern = 3
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
-                results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
+                results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 6, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
                 
                 for iFirstFrame = 1:length(whichFirstFrames)
+%                 for iFirstFrame = 1
                     firstFrame = whichFirstFrames(iFirstFrame);
                     
-                    colorIndexes = -ones(numTestTypes, 1);
-                    numPositives = -ones(numTestTypes, 1);
+                    whichColors = -ones(3, numTestTypes);
+                    numPositives = -ones(3, numTestTypes);
                     
                     outString = sprintf('test:(%d,%d) method:(%d,%d)', iFilenamePattern, iFirstFrame, iAlignmentType, iParsingType);
                     
                     % Unknown LED color
                     if testUnknownLedColor
-                        [colorIndexes(1), numPositives(1)] = parseLedCode_rgb(...
+                        [whichColors(:,1), numPositives(:,1)] = parseLedCode_rgb(...
                             'showFigures', false,...
                             'numFramesToTest', numFramesToTest,...
                             'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
@@ -65,29 +70,34 @@ function [accuracy, results] = test_rgb()
                             'parsingType', parsingTypes{iParsingType},...
                             'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
                             'processingSize', processingSize,...
-                            'lightSquareWidths', lightSquareWidths);
-                        
-                        outString = [outString, sprintf(' unknown:(%s,%0.1f)', colorNames{colorIndexes(1)}, numPositives(1))];
+                            'lightSquareWidth', lightSquareWidth);
+
+                        %                             sprintf(' unknown:(%s%0.1f %s%0.1f %s%0.1f)',...
+                        outString = [outString,...
+                                     sprintf(' unknown:(%s%d %s%d %s%d)',...
+                                            colorNames{whichColors(1,1)}, numPositives(1,1),...
+                                            colorNames{whichColors(2,1)}, numPositives(2,1),...
+                                            colorNames{whichColors(3,1)}, numPositives(3,1))];
                     end
                     
-                    % Ground truth LED color
-                    if testKnownLedColor
-                        [colorIndexes(2), numPositives(2)] = parseLedCode_rgb(...
-                            'showFigures', false,...
-                            'numFramesToTest', numFramesToTest,...
-                            'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
-                            'cameraType', 'offline',...
-                            'filenamePattern', filenamePatterns{iFilenamePattern}{1},...
-                            'alignmentType', alignmentTypes{iAlignmentType},...
-                            'knownLedColor', filenamePatterns{iFilenamePattern}{3},...
-                            'parsingType', parsingTypes{iParsingType},...
-                            'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
-                            'processingSize', processingSize,...
-                            'lightSquareWidths', lightSquareWidths);
-                        
-                        outString = [outString, sprintf(' known:(%s,%0.1f)', colorNames{colorIndexes(2)}, numPositives(2))];
-                    end
-                    
+%                     % Ground truth LED color
+%                     if testKnownLedColor
+%                         [whichColors(2), numPositives(2)] = parseLedCode_rgb(...
+%                             'showFigures', false,...
+%                             'numFramesToTest', numFramesToTest,...
+%                             'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
+%                             'cameraType', 'offline',...
+%                             'filenamePattern', filenamePatterns{iFilenamePattern}{1},...
+%                             'alignmentType', alignmentTypes{iAlignmentType},...
+%                             'knownLedColor', filenamePatterns{iFilenamePattern}{3},...
+%                             'parsingType', parsingTypes{iParsingType},...
+%                             'smallBlurKernel', fspecial('gaussian',[11,11],1.5),...
+%                             'processingSize', processingSize,...
+%                             'lightSquareWidth', lightSquareWidth);
+%                         
+%                         outString = [outString, sprintf(' known:(%s,%0.1f)', colorNames{whichColors(2)}, numPositives(2))];
+%                     end
+
                     isBadValue = false;
                     for iType = [1,2]
                         if iType == 1 && ~testUnknownLedColor
@@ -98,12 +108,22 @@ function [accuracy, results] = test_rgb()
                             continue;
                         end
                         
-                        results{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame, :, iType) = [colorIndexes(iType), colorIndexes(iType)];
+                        results{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame, :, iType) = [whichColors(:,iType)', numPositives(:,iType)'];
                         
-                        if colorIndexes(iType) == filenamePatterns{iFilenamePattern}{3}
-                            accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = abs(filenamePatterns{iFilenamePattern}{4} - numPositives(iType));
+                        groundTruthColors = filenamePatterns{iFilenamePattern}{3};
+                        if whichColors(1,iType)==1 && whichColors(2,iType)==1 && whichColors(3,iType)==1
+                            accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = 10;
                             
-                            if accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) > 1
+                            isBadValue = true;
+                        elseif whichColors(1,iType)==groundTruthColors(1) && whichColors(2,iType)==groundTruthColors(2) && whichColors(3,iType)==groundTruthColors(3)
+                            
+                            curAccuracy = max([abs(filenamePatterns{iFilenamePattern}{4}(1) - numPositives(1,iType)),...
+                                               abs(filenamePatterns{iFilenamePattern}{4}(2) - numPositives(2,iType)),...
+                                               abs(filenamePatterns{iFilenamePattern}{4}(3) - numPositives(3,iType))]);
+                            
+                            accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame,iType) = curAccuracy;
+                            
+                            if curAccuracy > 1
                                 isBadValue = true;
                             end
                         else
@@ -113,7 +133,7 @@ function [accuracy, results] = test_rgb()
                     end % for iType = 1:numTestTypes
                     
                     if isBadValue
-                        outString = [outString, ' *****'];
+                        outString = [outString, ' *****']; %#ok<AGROW>
                     end
                     
                     disp(outString)

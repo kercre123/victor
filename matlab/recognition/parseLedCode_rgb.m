@@ -1,7 +1,7 @@
 
 % function parseLedCode_rgb(varargin)
 
-function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
+function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     numFramesToTest = 15;
     cameraType = 'usbcam'; % 'webots', 'usbcam', 'offline'
     
@@ -11,7 +11,7 @@ function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
     processingSize = [120,160];
     
     lightSquareCenter = [120, 160] * (processingSize(1) / 240);
-    lightSquareWidths = [40] * (processingSize(1) / 240);
+    lightSquareWidth = 40 * (processingSize(1) / 240);
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     spatialBlurSigmas = linspace(2,6,5);
@@ -56,42 +56,30 @@ function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
     
     blurredImages = imfilter(images, smallBlurKernel);
     
-    colors = cell(length(lightSquareWidths), 1);
-    
-    for iWidth = 1:length(lightSquareWidths)
-        curWidth = lightSquareWidths(iWidth) / 2;
-        yLimits = round([lightSquareCenter(1)-curWidth, lightSquareCenter(1)+curWidth]);
-        xLimits = round([lightSquareCenter(2)-curWidth, lightSquareCenter(2)+curWidth]);
-        
-        colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
-        
-        if strcmpi(parsingType, 'spatialBlur')
-            if isempty(knownLedColor)
-                assert(false);
-            else
-                [numPositive, peakValue] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, knownLedColor);
-                colorIndex = knownLedColor;
-            end
-            
-            return;
-        else % if strcmpi(parsingType, 'spatialBlur')
-            assert(false);
-        end % if strcmpi(parsingType, 'spatialBlur') ... else
-    end % for iWidth = 1:length(lightSquareWidths)
-    
+    lightSquareHalfWidth = lightSquareWidth / 2;
+    yLimits = round([lightSquareCenter(1)-lightSquareHalfWidth, lightSquareCenter(1)+lightSquareHalfWidth]);
+    xLimits = round([lightSquareCenter(2)-lightSquareHalfWidth, lightSquareCenter(2)+lightSquareHalfWidth]);
+
+    colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
+
     if strcmpi(parsingType, 'spatialBlur')
-        [percentPositive, colorIndex, ~] = computeDutyCycle(colors{1}, knownLedColor);
-    else
+        if isempty(knownLedColor)
+            [whichColors, numPositive] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas);
+        else
+            assert(false);
+        end
+
+        return;
+    else % if strcmpi(parsingType, 'spatialBlur')
         assert(false);
-    end % if strcmpi(parsingType, 'blur') ... else
+    end % if strcmpi(parsingType, 'spatialBlur') ... else
     
-    numPositive = round(numFramesToTest*percentPositive);
     
     %     keyboard
     
 end % function parseLedCode_rgb()
 
-function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSigmas, whichColors)
+function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blurSigmas)
     
     blurKernels_small = cell(length(blurSigmas), 1);
     blurKernels_large = cell(length(blurSigmas), 1);
@@ -139,6 +127,8 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     % Find the best R, G, and B (seeds), then grow them out
     numSamples = size(bestColors,2);
     
+    numOffFrames = 3;
+    
     colorLabels = zeros(numSamples, 1);
     
     codeIsValid = true;
@@ -147,9 +137,9 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
         ind = ind(ceil(length(ind)/2));
         
         otherColors = [1,2,3];
-        otherColors = otherColors(3 ~= otherColors);
+        otherColors = otherColors(iColor ~= otherColors);
         if bestColors(iColor,ind) < bestColors(otherColors(1),ind) || bestColors(iColor,ind) < bestColors(otherColors(2),ind)
-            disp('This is an invalid code');
+%             disp('This is an invalid code');
             codeIsValid = false;
             break;
         end
@@ -179,37 +169,109 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
         end
     end % for iColor = 1:3
     
-    % TODO: check if colorLabels is contiguous, except for the lowest 2 (or 3) values
-    %       If something is missing, then the code is INVALID
+    % Various validity heuristics
+        
+    % The lowest three points must be contiguous (TODO: is there a counterexample for this?)     
+    maxBestColors = max(bestColors);
+    bestColorsSorted = sortrows([maxBestColors;1:length(maxBestColors)]', 1);
+    minInds = double(bestColorsSorted(1:numOffFrames,2));
+
+    % Set the min values to color 4 (not RGB)
+    colorLabels(bestColorsSorted(1:numOffFrames,2)) = 4;
     
-    highestColors = zeros(size(bestColors,2), 1);
-    highestColors(bestColors(1,:) > bestColors(2,:) & bestColors(1,:) > bestColors(3,:)) = 1;
-    highestColors(bestColors(2,:) > bestColors(1,:) & bestColors(2,:) > bestColors(3,:)) = 2;
-    highestColors(bestColors(3,:) > bestColors(1,:) & bestColors(3,:) > bestColors(2,:)) = 3;
+    minInds = sort(minInds);
     
-    keyboard
+    % TODO: support other numSamples and numOffFrames
+    assert(numSamples == 15);
+    assert(numOffFrames == 3);
+    if minInds(1) == 13
+        minInds = minInds - 15;
+    elseif minInds(2) == 14
+        minInds(2:3) = minInds(2:3) - 15;
+    elseif minInds(3) == 15
+        minInds(3) = minInds(3) - 15;
+    end
     
-    stepUpFilter = [-1, 0, 1]';
+    minInds = sort(minInds);
+        
+    if minInds(2) ~= (minInds(1)+1) || minInds(2) ~= (minInds(3)-1)
+        codeIsValid = false;
+    end
     
-    blurredImages_inside_reshaped = double(permute(blurredImages_inside, [4,1,2,3,5]));
-    steps = imfilter(blurredImages_inside_reshaped, stepUpFilter, 'circular');
+    % If any labels are zero, it means that the max labels are not continuous 
+    if(min(colorLabels) == 0)
+        codeIsValid = false;
+    end
     
-    % Per x,y,blur, what is the minimum of: the positive peaks and the negative peaks
-    maxSteps = squeeze(min(max(steps), max(-steps)));
-    peakValue = max(maxSteps(:));
-    inds = find(maxSteps == peakValue, 1);
-    [bestY,bestX,bestB] = ind2sub(size(maxSteps), inds);
+    % If we didn't see red, green, and blue, it's invalid
+    if isempty(find(colorLabels==1,1)) || isempty(find(colorLabels==2,1)) || isempty(find(colorLabels==3,1))
+        codeIsValid = false;
+    end
     
-    [~, startPoint] = max(steps(:,bestY,bestX,bestB));
-    [~, endPoint] = min(steps(:,bestY,bestX,bestB));
-    numPositive = mod(endPoint - startPoint, size(colorImages,4)) + 0.5;
+    if ~codeIsValid
+        whichColors = [1,1,1];
+        numPositive = [0,0,0];
+        return;
+    end
     
-    clickGui = true;
-    %     clickGui = false;
+    % shift the pattern
+    fourInds = find(colorLabels == 4);
+    
+    for iInd = 1:length(fourInds)
+        curInd = fourInds(iInd);
+        
+        if curInd == numSamples
+            curInd = 0;
+        end
+        
+        if colorLabels(curInd+1) ~= 4
+            startIndex = curInd + 1;
+            break;
+        end
+    end
+    
+    for iInd = 1:length(fourInds)
+        curInd = fourInds(iInd);
+        
+        if curInd == 1
+            curInd = numSamples+1;
+        end
+        
+        if colorLabels(curInd-1) ~= 4
+            endIndex = curInd - 1;
+            break;
+        end
+    end
+    
+    if endIndex < startIndex
+        shiftedColorLabels = colorLabels([startIndex:end, 1:endIndex]);
+    else
+        shiftedColorLabels = colorLabels(startIndex:endIndex);
+    end
+    
+    shiftedColorLabelsTmp = shiftedColorLabels;
+    whichColors = zeros(3,1);
+    numPositive = zeros(3,1);
+    for iColor = 1:3
+        inds = find(shiftedColorLabelsTmp > 0);
+        inds = find(shiftedColorLabelsTmp == shiftedColorLabelsTmp(inds(1)));
+        whichColors(iColor) = shiftedColorLabelsTmp(inds(1));
+        numPositive(iColor) = length(inds);
+        shiftedColorLabelsTmp(inds) = 0;
+    end
+    
+%     keyboard
+        
+%     highestColors = zeros(size(bestColors,2), 1);
+%     highestColors(bestColors(1,:) > bestColors(2,:) & bestColors(1,:) > bestColors(3,:)) = 1;
+%     highestColors(bestColors(2,:) > bestColors(1,:) & bestColors(2,:) > bestColors(3,:)) = 2;
+%     highestColors(bestColors(3,:) > bestColors(1,:) & bestColors(3,:) > bestColors(2,:)) = 3;
+    
+%     clickGui = true;
+    clickGui = false;
     if clickGui
         parseLedCode_plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
     end % if clickGui
-    %     playVideo({blurredImages(:,:,:,:,a,1), blurredImages(:,:,:,:,a,2), blurredImages(:,:,:,:,a,3)})
 end % function colors = dutyCycle_changingCenter()
 
 
