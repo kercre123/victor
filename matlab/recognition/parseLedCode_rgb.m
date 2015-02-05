@@ -11,7 +11,7 @@ function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
     processingSize = [120,160];
     
     lightSquareCenter = [120, 160] * (processingSize(1) / 240);
-    lightSquareWidths = [40] * (processingSize(1) / 240);   
+    lightSquareWidths = [40] * (processingSize(1) / 240);
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
     spatialBlurSigmas = linspace(2,6,5);
@@ -92,7 +92,7 @@ function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
 end % function parseLedCode_rgb()
 
 function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSigmas, whichColors)
-
+    
     blurKernels_small = cell(length(blurSigmas), 1);
     blurKernels_large = cell(length(blurSigmas), 1);
     blurKernels_outsideRing = cell(length(blurSigmas), 1);
@@ -121,11 +121,73 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
         blurredImages_outsideRing(:,:,4,:,iBlur) = max(blurredImages_outsideRing(:,:,1:3,:,iBlur), [], 3);
     end % for iBlur = 1:length(blurSigmas)
     
-    
     blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 5, size(colorImages,4), length(blurSigmas)]);
     blurredImages_inside(:,:,1:4,:,:) = blurredImages_small - blurredImages_outsideRing;
-    blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);    
+    blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);
     blurredImages_inside(blurredImages_inside<0) = 0;
+    
+    blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,5,:,:)), [3,1,2,4]);
+    blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
+    blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
+    peakValue = max(blurredImages_onMax_mean(:));
+    
+    inds = find(blurredImages_onMax_mean == peakValue, 1);
+    [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
+    
+    bestColors = squeeze(blurredImages_small(bestY,bestX, 1:3, :, bestB));
+    
+    % Find the best R, G, and B (seeds), then grow them out
+    numSamples = size(bestColors,2);
+    
+    colorLabels = zeros(numSamples, 1);
+    
+    codeIsValid = true;
+    for iColor = 1:3
+        [~, ind] = max(bestColors(iColor,:));
+        ind = ind(ceil(length(ind)/2));
+        
+        otherColors = [1,2,3];
+        otherColors = otherColors(3 ~= otherColors);
+        if bestColors(iColor,ind) < bestColors(otherColors(1),ind) || bestColors(iColor,ind) < bestColors(otherColors(2),ind)
+            disp('This is an invalid code');
+            codeIsValid = false;
+            break;
+        end
+        
+        colorLabels(ind) = iColor;
+        
+        % Check right
+        %         disp('right');
+        for iSample = [(ind+1):numSamples, 1:(ind-1)]
+            if bestColors(iColor,iSample) < bestColors(otherColors(1),iSample) || bestColors(iColor,iSample) < bestColors(otherColors(2),iSample)
+                break;
+            else
+                colorLabels(iSample) = iColor;
+                %                 disp(colorLabels')
+            end
+        end
+        
+        % Check left
+        %         disp('left');
+        for iSample = [(ind-1):-1:1, numSamples:-1:(ind+1)]
+            if bestColors(iColor,iSample) < bestColors(otherColors(1),iSample) || bestColors(iColor,iSample) < bestColors(otherColors(2),iSample)
+                break;
+            else
+                colorLabels(iSample) = iColor;
+                %                 disp(colorLabels')
+            end
+        end
+    end % for iColor = 1:3
+    
+    % TODO: check if colorLabels is contiguous, except for the lowest 2 (or 3) values
+    %       If something is missing, then the code is INVALID
+    
+    highestColors = zeros(size(bestColors,2), 1);
+    highestColors(bestColors(1,:) > bestColors(2,:) & bestColors(1,:) > bestColors(3,:)) = 1;
+    highestColors(bestColors(2,:) > bestColors(1,:) & bestColors(2,:) > bestColors(3,:)) = 2;
+    highestColors(bestColors(3,:) > bestColors(1,:) & bestColors(3,:) > bestColors(2,:)) = 3;
+    
+    keyboard
     
     stepUpFilter = [-1, 0, 1]';
     
@@ -143,7 +205,7 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     numPositive = mod(endPoint - startPoint, size(colorImages,4)) + 0.5;
     
     clickGui = true;
-%     clickGui = false;
+    %     clickGui = false;
     if clickGui
         parseLedCode_plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
     end % if clickGui
