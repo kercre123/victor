@@ -67,15 +67,7 @@ function [colorIndex, numPositive] = parseLedCode_rgb(varargin)
         
         if strcmpi(parsingType, 'spatialBlur')
             if isempty(knownLedColor)
-                numPositives = zeros(3,1);
-                peakValues = zeros(3,1);
-                
-                for iColor = 1:3
-                    [numPositives(iColor), peakValues(iColor)] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, iColor);
-                end
-                
-                [~, colorIndex] = max(peakValues);
-                numPositive = numPositives(colorIndex);
+                assert(false);
             else
                 [numPositive, peakValue] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, knownLedColor);
                 colorIndex = knownLedColor;
@@ -114,22 +106,30 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
         blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(sum(blurKernels_outsideRing{iBlur}));
     end % for iBlur = 1:length(blurSigmas)
     
-    blurredImages_small = zeros([size(colorImages),length(blurSigmas)], 'uint8');
-    blurredImages_large = zeros([size(colorImages),length(blurSigmas)], 'uint8');
-    blurredImages_outsideRing = zeros([size(colorImages),length(blurSigmas)], 'uint8');
+    blurredSize = [size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)];
+    blurredImages_small = zeros(blurredSize, 'uint8');
+    blurredImages_large = zeros(blurredSize, 'uint8');
+    blurredImages_outsideRing = zeros(blurredSize, 'uint8');
     
     for iBlur = 1:length(blurSigmas)
-        blurredImages_small(:,:,:,:,iBlur) = imfilter(colorImages, blurKernels_small{iBlur});
-        blurredImages_large(:,:,:,:,iBlur) = imfilter(colorImages, blurKernels_large{iBlur});
-        blurredImages_outsideRing(:,:,:,:,iBlur) = imfilter(colorImages, blurKernels_outsideRing{iBlur});
+        blurredImages_small(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_small{iBlur});
+        blurredImages_large(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_large{iBlur});
+        blurredImages_outsideRing(:,:,1:3,:,iBlur) = imfilter(colorImages, blurKernels_outsideRing{iBlur});
+        
+        blurredImages_small(:,:,4,:,iBlur)       = max(blurredImages_small(:,:,1:3,:,iBlur), [], 3);
+        blurredImages_large(:,:,4,:,iBlur)       = max(blurredImages_large(:,:,1:3,:,iBlur), [], 3);
+        blurredImages_outsideRing(:,:,4,:,iBlur) = max(blurredImages_outsideRing(:,:,1:3,:,iBlur), [], 3);
     end % for iBlur = 1:length(blurSigmas)
     
-    blurredImages_inside = blurredImages_small - blurredImages_outsideRing;
+    
+    blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 5, size(colorImages,4), length(blurSigmas)]);
+    blurredImages_inside(:,:,1:4,:,:) = blurredImages_small - blurredImages_outsideRing;
+    blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);    
     blurredImages_inside(blurredImages_inside<0) = 0;
     
     stepUpFilter = [-1, 0, 1]';
     
-    blurredImages_inside_reshaped = double(permute(blurredImages_inside, [3,1,2,4]));
+    blurredImages_inside_reshaped = double(permute(blurredImages_inside, [4,1,2,3,5]));
     steps = imfilter(blurredImages_inside_reshaped, stepUpFilter, 'circular');
     
     % Per x,y,blur, what is the minimum of: the positive peaks and the negative peaks
@@ -142,8 +142,8 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     [~, endPoint] = min(steps(:,bestY,bestX,bestB));
     numPositive = mod(endPoint - startPoint, size(colorImages,4)) + 0.5;
     
-    %     clickGui = true;
-    clickGui = false;
+    clickGui = true;
+%     clickGui = false;
     if clickGui
         parseLedCode_plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
     end % if clickGui
