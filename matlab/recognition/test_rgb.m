@@ -1,22 +1,18 @@
-% function test_dutyCycle()
+% function test_rgb()
 
-% [accuracy, results] = test_dutyCycle();
+% [accuracy, results] = test_rgb();
 
-function [accuracy, results] = test_dutyCycle()
+function [accuracy, results] = test_rgb()
     
+    % format: {filenamePattern, [minFrame,maxFrame], [whichLeds], [numOnFrames]}
     filenamePatterns = {...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle1/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle2/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle3/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle4/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle5/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle6/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle7/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle8/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle9/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle10/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle11/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle12/images_%05d.png', [0,99], 1, 6}};
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb1/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb2/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb3/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb4/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb5/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb6/images_%05d.png', [0,99], [1,2,3], [5,5,2]},...
+        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/rgb7/images_%05d.png', [0,99], [1,2,3], [5,5,2]}};
     
     numFramesToTest = 15;
     
@@ -24,12 +20,8 @@ function [accuracy, results] = test_dutyCycle()
     %     save /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat compositeVideo
     %     load /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat
     
-    alignmentTypes = {'none', 'exhaustiveTranslation'};
-    %     parsingTypes = {'blur', 'histogram'};
-    
-    %     alignmentTypes = {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
-    %     parsingTypes = {'blur', 'histogram'};
-    parsingTypes = {'blur', 'histogram', 'spatialBlur'};
+    alignmentTypes = {'none', 'exhaustiveTranslation'}; % {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
+    parsingTypes = {'spatialBlur'};
     
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
@@ -45,25 +37,15 @@ function [accuracy, results] = test_dutyCycle()
     
     for iAlignmentType = length(alignmentTypes):-1:1
         for iParsingType = length(parsingTypes):-1:1
-            %     for iAlignmentType = 2
-            %         for iParsingType = 3
-            
-            if iParsingType == 3
-                processingSize = [120,160];
-                lightSquareWidths = [80] * (processingSize(1) / 240);
-            else
-                processingSize = [120,160];
-                lightSquareWidths = [40] * (processingSize(1) / 240);
-            end
-            
+            processingSize = [120,160];
+            lightSquareWidths = [80] * (processingSize(1) / 240);
+           
             for iFilenamePattern = 1:length(filenamePatterns)
-                %             for iFilenamePattern = 1
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
                 results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
                 
                 for iFirstFrame = 1:length(whichFirstFrames)
-                    %                 for iFirstFrame = 84
                     firstFrame = whichFirstFrames(iFirstFrame);
                     
                     colorIndexes = -ones(numTestTypes, 1);
@@ -73,7 +55,7 @@ function [accuracy, results] = test_dutyCycle()
                     
                     % Unknown LED color
                     if testUnknownLedColor
-                        [colorIndexes(1), numPositives(1)] = parseLedCode_dutyCycle(...
+                        [colorIndexes(1), numPositives(1)] = parseLedCode_rgb(...
                             'showFigures', false,...
                             'numFramesToTest', numFramesToTest,...
                             'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
@@ -90,7 +72,7 @@ function [accuracy, results] = test_dutyCycle()
                     
                     % Ground truth LED color
                     if testKnownLedColor
-                        [colorIndexes(2), numPositives(2)] = parseLedCode_dutyCycle(...
+                        [colorIndexes(2), numPositives(2)] = parseLedCode_rgb(...
                             'showFigures', false,...
                             'numFramesToTest', numFramesToTest,...
                             'whichImages', firstFrame:(firstFrame+numFramesToTest-1),...
@@ -176,4 +158,4 @@ function [accuracy, results] = test_dutyCycle()
     
     
     keyboard
-end % function test_dutyCycle()
+end % function test_rgb()
