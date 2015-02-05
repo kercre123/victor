@@ -7,7 +7,7 @@ namespace Anki
   namespace Cozmo
   {
     namespace HAL
-    {			                
+    {
       // Cozmo 3 implementation
       GPIO_PIN_SOURCE(EYE1nEN, GPIOC, 14);
       GPIO_PIN_SOURCE(EYE2nEN, GPIOB, 12);
@@ -24,14 +24,18 @@ namespace Anki
       GPIO_PIN_SOURCE(BLU2, GPIOA,  6);
       GPIO_PIN_SOURCE(BLU3, GPIOB,  8);
       GPIO_PIN_SOURCE(BLU4, GPIOB,  4);
-      
+
       GPIO_PIN_SOURCE(IRLED, GPIOA, 12);
 
       // Map the natural LED order (as shown in hal.h) to the hardware swizzled order
       // See schematic if you care about why the LEDs are swizzled
-      static const u32 CHANNEL_MASK = 7;  // Bitmask for all 8 channels
-      static const u8 HW_CHANNELS[8] = {5, 1, 2, 0, 6, 7, 3, 4};
-      static u32 m_channels[8];   // The actual RGB color values in use
+      typedef union color_t {
+        u32 asColor;
+        u8  asLEDs[4];
+      } ColorValue;
+      
+      static const u8 HW_CHANNELS[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+      static ColorValue m_channels[8];   // The actual RGB color values in use
 
       // Make some nice array handles into macro defined GPIOs
       static const int NUM_EYEnEN = 2;
@@ -45,10 +49,10 @@ namespace Anki
       static GPIO_TypeDef* const BLU_GPIO[4] = {GPIO_BLU1, GPIO_BLU2, GPIO_BLU3, GPIO_BLU4}; // hack
       static const u32 RED_PIN[4] = {PIN_RED1, PIN_RED2, PIN_RED3, PIN_RED4}; // These also need to concatinate
       static const u32 GRN_PIN[4] = {PIN_GRN1, PIN_GRN2, PIN_GRN3, PIN_GRN4};
-      static const u32 BLU_PIN[4] = {PIN_BLU1, PIN_BLU2, PIN_BLU4, PIN_BLU4};
-      static const u8 RED_SOURCE[4] = {SOURCE_RED1, SOURCE_RED2, SOURCE_RED3, SOURCE_RED4}; // And these
-      static const u8 GRN_SOURCE[4] = {SOURCE_GRN1, SOURCE_GRN2, SOURCE_GRN3, SOURCE_GRN4};
-      static const u8 BLU_SOURCE[4] = {SOURCE_BLU1, SOURCE_BLU2, SOURCE_BLU3, SOURCE_BLU4};
+      static const u32 BLU_PIN[4] = {PIN_BLU1, PIN_BLU2, PIN_BLU3, PIN_BLU4};
+      static const u8 CLR_SOURCE[12] = {SOURCE_RED1, SOURCE_RED2, SOURCE_RED3, SOURCE_RED4, // Source is only used concatinated so declared as such
+                                        SOURCE_GRN1, SOURCE_GRN2, SOURCE_GRN3, SOURCE_GRN4,
+                                        SOURCE_BLU1, SOURCE_BLU2, SOURCE_BLU3, SOURCE_BLU4};
 
 
       static const int CH_RED = 2, CH_GREEN = 1, CH_BLUE = 0;
@@ -56,10 +60,10 @@ namespace Anki
       // Initialize LED head/face light hardware
       void LightsInit()
       {
-        int i;
-
         return;
         
+        int i;
+
         // Leave the high side pins off until first LED is set
         for (i=0; i<NUM_EYEnEN; ++i)
         {
@@ -76,9 +80,9 @@ namespace Anki
         for (i=0; i<num_color_gpio; ++i)
         {
           GPIO_SET(RED_GPIO[i], RED_PIN[i]);
-          PIN_NOPULL(RED_GPIO[i], RED_SOURCE[i]);
-          PIN_OD(RED_GPIO[i], RED_SOURCE[i]); 
-          PIN_OUT(RED_GPIO[i], RED_SOURCE[i]);
+          PIN_NOPULL(RED_GPIO[i], CLR_SOURCE[i]);
+          PIN_OD(RED_GPIO[i], CLR_SOURCE[i]);
+          PIN_OUT(RED_GPIO[i], CLR_SOURCE[i]);
         }
 
         // IR LED is controlled by N-FET so positive polarity unlike everything else
@@ -86,7 +90,7 @@ namespace Anki
         PIN_PULLDOWN(GPIO_IRLED, SOURCE_IRLED);
         PIN_PP(GPIO_IRLED, SOURCE_IRLED);
         PIN_OUT(GPIO_IRLED, SOURCE_IRLED);
-        
+
         // Initialize timer to rapidly blink LEDs, simulating dimming
         NVIC_InitTypeDef NVIC_InitStructure;
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
@@ -94,9 +98,9 @@ namespace Anki
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM11, ENABLE);
 
         // Set up clock to multiplex the LEDs - must keep above 100Hz to hide flicker
-        // 173Hz = 90MHz/8 eyes/(255^2)/(Prescaler+1) - about 1600 CPU cycles/Hz (8-32 IRQs)
-        TIM_TimeBaseStructure.TIM_Prescaler = 0;
-        TIM_TimeBaseStructure.TIM_Period = 1000;  // Take a second before starting
+        // 98Hz = 90MHz/2 eyes/(255^2)/(Prescaler+1)
+        TIM_TimeBaseStructure.TIM_Prescaler = 6;
+        TIM_TimeBaseStructure.TIM_Period = 12857143; // Wait one second before resetting
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseInit(TIM11, &TIM_TimeBaseStructure);
@@ -111,18 +115,18 @@ namespace Anki
         // Route interrupt
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_InitStructure.NVIC_IRQChannel = TIM1_TRG_COM_TIM11_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-        NVIC_Init(&NVIC_InitStructure);      
+        NVIC_Init(&NVIC_InitStructure);
       }
-            
+
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
         if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
-          m_channels[HW_CHANNELS[led_id]] = color;
-      }      
-      
+          m_channels[HW_CHANNELS[led_id]].asColor = color;
+      }
+
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state)
       {
@@ -137,58 +141,74 @@ namespace Anki
 
 // This interrupt runs thousands of times a second to create a steady image on the face LEDs
 // It must be high priority - incorrect priorities and disable_irq cause flicker!
-// Please keep this code optimized - avoid function calls and loops 
+// Please keep this code optimized - avoid function calls and loops
 extern "C" void TIM1_TRG_COM_TIM11_IRQHandler(void)
 {
-  using namespace Anki::Cozmo::HAL;  
-  static u8 s_color[4];     // Cache the current color, since mid-cycle changes cause flicker
-  static u8 s_which = 0;    // Which LED to light
-  static u8 s_now = 0;      // The current 'time' in the per-LED PWM cycle (0xff = full bright)
-
+  using namespace Anki::Cozmo::HAL;
+  static ColorValue s_color[4];     // Cache the current color, since mid-cycle changes cause flicker
+  static u8  s_which = 0;    // Which LED to light
+  static u8  s_now   = 0;      // The current 'time' in the per-LED PWM cycle (0xff = full bright)
+  const u8  NUM_COLOR_GPIO = NUM_COLOR_CHANNELS * 3;
+  u32 howlong;
+  u8 nexttime;
+  u8 i;
+  
   // If this is the end of the last LED, switch to the next LED
   if (0 == s_now)
   {
-    // Advance to next LED, or reset to beginning on first LED
-    s_which = (s_which + 1) & CHANNEL_MASK;
-    if (0 == s_which)
-      ; //XXX GPIO_SET(GPIO_EYERST, PIN_EYERST);
+    if (s_which == 0)
+    {
+      // Select eye 1
+      GPIO_SET(  GPIO_EYE2nEN, PIN_EYE2nEN);
+      GPIO_RESET(GPIO_EYE1nEN, PIN_EYE1nEN);
+      // Cache the new colors for this eye
+      s_color[0] = m_channels[0];
+      s_color[1] = m_channels[1];
+      s_color[2] = m_channels[2];
+      s_color[3] = m_channels[3];
+      s_which = 1; // Next time do other eye.
+    }
     else
-      ; //XXX GPIO_SET(GPIO_EYECLK, PIN_EYECLK);   
-    
-    // Point to the beginning of the next light with everything turned off
-    ; //XXX GPIO_SET(GPIO_COLORS, PIN_RED | PIN_GREEN | PIN_BLUE);    
-    *((int*)s_color) = m_channels[s_which];   // Cache the new color
+    {
+      // Select eye 2
+      GPIO_SET(  GPIO_EYE1nEN, PIN_EYE1nEN);
+      GPIO_RESET(GPIO_EYE2nEN, PIN_EYE2nEN);
+      // Cache the colors for this eye
+      s_color[0] = m_channels[4];
+      s_color[1] = m_channels[5];
+      s_color[2] = m_channels[6];
+      s_color[3] = m_channels[7];
+      s_which = 0; // Next time do other eye
+    }  
+
+    // Turn everything off
+    for (i=0; i<NUM_COLOR_GPIO; ++i)
+    { // Concatination hack
+      GPIO_SET(RED_GPIO[i], RED_PIN[i]);
+    }
     s_now = 255;
   }
-    
+
   // If the LED is due to turn, turn it on - if not, see if it is next to turn on
-  u8 nexttime = 0;
-  if (s_now == s_color[CH_BLUE])
-    ; //XXX GPIO_RESET(GPIO_COLORS, PIN_BLUE);
-  else if (s_color[CH_BLUE] < s_now)
-    nexttime = s_color[CH_BLUE];
-  
-  if (s_now == s_color[CH_GREEN])
-    ; //XXX GPIO_RESET(GPIO_COLORS, PIN_GREEN);
-  else if (s_color[CH_GREEN] < s_now && s_color[CH_GREEN] > nexttime)
-    nexttime = s_color[CH_GREEN];
-  
-  if (s_now == s_color[CH_RED])
-    ; //XXX GPIO_RESET(GPIO_COLORS, PIN_RED);
-  else if (s_color[CH_RED] < s_now && s_color[CH_RED] > nexttime)
-    nexttime = s_color[CH_RED];
-    
+  nexttime = 0;
+  for (i=0; i<NUM_COLOR_CHANNELS; ++i)
+  {
+    if (s_now == s_color[i].asLEDs[CH_BLUE]) GPIO_RESET(BLU_GPIO[i], BLU_PIN[i]);
+    else if (s_color[i].asLEDs[CH_BLUE] < s_now) nexttime = s_color[i].asLEDs[CH_BLUE];
+
+    if (s_now == s_color[i].asLEDs[CH_GREEN]) GPIO_RESET(GRN_GPIO[i], GRN_PIN[i]);
+    else if (s_color[i].asLEDs[CH_GREEN] < s_now && s_color[i].asLEDs[CH_GREEN] > nexttime) nexttime = s_color[i].asLEDs[CH_GREEN];
+
+    if (s_now == s_color[i].asLEDs[CH_RED]) GPIO_RESET(RED_GPIO[i], RED_PIN[i]);
+    else if (s_color[i].asLEDs[CH_RED] < s_now && s_color[i].asLEDs[CH_RED] > nexttime) nexttime = s_color[i].asLEDs[CH_RED];
+  }
   // Figure out how many cycles to wait before the next color turns on
   // Gamma correction requires us to use the square of intensity here (linear PWM = RGB^2)
-  int howlong = (s_now * s_now) - (nexttime * nexttime);  // Keep all 16-bits, since 1 is a valid result
+  howlong = (s_now * s_now) - (nexttime * nexttime);  // Keep all 16-bits, since 1 is a valid result
   s_now = nexttime;    // Next time we get an interrupt, now will be nexttime!
-
+  
   // Schedule the next timer interrupt
   TIM11->SR = 0;        // Acknowledge interrupt
   TIM11->ARR = howlong; // Next time to trigger
   TIM11->CR1 = TIM_CR1_CEN | TIM_CR1_URS | TIM_CR1_OPM; // Fire off one pulse
-
-  // In case we just pulsed EYERST or EYECLK, let them low again
-  ; //XXX GPIO_RESET(GPIO_EYERST, PIN_EYERST);
-  ; //XXX GPIO_RESET(GPIO_EYECLK, PIN_EYECLK);
 }
