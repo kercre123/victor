@@ -75,17 +75,19 @@ extern GlobalDataToBody g_dataToBody;
   const u8 ENCODER_HEADA_PIN = 11;   // M2/Head on schematic
   const u8 ENCODER_HEADB_PIN = 10;
   
-  // Given a gear ratio of 283.5:1 and 88mm wheel circumference and 4 encoder
+  // Encoder scaling reworked for Cozmo 3
+  
+  // Given a gear ratio of 340.2:1 and 88mm wheel circumference and 2 encoder
   // ticks per revolution, we compute the meters per tick as:
-  const Fixed METERS_PER_TICK = TO_FIXED(0.088 / (283.5 * 4.0));
+  const Fixed METERS_PER_TICK = TO_FIXED((0.5 * 0.088) / 340.2);
   
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
   const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 729.0);
   
-  // Given a gear ratio of 108:1 and 8 encoder ticks per revolution, we
+  // Given a gear ratio of 324:1 and 8 encoder ticks per revolution, we
   // compute the radians per tick on the head as:
-  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 108.0);
+  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
   
   // If no encoder activity for 200ms, we may as well be stopped
   const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
