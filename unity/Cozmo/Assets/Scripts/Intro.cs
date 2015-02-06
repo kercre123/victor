@@ -80,7 +80,7 @@ public class Intro : MonoBehaviour {
 			}
 			else {
 				connecting = true;
-				lastIp = ip.text;
+				SaveData();
 				CurrentRobotID = idInteger;
 				hackWait = Time.time + 5.0f;
 				errorText = "Connecting...";
@@ -90,7 +90,16 @@ public class Intro : MonoBehaviour {
 		error.text = errorText;
 	}
 
+	protected void SaveData()
+	{
+		lastIp = ip.text;
+		lastId = id.text;
+		lastSimulated = simulated.isOn;
+		lastScene = scene.text;
+	}
+
 	public void FakeTest() {
+		SaveData();
 		Application.LoadLevel(scene.text);
 	}
 
