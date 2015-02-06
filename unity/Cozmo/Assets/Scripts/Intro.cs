@@ -5,6 +5,7 @@ using System.Collections;
 public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField id;
 	[SerializeField] protected InputField ip;
+	[SerializeField] protected InputField scene;
 	[SerializeField] protected Toggle simulated;
 	[SerializeField] protected Button play;
 	[SerializeField] protected Text error;
@@ -14,9 +15,39 @@ public class Intro : MonoBehaviour {
 
 	public static int CurrentRobotID { get; private set; }
 
+	private string lastIp
+	{
+		get { return PlayerPrefs.GetString("LastIP", "127.0.0.1"); }
+
+		set { PlayerPrefs.SetString("LastIP", value); }
+	}
+
+	private string lastId
+	{
+		get { return PlayerPrefs.GetString("LastID", "1"); }
+		
+		set { PlayerPrefs.SetString("LastID", value); }
+	}
+
+	private bool lastSimulated
+	{
+		get { return PlayerPrefs.GetInt("LastSimulated", 1) == 1; }
+		
+		set { if(value) { PlayerPrefs.SetInt("LastSimulated", 1); } else { PlayerPrefs.SetInt("LastSimulated", 0); } }
+	}
+
+	private string lastScene
+	{
+		get { return PlayerPrefs.GetString("LastScene", "ControlSchemeTest"); }
+		
+		set { PlayerPrefs.SetString("LastScene", value); }
+	}
+
 	protected void Awake() {
-		play.onClick.AddListener(Play);
-		ip.text = PlayerPrefs.GetString("LastIP", "127.0.0.1");
+		ip.text = lastIp;
+		id.text = lastId;
+		simulated.isOn = lastSimulated;
+		scene.text = lastScene;
 	}
 
 	protected void Update() {
@@ -26,12 +57,12 @@ public class Intro : MonoBehaviour {
 				error.text = "";
 				//RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
 
-				Application.LoadLevel("ControlSchemeTest");
+				Application.LoadLevel(scene.text);
 			}
 		}
 	}
 
-	protected void Play() {
+	public void Play() {
 		CurrentRobotID = 0;
 
 		string errorText = null;
@@ -49,7 +80,7 @@ public class Intro : MonoBehaviour {
 			}
 			else {
 				connecting = true;
-				PlayerPrefs.SetString("LastIP", ip.text);
+				lastIp = ip.text;
 				CurrentRobotID = idInteger;
 				hackWait = Time.time + 5.0f;
 				errorText = "Connecting...";
@@ -60,7 +91,7 @@ public class Intro : MonoBehaviour {
 	}
 
 	public void FakeTest() {
-		Application.LoadLevel("ControlSchemeTest");
+		Application.LoadLevel(scene.text);
 	}
 
 }
