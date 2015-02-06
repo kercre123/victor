@@ -20,3 +20,6 @@ add_library(CoreTech_Vision_Robot
 set_target_properties(CoreTech_Vision_Robot PROPERTIES
   FOLDER "CoreTech"#/Robot"
 )
+
+target_link_libraries(CoreTech_Vision_Robot
+  CoreTech_Common_Robot)

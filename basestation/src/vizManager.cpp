@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/polygon_impl.h"
 
 #include "anki/vision/basestation/imageIO.h"
 

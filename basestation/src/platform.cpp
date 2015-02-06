@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 

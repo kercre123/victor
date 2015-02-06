@@ -16,6 +16,7 @@
 #include "anki/vision/basestation/observableObjectLibrary.h"
 
 #include "anki/common/basestation/exceptions.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 
 namespace Anki {

@@ -21,3 +21,6 @@ add_library(CoreTech_Planning_Robot
 set_target_properties(CoreTech_Planning_Robot PROPERTIES
   FOLDER "CoreTech"#/Robot"
 )
+
+target_link_libraries(CoreTech_Planning_Robot
+  CoreTech_Common_Robot)

@@ -23,4 +23,5 @@ set_target_properties(CoreTech_Vision_Basestation PROPERTIES
   
 #target_link_libraries(CoreTech_Vision)
 
-
+target_link_libraries(CoreTech_Vision_Basestation
+  CoreTech_Common_Basestation)

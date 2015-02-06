@@ -386,6 +386,11 @@ namespace Anki {
 
         return RESULT_OK;
       } // computePossiblePoses(from individually-listed points)
+      
+      template Result solveQuartic<float>(const float* factors, //const Array<PRECISION>& factors,  // 1x5
+                                          float* realRoots);
+      template Result solveQuartic<double>(const double* factors, //const Array<PRECISION>& factors,  // 1x5
+                                           double* realRoots);
 
       // Explicit instatiation for single and double precision
       template Result computePossiblePoses<float>(const Point3<float>& worldPoint1,
