@@ -7,8 +7,7 @@ public class TankControls : MonoBehaviour {
 	[SerializeField] Transform robot = null;
 	[SerializeField] SpringSlider sliderLeft = null;
 	[SerializeField] SpringSlider sliderRight = null;
-	[SerializeField] float maxVel = 10f;
-	[SerializeField] float maxTurn = 90f;
+	[SerializeField] float maxTurn = 2f;
 
 	void OnEnable() {
 		//acquire the robot
@@ -22,13 +21,17 @@ public class TankControls : MonoBehaviour {
 		float left = sliderLeft.value;
 		float right = sliderRight.value;
 
+		if(Intro.CurrentRobotID != 0) {
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, left * RobotEngineManager.MAX_WHEEL_SPEED, right * RobotEngineManager.MAX_WHEEL_SPEED);
+			return;
+		}
 
-		float speed = (left + right) * 0.5f * maxVel;
+		//no robot, fake it in unity visualization
+		float speed = (left + right) * 0.5f * RobotEngineManager.MAX_WHEEL_SPEED;
 		float turn = (left - right) * 0.5f * maxTurn;
 
 		float turnThisFrame = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(turn) * maxTurn);
-		if(turn < 0f)
-			turnThisFrame = -turnThisFrame;
+		if(turn < 0f) turnThisFrame = -turnThisFrame;
 		robot.rotation *= Quaternion.AngleAxis(turnThisFrame, robot.up);
 		
 		Vector3 idealMove = robot.forward * speed;

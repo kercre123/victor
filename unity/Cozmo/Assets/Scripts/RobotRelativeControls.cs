@@ -5,8 +5,16 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	[SerializeField] Transform robot = null;
 	[SerializeField] Joystick moveStick = null;
-	[SerializeField] float maxVel = 10f;
+
 	[SerializeField] float maxTurn = 90f;
+
+	Vector2 inputs = Vector2.zero;
+	Vector2 lastInputs = Vector2.zero;
+	float timeSinceLastCommand = 0f;
+	float refreshTime = 0.1f;
+
+	float leftWheelSpeed = 0f;
+	float rightWheelSpeed = 0f;
 
 	void OnEnable() {
 		//acquire the robot
@@ -14,33 +22,59 @@ public class RobotRelativeControls : MonoBehaviour {
 		Debug.Log("RobotRelativeControls OnEnable");
 	}
 
-	void Update() {
-		//take our v-pad control axes and calc translate to robot
-		
-		float x = moveStick.Horizontal;
-		float z = moveStick.Vertical;
+	void FixedUpdate() {
+		timeSinceLastCommand += Time.deltaTime;
 
-		if(x == 0f && z == 0f) {
-
-			x = Input.GetAxis("Horizontal");
-			z = Input.GetAxis("Vertical");
-		}
-
-		if(x == 0f && z == 0f)
+		if(timeSinceLastCommand < refreshTime)
 			return;
 
-		float turn = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(x) * maxTurn);
-		if(x < 0f)
+		timeSinceLastCommand = 0f;
+
+		//take our v-pad control axes and calc translate to robot
+		inputs = new Vector2(moveStick.Horizontal, moveStick.Vertical);
+
+		if(inputs.x == 0f && inputs.y == 0f) {
+			inputs.x = Input.GetAxis("Horizontal");
+			inputs.y = Input.GetAxis("Vertical");
+		}
+
+		if((inputs - lastInputs).magnitude < 0.1f) return;
+		lastInputs = inputs;
+
+		if(Intro.CurrentRobotID != 0) {
+			RobotEngineManager.CalcWheelSpeedsFromBotRelativeInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+			return;
+		}
+
+		//no robot, fake it in unity visualization
+		if(inputs.x == 0f && inputs.y == 0f)
+			return;
+
+
+		
+		float turn = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(inputs.x) * maxTurn);
+		if(inputs.x < 0f)
 			turn = -turn;
+
 		robot.rotation *= Quaternion.AngleAxis(turn, robot.up);
 
-		Vector3 idealMove = robot.forward * z * maxVel;
+		Vector3 idealMove = robot.forward * inputs.y * RobotEngineManager.MAX_WHEEL_SPEED;
 		robot.position += idealMove * Time.deltaTime;
 	}
 
 	void OnDisable() {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
+	}
+
+	void OnGUI() {
+		GUILayout.BeginVertical();
+		GUILayout.Space(100);
+		GUILayout.Label("input("+inputs+")");
+		GUILayout.Label("leftWheelSpeed("+leftWheelSpeed+")");
+		GUILayout.Label("rightWheelSpeed("+rightWheelSpeed+")");
+		GUILayout.EndVertical();
 	}
 
 }

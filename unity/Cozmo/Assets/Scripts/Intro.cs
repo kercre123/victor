@@ -12,18 +12,19 @@ public class Intro : MonoBehaviour {
 	private bool connecting = false;
 	private float hackWait = 0.0f;
 
-	public int CurrentRobotID { get; private set; }
+	public static int CurrentRobotID { get; private set; }
 
 	protected void Awake() {
 		play.onClick.AddListener(Play);
+		ip.text = PlayerPrefs.GetString("LastIP", "127.0.0.1");
 	}
 
 	protected void Update() {
-		if(connecting && Time.time < hackWait) {
+		if(connecting && Time.time > hackWait) {
 			if(RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
 				connecting = false;
 				error.text = "";
-				RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
+				//RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
 
 				Application.LoadLevel("ControlSchemeTest");
 			}
@@ -48,6 +49,7 @@ public class Intro : MonoBehaviour {
 			}
 			else {
 				connecting = true;
+				PlayerPrefs.SetString("LastIP", ip.text);
 				CurrentRobotID = idInteger;
 				hackWait = Time.time + 5.0f;
 				errorText = "Connecting...";
