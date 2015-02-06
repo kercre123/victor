@@ -37,13 +37,13 @@ file(GLOB SOURCE_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.cpp")
 file(GLOB HEADER_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.h")
 
 # BLEManager subdirectory (not on iOS)
-if(ANKI_IOS_BUILD)
-  file(GLOB_RECURSE SOURCE_FILES_BLEMGR "BLEManager/*.m*")
-  file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h")
-else()
+#if(NOT ANKI_IOS_BUILD)
+#  file(GLOB_RECURSE SOURCE_FILES_BLEMGR "BLEManager/*.m*")
+#  file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h”)
+#else()
   set(SOURCE_FILES_BLEMGR )
   set(HEADER_FILES_BLEMGR )
-endif(ANKI_IOS_BUILD)
+#endif(NOT ANKI_IOS_BUILD)
 
 set(PRIVATE_HEADER_FILES 
   ${HEADER_FILES_ROOT} 
