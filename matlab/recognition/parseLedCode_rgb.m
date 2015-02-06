@@ -16,27 +16,30 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     
     spatialBlurSigmas = linspace(2,6,5);
     
-    useBoxFilter = false;
+%     useBoxFilter = false;
     alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation'}
     
     parsingType = 'spatialBlur'; % {'spatialBlur'}
     
     showFigures = true;
+    displayText = false;
     
     knownLedColor = [];
     
-    if useBoxFilter
-        smallBlurKernel = ones(11, 11);
-        smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
-    else
-        smallBlurKernel = fspecial('gaussian',[21,21],6);
-    end
+%     if useBoxFilter
+%         smallBlurKernel = ones(11, 11);
+%         smallBlurKernel = smallBlurKernel / sum(smallBlurKernel(:));
+%     else
+%         smallBlurKernel = fspecial('gaussian',[21,21],6);
+%     end
     
     parseVarargin(varargin);
     
-    images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numFramesToTest, showFigures);
+    images = parseLedCode_captureAllImages(cameraType, filenamePattern, whichImages, processingSize, numFramesToTest, showFigures, displayText);
     
     if isempty(images)
+        whichColors = [];
+        numPositive = [];
         return;
     end
     
@@ -54,21 +57,22 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
         images = alignedImages;
     end % if strcmpu(alignmentType, 'exhaustiveTranslation')
     
-    blurredImages = imfilter(images, smallBlurKernel);
+%     blurredImages = imfilter(images, smallBlurKernel);
+    blurredImages = images;
     
     lightSquareHalfWidth = lightSquareWidth / 2;
     yLimits = round([lightSquareCenter(1)-lightSquareHalfWidth, lightSquareCenter(1)+lightSquareHalfWidth]);
     xLimits = round([lightSquareCenter(2)-lightSquareHalfWidth, lightSquareCenter(2)+lightSquareHalfWidth]);
-
+    
     colorPatches = blurredImages(yLimits(1):yLimits(2), xLimits(1):xLimits(2), :, :);
-
+    
     if strcmpi(parsingType, 'spatialBlur')
         if isempty(knownLedColor)
             [whichColors, numPositive] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas);
         else
             assert(false);
         end
-
+        
         return;
     else % if strcmpi(parsingType, 'spatialBlur')
         assert(false);
@@ -139,7 +143,7 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
         otherColors = [1,2,3];
         otherColors = otherColors(iColor ~= otherColors);
         if bestColors(iColor,ind) < bestColors(otherColors(1),ind) || bestColors(iColor,ind) < bestColors(otherColors(2),ind)
-%             disp('This is an invalid code');
+            %             disp('This is an invalid code');
             codeIsValid = false;
             break;
         end
@@ -170,12 +174,12 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
     end % for iColor = 1:3
     
     % Various validity heuristics
-        
-    % The lowest three points must be contiguous (TODO: is there a counterexample for this?)     
+    
+    % The lowest three points must be contiguous (TODO: is there a counterexample for this?)
     maxBestColors = max(bestColors);
     bestColorsSorted = sortrows([maxBestColors;1:length(maxBestColors)]', 1);
     minInds = double(bestColorsSorted(1:numOffFrames,2));
-
+    
     % Set the min values to color 4 (not RGB)
     colorLabels(bestColorsSorted(1:numOffFrames,2)) = 4;
     
@@ -193,12 +197,12 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
     end
     
     minInds = sort(minInds);
-        
+    
     if minInds(2) ~= (minInds(1)+1) || minInds(2) ~= (minInds(3)-1)
         codeIsValid = false;
     end
     
-    % If any labels are zero, it means that the max labels are not continuous 
+    % If any labels are zero, it means that the max labels are not continuous
     if(min(colorLabels) == 0)
         codeIsValid = false;
     end
@@ -260,14 +264,14 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
         shiftedColorLabelsTmp(inds) = 0;
     end
     
-%     keyboard
-        
-%     highestColors = zeros(size(bestColors,2), 1);
-%     highestColors(bestColors(1,:) > bestColors(2,:) & bestColors(1,:) > bestColors(3,:)) = 1;
-%     highestColors(bestColors(2,:) > bestColors(1,:) & bestColors(2,:) > bestColors(3,:)) = 2;
-%     highestColors(bestColors(3,:) > bestColors(1,:) & bestColors(3,:) > bestColors(2,:)) = 3;
+    %     keyboard
     
-%     clickGui = true;
+    %     highestColors = zeros(size(bestColors,2), 1);
+    %     highestColors(bestColors(1,:) > bestColors(2,:) & bestColors(1,:) > bestColors(3,:)) = 1;
+    %     highestColors(bestColors(2,:) > bestColors(1,:) & bestColors(2,:) > bestColors(3,:)) = 2;
+    %     highestColors(bestColors(3,:) > bestColors(1,:) & bestColors(3,:) > bestColors(2,:)) = 3;
+    
+    %     clickGui = true;
     clickGui = false;
     if clickGui
         parseLedCode_plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);

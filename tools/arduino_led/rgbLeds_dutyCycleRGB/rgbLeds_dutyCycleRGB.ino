@@ -9,7 +9,8 @@ const int numLeds = 3;
 const int ledPins[numLeds] = {31, 33, 35};
 
 const int modulationPeriodMicroseconds = 2000;
-const int modulationOnMicroseconds[numLeds] = {125, 20, 30}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+//const int modulationOnMicroseconds[numLeds] = {125, 30, 30}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+const int modulationOnMicroseconds[numLeds] = {100, 25, 100}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
 
 const int microsecondsPerFrame = 33333;
 const int microsecondPause = microsecondsPerFrame/2; // TODO: pick a good value
@@ -18,6 +19,10 @@ const int totalPeriodMicroseconds = totalPeriodFrames * microsecondsPerFrame; //
 
 int whichLeds[3] = {0, 1, 2};
 int numOnFrames[3] = {5, 5, 2};
+
+// For bHood style car LEDs
+#define LIGHT_ON LOW
+#define LIGHT_OFF HIGH
 
 void setDefaultTimings()
 {
@@ -32,7 +37,7 @@ void setup()
 
   for(int iLed=0; iLed<numLeds; iLed++) {
     pinMode(ledPins[iLed], OUTPUT);
-    digitalWrite(ledPins[iLed], LOW);
+    digitalWrite(ledPins[iLed], LIGHT_OFF);
   }
 } // void setup()
 
@@ -101,7 +106,7 @@ void updateTimings()
 
 static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn) 
 {
-  digitalWrite(whichLedPin, HIGH);
+  digitalWrite(whichLedPin, LIGHT_ON);
   bool ledIsOn = true;
 
   // Inner loop, modulating on and off very quickly, to form a brightness
@@ -116,13 +121,13 @@ static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn)
     }
 
     if(ledIsOn && (deltaTime > numMicrosecondsOn)) {
-      digitalWrite(whichLedPin, LOW);
+      digitalWrite(whichLedPin, LIGHT_OFF);
       ledIsOn = false;
     }
   } // while(true)
 
   if(ledIsOn) {
-    digitalWrite(whichLedPin, LOW);
+    digitalWrite(whichLedPin, LIGHT_OFF);
     ledIsOn = false;
   }
 }
@@ -160,7 +165,7 @@ void loop()
       mainLoopTimeDelta = outerStartTime - ledLoopStartTime;
     } // while(true)
     
-    digitalWrite(curLedPin, LOW);
+    digitalWrite(curLedPin, LIGHT_OFF);
   } // for(int iLed=0; iLed<3; iLed++)
 
   // Finish with dark
