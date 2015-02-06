@@ -19,9 +19,9 @@ namespace Anki
 {
   // Capture a bunch of images efficiently
   // captureTime is the time right between right before the first frame to right after the last frame
-  // NOTE: autoWhitebalance doesn't work on OSX
+  // NOTE: cameraSettingsGui doesn't work on OSX
   // Returns 0 if successful, or a negative number if it fails
-  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, const bool startCaptureImmediately=false, const bool showPreview=true, const bool showCrosshair=true, const bool autoWhitebalance=false);
+  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, bool &wasQuitPressed, const bool startCaptureImmediately=false, const bool showPreview=true, const bool showCrosshair=true, const bool cameraSettingsGui=true);
 }
 
 #endif // #ifndef _CAPTURE_IMAGES_H_

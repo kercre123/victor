@@ -76,10 +76,12 @@ static double GetTimeF64()
 
 namespace Anki
 {
-  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, const bool startCaptureImmediately, const bool showPreview, const bool showCrosshair, const bool autoWhitebalance)
+  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, bool &wasQuitPressed, const bool startCaptureImmediately, const bool showPreview, const bool showCrosshair, const bool cameraSettingsGui)
   {
     const int crosshairBlackHalfWidth = 1;
     const int crosshairWhiteHalfWidth = 0;
+
+    wasQuitPressed = false;
 
     if(numImages < 1 || numImages > 100000) {
       printf("Error: invalid numImages %d\n", numImages);
@@ -110,7 +112,7 @@ namespace Anki
     capture.set(CV_CAP_PROP_FRAME_WIDTH, imageSize.width);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, imageSize.height);
 
-    if(!autoWhitebalance) {
+    if(cameraSettingsGui) {
       capture.set(CV_CAP_PROP_WHITE_BALANCE_BLUE_U, 4000);
       capture.set(CV_CAP_PROP_SETTINGS, 1);
     }
@@ -180,6 +182,7 @@ namespace Anki
             continue;
           }
         } else if((pressedKey & 0xFF) == 'q') {
+          wasQuitPressed = true;
           break;
         }
       }

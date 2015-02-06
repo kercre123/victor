@@ -50,20 +50,49 @@ int main(int argc, char ** argv)
 
   std::vector<cv::Mat> capturedImages;
   double captureTime;
+  bool wasQuitPressed = false;
+  int captureImagesResult;
+  int curFileNumber = 0;
+  bool cameraSettingsGui = true;
+  while(!wasQuitPressed) {
+    // captureTime is the time right between right before the first frame to right after the last frame
+    captureImagesResult = Anki::CaptureImages(cameraId, numImages, imageSize, capturedImages, captureTime, wasQuitPressed, startCaptureImmediately, showPreview, showCrosshair, cameraSettingsGui);
 
-  // captureTime is the time right between right before the first frame to right after the last frame
-  const int result = Anki::CaptureImages(cameraId, numImages, imageSize, capturedImages, captureTime, startCaptureImmediately, showPreview, showCrosshair);
+    printf("Captured %d images at %0.2f FPS. Saving ", static_cast<int>(capturedImages.size()), 1.0 / (captureTime / capturedImages.size()));
 
-  printf("Captured %d images at %0.2f FPS. Saving...\n", static_cast<int>(capturedImages.size()), 1.0 / (captureTime / capturedImages.size()));
+    char filename[1024];
+    while(curFileNumber < 1000000) {
+      snprintf(filename, 1024, filenamePattern, curFileNumber);
 
-  char filename[1024];
-  for(int i=0; i<static_cast<int>(capturedImages.size()); i++) {
-    snprintf(filename, 1024, filenamePattern, i);
-    cv::imwrite(filename, capturedImages[i]);
-  }
+      FILE *file = fopen(filename, "r");
 
-  printf("Saving done.\n");
+      if(file) {
+        fclose(file);
+      } else {
+        break;
+      }
 
-  return result;
+      curFileNumber++;
+    }
+
+    if(curFileNumber == 1000000) {
+      printf("\ncurFileNumber is too large\n");
+      return -10;
+    }
+
+    printf("starting at %s...\n", filename);
+
+    for(int i=0; i<static_cast<int>(capturedImages.size()); i++) {
+      snprintf(filename, 1024, filenamePattern, curFileNumber);
+      cv::imwrite(filename, capturedImages[i]);
+      curFileNumber++;
+    }
+
+    printf("Saving done.\n");
+
+    cameraSettingsGui = false;
+  } // while(!wasQuitPressed)
+
+  return captureImagesResult;
 } // int main()
 #endif // #ifndef ROBOT_HARDWARE
