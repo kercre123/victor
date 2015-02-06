@@ -3,13 +3,12 @@ File: captureImages.cpp
 Author: Peter Barnum
 Created: 2015-01-28
 
-Function to capture images as quickly as possible, when a high and constant frame rate is critical. 
+Function to capture images as quickly as possible, when a high and constant frame rate is critical.
 You should ideally compile this as RelWithDebInfo or Release. It only depends on the OpenCV libraries, not all the normal Anki libraries.
 
 Copyright Anki, Inc. 2015
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
-
 
 #ifndef ROBOT_HARDWARE
 
@@ -58,7 +57,7 @@ static double GetTimeF64()
   // TODO: Fix build error when using this in an iOS build for arm architectures
   gettimeofday(&time, NULL);
 #     endif
-  
+
   // Subtract startSeconds, so the floating point number has reasonable precision
   static long startSeconds = 0;
   if(startSeconds == 0) {
@@ -77,40 +76,45 @@ static double GetTimeF64()
 
 namespace Anki
 {
-  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, const bool startCaptureImmediately, const bool showPreview, const bool showCrosshair)
+  int CaptureImages(const int cameraId, const int numImages, const cv::Size2i imageSize, std::vector<cv::Mat> &capturedImages, double &captureTime, const bool startCaptureImmediately, const bool showPreview, const bool showCrosshair, const bool autoWhitebalance)
   {
     const int crosshairBlackHalfWidth = 1;
     const int crosshairWhiteHalfWidth = 0;
-    
+
     if(numImages < 1 || numImages > 100000) {
       printf("Error: invalid numImages %d\n", numImages);
       return -1;
     }
-    
+
     if(!startCaptureImmediately && !showPreview) {
       printf("Error: !startCaptureImmediately && !showPreview\n");
       return -1;
     }
 
     capturedImages.resize(numImages);
-    
+
     if(capturedImages.size() != numImages) {
       printf("Error: Out of memory\n");
       capturedImages.resize(0);
       return -2;
     }
-    
+
     cv::VideoCapture capture(cameraId);
-    
+
     if (!capture.isOpened()) {
       printf("Error: Capture cannot be opened\n");
       capturedImages.resize(0);
       return -3;
     }
-    
+
     capture.set(CV_CAP_PROP_FRAME_WIDTH, imageSize.width);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, imageSize.height);
-    
+
+    if(!autoWhitebalance) {
+      capture.set(CV_CAP_PROP_WHITE_BALANCE_BLUE_U, 4000);
+      capture.set(CV_CAP_PROP_SETTINGS, 1);
+    }
+
     // Capture a few frames to get things started
     for(int i=0; i<5; i++) {
       if(!capture.read(capturedImages[0])) {
@@ -119,26 +123,26 @@ namespace Anki
         return -4;
       }
     }
-    
+
     for(int i=1; i<numImages; i++) {
       //capturedImages[i].create(capturedImages[0].rows, capturedImages[0].cols, capturedImages[0].type());
       capturedImages[0].copyTo(capturedImages[i]);
-      
+
       if(capturedImages[i].rows == 0) {
         printf("Error: Out of memory.\n");
         capturedImages.resize(0);
         return -4;
       }
     }
-    
+
     if(showPreview) {
       cv::namedWindow("Video preview", CV_WINDOW_AUTOSIZE);
     }
-    
+
     const cv::Point2i center((imageSize.width+1) / 2, (imageSize.height+1) / 2);
-    
+
     cv::Mat toShowImage;
-    
+
     double startTime = GetTimeF64();
     bool capturingImages = startCaptureImmediately;
     int curFrame = 0;
@@ -148,24 +152,24 @@ namespace Anki
         capturedImages.resize(curFrame-1);
         return -5;
       }
-      
+
       if(showPreview) {
         if(showCrosshair) {
           capturedImages[curFrame].copyTo(toShowImage);
-          
+
           toShowImage(cv::Rect(0, center.y-crosshairBlackHalfWidth, imageSize.width, 2*crosshairBlackHalfWidth+1)).setTo(0);
           toShowImage(cv::Rect(center.x-crosshairBlackHalfWidth, 0, 2*crosshairBlackHalfWidth+1, imageSize.height)).setTo(0);
-          
+
           toShowImage(cv::Rect(0, center.y-crosshairWhiteHalfWidth, imageSize.width, 2*crosshairWhiteHalfWidth+1)).setTo(255);
           toShowImage(cv::Rect(center.x-crosshairWhiteHalfWidth, 0, 2*crosshairWhiteHalfWidth+1, imageSize.height)).setTo(255);
-          
+
           cv::imshow("Video preview", toShowImage);
         } else {
           cv::imshow("Video preview", capturedImages[curFrame]);
         }
-        
+
         const int pressedKey = cv::waitKey(1);
-        
+
         if((pressedKey & 0xFF) == 'h') {
           printf("Hold 'c' to start capture, or 'q' to quit.\n");
         } else if((pressedKey & 0xFF) == 'c') {
@@ -179,14 +183,14 @@ namespace Anki
           break;
         }
       }
-      
+
       if(capturingImages) {
         curFrame++;
       }
     } // while(curFrame < numImages)
 
     captureTime = GetTimeF64() - startTime;
-    
+
     capturedImages.resize(curFrame);
 
     return 0;
