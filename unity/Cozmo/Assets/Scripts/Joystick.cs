@@ -5,6 +5,10 @@ using UnityEngine.EventSystems;
 public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
 	[SerializeField] RectTransform stick = null;
 	[SerializeField] Vector2 deadZone = new Vector2(0.01f, 0.01f);
+	[SerializeField] float widthInches = 1.5f;
+	[SerializeField] float heightInches = 1.5f;
+
+	//Vector3 anchoredPosition;
 
 	public Vector2 JoystickData {
 		get {
@@ -40,12 +44,25 @@ public class Joystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPoint
 	void Awake() {
 		canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
+		//anchoredPosition = rTrans.anchoredPosition;
+
+		ResizeStickToInches();
 
 		startPosition = stick.position;
 		radius = Mathf.Min(rTrans.sizeDelta.x * canvas.transform.localScale.x, rTrans.sizeDelta.y * canvas.transform.localScale.y) * 0.5f;
 
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
 
+	}
+
+	void ResizeStickToInches() {
+		if(Screen.dpi == 0f)
+			return;
+
+		Vector3 size = rTrans.sizeDelta;
+		size.x = Screen.dpi * widthInches;
+		size.y = Screen.dpi * heightInches;
+		rTrans.sizeDelta = size;
 	}
 
 	void Update() {

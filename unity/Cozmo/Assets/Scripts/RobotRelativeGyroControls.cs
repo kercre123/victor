@@ -7,9 +7,22 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 	[SerializeField] Transform robot = null;
 	[SerializeField] float maxVel = 10f;
 	[SerializeField] float maxTurn = 90f;
+	[SerializeField] Text turnOnlyLabel;
+	[SerializeField] SpringSlider slider;
+
 	float rollStart = 0f;
 	float pitchStart = 0f;
 	ScreenOrientation orientation = ScreenOrientation.Unknown;
+
+	Vector2 inputs = Vector2.zero;
+	Vector2 lastInputs = Vector2.zero;
+	float timeSinceLastCommand = 0f;
+	float refreshTime = 0.1f;
+	
+	float leftWheelSpeed = 0f;
+	float rightWheelSpeed = 0f;
+
+	bool turnOnly = true;
 
 	void OnEnable() {
 		//acquire the robot
@@ -17,71 +30,97 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 		Debug.Log("RobotRelativeGyroControls OnEnable");
 
 		Calibrate();
+
+		turnOnlyLabel.text = "TurnOnly";
+		slider.gameObject.SetActive(true);
 	}
 
-	void Update() {
-		//take our gyro control axes and translate to robot
-		if(!SystemInfo.supportsGyroscope)
+	void FixedUpdate() {
+		timeSinceLastCommand += Time.deltaTime;
+		
+		if(timeSinceLastCommand < refreshTime)
 			return;
-
-		if(orientation != Screen.orientation)
-			Calibrate();
-
+		
+		timeSinceLastCommand = 0f;
+		//take our gyro control axes and translate to robot
+		if(!SystemInfo.supportsGyroscope) return;
+		
+		if(orientation != Screen.orientation) Calibrate();
+		
 		//figure out axes based on screen orientation mode
+		
+		//switch(Screen.orientation) {
+		//	case ScreenOrientation.AutoRotation:
+		//		break;
+		//	case ScreenOrientation.Portrait:
+		//		break;
+		//	case ScreenOrientation.PortraitUpsideDown:
+		//		break;
+		//	//case ScreenOrientation.Landscape: //same value as landscapeleft
+		//	case ScreenOrientation.LandscapeLeft:
+		//		break;
+		//	case ScreenOrientation.LandscapeRight:
+		//		break;
+		//}
 
-		switch(Screen.orientation) {
-			case ScreenOrientation.AutoRotation:
-				break;
-			case ScreenOrientation.Portrait:
-				break;
-			case ScreenOrientation.PortraitUpsideDown:
-				break;
-		//case ScreenOrientation.Landscape: //same value as landscapeleft
-			case ScreenOrientation.LandscapeLeft:
-				break;
-			case ScreenOrientation.LandscapeRight:
-				break;
-		}
-
-		float x = 0f;
-		float z = 0f;
-
+		inputs = Vector2.zero;
+		
 		Quaternion deviceRot = Input.gyro.attitude;
 		Vector3 euler = deviceRot.eulerAngles;
-
+		
 		float roll = euler.z - rollStart;
 		while(roll < -180f)
 			roll += 360f;
 		while(roll > 180f)
 			roll -= 360f;
 
-		float pitch = euler.y - pitchStart;
-		while(pitch < -180f)
-			pitch += 360f;
-		while(pitch > 180f)
-			pitch -= 360f;
-
-		x = Mathf.Clamp01((Mathf.Abs(roll) - 10f) / 45f);
+		inputs.x = Mathf.Clamp01((Mathf.Abs(roll) - 10f) / 45f);
 		if(roll >= 0f)
-			x = -x;
+			inputs.x = -inputs.x;
 
-		z = Mathf.Clamp01((Mathf.Abs(pitch) - 10f) / 45f);
-		if(pitch < 0f)
-			z = -z;
+		float pitch = 0f;
 
-		Debug.Log("RobotRelativeControls gyro euler(" + euler + ") roll(" + roll + ") pitch(" + pitch + ") z(" + z + ") x(" + x + ")");
+		if(turnOnly) {
+			inputs.y = slider.value;
+		}
+		else {
 
-		if(x == 0f && z == 0f)
+			pitch = euler.y - pitchStart;
+			while(pitch < -180f)
+				pitch += 360f;
+			while(pitch > 180f)
+				pitch -= 360f;
+
+			inputs.y = Mathf.Clamp01((Mathf.Abs(pitch) - 10f) / 45f);
+			if(pitch < 0f)
+				inputs.y = -inputs.y;
+		}
+		
+		Debug.Log("RobotRelativeControls gyro euler(" + euler + ") roll(" + roll + ") pitch(" + pitch + ") x(" + inputs.x + ") y(" + inputs.y + ")");
+
+		
+		if((inputs - lastInputs).magnitude < 0.1f) return;
+		lastInputs = inputs;
+		
+		if(Intro.CurrentRobotID != 0) {
+			RobotEngineManager.CalcWheelSpeedsFromBotRelativeInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 			return;
-
-		float turn = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(x) * maxTurn);
-		if(x < 0f)
+		}
+		
+		//no robot, fake it in unity visualization
+		if(inputs.x == 0f && inputs.y == 0f)
+			return;
+		
+		float turn = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(inputs.x) * maxTurn);
+		if(inputs.x < 0f)
 			turn = -turn;
 		robot.rotation *= Quaternion.AngleAxis(turn, robot.up);
-
-		Vector3 idealMove = robot.forward * z * maxVel;
+		
+		Vector3 idealMove = robot.forward * inputs.y * maxVel;
 		robot.position += idealMove * Time.deltaTime;
 	}
+
 
 	void OnDisable() {
 		//clean up this controls test if needed
@@ -91,6 +130,9 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 	void OnGUI() {
 		GUILayout.BeginVertical();
 		GUILayout.Space(100);
+		GUILayout.Label("input("+inputs+")");
+		GUILayout.Label("leftWheelSpeed("+leftWheelSpeed+")");
+		GUILayout.Label("rightWheelSpeed("+rightWheelSpeed+")");
 		GUILayout.Label("Gyroscope attitudeEulers : " + Input.gyro.attitude.eulerAngles);
 		GUILayout.Label("Gyroscope attitude : " + Input.gyro.attitude);
 		GUILayout.Label("Gyroscope gravity : " + Input.gyro.gravity);
@@ -112,5 +154,11 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 		Vector3 euler = deviceRot.eulerAngles;
 		rollStart = euler.z;
 		pitchStart = euler.y;
+	}
+
+	public void TurnOnlyToggle() {
+		turnOnly = !turnOnly;
+		slider.gameObject.SetActive(turnOnly);
+		turnOnlyLabel.text = turnOnly ? "TurnOnly" : "FullGyro";
 	}
 }

@@ -53,4 +53,11 @@ public class ControlSchemeTester : MonoBehaviour {
 		Screen.orientation = orientation;
 		orientationLabel.text = orientation.ToString();
 	}
+
+	void OnGUI() {
+		GUILayout.BeginArea(new Rect(Screen.width-300f, 300f, 300f, 300f));
+		GUILayout.Label("RobotID("+Intro.CurrentRobotID+")");
+		GUILayout.EndArea();
+	}
+
 }
