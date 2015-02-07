@@ -4,7 +4,50 @@
 
 #include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
 
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+// Let the UI know that a robot is advertising as available
+START_MESSAGE_DEFINITION(G2U_RobotAvailable, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+END_MESSAGE_DEFINITION(G2U_RobotAvailable)
+
+START_MESSAGE_DEFINITION(G2U_UiDeviceAvailable, 1)
+ADD_MESSAGE_MEMBER(u32, deviceID)
+END_MESSAGE_DEFINITION(G2U_UiDeviceAvailable)
+
+START_MESSAGE_DEFINITION(G2U_RobotConnected, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(u8, successful)
+END_MESSAGE_DEFINITION(G2U_RobotConnected)
+
+START_MESSAGE_DEFINITION(G2U_UiDeviceConnected, 1)
+ADD_MESSAGE_MEMBER(u32, deviceID)
+ADD_MESSAGE_MEMBER(u8, successful)
+END_MESSAGE_DEFINITION(G2U_UiDeviceConnected)
+
+/*
+START_MESSAGE_DEFINITION(G2U_Bogus, 1)
+END_MESSAGE_DEFINITION(G2U_Bogus)
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  VISION  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Full QVGA Image from a specifed Robot
+START_MESSAGE_DEFINITION(G2U_RobotImage_320x240, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, 320*240)
+END_MESSAGE_DEFINITION(G2U_RobotImage_320x240)
+
+// Full VGA Image from a specifed Robot
+START_MESSAGE_DEFINITION(G2U_RobotImage_640x480, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, 640*480)
+END_MESSAGE_DEFINITION(G2U_RobotImage_640x480)
 
 // ObjectVisionMarker for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
@@ -29,6 +72,14 @@ ADD_MESSAGE_MEMBER(float, x_lowerRight)
 ADD_MESSAGE_MEMBER(float, y_lowerRight)
 END_MESSAGE_DEFINITION(G2U_DeviceDetectedVisionMarker)
 
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  SOUND  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Note: these should go away when the robot can play its own sounds and doesn't
+//       rely on the phone to do it.
+
 START_MESSAGE_DEFINITION(G2U_PlaySound, 1)
 ADD_MESSAGE_MEMBER_ARRAY(char, soundFilename, 128)
 ADD_MESSAGE_MEMBER(u8, numLoops)
@@ -37,27 +88,3 @@ END_MESSAGE_DEFINITION(G2U_PlaySound)
 
 START_MESSAGE_DEFINITION(G2U_StopSound, 1)
 END_MESSAGE_DEFINITION(G2U_StopSound)
-
-/*
-START_MESSAGE_DEFINITION(G2U_Bogus, 1)
-END_MESSAGE_DEFINITION(G2U_Bogus)
-*/
-
-// Let the UI know that a robot is advertising as available
-START_MESSAGE_DEFINITION(G2U_RobotAvailable, 1)
-ADD_MESSAGE_MEMBER(u32, robotID)
-END_MESSAGE_DEFINITION(G2U_RobotAvailable)
-
-START_MESSAGE_DEFINITION(G2U_UiDeviceAvailable, 1)
-ADD_MESSAGE_MEMBER(u32, deviceID)
-END_MESSAGE_DEFINITION(G2U_UiDeviceAvailable)
-
-START_MESSAGE_DEFINITION(G2U_RobotConnected, 1)
-ADD_MESSAGE_MEMBER(u32, robotID)
-ADD_MESSAGE_MEMBER(u8, successful)
-END_MESSAGE_DEFINITION(G2U_RobotConnected)
-
-START_MESSAGE_DEFINITION(G2U_UiDeviceConnected, 1)
-ADD_MESSAGE_MEMBER(u32, deviceID)
-ADD_MESSAGE_MEMBER(u8, successful)
-END_MESSAGE_DEFINITION(G2U_UiDeviceConnected)
