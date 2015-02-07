@@ -9,8 +9,11 @@ const int numLeds = 3;
 const int ledPins[numLeds] = {31, 33, 35};
 
 const int modulationPeriodMicroseconds = 2000;
-//const int modulationOnMicroseconds[numLeds] = {125, 30, 30}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
-const int modulationOnMicroseconds[numLeds] = {100, 25, 100}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+
+// percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+//const int modulationOnMicroseconds[numLeds] = {125, 30, 30}; 
+//const int modulationOnMicroseconds[numLeds] = {10, 10, 10};
+const int modulationOnMicroseconds[numLeds] = {125, 60, 100};
 
 const int microsecondsPerFrame = 33333;
 const int microsecondPause = microsecondsPerFrame/2; // TODO: pick a good value
