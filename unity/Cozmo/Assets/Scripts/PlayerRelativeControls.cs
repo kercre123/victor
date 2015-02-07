@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerRelativeControls : MonoBehaviour {
 
 	[SerializeField] Transform robot = null;
-	[SerializeField] Joystick moveStick = null;
+	[SerializeField] VirtualStick moveStick = null;
 	[SerializeField] float maxVel = 10f;
 	[SerializeField] float maxTurn = 90f;
 
@@ -13,8 +13,8 @@ public class PlayerRelativeControls : MonoBehaviour {
 	float timeSinceLastCommand = 0f;
 	float refreshTime = 0.1f;
 	
-	float leftWheelSpeed = 0f;
-	float rightWheelSpeed = 0f;
+	//float leftWheelSpeed = 0f;
+	//float rightWheelSpeed = 0f;
 
 	void OnEnable() {
 		//acquire the robot

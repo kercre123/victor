@@ -5,8 +5,8 @@ using System.Collections;
 public class TankControls : MonoBehaviour {
 
 	[SerializeField] Transform robot = null;
-	[SerializeField] SpringSlider sliderLeft = null;
-	[SerializeField] SpringSlider sliderRight = null;
+	[SerializeField] VirtualStick sliderLeft = null;
+	[SerializeField] VirtualStick sliderRight = null;
 	[SerializeField] float maxTurn = 2f;
 
 	void OnEnable() {
@@ -18,8 +18,8 @@ public class TankControls : MonoBehaviour {
 	void Update() {
 
 		//take our two control axes and if changed, send them to the robot
-		float left = sliderLeft.value;
-		float right = sliderRight.value;
+		float left = sliderLeft.Vertical;
+		float right = sliderRight.Vertical;
 
 		if(Intro.CurrentRobotID != 0) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, left * RobotEngineManager.MAX_WHEEL_SPEED, right * RobotEngineManager.MAX_WHEEL_SPEED);
