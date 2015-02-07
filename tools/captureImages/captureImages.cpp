@@ -173,7 +173,7 @@ namespace Anki
         const int pressedKey = cv::waitKey(1);
 
         if((pressedKey & 0xFF) == 'h') {
-          printf("Hold 'c' to start capture, or 'q' to quit.\n");
+          printf("Hold 'c' to start capture, 's' to change camera settings (windows only), or 'q' to quit.\n");
         } else if((pressedKey & 0xFF) == 'c') {
           if(!capturingImages) {
             capturingImages = true;
@@ -181,6 +181,8 @@ namespace Anki
             startTime = GetTimeF64();
             continue;
           }
+        } else if ((pressedKey & 0xFF) == 's') {
+          capture.set(CV_CAP_PROP_SETTINGS, 1);
         } else if((pressedKey & 0xFF) == 'q') {
           wasQuitPressed = true;
           break;

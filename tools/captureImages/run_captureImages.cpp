@@ -19,10 +19,11 @@ int main(int argc, char ** argv)
   bool startCaptureImmediately = false;
   bool showPreview = true;
   bool showCrosshair = true;
+  bool captureOnce = false;
 
   if(argc == 1) {
-    printf("Running with default parameters %d %d (%d,%d) %s %d %d %d\n", cameraId, numImages, imageSize.width, imageSize.height, filenamePattern, startCaptureImmediately, showPreview, showCrosshair);
-  } else if(argc >= 6 && argc <= 9) {
+    printf("Running with default parameters %d %d (%d,%d) %s %d %d %d %d\n", cameraId, numImages, imageSize.width, imageSize.height, filenamePattern, startCaptureImmediately, showPreview, showCrosshair, captureOnce);
+  } else if(argc >= 6 && argc <= 10) {
     char * pEnd;
 
     cameraId = strtol(argv[1], &pEnd, 10);
@@ -39,12 +40,15 @@ int main(int argc, char ** argv)
 
     if(argc >= 9)
       showCrosshair = static_cast<bool>(strtol(argv[8], &pEnd, 10));
+
+    if(argc >= 10)
+      captureOnce =  static_cast<bool>(strtol(argv[9], &pEnd, 10));
   } else {
     printf("Usage:\n"
-      "run_captureImages cameraId numImages imageWidth imageHeight filenamePattern <startCaptureImmediately> <showPreview> <showCrosshair>\n"
+      "run_captureImages cameraId numImages imageWidth imageHeight filenamePattern <startCaptureImmediately> <showPreview> <showCrosshair> <captureOnce> \n"
       "Examples:\n"
       "run_captureImages 1 100 640 480 \"/Users/pbarnum/tmp/images_%%05d.png\"\n"
-      "run_captureImages 1 100 640 480 \"/Users/pbarnum/tmp/images_%%05d.png\" 0 1 1\n");
+      "run_captureImages 1 100 640 480 \"/Users/pbarnum/tmp/images_%%05d.png\" 0 1 1 1s\n");
     return -1;
   }
 
@@ -89,6 +93,10 @@ int main(int argc, char ** argv)
     }
 
     printf("Saving done.\n");
+
+    if(captureOnce) {
+      break;
+    }
 
     cameraSettingsGui = false;
   } // while(!wasQuitPressed)
