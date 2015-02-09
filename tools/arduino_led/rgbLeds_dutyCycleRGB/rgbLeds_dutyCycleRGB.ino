@@ -87,7 +87,7 @@ void updateTimings()
       isValid = false;
     }
     
-    snprintf(buffer, bufferLength, "%d,%d %d,%d %d,%d", local_whichLeds[0], local_numOnFrames[0], local_whichLeds[1], local_numOnFrames[1], local_whichLeds[2], local_numOnFrames[2]);
+    snprintf(buffer, bufferLength, "%d,%d,%d,%d,%d,%d", local_whichLeds[0], local_numOnFrames[0], local_whichLeds[1], local_numOnFrames[1], local_whichLeds[2], local_numOnFrames[2]);
     Serial.println(buffer);
 
     if(!isValid) {
