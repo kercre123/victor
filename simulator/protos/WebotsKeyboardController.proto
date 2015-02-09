@@ -33,6 +33,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 fd_minObjectWidth 30
   field SFInt32 fd_maxObjectHeight 240
   field SFInt32 fd_maxObjectWidth 320
+
+  # Test mode params
+  field SFInt32 dt_flags 1
+  field SFInt32 dt_wheel_power 20
 ]
 {
 Supervisor {
