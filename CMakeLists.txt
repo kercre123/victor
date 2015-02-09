@@ -44,6 +44,9 @@ if(ANKI_IOS_BUILD)
   
 else()
   
+  #if(APPLE)
+  #  set(BUILD_SHARED_LIBS ON)
+  #endif(APPLE)
   ankiProject(CozmoGame)
     
 endif(ANKI_IOS_BUILD)
