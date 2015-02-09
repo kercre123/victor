@@ -62,6 +62,11 @@ ADD_MESSAGE_MEMBER(u8, robotID)
 ADD_MESSAGE_MEMBER(u8, isSimulated)
 END_MESSAGE_DEFINITION(U2G_ForceAddRobot)
 
+// Heartbeat
+START_MESSAGE_DEFINITION(U2G_Heartbeat, 1)
+ADD_MESSAGE_MEMBER(f32, currentTime_sec)
+END_MESSAGE_DEFINITION(U2G_Heartbeat)
+
 // DriveWheels
 START_MESSAGE_DEFINITION(U2G_DriveWheels, 1)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
