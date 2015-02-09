@@ -10,7 +10,7 @@ namespace Anki {
   namespace Cozmo {
     
     // Uncomment if using COZMO v2
-    #define COZMO2
+    //#define COZMO2
 
     /***************************************************************************
      *
