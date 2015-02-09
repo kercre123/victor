@@ -19,11 +19,12 @@
 #include <fstream>
 
 
-#define USE_WEBOTS_TIMESTEP 1
-#if (USE_WEBOTS_TIMESTEP)
+#ifdef USE_WEBOTS
 #include <webots/Supervisor.hpp>
 webots::Supervisor basestationController;
 #else
+#include <chrono>
+#include <thread>
 class BSTimer {
 public:
   BSTimer() {_time = 0;}
@@ -128,7 +129,20 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
+#ifndef USE_WEBOTS
+    auto tick_start = std::chrono::system_clock::now();
+#endif
+    
     cozmoGame.Update(basestationController.getTime());
+    
+#ifndef USE_WEBOTS
+    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
+    if (ms_left < std::chrono::milliseconds(0)) {
+      PRINT_NAMED_WARNING("EngineHeartbeat.overtime", "over by %d", -ms_left);
+    }
+    std::this_thread::sleep_for(ms_left);
+#endif
+    
   } // while still stepping
   
   return 0;
