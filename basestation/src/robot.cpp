@@ -179,7 +179,12 @@ namespace Anki {
 
         VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
                                            Anki::NamedColors::GREEN,
+                                           "speed L: %4d  R: %4d mm/s\n"
                                            "prox: (%2u, %2u, %2u) %d%d%d",
+                                           
+                                           (int)msg.lwheel_speed_mmps,
+                                           (int)msg.rwheel_speed_mmps,
+                                           
                                            GetProxSensorVal(PROX_LEFT),
                                            GetProxSensorVal(PROX_FORWARD),
                                            GetProxSensorVal(PROX_RIGHT),
