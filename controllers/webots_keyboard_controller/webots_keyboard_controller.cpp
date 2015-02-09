@@ -10,6 +10,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/game/comms/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
