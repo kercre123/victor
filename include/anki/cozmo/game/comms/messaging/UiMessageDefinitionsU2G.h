@@ -54,6 +54,14 @@ START_MESSAGE_DEFINITION(U2G_ConnectToUiDevice, 1)
 ADD_MESSAGE_MEMBER(u8, deviceID)
 END_MESSAGE_DEFINITION(U2G_ConnectToUiDevice)
 
+// ForceAddRobot
+// NOTE: This can be removed once physical robots can advertise (e.g. with BLE)
+START_MESSAGE_DEFINITION(U2G_ForceAddRobot, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, ipAddress, 16)
+ADD_MESSAGE_MEMBER(u8, robotID)
+ADD_MESSAGE_MEMBER(u8, isSimulated)
+END_MESSAGE_DEFINITION(U2G_ForceAddRobot)
+
 // DriveWheels
 START_MESSAGE_DEFINITION(U2G_DriveWheels, 1)
 ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)

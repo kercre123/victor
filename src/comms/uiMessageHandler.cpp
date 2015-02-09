@@ -165,6 +165,15 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_ForceAddRobot const& msg)
+    {
+      char ip[16];
+      assert(msg.ipAddress.size() <= 16);
+      std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
+      cozmoEngine_->ForceAddRobot(msg.robotID, ip, msg.isSimulated);
+      return RESULT_OK;
+    }
+    
     Result UiMessageHandler::ProcessMessage(Robot* robot, MessageU2G_DriveWheels const& msg)
     {
       if(robot == nullptr) {
