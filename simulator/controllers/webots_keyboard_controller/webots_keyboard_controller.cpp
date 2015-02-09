@@ -450,9 +450,12 @@ namespace Anki {
                   // p1: flags (See DriveTestFlags)
                   // p2: wheelPowerStepPercent (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
                   // p3: wheelSpeed_mmps (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
-                  p1 = DTF_ENABLE_DIRECT_HAL_TEST | DTF_ENABLE_CYCLE_SPEEDS_TEST;
+                  //p1 = DTF_ENABLE_DIRECT_HAL_TEST | DTF_ENABLE_CYCLE_SPEEDS_TEST;
+                  //p2 = 5;
+                  //p3 = 20;
+                  p1 = root_->getField("dt_flags")->getSFInt32();
                   p2 = 5;
-                  p3 = 20;
+                  p3 = root_->getField("dt_wheel_power")->getSFInt32();
                   break;
                   
                 case TM_LIGHTS:

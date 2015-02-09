@@ -8,7 +8,7 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 	[SerializeField] float maxVel = 10f;
 	[SerializeField] float maxTurn = 90f;
 	[SerializeField] Text turnOnlyLabel;
-	[SerializeField] SpringSlider slider;
+	[SerializeField] VirtualStick stick;
 
 	float rollStart = 0f;
 	float pitchStart = 0f;
@@ -32,7 +32,7 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 		Calibrate();
 
 		turnOnlyLabel.text = "TurnOnly";
-		slider.gameObject.SetActive(true);
+		stick.gameObject.SetActive(true);
 	}
 
 	void FixedUpdate() {
@@ -81,7 +81,7 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 		float pitch = 0f;
 
 		if(turnOnly) {
-			inputs.y = slider.value;
+			inputs.y = stick.Vertical;
 		}
 		else {
 
@@ -158,7 +158,7 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 
 	public void TurnOnlyToggle() {
 		turnOnly = !turnOnly;
-		slider.gameObject.SetActive(turnOnly);
+		stick.gameObject.SetActive(turnOnly);
 		turnOnlyLabel.text = turnOnly ? "TurnOnly" : "FullGyro";
 	}
 }

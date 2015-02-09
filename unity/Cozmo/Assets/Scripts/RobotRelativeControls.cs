@@ -4,7 +4,7 @@ using System.Collections;
 public class RobotRelativeControls : MonoBehaviour {
 
 	[SerializeField] Transform robot = null;
-	[SerializeField] Joystick moveStick = null;
+	[SerializeField] VirtualStick moveStick = null;
 
 	[SerializeField] float maxTurn = 90f;
 
