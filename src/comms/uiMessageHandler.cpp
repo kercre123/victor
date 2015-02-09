@@ -24,6 +24,9 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
+
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"
 #else
