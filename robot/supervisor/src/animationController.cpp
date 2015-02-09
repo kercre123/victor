@@ -30,11 +30,7 @@ namespace AnimationController {
     
     AnimationID_t _currAnimID   = ANIM_IDLE;
     AnimationID_t _queuedAnimID = ANIM_IDLE;
-#if defined(STM32F411xE)
-    ONCHIP  Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
-#else
     OFFCHIP Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
-#endif
     
     s32 _currDesiredLoops   = 0;
     s32 _queuedDesiredLoops = 0;
