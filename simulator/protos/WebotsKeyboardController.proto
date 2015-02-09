@@ -37,6 +37,10 @@ PROTO WebotsKeyboardController [
   # Test mode params
   field SFInt32 dt_flags 1
   field SFInt32 dt_wheel_power 20
+  
+  # Force-add robot options
+  field SFString forceAddIP "192.168.3.34"
+  field SFInt32  forceAddID 1
 ]
 {
 Supervisor {
