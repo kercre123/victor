@@ -154,7 +154,7 @@ function [accuracy, results] = test_rgb()
                 figureIndex = length(parsingTypes)*(iAlignmentType-1) + iParsingType;
                 
                 figureHandle = figure(figureIndex);
-                subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iFilenamePattern);
+                subplotHandle = subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iFilenamePattern);
                 %                 plot(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType})
                 hold off
                 if testUnknownLedColor
@@ -168,6 +168,7 @@ function [accuracy, results] = test_rgb()
                     scatter(1:size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,2), markerSizes2, 'go', 'filled');
                 end
                 
+                set(subplotHandle, 'XTick', [0:10:100]);
                 title(sprintf('FilenamePattern %d', iFilenamePattern))
                 a = axis();
                 axis([a(1:2),-1,numFramesToTest+1]);

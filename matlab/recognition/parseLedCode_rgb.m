@@ -68,7 +68,8 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     
     if strcmpi(parsingType, 'spatialBlur')
         if isempty(knownLedColor)
-            [whichColors, numPositive] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas);
+            findHsvPeak = false;
+            [whichColors, numPositive] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas, findHsvPeak);
         else
             assert(false);
         end
@@ -83,7 +84,7 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     
 end % function parseLedCode_rgb()
 
-function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blurSigmas)
+function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blurSigmas, findHsvPeak)
     
     blurKernels_small = cell(length(blurSigmas), 1);
     blurKernels_large = cell(length(blurSigmas), 1);
@@ -92,41 +93,96 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
         filterWidth = blurSigmas(iBlur) * 4;
         blurKernels_small{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], blurSigmas(iBlur));
         blurKernels_large{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], 2*blurSigmas(iBlur));
-        
+
         blurKernels_outsideRing{iBlur} = blurKernels_large{iBlur} - blurKernels_small{iBlur};
         blurKernels_outsideRing{iBlur}(blurKernels_outsideRing{iBlur} < 0) = 0;
         blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(sum(blurKernels_outsideRing{iBlur}));
     end % for iBlur = 1:length(blurSigmas)
     
-    blurredSize = [size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)];
-    blurredImages_small = zeros(blurredSize, 'uint8');
-    blurredImages_large = zeros(blurredSize, 'uint8');
-    blurredImages_outsideRing = zeros(blurredSize, 'uint8');
-    
-    for iBlur = 1:length(blurSigmas)
-        blurredImages_small(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_small{iBlur});
-        blurredImages_large(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_large{iBlur});
-        blurredImages_outsideRing(:,:,1:3,:,iBlur) = imfilter(colorImages, blurKernels_outsideRing{iBlur});
+    if findHsvPeak
+        hsvImages = zeros(size(colorImages));
+        for i = 1:size(colorImages,4) 
+            hsvImages(:,:,:,i) = rgb2hsv(colorImages(:,:,:,i)); 
+        end
         
-        blurredImages_small(:,:,4,:,iBlur)       = max(blurredImages_small(:,:,1:3,:,iBlur), [], 3);
-        blurredImages_large(:,:,4,:,iBlur)       = max(blurredImages_large(:,:,1:3,:,iBlur), [], 3);
-        blurredImages_outsideRing(:,:,4,:,iBlur) = max(blurredImages_outsideRing(:,:,1:3,:,iBlur), [], 3);
-    end % for iBlur = 1:length(blurSigmas)
-    
-    blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 5, size(colorImages,4), length(blurSigmas)]);
-    blurredImages_inside(:,:,1:4,:,:) = blurredImages_small - blurredImages_outsideRing;
-    blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);
-    blurredImages_inside(blurredImages_inside<0) = 0;
-    
-    blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,5,:,:)), [3,1,2,4]);
-    blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
-    blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
-    peakValue = max(blurredImages_onMax_mean(:));
-    
-    inds = find(blurredImages_onMax_mean == peakValue, 1);
-    [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
-    
-    bestColors = squeeze(blurredImages_small(bestY,bestX, 1:3, :, bestB));
+        blurredSize = [size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)];
+        
+        blurredImages_small = zeros(blurredSize, 'double');
+        blurredImages_large = zeros(blurredSize, 'double');
+        blurredImages_outsideRing = zeros(blurredSize, 'double');
+        
+        for iBlur = 1:length(blurSigmas)
+            blurredImages_small(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_small{iBlur});
+            blurredImages_large(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_large{iBlur});
+            blurredImages_outsideRing(:,:,1:3,:,iBlur) = imfilter(colorImages, blurKernels_outsideRing{iBlur});
+
+            blurredImages_small(:,:,4,:,iBlur)       = max(blurredImages_small(:,:,1:3,:,iBlur), [], 3);
+            blurredImages_large(:,:,4,:,iBlur)       = max(blurredImages_large(:,:,1:3,:,iBlur), [], 3);
+            blurredImages_outsideRing(:,:,4,:,iBlur) = max(blurredImages_outsideRing(:,:,1:3,:,iBlur), [], 3);
+        end % for iBlur = 1:length(blurSigmas)
+        
+        blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 5, size(colorImages,4), length(blurSigmas)]);
+        blurredImages_inside(:,:,1:4,:,:) = blurredImages_small - blurredImages_outsideRing;
+        blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);
+        blurredImages_inside(blurredImages_inside<0) = 0;
+        
+        peakValues = zeros(5, 1);
+        bestYs = zeros(5, 1);
+        bestXs = zeros(5, 1);
+        bestBs = zeros(5, 1);
+        
+        for iChannel = 1:5
+            blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,iChannel,:,:)), [3,1,2,4]);
+            blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
+            blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
+            peakValues(iChannel) = max(blurredImages_onMax_mean(:));
+            
+            inds = find(blurredImages_onMax_mean == peakValues(iChannel), 1);
+            [bestYs(iChannel),bestXs(iChannel),bestBs(iChannel)] = ind2sub(size(blurredImages_onMax_mean), inds);
+        end
+        
+        bestColors = zeros(size(colorImages,4), 4);
+        for iChannel = 1:4
+%             bestColors(:,iChannel) = squeeze(blurredImages_small(bestYs(iChannel), bestXs(iChannel), iChannel, :, bestBs(iChannel)));
+            bestColors(:,iChannel) = squeeze(blurredImages_small(bestYs(1), bestXs(1), iChannel, :, bestBs(1)));
+        end
+        
+%         whichChannel = 1; % hue
+        
+        
+        
+        keyboard
+    else
+        blurredSize = [size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)];
+        blurredImages_small = zeros(blurredSize, 'uint8');
+        blurredImages_large = zeros(blurredSize, 'uint8');
+        blurredImages_outsideRing = zeros(blurredSize, 'uint8');
+
+        for iBlur = 1:length(blurSigmas)
+            blurredImages_small(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_small{iBlur});
+            blurredImages_large(:,:,1:3,:,iBlur)       = imfilter(colorImages, blurKernels_large{iBlur});
+            blurredImages_outsideRing(:,:,1:3,:,iBlur) = imfilter(colorImages, blurKernels_outsideRing{iBlur});
+
+            blurredImages_small(:,:,4,:,iBlur)       = max(blurredImages_small(:,:,1:3,:,iBlur), [], 3);
+            blurredImages_large(:,:,4,:,iBlur)       = max(blurredImages_large(:,:,1:3,:,iBlur), [], 3);
+            blurredImages_outsideRing(:,:,4,:,iBlur) = max(blurredImages_outsideRing(:,:,1:3,:,iBlur), [], 3);
+        end % for iBlur = 1:length(blurSigmas)
+
+        blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 5, size(colorImages,4), length(blurSigmas)]);
+        blurredImages_inside(:,:,1:4,:,:) = blurredImages_small - blurredImages_outsideRing;
+        blurredImages_inside(:,:,5,:,:) = max(blurredImages_inside(:,:,1:3,:,:), [], 3);
+        blurredImages_inside(blurredImages_inside<0) = 0;
+
+        blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,5,:,:)), [3,1,2,4]);
+        blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
+        blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
+        peakValue = max(blurredImages_onMax_mean(:));
+
+        inds = find(blurredImages_onMax_mean == peakValue, 1);
+        [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
+        
+        bestColors = squeeze(blurredImages_small(bestY,bestX, 1:3, :, bestB));
+    end % if findHsvPeak ... else
     
     % Find the best R, G, and B (seeds), then grow them out
     numSamples = size(bestColors,2);

@@ -148,7 +148,11 @@ void loop()
     
     int numOnMicroseconds;
     if(iLed == 2) {
-      numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame - microsecondPause;
+      if(numOnFrames[iLed] * microsecondsPerFrame < microsecondPause) {
+        numOnMicroseconds = 0;
+      } else {
+        numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame - microsecondPause;
+      }
     } else {
       numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame;
     }
