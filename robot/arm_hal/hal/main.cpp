@@ -8,6 +8,8 @@
 
 //#define DO_MOTOR_TESTING
 
+//#define DO_BAUDRATE_TESTING
+
 #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
 OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
 #endif
@@ -129,6 +131,10 @@ int main(void)
   UARTInit();
   printf("UART..");
   GetId();
+  
+#if defined(DO_BAUDRATE_TESTING)
+  while(1) UARTPutChar(0xaa);
+#endif
     
   IMUInit();  // The IMU must be configured before spineport  
   printf("IMU..");
