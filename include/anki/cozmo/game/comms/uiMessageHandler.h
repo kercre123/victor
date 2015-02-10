@@ -82,7 +82,7 @@ namespace Anki {
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
       
       // Fill in the message information lookup table for getting size and
       // ProcesBufferAs_MessageX function pointers according to enumerated
@@ -96,11 +96,11 @@ namespace Anki {
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME UiMessageHandler
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
 #undef MESSAGE_HANDLER_CLASSNAME
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
         {0, 0, 0} // Final dummy entry without comma at end
       };
       
