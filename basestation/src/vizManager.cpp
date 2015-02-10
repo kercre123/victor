@@ -40,6 +40,9 @@ namespace Anki {
     
     Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
     {
+      if(_isInitialized) {
+        Disconnect();
+      }
       
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_INFO("Failed to init VizManager client (%s:%d)\n", udp_host_address, port);
@@ -53,11 +56,15 @@ namespace Anki {
     
     Result VizManager::Disconnect()
     {
-      if (_vizClient.Disconnect()) {
+      if(_isInitialized) {
+        if (_vizClient.Disconnect()) {
+          _isInitialized = false;
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      } else {
         return RESULT_OK;
       }
-      
-      return RESULT_FAIL;
     }
     
     VizManager::VizManager()
