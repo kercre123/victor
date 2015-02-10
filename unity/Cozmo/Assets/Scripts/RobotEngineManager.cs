@@ -10,7 +10,9 @@ public class RobotEngineManager : MonoBehaviour {
 
 	[SerializeField]
 	private TextAsset configuration;
-	
+
+	private static string VisualizerIP = "192.168.17.165";
+
 	private bool engineHostInitialized = false;
 
 	public bool IsHostInitialized {
@@ -45,8 +47,9 @@ public class RobotEngineManager : MonoBehaviour {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
 			return;
 		}
-		
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text);
+		Debug.Log("cozmo_engine_host_create("+VisualizerIP+")");
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text, VisualizerIP);
+
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
 		} else {
@@ -153,7 +156,7 @@ public class RobotEngineManager : MonoBehaviour {
 #endif
 	}
 
-	public const float MAX_WHEEL_SPEED 	= 100f;
+	public const float MAX_WHEEL_SPEED 	= 70f;
 	public const float MAX_ANALOG_RADIUS   = 300f;
 	public const float HALF_PI             = Mathf.PI * 0.5f;
 	public const float wheelDistHalfMM 	= 23.85f; //47.7f / 2.0; // distance b/w the front wheels

@@ -5,6 +5,7 @@ using System.Collections;
 public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField id;
 	[SerializeField] protected InputField ip;
+	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Text schemeLabel;
 	[SerializeField] protected Slider schemeSlider;
 	[SerializeField] protected Slider orientationSlider;
@@ -41,6 +42,13 @@ public class Intro : MonoBehaviour {
 		set { if(value) { PlayerPrefs.SetInt("LastSimulated", 1); } else { PlayerPrefs.SetInt("LastSimulated", 0); } }
 	}
 
+	private string lastVisualizerIp
+	{
+		get { return PlayerPrefs.GetString("LastVisualizerIp", "127.0.0.1"); }
+		
+		set { PlayerPrefs.SetString("LastVisualizerIp", value); }
+	}
+
 	private int lastSceneIndex
 	{
 		get { 
@@ -55,6 +63,9 @@ public class Intro : MonoBehaviour {
 		ip.text = lastIp;
 		id.text = lastId;
 		simulated.isOn = lastSimulated;
+
+		visualizerIP.text = lastVisualizerIp;
+
 		schemeSlider.wholeNumbers = true;
 		schemeSlider.minValue = 0;
 		schemeSlider.maxValue = scenes.Length-1;
@@ -135,6 +146,7 @@ public class Intro : MonoBehaviour {
 		lastIp = ip.text;
 		lastId = id.text;
 		lastSimulated = simulated.isOn;
+		lastVisualizerIp = visualizerIP.text;
 		lastSceneIndex = (int)schemeSlider.value;
 	}
 
