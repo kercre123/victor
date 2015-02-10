@@ -69,6 +69,10 @@ namespace Anki {
       // Send a message to a specified ID
       Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
       
+      // Declare registration functions for message handling callbacks
+#define MESSAGE_DEFINITION_MODE MESSAGE_UI_REG_CALLBACK_METHODS_MODE
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
+      
     protected:
       
       Comms::IComms* comms_;
@@ -81,7 +85,7 @@ namespace Anki {
       Result ProcessPacket(const Comms::MsgPacket& packet);
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
+#define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
 #include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
       
       // Fill in the message information lookup table for getting size and
@@ -89,8 +93,8 @@ namespace Anki {
       // message ID.
       struct {
         u8 priority;
-        u8 size;
-        Result (UiMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+        u16 size;
+        Result (UiMessageHandler::*ProcessPacketAs)(const u8*);
       } lookupTable_[NUM_UI_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
         

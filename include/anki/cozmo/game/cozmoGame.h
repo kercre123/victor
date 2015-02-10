@@ -15,6 +15,8 @@
 #include "anki/common/types.h"
 #include "json/json.h"
 
+#include "anki/cozmo/shared/cozmoTypes.h"
+
 // TODO: Remove dependency on this
 //#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/game/comms/messaging/uiMessages.h"
@@ -57,6 +59,8 @@ namespace Cozmo {
     
     virtual bool Init(const Json::Value& config) = 0;
     
+    Result StartEngine(const Json::Value& config);
+    
     // Ticked with game heartbeat:
     virtual void Update(const float currentTime_sec) = 0;
     
@@ -81,6 +85,8 @@ namespace Cozmo {
     //  (For now, this doesn't work on a client device because its game can't
     //   talk straight to the UI on the device it is running on)
     const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    
+    void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
     
   protected:
     

@@ -118,11 +118,15 @@ int main(int argc, char **argv)
   CozmoGameHost cozmoGame;
   cozmoGame.Init(config);
   
+  // TODO: Wait to receive this from UI (webots keyboard controller)
+  cozmoGame.StartEngine(config);
+  
+  
+  // TODO: Have UI (webots kb controller) send this
   // Force add a robot
   if (FORCE_ADD_ROBOT) {
     cozmoGame.ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
-  }
-  
+  }  
 
   //
   // Main Execution loop: step the world forward forever
