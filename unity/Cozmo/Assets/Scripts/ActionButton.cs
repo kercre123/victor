@@ -40,6 +40,8 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
 	protected void AnimateInChildren()
 	{
+		children.SetActive( true );
+
 		StartCoroutine( _AnimateInChildren() );
 	}
 
@@ -72,6 +74,11 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 		{
 			offset = image.rectTransform.rect.size.y;
 			velocity *= -1f;
+		}
+
+		if( children != null )
+		{
+			children.SetActive( false );
 		}
 	}
 
