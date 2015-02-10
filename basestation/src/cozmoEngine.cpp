@@ -356,19 +356,24 @@ namespace Cozmo {
                                           const char*      robotIP,
                                           bool             robotIsSimulated)
   {
-    // Force add physical robot since it's not registering by itself yet.
-    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
-    forcedRegistrationMsg.id = robotID;
-    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
-    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-    forcedRegistrationMsg.enableAdvertisement = 1;
-    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
-    
-    _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
-    
-    // Mark this robot as force-added so we can deregister it from the advertising
-    // service manually once we connect to it.
-    _forceAddedRobots[robotID] = true;
+    if(_isBasestationStarted) {
+      // Force add physical robot since it's not registering by itself yet.
+      Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+      forcedRegistrationMsg.id = robotID;
+      forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
+      forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+      forcedRegistrationMsg.enableAdvertisement = 1;
+      snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
+      
+      _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
+      
+      // Mark this robot as force-added so we can deregister it from the advertising
+      // service manually once we connect to it.
+      _forceAddedRobots[robotID] = true;
+    } else {
+      PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
+                        "You cannot force-add a robot until the engine is started.\n");
+    }
   }
   
   int CozmoEngineHostImpl::GetNumRobots() const
