@@ -122,19 +122,29 @@ public class Intro : MonoBehaviour {
 			errorText = "You must enter a nonzero id.";
 		}
 		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ip.text)) {
-			errorText = "You must enter an ip address.";
+			errorText = "You must enter a robot ip address.";
 		}
+
+		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(visualizerIP.text)) {
+			errorText = "You must enter a visualizer ip address.";
+		}
+
 		if(string.IsNullOrEmpty(errorText)) {
-			CozmoResult result = RobotEngineManager.instance.ForceAddRobot(idInteger, ip.text, simulated.isOn);
-			if(result != CozmoResult.OK) {
-				errorText = "Error attempting to add robot: " + result.ToString();
-			}
-			else {
-				connecting = true;
-				SaveData();
-				CurrentRobotID = idInteger;
-				hackWait = Time.time + 5.0f;
-				errorText = "Connecting...";
+
+			bool hostCreated = RobotEngineManager.instance.CreateHostWithVisIP(visualizerIP.text);
+
+			if(hostCreated) {
+				CozmoResult result = RobotEngineManager.instance.ForceAddRobot(idInteger, ip.text, simulated.isOn);
+				if(result != CozmoResult.OK) {
+					errorText = "Error attempting to add robot: " + result.ToString();
+				}
+				else {
+					connecting = true;
+					SaveData();
+					CurrentRobotID = idInteger;
+					hackWait = Time.time + 5.0f;
+					errorText = "Connecting...";
+				}
 			}
 		}
 

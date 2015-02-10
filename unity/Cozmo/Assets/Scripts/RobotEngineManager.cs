@@ -11,8 +11,6 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField]
 	private TextAsset configuration;
 
-	private static string VisualizerIP = "192.168.17.165";
-
 	private bool engineHostInitialized = false;
 
 	public bool IsHostInitialized {
@@ -34,29 +32,34 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-#if UNITY_IOS && !UNITY_EDITOR
-
-	void Start()
+	public bool CreateHostWithVisIP(string visIP)
 	{
-		if (engineHostInitialized) {
-			Debug.LogError("Error initializing cozmo host: Host already started.");
-			return;
-		}
+
+#if UNITY_IOS && !UNITY_EDITOR
+//		if (engineHostInitialized) {
+//			Debug.LogError("Error initializing cozmo host: Host already started.");
+//			return true;
+//		}
 
 		if (configuration == null) {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
-			return;
+			return false;
 		}
-		Debug.Log("cozmo_engine_host_create("+VisualizerIP+")");
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text, VisualizerIP);
+		Debug.Log("cozmo_engine_host_create("+visIP+")");
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text, visIP);
 
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
+#endif
+
+		return engineHostInitialized;
 	}
-	
+
+#if UNITY_IOS && !UNITY_EDITOR
+
 	void OnDestroy()
 	{
 		if (engineHostInitialized) {

@@ -43,7 +43,7 @@ public class GyroControls : MonoBehaviour {
 		get { 
 			if(!SystemInfo.supportsGyroscope) return 0f;
 
-			if(Time.frameCount == lastYStamp) return x;
+			if(Time.frameCount == lastYStamp) return y;
 			lastYStamp = Time.frameCount;
 			
 			Quaternion deviceRot = Input.gyro.attitude;
