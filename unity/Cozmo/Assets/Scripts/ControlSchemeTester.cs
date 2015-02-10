@@ -60,4 +60,8 @@ public class ControlSchemeTester : MonoBehaviour {
 		GUILayout.EndArea();
 	}
 
+	public void Exit() {
+		Application.LoadLevel("Shell");
+	}
+
 }

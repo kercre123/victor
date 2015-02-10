@@ -17,7 +17,7 @@ public class RobotRelativeGyroControls : MonoBehaviour {
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
 	float timeSinceLastCommand = 0f;
-	float refreshTime = 0.1f;
+	float refreshTime = 0f;
 	
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;

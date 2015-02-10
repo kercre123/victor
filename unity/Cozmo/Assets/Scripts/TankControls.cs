@@ -17,6 +17,14 @@ public class TankControls : MonoBehaviour {
 
 	void Update() {
 
+		if(sliderLeft.IsPressed && sliderRight.IsPressed) {
+
+			if(sliderLeft.PressedTime < 0.5f && sliderRight.PressedTime > sliderLeft.PressedTime) {
+
+			}
+
+		}
+
 		//take our two control axes and if changed, send them to the robot
 		float left = sliderLeft.Vertical;
 		float right = sliderRight.Vertical;
