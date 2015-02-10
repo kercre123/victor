@@ -417,7 +417,8 @@ namespace Cozmo {
      
     // Update robot comms
     if(_robotComms.IsInitialized()) {
-      _robotComms.Update();
+      // Receive messages but don't send queued messages
+      _robotComms.Update(false);
     }
     
     if(_isListeningForRobots) {
@@ -442,6 +443,9 @@ namespace Cozmo {
       _robotAdvertisementService.Update();
     }
      */
+    
+    // Send messages
+    _robotComms.Update();
     
     return RESULT_OK;
   } // UpdateInternal()

@@ -583,7 +583,9 @@ namespace Anki {
       // Send ping to keep connection alive.
       // TODO: Don't send ping if there are already outgoing messages this tic.
       //       This should probably be done outside of Robot at the end of the basestation tic.
-      SendPing();
+      if (_msgHandler->GetNumMsgsSentThisTic(GetID()) == 0) {
+        SendPing();
+      }
       
       ///////// Update the behavior manager ///////////
       

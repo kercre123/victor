@@ -74,6 +74,10 @@ namespace Anki {
       return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
     }
 
+    u32 RobotMessageHandler::GetNumMsgsSentThisTic(const RobotID_t robotID)
+    {
+      return comms_->GetNumMsgPacketsInSendQueue(robotID);
+    }
     
     Result RobotMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
