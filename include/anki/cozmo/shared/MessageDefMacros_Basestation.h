@@ -63,6 +63,7 @@
 #define MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE   12
 #define MESSAGE_CREATEFROMJSON_LADDER_MODE    13
 #define MESSAGE_STRUCT_DEFINITION_MODE        14
+#define MESSAGE_PROCESS_METHODS_NO_WRAPPERS_MODE 15
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -371,11 +372,25 @@ Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(Robot* robot, const u8* buffer) \
   return ProcessMessage(robot, msg); \
 }
 
-
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__)
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
+
+//
+// This mode is the same as the above, but does not generated the wrapper which
+// takes in the u8* buffer -- and uses a slightly different prototype:
+//
+//  void ProcessMessage(const MessageFooBar& msg);
+//
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_METHODS_NO_WRAPPERS_MODE
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+void ProcessMessage(const GET_MESSAGE_CLASSNAME(__MSG_TYPE__)& msg); \
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
 
 //inline void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(void(*fPtr)(RobotID_t, GET_MESSAGE_CLASSNAME(__MSG_TYPE__) const&))
