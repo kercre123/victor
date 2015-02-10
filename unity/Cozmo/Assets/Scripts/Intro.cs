@@ -6,10 +6,8 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField id;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
-	[SerializeField] protected Text schemeLabel;
-	[SerializeField] protected Slider schemeSlider;
-	[SerializeField] protected Slider orientationSlider;
-	[SerializeField] protected Text orientationLabel;
+	[SerializeField] protected Toggle[] schemeToggles;
+	[SerializeField] protected Toggle[] orientationToggles;
 	[SerializeField] protected Toggle simulated;
 	[SerializeField] protected Button play;
 	[SerializeField] protected Text error;
@@ -18,6 +16,7 @@ public class Intro : MonoBehaviour {
 	private float hackWait = 0.0f;
 
 	private string[] scenes = { "ThumbStick", "ScreenPad", "TwoSliders" };
+	private ScreenOrientation[] orientations = { ScreenOrientation.Portrait, ScreenOrientation.PortraitUpsideDown, ScreenOrientation.LandscapeLeft, ScreenOrientation.LandscapeRight };
 
 	public static int CurrentRobotID { get; private set; }
 
@@ -66,39 +65,34 @@ public class Intro : MonoBehaviour {
 
 		visualizerIP.text = lastVisualizerIp;
 
-		schemeSlider.wholeNumbers = true;
-		schemeSlider.minValue = 0;
-		schemeSlider.maxValue = scenes.Length-1;
-		schemeSlider.value = lastSceneIndex;
-		schemeSlider.onValueChanged.AddListener(SchemeChanged);
-		schemeLabel.text = "ControlScheme: " + scenes[lastSceneIndex];
-		
-		orientationSlider.wholeNumbers = true;
-		orientationSlider.minValue = (int)ScreenOrientation.Portrait;
-		orientationSlider.maxValue = (int)ScreenOrientation.LandscapeRight;
-
-		ScreenOrientation orientation = Screen.orientation;
-		if(orientation == ScreenOrientation.Unknown || orientation == ScreenOrientation.AutoRotation) {
-			orientation = ScreenOrientation.LandscapeLeft;
-			Screen.orientation = orientation;
+		//initialize scheme choices
+		for(int i=0;i<schemeToggles.Length;i++) {
+			schemeToggles[i].isOn = i == lastSceneIndex;
 		}
 
-		orientationSlider.value = (int)Screen.orientation;
-		orientationLabel.text = Screen.orientation.ToString();
-		orientationSlider.onValueChanged.AddListener(OrientationChanged);
+		//initialize orientation choices
+		ScreenOrientation orientation = Screen.orientation;
+		if(orientation == ScreenOrientation.AutoRotation || orientation == ScreenOrientation.Unknown) {
+			orientation = ScreenOrientation.LandscapeLeft;
+			if(!Application.isEditor) Screen.orientation = orientation;
+		}
+
+		for(int i=0;i<orientationToggles.Length;i++) {
+			orientationToggles[i].isOn = orientation == orientations[i];
+		}
 	}
 
-	private void SchemeChanged(float val) {
-		lastSceneIndex = (int)val;
-		schemeLabel.text = "ControlScheme: " + scenes[lastSceneIndex];
+	public void ChooseScheme(int choice) {
+		lastSceneIndex = choice;
+		Debug.Log("ChooseScheme("+choice+")");
 	}
 
-	public void OrientationChanged(float val) {
-		ScreenOrientation orientation = (ScreenOrientation)val;
-		if(orientation >= ScreenOrientation.AutoRotation)
-			orientation = ScreenOrientation.Portrait;
+	public void ChooseOrientation(int choice) {
+		if(Application.isEditor)
+			return;
+		choice = Mathf.Clamp(choice, 0, orientations.Length - 1);
+		ScreenOrientation orientation = (ScreenOrientation)choice;
 		Screen.orientation = orientation;
-		orientationLabel.text = orientation.ToString();
 	}
 
 	protected void Update() {
@@ -106,8 +100,6 @@ public class Intro : MonoBehaviour {
 			if(RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
 				connecting = false;
 				error.text = "";
-				//RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
-
 				Application.LoadLevel(scenes[lastSceneIndex]);
 			}
 		}
@@ -151,13 +143,18 @@ public class Intro : MonoBehaviour {
 		error.text = errorText;
 	}
 
-	protected void SaveData()
-	{
+	protected void SaveData() {
 		lastIp = ip.text;
 		lastId = id.text;
 		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
-		lastSceneIndex = (int)schemeSlider.value;
+
+		for(int i=0;i<schemeToggles.Length;i++) {
+			if(!schemeToggles[i].isOn) continue;
+			lastSceneIndex = i;
+			break;
+		}
+
 	}
 
 	public void FakeTest() {

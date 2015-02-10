@@ -1,19 +1,28 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.EventSystems;
 
+
+[ExecuteInEditMode]
 public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
 	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
+
+	[SerializeField] Image stickImageThrown = null;
+	[SerializeField] Image stickImageNeutral = null;
+
 	[SerializeField] Vector2 deadZone = new Vector2(0.01f, 0.01f);
 
 	[SerializeField] bool clearHorizontal = true;
 	[SerializeField] bool clearVertical = true;
 
-	[SerializeField] float widthInches = 1.5f;
-	[SerializeField] float heightInches = 1.5f;
-	[SerializeField] bool resizeStickNotBG = false;
+	[SerializeField] float bgWidthInches = -1f;
+	[SerializeField] float bgHeightInches = -1f;
+
+	[SerializeField] float stickWidthInches = -1f;
+	[SerializeField] float stickHeightInches = -1f;
 
 	[SerializeField] bool allowAxisSwipes = false;
 	[SerializeField] bool allowPreciseSwipes = false;
@@ -52,7 +61,16 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public Vector2 JoystickData {
 		get {
-			Vector2 res = stick.anchoredPosition;
+			Vector2 res = stick.anchoredPosition - bg.anchoredPosition;
+
+			if(Mathf.Abs(res.x) < deadZone.x) {
+				res.x = 0f;
+			}
+			
+			if(Mathf.Abs(res.y) < deadZone.y) {
+				res.y = 0f;
+			}
+
 			if(horizontalOnly) {
 				res.y = 0f;
 			}
@@ -67,19 +85,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public float Horizontal {
 		get { 
-			float x = JoystickData.x;
-			if(Mathf.Abs(x) < deadZone.x)
-				return 0f;
-			return x; 
+			return JoystickData.x; 
 		}
 	}
 
 	public float Vertical {
 		get { 
-			float y = JoystickData.y;
-			if(Mathf.Abs(y) < deadZone.y)
-				return 0f;
-			return y; 
+			return JoystickData.y; 
 		}
 	}
 
@@ -93,10 +105,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		rTrans = transform as RectTransform;
 
 		ResizeStickToInches();
-
-		bg.anchoredPosition = Vector3.zero;
-		RefreshRadius();
-
+		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
 		bg.gameObject.SetActive(!dynamic);
 		stick.gameObject.SetActive(!dynamic);
@@ -115,24 +124,31 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 
 	void ResizeStickToInches() {
-		if(Screen.dpi == 0f)
-			return;
+		if(Screen.dpi == 0f) return;
 
-		RectTransform rectT = bg;
-		if(resizeStickNotBG)
-			rectT = stick;
+		if(bgWidthInches > 0f && bgHeightInches > 0f) {
+			Vector3 size = bg.sizeDelta;
+			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, Screen.width);
+			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, Screen.height);
+			bg.sizeDelta = size;
+		}
 
-		Vector3 size = rectT.sizeDelta;
-		size.x = Screen.dpi * widthInches;
-		size.y = Screen.dpi * heightInches;
-		rectT.sizeDelta = size;
-		rectT.anchoredPosition = Vector3.zero;
+		if(stickWidthInches > 0f && stickHeightInches > 0f) {
+			Vector3 size = stick.sizeDelta;
+			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, Screen.width);
+			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, Screen.height);;
+			stick.sizeDelta = size;
+		}
+
+		bg.anchoredPosition = Vector3.zero;
 		stick.anchoredPosition = Vector3.zero;
 
 		RefreshRadius();
 	}
 
 	void Update() {
+		if(!Application.isPlaying) return;
+
 		if(Screen.orientation != orientation) {
 			bg.anchoredPosition = Vector3.zero;
 			stick.anchoredPosition = Vector3.zero;
@@ -147,9 +163,30 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 			//if we've allowed a swipe to override stick, then snap it here
 			if(swipedDirection.sqrMagnitude > 0f) {
-				Vector3 anchorPos = swipedDirection * radius;
+				Vector3 anchorPos = bg.anchoredPosition + swipedDirection * radius;
 				stick.anchoredPosition = anchorPos;
 			}
+		}
+
+		RefreshStickImages();
+	}
+
+	public void RefreshStickImages() {
+		if(stickImageThrown == null) return;
+		if(stickImageNeutral == null) return;
+		Vector2 throwVector = JoystickData;
+		bool thrown = throwVector.sqrMagnitude > 0f;
+
+		stickImageThrown.enabled = thrown;
+		stickImageNeutral.enabled = !thrown;
+
+		if(thrown) {
+			float angle = Vector2.Angle(Vector3.up, throwVector);
+			if(Vector2.Dot(Vector2.right, throwVector) > 0f) {
+				angle = -angle;
+			}
+
+			stickImageThrown.rectTransform.localRotation = Quaternion.AngleAxis(angle, Vector3.forward);
 		}
 	}
 
@@ -157,7 +194,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(dynamic) {
 			bg.anchoredPosition = eventData.position - ZoneCenter;
-			stick.anchoredPosition = Vector3.zero;
+			stick.anchoredPosition = bg.anchoredPosition;
 		}
 
 		bg.gameObject.SetActive(true);
@@ -183,19 +220,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		ProcessStick(eventData);
 		ConsiderSwipes(eventData.position);
 
+		Vector2 throwVector = stick.anchoredPosition - bg.anchoredPosition;
+
 		if(dynamic) bg.anchoredPosition = Vector3.zero;
 
 		if(clearHorizontal) {
-			Vector3 anchor = stick.anchoredPosition;
-			anchor.x = 0f;
-			stick.anchoredPosition = anchor;
+			throwVector.x = 0f;
 		}
 
 		if(clearVertical) {
-			Vector3 anchor = stick.anchoredPosition;
-			anchor.y = 0f;
-			stick.anchoredPosition = anchor;
+			throwVector.y = 0f;
 		}
+
+		stick.anchoredPosition = bg.anchoredPosition + throwVector;
 
 		pressed = false;
 		pressedTime = 0f;
@@ -280,7 +317,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			delta.y = 0f;
 		}
 
-		stick.anchoredPosition = delta;
+		stick.anchoredPosition = bg.anchoredPosition + delta;
 		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
 }

@@ -10,9 +10,9 @@ public class GyroControls : MonoBehaviour {
 	[SerializeField] float pitchAngleMin = 10f;
 	[SerializeField] float pitchAngleMax = 45f;
 
-	float rollStart = 0f;
+	float rollStart = 270f;
 	float pitchStart = 0f;
-	ScreenOrientation orientation = ScreenOrientation.Unknown;
+	//ScreenOrientation orientation = ScreenOrientation.Unknown;
 
 	float x = 0f;
 	float lastXStamp = 0f;
@@ -60,14 +60,14 @@ public class GyroControls : MonoBehaviour {
 		}
 	}
 
-	void OnEnable() {
-		Calibrate();
-	}
+//	void OnEnable() {
+//		Calibrate();
+//	}
 
-	void FixedUpdate() {
-		if(!SystemInfo.supportsGyroscope) return;
-		if(orientation != Screen.orientation) Calibrate();
-	}
+	//void FixedUpdate() {
+		//if(!SystemInfo.supportsGyroscope) return;
+		//if(orientation != Screen.orientation) Calibrate();
+	//}
 
 	void OnGUI() {
 		GUILayout.BeginArea(new Rect(Screen.width*0.5f-150f, Screen.height*0.5f, 300f, 300f));
@@ -86,7 +86,7 @@ public class GyroControls : MonoBehaviour {
 
 	public void Calibrate() {
 		if(!SystemInfo.supportsGyroscope) return;
-		orientation = Screen.orientation;
+		//orientation = Screen.orientation;
 		Input.gyro.enabled = true;
 		Quaternion deviceRot = Input.gyro.attitude;
 		Vector3 euler = deviceRot.eulerAngles;
