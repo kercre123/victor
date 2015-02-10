@@ -135,7 +135,8 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     lastResult = _robotComms.Init(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt());
+                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt(),
+                                  MAX_SENT_BYTES_PER_TIC_TO_ROBOT);
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.\n");
       return lastResult;
