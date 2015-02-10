@@ -103,23 +103,26 @@ namespace Cozmo {
     connectedDevicesIt_t it = connectedDevices_.find(p.destId);
     if (it != connectedDevices_.end()) {
       
-      // Wrap message in header/footer
-      char sendBuf[512]; // TODO: probaly larger than we need (b/c we are sending long strings)
-      int sendBufLen = 0;
-
       bool isTCP = it->second.protocol == Anki::Comms::TCP;
       
       if (isTCP) {
+        // Wrap message in header/footer
+        char sendBuf[p.dataLen + 10]; // Extra bytes for TCP header stuff
+        int sendBufLen = 0;
+        
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         sendBufLen += sizeof(RADIO_PACKET_HEADER);
         sendBuf[sendBufLen++] = p.dataLen;
         sendBuf[sendBufLen++] = p.dataLen >> 8;
         sendBuf[sendBufLen++] = 0;
         sendBuf[sendBufLen++] = 0;
+        memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
+        sendBufLen += p.dataLen;
+        return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
+      } else {
+        return ((UdpClient*)it->second.client)->Send((char*)p.data, p.dataLen);
       }
-
-      memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
-      sendBufLen += p.dataLen;
+    
 
       /*
       printf("SENDBUF (hex): ");
@@ -128,15 +131,6 @@ namespace Cozmo {
       PrintBytesUInt(sendBuf, sendBufLen);
       printf("\n");
       */
-      
-      //return it->second.client->Send(sendBuf, sendBufLen);
-      
-      if (isTCP) {
-        return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
-      } else {
-        return ((UdpClient*)it->second.client)->Send(sendBuf, sendBufLen);
-      }
-      
     }
     return -1;
     
