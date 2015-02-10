@@ -53,10 +53,17 @@ namespace Cozmo {
     Result lastResult = RESULT_FAIL;
     
     if(_runState == CozmoGameHost::STOPPED) {
+      
+      // Init the engine with the given configuration info:
       lastResult = GetCozmoEngine()->Init(config);
+      
       if(lastResult == RESULT_OK) {
         _runState = CozmoGameHost::WAITING_FOR_UI_DEVICES;
+      } else {
+        PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
+                          "Failed to initialize the engine.\n");
       }
+      
     } else {
       PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
                         "Engine already running, must start from stopped state.\n");
