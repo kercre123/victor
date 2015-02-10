@@ -9,7 +9,7 @@
 
 #ifdef DEBUG_UART
 // Use the head debug cable UART
-#define BAUDRATE 3000000
+#define BAUDRATE 2900000 // Ask for this to actually get 3e6
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2

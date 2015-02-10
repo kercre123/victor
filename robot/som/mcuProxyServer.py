@@ -113,11 +113,9 @@ class MCUProxyServer(object):
             if len(self.rawSerData) < length: # Something is wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return
+            if self.rawSerData[0] == '\x45': sys.stdout.write(self.rawSerData[1:length]) # Print statement
             if self.v:
-                if self.rawSerData[0] == '\x45':
-                    sys.stdout.write(self.rawSerData[1:length])
-                else:
-                    sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
+                sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 #sys.stdout.write(repr([ord(c) for c in self.rawSerData[:10]]) + '\n')
                 sys.stdout.flush()
             self.fromMcuQ = self.rawSerData[:length]

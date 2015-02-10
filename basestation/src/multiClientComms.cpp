@@ -19,11 +19,6 @@
 
 #include "anki/cozmo/basestation/multiClientComms.h"
 
-// The number of bytes that can be sent out per call to Update(),
-// the assumption being Update() is called once per basestation tic.
-#define MAX_SENT_BYTES_PER_TIC 1000  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
-
-
 #define DEBUG_COMMS 0
 
 namespace Anki {
@@ -37,8 +32,9 @@ namespace Cozmo {
     
   }
   
-  Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort)
+  Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic)
   {
+    maxSentBytesPerTic_ = maxSentBytesPerTic;
     advertisingHostIP_ = advertisingHostIP;
     
     if(false == advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort)) {
@@ -76,7 +72,7 @@ namespace Cozmo {
     #if(DO_SIM_COMMS_LATENCY)
     // If no send latency, just send now
     if (SIM_SEND_LATENCY_SEC == 0) {
-      if (bytesSentThisUpdateCycle_ + p.dataLen > MAX_SENT_BYTES_PER_TIC) {
+      if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
         #if(DEBUG_COMMS)
         PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message\n");
         #endif
@@ -203,7 +199,7 @@ namespace Cozmo {
     while (!sendMsgPackets_.empty()) {
       if (sendMsgPackets_.front().first <= currTime) {
         
-        if (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > MAX_SENT_BYTES_PER_TIC) {
+        if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > maxSentBytesPerTic_)) {
           #if(DEBUG_COMMS)
           PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
           #endif
