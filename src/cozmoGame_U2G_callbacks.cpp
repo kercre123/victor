@@ -43,7 +43,6 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     REGISTER_CALLBACK(U2G_ConnectToUiDevice)
     REGISTER_CALLBACK(U2G_ForceAddRobot)
     REGISTER_CALLBACK(U2G_StartEngine)
-    REGISTER_CALLBACK(U2G_Heartbeat)
     REGISTER_CALLBACK(U2G_DriveWheels)
     REGISTER_CALLBACK(U2G_MoveHead)
     REGISTER_CALLBACK(U2G_MoveLift)
@@ -119,11 +118,6 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     // Start the engine with that configuration
     StartEngine(config);
     
-  }
-  
-  void CozmoGameHostImpl::ProcessMessage(MessageU2G_Heartbeat const& msg)
-  {
-    _cozmoEngine.Update(msg.currentTime_sec);
   }
   
   void CozmoGameHostImpl::ProcessMessage(MessageU2G_DriveWheels const& msg)
