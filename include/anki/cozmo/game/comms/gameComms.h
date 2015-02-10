@@ -47,8 +47,10 @@ namespace Cozmo {
     // when game is unpaused we need to dump old messages
     virtual void ClearMsgPackets();
     
+    virtual u32 GetNumMsgPacketsInSendQueue(int devID);
+    
     // Updates the list of advertising robots
-    void Update();
+    virtual void Update(bool send_queued_msgs = true);
     
     bool HasClient();
     void DisconnectClient();

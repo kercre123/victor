@@ -97,8 +97,13 @@ namespace Cozmo {
     
   }
   
+  u32 GameComms::GetNumMsgPacketsInSendQueue(int devID)
+  {
+    // TODO: This function isn't used on the game side, sent messages aren't queued anyway, so just returning 0.
+    return 0;
+  }
   
-  void GameComms::Update()
+  void GameComms::Update(bool send_queued_msgs)
   {
     if(!IsInitialized()) {
       // Register with advertisement service
