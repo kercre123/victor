@@ -66,7 +66,9 @@ namespace Cozmo {
     MultiClientComms();
     
     // Init with the IP address to use as the advertising host
-    Result Init(const char* advertisingHostIP, int advertisingPort);
+    // and the maximum number of bytes that can be sent out per call to Update().
+    // If maxSentBytesPerTic == 0, then there is no limit.
+    Result Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic = 0);
     
     // The destructor will automatically cleans up
     virtual ~MultiClientComms();
@@ -125,6 +127,10 @@ namespace Cozmo {
     const char* advertisingHostIP_;
     // Connects to "advertising" server to view available unconnected devices.
     UdpClient advertisingChannelClient_;
+    
+    // The number of bytes that can be sent out per call to Update(),
+    // the assumption being Update() is called once per basestation tic.
+    unsigned int maxSentBytesPerTic_;
     
     void ReadAllMsgPackets();
     
