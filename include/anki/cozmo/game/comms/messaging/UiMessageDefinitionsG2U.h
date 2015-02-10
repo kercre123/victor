@@ -36,7 +36,7 @@ END_MESSAGE_DEFINITION(G2U_Bogus)
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
+/*
 // Full QVGA Image from a specifed Robot
 START_MESSAGE_DEFINITION(G2U_RobotImage_320x240, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
@@ -48,7 +48,7 @@ START_MESSAGE_DEFINITION(G2U_RobotImage_640x480, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
 ADD_MESSAGE_MEMBER_ARRAY(u8, image, 640*480)
 END_MESSAGE_DEFINITION(G2U_RobotImage_640x480)
-
+*/
 // ObjectVisionMarker for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
 START_MESSAGE_DEFINITION(G2U_RobotObservedObject, 1)

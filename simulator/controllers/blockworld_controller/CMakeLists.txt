@@ -1,7 +1,7 @@
 # products-cozmo/robot/simulator/controllers/blockworld_controller/CMakeLists.txt
 
 remove_definitions(-DCOZMO_ROBOT -DSIMULATOR)
-add_definitions(-DCOZMO_BASESTATION -DUSE_WEBOTS)
+add_definitions(-DCOZMO_BASESTATION)
 
 # Include paths
   include_directories(
@@ -61,13 +61,14 @@ endif()
 
 set_target_properties(blockworld_controller PROPERTIES
     FOLDER "Webots Controllers"
+    COMPILE_DEFINITIONS USE_WEBOTS
 )
 #  COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
 #  XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
 
-# Make sure a copy of the target exists  in cozmo_c_controller/
+# Make sure a copy of the target exists  in blockworld_controller/
 # no matter where the target is actually built.
 add_custom_command(
   TARGET blockworld_controller
@@ -146,7 +147,7 @@ set_target_properties(cozmo_engine PROPERTIES
 #   XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
 #)
 
-# Make sure a copy of the target exists  in cozmo_c_controller/
+# Make sure a copy of the target exists  in cozmo_engine/
 # no matter where the target is actually built.
 add_custom_command(
   TARGET cozmo_engine
