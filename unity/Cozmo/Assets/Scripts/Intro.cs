@@ -17,6 +17,7 @@ public class Intro : MonoBehaviour {
 
 	private string currentRobotIP;
 	private string currentScene;
+	private string currentVizHostIP;
 
 	public const int CurrentRobotID = 1;
 
@@ -124,6 +125,7 @@ public class Intro : MonoBehaviour {
 		if (string.IsNullOrEmpty (errorText)) {
 			currentRobotIP = ip.text;
 			currentScene = scenes[lastSceneIndex];
+			currentVizHostIP = visualizerIP.text;
 
 			SaveData ();
 			RobotEngineManager.instance.Connect (engineIP.text);
@@ -155,6 +157,7 @@ public class Intro : MonoBehaviour {
 	private void Connected(string connectionIdentifier)
 	{
 		error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+		RobotEngineManager.instance.StartEngine (currentVizHostIP);
 		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, currentRobotIP, simulated.isOn);
 	}
 

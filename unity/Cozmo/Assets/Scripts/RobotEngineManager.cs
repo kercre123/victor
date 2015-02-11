@@ -221,7 +221,24 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		
 	}
-	
+
+	public void StartEngine(string vizHostIP)
+	{
+		U2G_StartEngine message = new U2G_StartEngine ();
+		message.asHost = 1;
+		int length = 0;
+		if (!string.IsNullOrEmpty (vizHostIP)) {
+			length = Encoding.UTF8.GetByteCount(vizHostIP);
+			if (length + 1 > message.vizHostIP.Length) {
+				throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + message.vizHostIP.Length + ".)");
+			}
+			Encoding.UTF8.GetBytes (vizHostIP, 0, vizHostIP.Length, message.vizHostIP, 0);
+		}
+		message.vizHostIP [length] = 0;
+
+		channel.Send (message);
+	}
+
 	/// <summary>
 	/// Forcibly adds a new robot.
 	/// </summary>
