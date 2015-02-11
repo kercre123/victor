@@ -39,39 +39,6 @@ namespace Cozmo {
     
     _signalHandles.emplace_back( CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().ScopedSubscribe(cbDeviceDetectedVisionMarkerSignal));
     
-  } // SetupSignalHandlers()
-  
-  void CozmoGameImpl::HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
-                                                             float x_upperLeft,  float y_upperLeft,
-                                                             float x_lowerLeft,  float y_lowerLeft,
-                                                             float x_upperRight, float y_upperRight,
-                                                             float x_lowerRight, float y_lowerRight)
-  {
-    // Notify the UI that the device camera saw a VisionMarker
-    MessageG2U_DeviceDetectedVisionMarker msg;
-    msg.markerType = markerType;
-    msg.x_upperLeft = x_upperLeft;
-    msg.y_upperLeft = y_upperLeft;
-    msg.x_lowerLeft = x_lowerLeft;
-    msg.y_lowerLeft = y_lowerLeft;
-    msg.x_upperRight = x_upperRight;
-    msg.y_upperRight = y_upperRight;
-    msg.x_lowerRight = x_lowerRight;
-    msg.y_lowerRight = y_lowerRight;
-    
-    // TODO: Look up which UI device to notify based on the robotID that saw the object
-    // TODO: go back to actually sending this as a message instead of storing it for polling
-    //_uiMsgHandler.SendMessage(1, msg);
-    _visionMarkersDetectedByDevice.push_back(msg);
-  }
-  
-#pragma mark - Derived Host Class Signal Handlers
-  
-
-  void CozmoGameHostImpl::SetupSignalHandlers()
-  {
-    
-    
     auto cbRobotConnectedSignal = [this](RobotID_t robotID, bool successful) {
       this->HandleRobotConnectedSignal(robotID, successful);
     };
@@ -128,7 +95,34 @@ namespace Cozmo {
     
   } // SetupSignalHandlers()
   
-  void CozmoGameHostImpl::HandleRobotAvailableSignal(RobotID_t robotID) {
+  
+  void CozmoGameImpl::HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
+                                                             float x_upperLeft,  float y_upperLeft,
+                                                             float x_lowerLeft,  float y_lowerLeft,
+                                                             float x_upperRight, float y_upperRight,
+                                                             float x_lowerRight, float y_lowerRight)
+  {
+    // Notify the UI that the device camera saw a VisionMarker
+    MessageG2U_DeviceDetectedVisionMarker msg;
+    msg.markerType = markerType;
+    msg.x_upperLeft = x_upperLeft;
+    msg.y_upperLeft = y_upperLeft;
+    msg.x_lowerLeft = x_lowerLeft;
+    msg.y_lowerLeft = y_lowerLeft;
+    msg.x_upperRight = x_upperRight;
+    msg.y_upperRight = y_upperRight;
+    msg.x_lowerRight = x_lowerRight;
+    msg.y_lowerRight = y_lowerRight;
+    
+    // TODO: Look up which UI device to notify based on the robotID that saw the object
+    // TODO: go back to actually sending this as a message instead of storing it for polling
+    //_uiMsgHandler.SendMessage(1, msg);
+    _visionMarkersDetectedByDevice.push_back(msg);
+  }
+  
+  
+  
+  void CozmoGameImpl::HandleRobotAvailableSignal(RobotID_t robotID) {
     
     // Notify UI that robot is availale and let it issue message to connect
     MessageG2U_RobotAvailable msg;
@@ -136,7 +130,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
-  void CozmoGameHostImpl::HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID) {
+  void CozmoGameImpl::HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID) {
     
     // Notify UI that a UI device is availale and let it issue message to connect
     MessageG2U_UiDeviceAvailable msg;
@@ -144,7 +138,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
-  void CozmoGameHostImpl::HandleRobotConnectedSignal(RobotID_t robotID, bool successful)
+  void CozmoGameImpl::HandleRobotConnectedSignal(RobotID_t robotID, bool successful)
   {
     MessageG2U_RobotConnected msg;
     msg.robotID = robotID;
@@ -152,7 +146,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
-  void CozmoGameHostImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
+  void CozmoGameImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
   {
     MessageG2U_UiDeviceConnected msg;
     msg.deviceID = deviceID;
@@ -160,7 +154,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
-  void CozmoGameHostImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+  void CozmoGameImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
   {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to play a sound:
@@ -186,7 +180,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameHostImpl::HandleStopSoundForRobotSignal(RobotID_t robotID)
+  void CozmoGameImpl::HandleStopSoundForRobotSignal(RobotID_t robotID)
   {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to stop the sound
@@ -200,7 +194,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameHostImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
+  void CozmoGameImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                                           float x_upperLeft,  float y_upperLeft,
                                                           float width,  float height) {
     // Send a message out to UI that the device found a vision marker
@@ -217,7 +211,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameHostImpl::HandleConnectToRobotSignal(RobotID_t robotID)
+  void CozmoGameImpl::HandleConnectToRobotSignal(RobotID_t robotID)
   {
     const bool success = ConnectToRobot(robotID);
     if(success) {
@@ -227,7 +221,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameHostImpl::HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID)
+  void CozmoGameImpl::HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID)
   {
     const bool success = ConnectToUiDevice(deviceID);
     if(success) {
@@ -237,7 +231,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameHostImpl::HandleRobotImageAvailable(RobotID_t robotID)
+  void CozmoGameImpl::HandleRobotImageAvailable(RobotID_t robotID)
   {
     auto ismIter = _imageSendMode.find(robotID);
     

@@ -65,6 +65,7 @@ END_MESSAGE_DEFINITION(U2G_ForceAddRobot)
 // StartEngine
 // Tell game to start the engine with the configuration specified by the message members.
 START_MESSAGE_DEFINITION(U2G_StartEngine, 1)
+ADD_MESSAGE_MEMBER(u8, asHost)
 ADD_MESSAGE_MEMBER_ARRAY(u8, vizHostIP, 16) // if first char is '\0', disables viz
 END_MESSAGE_DEFINITION(U2G_StartEngine)
 

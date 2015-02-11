@@ -37,18 +37,16 @@ namespace Anki {
   namespace Cozmo {
 
     UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), cozmoEngine_(NULL), isInitialized_(false)
+    : comms_(NULL), isInitialized_(false)
     {
       
     }
-    Result UiMessageHandler::Init(Comms::IComms*   comms,
-                                  CozmoEngineHost*  cozmoEngine)
+    Result UiMessageHandler::Init(Comms::IComms*   comms)
     {
       Result retVal = RESULT_FAIL;
       
-      if(comms != nullptr && cozmoEngine != nullptr) {
+      if(comms != nullptr) {
         comms_ = comms;
-        cozmoEngine_ = cozmoEngine;
         
         isInitialized_ = true;
         retVal = RESULT_OK;
@@ -84,28 +82,22 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(cozmoEngine_ == NULL) {
-        PRINT_NAMED_ERROR("UiMessageHandler.NullCozmoEngine",
-                          "CozmoEngine NULL when MessageHandler::ProcessPacket() called.\n");
+      const u8 msgID = packet.data[0];
+      
+      if(lookupTable_[msgID].size != packet.dataLen-1) {
+        PRINT_NAMED_ERROR("UiMessageHandler.MessageBufferWrongSize",
+                          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
+                          msgID,
+                          lookupTable_[msgID].size,
+                          packet.dataLen - 1
+                          );
       }
       else {
-        const u8 msgID = packet.data[0];
         
-        if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
-                            msgID,
-                            lookupTable_[msgID].size,
-                            packet.dataLen - 1
-                            );
-        }
-        else {
-          
-          // This calls the registered callback for the message
-          retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.data+1);
-
-        }
-      } // if(robotMgr_ != NULL)
+        // This calls the registered callback for the message
+        retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.data+1);
+        
+      }
       
       return retVal;
     } // ProcessBuffer()

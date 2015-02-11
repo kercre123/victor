@@ -42,8 +42,7 @@ namespace Anki {
     public:
       
       // TODO: Change these to interface references so they can be stubbed as well
-      virtual Result Init(Comms::IComms*   comms,
-                          CozmoEngineHost* robotMgr) = 0;
+      virtual Result Init(Comms::IComms*   comms) = 0;
       
       virtual Result ProcessMessages() = 0;
       
@@ -59,8 +58,7 @@ namespace Anki {
       UiMessageHandler(); // Force construction with stuff in Init()?
       
       // Set the message handler's communications manager
-      virtual Result Init(Comms::IComms*    comms,
-                          CozmoEngineHost*  cozmoEngine);
+      virtual Result Init(Comms::IComms* comms) override;
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -76,7 +74,6 @@ namespace Anki {
     protected:
       
       Comms::IComms* comms_;
-      CozmoEngineHost* cozmoEngine_;
       
       bool isInitialized_;
       
@@ -116,8 +113,7 @@ namespace Anki {
     public:
       UiMessageHandlerStub() { }
       
-      Result Init(Comms::IComms*    comms,
-                  CozmoEngineHost*  cozmoEngine)
+      virtual Result Init(Comms::IComms* comms) override
       {
         return RESULT_OK;
       }

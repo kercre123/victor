@@ -31,121 +31,16 @@ namespace Cozmo {
 #pragma mark - CozmoGame Implementation
     
   CozmoGameImpl::CozmoGameImpl()
-  : _runState(CozmoGame::STOPPED)
-  {
-    SetupSignalHandlers();
-  }
-  
-  CozmoGameImpl::~CozmoGameImpl()
-  {
-    // NOTE: Do not delete _cozmoEngine pointer here. It's just a pointer to an
-    // engine living in the derived class, and its memory should be handled there.
-  }
-  
-  CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
-  {
-    return _runState;
-  }
-  
-  
-  Result CozmoGameImpl::StartEngine(const Json::Value& config)
-  {
-    Result lastResult = RESULT_FAIL;
-    
-    if(_runState == CozmoGameHost::STOPPED) {
-      
-      // Init the engine with the given configuration info:
-      lastResult = GetCozmoEngine()->Init(config);
-      
-      if(lastResult == RESULT_OK) {
-        _runState = CozmoGameHost::WAITING_FOR_UI_DEVICES;
-      } else {
-        PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
-                          "Failed to initialize the engine.\n");
-      }
-      
-    } else {
-      PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
-                        "Engine already running, must start from stopped state.\n");
-    }
-    return lastResult;
-  }
-  
-  void CozmoGameImpl::SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode)
-  {
-    _imageSendMode[forRobotID] = newMode;
-  }
-  
-  bool CozmoGameImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
-  {
-    return GetCozmoEngine()->GetCurrentRobotImage(robotId, img, newerThanTime);
-  }
-  
-  void CozmoGameImpl::ProcessDeviceImage(const Vision::Image& image)
-  {
-    _visionMarkersDetectedByDevice.clear();
-    
-    GetCozmoEngine()->ProcessDeviceImage(image);
-  }
-
-  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
-  {
-    return _visionMarkersDetectedByDevice;
-  }
-  
-
-  
- 
-  
-#pragma mark - CozmoGame Wrappers
-  
-  CozmoGame::CozmoGame()
-  : _impl(nullptr)
-  {
-    // NOTE: _impl should be set by the derived classes' constructors
-  }
-  
-  CozmoGame::~CozmoGame()
-  {
-    // Let it be derived class's problem to delete their implementations
-    _impl = nullptr;
-  }
-  
-  Result CozmoGame::StartEngine(const Json::Value& config)
-  {
-    return _impl->StartEngine(config);
-  }
-  
-  bool CozmoGame::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
-  {
-    assert(_impl != nullptr);
-    return _impl->GetCurrentRobotImage(robotId, img, newerThanTime);
-  }
-  
-  void CozmoGame::ProcessDeviceImage(const Vision::Image& image)
-  {
-    _impl->ProcessDeviceImage(image);
-  }
-  
-  CozmoGame::RunState CozmoGame::GetRunState() const
-  {
-    assert(_impl != nullptr);
-    return _impl->GetRunState();
-  }
-  
-  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
-  {
-    return _impl->GetVisionMarkersDetectedByDevice();
-  }
-  
-#pragma mark - CozmoGameHost Implementation
-  
-  
-  CozmoGameHostImpl::CozmoGameHostImpl()
-  : _uiAdvertisementService("UIAdvertisementService")
+  : _isHost(true)
+  , _isEngineStarted(false)
+  , _runState(CozmoGame::STOPPED)
+  , _cozmoEngine(nullptr)
+  , _desiredNumUiDevices(1)
+  , _desiredNumRobots(1)
+  , _uiAdvertisementService("UIAdvertisementService")
   , _hostUiDeviceID(1)
   {
-    SetupSignalHandlers();    
+    SetupSignalHandlers();
     
     RegisterCallbacksU2G();
     
@@ -156,43 +51,38 @@ namespace Cozmo {
     
     _uiAdvertisementService.StartService(UI_ADVERTISEMENT_REGISTRATION_PORT,
                                          UI_ADVERTISING_PORT);
-    
   }
-
-  CozmoGameHostImpl::~CozmoGameHostImpl()
+  
+  CozmoGameImpl::~CozmoGameImpl()
   {
-    // Other tear-down:
+    delete _cozmoEngine;
+    
     SoundManager::removeInstance();
   }
   
-  Result CozmoGameHostImpl::Init(const Json::Value& config)
+  CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
   {
-    /*
-    // Force add any advertising UI device on this same device:
-    Comms::AdvertisementRegistrationMsg localUiRegMsg;
-    localUiRegMsg.id = 1;
-    localUiRegMsg.port = UI_ADVERTISEMENT_REGISTRATION_PORT;
-    localUiRegMsg.protocol = Comms::UDP;
-    localUiRegMsg.enableAdvertisement = 1;
-    _uiAdvertisementService.ProcessRegistrationMsg(localUiRegMsg);
-    */
-    
+    return _runState;
+  }
+  
+  Result CozmoGameImpl::Init(const Json::Value& config)
+  {
     if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
        !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-     
+      
       PRINT_NAMED_ERROR("CozmoGameHostImpl.Init", "Missing advertising hosdt / UI advertising port in Json config file.\n");
       return RESULT_FAIL;
     }
-      
+    
     Result lastResult = _uiComms.Init(config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
                                       config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
-
+    
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoGameHostImpl.Init", "Failed to initialize host uiComms.\n");
       return lastResult;
     }
     
-    _uiMsgHandler.Init(&_uiComms, &_cozmoEngine);
+    _uiMsgHandler.Init(&_uiComms);
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameHostImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
@@ -207,21 +97,114 @@ namespace Cozmo {
     } else {
       _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
     }
+
+    _config = config;
     
-    _runState = CozmoGameHost::STOPPED;
-
-    return RESULT_OK;
+    _runState = CozmoGame::STOPPED;
+    
+    // Let the UI know this cozmoGame object is here:
+    SendAvailabilityMessage();
+    
+    return lastResult;
   }
   
-  void CozmoGameHostImpl::ForceAddRobot(int              robotID,
-                                        const char*      robotIP,
-                                        bool             robotIsSimulated)
+  Result CozmoGameImpl::StartEngine(Json::Value config)
   {
-    _cozmoEngine.ForceAddRobot(robotID, robotIP, robotIsSimulated);
+    Result lastResult = RESULT_FAIL;
+    
+    if(!config.isMember("asHost")) {
+      
+      PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
+                        "Missing 'asHost' field in configuration.\n");
+      return RESULT_FAIL;
+    }
+    
+    // Pass the game's advertising IP/port info along to the engine:
+    config[AnkiUtil::kP_ADVERTISING_HOST_IP]    = _config[AnkiUtil::kP_ADVERTISING_HOST_IP];
+    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT];
+    config[AnkiUtil::kP_UI_ADVERTISING_PORT]    = _config[AnkiUtil::kP_UI_ADVERTISING_PORT];
+    
+    _isHost = config["asHost"].asBool();
+    
+    //if(_runState == CozmoGame::WAITING_FOR_UI_DEVICES) {
+      
+      if(_isEngineStarted) {
+        delete _cozmoEngine;
+      }
+      
+      if(_isHost) {
+        PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.\n");
+        CozmoEngineHost* engineHost = new CozmoEngineHost();
+        engineHost->ListenForRobotConnections(true);
+        _cozmoEngine = engineHost;
+      } else {
+        PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating CLIENT engine.\n");
+        _cozmoEngine = new CozmoEngineClient();
+      }
+      
+      // Init the engine with the given configuration info:
+      lastResult = _cozmoEngine->Init(config);
+      
+      if(lastResult == RESULT_OK) {
+        _isEngineStarted = true;
+      } else {
+        PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
+                          "Failed to initialize the engine.\n");
+      }
+    /*
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
+                        "Engine already running, must start from stopped state.\n");
+    }
+     */
+    return lastResult;
   }
   
+  void CozmoGameImpl::SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode)
+  {
+    _imageSendMode[forRobotID] = newMode;
+  }
+  
+  bool CozmoGameImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  {
+    return _cozmoEngine->GetCurrentRobotImage(robotId, img, newerThanTime);
+  }
+  
+  void CozmoGameImpl::ProcessDeviceImage(const Vision::Image& image)
+  {
+    _visionMarkersDetectedByDevice.clear();
+    
+    _cozmoEngine->ProcessDeviceImage(image);
+  }
 
-  bool CozmoGameHostImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
+  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
+  {
+    return _visionMarkersDetectedByDevice;
+  }
+  
+  void CozmoGameImpl::ForceAddRobot(int              robotID,
+                                    const char*      robotIP,
+                                    bool             robotIsSimulated)
+  {
+    if(_isHost) {
+      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+      assert(cozmoEngineHost != nullptr);
+      cozmoEngineHost->ForceAddRobot(robotID, robotIP, robotIsSimulated);
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameImpl.ForceAddRobot",
+                        "Cannot force-add a robot to game running as client.\n");
+    }
+  }
+  
+  void CozmoGameImpl::SendAvailabilityMessage()
+  {
+    MessageG2U_EngineAvailable msg;
+    msg.isHost = 1;
+    msg.runningOnDeviceID = _hostUiDeviceID;
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
+
+  bool CozmoGameImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
   {
     const bool success = _uiComms.ConnectToDeviceByID(whichDevice);
     if(success) {
@@ -231,32 +214,27 @@ namespace Cozmo {
     return success;
   }
 
-  bool CozmoGameHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
+  bool CozmoGameImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
-    return _cozmoEngine.ConnectToRobot(whichRobot);
+    return _cozmoEngine->ConnectToRobot(whichRobot);
   }
   
-  int CozmoGameHostImpl::GetNumRobots() const
+  int CozmoGameImpl::GetNumRobots() const
   {
-    return _cozmoEngine.GetNumRobots();
+    if(_isHost) {
+      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+      assert(cozmoEngineHost != nullptr);
+      return cozmoEngineHost->GetNumRobots();
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameImpl.GetNumRobots",
+                        "Cannot request number of robots from game running as client.\n");
+      return -1;
+    }
   }
 
-  void CozmoGameHostImpl::Update(const float currentTime_sec) {
-    /*
-    // Connect to any robots we see:
-    std::vector<CozmoEngine::AdvertisingRobot> advertisingRobots;
-    _cozmoEngine.GetAdvertisingRobots(advertisingRobots);
-    for(auto robot : advertisingRobots) {
-      _cozmoEngine.ConnectToRobot(robot);
-    }
-    
-    // Connect to any UI devices we see:
-    std::vector<CozmoEngine::AdvertisingUiDevice> advertisingUiDevices;
-    _cozmoEngine.GetAdvertisingUiDevices(advertisingUiDevices);
-    for(auto device : advertisingUiDevices) {
-      _cozmoEngine.ConnectToUiDevice(device);
-    }
-     */
+  Result CozmoGameImpl::Update(const float currentTime_sec)
+  {
+    Result lastResult = RESULT_OK;
     
     // Update UI comms
     if(_uiComms.IsInitialized()) {
@@ -266,16 +244,67 @@ namespace Cozmo {
     // Handle UI messages
     _uiMsgHandler.ProcessMessages();
     
+    if(!_isEngineStarted || _runState == CozmoGame::WAITING_FOR_UI_DEVICES) {
+      // If we are still waiting on the engine to start, or even if it is started
+      // but we have not connected to enough UI devices, then keep ticking the
+      // UI advertisement service and connect to anything advertising until we
+      // have enough devices and can switch to looking for robots.
+      
+      _uiAdvertisementService.Update();
+      
+      // TODO: Do we want to do this all the time in case UI devices want to join later?
+      // Notify the UI that there are advertising devices
+      std::vector<int> advertisingUiDevices;
+      _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
+      for(auto & device : advertisingUiDevices) {
+        if(device == _hostUiDeviceID) {
+          // Force connection to first (local) UI device
+          if(true == ConnectToUiDevice(device)) {
+            PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+                             "Automatically connected to local UI device %d!\n", device);
+          }
+        } else {
+          CozmoGameSignals::UiDeviceAvailableSignal().emit(device);
+        }
+      }
+      
+      if(_uiComms.GetNumConnectedDevices() >= _desiredNumUiDevices) {
+        PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost",
+                         "Enough UI devices connected (%d), will wait for %d robots.\n",
+                         _desiredNumUiDevices, _desiredNumRobots);
+        _runState = CozmoGame::WAITING_FOR_ROBOTS;
+      }
+      
+    } else {
+      if(_isHost) {
+        lastResult = UpdateAsHost(currentTime_sec);
+      } else {
+        lastResult = UpdateAsClient(currentTime_sec);
+      }
+    }
+    
+    return lastResult;
+    
+  } // Update()
+  
+  Result CozmoGameImpl::UpdateAsHost(const float currentTime_sec)
+  {
+    Result lastResult = RESULT_OK;
+    
+    CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+    assert(cozmoEngineHost != nullptr);
+    
     switch(_runState)
     {
-      case CozmoGameHost::STOPPED:
-        // Nothing to do (just process UI messages above)
+      case CozmoGame::STOPPED:
+        // Nothing to do
         break;
         
-      case CozmoGameHost::WAITING_FOR_UI_DEVICES:
+      case CozmoGame::WAITING_FOR_UI_DEVICES:
       {
+        /*
         _uiAdvertisementService.Update();
-
+        
         // TODO: Do we want to do this all the time in case UI devices want to join later?
         // Notify the UI that there are advertising devices
         std::vector<int> advertisingUiDevices;
@@ -284,65 +313,79 @@ namespace Cozmo {
           if(device == _hostUiDeviceID) {
             // Force connection to first (local) UI device
             if(true == ConnectToUiDevice(device)) {
-              PRINT_NAMED_INFO("CozmoGameHostImpl.Update", "Automatically connected to local UI device %d!\n", device);
+              PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+                               "Automatically connected to local UI device %d!\n", device);
             }
           } else {
             CozmoGameSignals::UiDeviceAvailableSignal().emit(device);
           }
-          /*
-          MessageG2U_UiDeviceAvailable msg;
-          msg.deviceID = device;
-          _uiMsgHandler.SendMessage(1, msg);
-           */
         }
-
+        
         if(_uiComms.GetNumConnectedDevices() >= _desiredNumUiDevices) {
-          PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+          PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost",
                            "Enough UI devices connected (%d), will wait for %d robots.\n",
                            _desiredNumUiDevices, _desiredNumRobots);
-          _cozmoEngine.ListenForRobotConnections(true);
-          _runState = CozmoGameHost::WAITING_FOR_ROBOTS;
+          cozmoEngineHost->ListenForRobotConnections(true);
+          _runState = CozmoGame::WAITING_FOR_ROBOTS;
         }
+         */
         break;
       }
-    
-      case CozmoGameHost::WAITING_FOR_ROBOTS:
+        
+      case CozmoGame::WAITING_FOR_ROBOTS:
       {
-        Result status = _cozmoEngine.Update(currentTime_sec);
-        if (status != RESULT_OK) {
-          PRINT_NAMED_WARNING("CozmoGameHostImpl.Update","Bad engine update: status = %d\n", status);
+        lastResult = cozmoEngineHost->Update(currentTime_sec);
+        if (lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
+                              "Bad engine update: status = %d\n", lastResult);
         }
         
         // Tell the engine to keep listening for robots until it reports that
         // it has connections to enough
-        if(_cozmoEngine.GetNumRobots() >= _desiredNumRobots) {
-          PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+        if(cozmoEngineHost->GetNumRobots() >= _desiredNumRobots) {
+          PRINT_NAMED_INFO("CozmoGameImpl.UpdateAsHost",
                            "Enough robots connected (%d), will run engine.\n",
                            _desiredNumRobots);
           // TODO: We could keep listening for others to join mid-game...
-          _cozmoEngine.ListenForRobotConnections(false);
-          _runState = CozmoGameHost::ENGINE_RUNNING;
+          cozmoEngineHost->ListenForRobotConnections(false);
+          _runState = CozmoGame::ENGINE_RUNNING;
         }
         break;
       }
         
-      case CozmoGameHost::ENGINE_RUNNING:
+      case CozmoGame::ENGINE_RUNNING:
       {
-        Result status = _cozmoEngine.Update(currentTime_sec);
-        if (status != RESULT_OK) {
-          PRINT_NAMED_WARNING("CozmoGameHostImpl.Update","Bad engine update: status = %d\n", status);
+        lastResult = _cozmoEngine->Update(currentTime_sec);
+        if (lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
+                              "Bad engine update: status = %d\n", lastResult);
         }
         break;
       }
         
       default:
-        PRINT_NAMED_ERROR("CozmoHostImpl.Update", "Reached unknown RunState %d.\n", _runState);
+        PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost",
+                          "Reached unknown RunState %d.\n", _runState);
         
     }
     
-  } // Update()
+    return lastResult;
+    
+  }
   
-  bool CozmoGameHostImpl::SendRobotImage(RobotID_t robotID)
+  Result CozmoGameImpl::UpdateAsClient(const float currentTime_sec)
+  {
+    Result lastResult = RESULT_OK;
+    
+    // Don't tick the engine until it has been started
+    if(_runState != CozmoGame::STOPPED) {
+      lastResult = _cozmoEngine->Update(currentTime_sec);
+    }
+    
+    return lastResult;
+  } // UpdateAsClient()
+  
+  bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
   {
     // Get the image from the robot
     Vision::Image img;
@@ -404,103 +447,56 @@ namespace Cozmo {
   } // SendImage()
   
   
-#pragma mark - CozmoGameHost Wrappers
+#pragma mark - CozmoGame Wrappers
   
-  CozmoGameHost::CozmoGameHost()
+  CozmoGame::CozmoGame()
+  : _impl(nullptr)
   {
-    _hostImpl = new CozmoGameHostImpl();
-    // Set base class's impl pointer
-    _impl = _hostImpl;
+    _impl = new CozmoGameImpl();
   }
   
-  CozmoGameHost::~CozmoGameHost()
-  {
-    delete _hostImpl;
-  }
-  
-  bool CozmoGameHost::Init(const Json::Value &config)
-  {
-    return _hostImpl->Init(config) == RESULT_OK;
-  }
-  
-  void CozmoGameHost::ForceAddRobot(int              robotID,
-                                    const char*      robotIP,
-                                    bool             robotIsSimulated)
-  {
-    _hostImpl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
-  }
-  
-  int CozmoGameHost::GetNumRobots() const
-  {
-    return _hostImpl->GetNumRobots();
-  }
-  
-  void CozmoGameHost::Update(const float currentTime_sec)
-  {
-    _hostImpl->Update(currentTime_sec);
-  }
-
-  
-
-#pragma mark - CozmoGameClient Implementation
-  
-  CozmoGameClientImpl::CozmoGameClientImpl()
-  : _runState(CozmoGame::STOPPED)
-  {
-    
-  }
-  
-  CozmoGameClientImpl::~CozmoGameClientImpl()
-  {
-
-  }
-  
-  Result CozmoGameClientImpl::Init(const Json::Value& config)
-  {
-    // TODO: Any other initialization needed on the client?
-    return _cozmoEngine.Init(config);
-  }
-  
-  void CozmoGameClientImpl::Update(const float currentTime_sec)
-  {
-    // Don't tick the engine until it has been started
-    if(_runState != CozmoGame::STOPPED) {
-      _cozmoEngine.Update(currentTime_sec);
-    }
-  }
-  
-  CozmoGameClientImpl::RunState CozmoGameClientImpl::GetRunState() const
-  {
-    return _runState;
-  }
-  
-  
-#pragma mark - CozmoGameClient Wrappers
-  
-  CozmoGameClient::CozmoGameClient()
-  {
-    _clientImpl = new CozmoGameClientImpl();
-    
-    // Set base class's impl pointer
-    _impl = _clientImpl;
-  }
-  
-  CozmoGameClient::~CozmoGameClient()
+  CozmoGame::~CozmoGame()
   {
     delete _impl;
   }
   
-  bool CozmoGameClient::Init(const Json::Value& config)
+  Result CozmoGame::Init(const Json::Value &config)
   {
-    return RESULT_OK == _clientImpl->Init(config);
+    return _impl->Init(config);
   }
   
-  void CozmoGameClient::Update(const float currentTime_sec)
+  Result CozmoGame::StartEngine(Json::Value config)
   {
-    _clientImpl->Update(currentTime_sec);
+    return _impl->StartEngine(config);
+  }
+  
+  Result CozmoGame::Update(const float currentTime_sec)
+  {
+    return _impl->Update(currentTime_sec);
+  }
+  
+  bool CozmoGame::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  {
+    assert(_impl != nullptr);
+    return _impl->GetCurrentRobotImage(robotId, img, newerThanTime);
+  }
+  
+  void CozmoGame::ProcessDeviceImage(const Vision::Image& image)
+  {
+    _impl->ProcessDeviceImage(image);
+  }
+  
+  CozmoGame::RunState CozmoGame::GetRunState() const
+  {
+    assert(_impl != nullptr);
+    return _impl->GetRunState();
+  }
+  
+  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
+  {
+    return _impl->GetVisionMarkersDetectedByDevice();
   }
 
-  
   
 } // namespace Cozmo
 } // namespace Anki

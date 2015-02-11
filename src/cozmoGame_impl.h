@@ -1,10 +1,10 @@
 /**
  * File: cozmoGame_impl.h
  *
- * Author: Kevin Yoon
- * Date:   7/11/2014
+ * Author: Andrew Stein
+ * Date:   2/10/2015
  *
- * Description: Defines the private implementation of the base/host/client CozmoGame objects.
+ * Description: Defines the private implementation of the CozmoGame object.
  *
  * Copyright: Anki, Inc. 2014
  **/
@@ -27,14 +27,43 @@ namespace Cozmo {
   class CozmoGameImpl
   {
   public:
-    using RunState = CozmoGame::RunState;
+    using RunState     = CozmoGame::RunState;
+    using PlaybackMode = CozmoGame::PlaybackMode;
+    
+    using AdvertisingUiDevice = CozmoGame::AdvertisingUiDevice;
+    using AdvertisingRobot    = CozmoGame::AdvertisingRobot;
     
     CozmoGameImpl();
-    virtual ~CozmoGameImpl();
+    ~CozmoGameImpl();
     
+
+    //
+    // Startup / Initialization / Comms
+    //
+    
+    Result StartEngine(Json::Value config);
+    
+    Result Init(const Json::Value& config);
+    
+    void ForceAddRobot(int              robotID,
+                       const char*      robotIP,
+                       bool             robotIsSimulated);
+    
+    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+    bool ConnectToRobot(AdvertisingRobot whichRobot);
+    
+    //
+    // Running
+    //
+
+    // Tick with game heartbeat:
+    Result Update(const float currentTime_sec);
+
     RunState GetRunState() const;
     
-    Result StartEngine(const Json::Value& config);
+    // Only valid when running as host, returns -1 if running as client.
+    int GetNumRobots() const;
+    
     
     //
     // Vision API
@@ -49,90 +78,21 @@ namespace Cozmo {
     
   protected:
     
-    // Derived classes must be able to provide a pointer to a CozmoEngine
-    virtual CozmoEngine* GetCozmoEngine() = 0;
+    Robot* GetRobotByID(const RobotID_t robotID);
     
-    RunState         _runState;
+    Result UpdateAsHost(const float currentTime_sec);
+    Result UpdateAsClient(const float currentTime_sec);
     
-    std::map<RobotID_t, ImageSendMode_t> _imageSendMode;
-    
-  private:
-    
-    // NOTE: Signal handler setup is in cozmoGame_signal_handlers.cpp
-    
-    void SetupSignalHandlers();
-    
-    // Signal causes the additin of a MessageG2U_DeviceDetectedVisionMarker message to
-    // the vector below.
-    void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
-                                                float x_upperLeft,  float y_upperLeft,
-                                                float x_lowerLeft,  float y_lowerLeft,
-                                                float x_upperRight, float y_upperRight,
-                                                float x_lowerRight, float y_lowerRight);
-    
-    std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
-    
-    std::vector<Signal::SmartHandle> _signalHandles;
-    
-  }; // CozmoGameImpl
-
-
-  class CozmoGameHostImpl : public CozmoGameImpl
-  {
-  public:
-    
-    using RunState = CozmoGameHost::RunState;
-    using PlaybackMode = CozmoGameHost::PlaybackMode;
-    
-    using AdvertisingUiDevice = CozmoGameHost::AdvertisingUiDevice;
-    using AdvertisingRobot    = CozmoGameHost::AdvertisingRobot;
-    
-    CozmoGameHostImpl();
-    virtual ~CozmoGameHostImpl();
-    
-    Result Init(const Json::Value& config);
-    
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
-    
-    bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
-    bool ConnectToRobot(AdvertisingRobot whichRobot);
-    
-    int GetNumRobots() const;
-    
-    // Tick with game heartbeat:
-    void Update(const float currentTime_sec);
-    
-  protected:
-    
-    
-    // Req'd by CozmoGameImpl
-    virtual CozmoEngine* GetCozmoEngine() { return &_cozmoEngine; }
-    
-    int                          _desiredNumUiDevices = 1;
-    int                          _desiredNumRobots = 1;
-    
-    CozmoEngineHost              _cozmoEngine;
-    
-    // UI Comms Stuff
-    Comms::AdvertisementService  _uiAdvertisementService;
-    MultiClientComms             _uiComms;
-    UiMessageHandler             _uiMsgHandler;
-    u32                          _hostUiDeviceID;
-    
-    std::vector<AdvertisingUiDevice> _connectedUiDevices;
-    
-    
-    // TODO: promote these to CozmoGame base class once we have distributed robot vision
+    // Notify UI that this game/engine wrapper is initialzed and availale.
+    // Sends G2U_EngineAvailable message.
+    void SendAvailabilityMessage();
     bool SendRobotImage(RobotID_t robotID);
     
-  private:
+    //
+    // Signals
+    //
+    //   NOTE: Signal handler implementations are in cozmoGame_signal_handlers.cpp
     
-    // Process raised events from CozmoEngine.
-    // NOTE: These methods are in cozmoGame_signal_handlers.cpp
-    std::vector<Signal::SmartHandle> _signalHandles;
-
     void SetupSignalHandlers();
     
     void HandleRobotAvailableSignal(RobotID_t robotID);
@@ -147,45 +107,52 @@ namespace Cozmo {
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
     void HandleRobotImageAvailable(RobotID_t robotID);
-
-
-    // Callbacks for incoming U2G messages
-    // NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
+    void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
+                                                float x_upperLeft,  float y_upperLeft,
+                                                float x_lowerLeft,  float y_lowerLeft,
+                                                float x_upperRight, float y_upperRight,
+                                                float x_lowerRight, float y_lowerRight);
+    
+    //
+    // U2G Message Handling
+    //
+    //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
+    
     void RegisterCallbacksU2G();
 #   define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_NO_WRAPPERS_MODE
 #   define MESSAGE_BASECLASS_NAME UiMessage
 #   include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
 #   undef MESSAGE_BASECLASS_NAME
+    
+    //
+    // Member Variables
+    //
+    
+    bool                             _isHost;
+    bool                             _isEngineStarted;
+    RunState                         _runState;
+    
+    Json::Value                      _config;
+    
+    CozmoEngine*                     _cozmoEngine;
+    int                              _desiredNumUiDevices;
+    int                              _desiredNumRobots;
+    
+    Comms::AdvertisementService      _uiAdvertisementService;
+    MultiClientComms                 _uiComms;
+    UiMessageHandler                 _uiMsgHandler;
+    u32                              _hostUiDeviceID;
+    
+    std::map<RobotID_t, ImageSendMode_t> _imageSendMode;
+    
+    std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
+    
+    std::vector<Signal::SmartHandle> _signalHandles;
 
-    //void ProcessMessage(const MessageU2G_AbortAll& msg);
+    std::vector<AdvertisingUiDevice> _connectedUiDevices;
     
-  }; // class CozmoGameHostImpl
-  
-  
-  class CozmoGameClientImpl : public CozmoGameImpl
-  {
-  public:
-    using RunState = CozmoGame::RunState;
-    
-    CozmoGameClientImpl();
-    virtual ~CozmoGameClientImpl();
-    
-    Result Init(const Json::Value& config);
-    void Update(const float currentTime_sec);
-    RunState GetRunState() const;
-    
-  protected:
-    
-    // Process raised events from CozmoEngine.
-    // ...
-    
-    // Req'd by CozmoGameImpl
-    virtual CozmoEngine* GetCozmoEngine() { return &_cozmoEngine; }
-    
-    RunState           _runState;
-    CozmoEngineClient  _cozmoEngine;
-    
-  }; // class CozmoGameClientImpl
+  }; // CozmoGameImpl
+
   
 } // namespace Cozmo
 } // namespace Anki
