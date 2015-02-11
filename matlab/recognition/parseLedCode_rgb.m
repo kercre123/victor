@@ -21,8 +21,8 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     
     parsingType = 'spatialBlur'; % {'spatialBlur'}
     
-    scaleDetectionMethod = 'temporalGaussian'; % { 'originalGaussian', 'temporalGaussian', 'temporalBox'}
-        
+    scaleDetectionMethod = 'temporalBox'; % { 'originalGaussian', 'temporalGaussian', 'temporalBox'}
+    
     redBlueOnly = false;
     
     showFigures = true;
@@ -345,18 +345,40 @@ end % function colors = dutyCycle_changingCenter()
 
 function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImages, blurSigmas, scaleDetectionMethod)
     
-    blurKernels_small = cell(length(blurSigmas), 1);
-    blurKernels_large = cell(length(blurSigmas), 1);
-    blurKernels_outsideRing = cell(length(blurSigmas), 1);
-    for iBlur = 1:length(blurSigmas)
-        filterWidth = blurSigmas(iBlur) * 4;
-        blurKernels_small{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], blurSigmas(iBlur));
-        blurKernels_large{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth], 2*blurSigmas(iBlur));
-        
-        blurKernels_outsideRing{iBlur} = blurKernels_large{iBlur} - blurKernels_small{iBlur};
-        blurKernels_outsideRing{iBlur}(blurKernels_outsideRing{iBlur} < 0) = 0;
-        blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(sum(blurKernels_outsideRing{iBlur}));
-    end % for iBlur = 1:length(blurSigmas)
+    if strcmpi(scaleDetectionMethod, 'originalGaussian') || strcmpi(scaleDetectionMethod, 'temporalGaussian')
+        % Gaussian kernels
+        blurKernels_small = cell(length(blurSigmas), 1);
+        blurKernels_large = cell(length(blurSigmas), 1);
+        blurKernels_outsideRing = cell(length(blurSigmas), 1);
+        for iBlur = 1:length(blurSigmas)
+            filterWidth = blurSigmas(iBlur) * 4;
+            blurKernels_small{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth] + 1, blurSigmas(iBlur));
+            blurKernels_large{iBlur} = fspecial('gaussian', 2*[filterWidth,filterWidth] + 1, 2*blurSigmas(iBlur));
+            
+            blurKernels_outsideRing{iBlur} = blurKernels_large{iBlur} - blurKernels_small{iBlur};
+            blurKernels_outsideRing{iBlur}(blurKernels_outsideRing{iBlur} < 0) = 0;
+            blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(sum(blurKernels_outsideRing{iBlur}));
+        end % for iBlur = 1:length(blurSigmas)
+    else % if strcmpi(scaleDetectionMethod, 'originalGaussian') || strcmpi(scaleDetectionMethod, 'temporalGaussian')
+        % Box kernels
+        blurKernels_small = cell(length(blurSigmas), 1);
+        blurKernels_large = cell(length(blurSigmas), 1);
+        blurKernels_outsideRing = cell(length(blurSigmas), 1);
+        for iBlur = 1:length(blurSigmas)
+            smallFilterWidth = 2*blurSigmas(iBlur) + 1;
+            largeFilterWidth = 4*blurSigmas(iBlur) + 1;
+            
+            blurKernels_small{iBlur} = ones(smallFilterWidth, smallFilterWidth);
+            blurKernels_small{iBlur} = blurKernels_small{iBlur} / sum(blurKernels_small{iBlur}(:));
+            
+            blurKernels_large{iBlur} = ones(largeFilterWidth, largeFilterWidth);
+            blurKernels_large{iBlur} = blurKernels_large{iBlur} / sum(blurKernels_large{iBlur}(:));
+            
+            blurKernels_outsideRing{iBlur} = ones(largeFilterWidth, largeFilterWidth);
+            blurKernels_outsideRing{iBlur}((ceil(end/2)-blurSigmas(iBlur)):(ceil(end/2)+blurSigmas(iBlur)), (ceil(end/2)-blurSigmas(iBlur)):(ceil(end/2)+blurSigmas(iBlur))) = 0;
+            blurKernels_outsideRing{iBlur} = blurKernels_outsideRing{iBlur} / sum(blurKernels_outsideRing{iBlur}(:));
+        end % for iBlur = 1:length(blurSigmas)
+    end % if strcmpi(scaleDetectionMethod, 'originalGaussian') || strcmpi(scaleDetectionMethod, 'temporalGaussian') ... else
     
     blurredSize = [size(colorImages,1), size(colorImages,2), 3, size(colorImages,4), length(blurSigmas)];
     blurredImages_small = zeros(blurredSize, 'uint8');
@@ -367,12 +389,11 @@ function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImag
         blurredImages_small(:,:,1:2,:,iBlur)       = imfilter(colorImages(:,:,[1,3],:), blurKernels_small{iBlur});
         blurredImages_large(:,:,1:2,:,iBlur)       = imfilter(colorImages(:,:,[1,3],:), blurKernels_large{iBlur});
         blurredImages_outsideRing(:,:,1:2,:,iBlur) = imfilter(colorImages(:,:,[1,3],:), blurKernels_outsideRing{iBlur});
-        
+
         blurredImages_small(:,:,3,:,iBlur)       = max(blurredImages_small(:,:,1:2,:,iBlur), [], 3);
         blurredImages_large(:,:,3,:,iBlur)       = max(blurredImages_large(:,:,1:2,:,iBlur), [], 3);
         blurredImages_outsideRing(:,:,3,:,iBlur) = max(blurredImages_outsideRing(:,:,1:2,:,iBlur), [], 3);
     end % for iBlur = 1:length(blurSigmas)
-    
     
     if strcmpi(scaleDetectionMethod, 'originalGaussian')
         blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
@@ -384,27 +405,10 @@ function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImag
         blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
         blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
         peakValue = max(blurredImages_onMax_mean(:));
-
+        
         inds = find(blurredImages_onMax_mean == peakValue, 1);
         [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
-    elseif strcmpi(scaleDetectionMethod, 'temporalGaussian')
-%         blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
-%         outsideChange = repmat(max(blurredImages_outsideRing, [], 4) - min(blurredImages_outsideRing, [], 4), [1,1,1,size(colorImages,4),1]);
-%         blurredImages_inside(:,:,1:3,:,:) = blurredImages_small - outsideChange;
-%         blurredImages_inside(:,:,4,:,:) = max(blurredImages_inside(:,:,1:2,:,:), [], 3);
-%         blurredImages_inside(blurredImages_inside<0) = 0;
-%         
-%         blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,4,:,:)), [3,1,2,4]);
-%         blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
-%         blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
-%         peakValue = max(blurredImages_onMax_mean(:));
-% 
-%         inds = find(blurredImages_onMax_mean == peakValue, 1);
-%         [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
-
-        blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
-%         blurredImages_inside(:,:,1:2,:,:) = ;
-        
+    elseif strcmpi(scaleDetectionMethod, 'temporalGaussian') || strcmpi(scaleDetectionMethod, 'temporalBox')
         outsideChange = squeeze(max(max(blurredImages_outsideRing(:,:,[1,3],:,:), [], 4) - min(blurredImages_outsideRing(:,:,[1,3],:,:), [], 4), [], 3));
         
         blurredImages_smallMax = permute(squeeze(max(blurredImages_small(:,:,1:2,:,:), [], 3)), [3,1,2,4]);
@@ -413,12 +417,11 @@ function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImag
         blurredImages_smallMaxScaled = blurredImages_smallMax - repmat(toSubtract, [size(colorImages,4), 1,1,1]);
         
         blurredImages_smallMaxScaled_mean = squeeze(mean(blurredImages_smallMaxScaled));
-       
+        
         peakValue = max(blurredImages_smallMaxScaled_mean(:));
-
+        
         inds = find(blurredImages_smallMaxScaled_mean == peakValue, 1);
         [bestY,bestX,bestB] = ind2sub(size(blurredImages_smallMaxScaled_mean), inds);
-    elseif strcmpi(scaleDetectionMethod, 'temporalBox')
     end
     
     bestColors = squeeze(blurredImages_small(bestY,bestX, 1:2, :, bestB));
