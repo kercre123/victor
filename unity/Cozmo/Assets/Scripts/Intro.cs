@@ -7,14 +7,21 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Toggle simulated;
-	[SerializeField] protected Button play;
+	[SerializeField] protected Text orientationLabel;
 	[SerializeField] protected Text error;
-
-
 
 	private string currentRobotIP;
 	private string currentScene;
 	private string currentVizHostIP;
+
+	private ScreenOrientation[] test_orientations = {
+		ScreenOrientation.Portrait,
+		ScreenOrientation.PortraitUpsideDown,
+		ScreenOrientation.LandscapeLeft,
+		ScreenOrientation.LandscapeRight
+	};
+
+	private int test_orientation_index = 2;
 
 	public const int CurrentRobotID = 1;
 
@@ -68,6 +75,9 @@ public class Intro : MonoBehaviour {
 		ip.text = lastIp;
 		simulated.isOn = lastSimulated;
 		visualizerIP.text = lastVisualizerIp;
+		//force portrait in shell to ensure working on phones
+		Screen.orientation = ScreenOrientation.Portrait;
+		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
 	}
 
 	public void PlayScheme(string choice) {
@@ -80,6 +90,12 @@ public class Intro : MonoBehaviour {
 		RobotEngineManager.instance.ConnectedToClient += Connected;
 		RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
 		RobotEngineManager.instance.RobotConnected += RobotConnected;
+	}
+
+	protected void OnDestroy() {
+		RobotEngineManager.instance.ConnectedToClient -= Connected;
+		RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
+		RobotEngineManager.instance.RobotConnected -= RobotConnected;
 	}
 
 	public void Play() {
@@ -139,6 +155,14 @@ public class Intro : MonoBehaviour {
 		}
 
 		error.text = "";
+		if(!Application.isEditor) Screen.orientation = test_orientations[test_orientation_index];
 		Application.LoadLevel(currentScene);
+	}
+
+	public void ChangeOrientation()
+	{
+		test_orientation_index++;
+		if(test_orientation_index >= test_orientations.Length) test_orientation_index = 0;
+		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
 	}
 }
