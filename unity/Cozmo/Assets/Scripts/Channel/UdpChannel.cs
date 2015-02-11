@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Net.NetworkInformation;
 
 public class UdpChannel : ChannelBase {
 
@@ -42,7 +43,6 @@ public class UdpChannel : ChannelBase {
 	private enum ConnectionState {
 		Disconnected,
 		Advertising,
-		WaitingForConnection,
 		Connected,
 		ConnectedAndSending,
 	}
@@ -67,6 +67,7 @@ public class UdpChannel : ChannelBase {
 
 	// state information
 	private ConnectionState connectionState = ConnectionState.Disconnected;
+	private bool advertisingBusy = false;
 	private DisconnectionReason currentDisconnectionReason = DisconnectionReason.ConnectionLost;
 
 	// various queues
@@ -85,15 +86,13 @@ public class UdpChannel : ChannelBase {
 		);
 
 	// asynchronous callbacks (saved to reduce allocations)
-	private readonly AsyncCallback callback_ChangeAdvertisement_StartComplete;
-	private readonly AsyncCallback callback_ChangeAdvertisement_StopComplete;
+	private readonly AsyncCallback callback_SendAdvertisement_Complete;
 	private readonly AsyncCallback callback_ServerReceive_Complete;
 	private readonly AsyncCallback callback_ServerSend_Complete;
 
 	public UdpChannel()
 	{
-		callback_ChangeAdvertisement_StartComplete = ChangeAdvertisement_StartComplete;
-		callback_ChangeAdvertisement_StopComplete = ChangeAdvertisement_StopComplete;
+		callback_SendAdvertisement_Complete = SendAdvertisement_Complete;
 		callback_ServerReceive_Complete = ServerReceive_Complete;
 		callback_ServerSend_Complete = ServerSend_Complete;
 	}
@@ -120,9 +119,11 @@ public class UdpChannel : ChannelBase {
 				throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
 			}
 
+			IPAddress localAddress = GetLocalIPv4();
+
 			try {
 				// set up main socket
-				IPEndPoint localEndPoint = new IPEndPoint (IPAddress.Any, localPort);
+				IPEndPoint localEndPoint = new IPEndPoint (/*localAddress ?? */ IPAddress.Any, localPort);
 				mainServer = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 				mainServer.Bind (localEndPoint);
 
@@ -134,8 +135,10 @@ public class UdpChannel : ChannelBase {
 			}
 
 			try {
+				string localIP = (localAddress ?? IPAddress.Loopback).ToString();
+
 				// set up advertisement message
-				string localIP = ((IPEndPoint)mainServer.LocalEndPoint).Address.ToString();
+				Debug.Log ("Local IP: " + localIP);
 				int length = Encoding.UTF8.GetByteCount(localIP);
 				if (length + 1 > advertisementRegistrationMessage.ip.Length) {
 					DestroySynchronously(DisconnectionReason.FailedToAdvertise,
@@ -151,13 +154,14 @@ public class UdpChannel : ChannelBase {
 				advertisementRegistrationMessage.id = (byte)deviceID;
 				advertisementRegistrationMessage.protocol = (byte)ChannelProtocol.Udp;
 				advertisementRegistrationMessage.enableAdvertisement = 1;
+				advertisementRegistrationMessage.oneShot = 1;
 
 				// set up advertisement socket
 				advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
 				advertisingClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 
 				// advertise
-				SendAdvertisement(true);
+				SendAdvertisement();
 			}
 			catch (Exception e) {
 				DestroySynchronously(DisconnectionReason.FailedToAdvertise, e);
@@ -262,9 +266,15 @@ public class UdpChannel : ChannelBase {
 		if (IsActive) {
 
 			lock (sync) {
-				//if (connectionState == ConnectionState.Advertising) {
-				//	SendAdvertisement(true);
-				//}
+				if (connectionState == ConnectionState.Advertising) {
+					try {
+						SendAdvertisement();
+					}
+					catch (Exception e) {
+						Destroy(DisconnectionReason.FailedToAdvertise, e);
+						return;
+					}
+				}
 
 				InternalUpdate ();
 			}
@@ -339,26 +349,18 @@ public class UdpChannel : ChannelBase {
 	
 	private void Destroy(DisconnectionReason reason) {
 		
-		bool needStopAdvertise = (connectionState == ConnectionState.WaitingForConnection);
-		
 		connectionState = ConnectionState.Disconnected;
+		advertisingBusy = false;
 		currentDisconnectionReason = reason;
+
 		sentBuffers.Clear ();
 		receivedMessages.Clear ();
 
+		mainEndPoint = null;
+		advertisementEndPoint = null;
+
 		if (advertisingClient != null) {
-			if (needStopAdvertise) {
-				try {
-					SendAdvertisement(false);
-				}
-				catch (Exception e) {
-					queuedLogs.Add (e);
-					advertisingClient.Close ();
-				}
-			}
-			else {
-				advertisingClient.Close();
-			}
+			advertisingClient.Close();
 			advertisingClient = null;
 		}
 		
@@ -366,9 +368,6 @@ public class UdpChannel : ChannelBase {
 			mainServer.Close();
 			mainServer = null;
 		}
-		
-		mainEndPoint = null;
-		advertisementEndPoint = null;
 	}
 
 	private void Destroy(DisconnectionReason reason, object exceptionOrLog)
@@ -466,11 +465,9 @@ public class UdpChannel : ChannelBase {
 					IPEndPoint ipEndPoint = endPoint as IPEndPoint;
 					if (ipEndPoint != null) {
 
-						if (connectionState == ConnectionState.Advertising || connectionState == ConnectionState.WaitingForConnection) {
+						if (connectionState == ConnectionState.Advertising) {
 							connectionState = ConnectionState.Connected;
 							mainEndPoint = ipEndPoint;
-
-							SendAdvertisement(false);
 						}
 						else if (mainEndPoint.Equals (ipEndPoint)) {
 							serializer.ByteBuffer = state.buffer;
@@ -508,12 +505,15 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
-	private void SendAdvertisement(bool start)
+	private void SendAdvertisement()
 	{
-		advertisementRegistrationMessage.enableAdvertisement = start ? (byte)1 : (byte)0;
+		if (advertisingBusy) {
+			return;
+		}
+		advertisingBusy = true;
 
-		bool success = false;
 		SocketBufferState state = AllocateBufferState(advertisingClient);
+		bool success = false;
 		try {
 			serializer.ByteBuffer = state.buffer;
 			int length;
@@ -531,7 +531,7 @@ public class UdpChannel : ChannelBase {
 				serializer.Clear ();
 			}
 
-			AsyncCallback callback = start ? callback_ChangeAdvertisement_StartComplete : callback_ChangeAdvertisement_StopComplete;
+			AsyncCallback callback = callback_SendAdvertisement_Complete;
 			BeginSendUdp(advertisingClient, state.buffer, length, advertisementEndPoint, callback, state);
 
 			success = true;
@@ -539,11 +539,12 @@ public class UdpChannel : ChannelBase {
 		finally {
 			if (!success) {
 				state.Dispose();
+				advertisingBusy = false;
 			}
 		}
 	}
 
-	private void ChangeAdvertisement_StartComplete(IAsyncResult result)
+	private void SendAdvertisement_Complete(IAsyncResult result)
 	{
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
@@ -554,40 +555,14 @@ public class UdpChannel : ChannelBase {
 			if (socket != advertisingClient) {
 				return;
 			}
-			
+
+			advertisingBusy = false;
+
 			try {
 				socket.EndSendTo(result);
-
-				if (connectionState == ConnectionState.Advertising) {
-					connectionState = ConnectionState.WaitingForConnection;
-				}
 			}
 			catch (Exception e) {
 				Destroy(DisconnectionReason.FailedToAdvertise, e);
-			}
-		}
-	}
-
-	private void ChangeAdvertisement_StopComplete(IAsyncResult result)
-	{
-		lock (sync) {
-			SocketBufferState state = (SocketBufferState)result.AsyncState;
-			Socket socket = state.socket;
-			state.Dispose();
-
-			try {
-				// can be an old connection
-
-				socket.EndSendTo(result);
-			}
-			catch (Exception) {
-				// ignore, since we can't do anything
-			}
-			// if old connection, need to close
-			finally {
-				if (socket != advertisingClient) {
-				    socket.Close ();
-				}
 			}
 		}
 	}
@@ -630,5 +605,40 @@ public class UdpChannel : ChannelBase {
 				throw;
 			}
 		}
+	}
+
+	// adapted from http://stackoverflow.com/a/24814027
+	public static IPAddress GetLocalIPv4()
+	{
+		NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces ();
+		Array.Sort (interfaces, CompareInterfaces);
+
+		foreach (NetworkInterface item in interfaces)
+		{
+			foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+			{
+				if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+				{
+					return (IPAddress)ip.Address;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static int CompareInterfaces(NetworkInterface a, NetworkInterface b)
+	{
+		// prioritize anything with status up or unknown
+		int compare = -(a.OperationalStatus == OperationalStatus.Up || a.OperationalStatus == OperationalStatus.Unknown).CompareTo (b.OperationalStatus == OperationalStatus.Up || a.OperationalStatus == OperationalStatus.Unknown);
+		// then prioritize anything without type loopback nor unknown
+		if (compare == 0) compare = -(a.NetworkInterfaceType != NetworkInterfaceType.Loopback && a.NetworkInterfaceType != NetworkInterfaceType.Unknown).CompareTo (b.NetworkInterfaceType != NetworkInterfaceType.Loopback && b.NetworkInterfaceType != NetworkInterfaceType.Unknown);
+		// then prioritize anything without type unknown
+		if (compare == 0) compare = -(a.NetworkInterfaceType != NetworkInterfaceType.Loopback).CompareTo (b.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+		// then prioritize status up over unknown
+		if (compare == 0) compare = -(a.OperationalStatus == OperationalStatus.Unknown).CompareTo (b.OperationalStatus == OperationalStatus.Unknown);
+		// then be deterministic
+		if (compare == 0) compare = a.OperationalStatus.CompareTo (b.OperationalStatus);
+		if (compare == 0) compare = a.NetworkInterfaceType.CompareTo (b.NetworkInterfaceType);
+		return compare;
 	}
 }

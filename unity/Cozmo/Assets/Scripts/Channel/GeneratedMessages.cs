@@ -53,7 +53,9 @@ U2G_ForceAddRobot,
 
 
 
-U2G_Heartbeat,
+
+U2G_StartEngine,
+
 
 
 
@@ -93,6 +95,7 @@ U2G_StopAllMotors,
 
 
 U2G_ImageRequest,
+U2G_SetRobotImageSendMode,
 
 
 
@@ -265,6 +268,7 @@ G2U_RobotConnected,
 
 
 G2U_UiDeviceConnected,
+G2U_ImageChunk,
 G2U_RobotObservedObject,
 G2U_DeviceDetectedVisionMarker,
 G2U_PlaySound,
@@ -300,9 +304,11 @@ public u8 isSimulated;
 public override int ID { get { return (int)NetworkMessageID.U2G_ForceAddRobot; } } }
 
 
-public partial class U2G_Heartbeat : NetworkMessage {
-public f32 currentTime_sec;
-public override int ID { get { return (int)NetworkMessageID.U2G_Heartbeat; } } }
+
+public partial class U2G_StartEngine : NetworkMessage {
+public u8 asHost;
+public u8[] vizHostIP = new u8[16];
+public override int ID { get { return (int)NetworkMessageID.U2G_StartEngine; } } }
 
 
 public partial class U2G_DriveWheels : NetworkMessage {
@@ -340,9 +346,18 @@ public override int ID { get { return (int)NetworkMessageID.U2G_StopAllMotors; }
 
 
 public partial class U2G_ImageRequest : NetworkMessage {
+public u8 robotID;
+public u8 mode;
+public override int ID { get { return (int)NetworkMessageID.U2G_ImageRequest; } } }
+
+
+
+
+
+public partial class U2G_SetRobotImageSendMode : NetworkMessage {
 public u8 mode;
 public u8 resolution;
-public override int ID { get { return (int)NetworkMessageID.U2G_ImageRequest; } } }
+public override int ID { get { return (int)NetworkMessageID.U2G_SetRobotImageSendMode; } } }
 
 
 public partial class U2G_SaveImages : NetworkMessage {
@@ -533,6 +548,21 @@ public partial class G2U_UiDeviceConnected : NetworkMessage {
 public u32 deviceID;
 public u8 successful;
 public override int ID { get { return (int)NetworkMessageID.G2U_UiDeviceConnected; } } }
+public partial class G2U_ImageChunk : NetworkMessage {
+public u32 imageId;
+public u32 frameTimeStamp;
+public u16 nrows;
+public u16 ncols;
+public u16 chunkSize;
+public u8 imageEncoding;
+public u8 imageChunkCount;
+public u8 chunkId;
+public u8[] data = new u8[1024];
+public override int ID { get { return (int)NetworkMessageID.G2U_ImageChunk; } } }
+
+
+
+
 public partial class G2U_RobotObservedObject : NetworkMessage {
 public u32 robotID;
 public u32 objectID;
@@ -585,8 +615,10 @@ ByteSerializer.GetSerializationLength(this.isSimulated) +
 0; } } }
 
 
-public partial class U2G_Heartbeat { public override int SerializationLength { get { return
-ByteSerializer.GetSerializationLength(this.currentTime_sec) +
+
+public partial class U2G_StartEngine { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.asHost) +
+ByteSerializer.GetSerializationLength(this.vizHostIP) +
 0; } } }
 
 
@@ -625,6 +657,15 @@ public partial class U2G_StopAllMotors { public override int SerializationLength
 
 
 public partial class U2G_ImageRequest { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.mode) +
+0; } } }
+
+
+
+
+
+public partial class U2G_SetRobotImageSendMode { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.mode) +
 ByteSerializer.GetSerializationLength(this.resolution) +
 0; } } }
@@ -818,6 +859,21 @@ public partial class G2U_UiDeviceConnected { public override int SerializationLe
 ByteSerializer.GetSerializationLength(this.deviceID) +
 ByteSerializer.GetSerializationLength(this.successful) +
 0; } } }
+public partial class G2U_ImageChunk { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.imageId) +
+ByteSerializer.GetSerializationLength(this.frameTimeStamp) +
+ByteSerializer.GetSerializationLength(this.nrows) +
+ByteSerializer.GetSerializationLength(this.ncols) +
+ByteSerializer.GetSerializationLength(this.chunkSize) +
+ByteSerializer.GetSerializationLength(this.imageEncoding) +
+ByteSerializer.GetSerializationLength(this.imageChunkCount) +
+ByteSerializer.GetSerializationLength(this.chunkId) +
+ByteSerializer.GetSerializationLength(this.data) +
+0; } } }
+
+
+
+
 public partial class G2U_RobotObservedObject { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.robotID) +
 ByteSerializer.GetSerializationLength(this.objectID) +
@@ -870,8 +926,10 @@ serializer.Serialize(this.isSimulated);
 } }
 
 
-public partial class U2G_Heartbeat { public override void Serialize(ByteSerializer serializer) {
-serializer.Serialize(this.currentTime_sec);
+
+public partial class U2G_StartEngine { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.asHost);
+serializer.Serialize(this.vizHostIP);
 } }
 
 
@@ -910,6 +968,15 @@ public partial class U2G_StopAllMotors { public override void Serialize(ByteSeri
 
 
 public partial class U2G_ImageRequest { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+serializer.Serialize(this.mode);
+} }
+
+
+
+
+
+public partial class U2G_SetRobotImageSendMode { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.mode);
 serializer.Serialize(this.resolution);
 } }
@@ -1103,6 +1170,21 @@ public partial class G2U_UiDeviceConnected { public override void Serialize(Byte
 serializer.Serialize(this.deviceID);
 serializer.Serialize(this.successful);
 } }
+public partial class G2U_ImageChunk { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.imageId);
+serializer.Serialize(this.frameTimeStamp);
+serializer.Serialize(this.nrows);
+serializer.Serialize(this.ncols);
+serializer.Serialize(this.chunkSize);
+serializer.Serialize(this.imageEncoding);
+serializer.Serialize(this.imageChunkCount);
+serializer.Serialize(this.chunkId);
+serializer.Serialize(this.data);
+} }
+
+
+
+
 public partial class G2U_RobotObservedObject { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.robotID);
 serializer.Serialize(this.objectID);
@@ -1155,8 +1237,10 @@ serializer.Deserialize(out this.isSimulated);
 } }
 
 
-public partial class U2G_Heartbeat { public override void Deserialize(ByteSerializer serializer) {
-serializer.Deserialize(out this.currentTime_sec);
+
+public partial class U2G_StartEngine { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.asHost);
+serializer.Deserialize(this.vizHostIP);
 } }
 
 
@@ -1195,6 +1279,15 @@ public partial class U2G_StopAllMotors { public override void Deserialize(ByteSe
 
 
 public partial class U2G_ImageRequest { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.mode);
+} }
+
+
+
+
+
+public partial class U2G_SetRobotImageSendMode { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.mode);
 serializer.Deserialize(out this.resolution);
 } }
@@ -1388,6 +1481,21 @@ public partial class G2U_UiDeviceConnected { public override void Deserialize(By
 serializer.Deserialize(out this.deviceID);
 serializer.Deserialize(out this.successful);
 } }
+public partial class G2U_ImageChunk { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.imageId);
+serializer.Deserialize(out this.frameTimeStamp);
+serializer.Deserialize(out this.nrows);
+serializer.Deserialize(out this.ncols);
+serializer.Deserialize(out this.chunkSize);
+serializer.Deserialize(out this.imageEncoding);
+serializer.Deserialize(out this.imageChunkCount);
+serializer.Deserialize(out this.chunkId);
+serializer.Deserialize(this.data);
+} }
+
+
+
+
 public partial class G2U_RobotObservedObject { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.robotID);
 serializer.Deserialize(out this.objectID);
@@ -1447,7 +1555,9 @@ case NetworkMessageID.U2G_ForceAddRobot: return new U2G_ForceAddRobot();
 
 
 
-case NetworkMessageID.U2G_Heartbeat: return new U2G_Heartbeat();
+
+case NetworkMessageID.U2G_StartEngine: return new U2G_StartEngine();
+
 
 
 
@@ -1487,6 +1597,7 @@ case NetworkMessageID.U2G_StopAllMotors: return new U2G_StopAllMotors();
 
 
 case NetworkMessageID.U2G_ImageRequest: return new U2G_ImageRequest();
+case NetworkMessageID.U2G_SetRobotImageSendMode: return new U2G_SetRobotImageSendMode();
 
 
 
@@ -1659,6 +1770,7 @@ case NetworkMessageID.G2U_RobotConnected: return new G2U_RobotConnected();
 
 
 case NetworkMessageID.G2U_UiDeviceConnected: return new G2U_UiDeviceConnected();
+case NetworkMessageID.G2U_ImageChunk: return new G2U_ImageChunk();
 case NetworkMessageID.G2U_RobotObservedObject: return new G2U_RobotObservedObject();
 case NetworkMessageID.G2U_DeviceDetectedVisionMarker: return new G2U_DeviceDetectedVisionMarker();
 case NetworkMessageID.G2U_PlaySound: return new G2U_PlaySound();

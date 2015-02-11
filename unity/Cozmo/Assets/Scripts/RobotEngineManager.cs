@@ -93,6 +93,8 @@ public class RobotEngineManager : MonoBehaviour {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
 		}
+
+		Application.runInBackground = true;
 	}
 
 	void OnEnable()

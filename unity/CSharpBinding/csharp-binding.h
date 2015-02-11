@@ -26,10 +26,10 @@ extern "C" {
     void cozmo_pop_log(char* buffer, int max_length);
     
     // Creates a new CozmoEngineHost instance
-    int cozmo_game_host_create(const char* configuration_data);
+    int cozmo_game_create(const char* configuration_data);
     
     // Destroys the current CozmoEngineHost instance, if any
-    int cozmo_game_host_destroy();
+    int cozmo_game_destroy();
   
     // Update tick
     int cozmo_game_update(float currentTime);

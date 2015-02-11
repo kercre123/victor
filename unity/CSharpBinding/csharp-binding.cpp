@@ -22,7 +22,6 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 Cozmo::CozmoGame* game = nullptr;
-Cozmo::CozmoGameHost* host = nullptr;
 
 std::deque<std::string> error_messages;
 
@@ -74,16 +73,19 @@ void configure(Json::Value config)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
-  
-  // Get engine playback mode mode
-  CozmoGameHost::PlaybackMode playbackMode = CozmoGameHost::LIVE_SESSION_NO_RECORD;
-  int pmInt;
-  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
-    playbackMode = (CozmoGameHost::PlaybackMode)pmInt;
-    assert(playbackMode <= CozmoGameHost::PLAYBACK_SESSION);
+  if(!config.isMember(AnkiUtil::kP_AS_HOST)) {
+    config[AnkiUtil::kP_AS_HOST] = true;
   }
   
-  if (playbackMode != CozmoGameHost::PLAYBACK_SESSION) {
+  // Get engine playback mode mode
+  CozmoGame::PlaybackMode playbackMode = CozmoGame::LIVE_SESSION_NO_RECORD;
+  int pmInt;
+  if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
+    playbackMode = (CozmoGame::PlaybackMode)pmInt;
+    assert(playbackMode <= CozmoGame::PLAYBACK_SESSION);
+  }
+  
+  if (playbackMode != CozmoGame::PLAYBACK_SESSION) {
     
     // Wait for at least one robot and UI device to connect
     config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
@@ -97,7 +99,7 @@ void configure(Json::Value config)
   } // if (bm != BM_PLAYBACK_SESSION)
 }
 
-int cozmo_game_host_create(const char* configurationData)
+int cozmo_game_create(const char* configurationData)
 {
     using namespace Cozmo;
   
@@ -118,26 +120,24 @@ int cozmo_game_host_create(const char* configurationData)
   
     configure(config);
   
-    CozmoGameHost* created_host = new CozmoGameHost();
+    CozmoGame* created_game = new CozmoGame();
   
-    bool good = created_host->Init(config);
+    bool good = created_game->Init(config);
     if (!good) {
-      delete created_host;
+      delete created_game;
       return BINDING_ERROR_FAILED_INITIALIZATION;
     }
     
-    host = created_host;
-    game = host;
+    game = created_game;
   
     return RESULT_OK;
 }
 
-int cozmo_game_host_destroy()
+int cozmo_game_destroy()
 {
     if (game != nullptr) {
         delete game;
         game = nullptr;
-        host = nullptr;
     }
     return (int)BINDING_OK;
 }

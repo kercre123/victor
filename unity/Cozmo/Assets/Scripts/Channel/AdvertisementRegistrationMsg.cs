@@ -5,10 +5,11 @@ using System.Collections.Generic;
 
 public partial class AdvertisementRegistrationMsg : NetworkMessage {
 	public ushort port;
-	public byte[] ip = new byte[19];
+	public byte[] ip = new byte[18];
 	public byte id;
 	public byte protocol;
 	public byte enableAdvertisement;
+	public byte oneShot;
 
 	public override int ID {
 		get {
@@ -25,6 +26,7 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 				ByteSerializer.GetSerializationLength(this.id) +
 				ByteSerializer.GetSerializationLength(this.protocol) +
 				ByteSerializer.GetSerializationLength(this.enableAdvertisement) +
+				ByteSerializer.GetSerializationLength(this.oneShot) +
 				0;
 		}
 	}
@@ -36,6 +38,7 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 		serializer.Serialize (this.id);
 		serializer.Serialize (this.protocol);
 		serializer.Serialize (this.enableAdvertisement);
+		serializer.Serialize (this.oneShot);
 	}
 
 	public override void Deserialize(ByteSerializer serializer)
@@ -45,6 +48,7 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 		serializer.Deserialize (out this.id);
 		serializer.Deserialize (out this.protocol);
 		serializer.Deserialize (out this.enableAdvertisement);
+		serializer.Deserialize (out this.oneShot);
 	}
 }
 
