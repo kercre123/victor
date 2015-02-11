@@ -106,7 +106,7 @@ public class Intro : MonoBehaviour {
 					connecting = true;
 					SaveData();
 					CurrentRobotID = idInteger;
-					hackWait = Time.time + 5.0f;
+					hackWait = Time.time + 2f;
 					errorText = "Connecting...";
 				}
 			}
