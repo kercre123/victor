@@ -53,6 +53,7 @@ namespace Anki {
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
         //
+        // *** COZMO 2 ***
         // Power   LSpeed  RSpeed (approx,In-air speeds)
         // 1.0    120     125
         // 0.9    110     115
@@ -63,6 +64,23 @@ namespace Anki {
         // 0.4     38      39
         // 0.3     25      25
         // 0.25    -       -
+
+        // *** COZMO 3 (with clamping on, i.e. MAX_WHEEL_SPEED == 0.5) ***
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 0.1      0      0
+        // 0.15    15     15
+        // 0.2     50     40
+        // 0.25    70     60
+        // 0.3     90     80
+        // 0.35   104     96
+        // 0.4    120    112
+        // 0.5    137    131
+        // 0.6    150    145
+        // 0.7    155    153
+        // 0.8    165    164
+        // 0.9    170    173
+        // 1.0    174    177
+        
         
         f32 wheelPower_ = 0;
         f32 wheelPowerStep_ = 0.05;
