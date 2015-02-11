@@ -159,7 +159,7 @@ namespace Anki {
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
-        u8 imgID_ = 0;
+        u32 imgID_ = 0;
         u8 imgData_[3*640*480];
         u32 imgBytes_ = 0;
         u32 imgWidth_, imgHeight_ = 0;
