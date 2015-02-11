@@ -216,8 +216,16 @@ namespace Anki {
       
       void ProcessMessageObjectVisionMarker(MessageG2U_RobotObservedObject const& msg)
       {
-        // TODO: Do something with this message to notify UI
-        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
+        if(cozmoCam_ == nullptr) {
+          printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
+        } else {
+          // Draw a rectangle in red with the object ID as text in the center
+          cozmoCam_->setColor(0xff0000);          
+          cozmoCam_->drawRectangle(msg.topLeft_x, msg.topLeft_y, msg.width, msg.height);
+          cozmoCam_->drawText(std::to_string(msg.objectID),
+                              msg.topLeft_x + msg.width/2,
+                              msg.topLeft_y + msg.height/2);
+        }
       }
 
       void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
