@@ -15,6 +15,8 @@
 #include "anki/common/types.h"
 #include "json/json.h"
 
+#include "anki/cozmo/shared/cozmoTypes.h"
+
 // TODO: Remove dependency on this
 //#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/game/comms/messaging/uiMessages.h"
@@ -53,14 +55,31 @@ namespace Cozmo {
     };
     
     CozmoGame();
-    virtual ~CozmoGame();
+    ~CozmoGame();
     
-    virtual bool Init(const Json::Value& config) = 0;
+    Result Init(const Json::Value& config);
+    
+    Result StartEngine(Json::Value config);
     
     // Ticked with game heartbeat:
-    virtual void Update(const float currentTime_sec) = 0;
+    Result Update(const float currentTime_sec);
     
     RunState GetRunState() const;
+    
+    // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
+    using AdvertisingRobot    = int;
+    using AdvertisingUiDevice = int;
+    
+    // For adding a real robot to the list of availale ones advertising, using its
+    // known IP address. This is only necessary until we have real advertising
+    // capability on real robots.
+    // TODO: Remove this once we have sorted out the advertising process for real robots
+    void ForceAddRobot(int              robotID,
+                       const char*      robotIP,
+                       bool             robotIsSimulated);
+    
+    // Return number of robots connected
+    int GetNumRobots() const;
     
     //
     // Vision-related API
@@ -82,74 +101,13 @@ namespace Cozmo {
     //   talk straight to the UI on the device it is running on)
     const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
+    void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
+    
   protected:
     
     CozmoGameImpl* _impl;
     
   }; // class CozmoGame
-  
-  class CozmoGameHost : public CozmoGame
-  {
-  public:
-    
-    CozmoGameHost();
-    ~CozmoGameHost();
-    
-    //
-    // API Inherited from CozmoGame:
-    //
-    virtual bool Init(const Json::Value& config) override;
-    
-    virtual void Update(const float currentTime_sec) override;
-    
-    //
-    // Host-specific API for establishing connections:
-    //
-    
-    // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
-    using AdvertisingRobot    = int;
-    using AdvertisingUiDevice = int;
-
-    // For adding a real robot to the list of availale ones advertising, using its
-    // known IP address. This is only necessary until we have real advertising
-    // capability on real robots.
-    // TODO: Remove this once we have sorted out the advertising process for real robots
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
-    
-    // Return number of robots connected
-    int GetNumRobots() const;
-    
-    //bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
-    //bool ConnectToRobot(AdvertisingRobot whichRobot);
-    
-  private:
-    
-    CozmoGameHostImpl* _hostImpl;
-    
-  }; // class CozmoGameHost
-  
-  
-  class CozmoGameClient : public CozmoGame
-  {
-  public:
-    
-    CozmoGameClient();
-    ~CozmoGameClient();
-    
-    //
-    // API Inherited from CozmoGame:
-    //
-    virtual bool Init(const Json::Value& config) override;
-    
-    virtual void Update(const float currentTime_sec) override;
-    
-  private:
-    
-    CozmoGameClientImpl* _clientImpl;
-    
-  }; // class CozmoGameClient
   
   
   
