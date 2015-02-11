@@ -67,10 +67,7 @@ namespace Cozmo {
     // For connecting to advertisement service
     UdpClient regClient_;
     Comms::AdvertisementRegistrationMsg regMsg_;
-    void RegisterWithAdvertisementService();
-    void DeregisterFromAdvertisementService();
-    bool IsRegistered();
-    
+    void AdvertiseToService();
     
     void ReadAllMsgPackets();
     
@@ -82,7 +79,6 @@ namespace Cozmo {
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
 
     bool           isInitialized_;
-    bool           wasConnected_;
 
     // Device ID to use for registering with advertisement service
     int            deviceID_;
