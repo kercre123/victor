@@ -6,17 +6,12 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField id;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
-	[SerializeField] protected Toggle[] schemeToggles;
-	[SerializeField] protected Toggle[] orientationToggles;
 	[SerializeField] protected Toggle simulated;
 	[SerializeField] protected Button play;
 	[SerializeField] protected Text error;
 
 	private bool connecting = false;
 	private float hackWait = 0.0f;
-
-	private string[] scenes = { "ThumbStick", "ScreenPad", "TwoSliders" };
-	private ScreenOrientation[] orientations = { ScreenOrientation.Portrait, ScreenOrientation.PortraitUpsideDown, ScreenOrientation.LandscapeLeft, ScreenOrientation.LandscapeRight };
 
 	public static int CurrentRobotID { get; private set; }
 
@@ -48,14 +43,14 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetString("LastVisualizerIp", value); }
 	}
 
-	private int lastSceneIndex
+	private string lastSceneName
 	{
 		get { 
-			int index = PlayerPrefs.GetInt("LastSceneIndex", 0);
-			index = Mathf.Clamp(index, 0, scenes.Length-1);
-			return index; }
+			string sceneName = PlayerPrefs.GetString("LastSceneName", "ThumbStick");
+			return sceneName;
+		}
 		
-		set { PlayerPrefs.SetInt("LastSceneIndex", value); }
+		set { PlayerPrefs.SetString("LastSceneName", value); }
 	}
 
 	protected void OnEnable() {
@@ -65,62 +60,6 @@ public class Intro : MonoBehaviour {
 
 		visualizerIP.text = lastVisualizerIp;
 
-		//initialize scheme choices
-		for(int i=0;i<schemeToggles.Length;i++) {
-			schemeToggles[i].isOn = i == lastSceneIndex;
-		}
-
-		for(int i=0;i<schemeToggles.Length;i++) {
-			schemeToggles[i].onValueChanged.AddListener(RefreshScheme);
-		}
-
-		//initialize orientation choices
-		ScreenOrientation orientation = Screen.orientation;
-		if(orientation == ScreenOrientation.AutoRotation || orientation == ScreenOrientation.Unknown) {
-			orientation = ScreenOrientation.LandscapeLeft;
-			if(!Application.isEditor) Screen.orientation = orientation;
-
-		}
-
-		for(int i=0;i<orientationToggles.Length;i++) {
-			orientationToggles[i].isOn = orientation == orientations[i];
-		}
-
-		for(int i=0;i<orientationToggles.Length;i++) {
-			orientationToggles[i].onValueChanged.AddListener(RefreshOrientation);
-		}
-
-	}
-
-	public void RefreshScheme(bool on) {
-		if(!on || Application.isEditor) return;
-		
-		int index = 0;
-		for(int i=0; i<schemeToggles.Length; i++) {
-			if(!schemeToggles[i].isOn) continue;
-			
-			index = i;
-			break;
-		}
-
-		lastSceneIndex = index;
-		Debug.Log("RefreshScheme("+index+")");
-	}
-
-	public void RefreshOrientation(bool on) {
-		if(!on || Application.isEditor) return;
-
-		int index = 0;
-		for(int i=0; i<orientationToggles.Length; i++) {
-			if(!orientationToggles[i].isOn) continue;
-
-			index = i;
-			break;
-		}
-
-		index = Mathf.Clamp(index, 0, orientations.Length - 1);
-		ScreenOrientation orientation = (ScreenOrientation)orientations[index];
-		Screen.orientation = orientation;
 	}
 
 	protected void Update() {
@@ -128,9 +67,14 @@ public class Intro : MonoBehaviour {
 			if(RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
 				connecting = false;
 				error.text = "";
-				Application.LoadLevel(scenes[lastSceneIndex]);
+				Application.LoadLevel(lastSceneName);
 			}
 		}
+	}
+
+	public void PlayScheme(string choice) {
+		lastSceneName = choice;
+		Play();
 	}
 
 	public void Play() {
@@ -176,18 +120,11 @@ public class Intro : MonoBehaviour {
 		lastId = id.text;
 		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
-
-		for(int i=0;i<schemeToggles.Length;i++) {
-			if(!schemeToggles[i].isOn) continue;
-			lastSceneIndex = i;
-			break;
-		}
-
 	}
 
 	public void FakeTest() {
 		SaveData();
-		Application.LoadLevel(scenes[lastSceneIndex]);
+		Application.LoadLevel(lastSceneName);
 	}
 
 }

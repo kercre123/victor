@@ -387,7 +387,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
       propertyPath: m_AnchorMax.y
-      value: .5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
       propertyPath: m_Pivot.x
@@ -497,8 +497,8 @@ RectTransform:
   - {fileID: 1629215272}
   m_Father: {fileID: 2014748986}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: .949999988}
-  m_AnchorMax: {x: .100000001, y: 1}
+  m_AnchorMin: {x: .899999976, y: .949999988}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -4.57763672e-05}
   m_SizeDelta: {x: 0, y: -4.57763672e-05}
   m_Pivot: {x: .5, y: 1}
@@ -656,11 +656,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2014748986}
   m_RootOrder: 2
-  m_AnchorMin: {x: .699999988, y: .800000012}
+  m_AnchorMin: {x: .699999988, y: .850000024}
   m_AnchorMax: {x: 1, y: .899999976}
-  m_AnchoredPosition: {x: -2.5, y: 0}
+  m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -5, y: 0}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 1, y: .5}
 --- !u!114 &700661455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,7 +681,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 4
     m_MaxSize: 100
-    m_Alignment: 4
+    m_Alignment: 5
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
@@ -952,10 +952,10 @@ RectTransform:
   m_Father: {fileID: 2014748986}
   m_RootOrder: 0
   m_AnchorMin: {x: .699999988, y: .899999976}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -2.5, y: 0}
+  m_AnchorMax: {x: 1, y: .949999988}
+  m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -5, y: 0}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 1, y: .5}
 --- !u!114 &1473293525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -976,7 +976,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 4
     m_MaxSize: 100
-    m_Alignment: 4
+    m_Alignment: 5
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
@@ -1086,7 +1086,7 @@ RectTransform:
   m_Father: {fileID: 18556363}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
