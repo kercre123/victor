@@ -142,6 +142,20 @@ namespace Cozmo {
       return lastResult;
     }
     
+    if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+      PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
+                          "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
+    } else {
+      VizManager::getInstance()->Connect(config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+      
+      // Only send images if the viz host is the same as the robot advertisement service
+      // (so we don't waste bandwidth sending (uncompressed) viz data over the network
+      //  to be displayed on another machine)
+      if(config[AnkiUtil::kP_VIZ_HOST_IP] == config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
+        VizManager::getInstance()->EnableImageSend(true);
+      }
+    }
+    
     lastResult = InitInternal();
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
@@ -357,19 +371,24 @@ namespace Cozmo {
                                           const char*      robotIP,
                                           bool             robotIsSimulated)
   {
-    // Force add physical robot since it's not registering by itself yet.
-    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
-    forcedRegistrationMsg.id = robotID;
-    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
-    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-    forcedRegistrationMsg.enableAdvertisement = 1;
-    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
-    
-    _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
-    
-    // Mark this robot as force-added so we can deregister it from the advertising
-    // service manually once we connect to it.
-    _forceAddedRobots[robotID] = true;
+    if(_isBasestationStarted) {
+      // Force add physical robot since it's not registering by itself yet.
+      Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+      forcedRegistrationMsg.id = robotID;
+      forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
+      forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+      forcedRegistrationMsg.enableAdvertisement = 1;
+      snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
+      
+      _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
+      
+      // Mark this robot as force-added so we can deregister it from the advertising
+      // service manually once we connect to it.
+      _forceAddedRobots[robotID] = true;
+    } else {
+      PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
+                        "You cannot force-add a robot until the engine is started.\n");
+    }
   }
   
   int CozmoEngineHostImpl::GetNumRobots() const
