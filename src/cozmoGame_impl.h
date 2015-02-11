@@ -83,9 +83,6 @@ namespace Cozmo {
     Result UpdateAsHost(const float currentTime_sec);
     Result UpdateAsClient(const float currentTime_sec);
     
-    // Notify UI that this game/engine wrapper is initialzed and availale.
-    // Sends G2U_EngineAvailable message.
-    void SendAvailabilityMessage();
     bool SendRobotImage(RobotID_t robotID);
     
     //

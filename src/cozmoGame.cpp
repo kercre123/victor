@@ -102,10 +102,7 @@ namespace Cozmo {
     _config = config;
     
     _runState = CozmoGame::STOPPED;
-    
-    // Let the UI know this cozmoGame object is here:
-    SendAvailabilityMessage();
-    
+        
     return lastResult;
   }
   
@@ -197,14 +194,6 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::SendAvailabilityMessage()
-  {
-    MessageG2U_EngineAvailable msg;
-    msg.isHost = 1;
-    msg.runningOnDeviceID = _hostUiDeviceID;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
-  }
-
   bool CozmoGameImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
   {
     const bool success = _uiComms.ConnectToDeviceByID(whichDevice);
