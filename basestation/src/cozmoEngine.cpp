@@ -142,6 +142,20 @@ namespace Cozmo {
       return lastResult;
     }
     
+    if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+      PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
+                          "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
+    } else {
+      VizManager::getInstance()->Connect(config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+      
+      // Only send images if the viz host is the same as the robot advertisement service
+      // (so we don't waste bandwidth sending (uncompressed) viz data over the network
+      //  to be displayed on another machine)
+      if(config[AnkiUtil::kP_VIZ_HOST_IP] == config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
+        VizManager::getInstance()->EnableImageSend(true);
+      }
+    }
+    
     lastResult = InitInternal();
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
