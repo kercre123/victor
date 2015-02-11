@@ -58,7 +58,7 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetInt("LastSceneIndex", value); }
 	}
 
-	protected void Awake() {
+	protected void OnEnable() {
 		ip.text = lastIp;
 		id.text = lastId;
 		simulated.isOn = lastSimulated;
@@ -70,28 +70,56 @@ public class Intro : MonoBehaviour {
 			schemeToggles[i].isOn = i == lastSceneIndex;
 		}
 
+		for(int i=0;i<schemeToggles.Length;i++) {
+			schemeToggles[i].onValueChanged.AddListener(RefreshScheme);
+		}
+
 		//initialize orientation choices
 		ScreenOrientation orientation = Screen.orientation;
 		if(orientation == ScreenOrientation.AutoRotation || orientation == ScreenOrientation.Unknown) {
 			orientation = ScreenOrientation.LandscapeLeft;
 			if(!Application.isEditor) Screen.orientation = orientation;
+
 		}
 
 		for(int i=0;i<orientationToggles.Length;i++) {
 			orientationToggles[i].isOn = orientation == orientations[i];
 		}
+
+		for(int i=0;i<orientationToggles.Length;i++) {
+			orientationToggles[i].onValueChanged.AddListener(RefreshOrientation);
+		}
+
 	}
 
-	public void ChooseScheme(int choice) {
-		lastSceneIndex = choice;
-		Debug.Log("ChooseScheme("+choice+")");
+	public void RefreshScheme(bool on) {
+		if(!on || Application.isEditor) return;
+		
+		int index = 0;
+		for(int i=0; i<schemeToggles.Length; i++) {
+			if(!schemeToggles[i].isOn) continue;
+			
+			index = i;
+			break;
+		}
+
+		lastSceneIndex = index;
+		Debug.Log("RefreshScheme("+index+")");
 	}
 
-	public void ChooseOrientation(int choice) {
-		if(Application.isEditor)
-			return;
-		choice = Mathf.Clamp(choice, 0, orientations.Length - 1);
-		ScreenOrientation orientation = (ScreenOrientation)choice;
+	public void RefreshOrientation(bool on) {
+		if(!on || Application.isEditor) return;
+
+		int index = 0;
+		for(int i=0; i<orientationToggles.Length; i++) {
+			if(!orientationToggles[i].isOn) continue;
+
+			index = i;
+			break;
+		}
+
+		index = Mathf.Clamp(index, 0, orientations.Length - 1);
+		ScreenOrientation orientation = (ScreenOrientation)orientations[index];
 		Screen.orientation = orientation;
 	}
 
