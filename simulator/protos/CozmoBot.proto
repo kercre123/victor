@@ -578,7 +578,7 @@ Supervisor {
 	
 		DEF LEFT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
-				dampingConstant 2
+				dampingConstant 0.75
 				axis 0 1 0
 		  }
 		  device [
@@ -652,7 +652,7 @@ Supervisor {
 		}
 		DEF RIGHT_FRONT_WHEEL HingeJoint {
 		  jointParameters HingeJointParameters {
-				dampingConstant 2
+				dampingConstant 0.75
 				axis 0 1 0
 		  }
 		  device [

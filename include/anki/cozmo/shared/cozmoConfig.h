@@ -269,7 +269,10 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-        
+    
+    // Rate at which the robot advertises itself
+    const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
+    
     // Port on which registered robots advertise.
     const u32 ROBOT_ADVERTISING_PORT = 5100;
     

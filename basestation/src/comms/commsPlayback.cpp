@@ -93,8 +93,25 @@ size_t CommsPlayback::Send(const Comms::MsgPacket &msg)
 {
   // noop
   size_t numBytesSent = 6 + msg.dataLen; // It's actually sizeof(RADIO_PACKET_HEADER) + sizeof(u32) + msg.dataLen but nobody really cares about this anyway.
+  
+  // Increment the number of sent messages for the specified destination device
+  ++numSendMsgs_[msg.destId];
+  
   return numBytesSent;
 }
+  
+u32 CommsPlayback::GetNumMsgPacketsInSendQueue(int devID) {
+  std::map<int, int>::iterator it = numSendMsgs_.find(devID);
+  if (it != numSendMsgs_.end()) {
+    return it->second;
+  }
+  return 0;
+}
+  
+void CommsPlayback::Update(bool send_queued_msgs) {
+  numSendMsgs_.clear();
+}
+  
 // ICOMMS implementation
 //////////////////////////
 

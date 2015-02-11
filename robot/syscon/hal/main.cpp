@@ -46,7 +46,9 @@ int main(void)
   BatteryInit();
   TimerInit();
   MotorsInit();   // Must init before power goes on
-  //UARTInit();  // XXX - do not enable unless you want neck cable to break
+#if defined(DO_MOTOR_TESTING)
+  UARTInit();
+#endif
   
   UARTPutString("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -55,7 +57,9 @@ int main(void)
   UARTPutString("too late!\r\n");
 
   // Finish booting up
+#ifndef DO_MOTOR_TESTING
   SPIInit();
+#endif
   PowerInit(); 
   
   g_dataToHead.common.source = SPI_SOURCE_BODY;
@@ -78,32 +82,28 @@ int main(void)
   nrf_gpio_pin_set(PIN_LED2);
   while (1)
   {
-    UARTPutString("\nForward ends with...");
-    for (int i = 0; i < 2; i++)
+    UARTPutString("\r\nForward ends with...");
+    for (int i = 0; i < 4; i++)
       MotorsSetPower(i, 0x2000);   
     MotorsUpdate();
     MicroWait(5000);
-//    encoderAnalyzer();
     MotorsUpdate();
 
     MicroWait(500000);
-//    encoderAnalyzer();
-//    MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
-    //UARTPutString("\nBackward ends with...");
+    UARTPutString("\r\nBackward ends with...");
     
-    for (int i = 0; i < 2; i++)    
+    for (int i = 0; i < 4; i++)    
       MotorsSetPower(i, -0x2000);
     MotorsUpdate();
     MicroWait(5000);
-//    encoderAnalyzer();
     MotorsUpdate();
 
     MicroWait(500000);
-//    encoderAnalyzer();
-//    MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
-//    BatteryUpdate();
+    BatteryUpdate();
   }
   
 #else

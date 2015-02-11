@@ -16,14 +16,24 @@ namespace Anki {
       UDP
     } Protocol;
     
+    // Message received from device at registrationPort that wants to advertise.
+    // If enableAdvertisement == 1 and oneShot == 0, the device is registered to the service
+    // which will then advertise for the device on subsequent calls to Update().
+    // If enableAdvertisement == 1 and oneShot == 1, the service will advertise one time
+    // on the next call to Update(). This mode is helpful in that an advertising device
+    // need not know whether an advertisement service is running before it sends a registration message.
+    // It just keeps sending them!
+    // If enableAdvertisement == 0, the device is deregistered if it isn't already.
     typedef struct {
       unsigned short port;         // Port that advertising device is accepting connections on
       unsigned char ip[18];        // IP address as null terminated string
       unsigned char id;
       unsigned char protocol;      // See Protocol enum
       unsigned char enableAdvertisement;  // 1 = register, 0 = deregister
+      unsigned char oneShot;
     } AdvertisementRegistrationMsg;
     
+    // Sent to all clients interested in knowing about advertising devices from advertisementPort.
     typedef struct  {
       unsigned short port;
       unsigned char ip[17];        // IP address as null terminated string
@@ -63,15 +73,20 @@ namespace Anki {
 
       char serviceName_[MAX_SERVICE_NAME_LENGTH];
       
-      // Device that want to advertise connect to this server
+      // Devices that want to advertise connect to this server
       UdpServer regServer_;
       
       // Devices that want to receive advertisements connect to this server
       UdpServer advertisingServer_;
       
       // Map of advertising device id to AdvertisementMsg
+      // populated by AdvertisementRegistrationMsg
       typedef std::map<int, AdvertisementMsg>::iterator connectionInfoMapIt;
       std::map<int, AdvertisementMsg> connectionInfoMap_;
+      
+      // Map of advertising device id to AdvertisementMsg
+      // for one-shot advertisements, also populated by AdvertisementRegistrationMsg
+      std::map<int, AdvertisementMsg> oneShotAdvertiseConnectionInfoMap_;
       
 
     };

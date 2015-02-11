@@ -85,6 +85,64 @@ namespace Anki {
       enable_ = false;
     }
     
+    
+    f32 ComputeLeftWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
+    {
+      
+#ifdef COZMO2
+      f32 out_ol = 0, out_corr = 0;
+      f32 dir = desired_speed_mmps >= 0 ? 1 : -1;
+      
+      // Compute open loop component and error correction component of wheel motor command
+      if (ABS(desired_speed_mmps) >= TRANSITION_SPEED) {
+        out_ol = (desired_speed_mmps * HIGH_OPEN_LOOP_GAIN) + dir * HIGH_OPEN_LOOP_OFFSET;
+        out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
+      } else {
+        out_ol = (desired_speed_mmps) * LOW_OPEN_LOOP_GAIN;
+        out_corr = ( (DEFAULT_WHEEL_LOW_KP * error) + (error_sum * DEFAULT_WHEEL_LOW_KI) );
+      }
+      
+      return (out_ol + out_corr);
+#else
+      // 3rd order polynomial
+      // For x = speed in mm/s,
+      // power = 5E-7x^3 - 0.0001x^2 + 0.0082x + 0.0149
+      f32 x = ABS(desired_speed_mmps);
+      f32 x2 = x*x;
+      f32 x3 = x*x2;
+      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x + 0.0149;
+      if (desired_speed_mmps < 0) {
+        out_ol *= -1;
+      }
+      f32 out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
+      f32 out_total = out_ol + out_corr;
+      return out_total;
+#endif
+    }
+
+    f32 ComputeRightWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
+    {
+#ifdef COZMO2
+      return ComputeLeftWheelPower(desired_speed_mmps, error, error_sum);
+#else
+      // 3rd order polynomial
+      // For x = speed in mm/s,
+      // power = 4E-7x^3 - 0.00008x^2 + 0.0072x + 0.0203
+      f32 x = ABS(desired_speed_mmps);
+      f32 x2 = x*x;
+      f32 x3 = x*x2;
+      f32 out_ol = 4E-7 * x3 - 0.00008 * x2 + 0.0072 * x + 0.0203;
+      if (desired_speed_mmps < 0) {
+        out_ol *= -1;
+      }
+      f32 out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
+      f32 out_total = out_ol + out_corr;
+      return out_total;
+#endif
+      
+    }
+    
+    
     //Run the wheel controller
     void Run()
     {
@@ -100,34 +158,12 @@ namespace Anki {
 #endif
         
         //Compute the error between dessired and actual (filtered)
-        float errorL = (desiredWheelSpeedL_ - filterWheelSpeedL_);
-        float errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
-    
-        f32 dirL = desiredWheelSpeedL_ >= 0 ? 1 : -1;
-        f32 dirR = desiredWheelSpeedR_ >= 0 ? 1 : -1;
+        f32 errorL = (desiredWheelSpeedL_ - filterWheelSpeedL_);
+        f32 errorR = (desiredWheelSpeedR_ - filterWheelSpeedR_);
         
-        f32 outl_ol = 0, outr_ol = 0;
-        f32 outl_corr = 0, outr_corr = 0;
-        f32 outl = 0, outr = 0;
-    
-        // Compute open loop component and error correction component of wheel motor command
-        if (ABS(desiredWheelSpeedL_) >= TRANSITION_SPEED) {
-          outl_ol = (desiredWheelSpeedL_ * HIGH_OPEN_LOOP_GAIN) + dirL * HIGH_OPEN_LOOP_OFFSET;
-          outl_corr = ( (Kp_ * errorL) + (error_sumL_ * Ki_) );
-        } else {
-          outl_ol = (desiredWheelSpeedL_) * LOW_OPEN_LOOP_GAIN;
-          outl_corr = ( (DEFAULT_WHEEL_LOW_KP * errorL) + (error_sumL_ * DEFAULT_WHEEL_LOW_KI) );
-        }
-        outl = outl_ol + outl_corr;
-
-        if (ABS(desiredWheelSpeedR_) >= TRANSITION_SPEED) {
-          outr_ol = (desiredWheelSpeedR_ * HIGH_OPEN_LOOP_GAIN) + dirR * HIGH_OPEN_LOOP_OFFSET;
-          outr_corr = ( (Kp_ * errorR) + (error_sumR_ * Ki_) );
-        } else {
-          outr_ol = (desiredWheelSpeedR_) * LOW_OPEN_LOOP_GAIN;
-          outr_corr = ( (DEFAULT_WHEEL_LOW_KP * errorR) + (error_sumR_ * DEFAULT_WHEEL_LOW_KI) );
-        }
-        outr = outr_ol + outr_corr;
+        // Compute power to command to motors
+        f32 outl = ComputeLeftWheelPower(desiredWheelSpeedL_, errorL, error_sumL_);
+        f32 outr = ComputeRightWheelPower(desiredWheelSpeedR_, errorR, error_sumR_);
         
         
 #if(DEBUG_WHEEL_CONTROLLER)

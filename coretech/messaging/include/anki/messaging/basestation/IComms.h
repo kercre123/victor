@@ -67,6 +67,10 @@ namespace Anki {
       // when game is unpaused we need to dump old messages
       virtual void ClearMsgPackets() = 0;
 
+      // Return the number of MsgPackets in the send queue that are bound for devID
+      virtual u32 GetNumMsgPacketsInSendQueue(int devID) = 0;
+      
+      virtual void Update(bool send_queued_msgs = true) = 0;
     };
   }
 }

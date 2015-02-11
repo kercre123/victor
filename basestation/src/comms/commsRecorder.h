@@ -63,6 +63,8 @@ public:
   // Reads all data from buffer into provided data storage
   BaseStationTime_t ReadFromBuffer(unsigned char *buffer, unsigned int size, vector<CommsRecord> &data);
   virtual void ClearMsgPackets();
+  virtual u32 GetNumMsgPacketsInSendQueue(int devID);
+  virtual void Update(bool send_queued_msgs = true);
   // ICOMMS implementation
   //////////////////////////
 
