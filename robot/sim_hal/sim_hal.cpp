@@ -192,12 +192,6 @@ namespace Anki {
     
     Result HAL::Init()
     {
-      // HACK
-      // This makes "sure" we give the robot advertisement service (running
-      // inside CozmoEngine inside "blockworld_controller") time to start
-      // before we send our registration message in InitSimRadio() below.
-      webotRobot_.step(100*Cozmo::TIME_STEP);
-      
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
