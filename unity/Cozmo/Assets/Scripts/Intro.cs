@@ -6,14 +6,11 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField engineIP;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
-	[SerializeField] protected Toggle[] schemeToggles;
-	[SerializeField] protected Toggle[] orientationToggles;
 	[SerializeField] protected Toggle simulated;
 	[SerializeField] protected Button play;
 	[SerializeField] protected Text error;
 
-	private string[] scenes = { "ThumbStick", "ScreenPad", "TwoSliders" };
-	private ScreenOrientation[] orientations = { ScreenOrientation.Portrait, ScreenOrientation.PortraitUpsideDown, ScreenOrientation.LandscapeLeft, ScreenOrientation.LandscapeRight };
+
 
 	private string currentRobotIP;
 	private string currentScene;
@@ -56,51 +53,26 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetString("LastVisualizerIp", value); }
 	}
 
-	private int lastSceneIndex
+	private string lastSceneName
 	{
 		get { 
-			int index = PlayerPrefs.GetInt("LastSceneIndex", 0);
-			index = Mathf.Clamp(index, 0, scenes.Length-1);
-			return index; }
+			string sceneName = PlayerPrefs.GetString("LastSceneName", "ThumbStick");
+			return sceneName;
+		}
 		
-		set { PlayerPrefs.SetInt("LastSceneIndex", value); }
+		set { PlayerPrefs.SetString("LastSceneName", value); }
 	}
 
-	protected void Awake() {
+	protected void OnEnable() {
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
 		simulated.isOn = lastSimulated;
-
 		visualizerIP.text = lastVisualizerIp;
-
-		//initialize scheme choices
-		for(int i=0;i<schemeToggles.Length;i++) {
-			schemeToggles[i].isOn = i == lastSceneIndex;
-		}
-
-		//initialize orientation choices
-		ScreenOrientation orientation = Screen.orientation;
-		if(orientation == ScreenOrientation.AutoRotation || orientation == ScreenOrientation.Unknown) {
-			orientation = ScreenOrientation.LandscapeLeft;
-			if(!Application.isEditor) Screen.orientation = orientation;
-		}
-
-		for(int i=0;i<orientationToggles.Length;i++) {
-			orientationToggles[i].isOn = orientation == orientations[i];
-		}
 	}
 
-	public void ChooseScheme(int choice) {
-		lastSceneIndex = choice;
-		Debug.Log("ChooseScheme("+choice+")");
-	}
-
-	public void ChooseOrientation(int choice) {
-		if(Application.isEditor)
-			return;
-		choice = Mathf.Clamp(choice, 0, orientations.Length - 1);
-		ScreenOrientation orientation = (ScreenOrientation)choice;
-		Screen.orientation = orientation;
+	public void PlayScheme(string choice) {
+		lastSceneName = choice;
+		Play();
 	}
 
 	protected void Start()
@@ -124,7 +96,7 @@ public class Intro : MonoBehaviour {
 
 		if (string.IsNullOrEmpty (errorText)) {
 			currentRobotIP = ip.text;
-			currentScene = scenes[lastSceneIndex];
+			currentScene = lastSceneName;
 			currentVizHostIP = visualizerIP.text;
 
 			SaveData ();
@@ -140,18 +112,11 @@ public class Intro : MonoBehaviour {
 		lastId = engineIP.text;
 		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
-
-		for(int i=0;i<schemeToggles.Length;i++) {
-			if(!schemeToggles[i].isOn) continue;
-			lastSceneIndex = i;
-			break;
-		}
-
 	}
 
 	public void FakeTest() {
 		SaveData();
-		Application.LoadLevel(scenes[lastSceneIndex]);
+		Application.LoadLevel(lastSceneName);
 	}
 
 	private void Connected(string connectionIdentifier)
