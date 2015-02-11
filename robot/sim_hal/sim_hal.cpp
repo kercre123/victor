@@ -120,7 +120,8 @@ namespace Anki {
       float WheelPowerToAngSpeed(float power)
       {
         float speed_mm_per_s = 0;
-        
+
+#ifdef COZMO2
         // A minimum amount of power is required to actually move the wheels
         if (ABS(power) < MIN_WHEEL_POWER_FOR_MOTION) {
           return 0;
@@ -137,6 +138,19 @@ namespace Anki {
             speed_mm_per_s = (power + WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN -WheelController::TRANSITION_SPEED;
           }
         }
+#else
+        // Approximate inverse of the open-loop wheel formula used in wheelController
+        power = CLIP(power, -1.0, 1.0);
+        f32 absPower = ABS(power);
+        if (absPower >= 0.15) {
+          speed_mm_per_s = -225.82 * absPower * absPower + 439.75 * absPower - 36.455;
+          if (power < 0) {
+            speed_mm_per_s *= -1;
+          }
+        } else {
+          speed_mm_per_s = 0;
+        }
+#endif
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
