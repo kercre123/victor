@@ -1,28 +1,34 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
 public class RobotEngineManager : MonoBehaviour {
-
+	
 	public static RobotEngineManager instance = null;
-
+	
 	[SerializeField]
 	private TextAsset configuration;
 	
 	private bool engineHostInitialized = false;
-
+	
 	public bool IsHostInitialized {
 		get {
 			return engineHostInitialized;
 		}
 	}
 
-#if UNITY_IOS && !UNITY_EDITOR
+	public event Action<string> ConnectedToClient;
+	public event Action<DisconnectionReason> DisconnectedFromClient;
+
+	private ChannelBase channel;
+
+#if !UNITY_EDITOR
 	private StringBuilder logBuilder = null;
 #endif
-
+	
 	void Awake() {
 		if (instance != null) {
 			Destroy (gameObject);
@@ -30,17 +36,21 @@ public class RobotEngineManager : MonoBehaviour {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
 		}
+
+		channel = new UdpChannel ();
+		channel.ConnectedToClient += Connected;
+		channel.DisconnectedFromClient += Disconnected;
+		channel.MessageReceived += ReceivedMessage;
 	}
 
-#if UNITY_IOS && !UNITY_EDITOR
-
+#if !UNITY_EDITOR
 	void Start()
 	{
 		if (engineHostInitialized) {
 			Debug.LogError("Error initializing cozmo host: Host already started.");
 			return;
 		}
-
+		
 		if (configuration == null) {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
 			return;
@@ -91,6 +101,104 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 #endif
 
+	public void Connect(string engineIP)
+	{
+		int deviceID = 1;
+		int enginePort = 5000;
+		int localPort = 5002;
+
+		channel.Connect (deviceID, localPort, engineIP, enginePort);
+	}
+
+	public void Disconnect()
+	{
+		channel.Disconnect ();
+	}
+
+	private void Connected(string connectionIdentifier)
+	{
+		if (ConnectedToClient != null) {
+			ConnectedToClient(connectionIdentifier);
+		}
+	}
+
+	private void Disconnected(DisconnectionReason reason)
+	{
+		if (DisconnectedFromClient != null) {
+			DisconnectedFromClient(reason);
+		}
+	}
+	
+	private void ReceivedMessage(NetworkMessage message)
+	{
+		switch (message.ID) {
+		case (int)NetworkMessageID.G2U_RobotAvailable:
+			ReceivedSpecificMessage((G2U_RobotAvailable)message);
+			break;
+		case (int)NetworkMessageID.G2U_UiDeviceAvailable:
+			ReceivedSpecificMessage((G2U_UiDeviceAvailable)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotConnected:
+			ReceivedSpecificMessage((G2U_RobotConnected)message);
+			break;
+		case (int)NetworkMessageID.G2U_UiDeviceConnected:
+			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotObservedObject:
+			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
+			break;
+		case (int)NetworkMessageID.G2U_DeviceDetectedVisionMarker:
+			ReceivedSpecificMessage((G2U_DeviceDetectedVisionMarker)message);
+			break;
+		case (int)NetworkMessageID.G2U_PlaySound:
+			ReceivedSpecificMessage((G2U_PlaySound)message);
+			break;
+		case (int)NetworkMessageID.G2U_StopSound:
+			ReceivedSpecificMessage((G2U_StopSound)message);
+			break;
+		}
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotAvailable message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_UiDeviceAvailable message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotConnected message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_PlaySound message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_StopSound message)
+	{
+		
+	}
+	
 	/// <summary>
 	/// Forcibly adds a new robot.
 	/// </summary>
@@ -99,6 +207,8 @@ public class RobotEngineManager : MonoBehaviour {
 	/// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
 	public CozmoResult ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
 	{
+
+
 #if UNITY_IOS && !UNITY_EDITOR
 		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_force_add_robot (robotID, robotIP, robotIsSimulated);
 		if (result != CozmoResult.OK) {
@@ -109,13 +219,13 @@ public class RobotEngineManager : MonoBehaviour {
 		return CozmoResult.CSHARP_NOT_AVAILABLE;
 #endif
 	}
-
+	
 	public bool IsRobotConnected(int robotID)
 	{
 #if UNITY_IOS && !UNITY_EDITOR
 		Update();
-
-    	bool isConnected;
+		
+		bool isConnected;
 		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_is_robot_connected (out isConnected, robotID);
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_engine_get_number_of_robots error: " + result.ToString());
@@ -125,13 +235,13 @@ public class RobotEngineManager : MonoBehaviour {
 #else
 		return false;
 #endif
-
+		
 	}
-
-    /// <summary>
-    /// Set wheel speed.
-    /// </summary>
-    /// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
+	
+	/// <summary>
+	/// Set wheel speed.
+	/// </summary>
+	/// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
 	/// <param name="right_wheel_speed_mmps">Right wheel speed in millimeters per second.</param>
 	public void DriveWheels(int robotID, float leftWheelSpeedMmps, float rightWheelSpeedMmps)
 	{
@@ -142,22 +252,22 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 #endif
 	}
-
+	
 	public void StopAllMotors(int robotID)
 	{
-#if UNITY_IOS && !UNITY_EDITOR
+		#if UNITY_IOS && !UNITY_EDITOR
 		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_stop_all_motors (robotID);
 		if (result != CozmoResult.OK) {
 			Debug.LogError ("cozmo_robot_stop_all_motors error: " + result.ToString());
 		}
-#endif
+		#endif
 	}
-
+	
 	public const float MAX_WHEEL_SPEED 	= 100f;
 	public const float MAX_ANALOG_RADIUS   = 300f;
 	public const float HALF_PI             = Mathf.PI * 0.5f;
 	public const float wheelDistHalfMM 	= 23.85f; //47.7f / 2.0; // distance b/w the front wheels
-
+	
 	public static void CalcWheelSpeedsFromBotRelativeInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
 		
 		leftWheelSpeed = 0f;
@@ -228,5 +338,5 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 	}
-
+	
 }

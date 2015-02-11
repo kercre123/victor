@@ -10,9 +10,6 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected Button play;
 	[SerializeField] protected Text error;
 
-	private bool connecting = false;
-	private float hackWait = 0.0f;
-
 	public static int CurrentRobotID { get; private set; }
 
 	private string lastIp
@@ -50,19 +47,15 @@ public class Intro : MonoBehaviour {
 		scene.text = lastScene;
 	}
 
-	protected void Update() {
-		if(connecting && Time.time > hackWait) {
-			if(RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
-				connecting = false;
-				error.text = "";
-				//RobotEngineManager.instance.DriveWheels(CurrentRobotID, 50.0f, 50.0f);
-
-				Application.LoadLevel(scene.text);
-			}
-		}
+	protected void Start()
+	{
+		RobotEngineManager.instance.ConnectedToClient += Connected;
+		RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
 	}
 
 	public void Play() {
+		RobotEngineManager.instance.Disconnect ();
+
 		CurrentRobotID = 0;
 
 		string errorText = null;
@@ -73,21 +66,14 @@ public class Intro : MonoBehaviour {
 		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ip.text)) {
 			errorText = "You must enter an ip address.";
 		}
-		if(string.IsNullOrEmpty(errorText)) {
-			CozmoResult result = RobotEngineManager.instance.ForceAddRobot(idInteger, ip.text, simulated.isOn);
-			if(result != CozmoResult.OK) {
-				errorText = "Error attempting to add robot: " + result.ToString();
-			}
-			else {
-				connecting = true;
-				SaveData();
-				CurrentRobotID = idInteger;
-				hackWait = Time.time + 5.0f;
-				errorText = "Connecting...";
-			}
-		}
 
 		error.text = errorText;
+
+		if(string.IsNullOrEmpty(errorText)) {
+			SaveData();
+			CurrentRobotID = idInteger;
+			RobotEngineManager.instance.Connect (ip.text);
+		}
 	}
 
 	protected void SaveData()
@@ -101,6 +87,17 @@ public class Intro : MonoBehaviour {
 	public void FakeTest() {
 		SaveData();
 		Application.LoadLevel(scene.text);
+	}
+
+	private void Connected(string connectionIdentifier)
+	{
+		error.text = "Connected to " + connectionIdentifier + ". Force-adding robot...";
+		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, ip.text, simulated.isOn);
+	}
+
+	private void Disconnected(DisconnectionReason reason)
+	{
+		error.text = "Disconnected: " + reason.ToString ();
 	}
 
 }

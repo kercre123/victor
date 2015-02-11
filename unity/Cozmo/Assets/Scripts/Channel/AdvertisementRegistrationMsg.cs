@@ -16,22 +16,22 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 		}
 	}
 
-	public override void Serialize(byte[] buffer, ref int index)
+	public override void Serialize(ByteSerializer serializer)
 	{
-		SerializerUtility.Serialize (buffer, ref index, this.port);
-		SerializerUtility.Serialize (buffer, ref index, this.ip);
-		SerializerUtility.Serialize (buffer, ref index, this.id);
-		SerializerUtility.Serialize (buffer, ref index, this.protocol);
-		SerializerUtility.Serialize (buffer, ref index, this.enableAdvertisement);
+		serializer.Serialize (this.port);
+		serializer.Serialize (this.ip);
+		serializer.Serialize (this.id);
+		serializer.Serialize (this.protocol);
+		serializer.Serialize (this.enableAdvertisement);
 	}
 
-	public override void Deserialize(byte[] buffer, ref int index)
+	public override void Deserialize(ByteSerializer serializer)
 	{
-		SerializerUtility.Deserialize (buffer, ref index, out this.port);
-		SerializerUtility.Deserialize (buffer, ref index, this.ip);
-		SerializerUtility.Deserialize (buffer, ref index, out this.id);
-		SerializerUtility.Deserialize (buffer, ref index, out this.protocol);
-		SerializerUtility.Deserialize (buffer, ref index, out this.enableAdvertisement);
+		serializer.Deserialize (out this.port);
+		serializer.Deserialize (this.ip);
+		serializer.Deserialize (out this.id);
+		serializer.Deserialize (out this.protocol);
+		serializer.Deserialize (out this.enableAdvertisement);
 	}
 }
 

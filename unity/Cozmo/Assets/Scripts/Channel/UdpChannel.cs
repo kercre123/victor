@@ -8,10 +8,23 @@ using System.Text;
 
 public class UdpChannel : ChannelBase {
 
-	private class SocketBufferState
+	private class SocketBufferState : IDisposable
 	{
+		public readonly UdpChannel channel;
 		public Socket socket;
-		public byte[] buffer;
+		public readonly byte[] buffer;
+
+		public SocketBufferState(UdpChannel channel, Socket socket)
+		{
+			this.channel = channel;
+			this.socket = socket;
+			this.buffer = new byte[MaxBufferSize];
+		}
+
+		public void Dispose()
+		{
+			channel.FreeBufferState (this);
+		}
 	}
 
 	private struct QueuedSend
@@ -35,11 +48,8 @@ public class UdpChannel : ChannelBase {
 	}
 
 	// various constants
-	private const int SendBufferSize = 8192;
-	private const int ReceiveBufferSize = 8192;
-	private const int SendBufferPoolLength = 66;
-	private const int ReceiveBufferPoolLength = 2;
-	private const int BufferStatePoolLength = 68;
+	private const int MaxBufferSize = 8192;
+	private const int BufferStatePoolLength = 128;
 	private const int MaxQueuedSends = 64;
 	private const int MaxQueuedReceives = 64;
 	private const int MaxQueuedLogs = 64;
@@ -66,9 +76,8 @@ public class UdpChannel : ChannelBase {
 	private readonly List<NetworkMessage> receivedMessages = new List<NetworkMessage> (MaxQueuedReceives);
 
 	// lists of pooled objects
-	private readonly List<byte[]> sendBufferPool = new List<byte[]>(SendBufferPoolLength);
-	private readonly List<byte[]> receiveBufferPool = new List<byte[]>(ReceiveBufferPoolLength);
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
+	private readonly ByteSerializer serializer = new ByteSerializer (ByteSwappingArchitecture.LittleEndian);
 
 	// asynchronous callbacks (saved to reduce allocations)
 	private readonly AsyncCallback callback_ChangeAdvertisement_StartComplete;
@@ -97,7 +106,7 @@ public class UdpChannel : ChannelBase {
 		}
 		
 		if (IsActive) {
-			throw new InvalidOperationException("UdpChannel is already connecting. Disconnect first.");
+			throw new InvalidOperationException("UdpChannel is already active. Disconnect first.");
 		}
 
 		lock (sync) {
@@ -192,27 +201,26 @@ public class UdpChannel : ChannelBase {
 			}
 
 			bool success = false;
-			SocketBufferState state = AllocateSendBuffer(mainServer);
+			SocketBufferState state = AllocateBufferState(mainServer);
 			try {
-				int index = 0;
+				serializer.ByteBuffer = state.buffer;
+				int length;
 				try {
-					byte id = (byte)message.ID;
-					SerializerUtility.Serialize(state.buffer, ref index, id);
-					message.Serialize (state.buffer, ref index);
-				} catch (IndexOutOfRangeException) {
-					CleanSynchronously(DisconnectionReason.AttemptedToSendInvalidData,
-					                   "Send buffer is not large enough to serialize " + message.GetType ().FullName + ".");
-					return;
+					NetworkMessageSerializer.Serialize(serializer, message);
+					length = serializer.Index;
 				}
 				catch (Exception e)
 				{
 					CleanSynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
 					return;
 				}
+				finally {
+					serializer.Clear ();
+				}
 
 				if (connectionState == ConnectionState.Connected) {
 					try {
-						ServerSend (state, index);
+						ServerSend (state, length);
 						success = true;
 					}
 					catch (Exception e) {
@@ -222,7 +230,7 @@ public class UdpChannel : ChannelBase {
 				}
 				else {
 					if (sentBuffers.Count < MaxQueuedSends) {
-						sentBuffers.Enqueue (new QueuedSend(state, index));
+						sentBuffers.Enqueue (new QueuedSend(state, length));
 						success = true;
 					}
 					else {
@@ -234,7 +242,7 @@ public class UdpChannel : ChannelBase {
 			}
 			finally {
 				if (!success) {
-					FreeSendBuffer(state);
+					state.Dispose();
 				}
 			}
 		}
@@ -374,7 +382,7 @@ public class UdpChannel : ChannelBase {
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
 			Socket socket = state.socket;
-			FreeSendBuffer(state);
+			state.Dispose();
 
 			// this is an old connection
 			if (socket != mainServer) {
@@ -395,7 +403,7 @@ public class UdpChannel : ChannelBase {
 					}
 					finally {
 						if (!success) {
-							FreeSendBuffer (queuedSend.state);
+							queuedSend.state.Dispose();
 						}
 					}
 				}
@@ -408,7 +416,7 @@ public class UdpChannel : ChannelBase {
 
 	private void ServerReceive()
 	{
-		SocketBufferState state = AllocateReceiveBuffer(mainServer);
+		SocketBufferState state = AllocateBufferState(mainServer);
 		bool success = false;
 		try {
 			EndPoint endPoint = anyEndPoint;
@@ -417,7 +425,7 @@ public class UdpChannel : ChannelBase {
 		}
 		finally {
 			if (!success) {
-				FreeReceiveBuffer(state);
+				state.Dispose();
 			}
 		}
 	}
@@ -445,9 +453,26 @@ public class UdpChannel : ChannelBase {
 						}
 						/*else ? */
 						if (mainEndPoint.Equals (ipEndPoint)) {
-							if (!ParseMessage (state.buffer, length)) {
+							serializer.ByteBuffer = state.buffer;
+							NetworkMessage message;
+							try {
+								NetworkMessageSerializer.Deserialize(serializer, length, out message);
+							}
+							catch (Exception e) {
+								Clean (DisconnectionReason.ReceivedInvalidData, e);
 								return;
 							}
+							finally {
+								serializer.Clear ();
+							}
+
+							if (receivedMessages.Count >= MaxQueuedReceives) {
+								Clean (DisconnectionReason.ConnectionThrottled,
+								       "Too many messages received too quickly.");
+								return;
+							}
+							
+							receivedMessages.Add (message);
 						}
 					}
 					
@@ -458,85 +483,39 @@ public class UdpChannel : ChannelBase {
 				}
 			}
 			finally {
-				FreeReceiveBuffer(state);
+				state.Dispose();
 			}
 		}
 	}
 
-	private bool ParseMessage(byte[] buffer, int length)
-	{
-		int index = 0;
-		byte id;
-		try {
-			SerializerUtility.Deserialize (buffer, ref index, out id);
-		}
-		catch (IndexOutOfRangeException) {
-			Clean (DisconnectionReason.ReceivedInvalidData,
-			       "Disconnecting. Message too short to even specify id.");
-			return false;
-		}
-
-		NetworkMessage message = null;
-		try {
-			message = NetworkMessageCreation.Allocate((int)id);
-			if (message == null) {
-				Clean (DisconnectionReason.ReceivedInvalidData,
-				       "Disconnecting. Unknown message type received with id " + id.ToString() + ".");
-				return false;
-			}
-			
-			message.Deserialize(buffer, ref index);
-		}
-		catch (IndexOutOfRangeException) {
-			Clean (DisconnectionReason.ReceivedInvalidData,
-			       "Disconnecting. Message not long enough for message of type " +
-			       (message == null ? id.ToString() : message.GetType().FullName) + ".");
-			return false;
-		}
-		catch (Exception e) {
-			Clean(DisconnectionReason.ReceivedInvalidData, e);
-			return false;
-		}
-
-		if (index != length) {
-			Clean (DisconnectionReason.ReceivedInvalidData,
-			       "Disconnecting. Message too long in receive buffer at end of message of type " + message.GetType ().FullName + ".");
-			return false;
-		}
-
-		if (receivedMessages.Count >= MaxQueuedReceives) {
-			Clean (DisconnectionReason.ConnectionThrottled,
-			       "Too many messages received too quickly.");
-			return false;
-		}
-
-		receivedMessages.Add (message);
-		return true;
-	}
-	
 	private void ChangeAdvertisement(bool start)
 	{
 		advertisementRegistrationMessage.enableAdvertisement = start ? (byte)1 : (byte)0;
 
 		bool success = false;
-		SocketBufferState state = AllocateSendBuffer(advertisingClient);
+		SocketBufferState state = AllocateBufferState(advertisingClient);
 		try {
-			int index = 0;
+			serializer.ByteBuffer = state.buffer;
+			int length;
 			try {
-				advertisementRegistrationMessage.Serialize(state.buffer, ref index);
+				advertisementRegistrationMessage.Serialize(serializer);
+				length = serializer.Index;
 			}
 			catch (IndexOutOfRangeException e) {
 				throw new IndexOutOfRangeException("Send buffer is not large enough for advertisement registration message.", e);
 			}
+			finally {
+				serializer.Clear ();
+			}
 
 			AsyncCallback callback = start ? callback_ChangeAdvertisement_StartComplete : callback_ChangeAdvertisement_StopComplete;
-			BeginSendUdp(advertisingClient, state.buffer, index, advertisementEndPoint, callback, state);
+			BeginSendUdp(advertisingClient, state.buffer, length, advertisementEndPoint, callback, state);
 
 			success = true;
 		}
 		finally {
 			if (!success) {
-				FreeSendBuffer(state);
+				state.Dispose();
 			}
 		}
 	}
@@ -546,7 +525,7 @@ public class UdpChannel : ChannelBase {
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
 			Socket socket = state.socket;
-			FreeSendBuffer(state);
+			state.Dispose();
 
 			// this is an old connection
 			if (socket != advertisingClient) {
@@ -571,7 +550,7 @@ public class UdpChannel : ChannelBase {
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
 			Socket socket = state.socket;
-			FreeSendBuffer(state);
+			state.Dispose();
 
 			try {
 				// always an old connection
@@ -588,61 +567,17 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
-	private SocketBufferState AllocateSendBuffer(Socket socket)
-	{
-		byte[] buffer;
-		int count = sendBufferPool.Count;
-		if (count != 0) {
-			buffer = sendBufferPool [count - 1];
-			sendBufferPool.RemoveAt (count - 1);
-		} else {
-			buffer = new byte[SendBufferSize];
-		}
-		return AllocateBufferState(socket, buffer);
-	}
-	
-	private void FreeSendBuffer(SocketBufferState bufferState)
-	{
-		if (sendBufferPool.Count < SendBufferPoolLength) {
-			sendBufferPool.Add (bufferState.buffer);
-		}
-		FreeBufferState (bufferState);
-	}
-
-	private SocketBufferState AllocateReceiveBuffer(Socket socket)
-	{
-		byte[] buffer;
-		int count = receiveBufferPool.Count;
-		if (count != 0) {
-			buffer = receiveBufferPool[count - 1];
-			receiveBufferPool.RemoveAt (count - 1);
-		}
-		else {
-		    buffer = new byte[ReceiveBufferSize];
-		}
-		return AllocateBufferState (socket, buffer);
-	}
-	
-	private void FreeReceiveBuffer(SocketBufferState bufferState)
-	{
-		if (receiveBufferPool.Count < ReceiveBufferPoolLength) {
-			receiveBufferPool.Add (bufferState.buffer);
-		}
-		FreeBufferState (bufferState);
-	}
-
-    private SocketBufferState AllocateBufferState(Socket socket, byte[] buffer)
+    private SocketBufferState AllocateBufferState(Socket socket)
 	{
 		SocketBufferState state;
 		int count = bufferStatePool.Count;
 		if (count == 0) {
 			state = bufferStatePool [count - 1];
+			state.socket = socket;
 			bufferStatePool.RemoveAt (count - 1);
 		} else {
-			state = new SocketBufferState ();
+			state = new SocketBufferState (this, socket);
 		}
-		state.socket = socket;
-		state.buffer = buffer;
 		return state;
 	}
 
