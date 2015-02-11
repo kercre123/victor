@@ -39,10 +39,10 @@ public class RobotEngineManager : MonoBehaviour {
 			return;
 		}
 
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_host_create (configuration.text);
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_create (configuration.text);
 
 		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
+			Debug.LogError("cozmo_engine_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
@@ -53,9 +53,9 @@ public class RobotEngineManager : MonoBehaviour {
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
 			
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_host_destroy();
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
 			if (result != CozmoResult.OK) {
-				Debug.LogError("cozmo_engine_host_destroy error: " + result.ToString());
+				Debug.LogError("cozmo_engine_destroy error: " + result.ToString());
 			}
 		}
 	}

@@ -550,7 +550,7 @@ public u8 successful;
 public override int ID { get { return (int)NetworkMessageID.G2U_UiDeviceConnected; } } }
 public partial class G2U_ImageChunk : NetworkMessage {
 public u32 imageId;
-public u32 frameTimeStamp;
+public Anki::TimeStamp_t frameTimeStamp;
 public u16 nrows;
 public u16 ncols;
 public u16 chunkSize;

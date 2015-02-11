@@ -122,10 +122,10 @@ int cozmo_game_create(const char* configurationData)
   
     CozmoGame* created_game = new CozmoGame();
   
-    bool good = created_game->Init(config);
-    if (!good) {
+    Result result = created_game->Init(config);
+    if (result != RESULT_OK) {
       delete created_game;
-      return BINDING_ERROR_FAILED_INITIALIZATION;
+      return (int)result;
     }
     
     game = created_game;

@@ -17,6 +17,8 @@ extern "C" {
         BINDING_ERROR_ALREADY_INITIALIZED = 0x8002,
         BINDING_ERROR_INVALID_CONFIGURATION = 0x8003,
         BINDING_ERROR_FAILED_INITIALIZATION = 0x8005,
+      
+        // also include Anki::Result values
     };
   
     // Determine if any logs are available; if so, set length

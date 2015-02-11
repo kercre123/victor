@@ -67,7 +67,7 @@ set(OUTPUT_PRE GeneratedMessages.cs)
 set(OUTPUT_DEST ${CMAKE_CURRENT_SOURCE_DIR}/../Cozmo/Assets/Scripts/Channel/)
 
 add_custom_command(
-  OUTPUT GeneratedMessages.cs
+  OUTPUT Fake.xxx
   COMMAND "${CMAKE_C_COMPILER}" -E -P ${SOURCE_PRE} ${PUBLIC_HEADER_PRE} ${PRIVATE_HEADER_PRE} -o ${OUTPUT_PRE}
   COMMAND cp ${OUTPUT_PRE} ${OUTPUT_DEST}
   MAIN_DEPENDENCY ${SOURCE_PRE}
@@ -77,6 +77,6 @@ add_custom_command(
 
 add_custom_target(
   CSharpGeneratedMessages ALL
-  DEPENDS GeneratedMessages.cs
+  DEPENDS Fake.xxx
   VERBATIM
 )

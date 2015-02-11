@@ -77,8 +77,6 @@ include_directories(
   ${CORETECH_ROOT_DIR}/planning/include
 )
 
-MESSAGE(STATUS "${CMAKE_C_COMPILER}" -E ${SOURCE_PRE} -I${INCLUDE_DIRECTORIES} -I${PRIVATE_HEADER_PRE})
-
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(src)
 
