@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class Intro : MonoBehaviour {
-	[SerializeField] protected InputField id;
+	[SerializeField] protected InputField engineIP;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Toggle[] schemeToggles;
@@ -15,15 +15,25 @@ public class Intro : MonoBehaviour {
 	private string[] scenes = { "ThumbStick", "ScreenPad", "TwoSliders" };
 	private ScreenOrientation[] orientations = { ScreenOrientation.Portrait, ScreenOrientation.PortraitUpsideDown, ScreenOrientation.LandscapeLeft, ScreenOrientation.LandscapeRight };
 
-	public static int CurrentRobotID { get; private set; }
+	private string currentRobotIP;
+	private string currentScene;
+
+	public const int CurrentRobotID = 1;
+
+	private string lastEngineIp
+	{
+		get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
+
+		set { PlayerPrefs.SetString("LastEngineIP", value); }
+	}
 
 	private string lastIp
 	{
 		get { return PlayerPrefs.GetString("LastIP", "127.0.0.1"); }
-
+		
 		set { PlayerPrefs.SetString("LastIP", value); }
 	}
-
+	
 	private string lastId
 	{
 		get { return PlayerPrefs.GetString("LastID", "1"); }
@@ -56,8 +66,8 @@ public class Intro : MonoBehaviour {
 	}
 
 	protected void Awake() {
+		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
-		id.text = lastId;
 		simulated.isOn = lastSimulated;
 
 		visualizerIP.text = lastVisualizerIp;
@@ -96,33 +106,36 @@ public class Intro : MonoBehaviour {
 	{
 		RobotEngineManager.instance.ConnectedToClient += Connected;
 		RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
+		RobotEngineManager.instance.RobotConnected += RobotConnected;
 	}
 
 	public void Play() {
 		RobotEngineManager.instance.Disconnect ();
 
-		CurrentRobotID = 0;
-
 		string errorText = null;
-		int idInteger;
-		if(!int.TryParse(id.text, out idInteger) || idInteger == 0) {
-			errorText = "You must enter a nonzero id.";
+
+		if(string.IsNullOrEmpty(engineIP.text)) {
+			errorText = "You must enter a device ip address.";
 		}
 		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ip.text)) {
 			errorText = "You must enter a robot ip address.";
 		}
-        error.text = errorText;
 
-		if(string.IsNullOrEmpty(errorText)) {
-			SaveData();
-			CurrentRobotID = idInteger;
-			RobotEngineManager.instance.Connect (ip.text);
+		if (string.IsNullOrEmpty (errorText)) {
+			currentRobotIP = ip.text;
+			currentScene = scenes[lastSceneIndex];
+
+			SaveData ();
+			RobotEngineManager.instance.Connect (engineIP.text);
+			error.text = "<color=#ffffff>Connecting to engine at " + ip.text + "....</color>";
+		} else {
+			error.text = errorText;
 		}
 	}
 
 	protected void SaveData() {
 		lastIp = ip.text;
-		lastId = id.text;
+		lastId = engineIP.text;
 		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
 
@@ -141,8 +154,8 @@ public class Intro : MonoBehaviour {
 
 	private void Connected(string connectionIdentifier)
 	{
-		error.text = "Connected to " + connectionIdentifier + ". Force-adding robot...";
-		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, ip.text, simulated.isOn);
+		error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, currentRobotIP, simulated.isOn);
 	}
 
 	private void Disconnected(DisconnectionReason reason)
@@ -150,4 +163,14 @@ public class Intro : MonoBehaviour {
 		error.text = "Disconnected: " + reason.ToString ();
 	}
 
+	private void RobotConnected(int robotID)
+	{
+		if (CurrentRobotID != robotID) {
+			Debug.LogError ("Unknown robot connected: " + robotID.ToString());
+			return;
+		}
+
+		error.text = "";
+		Application.LoadLevel(currentScene);
+	}
 }

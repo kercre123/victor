@@ -45,6 +45,19 @@ U2G_ConnectToUiDevice,
 
 
 
+
+U2G_ForceAddRobot,
+
+
+
+
+
+
+U2G_Heartbeat,
+
+
+
+
 U2G_DriveWheels,
 
 
@@ -277,6 +290,19 @@ public override int ID { get { return (int)NetworkMessageID.U2G_ConnectToRobot; 
 public partial class U2G_ConnectToUiDevice : NetworkMessage {
 public u8 deviceID;
 public override int ID { get { return (int)NetworkMessageID.U2G_ConnectToUiDevice; } } }
+
+
+
+public partial class U2G_ForceAddRobot : NetworkMessage {
+public u8[] ipAddress = new u8[16];
+public u8 robotID;
+public u8 isSimulated;
+public override int ID { get { return (int)NetworkMessageID.U2G_ForceAddRobot; } } }
+
+
+public partial class U2G_Heartbeat : NetworkMessage {
+public f32 currentTime_sec;
+public override int ID { get { return (int)NetworkMessageID.U2G_Heartbeat; } } }
 
 
 public partial class U2G_DriveWheels : NetworkMessage {
@@ -541,6 +567,291 @@ public override int ID { get { return (int)NetworkMessageID.G2U_StopSound; } } }
 
 
 
+public partial class U2G_ConnectToRobot { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+0; } } }
+
+
+public partial class U2G_ConnectToUiDevice { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.deviceID) +
+0; } } }
+
+
+
+public partial class U2G_ForceAddRobot { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.ipAddress) +
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.isSimulated) +
+0; } } }
+
+
+public partial class U2G_Heartbeat { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.currentTime_sec) +
+0; } } }
+
+
+public partial class U2G_DriveWheels { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.lwheel_speed_mmps) +
+ByteSerializer.GetSerializationLength(this.rwheel_speed_mmps) +
+0; } } }
+
+
+public partial class U2G_MoveHead { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.speed_rad_per_sec) +
+0; } } }
+
+
+public partial class U2G_MoveLift { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.speed_rad_per_sec) +
+0; } } }
+
+
+public partial class U2G_SetLiftHeight { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.height_mm) +
+ByteSerializer.GetSerializationLength(this.max_speed_rad_per_sec) +
+ByteSerializer.GetSerializationLength(this.accel_rad_per_sec2) +
+0; } } }
+
+
+public partial class U2G_SetHeadAngle { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.angle_rad) +
+ByteSerializer.GetSerializationLength(this.max_speed_rad_per_sec) +
+ByteSerializer.GetSerializationLength(this.accel_rad_per_sec2) +
+0; } } }
+
+
+public partial class U2G_StopAllMotors { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_ImageRequest { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.mode) +
+ByteSerializer.GetSerializationLength(this.resolution) +
+0; } } }
+
+
+public partial class U2G_SaveImages { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.enableSave) +
+0; } } }
+
+
+public partial class U2G_EnableDisplay { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.enable) +
+0; } } }
+
+
+public partial class U2G_SetHeadlights { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.intensity) +
+0; } } }
+
+
+public partial class U2G_GotoPose { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.x_mm) +
+ByteSerializer.GetSerializationLength(this.y_mm) +
+ByteSerializer.GetSerializationLength(this.rad) +
+ByteSerializer.GetSerializationLength(this.level) +
+0; } } }
+
+
+public partial class U2G_PlaceObjectOnGround { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.x_mm) +
+ByteSerializer.GetSerializationLength(this.y_mm) +
+ByteSerializer.GetSerializationLength(this.rad) +
+ByteSerializer.GetSerializationLength(this.level) +
+0; } } }
+
+
+public partial class U2G_PlaceObjectOnGroundHere { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_ExecuteTestPlan { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_SelectNextObject { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_PickAndPlaceObject { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.objectID) +
+ByteSerializer.GetSerializationLength(this.usePreDockPose) +
+0; } } }
+
+
+public partial class U2G_TraverseObject { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_ClearAllBlocks { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_ExecuteBehavior { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.behaviorMode) +
+0; } } }
+
+
+public partial class U2G_SetBehaviorState { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.behaviorState) +
+0; } } }
+
+
+public partial class U2G_AbortPath { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_AbortAll { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_DrawPoseMarker { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.x_mm) +
+ByteSerializer.GetSerializationLength(this.y_mm) +
+ByteSerializer.GetSerializationLength(this.rad) +
+ByteSerializer.GetSerializationLength(this.level) +
+0; } } }
+
+
+public partial class U2G_ErasePoseMarker { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_SetHeadControllerGains { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.kp) +
+ByteSerializer.GetSerializationLength(this.ki) +
+ByteSerializer.GetSerializationLength(this.maxIntegralError) +
+0; } } }
+
+
+public partial class U2G_SetLiftControllerGains { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.kp) +
+ByteSerializer.GetSerializationLength(this.ki) +
+ByteSerializer.GetSerializationLength(this.maxIntegralError) +
+0; } } }
+
+
+public partial class U2G_SelectNextSoundScheme { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_StartTestMode { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.p1) +
+ByteSerializer.GetSerializationLength(this.p2) +
+ByteSerializer.GetSerializationLength(this.p3) +
+ByteSerializer.GetSerializationLength(this.mode) +
+0; } } }
+
+
+public partial class U2G_IMURequest { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.length_ms) +
+0; } } }
+
+
+public partial class U2G_PlayAnimation { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.numLoops) +
+
+ByteSerializer.GetSerializationLength(this.animationName) +
+0; } } }
+
+
+public partial class U2G_ReadAnimationFile { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_StartFaceTracking { public override int SerializationLength { get { return
+
+ByteSerializer.GetSerializationLength(this.timeout_sec) +
+0; } } }
+
+
+public partial class U2G_StopFaceTracking { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_StartLookingForMarkers { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_StopLookingForMarkers { public override int SerializationLength { get { return
+0; } } }
+
+
+public partial class U2G_SetVisionSystemParams { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.autoexposureOn) +
+ByteSerializer.GetSerializationLength(this.exposureTime) +
+ByteSerializer.GetSerializationLength(this.integerCountsIncrement) +
+ByteSerializer.GetSerializationLength(this.minExposureTime) +
+ByteSerializer.GetSerializationLength(this.maxExposureTime) +
+ByteSerializer.GetSerializationLength(this.percentileToMakeHigh) +
+ByteSerializer.GetSerializationLength(this.limitFramerate) +
+ByteSerializer.GetSerializationLength(this.highValue) +
+0; } } }
+
+
+public partial class U2G_SetFaceDetectParams { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.scaleFactor) +
+ByteSerializer.GetSerializationLength(this.minNeighbors) +
+ByteSerializer.GetSerializationLength(this.minObjectHeight) +
+ByteSerializer.GetSerializationLength(this.minObjectWidth) +
+ByteSerializer.GetSerializationLength(this.maxObjectHeight) +
+ByteSerializer.GetSerializationLength(this.maxObjectWidth) +
+0; } } }
+
+
+
+
+public partial class G2U_RobotAvailable { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+0; } } }
+
+public partial class G2U_UiDeviceAvailable { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.deviceID) +
+0; } } }
+
+public partial class G2U_RobotConnected { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.successful) +
+0; } } }
+
+public partial class G2U_UiDeviceConnected { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.deviceID) +
+ByteSerializer.GetSerializationLength(this.successful) +
+0; } } }
+public partial class G2U_RobotObservedObject { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.objectID) +
+ByteSerializer.GetSerializationLength(this.topLeft_x) +
+ByteSerializer.GetSerializationLength(this.topLeft_y) +
+ByteSerializer.GetSerializationLength(this.width) +
+ByteSerializer.GetSerializationLength(this.height) +
+0; } } }
+
+public partial class G2U_DeviceDetectedVisionMarker { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.markerType) +
+ByteSerializer.GetSerializationLength(this.x_upperLeft) +
+ByteSerializer.GetSerializationLength(this.y_upperLeft) +
+ByteSerializer.GetSerializationLength(this.x_lowerLeft) +
+ByteSerializer.GetSerializationLength(this.y_lowerLeft) +
+ByteSerializer.GetSerializationLength(this.x_upperRight) +
+ByteSerializer.GetSerializationLength(this.y_upperRight) +
+ByteSerializer.GetSerializationLength(this.x_lowerRight) +
+ByteSerializer.GetSerializationLength(this.y_lowerRight) +
+0; } } }
+public partial class G2U_PlaySound { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.soundFilename) +
+ByteSerializer.GetSerializationLength(this.numLoops) +
+ByteSerializer.GetSerializationLength(this.volume) +
+0; } } }
+
+public partial class G2U_StopSound { public override int SerializationLength { get { return
+0; } } }
+
+
+
+
+
+
 public partial class U2G_ConnectToRobot { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.robotID);
 } }
@@ -548,6 +859,19 @@ serializer.Serialize(this.robotID);
 
 public partial class U2G_ConnectToUiDevice { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.deviceID);
+} }
+
+
+
+public partial class U2G_ForceAddRobot { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.ipAddress);
+serializer.Serialize(this.robotID);
+serializer.Serialize(this.isSimulated);
+} }
+
+
+public partial class U2G_Heartbeat { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.currentTime_sec);
 } }
 
 
@@ -820,6 +1144,19 @@ serializer.Deserialize(out this.robotID);
 
 public partial class U2G_ConnectToUiDevice { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.deviceID);
+} }
+
+
+
+public partial class U2G_ForceAddRobot { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(this.ipAddress);
+serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.isSimulated);
+} }
+
+
+public partial class U2G_Heartbeat { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.currentTime_sec);
 } }
 
 
@@ -1098,6 +1435,19 @@ case NetworkMessageID.U2G_ConnectToRobot: return new U2G_ConnectToRobot();
 
 
 case NetworkMessageID.U2G_ConnectToUiDevice: return new U2G_ConnectToUiDevice();
+
+
+
+
+
+case NetworkMessageID.U2G_ForceAddRobot: return new U2G_ForceAddRobot();
+
+
+
+
+
+
+case NetworkMessageID.U2G_Heartbeat: return new U2G_Heartbeat();
 
 
 

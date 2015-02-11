@@ -29,6 +29,9 @@ public enum NetworkMessageID {
 #define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFINITION_MODE
 #include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
 
+#define MESSAGE_DEFINITION_MODE MESSAGE_LENGTH_DEFINITION_MODE
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
+
 #define MESSAGE_DEFINITION_MODE MESSAGE_SERIALIZE_DEFINITION_MODE
 #include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
 

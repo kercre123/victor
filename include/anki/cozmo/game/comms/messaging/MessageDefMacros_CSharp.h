@@ -29,9 +29,10 @@
 
 #define MESSAGE_ENUM_DEFINITION_MODE          0
 #define MESSAGE_CLASS_DEFINITION_MODE         1
-#define MESSAGE_SERIALIZE_DEFINITION_MODE     2
-#define MESSAGE_DESERIALIZE_DEFINITION_MODE   3
-#define MESSAGE_ALLOCATE_DEFINITION_MODE      4
+#define MESSAGE_LENGTH_DEFINITION_MODE        2
+#define MESSAGE_SERIALIZE_DEFINITION_MODE     3
+#define MESSAGE_DESERIALIZE_DEFINITION_MODE   4
+#define MESSAGE_ALLOCATE_DEFINITION_MODE      5
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -74,15 +75,51 @@ ADD_MESSAGE_MEMBER(u32, timestamp)
 public partial class __MSG_TYPE__ : NetworkMessage {
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
-public __TYPE__ __NAME__;
+  public __TYPE__ __NAME__;
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
-public __TYPE__[] __NAME__ = new __TYPE__[__LENGTH__];
+  public __TYPE__[] __NAME__ = new __TYPE__[__LENGTH__];
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) \
   public override int ID { \
     get { \
       return (int)NetworkMessageID.__MSG_TYPE__; \
+    } \
+  } \
+}
+
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_LENGTH_DEFINITION_MODE
+
+//public partial class SampleMsg {
+//  public override int SerializationLength
+//  {
+//    get {
+//      return
+//      ByteSerializer.GetSerializationLength(this.port) +
+//      ByteSerializer.GetSerializationLength(this.ip) +
+//      ByteSerializer.GetSerializationLength(this.id) +
+//      ByteSerializer.GetSerializationLength(this.protocol) +
+//      ByteSerializer.GetSerializationLength(this.enableAdvertisement) +
+//      0;
+//    }
+//  }
+//}
+
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+public partial class __MSG_TYPE__ { \
+  public override int SerializationLength \
+  { \
+    get { \
+      return
+
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
+        ByteSerializer.GetSerializationLength(this.__NAME__) +
+
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
+        ByteSerializer.GetSerializationLength(this.__NAME__) +
+
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) \
+        0; \
     } \
   } \
 }

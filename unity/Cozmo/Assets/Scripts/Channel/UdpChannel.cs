@@ -67,7 +67,6 @@ public class UdpChannel : ChannelBase {
 
 	// state information
 	private ConnectionState connectionState = ConnectionState.Disconnected;
-	private string currentConnectionString = null;
 	private DisconnectionReason currentDisconnectionReason = DisconnectionReason.ConnectionLost;
 
 	// various queues
@@ -77,7 +76,13 @@ public class UdpChannel : ChannelBase {
 
 	// lists of pooled objects
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
-	private readonly ByteSerializer serializer = new ByteSerializer (ByteSwappingArchitecture.LittleEndian);
+	private readonly ByteSerializer serializer = new ByteSerializer (
+#if CHANNEL_USE_NATIVE_ARCHITECTURE
+		ByteSwappingArchitecture.Native
+#else
+		ByteSwappingArchitecture.LittleEndian
+#endif
+		);
 
 	// asynchronous callbacks (saved to reduce allocations)
 	private readonly AsyncCallback callback_ChangeAdvertisement_StartComplete;
@@ -124,7 +129,7 @@ public class UdpChannel : ChannelBase {
 				ServerReceive();
 			}
 			catch (Exception e) {
-				CleanSynchronously(DisconnectionReason.FailedToListen, e);
+				DestroySynchronously(DisconnectionReason.FailedToListen, e);
 				return;
 			}
 
@@ -133,7 +138,10 @@ public class UdpChannel : ChannelBase {
 				string localIP = ((IPEndPoint)mainServer.LocalEndPoint).Address.ToString();
 				int length = Encoding.UTF8.GetByteCount(localIP);
 				if (length + 1 > advertisementRegistrationMessage.ip.Length) {
-					CleanSynchronously(DisconnectionReason.FailedToAdvertise, "Advertising host is too long.");
+					DestroySynchronously(DisconnectionReason.FailedToAdvertise,
+					                   "Advertising host is too long: " +
+					                   advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
+					                   length.ToString () + " bytes used." );
 					return;
 				}
 				Encoding.UTF8.GetBytes (localIP, 0, localIP.Length, advertisementRegistrationMessage.ip, 0);
@@ -149,10 +157,10 @@ public class UdpChannel : ChannelBase {
 				advertisingClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 
 				// advertise
-				ChangeAdvertisement(true);
+				SendAdvertisement(true);
 			}
 			catch (Exception e) {
-				CleanSynchronously(DisconnectionReason.FailedToAdvertise, e);
+				DestroySynchronously(DisconnectionReason.FailedToAdvertise, e);
 				return;
 			}
 
@@ -172,7 +180,7 @@ public class UdpChannel : ChannelBase {
 
 			lock (sync) {
 				if (connectionState != ConnectionState.Disconnected) {
-					Clean (DisconnectionReason.ConnectionLost);
+					Destroy (DisconnectionReason.ConnectionLost);
 					IsActive = false;
 					IsConnected = false;
 					ProcessLogs();
@@ -211,7 +219,7 @@ public class UdpChannel : ChannelBase {
 				}
 				catch (Exception e)
 				{
-					CleanSynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
+					DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
 					return;
 				}
 				finally {
@@ -224,7 +232,7 @@ public class UdpChannel : ChannelBase {
 						success = true;
 					}
 					catch (Exception e) {
-						CleanSynchronously(DisconnectionReason.ConnectionLost, e);
+						DestroySynchronously(DisconnectionReason.ConnectionLost, e);
 						return;
 					}
 				}
@@ -234,8 +242,8 @@ public class UdpChannel : ChannelBase {
 						success = true;
 					}
 					else {
-						CleanSynchronously(DisconnectionReason.ConnectionThrottled,
-						                   "Disconnecting. Too much data queued to send.");
+						DestroySynchronously(DisconnectionReason.ConnectionThrottled,
+						                   "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
 						return;
 					}
 				}
@@ -254,6 +262,10 @@ public class UdpChannel : ChannelBase {
 		if (IsActive) {
 
 			lock (sync) {
+				//if (connectionState == ConnectionState.Advertising) {
+				//	SendAdvertisement(true);
+				//}
+
 				InternalUpdate ();
 			}
 		}
@@ -265,9 +277,9 @@ public class UdpChannel : ChannelBase {
 		
 		if (!IsConnected && (connectionState == ConnectionState.Connected || connectionState == ConnectionState.ConnectedAndSending)) {
 			IsConnected = true;
-			Debug.Log ("UdpConnection: Connected to " + currentConnectionString + ".");
+			Debug.Log ("UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
 			try {
-				RaiseConnectedToClient(currentConnectionString);
+				RaiseConnectedToClient(mainEndPoint.ToString());
 			}
 			catch (Exception e) {
 				Debug.LogException(e);
@@ -276,10 +288,14 @@ public class UdpChannel : ChannelBase {
 		}
 		
 		ProcessMessages();
-		
+
+		bool wasActive = IsActive;
 		IsConnected = (connectionState == ConnectionState.Connected || connectionState == ConnectionState.ConnectedAndSending);
 		IsActive = (connectionState != ConnectionState.Disconnected);
-		if (!IsActive) {
+
+		if (wasActive && !IsActive) {
+			Debug.LogWarning("UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
+
 			try {
 				RaiseDisconnectedFromClient(currentDisconnectionReason);
 			}
@@ -298,7 +314,7 @@ public class UdpChannel : ChannelBase {
 				if (log is Exception) {
 					Debug.LogException ((Exception)log);
 				} else {
-					Debug.LogError ("UdpConnection: " + log);
+					Debug.LogWarning ("UdpConnection: " + log);
 				}
 			}
 			queuedLogs.Clear ();
@@ -321,21 +337,24 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 	
-	private void Clean(DisconnectionReason reason) {
+	private void Destroy(DisconnectionReason reason) {
 		
-		bool needStopAdvertise = (connectionState == ConnectionState.WaitingForConnection ||
-		                          connectionState == ConnectionState.Connected ||
-		                          connectionState == ConnectionState.ConnectedAndSending);
+		bool needStopAdvertise = (connectionState == ConnectionState.WaitingForConnection);
 		
 		connectionState = ConnectionState.Disconnected;
-		currentConnectionString = null;
 		currentDisconnectionReason = reason;
 		sentBuffers.Clear ();
 		receivedMessages.Clear ();
 
 		if (advertisingClient != null) {
 			if (needStopAdvertise) {
-				ChangeAdvertisement(false);
+				try {
+					SendAdvertisement(false);
+				}
+				catch (Exception e) {
+					queuedLogs.Add (e);
+					advertisingClient.Close ();
+				}
 			}
 			else {
 				advertisingClient.Close();
@@ -352,15 +371,15 @@ public class UdpChannel : ChannelBase {
 		advertisementEndPoint = null;
 	}
 
-	private void Clean(DisconnectionReason reason, object exceptionOrLog)
+	private void Destroy(DisconnectionReason reason, object exceptionOrLog)
 	{
-		Clean (reason);
+		Destroy (reason);
 	    queuedLogs.Add (exceptionOrLog);
 	}
 
-	private void CleanSynchronously(DisconnectionReason reason, object exceptionOrLog)
+	private void DestroySynchronously(DisconnectionReason reason, object exceptionOrLog)
 	{
-		Clean (reason, exceptionOrLog);
+		Destroy (reason, exceptionOrLog);
 		InternalUpdate ();
 	}
 	
@@ -409,7 +428,7 @@ public class UdpChannel : ChannelBase {
 				}
 			}
 			catch (Exception e) {
-				Clean (DisconnectionReason.ConnectionLost, e);
+				Destroy (DisconnectionReason.ConnectionLost, e);
 			}
 		}
 	}
@@ -445,21 +464,22 @@ public class UdpChannel : ChannelBase {
 					int length = state.socket.EndReceiveFrom(result, ref endPoint);
 
 					IPEndPoint ipEndPoint = endPoint as IPEndPoint;
-					if (ipEndPoint == null) {
+					if (ipEndPoint != null) {
 
 						if (connectionState == ConnectionState.Advertising || connectionState == ConnectionState.WaitingForConnection) {
 							connectionState = ConnectionState.Connected;
 							mainEndPoint = ipEndPoint;
+
+							SendAdvertisement(false);
 						}
-						/*else ? */
-						if (mainEndPoint.Equals (ipEndPoint)) {
+						else if (mainEndPoint.Equals (ipEndPoint)) {
 							serializer.ByteBuffer = state.buffer;
 							NetworkMessage message;
 							try {
 								NetworkMessageSerializer.Deserialize(serializer, length, out message);
 							}
 							catch (Exception e) {
-								Clean (DisconnectionReason.ReceivedInvalidData, e);
+								Destroy (DisconnectionReason.ReceivedInvalidData, e);
 								return;
 							}
 							finally {
@@ -467,8 +487,8 @@ public class UdpChannel : ChannelBase {
 							}
 
 							if (receivedMessages.Count >= MaxQueuedReceives) {
-								Clean (DisconnectionReason.ConnectionThrottled,
-								       "Too many messages received too quickly.");
+								Destroy (DisconnectionReason.ConnectionThrottled,
+								       "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
 								return;
 							}
 							
@@ -479,7 +499,7 @@ public class UdpChannel : ChannelBase {
 					ServerReceive();
 				}
 				catch (Exception e) {
-					Clean(DisconnectionReason.ConnectionLost, e);
+					Destroy(DisconnectionReason.ConnectionLost, e);
 				}
 			}
 			finally {
@@ -488,7 +508,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
-	private void ChangeAdvertisement(bool start)
+	private void SendAdvertisement(bool start)
 	{
 		advertisementRegistrationMessage.enableAdvertisement = start ? (byte)1 : (byte)0;
 
@@ -502,7 +522,10 @@ public class UdpChannel : ChannelBase {
 				length = serializer.Index;
 			}
 			catch (IndexOutOfRangeException e) {
-				throw new IndexOutOfRangeException("Send buffer is not large enough for advertisement registration message.", e);
+				throw new NetworkMessageSerializationException("Send buffer not large enough for AdvertisementRegistrationMsg. " +
+				                                               "(" + advertisementRegistrationMessage.SerializationLength.ToString() + " bytes required, " +
+				                                               state.buffer.Length.ToString() + " bytes allowed in buffer.)",
+				                                               e);
 			}
 			finally {
 				serializer.Clear ();
@@ -540,7 +563,7 @@ public class UdpChannel : ChannelBase {
 				}
 			}
 			catch (Exception e) {
-				Clean(DisconnectionReason.FailedToAdvertise, e);
+				Destroy(DisconnectionReason.FailedToAdvertise, e);
 			}
 		}
 	}
@@ -553,16 +576,18 @@ public class UdpChannel : ChannelBase {
 			state.Dispose();
 
 			try {
-				// always an old connection
+				// can be an old connection
 
 				socket.EndSendTo(result);
 			}
 			catch (Exception) {
 				// ignore, since we can't do anything
 			}
-			// old connection, so need to close
+			// if old connection, need to close
 			finally {
-				state.socket.Close ();
+				if (socket != advertisingClient) {
+				    socket.Close ();
+				}
 			}
 		}
 	}
@@ -571,7 +596,7 @@ public class UdpChannel : ChannelBase {
 	{
 		SocketBufferState state;
 		int count = bufferStatePool.Count;
-		if (count == 0) {
+		if (count > 0) {
 			state = bufferStatePool [count - 1];
 			state.socket = socket;
 			bufferStatePool.RemoveAt (count - 1);

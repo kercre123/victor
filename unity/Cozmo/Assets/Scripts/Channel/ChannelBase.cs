@@ -7,8 +7,8 @@ using System.Collections.Generic;
 /// The type of protocol to communicate over.
 /// </summary>
 public enum ChannelProtocol {
-	Udp = 0,
-	Tcp,
+	Tcp = 0,
+	Udp,
 }
 
 /// <summary>

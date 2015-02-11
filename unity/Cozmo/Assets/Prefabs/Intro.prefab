@@ -704,7 +704,7 @@ GameObject:
   - 114: {fileID: 11455024}
   - 114: {fileID: 11455022}
   m_Layer: 5
-  m_Name: Robot ID
+  m_Name: Engine IP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2231,7 +2231,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1
+  m_Text: 127.0.0.1
 --- !u!114 &11455022
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2288,7 +2288,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.InputField+OnChangeEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
   m_SelectionColor: {r: .65882355, g: .807843149, b: 1, a: .752941191}
-  m_Text: 1
+  m_Text: 127.0.0.1
   m_CaretBlinkRate: 1.70000005
 --- !u!114 &11455024
 MonoBehaviour:
@@ -2656,7 +2656,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Robot ID:'
+  m_Text: 'Engine IP:'
 --- !u!114 &11485814
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2787,7 +2787,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Robot ID
+  m_Text: Engine IP
 --- !u!114 &11485830
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2851,18 +2851,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 559203f278d2b4bf492309cb47be32c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: {fileID: 11455022}
+  engineIP: {fileID: 11455022}
   ip: {fileID: 11485822}
   visualizerIP: {fileID: 11478924}
-  schemeToggles:
-  - {fileID: 11427908}
-  - {fileID: 11427904}
-  - {fileID: 11427890}
-  orientationToggles:
-  - {fileID: 11427872}
-  - {fileID: 11427874}
-  - {fileID: 11427888}
-  - {fileID: 11455008}
+  schemeToggles: []
+  orientationToggles: []
   simulated: {fileID: 11427924}
   play: {fileID: 11479368}
   error: {fileID: 11478116}

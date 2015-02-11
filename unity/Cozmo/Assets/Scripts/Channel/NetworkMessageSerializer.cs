@@ -34,7 +34,10 @@ public static class NetworkMessageSerializer {
 			message.Serialize(serializer);
 		}
 		catch (IndexOutOfRangeException e) {
-			throw new NetworkMessageSerializationException("Failed to serialize " + message.GetType ().FullName + ". Buffer not large enough.", e);
+			throw new NetworkMessageSerializationException("Failed to serialize " + message.GetType ().FullName + ". " +
+			                                               "Buffer not large enough. " +
+			                                               "(" + serializer.ByteBuffer.Length.ToString() + " bytes allowed.)",
+			                                               e);
 		}
 	}
 
@@ -45,23 +48,33 @@ public static class NetworkMessageSerializer {
 			serializer.Deserialize (out id);
 		}
 		catch (IndexOutOfRangeException e) {
-			throw new NetworkMessageSerializationException("Failed to deserialize network message. Not enough data to even specify an id.", e);
+			throw new NetworkMessageSerializationException("Failed to deserialize network message. Not enough data to even specify an id." +
+			                                               "(" + length.ToString() + " bytes received.)",
+			                                               e);
 		}
 
 		message = NetworkMessageCreation.Allocate((int)id);
 		if (message == null) {
-			throw new NetworkMessageSerializationException("Failed to deserialize network message. Unknown message ID " + id.ToString() + ".");
+			throw new NetworkMessageSerializationException("Failed to deserialize network message. Unknown message ID " + id.ToString() + ". " +
+			                                               "(Message length " + (length - ByteSerializer.GetSerializationLength(id)).ToString() + " bytes.)");
 		}
 
 		try {
 			message.Deserialize(serializer);
 		}
 		catch (IndexOutOfRangeException e) {
-			throw new NetworkMessageSerializationException("Failed to deserialize network message of type " + message.GetType ().FullName + ". Not enough data to specify the full message.", e);
+			throw new NetworkMessageSerializationException("Failed to deserialize network message of type " + message.GetType ().FullName + ". " +
+			                                               "Not enough data to specify the full message. " +
+			                                               "(" + (length - ByteSerializer.GetSerializationLength(id)).ToString() + " bytes received, " + 
+			                                               message.SerializationLength.ToString() + " bytes required.)",
+			                                               e);
 		}
 
 		if (serializer.Index != length) {
-			throw new NetworkMessageSerializationException("Failed to deserialize network message of type " + message.GetType ().FullName + ". Message too long.");
+			throw new NetworkMessageSerializationException("Failed to deserialize network message of type " + message.GetType ().FullName + ". " +
+			                                               "Message too long. " +
+			                                               "(" + (length - ByteSerializer.GetSerializationLength(id)).ToString() + " bytes received, " +
+			                                               message.SerializationLength.ToString() + " bytes required.)");
 		}
 	}
 }

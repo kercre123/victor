@@ -14,6 +14,11 @@ public abstract class NetworkMessage {
 	public abstract int ID { get; }
 
 	/// <summary>
+	/// The number of bytes used when serializing. (For debugging purposes.)
+	/// </summary>
+	public abstract int SerializationLength { get; }
+
+	/// <summary>
 	/// Serializes the message in the given buffer, starting at and updating the given index.
 	/// </summary>
 	/// <param name="buffer">The buffer to serialize to.</param>

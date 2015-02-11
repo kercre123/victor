@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public partial class AdvertisementRegistrationMsg : NetworkMessage {
 	public ushort port;
-	public byte[] ip = new byte[18];
+	public byte[] ip = new byte[19];
 	public byte id;
 	public byte protocol;
 	public byte enableAdvertisement;
@@ -13,6 +13,19 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 	public override int ID {
 		get {
 			return -1;
+		}
+	}
+
+	public override int SerializationLength
+	{
+		get {
+			return
+				ByteSerializer.GetSerializationLength(this.port) +
+				ByteSerializer.GetSerializationLength(this.ip) +
+				ByteSerializer.GetSerializationLength(this.id) +
+				ByteSerializer.GetSerializationLength(this.protocol) +
+				ByteSerializer.GetSerializationLength(this.enableAdvertisement) +
+				0;
 		}
 	}
 

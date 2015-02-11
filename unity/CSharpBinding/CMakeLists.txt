@@ -77,6 +77,6 @@ add_custom_command(
 
 add_custom_target(
   CSharpGeneratedMessages ALL
-  DEPENDS GeneratedMessages.cs ${SOURCE_PRE}
+  DEPENDS GeneratedMessages.cs
   VERBATIM
 )

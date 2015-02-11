@@ -180,6 +180,8 @@ public class ByteSerializer {
 		} else {
 			value = b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
 		}
+
+		index += 4;
 	}
 	
 	public void Deserialize(out int value)
@@ -201,6 +203,8 @@ public class ByteSerializer {
 			Deserialize(out i0);
 		}
 		value = i0 | (i1 << 32);
+
+		index += 8;
 	}
 
 	public void Deserialize(out float value)
@@ -241,7 +245,7 @@ public class ByteSerializer {
 		}
 		index += value.Length;
 	}
-	
+
 	private void Swap(int offsetA, int offsetB)
 	{
 		int indexA = index + offsetA;
@@ -268,6 +272,51 @@ public class ByteSerializer {
 			Swap (2, 5);
 			Swap (3, 4);
 		}
+	}
+	
+	public static int GetSerializationLength(byte value)
+	{
+		return 1;
+	}
+	
+	public static int GetSerializationLength(ushort value)
+	{
+		return 2;
+	}
+	
+	public static int GetSerializationLength(uint value)
+	{
+		return 4;
+	}
+	
+	public static int GetSerializationLength(int value)
+	{
+		return 4;
+	}
+	
+	public static int GetSerializationLength(ulong value)
+	{
+		return 8;
+	}
+	
+	public static int GetSerializationLength(float value)
+	{
+		return 4;
+	}
+	
+	public static int GetSerializationLength(double value)
+	{
+		return 8;
+	}
+	
+	public static int GetSerializationLength(byte[] value)
+	{
+		return value.Length;
+	}
+	
+	public static int GetSerializationLength(char[] value)
+	{
+		return value.Length;
 	}
 }
 

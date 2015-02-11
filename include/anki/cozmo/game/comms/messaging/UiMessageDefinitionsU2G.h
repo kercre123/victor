@@ -30,7 +30,7 @@
 #if defined(COZMO_ROBOT)
 #error UIMessages should not be used on robot!
 #elif defined(COZMO_CSHARP)
-#include "anki/cozmo/game/comms/messages/MessageDefMacros_CSharp.h"
+#include "anki/cozmo/game/comms/messaging/MessageDefMacros_CSharp.h"
 #elif defined(COZMO_BASESTATION)
 #include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
 #else

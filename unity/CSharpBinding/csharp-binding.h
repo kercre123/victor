@@ -16,8 +16,7 @@ extern "C" {
         BINDING_ERROR_NOT_INITIALIZED = 0x8001,
         BINDING_ERROR_ALREADY_INITIALIZED = 0x8002,
         BINDING_ERROR_INVALID_CONFIGURATION = 0x8003,
-        BINDING_ERROR_ROBOT_NOT_READY = 0x8004,
-        // also include Anki::Result values
+        BINDING_ERROR_FAILED_INITIALIZATION = 0x8005,
     };
   
     // Determine if any logs are available; if so, set length
@@ -27,13 +26,13 @@ extern "C" {
     void cozmo_pop_log(char* buffer, int max_length);
     
     // Creates a new CozmoEngineHost instance
-    int cozmo_engine_host_create(const char* configuration_data);
+    int cozmo_game_host_create(const char* configuration_data);
     
     // Destroys the current CozmoEngineHost instance, if any
-    int cozmo_engine_host_destroy();
+    int cozmo_game_host_destroy();
   
     // Update tick
-    int cozmo_engine_update(float currentTime);
+    int cozmo_game_update(float currentTime);
 }
 
 #endif /* defined(__CozmoGame__csharp_binding__) */
