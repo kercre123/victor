@@ -44,6 +44,7 @@ namespace Anki {
       using Handle_t = u32;
       static const Handle_t INVALID_HANDLE;
       
+      // NOTE: Connect() will call Disconnect() first if already connected.
       Result Connect(const char *udp_host_address, const unsigned short port);
       Result Disconnect();
       

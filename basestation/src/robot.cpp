@@ -494,7 +494,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        // CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
+        CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         

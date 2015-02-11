@@ -41,6 +41,9 @@ PROTO WebotsKeyboardController [
   # Force-add robot options
   field SFString forceAddIP "192.168.3.34"
   field SFInt32  forceAddID 1
+  
+  # CozmoCam
+  field SFString streamResolution "QVGA"
 ]
 {
 Supervisor {
@@ -80,7 +83,46 @@ Supervisor {
       ]
     }
       
+    DEF CAM_DISPLAY_PLANE Display {
+      # Hide display plane far away
+      translation 1000 0.1 0
 
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+	         size 1 1
+          }
+        }
+      ]
+      name "uiCamDisplay"
+
+
+      %{ if fields.streamResolution == "VGA" then }%
+      width 640
+      height 480
+      pixelSize 0.5
+      %{ elseif fields.streamResolution == "QVGA" then }%
+      width 320
+      height 240
+      pixelSize 1
+      %{ elseif fields.streamResolution == "QQVGA" then }%
+      width 160
+      height 120
+      pixelSize 2
+      %{ elseif fields.streamResolution == "QQQVGA" then }%
+      width 80
+      height 60
+      pixelSize 4
+      %{ end }%
+      windowPosition 0 1
+    }
   ]
   name IS name
   controller "webots_keyboard_controller"
