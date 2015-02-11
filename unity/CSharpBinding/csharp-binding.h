@@ -29,7 +29,7 @@ extern "C" {
     void cozmo_pop_log(char* buffer, int max_length);
     
     // Creates a new CozmoEngineHost instance
-    int cozmo_engine_host_create(const char* configurationData);
+    int cozmo_engine_host_create(const char* configurationData, const char* visIP);
     
     // Destroys the current CozmoEngineHost instance, if any
     int cozmo_engine_host_destroy();

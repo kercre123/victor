@@ -10,7 +10,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	[SerializeField]
 	private TextAsset configuration;
-	
+
 	private bool engineHostInitialized = false;
 
 	public bool IsHostInitialized {
@@ -32,28 +32,34 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-#if UNITY_IOS && !UNITY_EDITOR
-
-	void Start()
+	public bool CreateHostWithVisIP(string visIP)
 	{
-		if (engineHostInitialized) {
-			Debug.LogError("Error initializing cozmo host: Host already started.");
-			return;
-		}
+
+#if UNITY_IOS && !UNITY_EDITOR
+//		if (engineHostInitialized) {
+//			Debug.LogError("Error initializing cozmo host: Host already started.");
+//			return true;
+//		}
 
 		if (configuration == null) {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
-			return;
+			return false;
 		}
-		
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text);
+		Debug.Log("cozmo_engine_host_create("+visIP+")");
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text, visIP);
+
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
+#endif
+
+		return engineHostInitialized;
 	}
-	
+
+#if UNITY_IOS && !UNITY_EDITOR
+
 	void OnDestroy()
 	{
 		if (engineHostInitialized) {
@@ -153,7 +159,7 @@ public class RobotEngineManager : MonoBehaviour {
 #endif
 	}
 
-	public const float MAX_WHEEL_SPEED 	= 100f;
+	public const float MAX_WHEEL_SPEED 	= 70f;
 	public const float MAX_ANALOG_RADIUS   = 300f;
 	public const float HALF_PI             = Mathf.PI * 0.5f;
 	public const float wheelDistHalfMM 	= 23.85f; //47.7f / 2.0; // distance b/w the front wheels

@@ -43,7 +43,7 @@ public static class CozmoBinding {
 	public static extern void cozmo_pop_log(StringBuilder buffer, int max_length);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_engine_host_create (string configurationData);
+	public static extern int cozmo_engine_host_create (string configurationData, string visIP);
 
 	[DllImport("__Internal")]
 	public static extern int cozmo_engine_host_destroy();

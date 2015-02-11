@@ -75,8 +75,9 @@ namespace Cozmo {
     }
     
     Result lastResult = _uiComms.Init(config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                      config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
-    
+                                      config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt(),
+                                      MAX_SENT_BYTES_PER_TIC_TO_UI);
+
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoGameHostImpl.Init", "Failed to initialize host uiComms.\n");
       return lastResult;
