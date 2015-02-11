@@ -14,13 +14,15 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     lightSquareWidth = 40 * (processingSize(1) / 240);
     alignmentRectangle = [110, 210, 70, 170] * (processingSize(1) / 240);
     
-    spatialBlurSigmas = linspace(2,6,5);
+    spatialBlurSigmas = linspace(2,5,4);
     
     %     useBoxFilter = false;
     alignmentType = 'exhaustiveTranslation'; % {'none', 'exhaustiveTranslation'}
     
     parsingType = 'spatialBlur'; % {'spatialBlur'}
     
+    scaleDetectionMethod = 'temporalGaussian'; % { 'originalGaussian', 'temporalGaussian', 'temporalBox'}
+        
     redBlueOnly = false;
     
     showFigures = true;
@@ -71,7 +73,7 @@ function [whichColors, numPositive] = parseLedCode_rgb(varargin)
     if strcmpi(parsingType, 'spatialBlur')
         if isempty(knownLedColor)
             if redBlueOnly
-                [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorPatches, spatialBlurSigmas);
+                [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorPatches, spatialBlurSigmas, scaleDetectionMethod);
             else
                 [whichColors, numPositive] = dutyCycle_changingCenter(colorPatches, spatialBlurSigmas);
             end
@@ -341,7 +343,7 @@ function [whichColors, numPositive] = dutyCycle_changingCenter(colorImages, blur
 end % function colors = dutyCycle_changingCenter()
 
 
-function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImages, blurSigmas)
+function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImages, blurSigmas, scaleDetectionMethod)
     
     blurKernels_small = cell(length(blurSigmas), 1);
     blurKernels_large = cell(length(blurSigmas), 1);
@@ -371,20 +373,56 @@ function [whichColors, numPositive] = dutyCycle_changingCenter_redBlue(colorImag
         blurredImages_outsideRing(:,:,3,:,iBlur) = max(blurredImages_outsideRing(:,:,1:2,:,iBlur), [], 3);
     end % for iBlur = 1:length(blurSigmas)
     
-    blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
-    blurredImages_inside(:,:,1:3,:,:) = blurredImages_small - blurredImages_outsideRing;
-    blurredImages_inside(:,:,4,:,:) = max(blurredImages_inside(:,:,1:2,:,:), [], 3);
-    blurredImages_inside(blurredImages_inside<0) = 0;
     
-    blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,4,:,:)), [3,1,2,4]);
-    blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
-    blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
-    peakValue = max(blurredImages_onMax_mean(:));
-    
-    inds = find(blurredImages_onMax_mean == peakValue, 1);
-    [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
+    if strcmpi(scaleDetectionMethod, 'originalGaussian')
+        blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
+        blurredImages_inside(:,:,1:3,:,:) = blurredImages_small - blurredImages_outsideRing;
+        blurredImages_inside(:,:,4,:,:) = max(blurredImages_inside(:,:,1:2,:,:), [], 3);
+        blurredImages_inside(blurredImages_inside<0) = 0;
+        
+        blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,4,:,:)), [3,1,2,4]);
+        blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
+        blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
+        peakValue = max(blurredImages_onMax_mean(:));
+
+        inds = find(blurredImages_onMax_mean == peakValue, 1);
+        [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
+    elseif strcmpi(scaleDetectionMethod, 'temporalGaussian')
+%         blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
+%         outsideChange = repmat(max(blurredImages_outsideRing, [], 4) - min(blurredImages_outsideRing, [], 4), [1,1,1,size(colorImages,4),1]);
+%         blurredImages_inside(:,:,1:3,:,:) = blurredImages_small - outsideChange;
+%         blurredImages_inside(:,:,4,:,:) = max(blurredImages_inside(:,:,1:2,:,:), [], 3);
+%         blurredImages_inside(blurredImages_inside<0) = 0;
+%         
+%         blurredImages_onMax = permute(squeeze(blurredImages_inside(:,:,4,:,:)), [3,1,2,4]);
+%         blurredImages_onMax = blurredImages_onMax - repmat(min(blurredImages_onMax), [size(blurredImages_onMax,1),1,1,1]);
+%         blurredImages_onMax_mean = squeeze(mean(blurredImages_onMax));
+%         peakValue = max(blurredImages_onMax_mean(:));
+% 
+%         inds = find(blurredImages_onMax_mean == peakValue, 1);
+%         [bestY,bestX,bestB] = ind2sub(size(blurredImages_onMax_mean), inds);
+
+        blurredImages_inside = zeros([size(colorImages,1), size(colorImages,2), 4, size(colorImages,4), length(blurSigmas)]);
+%         blurredImages_inside(:,:,1:2,:,:) = ;
+        
+        outsideChange = squeeze(max(max(blurredImages_outsideRing(:,:,[1,3],:,:), [], 4) - min(blurredImages_outsideRing(:,:,[1,3],:,:), [], 4), [], 3));
+        
+        blurredImages_smallMax = permute(squeeze(max(blurredImages_small(:,:,1:2,:,:), [], 3)), [3,1,2,4]);
+        
+        toSubtract = min(blurredImages_smallMax) + permute(outsideChange, [4,1,2,3]);
+        blurredImages_smallMaxScaled = blurredImages_smallMax - repmat(toSubtract, [size(colorImages,4), 1,1,1]);
+        
+        blurredImages_smallMaxScaled_mean = squeeze(mean(blurredImages_smallMaxScaled));
+       
+        peakValue = max(blurredImages_smallMaxScaled_mean(:));
+
+        inds = find(blurredImages_smallMaxScaled_mean == peakValue, 1);
+        [bestY,bestX,bestB] = ind2sub(size(blurredImages_smallMaxScaled_mean), inds);
+    elseif strcmpi(scaleDetectionMethod, 'temporalBox')
+    end
     
     bestColors = squeeze(blurredImages_small(bestY,bestX, 1:2, :, bestB));
+    
     
     % Find the best R, G, and B (seeds), then grow them out
     numSamples = size(bestColors,2);
