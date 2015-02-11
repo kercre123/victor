@@ -51,7 +51,7 @@ void cozmo_pop_log(char* buffer, int buffer_length)
     error_messages.pop_back();
 }
 
-int cozmo_engine_host_create(const char* configurationData)
+int cozmo_engine_host_create(const char* configurationData, const char* visIP)
 {
   using namespace Cozmo;
   
@@ -71,7 +71,9 @@ int cozmo_engine_host_create(const char* configurationData)
     }
     
     CozmoEngineHost* created_host = new CozmoEngineHost();
-  
+    config["VizHostIP"] = visIP;
+    printf("config[VizHostIP] = %s;", visIP);
+    
     Result result = created_host->Init(config);
     if (result == RESULT_OK) {
         created_host->ListenForRobotConnections(true);

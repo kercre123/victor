@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include <stdio.h>
+#include <string.h>
 
 // Webots includes
 #include <webots/Supervisor.hpp>
@@ -182,6 +183,7 @@ namespace Anki {
       void SendStopFaceTracking();
       void SendVisionSystemParams();
       void SendFaceDetectParams();
+      void SendForceAddRobot();
       
       
       // ======== Message handler callbacks =======
@@ -295,6 +297,7 @@ namespace Anki {
         printf("            Toggle face tracking:  f (Shift+f)\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
+        printf("        Force-add specifed robot:  Shift+r\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -306,40 +309,41 @@ namespace Anki {
         // these are the ascii codes for the capital letter
         //Numbers, spacebar etc. work, letters are different, why?
         //a, z, s, x, Space
-        const s32 CKEY_CANCEL_PATH = 81;  // q
-        const s32 CKEY_LIFT_UP     = 65;  // a
-        const s32 CKEY_LIFT_DOWN   = 90;  // z
-        //const s32 CKEY_HEAD_UPUP  = 87;  // w
-        const s32 CKEY_HEAD_UP     = 83;  // s
-        const s32 CKEY_HEAD_DOWN   = 88;  // x
-        const s32 CKEY_UNLOCK      = 32;  // space
-        const s32 CKEY_REQUEST_IMG = 73;  // i
-        const s32 CKEY_DISPLAY_TOGGLE = 68;  // d
-        const s32 CKEY_HEADLIGHT   = 72;  // h
-        const s32 CKEY_GOTO_POSE   = 71;  // g
-        const s32 CKEY_CLEAR_BLOCKS = 67; // c
-        //const s32 CKEY_COMMA   = 44;  // ,
-        const s32 CKEY_CYCLE_BLOCK_SELECT   = 46;  // .
+        const s32 CKEY_CANCEL_PATH = (s32)'Q';
+        const s32 CKEY_LIFT_UP     = (s32)'A';
+        const s32 CKEY_LIFT_DOWN   = (s32)'Z';  // z
+
+        const s32 CKEY_HEAD_UP     = (s32)'S';
+        const s32 CKEY_HEAD_DOWN   = (s32)'X';
+        const s32 CKEY_UNLOCK      = (s32)' ';
+        const s32 CKEY_REQUEST_IMG = (s32)'I';
+        const s32 CKEY_DISPLAY_TOGGLE = (s32)'D';
+        const s32 CKEY_HEADLIGHT   = (s32)'H';
+        const s32 CKEY_GOTO_POSE   = (s32)'G';
+        const s32 CKEY_CLEAR_BLOCKS = (s32)'C';
+
+        const s32 CKEY_CYCLE_BLOCK_SELECT   = (s32)'.';
         //const s32 CKEY_FWDSLASH    = 47; // '/'
         //const s32 CKEY_BACKSLASH   = 92 // '\'
-        const s32 CKEY_DOCK_TO_BLOCK  = 80;  // p
-        const s32 CKEY_USE_RAMP = 82; // r
-        const s32 CKEY_QUESTION_MARK  = 63; // '/'
+
+        const s32 CKEY_PICK_AND_PLACE  = (s32)'P';
+        const s32 CKEY_USE_RAMP        = (s32)'R';
+        const s32 CKEY_QUESTION_MARK   = (s32)'/';
         
-        const s32 CKEY_START_DICE_DEMO= 74; // 'j' for "June"
-        const s32 CKEY_SET_GAINS   = 75;  // 'k'
-        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = 86;  // v
+        const s32 CKEY_START_DICE_DEMO = (s32)'J';
+        const s32 CKEY_SET_GAINS       = (s32)'K';
+        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = (s32)'V';
         
-        const s32 CKEY_TEST_PLAN = (s32)'T';
+        const s32 CKEY_TEST_PLAN          = (s32)'T';
         const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
-        const s32 CKEY_EXPORT_IMAGES = (s32)'E';
-        const s32 CKEY_IMU_REQUEST = (s32)'O';
+        const s32 CKEY_EXPORT_IMAGES      = (s32)'E';
+        const s32 CKEY_IMU_REQUEST        = (s32)'O';
         
-        const s32 CKEY_ANIMATION_NOD = (s32)'!';
+        const s32 CKEY_ANIMATION_NOD            = (s32)'!';
         const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
-        const s32 CKEY_ANIMATION_BLINK = (s32)'#';
-        const s32 CKEY_ANIMATION_TOGGLE = (s32) '~';
-        const s32 CKEY_ANIMATION_SEND_FILE = 197; // ALT+A
+        const s32 CKEY_ANIMATION_BLINK          = (s32)'#';
+        const s32 CKEY_ANIMATION_TOGGLE         = (s32) '~';
+        const s32 CKEY_ANIMATION_SEND_FILE      = 197; // ALT+A
         
         const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
         
@@ -681,7 +685,7 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_DOCK_TO_BLOCK:
+              case CKEY_PICK_AND_PLACE:
               {
                 bool usePreDockPose = true;
                 if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
@@ -694,7 +698,12 @@ namespace Anki {
               }
               case CKEY_USE_RAMP:
               {
-                SendTraverseSelectedObject();
+                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                  // Shift+R
+                  SendForceAddRobot();
+                } else {
+                  SendTraverseSelectedObject();
+                }
                 break;
               }
               case CKEY_START_DICE_DEMO:
@@ -1514,6 +1523,31 @@ namespace Anki {
           SendMessage(p);
         }
       }
+      
+      void SendForceAddRobot()
+      {
+        if (root_) {
+          MessageU2G_ForceAddRobot msg;
+          msg.isSimulated = false;
+          msg.ipAddress.fill('\0'); // ensure null-termination after copy below
+          
+          webots::Field* ipField = root_->getField("forceAddIP");
+          webots::Field* idField = root_->getField("forceAddID");
+          
+          if(ipField != nullptr && idField != nullptr) {
+            const std::string ipStr = ipField->getSFString();
+            std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
+            
+            msg.robotID = static_cast<u8>(idField->getSFInt32());
+            
+            printf("Sending message to force-add robot %d at %s\n", msg.robotID, ipStr.c_str());
+            SendMessage(msg);
+          } else {
+            printf("ERROR: No 'forceAddIP' / 'forceAddID' field(s) found!\n");
+          }
+        }
+      }
+      
       
     } // namespace WebotsKeyboardController
   } // namespace Cozmo
