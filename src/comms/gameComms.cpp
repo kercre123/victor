@@ -36,7 +36,6 @@ namespace Cozmo {
   
   GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
   : isInitialized_(false)
-  , wasConnected_(true)
   , deviceID_(deviceID)
   , serverListenPort_(serverListenPort)
   , advertisementRegIP_(advertisementRegIP)
@@ -97,8 +96,13 @@ namespace Cozmo {
     
   }
   
+  u32 GameComms::GetNumMsgPacketsInSendQueue(int devID)
+  {
+    // TODO: This function isn't used on the game side, sent messages aren't queued anyway, so just returning 0.
+    return 0;
+  }
   
-  void GameComms::Update()
+  void GameComms::Update(bool send_queued_msgs)
   {
     if(!IsInitialized()) {
       // Register with advertisement service
@@ -116,24 +120,13 @@ namespace Cozmo {
     }
     
 #if(USE_UDP_UI_COMMS)
-    // Listen for client if don't already have one.
-    if (!server_.HasClient() && wasConnected_) {
-      RegisterWithAdvertisementService();
-      wasConnected_ = false;
-    } else if (server_.HasClient() && !wasConnected_){
-      printf("GameComms: User input device connected!\n");
-      DeregisterFromAdvertisementService();
-      wasConnected_ = true;
+    if (!server_.HasClient()) {
+      AdvertiseToService();
     }
 #else
-    // Listen for client if don't already have one.
     if (!server_.HasClient()) {
-      if (server_.Accept()) {
-        printf("GameComms: User input device connected!\n");
-        DeregisterFromAdvertisementService();
-      } else if (!IsRegistered()) {
-        printf("GameComms: Registering with advertisement service\n");
-        RegisterWithAdvertisementService();
+      if (!server_.Accept()) {
+        AdvertiseToService();
       }
     }
 #endif
@@ -169,7 +162,6 @@ namespace Cozmo {
         // Disconnect client
         printf("GameComms: Recv failed. Disconnecting client\n");
         server_.DisconnectClient();
-        RegisterWithAdvertisementService();
         return;
       }
       recvDataSize += bytes_recvd;
@@ -256,7 +248,6 @@ namespace Cozmo {
       // Disconnect client
       printf("GameComms: Recv failed. Disconnecting client\n");
       server_.DisconnectClient();
-      RegisterWithAdvertisementService();
     }
     
 #endif
@@ -304,29 +295,14 @@ namespace Cozmo {
   
   
   // Register this UI device with advertisement service
-  void GameComms::RegisterWithAdvertisementService()
+  void GameComms::AdvertiseToService()
   {
     regMsg_.enableAdvertisement = 1;
+    regMsg_.oneShot = 1;
     
     printf("GameComms: Sending registration for UI device %d at address %s on port %d\n", regMsg_.id, regMsg_.ip, regMsg_.port);
     regClient_.Send((char*)&regMsg_, sizeof(regMsg_));
   }
-  
-  // Deregister this UI from advertisement service
-  void GameComms::DeregisterFromAdvertisementService()
-  {
-    regMsg_.enableAdvertisement = 0;
-    
-    printf("GameComms: Sending deregistration for UI device %d\n", regMsg_.id);
-    regClient_.Send((char*)&regMsg_, sizeof(regMsg_));
-  }
-  
-  // Is this UI device registered with advertisement service
-  bool GameComms::IsRegistered()
-  {
-    return regMsg_.enableAdvertisement == 1;
-  }
-
   
   
   // Hacky function to grab localhost IP address starting with 192.

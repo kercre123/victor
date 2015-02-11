@@ -64,10 +64,12 @@ ADD_MESSAGE_MEMBER(u8, robotID)
 ADD_MESSAGE_MEMBER(u8, isSimulated)
 END_MESSAGE_DEFINITION(U2G_ForceAddRobot)
 
-// Heartbeat
-START_MESSAGE_DEFINITION(U2G_Heartbeat, 1)
-ADD_MESSAGE_MEMBER(f32, currentTime_sec)
-END_MESSAGE_DEFINITION(U2G_Heartbeat)
+// StartEngine
+// Tell game to start the engine with the configuration specified by the message members.
+START_MESSAGE_DEFINITION(U2G_StartEngine, 1)
+ADD_MESSAGE_MEMBER(u8, asHost)
+ADD_MESSAGE_MEMBER_ARRAY(u8, vizHostIP, 16) // if first char is '\0', disables viz
+END_MESSAGE_DEFINITION(U2G_StartEngine)
 
 // DriveWheels
 START_MESSAGE_DEFINITION(U2G_DriveWheels, 1)
@@ -105,9 +107,18 @@ END_MESSAGE_DEFINITION(U2G_StopAllMotors)
 
 // ImageRequest
 START_MESSAGE_DEFINITION(U2G_ImageRequest, 1)
-ADD_MESSAGE_MEMBER(u8, mode)
-ADD_MESSAGE_MEMBER(u8, resolution)
+ADD_MESSAGE_MEMBER(u8, robotID)
+ADD_MESSAGE_MEMBER(u8, mode) // See ImageSendMode_t in cozmoTypes.h
 END_MESSAGE_DEFINITION(U2G_ImageRequest)
+
+// SetRobotImageSendMode
+// NOTE: This can enable/disable streaming of images from the physical robot.
+//       It is intended for dev use, since the robot will likely always stream
+//       its image in the product.
+START_MESSAGE_DEFINITION(U2G_SetRobotImageSendMode, 1)
+ADD_MESSAGE_MEMBER(u8, mode) // See ImageSendMode_t in cozmoTypes.h
+ADD_MESSAGE_MEMBER(u8, resolution)
+END_MESSAGE_DEFINITION(U2G_SetRobotImageSendMode)
 
 // SaveImages
 START_MESSAGE_DEFINITION(U2G_SaveImages, 1)
