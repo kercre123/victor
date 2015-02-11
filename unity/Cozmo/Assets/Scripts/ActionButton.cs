@@ -15,17 +15,22 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 	protected float timePressed = 0f;
 	protected float offset = 0f;
 	protected float velocity = 0f;
+	protected IEnumerator pressedInvocation;
 
 	public void OnPointerDown( PointerEventData eventData )
 	{
 		timePressed = Time.time;
 
-		StartCoroutine( OnPressed() );
+		pressedInvocation = OnPressed();
+		StartCoroutine( pressedInvocation );
 	}
 
 	public void OnPointerUp( PointerEventData eventData )
 	{
-		StopCoroutine( OnPressed() );
+		if( pressedInvocation != null )
+		{
+		    StopCoroutine( pressedInvocation );
+		}
 	}
 
 	protected IEnumerator OnPressed()
@@ -40,6 +45,8 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
 	protected void AnimateInChildren()
 	{
+		children.SetActive( true );
+
 		StartCoroutine( _AnimateInChildren() );
 	}
 
@@ -73,6 +80,11 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 			offset = image.rectTransform.rect.size.y;
 			velocity *= -1f;
 		}
+
+		if( children != null )
+		{
+			children.SetActive( false );
+		}
 	}
 
 	// spawn children in editor time on enable
@@ -87,10 +99,7 @@ public class ActionButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 		{
 			for( int i = 0; i < children.transform.childCount; ++i )
 			{
-				if( children.transform.GetChild( i ) != null && children.transform.GetChild( i ).gameObject != null )
-				{
-					DestroyImmediate( children.transform.GetChild( i ).gameObject );
-				}
+				DestroyImmediate( children.transform.GetChild( i ).gameObject );
 
 				--i;
 			}

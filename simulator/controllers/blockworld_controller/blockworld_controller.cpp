@@ -53,7 +53,7 @@ BSTimer basestationController;
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
 #define VIZ_HOST_IP               "127.0.0.1"
 
-
+/*
 // For connecting to physical robot
 // TODO: Expose these to UI
 const bool FORCE_ADD_ROBOT = false;
@@ -61,6 +61,7 @@ const bool FORCED_ROBOT_IS_SIM = false;
 const u8 forcedRobotId = 1;
 //const char* forcedRobotIP = "192.168.3.34";   // cozmo2
 const char* forcedRobotIP = "172.31.1.1";     // cozmo3
+*/
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -83,8 +84,8 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
-  if(!config.isMember("VizHostIP")) {
-    config["VizHostIP"] = VIZ_HOST_IP;
+  if(!config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+    config[AnkiUtil::kP_VIZ_HOST_IP] = VIZ_HOST_IP;
   }
   if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = ROBOT_ADVERTISING_PORT;
@@ -92,16 +93,19 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
+  if(!config.isMember(AnkiUtil::kP_AS_HOST)) {
+    config[AnkiUtil::kP_AS_HOST] = true;
+  }
   
   // Get engine playback mode mode
-  CozmoGameHost::PlaybackMode playbackMode = CozmoGameHost::LIVE_SESSION_NO_RECORD;
+  CozmoGame::PlaybackMode playbackMode = CozmoGame::LIVE_SESSION_NO_RECORD;
   int pmInt;
   if(JsonTools::GetValueOptional(config, AnkiUtil::kP_ENGINE_PLAYBACK_MODE, pmInt)) {
-    playbackMode = (CozmoGameHost::PlaybackMode)pmInt;
-    assert(playbackMode <= CozmoGameHost::PLAYBACK_SESSION);
+    playbackMode = (CozmoGame::PlaybackMode)pmInt;
+    assert(playbackMode <= CozmoGame::PLAYBACK_SESSION);
   } 
   
-  if (playbackMode != CozmoGameHost::PLAYBACK_SESSION) {
+  if (playbackMode != CozmoGame::PLAYBACK_SESSION) {
     
     // Wait for at least one robot and UI device to connect
     config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
@@ -115,14 +119,22 @@ int main(int argc, char **argv)
   } // if (bm != BM_PLAYBACK_SESSION)
   
   // Initialize the engine
-  CozmoGameHost cozmoGame;
+  CozmoGame cozmoGame;
   cozmoGame.Init(config);
   
+  PRINT_INFO("CozmoGame created and initialized.\n");
+  
+  /*
+  // TODO: Wait to receive this from UI (webots keyboard controller)
+  cozmoGame.StartEngine(config);
+  
+  
+  // TODO: Have UI (webots kb controller) send this
   // Force add a robot
   if (FORCE_ADD_ROBOT) {
     cozmoGame.ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
-  }
-  
+  }  
+   */
 
   //
   // Main Execution loop: step the world forward forever
