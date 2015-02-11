@@ -37,6 +37,14 @@
 #define BASESTATION_IP "127.0.0.1"
 #define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
+// For connecting to physical robot
+// TODO: Expose these to UI
+const bool FORCE_ADD_ROBOT = false;
+const bool FORCED_ROBOT_IS_SIM = false;
+const u8 forcedRobotId = 1;
+//const std::string forcedRobotIP = "192.168.3.34";   // cozmo2
+const std::string forcedRobotIP = "172.31.1.1";     // cozmo3
+
 namespace Anki {
   namespace Cozmo {
     
@@ -134,6 +142,12 @@ namespace Anki {
         const f32 MAX_ANALOG_RADIUS = 300;
         #endif // ENABLE_GAMEPAD_SUPPORT
 
+        typedef enum {
+          UI_WAITING_FOR_GAME = 0,
+          UI_RUNNING
+        } UI_State_t;
+        
+        UI_State_t uiState_;
         
         GameMessageHandler msgHandler_;
         const int deviceID = 1;
@@ -328,6 +342,7 @@ namespace Anki {
 
         cozmoCam_ = inputController.getDisplay("uiCamDisplay");
 
+        uiState_ = UI_WAITING_FOR_GAME;
       }
       
       void PrintHelp()
@@ -469,7 +484,7 @@ namespace Anki {
           lastKeyPressTime_ = inputController.getTime();
           
           // DEBUG: Display modifier key information
-          
+          /*
           printf("Key = '%c'", char(key));
           if(modifier_key) {
             printf(", with modifier keys: ");
@@ -485,7 +500,7 @@ namespace Anki {
            
           }
           printf("\n");
-          
+          */
           
           // Use slow motor speeds if SHIFT is pressed
           f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
@@ -1287,42 +1302,78 @@ namespace Anki {
       {
         gameComms_.Update();
         
-        if (!gameComms_.HasClient()) {
-          return;
-        }
-        
-        msgHandler_.ProcessMessages();
-        
-        
-        // Update poseMarker pose
-        const double* trans = gps_->getValues();
-        const double* northVec = compass_->getValues();
-        
-        // Convert to mm
-        Vec3f transVec;
-        transVec.x() = trans[0] * 1000;
-        transVec.y() = trans[1] * 1000;
-        transVec.z() = trans[2] * 1000;
-        
-        // Compute orientation from north vector
-        f32 angle = atan2f(-northVec[1], northVec[0]);
-        
-        poseMarkerPose_.SetTranslation(transVec);
-        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
-        
-        
-        // Update pose marker if different from last time
-        if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
-          if (poseMarkerMode_ != 0) {
-            // Place object mode
-            SendDrawPoseMarker(poseMarkerPose_);
+        switch(uiState_) {
+          case UI_WAITING_FOR_GAME:
+          {
+            if (!gameComms_.HasClient()) {
+              return;
+            } else {
+              // Once gameComms has a client, tell the engine to start, force-add
+              // robot if necessary, and switch states in the UI
+              
+              PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.\n");
+              MessageU2G_StartEngine msg;
+              msg.asHost = 1; // TODO: Support running as client?
+              std::string vizIpStr = "127.0.0.1";
+              std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
+              std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
+              msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here
+
+              if(FORCE_ADD_ROBOT) {
+                MessageU2G_ForceAddRobot msg;
+                msg.isSimulated = FORCED_ROBOT_IS_SIM;
+                msg.robotID = forcedRobotId;
+                
+                std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
+                
+                msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here
+              }
+              
+              uiState_ = UI_RUNNING;
+            }
+            break;
           }
-        }
         
-        ProcessKeystroke();
-        ProcessJoystick();
+          case UI_RUNNING:
+          {
+            msgHandler_.ProcessMessages();
+            
+            // Update poseMarker pose
+            const double* trans = gps_->getValues();
+            const double* northVec = compass_->getValues();
+            
+            // Convert to mm
+            Vec3f transVec;
+            transVec.x() = trans[0] * 1000;
+            transVec.y() = trans[1] * 1000;
+            transVec.z() = trans[2] * 1000;
+            
+            // Compute orientation from north vector
+            f32 angle = atan2f(-northVec[1], northVec[0]);
+            
+            poseMarkerPose_.SetTranslation(transVec);
+            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+            
+            // Update pose marker if different from last time
+            if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
+              if (poseMarkerMode_ != 0) {
+                // Place object mode
+                SendDrawPoseMarker(poseMarkerPose_);
+              }
+            }
+            
+            ProcessKeystroke();
+            ProcessJoystick();
+            
+            prevPoseMarkerPose_ = poseMarkerPose_;
+            break;
+          }
+            
+          default:
+            PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.\n");
+            
+        } // switch(uiState_)
         
-        prevPoseMarkerPose_ = poseMarkerPose_;
       }
       
       void SendMessage(const UiMessage& msg)
