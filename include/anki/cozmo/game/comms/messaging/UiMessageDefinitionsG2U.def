@@ -1,8 +1,11 @@
-#if !defined(COZMO_BASESTATION)
-#error COZMO_BASESTATION should be defined when using MessageDefinitionsG2U.h
+#if defined(COZMO_CSHARP)
+#include "anki/cozmo/game/comms/messaging/MessageDefMacros_CSharp.h"
+#elif defined(COZMO_BASESTATION)
+#include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
+#else
+#error COZMO_BASESTATION or COZMO_CSHARP should be defined when using MessageDefinitionsG2U.h
 #endif
 
-#include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
@@ -49,6 +52,22 @@ ADD_MESSAGE_MEMBER(u32, robotID)
 ADD_MESSAGE_MEMBER_ARRAY(u8, image, 640*480)
 END_MESSAGE_DEFINITION(G2U_RobotImage_640x480)
 */
+
+// ImageChunk
+#define G2U_IMAGE_CHUNK_SIZE 1024
+START_MESSAGE_DEFINITION(G2U_ImageChunk, 1)
+ADD_MESSAGE_MEMBER(u32, imageId)
+ADD_MESSAGE_MEMBER(u32, frameTimeStamp)
+ADD_MESSAGE_MEMBER(u16, nrows)
+ADD_MESSAGE_MEMBER(u16, ncols)
+ADD_MESSAGE_MEMBER(u16, chunkSize)
+ADD_MESSAGE_MEMBER(u8, imageEncoding)
+ADD_MESSAGE_MEMBER(u8, imageChunkCount)
+ADD_MESSAGE_MEMBER(u8, chunkId)
+ADD_MESSAGE_MEMBER_ARRAY(u8, data, G2U_IMAGE_CHUNK_SIZE)
+END_MESSAGE_DEFINITION(G2U_ImageChunk)
+
+
 // ObjectVisionMarker for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
 START_MESSAGE_DEFINITION(G2U_RobotObservedObject, 1)
@@ -61,15 +80,15 @@ ADD_MESSAGE_MEMBER(u16, height)
 END_MESSAGE_DEFINITION(G2U_RobotObservedObject)
 
 START_MESSAGE_DEFINITION(G2U_DeviceDetectedVisionMarker, 1)
-ADD_MESSAGE_MEMBER(uint32_t, markerType)
-ADD_MESSAGE_MEMBER(float, x_upperLeft)
-ADD_MESSAGE_MEMBER(float, y_upperLeft)
-ADD_MESSAGE_MEMBER(float, x_lowerLeft)
-ADD_MESSAGE_MEMBER(float, y_lowerLeft)
-ADD_MESSAGE_MEMBER(float, x_upperRight)
-ADD_MESSAGE_MEMBER(float, y_upperRight)
-ADD_MESSAGE_MEMBER(float, x_lowerRight)
-ADD_MESSAGE_MEMBER(float, y_lowerRight)
+ADD_MESSAGE_MEMBER(u32, markerType)
+ADD_MESSAGE_MEMBER(f32, x_upperLeft)
+ADD_MESSAGE_MEMBER(f32, y_upperLeft)
+ADD_MESSAGE_MEMBER(f32, x_lowerLeft)
+ADD_MESSAGE_MEMBER(f32, y_lowerLeft)
+ADD_MESSAGE_MEMBER(f32, x_upperRight)
+ADD_MESSAGE_MEMBER(f32, y_upperRight)
+ADD_MESSAGE_MEMBER(f32, x_lowerRight)
+ADD_MESSAGE_MEMBER(f32, y_lowerRight)
 END_MESSAGE_DEFINITION(G2U_DeviceDetectedVisionMarker)
 
 

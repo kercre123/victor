@@ -7,8 +7,8 @@ using System.Collections.Generic;
 /// The type of protocol to communicate over.
 /// </summary>
 public enum ChannelProtocol {
-	Udp = 0,
-	Tcp,
+	Tcp = 0,
+	Udp,
 }
 
 /// <summary>
@@ -37,6 +37,8 @@ public abstract class ChannelBase {
 	/// True if the connection is established. Only valid from the main Unity thread.
 	/// </summary>
 	public bool IsConnected { get; protected set; }
+
+	public abstract bool HasPendingSends { get; }
 
 	/// <summary>
 	/// Occurs when the client is connected and ready to send to.

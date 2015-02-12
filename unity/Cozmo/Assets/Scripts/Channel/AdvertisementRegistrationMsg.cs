@@ -9,6 +9,7 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 	public byte id;
 	public byte protocol;
 	public byte enableAdvertisement;
+	public byte oneShot;
 
 	public override int ID {
 		get {
@@ -16,22 +17,38 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 		}
 	}
 
-	public override void Serialize(byte[] buffer, ref int index)
+	public override int SerializationLength
 	{
-		SerializerUtility.Serialize (buffer, ref index, this.port);
-		SerializerUtility.Serialize (buffer, ref index, this.ip);
-		SerializerUtility.Serialize (buffer, ref index, this.id);
-		SerializerUtility.Serialize (buffer, ref index, this.protocol);
-		SerializerUtility.Serialize (buffer, ref index, this.enableAdvertisement);
+		get {
+			return
+				ByteSerializer.GetSerializationLength(this.port) +
+				ByteSerializer.GetSerializationLength(this.ip) +
+				ByteSerializer.GetSerializationLength(this.id) +
+				ByteSerializer.GetSerializationLength(this.protocol) +
+				ByteSerializer.GetSerializationLength(this.enableAdvertisement) +
+				ByteSerializer.GetSerializationLength(this.oneShot) +
+				0;
+		}
 	}
 
-	public override void Deserialize(byte[] buffer, ref int index)
+	public override void Serialize(ByteSerializer serializer)
 	{
-		SerializerUtility.Deserialize (buffer, ref index, out this.port);
-		SerializerUtility.Deserialize (buffer, ref index, this.ip);
-		SerializerUtility.Deserialize (buffer, ref index, out this.id);
-		SerializerUtility.Deserialize (buffer, ref index, out this.protocol);
-		SerializerUtility.Deserialize (buffer, ref index, out this.enableAdvertisement);
+		serializer.Serialize (this.port);
+		serializer.Serialize (this.ip);
+		serializer.Serialize (this.id);
+		serializer.Serialize (this.protocol);
+		serializer.Serialize (this.enableAdvertisement);
+		serializer.Serialize (this.oneShot);
+	}
+
+	public override void Deserialize(ByteSerializer serializer)
+	{
+		serializer.Deserialize (out this.port);
+		serializer.Deserialize (this.ip);
+		serializer.Deserialize (out this.id);
+		serializer.Deserialize (out this.protocol);
+		serializer.Deserialize (out this.enableAdvertisement);
+		serializer.Deserialize (out this.oneShot);
 	}
 }
 

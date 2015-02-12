@@ -1,32 +1,44 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
 public class Intro : MonoBehaviour {
-	[SerializeField] protected InputField id;
+	[SerializeField] protected InputField engineIP;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
-	[SerializeField] protected Toggle[] schemeToggles;
-	[SerializeField] protected Toggle[] orientationToggles;
 	[SerializeField] protected Toggle simulated;
-	[SerializeField] protected Button play;
+	[SerializeField] protected Text orientationLabel;
 	[SerializeField] protected Text error;
 
-	private bool connecting = false;
-	private float hackWait = 0.0f;
+	private string currentRobotIP;
+	private string currentScene;
+	private string currentVizHostIP;
 
-	private string[] scenes = { "ThumbStick", "ScreenPad", "TwoSliders" };
-	private ScreenOrientation[] orientations = { ScreenOrientation.Portrait, ScreenOrientation.PortraitUpsideDown, ScreenOrientation.LandscapeLeft, ScreenOrientation.LandscapeRight };
+	private ScreenOrientation[] test_orientations = {
+		ScreenOrientation.Portrait,
+		ScreenOrientation.PortraitUpsideDown,
+		ScreenOrientation.LandscapeLeft,
+		ScreenOrientation.LandscapeRight
+	};
 
-	public static int CurrentRobotID { get; private set; }
+	private int test_orientation_index = 2;
+
+	public const int CurrentRobotID = 1;
+
+	private string lastEngineIp
+	{
+		get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
+
+		set { PlayerPrefs.SetString("LastEngineIP", value); }
+	}
 
 	private string lastIp
 	{
 		get { return PlayerPrefs.GetString("LastIP", "127.0.0.1"); }
-
+		
 		set { PlayerPrefs.SetString("LastIP", value); }
 	}
-
+	
 	private string lastId
 	{
 		get { return PlayerPrefs.GetString("LastID", "1"); }
@@ -48,118 +60,113 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetString("LastVisualizerIp", value); }
 	}
 
-	private int lastSceneIndex
+	private string lastSceneName
 	{
 		get { 
-			int index = PlayerPrefs.GetInt("LastSceneIndex", 0);
-			index = Mathf.Clamp(index, 0, scenes.Length-1);
-			return index; }
+			string sceneName = PlayerPrefs.GetString("LastSceneName", "ThumbStick");
+			return sceneName;
+		}
 		
-		set { PlayerPrefs.SetInt("LastSceneIndex", value); }
+		set { PlayerPrefs.SetString("LastSceneName", value); }
 	}
 
-	protected void Awake() {
+	protected void OnEnable() {
+		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
-		id.text = lastId;
 		simulated.isOn = lastSimulated;
-
 		visualizerIP.text = lastVisualizerIp;
+		//force portrait in shell to ensure working on phones
+		Screen.orientation = ScreenOrientation.Portrait;
+		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
+	}
 
-		//initialize scheme choices
-		for(int i=0;i<schemeToggles.Length;i++) {
-			schemeToggles[i].isOn = i == lastSceneIndex;
-		}
+	public void PlayScheme(string choice) {
+		lastSceneName = choice;
+		Play();
+	}
 
-		//initialize orientation choices
-		ScreenOrientation orientation = Screen.orientation;
-		if(orientation == ScreenOrientation.AutoRotation || orientation == ScreenOrientation.Unknown) {
-			orientation = ScreenOrientation.LandscapeLeft;
-			if(!Application.isEditor) Screen.orientation = orientation;
-		}
-
-		for(int i=0;i<orientationToggles.Length;i++) {
-			orientationToggles[i].isOn = orientation == orientations[i];
+	protected void Start()
+	{
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient += Connected;
+			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
+			RobotEngineManager.instance.RobotConnected += RobotConnected;
 		}
 	}
 
-	public void ChooseScheme(int choice) {
-		lastSceneIndex = choice;
-		Debug.Log("ChooseScheme("+choice+")");
-	}
-
-	public void ChooseOrientation(int choice) {
-		if(Application.isEditor)
-			return;
-		choice = Mathf.Clamp(choice, 0, orientations.Length - 1);
-		ScreenOrientation orientation = (ScreenOrientation)choice;
-		Screen.orientation = orientation;
-	}
-
-	protected void Update() {
-		if(connecting && Time.time > hackWait) {
-			if(RobotEngineManager.instance.IsRobotConnected(CurrentRobotID)) {
-				connecting = false;
-				error.text = "";
-				Application.LoadLevel(scenes[lastSceneIndex]);
-			}
+	protected void OnDestroy() {
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient -= Connected;
+			RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
+			RobotEngineManager.instance.RobotConnected -= RobotConnected;
 		}
 	}
 
 	public void Play() {
-		CurrentRobotID = 0;
+		RobotEngineManager.instance.Disconnect ();
 
 		string errorText = null;
-		int idInteger;
-		if(!int.TryParse(id.text, out idInteger) || idInteger == 0) {
-			errorText = "You must enter a nonzero id.";
+
+		if(string.IsNullOrEmpty(engineIP.text)) {
+			errorText = "You must enter a device ip address.";
 		}
 		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ip.text)) {
 			errorText = "You must enter a robot ip address.";
 		}
 
-		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(visualizerIP.text)) {
-			errorText = "You must enter a visualizer ip address.";
+		if (string.IsNullOrEmpty (errorText)) {
+			currentRobotIP = ip.text;
+			currentScene = lastSceneName;
+			currentVizHostIP = visualizerIP.text;
+
+			SaveData ();
+			RobotEngineManager.instance.Connect (engineIP.text);
+			error.text = "<color=#ffffff>Connecting to engine at " + ip.text + "....</color>";
+		} else {
+			error.text = errorText;
 		}
-
-		if(string.IsNullOrEmpty(errorText)) {
-
-			bool hostCreated = RobotEngineManager.instance.CreateHostWithVisIP(visualizerIP.text);
-
-			if(hostCreated) {
-				CozmoResult result = RobotEngineManager.instance.ForceAddRobot(idInteger, ip.text, simulated.isOn);
-				if(result != CozmoResult.OK) {
-					errorText = "Error attempting to add robot: " + result.ToString();
-				}
-				else {
-					connecting = true;
-					SaveData();
-					CurrentRobotID = idInteger;
-					hackWait = Time.time + 5.0f;
-					errorText = "Connecting...";
-				}
-			}
-		}
-
-		error.text = errorText;
 	}
 
 	protected void SaveData() {
 		lastIp = ip.text;
-		lastId = id.text;
+		lastId = engineIP.text;
 		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
-
-		for(int i=0;i<schemeToggles.Length;i++) {
-			if(!schemeToggles[i].isOn) continue;
-			lastSceneIndex = i;
-			break;
-		}
-
 	}
 
 	public void FakeTest() {
 		SaveData();
-		Application.LoadLevel(scenes[lastSceneIndex]);
+		Application.LoadLevel(lastSceneName);
 	}
 
+	private void Connected(string connectionIdentifier)
+	{
+		error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+		RobotEngineManager.instance.StartEngine (currentVizHostIP);
+		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, currentRobotIP, simulated.isOn);
+	}
+
+	private void Disconnected(DisconnectionReason reason)
+	{
+		error.text = "Disconnected: " + reason.ToString ();
+	}
+
+	private void RobotConnected(int robotID)
+	{
+		if (CurrentRobotID != robotID) {
+			Debug.LogError ("Unknown robot connected: " + robotID.ToString());
+			return;
+		}
+
+		error.text = "";
+		if(!Application.isEditor) Screen.orientation = test_orientations[test_orientation_index];
+		Application.LoadLevel(currentScene);
+	}
+
+	public void ChangeOrientation()
+	{
+		test_orientation_index++;
+		if(test_orientation_index >= test_orientations.Length) test_orientation_index = 0;
+		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
+	}
 }

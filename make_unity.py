@@ -29,9 +29,9 @@ os.chdir(dstRoot)
 
 os.system("cmake -GXcode -DCMAKE_BUILD_TYPE=" + config + " -DANKI_IOS_BUILD=1 " + scriptdir)
 
-command = "xcodebuild -project CozmoGame_iOS.xcodeproj/ -jobs 8 -sdk iphoneos -configuration " + config + " -target ALL_BUILD clean"
-print command
-os.system(command)
+#command = "xcodebuild -project CozmoGame_iOS.xcodeproj/ -jobs 8 -sdk iphoneos -configuration " + config + " -target ALL_BUILD clean"
+#print command
+#os.system(command)
 
 print "Building all the libraries for each architecture"
 
@@ -67,11 +67,18 @@ archs   = ["armv7",    "arm64",    "i386",            "x86_64"         ]
 
 
 inputLibsList = []
+gameLibsList = []
 for iArch in range(len(archs)):
-    inputLibsList.append(dstRoot + "/unity/CSharpBinding/CozmoGame_iOS.build/" + config + "-" + targets[iArch].lower() +
-                         "/CSharpBinding.build/Objects-normal/" + archs[iArch] + "/libCSharpBinding.a")
+  inputLibsList.append(dstRoot + "/unity/CSharpBinding/CozmoGame_iOS.build/" + config + "-" + targets[iArch].lower() +
+                       "/CSharpBinding.build/Objects-normal/" + archs[iArch] + "/libCSharpBinding.a")
+  gameLibsList.append(dstRoot + "/src/CozmoGame_iOS.build/" + config + "-" + targets[iArch].lower() +
+                       "/Cozmo_Game.build/Objects-normal/" + archs[iArch] + "/libCozmo_Game.a")
 
 command = "lipo -create " + " ".join(inputLibsList) + " -o " + multiArchDir + "/libCSharpBinding.a"
+print(command)
+os.system(command)
+
+command = "lipo -create " + " ".join(gameLibsList) + " -o " + multiArchDir + "/libCozmo_Game.a"
 print(command)
 os.system(command)
 
@@ -81,6 +88,7 @@ except:
     pass
 
 shutil.copy(multiArchDir + "/libCSharpBinding.a", unityLoc)
+shutil.copy(multiArchDir + "/libCozmo_Game.a", unityLoc)
 
 os.chdir(scriptdir)
 

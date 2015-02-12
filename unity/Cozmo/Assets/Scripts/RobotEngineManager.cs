@@ -1,78 +1,67 @@
-﻿using UnityEngine;
+
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
 public class RobotEngineManager : MonoBehaviour {
-
+	
 	public static RobotEngineManager instance = null;
-
+	
 	[SerializeField]
 	private TextAsset configuration;
 
+	public event Action<string> ConnectedToClient;
+	public event Action<DisconnectionReason> DisconnectedFromClient;
+	public event Action<int> RobotConnected;
+
+	private ChannelBase channel;
+
+	private const int UIDeviceID = 1;
+	private const int UIAdvertisingRegistrationPort = 5103;
+	private const int UILocalPort = 5106;
+
+#if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
-
-	public bool IsHostInitialized {
-		get {
-			return engineHostInitialized;
-		}
-	}
-
-#if UNITY_IOS && !UNITY_EDITOR
+	
 	private StringBuilder logBuilder = null;
-#endif
 
-	void Awake() {
-		if (instance != null) {
-			Destroy (gameObject);
-		} else {
-			instance = this;
-			DontDestroyOnLoad (gameObject);
-		}
-	}
-
-	public bool CreateHostWithVisIP(string visIP)
+	public void Start()
 	{
-
-#if UNITY_IOS && !UNITY_EDITOR
-//		if (engineHostInitialized) {
-//			Debug.LogError("Error initializing cozmo host: Host already started.");
-//			return true;
-//		}
-
+		if (engineHostInitialized) {
+			Debug.LogError("Error initializing cozmo host: Host already started.");
+			return;
+		}
+		
 		if (configuration == null) {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
-			return false;
+			return;
 		}
-		Debug.Log("cozmo_engine_host_create("+visIP+")");
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_create (configuration.text, visIP);
+
+		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_create (configuration.text);
 
 		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_engine_host_create error: " + result.ToString());
+			Debug.LogError("cozmo_engine_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
-#endif
-
-		return engineHostInitialized;
 	}
-
-#if UNITY_IOS && !UNITY_EDITOR
 
 	void OnDestroy()
 	{
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
 			
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_destroy();
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
 			if (result != CozmoResult.OK) {
-				Debug.LogError("cozmo_engine_host_destroy error: " + result.ToString());
+				Debug.LogError("cozmo_engine_destroy error: " + result.ToString());
 			}
 		}
 	}
-	
-	void Update()
+
+	// should be update; but this makes it easier to split up
+	void LateUpdate()
 	{
 		if (logBuilder == null) {
 			logBuilder = new StringBuilder (1024);
@@ -89,7 +78,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_update (Time.realtimeSinceStartup);
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
 			if (result != CozmoResult.OK) {
 				Debug.LogError ("cozmo_engine_update error: " + result.ToString ());
 			}
@@ -97,73 +86,242 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 #endif
 
+	void Awake() {
+		if (instance != null) {
+			Destroy (gameObject);
+		} else {
+			instance = this;
+			DontDestroyOnLoad (gameObject);
+		}
+
+		Application.runInBackground = true;
+	}
+
+	void OnEnable()
+	{
+		channel = new UdpChannel ();
+		channel.ConnectedToClient += Connected;
+		channel.DisconnectedFromClient += Disconnected;
+		channel.MessageReceived += ReceivedMessage;
+	}
+
+	void OnDisable()
+	{
+		if (channel != null) {
+			channel.Disconnect ();
+			channel = null;
+		}
+	}
+	
+	void Update()
+	{
+		if (channel != null) {
+			channel.Update ();
+		}
+	}
+
+	public void Connect(string engineIP)
+	{
+		channel.Connect (UIDeviceID, UILocalPort, engineIP, UIAdvertisingRegistrationPort);
+	}
+
+	public void Disconnect()
+	{
+		if (channel != null && channel.IsActive) {
+#if UNITY_EDITOR
+			if (channel.IsConnected) {
+				Debug.Log ("Sending disconnect.");
+				U2G_DisconnectFromUiDevice message = new U2G_DisconnectFromUiDevice();
+				message.deviceID = UIDeviceID;
+				channel.Send (message);
+
+				float limit = Time.realtimeSinceStartup + 2.0f;
+				while (channel.HasPendingSends) {
+					if (limit < Time.realtimeSinceStartup) {
+						Debug.LogWarning("Not waiting for disconnect to finish sending.");
+						break;
+					}
+					System.Threading.Thread.Sleep (500);
+				}
+			}
+#endif
+
+			channel.Disconnect ();
+		}
+	}
+
+	private void Connected(string connectionIdentifier)
+	{
+		if (ConnectedToClient != null) {
+			ConnectedToClient(connectionIdentifier);
+		}
+	}
+
+	private void Disconnected(DisconnectionReason reason)
+	{
+		if (DisconnectedFromClient != null) {
+			DisconnectedFromClient(reason);
+		}
+	}
+	
+	private void ReceivedMessage(NetworkMessage message)
+	{
+		switch (message.ID) {
+		case (int)NetworkMessageID.G2U_RobotAvailable:
+			ReceivedSpecificMessage((G2U_RobotAvailable)message);
+			break;
+		case (int)NetworkMessageID.G2U_UiDeviceAvailable:
+			ReceivedSpecificMessage((G2U_UiDeviceAvailable)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotConnected:
+			ReceivedSpecificMessage((G2U_RobotConnected)message);
+			break;
+		case (int)NetworkMessageID.G2U_UiDeviceConnected:
+			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotObservedObject:
+			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
+			break;
+		case (int)NetworkMessageID.G2U_DeviceDetectedVisionMarker:
+			ReceivedSpecificMessage((G2U_DeviceDetectedVisionMarker)message);
+			break;
+		case (int)NetworkMessageID.G2U_PlaySound:
+			ReceivedSpecificMessage((G2U_PlaySound)message);
+			break;
+		case (int)NetworkMessageID.G2U_StopSound:
+			ReceivedSpecificMessage((G2U_StopSound)message);
+			break;
+		}
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotAvailable message)
+	{
+		U2G_ConnectToRobot response = new U2G_ConnectToRobot();
+		response.robotID = (byte)message.robotID;
+
+		channel.Send (response);
+	}
+	
+	private void ReceivedSpecificMessage(G2U_UiDeviceAvailable message)
+	{
+		U2G_ConnectToUiDevice response = new U2G_ConnectToUiDevice ();
+		response.deviceID = (byte)message.deviceID;
+
+		channel.Send (response);
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotConnected message)
+	{
+		if (RobotConnected != null) {
+			RobotConnected((int)message.robotID);
+		}
+	}
+	
+	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
+	{
+		Debug.Log ("Device connected: " + message.deviceID.ToString());
+	}
+	
+	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_PlaySound message)
+	{
+		
+	}
+	
+	private void ReceivedSpecificMessage(G2U_StopSound message)
+	{
+		
+	}
+
+	public void StartEngine(string vizHostIP)
+	{
+		U2G_StartEngine message = new U2G_StartEngine ();
+		message.asHost = 1;
+		int length = 0;
+		if (!string.IsNullOrEmpty (vizHostIP)) {
+			length = Encoding.UTF8.GetByteCount(vizHostIP);
+			if (length + 1 > message.vizHostIP.Length) {
+				throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + message.vizHostIP.Length + ".)");
+			}
+			Encoding.UTF8.GetBytes (vizHostIP, 0, vizHostIP.Length, message.vizHostIP, 0);
+		}
+		message.vizHostIP [length] = 0;
+
+		channel.Send (message);
+	}
+
 	/// <summary>
 	/// Forcibly adds a new robot.
 	/// </summary>
 	/// <param name="robotId">The robot identifier.</param>
 	/// <param name="robotIP">The ip address the robot is connected to.</param>
 	/// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
-	public CozmoResult ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
+	public void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
 	{
-#if UNITY_IOS && !UNITY_EDITOR
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_force_add_robot (robotID, robotIP, robotIsSimulated);
-		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_engine_host_force_add_robot error: " + result.ToString());
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-		return result;
-#else
-		return CozmoResult.CSHARP_NOT_AVAILABLE;
-#endif
-	}
 
-	public bool IsRobotConnected(int robotID)
-	{
-#if UNITY_IOS && !UNITY_EDITOR
-		Update();
-
-    	bool isConnected;
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_engine_host_is_robot_connected (out isConnected, robotID);
-		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_engine_get_number_of_robots error: " + result.ToString());
-			return false;
+		if (string.IsNullOrEmpty (robotIP)) {
+			throw new ArgumentNullException("robotIP");
 		}
-		return isConnected;
-#else
-		return false;
-#endif
 
+		U2G_ForceAddRobot message = new U2G_ForceAddRobot ();
+		if (Encoding.UTF8.GetByteCount (robotIP) + 1 > message.ipAddress.Length) {
+			throw new ArgumentException("IP address too long.", "robotIP");
+		}
+		int length = Encoding.UTF8.GetBytes (robotIP, 0, robotIP.Length, message.ipAddress, 0);
+		message.ipAddress [length] = 0;
+
+		message.robotID = (byte)robotID;
+		message.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+
+		channel.Send (message);
 	}
-
-    /// <summary>
-    /// Set wheel speed.
-    /// </summary>
-    /// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
+	
+	/// <summary>
+	/// Set wheel speed.
+	/// </summary>
+	/// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
 	/// <param name="right_wheel_speed_mmps">Right wheel speed in millimeters per second.</param>
 	public void DriveWheels(int robotID, float leftWheelSpeedMmps, float rightWheelSpeedMmps)
 	{
-#if UNITY_IOS && !UNITY_EDITOR
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_drive_wheels (robotID, leftWheelSpeedMmps, rightWheelSpeedMmps);
-		if (result != CozmoResult.OK) {
-			Debug.LogError ("cozmo_robot_drive_wheels error: " + result.ToString());
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-#endif
-	}
+		
+		U2G_DriveWheels message = new U2G_DriveWheels ();
+		message.lwheel_speed_mmps = leftWheelSpeedMmps;
+		message.rwheel_speed_mmps = rightWheelSpeedMmps;
 
+		channel.Send (message);
+	}
+	
 	public void StopAllMotors(int robotID)
 	{
-#if UNITY_IOS && !UNITY_EDITOR
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_robot_stop_all_motors (robotID);
-		if (result != CozmoResult.OK) {
-			Debug.LogError ("cozmo_robot_stop_all_motors error: " + result.ToString());
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-#endif
+		
+		U2G_StopAllMotors message = new U2G_StopAllMotors ();
+
+		channel.Send (message);
 	}
 
 	public const float MAX_WHEEL_SPEED 	= 70f;
 	public const float MAX_ANALOG_RADIUS   = 300f;
 	public const float HALF_PI             = Mathf.PI * 0.5f;
 	public const float wheelDistHalfMM 	= 23.85f; //47.7f / 2.0; // distance b/w the front wheels
-
+	
 	public static void CalcWheelSpeedsFromBotRelativeInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
 		
 		leftWheelSpeed = 0f;
@@ -234,5 +392,5 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 	}
-
+	
 }

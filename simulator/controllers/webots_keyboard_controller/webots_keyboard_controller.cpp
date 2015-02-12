@@ -37,6 +37,14 @@
 #define BASESTATION_IP "127.0.0.1"
 #define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
+// For connecting to physical robot
+// TODO: Expose these to UI
+const bool FORCE_ADD_ROBOT = false;
+const bool FORCED_ROBOT_IS_SIM = false;
+const u8 forcedRobotId = 1;
+//const std::string forcedRobotIP = "192.168.3.34";   // cozmo2
+const std::string forcedRobotIP = "172.31.1.1";     // cozmo3
+
 namespace Anki {
   namespace Cozmo {
     
@@ -134,12 +142,27 @@ namespace Anki {
         const f32 MAX_ANALOG_RADIUS = 300;
         #endif // ENABLE_GAMEPAD_SUPPORT
 
+        typedef enum {
+          UI_WAITING_FOR_GAME = 0,
+          UI_RUNNING
+        } UI_State_t;
+        
+        UI_State_t uiState_;
         
         GameMessageHandler msgHandler_;
         const int deviceID = 1;
         GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
                              UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP,
                              UI_ADVERTISEMENT_REGISTRATION_PORT);
+        
+        
+        // For displaying cozmo's POV:
+        webots::Display* cozmoCam_;
+        webots::ImageRef* img_ = nullptr;
+        u32 imgID_ = 0;
+        u8 imgData_[3*640*480];
+        u32 imgBytes_ = 0;
+        u32 imgWidth_, imgHeight_ = 0;
         
       } // private namespace
       
@@ -154,7 +177,8 @@ namespace Anki {
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
       void SendStopAllMotors();
-      void SendImageRequest(u8 mode, u8 resolution);
+      void SendImageRequest(u8 mode, u8 robotID);
+      void SendSetRobotImageSendMode(u8 mode, u8 resolution);
       void SendSaveImages(bool on);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
@@ -192,8 +216,16 @@ namespace Anki {
       
       void ProcessMessageObjectVisionMarker(MessageG2U_RobotObservedObject const& msg)
       {
-        // TODO: Do something with this message to notify UI
-        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
+        if(cozmoCam_ == nullptr) {
+          printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
+        } else {
+          // Draw a rectangle in red with the object ID as text in the center
+          cozmoCam_->setColor(0xff0000);          
+          cozmoCam_->drawRectangle(msg.topLeft_x, msg.topLeft_y, msg.width, msg.height);
+          cozmoCam_->drawText(std::to_string(msg.objectID),
+                              msg.topLeft_x + msg.width/2,
+                              msg.topLeft_y + msg.height/2);
+        }
       }
 
       void HandleRobotConnection(const MessageG2U_RobotAvailable& msgIn)
@@ -216,6 +248,58 @@ namespace Anki {
         SendMessage(msgOut);
       }
       
+      // For processing image chunks arriving from robot.
+      // Sends complete images to VizManager for visualization (and possible saving).
+      void HandleImageChunk(MessageG2U_ImageChunk const& msg)
+      {
+        // If this is a new image, then reset everything
+        if (msg.imageId != imgID_) {
+          //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
+          imgID_     = msg.imageId;
+          imgBytes_  = 0;
+          imgWidth_  = msg.ncols;
+          imgHeight_ = msg.nrows;
+        }
+        
+        // Copy chunk into the appropriate location in the imgData array.
+        // Use green channel for no good reason
+        //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
+        u8* chunkStart = imgData_ + 3 * msg.chunkId * G2U_IMAGE_CHUNK_SIZE;
+        for(int i=0; i<msg.chunkSize; ++i) {
+          //chunkStart[3*i] = msg.data[i];
+          chunkStart[3*i+1] = msg.data[i];
+          chunkStart[3*i+2] = msg.data[i]/3;
+          
+          // [Optional] Add a bit of noise
+          f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
+          chunkStart[3*i+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(chunkStart[3*i+1]) + noise)));
+        }
+        
+        // Do we have all the data for this image?
+        imgBytes_ += msg.chunkSize;
+        if (imgBytes_ < imgWidth_ * imgHeight_) {
+          return;
+        }
+        
+        // [Optional] Remove every other line for interlacing effect
+        for(int i=0; i<msg.nrows; i+=2) {
+          memset(imgData_ + i*3*msg.ncols, 0, 3*msg.ncols*sizeof(u8));
+        }
+        
+        // TODO: Handle compressed image data?
+        
+        // Delete existing image if there is one.
+        if (img_ != nullptr) {
+          cozmoCam_->imageDelete(img_);
+        }
+        
+        //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+        
+        img_ = cozmoCam_->imageNew(imgWidth_, imgHeight_, imgData_, webots::Display::RGB);
+        cozmoCam_->imagePaste(img_, 0, 0);
+
+      } // HandleImageChunk()
+      
       // ===== End of message handler callbacks ====
       
       
@@ -235,6 +319,7 @@ namespace Anki {
         msgHandler_.RegisterCallbackForMessageG2U_RobotObservedObject(ProcessMessageObjectVisionMarker);
         msgHandler_.RegisterCallbackForMessageG2U_UiDeviceAvailable(HandleUiDeviceConnection);
         msgHandler_.RegisterCallbackForMessageG2U_RobotAvailable(HandleRobotConnection);
+        msgHandler_.RegisterCallbackForMessageG2U_ImageChunk(HandleImageChunk);
         
         inputController.keyboardEnable(BS_TIME_STEP);
         
@@ -263,7 +348,9 @@ namespace Anki {
         }
         #endif
 
+        cozmoCam_ = inputController.getDisplay("uiCamDisplay");
 
+        uiState_ = UI_WAITING_FOR_GAME;
       }
       
       void PrintHelp()
@@ -276,8 +363,10 @@ namespace Anki {
         printf("             Lift low/high/carry:  1/2/3\n");
         printf("            Head down/forward/up:  4/5/6\n");
         printf("                Toggle headlight:  h\n");
-        printf("                   Request image:  i\n");
-        printf("             Toggle image stream:  Shift+i\n");
+        printf("            Request *game* image:  i\n");
+        printf("           Request *robot* image:  Alt+i\n");
+        printf("      Toggle *game* image stream:  Shift+i\n");
+        printf("     Toggle *robot* image stream:  Alt+Shift+i\n");
         printf("              Toggle save images:  e\n");
         printf("        Toggle VizObject display:  d\n");
         printf("Goto/place object at pose marker:  g\n");
@@ -316,7 +405,8 @@ namespace Anki {
         const s32 CKEY_HEAD_UP     = (s32)'S';
         const s32 CKEY_HEAD_DOWN   = (s32)'X';
         const s32 CKEY_UNLOCK      = (s32)' ';
-        const s32 CKEY_REQUEST_IMG = (s32)'I';
+        const s32 CKEY_REQUEST_IMG = (s32)'U';
+        const s32 CKEY_SET_ROBOT_SEND_IMAGE_MODE = (s32)'I';
         const s32 CKEY_DISPLAY_TOGGLE = (s32)'D';
         const s32 CKEY_HEADLIGHT   = (s32)'H';
         const s32 CKEY_GOTO_POSE   = (s32)'G';
@@ -378,23 +468,20 @@ namespace Anki {
         }
         
         // Get all keys pressed this tic
-        std::set<int> keysPressed_;
-        while(1) {
-          int key = inputController.keyboardGetKey();
-          if (key == 0)
-            break;
-          
-          keysPressed_.insert(key);
+        std::set<int> keysPressed;
+        int key;
+        while((key = inputController.keyboardGetKey()) != 0) {
+          keysPressed.insert(key);
         }
         
         // If exact same keys were pressed last tic, do nothing.
-        if (lastKeysPressed_ == keysPressed_) {
+        if (lastKeysPressed_ == keysPressed) {
           return;
         }
-        lastKeysPressed_ = keysPressed_;
+        lastKeysPressed_ = keysPressed;
         
         
-        for(auto key : keysPressed_)
+        for(auto key : keysPressed)
         {
           // Extract modifier key(s)
           int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
@@ -579,17 +666,25 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_REQUEST_IMG:
+              case CKEY_SET_ROBOT_SEND_IMAGE_MODE:
               {
+                //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
+                // CTRL/CMD+I - Tell physical robot to send a single image
                 ImageSendMode_t mode = ISM_SINGLE_SHOT;
-                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  // CTRL/CMD+SHIFT+I - Toggle physical robot image streaming
                   static bool streamOn = false;
                   if (streamOn) {
                     mode = ISM_OFF;
+                    printf("Turning robot image streaming OFF.\n");
                   } else {
                     mode = ISM_STREAM;
+                    printf("Turning robot image streaming ON.\n");
                   }
                   streamOn = !streamOn;
+                } else {
+                  printf("Requesting single robot image.\n");
                 }
                 
                 Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
@@ -607,7 +702,36 @@ namespace Anki {
                   }
                 }
                 
-                SendImageRequest(mode, localStreamRes);
+                SendSetRobotImageSendMode(mode, localStreamRes);
+                //}
+                break;
+              }
+                
+              case CKEY_REQUEST_IMG:
+              {
+                // TODO: How to choose which robot
+                const RobotID_t robotID = 1;
+                
+                // I - Request a single image from the game for a specified robot
+                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  // SHIFT+I - Toggle image streaming from the game
+                  static bool streamOn = false;
+                  if (streamOn) {
+                    mode = ISM_OFF;
+                    printf("Turning game image streaming OFF.\n");
+                  } else {
+                    mode = ISM_STREAM;
+                    printf("Turning game image streaming ON.\n");
+                  }
+                  streamOn = !streamOn;
+                } else {
+                  printf("Requesting single game image.\n");
+                }
+                
+                SendImageRequest(mode, robotID);
+                
                 break;
               }
                 
@@ -1186,42 +1310,79 @@ namespace Anki {
       {
         gameComms_.Update();
         
-        if (!gameComms_.HasClient()) {
-          return;
-        }
-        
-        msgHandler_.ProcessMessages();
-        
-        
-        // Update poseMarker pose
-        const double* trans = gps_->getValues();
-        const double* northVec = compass_->getValues();
-        
-        // Convert to mm
-        Vec3f transVec;
-        transVec.x() = trans[0] * 1000;
-        transVec.y() = trans[1] * 1000;
-        transVec.z() = trans[2] * 1000;
-        
-        // Compute orientation from north vector
-        f32 angle = atan2f(-northVec[1], northVec[0]);
-        
-        poseMarkerPose_.SetTranslation(transVec);
-        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
-        
-        
-        // Update pose marker if different from last time
-        if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
-          if (poseMarkerMode_ != 0) {
-            // Place object mode
-            SendDrawPoseMarker(poseMarkerPose_);
+        switch(uiState_) {
+          case UI_WAITING_FOR_GAME:
+          {
+            if (!gameComms_.HasClient()) {
+              return;
+            } else {
+              // Once gameComms has a client, tell the engine to start, force-add
+              // robot if necessary, and switch states in the UI
+              
+              PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.\n");
+              MessageU2G_StartEngine msg;
+              msg.asHost = 1; // TODO: Support running as client?
+              std::string vizIpStr = "127.0.0.1";
+              std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
+              std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
+              msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here
+
+              if(FORCE_ADD_ROBOT) {
+                MessageU2G_ForceAddRobot msg;
+                msg.isSimulated = FORCED_ROBOT_IS_SIM;
+                msg.robotID = forcedRobotId;
+                
+                std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+                std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
+                
+                msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here
+              }
+              
+              uiState_ = UI_RUNNING;
+            }
+            break;
           }
-        }
         
-        ProcessKeystroke();
-        ProcessJoystick();
+          case UI_RUNNING:
+          {
+            msgHandler_.ProcessMessages();
+            
+            // Update poseMarker pose
+            const double* trans = gps_->getValues();
+            const double* northVec = compass_->getValues();
+            
+            // Convert to mm
+            Vec3f transVec;
+            transVec.x() = trans[0] * 1000;
+            transVec.y() = trans[1] * 1000;
+            transVec.z() = trans[2] * 1000;
+            
+            // Compute orientation from north vector
+            f32 angle = atan2f(-northVec[1], northVec[0]);
+            
+            poseMarkerPose_.SetTranslation(transVec);
+            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+            
+            // Update pose marker if different from last time
+            if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
+              if (poseMarkerMode_ != 0) {
+                // Place object mode
+                SendDrawPoseMarker(poseMarkerPose_);
+              }
+            }
+            
+            ProcessKeystroke();
+            ProcessJoystick();
+            
+            prevPoseMarkerPose_ = poseMarkerPose_;
+            break;
+          }
+            
+          default:
+            PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.\n");
+            
+        } // switch(uiState_)
         
-        prevPoseMarkerPose_ = poseMarkerPose_;
       }
       
       void SendMessage(const UiMessage& msg)
@@ -1276,9 +1437,17 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendImageRequest(u8 mode, u8 resolution)
+      void SendImageRequest(u8 mode, u8 robotID)
       {
         MessageU2G_ImageRequest m;
+        m.robotID = robotID;
+        m.mode = mode;
+        SendMessage(m);
+      }
+      
+      void SendSetRobotImageSendMode(u8 mode, u8 resolution)
+      {
+        MessageU2G_SetRobotImageSendMode m;
         m.mode = mode;
         m.resolution = resolution;
         SendMessage(m);

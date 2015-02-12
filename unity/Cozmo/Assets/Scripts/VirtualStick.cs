@@ -10,6 +10,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
 
+	[SerializeField] RectTransform deadZoneRect = null;
+
+	[SerializeField] RectTransform capTop = null;
+	[SerializeField] RectTransform capBottom = null;
+	[SerializeField] RectTransform capLeft = null;
+	[SerializeField] RectTransform capRight = null;
+
 	[SerializeField] Image stickImageThrown = null;
 	[SerializeField] Image stickImageNeutral = null;
 
@@ -32,17 +39,21 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] bool horizontalOnly = false;
 	[SerializeField] bool verticalOnly = false;
 
+	[SerializeField] bool scaleToScreen = false;
+
 	float radius;
 	//Canvas canvas;
 	RectTransform rTrans;
 	ScreenOrientation orientation;
+	float lastScreenWidth = 0f;
+	float lastScreenHeight = 0f;
 
 	bool pressed = false;
 	float pressedTime = 0f;
 
 	Vector2 touchDownValue = Vector2.zero;
 	Vector2 swipedDirection = Vector2.zero;
-	bool disallowSwipeForThisTouch = false;
+	//bool disallowSwipeForThisTouch = false;
 
 	public bool IsPressed { get { return pressed; } }
 	public float PressedTime { get { return pressedTime; } }
@@ -104,7 +115,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		//canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
 
-		ResizeStickToInches();
+		ResizeToScreen();
 		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
 		bg.gameObject.SetActive(!dynamic);
@@ -123,13 +134,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	void ResizeStickToInches() {
+	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
+
+		if(scaleToScreen) {
+			rTrans.anchoredPosition = Vector2.zero;
+			float length = Mathf.Min(Screen.height, Screen.width);
+			rTrans.sizeDelta = new Vector2(length, length);
+		}
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, Screen.width);
-			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, Screen.height);
+			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width * 0.75f);
+			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height * 0.75f);
 			bg.sizeDelta = size;
 		}
 
@@ -138,22 +155,49 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, Screen.width);
 			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, Screen.height);;
 			stick.sizeDelta = size;
+
+			if(capTop != null) capTop.sizeDelta = size;
+			if(capBottom != null) capBottom.sizeDelta = size;
+			if(capLeft != null) capLeft.sizeDelta = size;
+			if(capRight != null) capRight.sizeDelta = size;
+
+			if(deadZoneRect != null) {
+				deadZoneRect.sizeDelta = size;
+			}
+
 		}
 
 		bg.anchoredPosition = Vector3.zero;
 		stick.anchoredPosition = Vector3.zero;
 
+		float height = bg.rect.height;
+		float width = bg.rect.width;
+
+		if(capTop != null) capTop.anchoredPosition = Vector2.up * height * 0.5f;
+		if(capBottom != null) capBottom.anchoredPosition = -Vector2.up * height * 0.5f;
+		if(capLeft != null) capLeft.anchoredPosition = -Vector2.right * width * 0.5f;
+		if(capRight != null) capRight.anchoredPosition = Vector2.right * width * 0.5f;
+
+		if(deadZoneRect != null) {
+			Vector3 size = deadZoneRect.sizeDelta;
+			if(deadZone.x > 0f && !verticalOnly) size.x = deadZone.x * width;
+			if(deadZone.y > 0f && !horizontalOnly) size.y = deadZone.y * height;
+			deadZoneRect.sizeDelta = size;
+		}
+
 		RefreshRadius();
+
+		lastScreenWidth = Screen.width;
+		lastScreenHeight = Screen.height;
+		orientation = Screen.orientation;
 	}
 
 	void Update() {
-		if(!Application.isPlaying) return;
-
-		if(Screen.orientation != orientation) {
-			bg.anchoredPosition = Vector3.zero;
-			stick.anchoredPosition = Vector3.zero;
-			orientation = Screen.orientation;
+		if(	Screen.orientation != orientation || lastScreenWidth != Screen.width || lastScreenHeight != Screen.height ) {
+			ResizeToScreen();
 		}
+
+		if(!Application.isPlaying) return;
 
 		if(pressed) {
 			pressedTime += Time.deltaTime;
@@ -171,11 +215,11 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		RefreshStickImages();
 	}
 
-	public void RefreshStickImages() {
+	void RefreshStickImages() {
 		if(stickImageThrown == null) return;
 		if(stickImageNeutral == null) return;
 		Vector2 throwVector = JoystickData;
-		bool thrown = throwVector.sqrMagnitude > 0f;
+		bool thrown = Mathf.Abs(throwVector.y) > deadZone.y || Mathf.Abs(throwVector.x) > deadZone.x;
 
 		stickImageThrown.enabled = thrown;
 		stickImageNeutral.enabled = !thrown;
@@ -205,7 +249,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		pressedTime = 0f;
 
 		//if this is first touch after a swipe, prevent swipe input for this touch
-		disallowSwipeForThisTouch = swipedDirection.sqrMagnitude > 0f;
+		//disallowSwipeForThisTouch = swipedDirection.sqrMagnitude > 0f;
 		swipedDirection = Vector2.zero;
 		touchDownValue = JoystickData;
 
@@ -222,7 +266,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		Vector2 throwVector = stick.anchoredPosition - bg.anchoredPosition;
 
-		if(dynamic) bg.anchoredPosition = Vector3.zero;
+		//if(dynamic) bg.anchoredPosition = Vector3.zero;
 
 		if(clearHorizontal) {
 			throwVector.x = 0f;
@@ -245,7 +289,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ConsiderSwipes(Vector2 pos) {
 		Vector3 oldSwipe = swipedDirection;
 		swipedDirection = Vector2.zero;
-		if(disallowSwipeForThisTouch) return;
+		//if(disallowSwipeForThisTouch) return;
 		if(!allowAxisSwipes && !allowPreciseSwipes) return;
 
 		if(pressedTime <= 0f) return;

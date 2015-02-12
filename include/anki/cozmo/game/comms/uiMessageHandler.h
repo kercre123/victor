@@ -42,8 +42,7 @@ namespace Anki {
     public:
       
       // TODO: Change these to interface references so they can be stubbed as well
-      virtual Result Init(Comms::IComms*   comms,
-                          CozmoEngineHost* robotMgr) = 0;
+      virtual Result Init(Comms::IComms*   comms) = 0;
       
       virtual Result ProcessMessages() = 0;
       
@@ -59,8 +58,7 @@ namespace Anki {
       UiMessageHandler(); // Force construction with stuff in Init()?
       
       // Set the message handler's communications manager
-      virtual Result Init(Comms::IComms*    comms,
-                          CozmoEngineHost*  cozmoEngine);
+      virtual Result Init(Comms::IComms* comms) override;
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -69,10 +67,13 @@ namespace Anki {
       // Send a message to a specified ID
       Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
       
+      // Declare registration functions for message handling callbacks
+#define MESSAGE_DEFINITION_MODE MESSAGE_UI_REG_CALLBACK_METHODS_MODE
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
+      
     protected:
       
       Comms::IComms* comms_;
-      CozmoEngineHost* cozmoEngine_;
       
       bool isInitialized_;
       
@@ -81,26 +82,26 @@ namespace Anki {
       Result ProcessPacket(const Comms::MsgPacket& packet);
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
+#define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
       
       // Fill in the message information lookup table for getting size and
       // ProcesBufferAs_MessageX function pointers according to enumerated
       // message ID.
       struct {
         u8 priority;
-        u8 size;
-        Result (UiMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
+        u16 size;
+        Result (UiMessageHandler::*ProcessPacketAs)(const u8*);
       } lookupTable_[NUM_UI_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #define MESSAGE_HANDLER_CLASSNAME UiMessageHandler
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
 #undef MESSAGE_HANDLER_CLASSNAME
         
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.h"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
         {0, 0, 0} // Final dummy entry without comma at end
       };
       
@@ -112,8 +113,7 @@ namespace Anki {
     public:
       UiMessageHandlerStub() { }
       
-      Result Init(Comms::IComms*    comms,
-                  CozmoEngineHost*  cozmoEngine)
+      virtual Result Init(Comms::IComms* comms) override
       {
         return RESULT_OK;
       }
