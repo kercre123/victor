@@ -101,6 +101,15 @@ namespace Anki
       void ClearObjectsByType(const ObjectType type);
       bool ClearObject(const ObjectID withID); // Returns true if object with ID is found and cleared, false otherwise.
       
+      // Clear an object when you have a direct iterator pointing to it. Returns
+      // the iterator to the next object in the container.
+      ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objIter,
+                                              const ObjectFamily& fromFamily);
+      
+      // Clear an object when you have just the pointer and its family
+      void ClearObject(Vision::ObservableObject* object, const ObjectFamily& fromFamily);
+      
+      
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
@@ -233,6 +242,8 @@ namespace Anki
 
       void ClearObjectHelper(Vision::ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
+      
+
       
       //
       // Member Variables
