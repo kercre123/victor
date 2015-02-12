@@ -29,9 +29,9 @@ os.chdir(dstRoot)
 
 os.system("cmake -GXcode -DCMAKE_BUILD_TYPE=" + config + " -DANKI_IOS_BUILD=1 " + scriptdir)
 
-command = "xcodebuild -project CozmoGame_iOS.xcodeproj/ -jobs 8 -sdk iphoneos -configuration " + config + " -target ALL_BUILD clean"
-print command
-os.system(command)
+#command = "xcodebuild -project CozmoGame_iOS.xcodeproj/ -jobs 8 -sdk iphoneos -configuration " + config + " -target ALL_BUILD clean"
+#print command
+#os.system(command)
 
 print "Building all the libraries for each architecture"
 
