@@ -55,7 +55,10 @@ namespace Cozmo {
   
   CozmoGameImpl::~CozmoGameImpl()
   {
-    delete _cozmoEngine;
+    if(_cozmoEngine != nullptr) {
+      delete _cozmoEngine;
+      _cozmoEngine = nullptr;
+    }
     
     SoundManager::removeInstance();
   }
@@ -67,6 +70,18 @@ namespace Cozmo {
   
   Result CozmoGameImpl::Init(const Json::Value& config)
   {
+    if(_isEngineStarted) {
+      // We've already initialzed and started running before, so shut down the
+      // already-running engine.
+      PRINT_NAMED_INFO("CozmoGameImpl.Init",
+                       "Re-initializing, so destroying existing cozmo engine and "
+                       "waiting for another StartEngine command.\n");
+      
+      delete _cozmoEngine;
+      _cozmoEngine = nullptr;
+      _isEngineStarted = false;
+    }
+    
     if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
        !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
       
