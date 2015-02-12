@@ -14,42 +14,23 @@ public abstract class NetworkMessage {
 	public abstract int ID { get; }
 
 	/// <summary>
+	/// The number of bytes used when serializing. (For debugging purposes.)
+	/// </summary>
+	public abstract int SerializationLength { get; }
+
+	/// <summary>
 	/// Serializes the message in the given buffer, starting at and updating the given index.
 	/// </summary>
 	/// <param name="buffer">The buffer to serialize to.</param>
 	/// <param name="index">The index specifying where to serialize to, updated to past the ending index.</param>
-	public abstract void Serialize (byte[] buffer, ref int index);
+	public abstract void Serialize (ByteSerializer serializer);
 
 	/// <summary>
 	/// Deserializes a message of the current type from the given buffer, starting at and updating the given index.
 	/// </summary>
 	/// <param name="buffer">The buffer to deserialize from.</param>
 	/// <param name="index">The index specifying where to deserialize from, updated to past the ending index..</param>
-	public abstract void Deserialize (byte[] buffer, ref int index);
-
-	public bool TrySerialize(byte[] buffer, ref int index)
-	{
-		try {
-			Serialize(buffer, ref index);
-			return true;
-		}
-		catch (IndexOutOfRangeException)
-		{
-			return false;
-		}
-	}
-
-	public bool TryDeserialize(byte[] buffer, ref int index)
-	{
-		try {
-			Serialize(buffer, ref index);
-			return true;
-		}
-		catch (IndexOutOfRangeException)
-		{
-			return false;
-		}
-	}
+	public abstract void Deserialize (ByteSerializer serializer);
 
 	public override string ToString ()
 	{

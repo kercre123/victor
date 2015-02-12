@@ -12,10 +12,11 @@ public enum CozmoResult {
 	OK = 0,
 	
 	// BindingResult
+	BINDING_OK = 0,
 	BINDING_ERROR_NOT_INITIALIZED = 0x8001,
 	BINDING_ERROR_ALREADY_INITIALIZED = 0x8002,
 	BINDING_ERROR_INVALID_CONFIGURATION = 0x8003,
-	BINDING_ERROR_ROBOT_NOT_FOUND = 0x8004,
+	BINDING_ERROR_FAILED_INITIALIZATION = 0x8005,
 	
 	// Anki::Result
 	RESULT_FAIL                      = 0x00000001,
@@ -35,7 +36,6 @@ public enum CozmoResult {
 
 public static class CozmoBinding {
 
-#if UNITY_IOS && !UNITY_EDITOR
 	[DllImport ("__Internal")]
 	public static extern bool cozmo_has_log(out int receive_length);
 
@@ -43,25 +43,12 @@ public static class CozmoBinding {
 	public static extern void cozmo_pop_log(StringBuilder buffer, int max_length);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_engine_host_create (string configurationData, string visIP);
+	public static extern int cozmo_game_create (string configurationData);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_engine_host_destroy();
+	public static extern int cozmo_game_destroy();
 	
 	[DllImport("__Internal")]
-	public static extern int cozmo_engine_host_force_add_robot(int robot_id, string robot_ip, bool robot_is_simulated);
-
-	[DllImport("__Internal")]
-	public static extern int cozmo_engine_host_is_robot_connected(out bool is_connected, int robot_id);
-	
-	[DllImport("__Internal")]
-	public static extern int cozmo_engine_update(float currentTime);
-
-	[DllImport("__Internal")]
-	public static extern int cozmo_robot_drive_wheels(int robot_id, float left_wheel_speed_mmps, float right_wheel_speed_mmps);
-
-	[DllImport("__Internal")]
-	public static extern int cozmo_robot_stop_all_motors(int robot_id);
-#endif
+	public static extern int cozmo_game_update(float currentTime);
 }
 
