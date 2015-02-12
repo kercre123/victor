@@ -87,15 +87,19 @@ public class Intro : MonoBehaviour {
 
 	protected void Start()
 	{
-		RobotEngineManager.instance.ConnectedToClient += Connected;
-		RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
-		RobotEngineManager.instance.RobotConnected += RobotConnected;
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient += Connected;
+			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
+			RobotEngineManager.instance.RobotConnected += RobotConnected;
+		}
 	}
 
 	protected void OnDestroy() {
-		RobotEngineManager.instance.ConnectedToClient -= Connected;
-		RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
-		RobotEngineManager.instance.RobotConnected -= RobotConnected;
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient -= Connected;
+			RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
+			RobotEngineManager.instance.RobotConnected -= RobotConnected;
+		}
 	}
 
 	public void Play() {

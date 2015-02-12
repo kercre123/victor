@@ -38,6 +38,8 @@ public abstract class ChannelBase {
 	/// </summary>
 	public bool IsConnected { get; protected set; }
 
+	public abstract bool HasPendingSends { get; }
+
 	/// <summary>
 	/// Occurs when the client is connected and ready to send to.
 	/// </summary>
