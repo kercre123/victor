@@ -147,6 +147,12 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     // Do this with a signal?
     _uiComms.DisconnectDeviceByID(msg.deviceID);
     PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Disconnected from UI device %d!\n", msg.deviceID);
+    
+    if(_uiComms.GetNumConnectedDevices() == 0) {
+      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage",
+                       "Last UI device just disconnected: forcing re-initialization.\n");
+      Init(_config);
+    }
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_ForceAddRobot const& msg)
