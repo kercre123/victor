@@ -13,12 +13,10 @@ PRINT_INTERVAL = False
 
 MTU = 1500
 
-CLIENT_IDLE_TIMEOUT = 100.0
-
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
 
-    CLIENT_IDLE_TIMEOUT = 100.0
+    CLIENT_IDLE_TIMEOUT = 1.0
 
     def __init__(self, address):
         "Initalize the server and start listening on UDP"
