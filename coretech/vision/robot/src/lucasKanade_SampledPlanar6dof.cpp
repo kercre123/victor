@@ -36,7 +36,7 @@ non-disclosure agreement with Anki, inc.
 
 #define UPDATE_VERIFICATION_SAMPLES_DURING_TRACKING 1
 
-#define SAMPLE_TOP_HALF_ONLY 1
+#define SAMPLE_TOP_HALF_ONLY 0
 
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
