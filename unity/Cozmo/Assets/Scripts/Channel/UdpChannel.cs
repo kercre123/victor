@@ -95,7 +95,7 @@ public class UdpChannel : ChannelBase {
 	public override bool HasPendingSends {
 		get {
 			lock (sync) {
-				return (sentBuffers.Count > 0);
+				return (sentBuffers.Count > 0 || connectionState == ConnectionState.ConnectedAndSending);
 			}
 		}
 	}
