@@ -8,8 +8,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Shell.unity
   - enabled: 1
-    path: Assets/Scenes/ScreenPad.unity
-  - enabled: 1
-    path: Assets/Scenes/ThumbStick.unity
-  - enabled: 1
-    path: Assets/Scenes/TwoSliders.unity
+    path: Assets/Scenes/ControlSchemeTest.unity

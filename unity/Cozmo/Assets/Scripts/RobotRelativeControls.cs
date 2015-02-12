@@ -56,7 +56,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if((inputs - lastInputs).magnitude < 0.1f) return;
 		lastInputs = inputs;
 
-		if(Intro.CurrentRobotID != 0) {
+		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
 			RobotEngineManager.CalcWheelSpeedsFromBotRelativeInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 		}
@@ -65,6 +65,10 @@ public class RobotRelativeControls : MonoBehaviour {
 	void OnDisable() {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
+
+		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+		}
 	}
 
 //	void OnGUI() {
