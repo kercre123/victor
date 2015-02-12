@@ -15,6 +15,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
+	public event Action<Texture2D> RobotImage; 
 
 	private ChannelBase channel;
 
@@ -171,6 +172,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_StopSound:
 			ReceivedSpecificMessage((G2U_StopSound)message);
 			break;
+		case (int)NetworkMessageID.G2U_ImageChunk:
+			ReceivedSpecificMessage((G2U_ImageChunk)message);
+			break;
 		}
 	}
 	
@@ -220,6 +224,59 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage(G2U_StopSound message)
 	{
 		
+	}
+
+	private int currentImageColorIndex;
+	private int currentImageIndex;
+	private UInt32 currentImageID = UInt32.MaxValue;
+	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
+	private Color32[] colorArray;
+	private void ReceivedSpecificMessage(G2U_ImageChunk message)
+	{
+		Debug.Log( "receive image" );
+
+		if( message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		{
+			currentImageID = message.imageId;
+			currentImageFrameTimeStamp = message.frameTimeStamp;
+
+			colorArray = new Color32[message.ncols * message.nrows];
+
+			currentImageIndex = 0;
+			currentImageColorIndex = 0;
+		}
+
+		for( int messageIndex = 0; currentImageIndex < colorArray.Length; ++currentImageIndex )
+		{
+			for( ; currentImageColorIndex < 3 && messageIndex < message.chunkSize; ++currentImageColorIndex, ++messageIndex )
+			{
+				switch( currentImageColorIndex )
+				{
+					case 0:
+						colorArray[currentImageIndex].r = message.data[messageIndex];
+						break;
+					case 1:
+						colorArray[currentImageIndex].g = message.data[messageIndex];
+						break;
+					default:
+						colorArray[currentImageIndex].b = message.data[messageIndex];
+						break;
+				}
+			}
+			colorArray[currentImageIndex].a = 255;
+		}
+
+		if( currentImageIndex == colorArray.Length )
+		{
+			Texture2D texture = new Texture2D( message.ncols, message.nrows );
+
+			texture.SetPixels32( colorArray );
+
+			if( RobotImage != null )
+			{
+				RobotImage( texture );
+			}
+		}
 	}
 
 	public void StartEngine(string vizHostIP)
@@ -285,7 +342,29 @@ public class RobotEngineManager : MonoBehaviour {
 
 		channel.Send (message);
 	}
-	
+
+	public enum ImageSendMode_t
+	{
+		ISM_OFF,
+		ISM_STREAM,
+		ISM_SINGLE_SHOT
+	} ;
+
+	public void RequestImage(int robotID)
+	{
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+		}
+		
+		U2G_ImageRequest message = new U2G_ImageRequest ();
+		message.robotID = (byte)robotID;
+		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
+		
+		channel.Send (message);
+
+		Debug.Log( "image request message sent" );
+	}
+
 	public void StopAllMotors(int robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
