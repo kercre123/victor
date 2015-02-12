@@ -110,8 +110,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 2
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -179,8 +179,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 0
     m_HorizontalOverflow: 0
@@ -310,8 +310,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 0
     m_HorizontalOverflow: 0
@@ -499,8 +499,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 2
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -1049,6 +1049,62 @@ Prefab:
     - target: {fileID: 11485832, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
       propertyPath: m_Text
       value: 127.0.0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485814, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_BestFit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 178926, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11478922, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11455020, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11478928, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485806, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485828, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485832, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MinSize
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11478922, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 11455020, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 11478928, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485806, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485828, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 11485832, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
+      propertyPath: m_FontData.m_MaxSize
+      value: 50
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4243a7f118d1c4943bbb5cc2cc2a871b, type: 2}
@@ -2041,8 +2097,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 2
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -2092,8 +2148,8 @@ MonoBehaviour:
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 10
-    m_MaxSize: 40
+    m_MinSize: 6
+    m_MaxSize: 50
     m_Alignment: 0
     m_RichText: 0
     m_HorizontalOverflow: 0
