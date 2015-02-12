@@ -6,22 +6,11 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField engineIP;
 	[SerializeField] protected InputField ip;
 	[SerializeField] protected InputField visualizerIP;
-	[SerializeField] protected Toggle simulated;
-	[SerializeField] protected Text orientationLabel;
 	[SerializeField] protected Text error;
 
 	private string currentRobotIP;
 	private string currentScene;
 	private string currentVizHostIP;
-
-	private ScreenOrientation[] test_orientations = {
-		ScreenOrientation.Portrait,
-		ScreenOrientation.PortraitUpsideDown,
-		ScreenOrientation.LandscapeLeft,
-		ScreenOrientation.LandscapeRight
-	};
-
-	private int test_orientation_index = 2;
 
 	public const int CurrentRobotID = 1;
 
@@ -46,13 +35,6 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetString("LastID", value); }
 	}
 
-	private bool lastSimulated
-	{
-		get { return PlayerPrefs.GetInt("LastSimulated", 1) == 1; }
-		
-		set { if(value) { PlayerPrefs.SetInt("LastSimulated", 1); } else { PlayerPrefs.SetInt("LastSimulated", 0); } }
-	}
-
 	private string lastVisualizerIp
 	{
 		get { return PlayerPrefs.GetString("LastVisualizerIp", "127.0.0.1"); }
@@ -60,45 +42,32 @@ public class Intro : MonoBehaviour {
 		set { PlayerPrefs.SetString("LastVisualizerIp", value); }
 	}
 
-	private string lastSceneName
-	{
-		get { 
-			string sceneName = PlayerPrefs.GetString("LastSceneName", "ThumbStick");
-			return sceneName;
-		}
-		
-		set { PlayerPrefs.SetString("LastSceneName", value); }
-	}
-
 	protected void OnEnable() {
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
-		simulated.isOn = lastSimulated;
 		visualizerIP.text = lastVisualizerIp;
-		//force portrait in shell to ensure working on phones
-		Screen.orientation = ScreenOrientation.Portrait;
-		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
-	}
-
-	public void PlayScheme(string choice) {
-		lastSceneName = choice;
-		Play();
 	}
 
 	protected void Start()
 	{
-		RobotEngineManager.instance.ConnectedToClient += Connected;
-		RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
-		RobotEngineManager.instance.RobotConnected += RobotConnected;
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient += Connected;
+			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
+			RobotEngineManager.instance.RobotConnected += RobotConnected;
+		}
 	}
 
 	protected void OnDestroy() {
-		RobotEngineManager.instance.ConnectedToClient -= Connected;
-		RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
-		RobotEngineManager.instance.RobotConnected -= RobotConnected;
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.ConnectedToClient -= Connected;
+			RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
+			RobotEngineManager.instance.RobotConnected -= RobotConnected;
+		}
 	}
 
-	public void Play() {
+	bool simulated =false;
+	public void Play(bool sim) {
+		simulated = sim;
 		RobotEngineManager.instance.Disconnect ();
 
 		string errorText = null;
@@ -112,7 +81,6 @@ public class Intro : MonoBehaviour {
 
 		if (string.IsNullOrEmpty (errorText)) {
 			currentRobotIP = ip.text;
-			currentScene = lastSceneName;
 			currentVizHostIP = visualizerIP.text;
 
 			SaveData ();
@@ -126,20 +94,19 @@ public class Intro : MonoBehaviour {
 	protected void SaveData() {
 		lastIp = ip.text;
 		lastId = engineIP.text;
-		lastSimulated = simulated.isOn;
 		lastVisualizerIp = visualizerIP.text;
 	}
 
 	public void FakeTest() {
 		SaveData();
-		Application.LoadLevel(lastSceneName);
+		Application.LoadLevel("ControlSchemeTest");
 	}
 
 	private void Connected(string connectionIdentifier)
 	{
 		error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
 		RobotEngineManager.instance.StartEngine (currentVizHostIP);
-		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, currentRobotIP, simulated.isOn);
+		RobotEngineManager.instance.ForceAddRobot(CurrentRobotID, currentRobotIP, simulated);
 	}
 
 	private void Disconnected(DisconnectionReason reason)
@@ -155,14 +122,7 @@ public class Intro : MonoBehaviour {
 		}
 
 		error.text = "";
-		if(!Application.isEditor) Screen.orientation = test_orientations[test_orientation_index];
-		Application.LoadLevel(currentScene);
+		Application.LoadLevel("ControlSchemeTest");
 	}
 
-	public void ChangeOrientation()
-	{
-		test_orientation_index++;
-		if(test_orientation_index >= test_orientations.Length) test_orientation_index = 0;
-		orientationLabel.text = "Orientation: " + test_orientations[test_orientation_index].ToString();
-	}
 }

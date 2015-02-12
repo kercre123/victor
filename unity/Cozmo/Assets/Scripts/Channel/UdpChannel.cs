@@ -53,21 +53,23 @@ public class UdpChannel : ChannelBase {
 	private const int MaxQueuedSends = 64;
 	private const int MaxQueuedReceives = 64;
 	private const int MaxQueuedLogs = 64;
+	private const float AdvertiseTick = .25f;
 
 	// unique object used for locking
 	private readonly object sync = new object();
 
 	// sockets
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg ();
-	private Socket mainServer;
-	private Socket advertisingClient;
 	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
-	private IPEndPoint mainEndPoint = null;
+	private Socket advertisingClient;
 	private IPEndPoint advertisementEndPoint = null;
+	private Socket mainServer;
+	private IPEndPoint mainEndPoint = null;
 
 	// state information
 	private ConnectionState connectionState = ConnectionState.Disconnected;
 	private bool advertisingBusy = false;
+	private float lastAdvertise = 0;
 	private DisconnectionReason currentDisconnectionReason = DisconnectionReason.ConnectionLost;
 
 	// various queues
@@ -89,6 +91,14 @@ public class UdpChannel : ChannelBase {
 	private readonly AsyncCallback callback_SendAdvertisement_Complete;
 	private readonly AsyncCallback callback_ServerReceive_Complete;
 	private readonly AsyncCallback callback_ServerSend_Complete;
+    
+	public override bool HasPendingSends {
+		get {
+			lock (sync) {
+				return (sentBuffers.Count > 0 || connectionState == ConnectionState.ConnectedAndSending);
+			}
+		}
+	}
 
 	public UdpChannel()
 	{
@@ -348,7 +358,7 @@ public class UdpChannel : ChannelBase {
 	}
 	
 	private void Destroy(DisconnectionReason reason) {
-		
+
 		connectionState = ConnectionState.Disconnected;
 		advertisingBusy = false;
 		currentDisconnectionReason = reason;
@@ -507,10 +517,12 @@ public class UdpChannel : ChannelBase {
 
 	private void SendAdvertisement()
 	{
-		if (advertisingBusy) {
+		float now = Time.realtimeSinceStartup;
+		if (advertisingBusy || lastAdvertise + AdvertiseTick > now) {
 			return;
 		}
 		advertisingBusy = true;
+		lastAdvertise = now;
 
 		SocketBufferState state = AllocateBufferState(advertisingClient);
 		bool success = false;
