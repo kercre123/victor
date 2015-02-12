@@ -276,6 +276,7 @@ namespace Cozmo {
     
     s32 _frameNumber;
     bool _autoExposure_enabled = true;
+    s32 _trackingIteration; // Simply for display at this point
     
     // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
     /*
