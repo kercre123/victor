@@ -141,9 +141,11 @@ namespace Anki {
 #else
         // Approximate inverse of the open-loop wheel formula used in wheelController
         power = CLIP(power, -1.0, 1.0);
-        f32 absPower = ABS(power);
-        if (absPower >= 0.15) {
-          speed_mm_per_s = -225.82 * absPower * absPower + 439.75 * absPower - 36.455;
+        f32 x = ABS(power);
+        f32 x2 = x*x;
+        f32 x3 = x*x2;
+        if (x >= 0.15) {
+          speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
           if (power < 0) {
             speed_mm_per_s *= -1;
           }
