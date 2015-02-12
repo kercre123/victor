@@ -146,6 +146,15 @@ BaseStationTime_t CommsRecorder::ReadFromBuffer(unsigned char *buffer, unsigned 
   //printf("packets read %d\n", dataSize);
   return timeLastMessageRecorded;
 }
+  
+u32 CommsRecorder::GetNumMsgPacketsInSendQueue(int devID) {
+  return realComms_->GetNumMsgPacketsInSendQueue(devID);
+}
+  
+void CommsRecorder::Update(bool send_queued_msgs) {
+  realComms_->Update(send_queued_msgs);
+}
+  
 // ICOMMS implementation
 //////////////////////////
 

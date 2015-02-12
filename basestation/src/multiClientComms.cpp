@@ -70,6 +70,7 @@ namespace Cozmo {
     // once to more closely emulate BTLE.
 
     #if(DO_SIM_COMMS_LATENCY)
+    /*
     // If no send latency, just send now
     if (SIM_SEND_LATENCY_SEC == 0) {
       if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
@@ -81,11 +82,11 @@ namespace Cozmo {
         return RealSend(p);
       }
     }
-    
+    */
     // Otherwise add to send queue
-    sendMsgPackets_.emplace_back(std::piecewise_construct,
-                                 std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
-                                 std::forward_as_tuple(p));
+    sendMsgPackets_[p.destId].emplace_back(std::piecewise_construct,
+                                           std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
+                                           std::forward_as_tuple(p));
     
     // Fake the number of bytes sent
     size_t numBytesSent = sizeof(RADIO_PACKET_HEADER) + sizeof(u32) + p.dataLen;
@@ -133,7 +134,7 @@ namespace Cozmo {
   }
   
   
-  void MultiClientComms::Update()
+  void MultiClientComms::Update(bool send_queued_msgs)
   {
     
     f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -195,21 +196,30 @@ namespace Cozmo {
     //printf("TIME %f: Total: %d, rel: %d\n", currTime, recvdMsgPackets_.size(), numRecvRdyMsgs_);
     
     // Send messages that are scheduled to be sent, up to the outgoing bytes limit.
-    bytesSentThisUpdateCycle_ = 0;
-    while (!sendMsgPackets_.empty()) {
-      if (sendMsgPackets_.front().first <= currTime) {
-        
-        if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > maxSentBytesPerTic_)) {
-          #if(DEBUG_COMMS)
-          PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
-          #endif
-          break;
+    if (send_queued_msgs) {
+      bytesSentThisUpdateCycle_ = 0;
+      std::map<int, PacketQueue_t>::iterator sendQueueIt = sendMsgPackets_.begin();
+      while (sendQueueIt != sendMsgPackets_.end()) {
+        PacketQueue_t* pQueue = &(sendQueueIt->second);
+        while (!pQueue->empty()) {
+          if (pQueue->front().first <= currTime) {
+            
+            if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + pQueue->front().second.dataLen > maxSentBytesPerTic_)) {
+              #if(DEBUG_COMMS)
+              PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", pQueue->size() - 1);
+              #endif
+              break;
+            }
+            bytesSentThisUpdateCycle_ += pQueue->front().second.dataLen;
+            if (RealSend(pQueue->front().second) < 0) {
+              PRINT_NAMED_WARNING("MultiClientComms.RealSendFail", "");
+            }
+            pQueue->pop_front();
+          } else {
+            break;
+          }
         }
-        bytesSentThisUpdateCycle_ += sendMsgPackets_.front().second.dataLen;
-        RealSend(sendMsgPackets_.front().second);
-        sendMsgPackets_.pop_front();
-      } else {
-        break;
+        ++sendQueueIt;
       }
     }
     #endif  // #if(DO_SIM_COMMS_LATENCY)
@@ -547,7 +557,14 @@ namespace Cozmo {
     #endif
   };
   
-  
+  u32 MultiClientComms::GetNumMsgPacketsInSendQueue(int devID)
+  {
+    std::map<int, PacketQueue_t>::iterator it = sendMsgPackets_.find(devID);
+    if (it != sendMsgPackets_.end()) {
+      return it->second.size();
+    }
+    return 0;
+  }
   
 }  // namespace Cozmo
 }  // namespace Anki

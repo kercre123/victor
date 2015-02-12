@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -54,6 +55,8 @@ public:
   //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp) { };
   // prevents parent class method from executing
   virtual void ClearMsgPackets() { };
+  virtual u32 GetNumMsgPacketsInSendQueue(int devID);
+  virtual void Update(bool send_queued_msgs = true);
   // ICOMMS implementation
   //////////////////////////
 
@@ -65,6 +68,8 @@ protected:
   // internal storage
   unsigned int nextValue;
   vector<CommsRecord> dataFromFile;
+  
+  std::map<int, int> numSendMsgs_;
 
   BaseStationTime_t timeLastMessageRecorded;
 };

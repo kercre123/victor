@@ -82,42 +82,69 @@ namespace Anki {
       
       
       // Notify all clients of advertising devices
-//      if (advertisementController.getTime() - lastAdvertisingTime > ROBOT_ADVERTISING_PERIOD_S) {
-        if (advertisingServer_.GetNumClients() > 0 && !connectionInfoMap_.empty()) {
+      if (advertisingServer_.GetNumClients() > 0 && (!connectionInfoMap_.empty() || !oneShotAdvertiseConnectionInfoMap_.empty() )) {
+        
+        std::cout << serviceName_ << ": "
+                  << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising devices\n";
+        
+        // Send registered devices' advertisement
+        for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
           
           std::cout << serviceName_ << ": "
-                    << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising devices\n";
-          
-          for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
-            
-            std::cout << serviceName_ << ": "
-                      << "Advertising: Device " << it->second.id
-                      << " on host " << it->second.ip
-                      << " at port " << it->second.port
-                      << "(size=" << sizeof(AdvertisementMsg) << ")\n";
-             
-            advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
-            
-//            lastAdvertisingTime = advertisementController.getTime();
-          }
+                    << "Advertising: Device " << it->second.id
+                    << " on host " << it->second.ip
+                    << " at port " << it->second.port
+                    << "(size=" << sizeof(AdvertisementMsg) << ")\n";
+           
+          advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
         }
-//      }
+        
+        // Send one-shot advertisements
+        for (it = oneShotAdvertiseConnectionInfoMap_.begin(); it != oneShotAdvertiseConnectionInfoMap_.end(); it++) {
+          
+          std::cout << serviceName_ << ": "
+          << "Advertising (one-shot): Device " << it->second.id
+          << " on host " << it->second.ip
+          << " at port " << it->second.port
+          << "(size=" << sizeof(AdvertisementMsg) << ")\n";
+          
+          advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
+        }
+        
+        // Clearing advertising devices
+        oneShotAdvertiseConnectionInfoMap_.clear();
+      }
+      
     }
     
   
     void AdvertisementService::ProcessRegistrationMsg(const AdvertisementRegistrationMsg &regMsg)
     {
       if (regMsg.enableAdvertisement) {
-        std::cout << serviceName_ << ": "
-                  << "Registering device " << (int)regMsg.id
-                  << " on host " << regMsg.ip
-                  << " at port " << regMsg.port
-                  << " with advertisement service\n";
         
-        connectionInfoMap_[regMsg.id].id = regMsg.id;
-        connectionInfoMap_[regMsg.id].port = regMsg.port;
-        connectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
-        memcpy(connectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
+        if (regMsg.oneShot) {
+          std::cout << serviceName_ << ": "
+          << "One-shot advertising device " << (int)regMsg.id
+          << " on host " << regMsg.ip
+          << " at port " << regMsg.port
+          << " with advertisement service\n";
+
+          oneShotAdvertiseConnectionInfoMap_[regMsg.id].id = regMsg.id;
+          oneShotAdvertiseConnectionInfoMap_[regMsg.id].port = regMsg.port;
+          oneShotAdvertiseConnectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
+          memcpy(oneShotAdvertiseConnectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
+        } else {
+          std::cout << serviceName_ << ": "
+          << "Registering device " << (int)regMsg.id
+          << " on host " << regMsg.ip
+          << " at port " << regMsg.port
+          << " with advertisement service\n";
+
+          connectionInfoMap_[regMsg.id].id = regMsg.id;
+          connectionInfoMap_[regMsg.id].port = regMsg.port;
+          connectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
+          memcpy(connectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
+        }
         
       } else {
         std::cout << serviceName_ << ": "

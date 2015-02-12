@@ -5,6 +5,8 @@
 
 #include "anki/vision/robot/fiducialDetection.h"
 
+#define DEBUG_QUAD_REFINEMENT 0
+
 #define VISUALIZE_WITH_MATLAB 0
 
 #if VISUALIZE_WITH_MATLAB
@@ -109,7 +111,7 @@ namespace Anki {
       AnkiConditionalErrorAndReturnValue(NotAliased(initialHomography, refinedHomography),
         RESULT_FAIL_ALIASED_MEMORY, "RefineQuadrilateral", "initialHomography and refinedHomography are aliased");
 
-#if VISUALIZE_WITH_MATLAB
+#     if VISUALIZE_WITH_MATLAB
       CoreTechPrint("Initial quad: ");
       initialQuad.Print();
       CoreTechPrint("\n");
@@ -122,8 +124,7 @@ namespace Anki {
         "     initialQuad([1 2 4 3 1],2)+1, "
         "     'r', 'LineWidth', 2, "
         "     'Tag', 'initialQuad'); drawnow");
-
-#endif
+#     endif
 
       // Use the size of the initial quad to establish the resolution and thus
       // the scale of the derivatives of the implicit template model
@@ -627,14 +628,14 @@ namespace Anki {
 
           //BeginBenchmark("vme_quadrefine_mainLoop_samples3");
 
-#if ACCELERATION_TYPE == ACCELERATION_NONE
+#         if ACCELERATION_TYPE == ACCELERATION_NONE
           for(s32 ia=0; ia<8; ia++) {
             for(s32 ja=ia; ja<8; ja++) {
               AWAt_raw[ia][ja] += Arow[ia][iSample] * Arow[ja][iSample];
             }
             b_raw[ia] += Arow[ia][iSample] * tGradientValue;
           }
-#else // #if ACCELERATION_TYPE == ACCELERATION_NONE
+#         else // #if ACCELERATION_TYPE == ACCELERATION_NONE
           const f32 a0 = Arow[0][iSample];
           const f32 a1 = Arow[1][iSample];
           const f32 a2 = Arow[2][iSample];
@@ -695,7 +696,7 @@ namespace Anki {
 
           AWAt_raw[7][7] += a7 * a7;
           b_raw[7] += a7 * tGradientValue;
-#endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
+#         endif // #if ACCELERATION_TYPE == ACCELERATION_NONE ... #else
 
           //EndBenchmark("vme_quadrefine_mainLoop_samples3");
         } // for each sample
@@ -757,7 +758,7 @@ namespace Anki {
           break;
         }
 
-#if VISUALIZE_WITH_MATLAB
+#       if VISUALIZE_WITH_MATLAB
         {
           matlab.PutQuad(refinedQuad, "refinedQuad");
           matlab.EvalStringEcho("delete(findobj(gcf, 'Tag', 'refinedQuad')); "
@@ -767,7 +768,7 @@ namespace Anki {
             "     'b', 'LineWidth', 1, "
             "     'Tag', 'refinedQuad'); drawnow");
         }
-#endif
+#       endif
 
         EndBenchmark("vme_quadrefine_mainLoop_finalize");
       } // for each iteration
@@ -776,7 +777,7 @@ namespace Anki {
 
       BeginBenchmark("vme_quadrefine_finalize");
 
-#if VISUALIZE_WITH_MATLAB
+#     if VISUALIZE_WITH_MATLAB
       CoreTechPrint("Final quad: ");
       refinedQuad.Print();
       CoreTechPrint("\n");
@@ -788,7 +789,7 @@ namespace Anki {
           "     'g', 'LineWidth', 1, "
           "     'Tag', 'refinedQuad'); drawnow");
       }
-#endif
+#     endif
 
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
@@ -798,7 +799,9 @@ namespace Anki {
       if(!restoreOriginal) {
         const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
         if(finalCornerChange > maxCornerChange) {
+#         if DEBUG_QUAD_REFINEMENT
           AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
+#         endif
           restoreOriginal = true;
         }
       }
@@ -806,7 +809,9 @@ namespace Anki {
       // If corner change check or numerical failure triggered a restoreOriginal
       // do so now.
       if(restoreOriginal) {
+#       if DEBUG_QUAD_REFINEMENT
         AnkiWarn("RefineQuadrilateral", "Restoring original quad.\n");
+#       endif
         refinedQuad = initialQuadF32;
         refinedHomography.Set(initialHomography);
       }

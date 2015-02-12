@@ -90,9 +90,11 @@ namespace Cozmo {
     
     //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp);
   
+    // Return the number of MsgPackets in the send queue that are bound for devID
+    virtual u32 GetNumMsgPacketsInSendQueue(int devID);
     
     // Updates the list of advertising devices
-    void Update();
+    virtual void Update(bool send_queued_msgs = true);
     
     // Connect to a device.
     // Returns true if successfully connected
@@ -156,7 +158,8 @@ namespace Cozmo {
     u32 numRecvRdyMsgs_;
     
     // Queue of messages to be sent with the times they should be sent at
-    PacketQueue_t sendMsgPackets_;
+    // (key: dev id)
+    std::map<int, PacketQueue_t> sendMsgPackets_;
 
     // The actual function that does the sending when we're simulating latency
     int RealSend(const Comms::MsgPacket &p);

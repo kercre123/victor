@@ -48,6 +48,8 @@ namespace Anki {
       virtual Result ProcessMessages() = 0;
       
       virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) = 0;
+
+      virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID) = 0;
       
     }; // IRobotMessageHandler
     
@@ -68,6 +70,8 @@ namespace Anki {
       
       // Send a message to a specified ID
       virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg);
+      
+      virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID);
       
     protected:
       
@@ -128,7 +132,12 @@ namespace Anki {
       Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) {
         return RESULT_OK;
       }
-      
+
+      u32 GetNumMsgsSentThisTic(const RobotID_t robotID)
+      {
+        return 0;
+      }
+
     }; // MessageHandlerStub
     
 #undef MESSAGE_BASECLASS_NAME

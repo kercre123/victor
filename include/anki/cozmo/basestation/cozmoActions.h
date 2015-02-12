@@ -180,6 +180,7 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       f32                         _maxPreActionPoseDistance;
       f32                         _waitToVerifyTime;
+      bool                        _wasPickingOrPlacing;
 
     }; // class IDockAction
 

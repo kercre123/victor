@@ -321,7 +321,6 @@ namespace Cozmo {
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
     
     BasestationMain              _basestation;
-    bool                         _isBasestationStarted;
     bool                         _isListeningForRobots;
     
     Comms::AdvertisementService  _robotAdvertisementService;
@@ -332,8 +331,7 @@ namespace Cozmo {
   
   
   CozmoEngineHostImpl::CozmoEngineHostImpl()
-  : _isBasestationStarted(false)
-  , _isListeningForRobots(false)
+  : _isListeningForRobots(false)
   , _robotAdvertisementService("RobotAdvertisementService")
   {
     
@@ -346,24 +344,14 @@ namespace Cozmo {
 
   }
   
-  Result CozmoEngineHostImpl::StartBasestation()
-  {
-    if(!_isBasestationStarted)
-    {
-      BasestationStatus status = _basestation.Init(&_robotComms, _config);
-      if (status != BS_OK) {
-        PRINT_NAMED_ERROR("Basestation.Init.Fail","Status = %d\n", status);
-        return RESULT_FAIL;
-      }
-      
-      _isBasestationStarted = true;
-    }
-    
-    return RESULT_OK;
-  }
-  
   Result CozmoEngineHostImpl::InitInternal()
   {
+    BasestationStatus status = _basestation.Init(&_robotComms, _config);
+    if (status != BS_OK) {
+      PRINT_NAMED_ERROR("Basestation.Init.Fail","Status = %d\n", status);
+      return RESULT_FAIL;
+    }
+    
     return RESULT_OK;
   }
   
@@ -371,7 +359,7 @@ namespace Cozmo {
                                           const char*      robotIP,
                                           bool             robotIsSimulated)
   {
-    if(_isBasestationStarted) {
+    if(_isInitialized) {
       // Force add physical robot since it's not registering by itself yet.
       Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
       forcedRegistrationMsg.id = robotID;
@@ -387,7 +375,7 @@ namespace Cozmo {
       _forceAddedRobots[robotID] = true;
     } else {
       PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
-                        "You cannot force-add a robot until the engine is started.\n");
+                        "You cannot force-add a robot until the engine is initialized.\n");
     }
   }
   
@@ -436,31 +424,18 @@ namespace Cozmo {
      
     // Update robot comms
     if(_robotComms.IsInitialized()) {
-      _robotComms.Update();
+      // Receive messages but don't send queued messages
+      _robotComms.Update(false);
     }
     
     if(_isListeningForRobots) {
       _robotAdvertisementService.Update();
     }
     
-    if(!_isBasestationStarted) {
-      StartBasestation();
-    }
-    
     _basestation.Update(currTime_ns);
     
-    /*
-    if(_isBasestationStarted) {
-      // TODO: Handle different basestation return codes
-      _basestation.Update(currTime_ns);
-    } else if(_robotComms.GetNumConnectedDevices() >= _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR].asInt()) {
-      // We have connected to enough robots and devices:
-      StartBasestation();
-    } else {
-      // Tics advertisement service
-      _robotAdvertisementService.Update();
-    }
-     */
+    // Send messages
+    _robotComms.Update();
     
     return RESULT_OK;
   } // UpdateInternal()

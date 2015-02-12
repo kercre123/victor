@@ -466,6 +466,7 @@ namespace Anki {
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _maxPreActionPoseDistance(MAX_DISTANCE_TO_PREDOCK_POSE)
+    , _wasPickingOrPlacing(false)
     {
       
     }
@@ -557,6 +558,7 @@ namespace Anki {
                          Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
         
         if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction) == RESULT_OK) {
+          _wasPickingOrPlacing = false;
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -570,7 +572,13 @@ namespace Anki {
     {
       ActionResult actionResult = RUNNING;
       
-      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      if (!_wasPickingOrPlacing) {
+        // We have to see the robot went into pick-place mode once before checking
+        // to see that it has finished picking or placing below. I.e., we need to
+        // know the robot got the DockWithObject command sent in Init().
+        _wasPickingOrPlacing = robot.IsPickingOrPlacing();
+      }
+      else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         
