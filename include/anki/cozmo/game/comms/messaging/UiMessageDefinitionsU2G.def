@@ -54,6 +54,11 @@ START_MESSAGE_DEFINITION(U2G_ConnectToUiDevice, 1)
 ADD_MESSAGE_MEMBER(u8, deviceID)
 END_MESSAGE_DEFINITION(U2G_ConnectToUiDevice)
 
+// DisconnectFromUiDevice
+START_MESSAGE_DEFINITION(U2G_DisconnectFromUiDevice, 1)
+ADD_MESSAGE_MEMBER(u8, deviceID)
+END_MESSAGE_DEFINITION(U2G_DisconnectFromUiDevice)
+
 // ForceAddRobot
 // NOTE: This can be removed once physical robots can advertise (e.g. with BLE)
 START_MESSAGE_DEFINITION(U2G_ForceAddRobot, 1)
