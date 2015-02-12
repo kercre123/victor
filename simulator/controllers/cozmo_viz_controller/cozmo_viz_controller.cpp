@@ -199,7 +199,12 @@ namespace Anki {
       // Draw text
       disp->setColor(color >> 8);
       disp->setAlpha(static_cast<double>(0xff & color)/255.);
-      disp->drawText(std::string(text), baseXOffset, baseYOffset + yLabelStep * labelID);
+      
+      std::string str(text);
+      if(str.empty()) {
+        str = " "; // Avoid webots warnings for empty text
+      }
+      disp->drawText(str, baseXOffset, baseYOffset + yLabelStep * labelID);
     }
     
     void DrawText(u32 labelID, const char* text) {
