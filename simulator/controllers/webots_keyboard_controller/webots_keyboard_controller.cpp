@@ -1332,6 +1332,7 @@ namespace Anki {
                 msg.isSimulated = FORCED_ROBOT_IS_SIM;
                 msg.robotID = forcedRobotId;
                 
+                std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
                 std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
                 
                 msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here

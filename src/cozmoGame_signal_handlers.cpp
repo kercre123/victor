@@ -76,7 +76,7 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
-    
+    /* Now using U2G message handlers for these
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
       this->HandleConnectToRobotSignal(robotID);
     };
@@ -86,6 +86,7 @@ namespace Cozmo {
       this->HandleConnectToUiDeviceSignal(deviceID);
     };
     _signalHandles.emplace_back( CozmoGameSignals::ConnectToUiDeviceSignal().ScopedSubscribe(cbConnectToUiDeviceSignal));
+    */
     
     // TODO: This should probaly be in base class constructor so clients and hosts can respond
     auto cbRobotImageAvailable = [this](RobotID_t robotID) {
@@ -210,7 +211,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
-  
+  /*
   void CozmoGameImpl::HandleConnectToRobotSignal(RobotID_t robotID)
   {
     const bool success = ConnectToRobot(robotID);
@@ -230,6 +231,7 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaised", "Failed to connected to UI device %d!\n", deviceID);
     }
   }
+   */
   
   void CozmoGameImpl::HandleRobotImageAvailable(RobotID_t robotID)
   {

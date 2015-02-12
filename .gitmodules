@@ -1,6 +1,8 @@
 [submodule "lib/anki/cozmo-engine"]
 	path = lib/anki/cozmo-engine
 	url = git@github.com:anki/products-cozmo.git
+	branch = master
 [submodule "lib/anki/products-cozmo-assets"]
 	path = lib/anki/products-cozmo-assets
 	url = git@github.com:anki/products-cozmo-assets.git
+	branch = master

@@ -44,6 +44,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   {
     REGISTER_CALLBACK(U2G_ConnectToRobot)
     REGISTER_CALLBACK(U2G_ConnectToUiDevice)
+    REGISTER_CALLBACK(U2G_DisconnectFromUiDevice)
     REGISTER_CALLBACK(U2G_ForceAddRobot)
     REGISTER_CALLBACK(U2G_StartEngine)
     REGISTER_CALLBACK(U2G_DriveWheels)
@@ -118,13 +119,40 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToRobot const& msg)
   {
     // Tell the game to connect to a robot, using a signal
-    CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
+    // CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
+    
+    const bool success = ConnectToRobot(msg.robotID);
+    if(success) {
+      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to robot %d!\n", msg.robotID);
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connected to robot %d!\n", msg.robotID);
+    }
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToUiDevice const& msg)
   {
-    // Tell the game to connect to a UI device, using a signal
-    CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
+    // Tell the game to connect to a UI device, using a signal?
+    // CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
+    
+    const bool success = ConnectToUiDevice(msg.deviceID);
+    if(success) {
+      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to UI device %d!\n", msg.deviceID);
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connected to UI device %d!\n", msg.deviceID);
+    }
+  }
+  
+  void CozmoGameImpl::ProcessMessage(MessageU2G_DisconnectFromUiDevice const& msg)
+  {
+    // Do this with a signal?
+    _uiComms.DisconnectDeviceByID(msg.deviceID);
+    PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Disconnected from UI device %d!\n", msg.deviceID);
+    
+    if(_uiComms.GetNumConnectedDevices() == 0) {
+      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage",
+                       "Last UI device just disconnected: forcing re-initialization.\n");
+      Init(_config);
+    }
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_ForceAddRobot const& msg)

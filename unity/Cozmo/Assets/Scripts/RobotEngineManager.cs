@@ -127,7 +127,27 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void Disconnect()
 	{
-		channel.Disconnect ();
+		if (channel != null && channel.IsActive) {
+#if UNITY_EDITOR
+			if (channel.IsConnected) {
+				Debug.Log ("Sending disconnect.");
+				U2G_DisconnectFromUiDevice message = new U2G_DisconnectFromUiDevice();
+				message.deviceID = UIDeviceID;
+				channel.Send (message);
+
+				float limit = Time.realtimeSinceStartup + 2.0f;
+				while (channel.HasPendingSends) {
+					if (limit < Time.realtimeSinceStartup) {
+						Debug.LogWarning("Not waiting for disconnect to finish sending.");
+						break;
+					}
+					System.Threading.Thread.Sleep (500);
+				}
+			}
+#endif
+
+			channel.Disconnect ();
+		}
 	}
 
 	private void Connected(string connectionIdentifier)

@@ -9,11 +9,13 @@
 
 #include "anki/cozmo/basestation/signals/SignalDefMacros.h"
 
+/* Using U2G messages for these
 // Tell game host to connect to robot
 DEF_SIGNAL(ConnectToRobot, RobotID_t robotID)
     
 // Tell game host to connect to a UI device
 DEF_SIGNAL(ConnectToUiDevice, UserDeviceID_t deviceID)
+*/
 
 // Signal that a UI device is available for connection
 DEF_SIGNAL(UiDeviceAvailable, UserDeviceID_t deviceID)

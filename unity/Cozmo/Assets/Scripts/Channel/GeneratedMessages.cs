@@ -45,6 +45,11 @@ U2G_ConnectToUiDevice,
 
 
 
+U2G_DisconnectFromUiDevice,
+
+
+
+
 
 U2G_ForceAddRobot,
 
@@ -294,6 +299,11 @@ public override int ID { get { return (int)NetworkMessageID.U2G_ConnectToRobot; 
 public partial class U2G_ConnectToUiDevice : NetworkMessage {
 public u8 deviceID;
 public override int ID { get { return (int)NetworkMessageID.U2G_ConnectToUiDevice; } } }
+
+
+public partial class U2G_DisconnectFromUiDevice : NetworkMessage {
+public u8 deviceID;
+public override int ID { get { return (int)NetworkMessageID.U2G_DisconnectFromUiDevice; } } }
 
 
 
@@ -603,6 +613,11 @@ ByteSerializer.GetSerializationLength(this.robotID) +
 
 
 public partial class U2G_ConnectToUiDevice { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.deviceID) +
+0; } } }
+
+
+public partial class U2G_DisconnectFromUiDevice { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.deviceID) +
 0; } } }
 
@@ -918,6 +933,11 @@ serializer.Serialize(this.deviceID);
 } }
 
 
+public partial class U2G_DisconnectFromUiDevice { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.deviceID);
+} }
+
+
 
 public partial class U2G_ForceAddRobot { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.ipAddress);
@@ -1225,6 +1245,11 @@ serializer.Deserialize(out this.robotID);
 
 
 public partial class U2G_ConnectToUiDevice { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.deviceID);
+} }
+
+
+public partial class U2G_DisconnectFromUiDevice { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.deviceID);
 } }
 
@@ -1543,6 +1568,11 @@ case NetworkMessageID.U2G_ConnectToRobot: return new U2G_ConnectToRobot();
 
 
 case NetworkMessageID.U2G_ConnectToUiDevice: return new U2G_ConnectToUiDevice();
+
+
+
+
+case NetworkMessageID.U2G_DisconnectFromUiDevice: return new U2G_DisconnectFromUiDevice();
 
 
 
