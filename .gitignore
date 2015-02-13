@@ -75,7 +75,7 @@ build/msvc*
 build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
-build
+/build
 simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
@@ -167,3 +167,8 @@ unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 *.a.meta
+
+build_xcode/*.xcworkspace
+build_xcode/game_osx
+build_xcode/game_ios
+build_xcode/game_sim

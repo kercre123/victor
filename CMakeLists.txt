@@ -19,13 +19,6 @@ if(NOT DEFINED ANKI_IOS_BUILD)
 endif()
 
 if(ANKI_IOS_BUILD)
-  set(DEVROOT "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer")
-  set(CMAKE_OSX_SYSROOT "${DEVROOT}/SDKs/iPhoneOS.sdk")
-  
-  set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_UNIVERSAL_IPHONE_OS)")
-  
-  set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos;-iphonesimulator") 
-
   set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "6.0")
 
   add_definitions(-DANKI_IOS_BUILD=1)
@@ -36,17 +29,14 @@ if(ANKI_IOS_BUILD)
   set(EMBEDDED_USE_MATLAB 0)
   message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
   
-  ankiProject(CozmoGame_iOS)
-  
-  # TODO: this is a weird place for this, but until we have an external iOS build, it's the only
-  #       thing we need from coretech-external for the iOS build, so i'm just doing it here for simplicity
-  #add_subdirectory(${CORETECH_EXTERNAL_DIR}/jsoncpp "${CMAKE_CURRENT_BINARY_DIR}/jsoncpp")
+  if(DEFINED IOS_PLATFORM AND IOS_PLATFORM STREQUAL "SIMULATOR")
+    ankiProject(CozmoGame_sim)
+  else()
+    ankiProject(CozmoGame_iOS)
+  endif()
   
 else()
   
-  #if(APPLE)
-  #  set(BUILD_SHARED_LIBS ON)
-  #endif(APPLE)
   ankiProject(CozmoGame)
     
 endif(ANKI_IOS_BUILD)
@@ -81,7 +71,10 @@ include_directories(
 add_subdirectory(src)
 
 # Don't build these if ANKI_IOS_BUILD is defined:
-if(NOT ANKI_IOS_BUILD)
+if(ANKI_IOS_BUILD)
+  add_subdirectory(lib/anki/cozmo-engine)
+  add_subdirectory(unity/CSharpBinding)
+else()
   add_subdirectory(lib/anki/cozmo-engine)
   add_subdirectory(simulator)
 
@@ -90,6 +83,4 @@ if(NOT ANKI_IOS_BUILD)
   #endif()
 
 endif()
-
-add_subdirectory(unity/CSharpBinding)
 
