@@ -39,9 +39,12 @@ class CameraSubServer(object):
     def __init__(self, poller, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
         self.v = verbose
-        if self.v: sys.stdout.write("CameraSubServer will be verbose\n")
+        if self.v:
+            sys.stdout.write("CameraSubServer will be verbose\n")
         self.tfr = test_framerate
-        if self.tfr: sys.stdout.write("Will print frame rate information")
+        if self.tfr:
+            sys.stdout.write("Will print frame rate information\n")
+
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         # Setup local jpeg data receive socket
@@ -73,7 +76,8 @@ class CameraSubServer(object):
         self.sendMode       = messages.ISM_OFF
 
         self.latestTimestamp = (0, time.time())
-        self.lastFrameTime = 0
+        self.lastFrameOTime = 0
+        self.lastFrameITime = 0
 
     def __del__(self):
         "Shut down processes in the right order"
@@ -140,8 +144,8 @@ class CameraSubServer(object):
         if not self.dataQueue and self.nextFrame: # If we've used up the frame we were sending and a new one is available
             if self.tfr:
                 tick = time.time()
-                sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameTime)*1000))
-                self.lastFrameTime = tick
+                sys.stdout.write('FOP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
+                self.lastFrameOTime = tick
             self.imageTimestamp = self.getTimestamp() - self.ENCODER_LATEANCY # Skew back by 5 for estimated encoder latency
             self.imageNumber += 1
             self.dataQueue = self.nextFrame # Queue the next one
@@ -165,7 +169,10 @@ class CameraSubServer(object):
         # Get a new frame if any from encoder
         try:
             self.nextFrame = self.encoderSocket.recv(MTU)
-            if True: sys.stdout.write("New frame from encoder\n")
+            if self.tfr:
+                tick = time.time()
+                sys.stdout.write("FIP: %f ms\n" % ((tick - self.lastFrameITime)*1000))
+                self.lastFrameITime = tick
         except:
             pass
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:

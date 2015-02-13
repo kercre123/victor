@@ -122,8 +122,11 @@ class MCUProxyServer(object):
             if msgID == messages.PrintText.ID:
                 sys.stdout.write(self.rawSerData[1:length]) # Print statement
             elif msgID == messages.RobotState.ID:
-                self.timestampCB(struct.unpack('I', self.rawSerData[1:5])[0]) # Unpack the timestamp member of the RobotState message
-            if self.v:
+                rsmts = struct.unpack('I', self.rawSerData[1:5])[0]
+                self.timestampCB(rsmts) # Unpack the timestamp member of the RobotState message
+                if self.v:
+                    sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+            elif self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 #sys.stdout.write(repr([ord(c) for c in self.rawSerData[:10]]) + '\n')
                 sys.stdout.flush()
