@@ -49,8 +49,28 @@ public class RobotRelativeControls : MonoBehaviour {
 		//take our v-pad control axes and calc translate to robot
 		inputs = Vector2.zero;
 
-		if(horizontalStick != null) inputs.x = horizontalStick.Horizontal;
-		if(verticalStick != null) inputs.y = verticalStick.Vertical;
+		bool driveForwardOnlyMode = false;
+		bool driveReverseOnlyMode = false;
+		bool turnInPlaceOnlyMode = false;
+
+		if(horizontalStick != null) {
+			if(horizontalStick.SideModeEngaged) {
+				turnInPlaceOnlyMode = true;
+			}
+			inputs.x = horizontalStick.Horizontal;
+		}
+
+		if(verticalStick != null) {
+
+			if(verticalStick.UpModeEngaged) {
+				driveForwardOnlyMode = true;
+			}
+			else if(verticalStick.DownModeEngaged) {
+				driveReverseOnlyMode = true;
+			}
+
+			inputs.y = verticalStick.Vertical;
+		}
 
 //		if(inputs.x == 0f && inputs.y == 0f) {
 //			inputs.x = Input.GetAxis("Horizontal");
@@ -58,13 +78,21 @@ public class RobotRelativeControls : MonoBehaviour {
 //		}
 
 		if(gyroInputs != null) {
-			if(gyroRollControl != null && gyroRollControl.isOn) inputs.x = gyroInputs.Horizontal * gyroInputs.Horizontal;
-			if(gyroPitchControl != null && gyroPitchControl.isOn) inputs.y = gyroInputs.Vertical * gyroInputs.Horizontal;;
+			if(gyroRollControl != null && gyroRollControl.isOn) {
+				inputs.x = gyroInputs.Horizontal;
+			}
+
+			if(gyroPitchControl != null && gyroPitchControl.isOn) {
+				inputs.y = gyroInputs.Vertical;
+			}
 		}
 
-		if(reverseLikeACar) {
-			if(inputs.y < 0f) inputs.x = -inputs.x;
-		}
+		inputs.x = inputs.x*inputs.x * (inputs.x < 0f ? -1f : 1f);
+		inputs.y = inputs.y*inputs.y * (inputs.y < 0f ? -1f : 1f);
+
+//		if(reverseLikeACar) {
+//			if(inputs.y < 0f) inputs.x = -inputs.x;
+//		}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -75,7 +103,22 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastInputs = inputs;
 
 		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-			CozmoUtil.CalcWheelSpeedsFromBotRelativeInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+
+			if(driveForwardOnlyMode) {
+				CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			}
+			else if(driveReverseOnlyMode) {
+				if(reverseLikeACar) {
+					if(inputs.y < 0f) inputs.x = -inputs.x;
+				}
+				CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			}
+			else if(turnInPlaceOnlyMode) {
+				CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed);
+			}
+			else { //continues input range mode...causes issues at thresholds
+				CozmoUtil.CalcWheelSpeedsFromBotRelativeInputsB(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			}
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 		}
 
