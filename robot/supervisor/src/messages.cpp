@@ -68,6 +68,8 @@ namespace Anki {
         // Used to avoid repeating a send.
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
+       
+        TimeStamp_t lastPingTime_ = 0;
         
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -269,6 +271,16 @@ namespace Anki {
           ProcessMessage(msgID, msgBuffer_);
         }
         
+#ifdef SIMULATOR
+        // NOTE: This disconnect mode could possibly trigger if cozmo-engine sends so many things to the robot
+        // such that it doesn't need to send pings for more than
+        const u32 PING_DISCONNECT_TIMEOUT_MS = 1000;
+        if ((lastPingTime_ != 0) && (lastPingTime_ + PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
+          printf("WARN: Disconnecting radio due to ping timeout\n");
+          HAL::DisconnectRadio();
+        }
+#endif
+        
       } // ProcessBTLEMessages()
       
       void ProcessClearPathMessage(const ClearPath& msg) {
@@ -457,8 +469,7 @@ namespace Anki {
       
       void ProcessPingMessage(const Ping& msg)
       {
-        // TODO: Use ping message to keep-alive connection
-        // ...
+        lastPingTime_ = HAL::GetTimeStamp();
       }
       
       
@@ -867,6 +878,7 @@ namespace Anki {
       void ResetInit()
       {
         initReceived_ = false;
+        lastPingTime_ = 0;
       }
       
     } // namespace Messages
