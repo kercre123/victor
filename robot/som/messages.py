@@ -123,7 +123,8 @@ class ImageChunk(MessageBase):
 
     def _getMembers(self):
         "Convert the python class into a C struct compatible serial byte buffer"
-        return self.imageId, self.imageTimestamp, len(self.data), self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data
+        its = max(0, min(int(self.imageTimestamp), 4294967295L))
+        return self.imageId, its, len(self.data), self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data
 
     def _setMembers(self, *members):
         self.imageId, self.imageTimestamp, size, self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data = members

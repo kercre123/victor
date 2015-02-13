@@ -83,7 +83,7 @@ class CameraSubServer(object):
 
     def getTimestamp(self):
         "Return extrapolated synced timestamp"
-        return self.latestTimestamp[0] + ((time.time() - self.latestTimestamp[1])*1e3) # Timestamp is in units of ms
+        return self.latestTimestamp[0] # + ((time.time() - self.latestTimestamp[1])*1e3) # Timestamp is in units of ms
 
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
