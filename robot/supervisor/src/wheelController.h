@@ -9,6 +9,8 @@
 #ifndef WHEEL_CONTROLLER_H_
 #define WHEEL_CONTROLLER_H_
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 namespace Anki {
   namespace Cozmo {
   namespace WheelController {
@@ -24,13 +26,10 @@ namespace Anki {
     // Point at which open loop speed-power trendlines meet
     const f32 TRANSITION_SPEED = 25.0f;  // mm/s
     const f32 TRANSITION_POWER = 0.30f;  // wheel motor power
-
-    //How fast (in mm/sec) can a wheel spin at max
-    const f32 MAX_WHEEL_SPEED_MM_S = 120.f;
     
     // Slope of power:speed in upper line.
     // Obtained from plotting average open loop response of both wheels.
-    const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MM_S - TRANSITION_SPEED);
+    const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MMPS - TRANSITION_SPEED);
     
     // open loop power = speed * HIGH_OPEN_LOOP_GAIN + HIGH_OPEN_LOOP_OFFSET
     const f32 HIGH_OPEN_LOOP_OFFSET = TRANSITION_POWER - (TRANSITION_SPEED * HIGH_OPEN_LOOP_GAIN);
