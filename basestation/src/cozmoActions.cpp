@@ -595,11 +595,18 @@ namespace Anki {
         if(currentTime >= _waitToVerifyTime) {
           actionResult = Verify(robot);
           
+          // Go back to looking for markers (and stop tracking) when we finish,
+          // whether or not we succeeded?
+          robot.StartLookingForMarkers();
+          robot.StopDocking();
+          
+          /*
           // If docking fails, go back to looking for markers?
           if(actionResult != SUCCESS) {
             robot.StartLookingForMarkers();
             robot.StopDocking();
           }
+           */
         }
       }
       

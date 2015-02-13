@@ -1450,8 +1450,8 @@ namespace Anki {
       const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
                                  dockAction == DA_RAMP_DESCEND ||
                                  dockAction == DA_CROSS_BRIDGE);
-      // Tell the VisionSystem to start tracking this marker:
       
+      // Tell the VisionSystem to start tracking this marker:
       _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
       
       return _msgHandler->SendMessage(_ID, msg);
