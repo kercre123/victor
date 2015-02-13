@@ -308,6 +308,7 @@ namespace Cozmo {
     
     int    GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
+    std::vector<RobotID_t> const& GetRobotIDList() const;
     
     // TODO: Remove once we don't have to specially handle forced adds
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
@@ -387,6 +388,11 @@ namespace Cozmo {
   Robot* CozmoEngineHostImpl::GetRobotByID(const RobotID_t robotID)
   {
     return _basestation.GetRobotByID(robotID);
+  }
+  
+  std::vector<RobotID_t> const& CozmoEngineHostImpl::GetRobotIDList() const
+  {
+    return _basestation.GetRobotIDList();
   }
   
   bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
@@ -485,6 +491,10 @@ namespace Cozmo {
   
   Robot* CozmoEngineHost::GetRobotByID(const RobotID_t robotID) {
     return _hostImpl->GetRobotByID(robotID);
+  }
+  
+  std::vector<RobotID_t> const& CozmoEngineHost::GetRobotIDList() const {
+    return _hostImpl->GetRobotIDList();
   }
   
 #if 0

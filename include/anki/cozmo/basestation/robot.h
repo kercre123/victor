@@ -146,6 +146,10 @@ namespace Anki {
       // is raised
       f32 GetHeight() const;
       
+      // Wheel speeds, mm/sec
+      f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
+      f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
+      
       //
       // Path Following
       //
@@ -397,7 +401,7 @@ namespace Anki {
       IRobotMessageHandler* _msgHandler;
             
       // A reference to the BlockWorld the robot lives in
-      BlockWorld       _blockWorld;
+      BlockWorld        _blockWorld;
       
       VisionProcessingThread _visionProcessor;
 #     if !ASYNC_VISION_PROCESSING
@@ -453,6 +457,9 @@ namespace Anki {
 
       f32              _currentHeadAngle;
       f32              _currentLiftAngle;
+      
+      f32              _leftWheelSpeed_mmps;
+      f32              _rightWheelSpeed_mmps;
       
       static const Quad2f CanonicalBoundingBoxXY;
       

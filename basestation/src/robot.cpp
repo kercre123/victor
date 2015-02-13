@@ -222,6 +222,8 @@ namespace Anki {
         _isMoving = true;
       }
       
+      _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
+      _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
       Pose3d newPose;
       

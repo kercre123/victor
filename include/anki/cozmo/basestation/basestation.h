@@ -97,6 +97,7 @@ namespace Cozmo {
     
     int GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID);
+    std::vector<RobotID_t> const& GetRobotIDList() const;
     
     // *Copies* into the given image object. Returns true if successful.
     bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);

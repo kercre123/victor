@@ -84,6 +84,8 @@ namespace Cozmo {
     
     Robot* GetRobotByID(const RobotID_t robotID);
 
+    std::vector<RobotID_t> const& GetRobotIDList() const;
+    
     bool GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan);
 
     s32  GetAnimationID(const RobotID_t robotID,
@@ -344,6 +346,11 @@ namespace Cozmo {
   {
     return robotMgr_.GetRobotByID(robotID);
   }
+  
+  std::vector<RobotID_t> const& BasestationMainImpl::GetRobotIDList() const
+  {
+    return robotMgr_.GetRobotIDList();
+  }
 
   bool BasestationMainImpl::GetCurrentRobotImage(const RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThan)
   {
@@ -442,6 +449,10 @@ namespace Cozmo {
 
   Robot* BasestationMain::GetRobotByID(const RobotID_t robotID) {
     return impl_->GetRobotByID(robotID);
+  }
+  
+  std::vector<RobotID_t> const& BasestationMain::GetRobotIDList() const {
+    return impl_->GetRobotIDList();
   }
   
 } // namespace Cozmo
