@@ -57,7 +57,7 @@ namespace Anki {
       Pose3d   _goalPose;
       f32      _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
-      
+      bool     _startedTraversingPath;
       bool     _forceReplanOnNextWorldChange;
       
     }; // class DriveToPoseAction
