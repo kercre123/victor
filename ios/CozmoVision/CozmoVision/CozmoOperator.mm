@@ -499,7 +499,7 @@ using namespace Anki;
 
 - (void)sendCameraResolution:(BOOL)isHigh
 {
-  Cozmo::MessageU2G_ImageRequest message;
+  Cozmo::MessageU2G_SetRobotImageSendMode message;
   // HACK
   message.mode = 1;
   message.resolution = isHigh ? Vision::CAMERA_RES_QVGA : Vision::CAMERA_RES_QQQVGA;
@@ -509,7 +509,7 @@ using namespace Anki;
 
 - (void)sendEnableRobotImageStreaming:(BOOL)enable
 {
-  Cozmo::MessageU2G_ImageRequest message;
+  Cozmo::MessageU2G_SetRobotImageSendMode message;
   // HACK
   message.mode = (enable ? 1 : 0); // 1 is ISM_STREAM, 0 is ISM_OFF
   message.resolution = Vision::CAMERA_RES_QQQVGA;
