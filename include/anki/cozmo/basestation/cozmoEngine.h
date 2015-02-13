@@ -37,9 +37,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 
-// TODO: Remove dependence on this include
-#include "anki/cozmo/basestation/basestation.h"
-
 #include "json/json.h"
 
 namespace Anki {

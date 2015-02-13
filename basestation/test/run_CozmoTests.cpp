@@ -71,10 +71,8 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   // Create the modules we need (and stubs of those we don't)
   RobotManager        robotMgr;
   MessageHandlerStub  msgHandler;
-
-  robotMgr.Init(&msgHandler);
-  
-  robotMgr.AddRobot(0);
+ 
+  robotMgr.AddRobot(0, &msgHandler);
   Robot& robot = *robotMgr.GetRobotByID(0);
   
 //  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
