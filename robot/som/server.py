@@ -10,6 +10,7 @@ import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
+PRINT_FRAMERATE = False
 
 MTU = 1500
 
@@ -87,8 +88,10 @@ class CozmoServer(socket.socket):
 
 
 if __name__ == '__main__':
-    if '-v' in sys.argv: VERBOSE = True
-    if '-i' in sys.argv: PRINT_INTERVAL = True
+    if '-v'  in sys.argv: VERBOSE = True
+    if '-vv' in sys.argv: VERBOSE = 10
+    if '-i'  in sys.argv: PRINT_INTERVAL = True
+    if '-f'  in sys.argv: PRINT_FRAMERATE = True
     address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
