@@ -27,9 +27,10 @@ class CozmoServer(socket.socket):
         self.settimeout(0)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
-        self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
-                           mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
-        self.subServers[1].timestampCB = self.subServers[0].updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
+        camServer = camServer.CameraSubServer(self.poller, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)
+        self.subServers = [camServer, mcu]
+        mcu.timestampCB = camServer.updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
 
