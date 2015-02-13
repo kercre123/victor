@@ -59,8 +59,12 @@ namespace Cozmo {
       delete _cozmoEngine;
       _cozmoEngine = nullptr;
     }
+  
+    VizManager::getInstance()->Disconnect();
     
+    // Remove singletons
     SoundManager::removeInstance();
+    VizManager::removeInstance();
   }
   
   CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
