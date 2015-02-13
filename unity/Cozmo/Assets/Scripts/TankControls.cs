@@ -30,12 +30,12 @@ public class TankControls : MonoBehaviour {
 		float right = sliderRight.Vertical;
 
 		if(Intro.CurrentRobotID != 0) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, left * RobotEngineManager.MAX_WHEEL_SPEED, right * RobotEngineManager.MAX_WHEEL_SPEED);
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, left * CozmoUtil.MAX_WHEEL_SPEED, right * CozmoUtil.MAX_WHEEL_SPEED);
 			return;
 		}
 
 		//no robot, fake it in unity visualization
-//		float speed = (left + right) * 0.5f * RobotEngineManager.MAX_WHEEL_SPEED;
+		//		float speed = (left + right) * 0.5f * CozmoUtil.MAX_WHEEL_SPEED;
 //		float turn = (left - right) * 0.5f * maxTurn;
 //
 //		float turnThisFrame = Mathf.Min(maxTurn * Time.deltaTime, Mathf.Abs(turn) * maxTurn);

@@ -41,6 +41,11 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	[SerializeField] bool scaleToScreen = false;
 
+	[SerializeField] float[] swipeVerticalMagnitudes = { 1f };
+	[SerializeField] float[] swipeHorizontalMagnitudes = { 0.25f, 0.5f, 1f };
+
+	int swipeIndex = 0;
+
 	float radius;
 	//Canvas canvas;
 	RectTransform rTrans;
@@ -120,6 +125,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
 		bg.gameObject.SetActive(!dynamic);
 		stick.gameObject.SetActive(!dynamic);
+
+		swipeIndex = 0;
 	}
 
 	void RefreshRadius() {
@@ -207,8 +214,21 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 			//if we've allowed a swipe to override stick, then snap it here
 			if(swipedDirection.sqrMagnitude > 0f) {
-				Vector3 anchorPos = bg.anchoredPosition + swipedDirection * radius;
+
+				float[] mags = swipeVerticalMagnitudes;
+				if(Vector2.Dot(swipedDirection, Vector2.right) != 0f) {
+					mags = swipeHorizontalMagnitudes;
+				}
+
+				float mag = 1f;
+				swipeIndex = Mathf.Clamp(swipeIndex, 0, mags.Length-1);
+				mag = mags[swipeIndex];
+
+				Vector3 anchorPos = bg.anchoredPosition + swipedDirection * radius * mag;
 				stick.anchoredPosition = anchorPos;
+			}
+			else {
+				swipeIndex = 0;
 			}
 		}
 
@@ -250,7 +270,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		//if this is first touch after a swipe, prevent swipe input for this touch
 		//disallowSwipeForThisTouch = swipedDirection.sqrMagnitude > 0f;
-		swipedDirection = Vector2.zero;
+		//swipedDirection = Vector2.zero;
 		touchDownValue = JoystickData;
 
 		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
@@ -292,19 +312,35 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		//if(disallowSwipeForThisTouch) return;
 		if(!allowAxisSwipes && !allowPreciseSwipes) return;
 
-		if(pressedTime <= 0f) return;
-		if(pressedTime > 1f) return;
+		if(pressedTime <= 0f) {
+			swipeIndex = 0;
+			return;
+		}
+		if(pressedTime > 1f) {
+			swipeIndex = 0;
+			return;
+		}
 
 		Vector2 delta = JoystickData - touchDownValue;
 		float distance = delta.magnitude;
 
-		if(distance < swipeMinSpeed * pressedTime)
+		if(distance < swipeMinSpeed * pressedTime) {
+			swipeIndex = 0;
 			return;
+		}
 
 		swipedDirection = delta.normalized;
 
-		if(oldSwipe.sqrMagnitude > 0f && Vector2.Dot(oldSwipe, swipedDirection) < 0f) {
-			swipedDirection = Vector2.zero;
+		//if our swipe dir has changed, start our stepwise magnitude index over
+		if(oldSwipe.sqrMagnitude > 0f) {
+			swipeIndex++;
+
+			if(Vector2.Angle(oldSwipe, swipedDirection) > 10f) {
+				swipeIndex = 0;
+			}
+
+//			&& Vector2.Dot(oldSwipe, swipedDirection) < 0f) {
+//			swipedDirection = Vector2.zero;
 		}
 
 		if(allowPreciseSwipes && !horizontalOnly && !verticalOnly) return;
