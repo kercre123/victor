@@ -1999,12 +1999,16 @@ static void dm3730logic_camera_init(void)
 //        omap_mux_init_signal("cam_xclkb.cam_xclkb", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_pclk.cam_pclk", OMAP_PIN_INPUT);
 
+#if 0
         omap_mux_init_signal("cam_d0.cam_d0", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d1.cam_d1", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d2.cam_d2", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d3.cam_d3", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d4.cam_d4", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d5.cam_d5", OMAP_PIN_INPUT);
+#else
+	printk("COZMO disabling undriven cam_d0..6\n");
+#endif
         omap_mux_init_signal("cam_d6.cam_d6", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d7.cam_d7", OMAP_PIN_INPUT);
 

@@ -156,3 +156,4 @@ uImage
 robot/som/ov2686/ov2686_code_timestamp.h
 robot/som/*.jpg
 buildMakefile
+c-source.txt

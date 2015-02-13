@@ -23,14 +23,14 @@ static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H
 
 /*** Camera format definitions */
 
-#define OV2686_WIDTH 1600
-#define OV2686_HEIGHT 1200
+#define OV2686_WIDTH 800
+#define OV2686_HEIGHT 600
 
 static struct v4l2_mbus_framefmt FORMATS[] = {
   {
     .width  = OV2686_WIDTH,
     .height = OV2686_HEIGHT,
-    .code   = V4L2_MBUS_FMT_SBGGR12_1X12,
+    .code   = V4L2_MBUS_FMT_SRGGB12_1X12,
     .colorspace = V4L2_COLORSPACE_SRGB,
     .field      = V4L2_FIELD_NONE,
   },
@@ -266,13 +266,13 @@ static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
                                       struct v4l2_subdev_frame_interval_enum *fie) {
   printk(KERN_INFO "ov2686_enum_frame_interval\n");
 
-  // Function stubbed out to only return 15 fps
+  // Function stubbed out to only return 30 fps
 
   if (fie->index >= 1) {
     return -EINVAL;
   }
 
-  fie->interval.numerator   = 15000;
+  fie->interval.numerator   = 30000;
   fie->interval.denominator = 1000000;
 
   return 0;

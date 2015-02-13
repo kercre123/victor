@@ -4,7 +4,7 @@ Python UDP server to proxy messages to / from the MCU and the WiFi radio
 __author__  = "Daniel Canser"
 __version__ = "0.0.1"
 
-import sys, os, socket, time, serial, select
+import sys, os, socket, time, serial, select, struct
 import messages
 
 
@@ -34,6 +34,9 @@ class MCUProxyServer(object):
         self._fromMcuQ = []
         self.poller.register(self.mcu, select.POLLIN)
         self.rawSerData = ""
+        def noop(timestamp):
+            return
+        self.timestampCB = noop
 
     def __del__(self):
         "Send closeout messages"
@@ -87,7 +90,7 @@ class MCUProxyServer(object):
         "Send one message (with header and footer) to MCU over serial link"
         if message is not None: # Skip if no message to send
             length = len(message)
-            self.mcu.write(self.SERIAL_HEADER + ''.join([chr((length >> i) & 0xff) for i in (0, 8, 16, 24)]))
+            self.mcu.write(self.SERIAL_HEADER + struct.pack('I', length))
             self.mcu.write(message)
             self.mcu.flush()
 
@@ -101,19 +104,25 @@ class MCUProxyServer(object):
                 return
             self.rawSerData = self.rawSerData[messageStart + len(self.SERIAL_HEADER):]
             if len(self.rawSerData) < 4: self.rawSerData += self.mcu.read(4 - len(self.rawSerData))
-            if len(self.rawSerData) < 4: # Somethings wrong
+            if len(self.rawSerData) < 4: # Something's wrong
                 self.rawSerData = "" # Throw everything out and start over
                 return
-            length = sum([ord(d) << i for d, i in zip(self.rawSerData, (0, 8, 16, 24))]) # Calculate message length
+            length = struct.unpack('I', self.rawSerData[:4])[0]
+            if self.v > 9: sys.stdout.write("\t length = %d\n" % length)
             length = min(self.MTU, max(length, 4))
             self.rawSerData = self.rawSerData[4:]
             if len(self.rawSerData) < length:
                 #if self.v: sys.stdout.write("sr read %d\n" % length)
                 self.rawSerData += self.mcu.read(length - len(self.rawSerData))
             if len(self.rawSerData) < length: # Something is wrong
+                if self.v: sys.stdout.write("Insufficient serial data %d < %d" % (len(self.rawSerData), length))
                 self.rawSerData = "" # Throw everything out and start over
                 return
-            if self.rawSerData[0] == '\x45': sys.stdout.write(self.rawSerData[1:length]) # Print statement
+            msgID = ord(self.rawSerData[0])
+            if msgID == messages.PrintText.ID:
+                sys.stdout.write(self.rawSerData[1:length]) # Print statement
+            elif msgID == messages.RobotState.ID:
+                self.timestampCB(struct.unpack('I', self.rawSerData[1:5])[0]) # Unpack the timestamp member of the RobotState message
             if self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 #sys.stdout.write(repr([ord(c) for c in self.rawSerData[:10]]) + '\n')
