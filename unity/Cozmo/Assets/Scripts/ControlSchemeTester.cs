@@ -4,64 +4,112 @@ using System.Collections;
 
 public class ControlSchemeTester : MonoBehaviour {
 
-	[SerializeField] GameObject[] schemes = null;
+	[SerializeField] GameObject[] screens = null;
 	[SerializeField] int defaultIndex = 0;
 	[SerializeField] Text label = null;
 	[SerializeField] Text orientationLabel = null;
-	int index = 0;
+	[SerializeField] Toggle reverseLikeACarToggle = null;
+
+	public bool ReverseLikeACar {
+		get {
+			if(reverseLikeACarToggle == null) return false;
+			return reverseLikeACarToggle.isOn;
+		}
+	}
+
+	int _index = -1;
+	private int index {
+		get {
+			return _index;
+		}
+
+		set {
+			if(value != _index) {
+				if(_index >= 0 && _index < screens.Length) Debug.Log("ControlSchemeTester screen changed from " + screens[_index].name + " to " + screens[value].name );
+				_index = value;
+				Refresh();
+			}
+		}
+	}
+
 	ScreenOrientation orientation = ScreenOrientation.Portrait;
 
-	void Awake() {
+	void OnEnable() {
 		orientation = Screen.orientation;
 
-		if(schemes == null || schemes.Length == 0) {
+		if(screens == null || screens.Length == 0) {
 			enabled = false;
 			return;
 		}
 		Input.multiTouchEnabled = true;
-		index = Mathf.Clamp(defaultIndex, 0, schemes.Length - 1);
+		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
+
+		if(reverseLikeACarToggle != null) {
+			reverseLikeACarToggle.isOn = PlayerPrefs.GetInt("ReverseLikeACar", 0) == 1;
+		}
 	}
 
-	void Update() {
-		if(schemes == null || schemes.Length == 0) {
+	void Refresh() {
+		if(screens == null || screens.Length == 0) {
 			enabled = false;
 			return;
 		}
 
-		for(int i=0; i<schemes.Length; i++) {
-			if(schemes[i] == null)
-				continue;
-			schemes[i].SetActive(index == i);
-			if(index == i) {
-				if(label != null && label.text != schemes[i].name) {
-					label.text = schemes[i].name;
-				}
-			}
+		_index = Mathf.Clamp(_index, 0, screens.Length - 1);
+
+		//first disable the old screen(s)
+		for(int i=0; i<screens.Length; i++) {
+			if(screens[i] == null) continue;
+			if(index == i) continue;
+			screens[i].SetActive(false);
 		}
-	}
-	
-	public void NextScheme() {
-		index++;
-		if(schemes != null && index >= schemes.Length)
-			index = 0;
+
+		//then enable the new one
+		screens[index].SetActive(true);
+		
+		//then refresh our test title field
+		if(label != null && label.text != screens[index].name) {
+			label.text = screens[index].name;
+		}
+
 	}
 
 	public void NextOrientation() {
+
 		orientation++;
-		if(orientation >= ScreenOrientation.AutoRotation)
-			orientation = ScreenOrientation.Portrait;
+
+		if(orientation >= ScreenOrientation.AutoRotation) orientation = ScreenOrientation.Portrait;
+
 		Screen.orientation = orientation;
+
 		orientationLabel.text = orientation.ToString();
 	}
 
-	void OnGUI() {
-		GUILayout.BeginArea(new Rect(Screen.width-300f, 300f, 300f, 300f));
-		GUILayout.Label("RobotID("+Intro.CurrentRobotID+")");
-		GUILayout.EndArea();
-	}
+//	void OnGUI() {
+//		GUILayout.BeginArea(new Rect(Screen.width-300f, 300f, 300f, 300f));
+//		GUILayout.Label("RobotID("+Intro.CurrentRobotID+")");
+//		GUILayout.EndArea();
+//	}
 
 	public void Exit() {
 		Application.LoadLevel("Shell");
+	}
+
+	public void SetScreenIndex(int i) {
+		index = Mathf.Clamp(i, 0, screens.Length - 1);
+	}
+
+	public void ToggleReverseLikeACar(bool on) {
+		bool toggled = reverseLikeACarToggle.isOn;
+
+		for(int i=0; i<screens.Length; i++) {
+			if(screens[i] == null) continue;
+			RobotRelativeControls controls = screens[i].GetComponent<RobotRelativeControls>();
+			if(controls == null) continue;
+			controls.SetReverseLikeACar(toggled);
+		}
+
+		PlayerPrefs.SetInt("ReverseLikeACar", on ? 1 : 0);
 	}
 
 }

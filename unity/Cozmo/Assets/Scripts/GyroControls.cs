@@ -10,6 +10,8 @@ public class GyroControls : MonoBehaviour {
 	[SerializeField] float pitchAngleMin = 10f;
 	[SerializeField] float pitchAngleMax = 45f;
 
+	[SerializeField] RectTransform upIndicator = null;
+
 	float rollStart = 270f;
 	float pitchStart = 0f;
 	//ScreenOrientation orientation = ScreenOrientation.Unknown;
@@ -64,25 +66,36 @@ public class GyroControls : MonoBehaviour {
 //		Calibrate();
 //	}
 
-	//void FixedUpdate() {
-		//if(!SystemInfo.supportsGyroscope) return;
-		//if(orientation != Screen.orientation) Calibrate();
-	//}
+	void FixedUpdate() {
+		if(!SystemInfo.supportsGyroscope) return;
 
-	void OnGUI() {
-		GUILayout.BeginArea(new Rect(Screen.width*0.5f-150f, Screen.height*0.5f, 300f, 300f));
-		GUILayout.Label("x("+x+")");
-		GUILayout.Label("y("+y+")");
-		GUILayout.Label("Gyroscope attitudeEulers : " + Input.gyro.attitude.eulerAngles);
-		GUILayout.Label("Gyroscope attitude : " + Input.gyro.attitude);
-		GUILayout.Label("Gyroscope gravity : " + Input.gyro.gravity);
-		GUILayout.Label("Gyroscope rotationRate : " + Input.gyro.rotationRate);
-		GUILayout.Label("Gyroscope rotationRateUnbiased : " + Input.gyro.rotationRateUnbiased);
-		GUILayout.Label("Gyroscope updateInterval : " + Input.gyro.updateInterval);
-		GUILayout.Label("Gyroscope userAcceleration : " + Input.gyro.userAcceleration);
-		GUILayout.Label("ScreenOrientation : " + Screen.orientation);
-		GUILayout.EndArea();
+
+		if(upIndicator != null) {
+			Quaternion deviceRot = Input.gyro.attitude;
+			Vector3 euler = deviceRot.eulerAngles;
+			
+			float roll = euler.z - rollStart;
+			while(roll < -180f) roll += 360f;
+			while(roll > 180f) roll -= 360f;
+
+			upIndicator.localRotation = Quaternion.AngleAxis(-roll, Vector3.forward);
+		}
 	}
+
+//	void OnGUI() {
+//		GUILayout.BeginArea(new Rect(Screen.width*0.5f-150f, Screen.height*0.5f, 300f, 300f));
+//		GUILayout.Label("x("+x+")");
+//		GUILayout.Label("y("+y+")");
+//		GUILayout.Label("Gyroscope attitudeEulers : " + Input.gyro.attitude.eulerAngles);
+//		GUILayout.Label("Gyroscope attitude : " + Input.gyro.attitude);
+//		GUILayout.Label("Gyroscope gravity : " + Input.gyro.gravity);
+//		GUILayout.Label("Gyroscope rotationRate : " + Input.gyro.rotationRate);
+//		GUILayout.Label("Gyroscope rotationRateUnbiased : " + Input.gyro.rotationRateUnbiased);
+//		GUILayout.Label("Gyroscope updateInterval : " + Input.gyro.updateInterval);
+//		GUILayout.Label("Gyroscope userAcceleration : " + Input.gyro.userAcceleration);
+//		GUILayout.Label("ScreenOrientation : " + Screen.orientation);
+//		GUILayout.EndArea();
+//	}
 
 	public void Calibrate() {
 		if(!SystemInfo.supportsGyroscope) return;
