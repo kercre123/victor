@@ -121,7 +121,7 @@ Supervisor {
       height 60
       pixelSize 4
       %{ end }%
-      windowPosition 0 1
+      windowPosition 1 0
     }
   ]
   name IS name

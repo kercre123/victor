@@ -82,6 +82,12 @@ ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 END_MESSAGE_DEFINITION(U2G_DriveWheels)
 
+// TurnInPlace
+START_MESSAGE_DEFINITION(U2G_TurnInPlace, 1)
+ADD_MESSAGE_MEMBER(f32, angle_rad) // postive turns left, negative turns right
+ADD_MESSAGE_MEMBER(u8, robotID)
+END_MESSAGE_DEFINITION(U2G_TurnInPlace)
+
 // MoveHead
 START_MESSAGE_DEFINITION(U2G_MoveHead, 1)
 ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)

@@ -48,6 +48,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     REGISTER_CALLBACK(U2G_ForceAddRobot)
     REGISTER_CALLBACK(U2G_StartEngine)
     REGISTER_CALLBACK(U2G_DriveWheels)
+    REGISTER_CALLBACK(U2G_TurnInPlace)
     REGISTER_CALLBACK(U2G_MoveHead)
     REGISTER_CALLBACK(U2G_MoveLift)
     REGISTER_CALLBACK(U2G_SetLiftHeight)
@@ -189,6 +190,15 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     
     if(robot != nullptr) {
       robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+    }
+  }
+  
+  void CozmoGameImpl::ProcessMessage(MessageU2G_TurnInPlace const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->GetActionList().AddAction(new TurnInPlaceAction(msg.angle_rad));
     }
   }
   
