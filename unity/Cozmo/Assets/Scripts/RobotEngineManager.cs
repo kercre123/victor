@@ -246,51 +246,62 @@ public class RobotEngineManager : MonoBehaviour {
 		
 	}
 
-	private int currentImageColorIndex;
+	private Texture2D texture;
 	private int currentImageIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
 	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
 	private Color32[] colorArray;
-	private void ReceivedSpecificMessage(G2U_ImageChunk message)
-	{
-		Debug.Log( "receive image" );
 
-		if( message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+	private void ReceivedSpecificMessage( G2U_ImageChunk message )
+	{
+		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 
-			colorArray = new Color32[message.ncols * message.nrows];
+			int length = message.ncols * message.nrows;
+
+			if( colorArray == null || colorArray.Length != length )
+			{
+				colorArray = new Color32[ length ];
+			}
 
 			currentImageIndex = 0;
-			currentImageColorIndex = 0;
 		}
 
-		for( int messageIndex = 0; currentImageIndex < colorArray.Length; ++currentImageIndex )
+		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
-			for( ; currentImageColorIndex < 3 && messageIndex < message.chunkSize; ++currentImageColorIndex, ++messageIndex )
-			{
-				switch( currentImageColorIndex )
-				{
-					case 0:
-						colorArray[currentImageIndex].r = message.data[messageIndex];
-						break;
-					case 1:
-						colorArray[currentImageIndex].g = message.data[messageIndex];
-						break;
-					default:
-						colorArray[currentImageIndex].b = message.data[messageIndex];
-						break;
-				}
-			}
-			colorArray[currentImageIndex].a = 255;
+			byte gray = message.data[ messageIndex ];
+
+			int x = currentImageIndex % message.ncols;
+			int y = currentImageIndex / message.ncols;
+			int index = message.ncols * ( message.nrows - y - 1 ) + x;
+
+			colorArray[ index ] = new Color32( gray, gray, gray, 255 );
 		}
 
 		if( currentImageIndex == colorArray.Length )
 		{
-			Texture2D texture = new Texture2D( message.ncols, message.nrows );
+			int width = message.ncols;
+			int height = message.nrows;
+
+			if( texture != null )
+			{
+				if( texture.width != width || texture.height != height )
+				{
+					Destroy( texture );
+					texture = null;
+				}
+			}
+
+			if( texture == null )
+			{
+				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
+			}
 
 			texture.SetPixels32( colorArray );
+
+			texture.Apply( false );
 
 			if( RobotImage != null )
 			{
@@ -370,17 +381,41 @@ public class RobotEngineManager : MonoBehaviour {
 		ISM_SINGLE_SHOT
 	} ;
 
+	public enum CameraResolution
+	{
+		CAMERA_RES_QUXGA = 0, // 3200 x 2400
+		CAMERA_RES_QXGA,      // 2048 x 1536
+		CAMERA_RES_UXGA,      // 1600 x 1200
+		CAMERA_RES_SXGA,      // 1280 x 960, technically SXGA-
+		CAMERA_RES_XGA,       // 1024 x 768
+		CAMERA_RES_SVGA,      // 800 x 600
+		CAMERA_RES_VGA,       // 640 x 480
+		CAMERA_RES_QVGA,      // 320 x 240
+		CAMERA_RES_QQVGA,     // 160 x 120
+		CAMERA_RES_QQQVGA,    // 80 x 60
+		CAMERA_RES_QQQQVGA,   // 40 x 30
+		CAMERA_RES_VERIFICATION_SNAPSHOT, // 16 x 16
+		CAMERA_RES_COUNT,
+		CAMERA_RES_NONE = CAMERA_RES_COUNT
+	} 
+	
 	public void RequestImage(int robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
 		
-		U2G_ImageRequest message = new U2G_ImageRequest ();
-		message.robotID = (byte)robotID;
+		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
+		message.resolution = (byte)CameraResolution.CAMERA_RES_QVGA;
 		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
 		channel.Send (message);
+
+		U2G_ImageRequest message2 = new U2G_ImageRequest ();
+		message2.robotID = (byte)robotID;
+		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
+		
+		channel.Send (message2);
 
 		Debug.Log( "image request message sent" );
 	}
