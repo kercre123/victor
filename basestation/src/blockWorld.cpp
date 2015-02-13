@@ -375,10 +375,11 @@ namespace Anki
       // Create a list of unobserved objects for further consideration below.
       struct UnobservedObjectContainer {
         ObjectFamily family;
+        ObjectType   type;
         Vision::ObservableObject*      object;
         
-        UnobservedObjectContainer(ObjectFamily family_, Vision::ObservableObject* object_)
-        : family(family_), object(object_) { }
+        UnobservedObjectContainer(ObjectFamily family_, ObjectType type_, Vision::ObservableObject* object_)
+        : family(family_), type(type_), object(object_) { }
       };
       std::vector<UnobservedObjectContainer> unobservedObjects;
       
@@ -395,7 +396,7 @@ namespace Anki
             Vision::ObservableObject* object = objectIter->second;;
             if(object->GetLastObservedTime() < atTimestamp) {
               //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-              unobservedObjects.emplace_back(objectFamily.first, objectIter->second);
+              unobservedObjects.emplace_back(objectFamily.first, objectTypeIter->first, objectIter->second);
             } // if object was not observed
             else {
               /* Always re-drawing everything now
@@ -419,7 +420,7 @@ namespace Anki
           CoreTechPrint("Removing object %d, which should have been seen, "
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
-          ClearObject(unobserved.object, unobserved.family);
+          ClearObject(unobserved.object, unobserved.type, unobserved.family);
         }
         
       } // for each unobserved object
@@ -1004,7 +1005,8 @@ namespace Anki
       for (auto proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].begin(); proxObsIter != _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].end(); ) {
         if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS) {
           
-          proxObsIter = ClearObject(proxObsIter, ObjectFamily::MARKERLESS_OBJECTS);
+          proxObsIter = ClearObject(proxObsIter, MarkerlessObject::Type::PROX_OBSTACLE,
+                                    ObjectFamily::MARKERLESS_OBJECTS);
 
           continue;
         }
@@ -1186,7 +1188,7 @@ namespace Anki
                       //VizManager::getInstance()->EraseCuboid(object->GetID());
 
                       // Erase the block (with a postfix increment of the iterator)
-                      objectIter = ClearObject(objectIter, objectsByFamily.first);
+                      objectIter = ClearObject(objectIter, objectsByType.first, objectsByFamily.first);
                       didErase = true;
                       
                       break; // no need to check other robots, block already gone
@@ -1348,23 +1350,25 @@ namespace Anki
     
     
     BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(ObjectsMapByID_t::iterator objIter,
+                                                                   const ObjectType&   withType,
                                                                    const ObjectFamily& fromFamily)
     {
       Vision::ObservableObject* object = objIter->second;
      
       ClearObjectHelper(object);
 
-      return _existingObjects[fromFamily][object->GetType()].erase(objIter);
+      return _existingObjects[fromFamily][withType].erase(objIter);
     }
     
     void BlockWorld::ClearObject(Vision::ObservableObject* object,
+                                 const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
       ClearObjectHelper(object);
       
       // Actually erase the object from blockWorld's container of
       // existing objects
-      _existingObjects[fromFamily][object->GetType()].erase(object->GetID());
+      _existingObjects[fromFamily][withType].erase(object->GetID());
     }
     
     
