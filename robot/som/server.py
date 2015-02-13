@@ -28,6 +28,7 @@ class CozmoServer(socket.socket):
         self.poller.register(self, select.POLLIN)
         self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
                            mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
+        self.subServers[1].timestampCB = self.subServers[0].updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
 
@@ -70,6 +71,8 @@ class CozmoServer(socket.socket):
             if outMsg:
                 self.clientSend(outMsg)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
+            sys.stdout.write("Going to standby\n")
+            sys.stdout.flush()
             for ss in self.subServers:
                 ss.standby()
             self.client = None
