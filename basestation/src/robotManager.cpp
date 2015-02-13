@@ -19,18 +19,15 @@ namespace Anki {
       
     }
     
-    Result RobotManager::Init(IRobotMessageHandler* msgHandler)
+    void RobotManager::AddRobot(const RobotID_t withID, IRobotMessageHandler* msgHandler)
     {
-      _msgHandler  = msgHandler;
-      //_pathPlanner = pathPlanner;
+      if(msgHandler == nullptr) {
+        PRINT_NAMED_ERROR("RobotManager.AddRobot", "Can't add robot with null message handler.\n");
+        return;
+      }
       
-      return RESULT_OK;
-    }
-    
-    void RobotManager::AddRobot(const RobotID_t withID)
-    {
       if (_robots.find(withID) == _robots.end()) {
-        _robots[withID] = new Robot(withID, _msgHandler);
+        _robots[withID] = new Robot(withID, msgHandler);
         _IDs.push_back(withID);
       } else {
         PRINT_NAMED_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID %d already exists. Ignoring.\n");
