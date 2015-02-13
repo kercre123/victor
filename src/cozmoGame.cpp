@@ -173,6 +173,9 @@ namespace Cozmo {
                         "Engine already running, must start from stopped state.\n");
     }
      */
+    
+    _runState = CozmoGame::WAITING_FOR_UI_DEVICES;
+    
     return lastResult;
   }
   
