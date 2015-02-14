@@ -69,13 +69,12 @@ include_directories(
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(src)
+add_subdirectory(lib/anki/cozmo-engine)
+# always regenerate GeneratedMessages
+add_subdirectory(unity/CSharpBinding)
 
 # Don't build these if ANKI_IOS_BUILD is defined:
-if(ANKI_IOS_BUILD)
-  add_subdirectory(lib/anki/cozmo-engine)
-  add_subdirectory(unity/CSharpBinding)
-else()
-  add_subdirectory(lib/anki/cozmo-engine)
+if(NOT ANKI_IOS_BUILD)
   add_subdirectory(simulator)
 
   #if(APPLE)
