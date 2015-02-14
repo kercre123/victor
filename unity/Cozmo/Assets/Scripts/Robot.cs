@@ -15,7 +15,7 @@ public class Robot
 
 	public void UpdateInfo( G2U_RobotState message )
 	{
-		ID = message.ID;
+		ID = message.robotID;
 		headAngle_rad = message.headAngle_rad;
 		poseAngle_rad = message.poseAngle_rad;
 		leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
