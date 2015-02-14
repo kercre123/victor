@@ -581,6 +581,7 @@ public f32 rightWheelSpeed_mmps;
 public f32 headAngle_rad;
 public f32 liftHeight_mm;
 public u8 status;
+public u8 robotID;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotState; } } }
 public partial class G2U_ImageChunk : NetworkMessage {
 public u32 imageId;
@@ -914,6 +915,7 @@ ByteSerializer.GetSerializationLength(this.rightWheelSpeed_mmps) +
 ByteSerializer.GetSerializationLength(this.headAngle_rad) +
 ByteSerializer.GetSerializationLength(this.liftHeight_mm) +
 ByteSerializer.GetSerializationLength(this.status) +
+ByteSerializer.GetSerializationLength(this.robotID) +
 0; } } }
 public partial class G2U_ImageChunk { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.imageId) +
@@ -1247,6 +1249,7 @@ serializer.Serialize(this.rightWheelSpeed_mmps);
 serializer.Serialize(this.headAngle_rad);
 serializer.Serialize(this.liftHeight_mm);
 serializer.Serialize(this.status);
+serializer.Serialize(this.robotID);
 } }
 public partial class G2U_ImageChunk { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.imageId);
@@ -1580,6 +1583,7 @@ serializer.Deserialize(out this.rightWheelSpeed_mmps);
 serializer.Deserialize(out this.headAngle_rad);
 serializer.Deserialize(out this.liftHeight_mm);
 serializer.Deserialize(out this.status);
+serializer.Deserialize(out this.robotID);
 } }
 public partial class G2U_ImageChunk { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.imageId);

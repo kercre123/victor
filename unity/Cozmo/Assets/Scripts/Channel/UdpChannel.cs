@@ -49,10 +49,10 @@ public class UdpChannel : ChannelBase {
 
 	// various constants
 	private const int MaxBufferSize = 8192;
-	private const int BufferStatePoolLength = 128;
-	private const int MaxQueuedSends = 64;
-	private const int MaxQueuedReceives = 64;
-	private const int MaxQueuedLogs = 64;
+	private const int BufferStatePoolLength = 1280;
+	private const int MaxQueuedSends = 640;
+	private const int MaxQueuedReceives = 640;
+	private const int MaxQueuedLogs = 640;
 	private const float AdvertiseTick = .25f;
 
 	// unique object used for locking

@@ -382,6 +382,8 @@ namespace Cozmo {
             } else {
               MessageG2U_RobotState msg;
               
+              msg.robotID = robotID;
+              
               msg.pose_x = robot->GetPose().GetTranslation().x();
               msg.pose_y = robot->GetPose().GetTranslation().y();
               msg.pose_z = robot->GetPose().GetTranslation().z();
@@ -401,6 +403,8 @@ namespace Cozmo {
               if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
 
               // TODO: Add proximity sensor data to state message
+              
+              _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
             }
           }
         }
