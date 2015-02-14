@@ -50,6 +50,7 @@ ADD_MESSAGE_MEMBER(f32, rightWheelSpeed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle_rad)
 ADD_MESSAGE_MEMBER(f32, liftHeight_mm)
 ADD_MESSAGE_MEMBER(u8,  status)  // See RobotStatusFlag in cozmoTypes.h
+ADD_MESSAGE_MEMBER(u8,  robotID)
 END_MESSAGE_DEFINITION(G2U_RobotState)
 
 

@@ -10,10 +10,9 @@ public class RobotEngineManager : MonoBehaviour {
 	public static RobotEngineManager instance = null;
 
 	[System.NonSerialized]
-	public List<Robot> robots = new List<Robot>();
-
-	private int currentIndex = 0;
-	public Robot current { get { return robots[currentIndex]; } }
+	public Dictionary<int, Robot> robots = new Dictionary<int, Robot>();
+	
+	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 
 	[SerializeField]
 	private TextAsset configuration;
@@ -103,12 +102,12 @@ public class RobotEngineManager : MonoBehaviour {
 
 		Application.runInBackground = true;
 
-		AddRobot();
+		AddRobot( Intro.CurrentRobotID );
 	}
 
-	public void AddRobot()
+	public void AddRobot( int robotID )
 	{
-		robots.Add( new Robot() );
+		robots.Add( robotID, new Robot() );
 	}
 
 	private void OnEnable()
@@ -262,9 +261,16 @@ public class RobotEngineManager : MonoBehaviour {
 		
 	}
 
-	private void ReceivedSpecificMessage(G2U_RobotState message)
+	private void ReceivedSpecificMessage( G2U_RobotState message )
 	{
-		current.UpdateInfo( message );
+		if( !robots.ContainsKey( message.robotID ) )
+		{
+			Debug.Log( "adding robot with ID: " + message.robotID );
+			
+			AddRobot( message.robotID );
+		}
+
+		robots[ message.robotID ].UpdateInfo( message );
 	}
 
 	private Texture2D texture;

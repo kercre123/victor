@@ -7,7 +7,7 @@ public class ControlSchemeTester : MonoBehaviour {
 	[SerializeField] GameObject[] screens = null;
 	[SerializeField] int defaultIndex = 0;
 	[SerializeField] Text label = null;
-	[SerializeField] Text orientationLabel = null;
+	[SerializeField] Text[] orientationLabels = null;
 	[SerializeField] Toggle reverseLikeACarToggle = null;
 
 	public bool ReverseLikeACar {
@@ -82,7 +82,7 @@ public class ControlSchemeTester : MonoBehaviour {
 
 		Screen.orientation = orientation;
 
-		orientationLabel.text = orientation.ToString();
+		if(orientationLabels != null) foreach(Text text in orientationLabels) text.text = orientation.ToString();
 	}
 
 //	void OnGUI() {
