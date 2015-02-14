@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Robot
 {
-	public int ID;
+	public int ID { get; private set; }
 	public float headAngle_rad { get; private set; }
 	public float poseAngle_rad { get; private set; }
 	public float leftWheelSpeed_mmps { get; private set; }
