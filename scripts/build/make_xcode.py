@@ -17,7 +17,7 @@ except ImportError:
 
 game_osx = Project('build_xcode/game_osx/CozmoGame.xcodeproj', '.', 'osx')
 game_ios = Project('build_xcode/game_ios/CozmoGame_iOS.xcodeproj', '.', 'ios')
-game_sim = Project('build_xcode/game_ios_sim/CozmoGame_sim.xcodeproj', '.', 'sim')
+game_sim = Project('build_xcode/game_sim/CozmoGame_sim.xcodeproj', '.', 'sim')
 projects = [game_osx, game_ios, game_sim]
 
 extra_projects_osx = []

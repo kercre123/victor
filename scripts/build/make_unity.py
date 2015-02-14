@@ -38,6 +38,16 @@ ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(os.p
 def complete_path(path):
   return os.path.join(ROOT_PATH, path)
 
+def makedirs(path):
+  path = complete_path(path)
+  if ECHO_ALL:
+    print 'mkdir -p ' + path
+  try:
+    os.makedirs(path)
+  except OSError as e:
+    if not os.path.isdir(path):
+      sys.exit('ERROR: Failed to recursively create directories to {0}: {1}'.format(path, e.strerror))
+
 config = "Debug"
 
 execute([complete_path('scripts/build/make_xcode.py'), '-p', 'ios+osx', '--config', config, 'build'])
@@ -48,6 +58,7 @@ execute([complete_path('scripts/build/make_xcode.py'), '-p', 'ios+osx', '--confi
 print "Copying libraries to unity."
 
 unityLoc = complete_path("unity/Cozmo/Assets/Plugins/iOS/")
+makedirs(unityLoc)
 
 cozmoGameLibsDir = complete_path(os.path.join("build_xcode/game_ios/Xcode/lib", config))
 cozmoGameLibFiles = os.listdir(cozmoGameLibsDir)
