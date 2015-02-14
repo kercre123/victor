@@ -8,7 +8,13 @@ using System.Text;
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
-	
+
+	[System.NonSerialized]
+	public List<Robot> robots = new List<Robot>();
+
+	private int currentIndex = 0;
+	public Robot current { get { return robots[currentIndex]; } }
+
 	[SerializeField]
 	private TextAsset configuration;
 
@@ -28,7 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private StringBuilder logBuilder = null;
 
-	public void Start()
+	private void Start()
 	{
 		if (engineHostInitialized) {
 			Debug.LogError("Error initializing cozmo host: Host already started.");
@@ -49,7 +55,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	void OnDestroy()
+	private void OnDestroy()
 	{
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
@@ -62,7 +68,7 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 
 	// should be update; but this makes it easier to split up
-	void LateUpdate()
+	private void LateUpdate()
 	{
 		if (logBuilder == null) {
 			logBuilder = new StringBuilder (1024);
@@ -87,7 +93,7 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 #endif
 
-	void Awake() {
+	private void Awake() {
 		if (instance != null) {
 			Destroy (gameObject);
 		} else {
@@ -96,9 +102,16 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 		Application.runInBackground = true;
+
+		AddRobot();
 	}
 
-	void OnEnable()
+	public void AddRobot()
+	{
+		robots.Add( new Robot() );
+	}
+
+	private void OnEnable()
 	{
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
@@ -106,7 +119,7 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.MessageReceived += ReceivedMessage;
 	}
 
-	void OnDisable()
+	private void OnDisable()
 	{
 		if (channel != null) {
 			channel.Disconnect ();
@@ -114,7 +127,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 	
-	void Update()
+	private void Update()
 	{
 		if (channel != null) {
 			channel.Update ();
@@ -195,6 +208,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_ImageChunk:
 			ReceivedSpecificMessage((G2U_ImageChunk)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotState:
+			ReceivedSpecificMessage((G2U_RobotState)message);
+			break;
 		}
 	}
 	
@@ -244,6 +260,11 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage(G2U_StopSound message)
 	{
 		
+	}
+
+	private void ReceivedSpecificMessage(G2U_RobotState message)
+	{
+		current.UpdateInfo( message );
 	}
 
 	private Texture2D texture;
