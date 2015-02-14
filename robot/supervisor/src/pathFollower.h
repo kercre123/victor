@@ -51,10 +51,21 @@ namespace Anki
       // path_id is the ID to associate with the path that is being followed.
       // path_id of 0 is reserved for paths initiated internally by the robot
       // and does not actually update lastPathID.
-      bool StartPathTraversal(u16 path_id = 0);
+      // manualSpeedControl: Set to true if you want to control the speed at which
+      // the path is traversed via SetManualPathSpeed() vs using the speed values
+      // embedded in the path.
+      bool StartPathTraversal(u16 path_id = 0, bool manualSpeedControl = false);
       bool IsTraversingPath(void);
       u16 GetLastPathID();
 
+      // Whether or not the speed at which to traverse path is determined by the speeds
+      // set by SetManualPathSpeed()
+      bool IsInManualSpeedMode();
+      
+      // If a path has been started with manualSpeedControl == true, then the path will be
+      // traversed at these speed settings rather than the settings embedded in the path.
+      void SetManualPathSpeed(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2);
+      
       // Returns the index of the path segment that is currently being traversed.
       // Returns -1 if not traversing a path.
       s8 GetCurrPathSegment(void);
