@@ -78,7 +78,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //		}
 
 		if(gyroInputs != null) {
-			if(gyroRollControl != null && gyroRollControl.isOn) {
+			if(gyroRollControl != null && gyroRollControl.isOn && (verticalStick == null || verticalStick.IsPressed) ) {
 				inputs.x = gyroInputs.Horizontal;
 			}
 

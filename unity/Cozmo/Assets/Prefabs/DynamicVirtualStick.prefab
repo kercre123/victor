@@ -212,7 +212,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 86668db7d41224a17be19838fa97d42c, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: .485294104, g: .485294104, b: .485294104, a: 1}
   m_Sprite: {fileID: 0}
   m_Type: 0
@@ -241,6 +241,7 @@ MonoBehaviour:
   capBottom: {fileID: 0}
   capLeft: {fileID: 22479648}
   capRight: {fileID: 22479650}
+  originMarker: {fileID: 0}
   bgDefaultMode: {fileID: 11479654}
   bgUpMode: {fileID: 11479652}
   bgDownMode: {fileID: 11435592}
@@ -252,8 +253,8 @@ MonoBehaviour:
   deadZoneRadial: 1
   verticalAxisSnapAngle: 5
   horizontalAxisSnapAngle: 5
-  verticalModeEntryAngle: 0
-  horizontalModeEntryAngle: 0
+  verticalModeEntryAngle: 70
+  horizontalModeEntryAngle: 25
   clearHorizontal: 1
   clearVertical: 1
   bgWidthInches: 2
@@ -269,8 +270,8 @@ MonoBehaviour:
   swipeVerticalMagnitudes:
   - 1
   swipeHorizontalMagnitudes:
-  - .25
   - .5
+  - .75
   - 1
 --- !u!114 &11435590
 MonoBehaviour:
@@ -346,7 +347,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 616b723807396468abd8186ce158264c, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Sprite: {fileID: 0}
   m_Type: 0

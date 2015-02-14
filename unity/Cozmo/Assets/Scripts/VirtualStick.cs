@@ -17,6 +17,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] RectTransform capLeft = null;
 	[SerializeField] RectTransform capRight = null;
 
+	[SerializeField] RectTransform originMarker = null;
+
 	[SerializeField] Image bgDefaultMode = null;
 	[SerializeField] Image bgUpMode = null;
 	[SerializeField] Image bgDownMode = null;
@@ -138,27 +140,27 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				res.y = Mathf.Min(0f, res.y);
 			}
 
-//			if(verticalAxisSnapAngle > 0f && res.sqrMagnitude > 0f) {
-//				float angleFromUp = Vector2.Angle(Vector2.up, res.normalized);
-//
-//				if(angleFromUp <= verticalAxisSnapAngle) {
-//					res = Vector2.up * res.magnitude;
-//				}
-//				else if(angleFromUp >= 180f - verticalAxisSnapAngle) {
-//					res = -Vector2.up * res.magnitude;
-//				}
-//			}
-//
-//			if(horizontalAxisSnapAngle > 0f && res.sqrMagnitude > 0f) {
-//				float angleFromRight = Vector2.Angle(Vector2.right, res.normalized);
-//				
-//				if(angleFromRight <= horizontalAxisSnapAngle) {
-//					res = Vector2.right * res.magnitude;
-//				}
-//				else if(angleFromRight >= 180f - horizontalAxisSnapAngle) {
-//					res = -Vector2.right * res.magnitude;
-//				}
-//			}
+			if(verticalAxisSnapAngle > 0f && res.sqrMagnitude > 0f) {
+				float angleFromUp = Vector2.Angle(Vector2.up, res.normalized);
+
+				if(angleFromUp <= verticalAxisSnapAngle) {
+					res = Vector2.up * res.magnitude;
+				}
+				else if(angleFromUp >= 180f - verticalAxisSnapAngle) {
+					res = -Vector2.up * res.magnitude;
+				}
+			}
+
+			if(horizontalAxisSnapAngle > 0f && res.sqrMagnitude > 0f) {
+				float angleFromRight = Vector2.Angle(Vector2.right, res.normalized);
+				
+				if(angleFromRight <= horizontalAxisSnapAngle) {
+					res = Vector2.right * res.magnitude;
+				}
+				else if(angleFromRight >= 180f - horizontalAxisSnapAngle) {
+					res = -Vector2.right * res.magnitude;
+				}
+			}
 
 
 			return res;
@@ -234,6 +236,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			if(capLeft != null) capLeft.sizeDelta = size;
 			if(capRight != null) capRight.sizeDelta = size;
 
+			if(originMarker != null) originMarker.sizeDelta = size;
+
 			if(deadZoneRect != null) {
 				deadZoneRect.sizeDelta = size;
 			}
@@ -250,6 +254,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		if(capBottom != null) capBottom.anchoredPosition = -Vector2.up * height * 0.5f;
 		if(capLeft != null) capLeft.anchoredPosition = -Vector2.right * width * 0.5f;
 		if(capRight != null) capRight.anchoredPosition = Vector2.right * width * 0.5f;
+
+		if(originMarker != null) originMarker.anchoredPosition = Vector2.zero;
 
 		if(deadZoneRect != null) {
 			Vector3 size = deadZoneRect.sizeDelta;
@@ -306,6 +312,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		RefreshStickImages();
 		RefreshBGImages();
+		RefreshCaps();
+
 	}
 
 	void RefreshStickImages() {
@@ -338,6 +346,30 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		if(bgUpMode != null) bgUpMode.gameObject.SetActive(UpModeEngaged);
 		if(bgDownMode != null) bgDownMode.gameObject.SetActive(DownModeEngaged);
 		if(bgSideMode != null) bgSideMode.gameObject.SetActive(SideModeEngaged);
+	}
+
+	void RefreshCaps() {
+
+		if(!UpModeEngaged && !DownModeEngaged && !SideModeEngaged) {
+			if(capTop != null)
+				capTop.gameObject.SetActive(true);
+			if(capBottom != null)
+				capBottom.gameObject.SetActive(true);
+			if(capLeft != null)
+				capLeft.gameObject.SetActive(true);
+			if(capRight != null)
+				capRight.gameObject.SetActive(true);
+		}
+		else {
+			if(capTop != null)
+				capTop.gameObject.SetActive(UpModeEngaged);
+			if(capBottom != null)
+				capBottom.gameObject.SetActive(DownModeEngaged);
+			if(capLeft != null)
+				capLeft.gameObject.SetActive(SideModeEngaged);
+			if(capRight != null)
+				capRight.gameObject.SetActive(SideModeEngaged);
+		}
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
