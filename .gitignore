@@ -166,6 +166,7 @@ unity/Cozmo/*.sln
 unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
+*.orig.meta
 *.a.meta
 
 build_xcode/*.xcworkspace
