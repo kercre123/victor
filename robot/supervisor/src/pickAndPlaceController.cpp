@@ -839,12 +839,14 @@ namespace Anki {
         pixelSearchRadius_ = pixelSearchRadius;
       }
       
-      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
         action_ = DA_PLACE_LOW;
         dockOffsetDistX_ = rel_x;
         dockOffsetDistY_ = rel_y;
         dockOffsetAng_ = rel_angle;
+        
+        useManualSpeed_ = useManualSpeed;
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;

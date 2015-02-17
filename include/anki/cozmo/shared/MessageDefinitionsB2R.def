@@ -163,6 +163,7 @@ START_MESSAGE_DEFINITION(PlaceObjectOnGround, 1)
 ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of object face center in forward axis
 ADD_MESSAGE_MEMBER(f32, rel_y_mm)    // Distance of object face center in horizontal axis. (Left of robot is +ve)
 ADD_MESSAGE_MEMBER(f32, rel_angle)   // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(PlaceObjectOnGround)
 
 

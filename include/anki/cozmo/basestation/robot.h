@@ -289,7 +289,7 @@ namespace Anki {
       // Send a message to the robot to place whatever it is carrying on the
       // ground right where it is. Returns RESULT_FAIL if robot is not carrying
       // anything.
-      Result PlaceObjectOnGround();
+      Result PlaceObjectOnGround(const bool useManualSpeed = false);
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
@@ -588,7 +588,7 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
       
-      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
+      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
       
       // Play animation
       // If numLoops == 0, animation repeats forever.

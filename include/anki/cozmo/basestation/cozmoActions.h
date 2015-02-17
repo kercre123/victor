@@ -96,7 +96,7 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose);
+      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       
@@ -256,9 +256,9 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose),
+        new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         

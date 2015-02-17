@@ -848,7 +848,7 @@ namespace Anki {
       return SendStopAllMotors();
     }
     
-    Result Robot::PlaceObjectOnGround()
+    Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
     {
       if(!IsCarryingObject()) {
         PRINT_NAMED_ERROR("Robot.PlaceObjectOnGround.NotCarryingObject",
@@ -856,7 +856,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      return SendPlaceObjectOnGround(0, 0, 0);
+      return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
     Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
@@ -1629,13 +1629,14 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
     {
       MessagePlaceObjectOnGround m;
       
       m.rel_angle = rel_angle;
       m.rel_x_mm  = rel_x;
       m.rel_y_mm  = rel_y;
+      m.useManualSpeed = useManualSpeed;
       
       return _msgHandler->SendMessage(_ID, m);
     } // SendPlaceBlockOnGround()
