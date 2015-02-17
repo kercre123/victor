@@ -98,6 +98,9 @@ namespace Anki {
         // The docking pose
         Anki::Embedded::Pose2d dockPose_;
         
+        // Whether or not docking path should be traversed with manually controlled speed
+        bool useManualSpeed_ = false;
+        
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Since the physical robot currently does not localize,
         // we need to store the transform from docking pose
@@ -533,7 +536,7 @@ namespace Anki {
         */
         
         // Start following path
-        createdValidPath_ = PathFollower::StartPathTraversal();
+        createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
         
         // Debug
         if (!createdValidPath_) {
@@ -546,15 +549,19 @@ namespace Anki {
       
       void StartDocking(const Vision::MarkerType& dockingMarker,
                         const f32 markerWidth_mm,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle, const bool checkAngleX)
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
+                        const bool checkAngleX,
+                        const bool useManualSpeed)
       {
-        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX);
+        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX, useManualSpeed);
       }
 
       void StartDocking(const Vision::MarkerType& dockingMarker,
                         const f32 markerWidth_mm,
                         const Embedded::Point2f &markerCenter, const u8 pixel_radius,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle, const bool checkAngleX)
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
+                        const bool checkAngleX,
+                        const bool useManualSpeed)
       {
         AnkiAssert(markerWidth_mm > 0.f);
         
@@ -567,14 +574,16 @@ namespace Anki {
           VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, markerCenter, static_cast<f32>(pixel_radius), checkAngleX);
         }
         
+        useManualSpeed_ = useManualSpeed;
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         
         success_ = false;
       }
       
-      void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+      void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
+        useManualSpeed_ = useManualSpeed;
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
