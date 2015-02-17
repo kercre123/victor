@@ -137,6 +137,7 @@ END_MESSAGE_DEFINITION(TrimPath)
 // ExecutePath
 START_MESSAGE_DEFINITION(ExecutePath, 1)
 ADD_MESSAGE_MEMBER(u16, pathID)   // u16 or u8?
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(ExecutePath)
 
 // DockWithObject
@@ -150,6 +151,7 @@ ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many p
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, markerType)
 ADD_MESSAGE_MEMBER(u8, markerType2) // End marker (for bridge crossing only)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(DockWithObject)
 
 // AbortDocking

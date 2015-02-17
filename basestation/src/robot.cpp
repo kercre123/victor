@@ -1158,7 +1158,7 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    Result Robot::ExecutePath(const Planning::Path& path)
+    Result Robot::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
     {
       Result lastResult = RESULT_FAIL;
       
@@ -1172,7 +1172,7 @@ namespace Anki {
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
           _pdo->SetPath(path);
-          lastResult = SendExecutePath(path);
+          lastResult = SendExecutePath(path, useManualSpeed);
         }
         
         // Visualize path if robot has just started traversing it.
@@ -1362,9 +1362,10 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction)
+                                 const DockAction_t dockAction,
+                                 const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
+      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -1373,7 +1374,8 @@ namespace Anki {
                                  const DockAction_t dockAction,
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
-                                 const u8 pixel_radius)
+                                 const u8 pixel_radius,
+                                 const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -1397,7 +1399,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius);
+      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
     
     
@@ -1411,7 +1413,8 @@ namespace Anki {
                                      const DockAction_t dockAction,
                                      const u16 image_pixel_x,
                                      const u16 image_pixel_y,
-                                     const u8 pixel_radius)
+                                     const u8 pixel_radius,
+                                     const bool useManualSpeed)
     {
       const Vision::Marker::Code code1 = marker->GetCode();
       Vision::Marker::Code       code2 = code1;
@@ -1439,6 +1442,7 @@ namespace Anki {
       msg.markerWidth_mm = marker->GetSize();
       msg.markerType     = static_cast<u8>(code1);
       msg.markerType2    = static_cast<u8>(code2);
+      msg.useManualSpeed = useManualSpeed;
       msg.dockAction     = dockAction;
       msg.image_pixel_x  = image_pixel_x;
       msg.image_pixel_y  = image_pixel_y;
@@ -1615,12 +1619,13 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    Result Robot::SendExecutePath(const Planning::Path& path) const
+    Result Robot::SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const
     {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message\n");
+      m.useManualSpeed = useManualSpeed;
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     

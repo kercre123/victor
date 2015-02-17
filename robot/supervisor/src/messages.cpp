@@ -314,7 +314,7 @@ namespace Anki {
       }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
-        PathFollower::StartPathTraversal(msg.pathID);
+        PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
       
       void ProcessDockWithObjectMessage(const DockWithObject& msg)
@@ -327,12 +327,14 @@ namespace Anki {
                                               msg.markerWidth_mm,
                                               markerCenter,
                                               msg.pixel_radius,
+                                              msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
         } else {
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
                                               static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
+                                              msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
         }
       }
