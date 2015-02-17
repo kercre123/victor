@@ -90,6 +90,9 @@ namespace Anki {
           //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
           
           (*LookupTable_[msgID].dispatchFcn)(buffer);
+          
+          // Treat any message as a ping
+          lastPingTime_ = HAL::GetTimeStamp();
         }
         
         if(lookForID_ != NO_MESSAGE_ID) {
