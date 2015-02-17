@@ -349,7 +349,15 @@ namespace Anki {
         
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
-          PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
+          if (PathFollower::IsInManualSpeedMode()) {
+            // TODO: Maybe want to set manual speed via a different message?
+            //       For now, using average wheel speed.
+            f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
+            PRINT("Commanding manual path speed %f mm/s.\n", manualSpeed);
+            PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
+          } else {
+            PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
+          }
           return;
         }
         
