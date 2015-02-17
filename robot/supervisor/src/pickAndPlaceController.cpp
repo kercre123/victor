@@ -74,6 +74,9 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
+        // Whether or not docking path should be traversed with manually controlled speed
+        bool useManualSpeed_ = false;
+        
         
 #if USE_SNAPSHOT_VERIFICATION
         // "Snapshots" for visual verification of a successful block pick up
@@ -381,7 +384,8 @@ namespace Anki {
               if (action_ == DA_PLACE_LOW) {
                 DockingController::StartDockingToRelPose(dockOffsetDistX_,
                                                          dockOffsetDistY_,
-                                                         dockOffsetAng_);
+                                                         dockOffsetAng_,
+                                                         useManualSpeed_);
               } else {
                 // When we are "docking" with a ramp or crossing a bridge, we
                 // don't want to worry about the X angle being large (since we
@@ -394,7 +398,8 @@ namespace Anki {
                                                   dockOffsetDistX_,
                                                   dockOffsetDistY_,
                                                   dockOffsetAng_,
-                                                  checkAngleX);
+                                                  checkAngleX,
+                                                  useManualSpeed_);
                 } else {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
@@ -403,7 +408,8 @@ namespace Anki {
                                                   dockOffsetDistX_,
                                                   dockOffsetDistY_,
                                                   dockOffsetAng_,
-                                                  checkAngleX);
+                                                  checkAngleX,
+                                                  useManualSpeed_);
                 }
               }
               mode_ = DOCKING;
@@ -788,6 +794,7 @@ namespace Anki {
       void DockToBlock(const Vision::MarkerType markerType,
                        const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
+                       const bool useManualSpeed,
                        const DockAction_t action)
       {
 #if(DEBUG_PAP_CONTROLLER)
@@ -812,6 +819,8 @@ namespace Anki {
         dockOffsetDistY_ = 0;
         dockOffsetAng_ = 0;
         
+        useManualSpeed_ = useManualSpeed;
+        
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
@@ -821,9 +830,10 @@ namespace Anki {
                        const f32 markerWidth_mm,
                        const Embedded::Point2f& markerCenter,
                        const f32 pixelSearchRadius,
+                       const bool useManualSpeed,
                        const DockAction_t action)
       {
-        DockToBlock(markerType, markerType2, markerWidth_mm, action);
+        DockToBlock(markerType, markerType2, markerWidth_mm, useManualSpeed, action);
         
         markerCenter_ = markerCenter;
         pixelSearchRadius_ = pixelSearchRadius;

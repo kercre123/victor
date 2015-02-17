@@ -65,6 +65,7 @@ namespace Anki {
       void DockToBlock(const Vision::MarkerType markerType,
                        const Vision::MarkerType markerType2,
                        const f32 markerWidth_mm,
+                       const bool useManualSpeed,
                        const DockAction_t action);
       
       // Same as above except docking will only occur if the specified marker is found
@@ -74,6 +75,7 @@ namespace Anki {
                        const f32 markerWidth_mm,
                        const Embedded::Point2f& markerCenter,
                        const f32 pixelSearchRadius,
+                       const bool useManualSpeed,                       
                        const DockAction_t action);
        
       // Places block on ground and backs out.
