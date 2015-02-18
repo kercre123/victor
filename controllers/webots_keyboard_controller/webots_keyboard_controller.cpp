@@ -59,7 +59,7 @@ namespace Anki {
       namespace {
         // Constants for Webots:
         const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 10.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -182,11 +182,11 @@ namespace Anki {
       void SendSaveImages(bool on);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
-      void SendExecutePathToPose(const Pose3d& p);
-      void SendPlaceObjectOnGroundSequence(const Pose3d& p);
-      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose);
-      void SendPickAndPlaceSelectedObject(const bool usePreDockPose);
-      void SendTraverseSelectedObject();
+      void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+      void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
       void SendSelectNextObject();
@@ -513,7 +513,7 @@ namespace Anki {
           // Use slow motor speeds if SHIFT is pressed
           f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
           f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
-          if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+          if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
             liftSpeed *= 0.4;
             headSpeed *= 0.5;
@@ -761,7 +761,7 @@ namespace Anki {
               }
               case CKEY_GOTO_POSE:
               {
-                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   poseMarkerMode_ = !poseMarkerMode_;
                   printf("Pose marker mode: %d\n", poseMarkerMode_);
                   poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
@@ -769,12 +769,15 @@ namespace Anki {
                   break;
                 }
                 
+                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                  
                 if (poseMarkerMode_ == 0) {
                   // Execute path to pose
-                  SendExecutePathToPose(poseMarkerPose_);
+                  printf("Going to pose marker (useManualSpeed: %d)\n", useManualSpeed);
+                  SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
                   SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 } else {
-                  SendPlaceObjectOnGroundSequence(poseMarkerPose_);
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
                   SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                   
@@ -795,7 +798,7 @@ namespace Anki {
               }
               case CKEY_CLEAR_BLOCKS:
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   if(BehaviorManager::CREEP == behaviorMode_) {
                     behaviorMode_ = BehaviorManager::None;
                   } else {
@@ -811,23 +814,18 @@ namespace Anki {
               }
               case CKEY_PICK_AND_PLACE:
               {
-                bool usePreDockPose = true;
-                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-                  // Don't go to predock pose first. I.e., just try to dock from
-                  // right there.
-                  usePreDockPose = false;
-                }
-                SendPickAndPlaceSelectedObject(usePreDockPose);
+                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                
+                SendPickAndPlaceSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
               case CKEY_USE_RAMP:
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
-                  // Shift+R
-                  SendForceAddRobot();
-                } else {
-                  SendTraverseSelectedObject();
-                }
+                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                
+                SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
               case CKEY_START_DICE_DEMO:
@@ -841,7 +839,7 @@ namespace Anki {
               }
               case CKEY_CANCEL_PATH:
               {
-                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
                   SendAbortAll();
                 } else {
@@ -989,7 +987,7 @@ namespace Anki {
                 
               case CKEY_TOGGLE_FACE_TRACKING:
               {
-                if (modifier_key == webots::Supervisor::KEYBOARD_SHIFT) {
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   SendStopFaceTracking();
                 } else {
                   SendStartFaceTracking(5);
@@ -1259,7 +1257,7 @@ namespace Anki {
                 case GC_BUTTON_RB:
                 {
                   bool usePreDockPose = !LT_held;
-                  SendPickAndPlaceSelectedObject(usePreDockPose);
+                  SendPickAndPlaceSelectedObject(usePreDockPose, false);
                   break;
                 }
                 case GC_BUTTON_DIR_UP:
@@ -1474,23 +1472,25 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendExecutePathToPose(const Pose3d& p)
+      void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed)
       {
         MessageU2G_GotoPose m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
         SendMessage(m);
       }
       
-      void SendPlaceObjectOnGroundSequence(const Pose3d& p)
+      void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
       {
         MessageU2G_PlaceObjectOnGround m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
         SendMessage(m);
       }
       
@@ -1512,22 +1512,25 @@ namespace Anki {
         SendMessage(m);
       }
       
-      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose)
+      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
       {
         MessageU2G_PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
         m.objectID = -1;
         SendMessage(m);
       }
       
-      void SendPickAndPlaceSelectedObject(const bool usePreDockPose)
+      void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {
-        SendPickAndPlaceObject(-1, usePreDockPose);
+        SendPickAndPlaceObject(-1, usePreDockPose, useManualSpeed);
       }
       
-      void SendTraverseSelectedObject()
+      void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {
         MessageU2G_TraverseObject m;
+        m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
         SendMessage(m);
       }
       
