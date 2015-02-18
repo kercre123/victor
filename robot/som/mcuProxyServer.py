@@ -61,10 +61,9 @@ class MCUProxyServer(object):
     def __addFromMcuQ(self, msg):
         self._fromMcuQ.append(msg)
     def __getFromMcuQ(self):
-        if len(self._fromMcuQ):
-            return self._fromMcuQ.pop(0)
-        else:
-            return None
+        ret = self._fromMcuQ
+        self._fromMcuQ = []
+        return ret
     def __clearFromMcuQ(self):
         self._fromMcuQ = []
     fromMcuQ = property(__getFromMcuQ, __addFromMcuQ, __clearFromMcuQ, "Meta accessor for messages queued from the MCU to the radio. Set to queue a message, get to pop, del to clear queue.")
@@ -122,8 +121,11 @@ class MCUProxyServer(object):
             if msgID == messages.PrintText.ID:
                 sys.stdout.write(self.rawSerData[1:length]) # Print statement
             elif msgID == messages.RobotState.ID:
-                self.timestampCB(struct.unpack('I', self.rawSerData[1:5])[0]) # Unpack the timestamp member of the RobotState message
-            if self.v:
+                rsmts = struct.unpack('I', self.rawSerData[1:5])[0]
+                self.timestampCB(rsmts) # Unpack the timestamp member of the RobotState message
+                if self.v:
+                    sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+            elif self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 #sys.stdout.write(repr([ord(c) for c in self.rawSerData[:10]]) + '\n')
                 sys.stdout.flush()
