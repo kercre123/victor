@@ -103,7 +103,7 @@ public class GyroControls : MonoBehaviour {
 		Input.gyro.enabled = true;
 		Quaternion deviceRot = Input.gyro.attitude;
 		Vector3 euler = deviceRot.eulerAngles;
-		rollStart = euler.z;
+		//rollStart = euler.z;
 		pitchStart = euler.y;
 		Debug.Log("GyronControls Calibrate ScreenOrientation(" + Screen.orientation + ") rollStart(" + rollStart + ") pitchStart(" + pitchStart + ")");
 

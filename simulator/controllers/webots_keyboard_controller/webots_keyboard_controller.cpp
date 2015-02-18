@@ -172,6 +172,7 @@ namespace Anki {
       void PrintHelp(void);
       void SendMessage(const UiMessage& msg);
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
+      void SendTurnInPlace(const f32 angle_rad);
       void SendMoveHead(const f32 speed_rad_per_sec);
       void SendMoveLift(const f32 speed_rad_per_sec);
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
@@ -593,6 +594,18 @@ namespace Anki {
               case webots::Robot::KEYBOARD_RIGHT:
               {
                 ++steeringDir;
+                break;
+              }
+                
+              case (s32)'<':
+              {
+                SendTurnInPlace(DEG_TO_RAD(45));
+                break;
+              }
+                
+              case (s32)'>':
+              {
+                SendTurnInPlace(DEG_TO_RAD(-45));
                 break;
               }
                 
@@ -1394,6 +1407,14 @@ namespace Anki {
         MessageU2G_DriveWheels m;
         m.lwheel_speed_mmps = lwheel_speed_mmps;
         m.rwheel_speed_mmps = rwheel_speed_mmps;
+        SendMessage(m);
+      }
+      
+      void SendTurnInPlace(const f32 angle_rad)
+      {
+        MessageU2G_TurnInPlace m;
+        m.robotID = 1;
+        m.angle_rad = angle_rad;
         SendMessage(m);
       }
       

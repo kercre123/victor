@@ -19,7 +19,6 @@
 
 
 // Cozmo includes
-#import <anki/cozmo/basestation/basestation.h>
 #import <anki/cozmo/game/comms/messaging/uiMessages.h>
 #import <anki/cozmo/shared/cozmoConfig.h>
 #import <anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h>
@@ -229,25 +228,17 @@ using namespace Anki;
     _cozmoGame = nullptr;
   }
   
-  if(asHost) {
-    //Anki::Cozmo::CozmoEngineHost* cozmoEngineHost = new Anki::Cozmo::CozmoEngineHost();
-    //cozmoEngineHost->Init(_config);
-    
-    Cozmo::CozmoGameHost* cozmoGameHost = new Cozmo::CozmoGameHost();
-    cozmoGameHost->Init(_config);
-    
-    // Force add a robot
-    if (FORCE_ADD_ROBOT) {
-      cozmoGameHost->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
-    }
-    
-    _cozmoGame = cozmoGameHost;
-    
-  } else { // as Client
-    _cozmoGame = new Anki::Cozmo::CozmoGameClient();
-    _cozmoGame->Init(_config);
-  }
+  _cozmoGame = new Cozmo::CozmoGame();
+  _cozmoGame->Init(_config);
   
+  _config[AnkiUtil::kP_AS_HOST] = asHost;
+  _cozmoGame->StartEngine(_config);
+  
+  // Force add a robot
+  if (FORCE_ADD_ROBOT) {
+    _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+  }
+    
   [self resetHeartbeatTimer];
   
   self.runState = CozmoEngineRunStateRunning;

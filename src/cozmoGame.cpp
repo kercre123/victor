@@ -59,8 +59,12 @@ namespace Cozmo {
       delete _cozmoEngine;
       _cozmoEngine = nullptr;
     }
+  
+    VizManager::getInstance()->Disconnect();
     
+    // Remove singletons
     SoundManager::removeInstance();
+    VizManager::removeInstance();
   }
   
   CozmoGameImpl::RunState CozmoGameImpl::GetRunState() const
@@ -169,6 +173,9 @@ namespace Cozmo {
                         "Engine already running, must start from stopped state.\n");
     }
      */
+    
+    _runState = CozmoGame::WAITING_FOR_UI_DEVICES;
+    
     return lastResult;
   }
   
@@ -359,10 +366,47 @@ namespace Cozmo {
         
       case CozmoGame::ENGINE_RUNNING:
       {
-        lastResult = _cozmoEngine->Update(currentTime_sec);
+        lastResult = cozmoEngineHost->Update(currentTime_sec);
+        
         if (lastResult != RESULT_OK) {
           PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                               "Bad engine update: status = %d\n", lastResult);
+        } else {
+          // Send out robot state information for each robot:
+          auto robotIDs = cozmoEngineHost->GetRobotIDList();
+          for(auto & robotID : robotIDs) {
+            Robot* robot = cozmoEngineHost->GetRobotByID(robotID);
+            if(robot == nullptr) {
+              PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost", "Null robot returned for ID=%d!\n", robotID);
+              lastResult = RESULT_FAIL;
+            } else {
+              MessageG2U_RobotState msg;
+              
+              msg.robotID = robotID;
+              
+              msg.pose_x = robot->GetPose().GetTranslation().x();
+              msg.pose_y = robot->GetPose().GetTranslation().y();
+              msg.pose_z = robot->GetPose().GetTranslation().z();
+              
+              msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
+
+              msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
+              msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
+              
+              msg.headAngle_rad = robot->GetHeadAngle();
+              msg.liftHeight_mm = robot->GetLiftHeight();
+              
+              msg.status = 0;
+              if(robot->IsCarryingObject())   { msg.status |= IS_CARRYING_BLOCK; }
+              if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
+              if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
+              if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
+
+              // TODO: Add proximity sensor data to state message
+              
+              _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+            }
+          }
         }
         break;
       }

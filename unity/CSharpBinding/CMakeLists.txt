@@ -16,7 +16,7 @@ set(SOURCE_FILES
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 set(PUBLIC_HEADER_FILES
   ${PUBLIC_HEADER_FILES_ROOT}
