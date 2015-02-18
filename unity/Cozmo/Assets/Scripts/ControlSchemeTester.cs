@@ -92,6 +92,7 @@ public class ControlSchemeTester : MonoBehaviour {
 //	}
 
 	public void Exit() {
+		RobotEngineManager.instance.Disconnect ();
 		Application.LoadLevel("Shell");
 	}
 

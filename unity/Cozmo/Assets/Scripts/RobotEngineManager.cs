@@ -165,6 +165,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void Disconnected(DisconnectionReason reason)
 	{
+		Application.LoadLevel ("Shell");
+
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}

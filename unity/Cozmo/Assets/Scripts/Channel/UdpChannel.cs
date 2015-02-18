@@ -175,6 +175,7 @@ public class UdpChannel : ChannelBase {
 
 			try {
 				string localIP = (localAddress ?? IPAddress.Loopback).ToString();
+				int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
 				// set up advertisement message
 				Debug.Log ("Local IP: " + localIP);
@@ -189,7 +190,7 @@ public class UdpChannel : ChannelBase {
 				Encoding.UTF8.GetBytes (localIP, 0, localIP.Length, advertisementRegistrationMessage.ip, 0);
 				advertisementRegistrationMessage.ip[length] = 0;
 				
-				advertisementRegistrationMessage.port = (ushort)localPort;
+				advertisementRegistrationMessage.port = (ushort)realPort;
 				advertisementRegistrationMessage.id = (byte)deviceID;
 				advertisementRegistrationMessage.protocol = (byte)ChannelProtocol.Udp;
 				advertisementRegistrationMessage.enableAdvertisement = 1;
@@ -607,10 +608,14 @@ public class UdpChannel : ChannelBase {
 					if (connectionState == ConnectionState.Advertising) {
 						connectionState = ConnectionState.Connected;
 						mainEndPoint = ipEndPoint;
+						lastReceiveTime = lastUpdateTime;
+
 						// ignore first message
 					}
 					else if (mainEndPoint.Equals (ipEndPoint)) {
 
+						lastReceiveTime = lastUpdateTime;
+						
 						serializer.ByteBuffer = state.buffer;
 						NetworkMessage message;
 						try {
