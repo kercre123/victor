@@ -67,6 +67,8 @@ namespace Anki {
         const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
         const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
+        MessageU2G_Ping _pingMsg;
+        
         std::set<int> lastKeysPressed_;
         
         bool wasMovingWheels_ = false;
@@ -1358,6 +1360,10 @@ namespace Anki {
         
           case UI_RUNNING:
           {
+            // Send ping to engine
+            msgHandler_.SendMessage(1, _pingMsg);
+            ++_pingMsg.counter;
+            
             msgHandler_.ProcessMessages();
             
             // Update poseMarker pose
