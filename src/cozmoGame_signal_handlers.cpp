@@ -44,6 +44,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
     
+    auto cbRobotDisconnectedSignal = [this](RobotID_t robotID, float timeSinceLastMsg_sec) {
+      this->HandleRobotDisconnectedSignal(robotID, timeSinceLastMsg_sec);
+    };
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnectedSignal));
+    
     auto cbUiDeviceConnectedSignal = [this](UserDeviceID_t deviceID, bool successful) {
       this->HandleUiDeviceConnectedSignal(deviceID, successful);
     };
@@ -149,6 +154,14 @@ namespace Cozmo {
     MessageG2U_RobotConnected msg;
     msg.robotID = robotID;
     msg.successful = successful;
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
+  
+  void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec)
+  {
+    MessageG2U_RobotDisconnected msg;
+    msg.robotID = robotID;
+    msg.timeSinceLastMsg_sec = timeSinceLastMsg_sec;
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   

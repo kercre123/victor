@@ -11,6 +11,10 @@
 ////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+START_MESSAGE_DEFINITION(G2U_Ping, 1)
+ADD_MESSAGE_MEMBER(u32, counter)        // should count sequentially if no drops
+END_MESSAGE_DEFINITION(G2U_Ping)
+
 // Let the UI know that a robot is advertising as available
 START_MESSAGE_DEFINITION(G2U_RobotAvailable, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
@@ -24,6 +28,12 @@ START_MESSAGE_DEFINITION(G2U_RobotConnected, 1)
 ADD_MESSAGE_MEMBER(u32, robotID)
 ADD_MESSAGE_MEMBER(u8, successful)
 END_MESSAGE_DEFINITION(G2U_RobotConnected)
+
+START_MESSAGE_DEFINITION(G2U_RobotDisconnected, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(f32, timeSinceLastMsg_sec)
+END_MESSAGE_DEFINITION(G2U_RobotDisconnected)
+
 
 START_MESSAGE_DEFINITION(G2U_UiDeviceConnected, 1)
 ADD_MESSAGE_MEMBER(u32, deviceID)

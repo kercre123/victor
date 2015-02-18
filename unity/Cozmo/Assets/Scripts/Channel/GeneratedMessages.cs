@@ -35,6 +35,11 @@ public enum NetworkMessageID {
 
 
 
+U2G_Ping,
+
+
+
+
 U2G_ConnectToRobot,
 
 
@@ -265,6 +270,11 @@ U2G_SetFaceDetectParams,
 
 
 
+G2U_Ping,
+
+
+
+
 G2U_RobotAvailable,
 
 
@@ -274,6 +284,12 @@ G2U_UiDeviceAvailable,
 
 
 G2U_RobotConnected,
+
+
+
+
+G2U_RobotDisconnected,
+
 
 
 
@@ -300,6 +316,11 @@ G2U_StopSound,
 
 
 
+
+
+public partial class U2G_Ping : NetworkMessage {
+public u32 counter;
+public override int ID { get { return (int)NetworkMessageID.U2G_Ping; } } }
 
 
 public partial class U2G_ConnectToRobot : NetworkMessage {
@@ -558,6 +579,11 @@ public override int ID { get { return (int)NetworkMessageID.U2G_SetFaceDetectPar
 
 
 
+public partial class G2U_Ping : NetworkMessage {
+public u32 counter;
+public override int ID { get { return (int)NetworkMessageID.G2U_Ping; } } }
+
+
 public partial class G2U_RobotAvailable : NetworkMessage {
 public u32 robotID;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotAvailable; } } }
@@ -570,6 +596,12 @@ public partial class G2U_RobotConnected : NetworkMessage {
 public u32 robotID;
 public u8 successful;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotConnected; } } }
+
+public partial class G2U_RobotDisconnected : NetworkMessage {
+public u32 robotID;
+public f32 timeSinceLastMsg_sec;
+public override int ID { get { return (int)NetworkMessageID.G2U_RobotDisconnected; } } }
+
 
 public partial class G2U_UiDeviceConnected : NetworkMessage {
 public u32 deviceID;
@@ -639,6 +671,11 @@ public override int ID { get { return (int)NetworkMessageID.G2U_StopSound; } } }
 
 
 
+
+
+public partial class U2G_Ping { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.counter) +
+0; } } }
 
 
 public partial class U2G_ConnectToRobot { public override int SerializationLength { get { return
@@ -897,6 +934,11 @@ ByteSerializer.GetSerializationLength(this.maxObjectWidth) +
 
 
 
+public partial class G2U_Ping { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.counter) +
+0; } } }
+
+
 public partial class G2U_RobotAvailable { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.robotID) +
 0; } } }
@@ -909,6 +951,12 @@ public partial class G2U_RobotConnected { public override int SerializationLengt
 ByteSerializer.GetSerializationLength(this.robotID) +
 ByteSerializer.GetSerializationLength(this.successful) +
 0; } } }
+
+public partial class G2U_RobotDisconnected { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.timeSinceLastMsg_sec) +
+0; } } }
+
 
 public partial class G2U_UiDeviceConnected { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.deviceID) +
@@ -978,6 +1026,11 @@ public partial class G2U_StopSound { public override int SerializationLength { g
 
 
 
+
+
+public partial class U2G_Ping { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.counter);
+} }
 
 
 public partial class U2G_ConnectToRobot { public override void Serialize(ByteSerializer serializer) {
@@ -1236,6 +1289,11 @@ serializer.Serialize(this.maxObjectWidth);
 
 
 
+public partial class G2U_Ping { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.counter);
+} }
+
+
 public partial class G2U_RobotAvailable { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.robotID);
 } }
@@ -1248,6 +1306,12 @@ public partial class G2U_RobotConnected { public override void Serialize(ByteSer
 serializer.Serialize(this.robotID);
 serializer.Serialize(this.successful);
 } }
+
+public partial class G2U_RobotDisconnected { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+serializer.Serialize(this.timeSinceLastMsg_sec);
+} }
+
 
 public partial class G2U_UiDeviceConnected { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.deviceID);
@@ -1317,6 +1381,11 @@ public partial class G2U_StopSound { public override void Serialize(ByteSerializ
 
 
 
+
+
+public partial class U2G_Ping { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.counter);
+} }
 
 
 public partial class U2G_ConnectToRobot { public override void Deserialize(ByteSerializer serializer) {
@@ -1575,6 +1644,11 @@ serializer.Deserialize(out this.maxObjectWidth);
 
 
 
+public partial class G2U_Ping { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.counter);
+} }
+
+
 public partial class G2U_RobotAvailable { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.robotID);
 } }
@@ -1587,6 +1661,12 @@ public partial class G2U_RobotConnected { public override void Deserialize(ByteS
 serializer.Deserialize(out this.robotID);
 serializer.Deserialize(out this.successful);
 } }
+
+public partial class G2U_RobotDisconnected { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.timeSinceLastMsg_sec);
+} }
+
 
 public partial class G2U_UiDeviceConnected { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.deviceID);
@@ -1661,6 +1741,11 @@ public static class NetworkMessageCreation {
         return null;
 
 
+
+
+
+
+case NetworkMessageID.U2G_Ping: return new U2G_Ping();
 
 
 
@@ -1895,6 +1980,11 @@ case NetworkMessageID.U2G_SetFaceDetectParams: return new U2G_SetFaceDetectParam
 
 
 
+case NetworkMessageID.G2U_Ping: return new G2U_Ping();
+
+
+
+
 case NetworkMessageID.G2U_RobotAvailable: return new G2U_RobotAvailable();
 
 
@@ -1904,6 +1994,12 @@ case NetworkMessageID.G2U_UiDeviceAvailable: return new G2U_UiDeviceAvailable();
 
 
 case NetworkMessageID.G2U_RobotConnected: return new G2U_RobotConnected();
+
+
+
+
+case NetworkMessageID.G2U_RobotDisconnected: return new G2U_RobotDisconnected();
+
 
 
 
