@@ -95,12 +95,14 @@ namespace Cozmo {
     void HandleRobotAvailableSignal(RobotID_t robotID);
     void HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID);
     void HandleRobotConnectedSignal(RobotID_t robotID, bool successful);
+    void HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec);
     void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
     void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                          float x_upperLeft,  float y_upperLeft,
                                          float width,  float height);
+    void HandleRobotObservedNothingSignal(uint8_t robotID);    
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
     void HandleRobotImageAvailable(RobotID_t robotID);
@@ -124,6 +126,10 @@ namespace Cozmo {
     //
     // Member Variables
     //
+    
+    Cozmo::MessageG2U_Ping           _pingToUI;
+    f32                              _lastPingTimeFromUI_sec;
+    u32                              _lastPingCounterFromUI;
     
     bool                             _isHost;
     bool                             _isEngineStarted;

@@ -28,6 +28,8 @@
 namespace Anki {
 namespace Cozmo {
   
+  const float UI_PING_TIMEOUT_SEC = 1.0f;
+  
 #pragma mark - CozmoGame Implementation
     
   CozmoGameImpl::CozmoGameImpl()
@@ -40,6 +42,8 @@ namespace Cozmo {
   , _uiAdvertisementService("UIAdvertisementService")
   , _hostUiDeviceID(1)
   {
+    _pingToUI.counter = 0;
+    
     SetupSignalHandlers();
     
     RegisterCallbacksU2G();
@@ -74,6 +78,8 @@ namespace Cozmo {
   
   Result CozmoGameImpl::Init(const Json::Value& config)
   {
+    _lastPingTimeFromUI_sec = -1.f;
+    
     if(_isEngineStarted) {
       // We've already initialzed and started running before, so shut down the
       // already-running engine.
@@ -173,6 +179,9 @@ namespace Cozmo {
                         "Engine already running, must start from stopped state.\n");
     }
      */
+    
+    _runState = CozmoGame::WAITING_FOR_UI_DEVICES;
+    
     return lastResult;
   }
   
@@ -243,10 +252,29 @@ namespace Cozmo {
   Result CozmoGameImpl::Update(const float currentTime_sec)
   {
     Result lastResult = RESULT_OK;
+  
+    if(_lastPingTimeFromUI_sec > 0.f) {
+      const f32 timeSinceLastUiPing = currentTime_sec - _lastPingTimeFromUI_sec;
+      
+      if(timeSinceLastUiPing > UI_PING_TIMEOUT_SEC) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.Update",
+                          "Lost connection to UI (no ping in %.2f seconds). Resetting.\n",
+                          timeSinceLastUiPing);
+        
+        Init(_config);
+        return lastResult;
+      }
+    }
     
     // Update UI comms
     if(_uiComms.IsInitialized()) {
       _uiComms.Update();
+      
+      if(_uiComms.GetNumConnectedDevices() > 0) {
+        // Ping the UI to let them know we're still here
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, _pingToUI);
+        ++_pingToUI.counter;
+      }
     }
     
     // Handle UI messages
@@ -379,6 +407,8 @@ namespace Cozmo {
             } else {
               MessageG2U_RobotState msg;
               
+              msg.robotID = robotID;
+              
               msg.pose_x = robot->GetPose().GetTranslation().x();
               msg.pose_y = robot->GetPose().GetTranslation().y();
               msg.pose_z = robot->GetPose().GetTranslation().z();
@@ -398,6 +428,8 @@ namespace Cozmo {
               if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
 
               // TODO: Add proximity sensor data to state message
+              
+              _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
             }
           }
         }

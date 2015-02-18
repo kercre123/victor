@@ -34,7 +34,7 @@ set(SOURCE_FILES
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 message(STATUS "COZMO_GAME_INCLUDE_DIR = ${COZMO_GAME_INCLUDE_DIR}")
 

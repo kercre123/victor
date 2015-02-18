@@ -35,6 +35,11 @@ public enum NetworkMessageID {
 
 
 
+U2G_Ping,
+
+
+
+
 U2G_ConnectToRobot,
 
 
@@ -128,21 +133,7 @@ U2G_SetHeadlights,
 
 
 U2G_GotoPose,
-
-
-
-
-
-
-
 U2G_PlaceObjectOnGround,
-
-
-
-
-
-
-
 U2G_PlaceObjectOnGroundHere,
 
 
@@ -161,7 +152,10 @@ U2G_PickAndPlaceObject,
 
 
 
+
 U2G_TraverseObject,
+
+
 
 
 
@@ -265,6 +259,11 @@ U2G_SetFaceDetectParams,
 
 
 
+G2U_Ping,
+
+
+
+
 G2U_RobotAvailable,
 
 
@@ -278,10 +277,20 @@ G2U_RobotConnected,
 
 
 
+G2U_RobotDisconnected,
+
+
+
+
+
 G2U_UiDeviceConnected,
 G2U_RobotState,
 G2U_ImageChunk,
 G2U_RobotObservedObject,
+G2U_RobotObservedNothing,
+
+
+
 G2U_DeviceDetectedVisionMarker,
 G2U_PlaySound,
 
@@ -296,6 +305,11 @@ G2U_StopSound,
 
 
 
+
+
+public partial class U2G_Ping : NetworkMessage {
+public u32 counter;
+public override int ID { get { return (int)NetworkMessageID.U2G_Ping; } } }
 
 
 public partial class U2G_ConnectToRobot : NetworkMessage {
@@ -403,6 +417,7 @@ public f32 x_mm;
 public f32 y_mm;
 public f32 rad;
 public u8 level;
+public u8 useManualSpeed;
 public override int ID { get { return (int)NetworkMessageID.U2G_GotoPose; } } }
 
 
@@ -411,6 +426,7 @@ public f32 x_mm;
 public f32 y_mm;
 public f32 rad;
 public u8 level;
+public u8 useManualSpeed;
 public override int ID { get { return (int)NetworkMessageID.U2G_PlaceObjectOnGround; } } }
 
 
@@ -429,10 +445,13 @@ public override int ID { get { return (int)NetworkMessageID.U2G_SelectNextObject
 public partial class U2G_PickAndPlaceObject : NetworkMessage {
 public s32 objectID;
 public u8 usePreDockPose;
+public u8 useManualSpeed;
 public override int ID { get { return (int)NetworkMessageID.U2G_PickAndPlaceObject; } } }
 
 
 public partial class U2G_TraverseObject : NetworkMessage {
+public u8 usePreDockPose;
+public u8 useManualSpeed;
 public override int ID { get { return (int)NetworkMessageID.U2G_TraverseObject; } } }
 
 
@@ -554,6 +573,11 @@ public override int ID { get { return (int)NetworkMessageID.U2G_SetFaceDetectPar
 
 
 
+public partial class G2U_Ping : NetworkMessage {
+public u32 counter;
+public override int ID { get { return (int)NetworkMessageID.G2U_Ping; } } }
+
+
 public partial class G2U_RobotAvailable : NetworkMessage {
 public u32 robotID;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotAvailable; } } }
@@ -566,6 +590,12 @@ public partial class G2U_RobotConnected : NetworkMessage {
 public u32 robotID;
 public u8 successful;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotConnected; } } }
+
+public partial class G2U_RobotDisconnected : NetworkMessage {
+public u32 robotID;
+public f32 timeSinceLastMsg_sec;
+public override int ID { get { return (int)NetworkMessageID.G2U_RobotDisconnected; } } }
+
 
 public partial class G2U_UiDeviceConnected : NetworkMessage {
 public u32 deviceID;
@@ -581,6 +611,7 @@ public f32 rightWheelSpeed_mmps;
 public f32 headAngle_rad;
 public f32 liftHeight_mm;
 public u8 status;
+public u8 robotID;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotState; } } }
 public partial class G2U_ImageChunk : NetworkMessage {
 public u32 imageId;
@@ -606,6 +637,11 @@ public u16 width;
 public u16 height;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotObservedObject; } } }
 
+
+public partial class G2U_RobotObservedNothing : NetworkMessage {
+public u32 robotID;
+public override int ID { get { return (int)NetworkMessageID.G2U_RobotObservedNothing; } } }
+
 public partial class G2U_DeviceDetectedVisionMarker : NetworkMessage {
 public u32 markerType;
 public f32 x_upperLeft;
@@ -629,6 +665,11 @@ public override int ID { get { return (int)NetworkMessageID.G2U_StopSound; } } }
 
 
 
+
+
+public partial class U2G_Ping { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.counter) +
+0; } } }
 
 
 public partial class U2G_ConnectToRobot { public override int SerializationLength { get { return
@@ -736,6 +777,7 @@ ByteSerializer.GetSerializationLength(this.x_mm) +
 ByteSerializer.GetSerializationLength(this.y_mm) +
 ByteSerializer.GetSerializationLength(this.rad) +
 ByteSerializer.GetSerializationLength(this.level) +
+ByteSerializer.GetSerializationLength(this.useManualSpeed) +
 0; } } }
 
 
@@ -744,6 +786,7 @@ ByteSerializer.GetSerializationLength(this.x_mm) +
 ByteSerializer.GetSerializationLength(this.y_mm) +
 ByteSerializer.GetSerializationLength(this.rad) +
 ByteSerializer.GetSerializationLength(this.level) +
+ByteSerializer.GetSerializationLength(this.useManualSpeed) +
 0; } } }
 
 
@@ -762,10 +805,13 @@ public partial class U2G_SelectNextObject { public override int SerializationLen
 public partial class U2G_PickAndPlaceObject { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.objectID) +
 ByteSerializer.GetSerializationLength(this.usePreDockPose) +
+ByteSerializer.GetSerializationLength(this.useManualSpeed) +
 0; } } }
 
 
 public partial class U2G_TraverseObject { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.usePreDockPose) +
+ByteSerializer.GetSerializationLength(this.useManualSpeed) +
 0; } } }
 
 
@@ -887,6 +933,11 @@ ByteSerializer.GetSerializationLength(this.maxObjectWidth) +
 
 
 
+public partial class G2U_Ping { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.counter) +
+0; } } }
+
+
 public partial class G2U_RobotAvailable { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.robotID) +
 0; } } }
@@ -899,6 +950,12 @@ public partial class G2U_RobotConnected { public override int SerializationLengt
 ByteSerializer.GetSerializationLength(this.robotID) +
 ByteSerializer.GetSerializationLength(this.successful) +
 0; } } }
+
+public partial class G2U_RobotDisconnected { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.timeSinceLastMsg_sec) +
+0; } } }
+
 
 public partial class G2U_UiDeviceConnected { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.deviceID) +
@@ -914,6 +971,7 @@ ByteSerializer.GetSerializationLength(this.rightWheelSpeed_mmps) +
 ByteSerializer.GetSerializationLength(this.headAngle_rad) +
 ByteSerializer.GetSerializationLength(this.liftHeight_mm) +
 ByteSerializer.GetSerializationLength(this.status) +
+ByteSerializer.GetSerializationLength(this.robotID) +
 0; } } }
 public partial class G2U_ImageChunk { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.imageId) +
@@ -939,6 +997,11 @@ ByteSerializer.GetSerializationLength(this.width) +
 ByteSerializer.GetSerializationLength(this.height) +
 0; } } }
 
+
+public partial class G2U_RobotObservedNothing { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+0; } } }
+
 public partial class G2U_DeviceDetectedVisionMarker { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.markerType) +
 ByteSerializer.GetSerializationLength(this.x_upperLeft) +
@@ -962,6 +1025,11 @@ public partial class G2U_StopSound { public override int SerializationLength { g
 
 
 
+
+
+public partial class U2G_Ping { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.counter);
+} }
 
 
 public partial class U2G_ConnectToRobot { public override void Serialize(ByteSerializer serializer) {
@@ -1069,6 +1137,7 @@ serializer.Serialize(this.x_mm);
 serializer.Serialize(this.y_mm);
 serializer.Serialize(this.rad);
 serializer.Serialize(this.level);
+serializer.Serialize(this.useManualSpeed);
 } }
 
 
@@ -1077,6 +1146,7 @@ serializer.Serialize(this.x_mm);
 serializer.Serialize(this.y_mm);
 serializer.Serialize(this.rad);
 serializer.Serialize(this.level);
+serializer.Serialize(this.useManualSpeed);
 } }
 
 
@@ -1095,10 +1165,13 @@ public partial class U2G_SelectNextObject { public override void Serialize(ByteS
 public partial class U2G_PickAndPlaceObject { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.objectID);
 serializer.Serialize(this.usePreDockPose);
+serializer.Serialize(this.useManualSpeed);
 } }
 
 
 public partial class U2G_TraverseObject { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.usePreDockPose);
+serializer.Serialize(this.useManualSpeed);
 } }
 
 
@@ -1220,6 +1293,11 @@ serializer.Serialize(this.maxObjectWidth);
 
 
 
+public partial class G2U_Ping { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.counter);
+} }
+
+
 public partial class G2U_RobotAvailable { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.robotID);
 } }
@@ -1232,6 +1310,12 @@ public partial class G2U_RobotConnected { public override void Serialize(ByteSer
 serializer.Serialize(this.robotID);
 serializer.Serialize(this.successful);
 } }
+
+public partial class G2U_RobotDisconnected { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+serializer.Serialize(this.timeSinceLastMsg_sec);
+} }
+
 
 public partial class G2U_UiDeviceConnected { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.deviceID);
@@ -1247,6 +1331,7 @@ serializer.Serialize(this.rightWheelSpeed_mmps);
 serializer.Serialize(this.headAngle_rad);
 serializer.Serialize(this.liftHeight_mm);
 serializer.Serialize(this.status);
+serializer.Serialize(this.robotID);
 } }
 public partial class G2U_ImageChunk { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.imageId);
@@ -1272,6 +1357,11 @@ serializer.Serialize(this.width);
 serializer.Serialize(this.height);
 } }
 
+
+public partial class G2U_RobotObservedNothing { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+} }
+
 public partial class G2U_DeviceDetectedVisionMarker { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.markerType);
 serializer.Serialize(this.x_upperLeft);
@@ -1295,6 +1385,11 @@ public partial class G2U_StopSound { public override void Serialize(ByteSerializ
 
 
 
+
+
+public partial class U2G_Ping { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.counter);
+} }
 
 
 public partial class U2G_ConnectToRobot { public override void Deserialize(ByteSerializer serializer) {
@@ -1402,6 +1497,7 @@ serializer.Deserialize(out this.x_mm);
 serializer.Deserialize(out this.y_mm);
 serializer.Deserialize(out this.rad);
 serializer.Deserialize(out this.level);
+serializer.Deserialize(out this.useManualSpeed);
 } }
 
 
@@ -1410,6 +1506,7 @@ serializer.Deserialize(out this.x_mm);
 serializer.Deserialize(out this.y_mm);
 serializer.Deserialize(out this.rad);
 serializer.Deserialize(out this.level);
+serializer.Deserialize(out this.useManualSpeed);
 } }
 
 
@@ -1428,10 +1525,13 @@ public partial class U2G_SelectNextObject { public override void Deserialize(Byt
 public partial class U2G_PickAndPlaceObject { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.objectID);
 serializer.Deserialize(out this.usePreDockPose);
+serializer.Deserialize(out this.useManualSpeed);
 } }
 
 
 public partial class U2G_TraverseObject { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.usePreDockPose);
+serializer.Deserialize(out this.useManualSpeed);
 } }
 
 
@@ -1553,6 +1653,11 @@ serializer.Deserialize(out this.maxObjectWidth);
 
 
 
+public partial class G2U_Ping { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.counter);
+} }
+
+
 public partial class G2U_RobotAvailable { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.robotID);
 } }
@@ -1565,6 +1670,12 @@ public partial class G2U_RobotConnected { public override void Deserialize(ByteS
 serializer.Deserialize(out this.robotID);
 serializer.Deserialize(out this.successful);
 } }
+
+public partial class G2U_RobotDisconnected { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.timeSinceLastMsg_sec);
+} }
+
 
 public partial class G2U_UiDeviceConnected { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.deviceID);
@@ -1580,6 +1691,7 @@ serializer.Deserialize(out this.rightWheelSpeed_mmps);
 serializer.Deserialize(out this.headAngle_rad);
 serializer.Deserialize(out this.liftHeight_mm);
 serializer.Deserialize(out this.status);
+serializer.Deserialize(out this.robotID);
 } }
 public partial class G2U_ImageChunk { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.imageId);
@@ -1603,6 +1715,11 @@ serializer.Deserialize(out this.topLeft_x);
 serializer.Deserialize(out this.topLeft_y);
 serializer.Deserialize(out this.width);
 serializer.Deserialize(out this.height);
+} }
+
+
+public partial class G2U_RobotObservedNothing { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
 } }
 
 public partial class G2U_DeviceDetectedVisionMarker { public override void Deserialize(ByteSerializer serializer) {
@@ -1633,6 +1750,11 @@ public static class NetworkMessageCreation {
         return null;
 
 
+
+
+
+
+case NetworkMessageID.U2G_Ping: return new U2G_Ping();
 
 
 
@@ -1730,21 +1852,7 @@ case NetworkMessageID.U2G_SetHeadlights: return new U2G_SetHeadlights();
 
 
 case NetworkMessageID.U2G_GotoPose: return new U2G_GotoPose();
-
-
-
-
-
-
-
 case NetworkMessageID.U2G_PlaceObjectOnGround: return new U2G_PlaceObjectOnGround();
-
-
-
-
-
-
-
 case NetworkMessageID.U2G_PlaceObjectOnGroundHere: return new U2G_PlaceObjectOnGroundHere();
 
 
@@ -1763,7 +1871,10 @@ case NetworkMessageID.U2G_PickAndPlaceObject: return new U2G_PickAndPlaceObject(
 
 
 
+
 case NetworkMessageID.U2G_TraverseObject: return new U2G_TraverseObject();
+
+
 
 
 
@@ -1867,6 +1978,11 @@ case NetworkMessageID.U2G_SetFaceDetectParams: return new U2G_SetFaceDetectParam
 
 
 
+case NetworkMessageID.G2U_Ping: return new G2U_Ping();
+
+
+
+
 case NetworkMessageID.G2U_RobotAvailable: return new G2U_RobotAvailable();
 
 
@@ -1880,10 +1996,20 @@ case NetworkMessageID.G2U_RobotConnected: return new G2U_RobotConnected();
 
 
 
+case NetworkMessageID.G2U_RobotDisconnected: return new G2U_RobotDisconnected();
+
+
+
+
+
 case NetworkMessageID.G2U_UiDeviceConnected: return new G2U_UiDeviceConnected();
 case NetworkMessageID.G2U_RobotState: return new G2U_RobotState();
 case NetworkMessageID.G2U_ImageChunk: return new G2U_ImageChunk();
 case NetworkMessageID.G2U_RobotObservedObject: return new G2U_RobotObservedObject();
+case NetworkMessageID.G2U_RobotObservedNothing: return new G2U_RobotObservedNothing();
+
+
+
 case NetworkMessageID.G2U_DeviceDetectedVisionMarker: return new G2U_DeviceDetectedVisionMarker();
 case NetworkMessageID.G2U_PlaySound: return new G2U_PlaySound();
 

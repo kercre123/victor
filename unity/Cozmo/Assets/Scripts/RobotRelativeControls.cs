@@ -7,8 +7,15 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
+	[SerializeField] AccelControls accelInputs = null;
 	[SerializeField] Toggle gyroRollControl = null;
 	[SerializeField] Toggle gyroPitchControl = null;
+
+	[SerializeField] Text text_x = null;
+	[SerializeField] Text text_y = null;
+
+	[SerializeField] Text text_leftWheelSpeed = null;
+	[SerializeField] Text text_rightWheelSpeed = null;
 
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
@@ -49,8 +56,32 @@ public class RobotRelativeControls : MonoBehaviour {
 		//take our v-pad control axes and calc translate to robot
 		inputs = Vector2.zero;
 
-		if(horizontalStick != null) inputs.x = horizontalStick.Horizontal;
-		if(verticalStick != null) inputs.y = verticalStick.Vertical;
+		bool driveForwardOnlyMode = false;
+		bool driveReverseOnlyMode = false;
+		bool turnInPlaceOnlyMode = false;
+
+		if(horizontalStick != null) {
+			if(horizontalStick.SideModeEngaged) {
+				turnInPlaceOnlyMode = true;
+			}
+			inputs.x = horizontalStick.Horizontal;
+		}
+
+		float maxAngle = 135f;
+
+		if(verticalStick != null) {
+
+			if(verticalStick.UpModeEngaged) {
+				driveForwardOnlyMode = true;
+				maxAngle = verticalStick.MaxAngle;
+			}
+			else if(verticalStick.DownModeEngaged) {
+				driveReverseOnlyMode = true;
+				maxAngle = verticalStick.MaxAngle;
+			}
+
+			inputs.y = verticalStick.Vertical;
+		}
 
 //		if(inputs.x == 0f && inputs.y == 0f) {
 //			inputs.x = Input.GetAxis("Horizontal");
@@ -58,13 +89,22 @@ public class RobotRelativeControls : MonoBehaviour {
 //		}
 
 		if(gyroInputs != null) {
-			if(gyroRollControl != null && gyroRollControl.isOn) inputs.x = gyroInputs.Horizontal * gyroInputs.Horizontal;
-			if(gyroPitchControl != null && gyroPitchControl.isOn) inputs.y = gyroInputs.Vertical * gyroInputs.Horizontal;;
+			if(gyroRollControl != null && gyroRollControl.isOn && (verticalStick == null || verticalStick.IsPressed) ) {
+				inputs.x = gyroInputs.Horizontal;
+			}
+
+			if(gyroPitchControl != null && gyroPitchControl.isOn) {
+				inputs.y = gyroInputs.Vertical;
+			}
 		}
 
-		if(reverseLikeACar) {
-			if(inputs.y < 0f) inputs.x = -inputs.x;
+		if(accelInputs != null && (verticalStick == null || verticalStick.IsPressed) ) {
+			inputs.x = accelInputs.Horizontal;
 		}
+
+//		if(reverseLikeACar) {
+//			if(inputs.y < 0f) inputs.x = -inputs.x;
+//		}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -74,19 +114,39 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = inputs;
 
+		if(driveForwardOnlyMode) {
+			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, false);
+		}
+		else if(driveReverseOnlyMode) {
+			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, true);
+		}
+		else if(turnInPlaceOnlyMode) {
+			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed);
+		}
+		else { //continues input range mode...causes issues at thresholds
+
+			CozmoUtil.CalcWheelSpeedsFromBotRelativeInputsB(inputs, out leftWheelSpeed, out rightWheelSpeed);
+		}
+
 		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-			CozmoUtil.CalcWheelSpeedsFromBotRelativeInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 		}
 
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
+
+
+		if(text_x != null) text_x.text = "x(" + inputs.x + ")";
+		if(text_y != null) text_y.text = "y(" + inputs.y + ")";
+
+		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed + ")";
+		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed + ")";
 	}
 
 	void OnDisable() {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
 
-		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
 		}
 	}

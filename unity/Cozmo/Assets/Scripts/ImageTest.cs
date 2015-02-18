@@ -13,7 +13,7 @@ public class ImageTest : MonoBehaviour
 
 	protected void RobotImage( Texture2D texture )
 	{
-		if( rect == null || rect.height != texture.height || rect.width != texture.width )
+		if( rect.height != texture.height || rect.width != texture.width )
 		{
 			rect = new Rect( 0, 0, texture.width, texture.height );
 		}

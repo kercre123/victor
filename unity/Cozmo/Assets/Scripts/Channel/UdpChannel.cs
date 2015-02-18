@@ -13,30 +13,38 @@ public class UdpChannel : ChannelBase {
 	{
 		public readonly UdpChannel channel;
 		public Socket socket;
+		public EndPoint endPoint;
 		public readonly byte[] buffer;
+		public int length;
+		public SocketBufferState chainedSend;
+		public bool isSocketActive;
+		public bool needsCloseWhenDone;
 
-		public SocketBufferState(UdpChannel channel, Socket socket)
+		public SocketBufferState(UdpChannel channel, Socket socket, EndPoint endPoint)
 		{
 			this.channel = channel;
-			this.socket = socket;
 			this.buffer = new byte[MaxBufferSize];
+			Reset (socket, endPoint);
+		}
+
+		public void Reset(Socket socket, EndPoint endPoint)
+		{
+			this.socket = socket;
+			this.endPoint = endPoint;
+			this.length = 0;
+			this.chainedSend = null;
+			this.isSocketActive = true;
+			this.needsCloseWhenDone = false;
 		}
 
 		public void Dispose()
 		{
 			channel.FreeBufferState (this);
-		}
-	}
-
-	private struct QueuedSend
-	{
-		public SocketBufferState state;
-		public int length;
-
-		public QueuedSend(SocketBufferState state, int size)
-		{
-			this.state = state;
-			this.length = size;
+			this.socket = null;
+			this.length = 0;
+			this.chainedSend = null;
+			this.isSocketActive = false;
+			this.needsCloseWhenDone = false;
 		}
 	}
 
@@ -44,37 +52,54 @@ public class UdpChannel : ChannelBase {
 		Disconnected,
 		Advertising,
 		Connected,
-		ConnectedAndSending,
 	}
 
 	// various constants
 	private const int MaxBufferSize = 8192;
-	private const int BufferStatePoolLength = 128;
-	private const int MaxQueuedSends = 64;
-	private const int MaxQueuedReceives = 64;
-	private const int MaxQueuedLogs = 64;
-	private const float AdvertiseTick = .25f;
+	private const int BufferStatePoolLength = 1280;
+	private const int MaxQueuedSends = 640;
+	private const int MaxQueuedReceives = 640;
+	private const int MaxQueuedLogs = 640;
 
 	// unique object used for locking
 	private readonly object sync = new object();
 
-	// sockets
+	// fixed messages
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg ();
+	private readonly U2G_Ping pingMessage = new U2G_Ping();
+	private readonly U2G_DisconnectFromUiDevice disconnectionMessage = new U2G_DisconnectFromUiDevice();
+
+	// sockets
 	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
-	private Socket advertisingClient;
+	private Socket advertisementClient;
 	private IPEndPoint advertisementEndPoint = null;
 	private Socket mainServer;
 	private IPEndPoint mainEndPoint = null;
 
+	// active operations
+	private SocketBufferState advertisementSend = null;
+	private SocketBufferState mainSend = null;
+	private SocketBufferState mainReceive = null;
+
 	// state information
 	private ConnectionState connectionState = ConnectionState.Disconnected;
-	private bool advertisingBusy = false;
-	private float lastAdvertise = 0;
 	private DisconnectionReason currentDisconnectionReason = DisconnectionReason.ConnectionLost;
+	private int pendingOperations = 0;
+
+	// timers
+	private const float AdvertiseTick = .25f;
+	private const float AdvertiseTimeout = 30.0f;
+	private const float PingTimeout = 0.1f;
+	private const float ReceiveTimeout = 1.0f;
+	private float lastUpdateTime = 0;
+	private float lastAdvertiseTime = 0;
+	private float startAdvertiseTime = 0;
+	private float lastReceiveTime = 0;
+	private float lastPingTime = 0;
 
 	// various queues
 	private readonly List<object> queuedLogs = new List<object>(MaxQueuedLogs);
-	private readonly Queue<QueuedSend> sentBuffers = new Queue<QueuedSend>(MaxQueuedSends);
+	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
 	private readonly List<NetworkMessage> receivedMessages = new List<NetworkMessage> (MaxQueuedReceives);
 
 	// lists of pooled objects
@@ -91,11 +116,12 @@ public class UdpChannel : ChannelBase {
 	private readonly AsyncCallback callback_SendAdvertisement_Complete;
 	private readonly AsyncCallback callback_ServerReceive_Complete;
 	private readonly AsyncCallback callback_ServerSend_Complete;
+	private readonly AsyncCallback callback_SimpleSend_Complete;
     
-	public override bool HasPendingSends {
+	public override bool HasPendingOperations {
 		get {
 			lock (sync) {
-				return (sentBuffers.Count > 0 || connectionState == ConnectionState.ConnectedAndSending);
+				return (pendingOperations != 0);
 			}
 		}
 	}
@@ -105,8 +131,10 @@ public class UdpChannel : ChannelBase {
 		callback_SendAdvertisement_Complete = SendAdvertisement_Complete;
 		callback_ServerReceive_Complete = ServerReceive_Complete;
 		callback_ServerSend_Complete = ServerSend_Complete;
+		callback_SimpleSend_Complete = SimpleSend_Complete;
 	}
 
+	// synchronous
 	public override void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort)
 	{
 		IPAddress advertisingAddress;
@@ -129,11 +157,15 @@ public class UdpChannel : ChannelBase {
 				throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
 			}
 
+			lastUpdateTime = Time.realtimeSinceStartup;
 			IPAddress localAddress = GetLocalIPv4();
 
 			try {
+				pingMessage.counter = 0;
+				disconnectionMessage.deviceID = (byte)deviceID;
+
 				// set up main socket
-				IPEndPoint localEndPoint = new IPEndPoint (/*localAddress ?? */ IPAddress.Any, localPort);
+				IPEndPoint localEndPoint = anyEndPoint;//new IPEndPoint (/*localAddress ?? */ IPAddress.Any, localPort);
 				mainServer = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 				mainServer.Bind (localEndPoint);
 
@@ -146,6 +178,7 @@ public class UdpChannel : ChannelBase {
 
 			try {
 				string localIP = (localAddress ?? IPAddress.Loopback).ToString();
+				int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
 				// set up advertisement message
 				Debug.Log ("Local IP: " + localIP);
@@ -160,7 +193,7 @@ public class UdpChannel : ChannelBase {
 				Encoding.UTF8.GetBytes (localIP, 0, localIP.Length, advertisementRegistrationMessage.ip, 0);
 				advertisementRegistrationMessage.ip[length] = 0;
 				
-				advertisementRegistrationMessage.port = (ushort)localPort;
+				advertisementRegistrationMessage.port = (ushort)realPort;
 				advertisementRegistrationMessage.id = (byte)deviceID;
 				advertisementRegistrationMessage.protocol = (byte)ChannelProtocol.Udp;
 				advertisementRegistrationMessage.enableAdvertisement = 1;
@@ -168,9 +201,10 @@ public class UdpChannel : ChannelBase {
 
 				// set up advertisement socket
 				advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
-				advertisingClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+				advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 
 				// advertise
+				startAdvertiseTime = lastUpdateTime;
 				SendAdvertisement();
 			}
 			catch (Exception e) {
@@ -187,6 +221,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// synchronous
 	public override void Disconnect ()
 	{
 		// IsActive only becomes true synchronously
@@ -204,6 +239,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// synchronous
 	public override void Send(NetworkMessage message)
 	{
 		if (message.ID < 0 || message.ID > 255) {
@@ -217,85 +253,65 @@ public class UdpChannel : ChannelBase {
 
 		lock (sync) {
 			// about to be disconnected; ignore
-			if (connectionState != ConnectionState.Connected && connectionState != ConnectionState.ConnectedAndSending) {
+			if (connectionState != ConnectionState.Connected) {
 				Debug.LogWarning("Ignoring message of type " + message.GetType().FullName + " because the connection is about to disconnect.");
 				return;
 			}
 
-			bool success = false;
-			SocketBufferState state = AllocateBufferState(mainServer);
-			try {
-				serializer.ByteBuffer = state.buffer;
-				int length;
-				try {
-					NetworkMessageSerializer.Serialize(serializer, message);
-					length = serializer.Index;
-				}
-				catch (Exception e)
-				{
-					DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
-					return;
-				}
-				finally {
-					serializer.Clear ();
-				}
-
-				if (connectionState == ConnectionState.Connected) {
-					try {
-						ServerSend (state, length);
-						success = true;
-					}
-					catch (Exception e) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, e);
-						return;
-					}
-				}
-				else {
-					if (sentBuffers.Count < MaxQueuedSends) {
-						sentBuffers.Enqueue (new QueuedSend(state, length));
-						success = true;
-					}
-					else {
-						DestroySynchronously(DisconnectionReason.ConnectionThrottled,
-						                   "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
-						return;
-					}
-				}
-			}
-			finally {
-				if (!success) {
-					state.Dispose();
-				}
-			}
+			SendInternal(message);
 		}
 	}
 
+	// synchronous
 	public override void Update()
 	{
 		// IsActive only becomes true synchronously
 		if (IsActive) {
 
 			lock (sync) {
+				lastUpdateTime = Time.realtimeSinceStartup;
+
 				if (connectionState == ConnectionState.Advertising) {
+					if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
+						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.2f") + " seconds.");
+						return;
+					}
+
 					try {
 						SendAdvertisement();
 					}
 					catch (Exception e) {
-						Destroy(DisconnectionReason.FailedToAdvertise, e);
+						DestroySynchronously(DisconnectionReason.FailedToAdvertise, e);
+						return;
+					}
+				}
+
+				if (connectionState == ConnectionState.Connected) {
+					if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
+						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.2f") + " seconds.");
 						return;
 					}
 				}
 
 				InternalUpdate ();
+
+				if (connectionState == ConnectionState.Connected) {
+					if (lastPingTime + PingTimeout < lastUpdateTime) {
+						lastPingTime = lastUpdateTime;
+						SendInternal(pingMessage);
+						pingMessage.counter += 1;
+					}
+				}
 			}
 		}
 	}
-	
+
+	// synchronous
 	private void InternalUpdate()
 	{
 		ProcessLogs();
 		
-		if (!IsConnected && (connectionState == ConnectionState.Connected || connectionState == ConnectionState.ConnectedAndSending)) {
+		if (!IsConnected && (connectionState == ConnectionState.Connected)) {
 			IsConnected = true;
 			Debug.Log ("UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
 			try {
@@ -310,7 +326,7 @@ public class UdpChannel : ChannelBase {
 		ProcessMessages();
 
 		bool wasActive = IsActive;
-		IsConnected = (connectionState == ConnectionState.Connected || connectionState == ConnectionState.ConnectedAndSending);
+		IsConnected = (connectionState == ConnectionState.Connected);
 		IsActive = (connectionState != ConnectionState.Disconnected);
 
 		if (wasActive && !IsActive) {
@@ -325,6 +341,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 	
+	// synchronous
 	private void ProcessLogs()
 	{
 		int logCount = queuedLogs.Count;
@@ -341,6 +358,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 	
+	// synchronous
 	private void ProcessMessages()
 	{
 		int count = receivedMessages.Count;
@@ -356,99 +374,162 @@ public class UdpChannel : ChannelBase {
 			receivedMessages.Clear ();
 		}
 	}
-	
+
+	// either
 	private void Destroy(DisconnectionReason reason) {
 
-		connectionState = ConnectionState.Disconnected;
-		advertisingBusy = false;
-		currentDisconnectionReason = reason;
+		bool needsDisconnect = (connectionState == ConnectionState.Connected && mainServer != null && mainEndPoint != null);
 
+		connectionState = ConnectionState.Disconnected;
+		currentDisconnectionReason = reason;
+		
 		sentBuffers.Clear ();
 		receivedMessages.Clear ();
-
-		mainEndPoint = null;
-		advertisementEndPoint = null;
-
-		if (advertisingClient != null) {
-			advertisingClient.Close();
-			advertisingClient = null;
-		}
 		
-		if (mainServer != null) {
-			mainServer.Close();
-			mainServer = null;
+		if (!needsDisconnect || !SendDisconnect ()) {
+			if (mainServer != null) {
+				mainServer.Close ();
+			}
+			if (mainSend != null) {
+				mainSend.isSocketActive = false;
+			}
+			if (mainReceive != null) {
+				mainReceive.isSocketActive = false;
+			}
 		}
+		mainServer = null;
+		mainSend = null;
+		mainReceive = null;
+		mainEndPoint = null;
+
+		if (advertisementClient != null) {
+			advertisementClient.Close();
+			advertisementClient = null;
+		}
+		if (advertisementSend != null) {
+			advertisementSend.isSocketActive = false;
+			advertisementSend = null;
+		}
+		advertisementEndPoint = null;
 	}
 
+	// either
 	private void Destroy(DisconnectionReason reason, object exceptionOrLog)
 	{
 		Destroy (reason);
 	    queuedLogs.Add (exceptionOrLog);
 	}
 
+	// synchronous
 	private void DestroySynchronously(DisconnectionReason reason, object exceptionOrLog)
 	{
 		Destroy (reason, exceptionOrLog);
 		InternalUpdate ();
 	}
 	
-	private void ServerSend(SocketBufferState state, int length)
+	// either
+	private void SimpleSend(SocketBufferState chainedState)
 	{
-		// should indicate programmer error
-		if (connectionState != ConnectionState.Connected) {
-			throw new InvalidOperationException("Error attempting to send on UdpConnection with state " + connectionState.ToString() + ".");
-		}
-
-		connectionState = ConnectionState.ConnectedAndSending;
-
-		AsyncCallback callback = callback_ServerSend_Complete;
-		BeginSendUdp(mainServer, state.buffer, length, mainEndPoint, callback, state);
+		BeginSend (chainedState, callback_SimpleSend_Complete);
 	}
 
-	private void ServerSend_Complete(IAsyncResult result)
+	// asynchronous
+	private void SimpleSend_Complete(IAsyncResult result)
 	{
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
-			Socket socket = state.socket;
-			state.Dispose();
-
-			// this is an old connection
-			if (socket != mainServer) {
-				return;
-			}
-
 			try {
-				socket.EndSendTo(result);
-				
-				connectionState = ConnectionState.Connected;
-
-				if (sentBuffers.Count > 0) {
-					QueuedSend queuedSend = sentBuffers.Dequeue();
-					bool success = false;
-					try {
-						ServerSend (queuedSend.state, queuedSend.length);
-						success = true;
-					}
-					finally {
-						if (!success) {
-							queuedSend.state.Dispose();
-						}
-					}
-				}
-			}
-			catch (Exception e) {
-				Destroy (DisconnectionReason.ConnectionLost, e);
+				EndSend (result);
+			} catch (Exception e) {
+				queuedLogs.Add (e);
+			} finally {
+				state.Dispose ();
 			}
 		}
 	}
 
-	private void ServerReceive()
+	// either
+	private bool SendDisconnect()
 	{
-		SocketBufferState state = AllocateBufferState(mainServer);
+		SocketBufferState state = AllocateBufferState (mainServer, mainEndPoint);
 		bool success = false;
 		try {
-			EndPoint endPoint = anyEndPoint;
-			mainServer.BeginReceiveFrom(state.buffer, 0, state.buffer.Length, SocketFlags.None, ref endPoint, callback_ServerReceive_Complete, state);
+			state.needsCloseWhenDone = true;
+			
+			serializer.ByteBuffer = state.buffer;
+			try {
+				NetworkMessageSerializer.Serialize(serializer, disconnectionMessage);
+				state.length = serializer.Index;
+			}
+			catch (Exception e)
+			{
+				queuedLogs.Add(e);
+				return false;
+			}
+			finally {
+				serializer.Clear ();
+			}
+			
+			if (mainSend == null) {
+				SimpleSend (state);
+			}
+			else {
+				mainSend.chainedSend = state;
+			}
+			
+			success = true;
+			return true;
+		}
+		catch (Exception e) {
+			queuedLogs.Add (e);
+			return false;
+		}
+		finally {
+			if (!success) {
+				state.Dispose();
+			}
+		}
+	}
+
+	// synchronous
+	private void SendInternal(NetworkMessage message)
+	{
+		bool success = false;
+		SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
+		try {
+			serializer.ByteBuffer = state.buffer;
+			try {
+				NetworkMessageSerializer.Serialize(serializer, message);
+				state.length = serializer.Index;
+			}
+			catch (Exception e)
+			{
+				DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
+				return;
+			}
+			finally {
+				serializer.Clear ();
+			}
+			
+			if (mainSend == null) {
+				try {
+					ServerSend (state);
+				}
+				catch (Exception e) {
+					DestroySynchronously(DisconnectionReason.ConnectionLost, e);
+					return;
+				}
+			}
+			else {
+				if (sentBuffers.Count < MaxQueuedSends) {
+					sentBuffers.Enqueue (state);
+				}
+				else {
+					DestroySynchronously(DisconnectionReason.ConnectionThrottled,
+					                     "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+					return;
+				}
+			}
 			success = true;
 		}
 		finally {
@@ -458,55 +539,160 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// either
+	private void ServerSend(SocketBufferState state)
+	{
+		// should indicate programmer error
+		if (connectionState != ConnectionState.Connected) {
+			throw new InvalidOperationException("Error attempting to send on UdpConnection with state " + connectionState.ToString() + ".");
+		}
+		
+		if (mainSend != null) {
+			throw new InvalidOperationException("Error attempting to send on UdpConnection when already sending.");
+		}
+
+		mainSend = state;
+		bool success = false;
+		try {
+			AsyncCallback callback = callback_ServerSend_Complete;
+			BeginSend (mainSend, callback);
+			success = true;
+		}
+		finally {
+			if (!success) {
+				mainSend.Dispose();
+				mainSend = null;
+			}
+		}
+	}
+
+	// asynchronous
+	private void ServerSend_Complete(IAsyncResult result)
+	{
+		lock (sync) {
+			SocketBufferState state = (SocketBufferState)result.AsyncState;
+			bool isMain = false;
+			try {
+				if (mainSend == state) {
+					mainSend = null;
+					isMain = true;
+				}
+
+				EndSend (result);
+
+				if (!isMain) {
+					return;
+				}
+
+				if (sentBuffers.Count > 0) {
+					SocketBufferState queuedState = sentBuffers.Dequeue();
+					bool success = false;
+					try {
+						ServerSend (queuedState);
+						success = true;
+					}
+					finally {
+						if (!success) {
+							queuedState.Dispose();
+						}
+					}
+				}
+			}
+			catch (Exception e) {
+				if (isMain) {
+				    Destroy (DisconnectionReason.ConnectionLost, e);
+				}
+				else if (!(e is ObjectDisposedException)) {
+					queuedLogs.Add (e);
+				}
+			}
+			finally {
+				state.Dispose ();
+			}
+		}
+	}
+
+	// either
+	private void ServerReceive()
+	{
+		mainReceive = AllocateBufferState(mainServer, anyEndPoint);
+		bool success = false;
+		try {
+			mainReceive.length = mainReceive.buffer.Length;
+			BeginReceive(mainReceive, callback_ServerReceive_Complete);
+			success = true;
+		}
+		finally {
+			if (!success) {
+				mainReceive.Dispose();
+				mainReceive = null;
+			}
+		}
+	}
+
+	// asynchronous
 	private void ServerReceive_Complete(IAsyncResult result) 
 	{
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
+			bool isMain = false;
+			if (state == mainReceive) {
+				mainReceive = null;
+				isMain = true;
+			}
+
 			try {
-				// this is an old connection
-				if (state.socket != mainServer) {
+				EndReceive(result);
+
+				if (!isMain) {
 					return;
 				}
 
-				try {
-					EndPoint endPoint = anyEndPoint;
-					int length = state.socket.EndReceiveFrom(result, ref endPoint);
+				IPEndPoint ipEndPoint = state.endPoint as IPEndPoint;
+				if (ipEndPoint != null) {
 
-					IPEndPoint ipEndPoint = endPoint as IPEndPoint;
-					if (ipEndPoint != null) {
+					if (connectionState == ConnectionState.Advertising) {
+						connectionState = ConnectionState.Connected;
+						mainEndPoint = ipEndPoint;
+						lastReceiveTime = lastUpdateTime;
 
-						if (connectionState == ConnectionState.Advertising) {
-							connectionState = ConnectionState.Connected;
-							mainEndPoint = ipEndPoint;
-						}
-						else if (mainEndPoint.Equals (ipEndPoint)) {
-							serializer.ByteBuffer = state.buffer;
-							NetworkMessage message;
-							try {
-								NetworkMessageSerializer.Deserialize(serializer, length, out message);
-							}
-							catch (Exception e) {
-								Destroy (DisconnectionReason.ReceivedInvalidData, e);
-								return;
-							}
-							finally {
-								serializer.Clear ();
-							}
-
-							if (receivedMessages.Count >= MaxQueuedReceives) {
-								Destroy (DisconnectionReason.ConnectionThrottled,
-								       "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
-								return;
-							}
-							
-							receivedMessages.Add (message);
-						}
+						// ignore first message
 					}
-					
-					ServerReceive();
+					else if (mainEndPoint.Equals (ipEndPoint)) {
+
+						lastReceiveTime = lastUpdateTime;
+						
+						serializer.ByteBuffer = state.buffer;
+						NetworkMessage message;
+						try {
+							NetworkMessageSerializer.Deserialize(serializer, state.length, out message);
+						}
+						catch (Exception e) {
+							Destroy (DisconnectionReason.ReceivedInvalidData, e);
+							return;
+						}
+						finally {
+							serializer.Clear ();
+						}
+
+						if (receivedMessages.Count >= MaxQueuedReceives) {
+							Destroy (DisconnectionReason.ConnectionThrottled,
+							       "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+							return;
+						}
+						
+						receivedMessages.Add (message);
+					}
 				}
-				catch (Exception e) {
+				
+				ServerReceive();
+			}
+			catch (Exception e) {
+				if (isMain) {
 					Destroy(DisconnectionReason.ConnectionLost, e);
+				}
+				else if (!(e is ObjectDisposedException)) {
+					queuedLogs.Add (e);
 				}
 			}
 			finally {
@@ -515,28 +701,26 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// either
 	private void SendAdvertisement()
 	{
-		float now = Time.realtimeSinceStartup;
-		if (advertisingBusy || lastAdvertise + AdvertiseTick > now) {
+		if (advertisementSend != null || lastAdvertiseTime + AdvertiseTick > lastUpdateTime) {
 			return;
 		}
-		advertisingBusy = true;
-		lastAdvertise = now;
+		lastAdvertiseTime = lastUpdateTime;
 
-		SocketBufferState state = AllocateBufferState(advertisingClient);
+		advertisementSend = AllocateBufferState(advertisementClient, advertisementEndPoint);
 		bool success = false;
 		try {
-			serializer.ByteBuffer = state.buffer;
-			int length;
+			serializer.ByteBuffer = advertisementSend.buffer;
 			try {
 				advertisementRegistrationMessage.Serialize(serializer);
-				length = serializer.Index;
+				advertisementSend.length = serializer.Index;
 			}
 			catch (IndexOutOfRangeException e) {
 				throw new NetworkMessageSerializationException("Send buffer not large enough for AdvertisementRegistrationMsg. " +
 				                                               "(" + advertisementRegistrationMessage.SerializationLength.ToString() + " bytes required, " +
-				                                               state.buffer.Length.ToString() + " bytes allowed in buffer.)",
+				                                               advertisementSend.buffer.Length.ToString() + " bytes allowed in buffer.)",
 				                                               e);
 			}
 			finally {
@@ -544,63 +728,73 @@ public class UdpChannel : ChannelBase {
 			}
 
 			AsyncCallback callback = callback_SendAdvertisement_Complete;
-			BeginSendUdp(advertisingClient, state.buffer, length, advertisementEndPoint, callback, state);
+			BeginSend(advertisementSend, callback);
 
 			success = true;
 		}
 		finally {
 			if (!success) {
-				state.Dispose();
-				advertisingBusy = false;
+				advertisementSend.Dispose();
+				advertisementSend = null;
 			}
 		}
 	}
 
+	// asynchronous
 	private void SendAdvertisement_Complete(IAsyncResult result)
 	{
 		lock (sync) {
 			SocketBufferState state = (SocketBufferState)result.AsyncState;
-			Socket socket = state.socket;
-			state.Dispose();
-
-			// this is an old connection
-			if (socket != advertisingClient) {
-				return;
-			}
-
-			advertisingBusy = false;
-
+			bool isAdvert = false;
 			try {
-				socket.EndSendTo(result);
+				if (state == advertisementSend) {
+					advertisementSend = null;
+					isAdvert = true;
+				}
+
+				EndSend(result);
 			}
 			catch (Exception e) {
-				Destroy(DisconnectionReason.FailedToAdvertise, e);
+				if (isAdvert) {
+					Destroy(DisconnectionReason.FailedToAdvertise, e);
+				}
+				else if (!(e is ObjectDisposedException)) {
+					queuedLogs.Add (e);
+				}
+			}
+			finally {
+				state.Dispose();
 			}
 		}
 	}
 
-    private SocketBufferState AllocateBufferState(Socket socket)
+	// either
+    private SocketBufferState AllocateBufferState(Socket socket, EndPoint endPoint)
 	{
 		SocketBufferState state;
 		int count = bufferStatePool.Count;
 		if (count > 0) {
 			state = bufferStatePool [count - 1];
-			state.socket = socket;
+			state.Reset (socket, endPoint);
 			bufferStatePool.RemoveAt (count - 1);
 		} else {
-			state = new SocketBufferState (this, socket);
+			state = new SocketBufferState (this, socket, endPoint);
 		}
 		return state;
 	}
 
 	private void FreeBufferState(SocketBufferState state)
 	{
+		if (state.socket == null) {
+			return;
+		}
+
 		if (bufferStatePool.Count < BufferStatePoolLength) {
 			bufferStatePool.Add (state);
 		}
 	}
 
-	private static void BeginSendUdp(Socket socket, byte[] datagram, int bytes, IPEndPoint endPoint, AsyncCallback callback, object state)
+	private static void BeginSendUdp(Socket socket, byte[] datagram, int bytes, EndPoint endPoint, AsyncCallback callback, object state)
 	{
 		try
 		{
@@ -615,6 +809,74 @@ public class UdpChannel : ChannelBase {
 			}
 			else {
 				throw;
+			}
+		}
+	}
+
+	private void BeginSend(SocketBufferState state, AsyncCallback callback)
+	{
+		BeginSendUdp (state.socket, state.buffer, state.length, state.endPoint, callback, state);
+
+		pendingOperations++;
+	}
+
+	private void EndSend(IAsyncResult result)
+	{
+		pendingOperations = Math.Max(pendingOperations - 1, 0);
+
+		SocketBufferState state = (SocketBufferState)result.AsyncState;
+		if (state.isSocketActive) {
+			try {
+				int length = state.socket.EndSendTo (result);
+				state.length = length;
+			}
+			catch (ObjectDisposedException) {
+				state.length = 0;
+				state.isSocketActive = false;
+				state.needsCloseWhenDone = false;
+				throw;
+			}
+
+			if (state.chainedSend != null) {
+				SimpleSend(state.chainedSend);
+			}
+			else if (state.needsCloseWhenDone) {
+				state.socket.Close ();
+				
+				state.isSocketActive = false;
+				state.needsCloseWhenDone = false;
+			}
+		}
+	}
+
+	private void BeginReceive(SocketBufferState state, AsyncCallback callback)
+	{
+		state.socket.BeginReceiveFrom (state.buffer, 0, state.length, SocketFlags.None, ref state.endPoint, callback, state);
+		pendingOperations++;
+	}
+
+	private void EndReceive(IAsyncResult result)
+	{
+		pendingOperations = Math.Max(pendingOperations - 1, 0);
+
+		SocketBufferState state = (SocketBufferState)result.AsyncState;
+		if (state.isSocketActive) {
+			try {
+				int length = state.socket.EndReceiveFrom (result, ref state.endPoint);
+				state.length = length;
+			}
+			catch (ObjectDisposedException) {
+				state.length = 0;
+				state.isSocketActive = false;
+				state.needsCloseWhenDone = false;
+				throw;
+			}
+
+			if (state.needsCloseWhenDone) {
+				state.socket.Close ();
+				
+				state.isSocketActive = false;
+				state.needsCloseWhenDone = false;
 			}
 		}
 	}

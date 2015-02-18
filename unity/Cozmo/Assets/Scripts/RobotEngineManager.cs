@@ -8,7 +8,18 @@ using System.Text;
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
+
+	[System.NonSerialized]
+	public Dictionary<int, Robot> robots = new Dictionary<int, Robot>();
 	
+	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
+
+	public bool IsConnected {
+		get {
+			return (channel != null && channel.IsConnected);
+		}
+	}
+
 	[SerializeField]
 	private TextAsset configuration;
 
@@ -28,7 +39,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private StringBuilder logBuilder = null;
 
-	public void Start()
+	private void Start()
 	{
 		if (engineHostInitialized) {
 			Debug.LogError("Error initializing cozmo host: Host already started.");
@@ -49,7 +60,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	void OnDestroy()
+	private void OnDestroy()
 	{
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
@@ -62,7 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 
 	// should be update; but this makes it easier to split up
-	void LateUpdate()
+	private void LateUpdate()
 	{
 		if (logBuilder == null) {
 			logBuilder = new StringBuilder (1024);
@@ -87,7 +98,7 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 #endif
 
-	void Awake() {
+	private void Awake() {
 		if (instance != null) {
 			Destroy (gameObject);
 		} else {
@@ -96,9 +107,16 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 		Application.runInBackground = true;
+
+		AddRobot( Intro.CurrentRobotID );
 	}
 
-	void OnEnable()
+	public void AddRobot( int robotID )
+	{
+		robots.Add( robotID, new Robot() );
+	}
+
+	private void OnEnable()
 	{
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
@@ -106,15 +124,15 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.MessageReceived += ReceivedMessage;
 	}
 
-	void OnDisable()
+	private void OnDisable()
 	{
 		if (channel != null) {
-			channel.Disconnect ();
+			Disconnect ();
 			channel = null;
 		}
 	}
 	
-	void Update()
+	private void Update()
 	{
 		if (channel != null) {
 			channel.Update ();
@@ -128,26 +146,19 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void Disconnect()
 	{
-		if (channel != null && channel.IsActive) {
-#if UNITY_EDITOR
-			if (channel.IsConnected) {
-				Debug.Log ("Sending disconnect.");
-				U2G_DisconnectFromUiDevice message = new U2G_DisconnectFromUiDevice();
-				message.deviceID = UIDeviceID;
-				channel.Send (message);
+		if (channel != null) {
+			channel.Disconnect ();
 
-				float limit = Time.realtimeSinceStartup + 2.0f;
-				while (channel.HasPendingSends) {
-					if (limit < Time.realtimeSinceStartup) {
-						Debug.LogWarning("Not waiting for disconnect to finish sending.");
-						break;
-					}
-					System.Threading.Thread.Sleep (500);
+#if UNITY_EDITOR
+			float limit = Time.realtimeSinceStartup + 2.0f;
+			while (channel.HasPendingOperations) {
+				if (limit < Time.realtimeSinceStartup) {
+					Debug.LogWarning("Not waiting for disconnect to finish sending.");
+					break;
 				}
+				System.Threading.Thread.Sleep (500);
 			}
 #endif
-
-			channel.Disconnect ();
 		}
 	}
 
@@ -160,6 +171,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void Disconnected(DisconnectionReason reason)
 	{
+		Application.LoadLevel ("Shell");
+
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}
@@ -180,6 +193,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_UiDeviceConnected:
 			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotDisconnected:
+			ReceivedSpecificMessage((G2U_RobotDisconnected)message);
+			break;
 		case (int)NetworkMessageID.G2U_RobotObservedObject:
 			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
 			break;
@@ -194,6 +210,9 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case (int)NetworkMessageID.G2U_ImageChunk:
 			ReceivedSpecificMessage((G2U_ImageChunk)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotState:
+			ReceivedSpecificMessage((G2U_RobotState)message);
 			break;
 		}
 	}
@@ -225,7 +244,13 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
-	
+
+	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
+	{
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.2f") + " seconds.");
+		Disconnected (DisconnectionReason.RobotDisconnected);
+	}
+
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
 		
@@ -244,6 +269,18 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage(G2U_StopSound message)
 	{
 		
+	}
+
+	private void ReceivedSpecificMessage( G2U_RobotState message )
+	{
+		if( !robots.ContainsKey( message.robotID ) )
+		{
+			Debug.Log( "adding robot with ID: " + message.robotID );
+			
+			AddRobot( message.robotID );
+		}
+
+		robots[ message.robotID ].UpdateInfo( message );
 	}
 
 	private Texture2D texture;

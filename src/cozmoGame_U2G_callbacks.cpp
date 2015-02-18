@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
@@ -42,6 +43,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
+    REGISTER_CALLBACK(U2G_Ping)
     REGISTER_CALLBACK(U2G_ConnectToRobot)
     REGISTER_CALLBACK(U2G_ConnectToUiDevice)
     REGISTER_CALLBACK(U2G_DisconnectFromUiDevice)
@@ -115,6 +117,25 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
     
     return robot;
+  }
+  
+  void CozmoGameImpl::ProcessMessage(MessageU2G_Ping const& msg)
+  {
+    
+    _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
+    // Check to see if the ping counter is sequential or if we've dropped packets/pings
+    const u32 counterDiff = msg.counter - _lastPingCounterFromUI;
+    _lastPingCounterFromUI = msg.counter;
+    
+    if(counterDiff > 1) {
+      PRINT_NAMED_WARNING("CozmoGameImpl.Update",
+                          "Counter difference > 1 betweeen last two pings from UI. (Difference was %d.)\n",
+                          counterDiff);
+      
+      // TODO: Take action if we've dropped pings?
+    }
+    
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToRobot const& msg)
@@ -324,7 +345,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       // TODO: Better way to specify the target pose's parent
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
-      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose));
+      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose, msg.useManualSpeed));
     }
   }
   
@@ -339,7 +360,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
-      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose));
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed));
     }
   }
   
@@ -406,9 +427,9 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       }
       
       if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
-        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID);
+        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
         action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
         robot->GetActionList().AddAction(action, numRetries);
       }
@@ -426,7 +447,13 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       const u8 numRetries = 0;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);
+      
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+      } else {
+        TraverseObjectAction* action = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+        robot->GetActionList().AddAction(action, numRetries);
+      }
       
     }
   }

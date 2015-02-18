@@ -29,7 +29,7 @@ set(SOURCE_FILES
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 find_library(BLE_LIBRARY NAMES IOBluetooth)
 
@@ -110,7 +110,7 @@ set(SOURCE_FILES
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 find_library(BLE_LIBRARY NAMES IOBluetooth)
 
