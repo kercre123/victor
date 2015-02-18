@@ -18,4 +18,13 @@ public class Box
 		topLeft_x = message.topLeft_x;
 		topLeft_y = message.topLeft_y;
 	}
+
+	public void RemoveInfo()
+	{
+		ID =  0;
+		height = 0;
+		width = 0;
+		topLeft_x = 0;
+		topLeft_y = 0;
+	}
 }

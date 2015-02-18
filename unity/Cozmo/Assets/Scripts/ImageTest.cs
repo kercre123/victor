@@ -5,11 +5,20 @@ using System.Collections;
 public class ImageTest : MonoBehaviour
 {
 	[SerializeField] protected Button button;
+	[SerializeField] protected Button actionButton;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+
+	protected void Update()
+	{
+		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		{
+			actionButton.gameObject.SetActive( RobotEngineManager.instance.current.box.ID != 0 );
+		}
+	}
 
 	protected void RobotImage( Texture2D texture )
 	{
@@ -31,11 +40,16 @@ public class ImageTest : MonoBehaviour
 		}
 	}
 
+	public void Action()
+	{
+		RobotEngineManager.instance.PickUpBox();
+	}
+
 	public void RequestImage()
 	{
 		Debug.Log( "request image" );
 
-		RobotEngineManager.instance.RequestImage(Intro.CurrentRobotID);
+		RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
 	}
 
 	protected void OnEnable()
