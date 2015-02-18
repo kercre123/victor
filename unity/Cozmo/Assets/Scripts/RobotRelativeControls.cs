@@ -24,7 +24,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;
 
-	bool reverseLikeACar = false;
+	//bool reverseLikeACar = false;
 	bool moveCommandLastFrame = false;
 
 	void OnEnable() {
@@ -88,23 +88,17 @@ public class RobotRelativeControls : MonoBehaviour {
 //			inputs.y = Input.GetAxis("Vertical");
 //		}
 
-		if(gyroInputs != null) {
-			if(gyroRollControl != null && gyroRollControl.isOn && (verticalStick == null || verticalStick.IsPressed) ) {
-				inputs.x = gyroInputs.Horizontal;
-			}
+		if(gyroInputs != null && gyroInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed)) {
+			inputs.x = gyroInputs.Horizontal;
 
-			if(gyroPitchControl != null && gyroPitchControl.isOn) {
-				inputs.y = gyroInputs.Vertical;
-			}
+//			if(gyroPitchControl != null && gyroPitchControl.isOn) {
+//				inputs.y = gyroInputs.Vertical;
+//			}
 		}
 
-		if(accelInputs != null && (verticalStick == null || verticalStick.IsPressed) ) {
+		if(accelInputs != null && accelInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed) ) {
 			inputs.x = accelInputs.Horizontal;
 		}
-
-//		if(reverseLikeACar) {
-//			if(inputs.y < 0f) inputs.x = -inputs.x;
-//		}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -174,7 +168,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	public void SetReverseLikeACar(bool on) {
 		Debug.Log(gameObject.name + " RobotRelativeControls SetReverseLikeACar("+on+")");
-		reverseLikeACar = on;
+		//reverseLikeACar = on;
 	}
 
 }

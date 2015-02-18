@@ -1,0 +1,60 @@
+#!/usr/bin/python
+import os
+import stat
+import shutil
+import sys
+import subprocess
+
+saveout = sys.stdout
+fsock = open('PostprocessBuildPlayer.log', 'w')
+sys.stdout = fsock
+
+script_path = sys.argv[0]
+
+# the path that the player is built into
+target_path = sys.argv[1]
+
+# the type of player built
+target = sys.argv[2]
+
+# what optimizations are applied
+optimization = sys.argv[3]
+
+# the name of the company set in project settings
+company_name = sys.argv[4]
+
+# the name of the product set in project settings
+product_name = sys.argv[5]
+
+# the default screen width of the player
+width = sys.argv[6]
+
+# the default screen height of the player
+height = sys.argv[7]
+
+editor_path = "Assets/Editor/"
+file_list = os.listdir(editor_path)
+
+print "Current path:" + os.getcwd()
+print 'PostprocessBuildPlayer with args: '+sys.argv[0]+' '+sys.argv[1]+' '+sys.argv[2]+' '+sys.argv[3]+' '+sys.argv[4]+' '+sys.argv[5]+' '+sys.argv[6]+' '+sys.argv[7]
+
+for filename in file_list:
+	filename_l = filename.lower()
+	if filename_l .startswith("postprocessbuildplayer_") and not filename_l .endswith(".meta"):
+		print 'Executing ' + filename
+		subprocess.call([os.path.join(editor_path, filename), target_path, target, optimization, company_name, product_name, width, height])
+
+mode = os.stat(editor_path + "FixupXcodeProject.py").st_mode
+os.chmod(editor_path + "FixupXcodeProject.py", mode | stat.S_IRWXU);
+
+mode = os.stat(editor_path + "configure_xcode_fixup.py").st_mode
+os.chmod(editor_path + "configure_xcode_fixup.py", mode | stat.S_IRWXU);
+
+mode = os.stat(editor_path + "params.py").st_mode
+os.chmod(editor_path + "params.py", mode | stat.S_IRWXU);
+
+if target == 'iPhone':
+	print 'Fixing up Xcode project'
+	subprocess.call([os.path.join(editor_path, "FixupXcodeProject.py"), target_path])
+
+#sys.stdout = saveout
