@@ -282,6 +282,10 @@ G2U_UiDeviceConnected,
 G2U_RobotState,
 G2U_ImageChunk,
 G2U_RobotObservedObject,
+G2U_RobotObservedNothing,
+
+
+
 G2U_DeviceDetectedVisionMarker,
 G2U_PlaySound,
 
@@ -606,6 +610,11 @@ public u16 topLeft_y;
 public u16 width;
 public u16 height;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotObservedObject; } } }
+
+
+public partial class G2U_RobotObservedNothing : NetworkMessage {
+public u32 robotID;
+public override int ID { get { return (int)NetworkMessageID.G2U_RobotObservedNothing; } } }
 
 public partial class G2U_DeviceDetectedVisionMarker : NetworkMessage {
 public u32 markerType;
@@ -939,6 +948,11 @@ ByteSerializer.GetSerializationLength(this.topLeft_x) +
 ByteSerializer.GetSerializationLength(this.topLeft_y) +
 ByteSerializer.GetSerializationLength(this.width) +
 ByteSerializer.GetSerializationLength(this.height) +
+0; } } }
+
+
+public partial class G2U_RobotObservedNothing { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
 0; } } }
 
 public partial class G2U_DeviceDetectedVisionMarker { public override int SerializationLength { get { return
@@ -1275,6 +1289,11 @@ serializer.Serialize(this.width);
 serializer.Serialize(this.height);
 } }
 
+
+public partial class G2U_RobotObservedNothing { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+} }
+
 public partial class G2U_DeviceDetectedVisionMarker { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.markerType);
 serializer.Serialize(this.x_upperLeft);
@@ -1609,6 +1628,11 @@ serializer.Deserialize(out this.width);
 serializer.Deserialize(out this.height);
 } }
 
+
+public partial class G2U_RobotObservedNothing { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
+} }
+
 public partial class G2U_DeviceDetectedVisionMarker { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.markerType);
 serializer.Deserialize(out this.x_upperLeft);
@@ -1888,6 +1912,10 @@ case NetworkMessageID.G2U_UiDeviceConnected: return new G2U_UiDeviceConnected();
 case NetworkMessageID.G2U_RobotState: return new G2U_RobotState();
 case NetworkMessageID.G2U_ImageChunk: return new G2U_ImageChunk();
 case NetworkMessageID.G2U_RobotObservedObject: return new G2U_RobotObservedObject();
+case NetworkMessageID.G2U_RobotObservedNothing: return new G2U_RobotObservedNothing();
+
+
+
 case NetworkMessageID.G2U_DeviceDetectedVisionMarker: return new G2U_DeviceDetectedVisionMarker();
 case NetworkMessageID.G2U_PlaySound: return new G2U_PlaySound();
 

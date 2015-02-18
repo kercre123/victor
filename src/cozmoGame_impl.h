@@ -101,6 +101,7 @@ namespace Cozmo {
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
                                          float x_upperLeft,  float y_upperLeft,
                                          float width,  float height);
+    void HandleRobotObservedNothingSignal(uint8_t robotID);    
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
     void HandleRobotImageAvailable(RobotID_t robotID);

@@ -76,6 +76,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
+    auto cbRobotObservedNothingSignal = [this](uint8_t robotID) {
+      this->HandleRobotObservedNothingSignal(robotID);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedNothingSignal().ScopedSubscribe(cbRobotObservedNothingSignal));
+    
     /* Now using U2G message handlers for these
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
       this->HandleConnectToRobotSignal(robotID);
@@ -208,6 +213,14 @@ namespace Cozmo {
     msg.height    = height;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
+  
+  void CozmoGameImpl::HandleRobotObservedNothingSignal(uint8_t robotID)
+  {
+    MessageG2U_RobotObservedNothing msg;
+    msg.robotID = robotID;
+    
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   

@@ -97,6 +97,11 @@ ADD_MESSAGE_MEMBER(u16, width)
 ADD_MESSAGE_MEMBER(u16, height)
 END_MESSAGE_DEFINITION(G2U_RobotObservedObject)
 
+// RobotObservedNothing
+START_MESSAGE_DEFINITION(G2U_RobotObservedNothing, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+END_MESSAGE_DEFINITION(G2U_RobotObservedNothing)
+
 START_MESSAGE_DEFINITION(G2U_DeviceDetectedVisionMarker, 1)
 ADD_MESSAGE_MEMBER(u32, markerType)
 ADD_MESSAGE_MEMBER(f32, x_upperLeft)
