@@ -94,17 +94,15 @@ class CameraSubServer(object):
 
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
-        if resolutionEnum < self.SENSOR_RESOLUTION:
-            resolutionEnum = self.SENSOR_RESOLUTION
-        elif resolutionEnum > messages.CAMERA_RES_QQVGA:
-            resolutionEnum = messages.CAMERA_RES_QQVGA
+        # Camera resolution enum is backwards, smaller number -> larger image
+        resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
+        resolutionEnum = min(resolutionEnum, messages.CAMERA_RES_QVGA) # The lowest resolution supported TODO restore QQVGA when DSP encoder is available
         if resolutionEnum == self.ENCResolution:
             self.startEncoder(resolutionEnum)
             return True
         else:
             self.stopEncoder()
-            if resolutionEnum > messages.CAMERA_RES_QVGA: # Minimum isp resolution
-                ispRes = messages.CAMERA_RES_QVGA
+            ispRes = min(resolutionEnum, messages.CAMERA_RES_QVGA) # ISP doesn't support smaller than QVGA
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
                                 (self.camDev, self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], \
                                  self.RESOLUTION_TUPLES[ispRes][0], self.RESOLUTION_TUPLES[ispRes][1])]) == 0:
@@ -118,20 +116,20 @@ class CameraSubServer(object):
     def startEncoder(self, encRes):
         "Starts the encoder subprocess"
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', 'ffmpegcolorspace', \
-                                                    '!', 'TIImgenc1', 'engineName=codecServer', 'codecName=jpegenc', \
-                                                    'resolution=%dx%d' % self.RESOLUTION_TUPLES[encRes], 'iColorSpace=UYVY', \
-                                                    'oColorSpace=YUV420P', 'qValue=%d' % self.ENCODER_QUALITY, '!', 'udpsink', \
+            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', 'ffmpegcolorspace', '!', \
+                                                    'jpegenc', '!', 'udpsink', \
                                                     'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
             self.ENCResolution = encRes
 
     def stopEncoder(self):
         "Stop the encoder subprocess if it is running"
         if self.encoderProcess is not None:
+            if self.v: sys.stdout.write("Stopping the encoder\n")
             if self.encoderProcess.poll() is None:
                 self.encoderProcess.kill()
                 self.encoderProcess.wait()
             self.encoderProcess = None
+        self.nextFrame = ""
 
     def poll(self, message=None):
         "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
