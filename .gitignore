@@ -161,3 +161,5 @@ build_xcode_osx
 build_xcode_ios
 build_xcode_sim
 c-source.txt
+robot/build
+robot/syscon/build

@@ -36,7 +36,14 @@ namespace
   const u8 PIN_VBATs_EN = 12;
   const u8 PIN_VDDs_EN = 8;
 
+  // Read battery dead state N times before we believe it is dead
+  const u8 BATTERY_DEAD_CYCLES = 60;
+  // Read charger contact state N times before we believe it changed
+  const u8 CONTACT_DEBOUNCE_CYCLES = 30;
   
+  // Are we currently on charge contacts?
+  u8 m_onContacts = 0;
+
   // Which pin is currently being used in the ADC mux
   u8 m_pinIndex;
 }
@@ -54,15 +61,27 @@ static inline void startADCsample(u8 channel)
 
 void BatteryInit()
 {
+  // Syscon power - this should always be on until battery fail
+  nrf_gpio_pin_set(PIN_VDD_EN);        // On
+  nrf_gpio_cfg_output(PIN_VDD_EN);
+  
+  // Motor and headboard power
+  nrf_gpio_pin_clear(PIN_VBATs_EN);    // Off
+  nrf_gpio_cfg_output(PIN_VBATs_EN);
+  
+  // Encoder and headboard power
+  nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
+  nrf_gpio_cfg_output(PIN_VDDs_EN);
+  
   // Configure the charger status pins as inputs
   nrf_gpio_cfg_input(PIN_CHARGE_S1, NRF_GPIO_PIN_PULLUP);
   //nrf_gpio_cfg_input(PIN_CHARGE_S2, NRF_GPIO_PIN_PULLUP);
   
-  // Initially set pins to disable high current
-  nrf_gpio_pin_set(PIN_CHARGE_HC);
+  // Initially clear pins to enable high current charge
+  nrf_gpio_pin_clear(PIN_CHARGE_HC);
   nrf_gpio_cfg_output(PIN_CHARGE_HC);
-  // Initially clear charge en to enable charging by default
-  nrf_gpio_pin_clear(PIN_CHARGE_EN);
+  // Initially set charge en to disable charging by default
+  nrf_gpio_pin_set(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
 
   // Configure the analog sense pins
@@ -124,31 +143,62 @@ void BatteryUpdate()
       case 1: // Battery voltage
       {
         g_dataToHead.VBat = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VBAT_SCALE);
-        if (g_dataToHead.VBat < VBAT_EMPTY_THRESHOLD) // Battery dead
+        static u8 debounceBattery = 0;
+        
+        // Is battery dead AND we are not on the contacts
+        if (!m_onContacts && g_dataToHead.VBat < VBAT_EMPTY_THRESHOLD)
         {
-          // Shut everything down
-          nrf_gpio_pin_clear(PIN_VBATs_EN);
-          nrf_gpio_pin_clear(PIN_VDDs_EN);
-          nrf_gpio_pin_clear(PIN_VDD_EN);
+          if (debounceBattery < BATTERY_DEAD_CYCLES)
+          {
+            debounceBattery++;
+          } else {
+            // Shut everything down
+            nrf_gpio_pin_clear(PIN_VBATs_EN);
+            nrf_gpio_pin_clear(PIN_VDDs_EN);
+            nrf_gpio_pin_clear(PIN_VDD_EN);
+          }
+        } else {
+          debounceBattery = 0;
         }
-        else if (g_dataToHead.VBat > VBAT_CHGD_HI_THRESHOLD) // Battery charged
-        {
-          nrf_gpio_pin_set(PIN_CHARGE_EN); // Disable charging
-          // Enable power if it was shut down
-          nrf_gpio_pin_clear(PIN_VBATs_EN);
-          nrf_gpio_pin_clear(PIN_VDDs_EN);
-          nrf_gpio_pin_clear(PIN_VDD_EN);
-        }
+        
         startADCsample(ANALOG_V_USB_SENSE);
         m_pinIndex = 2;
         break;
       }
-      case 2:
+      case 2:   // Charge contacts
       {
         g_dataToHead.Vusb = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VUSB_SCALE);
-        if ((g_dataToHead.Vusb > VUSB_DETECT_THRESHOLD) && (g_dataToHead.VBat < VBAT_CHGD_LO_THRESHOLD))
+
+        // Are we on external power?
+        u8 onContacts = (g_dataToHead.Vusb > VUSB_DETECT_THRESHOLD);
+        static u8 debounceContacts = 0;
+
+        // If contact state hasn't changed, do nothing
+        if (onContacts == m_onContacts)
         {
-          nrf_gpio_pin_set(PIN_CHARGE_EN); // Enable charging
+          debounceContacts = 0;   // Reset debounce time
+          
+        // If contact state has changed, debounce it first
+        } else if (debounceContacts < CONTACT_DEBOUNCE_CYCLES) {
+            debounceContacts++;
+          
+        // If contact state has changed, and we are debounced, commit the change
+        } else {
+          m_onContacts = onContacts;
+          
+          // If we are now on contacts, start charging
+          if (m_onContacts)
+          {
+            // MUST disable VBATs (and thus head power) while charging, to protect battery
+            nrf_gpio_pin_clear(PIN_VBATs_EN);   // Off
+            nrf_gpio_pin_set(PIN_VDDs_EN);      // Off            
+            nrf_gpio_pin_clear(PIN_CHARGE_EN);  // Enable charging
+            
+          // If we are now off contacts, stop charging and reboot
+          } else {
+            nrf_gpio_pin_set(PIN_CHARGE_EN);    // Disable charging
+            PowerOn();
+          }
         }
         startADCsample(ANALOG_I_SENSE);
         m_pinIndex = 0;
@@ -166,25 +216,13 @@ void BatteryUpdate()
 }
 
 
-void PowerInit()
+void PowerOn()
 {
-  // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_VDD_EN);        // On
-  nrf_gpio_cfg_output(PIN_VDD_EN);
-  
-  // Motor and headboard power
-  nrf_gpio_pin_clear(PIN_VBATs_EN);    // Off
-  nrf_gpio_cfg_output(PIN_VBATs_EN);
-  
-  // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
-  nrf_gpio_cfg_output(PIN_VDDs_EN);
-  
   // Let power drain out - 10ms is plenty long enough
   MicroWait(10000);
   
-  // Bring up VBATs first, because camera requires 1V8 (via VBATs) before VDDs  
-  nrf_gpio_pin_set(PIN_VBATs_EN);     // On
-  MicroWait(1000);                    // Long enough for 1V8 to stabilize (datasheet says ~80uS)
+  // Bring up VDDs first, because IMU requires VDDs before 1V8 (via VBATs)
+  // WARNING:  This might affect camera and/or leakage into M4/Torpedo prior to 1V8
   nrf_gpio_pin_clear(PIN_VDDs_EN);    // On  - XXX: VDDs is a PITA right now due to power sags
+  nrf_gpio_pin_set(PIN_VBATs_EN);     // On  - takes about 80uS to get to 1V8
 }
