@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
@@ -42,6 +43,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
+    REGISTER_CALLBACK(U2G_Ping)
     REGISTER_CALLBACK(U2G_ConnectToRobot)
     REGISTER_CALLBACK(U2G_ConnectToUiDevice)
     REGISTER_CALLBACK(U2G_DisconnectFromUiDevice)
@@ -115,6 +117,25 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
     
     return robot;
+  }
+  
+  void CozmoGameImpl::ProcessMessage(MessageU2G_Ping const& msg)
+  {
+    
+    _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
+    // Check to see if the ping counter is sequential or if we've dropped packets/pings
+    const u32 counterDiff = msg.counter - _lastPingCounterFromUI;
+    _lastPingCounterFromUI = msg.counter;
+    
+    if(counterDiff > 1) {
+      PRINT_NAMED_WARNING("CozmoGameImpl.Update",
+                          "Counter difference > 1 betweeen last two pings from UI. (Difference was %d.)\n",
+                          counterDiff);
+      
+      // TODO: Take action if we've dropped pings?
+    }
+    
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToRobot const& msg)

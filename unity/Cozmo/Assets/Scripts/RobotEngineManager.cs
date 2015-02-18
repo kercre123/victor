@@ -14,6 +14,12 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 
+	public bool IsConnected {
+		get {
+			return (channel != null && channel.IsConnected);
+		}
+	}
+
 	[SerializeField]
 	private TextAsset configuration;
 
@@ -121,7 +127,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void OnDisable()
 	{
 		if (channel != null) {
-			channel.Disconnect ();
+			Disconnect ();
 			channel = null;
 		}
 	}
@@ -140,26 +146,19 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void Disconnect()
 	{
-		if (channel != null && channel.IsActive) {
-#if UNITY_EDITOR
-			if (channel.IsConnected) {
-				Debug.Log ("Sending disconnect.");
-				U2G_DisconnectFromUiDevice message = new U2G_DisconnectFromUiDevice();
-				message.deviceID = UIDeviceID;
-				channel.Send (message);
+		if (channel != null) {
+			channel.Disconnect ();
 
-				float limit = Time.realtimeSinceStartup + 2.0f;
-				while (channel.HasPendingSends) {
-					if (limit < Time.realtimeSinceStartup) {
-						Debug.LogWarning("Not waiting for disconnect to finish sending.");
-						break;
-					}
-					System.Threading.Thread.Sleep (500);
+#if UNITY_EDITOR
+			float limit = Time.realtimeSinceStartup + 2.0f;
+			while (channel.HasPendingOperations) {
+				if (limit < Time.realtimeSinceStartup) {
+					Debug.LogWarning("Not waiting for disconnect to finish sending.");
+					break;
 				}
+				System.Threading.Thread.Sleep (500);
 			}
 #endif
-
-			channel.Disconnect ();
 		}
 	}
 
@@ -172,6 +171,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void Disconnected(DisconnectionReason reason)
 	{
+		Application.LoadLevel ("Shell");
+
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}
@@ -191,6 +192,9 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case (int)NetworkMessageID.G2U_UiDeviceConnected:
 			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotDisconnected:
+			ReceivedSpecificMessage((G2U_RobotDisconnected)message);
 			break;
 		case (int)NetworkMessageID.G2U_RobotObservedObject:
 			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
@@ -240,7 +244,13 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
-	
+
+	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
+	{
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.2f") + " seconds.");
+		Disconnected (DisconnectionReason.RobotDisconnected);
+	}
+
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
 		

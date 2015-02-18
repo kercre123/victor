@@ -46,6 +46,11 @@ ADD_MESSAGE_MEMBER(u8,  fooMember3)
 END_MESSAGE_DEFINITION(Foo)
 #endif
 
+// Ping
+START_MESSAGE_DEFINITION(U2G_Ping, 1)
+ADD_MESSAGE_MEMBER(u32, counter)        // should count sequentially if no drops
+END_MESSAGE_DEFINITION(U2G_Ping)
+
 // ConnectToRobot
 START_MESSAGE_DEFINITION(U2G_ConnectToRobot, 1)
 ADD_MESSAGE_MEMBER(u8, robotID)

@@ -44,6 +44,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
     
+    auto cbRobotDisconnectedSignal = [this](RobotID_t robotID, float timeSinceLastMsg_sec) {
+      this->HandleRobotDisconnectedSignal(robotID, timeSinceLastMsg_sec);
+    };
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnectedSignal));
+    
     auto cbUiDeviceConnectedSignal = [this](UserDeviceID_t deviceID, bool successful) {
       this->HandleUiDeviceConnectedSignal(deviceID, successful);
     };
@@ -75,6 +80,11 @@ namespace Cozmo {
       this->HandleRobotObservedObjectSignal(robotID, objectID, x_upperLeft, y_upperLeft, width, height);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
+    
+    auto cbRobotObservedNothingSignal = [this](uint8_t robotID) {
+      this->HandleRobotObservedNothingSignal(robotID);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedNothingSignal().ScopedSubscribe(cbRobotObservedNothingSignal));
     
     /* Now using U2G message handlers for these
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
@@ -147,6 +157,14 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
+  void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec)
+  {
+    MessageG2U_RobotDisconnected msg;
+    msg.robotID = robotID;
+    msg.timeSinceLastMsg_sec = timeSinceLastMsg_sec;
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
+  
   void CozmoGameImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
   {
     MessageG2U_UiDeviceConnected msg;
@@ -208,6 +226,14 @@ namespace Cozmo {
     msg.height    = height;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+  }
+  
+  void CozmoGameImpl::HandleRobotObservedNothingSignal(uint8_t robotID)
+  {
+    MessageG2U_RobotObservedNothing msg;
+    msg.robotID = robotID;
+    
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   

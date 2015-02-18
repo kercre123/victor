@@ -146,7 +146,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
 
-		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
 		}
 	}
