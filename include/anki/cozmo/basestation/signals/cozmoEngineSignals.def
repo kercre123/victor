@@ -11,22 +11,25 @@
 
 DEF_SIGNAL(RobotConnected, RobotID_t robotID, bool successful)
 DEF_SIGNAL(RobotAvailable, RobotID_t robotID)
-      
+DEF_SIGNAL(RobotDisconnected, RobotID_t robotID, float timeSinceLastMessage_sec)
       
 // Robot signals
 DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+
 DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
       
       
 // Vision signals
 DEF_SIGNAL(RobotImageAvailable,
            uint8_t robotID)
+
 DEF_SIGNAL(DeviceDetectedVisionMarker,
            uint8_t engineID, uint32_t markerType,
            float x_upperLeft,  float y_upperLeft,
            float x_lowerLeft,  float y_lowerLeft,
            float x_upperRight, float y_upperRight,
            float x_lowerRight, float y_lowerRight)
+
 DEF_SIGNAL(RobotObservedObject,
            uint8_t robotID, uint32_t objectID,
            float x_upperLeft,  float y_upperLeft,

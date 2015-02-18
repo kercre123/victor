@@ -39,12 +39,14 @@
 
 #define DISPLAY_PROX_OVERLAY 1
 
-
 namespace Anki {
   namespace Cozmo {
+
+    const float ROBOT_STATE_MESSAGE_TIMEOUT_SEC = 1.0f;
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
+    , _lastStateMsgTime_sec(-1.f)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
@@ -158,6 +160,13 @@ namespace Anki {
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
+      
+      // Keep up with the time we received the last state message (which is
+      // effectively the robot's "ping", so we know we're still connected to
+      // a working robot. Note that basestation and robot time aren't necessarily
+      // sync'd, so don't use the message's (i.e. robot's) timestamp here, since
+      // we're going to compare to basestation time to check for a timeout.
+      _lastStateMsgTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       // Update head angle
       SetHeadAngle(msg.headAngle);
@@ -484,6 +493,19 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
+      // Make sure physical robot is still alive and sending us state updates
+      if(_lastStateMsgTime_sec > 0.f) {
+        const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
+        if(timeDiff_sec > ROBOT_STATE_MESSAGE_TIMEOUT_SEC) {
+          PRINT_NAMED_ERROR("Robot.Update",
+                            "No state message received from robot %d in %.1f seconds, "
+                            "sending disconnected signal.\n", GetID(), timeDiff_sec);
+          
+          CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
+        }
+      }
+      
+      
 #     if !ASYNC_VISION_PROCESSING
       if(_haveNewImage) {
         

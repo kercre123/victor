@@ -34,6 +34,16 @@ namespace Cozmo {
   
   Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic)
   {
+    if(isInitialized_) {
+      PRINT_NAMED_WARNING("MultiClientComms.Init",
+                          "Already initialized, disconnecting all devices and from "
+                          "advertisement servier, then will re-initialize.\n");
+      
+      DisconnectAllDevices();
+      advertisingChannelClient_.Disconnect();
+      isInitialized_ = false;
+    }
+    
     maxSentBytesPerTic_ = maxSentBytesPerTic;
     advertisingHostIP_ = advertisingHostIP;
     
