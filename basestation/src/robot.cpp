@@ -502,6 +502,7 @@ namespace Anki {
                             "sending disconnected signal.\n", GetID(), timeDiff_sec);
           
           CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
+          _lastStateMsgTime_sec = -1.f;
         }
       }
       
