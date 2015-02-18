@@ -1,7 +1,8 @@
 fileFormatVersion: 2
 guid: a6a5f2730dcc3483a8392477457aa9dc
 TextureImporter:
-  fileIDToRecycleName: {}
+  fileIDToRecycleName:
+    21300000: UI_Icon_Arrow_0
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -42,6 +43,16 @@ TextureImporter:
   textureType: 8
   buildTargetSettings: []
   spriteSheet:
-    sprites: []
+    sprites:
+    - name: UI_Icon_Arrow_0
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 2
+        width: 45
+        height: 59
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 9, z: 0, w: 38}
   spritePackingTag: 
   userData: 
