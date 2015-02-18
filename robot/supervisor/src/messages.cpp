@@ -274,15 +274,12 @@ namespace Anki {
           ProcessMessage(msgID, msgBuffer_);
         }
         
-#ifdef SIMULATOR
-        // NOTE: This disconnect mode could possibly trigger if cozmo-engine sends so many things to the robot
-        // such that it doesn't need to send pings for more than
+        // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
         const u32 PING_DISCONNECT_TIMEOUT_MS = 1000;
         if ((lastPingTime_ != 0) && (lastPingTime_ + PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
           printf("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
         }
-#endif
         
       } // ProcessBTLEMessages()
       
