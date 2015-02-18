@@ -17,17 +17,14 @@ except ImportError:
 
 game_osx = Project('build_xcode/game_osx/CozmoGame.xcodeproj', '.', 'osx')
 game_ios = Project('build_xcode/game_ios/CozmoGame_iOS.xcodeproj', '.', 'ios')
-game_sim = Project('build_xcode/game_sim/CozmoGame_sim.xcodeproj', '.', 'sim')
-projects = [game_osx, game_ios, game_sim]
+projects = [game_osx, game_ios]
 
 extra_projects_osx = []
 extra_projects_ios = []
-extra_projects_sim = []
 
 workspace_osx = Workspace('build_xcode/CozmoWorkspace_OSX.xcworkspace', 'ALL_BUILD', extra_projects_osx, 'osx')
 workspace_ios = Workspace('build_xcode/CozmoWorkspace_iOS.xcworkspace', 'ALL_BUILD', extra_projects_ios, 'ios')
-workspace_sim = Workspace('build_xcode/CozmoWorkspace_sim.xcworkspace', 'ALL_BUILD', extra_projects_sim, 'sim')
-workspaces = [workspace_osx, workspace_ios, workspace_sim]
+workspaces = [workspace_osx, workspace_ios]
 
 #downstream_script = 'lib/anki/cozmo-engine/make_xcode.py'
 downstream_scripts = []
