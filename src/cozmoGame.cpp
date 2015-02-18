@@ -266,14 +266,15 @@ namespace Cozmo {
       }
     }
     
-    // Ping the UI to let them know we're still here
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, _pingToUI);
-    ++_pingToUI.counter;
-    
-    
     // Update UI comms
     if(_uiComms.IsInitialized()) {
       _uiComms.Update();
+      
+      if(_uiComms.GetNumConnectedDevices() > 0) {
+        // Ping the UI to let them know we're still here
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, _pingToUI);
+        ++_pingToUI.counter;
+      }
     }
     
     // Handle UI messages
