@@ -25,15 +25,16 @@ public class GyroControls : MonoBehaviour {
 			if(Time.frameCount == lastXStamp) return x;
 			lastXStamp = Time.frameCount;
 
-			Quaternion deviceRot = Input.gyro.attitude;
-			Vector3 euler = deviceRot.eulerAngles;
-			
-			float roll = euler.z - rollStart;
-			while(roll < -180f) roll += 360f;
-			while(roll > 180f) roll -= 360f;
-			
-			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin));
-			if(roll >= 0f) x = -x;
+//			Quaternion deviceRot = Input.gyro.attitude;
+//			Vector3 euler = deviceRot.eulerAngles;
+//			
+//			float roll = euler.z - rollStart;
+//			while(roll < -180f) roll += 360f;
+//			while(roll > 180f) roll -= 360f;
+
+			float roll = MSP_Input.GyroAccel.GetRoll();
+			//Debug.Log("roll");
+			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
 
 			return x; 
 		}
