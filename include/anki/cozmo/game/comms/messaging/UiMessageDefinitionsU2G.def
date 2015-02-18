@@ -152,6 +152,7 @@ ADD_MESSAGE_MEMBER(f32, x_mm)
 ADD_MESSAGE_MEMBER(f32, y_mm)
 ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(U2G_GotoPose)
 
 // PlaceObjectOnGround
@@ -160,6 +161,7 @@ ADD_MESSAGE_MEMBER(f32, x_mm)
 ADD_MESSAGE_MEMBER(f32, y_mm)
 ADD_MESSAGE_MEMBER(f32, rad)
 ADD_MESSAGE_MEMBER(u8, level)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(U2G_PlaceObjectOnGround)
 
 // PlaceObjectOnGroundHere
@@ -178,10 +180,13 @@ END_MESSAGE_DEFINITION(U2G_SelectNextObject)
 START_MESSAGE_DEFINITION(U2G_PickAndPlaceObject, 1)
 ADD_MESSAGE_MEMBER(s32, objectID) // negative value means "currently selected object"
 ADD_MESSAGE_MEMBER(u8, usePreDockPose)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(U2G_PickAndPlaceObject)
 
 // TraverseObject
 START_MESSAGE_DEFINITION(U2G_TraverseObject, 1)
+ADD_MESSAGE_MEMBER(u8, usePreDockPose)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(U2G_TraverseObject)
 
 // ClearAllBlocks
