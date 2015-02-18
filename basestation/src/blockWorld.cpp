@@ -359,13 +359,14 @@ namespace Anki
         
         // Signal the observation of this object, with its bounding box:
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(), obsID,
-                                                                boundingBox.GetX(),
-                                                                boundingBox.GetY(),
-                                                                boundingBox.GetWidth(),
-                                                                boundingBox.GetHeight());
+                                                             boundingBox.GetX(),
+                                                             boundingBox.GetY(),
+                                                             boundingBox.GetWidth(),
+                                                             boundingBox.GetHeight());
 
         _didObjectsChange = true;
       } // for each object seen
+      
       
     } // AddAndUpdateObjects()
     
@@ -1083,27 +1084,16 @@ namespace Anki
         numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
                                                 _existingObjects[ObjectFamily::RAMPS], atTimestamp);
         
-        
+
+        if(numObjectsObserved == 0) {
+          if(_didObjectsChange) {
+            PRINT_NAMED_WARNING("BlockWorld.Update", "NumObjectsObserved==0 but didObjectsChange==true.\n");
+          }
+          // If we didn't see/update anything, send a signal saying so
+          CozmoEngineSignals::RobotObservedNothingSignal().emit(_robot->GetID());
+        }
         
         // TODO: Deal with unknown markers?
-        
-        // Notify any listeners with the bounding boxes and IDs of any objects we
-        // observed
-        /*
-        if(numObjectsObserved > 0) {
-          for(auto & obsObject : _obsProjectedObjects) {
-            const Rectangle<f32>& bbox = obsObject.second;
-            CozmoEngineSignals::GetRobotObservedObjectSignal().emit(_robot->GetID(), obsObject.first.GetValue(),
-                                                                    bbox.GetX(), bbox.GetY(),
-                                                                    bbox.GetWidth(), bbox.GetHeight());
-            
-            // Display
-            Quad2f quad;
-            obsObject.second.GetQuad(quad);
-            VizManager::getInstance()->DrawCameraQuad(0, quad, NamedColors::GREEN);
-          }
-        }
-         */
         
         // Keep track of how many markers went unused by either robot or block
         // pose updating processes above
