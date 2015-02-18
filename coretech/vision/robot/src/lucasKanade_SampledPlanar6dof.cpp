@@ -275,8 +275,13 @@ namespace Anki
           calibMatrix[2][0] = 0.f;           calibMatrix[2][1] = 0.f;           calibMatrix[2][2] = 1.f;
 
           cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
-          cv::Mat calibMatrix_cvMat;
-          calibMatrix.ArrayToCvMat(&calibMatrix_cvMat);
+          cv::Mat_<f32> calibMatrix_cvMat(3,3);
+          //calibMatrix.ArrayToCvMat(&calibMatrix_cvMat);
+          for(s32 i=0; i<3; ++i) {
+            for(s32 j=0; j<3; ++j) {
+              calibMatrix_cvMat.at<f32>(i,j) = calibMatrix[i][j];
+            }
+          }
 
           cv::solvePnP(cvObjPoints, cvImagePoints,
             calibMatrix_cvMat, distortionCoeffs,

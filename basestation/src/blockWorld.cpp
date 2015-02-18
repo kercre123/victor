@@ -375,10 +375,11 @@ namespace Anki
       // Create a list of unobserved objects for further consideration below.
       struct UnobservedObjectContainer {
         ObjectFamily family;
+        ObjectType   type;
         Vision::ObservableObject*      object;
         
-        UnobservedObjectContainer(ObjectFamily family_, Vision::ObservableObject* object_)
-        : family(family_), object(object_) { }
+        UnobservedObjectContainer(ObjectFamily family_, ObjectType type_, Vision::ObservableObject* object_)
+        : family(family_), type(type_), object(object_) { }
       };
       std::vector<UnobservedObjectContainer> unobservedObjects;
       
@@ -395,7 +396,7 @@ namespace Anki
             Vision::ObservableObject* object = objectIter->second;;
             if(object->GetLastObservedTime() < atTimestamp) {
               //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-              unobservedObjects.emplace_back(objectFamily.first, objectIter->second);
+              unobservedObjects.emplace_back(objectFamily.first, objectTypeIter->first, objectIter->second);
             } // if object was not observed
             else {
               /* Always re-drawing everything now
@@ -419,25 +420,12 @@ namespace Anki
           CoreTechPrint("Removing object %d, which should have been seen, "
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
-          // Grab the object's type and ID before we delete it
-          ObjectType objType = unobserved.object->GetType();
-          ObjectID   objID   = unobserved.object->GetID();
-          
-          // Delete the object's instantiation (which will also erase its
-          // visualization)
-          delete unobserved.object;
-          
-          // Actually erase the object from blockWorld's container of
-          // existing objects
-          _existingObjects[unobserved.family][objType].erase(objID);
-          
-          _didObjectsChange = true;
+          ClearObject(unobserved.object, unobserved.type, unobserved.family);
         }
         
       } // for each unobserved object
       
     } // CheckForUnobservedObjects()
-    
     
     void BlockWorld::GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
                                       std::list<Vision::ObservedMarker*>& lst)
@@ -1017,11 +1005,9 @@ namespace Anki
       for (auto proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].begin(); proxObsIter != _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].end(); ) {
         if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS) {
           
-          // Erase obstacle (with a postfix increment of the iterator)
-          delete proxObsIter->second;
-          proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].erase(proxObsIter);
-          
-          _didObjectsChange = true;
+          proxObsIter = ClearObject(proxObsIter, MarkerlessObject::Type::PROX_OBSTACLE,
+                                    ObjectFamily::MARKERLESS_OBJECTS);
+
           continue;
         }
         ++proxObsIter;
@@ -1200,10 +1186,9 @@ namespace Anki
                       
                       // Erase the vizualized block and its projected quad
                       //VizManager::getInstance()->EraseCuboid(object->GetID());
-                      
+
                       // Erase the block (with a postfix increment of the iterator)
-                      delete object;
-                      objectIter = objectsByType.second.erase(objectIter);
+                      objectIter = ClearObject(objectIter, objectsByType.first, objectsByFamily.first);
                       didErase = true;
                       
                       break; // no need to check other robots, block already gone
@@ -1292,6 +1277,14 @@ namespace Anki
           _robot->UnSetCarryingObject();
         }
         
+        if(_selectedObject == object->GetID()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingSelectedObject",
+                           "Clearing %s object %d which is currently selected.\n",
+                           object->GetType().GetName().c_str(),
+                           object->GetID().GetValue());
+          _selectedObject.UnSet();
+        }
+        
         // NOTE: The object should erase its own visualization upon destruction
         delete object;
         
@@ -1353,6 +1346,30 @@ namespace Anki
       // Never found the specified ID
       return false;
     } // ClearObject()
+    
+    
+    
+    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(ObjectsMapByID_t::iterator objIter,
+                                                                   const ObjectType&   withType,
+                                                                   const ObjectFamily& fromFamily)
+    {
+      Vision::ObservableObject* object = objIter->second;
+     
+      ClearObjectHelper(object);
+
+      return _existingObjects[fromFamily][withType].erase(objIter);
+    }
+    
+    void BlockWorld::ClearObject(Vision::ObservableObject* object,
+                                 const ObjectType&   withType,
+                                 const ObjectFamily& fromFamily)
+    {
+      ClearObjectHelper(object);
+      
+      // Actually erase the object from blockWorld's container of
+      // existing objects
+      _existingObjects[fromFamily][withType].erase(object->GetID());
+    }
     
     
     bool BlockWorld::SelectObject(const ObjectID objectID)

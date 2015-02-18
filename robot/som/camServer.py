@@ -36,10 +36,12 @@ class CameraSubServer(object):
 
     ENCODER_LATEANCY = 5 # ms, SWAG
 
-    def __init__(self, poller, verbose=False):
+    def __init__(self, poller, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
         self.v = verbose
         if self.v: sys.stdout.write("CameraSubServer will be verbose\n")
+        self.tfr = test_framerate
+        if self.tfr: sys.stdout.write("Will print frame rate information")
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
         # Setup local jpeg data receive socket
@@ -71,6 +73,7 @@ class CameraSubServer(object):
         self.sendMode       = messages.ISM_OFF
 
         self.latestTimestamp = (0, time.time())
+        self.lastFrameTime = 0
 
     def __del__(self):
         "Shut down processes in the right order"
@@ -83,7 +86,7 @@ class CameraSubServer(object):
 
     def getTimestamp(self):
         "Return extrapolated synced timestamp"
-        return self.latestTimestamp[0] + ((time.time() - self.latestTimestamp[1])*1e3) # Timestamp is in units of ms
+        return self.latestTimestamp[0] # + ((time.time() - self.latestTimestamp[1])*1e3) # Timestamp is in units of ms
 
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
@@ -135,6 +138,10 @@ class CameraSubServer(object):
                 self.setResolution(inMsg.resolution)
         # Handle encoder data and buffering
         if not self.dataQueue and self.nextFrame: # If we've used up the frame we were sending and a new one is available
+            if self.tfr:
+                tick = time.time()
+                sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameTime)*1000))
+                self.lastFrameTime = tick
             self.imageTimestamp = self.getTimestamp() - self.ENCODER_LATEANCY # Skew back by 5 for estimated encoder latency
             self.imageNumber += 1
             self.dataQueue = self.nextFrame # Queue the next one

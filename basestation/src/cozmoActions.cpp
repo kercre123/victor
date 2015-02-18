@@ -34,6 +34,7 @@ namespace Anki {
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
+    , _startedTraversingPath(false)
     {
       
     }
@@ -76,6 +77,8 @@ namespace Anki {
       
       ActionResult result = SUCCESS;
       
+      _startedTraversingPath = false;
+      
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.CheckPreconditions.NoGoalSet",
                           "Goal must be set before running this action.\n");
@@ -103,18 +106,23 @@ namespace Anki {
     {
       IAction::ActionResult result = IAction::RUNNING;
       
-      // Wait until robot reports it is no longer traversing a path
-      if(robot.IsTraversingPath())
-      {
-        // If the robot is traversing a path, consider replanning it
-        if(robot.GetBlockWorld().DidObjectsChange())
+      if(!_startedTraversingPath) {
+        // Wait until robot reports it has started traversing the path
+        _startedTraversingPath = robot.IsTraversingPath();
+        
+      } else {
+        // Wait until robot reports it is no longer traversing a path
+        if(robot.IsTraversingPath())
         {
-          Planning::Path newPath;
-          switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+          // If the robot is traversing a path, consider replanning it
+          if(robot.GetBlockWorld().DidObjectsChange())
           {
-            case IPathPlanner::DID_PLAN:
+            Planning::Path newPath;
+            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
             {
-              // clear path, but flag that we are replanning
+              case IPathPlanner::DID_PLAN:
+              {
+                // clear path, but flag that we are replanning
               robot.ClearPath();
               _forceReplanOnNextWorldChange = false;
               
@@ -154,38 +162,41 @@ namespace Anki {
               // Don't do anything just proceed with the current plan...
               break;
             }
+                
               
-          } // switch(GetPlan())
-        } // if blocks changed
-        
-      } else {
-        Vec3f Tdiff;
-        
-        // HACK: Loosen z threshold bigtime:
-        const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
-        
-        if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
-        {
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
-                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
-                           robot.GetID(), Tdiff.Length());
+            } // switch(GetPlan())
+          } // if blocks changed
           
-          result = IAction::SUCCESS;
-        }
-        // The last path sent was definitely received by the robot
-        // and it is no longer executing it, but we appear to not be in position
-        else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
-                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
-                           Tdiff.Length(), robot.GetLastRecvdPathID());
-          result = IAction::FAILURE_RETRY;
-        }
-        else {
-          // Something went wrong: not in place and robot apparently hasn't
-          // received all that it should have
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
-                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
-          result = IAction::FAILURE_ABORT;
+        } else {
+          // No longer traversing the path, so check to see if we ended up in the right place
+          Vec3f Tdiff;
+          
+          // HACK: Loosen z threshold bigtime:
+          const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
+          
+          if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
+          {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
+                             "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
+                             robot.GetID(), Tdiff.Length());
+            
+            result = IAction::SUCCESS;
+          }
+          // The last path sent was definitely received by the robot
+          // and it is no longer executing it, but we appear to not be in position
+          else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
+                             "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
+                             Tdiff.Length(), robot.GetLastRecvdPathID());
+            result = IAction::FAILURE_RETRY;
+          }
+          else {
+            // Something went wrong: not in place and robot apparently hasn't
+            // received all that it should have
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+            result = IAction::FAILURE_ABORT;
+          }
         }
       }
       
@@ -408,18 +419,18 @@ namespace Anki {
     
     IAction::ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
-      ActionResult result = SUCCESS;
-
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
       
       Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D,
-                         robot.GetPose().GetTranslation());
+                         robot.GetPose().GetTranslation(),
+                         robot.GetPose().GetParent());
       
       SetGoal(rotatedPose);
       
-      return result;
+      // Now that goal is set, call the base class init to send the path, etc.
+      return DriveToPoseAction::Init(robot);
     }
     
     
@@ -598,11 +609,18 @@ namespace Anki {
         if(currentTime >= _waitToVerifyTime) {
           actionResult = Verify(robot);
           
+          // Go back to looking for markers (and stop tracking) when we finish,
+          // whether or not we succeeded?
+          robot.StartLookingForMarkers();
+          robot.StopDocking();
+          
+          /*
           // If docking fails, go back to looking for markers?
           if(actionResult != SUCCESS) {
             robot.StartLookingForMarkers();
             robot.StopDocking();
           }
+           */
         }
       }
       

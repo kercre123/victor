@@ -10,6 +10,7 @@ import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
+PRINT_FRAMERATE = False
 
 MTU = 1500
 
@@ -26,9 +27,10 @@ class CozmoServer(socket.socket):
         self.settimeout(0)
         self.poller = select.poll()
         self.poller.register(self, select.POLLIN)
-        self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
-                           mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
-        self.subServers[1].timestampCB = self.subServers[0].updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
+        camServer = camServer.CameraSubServer(self.poller, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)
+        self.subServers = [camServer, mcu]
+        mcu.timestampCB = camServer.updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
 
@@ -87,8 +89,10 @@ class CozmoServer(socket.socket):
 
 
 if __name__ == '__main__':
-    if '-v' in sys.argv: VERBOSE = True
-    if '-i' in sys.argv: PRINT_INTERVAL = True
+    if '-v'  in sys.argv: VERBOSE = True
+    if '-vv' in sys.argv: VERBOSE = 10
+    if '-i'  in sys.argv: PRINT_INTERVAL = True
+    if '-f'  in sys.argv: PRINT_FRAMERATE = True
     address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)

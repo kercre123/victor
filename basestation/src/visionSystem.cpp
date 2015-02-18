@@ -22,6 +22,9 @@
 #include "anki/common/shared/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 //
 // Embedded implementation holdovers:
 //  (these should probably all go away once basestation vision is natively implemented)
@@ -580,6 +583,8 @@ namespace Cozmo {
     AnkiAssert(parameters.isInitialized);
     AnkiAssert(_markerToTrack.width_mm > 0);
     
+    _trackingIteration = 0;
+    
 #if USE_MATLAB_TRACKER
     return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
 #endif
@@ -830,6 +835,7 @@ namespace Cozmo {
     const Embedded::Point3<f32>& initTranslation = tracker.GetTranslation();
     
     bool converged = false;
+    ++_trackingIteration;
     const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
                                                      parameters.maxIterations,
                                                      parameters.convergenceTolerance_angle,
@@ -898,6 +904,7 @@ namespace Cozmo {
     }
     else {
       // Everything seems ok!
+      PRINT_INFO("Tracker succeeded (%d)!\n", _trackingIteration);
       trackingSucceeded = true;
     }
     
@@ -960,6 +967,24 @@ namespace Cozmo {
     return RESULT_OK;
   } // TrackTemplate()
   
+  template<typename T>
+  static void GetVizQuad(const Embedded::Quadrilateral<T>&  embeddedQuad,
+                         Anki::Quadrilateral<2, T>&         vizQuad)
+  {
+    vizQuad[Quad::TopLeft].x() = embeddedQuad[Quad::TopLeft].x;
+    vizQuad[Quad::TopLeft].y() = embeddedQuad[Quad::TopLeft].y;
+    
+    vizQuad[Quad::TopRight].x() = embeddedQuad[Quad::TopRight].x;
+    vizQuad[Quad::TopRight].y() = embeddedQuad[Quad::TopRight].y;
+    
+    vizQuad[Quad::BottomLeft].x() = embeddedQuad[Quad::BottomLeft].x;
+    vizQuad[Quad::BottomLeft].y() = embeddedQuad[Quad::BottomLeft].y;
+    
+    vizQuad[Quad::BottomRight].x() = embeddedQuad[Quad::BottomRight].x;
+    vizQuad[Quad::BottomRight].y() = embeddedQuad[Quad::BottomRight].y;
+  }
+  
+  
   //
   // Tracker Prediction
   //
@@ -973,7 +998,10 @@ namespace Cozmo {
     const Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
     
     // TODO: Re-enable tracker prediction viz on Basestation
-    //MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
+    // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
+    Anki::Quad2f vizQuad;
+    GetVizQuad(currentQuad, vizQuad);
+    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -1135,6 +1163,8 @@ namespace Cozmo {
     
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
+    GetVizQuad(GetTrackerQuad(scratch), vizQuad);
+    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()

@@ -45,7 +45,7 @@ namespace Anki {
     Result RobotMessageHandler::Init(Comms::IComms* comms,
                                 RobotManager*  robotMgr)
     {
-      Result retVal = RESULT_FAIL;
+      Result retVal = RESULT_OK;
       
       //TODO: PRINT_NAMED_DEBUG("RobotMessageHandler", "Initializing comms");
       comms_ = comms;
@@ -54,8 +54,8 @@ namespace Anki {
       if(comms_) {
         isInitialized_ = comms_->IsInitialized();
         if (isInitialized_ == false) {
-          // TODO: PRINT_NAMED_ERROR("RobotMessageHandler", "Unable to initialize comms!");
-          retVal = RESULT_OK;
+          PRINT_NAMED_ERROR("RobotMessageHandler", "Expecting passed-in comms to be initialized!");
+          retVal = RESULT_FAIL;
         }
       }
       

@@ -83,7 +83,7 @@ include_directories(${PROJECT_SOURCE_DIR}/basestation/src
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 add_library(Cozmo_Basestation 
   ${SOURCE_FILES} 

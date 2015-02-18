@@ -71,7 +71,7 @@ build/msvc*
 build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
-build
+/build
 simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
@@ -156,3 +156,8 @@ uImage
 robot/som/ov2686/ov2686_code_timestamp.h
 robot/som/*.jpg
 buildMakefile
+
+build_xcode_osx
+build_xcode_ios
+build_xcode_sim
+c-source.txt

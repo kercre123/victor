@@ -90,7 +90,7 @@ namespace Anki {
       if(currentTimeInSeconds > _timeoutTime) {
         PRINT_NAMED_INFO("IAction.Update.TimedOut",
                          "%s timed out after %.1f seconds.\n",
-                         GetName().c_str(), GetStartDelayInSeconds());
+                         GetName().c_str(), GetTimeoutInSeconds());
         
         result = FAILURE_TIMEOUT;
       }
