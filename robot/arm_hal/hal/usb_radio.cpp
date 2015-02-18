@@ -56,8 +56,10 @@ namespace Anki {
       return false;
     }
 
-    void DisconnectRadio(void)
+    void HAL::DisconnectRadio(void)
     {
+      somBlueState = 0;
+      somWifiState = 0;
       recvBufSize_ = 0;
     }
 

@@ -400,7 +400,7 @@ namespace Anki {
       RobotID_t         _ID;
       
       // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
-      TimeStamp_t       _lastStateMsgTime_sec;
+      double       _lastStateMsgTime_sec;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IRobotMessageHandler* _msgHandler;
