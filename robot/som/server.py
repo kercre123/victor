@@ -73,10 +73,11 @@ class CozmoServer(socket.socket):
         if recvData is not None:
             didSome = True
         for ss in self.subServers:
-            outMsg = ss.poll(recvData)
-            if outMsg:
+            outMsgs = ss.poll(recvData)
+            if outMsgs:
                 didSome = True
-                self.clientSend(outMsg)
+                for m in outMsgs:
+                    self.clientSend(m)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
             sys.stdout.write("Going to standby\n")
             sys.stdout.flush()

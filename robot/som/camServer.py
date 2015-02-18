@@ -33,6 +33,8 @@ class CameraSubServer(object):
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
+    ENCODER_QUALITY       = 95
+    ENCODER_FPS           = 30
 
     ENCODER_LATEANCY = 5 # ms, SWAG
 
@@ -63,16 +65,14 @@ class CameraSubServer(object):
 
         assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"%s":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]' % self.camDev]) == 0, "media-ctl ISP links setup failure"
 
-        # Set ISP camera resizer
-        self.resolution = messages.CAMERA_RES_NONE
+        # ISP resizer resolution
+        self.ISPResolution = messages.CAMERA_RES_NONE
+        # Image encoder output resolution
+        self.ENCResolution = messages.CAMERA_RES_NONE
 
         # Setup video data chunking state
-        self.imageTimestamp = 0
         self.imageNumber    = 0
-        self.dataQueue      = ""
         self.nextFrame      = ""
-        self.chunkNumber    = 0
-        self.expectedChunks = 0
         self.sendMode       = messages.ISM_OFF
 
         self.latestTimestamp = (0, time.time())
@@ -96,29 +96,34 @@ class CameraSubServer(object):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
         if resolutionEnum < self.SENSOR_RESOLUTION:
             resolutionEnum = self.SENSOR_RESOLUTION
-        elif resolutionEnum > messages.CAMERA_RES_QVGA:
-            resolutionEnum = messages.CAMERA_RES_QVGA
-        if resolutionEnum == self.resolution:
-            self.startEncoder()
+        elif resolutionEnum > messages.CAMERA_RES_QQVGA:
+            resolutionEnum = messages.CAMERA_RES_QQVGA
+        if resolutionEnum == self.ENCResolution:
+            self.startEncoder(resolutionEnum)
             return True
         else:
             self.stopEncoder()
+            if resolutionEnum > messages.CAMERA_RES_QVGA: # Minimum isp resolution
+                ispRes = messages.CAMERA_RES_QVGA
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
                                 (self.camDev, self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], self.SENSOR_RES_TPL[0], self.SENSOR_RES_TPL[1], \
-                                 self.RESOLUTION_TUPLES[resolutionEnum][0], self.RESOLUTION_TUPLES[resolutionEnum][1])]) == 0:
-                self.resolution = resolutionEnum
-                self.startEncoder()
+                                 self.RESOLUTION_TUPLES[ispRes][0], self.RESOLUTION_TUPLES[ispRes][1])]) == 0:
+                self.ISPResolution = ispRes
+                self.startEncoder(resolutionEnum)
                 return True
             else:
                 return False
 
 
-    def startEncoder(self):
+    def startEncoder(self, encRes):
         "Starts the encoder subprocess"
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            #self.encoderProcess = subprocess.Popen(['./launch-gst-subprocess.sh', '127.0.0.1', '6000'])
-            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', 'ffmpegcolorspace', '!', 'jpegenc', '!', 'udpsink', 'host=%s' % \
-                                                    self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
+            self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', 'ffmpegcolorspace', \
+                                                    '!', 'TIImgenc1', 'engineName=codecServer', 'codecName=jpegenc', \
+                                                    'resolution=%dx%d' % self.RESOLUTION_TUPLES[encRes], 'iColorSpace=UYVY', \
+                                                    'oColorSpace=YUV420P', 'qValue=%d' % self.ENCODER_QUALITY, '!', 'udpsink', \
+                                                    'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
+            self.ENCResolution = encRes
 
     def stopEncoder(self):
         "Stop the encoder subprocess if it is running"
@@ -130,7 +135,7 @@ class CameraSubServer(object):
 
     def poll(self, message=None):
         "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
-        outMsg = None
+        outMsgs = []
         # Handle incoming messages if any
         if message and ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
@@ -140,32 +145,30 @@ class CameraSubServer(object):
                 self.stopEncoder()
             else: # Not off, set resolution and start encoder
                 self.setResolution(inMsg.resolution)
-        # Handle encoder data and buffering
-        if not self.dataQueue and self.nextFrame: # If we've used up the frame we were sending and a new one is available
+        # Handle encoder data transmission
+        if self.nextFrame:
             if self.tfr:
                 tick = time.time()
                 sys.stdout.write('FOP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
                 self.lastFrameOTime = tick
-            self.imageTimestamp = self.getTimestamp() - self.ENCODER_LATEANCY # Skew back by 5 for estimated encoder latency
-            self.imageNumber += 1
-            self.dataQueue = self.nextFrame # Queue the next one
-            self.chunkNumber = 0
-            self.expectedChunks = int(math.ceil(float(len(self.dataQueue)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-            self.nextFrame = ''
+            # If only sending single image
             if self.sendMode == messages.ISM_SINGLE_SHOT:
                 self.stopEncoder()
                 self.sendMode = messages.ISM_OFF
-        if self.dataQueue:
+            frame = self.nextFrame
+            self.imageNumber += 1
             msg = messages.ImageChunk()
-            self.dataQueue = msg.takeChunk(self.dataQueue)
             msg.imageId = self.imageNumber
-            msg.imageTimestamp = self.imageTimestamp
+            msg.imageTimestamp = self.getTimestamp()
             msg.imageEncoding = messages.IE_JPEG
-            msg.imageChunkCount = self.expectedChunks
-            msg.chunkId = self.chunkNumber
-            msg.resolution = self.resolution
-            self.chunkNumber += 1
-            outMsg = msg.serialize()
+            msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
+            msg.resolution = self.ENCResolution
+            chunkNumber = 0
+            while frame:
+                frame = msg.takeChunk(frame)
+                msg.chunkId = chunkNumber
+                chunkNumber += 1
+                outMsgs.append(msg.serialize())
         # Get a new frame if any from encoder
         try:
             self.nextFrame = self.encoderSocket.recv(MTU)
@@ -177,7 +180,7 @@ class CameraSubServer(object):
             pass
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
             raise Exception("Encoder sub-process has terminated")
-        return outMsg
+        return outMsgs
 
     def standby(self):
         "Put the sub server into standby mode"

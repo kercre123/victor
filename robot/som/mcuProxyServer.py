@@ -61,10 +61,9 @@ class MCUProxyServer(object):
     def __addFromMcuQ(self, msg):
         self._fromMcuQ.append(msg)
     def __getFromMcuQ(self):
-        if len(self._fromMcuQ):
-            return self._fromMcuQ.pop(0)
-        else:
-            return None
+        ret = self._fromMcuQ
+        self._fromMcuQ = []
+        return ret
     def __clearFromMcuQ(self):
         self._fromMcuQ = []
     fromMcuQ = property(__getFromMcuQ, __addFromMcuQ, __clearFromMcuQ, "Meta accessor for messages queued from the MCU to the radio. Set to queue a message, get to pop, del to clear queue.")
