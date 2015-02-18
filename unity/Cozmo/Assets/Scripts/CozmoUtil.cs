@@ -80,7 +80,6 @@ public static class CozmoUtil {
 		
 	}
 
-
 	public static void CalcWheelSpeedsFromBotRelativeInputsB(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
 		
 		leftWheelSpeed = 0f;
@@ -90,19 +89,22 @@ public static class CozmoUtil {
 
 		float speed = inputs.magnitude;
 
-		if(inputs.y == 0f) {
-			if(inputs.x > 0f) {
-				leftWheelSpeed = speed;
-				rightWheelSpeed = -speed;
+//		if(inputs.y == 0f) {
+//			if(inputs.x > 0f) {
+//				leftWheelSpeed = speed;
+//				rightWheelSpeed = -speed;
+//			}
+//			else {
+//				rightWheelSpeed = speed;
+//				leftWheelSpeed = -speed;
+//			}
+//		}
+//		else {
+			//back that ass up like a pickup truck
+			if(inputs.y < 0f) {
+				speed = -speed;
+				inputs.x = -inputs.x;
 			}
-			else {
-				rightWheelSpeed = speed;
-				leftWheelSpeed = -speed;
-			}
-		}
-		else {
-
-			if(inputs.y < 0f) speed = -speed;
 
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
@@ -117,26 +119,13 @@ public static class CozmoUtil {
 				float speedB = speed;
 
 				if(angle <= 45f) {
-					float factor = Mathf.Clamp01(angle / 45f);
-					speedA = speed;
-					speedB = Mathf.Lerp(speed, 0f, factor);
-
-					if(inputs.x > 0f) {
-						leftWheelSpeed = speedA;
-						rightWheelSpeed = speedB;
-					}
-					else {
-						rightWheelSpeed = speedA;
-						leftWheelSpeed = speedB;
-					}
+					speedB = Mathf.Lerp(speed, 0f, Mathf.Clamp01(angle / 45f));
 				}
 				else {
-					float factor = Mathf.Clamp01( (angle-45f) / 45f);
-					speedA = speed;
-					speedB = Mathf.Lerp(0f, -speed, factor);
+					speedB = Mathf.Lerp(0f, -speed, Mathf.Clamp01( (angle-45f) / 45f));
 				}
 
-				if(inputs.x > 0f ^ inputs.y < 0f) {
+				if(inputs.x > 0f) {
 					leftWheelSpeed = speedA;
 					rightWheelSpeed = speedB;
 				}
@@ -146,38 +135,42 @@ public static class CozmoUtil {
 				}
 
 			}
-		}
+		//}
 
 		//scale to maximum wheel speeds
 		leftWheelSpeed *= MAX_WHEEL_SPEED;
 		rightWheelSpeed *= MAX_WHEEL_SPEED;
 	}
 
-	public static void CalcDriveWheelSpeedsForInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
+	public static void CalcDriveWheelSpeedsForInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, bool reverse=false) {
 		
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
 		
 		if(inputs.x == 0f && inputs.y == 0f) return;
-		
+
 		float speed = inputs.magnitude;
-		if(inputs.y < 0f) speed = -speed;
-			
+		float turn = 0f;
+
+		if(!reverse) {
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+		}
+		else {
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			speed = -speed;
+		}
+
+		speed = speed*speed * (speed < 0f ? -1f : 1f);
+		turn = turn*turn * (turn < 0f ? -1f : 1f);
+
 		leftWheelSpeed = speed;
 		rightWheelSpeed = speed;
 			
-		if(inputs.x != 0f) {
-
-			float angle = Vector2.Angle(Vector2.up, inputs.normalized);
-			if(inputs.y < 0f) {
-				angle = 180f - angle;
-			}
-
-			float factor = Mathf.Clamp01(angle / 90f);
+		if(turn != 0f) {
 			float speedA = speed;
-			float speedB = Mathf.Lerp(speed, 0f, factor);
+			float speedB = Mathf.Lerp(speed, -speed, Mathf.Abs(turn));
 
-			if(inputs.x > 0f ^ inputs.y < 0f) {
+			if(turn > 0f) {
 				leftWheelSpeed = speedA;
 				rightWheelSpeed = speedB;
 			}
@@ -185,17 +178,25 @@ public static class CozmoUtil {
 				rightWheelSpeed = speedA;
 				leftWheelSpeed = speedB;
 			}
-
 		}
-		
+
+		//Debug.Log("speed("+speed+") turn("+turn+")");
+
 		//scale to maximum wheel speeds
 		leftWheelSpeed *= MAX_WHEEL_SPEED;
 		rightWheelSpeed *= MAX_WHEEL_SPEED;
 	}
 
 	public static void CalcTurnInPlaceWheelSpeeds(float x, out float leftWheelSpeed, out float rightWheelSpeed) {
+		x = x*x * (x < 0f ? -1f : 1f);
+
 		leftWheelSpeed = x * MAX_WHEEL_SPEED;
 		rightWheelSpeed = -x * MAX_WHEEL_SPEED;
+	}
+
+	public static void SquareInputs(ref Vector2 inputs) {
+		inputs.x = inputs.x*inputs.x * (inputs.x < 0f ? -1f : 1f);
+		inputs.y = inputs.y*inputs.y * (inputs.y < 0f ? -1f : 1f);
 	}
 
 }

@@ -345,7 +345,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       // TODO: Better way to specify the target pose's parent
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
-      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose));
+      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose, msg.useManualSpeed));
     }
   }
   
@@ -360,7 +360,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
       Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
-      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose));
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed));
     }
   }
   
@@ -427,9 +427,9 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       }
       
       if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID), numRetries);
+        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
-        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID);
+        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
         action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
         robot->GetActionList().AddAction(action, numRetries);
       }
@@ -447,7 +447,13 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       const u8 numRetries = 0;
       
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID), numRetries);
+      
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+      } else {
+        TraverseObjectAction* action = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+        robot->GetActionList().AddAction(action, numRetries);
+      }
       
     }
   }

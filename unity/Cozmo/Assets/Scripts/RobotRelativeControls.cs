@@ -7,8 +7,15 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
+	[SerializeField] AccelControls accelInputs = null;
 	[SerializeField] Toggle gyroRollControl = null;
 	[SerializeField] Toggle gyroPitchControl = null;
+
+	[SerializeField] Text text_x = null;
+	[SerializeField] Text text_y = null;
+
+	[SerializeField] Text text_leftWheelSpeed = null;
+	[SerializeField] Text text_rightWheelSpeed = null;
 
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
@@ -60,13 +67,17 @@ public class RobotRelativeControls : MonoBehaviour {
 			inputs.x = horizontalStick.Horizontal;
 		}
 
+		float maxAngle = 135f;
+
 		if(verticalStick != null) {
 
 			if(verticalStick.UpModeEngaged) {
 				driveForwardOnlyMode = true;
+				maxAngle = verticalStick.MaxAngle;
 			}
 			else if(verticalStick.DownModeEngaged) {
 				driveReverseOnlyMode = true;
+				maxAngle = verticalStick.MaxAngle;
 			}
 
 			inputs.y = verticalStick.Vertical;
@@ -87,8 +98,9 @@ public class RobotRelativeControls : MonoBehaviour {
 			}
 		}
 
-		inputs.x = inputs.x*inputs.x * (inputs.x < 0f ? -1f : 1f);
-		inputs.y = inputs.y*inputs.y * (inputs.y < 0f ? -1f : 1f);
+		if(accelInputs != null && (verticalStick == null || verticalStick.IsPressed) ) {
+			inputs.x = accelInputs.Horizontal;
+		}
 
 //		if(reverseLikeACar) {
 //			if(inputs.y < 0f) inputs.x = -inputs.x;
@@ -102,27 +114,32 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = inputs;
 
-		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+		if(driveForwardOnlyMode) {
+			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, false);
+		}
+		else if(driveReverseOnlyMode) {
+			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, true);
+		}
+		else if(turnInPlaceOnlyMode) {
+			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed);
+		}
+		else { //continues input range mode...causes issues at thresholds
 
-			if(driveForwardOnlyMode) {
-				CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
-			}
-			else if(driveReverseOnlyMode) {
-				if(reverseLikeACar) {
-					if(inputs.y < 0f) inputs.x = -inputs.x;
-				}
-				CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
-			}
-			else if(turnInPlaceOnlyMode) {
-				CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed);
-			}
-			else { //continues input range mode...causes issues at thresholds
-				CozmoUtil.CalcWheelSpeedsFromBotRelativeInputsB(inputs, out leftWheelSpeed, out rightWheelSpeed);
-			}
+			CozmoUtil.CalcWheelSpeedsFromBotRelativeInputsB(inputs, out leftWheelSpeed, out rightWheelSpeed);
+		}
+
+		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 		}
 
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
+
+
+		if(text_x != null) text_x.text = "x(" + inputs.x + ")";
+		if(text_y != null) text_y.text = "y(" + inputs.y + ")";
+
+		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed + ")";
+		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed + ")";
 	}
 
 	void OnDisable() {
