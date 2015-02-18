@@ -118,8 +118,12 @@ def parse_args(use_workspaces = False, use_unity = False):
                       delete -- delete all generated {0}
                       ''').format(both_text, single_text))
   parser.add_argument('-p', '--platform', type=str.lower, dest='platforms', metavar='platforms', default='osx+ios',
-                      help='which platform(s) to target of osx, ios or sim;\n' +
-                      'can concatenate with + (default is %(default)s), or specify "all"')
+                      help=textwrap.dedent('''\
+                      which platform(s) to target {osx, ios}
+                      can concatenate with + (default is %(default)s)
+                      ''')
+  parser.add_argument('-s', '--simulator', action='store_true',
+                      help='use the iphone simulator build (will add platform "ios")')
   group = parser.add_mutually_exclusive_group(required=False)
   group.add_argument('-c', '--config', type=str.lower, required=False, dest='configuration', metavar='configuration',
                      choices=['debug', 'release', 'relwithdebinfo', 'minsizerel'],
@@ -137,11 +141,11 @@ def parse_args(use_workspaces = False, use_unity = False):
                         dl -- download and build with prebuilt unity files
                         '''))
   args = parser.parse_args()
-  if args.platforms == 'all':
-    args.platforms = 'osx+ios+sim'
+  if args.platforms in 'all':
+    args.platforms = 'osx+ios'
   args.platforms = args.platforms.replace(' ', '').split('+')
   for platform in args.platforms:
-    if platform not in ('ios', 'osx', 'sim'):
+    if platform not in ('osx', 'ios'):
       exit('Invalid platform "{0}".'.format(platform))
 
   return args
@@ -237,29 +241,30 @@ def execute(args):
 def execute_downstream(script_path):
   script_path = complete_path(script_path)
   arguments = [script_path] + sys.argv
+  
   cd(os.path.dirname(script_path))
   execute(arguments)
 
 
 def cmake(source_path, build_path, platform):
   arguments = ['cmake', '-GXcode']
-  if platform in ('ios', 'sim'):
+  if platform == 'ios':
     arguments += ['-DANKI_IOS_BUILD=1']
     arguments += ['-DCMAKE_TOOLCHAIN_FILE=' + CMAKE_IOS_PATH]
-    if platform == 'ios':
-      arguments += ['-DIOS_PLATFORM=OS']
-    else:
-      arguments += ['-DIOS_PLATFORM=SIMULATOR']
   arguments += [complete_path(source_path)]
+  
   makedirs(build_path)
   cd(build_path)
   execute(arguments)
 
 
-def xcodebuild(project = None, workspace = None, scheme = None, configuration = None, platform = None, buildaction = 'build'):
+def xcodebuild(project = None, workspace = None, scheme = None,
+               configuration = None, platform = None, simulator = False,
+               buildaction = 'build'):
   if not project and not workspace:
     raise ValueError('You must specify either a project or workspace to xcodebuild.')
   arguments = ['xcodebuild']
+  
   if project:
     arguments += ['-project', complete_path(project)]
   if workspace:
@@ -269,15 +274,14 @@ def xcodebuild(project = None, workspace = None, scheme = None, configuration = 
   if configuration:
     arguments += ['-configuration', configuration]
 
-  # bug in xcodebuild ignores sdk/arch setting when building workspaces; projects seem fine
-  # but it doesn't hurt to specify it manually for both types of builds
-  if platform:
-    if platform == 'ios':
-      arguments += ['-sdk', 'iphoneos', 'ARCHS=armv6 armv7 armv7s arm64', 'ONLY_ACTIVE_ARCH=NO']
-    elif platform == 'sim':
+  if platform == 'ios':
+    if simulator:
+      arguments += ['-sdk', 'iphoneos', 'ARCHS=armv6 armv7 arm64', 'ONLY_ACTIVE_ARCH=NO']
+    else:
       arguments += ['-sdk', 'iphonesimulator']
 
   arguments += [buildaction]
+  
   cd()
   execute(arguments)
 
@@ -288,6 +292,7 @@ def generate_workspace(workspace_path, generated_project_paths, extra_project_pa
     relpath = os.path.relpath(complete_path(path), os.path.dirname(workspace_full))
     scheme_contents = XCSCHEME_XML.format(relpath)
     scheme_path = os.path.join(path, 'xcshareddata/xcschemes/ALL_BUILD.xcscheme')
+    
     makedirs(os.path.dirname(scheme_path))
     write(scheme_path, scheme_contents)
 
@@ -299,6 +304,7 @@ def generate_workspace(workspace_path, generated_project_paths, extra_project_pa
 
   entries.append(WORKSPACE_BOTTOM_XML)
   workspace_file = os.path.join(workspace_path, 'contents.xcworkspacedata')
+  
   makedirs(workspace_path)
   write(workspace_file, ''.join(entries))
 
