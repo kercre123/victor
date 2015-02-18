@@ -63,6 +63,13 @@ namespace Anki
         const f32 COAST_VELOCITY_MMPS = 15.f;
         const f32 COAST_VELOCITY_RADPS = 0.4f; // Same as POINT_TURN_TERMINAL_VEL_RAD_PER_S
         
+        // If true, then the path is not traversed according to its speed parameters, but
+        // instead by the SetPathSpeed message.
+        bool manualSpeedControl_ = false;
+        f32 manualPathSpeed_ = 0;
+        f32 manualPathAccel_ = 100;
+        f32 manualPathDecel_ = 100;
+        
       } // Private Members
       
       
@@ -203,7 +210,7 @@ namespace Anki
         }
       }
       
-      bool StartPathTraversal(u16 path_id)
+      bool StartPathTraversal(u16 path_id, bool manualSpeedControl)
       {
         // Set first path segment
         if (path_.GetNumSegments() > 0) {
@@ -217,6 +224,8 @@ namespace Anki
             return false;
           }
           
+          // Set whether or not path is traversed according to speed in path parameters
+          manualSpeedControl_ = manualSpeedControl;
           
           // Get current robot pose
           f32 x, y;
@@ -229,9 +238,15 @@ namespace Anki
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
           if (path_[currPathSegment_].GetType() != Planning::PST_POINT_TURN) {
-            SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
-            SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
-            SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+            if (manualSpeedControl_) {
+              SpeedController::SetUserCommandedDesiredVehicleSpeed( manualPathSpeed_ );
+              SpeedController::SetUserCommandedAcceleration( manualPathAccel_ );
+              SpeedController::SetUserCommandedDeceleration( manualPathDecel_ );
+            } else {
+              SpeedController::SetUserCommandedDesiredVehicleSpeed( path_[currPathSegment_].GetTargetSpeed() );
+              SpeedController::SetUserCommandedAcceleration( path_[currPathSegment_].GetAccel() );
+              SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
+            }
           }
 
 #if(DEBUG_PATH_FOLLOWER)
@@ -262,6 +277,19 @@ namespace Anki
       {
         return currPathSegment_ >= 0;
       }
+
+      bool IsInManualSpeedMode()
+      {
+        return manualSpeedControl_;
+      }
+      
+      void SetManualPathSpeed(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)
+      {
+        manualPathSpeed_ = speed_mmps;
+        manualPathAccel_ = accel_mmps2;
+        manualPathDecel_ = decel_mmps2;
+      }
+      
       
       s8 GetCurrPathSegment()
       {
@@ -355,6 +383,10 @@ namespace Anki
         pointTurnStarted_ = false;
         currPathSegment_ = -1;
         realPathSegment_ = -1;
+        
+        manualSpeedControl_ = false;
+        manualPathSpeed_ = 0;
+        
 #if(DEBUG_PATH_FOLLOWER)
         PRINT("*** PATH COMPLETE ***\n");
 #endif
@@ -469,6 +501,13 @@ namespace Anki
 #endif
           WheelController::ResetIntegralGainSums();
           
+        }
+        
+        // If in manual speed control, apply speed here
+        if (manualSpeedControl_) {
+          SpeedController::SetUserCommandedDesiredVehicleSpeed( manualPathSpeed_ );
+          SpeedController::SetUserCommandedAcceleration( manualPathAccel_ );
+          SpeedController::SetUserCommandedDeceleration( manualPathDecel_ );
         }
         
         if (!DockingController::IsBusy()) {

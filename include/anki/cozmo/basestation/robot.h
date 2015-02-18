@@ -170,7 +170,7 @@ namespace Anki {
       Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
 
       // Sends a path to the robot to be immediately executed
-      Result ExecutePath(const Planning::Path& path);
+      Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
       
       // Executes a test path defined in latticePlanner
       void ExecuteTestPath();
@@ -212,13 +212,15 @@ namespace Anki {
                                 const DockAction_t dockAction,
                                 const u16 image_pixel_x,
                                 const u16 image_pixel_y,
-                                const u8 pixel_radius);
+                                const u8 pixel_radius,
+                                const bool useManualSpeed = false);
       
       // Same as above but without specifying image location for marker
       Result DockWithObject(const ObjectID objectID,
                             const Vision::KnownMarker* marker,
                             const Vision::KnownMarker* marker2,
-                            const DockAction_t dockAction);
+                            const DockAction_t dockAction,
+                            const bool useManualSpeed = false);
       
       // Transitions the object that robot was docking with to the one that it
       // is carrying, and puts it in the robot's pose chain, attached to the
@@ -291,7 +293,7 @@ namespace Anki {
       // Send a message to the robot to place whatever it is carrying on the
       // ground right where it is. Returns RESULT_FAIL if robot is not carrying
       // anything.
-      Result PlaceObjectOnGround();
+      Result PlaceObjectOnGround(const bool useManualSpeed = false);
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
@@ -568,7 +570,7 @@ namespace Anki {
       Result SendTrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments) const;
       
       // Sends a path to the robot to be immediately executed
-      Result SendExecutePath(const Planning::Path& path) const;
+      Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
       
       // Turn on/off headlight LEDs
       Result SendHeadlight(u8 intensity);
@@ -593,7 +595,7 @@ namespace Anki {
       // Run a test mode
       Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
       
-      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle);
+      Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
       
       // Play animation
       // If numLoops == 0, animation repeats forever.
@@ -607,7 +609,8 @@ namespace Anki {
                                 const DockAction_t dockAction,
                                 const u16 image_pixel_x,
                                 const u16 image_pixel_y,
-                                const u8 pixel_radius);
+                                const u8 pixel_radius,
+                                const bool useManualSpeed);
       
       Result SendStartFaceTracking(const u8 timeout_sec);
       Result SendStopFaceTracking();

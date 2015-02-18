@@ -67,14 +67,14 @@ bool TcpMultiClientServer::server_handler()
   status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
   // getaddrinfo returns 0 on succes, or some other value when an error occured.
   // (translated into human readable text by the gai_gai_strerror function).
-  if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
+  if (status != 0)  std::cerr << "getaddrinfo error" << gai_strerror(status) ;
 
   DEBUG_TCP_SERVER("TcpMultiClientServer: Creating a socket on port " << portStr);
 
   listenfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                     host_info_list->ai_protocol);
   if (listenfd == -1) {
-    std::cout << "socket error\n" ;
+    std::cerr << "socket error\n" ;
     return false;
   }
 
@@ -95,7 +95,7 @@ bool TcpMultiClientServer::server_handler()
 
   status = bind(listenfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
   if (status == -1) {
-    std::cout << "bind error\n";
+    std::cerr << "bind error\n";
     return false;
   }
   freeaddrinfo(host_info_list);
@@ -104,7 +104,7 @@ bool TcpMultiClientServer::server_handler()
 
   status =  listen(listenfd, 10);
   if (status == -1) {
-    std::cout << "listen error\n";
+    std::cerr << "listen error\n";
     return false;
   }
 

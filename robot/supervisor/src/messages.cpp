@@ -68,6 +68,8 @@ namespace Anki {
         // Used to avoid repeating a send.
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
+       
+        TimeStamp_t lastPingTime_ = 0;
         
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -88,6 +90,9 @@ namespace Anki {
           //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
           
           (*LookupTable_[msgID].dispatchFcn)(buffer);
+          
+          // Treat any message as a ping
+          lastPingTime_ = HAL::GetTimeStamp();
         }
         
         if(lookForID_ != NO_MESSAGE_ID) {
@@ -269,6 +274,16 @@ namespace Anki {
           ProcessMessage(msgID, msgBuffer_);
         }
         
+#ifdef SIMULATOR
+        // NOTE: This disconnect mode could possibly trigger if cozmo-engine sends so many things to the robot
+        // such that it doesn't need to send pings for more than
+        const u32 PING_DISCONNECT_TIMEOUT_MS = 1000;
+        if ((lastPingTime_ != 0) && (lastPingTime_ + PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
+          printf("WARN: Disconnecting radio due to ping timeout\n");
+          HAL::DisconnectRadio();
+        }
+#endif
+        
       } // ProcessBTLEMessages()
       
       void ProcessClearPathMessage(const ClearPath& msg) {
@@ -299,7 +314,7 @@ namespace Anki {
       }
       
       void ProcessExecutePathMessage(const ExecutePath& msg) {
-        PathFollower::StartPathTraversal(msg.pathID);
+        PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
       
       void ProcessDockWithObjectMessage(const DockWithObject& msg)
@@ -312,12 +327,14 @@ namespace Anki {
                                               msg.markerWidth_mm,
                                               markerCenter,
                                               msg.pixel_radius,
+                                              msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
         } else {
           
           PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
                                               static_cast<Vision::MarkerType>(msg.markerType2),
                                               msg.markerWidth_mm,
+                                              msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
         }
       }
@@ -325,14 +342,22 @@ namespace Anki {
       void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)
       {
         //PRINT("Received PlaceOnGround message.\n");
-        PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle);
+        PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle, msg.useManualSpeed);
       }
 
       void ProcessDriveWheelsMessage(const DriveWheels& msg) {
         
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
-          PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
+          if (PathFollower::IsInManualSpeedMode()) {
+            // TODO: Maybe want to set manual speed via a different message?
+            //       For now, using average wheel speed.
+            f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
+            PRINT("Commanding manual path speed %f mm/s.\n", manualSpeed);
+            PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
+          } else {
+            PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
+          }
           return;
         }
         
@@ -457,8 +482,7 @@ namespace Anki {
       
       void ProcessPingMessage(const Ping& msg)
       {
-        // TODO: Use ping message to keep-alive connection
-        // ...
+        lastPingTime_ = HAL::GetTimeStamp();
       }
       
       
@@ -867,6 +891,7 @@ namespace Anki {
       void ResetInit()
       {
         initReceived_ = false;
+        lastPingTime_ = 0;
       }
       
     } // namespace Messages

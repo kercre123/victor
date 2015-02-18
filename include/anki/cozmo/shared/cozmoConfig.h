@@ -149,6 +149,12 @@ namespace Anki {
     const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
     const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
+    // How fast (in mm/sec) can a wheel spin at max
+#ifdef COZMO2
+    const f32 MAX_WHEEL_SPEED_MMPS = 120.f;
+#else
+    const f32 MAX_WHEEL_SPEED_MMPS = 170.f;
+#endif
     
     /***************************************************************************
      *

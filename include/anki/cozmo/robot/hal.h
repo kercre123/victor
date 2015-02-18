@@ -406,6 +406,9 @@ namespace Anki
       // RADIO
       //
       bool RadioIsConnected();
+#ifdef SIMULATOR
+      void DisconnectRadio();
+#endif
 
       Messages::ID RadioGetNextMessage(u8* buffer);
 
