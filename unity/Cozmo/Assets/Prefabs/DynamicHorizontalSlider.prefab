@@ -84,6 +84,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &120186
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22420186}
+  - 222: {fileID: 22220186}
+  - 114: {fileID: 11420186}
+  m_Layer: 5
+  m_Name: originMark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &126298
 GameObject:
   m_ObjectHideFlags: 1
@@ -192,7 +209,7 @@ MonoBehaviour:
   capBottom: {fileID: 0}
   capLeft: {fileID: 22426300}
   capRight: {fileID: 22435188}
-  originMarker: {fileID: 0}
+  originMarker: {fileID: 22420186}
   bgDefaultMode: {fileID: 0}
   bgUpMode: {fileID: 0}
   bgDownMode: {fileID: 0}
@@ -202,17 +219,19 @@ MonoBehaviour:
   clampRadially: 1
   deadZone: {x: .100000001, y: .100000001}
   deadZoneRadial: 0
+  scaleMagFromDeadZone: 1
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
   horizontalModeEntryAngle: 0
+  verticalModeMaxAngleAllowance: 170
   clearHorizontal: 1
   clearVertical: 1
-  bgWidthInches: 2
+  bgWidthInches: 1.5
   bgHeightInches: .0199999996
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 1
+  allowAxisSwipes: 0
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 1
@@ -292,6 +311,27 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: drag left/right to turn.
+--- !u!114 &11420186
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 120186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: .294117659}
+  m_Sprite: {fileID: 21300000, guid: 0b7e759ead5f7487b81d9eefb3e3a06e, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11426298
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -400,6 +440,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 109622}
+--- !u!222 &22220186
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 120186}
 --- !u!222 &22226298
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -439,7 +485,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 18.3999996, y: 36.7999992}
+  m_SizeDelta: {x: 13.8000002, y: 36.7999992}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22406224
 RectTransform:
@@ -474,12 +520,13 @@ RectTransform:
   - {fileID: 22435188}
   - {fileID: 22426300}
   - {fileID: 22405806}
+  - {fileID: 22420186}
   m_Father: {fileID: 22406224}
   m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 184, y: 1.83999991}
+  m_SizeDelta: {x: 138, y: 1.83999991}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22406228
 RectTransform:
@@ -517,6 +564,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
+--- !u!224 &22420186
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 120186}
+  m_LocalRotation: {x: 0, y: 0, z: .707106829, w: .707106709}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22406226}
+  m_RootOrder: 3
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 36.7999992, y: 36.7999992}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22426298
 RectTransform:
   m_ObjectHideFlags: 1
@@ -548,7 +612,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: -92, y: -0}
+  m_AnchoredPosition: {x: -69, y: -0}
   m_SizeDelta: {x: 36.7999992, y: 36.7999992}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22435188
@@ -565,7 +629,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 92, y: 0}
+  m_AnchoredPosition: {x: 69, y: 0}
   m_SizeDelta: {x: 36.7999992, y: 36.7999992}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22435190

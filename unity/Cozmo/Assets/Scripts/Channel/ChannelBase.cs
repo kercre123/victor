@@ -21,6 +21,9 @@ public enum DisconnectionReason {
 	AttemptedToSendInvalidData,
 	ReceivedInvalidData,
 	ConnectionThrottled,
+
+	// temp
+	RobotDisconnected,
 }
 
 /// <summary>
@@ -38,8 +41,6 @@ public abstract class ChannelBase {
 	/// </summary>
 	public bool IsConnected { get; protected set; }
 
-	public abstract bool HasPendingSends { get; }
-
 	/// <summary>
 	/// Occurs when the client is connected and ready to send to.
 	/// </summary>
@@ -54,7 +55,12 @@ public abstract class ChannelBase {
 	/// Occurs when a valid message is received from the client.
 	/// </summary>
 	public event Action<NetworkMessage> MessageReceived;
-	
+
+	/// <summary>
+	/// True when there is any network traffic (eg disconnection messages, asynchronous sends cleaning up).
+	/// </summary>
+	public abstract bool HasPendingOperations { get; }
+
 	protected void RaiseConnectedToClient(string connectionInformation)
 	{
 		if (ConnectedToClient != null) {
