@@ -16,9 +16,7 @@ UdpClient::UdpClient()
 
 UdpClient::~UdpClient()
 {
-  if (socketfd > -1) {
-    Disconnect();
-  }
+  Disconnect();
 }
 
 void UdpClient::set_nonblock(int socket) {
@@ -76,10 +74,11 @@ bool UdpClient::Connect(const char *host_address, const unsigned short port)
 
 bool UdpClient::Disconnect()
 {
-  freeaddrinfo(host_info_list);
-  close(socketfd);
-  socketfd = -1;
-
+  if (socketfd > -1) {
+    freeaddrinfo(host_info_list);
+    close(socketfd);
+    socketfd = -1;
+  }
   return true;
 }
 
