@@ -16,7 +16,7 @@ public class ImageTest : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			actionButton.gameObject.SetActive( RobotEngineManager.instance.current.box.ID != 0 );
+			actionButton.gameObject.SetActive( RobotEngineManager.instance.current.box.ID != uint.MaxValue );
 		}
 	}
 

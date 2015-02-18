@@ -257,7 +257,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
-		Debug.Log( "box found " + Time.time );
+		Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
 		current.box.UpdateInfo( message );
 	}
@@ -456,6 +456,8 @@ public class RobotEngineManager : MonoBehaviour {
 		message.usePreDockPose = 0;
 		
 		channel.Send( message );
+
+		current.box.RemoveInfo();
 	}
 
 	public void RequestImage(int robotID)
