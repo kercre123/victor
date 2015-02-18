@@ -360,26 +360,28 @@ MonoBehaviour:
   capLeft: {fileID: 0}
   capRight: {fileID: 0}
   originMarker: {fileID: 22455428}
-  bgDefaultMode: {fileID: 11493616}
-  bgUpMode: {fileID: 11493618}
-  bgDownMode: {fileID: 11455428}
+  bgDefaultMode: {fileID: 22493616}
+  bgUpMode: {fileID: 22493618}
+  bgDownMode: {fileID: 22455430}
   bgSideMode: {fileID: 0}
   stickImageThrown: {fileID: 11426392}
   stickImageNeutral: {fileID: 11493614}
-  clampRadially: 1
+  clampRadially: 0
   deadZone: {x: .100000001, y: .100000001}
   deadZoneRadial: 0
+  scaleMagFromDeadZone: 1
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
   horizontalModeEntryAngle: 0
+  verticalModeMaxAngleAllowance: 170
   clearHorizontal: 1
   clearVertical: 1
   bgWidthInches: .0199999996
   bgHeightInches: 1.5
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 1
+  allowAxisSwipes: 0
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 0

@@ -135,11 +135,11 @@ public class RobotRelativeControls : MonoBehaviour {
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
 
 
-		if(text_x != null) text_x.text = "x(" + inputs.x + ")";
-		if(text_y != null) text_y.text = "y(" + inputs.y + ")";
+		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
+		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
 
-		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed + ")";
-		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed + ")";
+		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
+		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
 	}
 
 	void OnDisable() {
