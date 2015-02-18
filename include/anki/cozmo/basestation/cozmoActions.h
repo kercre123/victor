@@ -38,8 +38,8 @@ namespace Anki {
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(const Pose3d& pose);
-      DriveToPoseAction(); // Note that SetGoal() must be called befure Update()!
+      DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed = false);
+      DriveToPoseAction(const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -51,12 +51,14 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
 
       Result SetGoal(const Pose3d& pose);
+      bool IsUsingManualSpeed() {return _useManualSpeed;}
       
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
       f32      _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
+      bool     _useManualSpeed;
       bool     _startedTraversingPath;
       bool     _forceReplanOnNextWorldChange;
       
@@ -70,7 +72,7 @@ namespace Anki {
     class DriveToObjectAction : public DriveToPoseAction
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType);
+      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -94,7 +96,7 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose);
+      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       
@@ -147,7 +149,7 @@ namespace Anki {
     class IDockAction : public IAction
     {
     public:
-      IDockAction(ObjectID objectID);
+      IDockAction(ObjectID objectID, const bool useManualSpeed);
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
@@ -181,6 +183,7 @@ namespace Anki {
       f32                         _maxPreActionPoseDistance;
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
+      bool                        _useManualSpeed;
 
     }; // class IDockAction
 
@@ -190,7 +193,7 @@ namespace Anki {
     class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID);
+      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       
@@ -217,10 +220,10 @@ namespace Anki {
     class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToPickAndPlaceObjectAction(const ObjectID& objectID)
+      DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING),
-        new PickAndPlaceObjectAction(objectID)})
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new PickAndPlaceObjectAction(objectID, useManualSpeed)})
       {
         
       }
@@ -253,9 +256,9 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose),
+        new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         
@@ -265,7 +268,7 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID);
+      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       
@@ -288,7 +291,7 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID);
+      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       
@@ -312,7 +315,7 @@ namespace Anki {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID);
+      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -325,6 +328,7 @@ namespace Anki {
       
       ObjectID       _objectID;
       IActionRunner* _chosenAction;
+      bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
     
@@ -333,10 +337,10 @@ namespace Anki {
     class DriveToAndTraverseObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToAndTraverseObjectAction(const ObjectID& objectID)
+      DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY),
-        new TraverseObjectAction(objectID)})
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY, useManualSpeed),
+        new TraverseObjectAction(objectID, useManualSpeed)})
       {
         
       }

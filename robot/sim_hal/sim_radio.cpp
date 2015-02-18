@@ -144,11 +144,9 @@ namespace Anki {
       return server.HasClient();
     }
 
-    void DisconnectRadio(void)
+    void HAL::DisconnectRadio(void)
     {
-#if(USE_UDP_ROBOT_COMMS==0)
       server.DisconnectClient();
-#endif
       recvBufSize_ = 0;
     }
     
@@ -234,7 +232,7 @@ namespace Anki {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
         // Something went wrong
-        DisconnectRadio();
+        HAL::DisconnectRadio();
       }
       
       return recvBufSize_;

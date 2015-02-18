@@ -63,14 +63,14 @@ bool TcpServer::StartListening(const unsigned short port)
     status = getaddrinfo(NULL, portStr, &host_info, &host_info_list);
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
-    if (status != 0)  std::cout << "getaddrinfo error" << gai_strerror(status) ;
+    if (status != 0)  std::cerr << "getaddrinfo error" << gai_strerror(status) ;
 
     DEBUG_TCP_SERVER("TcpServer: Creating a socket on port " << portStr);
 
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
     if (socketfd == -1) {
-      std::cout << "socket error\n" ;
+      std::cerr << "socket error\n" ;
       return false;
     }
 
@@ -91,7 +91,7 @@ bool TcpServer::StartListening(const unsigned short port)
   
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
-      std::cout << "bind error\n";
+      std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
       return false;
     }
 
@@ -99,7 +99,7 @@ bool TcpServer::StartListening(const unsigned short port)
 
     status =  listen(socketfd, 5);
     if (status == -1) {
-      std::cout << "listen error\n";
+      std::cerr << "listen error\n";
       return false;
     }
 

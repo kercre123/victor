@@ -59,7 +59,7 @@ bool UdpServer::StartListening(const unsigned short port)
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
     if (status != 0) {
-     std::cout << "getaddrinfo error" << gai_strerror(status) ;
+     std::cerr << "getaddrinfo error" << gai_strerror(status) ;
      freeaddrinfo(host_info_list);
      return res;
     }
@@ -69,7 +69,7 @@ bool UdpServer::StartListening(const unsigned short port)
     socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                       host_info_list->ai_protocol);
     if (socketfd == -1) {
-      std::cout << "socket error\n" ;
+      std::cerr << "socket error\n" ;
       freeaddrinfo(host_info_list);
       return res;
     }
@@ -89,7 +89,7 @@ bool UdpServer::StartListening(const unsigned short port)
     
     status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
     if (status == -1) {
-      std::cout << "bind error\n";
+      std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
     } else {
       DEBUG_UDP_SERVER("UdpServer: Port is open");
       res = true;
