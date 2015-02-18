@@ -14,6 +14,12 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 
+	public bool IsConnected {
+		get {
+			return (channel != null && channel.IsConnected);
+		}
+	}
+
 	[SerializeField]
 	private TextAsset configuration;
 
@@ -187,6 +193,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_UiDeviceConnected:
 			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotDisconnected:
+			ReceivedSpecificMessage((G2U_RobotDisconnected)message);
+			break;
 		case (int)NetworkMessageID.G2U_RobotObservedObject:
 			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
 			break;
@@ -235,7 +244,13 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
-	
+
+	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
+	{
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.2f") + " seconds.");
+		Disconnected (DisconnectionReason.RobotDisconnected);
+	}
+
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
 		
