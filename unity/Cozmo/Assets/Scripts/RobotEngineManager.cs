@@ -8,9 +8,8 @@ using System.Text;
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
-
-	[System.NonSerialized]
-	public Dictionary<int, Robot> robots = new Dictionary<int, Robot>();
+	
+	public Dictionary<int, Robot> robots { get; private set; }
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 
@@ -102,12 +101,14 @@ public class RobotEngineManager : MonoBehaviour {
 
 		Application.runInBackground = true;
 
+		robots = new Dictionary<int, Robot>();
+
 		AddRobot( Intro.CurrentRobotID );
 	}
 
-	public void AddRobot( int robotID )
+	public void AddRobot( byte robotID )
 	{
-		robots.Add( robotID, new Robot() );
+		robots.Add( robotID, new Robot( robotID ) );
 	}
 
 	private void OnEnable()
@@ -241,12 +242,14 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
 	
-	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
+	private void ReceivedSpecificMessage( G2U_RobotObservedObject message )
 	{
-		
+		Debug.Log( "box found" );
+
+		current.box.UpdateInfo( message );
 	}
 	
-	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
+	private void ReceivedSpecificMessage( G2U_DeviceDetectedVisionMarker message )
 	{
 		
 	}
@@ -425,7 +428,16 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_COUNT,
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
 	} 
-	
+
+	public void PickUpBox()
+	{
+		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
+		message.objectID = (int)current.box.ID;
+		message.usePreDockPose = 0;
+
+		channel.Send( message );
+	}
+
 	public void RequestImage(int robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
