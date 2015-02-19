@@ -8,6 +8,6 @@ void BatteryInit();
 void BatteryUpdate();
 
 // Turn on power to the head
-void PowerInit();
+void PowerOn();
 
 #endif

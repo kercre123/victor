@@ -30,8 +30,6 @@ void SystemInit(void)
   }
 }
 
-const u8 PIN_CHGEN = 5;  // 3.0
-
 const u8 PIN_LED1 = 18;
 const u8 PIN_LED2 = 19;
 
@@ -60,14 +58,10 @@ int main(void)
 #ifndef DO_MOTOR_TESTING
   SPIInit();
 #endif
-  PowerInit(); 
+  PowerOn(); 
   
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
-  
-  // Force charger on for now
-  nrf_gpio_pin_clear(PIN_CHGEN);
-  nrf_gpio_cfg_output(PIN_CHGEN);
   
   // Status LED hack
   nrf_gpio_cfg_output(PIN_LED1);
@@ -83,8 +77,10 @@ int main(void)
   while (1)
   {
     UARTPutString("\r\nForward ends with...");
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
       MotorsSetPower(i, 0x2000);   
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, 0x6800); 
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
@@ -94,8 +90,10 @@ int main(void)
     
     UARTPutString("\r\nBackward ends with...");
     
-    for (int i = 0; i < 4; i++)    
+    for (int i = 0; i < 2; i++)    
       MotorsSetPower(i, -0x2000);
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, -0x6800); 
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
@@ -162,7 +160,7 @@ int main(void)
          
     // Only call every loop through - not all the time
     MotorsUpdate();
-    //BatteryUpdate();
+    BatteryUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
