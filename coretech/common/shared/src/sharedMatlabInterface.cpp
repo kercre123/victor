@@ -457,22 +457,35 @@ namespace Anki {
         Put<s32>(matrix->data.i, matrix->rows*matrix->cols, tmpName);
         mismatch = false;
       }
-    } else {
-      CoreTechPrint("Error: Class ID not supported for %s\n", name.data());
+    }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_8U) {
+      Put<u8>(matrix->data.ptr, matrix->rows*matrix->step, tmpName);
+      mismatch = false;
+    }else {
+      printf("Error: Class ID 0x%x 0x%x not supported for %s\n", matrix->type&CV_MAT_DEPTH_MASK, matrix->type, name.data());
       EvalString("clear %s;", tmpName);
-      return -1;
+      return RESULT_FAIL;
     }
 
     if(mismatch) {
-      CoreTechPrint("Error: Class mismatch for %s\n", name.data());
+      printf("Error: Class mismatch for %s\n", name.data());
       EvalString("clear %s;", tmpName);
-      return -1;
+      return RESULT_FAIL;
     }
 
-    EvalString("%s=reshape(%s, [%d, %d])';", name.data(), tmpName, matrix->cols, matrix->rows);
+    const s32 numChannels = CV_MAT_CN(matrix->type);
+    if(numChannels == 1) {
+      EvalString("%s=reshape(%s, [%d, %d])';", name.data(), tmpName, matrix->cols, matrix->rows);
+    } else {
+      EvalString("%s=permute(reshape(%s, [%d, %d, %d]), [3,2,1]);", name.data(), tmpName, numChannels, matrix->cols, matrix->rows);
+
+      if(numChannels == 3) {
+        EvalString("%s=%s(:,:,end:-1:1);", name.data(), name.data());
+      }
+    }
+
     EvalString("clear %s;", tmpName);
 
-    return 0;
+    return RESULT_OK;
   }
 #endif // #if defined(ANKI_USE_OPENCV)
 
