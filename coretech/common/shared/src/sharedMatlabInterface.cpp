@@ -426,48 +426,20 @@ namespace Anki {
     char tmpName[TEXT_BUFFER_SIZE];
     snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
 
-    bool mismatch = true;
     if((matrix->type&CV_MAT_DEPTH_MASK) == CV_64F) {
-      //if(mat->type == CV_64F)
-      {
-        Put<double>(matrix->data.db, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<f64>(matrix->data.db, matrix->rows*matrix->step/sizeof(f64), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_32F) {
-      //if(mat->type == CV_32F)
-      {
-        Put<float>(matrix->data.fl, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<f32>(matrix->data.fl, matrix->rows*matrix->step/sizeof(f32), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_16S) {
-      //if(mat->type == CV_16S)
-      {
-        Put<s16>(matrix->data.s, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<s16>(matrix->data.s, matrix->rows*matrix->step/sizeof(s16), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_16U) {
-      //if(mat->type == CV_16U)
-      {
-        Put<u16>((const unsigned short*)matrix->data.s, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<u16>((const unsigned short*)matrix->data.s, matrix->rows*matrix->step/sizeof(u16), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_32S) {
-      //if(mat->type == CV_32S)
-      {
-        Put<s32>(matrix->data.i, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<s32>(matrix->data.i, matrix->rows*matrix->step/sizeof(s32), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_8U) {
       Put<u8>(matrix->data.ptr, matrix->rows*matrix->step, tmpName);
-      mismatch = false;
     }else {
       printf("Error: Class ID 0x%x 0x%x not supported for %s\n", matrix->type&CV_MAT_DEPTH_MASK, matrix->type, name.data());
-      EvalString("clear %s;", tmpName);
-      return RESULT_FAIL;
-    }
-
-    if(mismatch) {
-      printf("Error: Class mismatch for %s\n", name.data());
       EvalString("clear %s;", tmpName);
       return RESULT_FAIL;
     }
