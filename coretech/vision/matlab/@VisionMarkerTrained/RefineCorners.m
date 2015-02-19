@@ -26,18 +26,19 @@ diagonal = sqrt(max( sum((this.corners(1,:)-this.corners(4,:)).^2), ...
     sum((this.corners(2,:)-this.corners(3,:)).^2))) / sqrt(2);
 
 N = ceil(NumSamples/8);
-xSquareOuter = [linspace(0,1,N) linspace(0,1,N) zeros(1,N)      ones(1,N)];
-ySquareOuter = [zeros(1,N)      ones(1,N)       linspace(0,1,N) linspace(0,1,N)];
+curveOffset = VisionMarkerTrained.CornerRadiusFraction;
+xSquareOuter = [linspace(curveOffset,1-curveOffset,N) linspace(curveOffset,1-curveOffset,N) zeros(1,N)      ones(1,N)];
+ySquareOuter = [zeros(1,N)      ones(1,N)       linspace(curveOffset,1-curveOffset,N) linspace(curveOffset, 1-curveOffset,N)];
 
-xSquareInner = [linspace(this.SquareWidthFraction, 1-this.SquareWidthFraction, N) ...
-    linspace(this.SquareWidthFraction, 1-this.SquareWidthFraction, N) ...
+xSquareInner = [linspace(max(this.SquareWidthFraction, curveOffset), 1-max(this.SquareWidthFraction,curveOffset), N) ...
+    linspace(max(this.SquareWidthFraction, curveOffset), 1-max(this.SquareWidthFraction,curveOffset), N) ...
     this.SquareWidthFraction*ones(1,N) ...
     (1-this.SquareWidthFraction)*ones(1,N)];
 
 ySquareInner = [this.SquareWidthFraction*ones(1,N) ...
     (1-this.SquareWidthFraction)*ones(1,N) ...
-    linspace(this.SquareWidthFraction, 1-this.SquareWidthFraction, N) ...
-    linspace(this.SquareWidthFraction, 1-this.SquareWidthFraction, N)];
+    linspace(this.SquareWidthFraction+curveOffset/2, 1-this.SquareWidthFraction-curveOffset/2, N) ...
+    linspace(this.SquareWidthFraction+curveOffset/2, 1-this.SquareWidthFraction-curveOffset/2, N)];
 
 TxOuter = [-1 zeros(1,N-2) 1, -1 zeros(1,N-2) 1, -ones(1,N), ones(1,N)];
 TyOuter = [-ones(1,N), ones(1,N), -1 zeros(1,N-2) 1, -1 zeros(1,N-2) 1];
@@ -58,9 +59,11 @@ A = [ xsquare.*Tx  ysquare.*Tx  Tx  ...
 
 if DebugDisplay
     hold off, imagesc(img), axis image, hold on, colormap(gray)
+    plot(this.corners(:,1), this.corners(:,2), 'bx', 'MarkerSize', 10);
+    
     h_out = plot(nan, nan, 'r', 'LineWidth', 2);
     h_in  = plot(nan, nan, 'r', 'LineWidth', 2);
-    %h_pr  = plot(nan, nan, 'r.', 'MarkerSize', 10);
+    h_pr  = plot(nan, nan, 'r.', 'MarkerSize', 10);
 end
 
 newH = this.H;
@@ -83,7 +86,9 @@ while iteration < MaxIterations
         xc = temp(1,:)./temp(3,:);
         yc = temp(2,:)./temp(3,:);
         set(h_in, 'XData', xc([1 2 4 3 1]), 'YData', yc([1 2 4 3 1]));
-               
+         
+        set(h_pr, 'XData', xi, 'YData', yi)
+        
         title(iteration)
         pause
     end

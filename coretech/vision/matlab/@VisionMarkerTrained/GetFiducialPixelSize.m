@@ -1,4 +1,4 @@
-function [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, ...
+function [squareWidth_pix, padding_pix, cornerRadius_pix] = GetFiducialPixelSize(imageSize, ...
     imageSizeType)
 
 switch(imageSizeType)
@@ -30,7 +30,8 @@ end
    
 squareWidth_pix = VisionMarkerTrained.SquareWidthFraction * fiducialWidth_pix;
 padding_pix = VisionMarkerTrained.FiducialPaddingFraction * fiducialWidth_pix;
-
+cornerRadius_pix = VisionMarkerTrained.CornerRadiusFraction * fiducialWidth_pix;
+         
 %squareWidth_pix = round(squareWidth_pix);
 %padding_pix = round(padding_pix);
 

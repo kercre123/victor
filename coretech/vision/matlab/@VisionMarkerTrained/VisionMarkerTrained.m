@@ -18,8 +18,9 @@ classdef VisionMarkerTrained
                 
         MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
         
-        SquareWidthFraction = 0.1; % as a fraction of the fiducial width
+        SquareWidthFraction = 0.1;     % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
+        CornerRadiusFraction = 0.25;    % as a fraction of the fiducial width
         
         ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
             1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
@@ -51,7 +52,7 @@ classdef VisionMarkerTrained
         
         probeTree = TrainProbeTree(varargin);
         
-        [squareWidth_pix, padding_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
+        [squareWidth_pix, padding_pix, cornerRadius_pix] = GetFiducialPixelSize(imageSize, imageSizeType);
         %Corners = GetMarkerCorners(imageSize, isPadded);
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform, method);
@@ -106,7 +107,7 @@ classdef VisionMarkerTrained
             UseMexCornerRefinment = false;
             VerifyLabel = true;
             Initialize = true;
-            ThresholdMethod = 'Otsu'; % 'Otsu' or 'FiducialProbes'
+            ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
                         
             parseVarargin(varargin{:});
             
