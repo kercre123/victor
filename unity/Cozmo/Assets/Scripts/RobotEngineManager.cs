@@ -9,30 +9,35 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
 
-	[System.NonSerialized]
-	public Dictionary<int, Robot> robots = new Dictionary<int, Robot>();
+	public Dictionary<int, Robot> robots { get; private set; }
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
-
+	
+	public bool IsConnected {
+		get {
+			return (channel != null && channel.IsConnected);
+		}
+	}
+	
 	[SerializeField]
 	private TextAsset configuration;
-
+	
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage; 
-
+	
 	private ChannelBase channel;
-
+	
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
-
-#if !UNITY_EDITOR
+	
+	#if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
 	private StringBuilder logBuilder = null;
-
+	
 	private void Start()
 	{
 		if (engineHostInitialized) {
@@ -44,16 +49,16 @@ public class RobotEngineManager : MonoBehaviour {
 			Debug.LogError("Error initializing cozmo host: No configuration.");
 			return;
 		}
-
+		
 		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_create (configuration.text);
-
+		
 		if (result != CozmoResult.OK) {
 			Debug.LogError("cozmo_engine_create error: " + result.ToString());
 		} else {
 			engineHostInitialized = true;
 		}
 	}
-
+	
 	private void OnDestroy()
 	{
 		if (engineHostInitialized) {
@@ -65,7 +70,7 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 		}
 	}
-
+	
 	// should be update; but this makes it easier to split up
 	private void LateUpdate()
 	{
@@ -90,8 +95,8 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 		}
 	}
-#endif
-
+	#endif
+	
 	private void Awake() {
 		if (instance != null) {
 			Destroy (gameObject);
@@ -99,17 +104,19 @@ public class RobotEngineManager : MonoBehaviour {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
 		}
-
+		
 		Application.runInBackground = true;
+
+		robots = new Dictionary<int, Robot>();
 
 		AddRobot( Intro.CurrentRobotID );
 	}
-
-	public void AddRobot( int robotID )
+	
+	public void AddRobot( byte robotID )
 	{
-		robots.Add( robotID, new Robot() );
+		robots.Add( robotID, new Robot( robotID ) );
 	}
-
+	
 	private void OnEnable()
 	{
 		channel = new UdpChannel ();
@@ -117,7 +124,7 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.DisconnectedFromClient += Disconnected;
 		channel.MessageReceived += ReceivedMessage;
 	}
-
+	
 	private void OnDisable()
 	{
 		if (channel != null) {
@@ -132,18 +139,18 @@ public class RobotEngineManager : MonoBehaviour {
 			channel.Update ();
 		}
 	}
-
+	
 	public void Connect(string engineIP)
 	{
 		channel.Connect (UIDeviceID, UILocalPort, engineIP, UIAdvertisingRegistrationPort);
 	}
-
+	
 	public void Disconnect()
 	{
 		if (channel != null) {
 			channel.Disconnect ();
-
-#if UNITY_EDITOR
+			
+			#if UNITY_EDITOR
 			float limit = Time.realtimeSinceStartup + 2.0f;
 			while (channel.HasPendingOperations) {
 				if (limit < Time.realtimeSinceStartup) {
@@ -152,21 +159,21 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 				System.Threading.Thread.Sleep (500);
 			}
-#endif
+			#endif
 		}
 	}
-
+	
 	private void Connected(string connectionIdentifier)
 	{
 		if (ConnectedToClient != null) {
 			ConnectedToClient(connectionIdentifier);
 		}
 	}
-
+	
 	private void Disconnected(DisconnectionReason reason)
 	{
 		Application.LoadLevel ("Shell");
-
+		
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}
@@ -187,8 +194,14 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_UiDeviceConnected:
 			ReceivedSpecificMessage((G2U_UiDeviceConnected)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotDisconnected:
+			ReceivedSpecificMessage((G2U_RobotDisconnected)message);
+			break;
 		case (int)NetworkMessageID.G2U_RobotObservedObject:
 			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
+			break;
+		case (int)NetworkMessageID.G2U_RobotObservedNothing:
+			ReceivedSpecificMessage((G2U_RobotObservedNothing)message);
 			break;
 		case (int)NetworkMessageID.G2U_DeviceDetectedVisionMarker:
 			ReceivedSpecificMessage((G2U_DeviceDetectedVisionMarker)message);
@@ -212,7 +225,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		U2G_ConnectToRobot response = new U2G_ConnectToRobot();
 		response.robotID = (byte)message.robotID;
-
+		
 		channel.Send (response);
 	}
 	
@@ -220,7 +233,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		U2G_ConnectToUiDevice response = new U2G_ConnectToUiDevice ();
 		response.deviceID = (byte)message.deviceID;
-
+		
 		channel.Send (response);
 	}
 	
@@ -236,9 +249,24 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
 	
+	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
+	{
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.2f") + " seconds.");
+		Disconnected (DisconnectionReason.RobotDisconnected);
+	}
+	
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
-		
+		Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
+
+		current.box.UpdateInfo( message );
+	}
+
+	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
+	{
+		Debug.Log( "no box found " + Time.time );
+
+		current.box.RemoveInfo();
 	}
 	
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -255,7 +283,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		
 	}
-
+	
 	private void ReceivedSpecificMessage( G2U_RobotState message )
 	{
 		if( !robots.ContainsKey( message.robotID ) )
@@ -264,49 +292,49 @@ public class RobotEngineManager : MonoBehaviour {
 			
 			AddRobot( message.robotID );
 		}
-
+		
 		robots[ message.robotID ].UpdateInfo( message );
 	}
-
+	
 	private Texture2D texture;
 	private int currentImageIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
 	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
 	private Color32[] colorArray;
-
+	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
-
+			
 			int length = message.ncols * message.nrows;
-
+			
 			if( colorArray == null || colorArray.Length != length )
 			{
 				colorArray = new Color32[ length ];
 			}
-
+			
 			currentImageIndex = 0;
 		}
-
+		
 		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
 			byte gray = message.data[ messageIndex ];
-
+			
 			int x = currentImageIndex % message.ncols;
 			int y = currentImageIndex / message.ncols;
 			int index = message.ncols * ( message.nrows - y - 1 ) + x;
-
+			
 			colorArray[ index ] = new Color32( gray, gray, gray, 255 );
 		}
-
+		
 		if( currentImageIndex == colorArray.Length )
 		{
 			int width = message.ncols;
 			int height = message.nrows;
-
+			
 			if( texture != null )
 			{
 				if( texture.width != width || texture.height != height )
@@ -315,23 +343,23 @@ public class RobotEngineManager : MonoBehaviour {
 					texture = null;
 				}
 			}
-
+			
 			if( texture == null )
 			{
 				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
 			}
-
+			
 			texture.SetPixels32( colorArray );
-
+			
 			texture.Apply( false );
-
+			
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
 			}
 		}
 	}
-
+	
 	public void StartEngine(string vizHostIP)
 	{
 		U2G_StartEngine message = new U2G_StartEngine ();
@@ -345,10 +373,10 @@ public class RobotEngineManager : MonoBehaviour {
 			Encoding.UTF8.GetBytes (vizHostIP, 0, vizHostIP.Length, message.vizHostIP, 0);
 		}
 		message.vizHostIP [length] = 0;
-
+		
 		channel.Send (message);
 	}
-
+	
 	/// <summary>
 	/// Forcibly adds a new robot.
 	/// </summary>
@@ -360,21 +388,21 @@ public class RobotEngineManager : MonoBehaviour {
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-
+		
 		if (string.IsNullOrEmpty (robotIP)) {
 			throw new ArgumentNullException("robotIP");
 		}
-
+		
 		U2G_ForceAddRobot message = new U2G_ForceAddRobot ();
 		if (Encoding.UTF8.GetByteCount (robotIP) + 1 > message.ipAddress.Length) {
 			throw new ArgumentException("IP address too long.", "robotIP");
 		}
 		int length = Encoding.UTF8.GetBytes (robotIP, 0, robotIP.Length, message.ipAddress, 0);
 		message.ipAddress [length] = 0;
-
+		
 		message.robotID = (byte)robotID;
 		message.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
-
+		
 		channel.Send (message);
 	}
 	
@@ -392,17 +420,17 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_DriveWheels message = new U2G_DriveWheels ();
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
-
+		
 		channel.Send (message);
 	}
-
+	
 	public enum ImageSendMode_t
 	{
 		ISM_OFF,
 		ISM_STREAM,
 		ISM_SINGLE_SHOT
 	} ;
-
+	
 	public enum CameraResolution
 	{
 		CAMERA_RES_QUXGA = 0, // 3200 x 2400
@@ -420,7 +448,18 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_COUNT,
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
 	} 
-	
+
+	public void PickUpBox()
+	{
+		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
+		message.objectID = (int)current.box.ID;
+		message.usePreDockPose = 0;
+		
+		channel.Send( message );
+
+		current.box.RemoveInfo();
+	}
+
 	public void RequestImage(int robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
@@ -432,16 +471,16 @@ public class RobotEngineManager : MonoBehaviour {
 		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
 		channel.Send (message);
-
+		
 		U2G_ImageRequest message2 = new U2G_ImageRequest ();
 		message2.robotID = (byte)robotID;
 		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
 		channel.Send (message2);
-
+		
 		Debug.Log( "image request message sent" );
 	}
-
+	
 	public void StopAllMotors(int robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
@@ -449,8 +488,8 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		U2G_StopAllMotors message = new U2G_StopAllMotors ();
-
+		
 		channel.Send (message);
 	}
-
+	
 }

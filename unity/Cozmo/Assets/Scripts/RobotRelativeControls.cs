@@ -24,7 +24,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;
 
-	bool reverseLikeACar = false;
+	//bool reverseLikeACar = false;
 	bool moveCommandLastFrame = false;
 
 	void OnEnable() {
@@ -88,23 +88,17 @@ public class RobotRelativeControls : MonoBehaviour {
 //			inputs.y = Input.GetAxis("Vertical");
 //		}
 
-		if(gyroInputs != null) {
-			if(gyroRollControl != null && gyroRollControl.isOn && (verticalStick == null || verticalStick.IsPressed) ) {
-				inputs.x = gyroInputs.Horizontal;
-			}
+		if(gyroInputs != null && gyroInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed)) {
+			inputs.x = gyroInputs.Horizontal;
 
-			if(gyroPitchControl != null && gyroPitchControl.isOn) {
-				inputs.y = gyroInputs.Vertical;
-			}
+//			if(gyroPitchControl != null && gyroPitchControl.isOn) {
+//				inputs.y = gyroInputs.Vertical;
+//			}
 		}
 
-		if(accelInputs != null && (verticalStick == null || verticalStick.IsPressed) ) {
+		if(accelInputs != null && accelInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed) ) {
 			inputs.x = accelInputs.Horizontal;
 		}
-
-//		if(reverseLikeACar) {
-//			if(inputs.y < 0f) inputs.x = -inputs.x;
-//		}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -135,18 +129,18 @@ public class RobotRelativeControls : MonoBehaviour {
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
 
 
-		if(text_x != null) text_x.text = "x(" + inputs.x + ")";
-		if(text_y != null) text_y.text = "y(" + inputs.y + ")";
+		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
+		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
 
-		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed + ")";
-		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed + ")";
+		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
+		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
 	}
 
 	void OnDisable() {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
 
-		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
 		}
 	}
@@ -174,7 +168,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	public void SetReverseLikeACar(bool on) {
 		Debug.Log(gameObject.name + " RobotRelativeControls SetReverseLikeACar("+on+")");
-		reverseLikeACar = on;
+		//reverseLikeACar = on;
 	}
 
 }
