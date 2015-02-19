@@ -1,49 +1,10 @@
 
-#import getpass
-#import os
-#import plistlib
+import getpass
+import os
+import plistlib
 
-import os.path
-import sys
+import util
 
-import shell
-
-def xcodebuild(
-    project = None,
-    workspace = None,
-    target = None,
-    scheme = None,
-    configuration = None,
-    platform = None,
-    simulator = False,
-    buildaction = 'build'):
-    if not project and not workspace:
-        raise ValueError('You must specify either a project or workspace to xcodebuild.')
-    
-    arguments = ['xcodebuild']
-    
-    if project:
-        arguments += ['-project', os.path.abspath(project)]
-    if workspace:
-        arguments += ['-workspace', os.path.abspath(workspace)]
-    if target:
-        arguments += ['-target', target]
-    if scheme:
-        arguments += ['-scheme', scheme]
-    if configuration:
-        arguments += ['-configuration', configuration]
-
-    if platform == 'ios':
-        if simulator:
-            arguments += ['-sdk', 'iphonesimulator']
-        else:
-            arguments += ['-sdk', 'iphoneos', 'ARCHS=armv6 armv7 arm64', 'ONLY_ACTIVE_ARCH=NO']
-    
-    arguments += [buildaction]
-    
-    shell.execute(arguments)
-
-'''
 class XcodeWorkspace(object):
     def __init__(self, name):
         self.name = name
@@ -102,5 +63,39 @@ class XcodeWorkspace(object):
         }
         return settings
 
-'''
 
+def build(
+    project = None,
+    workspace = None,
+    target = None,
+    scheme = None,
+    configuration = None,
+    platform = None,
+    simulator = False,
+    buildaction = 'build'):
+    
+    if not project and not workspace:
+        raise ValueError('You must specify either a project or workspace to xcodebuild.')
+    
+    arguments = ['xcodebuild']
+    
+    if project:
+        arguments += ['-project', os.path.abspath(project)]
+    if workspace:
+        arguments += ['-workspace', os.path.abspath(workspace)]
+    if target:
+        arguments += ['-target', target]
+    if scheme:
+        arguments += ['-scheme', scheme]
+    if configuration:
+        arguments += ['-configuration', configuration]
+
+    if platform == 'ios':
+        if simulator:
+            arguments += ['-sdk', 'iphonesimulator']
+        else:
+            arguments += ['-sdk', 'iphoneos', 'ARCHS=armv6 armv7 arm64', 'ONLY_ACTIVE_ARCH=NO']
+    
+    arguments += [buildaction]
+    
+    util.File.execute(arguments)

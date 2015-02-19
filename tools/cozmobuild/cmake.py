@@ -2,7 +2,7 @@
 "cmake generation."
 
 import os.path
-import shell
+import util
 import sys
 
 CMAKE_TOOLCHAIN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'iOS.cmake')
@@ -24,9 +24,9 @@ def generate(build_path, source_path, platform, generator=None):
     
     arguments += [os.path.abspath(source_path)]
     
-    cwd = shell.pwd()
-    shell.makedirs(build_path)
-    shell.cd(build_path)
-    shell.execute(arguments)
-    shell.cd(cwd)
+    cwd = util.File.pwd()
+    util.File.mkdir_p(build_path)
+    util.File.cd(build_path)
+    util.File.execute(arguments)
+    util.File.cd(cwd)
 

@@ -7,8 +7,8 @@ import os.path
 import sys
 import textwrap
 
-ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ROOT_PATH, 'tools'))
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
 import cozmobuild.cmake
 import cozmobuild.shell
 import cozmobuild.xcode
@@ -28,7 +28,7 @@ def parse_arguments():
         choices=['generate', 'build', 'clean', 'delete'],
         help=textwrap.dedent('''\
             generate (default) -- generate or regenerate projects
-            build -- build the generated projects
+            build -- generate, then build the generated projects
             clean -- issue the clean command to projects
             delete -- delete all generated projects
             '''))
@@ -52,17 +52,8 @@ def parse_arguments():
     parser.add_argument(
         '-b',
         '--build-dir',
-        dest='build_dir',
         metavar='path',
-        default=os.path.relpath(os.path.join(ROOT_PATH, 'build/')),
-        help='where to build the generated projects (default is "%(default)s")')
-    
-    parser.add_argument(
-        '-o',
-        '--output-dir',
-        dest='output_dir',
-        metavar='path',
-        default=os.path.relpath(os.path.join(ROOT_PATH, 'generated/')),
+        default=os.path.relpath(os.path.join(REPO_ROOT, 'build/')),
         help='where to build the generated projects (default is "%(default)s")')
     
     configurations = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
@@ -100,9 +91,10 @@ def parse_arguments():
     for platform in options.platforms:
         if platform not in ('mac', 'ios'):
             sys.exit('Invalid platform "{0}"'.format(platform))
-    
     if options.simulator and 'ios' not in options.platforms:
         options.platforms.append('ios')
+    if not options.platforms:
+        sys.exit('No platforms specified.')
     
     return options
 
@@ -110,18 +102,20 @@ def parse_arguments():
 def generate(options):
     for platform in options.platforms:
         project_dir = os.path.join(options.build_dir, platform)
-        cozmobuild.cmake.generate(project_dir, ROOT_PATH, platform)
+        cozmobuild.cmake.generate(project_dir, REPO_ROOT, platform)
 
 def build(options):
     for platform in options.platforms:
         if platform == 'ios':
             suffix = '_iOS'
-        else:
+        elif platform == 'mac':
             suffix = ''
+        else:
+        	sys.exit('Cannot {1} platform of type "{0}"'.format(platform, options.command))
         project_path = os.path.join(options.build_dir, platform, 'CozmoEngine{0}.xcodeproj'.format(suffix))
         
         if not os.path.exists(project_path):
-        	print('Skipping {0} because it does not exist.'.format(project_path))
+        	sys.exit('Project {0} does not exist. (clean does not generate projects.)'.format(project_path))
         else:
 			cozmobuild.xcode.xcodebuild(
 				buildaction=options.command,
@@ -140,7 +134,7 @@ def delete(options):
 if __name__ == '__main__':
     options = parse_arguments()
     
-    if len(options.platforms) > 1:
+    if len(options.platforms) != 1:
         print('Running command {0} on platforms {{{1}}}.'.format(options.command, ','.join(options.platforms)))
     else:
         print('Running command {0} on platform {1}.'.format(options.command, ','.join(options.platforms)))
