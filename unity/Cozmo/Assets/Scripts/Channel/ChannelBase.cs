@@ -21,6 +21,9 @@ public enum DisconnectionReason {
 	AttemptedToSendInvalidData,
 	ReceivedInvalidData,
 	ConnectionThrottled,
+
+	// temp
+	RobotDisconnected,
 }
 
 /// <summary>

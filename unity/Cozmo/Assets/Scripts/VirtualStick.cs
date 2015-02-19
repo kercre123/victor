@@ -19,10 +19,10 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	[SerializeField] RectTransform originMarker = null;
 
-	[SerializeField] Image bgDefaultMode = null;
-	[SerializeField] Image bgUpMode = null;
-	[SerializeField] Image bgDownMode = null;
-	[SerializeField] Image bgSideMode = null;
+	[SerializeField] RectTransform bgDefaultMode = null;
+	[SerializeField] RectTransform bgUpMode = null;
+	[SerializeField] RectTransform bgDownMode = null;
+	[SerializeField] RectTransform bgSideMode = null;
 
 	[SerializeField] Image stickImageThrown = null;
 	[SerializeField] Image stickImageNeutral = null;
@@ -143,25 +143,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					res.y = (res.y >= 0f ? 1f : -1f) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.y) - deadZone.y) / (1f - deadZone.y));
 				}
 			}
-//
-//			if(res.sqrMagnitude > 0f) {
-//
-//				if(UpModeEngaged) {
-//					float sideThrow = Vector2.Angle(Vector2.up, res) / verticalModeMaxAngleAllowance;
-//					sideThrow *= res.x >= 0f ? 1f : -1f;
-//					res.y = res.magnitude;
-//					res.x = sideThrow;
-//					res.Normalize();
-//				}
-//
-//				if(DownModeEngaged) {
-//					float sideThrow = Vector2.Angle(-Vector2.up, res) / verticalModeMaxAngleAllowance;
-//					sideThrow *= res.x >= 0f ? 1f : -1f;
-//					res.y = -res.magnitude;
-//					res.x = sideThrow;
-//					res.Normalize();
-//				}
-//			}
 
 			return res;
 		}
@@ -320,7 +301,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		if(stickImageThrown == null) return;
 		if(stickImageNeutral == null) return;
 
-		Vector2 throwVector = (stick.anchoredPosition - bg.anchoredPosition).normalized;
+		Vector2 throwVector = JoystickData;
 
 		bool thrown = throwVector.sqrMagnitude > 0f;
 		if(horizontalOnly || SideModeEngaged) thrown = throwVector.x != 0f;
@@ -552,7 +533,14 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ProcessStick(PointerEventData evnt) {
 		Vector2 delta = Vector2.zero;
 		delta = evnt.position - StickCenterOnScreen;
-		delta = Vector3.ClampMagnitude(delta, radius);
+
+		if(clampRadially) {
+			delta = Vector3.ClampMagnitude(delta, radius);
+		}
+		else {
+			delta.x = Mathf.Clamp(Mathf.Abs(delta.x), 0f, bg.rect.width * 0.5f) * (delta.x >= 0f ? 1f : -1f);
+			delta.y = Mathf.Clamp(Mathf.Abs(delta.y), 0f, bg.rect.height * 0.5f) * (delta.y >= 0f ? 1f : -1f);
+		}
 
 		if(delta.sqrMagnitude <= 0f) {
 			stick.anchoredPosition = bg.anchoredPosition;

@@ -84,8 +84,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8dcc220e71fa4dd19dab934717c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rollAngleMin: 10
-  rollAngleMax: 45
+  rollAngleMin: 5
+  rollAngleMax: 90
   pitchAngleMin: 10
   pitchAngleMax: 45
   upIndicator: {fileID: 22428646}
@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 86668db7d41224a17be19838fa97d42c, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: .372549027, g: .372549027, b: .372549027, a: 1}
   m_Sprite: {fileID: 0}
   m_Type: 0

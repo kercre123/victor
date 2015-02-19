@@ -88,54 +88,34 @@ public static class CozmoUtil {
 		if(inputs.x == 0f && inputs.y == 0f) return;
 
 		float speed = inputs.magnitude;
+		float turn = inputs.x;
 
-//		if(inputs.y == 0f) {
-//			if(inputs.x > 0f) {
-//				leftWheelSpeed = speed;
-//				rightWheelSpeed = -speed;
-//			}
-//			else {
-//				rightWheelSpeed = speed;
-//				leftWheelSpeed = -speed;
-//			}
-//		}
-//		else {
-			//back that ass up like a pickup truck
-			if(inputs.y < 0f) {
-				speed = -speed;
-				inputs.x = -inputs.x;
-			}
+		speed = Mathf.Clamp01(speed*speed) * (inputs.y >= 0f ? 1f : -1f);
+		//turn = Mathf.Clamp01(turn*turn) * (turn >= 0f ? 1f : -1f);
 
+		if(turn == 0f) { 
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
+		}
+		else if(inputs.y == 0f) {
+			leftWheelSpeed = turn > 0f ? speed : -speed;
+			rightWheelSpeed = turn > 0f ? -speed : speed;
+		}
+		else {
+			float speedA = speed;
+			float speedB = Mathf.Lerp(speed, -speed * 0.5f, Mathf.Abs(turn));
 
-			if(inputs.x != 0f) {
-				float angle = Vector2.Angle(Vector2.up, inputs.normalized);
-				if(inputs.y < 0f) {
-					angle = 180f - angle;
-				}
-
-				float speedA = speed;
-				float speedB = speed;
-
-				if(angle <= 45f) {
-					speedB = Mathf.Lerp(speed, 0f, Mathf.Clamp01(angle / 45f));
-				}
-				else {
-					speedB = Mathf.Lerp(0f, -speed, Mathf.Clamp01( (angle-45f) / 45f));
-				}
-
-				if(inputs.x > 0f) {
-					leftWheelSpeed = speedA;
-					rightWheelSpeed = speedB;
-				}
-				else {
-					rightWheelSpeed = speedA;
-					leftWheelSpeed = speedB;
-				}
-
+			if(turn > 0f) {
+				leftWheelSpeed = speedA;
+				rightWheelSpeed = speedB;
 			}
-		//}
+			else if(turn < 0f) {
+				rightWheelSpeed = speedA;
+				leftWheelSpeed = speedB;
+			}
+		}
+
+		//Debug.Log("CalcWheelSpeedsFromBotRelativeInputsB speed("+speed+") turn("+turn+")");
 
 		//scale to maximum wheel speeds
 		leftWheelSpeed *= MAX_WHEEL_SPEED;
@@ -180,7 +160,7 @@ public static class CozmoUtil {
 			}
 		}
 
-		//Debug.Log("speed("+speed+") turn("+turn+")");
+		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 
 		//scale to maximum wheel speeds
 		leftWheelSpeed *= MAX_WHEEL_SPEED;

@@ -66,6 +66,7 @@ public class UdpChannel : ChannelBase {
 
 	// fixed messages
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg ();
+	private readonly U2G_Ping pingMessage = new U2G_Ping();
 	private readonly U2G_DisconnectFromUiDevice disconnectionMessage = new U2G_DisconnectFromUiDevice();
 
 	// sockets
@@ -133,6 +134,7 @@ public class UdpChannel : ChannelBase {
 		callback_SimpleSend_Complete = SimpleSend_Complete;
 	}
 
+	// synchronous
 	public override void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort)
 	{
 		IPAddress advertisingAddress;
@@ -159,6 +161,7 @@ public class UdpChannel : ChannelBase {
 			IPAddress localAddress = GetLocalIPv4();
 
 			try {
+				pingMessage.counter = 0;
 				disconnectionMessage.deviceID = (byte)deviceID;
 
 				// set up main socket
@@ -218,6 +221,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// synchronous
 	public override void Disconnect ()
 	{
 		// IsActive only becomes true synchronously
@@ -235,6 +239,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// synchronous
 	public override void Send(NetworkMessage message)
 	{
 		if (message.ID < 0 || message.ID > 255) {
@@ -253,52 +258,11 @@ public class UdpChannel : ChannelBase {
 				return;
 			}
 
-			bool success = false;
-			SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
-			try {
-				serializer.ByteBuffer = state.buffer;
-				try {
-					NetworkMessageSerializer.Serialize(serializer, message);
-					state.length = serializer.Index;
-				}
-				catch (Exception e)
-				{
-					DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
-					return;
-				}
-				finally {
-					serializer.Clear ();
-				}
-
-				if (mainSend == null) {
-					try {
-						ServerSend (state);
-					}
-					catch (Exception e) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, e);
-						return;
-					}
-				}
-				else {
-					if (sentBuffers.Count < MaxQueuedSends) {
-						sentBuffers.Enqueue (state);
-					}
-					else {
-						DestroySynchronously(DisconnectionReason.ConnectionThrottled,
-						                   "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
-						return;
-					}
-				}
-				success = true;
-			}
-			finally {
-				if (!success) {
-					state.Dispose();
-				}
-			}
+			SendInternal(message);
 		}
 	}
 
+	// synchronous
 	public override void Update()
 	{
 		// IsActive only becomes true synchronously
@@ -333,13 +297,16 @@ public class UdpChannel : ChannelBase {
 
 				if (connectionState == ConnectionState.Connected) {
 					if (lastPingTime + PingTimeout < lastUpdateTime) {
-						//Ping();
+						lastPingTime = lastUpdateTime;
+						SendInternal(pingMessage);
+						pingMessage.counter += 1;
 					}
 				}
 			}
 		}
 	}
-	
+
+	// synchronous
 	private void InternalUpdate()
 	{
 		ProcessLogs();
@@ -374,6 +341,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 	
+	// synchronous
 	private void ProcessLogs()
 	{
 		int logCount = queuedLogs.Count;
@@ -390,6 +358,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 	
+	// synchronous
 	private void ProcessMessages()
 	{
 		int count = receivedMessages.Count;
@@ -405,7 +374,8 @@ public class UdpChannel : ChannelBase {
 			receivedMessages.Clear ();
 		}
 	}
-	
+
+	// either
 	private void Destroy(DisconnectionReason reason) {
 
 		bool needsDisconnect = (connectionState == ConnectionState.Connected && mainServer != null && mainEndPoint != null);
@@ -443,18 +413,42 @@ public class UdpChannel : ChannelBase {
 		advertisementEndPoint = null;
 	}
 
+	// either
 	private void Destroy(DisconnectionReason reason, object exceptionOrLog)
 	{
 		Destroy (reason);
 	    queuedLogs.Add (exceptionOrLog);
 	}
 
+	// synchronous
 	private void DestroySynchronously(DisconnectionReason reason, object exceptionOrLog)
 	{
 		Destroy (reason, exceptionOrLog);
 		InternalUpdate ();
 	}
 	
+	// either
+	private void SimpleSend(SocketBufferState chainedState)
+	{
+		BeginSend (chainedState, callback_SimpleSend_Complete);
+	}
+
+	// asynchronous
+	private void SimpleSend_Complete(IAsyncResult result)
+	{
+		lock (sync) {
+			SocketBufferState state = (SocketBufferState)result.AsyncState;
+			try {
+				EndSend (result);
+			} catch (Exception e) {
+				queuedLogs.Add (e);
+			} finally {
+				state.Dispose ();
+			}
+		}
+	}
+
+	// either
 	private bool SendDisconnect()
 	{
 		SocketBufferState state = AllocateBufferState (mainServer, mainEndPoint);
@@ -496,7 +490,56 @@ public class UdpChannel : ChannelBase {
 			}
 		}
 	}
-	
+
+	// synchronous
+	private void SendInternal(NetworkMessage message)
+	{
+		bool success = false;
+		SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
+		try {
+			serializer.ByteBuffer = state.buffer;
+			try {
+				NetworkMessageSerializer.Serialize(serializer, message);
+				state.length = serializer.Index;
+			}
+			catch (Exception e)
+			{
+				DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
+				return;
+			}
+			finally {
+				serializer.Clear ();
+			}
+			
+			if (mainSend == null) {
+				try {
+					ServerSend (state);
+				}
+				catch (Exception e) {
+					DestroySynchronously(DisconnectionReason.ConnectionLost, e);
+					return;
+				}
+			}
+			else {
+				if (sentBuffers.Count < MaxQueuedSends) {
+					sentBuffers.Enqueue (state);
+				}
+				else {
+					DestroySynchronously(DisconnectionReason.ConnectionThrottled,
+					                     "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+					return;
+				}
+			}
+			success = true;
+		}
+		finally {
+			if (!success) {
+				state.Dispose();
+			}
+		}
+	}
+
+	// either
 	private void ServerSend(SocketBufferState state)
 	{
 		// should indicate programmer error
@@ -523,6 +566,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// asynchronous
 	private void ServerSend_Complete(IAsyncResult result)
 	{
 		lock (sync) {
@@ -568,6 +612,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// either
 	private void ServerReceive()
 	{
 		mainReceive = AllocateBufferState(mainServer, anyEndPoint);
@@ -585,6 +630,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// asynchronous
 	private void ServerReceive_Complete(IAsyncResult result) 
 	{
 		lock (sync) {
@@ -655,6 +701,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// either
 	private void SendAdvertisement()
 	{
 		if (advertisementSend != null || lastAdvertiseTime + AdvertiseTick > lastUpdateTime) {
@@ -693,6 +740,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// asynchronous
 	private void SendAdvertisement_Complete(IAsyncResult result)
 	{
 		lock (sync) {
@@ -720,6 +768,7 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
+	// either
     private SocketBufferState AllocateBufferState(Socket socket, EndPoint endPoint)
 	{
 		SocketBufferState state;
@@ -832,25 +881,6 @@ public class UdpChannel : ChannelBase {
 		}
 	}
 
-	private void SimpleSend(SocketBufferState chainedState)
-	{
-		BeginSend (chainedState, callback_SimpleSend_Complete);
-	}
-	
-	private void SimpleSend_Complete(IAsyncResult result)
-	{
-		lock (sync) {
-			SocketBufferState state = (SocketBufferState)result.AsyncState;
-			try {
-				EndSend (result);
-			} catch (Exception e) {
-				queuedLogs.Add (e);
-			} finally {
-				state.Dispose ();
-			}
-		}
-	}
-	
 	// adapted from http://stackoverflow.com/a/24814027
 	public static IPAddress GetLocalIPv4()
 	{
