@@ -138,17 +138,36 @@ class File(object):
 
     @staticmethod
     def rmdir(path):
-        "Removes a directory if empty."
+        "Removes a directory if empty, or just contains directories."
         path = os.path.abspath(path)
         if ECHO_ALL:
             print 'rmdir ' + path
         try:
-            for file in os.listdir(path):
-                if file != '.DS_Store':
-                    return
+            dirs = [path]
+            cycle_detector = set()
+            while dirs:
+                dir = dirs.pop()
+                
+                # infinite symlink loop protection
+                realpath = os.path.realpath(dir)
+                if realpath in cycle_detector:
+                    continue
+                cycle_detector.add(realpath)
+                
+                for file in os.listdir(dir):
+                    if file != '.DS_Store':
+                        fullpath = os.join(dir, file)
+                        if os.isdir(path):
+                            dirs.append(path)
+                        else:
+                            # normal file, so don't remove
+                            print('"{0}" still exists, so not removing "{1}"'.format(fullpath, path))
+                            return
+            
             shutil.rmtree(path)
-        except OSError:
-            pass
+        except OSError as e:
+            if os.path.exists(path):
+                sys.exit('ERROR: Failed to remove empty directory {0}: {1}'.format(path, e.strerror))
 
 
     @staticmethod

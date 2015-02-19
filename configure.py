@@ -9,9 +9,9 @@ import textwrap
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'tools'))
-import cozmobuild.cmake
-import cozmobuild.shell
-import cozmobuild.xcode
+import ankibuild.cmake
+import ankibuild.util
+import ankibuild.xcode
 
 def parse_arguments():
     
@@ -50,11 +50,11 @@ def parse_arguments():
         help='specify the iphone simulator when building (will add platform "ios")')
     
     parser.add_argument(
-        '-b',
-        '--build-dir',
+        '-o',
+        '--output-dir',
         metavar='path',
-        default=os.path.relpath(os.path.join(REPO_ROOT, 'build/')),
-        help='where to build the generated projects (default is "%(default)s")')
+        default=os.path.relpath(os.path.join(REPO_ROOT, 'generated/')),
+        help='where to put the generated projects (default is "%(default)s")')
     
     configurations = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
     group = parser.add_mutually_exclusive_group(required=False)
@@ -99,50 +99,67 @@ def parse_arguments():
     return options
 
 
-def generate(options):
-    for platform in options.platforms:
-        project_dir = os.path.join(options.build_dir, platform)
-        cozmobuild.cmake.generate(project_dir, REPO_ROOT, platform)
-
-def build(options):
-    for platform in options.platforms:
+class PlatformConfiguration(object):
+    
+    def __init__(self, platform, options):
+        self.platform = platform
+        self.options = options
+        
         if platform == 'ios':
             suffix = '_iOS'
         elif platform == 'mac':
             suffix = ''
         else:
-        	sys.exit('Cannot {1} platform of type "{0}"'.format(platform, options.command))
-        project_path = os.path.join(options.build_dir, platform, 'CozmoEngine{0}.xcodeproj'.format(suffix))
+            sys.exit('Cannot {1} platform of type "{0}"'.format(platform, options.command))
         
-        if not os.path.exists(project_path):
-        	sys.exit('Project {0} does not exist. (clean does not generate projects.)'.format(project_path))
-        else:
-			cozmobuild.xcode.xcodebuild(
-				buildaction=options.command,
-				project=project_path,
-				target='ALL_BUILD',
-				platform=platform,
-				configuration=options.configuration,
-				simulator=options.simulator)
+        self.project_dir = os.path.join(options.output_dir, self.platform)
+        self.project_path = os.path.join(self.project_dir, 'CozmoEngine{0}.xcodeproj'.format(suffix))
+    
+    def run(self):
+        if self.options.command in ('generate', 'build'):
+            self.generate()
+        if self.options.command in ('build', 'clean'):
+            self.build()
+        if self.options.command == 'delete':
+            self.delete()
+    
+    def generate(self):
+        ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
 
-def delete(options):
-    for platform in options.platforms:
-        project_dir = os.path.join(options.build_dir, platform)
-        cozmobuild.shell.rm_rf(project_dir)
-    cozmobuild.shell.rmdir(options.build_dir)
+    def build(self):
+        if not os.path.exists(self.project_path):
+            sys.exit('Project {0} does not exist. (clean does not generate projects.)'.format(self.project_path))
+        else:
+            ankibuild.xcode.build(
+                buildaction=self.options.command,
+                project=self.project_path,
+                target='ALL_BUILD',
+                platform=self.platform,
+                configuration=self.options.configuration,
+                simulator=self.options.simulator)
+
+    def delete(self):
+        ankibuild.util.File.rm_rf(self.project_dir)
+
 
 if __name__ == '__main__':
     options = parse_arguments()
     
     if len(options.platforms) != 1:
-        print('Running command {0} on platforms {{{1}}}.'.format(options.command, ','.join(options.platforms)))
+        platforms_text = 'platforms {{{0}}}'
     else:
-        print('Running command {0} on platform {1}.'.format(options.command, ','.join(options.platforms)))
-    if options.command in ('generate', 'build'):
-        generate(options)
-    if options.command in ('build', 'clean'):
-        build(options)
+        platforms_text = 'platform {0}'
+    platforms_text = platforms_text.format(','.join(options.platforms))
+    
+    print('')
+    print('Running command {0} on {1}'.format(options.command, platforms_text))
+    for platform in options.platforms:
+        config = PlatformConfiguration(platform, options)
+        config.run()
+        
     if options.command == 'delete':
-        delete(options)
-    print('DONE')
+        ankibuild.util.File.rmdir(options.output_dir)
+    
+    print('DONE command {0} on {1}'.format(options.command, platforms_text))
+
 

@@ -32,8 +32,7 @@ class XcodeWorkspace(object):
 
         # generate contents
         xc_contents = os.path.join(path, 'contents.xcworkspacedata')
-        with open(xc_contents, 'w') as f:
-            f.write("\n".join(output))
+        util.File.write(xc_contents, "\n".join(output))
 
         # generate settings if necessary
         if derived_data_path is not None:
@@ -99,3 +98,4 @@ def build(
     arguments += [buildaction]
     
     util.File.execute(arguments)
+
