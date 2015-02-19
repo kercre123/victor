@@ -4,6 +4,8 @@ using System.Collections;
 
 public class RobotRelativeControls : MonoBehaviour {
 
+	[SerializeField] ScreenRecorder recorder = null;
+
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
@@ -43,6 +45,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = Vector2.zero;
 		moveCommandLastFrame = false;
+
+		if(recorder != null) {
+			recorder.videoFileName = "cozmoTest_screenRec_" + System.DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + gameObject.name + ".mp4";
+			recorder.enabled = true;
+		}
 	}
 
 	void FixedUpdate() {
@@ -90,7 +97,6 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(gyroInputs != null && gyroInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed)) {
 			inputs.x = gyroInputs.Horizontal;
-
 //			if(gyroPitchControl != null && gyroPitchControl.isOn) {
 //				inputs.y = gyroInputs.Vertical;
 //			}
@@ -142,6 +148,10 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+		}
+
+		if(recorder != null) {
+			recorder.enabled = false;
 		}
 	}
 

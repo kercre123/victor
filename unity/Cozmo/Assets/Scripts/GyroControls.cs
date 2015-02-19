@@ -25,15 +25,7 @@ public class GyroControls : MonoBehaviour {
 			if(Time.frameCount == lastXStamp) return x;
 			lastXStamp = Time.frameCount;
 
-//			Quaternion deviceRot = Input.gyro.attitude;
-//			Vector3 euler = deviceRot.eulerAngles;
-//			
-//			float roll = euler.z - rollStart;
-//			while(roll < -180f) roll += 360f;
-//			while(roll > 180f) roll -= 360f;
-
 			float roll = MSP_Input.GyroAccel.GetRoll();
-			//Debug.Log("roll");
 			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
 
 			return x; 
@@ -48,17 +40,10 @@ public class GyroControls : MonoBehaviour {
 
 			if(Time.frameCount == lastYStamp) return y;
 			lastYStamp = Time.frameCount;
-			
-			Quaternion deviceRot = Input.gyro.attitude;
-			Vector3 euler = deviceRot.eulerAngles;
-			
-			float pitch = euler.y - pitchStart;
-			while(pitch < -180f) pitch += 360f;
-			while(pitch > 180f) pitch -= 360f;
-			
-			y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin));
-			if(pitch < 0f) y = -y;
-			
+
+			float pitch = MSP_Input.GyroAccel.GetPitch();
+			y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * (pitch >= 0f ? -1f : 1f);
+
 			return y; 
 		}
 	}
@@ -72,13 +57,7 @@ public class GyroControls : MonoBehaviour {
 
 
 		if(upIndicator != null) {
-			Quaternion deviceRot = Input.gyro.attitude;
-			Vector3 euler = deviceRot.eulerAngles;
-			
-			float roll = euler.z - rollStart;
-			while(roll < -180f) roll += 360f;
-			while(roll > 180f) roll -= 360f;
-
+			float roll = MSP_Input.GyroAccel.GetRoll();
 			upIndicator.localRotation = Quaternion.AngleAxis(-roll, Vector3.forward);
 		}
 	}

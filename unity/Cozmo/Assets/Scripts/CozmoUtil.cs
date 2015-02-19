@@ -91,19 +91,20 @@ public static class CozmoUtil {
 		float turn = inputs.x;
 
 		speed = Mathf.Clamp01(speed*speed) * (inputs.y >= 0f ? 1f : -1f);
-		//turn = Mathf.Clamp01(turn*turn) * (turn >= 0f ? 1f : -1f);
+		turn = Mathf.Clamp01(turn*turn) * (turn >= 0f ? 1f : -1f);
 
 		if(turn == 0f) { 
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
 		}
 		else if(inputs.y == 0f) {
+			speed *= 0.5f;
 			leftWheelSpeed = turn > 0f ? speed : -speed;
 			rightWheelSpeed = turn > 0f ? -speed : speed;
 		}
 		else {
 			float speedA = speed;
-			float speedB = Mathf.Lerp(speed, -speed * 0.5f, Mathf.Abs(turn));
+			float speedB = Mathf.Lerp(speed, -speed * 0.25f, Mathf.Abs(turn));
 
 			if(turn > 0f) {
 				leftWheelSpeed = speedA;
