@@ -200,6 +200,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_RobotObservedObject:
 			ReceivedSpecificMessage((G2U_RobotObservedObject)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotObservedNothing:
+			ReceivedSpecificMessage((G2U_RobotObservedNothing)message);
+			break;
 		case (int)NetworkMessageID.G2U_DeviceDetectedVisionMarker:
 			ReceivedSpecificMessage((G2U_DeviceDetectedVisionMarker)message);
 			break;
@@ -254,7 +257,16 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
+		Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
+
 		current.box.UpdateInfo( message );
+	}
+
+	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
+	{
+		Debug.Log( "no box found " + Time.time );
+
+		current.box.RemoveInfo();
 	}
 	
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -444,6 +456,8 @@ public class RobotEngineManager : MonoBehaviour {
 		message.usePreDockPose = 0;
 		
 		channel.Send( message );
+
+		current.box.RemoveInfo();
 	}
 
 	public void RequestImage(int robotID)

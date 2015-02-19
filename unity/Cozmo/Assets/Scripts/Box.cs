@@ -10,6 +10,11 @@ public class Box
 	public float topLeft_x { get; private set; }
 	public float topLeft_y { get; private set; }
 
+	public Box()
+	{
+		ID = uint.MaxValue;
+	}
+
 	public void UpdateInfo( G2U_RobotObservedObject message )
 	{
 		ID =  message.objectID;
@@ -17,5 +22,14 @@ public class Box
 		width = message.width;
 		topLeft_x = message.topLeft_x;
 		topLeft_y = message.topLeft_y;
+	}
+
+	public void RemoveInfo()
+	{
+		ID = uint.MaxValue;
+		height = 0;
+		width = 0;
+		topLeft_x = 0;
+		topLeft_y = 0;
 	}
 }
