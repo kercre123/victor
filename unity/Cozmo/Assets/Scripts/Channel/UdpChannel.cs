@@ -273,7 +273,7 @@ public class UdpChannel : ChannelBase {
 
 				if (connectionState == ConnectionState.Advertising) {
 					if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.2f") + " seconds.");
+						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
 						return;
 					}
 
@@ -288,7 +288,7 @@ public class UdpChannel : ChannelBase {
 
 				if (connectionState == ConnectionState.Connected) {
 					if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.2f") + " seconds.");
+						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
 						return;
 					}
 				}
