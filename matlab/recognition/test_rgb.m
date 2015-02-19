@@ -2,7 +2,7 @@
 
 % [accuracy, results] = test_rgb();
 
-function [accuracy, results] = test_rgb()
+function [accuracy, results] = test_rgb(varargin)
     
     % format: {filenamePattern, [minFrame,maxFrame], [whichLeds], [numOnFrames]}
     
@@ -35,11 +35,13 @@ function [accuracy, results] = test_rgb()
         end
     end
     
-    testCExecutable = false;
+    testCExecutable = true;
     cExecutable = 'C:/Anki/ARGarage/parseLedCode/parseLedCode.msvc2012/Release/test_parseLedCode.exe ';
     outputFilename = 'c:/tmp/testRgbOut.txt';
     
     numFramesToTest = 15;
+    
+    parseVarargin(varargin);
     
     %     compositeVideo = test_createCompositeSampleVideo(filenamePatterns);
     %     save /Users/pbarnum/Documents/Anki/drive-ar-large-files/blinkingLights/lightsVideo.mat compositeVideo
@@ -47,6 +49,7 @@ function [accuracy, results] = test_rgb()
     
     alignmentTypes = {'none', 'exhaustiveTranslation'}; % {'none', 'exhaustiveTranslation', 'exhaustiveTranslation-double'};
     parsingTypes = {'spatialBlur'};
+    scaleDetectionMethod = 'temporalGaussian'; % { 'originalGaussian', 'temporalGaussian', 'temporalBox'}
     
     results = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
     accuracy = cell(length(filenamePatterns), length(parsingTypes), length(alignmentTypes));
@@ -76,6 +79,29 @@ function [accuracy, results] = test_rgb()
                 end
                 
                 if testCExecutable
+                    commandString = [...
+                        cExecutable, ' ',...
+                        filenamePatterns{iFilenamePattern}{1}, ' ',...
+                        sprintf('%d %d ', filenamePatterns{iFilenamePattern}{2}(1), filenamePatterns{iFilenamePattern}{2}(2)),...
+                        outputFilename];
+                    
+                    system(commandString);
+                    
+                    file = fopen(outputFilename);
+                    
+                    numbers = fscanf(file, '%d');
+                    
+                    fclose(file);
+                    
+                    numFrames = numbers(1);
+                    
+                    assert(numFrames == length(whichFirstFrames));
+                    
+                    numbers = reshape(numbers(2:end), [5, numFrames]);
+                    numbers(2:3, :) = numbers(2:3, :) + 1;
+                    
+                    whichColors = numbers(2:3, :);
+                    numPositives = numbers(4:5, :);
                 else % if testCExecutable
                     if redBlueOnly
                         whichColors = -ones(2, length(whichFirstFrames));
@@ -100,7 +126,8 @@ function [accuracy, results] = test_rgb()
                             'parsingType', parsingTypes{iParsingType},...
                             'processingSize', processingSize,...
                             'lightSquareWidth', lightSquareWidth,...
-                            'redBlueOnly', redBlueOnly);
+                            'redBlueOnly', redBlueOnly,...
+                            'scaleDetectionMethod', scaleDetectionMethod);
                         
                         if size(whichColors,1) == 2
                             outString = [outString,...
@@ -134,16 +161,13 @@ function [accuracy, results] = test_rgb()
                             colorNames{whichColors(2,iFirstFrame)}, numPositives(2,iFirstFrame),...
                             colorNames{whichColors(3,iFirstFrame)}, numPositives(3,iFirstFrame))];
                     end
-                    
-                    isBadValue = false;
-                    
+                                        
                     results{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame, :) = [whichColors(:,iFirstFrame)', numPositives(:,iFirstFrame)'];
                     
                     groundTruthColors = filenamePatterns{iFilenamePattern}{3};
-                    if whichColors(1,iFirstFrame)==1 && whichColors(2,iFirstFrame)==1
+                    if whichColors(1,iFirstFrame) == whichColors(2,iFirstFrame)
                         accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = 10;
-                        
-                        isBadValue = true;
+                        outString = [outString, ' *']; %#ok<AGROW>
                     elseif length(filenamePatterns{iFilenamePattern}{4}) == 2 && whichColors(1,iFirstFrame)==groundTruthColors(1) && whichColors(2,iFirstFrame)==groundTruthColors(2)
                         
                         curAccuracy = max([abs(filenamePatterns{iFilenamePattern}{4}(1) - numPositives(1,iFirstFrame)),...
@@ -152,7 +176,7 @@ function [accuracy, results] = test_rgb()
                         accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = curAccuracy;
                         
                         if curAccuracy > 1
-                            isBadValue = true;
+                            outString = [outString, ' XXXXX']; %#ok<AGROW>
                         end
                     elseif length(filenamePatterns{iFilenamePattern}{4}) == 3 && whichColors(1,iFirstFrame)==groundTruthColors(1) && whichColors(2,iFirstFrame)==groundTruthColors(2) && whichColors(3,iFirstFrame)==groundTruthColors(3)
                         
@@ -163,16 +187,11 @@ function [accuracy, results] = test_rgb()
                         accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = curAccuracy;
                         
                         if curAccuracy > 1
-                            isBadValue = true;
+                            outString = [outString, ' XXXXX']; %#ok<AGROW>
                         end
                     else
                         accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = numFramesToTest;
-                        isBadValue = true;
-                    end
-                    
-                    
-                    if isBadValue
-                        outString = [outString, ' *****']; %#ok<AGROW>
+                        outString = [outString, ' ZZZZZ']; %#ok<AGROW>
                     end
                     
                     disp(outString)
@@ -189,7 +208,6 @@ function [accuracy, results] = test_rgb()
                 markerSizes1 = 20 * ones(size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), 1);
                 scatter(1:size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1), markerSizes1, 'bo', 'filled');
                 hold on;
-                
                 
                 set(subplotHandle, 'XTick', [0:10:100]);
                 title(sprintf('FilenamePattern %d', iFilenamePattern))
