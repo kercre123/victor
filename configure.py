@@ -10,10 +10,10 @@ import textwrap
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'lib/anki/cozmo-engine/tools'))
-import cozmobuild.cmake
-import cozmobuild.shell
-import cozmobuild.xcode
-#import cozmobuild.unity
+import ankibuild.cmake
+import ankibuild.util
+import ankibuild.xcode
+#import ankibuild.unity
 
 def parse_arguments():
     
@@ -106,13 +106,13 @@ def parse_arguments():
         '--build-dir',
         metavar='path',
         default=os.path.relpath(os.path.join(REPO_ROOT, 'build/')),
-        help='where to build the generated projects (default is "%(default)s")')
+        help='where to build intermediate files (default is "%(default)s")')
     parser.add_argument(
         '-o',
         '--output-dir',
         metavar='path',
-        default=os.path.relpath(os.path.join(REPO_ROOT, 'build/generated')),
-        help='where to put the final unity build (default is "%(default)s")')
+        default=os.path.relpath(os.path.join(REPO_ROOT, 'generated/')),
+        help='where to put the generated projects (default is "%(default)s")')
     
     configurations = ['Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel']
     group = parser.add_mutually_exclusive_group(required=False)
@@ -146,9 +146,9 @@ def parse_arguments():
     if options.platforms == 'all':
         options.platforms = 'mac+ios'
     options.platforms = options.platforms.replace(' ', '').split('+')
-    for platform in options.platforms:
-        if platform not in ('mac', 'ios'):
-            sys.exit('Invalid platform "{0}"'.format(platform))
+    for plat in options.platforms:
+        if plat not in ('mac', 'ios'):
+            sys.exit('Invalid platform "{0}"'.format(plat))
     if options.simulator and 'ios' not in options.platforms:
         options.platforms.append('ios')
     if not options.platforms:
@@ -161,73 +161,90 @@ def parse_arguments():
     
     return options
 
-
-def generate(options):
-    for platform in options.platforms:
+class PlatformConfiguration(object):
+    
+    def __init__(self, platform, options):
+        self.platform = platform
+        self.options = options
+        
         if platform == 'ios':
-            project_suffix = '_iOS'
-            workspace_suffix = '_iOS'
+            game_suffix = '_iOS'
+            normal_suffix = '_iOS'
         elif platform == 'mac':
-            project_suffix = ''
-            workspace_suffix = '_OSX'
+            game_suffix = ''
+            normal_suffix = '_OSX'
         else:
-        	sys.exit('Cannot {1} platform of type "{0}"'.format(platform, options.command))
+            sys.exit('Cannot {1} platform of type "{0}"'.format(self.platform, self.options.command))
         
-        cmake_project_dir = os.path.join(options.build_dir, '{0}-engine'.format(platform))
-        cmake_project_path = os.path.join(cmake_project_dir, 'CozmoGame{0}.xcodeproj'.format(project_suffix))
-        unity_project_path = os.path.join(options.build_dir, '{0}-unity', 'CozmoUnity{0}.xcodeproj'.format(workspace_suffix))
-        projects = [cmake_project_path, unity_project_path]
+        self.cmake_project_dir = os.path.join(self.options.output_dir, 'game-{0}'.format(self.platform))
+        self.cmake_project_path = os.path.join(self.cmake_project_dir, 'CozmoGame{0}.xcodeproj'.format(game_suffix))
         
-        workspace_path = os.path.join(options.build_dir, 'CozmoWorkspace{0}.xcworkspace'.format(workspace_suffix))
+        self.unity_xcode_project_dir = os.path.join(REPO_ROOT, 'unity', self.platform)
+        self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity{0}.xcodeproj'.format(normal_suffix))
+        self.unity_build_root = os.path.join(self.options.build_dir, 'unity')
+        self.unity_build_dir = os.path.join(self.unity_build_root, self.platform)
+        
+        self.workspace_name = 'CozmoWorkspace{0}'.format(normal_suffix)
+        self.workspace_path = os.path.join(self.options.output_dir, '{0}.xcworkspace'.format(self.workspace_name))
+        self.derived_data_path = os.path.join(self.options.build_dir, 'DerivedData')
+        self.config_path = os.path.join(self.options.output_dir, '{0}.xcconfig'.format(self.platform))
+        
+        self.scheme = 'MODE_{0}'.format(self.options.mode.upper())
+    
+    def run(self):
+        if self.options.command in ('generate', 'build'):
+            self.generate()
+        if self.options.command in ('build', 'clean'):
+            self.build()
+        if self.options.command == 'delete':
+            self.delete()
+    
+    def generate(self):
+        workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
+        workspace.add_project(self.cmake_project_path)
+        workspace.add_project(self.unity_xcode_project_path)
+        
         
         xcconfig = [
-            'COZMO_BUILD_REPO_ROOT={0}'.format(ROOT_PATH),
-            'COZMO_BUILD_UNITY_PROJECT_PATH=${COZMO_BUILD_REPO_ROOT}/unity/Cozmo',
-            'COZMO_BUILD_UNITY_BUILD_DIR={0}'.format(''),
-            'COZMO_BUILD_UNITY_XCODE_BUILD_DIR=${COZMO_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+            'ANKI_BUILD_REPO_ROOT={0}'.format(REPO_ROOT),
+            'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+            'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
+            'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
         ]
-        if options.unity_binary_path:
-            xcconfig.append('COZMO_BUILD_UNITY_BINARY_PATH={0}'.format(options.unity_binary_path))
+        if self.options.unity_binary_path:
+            xcconfig.append('ANKI_BUILD_UNITY_BINARY_PATH={0}'.format(self.options.unity_binary_path))
         else:
-            xcconfig.append('// COZMO_BUILD_UNITY_BINARY_PATH=')
-        
-        if options.prebuilt_url:
-            xcconfig.append('COZMO_BUILD_PREBUILT_URL={0}'.format(options.prebuilt_url))
+            xcconfig.append('// ANKI_BUILD_UNITY_BINARY_PATH=')
+        if self.options.prebuilt_url:
+            xcconfig.append('ANKI_BUILD_PREBUILT_URL={0}'.format(self.options.prebuilt_url))
         else:
-            xcconfig.append('// COZMO_BUILD_PREBUILT_URL=')
+            xcconfig.append('// ANKI_BUILD_PREBUILT_URL=')
+        xcconfig.append('')
         
-        cozmobuild.cmake.generate(cmake_project_dir, REPO_ROOT, platform)
-        cozmobuild.xcode.generate_workspace(workspace_path, projects)
-        cozmobuild.xcode.generate_config(workspace_path, xcconfig)
-
-def build(options):
+        
+        ankibuild.cmake.generate(self.cmake_project_dir, REPO_ROOT, self.platform)
+        workspace.generate(self.workspace_path, self.derived_data_path)
+        ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
     
-    scheme = 'MODE_{0}'.format(options.mode.upper())
-    
-    for platform in options.platforms:
-        if platform == 'ios':
-            workspace_suffix = '_iOS'
-        elif platform == 'mac':
-            workspace_suffix = '_OSX'
-        else:
-        	sys.exit('Cannot {1} platform of type "{0}"'.format(platform, options.command))
-        workspace_path = os.path.join(options.build_dir, 'CozmoWorkspace{0}.xcworkspace'.format(workspace_suffix))
+    def build(self):
         
-        if not os.path.exists(workspace_path):
-        	sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(workspace_path))
+        if not os.path.exists(self.workspace_path):
+            sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
         else:
-			cozmobuild.xcode.xcodebuild(
-				buildaction=options.command,
-				workspace=workspace_path,
-				scheme=scheme,
-				platform=platform,
-				configuration=options.configuration,
-				simulator=options.simulator)
+            ankibuild.xcode.xcodebuild(
+                buildaction=self.options.command,
+                workspace=self.workspace_path,
+                scheme=self.scheme,
+                platform=self.platform,
+                configuration=self.options.configuration,
+                simulator=self.options.simulator)
+        
+    def delete(self):
+        ankibuild.util.File.rm_rf(self.workspace_path)
+        ankibuild.util.File.rm_rf(self.derived_data_path)
+        ankibuild.util.File.rm_rf(self.unity_build_dir)
+        ankibuild.util.File.rm_rf(self.cmake_project_path)
 
-def delete(options):
-    for platform in options.platforms:
-        project_dir = os.path.join(options.build_dir, platform)
-        cozmobuild.shell.rm_rf(project_dir)
 
 if __name__ == '__main__':
     options = parse_arguments()
@@ -239,12 +256,15 @@ if __name__ == '__main__':
     platforms_text = platforms_text.format(','.join(options.platforms))
     
     print('')
-    print('Running command {0} on {1}'.format(options.command, platforms_text, options.mode))
-    if options.command in ('generate', 'build'):
-        generate(options)
-    if options.command in ('build', 'clean'):
-        build(options)
+    print('Running command {0} on {1}'.format(options.command, platforms_text))
+    for platform in options.platforms:
+        config = PlatformConfiguration(platform, options)
+        config.run()
+        
     if options.command == 'delete':
-        delete(options)
+        ankibuild.util.File.rmdir(options.build_dir)
+        ankibuild.util.File.rmdir(options.output_dir)
+    
     print('DONE command {0} on {1}'.format(options.command, platforms_text))
+    
     
