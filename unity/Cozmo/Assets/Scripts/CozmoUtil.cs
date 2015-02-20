@@ -74,8 +74,8 @@ public static class CozmoUtil {
 		rightWheelSpeed = speed;
 			
 		if(turn != 0f) {
-			float speedA = speed;
-			float speedB = Mathf.Lerp(speed, -speed*maxTurnFactor*0.5f, Mathf.Abs(turn));
+			float speedA = Mathf.Lerp(speed, speed*Mathf.Clamp01(0.5f + maxTurnFactor), Mathf.Abs(turn));
+			float speedB = Mathf.Lerp(speed, -speed*maxTurnFactor*0.25f, Mathf.Abs(turn));
 
 			if(turn > 0f) {
 				leftWheelSpeed = speedA;
