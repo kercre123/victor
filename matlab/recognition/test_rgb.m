@@ -215,7 +215,7 @@ function [accuracy, results] = test_rgb(varargin)
                 axis([a(1:2),-1,numFramesToTest+1]);
                 set(figureHandle, 'name', sprintf('ParsingType:%d AlignmentType:%d', iParsingType, iAlignmentType))
                 figurePosition = get(figureHandle,'Position');
-                set(figureHandle,'Position', [figurePosition(1:2),900,800])
+                set(figureHandle,'Position', [figurePosition(1),100,900,800])
                 
                 %                 figure(2*iAlignmentType + 2);
                 %                 subplot(ceil(sqrt(length(filenamePatterns))), ceil(sqrt(length(filenamePatterns))), iFilenamePattern);
