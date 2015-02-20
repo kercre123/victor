@@ -28,7 +28,9 @@ namespace Anki {
         {0, 0, 0} // Final dummy entry without comma at end
       };
       
-      
+      u16 GetSize(const ID msgID) {
+        return lookupTable_[msgID].size;
+      }
       
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {

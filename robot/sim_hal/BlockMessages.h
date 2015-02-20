@@ -50,6 +50,8 @@ namespace Anki {
 #     define MESSAGE_DEFINITION_MODE MESSAGE_REG_CALLBACK_METHODS_MODE
 #     include "BlockMessageDefinitions.def"
      
+
+      u16 GetSize(const ID msgID);
       
       Result ProcessMessage(const u8* buffer, const u8 bufferSize);
       
