@@ -257,21 +257,21 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
-		Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
+		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
 		current.box.UpdateInfo( message );
 	}
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
-		Debug.Log( "no box found " + Time.time );
+		//Debug.Log( "no box found at " + Time.time );
 
 		current.box.RemoveInfo();
 	}
 	
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
 	{
-		
+
 	}
 	
 	private void ReceivedSpecificMessage(G2U_PlaySound message)
