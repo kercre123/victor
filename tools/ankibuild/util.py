@@ -2,8 +2,12 @@ import collections
 import errno
 import os
 import re
-import subprocess
+import shutil
 import sys
+try:
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
 
 class Git(object):
 
@@ -102,7 +106,7 @@ class File(object):
         "Recursively creates new directories up to and including the given directory, if needed."
         path = os.path.abspath(path)
         if ECHO_ALL:
-            print('mkdir -p ' + path)
+            print(File._escape(['mkdir', '-p', path]))
         try:
             os.makedirs(path)
         except OSError as e:
@@ -111,11 +115,25 @@ class File(object):
 
 
     @staticmethod
+    def ln_s(source, link_name):
+        "Makes a symbolic link, pointing link_name to source."
+        source = os.path.abspath(source)
+        link_name = os.path.abspath(link_name)
+        if ECHO_ALL:
+            print(File._escape(['ln', '-s', source, link_name]))
+        try:
+            os.symlink(source, link_name)
+        except OSError as e:
+            if not os.path.islink(link_name):
+                sys.exit('ERROR: Failed to create symlink from {0} pointing to {1}: {2}'.format(link_name, source, e.strerror))
+
+
+    @staticmethod
     def rm_rf(path):
         "Removes all files and directories including the given path."
         path = os.path.abspath(path)
         if ECHO_ALL:
-            print('rm -rf ' + path)
+            print(File._escape(['rm', '-rf', path]))
         try:
             shutil.rmtree(path)
         except OSError as e:
@@ -128,7 +146,7 @@ class File(object):
         "Removes a single specific file."
         path = os.path.abspath(path)
         if ECHO_ALL:
-            print('rm ' + path)
+            print(File._escape(['rm', path]))
         try:
             os.remove(path)
         except OSError as e:
@@ -141,7 +159,7 @@ class File(object):
         "Removes a directory if empty, or just contains directories."
         path = os.path.abspath(path)
         if ECHO_ALL:
-            print 'rmdir ' + path
+            print(File._escape(['rmdir', path]))
         try:
             dirs = [path]
             cycle_detector = set()
@@ -156,8 +174,8 @@ class File(object):
                 
                 for file in os.listdir(dir):
                     if file != '.DS_Store':
-                        fullpath = os.join(dir, file)
-                        if os.isdir(path):
+                        fullpath = os.path.join(dir, file)
+                        if os.path.isdir(path):
                             dirs.append(path)
                         else:
                             # normal file, so don't remove
@@ -221,7 +239,7 @@ class File(object):
     def _raw_execute(func, args):
         print('')
         if ECHO_ALL:
-            File._run_subprocess(subprocess.check_call, ['echo'] + args)
+            print(File._escape(args))
         return File._run_subprocess(func, args)
 
 
