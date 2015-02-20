@@ -179,13 +179,24 @@ class PlatformConfiguration(object):
         self.cmake_project_dir = os.path.join(self.options.output_dir, 'game-{0}'.format(self.platform))
         self.cmake_project_path = os.path.join(self.cmake_project_dir, 'CozmoGame{0}.xcodeproj'.format(game_suffix))
         
-        self.unity_xcode_project_dir = os.path.join(REPO_ROOT, 'unity', self.platform)
-        self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity{0}.xcodeproj'.format(normal_suffix))
-        self.unity_build_root = os.path.join(self.options.build_dir, 'unity')
-        self.unity_build_dir = os.path.join(self.unity_build_root, self.platform)
+        if platform == 'ios':
+            self.unity_xcode_project_dir = os.path.join(REPO_ROOT, 'unity', self.platform)
+            self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity{0}.xcodeproj'.format(normal_suffix))
+            self.unity_build_dir = os.path.join(self.options.build_dir, 'unity', self.platform)
+            self.unity_opencv_symlink = os.path.join(self.unity_build_dir, 'opencv')
+            if not os.environ.get("CORETECH_EXTERNAL_DIR"):
+                sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" is not defined.')
+            self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), "build/opencv-ios/multiArchLibs/")
+        else:
+            self.unity_xcode_project_dir = None
+            self.unity_xcode_project_path = None
+            self.unity_build_dir = None
+            self.unity_opencv_symlink = None
+            self.unity_opencv_symlink_target = None
         
         self.workspace_name = 'CozmoWorkspace{0}'.format(normal_suffix)
-        self.workspace_path = os.path.join(self.options.output_dir, '{0}.xcworkspace'.format(self.workspace_name))
+        self.workspace_dir = self.options.output_dir
+        self.workspace_path = os.path.join(self.workspace_dir, '{0}.xcworkspace'.format(self.workspace_name))
         self.derived_data_path = os.path.join(self.options.build_dir, 'DerivedData')
         self.config_path = os.path.join(self.options.output_dir, '{0}.xcconfig'.format(self.platform))
         
@@ -200,10 +211,24 @@ class PlatformConfiguration(object):
             self.delete()
     
     def generate(self):
-        workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
-        workspace.add_project(self.cmake_project_path)
-        workspace.add_project(self.unity_xcode_project_path)
+        rel_cmake_project = os.path.relpath(self.cmake_project_path, self.workspace_dir)
+        if self.unity_xcode_project_path:
+            rel_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.workspace_dir)
+            projects = [rel_cmake_project, rel_unity_xcode_project]
+            target_project = rel_unity_xcode_project
+            fixed_target = 'Unity-iPhone'
+        else:
+            projects = [rel_cmake_project]
+            target_project = rel_cmake_project
+            fixed_target = 'ALL_BUILD'
         
+        workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
+        workspace.add_project(rel_cmake_project)
+        if self.unity_xcode_project_path:
+            workspace.add_project(rel_unity_xcode_project)
+        
+        for mode in ['auto', 'unity', 'prebuilt', 'library']:
+            workspace.add_scheme(mode, target_project, fixed_target)
         
         xcconfig = [
             'ANKI_BUILD_REPO_ROOT={0}'.format(REPO_ROOT),
@@ -223,15 +248,23 @@ class PlatformConfiguration(object):
         
         
         ankibuild.cmake.generate(self.cmake_project_dir, REPO_ROOT, self.platform)
+        
+        if self.unity_build_dir:
+            ankibuild.util.File.mkdir_p(self.unity_build_dir)
+        if self.unity_opencv_symlink:
+            ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
+        
         workspace.generate(self.workspace_path, self.derived_data_path)
         ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
+        
+        ankibuild.util.File.mkdir_p(self.derived_data_path)
     
     def build(self):
         
         if not os.path.exists(self.workspace_path):
             sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
         else:
-            ankibuild.xcode.xcodebuild(
+            ankibuild.xcode.build(
                 buildaction=self.options.command,
                 workspace=self.workspace_path,
                 scheme=self.scheme,
@@ -242,7 +275,10 @@ class PlatformConfiguration(object):
     def delete(self):
         ankibuild.util.File.rm_rf(self.workspace_path)
         ankibuild.util.File.rm_rf(self.derived_data_path)
-        ankibuild.util.File.rm_rf(self.unity_build_dir)
+        if self.unity_opencv_symlink:
+            ankibuild.util.File.rm(self.unity_opencv_symlink)
+        if self.unity_build_dir:
+            ankibuild.util.File.rm_rf(self.unity_build_dir)
         ankibuild.util.File.rm_rf(self.cmake_project_path)
 
 
