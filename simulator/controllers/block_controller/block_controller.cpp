@@ -19,7 +19,10 @@ int main(int argc, char **argv)
 {
   using namespace Anki::Cozmo;
   
-  ActiveBlock::Init();
+  if (ActiveBlock::Init() == Anki::RESULT_FAIL) {
+    printf("ERROR (block_controller): Failed to init block");
+    return -1;
+  }
   
   while(ActiveBlock::Update() == Anki::RESULT_OK)
   {

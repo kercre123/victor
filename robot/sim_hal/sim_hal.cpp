@@ -1,6 +1,7 @@
 // System Includes
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 // Our Includes
 #include "anki/common/robot/errorHandling.h"
@@ -103,6 +104,9 @@ namespace Anki {
       
       // Emitter for block communication
       webots::Emitter *blockCommsEmitter_;
+      
+      // List of all blockIDs
+      std::vector<u8> blockIDs_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -325,6 +329,29 @@ namespace Anki {
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
+      
+      
+      // Get IDs of all available active blocks in the world
+      blockIDs_.clear();
+      webots::Node* root = webotRobot_.getRoot();
+      webots::Field* rootChildren = root->getField("children");
+      int numRootChildren = rootChildren->getCount();
+      
+      for (s32 n = 0 ; n<numRootChildren; ++n) {
+
+        // Check for nodes that have a 'blockColor' and 'active' field
+        webots::Node* nd = rootChildren->getMFNode(n);
+        webots::Field* blockColorField = nd->getField("blockColor");
+        webots::Field* activeField = nd->getField("active");
+        if (blockColorField && activeField) {
+          if (activeField->getSFBool()) {
+            printf("Found active block %d\n", n);
+            blockIDs_.push_back(n);
+            continue;
+          }
+        }
+      }
+
       
       // Get advertisement host IP
       webots::Field *advertisementHostField = webotRobot_.getSelf()->getField("advertisementHost");
@@ -861,7 +888,6 @@ namespace Anki {
       }
     }
     
-   
     void SendBlockMessage(BlockMessages::ID id, u8* buffer) {
       u16 msgSize = BlockMessages::GetSize(id);
       u8 buf[msgSize+1];
@@ -870,10 +896,15 @@ namespace Anki {
       blockCommsEmitter_->send(buf, msgSize + 1);
     }
     
-    void HAL::SetBlockLight(const u8 blockID, const u32 color) {
+    Result HAL::SetBlockLight(const u8 blockID, const u32 color) {
+      
+      // Check that blockID is valid
+      if (blockID >= blockIDs_.size()) {
+        return RESULT_FAIL;
+      }
       
       // Set channel
-      blockCommsEmitter_->setChannel(blockID);
+      blockCommsEmitter_->setChannel( blockIDs_[blockID] );
       
       // Fill in message struct
       Anki::Cozmo::BlockMessages::SetBlockLights m;
@@ -882,6 +913,8 @@ namespace Anki {
       }
       
       SendBlockMessage(BlockMessages::SetBlockLights_ID, (u8*)&m);
+      
+      return RESULT_OK;
     }
     
     

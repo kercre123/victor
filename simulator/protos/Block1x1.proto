@@ -11,10 +11,9 @@ PROTO Block1x1 [
   field SFString markerImg ""  # Image path relative to textures/
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFFloat width 0.044    # Length of one edge in meters
-  field SFInt32 radioChannel -1
 ]
 {
-Robot {
+Supervisor {
 
   %{
     # Set markerURL
@@ -164,7 +163,6 @@ Robot {
     Receiver {
       name   "receiver"    
       type   "radio"
-      channel IS radioChannel
     }
  
     # Accelerometer

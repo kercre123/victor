@@ -15,7 +15,7 @@
 
 #define TIMESTEP 10  //ms
 
-webots::Robot block_controller;
+webots::Supervisor block_controller;
 
 
 namespace Anki {
@@ -42,9 +42,41 @@ namespace Anki {
       
       // ================== End of callbacks ==================
       
+      // Returns the ID of the block which is used as the
+      // receiver channel for comms with the robot.
+      // This is not meant to reflect how actual comms will work.
+      s32 GetBlockID() {
+        webots::Node* selfNode = block_controller.getSelf();
+        
+        // Get world root node
+        webots::Node* root = block_controller.getRoot();
+        
+        // Look for the index of selfNode within the root's children
+        webots::Field* rootChildren = root->getField("children");
+        int numRootChildren = rootChildren->getCount();
+        
+        for (s32 n = 0 ; n<numRootChildren; ++n) {
+          webots::Node* nd = rootChildren->getMFNode(n);
+          
+          if (nd == selfNode) {
+            return n;
+          }
+        }
+        
+        return -1;
+      }
+
       
-      void Init()
+      Result Init()
       {
+        // Get this block's ID
+        s32 blockID = GetBlockID();
+        if (blockID < 0) {
+          printf("Failed to find blockID\n");
+          return RESULT_FAIL;
+        }
+        printf("Starting ActiveBlock %d\n", blockID);
+        
         // Get all LED handles
         for (int i=0; i<NUM_LEDS; ++i) {
           char led_name[NUM_LEDS];
@@ -57,6 +89,7 @@ namespace Anki {
         receiver_ = block_controller.getReceiver("receiver");
         assert(receiver_ != nullptr);
         receiver_->enable(TIMESTEP);
+        receiver_->setChannel(blockID);
         
         // Get accelerometer
         accel_ = block_controller.getAccelerometer("accel");
@@ -67,6 +100,7 @@ namespace Anki {
         // Register callbacks
         RegisterCallbackForMessageSetBlockLights(ProcessSetBlockLightsMessage);
         
+        return RESULT_OK;
       }
 
       void DeInit() {

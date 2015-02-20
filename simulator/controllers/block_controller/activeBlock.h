@@ -15,7 +15,7 @@ namespace Anki {
   namespace Cozmo {
     namespace ActiveBlock {
   
-      void Init();
+      Result Init();
       void DeInit();
       
       Result Update();
