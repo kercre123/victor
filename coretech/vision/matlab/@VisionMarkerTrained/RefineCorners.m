@@ -114,7 +114,12 @@ while iteration < MaxIterations
     
     It = imgi(:) - template;
     
-    update = (A(inBounds,:)'*A(inBounds,:)) \ (A(inBounds,:)'*It(inBounds));
+    AtA = A(inBounds,:)'*A(inBounds,:);
+    if rank(AtA) < 8
+      break;
+    end
+    
+    update = AtA \ (A(inBounds,:)'*It(inBounds));
     
     H_update = eye(3) + [update(1:3)'; update(4:6)'; update(7:8)' 0];
     newH = newH / H_update;
