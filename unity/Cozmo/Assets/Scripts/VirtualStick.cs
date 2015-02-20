@@ -33,6 +33,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] bool deadZoneRadial = false;
 	[SerializeField] bool scaleMagFromDeadZone = true;
 
+	[SerializeField] float horClampThrow = 1f;
+
 	[SerializeField] float verticalAxisSnapAngle = 0f;
 	[SerializeField] float horizontalAxisSnapAngle = 0f;
 
@@ -64,6 +66,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	[SerializeField] float[] swipeVerticalMagnitudes = { 1f };
 	[SerializeField] float[] swipeHorizontalMagnitudes = { 0.25f, 0.5f, 1f };
+
+	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
+	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
 
 	int swipeIndex = 0;
 
@@ -105,7 +110,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public Vector2 JoystickData {
 		get {
-			Vector2 res = stick.anchoredPosition - bg.anchoredPosition;
+			Vector2 res = stick.anchoredPosition;
 
 			if(clampRadially && !horizontalOnly && !verticalOnly && !SideModeEngaged) {
 				res = res / radius;
@@ -150,7 +155,11 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public float Horizontal {
 		get { 
-			return JoystickData.x; 
+
+			float hor = JoystickData.x;
+			if(Mathf.Abs(hor) > horClampThrow) hor = horClampThrow * (hor >= 0f ? 1f : -1f);
+				
+			return hor; 
 		}
 	}
 
@@ -163,12 +172,10 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void Awake() {
 		//canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
+
 	}
 
 	void OnEnable() {
-		//canvas = GetComponentInParent<Canvas>();
-		rTrans = transform as RectTransform;
-
 		ResizeToScreen();
 		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
@@ -193,6 +200,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
 
+		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
+
 		if(scaleToScreen) {
 			rTrans.anchoredPosition = Vector2.zero;
 			float length = Mathf.Min(Screen.height, Screen.width);
@@ -201,8 +210,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width * 0.75f);
-			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height * 0.75f);
+			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
+			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
 			bg.sizeDelta = size;
 		}
 
@@ -226,7 +235,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 
 		bg.anchoredPosition = Vector3.zero;
-		stick.anchoredPosition = Vector3.zero;
 
 		float height = bg.rect.height;
 		float width = bg.rect.width;
@@ -256,6 +264,53 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		lastScreenWidth = Screen.width;
 		lastScreenHeight = Screen.height;
 		orientation = Screen.orientation;
+
+		if(Application.isPlaying && screenHeightInches < 3f) {
+			dynamic = false;
+
+			Vector2 anchor = new Vector2(0.5f,0.5f);
+			switch(smallScreenAnchorType) {
+				case TextAnchor.UpperLeft:
+					anchor.x = 0f;
+					anchor.y = 1f;
+					break;
+				case TextAnchor.UpperCenter:
+					anchor.y = 1f;
+					break;
+				case TextAnchor.UpperRight:
+					anchor.x = 1f;
+					anchor.y = 1f;
+					break;
+				case TextAnchor.MiddleLeft:
+					anchor.x = 0f;
+					break;
+				case TextAnchor.MiddleCenter:
+					break;
+				case TextAnchor.MiddleRight:
+					anchor.x = 1f;
+					break;
+				case TextAnchor.LowerLeft:
+					anchor.x = 0f;
+					anchor.y = 0f;
+					break;
+				case TextAnchor.LowerCenter:
+					anchor.y = 0f;
+					break;
+				case TextAnchor.LowerRight:
+					anchor.x = 1f;
+					anchor.y = 0f;
+					break;
+			}
+
+			bg.anchorMin = anchor;
+			bg.anchorMax = anchor;
+			bg.pivot = anchor;
+			bg.anchoredPosition = smallScreenAnchorPos;
+		}
+
+		//Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");
+
+		stick.anchoredPosition = Vector2.zero;
 	}
 
 	void Update() {
@@ -283,8 +338,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				swipeIndex = Mathf.Clamp(swipeIndex, 0, mags.Length-1);
 				mag = mags[swipeIndex];
 
-				Vector3 anchorPos = bg.anchoredPosition + swipedDirection * radius * mag;
-				stick.anchoredPosition = anchorPos;
+				Vector2 pos = swipedDirection * radius * mag;
+				stick.anchoredPosition = pos;
 			}
 			else {
 				swipeIndex = 0;
@@ -357,7 +412,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(dynamic) {
 			bg.anchoredPosition = eventData.position - ZoneCenter;
-			stick.anchoredPosition = bg.anchoredPosition;
+			stick.anchoredPosition = Vector2.zero;
 		}
 
 		bg.gameObject.SetActive(true);
@@ -425,7 +480,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		ProcessStick(eventData);
 		ConsiderSwipes(eventData.position);
 
-		Vector2 throwVector = stick.anchoredPosition - bg.anchoredPosition;
+		Vector2 throwVector = stick.anchoredPosition;
 
 		//if(dynamic) bg.anchoredPosition = Vector3.zero;
 
@@ -437,7 +492,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			throwVector.y = 0f;
 		}
 
-		stick.anchoredPosition = bg.anchoredPosition + throwVector;
+		stick.anchoredPosition = throwVector;
 
 		pressed = false;
 		pressedTime = 0f;
@@ -543,7 +598,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 
 		if(delta.sqrMagnitude <= 0f) {
-			stick.anchoredPosition = bg.anchoredPosition;
+			stick.anchoredPosition = Vector2.zero;
 			return;
 		}
 
@@ -616,7 +671,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			}
 		}
 
-		stick.anchoredPosition = bg.anchoredPosition + delta;
-		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
+		stick.anchoredPosition = delta;
+		Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
 }
