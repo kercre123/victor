@@ -13,6 +13,7 @@ if(APPLE)
     add_subdirectory(plugins/physics/cozmo_physics)
     #add_subdirectory(controllers/overlay_display_supervisor)
     add_subdirectory(controllers/cozmo_c_controller)
+    add_subdirectory(controllers/block_controller)
     add_subdirectory(controllers/cozmo_viz_controller)
 
      if (ANKICORETECH_USE_MATLAB)
