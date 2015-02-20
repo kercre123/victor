@@ -488,7 +488,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		U2G_StopAllMotors message = new U2G_StopAllMotors ();
-		
+
 		channel.Send (message);
 	}
 
@@ -499,7 +499,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		U2G_TurnInPlace message = new U2G_TurnInPlace ();
-
+		message.robotID = (byte)robotID;
 		message.angle_rad = angle_rad;
 		
 		channel.Send (message);
