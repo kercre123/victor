@@ -308,7 +308,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			bg.anchoredPosition = smallScreenAnchorPos;
 		}
 
-		Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");
+		//Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");
 
 		stick.anchoredPosition = Vector2.zero;
 	}
