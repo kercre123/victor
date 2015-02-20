@@ -72,7 +72,7 @@ public static class NetworkMessageSerializer {
 
 		if (serializer.Index != length) {
 			throw new NetworkMessageSerializationException("Failed to deserialize network message of type " + message.GetType ().FullName + ". " +
-			                                               "Message too long. " +
+			                                               "Message wrong size. " +
 			                                               "(" + (length - ByteSerializer.GetSerializationLength(id)).ToString() + " bytes received, " +
 			                                               message.SerializationLength.ToString() + " bytes required.)");
 		}

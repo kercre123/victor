@@ -6,9 +6,12 @@ public class ImageTest : MonoBehaviour
 {
 	[SerializeField] protected Button button;
 	[SerializeField] protected Button actionButton;
+	[SerializeField] protected Image actionButtonImage;
+	[SerializeField] protected Text actionButtonText;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 
+	//protected uint lastBoxID = uint.MaxValue;
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
@@ -16,7 +19,29 @@ public class ImageTest : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			actionButton.gameObject.SetActive( RobotEngineManager.instance.current.box.ID != uint.MaxValue );
+			//Debug.Log( RobotEngineManager.instance.current.box.ID + " vs " + lastBoxID );
+
+			if( RobotEngineManager.instance.current.box.ID != uint.MaxValue /*&& RobotEngineManager.instance.current.box.ID != lastBoxID*/ )
+			{
+				actionButtonImage.rectTransform.sizeDelta = new Vector2( RobotEngineManager.instance.current.box.width, RobotEngineManager.instance.current.box.height );
+				//Debug.Log( "x: " + RobotEngineManager.instance.current.box.topLeft_x );
+				//Debug.Log( "y: " + RobotEngineManager.instance.current.box.topLeft_y );
+
+				actionButtonImage.rectTransform.anchoredPosition = new Vector2( RobotEngineManager.instance.current.box.topLeft_x, RobotEngineManager.instance.current.box.topLeft_y );
+
+				actionButtonText.text = "Action on ID: " + RobotEngineManager.instance.current.box.ID;
+
+				actionButton.gameObject.SetActive( true );
+			}
+			else
+			{
+				actionButton.gameObject.SetActive( false );
+
+				/*if( RobotEngineManager.instance.current.box.ID == uint.MaxValue )
+				{
+					lastBoxID = uint.MaxValue;
+				}*/
+			}
 		}
 	}
 
@@ -42,6 +67,8 @@ public class ImageTest : MonoBehaviour
 
 	public void Action()
 	{
+		//lastBoxID = RobotEngineManager.instance.current.box.ID;
+
 		RobotEngineManager.instance.PickUpBox();
 	}
 
