@@ -491,5 +491,17 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		channel.Send (message);
 	}
-	
+
+	public void TurnInPlace(int robotID, float angle_rad)
+	{
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+		}
+		
+		U2G_TurnInPlace message = new U2G_TurnInPlace ();
+
+		message.angle_rad = angle_rad;
+		
+		channel.Send (message);
+	}
 }
