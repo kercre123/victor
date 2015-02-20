@@ -542,3 +542,12 @@ START_MESSAGE_DEFINITION(ClientConnectionStatus, 1)
 ADD_MESSAGE_MEMBER(u8, wifiState)
 ADD_MESSAGE_MEMBER(u8, bluetoothState)
 END_MESSAGE_DEFINITION(ClientConnectionStatus)
+
+
+///////// Block messages ////////
+
+// SetBlockLights
+START_MESSAGE_DEFINITION(SetBlockLights, 1)
+ADD_MESSAGE_MEMBER(u32, color)
+ADD_MESSAGE_MEMBER(u8, blockID)
+END_MESSAGE_DEFINITION(SetBlockLights)

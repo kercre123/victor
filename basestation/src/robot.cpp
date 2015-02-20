@@ -2192,6 +2192,12 @@ namespace Anki {
     }
     
       
+    Result Robot::SetBlockLights(const u8 blockID, const u32 color)
+    {
+      return SendSetBlockLights(blockID, color);
+    }
+      
+      
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
       //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
@@ -2249,6 +2255,15 @@ namespace Anki {
     Result Robot::SendAbortDocking()
     {
       MessageAbortDocking m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+ 
+      
+    Result Robot::SendSetBlockLights(const u8 blockID, const u32 color)
+    {
+      MessageSetBlockLights m;
+      m.blockID = blockID;
+      m.color = color;
       return _msgHandler->SendMessage(GetID(), m);
     }
     

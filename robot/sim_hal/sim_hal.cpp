@@ -11,6 +11,7 @@
 #include "wheelController.h"
 
 #include "sim_overlayDisplay.h"
+#include "BlockMessages.h"
 
 // Webots Includes
 #include <webots/Robot.hpp>
@@ -99,6 +100,9 @@ namespace Anki {
       webots::DistanceSensor *proxLeft_;
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
+      
+      // Emitter for block communication
+      webots::Emitter *blockCommsEmitter_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -318,6 +322,9 @@ namespace Anki {
       proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
+      
+      // Block radio
+      blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
       
       // Get advertisement host IP
       webots::Field *advertisementHostField = webotRobot_.getSelf()->getField("advertisementHost");
@@ -853,6 +860,30 @@ namespace Anki {
         return 100000000;
       }
     }
+    
+   
+    void SendBlockMessage(BlockMessages::ID id, u8* buffer) {
+      u16 msgSize = BlockMessages::GetSize(id);
+      u8 buf[msgSize+1];
+      buf[0] = id;
+      memcpy(buf+1, buffer, msgSize);
+      blockCommsEmitter_->send(buf, msgSize + 1);
+    }
+    
+    void HAL::SetBlockLight(const u8 blockID, const u32 color) {
+      
+      // Set channel
+      blockCommsEmitter_->setChannel(blockID);
+      
+      // Fill in message struct
+      Anki::Cozmo::BlockMessages::SetBlockLights m;
+      for (int i=0; i<8; ++i) {
+        m.color[i] = color;
+      }
+      
+      SendBlockMessage(BlockMessages::SetBlockLights_ID, (u8*)&m);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki
