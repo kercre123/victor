@@ -105,6 +105,11 @@ namespace Anki {
       // Emitter for block communication
       webots::Emitter *blockCommsEmitter_;
       
+      // Block ID flashing parameters
+      s32 flashBlockIdx_ = -1;
+      TimeStamp_t flashStartTime_ = 0;
+      const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;  // This must be larger than the flash pattern duration on the block!
+      
       // List of all blockIDs
       std::vector<u8> blockIDs_;
       
@@ -198,6 +203,33 @@ namespace Anki {
       {
         liftMotor_->setVelocity(rad_per_sec);
       }
+      
+      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer) {
+        
+        // Check that blockID is valid
+        if (blockID >= blockIDs_.size()) {
+          return RESULT_FAIL;
+        }
+        
+        // Set channel
+        blockCommsEmitter_->setChannel( blockIDs_[blockID] );
+        
+        // Prepend msgID to buffer
+        u16 msgSize = BlockMessages::GetSize(msgID);
+        u8 buf[msgSize+1];
+        buf[0] = msgID;
+        memcpy(buf+1, buffer, msgSize);
+        blockCommsEmitter_->send(buf, msgSize + 1);
+        
+        return RESULT_OK;
+      }
+      
+      Result FlashBlock(const u8 blockID) {
+        Anki::Cozmo::BlockMessages::FlashID m;
+        return SendBlockMessage(blockID, BlockMessages::FlashID_ID, (u8*)&m);
+      }
+      
+
       
     } // "private" namespace
     
@@ -329,6 +361,9 @@ namespace Anki {
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
+      
+      // Reset index of block that is currently flashing ID
+      flashBlockIdx_ = -1;
       
       
       // Get IDs of all available active blocks in the world
@@ -628,6 +663,24 @@ namespace Anki {
         }
          */
         
+        // Manage block flashing
+        if (flashBlockIdx_ >= 0) {
+          if (HAL::GetTimeStamp() >= flashStartTime_ + FLASH_BLOCK_TIME_INTERVAL_MS) {
+            if (flashBlockIdx_ >= blockIDs_.size()) {
+              //printf("Block flashing complete\n");
+              flashBlockIdx_ = -1;
+              flashStartTime_ = 0;
+            } else {
+              //printf("Flashing block %d\n", flashBlockIdx_);
+              if (FlashBlock(flashBlockIdx_) == RESULT_FAIL) {
+                printf("FAILED to flash block %d\n", flashBlockIdx_);
+              }
+              ++flashBlockIdx_;
+              flashStartTime_ = HAL::GetTimeStamp();
+            }
+          }
+        }
+        
         return RESULT_OK;
       }
       
@@ -888,33 +941,19 @@ namespace Anki {
       }
     }
     
-    void SendBlockMessage(BlockMessages::ID id, u8* buffer) {
-      u16 msgSize = BlockMessages::GetSize(id);
-      u8 buf[msgSize+1];
-      buf[0] = id;
-      memcpy(buf+1, buffer, msgSize);
-      blockCommsEmitter_->send(buf, msgSize + 1);
+    void HAL::FlashBlockIDs() {
+      flashBlockIdx_ = 0;
+      flashStartTime_ = HAL::GetTimeStamp();
     }
     
     Result HAL::SetBlockLight(const u8 blockID, const u32 color) {
       
-      // Check that blockID is valid
-      if (blockID >= blockIDs_.size()) {
-        return RESULT_FAIL;
-      }
-      
-      // Set channel
-      blockCommsEmitter_->setChannel( blockIDs_[blockID] );
-      
-      // Fill in message struct
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<8; ++i) {
         m.color[i] = color;
       }
       
-      SendBlockMessage(BlockMessages::SetBlockLights_ID, (u8*)&m);
-      
-      return RESULT_OK;
+      return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
     }
     
     

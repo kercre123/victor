@@ -628,6 +628,7 @@ namespace Anki {
 
       
       // =========  Block messages  ============
+      Result SendFlashBlockIDs();
       Result SendSetBlockLights(const u8 blockID, const u32 color);
       
       

@@ -2259,6 +2259,12 @@ namespace Anki {
     }
  
       
+    Result Robot::SendFlashBlockIDs()
+    {
+      MessageFlashBlockIDs m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+      
     Result Robot::SendSetBlockLights(const u8 blockID, const u32 color)
     {
       MessageSetBlockLights m;

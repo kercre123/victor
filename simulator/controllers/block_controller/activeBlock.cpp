@@ -29,14 +29,45 @@ namespace Anki {
         webots::Receiver* receiver_;
         webots::Accelerometer* accel_;
         
+        typedef enum {
+          NORMAL = 0,
+          FLASHING_ID
+        } BlockState;
+        
+        BlockState state_ = NORMAL;
+        
+        // TODO: This will expand as we want the lights to do fancier things
+        typedef struct {
+          u32 color;
+        } LEDParams;
+        
+        LEDParams ledParams_[NUM_LEDS];
+        
+        // Flash ID params
+        double flashIDStartTime_ = 0;
+        
+        // For now, flashing ID means turning the LED off for a bit, then red for a bit,
+        // then off for a bit, then resuming the regular pattern
+        const double flashID_t1_off = 0.025;
+        const double flashID_t2_on = 0.1;
+        const double flashID_t3_off = 0.025;
+        
+        
       } // private namespace
 
       
       // ========== Callbacks for messages from robot =========
+      void ProcessFlashIDMessage(const BlockMessages::FlashID& msg)
+      {
+        state_ = FLASHING_ID;
+        flashIDStartTime_ = block_controller.getTime();
+        //printf("Starting ID flash\n");
+      }
+      
       void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
       {
         for(int i=0; i<NUM_LEDS; ++i) {
-          led_[i]->set(msg.color[i]);
+          ledParams_[i].color = msg.color[i];
         }
       }
       
@@ -69,6 +100,8 @@ namespace Anki {
       
       Result Init()
       {
+        state_ = NORMAL;
+        
         // Get this block's ID
         s32 blockID = GetBlockID();
         if (blockID < 0) {
@@ -98,6 +131,7 @@ namespace Anki {
         
         
         // Register callbacks
+        RegisterCallbackForMessageFlashID(ProcessFlashIDMessage);
         RegisterCallbackForMessageSetBlockLights(ProcessSetBlockLightsMessage);
         
         return RESULT_OK;
@@ -109,6 +143,12 @@ namespace Anki {
         }
         if (accel_) {
           accel_->disable();
+        }
+      }
+
+      void SetAllLEDs(u32 color) {
+        for(int i=0; i<NUM_LEDS; ++i) {
+          led_[i]->set(color);
         }
       }
       
@@ -125,20 +165,32 @@ namespace Anki {
             receiver_->nextPacket();
           }
           
-          /*
-          static int p =0;
-          static bool red = true;
-          if (p++ > 100) {
-            p = 0;
-            //printf("BLOCK LED: %d\n", red);
-            if (red) {
-              led_[0]->set(0xff0000);
-            } else {
-              led_[0]->set(0x00ff00);
-            }
-            red = !red;
+          double currTime = block_controller.getTime();
+          
+          // Run FSM
+          switch(state_) {
+            case NORMAL:
+              // Apply ledParams
+              for(int i=0; i<NUM_LEDS; ++i) {
+                SetAllLEDs(ledParams_[i].color);
+              }
+              break;
+            case FLASHING_ID:
+              if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
+                state_ = NORMAL;
+              } else if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on) {
+                SetAllLEDs(0);
+              } else if (currTime >= flashIDStartTime_ + flashID_t1_off) {
+                SetAllLEDs(0xff0000);
+              } else if (currTime >= flashIDStartTime_) {
+                SetAllLEDs(0);
+              }
+              break;
+            default:
+              printf("WARNING (ActiveBlock): Unknown state %d\n", state_);
+              break;
           }
-           */
+          
         
           return RESULT_OK;
         }

@@ -24,6 +24,10 @@
 //
 #include "anki/cozmo/shared/MessageDefMacros_Robot.h"
 
+// FlashID
+START_MESSAGE_DEFINITION(FlashID, 1)
+END_MESSAGE_DEFINITION(FlashID)
+
 // SetBlockLights
 START_MESSAGE_DEFINITION(SetBlockLights, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u32, color, 8)

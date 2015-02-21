@@ -546,6 +546,10 @@ END_MESSAGE_DEFINITION(ClientConnectionStatus)
 
 ///////// Block messages ////////
 
+// FlashBlockIDs
+START_MESSAGE_DEFINITION(FlashBlockIDs, 1)
+END_MESSAGE_DEFINITION(FlashBlockIDs)
+
 // SetBlockLights
 START_MESSAGE_DEFINITION(SetBlockLights, 1)
 ADD_MESSAGE_MEMBER(u32, color)

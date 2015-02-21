@@ -209,3 +209,12 @@ END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)
 // StopSoundOnBaseStation
 START_MESSAGE_DEFINITION(StopSoundOnBaseStation, 1)
 END_MESSAGE_DEFINITION(StopSoundOnBaseStation)
+
+
+
+// ----- Block messages ------
+
+// BlockIDFlashStarted
+START_TIMESTAMPED_MESSAGE_DEFINITION(BlockIDFlashStarted, 1)
+END_MESSAGE_DEFINITION(BlockIDFlashStarted)
+
