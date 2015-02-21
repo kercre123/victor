@@ -11,9 +11,9 @@ import textwrap
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'lib/anki/cozmo-engine/tools'))
 import ankibuild.cmake
+import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
-#import ankibuild.unity
 
 def parse_arguments():
     
@@ -40,10 +40,13 @@ def parse_arguments():
         type=str.lower,
         nargs='?',
         default='generate',
-        choices=['generate', 'build', 'clean', 'delete'],
+        choices=['generate', 'build', 'install', 'run', 'uninstall', 'clean', 'delete'],
         help=textwrap.dedent('''\
             generate (default) -- generate or regenerate projects
             build -- generate, then build the generated projects
+            install -- generate, build, then install the app on device
+            run -- generate, build, install, then run the app on device
+            uninstall -- uninstall the app from device
             clean -- issue the clean command to projects
             delete -- delete all generated projects
             '''))
@@ -187,7 +190,10 @@ class PlatformConfiguration(object):
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" is not defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), "build/opencv-ios/multiArchLibs/")
+            
             self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
+            self.ios_app_dir = os.path.join(self.options.build_dir, 'app-{0}'.format(self.platform))
+            self.ios_app_path = os.path.abspath(os.path.join(self.ios_app_dir, 'cozmo.app'))
         else:
             self.unity_xcode_project_dir = None
             self.unity_xcode_project_path = None
@@ -195,6 +201,8 @@ class PlatformConfiguration(object):
             self.unity_opencv_symlink = None
             self.unity_opencv_symlink_target = None
             self.unity_build_symlink = None
+            self.ios_app_dir = None
+            self.ios_app_path = None
         
         self.workspace_name = 'CozmoWorkspace{0}'.format(normal_suffix)
         self.workspace_dir = self.options.output_dir
@@ -208,10 +216,14 @@ class PlatformConfiguration(object):
             self.scheme = 'BUILD_WORKSPACE'
     
     def run(self):
-        if self.options.command in ('generate', 'build'):
+        if self.options.command in ('generate', 'build', 'install', 'run'):
             self.generate()
-        if self.options.command in ('build', 'clean'):
+        if self.options.command in ('build', 'clean', 'install', 'run'):
             self.build()
+        if self.options.command in ('install', 'run'):
+            self.execute()
+        if self.options.command == 'uninstall':
+            self.uninstall()
         if self.options.command == 'delete':
             self.delete()
     
@@ -224,8 +236,6 @@ class PlatformConfiguration(object):
         
         if self.platform == 'mac':
             workspace.add_scheme_cmake(self.scheme, rel_cmake_project)
-            
-            xcconfig = None
         
         elif self.platform == 'ios':
             rel_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.workspace_dir)
@@ -241,39 +251,69 @@ class PlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_BINARY_PATH={0}'.format(self.options.unity_binary_path),
                 'ANKI_BUILD_PREBUILT_URL={0}'.format(self.options.prebuilt_url),
+                'ANKI_BUILD_APP_PATH={0}'.format(self.ios_app_path),
                 '']
+            
+            if not os.path.exists(self.unity_opencv_symlink_target):
+                sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
         else:
             sys.exit('Cannot generate for platform "{0}"'.format(self.platform))
         
         ankibuild.cmake.generate(self.cmake_project_dir, REPO_ROOT, self.platform)
-        
+            
         if self.platform == 'ios':
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
-        
-        workspace.generate(self.workspace_path, self.derived_data_path)
-        if xcconfig:
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
-        
+            ankibuild.util.File.mkdir_p(self.ios_app_dir)
+            
         ankibuild.util.File.mkdir_p(self.derived_data_path)
+        workspace.generate(self.workspace_path, self.derived_data_path)
+            
     
     def build(self):
         
         if not os.path.exists(self.workspace_path):
             sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
         else:
+            if self.options.command == 'clean':
+                buildaction = 'clean'
+            else:
+                buildaction = 'build'
+            
             ankibuild.xcode.build(
-                buildaction=self.options.command,
+                buildaction=buildaction,
                 workspace=self.workspace_path,
                 scheme=self.scheme,
                 platform=self.platform,
                 configuration=self.options.configuration,
                 simulator=self.options.simulator)
-        
+    
+    def execute(self):
+        if self.platform == 'ios':
+            if self.options.command == 'install':
+                ankibuild.ios_deploy.install(self.ios_app_path)
+            elif self.options.command == 'run':
+                #ankibuild.ios_deploy.noninteractive(self.ios_app_path)
+                ankibuild.ios_deploy.debug(self.ios_app_path)
+            
+        #elif self.platform == 'mac':
+            # run webots?
+        else:
+            print('{0}: nothing to do on platform {1}'.format(self.options.command, self.platform))
+    
+    def uninstall(self):
+        if self.platform == 'ios':
+            ankibuild.ios_deploy.install(self.ios_app_path)
+        else:
+            print('{0}: nothing to do on platform {1}'.format(self.options.command, self.platform))
+    
     def delete(self):
+        # reverse generation
         ankibuild.util.File.rm_rf(self.workspace_path)
         ankibuild.util.File.rm_rf(self.derived_data_path)
         if self.platform == 'ios':
+            ankibuild.util.File.rm_rf(self.ios_app_dir)
             ankibuild.util.File.rm(self.unity_opencv_symlink)
             ankibuild.util.File.rm_rf(self.unity_build_dir)
             ankibuild.util.File.rm(self.unity_build_symlink)
@@ -294,7 +334,8 @@ if __name__ == '__main__':
     for platform in options.platforms:
         config = PlatformConfiguration(platform, options)
         config.run()
-        
+    
+    # delete root build dirs if empty (or just dirs inside)
     if options.command == 'delete':
         ankibuild.util.File.rmdir(options.build_dir)
         ankibuild.util.File.rmdir(options.output_dir)

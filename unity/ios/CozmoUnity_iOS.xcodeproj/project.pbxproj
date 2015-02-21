@@ -528,6 +528,7 @@
 				1D60588D0D05DD3D006BFB54 /* Resources */,
 				46F5C0B61A96C9830078F6E7 /* Copy Mono Assemblies */,
 				46F5C0B71A96C99C0078F6E7 /* Copy CozmoEngine Resources */,
+				4615E0661A98401200285574 /* Symlink App */,
 			);
 			buildRules = (
 			);
@@ -611,6 +612,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		4615E0661A98401200285574 /* Symlink App */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Symlink App";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -e\n\nBUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n\necho \"ANKI_BUILD_APP_PATH=${ANKI_BUILD_APP_PATH}\"\necho \"BUILT_APP_BUNDLE=${BUILT_APP_BUNDLE}\"\n\nrm -f \"${ANKI_BUILD_APP_PATH}\"\necho ln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"\nln -s \"${BUILT_APP_BUNDLE}\" \"${ANKI_BUILD_APP_PATH}\"";
+			showEnvVarsInLog = 0;
+		};
 		46F5C0B61A96C9830078F6E7 /* Copy Mono Assemblies */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -638,6 +654,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "#set -e\n\n#pushd ${ANKI_BUILD_REPO_ROOT}\n\n#ANKI_BUILD_ROOT=${BUILT_PRODUCTS_DIR} ${ANKI_BUILD_REPO_ROOT}/tools/build-scripts/build_basestation_resource_bundle.sh\n\n#BUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n#BS_RESOURCE_PATH=\"${BUILT_APP_BUNDLE}/BasestationResources\"\n\n#mkdir -p ${BS_RESOURCE_PATH}\n#cp -pR \"${BUILT_PRODUCTS_DIR}/BasestationResources/BasestationResources.bundle/\" \"${BS_RESOURCE_PATH}/\"\n\n#popd\n";
+			showEnvVarsInLog = 0;
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -651,7 +668,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "set -e\n\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\nif [ ${ANKI_BUILD_MODE:=auto} == \"auto\" ]; then\n\n# If we're not using a PREBUILT_UNITY, then build unity now.\n\necho ${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/build-scripts/build_unity_ios.py \\\n--config ${CONFIG} \\\n--sdk ${PLATFORM_NAME} \\\n--script-engine mono \\\n--build-dir ${ANKI_BUILD_UNITY_BUILD_DIR} \\\n--xcode-build-dir ${ANKI_BUILD_UNITY_XCODE_BUILD_DIR} \\\n${ANKI_BUILD_UNITY_PROJECT_PATH}\n\n${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/build-scripts/build_unity_ios.py \\\n--config ${CONFIG} \\\n--sdk ${PLATFORM_NAME} \\\n--script-engine mono \\\n--build-dir ${ANKI_BUILD_UNITY_BUILD_DIR} \\\n--xcode-build-dir ${ANKI_BUILD_UNITY_XCODE_BUILD_DIR} \\\n${ANKI_BUILD_UNITY_PROJECT_PATH}\n\nfi\n\n# update our symlink\nrm -f \"${SRCROOT}/UnityBuild\"\necho ln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\nln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\n";
+			shellScript = "set -e\n\nCONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')\n\nif [ ${ANKI_BUILD_MODE:=auto} == \"auto\" ]; then\n\n# If we're not using a PREBUILT_UNITY, then build unity now.\n\necho ${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/build-scripts/build_unity_ios.py \\\n--config ${CONFIG} \\\n--sdk ${PLATFORM_NAME} \\\n--script-engine mono \\\n--build-dir ${ANKI_BUILD_UNITY_BUILD_DIR} \\\n--xcode-build-dir ${ANKI_BUILD_UNITY_XCODE_BUILD_DIR} \\\n${ANKI_BUILD_UNITY_PROJECT_PATH}\n\npython -u ${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/tools/build-scripts/build_unity_ios.py \\\n--config ${CONFIG} \\\n--sdk ${PLATFORM_NAME} \\\n--script-engine mono \\\n--build-dir ${ANKI_BUILD_UNITY_BUILD_DIR} \\\n--xcode-build-dir ${ANKI_BUILD_UNITY_XCODE_BUILD_DIR} \\\n${ANKI_BUILD_UNITY_PROJECT_PATH}\n\nfi\n\n# update our symlink\nrm -f \"${SRCROOT}/UnityBuild\"\necho ln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\nln -s \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\" \"${SRCROOT}/UnityBuild\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
