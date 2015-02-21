@@ -2143,7 +2143,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &318169132
 Transform:
   m_ObjectHideFlags: 0
@@ -3300,7 +3300,7 @@ MonoBehaviour:
   deadZone: {x: .100000001, y: .100000001}
   deadZoneRadial: 0
   scaleMagFromDeadZone: 1
-  horClampThrow: .899999976
+  horClampThrow: 1
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
@@ -4402,7 +4402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &694922074
 Transform:
   m_ObjectHideFlags: 0
@@ -4758,8 +4758,8 @@ RectTransform:
   - {fileID: 1351769953}
   m_Father: {fileID: 361658246}
   m_RootOrder: 3
-  m_AnchorMin: {x: .75, y: 0}
-  m_AnchorMax: {x: 1, y: .100000001}
+  m_AnchorMin: {x: .349999994, y: 0}
+  m_AnchorMax: {x: .649999976, y: .100000001}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: 1}
@@ -7861,6 +7861,22 @@ Prefab:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 2100000, guid: 86668db7d41224a17be19838fa97d42c, type: 2}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: verticalAxisSnapAngle
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: verticalModeMaxAngleAllowance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: deadZone.x
+      value: .25
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: deadZone.y
+      value: .25
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
   m_RootGameObject: {fileID: 1555779515}
@@ -8077,7 +8093,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8dcc220e71fa4dd19dab934717c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rollAngleMin: 5
+  rollAngleMin: 3
   rollAngleMax: 90
   pitchAngleMin: 10
   pitchAngleMax: 45
@@ -9187,15 +9203,15 @@ MonoBehaviour:
   stickImageThrown: {fileID: 266960654}
   stickImageNeutral: {fileID: 1495858553}
   clampRadially: 1
-  deadZone: {x: .300000012, y: .300000012}
+  deadZone: {x: .25, y: .25}
   deadZoneRadial: 1
   scaleMagFromDeadZone: 1
   horClampThrow: 1
-  verticalAxisSnapAngle: 5
+  verticalAxisSnapAngle: 10
   horizontalAxisSnapAngle: 5
   verticalModeEntryAngle: 70
   horizontalModeEntryAngle: 20
-  verticalModeMaxAngleAllowance: 90
+  verticalModeMaxAngleAllowance: 0
   clearHorizontal: 1
   clearVertical: 1
   bgWidthInches: 1.5
@@ -9696,7 +9712,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1673140306}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 228.050781, y: 369, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -10880,6 +10896,10 @@ Prefab:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 2100000, guid: 616b723807396468abd8186ce158264c, type: 2}
+    - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
+      propertyPath: horClampThrow
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
   m_RootGameObject: {fileID: 493839751}

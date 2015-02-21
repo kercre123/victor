@@ -74,17 +74,17 @@ public class RobotRelativeControls : MonoBehaviour {
 			inputs.x = horizontalStick.Horizontal;
 		}
 
-		float maxAngle = 135f;
+		float maxAngle = 90f;
 
 		if(verticalStick != null) {
 
 			if(verticalStick.UpModeEngaged) {
 				driveForwardOnlyMode = true;
-				maxAngle = verticalStick.MaxAngle;
+				//maxAngle = verticalStick.MaxAngle;
 			}
 			else if(verticalStick.DownModeEngaged) {
 				driveReverseOnlyMode = true;
-				maxAngle = verticalStick.MaxAngle;
+				//maxAngle = verticalStick.MaxAngle;
 			}
 
 			inputs.y = verticalStick.Vertical;
@@ -95,7 +95,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //			inputs.y = Input.GetAxis("Vertical");
 //		}
 
-		if(gyroInputs != null && gyroInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed)) {
+		if(gyroInputs != null && gyroInputs.gameObject.activeSelf) { // && (verticalStick == null || verticalStick.IsPressed)) {
 			inputs.x = gyroInputs.Horizontal;
 //			if(gyroPitchControl != null && gyroPitchControl.isOn) {
 //				inputs.y = gyroInputs.Vertical;

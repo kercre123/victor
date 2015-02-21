@@ -24,6 +24,7 @@ public enum DisconnectionReason {
 
 	// temp
 	RobotDisconnected,
+	RobotConnectionTimedOut,
 }
 
 /// <summary>
