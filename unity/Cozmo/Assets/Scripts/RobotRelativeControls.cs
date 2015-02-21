@@ -4,6 +4,8 @@ using System.Collections;
 
 public class RobotRelativeControls : MonoBehaviour {
 
+	//[SerializeField] ScreenRecorder recorder = null;
+
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
@@ -43,6 +45,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = Vector2.zero;
 		moveCommandLastFrame = false;
+
+//		if(recorder != null) {
+//			recorder.videoFileName = "cozmoTest_screenRec_" + System.DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + gameObject.name + ".mp4";
+//			recorder.enabled = true;
+//		}
 	}
 
 	void FixedUpdate() {
@@ -67,17 +74,17 @@ public class RobotRelativeControls : MonoBehaviour {
 			inputs.x = horizontalStick.Horizontal;
 		}
 
-		float maxAngle = 135f;
+		float maxAngle = 90f;
 
 		if(verticalStick != null) {
 
 			if(verticalStick.UpModeEngaged) {
 				driveForwardOnlyMode = true;
-				maxAngle = verticalStick.MaxAngle;
+				//maxAngle = verticalStick.MaxAngle;
 			}
 			else if(verticalStick.DownModeEngaged) {
 				driveReverseOnlyMode = true;
-				maxAngle = verticalStick.MaxAngle;
+				//maxAngle = verticalStick.MaxAngle;
 			}
 
 			inputs.y = verticalStick.Vertical;
@@ -88,9 +95,8 @@ public class RobotRelativeControls : MonoBehaviour {
 //			inputs.y = Input.GetAxis("Vertical");
 //		}
 
-		if(gyroInputs != null && gyroInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed)) {
+		if(gyroInputs != null && gyroInputs.gameObject.activeSelf) { // && (verticalStick == null || verticalStick.IsPressed)) {
 			inputs.x = gyroInputs.Horizontal;
-
 //			if(gyroPitchControl != null && gyroPitchControl.isOn) {
 //				inputs.y = gyroInputs.Vertical;
 //			}
@@ -108,18 +114,19 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = inputs;
 
+		float maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
+
 		if(driveForwardOnlyMode) {
-			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, false);
+			CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor, false);
 		}
 		else if(driveReverseOnlyMode) {
-			CozmoUtil.CalcDriveWheelSpeedsForInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, true);
+			CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor, true);
 		}
 		else if(turnInPlaceOnlyMode) {
-			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed);
+			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
 		}
 		else { //continues input range mode...causes issues at thresholds
-
-			CozmoUtil.CalcWheelSpeedsFromBotRelativeInputsB(inputs, out leftWheelSpeed, out rightWheelSpeed);
+			CozmoUtil.CalcWheelSpeedsForTwoAxisInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
 		}
 
 		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
@@ -143,6 +150,10 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
 		}
+
+//		if(recorder != null) {
+//			recorder.enabled = false;
+//		}
 	}
 
 //	void OnGUI() {

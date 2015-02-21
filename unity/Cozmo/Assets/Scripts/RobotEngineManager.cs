@@ -271,21 +271,21 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
 	{
-		Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
+		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
 		current.box.UpdateInfo( message );
 	}
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
-		Debug.Log( "no box found " + Time.time );
+		//Debug.Log( "no box found at " + Time.time );
 
 		current.box.RemoveInfo();
 	}
 	
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
 	{
-		
+
 	}
 	
 	private void ReceivedSpecificMessage(G2U_PlaySound message)
@@ -515,5 +515,17 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		channel.Send (message);
 	}
-	
+
+	public void TurnInPlace(int robotID, float angle_rad)
+	{
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+		}
+		
+		U2G_TurnInPlace message = new U2G_TurnInPlace ();
+
+		message.angle_rad = angle_rad;
+		
+		channel.Send (message);
+	}
 }

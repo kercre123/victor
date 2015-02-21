@@ -139,7 +139,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &193166
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -370,6 +370,7 @@ MonoBehaviour:
   deadZone: {x: .100000001, y: .100000001}
   deadZoneRadial: 0
   scaleMagFromDeadZone: 1
+  horClampThrow: 1
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
@@ -393,6 +394,8 @@ MonoBehaviour:
   - .25
   - .5
   - 1
+  smallScreenAnchorType: 4
+  smallScreenAnchorPos: {x: 0, y: 0}
 --- !u!114 &11473930
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -703,7 +706,6 @@ RectTransform:
   - {fileID: 22473930}
   - {fileID: 22473932}
   - {fileID: 22493614}
-  - {fileID: 22493166}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -774,8 +776,8 @@ RectTransform:
   m_Children:
   - {fileID: 22426392}
   - {fileID: 22493612}
-  m_Father: {fileID: 22455432}
-  m_RootOrder: 3
+  m_Father: {fileID: 22493614}
+  m_RootOrder: 7
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 2.28881836e-05, y: -1.52587891e-05}
@@ -832,6 +834,7 @@ RectTransform:
   - {fileID: 22493616}
   - {fileID: 22493618}
   - {fileID: 22455430}
+  - {fileID: 22493166}
   m_Father: {fileID: 22455432}
   m_RootOrder: 2
   m_AnchorMin: {x: .5, y: .5}

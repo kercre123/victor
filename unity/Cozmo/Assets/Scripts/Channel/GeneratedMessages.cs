@@ -631,10 +631,10 @@ public override int ID { get { return (int)NetworkMessageID.G2U_ImageChunk; } } 
 public partial class G2U_RobotObservedObject : NetworkMessage {
 public u32 robotID;
 public u32 objectID;
-public u16 topLeft_x;
-public u16 topLeft_y;
-public u16 width;
-public u16 height;
+public f32 topLeft_x;
+public f32 topLeft_y;
+public f32 width;
+public f32 height;
 public override int ID { get { return (int)NetworkMessageID.G2U_RobotObservedObject; } } }
 
 
