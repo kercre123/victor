@@ -48,7 +48,7 @@ public class Intro : MonoBehaviour {
 		visualizerIP.text = lastVisualizerIp;
 	}
 
-	protected void Start()
+	private void Start()
 	{
 		if (RobotEngineManager.instance != null) {
 			RobotEngineManager.instance.ConnectedToClient += Connected;
@@ -57,11 +57,21 @@ public class Intro : MonoBehaviour {
 		}
 	}
 
-	protected void OnDestroy() {
+	private void OnDestroy() {
 		if (RobotEngineManager.instance != null) {
 			RobotEngineManager.instance.ConnectedToClient -= Connected;
 			RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
 			RobotEngineManager.instance.RobotConnected -= RobotConnected;
+		}
+	}
+
+	private void Update()
+	{
+		if (RobotEngineManager.instance != null) {
+			DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason ();
+			if (reason != DisconnectionReason.None) {
+				error.text = "Disconnected: " + reason.ToString ();
+			}
 		}
 	}
 

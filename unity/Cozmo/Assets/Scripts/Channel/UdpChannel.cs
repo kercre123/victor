@@ -653,6 +653,7 @@ public class UdpChannel : ChannelBase {
 						connectionState = ConnectionState.Connected;
 						mainEndPoint = ipEndPoint;
 						lastReceiveTime = lastUpdateTime;
+						lastPingTime = lastUpdateTime - PingTimeout * 2;
 
 						// ignore first message
 					}

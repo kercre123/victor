@@ -21,12 +21,16 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	[SerializeField]
 	private TextAsset configuration;
+
+	[SerializeField]
+	[HideInInspector]
+	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
 	
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage; 
-	
+
 	private ChannelBase channel;
 	private float lastRobotStateMessage = 0;
 	private bool isRobotConnected = false;
@@ -99,9 +103,16 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 	#endif
 	
-	private void Awake() {
-		if (instance != null) {
+	public void AddRobot( byte robotID )
+	{
+		robots.Add( robotID, new Robot( robotID ) );
+	}
+	
+	private void OnEnable()
+	{
+		if (instance != null && instance != this) {
 			Destroy (gameObject);
+			return;
 		} else {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
@@ -110,31 +121,26 @@ public class RobotEngineManager : MonoBehaviour {
 		Application.runInBackground = true;
 
 		robots = new Dictionary<int, Robot>();
-
 		AddRobot( Intro.CurrentRobotID );
-	}
-	
-	public void AddRobot( byte robotID )
-	{
-		robots.Add( robotID, new Robot( robotID ) );
-	}
-	
-	private void OnEnable()
-	{
+
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
 		channel.DisconnectedFromClient += Disconnected;
 		channel.MessageReceived += ReceivedMessage;
 	}
-	
+
 	private void OnDisable()
 	{
 		if (channel != null) {
-			Disconnect ();
+			if (channel.IsActive) {
+				Disconnect ();
+				Disconnected (DisconnectionReason.UnityReloaded);
+			}
+
 			channel = null;
 		}
 	}
-	
+	 
 	private void Update()
 	{
 		if (channel != null) {
@@ -173,19 +179,28 @@ public class RobotEngineManager : MonoBehaviour {
 			#endif
 		}
 	}
-	
+
+	public DisconnectionReason GetLastDisconnectionReason()
+	{
+		DisconnectionReason reason = lastDisconnectionReason;
+		lastDisconnectionReason = DisconnectionReason.None;
+		return reason;
+	}
+	 
 	private void Connected(string connectionIdentifier)
 	{
 		if (ConnectedToClient != null) {
 			ConnectedToClient(connectionIdentifier);
 		}
 	}
-	
+	 
 	private void Disconnected(DisconnectionReason reason)
 	{
+		Debug.Log ("Disconnected: " + reason.ToString());
 		isRobotConnected = false;
 		Application.LoadLevel ("Shell");
-		
+
+		lastDisconnectionReason = reason;
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}

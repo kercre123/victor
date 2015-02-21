@@ -23,8 +23,10 @@ public enum DisconnectionReason {
 	ConnectionThrottled,
 
 	// temp
+	None,
 	RobotDisconnected,
 	RobotConnectionTimedOut,
+	UnityReloaded,
 }
 
 /// <summary>
