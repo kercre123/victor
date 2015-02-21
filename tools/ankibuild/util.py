@@ -224,34 +224,37 @@ class File(object):
 
 
     @staticmethod
-    def _run_subprocess(func, args):
+    def _run_subprocess(func, args, ignore_result):
         if not args:
             raise ValueError('No arguments to execute.')
         try:
             return func(args)
         except subprocess.CalledProcessError as e:
-            sys.exit('ERROR: Subprocess `{0}` exited with code {1}.'.format(File._escape(args), e.returncode)) 
+            if ignore_result:
+                print('WARNING: Subprocess `{0}` exited with code {1}.'.format(File._escape(args), e.returncode))
+            else:
+                sys.exit('ERROR: Subprocess `{0}` exited with code {1}.'.format(File._escape(args), e.returncode)) 
         except OSError as e:
             sys.exit('ERROR: Error in subprocess `{0}`: {1}'.format(File._escape(args), e.strerror))
 
 
     @staticmethod
-    def _raw_execute(func, args):
+    def _raw_execute(func, args, ignore_result):
         print('')
         if ECHO_ALL:
             print(File._escape(args))
-        return File._run_subprocess(func, args)
+        return File._run_subprocess(func, args, ignore_result)
 
 
     @staticmethod
-    def execute(args):
+    def execute(args, ignore_result=False):
         "Executes the given list of arguments as a shell command, returning nothing."
-        File._raw_execute(subprocess.check_call, args)
+        File._raw_execute(subprocess.check_call, args, ignore_result)
 
 
     @staticmethod
-    def evaluate(args):
+    def evaluate(args, ignore_result=False):
         "Executes the given list of arguments as a shell command, returning stdout."
-        return File._raw_execute(subprocess.check_output, args)
+        return File._raw_execute(subprocess.check_output, args, ignore_result)
 
 

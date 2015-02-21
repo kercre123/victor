@@ -198,19 +198,22 @@ class UnityBuild(object):
 
         projectPath = self.build_config.project_dir
 
-        print(' '.join(procArgs))
+        #print(' '.join(procArgs))
+        cwd = util.File.pwd()
         util.File.mkdir_p(os.path.dirname(self.build_config.log_file))
-        ret = subprocess.call(procArgs, cwd=projectPath)
-        print "ret = " + str(ret)
+        util.File.cd(projectPath)
+        try:
+            util.File.execute(procArgs)
+        except SystemExit:
+            # It was observed (see ANDRIVE-128), that a clean build may fail
+            # due to a bug in Unity.  The marker of this failure is the AutoBuild class
+            # not being found.
+            # If this occurs, run the build one more time as a workaround
+            if self.check_log_file_for_autobuild_not_found(self.build_config.log_file):
+                util.File.execute(procArgs)
+        util.File.cd(cwd)
 
-        # It was observed (see ANDRIVE-128), that a clean build may fail
-        # due to a bug in Unity.  The marker of this failure is the AutoBuild class
-        # not being found.
-        # If this occurs, run the build one more time as a workaround
-        if ret != 0 and self.check_log_file_for_autobuild_not_found(self.build_config.log_file):
-            ret = subprocess.call(procArgs, cwd=projectPath)
-
-        return (ret, self.build_config.log_file)
+        return self.build_config.log_file
 
     def run(self):
         result = 0
@@ -226,10 +229,7 @@ class UnityBuild(object):
 
         # if unity is nto open, run command line
         if (not unityOpen):
-            (result, logFilePath) = self.run_unity_command_line()
-
-        if result != 0:
-            return result
+            logFilePath = self.run_unity_command_line()
 
         self.parse_log_file(logFilePath)
 
