@@ -136,11 +136,12 @@ Supervisor {
       children [
         DEF LED_SHAPE Group {
           children [
-            PointLight {
-             attenuation 0 0 5000
-             location    %{=px}% %{=py}% %{=pz}%
-             color       1 1 1
-            }
+            # NOTE: PointLight slows down simulation significantly!
+            #PointLight {
+            # attenuation 0 0 5000
+            # location    %{=px}% %{=py}% %{=pz}%
+            # color       1 1 1
+            #}
             Shape {
       	      appearance Appearance {
                 material Material {
