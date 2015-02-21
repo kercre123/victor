@@ -100,7 +100,7 @@ public class UdpChannel : ChannelBase {
 	// various queues
 	private readonly List<object> queuedLogs = new List<object>(MaxQueuedLogs);
 	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-	private readonly List<NetworkMessage> receivedMessages = new List<NetworkMessage> (MaxQueuedReceives);
+	private readonly Queue<NetworkMessage> receivedMessages = new Queue<NetworkMessage> (MaxQueuedReceives);
 
 	// lists of pooled objects
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
@@ -361,17 +361,15 @@ public class UdpChannel : ChannelBase {
 	// synchronous
 	private void ProcessMessages()
 	{
-		int count = receivedMessages.Count;
-		if (count != 0) {
-			for (int i = 0; i < count; ++i) {
-				try {
-					RaiseMessageReceived(receivedMessages[i]);
-				}
-				catch (Exception e) {
-					Debug.LogException(e);
-				}
+		while (receivedMessages.Count > 0) {
+			NetworkMessage message = receivedMessages.Dequeue();
+			try {
+				// can trigger Disconnect, InternalUpdate
+				RaiseMessageReceived(message);
 			}
-			receivedMessages.Clear ();
+			catch (Exception e) {
+				Debug.LogException(e);
+			}
 		}
 	}
 
@@ -681,7 +679,7 @@ public class UdpChannel : ChannelBase {
 							return;
 						}
 						
-						receivedMessages.Add (message);
+						receivedMessages.Enqueue (message);
 					}
 				}
 				
