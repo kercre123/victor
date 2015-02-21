@@ -174,3 +174,4 @@ build_xcode/game_osx
 build_xcode/game_ios
 build_xcode/game_sim
 generated
+unity/ios/UnityBuild
