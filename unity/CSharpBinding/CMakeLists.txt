@@ -3,7 +3,7 @@
 add_definitions(-DCOZMO_BASESTATION)
 add_definitions(-DCORETECH_BASESTATION)
 
-if(NOT ANKI_IOS_BUILD)
+if(ANKI_IOS_BUILD)
   # root src dir
   FILE(GLOB SOURCE_FILES_ROOT "csharp-binding.cpp")
   FILE(GLOB HEADER_FILES_ROOT "csharp-binding.h")

@@ -115,7 +115,13 @@ public class ProjectBuilder {
 
     // Later on use this to switch between building for different targets
     // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
-		
+	
+	try {
+		System.IO.Directory.CreateDirectory (buildPath);
+	}
+	catch (Exception) {
+	}
+
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
 	
