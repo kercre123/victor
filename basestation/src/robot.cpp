@@ -39,12 +39,14 @@
 
 #define DISPLAY_PROX_OVERLAY 1
 
-
 namespace Anki {
   namespace Cozmo {
+
+    const float ROBOT_STATE_MESSAGE_TIMEOUT_SEC = 1.0f;
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
+    , _lastStateMsgTime_sec(-1.f)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
@@ -159,6 +161,13 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
+      // Keep up with the time we received the last state message (which is
+      // effectively the robot's "ping", so we know we're still connected to
+      // a working robot. Note that basestation and robot time aren't necessarily
+      // sync'd, so don't use the message's (i.e. robot's) timestamp here, since
+      // we're going to compare to basestation time to check for a timeout.
+      _lastStateMsgTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
       // Update head angle
       SetHeadAngle(msg.headAngle);
       
@@ -179,7 +188,12 @@ namespace Anki {
 
         VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
                                            Anki::NamedColors::GREEN,
+                                           "speed L: %4d  R: %4d mm/s\n"
                                            "prox: (%2u, %2u, %2u) %d%d%d",
+                                           
+                                           (int)msg.lwheel_speed_mmps,
+                                           (int)msg.rwheel_speed_mmps,
+                                           
                                            GetProxSensorVal(PROX_LEFT),
                                            GetProxSensorVal(PROX_FORWARD),
                                            GetProxSensorVal(PROX_RIGHT),
@@ -217,6 +231,8 @@ namespace Anki {
         _isMoving = true;
       }
       
+      _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
+      _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
       Pose3d newPose;
       
@@ -477,6 +493,20 @@ namespace Anki {
     
     Result Robot::Update(void)
     {
+      // Make sure physical robot is still alive and sending us state updates
+      if(_lastStateMsgTime_sec > 0.f) {
+        const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
+        if(timeDiff_sec > ROBOT_STATE_MESSAGE_TIMEOUT_SEC) {
+          PRINT_NAMED_ERROR("Robot.Update",
+                            "No state message received from robot %d in %.1f seconds, "
+                            "sending disconnected signal.\n", GetID(), timeDiff_sec);
+          
+          CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
+          _lastStateMsgTime_sec = -1.f;
+        }
+      }
+      
+      
 #     if !ASYNC_VISION_PROCESSING
       if(_haveNewImage) {
         
@@ -489,7 +519,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        // CozmoEngineSignals::GetRobotImageAvailableSignal().emit(GetID());
+        CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -578,7 +608,9 @@ namespace Anki {
       // Send ping to keep connection alive.
       // TODO: Don't send ping if there are already outgoing messages this tic.
       //       This should probably be done outside of Robot at the end of the basestation tic.
-      SendPing();
+      if (_msgHandler->GetNumMsgsSentThisTic(GetID()) == 0) {
+        SendPing();
+      }
       
       ///////// Update the behavior manager ///////////
       
@@ -841,7 +873,7 @@ namespace Anki {
       return SendStopAllMotors();
     }
     
-    Result Robot::PlaceObjectOnGround()
+    Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
     {
       if(!IsCarryingObject()) {
         PRINT_NAMED_ERROR("Robot.PlaceObjectOnGround.NotCarryingObject",
@@ -849,7 +881,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      return SendPlaceObjectOnGround(0, 0, 0);
+      return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
     Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
@@ -1151,7 +1183,7 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    Result Robot::ExecutePath(const Planning::Path& path)
+    Result Robot::ExecutePath(const Planning::Path& path, const bool useManualSpeed)
     {
       Result lastResult = RESULT_FAIL;
       
@@ -1165,7 +1197,7 @@ namespace Anki {
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
           _pdo->SetPath(path);
-          lastResult = SendExecutePath(path);
+          lastResult = SendExecutePath(path, useManualSpeed);
         }
         
         // Visualize path if robot has just started traversing it.
@@ -1355,9 +1387,10 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction)
+                                 const DockAction_t dockAction,
+                                 const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX);
+      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -1366,7 +1399,8 @@ namespace Anki {
                                  const DockAction_t dockAction,
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
-                                 const u8 pixel_radius)
+                                 const u8 pixel_radius,
+                                 const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -1390,7 +1424,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius);
+      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
     
     
@@ -1404,7 +1438,8 @@ namespace Anki {
                                      const DockAction_t dockAction,
                                      const u16 image_pixel_x,
                                      const u16 image_pixel_y,
-                                     const u8 pixel_radius)
+                                     const u8 pixel_radius,
+                                     const bool useManualSpeed)
     {
       const Vision::Marker::Code code1 = marker->GetCode();
       Vision::Marker::Code       code2 = code1;
@@ -1432,6 +1467,7 @@ namespace Anki {
       msg.markerWidth_mm = marker->GetSize();
       msg.markerType     = static_cast<u8>(code1);
       msg.markerType2    = static_cast<u8>(code2);
+      msg.useManualSpeed = useManualSpeed;
       msg.dockAction     = dockAction;
       msg.image_pixel_x  = image_pixel_x;
       msg.image_pixel_y  = image_pixel_y;
@@ -1443,8 +1479,8 @@ namespace Anki {
       const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
                                  dockAction == DA_RAMP_DESCEND ||
                                  dockAction == DA_CROSS_BRIDGE);
-      // Tell the VisionSystem to start tracking this marker:
       
+      // Tell the VisionSystem to start tracking this marker:
       _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
       
       return _msgHandler->SendMessage(_ID, msg);
@@ -1608,22 +1644,24 @@ namespace Anki {
     }
     
     // Sends a path to the robot to be immediately executed
-    Result Robot::SendExecutePath(const Planning::Path& path) const
+    Result Robot::SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const
     {
       // Send start path execution message
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message\n");
+      m.useManualSpeed = useManualSpeed;
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle)
+    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
     {
       MessagePlaceObjectOnGround m;
       
       m.rel_angle = rel_angle;
       m.rel_x_mm  = rel_x;
       m.rel_y_mm  = rel_y;
+      m.useManualSpeed = useManualSpeed;
       
       return _msgHandler->SendMessage(_ID, m);
     } // SendPlaceBlockOnGround()

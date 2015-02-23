@@ -46,6 +46,10 @@ namespace Anki {
         
         const f32 SPEED_FILTERING_COEFF = 0.9f;
         
+        // Used when calling SetDesiredHeight with just a height:
+        const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
+        const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
+        const f32 DEFAULT_DURATION_SEC     = 0.25f;
         
         f32 Kp_ = 20.f; // proportional control constant
         f32 Ki_ = 0.03f; // integral control constant
@@ -385,104 +389,11 @@ namespace Anki {
         
       }
       
-      
-      static void SetDesiredHeight_internal(f32 height_mm)
-      {
-        
-        // Do range check on height
-        const f32 newDesiredHeight = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
-
-        // Exit early if lift is already moving towards the commanded height
-        if (desiredHeight_ == newDesiredHeight && !inPosition_) {
-          return;
-        }
-
-#ifdef SIMULATOR
-        if(!HAL::IsGripperEngaged()) {
-          // If the new desired height will make the lift move upward, turn on
-          // the gripper's locking mechanism so that we might pick up a block as
-          // it goes up
-          if(newDesiredHeight > desiredHeight_) {
-            HAL::EngageGripper();
-          }
-        }
-        else {
-          // If we're moving the lift down and the end goal is at low-place or
-          // high-place height, disengage the gripper when we get there
-          if(newDesiredHeight < desiredHeight_ &&
-             (newDesiredHeight == LIFT_HEIGHT_LOWDOCK ||
-              newDesiredHeight == LIFT_HEIGHT_HIGHDOCK))
-          {
-            disengageGripperAtDest_ = true;
-            disengageAtAngle_ = Height2Rad(newDesiredHeight + 3.f*LIFT_FINGER_HEIGHT);
-          }
-          else {
-            disengageGripperAtDest_ = false;
-          }
-        }
-#endif
-           
-        desiredHeight_ = newDesiredHeight;
-        
-        // Convert desired height into the necessary angle:
-#if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT DESIRED HEIGHT: %f mm (curr height %f mm)\n", desiredHeight_, GetHeightMM());
-#endif
-
-        
-        desiredAngle_ = Height2Rad(desiredHeight_);
-        angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-        
-        f32 startRadSpeed = radSpeed_;
-        f32 startRad = currentAngle_.ToFloat();
-        if (!inPosition_) {
-          startRadSpeed = currDesiredRadVel_;
-          startRad = currDesiredAngle_;
-        } else {
-          angleErrorSum_ = 0.f;
-        }
-        
-        lastLiftMovedTime_us = HAL::GetMicroCounter();
-        limitingDetected_ = false;
-        limitingExpected_ = false;
-        inPosition_ = false;
-        calibPending_ = false;
-        
-        if (FLT_NEAR(angleError_,0.f)) {
-          inPosition_ = true;
-#if(DEBUG_LIFT_CONTROLLER)
-          PRINT("Lift: Already at desired position\n");
-#endif          
-          return;
-        }
-
-        
-#if(RECALIBRATE_AT_LIMITS)
-        // Adjust approach speed to be a little faster if desired height is at a limit.
-        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
-#endif
-        
-        // Start profile of lift trajectory
-        vpg_.StartProfile(startRadSpeed, startRad,
-                          maxSpeedRad_, accelRad_,
-                          approachSpeedRad_, desiredAngle_.ToFloat(),
-                          CONTROL_DT);
-
-#if(DEBUG_LIFT_CONTROLLER)
-        PRINT("LIFT VPG: startVel %f, startPos %f, maxVel %f, accel %f, endVel %f, endPos %f\n",
-              radSpeed_, currentAngle_.ToFloat(), maxSpeedRad_, accelRad_, approachSpeedRad_, desiredAngle_.ToFloat());
-#endif
-        
-      } // SetDesiredHeight_internal()
-      
-      
       void SetDesiredHeight(f32 height_mm)
       {
-        isNodding_ = false;
-        SetDesiredHeight_internal(height_mm);
+        SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
       }
 
-    // TODO: There is common code with the other SetDesiredHeight() that can be pulled out into a shared function.
       static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
         
@@ -562,17 +473,20 @@ namespace Anki {
                                                    CONTROL_DT);
         
         if (!res) {
-          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying other version of SetDesiredHeight()\n",
+          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
           
-          SetDesiredHeight_internal(height_mm);
+          vpg_.StartProfile(startRadSpeed, startRad,
+                            maxSpeedRad_, accelRad_,
+                            approachSpeedRad_, desiredAngle_.ToFloat(),
+                            CONTROL_DT);
         }
         
 #if(DEBUG_HEAD_CONTROLLER)
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
-      }
+      } // SetDesiredHeight_internal
 
       
       void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)

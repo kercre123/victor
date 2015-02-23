@@ -77,9 +77,9 @@ extern GlobalDataToBody g_dataToBody;
   
   // Encoder scaling reworked for Cozmo 3
   
-  // Given a gear ratio of 340.2:1 and 88mm wheel circumference and 2 encoder
-  // ticks per revolution, we compute the meters per tick as:
-  const Fixed METERS_PER_TICK = TO_FIXED((0.5 * 0.088) / 340.2);
+  // Given a gear ratio of 340.2:1 and 88mm wheel circumference and 2 ticks * 2 teeth
+  // for 4 encoder ticks per revolution, we compute the meters per tick as:
+  const Fixed METERS_PER_TICK = TO_FIXED((0.25 * 0.088) / 340.2);
   
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
@@ -113,7 +113,7 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N1_PIN,
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
-      false,   // Wired forward
+      true,   // Wired backward
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,

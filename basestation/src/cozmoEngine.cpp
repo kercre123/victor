@@ -11,10 +11,10 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/basestation/basestation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -22,9 +22,10 @@
 #include "anki/messaging/basestation/advertisementService.h"
 
 #include "anki/common/basestation/jsonTools.h"
-
+#include "anki/common/basestation/utils/timer.h"
 
 #include "robotMessageHandler.h"
+#include "recording/playback.h"
 
 #define ASYNCHRONOUS_DEVICE_VISION 0
 
@@ -77,6 +78,7 @@ namespace Cozmo {
     
     MultiClientComms          _robotComms;
     
+    // TODO: Merge this into RobotManager
     // Each engine can potetnailly talk to multiple physical robots.
     // Package up the stuff req'd to deal with one robot and store a map
     // of them keyed by robot ID.
@@ -99,7 +101,7 @@ namespace Cozmo {
   
   CozmoEngineImpl::~CozmoEngineImpl()
   {
-    
+    BaseStationTimer::removeInstance();
   }
   
   Result CozmoEngineImpl::Init(const Json::Value& config)
@@ -135,10 +137,25 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     lastResult = _robotComms.Init(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt());
+                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt(),
+                                  MAX_SENT_BYTES_PER_TIC_TO_ROBOT);
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.\n");
       return lastResult;
+    }
+    
+    if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+      PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
+                          "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
+    } else {
+      VizManager::getInstance()->Connect(config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+      
+      // Only send images if the viz host is the same as the robot advertisement service
+      // (so we don't waste bandwidth sending (uncompressed) viz data over the network
+      //  to be displayed on another machine)
+      if(config[AnkiUtil::kP_VIZ_HOST_IP] == config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
+        VizManager::getInstance()->EnableImageSend(true);
+      }
     }
     
     lastResult = InitInternal();
@@ -180,8 +197,6 @@ namespace Cozmo {
     
     return success;
   }
-  
-
   
   Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
   {
@@ -242,7 +257,8 @@ namespace Cozmo {
 
   }
   
-  CozmoEngine::~CozmoEngine() {
+  CozmoEngine::~CozmoEngine()
+  {
     if(_impl != nullptr) {
       delete _impl;
       _impl = nullptr;
@@ -293,6 +309,7 @@ namespace Cozmo {
     
     int    GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
+    std::vector<RobotID_t> const& GetRobotIDList() const;
     
     // TODO: Remove once we don't have to specially handle forced adds
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
@@ -305,20 +322,27 @@ namespace Cozmo {
     virtual Result InitInternal() override;
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
     
-    BasestationMain              _basestation;
-    bool                         _isBasestationStarted;
-    bool                         _isListeningForRobots;
+    void InitPlaybackAndRecording();
     
+    
+    Result AddRobot(RobotID_t robotID);
+    
+    bool                         _isListeningForRobots;
     Comms::AdvertisementService  _robotAdvertisementService;
+    RobotManager                 _robotMgr;
+    RobotMessageHandler          _robotMsgHandler;
     
     std::map<AdvertisingRobot, bool> _forceAddedRobots;
+    
+    // TODO: Make use of these for playback/recording
+    IRecordingPlaybackModule *recordingPlaybackModule_;
+    IRecordingPlaybackModule *uiRecordingPlaybackModule_;
     
   }; // class CozmoEngineHostImpl
   
   
   CozmoEngineHostImpl::CozmoEngineHostImpl()
-  : _isBasestationStarted(false)
-  , _isListeningForRobots(false)
+  : _isListeningForRobots(false)
   , _robotAdvertisementService("RobotAdvertisementService")
   {
     
@@ -331,54 +355,164 @@ namespace Cozmo {
 
   }
   
-  Result CozmoEngineHostImpl::StartBasestation()
-  {
-    if(!_isBasestationStarted)
-    {
-      BasestationStatus status = _basestation.Init(&_robotComms, _config);
-      if (status != BS_OK) {
-        PRINT_NAMED_ERROR("Basestation.Init.Fail","Status = %d\n", status);
-        return RESULT_FAIL;
-      }
-      
-      _isBasestationStarted = true;
-    }
-    
-    return RESULT_OK;
-  }
-  
   Result CozmoEngineHostImpl::InitInternal()
   {
-    return RESULT_OK;
+    Result lastResult = _robotMsgHandler.Init(&_robotComms, &_robotMgr);
+    
+    return lastResult;
   }
   
   void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
                                           const char*      robotIP,
                                           bool             robotIsSimulated)
   {
-    // Force add physical robot since it's not registering by itself yet.
-    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
-    forcedRegistrationMsg.id = robotID;
-    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
-    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
-    forcedRegistrationMsg.enableAdvertisement = 1;
-    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
-    
-    _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
-    
-    // Mark this robot as force-added so we can deregister it from the advertising
-    // service manually once we connect to it.
-    _forceAddedRobots[robotID] = true;
+    if(_isInitialized) {
+      // Force add physical robot since it's not registering by itself yet.
+      Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+      forcedRegistrationMsg.id = robotID;
+      forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
+      forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+      forcedRegistrationMsg.enableAdvertisement = 1;
+      snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
+      
+      _robotAdvertisementService.ProcessRegistrationMsg(forcedRegistrationMsg);
+      
+      // Mark this robot as force-added so we can deregister it from the advertising
+      // service manually once we connect to it.
+      _forceAddedRobots[robotID] = true;
+    } else {
+      PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
+                        "You cannot force-add a robot until the engine is initialized.\n");
+    }
   }
+  
+  void CozmoEngineHostImpl::InitPlaybackAndRecording()
+  {
+    // TODO: get playback/recording working again
+    
+    /*
+     // Get basestation mode out of the config
+     int modeInt;
+     if(JsonTools::GetValueOptional(config, AnkiUtil::kP_BASESTATION_MODE, modeInt)) {
+     mode_ = static_cast<BasestationMode>(modeInt);
+     assert(mode_ <= BM_PLAYBACK_SESSION);
+     } else {
+     mode_ = BM_DEFAULT;
+     }
+     
+     PRINT_INFO("Starting basestation mode %d\n", mode_);
+     switch(mode_)
+     {
+     case BM_RECORD_SESSION:
+     {
+     // Create folder for all recorded logs
+     std::string rootLogFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR;
+     if (!DirExists(rootLogFolderName.c_str())) {
+     if(!MakeDir(rootLogFolderName.c_str())) {
+     PRINT_NAMED_WARNING("Basestation.Init.RootLogDirCreateFailed", "Failed to create folder %s\n", rootLogFolderName.c_str());
+     return BS_END_INIT_ERROR;
+     }
+     
+     }
+     
+     // Create folder for log
+     std::string logFolderName = rootLogFolderName + "/" + GetCurrentDateTime() + "/";
+     if(!MakeDir(logFolderName.c_str())) {
+     PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s\n", logFolderName.c_str());
+     return BS_END_INIT_ERROR;
+     }
+     
+     // Save config to log folder
+     Json::StyledStreamWriter writer;
+     std::ofstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
+     writer.write(jsonFile, config);
+     jsonFile.close();
+     
+     
+     // Setup recording modules
+     Comms::IComms *replacementComms = NULL;
+     recordingPlaybackModule_ = new Recording();
+     status = ConvertStatus(recordingPlaybackModule_->Init(robot_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_ROBOT_COMMS_LOG_FILE));
+     robot_comms = replacementComms;
+     
+     uiRecordingPlaybackModule_ = new Recording();
+     status = ConvertStatus(uiRecordingPlaybackModule_->Init(ui_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_UI_COMMS_LOG_FILE));
+     ui_comms = replacementComms;
+     break;
+     }
+     
+     case BM_PLAYBACK_SESSION:
+     {
+     // Get log folder from config
+     std::string logFolderName;
+     if (!JsonTools::GetValueOptional(config, AnkiUtil::kP_PLAYBACK_LOG_FOLDER, logFolderName)) {
+     PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotSpecified", "\n");
+     return BS_END_INIT_ERROR;
+     }
+     logFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR + string("/") + logFolderName + "/";
+     
+     
+     // Check if folder exists
+     if (!DirExists(logFolderName.c_str())) {
+     PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotFound", "%s\n", logFolderName.c_str());
+     return BS_END_INIT_ERROR;
+     }
+     
+     // Load configuration json from playback log folder
+     Json::Reader reader;
+     std::ifstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
+     reader.parse(jsonFile, config_);
+     jsonFile.close();
+     
+     
+     // Setup playback modules
+     Comms::IComms *replacementComms = NULL;
+     recordingPlaybackModule_ = new Playback();
+     status = ConvertStatus(recordingPlaybackModule_->Init(robot_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_ROBOT_COMMS_LOG_FILE));
+     robot_comms = replacementComms;
+     
+     uiRecordingPlaybackModule_ = new Playback();
+     status = ConvertStatus(uiRecordingPlaybackModule_->Init(ui_comms, &replacementComms, &config_, logFolderName + AnkiUtil::kP_UI_COMMS_LOG_FILE));
+     ui_comms = replacementComms;
+     break;
+     }
+     
+     case BM_DEFAULT:
+     break;
+     }
+     */
+  }
+  
+  Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
+  {
+    Result lastResult = RESULT_OK;
+    
+    _robotMgr.AddRobot(robotID, &_robotMsgHandler);
+    Robot* robot = _robotMgr.GetRobotByID(robotID);
+    if(nullptr == robot) {
+      PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).\n", robotID);
+      lastResult = RESULT_FAIL;
+    } else {
+      lastResult = robot->SyncTime();
+    }
+    
+    return lastResult;
+  }
+  
   
   int CozmoEngineHostImpl::GetNumRobots() const
   {
-    return _basestation.GetNumRobots();
+    return _robotMgr.GetNumRobots();
   }
   
   Robot* CozmoEngineHostImpl::GetRobotByID(const RobotID_t robotID)
   {
-    return _basestation.GetRobotByID(robotID);
+    return _robotMgr.GetRobotByID(robotID);
+  }
+  
+  std::vector<RobotID_t> const& CozmoEngineHostImpl::GetRobotIDList() const
+  {
+    return _robotMgr.GetRobotIDList();
   }
   
   bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
@@ -401,7 +535,7 @@ namespace Cozmo {
     }
     
     // Another exception for hosts: have to tell the basestation to add the robot as well
-    _basestation.AddRobot(whichRobot);
+    AddRobot(whichRobot);
     
     return result;
   }
@@ -416,38 +550,40 @@ namespace Cozmo {
      
     // Update robot comms
     if(_robotComms.IsInitialized()) {
-      _robotComms.Update();
+      // Receive messages but don't send queued messages
+      _robotComms.Update(false);
     }
     
     if(_isListeningForRobots) {
       _robotAdvertisementService.Update();
     }
     
-    if(!_isBasestationStarted) {
-      StartBasestation();
-    }
+    // Update time
+    BaseStationTimer::getInstance()->UpdateTime(currTime_ns);
     
-    _basestation.Update(currTime_ns);
+    _robotMsgHandler.ProcessMessages();
     
-    /*
-    if(_isBasestationStarted) {
-      // TODO: Handle different basestation return codes
-      _basestation.Update(currTime_ns);
-    } else if(_robotComms.GetNumConnectedDevices() >= _config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR].asInt()) {
-      // We have connected to enough robots and devices:
-      StartBasestation();
-    } else {
-      // Tics advertisement service
-      _robotAdvertisementService.Update();
-    }
-     */
+    // Let the robot manager do whatever it's gotta do to update the
+    // robots in the world.
+    _robotMgr.UpdateAllRobots();
+    
+    // Send messages
+    _robotComms.Update();
     
     return RESULT_OK;
   } // UpdateInternal()
   
-  bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+  bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
   {
-    return _basestation.GetCurrentRobotImage(robotId, img, newerThanTime);
+    Robot* robot = _robotMgr.GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      return robot->GetCurrentImage(img, newerThanTime);
+    } else {
+      PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentRobotImage.InvalidRobotID",
+                        "Image requested for invalid robot ID = %d.\n", robotID);
+      return false;
+    }
   }
   
 #if 0
@@ -490,6 +626,10 @@ namespace Cozmo {
   
   Robot* CozmoEngineHost::GetRobotByID(const RobotID_t robotID) {
     return _hostImpl->GetRobotByID(robotID);
+  }
+  
+  std::vector<RobotID_t> const& CozmoEngineHost::GetRobotIDList() const {
+    return _hostImpl->GetRobotIDList();
   }
   
 #if 0

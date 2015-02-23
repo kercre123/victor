@@ -276,6 +276,7 @@ namespace Cozmo {
     
     s32 _frameNumber;
     bool _autoExposure_enabled = true;
+    s32 _trackingIteration; // Simply for display at this point
     
     // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
     /*
@@ -354,8 +355,8 @@ namespace Cozmo {
        static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
        */
       static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
-      static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
-      static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
+      static const s32 ONCHIP_BUFFER_SIZE  = 2000000;
+      static const s32 CCM_BUFFER_SIZE     = 2000000;
       
       static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
       

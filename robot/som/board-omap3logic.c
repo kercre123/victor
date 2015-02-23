@@ -106,8 +106,8 @@ static struct regulator_consumer_supply omap3logic_vmmc1_supply = {
 static int kim_suspend(struct platform_device *plat, pm_message_t msg)
 {
 	printk("%s:\n", __FUNCTION__);
-	
-/* This is a work around for DM3730 TI errata: 
+
+/* This is a work around for DM3730 TI errata:
    "Usage Note 2.9 GPIO Is Driving Random Values When Device Returns From OFF Mode"
 */
 	gpio_direction_input(DM37_TORP_WIFI_BT_EN_GPIO);
@@ -117,8 +117,8 @@ static int kim_suspend(struct platform_device *plat, pm_message_t msg)
 static int kim_resume(struct platform_device *plat)
 {
 	printk("%s:\n", __FUNCTION__);
-	
-/* This is a work around for DM3730 TI errata: 
+
+/* This is a work around for DM3730 TI errata:
    "Usage Note 2.9 GPIO Is Driving Random Values When Device Returns From OFF Mode"
 */
 	gpio_direction_output(DM37_TORP_WIFI_BT_EN_GPIO, 1);
@@ -272,17 +272,17 @@ static int twl_set_voltage(void *data, int target_uV)
         struct voltagedomain *voltdm = (struct voltagedomain *)data;
 	int retval = 0;
 
-	/* Disable voltage processor Module */	
+	/* Disable voltage processor Module */
 	/* Disable SmartReflex Module */
 	omap_sr_disable(voltdm);
-	
-	/* Force SMSPS voltage update using FORCEUPDATE bit of the voltage processor */	
+
+	/* Force SMSPS voltage update using FORCEUPDATE bit of the voltage processor */
 	retval = voltdm_scale(voltdm, target_uV);
-	
-	/* Enable voltage processor Module */	
+
+	/* Enable voltage processor Module */
 	/* Enable SmartReflex Module */
 	omap_sr_enable(voltdm);
-	
+
 	return retval;
 }
 
@@ -504,12 +504,12 @@ static struct gpio_led omap3logic_leds[] = {
 		.active_low		= true,
 	},
 };
- 
+
 static struct gpio_led_platform_data omap3logic_led_data = {
 	.leds		= omap3logic_leds,
 	.num_leds	= 0,	/* Initialized in omap3logic_led_init() */
  };
- 
+
 static struct platform_device omap3logic_led_device = {
 	.name	= "leds-gpio",
 	.id	= -1,
@@ -605,7 +605,7 @@ static struct twl4030_gpio_platform_data omap3logic_gpio_data = {
 	.irq_base	= TWL4030_GPIO_IRQ_BASE,
 	.irq_end	= TWL4030_GPIO_IRQ_END,
 	.use_leds	= true,
-	.pullups	= BIT(1)  | BIT(7) 
+	.pullups	= BIT(1)  | BIT(7)
 #if 1
 	| BIT(8)
 #endif
@@ -979,7 +979,7 @@ static int omap3logic_enable_vaux4(struct v4l2_subdev *subdev, u32 on)
 		if (regerr) {
 			printk(KERN_INFO "%s: error disabling vaux4 regulator\n", __FUNCTION__);
 		}
-		
+
 	}
 	return regerr;
 }
@@ -1015,7 +1015,7 @@ static struct ov2686_platform_data omap3logic_ov2686_platform_data = {
 };
 
 static struct i2c_board_info omap3logic_ov2686_board_info = {
-  I2C_BOARD_INFO("ov2686", 0x78),
+  I2C_BOARD_INFO("ov2686", 0x3c),
   .platform_data = &omap3logic_ov2686_platform_data,
 };
 
@@ -1502,7 +1502,7 @@ static int omap3logic_init_isp1763(void)
                printk(KERN_ERR "Failed to request GPMC mem for ISP1763\n");
                return -ENOMEM;
        }
-       
+
        omap3logic_isp1763_resources[0].start = cs_mem_base;
        omap3logic_isp1763_resources[0].end = cs_mem_base + 0xffff;
 
@@ -1801,17 +1801,17 @@ static void omap3logic_spi_init(void)
 #ifdef CONFIG_OMAP3LOGIC_SPI3_CS0
 	omap3logic_spi_devices[nspi++] = omap3logic_spi3_expansion_board_cs0;
 	if (machine_is_dm3730_som_lv())
-		omap_mux_init_signal("sdmmc2_dat3.mcspi3_cs0", OMAP_PIN_INPUT); 
+		omap_mux_init_signal("sdmmc2_dat3.mcspi3_cs0", OMAP_PIN_INPUT);
 	else
-		omap_mux_init_signal("etk_d2.mcspi3_cs0", OMAP_PIN_INPUT); 
+		omap_mux_init_signal("etk_d2.mcspi3_cs0", OMAP_PIN_INPUT);
 	use_mcspi3=1;
 #endif
 #ifdef CONFIG_OMAP3LOGIC_SPI3_CS1
 	omap3logic_spi_devices[nspi++] = omap3logic_spi3_expansion_board_cs1;
 	if (machine_is_dm3730_som_lv())
-		omap_mux_init_signal("sdmmc2_dat2.mcspi3_cs1", OMAP_PIN_INPUT); 
+		omap_mux_init_signal("sdmmc2_dat2.mcspi3_cs1", OMAP_PIN_INPUT);
 	else
-		omap_mux_init_signal("etk_d7.mcspi3_cs1", OMAP_PIN_INPUT); 
+		omap_mux_init_signal("etk_d7.mcspi3_cs1", OMAP_PIN_INPUT);
 	use_mcspi3=1;
 #endif
 
@@ -1854,7 +1854,7 @@ int brf6300_request_shutdown_gpio(struct brf6300_platform_data *pdata)
 	if (IS_ERR(sys_clkout1_clk)) {
 		printk("%s: Can't get sys_clkout1\n", __FUNCTION__);
 		return -1;
-	}    
+	}
 	clk_enable(sys_clkout1_clk);
 
 	ret = gpio_request(pdata->shutdown_gpio, "BT_nSHUTDOWN");
@@ -1904,7 +1904,7 @@ void brf6300_set_debug_gpio(struct brf6300_platform_data *pdata, int which, int 
 		gpio_set_value(pdata->debug_gpio1, value);
 	else
 		gpio_set_value(pdata->debug_gpio2, value);
-		
+
 }
 #endif
 
@@ -1999,16 +1999,20 @@ static void dm3730logic_camera_init(void)
 //        omap_mux_init_signal("cam_xclkb.cam_xclkb", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_pclk.cam_pclk", OMAP_PIN_INPUT);
 
+#if 0
         omap_mux_init_signal("cam_d0.cam_d0", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d1.cam_d1", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d2.cam_d2", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d3.cam_d3", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d4.cam_d4", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d5.cam_d5", OMAP_PIN_INPUT);
+#else
+	printk("COZMO disabling undriven cam_d0..6\n");
+#endif
         omap_mux_init_signal("cam_d6.cam_d6", OMAP_PIN_INPUT);
         omap_mux_init_signal("cam_d7.cam_d7", OMAP_PIN_INPUT);
 
-#if 1
+#if 0
 	printk("%s: muxing 8-bit interface (cam_d0-cam_d7)\n", __FUNCTION__);
 #else
 	printk("%s: muxing 12-bit interface (cam_d0-cam_d11)\n", __FUNCTION__);
@@ -2072,7 +2076,7 @@ void omap3logic_cf_init(void)
 
 	omap3logic_som_lv_cf_resources[0].start = cs_mem_base;
 	omap3logic_som_lv_cf_resources[0].end = cs_mem_base + 0x1fff;
-	
+
 	omap_mux_init_signal("gpmc_ncs3", OMAP_PIN_OUTPUT);
 	omap_mux_init_signal("gpmc_io_dir", OMAP_PIN_OUTPUT);
 
@@ -2200,7 +2204,7 @@ static void __init omap3logic_opp_init(void)
 			 *   junction temp
 			 * !! TODO: add 90C junction temp
 			 *          throttle service   */
-		
+
 			/* Enable IVA 660Mhz opp */
 			if (iva_dev)
 				ret |= opp_enable(iva_dev, 660000000);
@@ -2208,7 +2212,7 @@ static void __init omap3logic_opp_init(void)
 				pr_err("%s: failed to enable opp %d\n",
 					__func__, ret);
 
-				/* Cleanup - disable the higher freqs 
+				/* Cleanup - disable the higher freqs
 				 * - we don't care about the results */
 				opp_disable(mpu_dev, 800000000);
 				if (iva_dev)
@@ -2294,7 +2298,7 @@ static void __init omap3logic_init(void)
 		omap3_mux_init(board_mux, OMAP_PACKAGE_CBP);
 	else if (machine_is_omap3530_lv_som() || machine_is_omap3_torpedo())
 		omap3_mux_init(board_mux, OMAP_PACKAGE_CBB);
-		
+
 	omap3torpedo_fix_pbias_voltage();
 	omap3logic_i2c_init();
 	omap3logic_lcd_init();

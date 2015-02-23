@@ -180,8 +180,8 @@ namespace Anki {
         numSamplingRegions            = 5;
         
         // Split total samples between fiducial and interior
-        numInteriorSamples            = 250;
-        numFiducialEdgeSamples        = 250;
+        numInteriorSamples            = 500;
+        numFiducialEdgeSamples        = 500;
         
         if(numFiducialEdgeSamples > 0) {
           scaleTemplateRegionPercent    = 1.f - FIDUCIAL_SQUARE_WIDTH_FRACTION;

@@ -8,6 +8,10 @@ add_executable(run_captureImages
   run_captureImages.cpp 
 )
 
+target_link_libraries(libCaptureImages
+  ${ALL_EMBEDDED_LIBRARIES}
+)
+
 target_link_libraries(run_captureImages
   ${ALL_EMBEDDED_LIBRARIES}
   libCaptureImages

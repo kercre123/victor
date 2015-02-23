@@ -15,7 +15,7 @@
 #include "anki/messaging/basestation/IComms.h"
 #include "comms/commsRecorder.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/basestation.h"
+
 //#include "basestation/version.h"
 //#include "basestation/ui/messaging/messageQueue.h"
 //#include "basestation/ui/messaging/messages/reproducibilityMessage.h"

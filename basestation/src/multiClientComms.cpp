@@ -19,11 +19,6 @@
 
 #include "anki/cozmo/basestation/multiClientComms.h"
 
-// The number of bytes that can be sent out per call to Update(),
-// the assumption being Update() is called once per basestation tic.
-#define MAX_SENT_BYTES_PER_TIC 1000  // Roughly 5 * 20 BLE packets which is the "maximum" amount BLE can send per tic.
-
-
 #define DEBUG_COMMS 0
 
 namespace Anki {
@@ -37,8 +32,19 @@ namespace Cozmo {
     
   }
   
-  Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort)
+  Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic)
   {
+    if(isInitialized_) {
+      PRINT_NAMED_WARNING("MultiClientComms.Init",
+                          "Already initialized, disconnecting all devices and from "
+                          "advertisement servier, then will re-initialize.\n");
+      
+      DisconnectAllDevices();
+      advertisingChannelClient_.Disconnect();
+      isInitialized_ = false;
+    }
+    
+    maxSentBytesPerTic_ = maxSentBytesPerTic;
     advertisingHostIP_ = advertisingHostIP;
     
     if(false == advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort)) {
@@ -74,9 +80,10 @@ namespace Cozmo {
     // once to more closely emulate BTLE.
 
     #if(DO_SIM_COMMS_LATENCY)
+    /*
     // If no send latency, just send now
     if (SIM_SEND_LATENCY_SEC == 0) {
-      if (bytesSentThisUpdateCycle_ + p.dataLen > MAX_SENT_BYTES_PER_TIC) {
+      if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
         #if(DEBUG_COMMS)
         PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message\n");
         #endif
@@ -85,11 +92,11 @@ namespace Cozmo {
         return RealSend(p);
       }
     }
-    
+    */
     // Otherwise add to send queue
-    sendMsgPackets_.emplace_back(std::piecewise_construct,
-                                 std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
-                                 std::forward_as_tuple(p));
+    sendMsgPackets_[p.destId].emplace_back(std::piecewise_construct,
+                                           std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
+                                           std::forward_as_tuple(p));
     
     // Fake the number of bytes sent
     size_t numBytesSent = sizeof(RADIO_PACKET_HEADER) + sizeof(u32) + p.dataLen;
@@ -103,23 +110,26 @@ namespace Cozmo {
     connectedDevicesIt_t it = connectedDevices_.find(p.destId);
     if (it != connectedDevices_.end()) {
       
-      // Wrap message in header/footer
-      char sendBuf[512]; // TODO: probaly larger than we need (b/c we are sending long strings)
-      int sendBufLen = 0;
-
       bool isTCP = it->second.protocol == Anki::Comms::TCP;
       
       if (isTCP) {
+        // Wrap message in header/footer
+        char sendBuf[p.dataLen + 10]; // Extra bytes for TCP header stuff
+        int sendBufLen = 0;
+        
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         sendBufLen += sizeof(RADIO_PACKET_HEADER);
         sendBuf[sendBufLen++] = p.dataLen;
         sendBuf[sendBufLen++] = p.dataLen >> 8;
         sendBuf[sendBufLen++] = 0;
         sendBuf[sendBufLen++] = 0;
+        memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
+        sendBufLen += p.dataLen;
+        return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
+      } else {
+        return ((UdpClient*)it->second.client)->Send((char*)p.data, p.dataLen);
       }
-
-      memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
-      sendBufLen += p.dataLen;
+    
 
       /*
       printf("SENDBUF (hex): ");
@@ -128,22 +138,13 @@ namespace Cozmo {
       PrintBytesUInt(sendBuf, sendBufLen);
       printf("\n");
       */
-      
-      //return it->second.client->Send(sendBuf, sendBufLen);
-      
-      if (isTCP) {
-        return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
-      } else {
-        return ((UdpClient*)it->second.client)->Send(sendBuf, sendBufLen);
-      }
-      
     }
     return -1;
     
   }
   
   
-  void MultiClientComms::Update()
+  void MultiClientComms::Update(bool send_queued_msgs)
   {
     
     f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -205,21 +206,30 @@ namespace Cozmo {
     //printf("TIME %f: Total: %d, rel: %d\n", currTime, recvdMsgPackets_.size(), numRecvRdyMsgs_);
     
     // Send messages that are scheduled to be sent, up to the outgoing bytes limit.
-    bytesSentThisUpdateCycle_ = 0;
-    while (!sendMsgPackets_.empty()) {
-      if (sendMsgPackets_.front().first <= currTime) {
-        
-        if (bytesSentThisUpdateCycle_ + sendMsgPackets_.front().second.dataLen > MAX_SENT_BYTES_PER_TIC) {
-          #if(DEBUG_COMMS)
-          PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", sendMsgPackets_.size() - 1);
-          #endif
-          break;
+    if (send_queued_msgs) {
+      bytesSentThisUpdateCycle_ = 0;
+      std::map<int, PacketQueue_t>::iterator sendQueueIt = sendMsgPackets_.begin();
+      while (sendQueueIt != sendMsgPackets_.end()) {
+        PacketQueue_t* pQueue = &(sendQueueIt->second);
+        while (!pQueue->empty()) {
+          if (pQueue->front().first <= currTime) {
+            
+            if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + pQueue->front().second.dataLen > maxSentBytesPerTic_)) {
+              #if(DEBUG_COMMS)
+              PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", pQueue->size() - 1);
+              #endif
+              break;
+            }
+            bytesSentThisUpdateCycle_ += pQueue->front().second.dataLen;
+            if (RealSend(pQueue->front().second) < 0) {
+              PRINT_NAMED_WARNING("MultiClientComms.RealSendFail", "");
+            }
+            pQueue->pop_front();
+          } else {
+            break;
+          }
         }
-        bytesSentThisUpdateCycle_ += sendMsgPackets_.front().second.dataLen;
-        RealSend(sendMsgPackets_.front().second);
-        sendMsgPackets_.pop_front();
-      } else {
-        break;
+        ++sendQueueIt;
       }
     }
     #endif  // #if(DO_SIM_COMMS_LATENCY)
@@ -557,7 +567,14 @@ namespace Cozmo {
     #endif
   };
   
-  
+  u32 MultiClientComms::GetNumMsgPacketsInSendQueue(int devID)
+  {
+    std::map<int, PacketQueue_t>::iterator it = sendMsgPackets_.find(devID);
+    if (it != sendMsgPackets_.end()) {
+      return it->second.size();
+    }
+    return 0;
+  }
   
 }  // namespace Cozmo
 }  // namespace Anki

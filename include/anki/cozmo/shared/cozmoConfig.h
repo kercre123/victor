@@ -149,6 +149,12 @@ namespace Anki {
     const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
     const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
+    // How fast (in mm/sec) can a wheel spin at max
+#ifdef COZMO2
+    const f32 MAX_WHEEL_SPEED_MMPS = 120.f;
+#else
+    const f32 MAX_WHEEL_SPEED_MMPS = 170.f;
+#endif
     
     /***************************************************************************
      *
@@ -246,6 +252,9 @@ namespace Anki {
     // Comms types for UI-game comms
     #define USE_UDP_UI_COMMS 1
     
+    const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 1000;
+    const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;
+    
     // Packet headers/footers:
     // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
     const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
@@ -266,7 +275,10 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-        
+    
+    // Rate at which the robot advertises itself
+    const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
+    
     // Port on which registered robots advertise.
     const u32 ROBOT_ADVERTISING_PORT = 5100;
     

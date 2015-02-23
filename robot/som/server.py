@@ -10,15 +10,14 @@ import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
+PRINT_FRAMERATE = False
 
 MTU = 1500
-
-CLIENT_IDLE_TIMEOUT = 100.0
 
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
 
-    CLIENT_IDLE_TIMEOUT = 100.0
+    CLIENT_IDLE_TIMEOUT = 1.0
 
     def __init__(self, address):
         "Initalize the server and start listening on UDP"
@@ -27,9 +26,11 @@ class CozmoServer(socket.socket):
         self.bind(address)
         self.settimeout(0)
         self.poller = select.poll()
-        self.poller.register(self, select.POLLIN)
-        self.subServers = [camServer.CameraSubServer(self.poller, VERBOSE),
-                           mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)]
+        self.poller.register(self, select.POLLIN | select.POLLOUT)
+        cam = camServer.CameraSubServer(self.poller, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)
+        self.subServers = [cam, mcu]
+        mcu.timestampCB = cam.updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
 
@@ -65,29 +66,41 @@ class CozmoServer(socket.socket):
 
     def step(self, timeout=None):
         "One main loop iteration"
-        self.poller.poll(timeout)
+        didSome = False
+        if timeout is not 0:
+            self.poller.poll(timeout)
         recvData = self.clientRecv(MTU)
+        if recvData is not None:
+            didSome = True
         for ss in self.subServers:
-            outMsg = ss.poll(recvData)
-            if outMsg:
-                self.clientSend(outMsg)
+            outMsgs = ss.poll(recvData)
+            if outMsgs:
+                didSome = True
+                for m in outMsgs:
+                    self.clientSend(m)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
+            sys.stdout.write("Going to standby\n")
+            sys.stdout.flush()
             for ss in self.subServers:
                 ss.standby()
             self.client = None
+        return didSome
 
     def run(self, loopHz):
         "Run main loop with target frequency"
         targetPeriod = 1.0/loopHz
+        didSome = False
         while True:
             st = time.time()
-            self.step(targetPeriod)
+            didSome = self.step(0.0 if didSome else targetPeriod)
             if PRINT_INTERVAL: sys.stdout.write('%d ms\n' % int((time.time()-st)*1000))
 
 
 if __name__ == '__main__':
-    if '-v' in sys.argv: VERBOSE = True
-    if '-i' in sys.argv: PRINT_INTERVAL = True
+    if '-v'  in sys.argv: VERBOSE = True
+    if '-vv' in sys.argv: VERBOSE = 10
+    if '-i'  in sys.argv: PRINT_INTERVAL = True
+    if '-f'  in sys.argv: PRINT_FRAMERATE = True
     address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)

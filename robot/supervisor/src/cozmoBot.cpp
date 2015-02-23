@@ -259,6 +259,10 @@ namespace Anki {
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
+          TestModeController::Start(TM_NONE);
+          SteeringController::ExecuteDirectDrive(0,0);
+          LiftController::SetAngularVelocity(0);
+          HeadController::SetAngularVelocity(0);
           wasConnected_ = false;
         }
 

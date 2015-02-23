@@ -149,21 +149,21 @@ namespace Anki {
       f32 avgSpeed = (*higherWheelSpeed + *lowerWheelSpeed) * 0.5f;
       
       // Center speeds on 0 if wheelSpeedDiff exceeds maximum achievable wheel speed
-      if (wheelSpeedDiff > 2*WheelController::MAX_WHEEL_SPEED_MM_S) {
+      if (wheelSpeedDiff > 2*MAX_WHEEL_SPEED_MMPS) {
         *higherWheelSpeed -= avgSpeed;
         *lowerWheelSpeed -= avgSpeed;
       }
       
       // If higherWheelSpeed exceeds max, decrease both wheel speeds
-      if (*higherWheelSpeed > WheelController::MAX_WHEEL_SPEED_MM_S) {
-        *lowerWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
-        *higherWheelSpeed -= *higherWheelSpeed - WheelController::MAX_WHEEL_SPEED_MM_S;
+      if (*higherWheelSpeed > MAX_WHEEL_SPEED_MMPS) {
+        *lowerWheelSpeed -= *higherWheelSpeed - MAX_WHEEL_SPEED_MMPS;
+        *higherWheelSpeed -= *higherWheelSpeed - MAX_WHEEL_SPEED_MMPS;
       }
       
       // If lowerWheelSpeed is faster than negative max, increase both wheel speeds
-      if (*lowerWheelSpeed < -WheelController::MAX_WHEEL_SPEED_MM_S) {
-        *higherWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
-        *lowerWheelSpeed -= *lowerWheelSpeed + WheelController::MAX_WHEEL_SPEED_MM_S;
+      if (*lowerWheelSpeed < -MAX_WHEEL_SPEED_MMPS) {
+        *higherWheelSpeed -= *lowerWheelSpeed + MAX_WHEEL_SPEED_MMPS;
+        *lowerWheelSpeed -= *lowerWheelSpeed + MAX_WHEEL_SPEED_MMPS;
       }
       
       // TODO: Should we also make sure that neither the left or right wheel is

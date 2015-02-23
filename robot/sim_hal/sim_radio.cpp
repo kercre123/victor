@@ -52,27 +52,20 @@ namespace Anki {
     }
 
     // Register robot with advertisement service
-    void RegisterRobot()
+    void AdvertiseRobot()
     {
-      regMsg.enableAdvertisement = 1;
+      static TimeStamp_t lastAdvertisedTime = 0;
+      if (lastAdvertisedTime + ROBOT_ADVERTISING_PERIOD_MS < HAL::GetTimeStamp()) {
       
-      PRINT("sim_radio: Sending registration for robot %d at address %s on port %d\n", regMsg.id, regMsg.ip, regMsg.port);
-      advRegClient.Send((char*)&regMsg, sizeof(regMsg));
-    }
-    
-    // Deregister robot with advertisement service
-    void DeregisterRobot()
-    {
-      regMsg.enableAdvertisement = 0;
+        PRINT("sim_radio: Sending registration for robot %d at address %s on port %d (time: %u)\n",
+              regMsg.id, regMsg.ip, regMsg.port, HAL::GetTimeStamp());
+        regMsg.enableAdvertisement = 1;
+        regMsg.oneShot = 1;
+        advRegClient.Send((char*)&regMsg, sizeof(regMsg));
+        
+        lastAdvertisedTime = HAL::GetTimeStamp();
+      }
       
-      PRINT("sim_radio: Sending deregistration for robot %d\n", regMsg.id);
-      advRegClient.Send((char*)&regMsg, sizeof(regMsg));
-    }
-    
-    // Is robot registered with advertisement service
-    bool IsRobotRegistered()
-    {
-      return regMsg.enableAdvertisement == 1;
     }
     
     const char* const HAL::GetLocalIP()
@@ -141,7 +134,6 @@ namespace Anki {
       regMsg.protocol = (USE_UDP_ROBOT_COMMS == 1) ? Anki::Comms::UDP : Anki::Comms::TCP;
       memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
       
-      RegisterRobot();
       recvBufSize_ = 0;
       
       return RESULT_OK;
@@ -152,14 +144,10 @@ namespace Anki {
       return server.HasClient();
     }
 
-    void DisconnectRadio(void)
+    void HAL::DisconnectRadio(void)
     {
-#if(USE_UDP_ROBOT_COMMS==0)
       server.DisconnectClient();
-#endif
       recvBufSize_ = 0;
-      
-      RegisterRobot();
     }
     
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
@@ -244,7 +232,7 @@ namespace Anki {
         recvBufSize_ += dataSize;
       } else if (dataSize < 0) {
         // Something went wrong
-        DisconnectRadio();
+        HAL::DisconnectRadio();
       }
       
       return recvBufSize_;
@@ -374,13 +362,13 @@ namespace Anki {
     void RadioUpdate()
     {
 #if(USE_UDP_ROBOT_COMMS)
-      if(server.HasClient() && IsRobotRegistered()) {
-        DeregisterRobot();
+      if (!server.HasClient()) {
+        AdvertiseRobot();
       }
 #else
       if(!server.HasClient()) {
-        if (server.Accept()) {
-          DeregisterRobot();
+        if (!server.Accept()) {
+          AdvertiseRobot();
         }
       }
 #endif

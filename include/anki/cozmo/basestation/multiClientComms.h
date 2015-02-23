@@ -66,7 +66,9 @@ namespace Cozmo {
     MultiClientComms();
     
     // Init with the IP address to use as the advertising host
-    Result Init(const char* advertisingHostIP, int advertisingPort);
+    // and the maximum number of bytes that can be sent out per call to Update().
+    // If maxSentBytesPerTic == 0, then there is no limit.
+    Result Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic = 0);
     
     // The destructor will automatically cleans up
     virtual ~MultiClientComms();
@@ -88,9 +90,11 @@ namespace Cozmo {
     
     //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp);
   
+    // Return the number of MsgPackets in the send queue that are bound for devID
+    virtual u32 GetNumMsgPacketsInSendQueue(int devID);
     
     // Updates the list of advertising devices
-    void Update();
+    virtual void Update(bool send_queued_msgs = true);
     
     // Connect to a device.
     // Returns true if successfully connected
@@ -126,6 +130,10 @@ namespace Cozmo {
     // Connects to "advertising" server to view available unconnected devices.
     UdpClient advertisingChannelClient_;
     
+    // The number of bytes that can be sent out per call to Update(),
+    // the assumption being Update() is called once per basestation tic.
+    unsigned int maxSentBytesPerTic_;
+    
     void ReadAllMsgPackets();
     
     void PrintRecvBuf(int robotID);
@@ -150,7 +158,8 @@ namespace Cozmo {
     u32 numRecvRdyMsgs_;
     
     // Queue of messages to be sent with the times they should be sent at
-    PacketQueue_t sendMsgPackets_;
+    // (key: dev id)
+    std::map<int, PacketQueue_t> sendMsgPackets_;
 
     // The actual function that does the sending when we're simulating latency
     int RealSend(const Comms::MsgPacket &p);

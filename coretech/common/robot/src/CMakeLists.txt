@@ -20,3 +20,7 @@ add_library(CoreTech_Common_Robot
 set_target_properties(CoreTech_Common_Robot PROPERTIES
   FOLDER "CoreTech"#/Robot"
 )
+
+target_link_libraries(CoreTech_Common_Robot
+  jsoncpp
+  ${OPENCV_LIBS})

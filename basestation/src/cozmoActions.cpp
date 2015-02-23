@@ -29,16 +29,18 @@ namespace Anki {
  
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction() //, const Pose3d& pose)
+    DriveToPoseAction::DriveToPoseAction(const bool useManualSpeed) //, const Pose3d& pose)
     : _isGoalSet(false)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
+    , _useManualSpeed(useManualSpeed)
+    , _startedTraversingPath(false)
     {
       
     }
     
-    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose)
-    : DriveToPoseAction()
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed)
+    : DriveToPoseAction(useManualSpeed)
     {
       SetGoal(pose);
     }
@@ -75,6 +77,8 @@ namespace Anki {
       
       ActionResult result = SUCCESS;
       
+      _startedTraversingPath = false;
+      
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.CheckPreconditions.NoGoalSet",
                           "Goal must be set before running this action.\n");
@@ -90,7 +94,7 @@ namespace Anki {
         else if(robot.GetPathToPose(_goalPose, p) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
-        else if(robot.ExecutePath(p) != RESULT_OK) {
+        else if(robot.ExecutePath(p, _useManualSpeed) != RESULT_OK) {
           result = FAILURE_ABORT;
         }
       }
@@ -102,23 +106,28 @@ namespace Anki {
     {
       IAction::ActionResult result = IAction::RUNNING;
       
-      // Wait until robot reports it is no longer traversing a path
-      if(robot.IsTraversingPath())
-      {
-        // If the robot is traversing a path, consider replanning it
-        if(robot.GetBlockWorld().DidObjectsChange())
+      if(!_startedTraversingPath) {
+        // Wait until robot reports it has started traversing the path
+        _startedTraversingPath = robot.IsTraversingPath();
+        
+      } else {
+        // Wait until robot reports it is no longer traversing a path
+        if(robot.IsTraversingPath())
         {
-          Planning::Path newPath;
-          switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+          // If the robot is traversing a path, consider replanning it
+          if(robot.GetBlockWorld().DidObjectsChange())
           {
-            case IPathPlanner::DID_PLAN:
+            Planning::Path newPath;
+            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
             {
-              // clear path, but flag that we are replanning
+              case IPathPlanner::DID_PLAN:
+              {
+                // clear path, but flag that we are replanning
               robot.ClearPath();
               _forceReplanOnNextWorldChange = false;
               
               PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
-              robot.ExecutePath(newPath);
+              robot.ExecutePath(newPath, _useManualSpeed);
               break;
             } // case DID_PLAN:
               
@@ -153,38 +162,41 @@ namespace Anki {
               // Don't do anything just proceed with the current plan...
               break;
             }
+                
               
-          } // switch(GetPlan())
-        } // if blocks changed
-        
-      } else {
-        Vec3f Tdiff;
-        
-        // HACK: Loosen z threshold bigtime:
-        const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
-        
-        if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
-        {
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
-                           "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
-                           robot.GetID(), Tdiff.Length());
+            } // switch(GetPlan())
+          } // if blocks changed
           
-          result = IAction::SUCCESS;
-        }
-        // The last path sent was definitely received by the robot
-        // and it is no longer executing it, but we appear to not be in position
-        else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
-                           "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
-                           Tdiff.Length(), robot.GetLastRecvdPathID());
-          result = IAction::FAILURE_RETRY;
-        }
-        else {
-          // Something went wrong: not in place and robot apparently hasn't
-          // received all that it should have
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
-                           "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
-          result = IAction::FAILURE_ABORT;
+        } else {
+          // No longer traversing the path, so check to see if we ended up in the right place
+          Vec3f Tdiff;
+          
+          // HACK: Loosen z threshold bigtime:
+          const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
+          
+          if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
+          {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
+                             "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
+                             robot.GetID(), Tdiff.Length());
+            
+            result = IAction::SUCCESS;
+          }
+          // The last path sent was definitely received by the robot
+          // and it is no longer executing it, but we appear to not be in position
+          else if (robot.GetLastSentPathID() == robot.GetLastRecvdPathID()) {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
+                             "Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d\n",
+                             Tdiff.Length(), robot.GetLastRecvdPathID());
+            result = IAction::FAILURE_RETRY;
+          }
+          else {
+            // Something went wrong: not in place and robot apparently hasn't
+            // received all that it should have
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
+                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
+            result = IAction::FAILURE_ABORT;
+          }
         }
       }
       
@@ -202,8 +214,9 @@ namespace Anki {
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType)
-    : _objectID(objectID)
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed)
+    : DriveToPoseAction(useManualSpeed)
+    , _objectID(objectID)
     , _actionType(actionType)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
@@ -271,7 +284,7 @@ namespace Anki {
           if(robot.GetPathToPose(possiblePoses, selectedIndex, p) != RESULT_OK) {
             result = FAILURE_ABORT;
           }
-          else if(robot.ExecutePath(p) != RESULT_OK) {
+          else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
             result = FAILURE_ABORT;
           }
           else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
@@ -336,8 +349,8 @@ namespace Anki {
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose)
-    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT)
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
+    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT, useManualSpeed)
     , _placementPose(placementPose)
     {
 
@@ -406,18 +419,18 @@ namespace Anki {
     
     IAction::ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
-      ActionResult result = SUCCESS;
-
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
       
       Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D,
-                         robot.GetPose().GetTranslation());
+                         robot.GetPose().GetTranslation(),
+                         robot.GetPose().GetParent());
       
       SetGoal(rotatedPose);
       
-      return result;
+      // Now that goal is set, call the base class init to send the path, etc.
+      return DriveToPoseAction::Init(robot);
     }
     
     
@@ -462,10 +475,12 @@ namespace Anki {
     // TODO: Define this as a constant parameter elsewhere
     #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
     
-    IDockAction::IDockAction(ObjectID objectID)
+    IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _maxPreActionPoseDistance(MAX_DISTANCE_TO_PREDOCK_POSE)
+    , _wasPickingOrPlacing(false)
+    , _useManualSpeed(useManualSpeed)
     {
       
     }
@@ -556,7 +571,8 @@ namespace Anki {
                          _dockMarker->GetCode(),
                          Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
         
-        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction) == RESULT_OK) {
+        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK) {
+          _wasPickingOrPlacing = false;
           return SUCCESS;
         } else {
           return FAILURE_ABORT;
@@ -570,7 +586,13 @@ namespace Anki {
     {
       ActionResult actionResult = RUNNING;
       
-      if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
+      if (!_wasPickingOrPlacing) {
+        // We have to see the robot went into pick-place mode once before checking
+        // to see that it has finished picking or placing below. I.e., we need to
+        // know the robot got the DockWithObject command sent in Init().
+        _wasPickingOrPlacing = robot.IsPickingOrPlacing();
+      }
+      else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         
@@ -587,11 +609,18 @@ namespace Anki {
         if(currentTime >= _waitToVerifyTime) {
           actionResult = Verify(robot);
           
+          // Go back to looking for markers (and stop tracking) when we finish,
+          // whether or not we succeeded?
+          robot.StartLookingForMarkers();
+          robot.StopDocking();
+          
+          /*
           // If docking fails, go back to looking for markers?
           if(actionResult != SUCCESS) {
             robot.StartLookingForMarkers();
             robot.StopDocking();
           }
+           */
         }
       }
       
@@ -601,8 +630,8 @@ namespace Anki {
     
 #pragma mark ---- PickAndPlaceObjectAction ----
     
-    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID)
-    : IDockAction(objectID)
+    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
     {
       
     }
@@ -839,8 +868,8 @@ namespace Anki {
     
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID)
-    : IDockAction(bridgeID)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
+    : IDockAction(bridgeID, useManualSpeed)
     {
       
     }
@@ -878,8 +907,8 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID)
-    : IDockAction(rampID)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
+    : IDockAction(rampID, useManualSpeed)
     {
 
     }
@@ -938,9 +967,10 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID)
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
     : _objectID(objectID)
     , _chosenAction(nullptr)
+    , _useManualSpeed(useManualSpeed)
     {
       
     }
@@ -981,10 +1011,10 @@ namespace Anki {
         if(object->GetType() == Bridge::Type::LONG_BRIDGE ||
            object->GetType() == Bridge::Type::SHORT_BRIDGE)
         {
-          _chosenAction = new CrossBridgeAction(_objectID);
+          _chosenAction = new CrossBridgeAction(_objectID, _useManualSpeed);
         }
         else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
-          _chosenAction = new AscendOrDescendRampAction(_objectID);
+          _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",

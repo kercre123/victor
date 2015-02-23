@@ -5,9 +5,11 @@
 // Comment this out to use the Torpedo UART (currently broken on 3.0)
 #define DEBUG_UART
 
+//#define UART_NON_ISR_PUT_CHAR
+
 #ifdef DEBUG_UART
 // Use the head debug cable UART
-#define BAUDRATE 3000000
+#define BAUDRATE 2900000 // Ask for this to actually get 3e6
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -76,6 +78,9 @@ namespace Anki
       
       static void UARTStartTransfer()
       {
+#if defined(UART_NON_ISR_PUT_CHAR)
+        return;
+#else
         int tail = m_writeTail;
         int length = m_writeHead - tail;
         if (length < 0)
@@ -93,6 +98,7 @@ namespace Anki
         m_isTransferring = true;
         
         DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
+#endif
       }
       
       int UARTGetFreeSpace()
@@ -229,21 +235,24 @@ namespace Anki
       // Add one char to the buffer, wrapping around
       static void BufPutChar(u8 c)
       {
+#if defined(UART_NON_ISR_PUT_CHAR)
+        UART->DR = c;
+        while (!(UART->SR & USART_FLAG_TXE))
+          ;
+        return;
+#else
         m_bufferWrite[m_writeHead] = c;
         m_writeHead++;
         if (m_writeHead >= sizeof(m_bufferWrite))
         {
           m_writeHead = 0;
         }
+#endif
       }
       
       int UARTPutChar(int c)
       {
-        //UART->DR = c;
-        //while (!(UART->SR & USART_FLAG_TXE))
-        //  ;
-        //return c;
-        
+       
         // Leave one guard byte in the buffer
         while (UARTGetFreeSpace() <= 2)
           ;
@@ -286,6 +295,12 @@ namespace Anki
 					
           BufPutChar(msgID);
           
+#if defined(UART_NON_ISR_PUT_CHAR)
+          for (int i=0; i<length; ++i)
+          {
+            BufPutChar(buffer[i]);
+          }
+#else          
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)
           {
@@ -312,9 +327,10 @@ namespace Anki
           {
             StartTransfer();
           }
+#endif
+
         }
         __enable_irq();
-        
         return result;
       }
 

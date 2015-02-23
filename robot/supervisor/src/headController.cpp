@@ -14,7 +14,12 @@ namespace HeadController {
     namespace {
       
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
-      
+
+      // Used when calling SetDesiredAngle with just an angle:
+      const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
+      const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
+      const f32 DEFAULT_DURATION_SEC     = 0.25f;
+
       // Head angle on startup
       //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
       
@@ -262,65 +267,8 @@ namespace HeadController {
       accel_rad_per_sec2 = accelRad_;
     }
     
-    
-    static void SetDesiredAngle_internal(f32 angle)
-    {
-      // Do range check on angle
-      angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
-      
-      // Exit early if already moving to the commanded angle
-      if (desiredAngle_ == angle && !inPosition_) {
-        return;
-      }
-      
-      desiredAngle_ = angle;
-      angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
-      
-#if(DEBUG_HEAD_CONTROLLER)
-      PRINT("HEAD: SetDesiredAngle %f rads\n", desiredAngle_.ToFloat());
-#endif
-      
-      f32 startRadSpeed = radSpeed_;
-      f32 startRad = currentAngle_.ToFloat();
-      if (!inPosition_) {
-        startRadSpeed = currDesiredRadVel_;
-        startRad = currDesiredAngle_;
-      } else {
-        startRadSpeed = 0;
-        angleErrorSum_ = 0.f;
-      }
-      
-      inPosition_ = false;
-
-      if (FLT_NEAR(angleError_,0.f)) {
-        inPosition_ = true;
-        #if(DEBUG_HEAD_CONTROLLER)
-        PRINT("Head: Already at desired position\n");
-        #endif
-        return;
-      }
-      
-      // Start profile of head trajectory
-      vpg_.StartProfile(startRadSpeed, startRad,
-                        maxSpeedRad_, accelRad_,
-                        approachSpeedRad_, desiredAngle_.ToFloat(),
-                        CONTROL_DT);
-      
-#if(DEBUG_HEAD_CONTROLLER)
-      PRINT("HEAD VPG: startVel %f, startPos %f, maxVel %f, endVel %f, endPos %f\n",
-            startRadSpeed, startRad, maxSpeedRad_, approachSpeedRad_, desiredAngle_.ToFloat());
-#endif
-
-      
-    } // SetDesiredAngle_internal()
-    
     void SetDesiredAngle(f32 angle) {
-      // Stop nodding if we were
-      if(IsNodding()) {
-        isNodding_ = false;
-      }
-      
-      SetDesiredAngle_internal(angle);
+      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
@@ -365,10 +313,16 @@ namespace HeadController {
                                                  CONTROL_DT);
       
       if (!res) {
-        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying other version of SetDesiredAngle()\n",
+        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
         
-        SetDesiredAngle_internal(angle);
+        //SetDesiredAngle_internal(angle);
+        // Start profile of head trajectory
+        vpg_.StartProfile(startRadSpeed, startRad,
+                          maxSpeedRad_, accelRad_,
+                          approachSpeedRad_, desiredAngle_.ToFloat(),
+                          CONTROL_DT);
+
       }
       
 #if(DEBUG_HEAD_CONTROLLER)
@@ -376,7 +330,7 @@ namespace HeadController {
             startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif
 
-    }
+    } // SetDesiredAngle_internal()
   
     void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {

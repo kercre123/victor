@@ -120,7 +120,8 @@ namespace Anki {
       float WheelPowerToAngSpeed(float power)
       {
         float speed_mm_per_s = 0;
-        
+
+#ifdef COZMO2
         // A minimum amount of power is required to actually move the wheels
         if (ABS(power) < MIN_WHEEL_POWER_FOR_MOTION) {
           return 0;
@@ -137,6 +138,21 @@ namespace Anki {
             speed_mm_per_s = (power + WheelController::TRANSITION_POWER) / WheelController::HIGH_OPEN_LOOP_GAIN -WheelController::TRANSITION_SPEED;
           }
         }
+#else
+        // Approximate inverse of the open-loop wheel formula used in wheelController
+        power = CLIP(power, -1.0, 1.0);
+        f32 x = ABS(power);
+        f32 x2 = x*x;
+        f32 x3 = x*x2;
+        if (x >= 0.15) {
+          speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
+          if (power < 0) {
+            speed_mm_per_s *= -1;
+          }
+        } else {
+          speed_mm_per_s = 0;
+        }
+#endif
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
@@ -192,12 +208,6 @@ namespace Anki {
     
     Result HAL::Init()
     {
-      // HACK
-      // This makes "sure" we give the robot advertisement service (running
-      // inside CozmoEngine inside "blockworld_controller") time to start
-      // before we send our registration message in InitSimRadio() below.
-      webotRobot_.step(100*Cozmo::TIME_STEP);
-      
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");

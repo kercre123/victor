@@ -37,9 +37,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 
-// TODO: Remove dependence on this include
-#include "anki/cozmo/basestation/basestation.h"
-
 #include "json/json.h"
 
 namespace Anki {
@@ -124,6 +121,7 @@ namespace Cozmo {
     
     int    GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
+    std::vector<RobotID_t> const& GetRobotIDList() const;
     
     // Overload to specially handle robot added by ForceAddRobot
     // TODO: Remove once we no longer need forced adds

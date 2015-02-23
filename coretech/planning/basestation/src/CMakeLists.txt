@@ -19,3 +19,6 @@ add_library(CoreTech_Planning_Basestation
 set_target_properties(CoreTech_Planning_Basestation PROPERTIES
   FOLDER "CoreTech"#/Basestation"
 )
+
+target_link_libraries(CoreTech_Planning_Basestation
+  CoreTech_Common_Basestation)

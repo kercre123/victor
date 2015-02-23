@@ -26,6 +26,14 @@ MARK_AS_ADVANCED(
                  
 SET(EXTRA_LIBS ${COCOA_LIBRARY} ${GLUT_LIBRARY} ${OpenGL_LIBRARY})
 
+target_link_libraries(libShowVoxels
+  CoreTech_Vision_Robot
+  CoreTech_Common_Robot
+  ${ALL_EMBEDDED_LIBRARIES}
+  SDL2-2.0
+  ${EXTRA_LIBS}
+)
+
 target_link_libraries(run_showVoxels
   CoreTech_Vision_Robot
   CoreTech_Common_Robot

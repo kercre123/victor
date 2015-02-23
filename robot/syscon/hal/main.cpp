@@ -30,8 +30,6 @@ void SystemInit(void)
   }
 }
 
-const u8 PIN_CHGEN = 5;  // 3.0
-
 const u8 PIN_LED1 = 18;
 const u8 PIN_LED2 = 19;
 
@@ -46,7 +44,9 @@ int main(void)
   BatteryInit();
   TimerInit();
   MotorsInit();   // Must init before power goes on
-  //UARTInit();  // XXX - do not enable unless you want neck cable to break
+#if defined(DO_MOTOR_TESTING)
+  UARTInit();
+#endif
   
   UARTPutString("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -55,15 +55,13 @@ int main(void)
   UARTPutString("too late!\r\n");
 
   // Finish booting up
+#ifndef DO_MOTOR_TESTING
   SPIInit();
-  PowerInit(); 
+#endif
+  PowerOn(); 
   
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
-  
-  // Force charger on for now
-  nrf_gpio_pin_clear(PIN_CHGEN);
-  nrf_gpio_cfg_output(PIN_CHGEN);
   
   // Status LED hack
   nrf_gpio_cfg_output(PIN_LED1);
@@ -78,32 +76,32 @@ int main(void)
   nrf_gpio_pin_set(PIN_LED2);
   while (1)
   {
-    UARTPutString("\nForward ends with...");
+    UARTPutString("\r\nForward ends with...");
     for (int i = 0; i < 2; i++)
       MotorsSetPower(i, 0x2000);   
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, 0x6800); 
     MotorsUpdate();
     MicroWait(5000);
-//    encoderAnalyzer();
     MotorsUpdate();
 
     MicroWait(500000);
-//    encoderAnalyzer();
-//    MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
-    //UARTPutString("\nBackward ends with...");
+    UARTPutString("\r\nBackward ends with...");
     
     for (int i = 0; i < 2; i++)    
       MotorsSetPower(i, -0x2000);
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, -0x6800); 
     MotorsUpdate();
     MicroWait(5000);
-//    encoderAnalyzer();
     MotorsUpdate();
 
     MicroWait(500000);
-//    encoderAnalyzer();
-//    MotorsPrintEncodersRaw();
+    MotorsPrintEncodersRaw();
     
-//    BatteryUpdate();
+    BatteryUpdate();
   }
   
 #else
@@ -162,7 +160,7 @@ int main(void)
          
     // Only call every loop through - not all the time
     MotorsUpdate();
-    //BatteryUpdate();
+    BatteryUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms

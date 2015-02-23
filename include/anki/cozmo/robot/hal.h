@@ -407,6 +407,8 @@ namespace Anki
       //
       bool RadioIsConnected();
 
+      void DisconnectRadio();
+
       Messages::ID RadioGetNextMessage(u8* buffer);
 
       // Returns true if the message has been sent to the basestation

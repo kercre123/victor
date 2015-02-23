@@ -1,16 +1,7 @@
 
 
-media-ctl -v -r -l '"ov2686":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]'
+media-ctl -v -r -l '"mt9p031":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]'
 
-media-ctl -v -f '"ov2686":0 [SBGGR12 1600x1200], "OMAP3 ISP CCDC":2 [SBGGR10 1600x1200], "OMAP3 ISP preview":1 [UYVY 1600x1200], "OMAP3 ISP resizer":1 [UYVY 400x1200]'
+media-ctl -v -f '"mt9p031":0 [SGRBG12 800x600], "OMAP3 ISP CCDC":2 [SGRBG10 800x600], "OMAP3 ISP preview":1 [UYVY 800x600], "OMAP3 ISP resizer":1 [UYVY 800x600]'
 
-gst-launch v4l2src device=/dev/video6 num-buffers=1 ! 'video/x-raw-yuv,format=(fourcc)UYVY,width=400,height=1200' ! TIImgenc1 engineName=codecServer codecName=jpegenc resolution=400x1200 iColorSpace=UYVY oColorSpace=YUV420P qValue=100 ! filesink location=still.jpg
-
-
-########################################################################################################################
-
-#media-ctl -v -r -l '"ov2686":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]'
-
-#media-ctl -v -f '"ov2686":0 [SBGGR8 1600x1200], "OMAP3 ISP CCDC":2 [SBGGR10 1600x1200], "OMAP3 ISP preview":1 [UYVY 1600x1200], "OMAP3 ISP resizer":1 [UYVY 1600x1200]'
-
-#gst-launch v4l2src device=/dev/video6 num-buffers=1 ! 'video/x-raw-yuv,format=(fourcc)UYVY,width=1600,height=1200' ! TIImgenc1 engineName=codecServer codecName=jpegenc resolution=1600x1200 iColorSpace=UYVY oColorSpace=YUV420P qValue=97 ! filesink location=still.jpg
+gst-launch --gst-debug=TIImgenc1:9,gsttiimgenc1:9 v4l2src device=/dev/video6 num-buffers=1 ! 'video/x-raw-yuv,format=(fourcc)UYVY,width=800,height=600' ! TIImgenc1 engineName=codecServer codecName=jpegenc resolution=800x600 iColorSpace=UYVY oColorSpace=YUV420P qValue=95 ! filesink location=still.jpg

@@ -23,14 +23,14 @@ static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H
 
 /*** Camera format definitions */
 
-#define OV2686_WIDTH 1600
-#define OV2686_HEIGHT 1200
+#define OV2686_WIDTH 800
+#define OV2686_HEIGHT 600
 
 static struct v4l2_mbus_framefmt FORMATS[] = {
   {
     .width  = OV2686_WIDTH,
     .height = OV2686_HEIGHT,
-    .code   = V4L2_MBUS_FMT_SBGGR12_1X12,
+    .code   = V4L2_MBUS_FMT_SGRBG12_1X12,
     .colorspace = V4L2_COLORSPACE_SRGB,
     .field      = V4L2_FIELD_NONE,
   },
@@ -45,14 +45,46 @@ static const u32 OV2686_WINDOW_MIN_HEIGHT = OV2686_HEIGHT;
 
 /*** Type definitions */
 
+struct ov2686_interval {
+  const struct OVRegSettings *regs;
+  const size_t reg_len;
+  struct v4l2_fract interval;
+};
+
 struct ov2686_info {
   struct v4l2_subdev subdev;
   struct media_pad pad;
   struct ov2686_platform_data *pdata;
+  const struct ov2686_interval *interval;
   struct mutex power_lock;
   int power_count;
   int streaming;
   int ident;
+};
+
+static const struct OVRegSettings ov2686_7p5fps[1] = {
+  {0x3086, 0x07, 0xff}
+};
+
+static const struct OVRegSettings ov2686_15fps[1] = {
+  {0x3086, 0x03, 0xff}
+};
+
+static const struct OVRegSettings ov2686_30fps[1] = {
+  {0x3086, 0x01, 0xff}
+};
+
+static const struct OVRegSettings ov2686_60fps[1] = {
+  {0x3086, 0x00, 0xff}
+};
+
+static const struct OVRegSettings OV2686_START = { 0x0100, 0x01, 0x01 };
+
+static const struct ov2686_interval ov2686_intervals[] = {
+  {ov2686_7p5fps, 1, { 7500, 1000000}},
+  {ov2686_15fps,  1, {15000, 1000000}},
+  {ov2686_30fps,  1, {30000, 1000000}},
+  {ov2686_60fps,  1, {60000, 1000000}},
 };
 
 /*** Functions */
@@ -203,6 +235,11 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
       ret = ov2686_reg_write(client, REG_SCRIPT[r].reg, REG_SCRIPT[r].val);
       if (ret < 0) return ret;
     }
+    printk(KERN_INFO "\tSending frame rate config to OV2686\n");
+    for (r=0; r<info->interval->reg_len; r++) {
+      ret = ov2686_reg_write(client, info->interval->regs[r].reg, info->interval->regs[r].val);
+      if (ret < 0) return ret;
+    }
 
     ret = ov2686_reg_read(client, 0x5080, &readVal);
     if (ret < 0) {
@@ -212,18 +249,55 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
     else {
       printk(KERN_INFO "\tReg 0x5080 = 0x%02x\n", readVal);
     }
-    ret = ov2686_reg_read(client, 0x0100, &readVal);
+
+    ret = ov2686_reg_write(client, OV2686_START.reg, OV2686_START.val);
     if (ret < 0) {
-      printk(KERN_WARNING "\tCouldn't read back register 0x0100, err %d\n", ret);
+      printk(KERN_WARNING "\tCouldn't enable streaming\n");
       return ret;
     }
     else {
-      printk(KERN_INFO "\tReg 0x0100 = 0x%02x\n", readVal);
+      printk(KERN_INFO "\tStreaming enabled\n");
     }
+
 
     info->streaming = 1;
   }
   return ret;
+}
+
+static int ov2686_get_frame_interval(struct v4l2_subdev *subdev, struct v4l2_subdev_frame_interval *fi) {
+  struct ov2686_info * info = to_state(subdev);
+  fi->interval = info->interval->interval;
+  return 0;
+}
+
+static int ov2686_set_frame_interval(struct v4l2_subdev *subdev, struct v4l2_subdev_frame_interval *fi) {
+  struct ov2686_info * info = to_state(subdev);
+  int i = 0;
+  int fr_time = 0;
+  unsigned int err = UINT_MAX;
+  unsigned int min_err = UINT_MAX;
+  const struct ov2686_interval *fiv = &ov2686_intervals[0];
+
+  if (fi->interval.denominator == 0) {
+    return -EINVAL;
+  }
+
+  printk(KERN_INFO "ov2686_s_frame_interval %d/%d\n", fi->interval.numerator, fi->interval.denominator);
+
+  fr_time = fi->interval.numerator * 10000 / fi->interval.denominator;
+  for (i = 0; i < ARRAY_SIZE(ov2686_intervals); i++) {
+    const struct ov2686_interval *iv = &ov2686_intervals[i];
+    err = abs((iv->interval.numerator * 10000/ iv->interval.denominator) - fr_time);
+    if (err < min_err) {
+      fiv = iv;
+      min_err = err;
+    }
+  }
+
+  info->interval = fiv;
+
+  return 0;
 }
 
 static int ov2686_enum_mbus_code(struct v4l2_subdev *subdev,
@@ -266,14 +340,18 @@ static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
                                       struct v4l2_subdev_frame_interval_enum *fie) {
   printk(KERN_INFO "ov2686_enum_frame_interval\n");
 
-  // Function stubbed out to only return 15 fps
+  // Function stubbed out to only return 30 fps
 
-  if (fie->index >= 1) {
+  if (fie->index > ARRAY_SIZE(ov2686_intervals)) {
     return -EINVAL;
   }
 
-  fie->interval.numerator   = 15000;
-  fie->interval.denominator = 1000000;
+  v4l_bound_align_image(&fie->width, OV2686_WINDOW_MIN_WIDTH,
+                        OV2686_WINDOW_MAX_WIDTH, 1,
+                        &fie->height, OV2686_WINDOW_MIN_HEIGHT,
+                        OV2686_WINDOW_MAX_HEIGHT, 1, 0);
+
+  fie->interval = ov2686_intervals[fie->index].interval;
 
   return 0;
 }
@@ -355,6 +433,8 @@ static int ov2686_set_crop(struct v4l2_subdev *subdev,
   return ov2686_get_crop(subdev, fh, crop);
 }
 
+
+
 static int ov2686_registered(struct v4l2_subdev *subdev) {
   struct i2c_client *client;
   struct ov2686_info *info;
@@ -422,7 +502,9 @@ static const struct v4l2_subdev_core_ops ov2686_subdev_core_ops = {
 };
 
 static const struct v4l2_subdev_video_ops ov2686_subdev_video_ops = {
-  .s_stream       = ov2686_s_stream,
+  .s_stream         = ov2686_s_stream,
+  .g_frame_interval = ov2686_get_frame_interval,
+  .s_frame_interval = ov2686_set_frame_interval,
 };
 
 static const struct v4l2_subdev_pad_ops ov2686_subdev_pad_ops = {
@@ -488,6 +570,8 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
     printk(KERN_WARNING "ov2686 media_entity_init failed: %d\n", ret);
     return ret;
   }
+
+  info->interval = &ov2686_intervals[0];
 
   info->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 

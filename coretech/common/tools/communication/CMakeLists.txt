@@ -75,4 +75,9 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     FOLDER "Tools"
   )
 
+  target_link_libraries(DebugStreamClient
+    CoreTech_Vision_Robot
+    CoreTech_Common_Robot
+    ${ALL_EMBEDDED_LIBRARIES})
+
 endif()

@@ -37,13 +37,13 @@ file(GLOB SOURCE_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.cpp")
 file(GLOB HEADER_FILES_UTILS_PARSECONSTS "utils/parsingConstants/*.h")
 
 # BLEManager subdirectory (not on iOS)
-if(NOT ANKI_IOS_BUILD)
-  file(GLOB_RECURSE SOURCE_FILES_BLEMGR "BLEManager/*.m*")
-  file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h")
-else()
+#if(NOT ANKI_IOS_BUILD)
+#  file(GLOB_RECURSE SOURCE_FILES_BLEMGR "BLEManager/*.m*")
+#  file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h”)
+#else()
   set(SOURCE_FILES_BLEMGR )
   set(HEADER_FILES_BLEMGR )
-endif(NOT ANKI_IOS_BUILD)
+#endif(NOT ANKI_IOS_BUILD)
 
 set(PRIVATE_HEADER_FILES 
   ${HEADER_FILES_ROOT} 
@@ -83,7 +83,7 @@ include_directories(${PROJECT_SOURCE_DIR}/basestation/src
 )
 
 # Enable ARC
-add_compile_options(-fobjc-arc)
+#add_compile_options(-fobjc-arc)
 
 add_library(Cozmo_Basestation 
   ${SOURCE_FILES} 
@@ -101,10 +101,12 @@ endif()
 
 target_link_libraries(Cozmo_Basestation 
   CoreTech_Common_Basestation 
+  CoreTech_Messaging_Basestation 
   CoreTech_Vision_Basestation 
   CoreTech_Planning_Basestation
   CoreTech_Vision_Robot  # TODO: Remove once we do basestation implementation of vision
   CoreTech_Common_Robot  # TODO: Remove once we do basestation implementation of vision
+  
   ${ZLIB_LIBRARY}
 )
 

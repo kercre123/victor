@@ -53,6 +53,7 @@ namespace Anki {
         // Measurements taken from a prototype cozmo.
         // Used to model open loop motor command in WheelController.
         //
+        // *** COZMO 2 ***
         // Power   LSpeed  RSpeed (approx,In-air speeds)
         // 1.0    120     125
         // 0.9    110     115
@@ -63,6 +64,23 @@ namespace Anki {
         // 0.4     38      39
         // 0.3     25      25
         // 0.25    -       -
+
+        // *** COZMO 3 (with clamping on, i.e. MAX_WHEEL_SPEED == 0.5) ***
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 0.1      0      0
+        // 0.15    15     15
+        // 0.2     50     40
+        // 0.25    70     60
+        // 0.3     90     80
+        // 0.35   104     96
+        // 0.4    120    112
+        // 0.5    137    131
+        // 0.6    150    145
+        // 0.7    155    153
+        // 0.8    165    164
+        // 0.9    170    173
+        // 1.0    174    177
+        
         
         f32 wheelPower_ = 0;
         f32 wheelPowerStep_ = 0.05;
@@ -176,6 +194,8 @@ namespace Anki {
         const f32 PLACE_ON_GROUND_DIST_Y = -10;
         const f32 PLACE_ON_GROUND_DIST_ANG = 0;
         
+        // Set to true if you want to manually specify the speed at which to dock to block
+        bool useManualSpeed_ = false;
         ////// End of PickAndPlaceTest ////
         
         
@@ -261,7 +281,7 @@ namespace Anki {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
             PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, PICKUP_ACTION);
+            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, PICKUP_ACTION);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
@@ -270,10 +290,10 @@ namespace Anki {
               if (PickAndPlaceController::DidLastActionSucceed()) {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
                   PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
-                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
+                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
                 }
                 pickAndPlaceState_ = PAP_PLACING;
               } else {
@@ -288,10 +308,10 @@ namespace Anki {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, DA_PLACE_HIGH);
+                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
-                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG);
+                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
                 }
               }
             }

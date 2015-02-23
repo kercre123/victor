@@ -141,8 +141,8 @@ namespace Anki {
       // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.5s delay
       virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.5f; }
       
-      // Before giving up on entire action. Optional: default is one minute
-      virtual f32 GetTimeoutInSeconds()          const { return 60.f; }
+      // Before giving up on entire action. Optional: default is 30 seconds
+      virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
       virtual void Reset() override;
       
