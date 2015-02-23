@@ -160,7 +160,7 @@ class UnityProjectIOS:
         cpp_file = os.path.join(self.build_dir, 'Libraries', 'RegisterMonoModules.cpp')
         cpp_file_in = "%s.in" % cpp_file
 
-        is_patched = os.path.isfile(cpp_file_in) and is_uptodate(cpp_file_in, cpp_file)
+        is_patched = os.path.isfile(cpp_file_in) and self.is_uptodate(cpp_file_in, cpp_file)
 
         if not is_patched:
             # mv src cpp to cpp.in 
