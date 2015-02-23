@@ -27,7 +27,7 @@ public class ImageTest : MonoBehaviour
 				//Debug.Log( "x: " + RobotEngineManager.instance.current.box.topLeft_x );
 				//Debug.Log( "y: " + RobotEngineManager.instance.current.box.topLeft_y );
 
-				actionButtonImage.rectTransform.anchoredPosition = new Vector2( RobotEngineManager.instance.current.box.topLeft_x, RobotEngineManager.instance.current.box.topLeft_y );
+				actionButtonImage.rectTransform.anchoredPosition = new Vector2( RobotEngineManager.instance.current.box.topLeft_x, -RobotEngineManager.instance.current.box.topLeft_y );
 
 				actionButtonText.text = "Action on ID: " + RobotEngineManager.instance.current.box.ID;
 
