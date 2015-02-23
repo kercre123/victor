@@ -179,7 +179,7 @@ class PlatformConfiguration(object):
         else:
             sys.exit('Cannot {1} platform of type "{0}"'.format(self.platform, self.options.command))
         
-        self.cmake_project_dir = os.path.join(self.options.output_dir, 'game-{0}'.format(self.platform))
+        self.cmake_project_dir = os.path.abspath(os.path.join(self.options.output_dir, 'game-{0}'.format(self.platform)))
         self.cmake_project_path = os.path.join(self.cmake_project_dir, 'CozmoGame{0}.xcodeproj'.format(game_suffix))
         
         if platform == 'ios':
@@ -246,6 +246,7 @@ class PlatformConfiguration(object):
         
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(REPO_ROOT),
+                'ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR={0}'.format(self.cmake_project_dir),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
                 'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',

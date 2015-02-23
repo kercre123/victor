@@ -774,13 +774,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)",
-					"\"$(SRCROOT)/Libraries\"",
-					"/Users/gregnage/cozmo-game/generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
-					"/Users/gregnage/cozmo-game/generated/game-ios/Xcode/lib/Debug",
-					"/Users/gregnage/coretech-external/build/opencv-ios/multiArchLibs",
-					"$(PROJECT_DIR)/build/unity/ios/Debug-iphoneos/Libraries",
-					"/Users/gregnage/cozmo-game/build/unity/ios/Debug-iphoneos/Libraries",
+					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/lib/anki/cozmo-engine/Xcode/lib/$(CONFIGURATION)",
+					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/Xcode/lib/$(CONFIGURATION)",
+					"$(ANKI_BUILD_UNITY_BUILD_DIR)/opencv",
+					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -819,13 +816,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)",
-					"\"$(SRCROOT)/Libraries\"",
-					"/Users/gregnage/cozmo-game/generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
-					"/Users/gregnage/cozmo-game/generated/game-ios/Xcode/lib/Debug",
-					"/Users/gregnage/coretech-external/build/opencv-ios/multiArchLibs",
-					"$(PROJECT_DIR)/build/unity/ios/Debug-iphoneos/Libraries",
-					"/Users/gregnage/cozmo-game/build/unity/ios/Debug-iphoneos/Libraries",
+					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/lib/anki/cozmo-engine/Xcode/lib/$(CONFIGURATION)",
+					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/Xcode/lib/$(CONFIGURATION)",
+					"$(ANKI_BUILD_UNITY_BUILD_DIR)/opencv",
+					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
