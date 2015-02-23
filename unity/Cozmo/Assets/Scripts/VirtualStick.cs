@@ -611,42 +611,50 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 		
 		if(UpModeEngaged) {
-			float angle = Vector2.Angle(Vector2.up, delta.normalized);
 
-			if(angle > 90f && !wasClockwise && !wasCounterClockwise) {
-				wasClockwise = delta.x > 0f;
-				wasCounterClockwise = delta.x < 0f;
- 			}
-			else if(angle <= 90f) { //release the rot direction locks if we have returned to the top half of circle
-				wasClockwise = false;
-				wasCounterClockwise = false;
-			}
+			if(verticalModeMaxAngleAllowance > 0f) {
+				float angle = Vector2.Angle(Vector2.up, delta.normalized);
 
-			if(angle > verticalModeMaxAngleAllowance) {
-				float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
-				delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * Vector2.up * delta.magnitude;
+				if(angle > 90f && !wasClockwise && !wasCounterClockwise) {
+					wasClockwise = delta.x > 0f;
+					wasCounterClockwise = delta.x < 0f;
+	 			}
+				else if(angle <= 90f) { //release the rot direction locks if we have returned to the top half of circle
+					wasClockwise = false;
+					wasCounterClockwise = false;
+				}
+
+				if(angle > verticalModeMaxAngleAllowance) {
+					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
+					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * Vector2.up * delta.magnitude;
+				}
 			}
-			
-			//res.y = Mathf.Max(0f, res.y);
+			else {
+				delta.y = Mathf.Max(0f, delta.y);
+			}
 		}
 		else if(DownModeEngaged) {
-			float angle = Vector2.Angle(-Vector2.up, delta.normalized);
 
-			if(angle > 90f && !wasClockwise && !wasCounterClockwise) {
-				wasClockwise = delta.x < 0f;
-				wasCounterClockwise = delta.x > 0f;
-			}
-			else if(angle <= 90f) { //release the rot direction locks if we have returned to the bottom half of circle
-				wasClockwise = false;
-				wasCounterClockwise = false;
-			}
+			if(verticalModeMaxAngleAllowance > 0f) {
+				float angle = Vector2.Angle(-Vector2.up, delta.normalized);
 
-			if(angle > verticalModeMaxAngleAllowance) {
-				float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
-				delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * -Vector2.up * delta.magnitude;
+				if(angle > 90f && !wasClockwise && !wasCounterClockwise) {
+					wasClockwise = delta.x < 0f;
+					wasCounterClockwise = delta.x > 0f;
+				}
+				else if(angle <= 90f) { //release the rot direction locks if we have returned to the bottom half of circle
+					wasClockwise = false;
+					wasCounterClockwise = false;
+				}
+
+				if(angle > verticalModeMaxAngleAllowance) {
+					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
+					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * -Vector2.up * delta.magnitude;
+				}
 			}
-			
-			//res.y = Mathf.Min(0f, res.y);
+			else {
+				delta.y = Mathf.Min(0f, delta.y);
+			}
 		}
 		
 		if(verticalAxisSnapAngle > 0f) {
@@ -672,6 +680,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 
 		stick.anchoredPosition = delta;
-		Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
+		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
 }

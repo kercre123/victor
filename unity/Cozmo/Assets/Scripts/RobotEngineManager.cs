@@ -21,14 +21,20 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	[SerializeField]
 	private TextAsset configuration;
+
+	[SerializeField]
+	[HideInInspector]
+	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
 	
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage; 
-	
+
 	private ChannelBase channel;
-	
+	private float lastRobotStateMessage = 0;
+	private bool isRobotConnected = false;
+
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
@@ -97,9 +103,16 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 	#endif
 	
-	private void Awake() {
-		if (instance != null) {
+	public void AddRobot( byte robotID )
+	{
+		robots.Add( robotID, new Robot( robotID ) );
+	}
+	
+	private void OnEnable()
+	{
+		if (instance != null && instance != this) {
 			Destroy (gameObject);
+			return;
 		} else {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
@@ -108,35 +121,37 @@ public class RobotEngineManager : MonoBehaviour {
 		Application.runInBackground = true;
 
 		robots = new Dictionary<int, Robot>();
-
 		AddRobot( Intro.CurrentRobotID );
-	}
-	
-	public void AddRobot( byte robotID )
-	{
-		robots.Add( robotID, new Robot( robotID ) );
-	}
-	
-	private void OnEnable()
-	{
+
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
 		channel.DisconnectedFromClient += Disconnected;
 		channel.MessageReceived += ReceivedMessage;
 	}
-	
+
 	private void OnDisable()
 	{
 		if (channel != null) {
-			Disconnect ();
+			if (channel.IsActive) {
+				Disconnect ();
+				Disconnected (DisconnectionReason.UnityReloaded);
+			}
+
 			channel = null;
 		}
 	}
-	
+	 
 	private void Update()
 	{
 		if (channel != null) {
 			channel.Update ();
+		}
+
+		float robotStateTimeout = 3.0f;
+		if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
+			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.");
+			Disconnect ();
+			Disconnected (DisconnectionReason.RobotConnectionTimedOut);
 		}
 	}
 	
@@ -147,9 +162,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public void Disconnect()
 	{
+		isRobotConnected = false;
 		if (channel != null) {
 			channel.Disconnect ();
-			
+
+			// only really needed in editor in case unhitting play
 			#if UNITY_EDITOR
 			float limit = Time.realtimeSinceStartup + 2.0f;
 			while (channel.HasPendingOperations) {
@@ -162,23 +179,33 @@ public class RobotEngineManager : MonoBehaviour {
 			#endif
 		}
 	}
-	
+
+	public DisconnectionReason GetLastDisconnectionReason()
+	{
+		DisconnectionReason reason = lastDisconnectionReason;
+		lastDisconnectionReason = DisconnectionReason.None;
+		return reason;
+	}
+	 
 	private void Connected(string connectionIdentifier)
 	{
 		if (ConnectedToClient != null) {
 			ConnectedToClient(connectionIdentifier);
 		}
 	}
-	
+	 
 	private void Disconnected(DisconnectionReason reason)
 	{
+		Debug.Log ("Disconnected: " + reason.ToString());
+		isRobotConnected = false;
 		Application.LoadLevel ("Shell");
-		
+
+		lastDisconnectionReason = reason;
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
 		}
 	}
-	
+
 	private void ReceivedMessage(NetworkMessage message)
 	{
 		switch (message.ID) {
@@ -239,9 +266,10 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotConnected message)
 	{
-		if (RobotConnected != null) {
-			RobotConnected((int)message.robotID);
-		}
+		// no longer a good indicator
+//		if (RobotConnected != null) {
+//			RobotConnected((int)message.robotID);
+//		}
 	}
 	
 	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
@@ -251,7 +279,8 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
 	{
-		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.2f") + " seconds.");
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.00") + " seconds.");
+		Disconnect ();
 		Disconnected (DisconnectionReason.RobotDisconnected);
 	}
 	
@@ -286,6 +315,16 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_RobotState message )
 	{
+		if (!isRobotConnected) {
+			Debug.Log ("Robot " + message.robotID.ToString() + " sent first state message.");
+			isRobotConnected = true;
+			if (RobotConnected != null) {
+			    RobotConnected(message.robotID);
+			}
+		}
+
+		lastRobotStateMessage = Time.realtimeSinceStartup;
+
 		if( !robots.ContainsKey( message.robotID ) )
 		{
 			Debug.Log( "adding robot with ID: " + message.robotID );
