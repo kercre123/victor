@@ -19,9 +19,12 @@ const int microsecondsPerFrame = 33333;
 const int microsecondPause = microsecondsPerFrame/2; // TODO: pick a good value
 const int totalPeriodFrames = 15;
 const int totalPeriodMicroseconds = totalPeriodFrames * microsecondsPerFrame; //500000;
+const int framesOff = 3;
 
-int whichLeds[3] = {0, 1, 2};
-int numOnFrames[3] = {5, 5, 2};
+// int whichLeds[3] = {0, 1, 2};
+// int numOnFrames[3] = {5, 5, 2};
+int whichLeds[3] = {0, 2, 1};
+int numOnFrames[3] = {8, 4, 0};
 
 // For bHood style car LEDs
 #define LIGHT_ON LOW
@@ -50,9 +53,6 @@ void updateTimings()
     const int bufferLength = 64;
     char buffer[bufferLength];
 
-    int local_whichLeds[3] = {-1, -1, -1};
-    int local_numOnFrames[3] = {-1, -1, -1};
-
     delay(100);
 
     int i;
@@ -68,30 +68,34 @@ void updateTimings()
 
     //Serial.println(buffer);
 
-    // Example: 0,5,1,5,2,2
-    sscanf(buffer, "%d,%d,%d,%d,%d,%d", &local_whichLeds[0], &local_numOnFrames[0], &local_whichLeds[1], &local_numOnFrames[1], &local_whichLeds[2], &local_numOnFrames[2]);
 
     bool isValid = true;
-
-    int totalOnFrames = 0;
-
-    for(int i=0; i<3; i++) {
-      totalOnFrames += local_numOnFrames[i];
-      if(local_whichLeds[i] < 0 || local_whichLeds[i] > 2 || local_numOnFrames[i] < 0 || whichLeds[i] < 0 || whichLeds[i] > 2) {
+    bool isRed;
+    if(buffer[0] == 'r' || buffer[0] == 'R') {
+      isRed = true;
+    } else if(buffer[0] == 'b' || buffer[0] == 'B') {
+      isRed = false;
+    } else {
+      isValid = false;
+    } 
+    
+    int numFramesFirst = -1;
+    if(isValid) {
+      numFramesFirst = strtol(buffer+1, NULL, 10);
+      //sscanf(buffer+1, "%d", &local_whichLeds[0], &local_numOnFrames[0], &local_whichLeds[1], &local_numOnFrames[1], &local_whichLeds[2], &local_numOnFrames[2]);
+  
+      if(numFramesFirst < 1 || numFramesFirst > (totalPeriodFrames-1-framesOff)) {
         isValid = false;
-        break;
       }
     }
     
-    if(totalOnFrames >= totalPeriodFrames) {
-      isValid = false;
-    }
-    
-    snprintf(buffer, bufferLength, "%d,%d,%d,%d,%d,%d", local_whichLeds[0], local_numOnFrames[0], local_whichLeds[1], local_numOnFrames[1], local_whichLeds[2], local_numOnFrames[2]);
     Serial.println(buffer);
+    
+    //snprintf(buffer, bufferLength, "%c %d", buffer[0], isRed);
+    //Serial.println(buffer);
 
     if(!isValid) {
-      Serial.println("Invalid input. Use format: whichLed0, numOnFrames0, whichLed1, numOnFrames1, whichLed2, numOnFrames2");
+      Serial.println("Invalid input. Use format: R# or B#");
       return;
     }
 
@@ -100,9 +104,20 @@ void updateTimings()
       Serial.read();
     }
     
-    for(int i=0; i<3; i++) {
-      whichLeds[i] = local_whichLeds[i];
-      numOnFrames[i] = local_numOnFrames[i];
+    if(isRed) {
+      whichLeds[0] = 0;
+      whichLeds[1] = 2;
+      whichLeds[2] = 1;
+      numOnFrames[0] = numFramesFirst;
+      numOnFrames[1] = totalPeriodFrames - framesOff - numFramesFirst;
+      numOnFrames[2] = 0;
+    } else {
+      whichLeds[0] = 2;
+      whichLeds[1] = 0;
+      whichLeds[2] = 1;
+      numOnFrames[0] = numFramesFirst;
+      numOnFrames[1] = totalPeriodFrames - framesOff - numFramesFirst;
+      numOnFrames[2] = 0;
     }
   } // if(Serial.available()) {
 } // void updateTimings()
