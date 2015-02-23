@@ -36,16 +36,23 @@ struct OVRegSettings
 {
   u16 reg;
   u8  val;
+  u8  mask;
+};
+
+struct OVRegScript
+{
+  u32 len;
+  OVRegSettings* script;
 };
 """)
     fh.write("""
-static struct OVRegSettings REG_SCRIPT[%d] = {
+static struct OVRegSettings REG_SCRIPT_DATA[%d] = {
 """ % (len(data),))
     for reg in data:
         fh.write("  { 0x%04x, 0x%02x, 0xff },\n" % reg)
     fh.write("""};
 
-const size_t REG_SCRIPT_LEN = %d;
+static struct OVRegScript REG_SCRIPT = { %d, REG_SCRIPT_DATA };
 """ % len(data))
     fh.close()
 
