@@ -631,6 +631,7 @@ namespace Anki {
       // =========  Block messages  ============
       Result SendFlashBlockIDs();
       Result SendSetBlockLights(const u8 blockID, const u32* color);
+      void ActiveBlockLightTest(const u8 blockID);  // For testing
       
       
     }; // class Robot
