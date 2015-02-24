@@ -419,7 +419,7 @@ namespace Anki
       // BLOCK COMMS
       //
       void FlashBlockIDs();
-      Result SetBlockLight(const u8 blockID, const u32 color);
+      Result SetBlockLight(const u8 blockID, const u32* color);
       
       
       /////////////////////////////////////////////////////////////////////

@@ -27,6 +27,8 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -2192,7 +2194,7 @@ namespace Anki {
     }
     
       
-    Result Robot::SetBlockLights(const u8 blockID, const u32 color)
+    Result Robot::SetBlockLights(const u8 blockID, const u32* color)
     {
       return SendSetBlockLights(blockID, color);
     }
@@ -2265,11 +2267,11 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
       
-    Result Robot::SendSetBlockLights(const u8 blockID, const u32 color)
+    Result Robot::SendSetBlockLights(const u8 blockID, const u32* color)
     {
       MessageSetBlockLights m;
       m.blockID = blockID;
-      m.color = color;
+      std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
       return _msgHandler->SendMessage(GetID(), m);
     }
     

@@ -8,6 +8,7 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -946,11 +947,11 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32 color) {
+    Result HAL::SetBlockLight(const u8 blockID, const u32* color) {
       
       Anki::Cozmo::BlockMessages::SetBlockLights m;
-      for (int i=0; i<8; ++i) {
-        m.color[i] = color;
+      for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+        m.color[i] = color[i];
       }
       
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);

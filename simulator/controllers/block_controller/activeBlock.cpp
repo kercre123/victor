@@ -182,7 +182,8 @@ namespace Anki {
         
         const double g = 9;
         TopFrontFacePair fp = Xz;
-      
+        //printf("ActiveBlock accel: %f %f %f\n", x, y, z);
+        
         
         if (x > g) {
           fp = Xz;
@@ -197,7 +198,7 @@ namespace Anki {
         } else if (z < -g) {
           fp = zx;
         } else {
-          printf("WARN: Block is moving. Orientation unknown\n");
+          //printf("WARN: Block is moving. Orientation unknown\n");
         }
         
         return fp;

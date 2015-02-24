@@ -390,7 +390,8 @@ namespace Anki {
      
       
       // =========  Block messages  ============
-      Result SetBlockLights(const u8 blockID, const u32 color);
+      // color: The desired colors of each LED ordered by BlockLEDPosition
+      Result SetBlockLights(const u8 blockID, const u32* color);
       
       
       // Abort everything the robot is doing, including path following, actions,
@@ -629,7 +630,7 @@ namespace Anki {
       
       // =========  Block messages  ============
       Result SendFlashBlockIDs();
-      Result SendSetBlockLights(const u8 blockID, const u32 color);
+      Result SendSetBlockLights(const u8 blockID, const u32* color);
       
       
     }; // class Robot
