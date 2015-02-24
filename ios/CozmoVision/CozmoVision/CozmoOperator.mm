@@ -24,10 +24,20 @@ using namespace Anki;
 @property (strong, nonatomic) NSMutableArray* robotConnectedListeners;
 @property (strong, nonatomic) NSMutableArray* uiDeviceConnectedListeners;
 
+@property (strong, nonatomic) NSString* forceAddRobotIP;
+
 @end
 
 @implementation CozmoOperator
 {
+  enum UIState {
+    UI_WAITING_FOR_GAME,
+    UI_RUNNING
+  };
+  
+  UIState _uiState;
+  
+  
   Cozmo::GameMessageHandler* _gameMsgHandler;
   Cozmo::GameComms* _gameComms;
 }
@@ -122,6 +132,8 @@ using namespace Anki;
 {
   self.robotConnectedListeners = [[NSMutableArray alloc] init];
   self.uiDeviceConnectedListeners = [[NSMutableArray alloc] init];
+  
+  _uiState = UI_WAITING_FOR_GAME;
 }
 
 - (void)dealloc
@@ -281,10 +293,65 @@ using namespace Anki;
       [self initMessageHandler];
     }
   } else {
-    _gameMsgHandler->ProcessMessages();
-  }
+    
+    switch(_uiState) {
+      case UI_WAITING_FOR_GAME:
+      {
+        if (!_gameComms->HasClient()) {
+          return;
+        } else {
+          // Once gameComms has a client, tell the engine to start, force-add
+          // robot if necessary, and switch states in the UI
+          
+          // TODO: Do this from UI. Currently CozmoEngineWrapper calls StartEngine directly
+          /*
+           NSLog(@"Sending StartEngine message.\n");
+           
+           MessageU2G_StartEngine msg;
+           msg.asHost = 1; // TODO: Support running as client?
+           std::string vizIpStr = "127.0.0.1";
+           std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
+           std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
+           msgHandler_.SendMessage(1, msg); // TODO: don't hardcode ID here
+           */
+          
+          if(false && _forceAddRobotIP != nil) {
+            NSLog(@"Sending message to force-add robot at IP %@.\n", _forceAddRobotIP);
+            Cozmo::MessageU2G_ForceAddRobot msg;
+            std::string tempStr = [_forceAddRobotIP UTF8String];
+            
+            std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+            std::copy(tempStr.begin(), tempStr.end(), msg.ipAddress.begin());
+            
+            msg.isSimulated = false;
+            msg.robotID = 1;
+            
+            [self sendMessage:msg];
+          }
+          
+          _uiState = UI_RUNNING;
+        }
+        break;
+      }
+        
+      case UI_RUNNING:
+      {
+        
+        _gameMsgHandler->ProcessMessages();
+        
+        break;
+      }
+    } // switch(uiState)
+  } // if/else
+  
 }
 
+#pragma MARK - Communications
+
+- (void)forceAddRobot:(NSString *)ipAddress
+{
+  _forceAddRobotIP = ipAddress;
+}
 
 #pragma mark - Drive Cozmo
 
@@ -512,7 +579,7 @@ using namespace Anki;
   Cozmo::MessageU2G_SetRobotImageSendMode message;
   // HACK
   message.mode = (enable ? 1 : 0); // 1 is ISM_STREAM, 0 is ISM_OFF
-  message.resolution = Vision::CAMERA_RES_QQQVGA;
+  message.resolution = Vision::CAMERA_RES_QVGA;
   
   [self sendMessage:message];
 }

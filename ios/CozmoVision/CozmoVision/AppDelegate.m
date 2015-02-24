@@ -39,7 +39,15 @@
   N = [NSUserDefaults lastNumUiDevices];
   [self.cozmoEngineWrapper setNumUiDevicesToWaitFor:N];
   
-
+  ipAddress = [NSUserDefaults lastForceAddIP];
+  if (ipAddress) {
+    [self.cozmoEngineWrapper setForceAddIP:ipAddress];
+    BOOL doForceAdd = [NSUserDefaults lastDoForceAdd];
+    [self.cozmoEngineWrapper setDoForceAdd:doForceAdd];
+  } else {
+    [self.cozmoEngineWrapper setDoForceAdd:NO];
+  }
+  
   return YES;
 }
 

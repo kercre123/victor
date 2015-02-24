@@ -7,14 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9BE1A31664A00EF0E90 /* libCoreTech_Common_Basestation.a */; };
-		4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9BF1A31664A00EF0E90 /* libCoreTech_Common_Robot.a */; };
-		4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C01A31664A00EF0E90 /* libCoreTech_Messaging_Basestation.a */; };
-		4967D9D11A32447800EF0E90 /* libCoreTech_Planning_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C11A31664A00EF0E90 /* libCoreTech_Planning_Basestation.a */; };
-		4967D9D21A32447800EF0E90 /* libCoreTech_Vision_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C21A31664A00EF0E90 /* libCoreTech_Vision_Basestation.a */; };
-		4967D9D31A32447800EF0E90 /* libCoreTech_Vision_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C31A31664A00EF0E90 /* libCoreTech_Vision_Robot.a */; };
-		4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9C41A31664A00EF0E90 /* libCozmo_Basestation.a */; };
-		4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4967D9CC1A32429800EF0E90 /* libjsoncpp.a */; };
 		4967D9D71A326C8A00EF0E90 /* CozmoEngineWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4967D9D61A326C8900EF0E90 /* CozmoEngineWrapper.mm */; };
 		499F44E31A255B120050A530 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E21A255B120050A530 /* main.m */; };
 		499F44E61A255B120050A530 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 499F44E51A255B120050A530 /* AppDelegate.m */; };
@@ -29,8 +21,16 @@
 		499F451A1A25672E0050A530 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45111A25672E0050A530 /* Foundation.framework */; };
 		499F451B1A25672E0050A530 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45121A25672E0050A530 /* QuartzCore.framework */; };
 		499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 499F45131A25672E0050A530 /* UIKit.framework */; };
+		49AC84061A9BFD0E008CCE56 /* libCozmo_Game.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC84051A9BFD0E008CCE56 /* libCozmo_Game.a */; };
+		49AC840F1A9BFD27008CCE56 /* libCoreTech_Common_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC84071A9BFD26008CCE56 /* libCoreTech_Common_Basestation.a */; };
+		49AC84101A9BFD27008CCE56 /* libCoreTech_Common_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC84081A9BFD26008CCE56 /* libCoreTech_Common_Robot.a */; };
+		49AC84111A9BFD27008CCE56 /* libCoreTech_Messaging_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC84091A9BFD26008CCE56 /* libCoreTech_Messaging_Basestation.a */; };
+		49AC84121A9BFD27008CCE56 /* libCoreTech_Planning_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC840A1A9BFD26008CCE56 /* libCoreTech_Planning_Basestation.a */; };
+		49AC84131A9BFD27008CCE56 /* libCoreTech_Vision_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC840B1A9BFD26008CCE56 /* libCoreTech_Vision_Basestation.a */; };
+		49AC84141A9BFD27008CCE56 /* libCoreTech_Vision_Robot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC840C1A9BFD26008CCE56 /* libCoreTech_Vision_Robot.a */; };
+		49AC84151A9BFD27008CCE56 /* libCozmo_Basestation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC840D1A9BFD27008CCE56 /* libCozmo_Basestation.a */; };
+		49AC84161A9BFD27008CCE56 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AC840E1A9BFD27008CCE56 /* libjsoncpp.a */; };
 		49AD65661A5F1A7400376685 /* CvVideoCameraReorient.m in Sources */ = {isa = PBXBuildFile; fileRef = 49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */; };
-		49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AD65681A64853200376685 /* libCozmo_Game.a */; };
 		49B269191A369F7900135486 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49B269181A369F7900135486 /* opencv2.framework */; };
 		49C2C6791A41019600AA0F27 /* CozmoObsObjectBBox.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */; };
 		49C305E71A42437000CCA87B /* ObservedObjectSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 49C305E61A42437000CCA87B /* ObservedObjectSelector.m */; };
@@ -83,9 +83,18 @@
 		499F45111A25672E0050A530 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		499F45121A25672E0050A530 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		499F45131A25672E0050A530 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		49AC84031A9BFCE1008CCE56 /* CozmoWorkspace_iOS.xcworkspace */ = {isa = PBXFileReference; lastKnownFileType = wrapper.workspace; name = CozmoWorkspace_iOS.xcworkspace; path = ../../generated/CozmoWorkspace_iOS.xcworkspace; sourceTree = "<group>"; };
+		49AC84051A9BFD0E008CCE56 /* libCozmo_Game.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Game.a; path = "../../generated/game-ios/Xcode/lib/Debug/libCozmo_Game.a"; sourceTree = "<group>"; };
+		49AC84071A9BFD26008CCE56 /* libCoreTech_Common_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Basestation.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Common_Basestation.a"; sourceTree = "<group>"; };
+		49AC84081A9BFD26008CCE56 /* libCoreTech_Common_Robot.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Common_Robot.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Common_Robot.a"; sourceTree = "<group>"; };
+		49AC84091A9BFD26008CCE56 /* libCoreTech_Messaging_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Messaging_Basestation.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Messaging_Basestation.a"; sourceTree = "<group>"; };
+		49AC840A1A9BFD26008CCE56 /* libCoreTech_Planning_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Planning_Basestation.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Planning_Basestation.a"; sourceTree = "<group>"; };
+		49AC840B1A9BFD26008CCE56 /* libCoreTech_Vision_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Vision_Basestation.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Vision_Basestation.a"; sourceTree = "<group>"; };
+		49AC840C1A9BFD26008CCE56 /* libCoreTech_Vision_Robot.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCoreTech_Vision_Robot.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCoreTech_Vision_Robot.a"; sourceTree = "<group>"; };
+		49AC840D1A9BFD27008CCE56 /* libCozmo_Basestation.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Basestation.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libCozmo_Basestation.a"; sourceTree = "<group>"; };
+		49AC840E1A9BFD27008CCE56 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = "../../generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug/libjsoncpp.a"; sourceTree = "<group>"; };
 		49AD65651A5F1A7400376685 /* CvVideoCameraReorient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CvVideoCameraReorient.m; sourceTree = "<group>"; };
 		49AD65671A5F1A8900376685 /* CvVideoCameraReorient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CvVideoCameraReorient.h; sourceTree = "<group>"; };
-		49AD65681A64853200376685 /* libCozmo_Game.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmo_Game.a; path = ../../build_ios/multiArchLibs/libCozmo_Game.a; sourceTree = "<group>"; };
 		49B269181A369F7900135486 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = opencv2.framework; path = "../../../../coretech-external/build/opencv-ios/opencv2.framework"; sourceTree = "<group>"; };
 		49C2C6771A41019600AA0F27 /* CozmoObsObjectBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CozmoObsObjectBBox.h; sourceTree = "<group>"; };
 		49C2C6781A41019600AA0F27 /* CozmoObsObjectBBox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CozmoObsObjectBBox.m; sourceTree = "<group>"; };
@@ -129,15 +138,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				49AD65691A64853200376685 /* libCozmo_Game.a in Frameworks */,
-				4967D9CE1A32447800EF0E90 /* libCoreTech_Common_Basestation.a in Frameworks */,
-				4967D9CF1A32447800EF0E90 /* libCoreTech_Common_Robot.a in Frameworks */,
-				4967D9D01A32447800EF0E90 /* libCoreTech_Messaging_Basestation.a in Frameworks */,
-				4967D9D11A32447800EF0E90 /* libCoreTech_Planning_Basestation.a in Frameworks */,
-				4967D9D21A32447800EF0E90 /* libCoreTech_Vision_Basestation.a in Frameworks */,
-				4967D9D31A32447800EF0E90 /* libCoreTech_Vision_Robot.a in Frameworks */,
-				4967D9D41A32447800EF0E90 /* libCozmo_Basestation.a in Frameworks */,
-				4967D9D51A32447800EF0E90 /* libjsoncpp.a in Frameworks */,
+				49AC840F1A9BFD27008CCE56 /* libCoreTech_Common_Basestation.a in Frameworks */,
+				49AC84101A9BFD27008CCE56 /* libCoreTech_Common_Robot.a in Frameworks */,
+				49AC84111A9BFD27008CCE56 /* libCoreTech_Messaging_Basestation.a in Frameworks */,
+				49AC84121A9BFD27008CCE56 /* libCoreTech_Planning_Basestation.a in Frameworks */,
+				49AC84131A9BFD27008CCE56 /* libCoreTech_Vision_Basestation.a in Frameworks */,
+				49AC84141A9BFD27008CCE56 /* libCoreTech_Vision_Robot.a in Frameworks */,
+				49AC84151A9BFD27008CCE56 /* libCozmo_Basestation.a in Frameworks */,
+				49AC84161A9BFD27008CCE56 /* libjsoncpp.a in Frameworks */,
+				49AC84061A9BFD0E008CCE56 /* libCozmo_Game.a in Frameworks */,
 				499F451C1A25672E0050A530 /* UIKit.framework in Frameworks */,
 				499F45141A25672E0050A530 /* Accelerate.framework in Frameworks */,
 				499F45151A25672E0050A530 /* AssetsLibrary.framework in Frameworks */,
@@ -197,7 +206,16 @@
 		499F44D41A255B120050A530 = {
 			isa = PBXGroup;
 			children = (
-				49AD65681A64853200376685 /* libCozmo_Game.a */,
+				49AC84071A9BFD26008CCE56 /* libCoreTech_Common_Basestation.a */,
+				49AC84081A9BFD26008CCE56 /* libCoreTech_Common_Robot.a */,
+				49AC84091A9BFD26008CCE56 /* libCoreTech_Messaging_Basestation.a */,
+				49AC840A1A9BFD26008CCE56 /* libCoreTech_Planning_Basestation.a */,
+				49AC840B1A9BFD26008CCE56 /* libCoreTech_Vision_Basestation.a */,
+				49AC840C1A9BFD26008CCE56 /* libCoreTech_Vision_Robot.a */,
+				49AC840D1A9BFD27008CCE56 /* libCozmo_Basestation.a */,
+				49AC840E1A9BFD27008CCE56 /* libjsoncpp.a */,
+				49AC84051A9BFD0E008CCE56 /* libCozmo_Game.a */,
+				49AC84031A9BFCE1008CCE56 /* CozmoWorkspace_iOS.xcworkspace */,
 				4967D9DF1A32902D00EF0E90 /* JSON Config */,
 				499F44DF1A255B120050A530 /* CozmoVision */,
 				499F44DE1A255B120050A530 /* Products */,
@@ -631,6 +649,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
+					"/Users/andrew/Code/cozmo-game/build_xcode/game_ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/build_xcode/game_ios/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/generated/game-ios/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -668,6 +690,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../build_ios/multiArchLibs\"",
+					"/Users/andrew/Code/cozmo-game/build_xcode/game_ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/build_xcode/game_ios/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/generated/game-ios/Xcode/lib/Debug",
+					"/Users/andrew/Code/cozmo-game/generated/game-ios/lib/anki/cozmo-engine/Xcode/lib/Debug",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";

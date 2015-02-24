@@ -38,6 +38,12 @@
 - (NSString*)vizIP;
 - (BOOL)setVizIP:(NSString*)vizIP;
 
+- (BOOL)doForceAdd;
+- (BOOL)setDoForceAdd:(BOOL)forceAdd;
+
+- (NSString*)forceAddIP;
+- (BOOL)setForceAddIP:(NSString*)ip;
+
 - (double)heartbeatRate;  // Run loop frequency (Ticks per second)
 - (BOOL)setHeartbeatRate:(NSTimeInterval)rate;
 

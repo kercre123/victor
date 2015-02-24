@@ -46,6 +46,7 @@
 - (void)addUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener;
 - (void)removeUiDeviceConnectedListener:(id<CozmoUiDeviceConnectedListener>)listener;
 
+- (void)forceAddRobot:(NSString*)ipAddress;
 
 - (void)update;
 

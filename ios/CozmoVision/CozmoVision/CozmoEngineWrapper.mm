@@ -67,6 +67,8 @@ using namespace Anki;
 // Config
 @property (strong, nonatomic) NSString* _hostAdvertisingIP;
 @property (strong, nonatomic) NSString* _vizIP;
+@property (assign, nonatomic) BOOL _doForceAdd;
+@property (strong, nonatomic) NSString* _forceAddIP;
 @property (assign, nonatomic) NSTimeInterval _heartbeatRate;
 @property (assign, nonatomic) NSTimeInterval _heartbeatPeriod;
 @property (assign, nonatomic) int _numRobotsToWaitFor;
@@ -130,6 +132,9 @@ using namespace Anki;
   self._numRobotsToWaitFor = 1;
   self._numUiDevicesToWaitFor = 1;
   
+  self._doForceAdd = NO;
+  self._forceAddIP = nil;
+  
   return self;
 }
 
@@ -168,6 +173,35 @@ using namespace Anki;
   }
   return NO;
 }
+
+- (NSString*)forceAddIP
+{
+  return self._forceAddIP;
+}
+
+- (BOOL)setForceAddIP:(NSString *)ip
+{
+  if (self.runState == CozmoEngineRunStateNone && ip.length > 0) {
+    self._forceAddIP = ip;
+    return YES;
+  }
+  return NO;
+}
+
+- (BOOL)doForceAdd
+{
+  return self._doForceAdd;
+}
+
+- (BOOL)setDoForceAdd:(BOOL)forceAdd
+{
+  if (self.runState == CozmoEngineRunStateNone) {
+    self._doForceAdd = forceAdd;
+    return YES;
+  }
+  return NO;
+}
+
 
 // Run loop frequency (Ticks per second)
 - (double)heartbeatRate
@@ -234,10 +268,18 @@ using namespace Anki;
   _config[AnkiUtil::kP_AS_HOST] = asHost;
   _cozmoGame->StartEngine(_config);
   
+  
   // Force add a robot
-  if (FORCE_ADD_ROBOT) {
-    _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+  /*
+   if(FORCE_ADD_ROBOT) {
+   //_cozmoGame->ForceAddRobot(forcedRobotId, [self._forceAddIP UTF8String], FORCED_ROBOT_IS_SIM);
+   _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+   }
+   */
+  if (self._forceAddIP != nil) {
+    _cozmoGame->ForceAddRobot(1, [self._forceAddIP UTF8String], true); // TODO: Change to false!
   }
+  
     
   [self resetHeartbeatTimer];
   

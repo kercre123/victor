@@ -543,6 +543,11 @@ namespace Cozmo {
     return _impl->StartEngine(config);
   }
   
+  void CozmoGame::ForceAddRobot(int robotID, const char *robotIP, bool robotIsSimulated)
+  {
+    _impl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
+  }
+  
   Result CozmoGame::Update(const float currentTime_sec)
   {
     return _impl->Update(currentTime_sec);
