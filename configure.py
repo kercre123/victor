@@ -9,7 +9,7 @@ import sys
 import textwrap
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(REPO_ROOT, 'lib/anki/cozmo-engine/tools'))
+sys.path.insert(0, os.path.join(REPO_ROOT, 'lib/anki/cozmo-engine/tools/build-tools/tools'))
 import ankibuild.cmake
 import ankibuild.ios_deploy
 import ankibuild.util
