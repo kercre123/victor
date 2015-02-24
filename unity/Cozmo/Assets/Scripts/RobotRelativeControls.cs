@@ -19,6 +19,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] Text text_leftWheelSpeed = null;
 	[SerializeField] Text text_rightWheelSpeed = null;
 
+	[SerializeField] float swipeTurnAngle = 0f;
+
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
 	float timeSinceLastCommand = 0f;
@@ -81,6 +83,27 @@ public class RobotRelativeControls : MonoBehaviour {
 			if(horizontalStick.SideModeEngaged) {
 				turnInPlaceOnlyMode = true;
 			}
+
+			if(swipeTurnAngle > 0f && horizontalStick.Swiped && horizontalStick.Swipe.sqrMagnitude > 0f) {
+				Debug.Log("swipeTurnAngle("+swipeTurnAngle+")");
+
+				float sideSwipeDot = Vector2.Dot(horizontalStick.Swipe.normalized, Vector2.right);
+				if(sideSwipeDot > 0.9f) {
+					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, swipeTurnAngle * Mathf.Deg2Rad);
+					}
+					horizontalStick.EndSwipe();
+				}
+				else if(sideSwipeDot < -0.9f) {
+					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, -swipeTurnAngle * Mathf.Deg2Rad);
+					}
+					horizontalStick.EndSwipe();
+				}
+	
+				return;
+			}
+
 			inputs.x = horizontalStick.Horizontal;
 		}
 

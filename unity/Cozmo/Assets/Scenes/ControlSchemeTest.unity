@@ -2392,6 +2392,7 @@ MonoBehaviour:
   text_y: {fileID: 66136252}
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
+  swipeTurnAngle: 0
 --- !u!1 &336529867
 GameObject:
   m_ObjectHideFlags: 0
@@ -2600,6 +2601,7 @@ MonoBehaviour:
   text_y: {fileID: 66136252}
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
+  swipeTurnAngle: 0
 --- !u!1 &364171961
 GameObject:
   m_ObjectHideFlags: 0
@@ -3680,7 +3682,7 @@ MonoBehaviour:
   bgHeightInches: .0199999996
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 0
+  allowAxisSwipes: 1
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 1
@@ -3689,8 +3691,6 @@ MonoBehaviour:
   swipeVerticalMagnitudes:
   - 1
   swipeHorizontalMagnitudes:
-  - .5
-  - .75
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
@@ -4804,6 +4804,7 @@ MonoBehaviour:
   text_y: {fileID: 66136252}
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
+  swipeTurnAngle: 45
 --- !u!1 &700661453
 GameObject:
   m_ObjectHideFlags: 0
@@ -7306,6 +7307,7 @@ MonoBehaviour:
   text_y: {fileID: 66136252}
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
+  swipeTurnAngle: 45
 --- !u!1 &1133578739
 GameObject:
   m_ObjectHideFlags: 0
@@ -8443,6 +8445,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 18556363}
     m_Modifications:
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: swipeHorizontalMagnitudes.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 22435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -8546,6 +8552,18 @@ Prefab:
     - target: {fileID: 22435592, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
       propertyPath: m_SizeDelta.y
       value: 34.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: allowAxisSwipes
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: swipeHorizontalMagnitudes.Array.data[0]
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11435588, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
+      propertyPath: swipeHorizontalMagnitudes.Array.data[1]
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2ab607a07c37048cab7cefd7702545ee, type: 2}
@@ -9888,7 +9906,7 @@ MonoBehaviour:
   bgHeightInches: 1.5
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 0
+  allowAxisSwipes: 1
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 0
@@ -9897,8 +9915,6 @@ MonoBehaviour:
   swipeVerticalMagnitudes:
   - 1
   swipeHorizontalMagnitudes:
-  - .5
-  - .75
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
@@ -11602,6 +11618,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 370717966}
     m_Modifications:
+    - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
+      propertyPath: swipeHorizontalMagnitudes.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 22406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -11684,6 +11704,14 @@ Prefab:
       objectReference: {fileID: 2100000, guid: 616b723807396468abd8186ce158264c, type: 2}
     - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: horClampThrow
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
+      propertyPath: allowAxisSwipes
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
+      propertyPath: swipeHorizontalMagnitudes.Array.data[0]
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

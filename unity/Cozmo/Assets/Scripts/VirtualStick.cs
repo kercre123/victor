@@ -84,6 +84,10 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	Vector2 touchDownValue = Vector2.zero;
 	Vector2 swipedDirection = Vector2.zero;
+	public Vector2 Swipe { get { return swipedDirection; } }
+	private bool swiped = false;
+	public bool Swiped { get { return swiped; } }
+
 	//bool disallowSwipeForThisTouch = false;
 
 	public bool UpModeEngaged { get; private set; }
@@ -433,7 +437,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		wasClockwise = false;
 		wasCounterClockwise = false;
-
+		swiped = false;
 		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
 	}
 
@@ -496,7 +500,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		pressed = false;
 		pressedTime = 0f;
-		bool swiped = swipedDirection.sqrMagnitude > 0f;
+		swiped = swipedDirection.sqrMagnitude > 0f;
 		bg.gameObject.SetActive(!dynamic || swiped);
 		stick.gameObject.SetActive(!dynamic || swiped);
 		//Debug.Log ("Joystick OnPointerUp StickCenterOnScreen(" + StickCenterOnScreen + ") stick.anchoredPosition("+stick.anchoredPosition+")");
@@ -504,6 +508,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		UpModeEngaged = false;
 		DownModeEngaged = false;
 		SideModeEngaged = false;
+
+
 	}
 
 	void ConsiderSwipes(Vector2 pos) {
@@ -681,5 +687,11 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		stick.anchoredPosition = delta;
 		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
+	}
+
+	public void EndSwipe() {
+		Debug.Log("EndSwipe()");
+		swipedDirection = Vector2.zero;
+		swiped = false;
 	}
 }
