@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\blocks.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1471,6 +1476,11 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\blocks.cpp</FilePath>
             </File>
           </Files>
         </Group>
