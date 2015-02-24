@@ -5,7 +5,7 @@ Implements UDP server for robot comms and includes some useful library classes
 __author__ = "Daniel Casner"
 
 
-import sys, os, time, socket, select
+import sys, os, time, socket, threading
 import camServer, mcuProxyServer
 
 VERBOSE = False
@@ -13,6 +13,31 @@ PRINT_INTERVAL = False
 PRINT_FRAMERATE = False
 
 MTU = 1500
+
+class TimestampExtrapolator(object):
+    "A threadsafe class for extrapolating timestamps from the MCU"
+
+    def __init__(self, ticks_per_second=1000):
+        self.mcuTS = 0
+        self.toc = time.time()
+        self.tps = ticks_per_second
+        self.lock = threading.Lock()
+
+    def update(self, tick):
+        "Update the local copy of the MCU time"
+        toc = time.time()
+        self.lock.acquire()
+        self.mcuTS = tick
+        self.toc = toc
+        self.lock.release()
+
+    def get(self):
+        "Retrive the estimated MCU time"
+        self.lock.acquire()
+        ret = self.mcuTS + ((time.time()-self.toc)*self.tps)
+        self.lock.release()
+        return ret
+
 
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
@@ -24,76 +49,50 @@ class CozmoServer(socket.socket):
         if VERBOSE: sys.stdout.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.bind(address)
-        self.settimeout(0)
-        self.poller = select.poll()
-        self.poller.register(self, select.POLLIN | select.POLLOUT)
-        cam = camServer.CameraSubServer(self.poller, VERBOSE, PRINT_FRAMERATE)
-        mcu = mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)
+        self.sendLock = threading.Lock()
+        self.timestamp = TimestampExtrapolator()
+        cam = camServer.CameraSubServer(self, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self, VERBOSE)
         self.subServers = [cam, mcu]
-        mcu.timestampCB = cam.updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
 
+    def __del__(self):
+        self.stop()
 
-    def fprintf(self, fh, fmt, *params):
-        "Writes to file handle"
-        fh.write(fmt % params)
-
-    def printOut(self, fmt, *params):
-        "Writes to stdout"
-        self.fprintf(sys.stdout, fmt, *params)
-
-    def printErr(self, fmt, *params):
-        "Writes to stderr"
-        self.fprintf(sys.stderr, fmt, *params)
-
-    def clientRecv(self, maxLen):
-        try:
-            data, self.client = self.recvfrom(maxLen)
-            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
-        except:
-            return None
-        else:
-            self.lastClientRecvTime = time.time()
-            if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
-                return None # Establish that we have a connection but don't pass the packet along
-            else:
-                return data
+    def stop(self):
+        for ss in self.subServers:
+            ss.stop()
+        self.close()
 
     def clientSend(self, data):
         if self.client:
+            self.sendLock.acquire()
             self.sendto(data, self.client)
+            self.sendLock.release()
 
-    def step(self, timeout=None):
+    def step(self):
         "One main loop iteration"
-        didSome = False
-        if timeout is not 0:
-            self.poller.poll(timeout)
-        recvData = self.clientRecv(MTU)
-        if recvData is not None:
-            didSome = True
+        data, self.client = self.recvfrom(MTU)
+        if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
+        self.lastClientRecvTime = time.time()
+        if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
+            return # Establish that we have a connection but don't pass the packet along
         for ss in self.subServers:
-            outMsgs = ss.poll(recvData)
-            if outMsgs:
-                didSome = True
-                for m in outMsgs:
-                    self.clientSend(m)
+            ss.giveMessage(data)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
             sys.stdout.write("Going to standby\n")
             sys.stdout.flush()
             for ss in self.subServers:
                 ss.standby()
             self.client = None
-        return didSome
 
-    def run(self, loopHz):
+    def run(self):
         "Run main loop with target frequency"
-        targetPeriod = 1.0/loopHz
-        didSome = False
+        for ss in self.subServers:
+            ss.start()
         while True:
-            st = time.time()
-            didSome = self.step(0.0 if didSome else targetPeriod)
-            if PRINT_INTERVAL: sys.stdout.write('%d ms\n' % int((time.time()-st)*1000))
+            self.step()
 
 
 if __name__ == '__main__':
@@ -105,6 +104,10 @@ if __name__ == '__main__':
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
     try:
-        server.run(200)
+        server.run()
     except KeyboardInterrupt:
         sys.stdout.write("Shutting down server\n")
+        server.stop()
+        sys.stdout.write("Exiting\n")
+        sys.stdout.flush()
+        exit(0)
