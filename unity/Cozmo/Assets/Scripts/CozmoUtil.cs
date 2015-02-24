@@ -4,7 +4,8 @@ using System;
 
 public static class CozmoUtil {
 
-	public const float MAX_WHEEL_SPEED 		= 150f;
+	public const float MAX_WHEEL_SPEED 		= 160f;
+	public const float MIN_WHEEL_SPEED 		= 10f;
 
 	public static void CalcWheelSpeedsForTwoAxisInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
 		
@@ -20,17 +21,25 @@ public static class CozmoUtil {
 		//turn = Mathf.Clamp01(turn*turn) * (turn >= 0f ? 1f : -1f);
 
 		if(turn == 0f) { 
+			//forward or backwards, scale speed from min to max
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
 		}
 		else if(inputs.y == 0f) {
-			speed *= maxTurnFactor;
+			//turn in place left or right, scale speed from min to max including maxTurnFactor
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed) * maxTurnFactor) * (speed >= 0f ? 1f : -1f);
+
 			leftWheelSpeed = turn > 0f ? speed : -speed;
 			rightWheelSpeed = turn > 0f ? -speed : speed;
 		}
 		else {
+			//drive and turn
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+
 			float speedA = speed;
-			float speedB = Mathf.Lerp(speed, -speed * maxTurnFactor * 0.5f, Mathf.Abs(turn));
+			float speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
 
 			if(turn > 0f) {
 				leftWheelSpeed = speedA;
@@ -45,8 +54,8 @@ public static class CozmoUtil {
 		//Debug.Log("CalcWheelSpeedsFromBotRelativeInputsB speed("+speed+") turn("+turn+")");
 
 		//scale to maximum wheel speeds
-		leftWheelSpeed *= MAX_WHEEL_SPEED;
-		rightWheelSpeed *= MAX_WHEEL_SPEED;
+		//leftWheelSpeed *= MAX_WHEEL_SPEED;
+		//rightWheelSpeed *= MAX_WHEEL_SPEED;
 	}
 
 	public static void CalcWheelSpeedsForThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor, bool reverse=false) {
@@ -57,6 +66,8 @@ public static class CozmoUtil {
 		if(inputs.x == 0f && inputs.y == 0f) return;
 
 		float speed = inputs.magnitude;
+		if(speed == 0f) return;
+
 		float turn = 0f;
 
 		if(!reverse) {
@@ -70,22 +81,22 @@ public static class CozmoUtil {
 		speed = speed*speed * (speed < 0f ? -1f : 1f);
 		//turn = turn*turn * (turn < 0f ? -1f : 1f);
 
-		leftWheelSpeed = speed;
-		rightWheelSpeed = speed;
-			
-		if(turn != 0f) {
-			float speedA = Mathf.Lerp(speed, speed*Mathf.Clamp01(0.5f + maxTurnFactor), Mathf.Abs(turn));
-			float speedB = Mathf.Lerp(speed, -speed*maxTurnFactor*0.25f, Mathf.Abs(turn));
+		float speedA = speed;
+		float speedB = speed;
 
-			if(turn > 0f) {
-				leftWheelSpeed = speedA;
-				rightWheelSpeed = speedB;
-			}
-			else {
-				rightWheelSpeed = speedA;
-				leftWheelSpeed = speedB;
-			}
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+
+		if(turn == 0f) {
+			speedA = speed;
+         	speedB = speed;
 		}
+		else {
+			speedA = speed;
+			speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
+		}
+
+		leftWheelSpeed = turn >= 0f ? speedA : speedB;
+		rightWheelSpeed = turn < 0f ? speedA : speedB;
 
 		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 
@@ -95,10 +106,16 @@ public static class CozmoUtil {
 	}
 
 	public static void CalcTurnInPlaceWheelSpeeds(float x, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
-		//x = x*x * (x < 0f ? -1f : 1f);
+		leftWheelSpeed = 0f;
+		rightWheelSpeed = 0f;
+		if(x == 0f) return;
 
-		leftWheelSpeed = x * MAX_WHEEL_SPEED * maxTurnFactor;
-		rightWheelSpeed = -x * MAX_WHEEL_SPEED * maxTurnFactor;
+		float speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(x) * maxTurnFactor) * (x >= 0f ? 1f : -1f);
+		//x = x*x * (x < 0f ? -1f : 1f);
+		//float factor = Mathf.Min(1f, maxTurnFactor * 2f);
+
+		leftWheelSpeed = speed;
+		rightWheelSpeed = -speed;
 	}
 
 }

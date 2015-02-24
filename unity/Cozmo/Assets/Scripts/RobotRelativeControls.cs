@@ -9,7 +9,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
-	[SerializeField] AccelControls accelInputs = null;
+	//[SerializeField] AccelControls accelInputs = null;
 	[SerializeField] Toggle gyroRollControl = null;
 	[SerializeField] Toggle gyroPitchControl = null;
 
@@ -29,6 +29,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	//bool reverseLikeACar = false;
 	bool moveCommandLastFrame = false;
 
+	bool debugOverride = false;
+
 	void OnEnable() {
 		//acquire the robot
 		//reset default state for this control scheme test
@@ -45,7 +47,8 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastInputs = Vector2.zero;
 		moveCommandLastFrame = false;
-
+		timeSinceLastCommand = 0f;
+		debugOverride = false;
 //		if(recorder != null) {
 //			recorder.videoFileName = "cozmoTest_screenRec_" + System.DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + gameObject.name + ".mp4";
 //			recorder.enabled = true;
@@ -53,6 +56,13 @@ public class RobotRelativeControls : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
+		if(debugOverride) {
+			if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+				RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+			}
+			RefreshDebugText();
+			return;
+		}
 		timeSinceLastCommand += Time.deltaTime;
 
 		if(timeSinceLastCommand < refreshTime)
@@ -102,14 +112,15 @@ public class RobotRelativeControls : MonoBehaviour {
 //			}
 		}
 
-		if(accelInputs != null && accelInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed) ) {
-			inputs.x = accelInputs.Horizontal;
-		}
+		//if(accelInputs != null && accelInputs.gameObject.activeSelf && (verticalStick == null || verticalStick.IsPressed) ) {
+		//	inputs.x = accelInputs.Horizontal;
+		//}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
 			Vector3 delta = inputs - lastInputs;
-			if(delta.sqrMagnitude <= 0f) return; // command not changed
+			if(delta.sqrMagnitude <= 0f)
+				return; // command not changed
 		}
 
 		lastInputs = inputs;
@@ -122,10 +133,10 @@ public class RobotRelativeControls : MonoBehaviour {
 		else if(driveReverseOnlyMode) {
 			CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor, true);
 		}
-		else if(turnInPlaceOnlyMode) {
+		else if(turnInPlaceOnlyMode || inputs.y == 0f) {
 			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
 		}
-		else { //continues input range mode...causes issues at thresholds
+		else { //continuous input range mode...causes issues at thresholds
 			CozmoUtil.CalcWheelSpeedsForTwoAxisInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
 		}
 
@@ -135,10 +146,13 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
 
+		RefreshDebugText();
+	}
 
+	void RefreshDebugText() {
 		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
 		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
-
+		
 		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
 		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
 	}
@@ -164,11 +178,6 @@ public class RobotRelativeControls : MonoBehaviour {
 //		GUILayout.EndArea();
 //	}
 
-	
-	public void CalibrateGyro() {
-		if(gyroInputs != null) gyroInputs.Calibrate();
-	}
-	
 	public void ToggleRollControl() {
 		if(gyroRollControl != null) gyroRollControl.isOn = !gyroRollControl.isOn;
 	}
@@ -180,6 +189,50 @@ public class RobotRelativeControls : MonoBehaviour {
 	public void SetReverseLikeACar(bool on) {
 		Debug.Log(gameObject.name + " RobotRelativeControls SetReverseLikeACar("+on+")");
 		//reverseLikeACar = on;
+	}
+
+	public void NudgeForward() {
+		if(!debugOverride) {
+			leftWheelSpeed = 0f;
+			rightWheelSpeed = 0f;
+		}
+		leftWheelSpeed += 1f;
+		rightWheelSpeed += 1f;
+		debugOverride = true;
+		Debug.Log(gameObject.name + " NudgeForward");
+	}
+
+	public void NudgeBackwards() {
+		if(!debugOverride) {
+			leftWheelSpeed = 0f;
+			rightWheelSpeed = 0f;
+		}
+		leftWheelSpeed -= 1f;
+		rightWheelSpeed -= 1f;
+		debugOverride = true;
+		Debug.Log(gameObject.name + " NudgeBackwards");
+	}
+
+	public void NudgeRight() {
+		if(!debugOverride) {
+			leftWheelSpeed = 0f;
+			rightWheelSpeed = 0f;
+		}
+		leftWheelSpeed += 1f;
+		rightWheelSpeed -= 1f;
+		debugOverride = true;
+		Debug.Log(gameObject.name + " NudgeRight");
+	}
+
+	public void NudgeLeft() {
+		if(!debugOverride) {
+			leftWheelSpeed = 0f;
+			rightWheelSpeed = 0f;
+		}
+		leftWheelSpeed -= 1f;
+		rightWheelSpeed += 1f;
+		debugOverride = true;
+		Debug.Log(gameObject.name + " NudgeRight");
 	}
 
 }

@@ -12,34 +12,32 @@ public class GyroControls : MonoBehaviour {
 
 	[SerializeField] RectTransform upIndicator = null;
 
-	float rollStart = 270f;
-	float pitchStart = 0f;
-	//ScreenOrientation orientation = ScreenOrientation.Unknown;
-
 	float x = 0f;
-	float lastXStamp = 0f;
 	public float Horizontal {
 		get {
 			if(!SystemInfo.supportsGyroscope) return 0f;
 
-			if(Time.frameCount == lastXStamp) return x;
-			lastXStamp = Time.frameCount;
-
 			float roll = MSP_Input.GyroAccel.GetRoll();
+			//bool crazy = false;
+			if(Mathf.Abs(roll) > 180f) {
+				//Debug.Log("GyroControls.Horizontal crazy roll("+roll+")");
+				while(roll > 180f) roll -= 360f;
+				while(roll < -180f) roll += 360f;
+
+				//crazy = true;
+			}
+
 			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
+			//if(crazy) Debug.Log("GyroControls.Horizontal x("+x+") roll("+roll+")");
 
 			return x; 
 		}
 	}
 
 	float y = 0f;
-	float lastYStamp = 0f;
 	public float Vertical {
 		get { 
 			if(!SystemInfo.supportsGyroscope) return 0f;
-
-			if(Time.frameCount == lastYStamp) return y;
-			lastYStamp = Time.frameCount;
 
 			float pitch = MSP_Input.GyroAccel.GetPitch();
 			y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * (pitch >= 0f ? -1f : 1f);
@@ -47,10 +45,6 @@ public class GyroControls : MonoBehaviour {
 			return y; 
 		}
 	}
-
-//	void OnEnable() {
-//		Calibrate();
-//	}
 
 	void FixedUpdate() {
 		if(!SystemInfo.supportsGyroscope) return;
@@ -62,30 +56,4 @@ public class GyroControls : MonoBehaviour {
 		}
 	}
 
-//	void OnGUI() {
-//		GUILayout.BeginArea(new Rect(Screen.width*0.5f-150f, Screen.height*0.5f, 300f, 300f));
-//		GUILayout.Label("x("+x+")");
-//		GUILayout.Label("y("+y+")");
-//		GUILayout.Label("Gyroscope attitudeEulers : " + Input.gyro.attitude.eulerAngles);
-//		GUILayout.Label("Gyroscope attitude : " + Input.gyro.attitude);
-//		GUILayout.Label("Gyroscope gravity : " + Input.gyro.gravity);
-//		GUILayout.Label("Gyroscope rotationRate : " + Input.gyro.rotationRate);
-//		GUILayout.Label("Gyroscope rotationRateUnbiased : " + Input.gyro.rotationRateUnbiased);
-//		GUILayout.Label("Gyroscope updateInterval : " + Input.gyro.updateInterval);
-//		GUILayout.Label("Gyroscope userAcceleration : " + Input.gyro.userAcceleration);
-//		GUILayout.Label("ScreenOrientation : " + Screen.orientation);
-//		GUILayout.EndArea();
-//	}
-
-	public void Calibrate() {
-		if(!SystemInfo.supportsGyroscope) return;
-		//orientation = Screen.orientation;
-		Input.gyro.enabled = true;
-		Quaternion deviceRot = Input.gyro.attitude;
-		Vector3 euler = deviceRot.eulerAngles;
-		//rollStart = euler.z;
-		pitchStart = euler.y;
-		Debug.Log("GyronControls Calibrate ScreenOrientation(" + Screen.orientation + ") rollStart(" + rollStart + ") pitchStart(" + pitchStart + ")");
-
-	}
 }
