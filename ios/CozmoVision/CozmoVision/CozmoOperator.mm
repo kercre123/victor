@@ -37,6 +37,7 @@ using namespace Anki;
   
   UIState _uiState;
   
+  Cozmo::MessageU2G_Ping _pingMsg;
   
   Cozmo::GameMessageHandler* _gameMsgHandler;
   Cozmo::GameComms* _gameComms;
@@ -132,6 +133,8 @@ using namespace Anki;
 {
   self.robotConnectedListeners = [[NSMutableArray alloc] init];
   self.uiDeviceConnectedListeners = [[NSMutableArray alloc] init];
+  
+  _pingMsg.counter = 0;
   
   _uiState = UI_WAITING_FOR_GAME;
 }
@@ -336,6 +339,9 @@ using namespace Anki;
         
       case UI_RUNNING:
       {
+        // Send ping to engine
+        //[self sendMessage:_pingMsg];
+        //++_pingMsg.counter;
         
         _gameMsgHandler->ProcessMessages();
         
