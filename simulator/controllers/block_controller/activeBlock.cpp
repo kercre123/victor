@@ -8,6 +8,7 @@
 
 #include "activeBlock.h"
 #include "BlockMessages.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
 #include <stdio.h>
 #include <assert.h>
 
@@ -23,9 +24,7 @@ namespace Anki {
     namespace ActiveBlock {
 
       namespace {
-        static const int NUM_LEDS = 8;
-        webots::LED* led_[NUM_LEDS];
-        
+      
         webots::Receiver* receiver_;
         webots::Accelerometer* accel_;
         
@@ -36,12 +35,41 @@ namespace Anki {
         
         BlockState state_ = NORMAL;
         
-        // TODO: This will expand as we want the lights to do fancier things
-        typedef struct {
-          u32 color;
-        } LEDParams;
+        webots::LED* led_[NUM_BLOCK_LEDS];
+        LEDParams ledParams_[NUM_BLOCK_LEDS];
         
-        LEDParams ledParams_[NUM_LEDS];
+        // Top-Front face pairs
+        typedef enum {
+          ZX = 0,
+          Xz,
+          zx,
+          xZ,
+          Yx,
+          yX,
+          NUM_TOP_FRONT_FACE_PAIRS
+        } TopFrontFacePair;
+        
+        const u8 ledPositionToIdx_[NUM_TOP_FRONT_FACE_PAIRS][NUM_BLOCK_LEDS] =
+        {
+          // ZX
+          { 6, 7, 5, 4, 2, 3, 1, 0 },
+          
+          // Xz
+          { 2, 3, 6, 7, 1, 0, 5, 4},
+          
+          // zx
+          { 1, 0, 2, 3, 5, 4, 6, 7},
+          
+          // xZ
+          { 5, 4, 1, 0, 6, 7, 2, 3},
+          
+          // Yx
+          { 2, 6, 1, 5, 3, 7, 0, 4},
+          
+          // yX
+          { 7, 3, 4, 0, 6, 2, 5, 1}
+        };
+        
         
         // Flash ID params
         double flashIDStartTime_ = 0;
@@ -66,7 +94,7 @@ namespace Anki {
       
       void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
       {
-        for(int i=0; i<NUM_LEDS; ++i) {
+        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           ledParams_[i].color = msg.color[i];
         }
       }
@@ -111,8 +139,8 @@ namespace Anki {
         printf("Starting ActiveBlock %d\n", blockID);
         
         // Get all LED handles
-        for (int i=0; i<NUM_LEDS; ++i) {
-          char led_name[NUM_LEDS];
+        for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+          char led_name[NUM_BLOCK_LEDS];
           sprintf(led_name, "led%d", i);
           led_[i] = block_controller.getLED(led_name);
           assert(led_[i] != nullptr);
@@ -145,9 +173,48 @@ namespace Anki {
           accel_->disable();
         }
       }
-
+      
+      TopFrontFacePair GetOrientation() {
+        const double* vals = accel_->getValues();
+        const double x = vals[0];
+        const double y = vals[1];
+        const double z = vals[2];
+        
+        const double g = 9;
+        TopFrontFacePair fp = Xz;
+      
+        
+        if (x > g) {
+          fp = Xz;
+        } else if (x < -g) {
+          return xZ;
+        } else if (y > g) {
+          fp = Yx;
+        } else if (y < -g) {
+          fp = yX;
+        } else if (z > g) {
+          fp = ZX;
+        } else if (z < -g) {
+          fp = zx;
+        } else {
+          printf("WARN: Block is moving. Orientation unknown\n");
+        }
+        
+        return fp;
+      }
+      
+      void ApplyLEDParams() {
+        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
+          led_[ ledPositionToIdx_[GetOrientation()][i] ]->set(ledParams_[i].color);
+        }
+      }
+      
+      void SetLED(BlockLEDPosition p, u32 color) {
+        led_[ ledPositionToIdx_[GetOrientation()][p] ]->set(color);
+      }
+      
       void SetAllLEDs(u32 color) {
-        for(int i=0; i<NUM_LEDS; ++i) {
+        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           led_[i]->set(color);
         }
       }
@@ -155,6 +222,32 @@ namespace Anki {
       
       Result Update() {
         if (block_controller.step(TIMESTEP) != -1) {
+          
+#if(0)
+          // Test: Blink all LEDs in order
+          static u32 p=0;
+          static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
+          if (p++ == 100) {
+            SetLED(prevIdx, 0);
+            if (idx == TopFrontLeft) {
+              // TopFrontLeft is green
+              SetLED(idx, 0x00ff00);
+            } else {
+              // All other LEDs are red
+              SetLED(idx, 0xff0000);
+            }
+            prevIdx = idx;
+
+            // Increment LED position index
+            if (idx == BottomBackRight) {
+              idx = TopFrontLeft;
+            } else {
+              idx = (BlockLEDPosition)(idx + 1);
+            }
+            p = 0;
+          }
+          return RESULT_OK;
+#endif
           
           // Read incoming messages
           while (receiver_->getQueueLength() > 0) {
@@ -171,9 +264,7 @@ namespace Anki {
           switch(state_) {
             case NORMAL:
               // Apply ledParams
-              for(int i=0; i<NUM_LEDS; ++i) {
-                SetAllLEDs(ledParams_[i].color);
-              }
+              ApplyLEDParams();
               break;
             case FLASHING_ID:
               if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
