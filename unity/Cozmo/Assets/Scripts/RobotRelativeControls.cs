@@ -84,27 +84,29 @@ public class RobotRelativeControls : MonoBehaviour {
 				turnInPlaceOnlyMode = true;
 			}
 
-			if(swipeTurnAngle > 0f && horizontalStick.Swiped && horizontalStick.Swipe.sqrMagnitude > 0f) {
-				Debug.Log("swipeTurnAngle("+swipeTurnAngle+")");
+			if(swipeTurnAngle > 0f && horizontalStick.SwipeRequest && horizontalStick.SwipedDirection.sqrMagnitude > 0f) {
+				//Debug.Log("swipeTurnAngle("+swipeTurnAngle+")");
 
-				float sideSwipeDot = Vector2.Dot(horizontalStick.Swipe.normalized, Vector2.right);
+				float sideSwipeDot = Vector2.Dot(horizontalStick.SwipedDirection.normalized, Vector2.right);
 				if(sideSwipeDot > 0.9f) {
 					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, swipeTurnAngle * Mathf.Deg2Rad);
+						RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, -swipeTurnAngle * Mathf.Deg2Rad);
 					}
-					horizontalStick.EndSwipe();
+					horizontalStick.AbsorbSwipeRequest();
+					return;
 				}
 				else if(sideSwipeDot < -0.9f) {
 					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, -swipeTurnAngle * Mathf.Deg2Rad);
+						RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, swipeTurnAngle * Mathf.Deg2Rad);
 					}
-					horizontalStick.EndSwipe();
+					horizontalStick.AbsorbSwipeRequest();
+					return;
 				}
-	
-				return;
 			}
 
-			inputs.x = horizontalStick.Horizontal;
+			if(swipeTurnAngle == 0f || !horizontalStick.Swiping) inputs.x = horizontalStick.Horizontal;
 		}
 
 		float maxAngle = 90f;
