@@ -54,6 +54,11 @@ namespace Anki {
     } LEDParams;
 
     
+    // The amount of time between sending the flash ID message
+    // to one block and the next block.
+    // This must be larger than the flash pattern duration on the block!
+    const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;
+    
   } // namespace Cozmo
 } // namespace Anki
 

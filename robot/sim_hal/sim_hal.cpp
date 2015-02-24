@@ -109,7 +109,6 @@ namespace Anki {
       // Block ID flashing parameters
       s32 flashBlockIdx_ = -1;
       TimeStamp_t flashStartTime_ = 0;
-      const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;  // This must be larger than the flash pattern duration on the block!
       
       // List of all blockIDs
       std::vector<u8> blockIDs_;
