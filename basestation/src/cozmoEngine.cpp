@@ -367,6 +367,9 @@ namespace Cozmo {
                                           bool             robotIsSimulated)
   {
     if(_isInitialized) {
+      PRINT_NAMED_INFO("CozmoEngineHostImpl.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s\n",
+                       (robotIsSimulated ? "simulated" : "real"), robotID, robotIP);
+      
       // Force add physical robot since it's not registering by itself yet.
       Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
       forcedRegistrationMsg.id = robotID;
