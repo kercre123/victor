@@ -31,7 +31,10 @@ DEF_SIGNAL(DeviceDetectedVisionMarker,
            float x_lowerRight, float y_lowerRight)
 
 DEF_SIGNAL(RobotObservedObject,
-           uint8_t robotID, uint32_t objectID,
+           uint8_t robotID,
+           uint32_t objectFamily,
+           uint32_t objectType,
+           uint32_t objectID,
            float x_upperLeft,  float y_upperLeft,
            float width,  float height)
 
