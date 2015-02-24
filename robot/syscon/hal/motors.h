@@ -17,4 +17,7 @@ void MotorsUpdate();
 // Print the raw encoder input values over the UART
 void MotorsPrintEncodersRaw();
 
+// Print the motor encoder value in binary
+void MotorPrintEncoder(u8 motorID);
+
 #endif

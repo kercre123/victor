@@ -1,6 +1,7 @@
 #include "uart.h"
 #include "nrf51.h"
 #include "nrf_gpio.h"
+#include "timer.h"
 
 // It looks like we might not be able to go above 1Mbaud with this chip.
 #define NRF_BAUD(x) (int)(x * 268.435456)   // 2^28/1MHz
@@ -12,16 +13,8 @@ bool m_isInitialized = false;
 
 void UARTInit()
 {
-  // Configure the pins
-  nrf_gpio_cfg_output(PIN_TX);
-  //nrf_gpio_cfg_input(PIN_RX, NRF_GPIO_PIN_NOPULL);
-
   // Power on the peripheral
   NRF_UART0->POWER = 1;
-  
-  // Configure the peripheral for the physical pins are being used for UART
-  NRF_UART0->PSELTXD = PIN_TX;
-  NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
 
   // Initialize the UART for the specified baudrate
   NRF_UART0->BAUDRATE = UART_BAUDRATE;
@@ -31,17 +24,41 @@ void UARTInit()
   
   // Enable the peripheral and start the tasks
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
-  NRF_UART0->TASKS_STARTTX = 1;
-  //NRF_UART0->TASKS_STARTRX = 1;
-  //NRF_UART0->EVENTS_RXDRDY = 0;
+ 
+  // Transmit is disabled by default
+  UARTSetTransmit(0);
   
   m_isInitialized = true;
+}
+
+// Set/clear transmit mode - you can't receive while in transmit mode
+static u8 m_transmitting = 0;
+void UARTSetTransmit(u8 doTransmit)
+{
+  // Connect the peripheral to the pin and change directions
+  if (doTransmit) {
+    NRF_UART0->PSELTXD = PIN_TX;
+    NRF_UART0->PSELRXD = 0xFFFFffff;
+    NRF_UART0->TASKS_STARTTX = 1;
+    nrf_gpio_cfg_output(PIN_TX);
+  } else {
+    nrf_gpio_cfg_input(PIN_TX, NRF_GPIO_PIN_PULLUP);
+    NRF_UART0->TASKS_STARTRX = 1;
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    NRF_UART0->PSELRXD = PIN_TX;
+    NRF_UART0->PSELTXD = 0xFFFFffff; 
+  }
+  // Leave time for turnaround (about two bytes worth)
+  MicroWait(20);
+  m_transmitting = doTransmit;
 }
 
 void UARTPutChar(u8 c)
 {
   if (!m_isInitialized)
     return;
+  if (!m_transmitting)
+    UARTSetTransmit(1);
   
   NRF_UART0->TXD = (u8)c;
 
@@ -84,20 +101,15 @@ void UARTPutDec(s32 value)
   UARTPutChar((value % 10) + '0');
 }
 
-/*int UARTGetChar(u32 timeout)
+int UARTGetChar()
 {
-  u32 now = GetMicroCounter();
+  if (m_transmitting)
+    UARTSetTransmit(0);
+  
   // Wait for data to be received
-  while (NRF_UART0->EVENTS_RXDRDY != 1)
-  {
-    // Check for timeout
-    if ((GetMicroCounter() - now) >= timeout)
-    {
-      return -1;
-    }
-  }
+  if (NRF_UART0->EVENTS_RXDRDY != 1)
+    return -1;
   
   NRF_UART0->EVENTS_RXDRDY = 0;
   return (u8)NRF_UART0->RXD;
-}*/
-
+}

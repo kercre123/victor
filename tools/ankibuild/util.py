@@ -232,6 +232,7 @@ class File(object):
         except subprocess.CalledProcessError as e:
             if ignore_result:
                 print('WARNING: Subprocess `{0}` exited with code {1}.'.format(File._escape(args), e.returncode))
+                return ''
             else:
                 sys.exit('ERROR: Subprocess `{0}` exited with code {1}.'.format(File._escape(args), e.returncode)) 
         except OSError as e:
