@@ -89,12 +89,15 @@ namespace Anki {
         
         // TODO: Make it possible to set the speed/accel somewhere?
         if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
           result = FAILURE_ABORT;
         }
         else if(robot.GetPathToPose(_goalPose, p) != RESULT_OK) {
+          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to get path to goal pose.\n");
           result = FAILURE_ABORT;
         }
         else if(robot.ExecutePath(p, _useManualSpeed) != RESULT_OK) {
+          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed calling execute path.\n");
           result = FAILURE_ABORT;
         }
       }

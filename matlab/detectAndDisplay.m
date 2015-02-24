@@ -1,8 +1,8 @@
-function detectAndDisplay(img, h_axes, h_img, markerLibrary)
+function detectAndDisplay(img, h_axes, h_img, varargin)
 
-if nargin < 4
-    markerLibrary = [];
-end
+markerLibrary = [];
+
+simpleDetectorArgs = parseVarargin(varargin{:});
 
 %persistent h_detections;
 
@@ -12,7 +12,7 @@ if isempty(img) || any(size(img)==0)
 end
 
 %t = tic;
-detections = simpleDetector(img);
+detections = simpleDetector(img, simpleDetectorArgs{:});
 %fprintf('Detection processing took %.2f seconds.\n', toc(t));
 
 %t = tic;

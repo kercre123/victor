@@ -57,26 +57,11 @@ Supervisor {
       translation 0 0 0.0142 # wheel radius
       children [ 
     
-		# Comms for sending paths for drawing to the physics plugin
+		# Comms for communicating with blocks
 		Emitter { 
-		  name "cozmo_physics_comms"
+		  name "blockCommsEmitter"
 		}
-   
-		# For simulated USB connection to do "offboard" vision
-		# processing
-		Emitter {
-		   name "usb_tx"
-		   type "radio"
-		   bufferSize 500000
-		   channel IS usbChannel
-		}
-		Receiver {
-		   name "usb_rx"
-		   type "radio"
-		   bufferSize 500000
-		   channel IS usbChannel
-		}
-	
+   	
 		# Are these still needed?
 		GPS {
 		  name "gps"

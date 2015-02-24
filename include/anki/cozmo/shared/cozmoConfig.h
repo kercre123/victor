@@ -252,7 +252,7 @@ namespace Anki {
     // Comms types for UI-game comms
     #define USE_UDP_UI_COMMS 1
     
-    const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 1000;
+    const u32 MAX_SENT_BYTES_PER_TIC_TO_ROBOT = 200;
     const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;
     
     // Packet headers/footers:

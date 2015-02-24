@@ -27,6 +27,8 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -489,10 +491,44 @@ namespace Anki {
       return lastResult;
       
     } // QueueObservedMarker()
+
+    
+    // Flashes a pattern on an active block
+    void Robot::ActiveBlockLightTest(const u8 blockID) {
+      static int p=0;
+      static int currFrame = 0;
+      const u32 onColor = 0x00ff00;
+      const u32 offColor = 0x0;
+      const u8 NUM_FRAMES = 4;
+      const u32 LIGHT_PATTERN[NUM_FRAMES][NUM_BLOCK_LEDS] =
+      {
+        {onColor, offColor, offColor, offColor, onColor, offColor, offColor, offColor}
+        ,{offColor, onColor, offColor, offColor, offColor, onColor, offColor, offColor}
+        ,{offColor, offColor, offColor, onColor, offColor, offColor, offColor, onColor}
+        ,{offColor, offColor, onColor, offColor, offColor, offColor, onColor, offColor}
+      };
+      
+      if (p++ == 10) {
+        
+        SendSetBlockLights(blockID, LIGHT_PATTERN[currFrame]);
+        //SendFlashBlockIDs();
+        
+        if (++currFrame == NUM_FRAMES) {
+          currFrame = 0;
+        }
+        
+        p = 0;
+      }
+    }
     
     
     Result Robot::Update(void)
     {
+#if(0)
+      ActiveBlockLightTest(1);
+      return RESULT_OK;
+#endif
+      
       // Make sure physical robot is still alive and sending us state updates
       if(_lastStateMsgTime_sec > 0.f) {
         const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
@@ -2192,6 +2228,12 @@ namespace Anki {
     }
     
       
+    Result Robot::SetBlockLights(const u8 blockID, const u32* color)
+    {
+      return SendSetBlockLights(blockID, color);
+    }
+      
+      
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
       //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
@@ -2249,6 +2291,21 @@ namespace Anki {
     Result Robot::SendAbortDocking()
     {
       MessageAbortDocking m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+ 
+      
+    Result Robot::SendFlashBlockIDs()
+    {
+      MessageFlashBlockIDs m;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+      
+    Result Robot::SendSetBlockLights(const u8 blockID, const u32* color)
+    {
+      MessageSetBlockLights m;
+      m.blockID = blockID;
+      std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
       return _msgHandler->SendMessage(GetID(), m);
     }
     

@@ -71,10 +71,11 @@ end
 [nrows,ncols,~] = size(img);
 assert(nrows==ncols, 'By now, image should be square.');
 
-[squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
+[squareWidth_pix, padding_pix, cornerRadius_pix] = VisionMarkerTrained.GetFiducialPixelSize(...
     nrows, 'CodeImageOnly');
 
-if PadOutside
+if cornerRadius_pix == 0
+  if PadOutside
     imgNew = padarray(img, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
     AlphaChannel = padarray(AlphaChannel, round(2*padding_pix+squareWidth_pix)*[1 1], 1, 'both');
     
@@ -83,13 +84,13 @@ if PadOutside
     
     [nrows,ncols,~] = size(imgNew);
     for i=1:3
-        imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
-        imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
-        
-        imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix),i) = FiducialColor(i);
-        imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+      imgNew(padding_pix+(1:squareWidth_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+      imgNew((nrows-padding_pix-squareWidth_pix+1):(nrows-padding_pix), (padding_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
+      
+      imgNew((padding_pix+1):(nrows-padding_pix), padding_pix+(1:squareWidth_pix),i) = FiducialColor(i);
+      imgNew((padding_pix+1):(nrows-padding_pix), (ncols-padding_pix-squareWidth_pix+1):(ncols-padding_pix),i) = FiducialColor(i);
     end
-else
+  else
     imgNew = padarray(img, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
     AlphaChannel = padarray(AlphaChannel, round(padding_pix+squareWidth_pix)*[1 1], 1, 'both'); %#ok<UNRCH>
     
@@ -98,11 +99,56 @@ else
     
     [nrows,ncols,~] = size(imgNew);
     for i=1:3
-        imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:,i) = FiducialColor(i);
-        imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end],i) = FiducialColor(i);
+      imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],:,i) = FiducialColor(i);
+      imgNew(:,[1:squareWidth_pix (end-squareWidth_pix+1):end],i) = FiducialColor(i);
     end
-end
-
+  end
+else
+  
+  cornerRadius_pix = round(cornerRadius_pix);
+  
+  paddingPlusSquareWidth_pix = round(padding_pix+squareWidth_pix);
+  
+  imgNew = padarray(img, paddingPlusSquareWidth_pix*[1 1], 1, 'both'); %#ok<UNRCH>
+  %imgNew = ones(2*paddingPlusSquareWidth_pix+size(img,1),2*paddingPlusSquareWidth_pix+size(img,2),size(img,3));
+  AlphaChannel = padarray(AlphaChannel, paddingPlusSquareWidth_pix*[1 1], 1, 'both'); %#ok<UNRCH>
+  
+  padding_pix = round(padding_pix);
+  squareWidth_pix = round(squareWidth_pix);
+  
+  [nrows,ncols,~] = size(imgNew);
+  for i=1:3
+    imgNew([1:squareWidth_pix (end-squareWidth_pix+1):end],cornerRadius_pix:(end-cornerRadius_pix+1),i) = FiducialColor(i);
+    imgNew(cornerRadius_pix:(end-cornerRadius_pix+1),[1:squareWidth_pix (end-squareWidth_pix+1):end],i) = FiducialColor(i);
+  end
+  
+  % Insert the corners:
+  [xgrid,ygrid] = meshgrid(1:ncols, 1:nrows);
+  rgridSq = (xgrid-cornerRadius_pix).^2 + (ygrid-cornerRadius_pix).^2;
+  topLeftCornerMask = rgridSq < cornerRadius_pix^2 & rgridSq > max(0,cornerRadius_pix-squareWidth_pix)^2 & ...
+    xgrid<cornerRadius_pix & ygrid<cornerRadius_pix;
+  rgridSq = (xgrid-(ncols-cornerRadius_pix)).^2 + (ygrid-cornerRadius_pix).^2;
+  topRightCornerMask = rgridSq < cornerRadius_pix^2 & rgridSq > max(0,cornerRadius_pix-squareWidth_pix)^2 & ...
+    xgrid>(ncols-cornerRadius_pix) & ygrid<cornerRadius_pix;
+  rgridSq = (xgrid-(ncols-cornerRadius_pix)).^2 + (ygrid-(nrows-cornerRadius_pix)).^2;
+  btmRightCornerMask = rgridSq < cornerRadius_pix^2 & rgridSq > max(0,cornerRadius_pix-squareWidth_pix)^2 & ...
+    xgrid>(ncols-cornerRadius_pix) & ygrid>(nrows-cornerRadius_pix); 
+  rgridSq = (xgrid-cornerRadius_pix).^2 + (ygrid-(nrows-cornerRadius_pix)).^2;
+  btmLeftCornerMask = rgridSq < cornerRadius_pix^2 & rgridSq > max(0,cornerRadius_pix-squareWidth_pix)^2 & ...
+    xgrid<cornerRadius_pix & ygrid>(nrows-cornerRadius_pix);
+  
+  cornerMask = topLeftCornerMask | topRightCornerMask | btmLeftCornerMask | btmRightCornerMask;
+  N = sum(cornerMask(:));
+  imgNew = reshape(imgNew, [], size(imgNew,3));
+  imgNew(cornerMask,:) = ones(N,1)*FiducialColor;
+  imgNew = reshape(imgNew, nrows, ncols, []);
+  
+  if PadOutside
+    imgNew = padarray(imgNew, padding_pix*[1 1], 1, 'both');
+  end
+  
+end % IF cornerRadius_pix==0
+;
 imgNew = imresize(imgNew, OutputSize*[1 1], 'nearest');
 AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1], 'nearest');
 

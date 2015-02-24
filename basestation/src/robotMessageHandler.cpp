@@ -607,7 +607,12 @@ namespace Anki {
       robot->StopSound();
       return RESULT_OK;
     }
-    
+
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockIDFlashStarted const& msg)
+    {
+      printf("TODO: MessageBlockIDFlashStarted at time %d ms\n", msg.timestamp);
+      return RESULT_OK;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

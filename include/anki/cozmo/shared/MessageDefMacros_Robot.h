@@ -35,6 +35,8 @@
 #undef MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
 #undef MESSAGE_ENUM_DEFINITION_MODE
 #undef MESSAGE_DISPATCH_DEFINITION_MODE
+#undef MESSAGE_REG_CALLBACK_METHODS_MODE
+#undef MESSAGE_PROCESS_METHODS_MODE
 #undef MESSAGE_SIZE_TABLE_DEFINITION_MODE
 #undef MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE
 
@@ -43,8 +45,10 @@
 #define MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE 2
 #define MESSAGE_ENUM_DEFINITION_MODE     3
 #define MESSAGE_DISPATCH_DEFINITION_MODE 4
-#define MESSAGE_SIZE_TABLE_DEFINITION_MODE          5
-#define MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE  6
+#define MESSAGE_REG_CALLBACK_METHODS_MODE           5
+#define MESSAGE_PROCESS_METHODS_MODE                6
+#define MESSAGE_SIZE_TABLE_DEFINITION_MODE          7
+#define MESSAGE_DISPATCH_FCN_TABLE_DEFINITION_MODE  8
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
 #define START_TIMESTAMPED_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__)
@@ -63,6 +67,8 @@
 #define GET_DISPATCH_FCN_NAME(__MSG_TYPE__) Process##__MSG_TYPE__##Message
 #define GET_STRUCT_TYPENAME(__MSG_TYPE__) __MSG_TYPE__
 #define GET_MESSAGE_ID(__MSG_TYPE__) __MSG_TYPE__##_ID
+#define GET_REGISTER_FCN_NAME(__MSG_TYPE__) RegisterCallbackForMessage##__MSG_TYPE__
+#define GET_CALLBACK_FCN_NAME(__MSG_TYPE__) CallbackForMessage##__MSG_TYPE__
 
 // Time-stamped message definiton (for now) just uses regular start-message
 // macro and adds a special timestamp member at the beginning.
@@ -121,6 +127,35 @@ GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
+
+
+// Register callback functions
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_REG_CALLBACK_METHODS_MODE
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(GET_STRUCT_TYPENAME(__MSG_TYPE__) const&)> callbackFcn);
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
+
+
+#elif MESSAGE_DEFINITION_MODE == MESSAGE_PROCESS_METHODS_MODE
+#define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
+std::function<void(GET_STRUCT_TYPENAME(__MSG_TYPE__)const&)> GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = nullptr; \
+void GET_REGISTER_FCN_NAME(__MSG_TYPE__)(std::function<void(GET_STRUCT_TYPENAME(__MSG_TYPE__) const&)> callbackFcn) \
+{ \
+  GET_CALLBACK_FCN_NAME(__MSG_TYPE__) = callbackFcn; \
+} \
+Result GET_DISPATCH_FCN_NAME(__MSG_TYPE__)(const u8* buffer) \
+{ \
+  if (nullptr != GET_CALLBACK_FCN_NAME(__MSG_TYPE__)) { \
+    GET_CALLBACK_FCN_NAME(__MSG_TYPE__)(*reinterpret_cast<const GET_STRUCT_TYPENAME(__MSG_TYPE__)*>(buffer)); \
+    return RESULT_OK; \
+  } \
+  return RESULT_FAIL; \
+}
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__)
+#define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__)
+#define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__)
 
 
 //
