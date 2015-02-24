@@ -4,7 +4,7 @@ function [image, curImageIndex] = parseLedCode_getNextImage(cameraType, filename
     elseif strcmpi(cameraType, 'usbcam')
         persistent cap; %#ok<TLEV>
         
-        cameraId = 0;
+        cameraId = 1;
         
         if isempty(cap)
             cap = cv.VideoCapture(cameraId);

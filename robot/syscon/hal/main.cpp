@@ -30,7 +30,68 @@ void SystemInit(void)
   }
 }
 
-const u8 PIN_CHGEN = 5;  // 3.0
+// Execute a particular test - indexed by cmd with 16-bit signed arg
+void TestRun(u8 cmd, s16 arg)
+{
+  const u8 REPSTART = 0xFC, REPEND = 0xFD;
+  UARTPutChar(REPSTART);
+  
+  // Execute motor setpower commands (0-3)
+  if (cmd <= 4)
+  {
+    MotorsSetPower(cmd, arg);
+    MotorsUpdate();
+    MicroWait(5000);
+    MotorPrintEncoder(cmd);
+    MotorsUpdate();
+    MicroWait(5000);
+  }
+  // Execute read sensors command (4)
+  if (4 == cmd)
+  {
+  }
+  
+  UARTPutChar(REPEND);
+}
+
+// Test mode enables direct control of the platform via the rear UART
+// All commands start with a request from the host and send a reply to the client
+// Standard requests are 5 bytes long - 0xFA header, command, arg0, arg1, 0xFB footer
+// Standard replies are 2 bytes long - 0xFC command started, 0xFD command complete
+// A few replies will return data between the command started and command complete
+void TestMode(void)
+{
+  const int REQLEN = 5; // Requests are 5 bytes long
+  const u8 REQSTART = 0xFA, REQEND = 0xFB;
+  
+  UARTInit();
+  
+  u8 req[REQLEN]; // Current request
+  u8 reqLen = 0;  // Number of request bytes received
+   
+  // Read requests byte by byte and dispatch them    
+  while (1)
+  {
+    int c = UARTGetChar();
+    
+    // Wait for a character to arrive
+    if (-1 == c)
+      continue;
+    
+    req[reqLen++] = c;
+    
+    // First byte must be REQSTART, else reset the request
+    if (1 == reqLen && REQSTART != c) {
+      reqLen = 0;
+      
+    // If last byte is REQEND, dispatch the request
+    } else if (REQLEN == reqLen) {
+      reqLen = 0;
+      if (REQEND == c)
+        TestRun(req[1], req[2] | (req[3] << 8));
+    }
+  }   
+}
 
 const u8 PIN_LED1 = 18;
 const u8 PIN_LED2 = 19;
@@ -49,7 +110,7 @@ int main(void)
 #if defined(DO_MOTOR_TESTING)
   UARTInit();
 #endif
-  
+
   UARTPutString("\r\nUnbrick me now...");
   u32 t = GetCounter();
   while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
@@ -60,14 +121,10 @@ int main(void)
 #ifndef DO_MOTOR_TESTING
   SPIInit();
 #endif
-  PowerInit(); 
-  
+  PowerOn(); 
+
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
-  
-  // Force charger on for now
-  nrf_gpio_pin_clear(PIN_CHGEN);
-  nrf_gpio_cfg_output(PIN_CHGEN);
   
   // Status LED hack
   nrf_gpio_cfg_output(PIN_LED1);
@@ -75,7 +132,7 @@ int main(void)
   // LED1 set means on, LED1 clear means off
   nrf_gpio_pin_clear(PIN_LED2);
   nrf_gpio_pin_set(PIN_LED1);    
-
+  
 #if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
   nrf_gpio_pin_clear(PIN_LED1);
@@ -83,8 +140,10 @@ int main(void)
   while (1)
   {
     UARTPutString("\r\nForward ends with...");
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
       MotorsSetPower(i, 0x2000);   
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, 0x6800); 
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
@@ -94,8 +153,10 @@ int main(void)
     
     UARTPutString("\r\nBackward ends with...");
     
-    for (int i = 0; i < 4; i++)    
+    for (int i = 0; i < 2; i++)    
       MotorsSetPower(i, -0x2000);
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, -0x6800); 
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
@@ -112,12 +173,15 @@ int main(void)
     u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
     
-    // Exchange data with the head board
-    SPITransmitReceive(
-      sizeof(GlobalDataToBody),
-      (const u8*)&g_dataToHead,
-      (u8*)&g_dataToBody);
-    
+    // If we're not on the charge contacts, exchange data with the head board
+    if (!IsOnContacts())
+    {
+      SPITransmitReceive(
+        sizeof(GlobalDataToBody),
+        (const u8*)&g_dataToHead,
+        (u8*)&g_dataToBody);
+    }
+        
 #if 0
     u8* d = (u8*)&g_dataToBody;
     for (int i = 0; i < 0x10; i++)
@@ -162,7 +226,7 @@ int main(void)
          
     // Only call every loop through - not all the time
     MotorsUpdate();
-    //BatteryUpdate();
+    BatteryUpdate();
     
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms

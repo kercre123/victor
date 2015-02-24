@@ -8,6 +8,9 @@ void BatteryInit();
 void BatteryUpdate();
 
 // Turn on power to the head
-void PowerInit();
+void PowerOn();
+
+// Are we on the contacts right now?
+int IsOnContacts();
 
 #endif

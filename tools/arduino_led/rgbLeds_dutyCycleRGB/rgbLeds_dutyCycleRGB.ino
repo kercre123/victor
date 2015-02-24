@@ -9,15 +9,26 @@ const int numLeds = 3;
 const int ledPins[numLeds] = {31, 33, 35};
 
 const int modulationPeriodMicroseconds = 2000;
-const int modulationOnMicroseconds[numLeds] = {125, 20, 30}; // percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+
+// percentBrightness = modulationOnMicroseconds / modulationPeriodMicroseconds
+//const int modulationOnMicroseconds[numLeds] = {125, 30, 30}; 
+//const int modulationOnMicroseconds[numLeds] = {10, 10, 10};
+const int modulationOnMicroseconds[numLeds] = {125, 60, 100};
 
 const int microsecondsPerFrame = 33333;
 const int microsecondPause = microsecondsPerFrame/2; // TODO: pick a good value
 const int totalPeriodFrames = 15;
 const int totalPeriodMicroseconds = totalPeriodFrames * microsecondsPerFrame; //500000;
+const int framesOff = 3;
 
-int whichLeds[3] = {0, 1, 2};
-int numOnFrames[3] = {5, 5, 2};
+// int whichLeds[3] = {0, 1, 2};
+// int numOnFrames[3] = {5, 5, 2};
+int whichLeds[3] = {0, 2, 1};
+int numOnFrames[3] = {8, 4, 0};
+
+// For bHood style car LEDs
+#define LIGHT_ON LOW
+#define LIGHT_OFF HIGH
 
 void setDefaultTimings()
 {
@@ -32,7 +43,7 @@ void setup()
 
   for(int iLed=0; iLed<numLeds; iLed++) {
     pinMode(ledPins[iLed], OUTPUT);
-    digitalWrite(ledPins[iLed], LOW);
+    digitalWrite(ledPins[iLed], LIGHT_OFF);
   }
 } // void setup()
 
@@ -41,9 +52,6 @@ void updateTimings()
   if(Serial.available()) {
     const int bufferLength = 64;
     char buffer[bufferLength];
-
-    int local_whichLeds[3] = {-1, -1, -1};
-    int local_numOnFrames[3] = {-1, -1, -1};
 
     delay(100);
 
@@ -60,30 +68,34 @@ void updateTimings()
 
     //Serial.println(buffer);
 
-    // Example: 0,5,1,5,2,2
-    sscanf(buffer, "%d,%d,%d,%d,%d,%d", &local_whichLeds[0], &local_numOnFrames[0], &local_whichLeds[1], &local_numOnFrames[1], &local_whichLeds[2], &local_numOnFrames[2]);
 
     bool isValid = true;
-
-    int totalOnFrames = 0;
-
-    for(int i=0; i<3; i++) {
-      totalOnFrames += local_numOnFrames[i];
-      if(local_whichLeds[i] < 0 || local_whichLeds[i] > 2 || local_numOnFrames[i] < 0 || whichLeds[i] < 0 || whichLeds[i] > 2) {
+    bool isRed;
+    if(buffer[0] == 'r' || buffer[0] == 'R') {
+      isRed = true;
+    } else if(buffer[0] == 'b' || buffer[0] == 'B') {
+      isRed = false;
+    } else {
+      isValid = false;
+    } 
+    
+    int numFramesFirst = -1;
+    if(isValid) {
+      numFramesFirst = strtol(buffer+1, NULL, 10);
+      //sscanf(buffer+1, "%d", &local_whichLeds[0], &local_numOnFrames[0], &local_whichLeds[1], &local_numOnFrames[1], &local_whichLeds[2], &local_numOnFrames[2]);
+  
+      if(numFramesFirst < 1 || numFramesFirst > (totalPeriodFrames-1-framesOff)) {
         isValid = false;
-        break;
       }
     }
     
-    if(totalOnFrames >= totalPeriodFrames) {
-      isValid = false;
-    }
-    
-    snprintf(buffer, bufferLength, "%d,%d %d,%d %d,%d", local_whichLeds[0], local_numOnFrames[0], local_whichLeds[1], local_numOnFrames[1], local_whichLeds[2], local_numOnFrames[2]);
     Serial.println(buffer);
+    
+    //snprintf(buffer, bufferLength, "%c %d", buffer[0], isRed);
+    //Serial.println(buffer);
 
     if(!isValid) {
-      Serial.println("Invalid input. Use format: whichLed0, numOnFrames0, whichLed1, numOnFrames1, whichLed2, numOnFrames2");
+      Serial.println("Invalid input. Use format: R# or B#");
       return;
     }
 
@@ -92,16 +104,27 @@ void updateTimings()
       Serial.read();
     }
     
-    for(int i=0; i<3; i++) {
-      whichLeds[i] = local_whichLeds[i];
-      numOnFrames[i] = local_numOnFrames[i];
+    if(isRed) {
+      whichLeds[0] = 0;
+      whichLeds[1] = 2;
+      whichLeds[2] = 1;
+      numOnFrames[0] = numFramesFirst;
+      numOnFrames[1] = totalPeriodFrames - framesOff - numFramesFirst;
+      numOnFrames[2] = 0;
+    } else {
+      whichLeds[0] = 2;
+      whichLeds[1] = 0;
+      whichLeds[2] = 1;
+      numOnFrames[0] = numFramesFirst;
+      numOnFrames[1] = totalPeriodFrames - framesOff - numFramesFirst;
+      numOnFrames[2] = 0;
     }
   } // if(Serial.available()) {
 } // void updateTimings()
 
 static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn) 
 {
-  digitalWrite(whichLedPin, HIGH);
+  digitalWrite(whichLedPin, LIGHT_ON);
   bool ledIsOn = true;
 
   // Inner loop, modulating on and off very quickly, to form a brightness
@@ -116,13 +139,13 @@ static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn)
     }
 
     if(ledIsOn && (deltaTime > numMicrosecondsOn)) {
-      digitalWrite(whichLedPin, LOW);
+      digitalWrite(whichLedPin, LIGHT_OFF);
       ledIsOn = false;
     }
   } // while(true)
 
   if(ledIsOn) {
-    digitalWrite(whichLedPin, LOW);
+    digitalWrite(whichLedPin, LIGHT_OFF);
     ledIsOn = false;
   }
 }
@@ -140,7 +163,11 @@ void loop()
     
     int numOnMicroseconds;
     if(iLed == 2) {
-      numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame - microsecondPause;
+      if(numOnFrames[iLed] * microsecondsPerFrame < microsecondPause) {
+        numOnMicroseconds = 0;
+      } else {
+        numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame - microsecondPause;
+      }
     } else {
       numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame;
     }
@@ -160,7 +187,7 @@ void loop()
       mainLoopTimeDelta = outerStartTime - ledLoopStartTime;
     } // while(true)
     
-    digitalWrite(curLedPin, LOW);
+    digitalWrite(curLedPin, LIGHT_OFF);
   } // for(int iLed=0; iLed<3; iLed++)
 
   // Finish with dark

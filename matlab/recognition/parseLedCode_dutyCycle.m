@@ -83,8 +83,8 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         %         imagesTmp(:, 1:alignmentRectangle(1),:,:) = 0;
         %         imagesTmp(:, alignmentRectangle(2):end, :, :) = 0;
         
-        %         [bestDys,bestDxs] = computeBestTranslations(imagesTmp, offsetImageSize, maxOffset);
-        [bestDys, bestDxs, offsetImageScale] = computeBestTranslations(images, offsetImageSize, maxOffset, alignmentRectangle, true);
+        %         [bestDys,bestDxs] = parseLedCode_computeBestTranslations(imagesTmp, offsetImageSize, maxOffset);
+        [bestDys, bestDxs, offsetImageScale] = parseLedCode_computeBestTranslations(images, offsetImageSize, maxOffset, alignmentRectangle, true);
         
         alignedImages = zeros(size(images), 'uint8');
         for iImage = 1:size(images,4)
@@ -108,7 +108,7 @@ function [colorIndex, numPositive] = parseLedCode_dutyCycle(varargin)
         
         if strcmpi(alignmentType, 'exhaustiveTranslation-double')
             maxOffsetLocal = 5;
-            [bestDys,bestDxs] = computeBestTranslations(colorPatches, [size(colorPatches,1),size(colorPatches,2)], maxOffsetLocal);
+            [bestDys,bestDxs] = parseLedCode_computeBestTranslations(colorPatches, [size(colorPatches,1),size(colorPatches,2)], maxOffsetLocal);
             
             for iImage = 1:size(images,4)
                 moreShifted = uint8(exhuastiveAlignment_shiftImage(blurredImages(:,:,:,iImage), bestDys(iImage), bestDxs(iImage), maxOffsetLocal));
@@ -232,7 +232,7 @@ function [percentPositive, colorIndex, colorName] = computeDutyCycle(colors, kno
         colorIndex = -1;
         colorName = 'unknown';
     end
-end
+end % function computeDutyCycle()
 
 function [colors, colorsHsv] = extractColorsAverage(colorImages, saturationThreshold)
     minImageBlurred = double(min(colorImages, [], 4));
@@ -309,68 +309,13 @@ function [numPositive, peakValue] = dutyCycle_changingCenter(colorImages, blurSi
     [~, endPoint] = min(steps(:,bestY,bestX,bestB));
     numPositive = mod(endPoint - startPoint, size(colorImages,4)) + 0.5;
     
-%     clickGui = true;
+    %     clickGui = true;
     clickGui = false;
     if clickGui
-        plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
+        parseLedCode_plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
     end % if clickGui
     %     playVideo({blurredImages(:,:,:,:,a,1), blurredImages(:,:,:,:,a,2), blurredImages(:,:,:,:,a,3)})
 end % function colors = dutyCycle_changingCenter()
-
-function plot_guiChangingCenter(colorImages, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps)
-    disp('Click a point');
-
-    while true
-        figure(1);
-        imshows(colorImages(:,:,:,ceil(end/2)))
-
-        [x,y] = ginput(1);
-        x = round(x);
-        y = round(y);
-
-        disp(sprintf('Clicked (%d,%d)', x, y));
-
-        plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps);
-    end % while true
-end
-
-function plot_changingCenter(x, y, blurSigmas, blurredImages_small, blurredImages_large, blurredImages_outsideRing, blurredImages_inside, steps)
-    figure(2);
-    for iBlur = 1:length(blurSigmas)
-        subplot(3,3,iBlur);
-        hold off
-        plot(squeeze(blurredImages_small(y, x, :, iBlur))', 'b')
-        hold on
-        plot(squeeze(blurredImages_large(y, x, :, iBlur))', 'g')
-        plot(squeeze(blurredImages_outsideRing(y, x, :, iBlur))', 'r')
-        plot(squeeze(blurredImages_inside(y, x, :, iBlur))', 'k')
-
-        a = axis();
-        a(3:4) = [0,200];
-        axis(a);
-    end
-
-    figure(3);
-    maxAxis = 0;
-    for iBlur = 1:length(blurSigmas)
-%         curRing = double(squeeze(blurredImages_inside(y,x,:,iBlur)));
-%         curSteps = imfilter(curRing, stepUpFilter, 'circular');
-
-        curSteps = steps(:,y,x,iBlur);
-
-        subplot(3,3,iBlur);
-        hold off
-        plot(curSteps);
-        curAxis = axis();
-
-        maxAxis = max(maxAxis, max(abs(curAxis(3:4))));
-    end
-
-    for iBlur = 1:length(blurSigmas)
-        subplot(3,3,iBlur);
-        axis([curAxis(1:2), -maxAxis, maxAxis])
-    end
-end
 
 function [rawBlockHistogram, normalizedRawBlockHistogram, maxPooledBlockHistogram, normalizedMaxPooledBlockHistogram] = getBlockHistograms(colorImage, numBinsPerColor, blockWidth)
     
@@ -424,43 +369,4 @@ function plotSpatialHistogram(reorderedHistograms)
         end
     end
 end % function plotSpatialHistogram()
-
-function [bestDys, bestDxs, offsetImageScale] = computeBestTranslations(images, offsetImageSize, maxOffset, validRegion, twoPass)
-    middleImageIndex = ceil(size(images,4) / 2);
-    smallImages = imresize(images, offsetImageSize);
-    
-    offsetImageScale = offsetImageSize(1) / size(images,1);
-    
-    bestDys = zeros(size(images,4), 1);
-    bestDxs = zeros(size(images,4), 1);
-    for iImage = 1:size(images,4)
-        
-        if iImage == middleImageIndex
-            bestDy = 0;
-            bestDx = 0;
-        else
-            % First, find the best for the small image
-            scaledMaxOffset = round(offsetImageScale*maxOffset);
-            [coarseBestDy, coarseBestDx, ~, ~, ~] = exhaustiveAlignment(smallImages(:,:,:,middleImageIndex), smallImages(:,:,:,iImage), (-scaledMaxOffset):scaledMaxOffset, (-scaledMaxOffset):scaledMaxOffset, scaledMaxOffset, round(offsetImageScale*validRegion));
-            coarseBestDy = (1/offsetImageScale)*coarseBestDy(1);
-            coarseBestDx = (1/offsetImageScale)*coarseBestDx(1);
-            
-            if twoPass
-                % Next, use the full size image to compute the one-pixel offset
-                fineOffsetsY = (coarseBestDy-ceil(0.5/offsetImageScale)):(coarseBestDy+ceil(0.5/offsetImageScale));
-                fineOffsetsX = (coarseBestDx-ceil(0.5/offsetImageScale)):(coarseBestDx+ceil(0.5/offsetImageScale));
-                [bestDy, bestDx, ~, ~, ~] = exhaustiveAlignment(images(:,:,:,middleImageIndex), images(:,:,:,iImage), fineOffsetsY, fineOffsetsX, (1/offsetImageScale)*maxOffset, round(offsetImageScale*validRegion));
-            else
-                bestDy = coarseBestDy;
-                bestDx = coarseBestDx;
-            end
-        end
-        
-        %         bestDys(iImage) = (1/offsetImageScale)*bestDy(1);
-        %         bestDxs(iImage) = (1/offsetImageScale)*bestDx(1);
-        bestDys(iImage) = bestDy(1);
-        bestDxs(iImage) = bestDx(1);
-    end
-end % function computeBestTranslations()
-
 

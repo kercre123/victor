@@ -13,6 +13,9 @@ extern GlobalDataToBody g_dataToBody;
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
+// Robot #2 (3.1) has nearly opposite wiring from #1
+#define ROBOT2
+
   enum MotorID
   {
     MOTOR_LEFT_WHEEL,
@@ -101,8 +104,12 @@ extern GlobalDataToBody g_dataToBody;
     {
       LEFT_N1_PIN,
       LEFT_N2_PIN,
-      LEFT_P_PIN,     
-      false,   // Wired forward
+      LEFT_P_PIN,    
+#ifdef ROBOT2      
+      true,
+#else
+      false,
+#endif      
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -113,7 +120,11 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N1_PIN,
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
-      true,   // Wired backward
+#ifdef ROBOT2      
+      false,
+#else
+      true,
+#endif 
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
@@ -135,7 +146,11 @@ extern GlobalDataToBody g_dataToBody;
       HEAD_N1_PIN,
       HEAD_N2_PIN,
       HEAD_P_PIN,
-      true,   // Wired backward
+#ifdef ROBOT2      
+      false,
+#else
+      true,
+#endif 
       0,
       ENCODER_HEADA_PIN,
       ENCODER_HEADB_PIN,
@@ -494,6 +509,15 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
       fast_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_SENSE_LOW);
     }
   }
+}
+
+void MotorPrintEncoder(u8 motorID)
+{
+  int i = m_motors[motorID].position;
+  UARTPutChar(i);
+  UARTPutChar(i >> 8);
+  UARTPutChar(i >> 16);
+  UARTPutChar(i >> 24);
 }
 
 // Apologies for the straight-line code - it's required for performance

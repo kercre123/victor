@@ -1,28 +1,28 @@
-% function test_blinkingLeds()
+% function test_dutyCycle()
 
-% [accuracy, results] = test_blinkingLeds();
+% [accuracy, results] = test_dutyCycle();
 
-function [accuracy, results] = test_blinkingLeds()
+function [accuracy, results] = test_dutyCycle()
     
     filenamePatterns = {...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle1/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle2/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle3/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle4/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle5/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle6/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle7/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle8/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle9/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle10/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle11/images_%05d.png', [0,99], 1, 6},...
-        {'~/Documents/Anki/products-cozmo-large-files/blinkingLights/dutyCycle12/images_%05d.png', [0,99], 1, 6}};
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle1/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle2/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle3/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle4/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle5/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle6/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle7/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle8/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle9/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle10/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle11/images_%05d.png', [0,99], 1, 6},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/dutyCycle12/images_%05d.png', [0,99], 1, 6}};
     
     numFramesToTest = 15;
     
-    %     compositeVideo = createCompositeSampleVideo(filenamePatterns);
-    %     save /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat compositeVideo
-    %     load /Users/pbarnum/Documents/Anki/products-cozmo-large-files/blinkingLights/lightsVideo.mat
+    %     compositeVideo = test_createCompositeSampleVideo(filenamePatterns);
+    %     save /Users/pbarnum/Documents/Anki/drive-ar-large-files/blinkingLights/lightsVideo.mat compositeVideo
+    %     load /Users/pbarnum/Documents/Anki/drive-ar-large-files/blinkingLights/lightsVideo.mat
     
     alignmentTypes = {'none', 'exhaustiveTranslation'};
     %     parsingTypes = {'blur', 'histogram'};
@@ -43,12 +43,10 @@ function [accuracy, results] = test_blinkingLeds()
     
     colorNames = {'red', 'green', 'blue'};
     
-    %     for iAlignmentType = length(alignmentTypes):-1:1
-    %         for iParsingType = length(parsingTypes):-1:1
-    %     for iAlignmentType = length(alignmentTypes)
-    %         for iParsingType = 1
-    for iAlignmentType = 2
-        for iParsingType = 3
+    for iAlignmentType = length(alignmentTypes):-1:1
+        for iParsingType = length(parsingTypes):-1:1
+            %     for iAlignmentType = 2
+            %         for iParsingType = 3
             
             if iParsingType == 3
                 processingSize = [120,160];
@@ -58,14 +56,14 @@ function [accuracy, results] = test_blinkingLeds()
                 lightSquareWidths = [40] * (processingSize(1) / 240);
             end
             
-            %             for iFilenamePattern = 1:length(filenamePatterns)
-            for iFilenamePattern = 1
+            for iFilenamePattern = 1:length(filenamePatterns)
+                %             for iFilenamePattern = 1
                 whichFirstFrames = filenamePatterns{iFilenamePattern}{2}(1):(filenamePatterns{iFilenamePattern}{2}(2)-numFramesToTest+1);
                 results{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), 2, numTestTypes);
                 accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} = -1 * ones(length(whichFirstFrames), numTestTypes);
                 
-                %                 for iFirstFrame = 1:length(whichFirstFrames)
-                for iFirstFrame = 84
+                for iFirstFrame = 1:length(whichFirstFrames)
+                    %                 for iFirstFrame = 84
                     firstFrame = whichFirstFrames(iFirstFrame);
                     
                     colorIndexes = -ones(numTestTypes, 1);
@@ -178,26 +176,4 @@ function [accuracy, results] = test_blinkingLeds()
     
     
     keyboard
-end % function test_blinkingLeds()
-
-function compositeVideo = createCompositeSampleVideo(filenamePatterns)
-    numImages = Inf;
-    for iFilenamePattern = 1:length(filenamePatterns)
-        imageNumbers = filenamePatterns{iFilenamePattern}{2}(1):filenamePatterns{iFilenamePattern}{2}(2);
-        numImages = min(numImages, length(imageNumbers));
-    end
-    
-    compositeVideo = cell(numImages, 1);
-    for iImage = 1:numImages
-        images = cell(length(filenamePatterns), 1);
-        for iFilenamePattern = 1:length(filenamePatterns)
-            imageNumbers = filenamePatterns{iFilenamePattern}{2}(1):filenamePatterns{iFilenamePattern}{2}(2);
-            curFilename = sprintf(filenamePatterns{iFilenamePattern}{1}, imageNumbers(iImage));
-            images{iFilenamePattern} = imread(curFilename);
-        end
-        
-        compositeVideo{iImage} = drawCollage(images);
-    end
-end % function createCompositeSampleVideo()
-
-
+end % function test_dutyCycle()
