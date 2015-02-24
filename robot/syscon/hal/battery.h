@@ -10,4 +10,7 @@ void BatteryUpdate();
 // Turn on power to the head
 void PowerOn();
 
+// Are we on the contacts right now?
+int IsOnContacts();
+
 #endif

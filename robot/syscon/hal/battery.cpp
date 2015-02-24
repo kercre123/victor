@@ -59,6 +59,11 @@ static inline void startADCsample(u8 channel)
   NRF_ADC->TASKS_START = 1;
 }
 
+int IsOnContacts()
+{
+  return m_onContacts;
+}
+
 void BatteryInit()
 {
   // Syscon power - this should always be on until battery fail
@@ -160,7 +165,6 @@ void BatteryUpdate()
         } else {
           debounceBattery = 0;
         }
-        
         startADCsample(ANALOG_V_USB_SENSE);
         m_pinIndex = 2;
         break;

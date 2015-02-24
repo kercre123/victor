@@ -11,10 +11,17 @@ For internal use only. No part of this code may be used without a signed non-dis
 //#include "anki/common/robot/errorHandling.h"
 
 #if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || \
-(defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
+  (defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
+
+#ifdef _MSC_VER
+#include <stdarg.h>
+
+#ifndef snprintf
+#define snprintf sprintf_s
+#endif
+#endif
 
 namespace Anki {
-   
 #define TEXT_BUFFER_SIZE 1024
 
   std::string ConvertToMatlabTypeString(const char *typeName, size_t byteDepth)
@@ -74,53 +81,53 @@ namespace Anki {
 
   /* Redundant with ones in matlabConverters.h
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u8>() {
-    return mxUINT8_CLASS;
+  return mxUINT8_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s8>() {
-    return mxINT8_CLASS;
+  return mxINT8_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u16>() {
-    return mxUINT16_CLASS;
+  return mxUINT16_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s16>() {
-    return mxINT16_CLASS;
+  return mxINT16_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u32>() {
-    return mxUINT32_CLASS;
+  return mxUINT32_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s32>() {
-    return mxINT32_CLASS;
+  return mxINT32_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<u64>() {
-    return mxUINT64_CLASS;
+  return mxUINT64_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<s64>() {
-    return mxINT64_CLASS;
+  return mxINT64_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<f32>() {
-    return mxSINGLE_CLASS;
+  return mxSINGLE_CLASS;
   }
 
   template<> mxClassID SharedMatlabInterface::GetMatlabClassID<f64>() {
-    return mxDOUBLE_CLASS;
+  return mxDOUBLE_CLASS;
   }
   */
-  
+
   SharedMatlabInterface::SharedMatlabInterface(bool clearWorkspace)
   {
     // Multithreading under Windows requires this command
     // CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    
+
     ep = engOpen(NULL);
-    
+
     if(!ep) {
       LOG_ERROR("SharedMatlabInterface Constructor", "Failed to open Matlab engine!");
     }
@@ -168,7 +175,7 @@ namespace Anki {
       LOG_ERROR("Anki.", "Matlab engine is not started/connected");
       return "";
     }
-    
+
     va_list args;
     char *buffer;
 
@@ -242,7 +249,7 @@ namespace Anki {
       LOG_ERROR("Anki.", "Matlab engine is not started/connected");
       return TYPE_UNKNOWN;
     }
-    
+
     char typeName[TEXT_BUFFER_SIZE];
     snprintf(typeName, TEXT_BUFFER_SIZE, "%s_types", name.data());
     EvalStringEcho("%s=int32([isa(%s, 'int8'), isa(%s, 'u8'), isa(%s, 'int16'), isa(%s, 'u16'), isa(%s, 'int32'), isa(%s, 'u32'), isa(%s, 'int64'), isa(%s, 'u64'), isa(%s, 'single'), isa(%s, 'double')]);", typeName, name.data(), name.data(), name.data(), name.data(), name.data(), name.data(), name.data(), name.data(), name.data(), name.data());
@@ -265,7 +272,7 @@ namespace Anki {
 
     free(types);
     types = 0;
-    
+
     return type;
   }
 
@@ -277,13 +284,13 @@ namespace Anki {
       LOG_ERROR("Anki.", "Matlab engine is not started/connected");
       return RESULT_FAIL;
     }
-    
+
     if(matrix == NULL) {
       // AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
       LOG_ERROR("Anki.", "Error: CvMat is not initialized for %s\n", name.data());
       return RESULT_FAIL;
     }
-    
+
     char tmpName[TEXT_BUFFER_SIZE];
     snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
     EvalString("%s=%s';", tmpName, name.data());
@@ -419,53 +426,38 @@ namespace Anki {
     char tmpName[TEXT_BUFFER_SIZE];
     snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());
 
-    bool mismatch = true;
     if((matrix->type&CV_MAT_DEPTH_MASK) == CV_64F) {
-      //if(mat->type == CV_64F)
-      {
-        Put<double>(matrix->data.db, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<f64>(matrix->data.db, matrix->rows*matrix->step/sizeof(f64), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_32F) {
-      //if(mat->type == CV_32F)
-      {
-        Put<float>(matrix->data.fl, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<f32>(matrix->data.fl, matrix->rows*matrix->step/sizeof(f32), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_16S) {
-      //if(mat->type == CV_16S)
-      {
-        Put<s16>(matrix->data.s, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<s16>(matrix->data.s, matrix->rows*matrix->step/sizeof(s16), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_16U) {
-      //if(mat->type == CV_16U)
-      {
-        Put<u16>((const unsigned short*)matrix->data.s, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<u16>((const unsigned short*)matrix->data.s, matrix->rows*matrix->step/sizeof(u16), tmpName);
     }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_32S) {
-      //if(mat->type == CV_32S)
-      {
-        Put<s32>(matrix->data.i, matrix->rows*matrix->cols, tmpName);
-        mismatch = false;
-      }
+      Put<s32>(matrix->data.i, matrix->rows*matrix->step/sizeof(s32), tmpName);
+    }else if((matrix->type&CV_MAT_DEPTH_MASK) == CV_8U) {
+      Put<u8>(matrix->data.ptr, matrix->rows*matrix->step, tmpName);
+    }else {
+      printf("Error: Class ID 0x%x 0x%x not supported for %s\n", matrix->type&CV_MAT_DEPTH_MASK, matrix->type, name.data());
+      EvalString("clear %s;", tmpName);
+      return RESULT_FAIL;
+    }
+
+    const s32 numChannels = CV_MAT_CN(matrix->type);
+    if(numChannels == 1) {
+      EvalString("%s=reshape(%s, [%d, %d])';", name.data(), tmpName, matrix->cols, matrix->rows);
     } else {
-      CoreTechPrint("Error: Class ID not supported for %s\n", name.data());
-      EvalString("clear %s;", tmpName);
-      return -1;
+      EvalString("%s=permute(reshape(%s, [%d, %d, %d]), [3,2,1]);", name.data(), tmpName, numChannels, matrix->cols, matrix->rows);
+
+      if(numChannels == 3) {
+        EvalString("%s=%s(:,:,end:-1:1);", name.data(), name.data());
+      }
     }
 
-    if(mismatch) {
-      CoreTechPrint("Error: Class mismatch for %s\n", name.data());
-      EvalString("clear %s;", tmpName);
-      return -1;
-    }
-
-    EvalString("%s=reshape(%s, [%d, %d])';", name.data(), tmpName, matrix->cols, matrix->rows);
     EvalString("clear %s;", tmpName);
 
-    return 0;
+    return RESULT_OK;
   }
 #endif // #if defined(ANKI_USE_OPENCV)
 
@@ -490,7 +482,7 @@ namespace Anki {
       LOG_ERROR("Anki.", "Matlab engine is not started/connected");
       return -1;
     }
-    
+
     s32 returnVal = engSetVisible(this->ep, isVisible);
 
     return returnVal;
@@ -514,8 +506,6 @@ namespace Anki {
     else
       return true;
   }
-
 } // namespace Anki
 
 #endif // #if (defined(ANKICORETECH_EMBEDDED_USE_MATLAB) && ANKICORETECH_EMBEDDED_USE_MATLAB) || (defined(ANKICORETECH_USE_MATLAB) && ANKICORETECH_USE_MATLAB)
-
