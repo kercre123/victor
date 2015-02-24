@@ -14,7 +14,7 @@ if [ "$1" = "start" -o "$1" = "restart" ]
 then
     echo "Starting cozmo server: "
     cd /root/som
-    /usr/bin/python server.py &
+    /bin/nice 10 /usr/bin/python server.py &
     cd -
     sleep 1
 fi

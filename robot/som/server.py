@@ -51,8 +51,8 @@ class CozmoServer(socket.socket):
         self.bind(address)
         self.sendLock = threading.Lock()
         self.timestamp = TimestampExtrapolator()
-        cam = camServer.CameraSubServer(self, VERBOSE, PRINT_FRAMERATE)
-        mcu = mcuProxyServer.MCUProxyServer(self, VERBOSE)
+        cam = camServer.CameraSubServer(self, 1.0, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self, 1.0, VERBOSE)
         self.subServers = [cam, mcu]
         self.client = None
         self.lastClientRecvTime = 0.0

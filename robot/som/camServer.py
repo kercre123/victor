@@ -5,12 +5,13 @@ __author__  = "Daniel Casner"
 __version__ = "0.0.1"
 
 
-import sys, socket, time, math, subprocess, threading
+import sys, socket, time, math, subprocess
+from subserver import *
 import messages
 
 MTU = 65535
 
-class CameraSubServer(threading.Thread):
+class CameraSubServer(BaseSubServer):
     "imageChunk server base class"
 
     RESOLUTION_TUPLES = { # Actually lists so we can contactinate
@@ -45,16 +46,12 @@ class CameraSubServer(threading.Thread):
 
     ENCODER_LATEANCY = 5 # ms, SWAG
 
-    def __init__(self, server, verbose=False, test_framerate=False):
+    def __init__(self, server, timeout, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
-        threading.Thread.__init__(self)
-        self.v = verbose
-        if self.v:
-            sys.stdout.write("CameraSubServer will be verbose\n")
+        BaseSubServer.__init__(self, server, timeout, verbose)
         self.tfr = test_framerate
         if self.tfr:
             sys.stdout.write("Will print frame rate information\n")
-        self.server = server
 
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
@@ -63,6 +60,7 @@ class CameraSubServer(threading.Thread):
         self.encoderProcess = None
         self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.encoderSocket.bind((self.ENCODER_SOCK_HOSTNAME, self.ENCODER_SOCK_PORT))
+        self.encoderSocket.settimeout(timeout)
 
         hostname = socket.gethostname()
         assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
@@ -83,12 +81,9 @@ class CameraSubServer(threading.Thread):
         self.lastFrameOTime = 0
         self.lastFrameITime = 0
 
-    def __del__(self):
-        "Shut down processes in the right order"
-        self.stop()
-
     def stop(self):
         sys.stdout.write("Closing camServer\n")
+        BaseSubServer.stop(self)
         self.stopEncoder(False)
         self.encoderSocket.close()
         sys.stdout.flush()
@@ -155,37 +150,39 @@ class CameraSubServer(threading.Thread):
 
     def step(self):
         "A single execution step for this thread"
-        frame = self.encoderSocket.recv(MTU)
-        if self.tfr:
-            tick = time.time()
-            sys.stdout.write('FOP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
-            self.lastFrameOTime = tick
-        # If only sending single image
-        if self.sendMode == messages.ISM_SINGLE_SHOT:
-            self.stopEncoder()
-            self.sendMode = messages.ISM_OFF
-        self.imageNumber += 1
-        msg = messages.ImageChunk()
-        msg.imageId = self.imageNumber
-        msg.imageTimestamp = self.server.timestamp.get()
-        msg.imageEncoding = self.ENCODER_CODING
-        msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-        msg.resolution = self.ISPResolution
-        chunkNumber = 0
-        while frame:
-            frame = msg.takeChunk(frame)
-            msg.chunkId = chunkNumber
-            chunkNumber += 1
-            self.server.clientSend(msg.serialize())
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
             raise Exception("Encoder sub-process has terminated")
-
-
-    def run(self):
-        "Thread run method"
-        while True:
-            self.step()
-
+        try:
+            frame = self.encoderSocket.recv(MTU)
+        except socket.timeout:
+            return # if no frame, skip the rest
+        except socket.error, e:
+            if e.errno == socket.EBADF and self._continue == False:
+                return
+            else:
+                raise e
+        else:
+            if self.tfr:
+                tick = time.time()
+                sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
+                self.lastFrameOTime = tick
+            # If only sending single image
+            if self.sendMode == messages.ISM_SINGLE_SHOT:
+                self.stopEncoder()
+                self.sendMode = messages.ISM_OFF
+            self.imageNumber += 1
+            msg = messages.ImageChunk()
+            msg.imageId = self.imageNumber
+            msg.imageTimestamp = self.server.timestamp.get()
+            msg.imageEncoding = self.ENCODER_CODING
+            msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
+            msg.resolution = self.ISPResolution
+            chunkNumber = 0
+            while frame:
+                frame = msg.takeChunk(frame)
+                msg.chunkId = chunkNumber
+                chunkNumber += 1
+                self.server.clientSend(msg.serialize())
 
 class Client(object):
     "Client for UDP camera server for testing"
