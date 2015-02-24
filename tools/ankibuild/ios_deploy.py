@@ -7,7 +7,7 @@ import sys
 import textwrap
 
 def _run(*args):
-    output = util.File.evaluate(['which', 'ios-deploy'])
+    output = util.File.evaluate(['which', 'ios-deploy'], ignore_result=True)
     if not output or output.isspace():
         sys.exit(textwrap.dedent('''\
             ERROR: ios-deploy not found. ios-deploy is used to run ios apps on device.
