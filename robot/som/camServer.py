@@ -29,7 +29,7 @@ class CameraSubServer(threading.Thread):
     }
 
     @classmethod
-    def FPS2INTERVAL(fps):
+    def FPS2INTERVAL(cls, fps):
         return [fps*1000, 1000000]
 
     SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
@@ -89,7 +89,7 @@ class CameraSubServer(threading.Thread):
 
     def stop(self):
         sys.stdout.write("Closing camServer\n")
-        self.stopEncoder()
+        self.stopEncoder(False)
         self.encoderSocket.close()
         sys.stdout.flush()
 
@@ -104,9 +104,9 @@ class CameraSubServer(threading.Thread):
         else:
             self.stopEncoder()
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
-                                [self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + \
-                                 self.RESOLUTION_TUPLES[resolutionEnum]]) == 0:
-                self.ISPResolution = ispRes
+                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + \
+                                 self.RESOLUTION_TUPLES[resolutionEnum])]) == 0:
+                self.ISPResolution = resolutionEnum
                 self.startEncoder()
                 return True
             else:
@@ -125,16 +125,17 @@ class CameraSubServer(threading.Thread):
                 raise ValueError("Unsupported encoder coding specified")
         self.encoderLock.release()
 
-    def stopEncoder(self):
+    def stopEncoder(self, blocking=True):
         "Stop the encoder subprocess if it is running"
-        self.encoderLock.acquire()
+        haveLock = self.encoderLock.acquire(blocking)
         if self.encoderProcess is not None:
             if self.v: sys.stdout.write("Stopping the encoder\n")
             if self.encoderProcess.poll() is None:
                 self.encoderProcess.kill()
                 self.encoderProcess.wait()
             self.encoderProcess = None
-        self.encoderLock.release()
+        if haveLock:
+            self.encoderLock.release()
 
     def giveMessage(self, message):
         "Process a message recieved by the server"
@@ -166,16 +167,16 @@ class CameraSubServer(threading.Thread):
         self.imageNumber += 1
         msg = messages.ImageChunk()
         msg.imageId = self.imageNumber
-        msg.imageTimestamp = server.timestamp.get()
+        msg.imageTimestamp = self.server.timestamp.get()
         msg.imageEncoding = self.ENCODER_CODING
         msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-        msg.resolution = self.ENCResolution
+        msg.resolution = self.ISPResolution
         chunkNumber = 0
         while frame:
             frame = msg.takeChunk(frame)
             msg.chunkId = chunkNumber
             chunkNumber += 1
-            server.clientSend(msg.serialize())
+            self.server.clientSend(msg.serialize())
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
             raise Exception("Encoder sub-process has terminated")
 

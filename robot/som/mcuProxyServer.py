@@ -91,7 +91,7 @@ class MCUProxyServer(threading.Thread):
                     sys.stdout.write("M4: %s" % (rawSerData[1:length],)) # Print statement
                 elif msgID == messages.RobotState.ID:
                     rsmts = struct.unpack('I', rawSerData[1:5])[0]
-                    server.timestamp.update(rsmts) # Unpack the timestamp member of the RobotState message
+                    self.server.timestamp.update(rsmts) # Unpack the timestamp member of the RobotState message
                     if self.v:
                         sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
                 elif self.v:
