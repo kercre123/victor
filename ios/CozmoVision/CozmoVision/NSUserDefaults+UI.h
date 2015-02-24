@@ -35,4 +35,10 @@
 + (float)lastTargetingSlopFactor;
 + (void)setLastTargetingSlopFactor:(float)factor;
 
++ (BOOL)lastDoForceAdd;
++ (void)setLastDoForceAdd:(BOOL)forceAdd;
+
++ (NSString*)lastForceAddIP;
++ (void)setLastForceAddIP:(NSString*)forceAddIP;
+
 @end

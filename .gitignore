@@ -150,7 +150,7 @@ a7_out.txt
 **.uvguix.*
 probeTree_*.mat
 build_ios
-ios/build
+ios/CozmoVision/build
 ios/CozmoVision/CozmoVision.xcodeproj/xcuserdata
 coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
 tools/modulate_led/Project/LCD/MDK-ARM/Demo/
@@ -175,3 +175,4 @@ build_xcode/game_ios
 build_xcode/game_sim
 generated
 unity/ios/UnityBuild
+unity/ios/build

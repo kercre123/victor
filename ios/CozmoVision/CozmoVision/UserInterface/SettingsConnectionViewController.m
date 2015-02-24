@@ -49,6 +49,9 @@
 @property (strong, nonatomic) NSMutableSet* connectedRobotIDs;
 @property (strong, nonatomic) NSMutableSet* connectedDeviceIDs;
 
+@property (weak, nonatomic) IBOutlet UISwitch *forceAddSwitch;
+@property (weak, nonatomic) IBOutlet UITextField *forceAddAddressTextField;
+
 @end
 
 @implementation SettingsConnectionViewController
@@ -82,7 +85,7 @@
   self.connectedDeviceIDs = [[NSMutableSet alloc] init];
 
 //  [self.cameraResolutionSwitch setOn:[NSUserDefaults cameraIsHighResolution]];
-  [self.cameraResolutionSwitch setOn:YES];
+  [self.cameraResolutionSwitch setOn:NO];
 
   // Set Resign First Responder Gesture
   UITapGestureRecognizer *tapGuesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleResignFirstResponderTapGesture:)];
@@ -186,6 +189,16 @@
   N = (int)self.numUiDevicesSelector.selectedSegmentIndex;
   [self.cozmoEngineWrapper setNumUiDevicesToWaitFor:N];
   [NSUserDefaults setLastNumUiDevices:N];
+  
+  NSString* forceAddAddress = self.forceAddAddressTextField.text;
+  [NSUserDefaults setLastForceAddIP:forceAddAddress];
+  
+  BOOL forceAdd = self.forceAddSwitch.isOn;
+  [NSUserDefaults setLastDoForceAdd:forceAdd];
+  
+  [self.cozmoEngineWrapper setDoForceAdd:forceAdd];
+  [self.cozmoEngineWrapper setForceAddIP:forceAddAddress];
+  
 }
 
 
@@ -200,6 +213,9 @@
   [self updateCameraResolutionLabel];
   self.numRobotsSelector.selectedSegmentIndex = self.cozmoEngineWrapper.numRobotsToWaitFor;
   self.numUiDevicesSelector.selectedSegmentIndex = self.cozmoEngineWrapper.numUiDevicesToWaitFor;
+  
+  [self.forceAddSwitch setOn:self.cozmoEngineWrapper.doForceAdd];
+  self.forceAddAddressTextField.text = self.cozmoEngineWrapper.forceAddIP;
 }
 
 - (void)updateUIWithBasestionState:(CozmoEngineRunState)state
@@ -376,10 +392,14 @@
                                                                    withDeviceID:uiDeviceID];
       
       self.cozmoOperator = [CozmoOperator defaultOperator];
+      
       [self.cozmoOperator addRobotConnectedListener:self];
       [self.cozmoOperator addUiDeviceConnectedListener:self];
       
       [self.cozmoEngineWrapper start:isHost];
+
+      self.forceAddAddressTextField.enabled = NO;
+      self.forceAddSwitch.enabled = NO;
       
       [self.cozmoEngineWrapper addHeartbeatListener:self.cozmoOperator];
     }
@@ -395,6 +415,9 @@
       [self.connectedRobotIDs removeAllObjects];
       self.numRobotsSelector.backgroundColor = [UIColor clearColor];
       self.numUiDevicesSelector.backgroundColor = [UIColor clearColor];
+      
+      self.forceAddAddressTextField.enabled = YES;
+      self.forceAddSwitch.enabled = YES;
     }
       break;
 

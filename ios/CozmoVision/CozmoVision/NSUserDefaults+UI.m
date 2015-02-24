@@ -109,4 +109,10 @@ RHUserDefaultDefinePropertyBool(lastUseAudioTargeting, setLastUseAudioTargeting,
 NSString* const DefaultKeyLastTargetingSlopFactor = @"lastTargetingSlopFactor";
 RHUserDefaultDefinePropertyFloat(lastTargetingSlopFactor, setLastTargetingSlopFactor, DefaultKeyLastTargetingSlopFactor, 1.f);
 
+NSString* const DefaultKeyLastDoForceAdd = @"lastDoForceAdd";
+RHUserDefaultDefinePropertyBool(lastDoForceAdd, setLastDoForceAdd, DefaultKeyLastDoForceAdd, NO);
+
+NSString* const DefaultKeyLastForceAddIP = @"lastForceAddIP";
+RHUserDefaultDefinePropertyObj(NSString, lastForceAddIP, setLastForceAddIP, DefaultKeyLastForceAddIP);
+
 @end
