@@ -79,11 +79,8 @@ project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
 simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
+simulator/controllers/block_controller/block_controller
 world_comms_controller
-robot/simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
-robot/simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
-robot/simulator/controllers/cozmo_c_controller/cozmo_c_controller
-robot/simulator/controllers/robot_advertisement_controller/robot_advertisement_controller
 screenshot.png
 blockworld_controller
 *.mvlib
