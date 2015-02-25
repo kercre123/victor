@@ -548,8 +548,9 @@ namespace Anki {
                             "No state message received from robot %d in %.1f seconds, "
                             "sending disconnected signal.\n", GetID(), timeDiff_sec);
           
-          CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
           _lastStateMsgTime_sec = -1.f;
+          //CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
+          return RESULT_FAIL_IO_TIMEOUT;
         }
       }
       

@@ -59,6 +59,7 @@ namespace Cozmo {
     
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
+    void DisconnectFromRobot(RobotID_t whichRobot);
     
   protected:
   
@@ -90,13 +91,21 @@ namespace Cozmo {
     
     VisionProcessingThread    _deviceVisionThread;
     
+    std::vector<Signal::SmartHandle> _signalHandles;
+    
   }; // class CozmoEngineImpl
 
   
   CozmoEngineImpl::CozmoEngineImpl()
   : _isInitialized(false)
   {
-
+    
+    // Handle robot disconnection:
+    auto cbRobotDisconnected = [this](RobotID_t robotID, float timeSinceLastMsg_sec) {
+      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in %.2fsec\n", timeSinceLastMsg_sec);
+      this->DisconnectFromRobot(robotID);
+    };
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));
   }
   
   CozmoEngineImpl::~CozmoEngineImpl()
@@ -198,6 +207,14 @@ namespace Cozmo {
     return success;
   }
   
+  void CozmoEngineImpl::DisconnectFromRobot(RobotID_t whichRobot) {
+    _robotComms.DisconnectDeviceByID(whichRobot);
+    auto connectedRobotIter = _connectedRobots.find(whichRobot);
+    if(connectedRobotIter != _connectedRobots.end()) {
+      _connectedRobots.erase(connectedRobotIter);
+    }
+  }
+  
   Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
   {
     if(!_isInitialized) {
@@ -283,6 +300,9 @@ namespace Cozmo {
     return _impl->ConnectToRobot(whichRobot);
   }
 
+  void CozmoEngine::DisconnectFromRobot(RobotID_t whichRobot) {
+    _impl->DisconnectFromRobot(whichRobot);
+  }
   
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
@@ -313,7 +333,7 @@ namespace Cozmo {
     
     // TODO: Remove once we don't have to specially handle forced adds
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot) override;
-    
+      
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
     

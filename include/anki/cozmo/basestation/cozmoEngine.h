@@ -80,6 +80,8 @@ namespace Cozmo {
     // NOTE: This is virtual for now so derived Host can do something different for force-added robots.
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
+    void DisconnectFromRobot(RobotID_t whichRobot);
+    
     // TODO: Add IsConnected methods
     // Check to see if a specified robot / UI device is connected
     // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
