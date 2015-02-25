@@ -270,14 +270,16 @@ using namespace Anki;
   
   
   // Force add a robot
-  /*
-   if(FORCE_ADD_ROBOT) {
-   //_cozmoGame->ForceAddRobot(forcedRobotId, [self._forceAddIP UTF8String], FORCED_ROBOT_IS_SIM);
-   _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
-   }
-   */
-  if (self._forceAddIP != nil) {
-    _cozmoGame->ForceAddRobot(1, [self._forceAddIP UTF8String], true); // TODO: Change to false!
+  if(FORCE_ADD_ROBOT) {
+    _cozmoGame->ForceAddRobot(forcedRobotId, forcedRobotIP, FORCED_ROBOT_IS_SIM);
+  } else {
+    if (self._doForceAdd) {
+      if(self._forceAddIP == nil) {
+        NSLog(@"Force add set to true, but IP is NIL!\n");
+      } else {
+        _cozmoGame->ForceAddRobot(1, [self._forceAddIP UTF8String], false);
+      }
+    }
   }
   
     
