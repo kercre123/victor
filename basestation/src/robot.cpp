@@ -160,7 +160,16 @@ namespace Anki {
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
-      
+
+      if (!_camera.IsCalibrated()) {
+        // Don't process RobotState messages until the robot has received
+        // the sync time message. (When the robot receives sync time it sends
+        // camera calib to basestation.)
+        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.Ignoring",
+                            "Robot has not received sync time yet. Timestamp might be in the future (t=%d)\n", msg.timestamp);
+        return RESULT_FAIL;
+      }
+
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
       // a working robot. Note that basestation and robot time aren't necessarily
