@@ -74,17 +74,20 @@
     [self._operator sendWheelCommandWithAngleInDegrees:angle magnitude:magnitude];
   }];
 
-  [self.dPadView setDoubleTapAction:^(UIGestureRecognizer *gesture) {
+  // Handle double-taps in any of the d-pad controllers for selecting objects
+  void (^doubleTapActionBlock)(UIGestureRecognizer*) = ^(UIGestureRecognizer* gesture) {
     CGPoint point = [gesture locationInView:self.cozmoVisionImageView];
-    CGPoint normalizedPoint = CGPointMake(point.x / (2*self.dPadView.bounds.size.width),
-                                          point.y / self.dPadView.bounds.size.height);
+    CGPoint normalizedPoint = CGPointMake(point.x / (self.cozmoVisionImageView.bounds.size.width),
+                                          point.y / self.cozmoVisionImageView.bounds.size.height);
     NSNumber *objectID = [self.obsObjSelector checkForSelectedObject:normalizedPoint];
     if(objectID) {
       // Send message
       NSLog(@"Selected Object %d\n", objectID.intValue);
       [self._operator sendPickOrPlaceObject:objectID];
     }
-  }];
+  };
+  
+  [self.dPadView setDoubleTapAction:doubleTapActionBlock];
   
   // D-pad for Head
   [self.view insertSubview:self.dPadHeadView aboveSubview:self.cozmoVisionImageView];
@@ -94,21 +97,11 @@
                                                       alpha:0.8];
   
   [self.dPadHeadView setJoystickMovementAction:^(CGFloat angle, CGFloat magnitude) {
-    float speed = 5*magnitude*sinf(angle * M_PI / 180.f);
+    float speed = 2*magnitude*sinf(angle * M_PI / 180.f);
     [self._operator sendMoveHeadCommandWithSpeed:speed];
   }];
   
-  [self.dPadHeadView setDoubleTapAction:^(UIGestureRecognizer *gesture) {
-    CGPoint point = [gesture locationInView:self.cozmoVisionImageView];
-    CGPoint normalizedPoint = CGPointMake(point.x / (4*self.dPadView.bounds.size.width) + 0.5,
-                                          point.y / self.dPadView.bounds.size.height);
-    NSNumber *objectID = [self.obsObjSelector checkForSelectedObject:normalizedPoint];
-    if(objectID) {
-      // Send message
-      NSLog(@"Selected Object %d\n", objectID.intValue);
-      [self._operator sendPickOrPlaceObject:objectID];
-    }
-  }];
+  [self.dPadHeadView setDoubleTapAction:doubleTapActionBlock];
 
   // D-pad for Lift
   [self.view insertSubview:self.dPadLiftView aboveSubview:self.cozmoVisionImageView];
@@ -122,18 +115,7 @@
     [self._operator sendMoveLiftCommandWithSpeed:speed];
   }];
   
-  [self.dPadLiftView setDoubleTapAction:^(UIGestureRecognizer *gesture) {
-    CGPoint point = [gesture locationInView:self.cozmoVisionImageView];
-    CGPoint normalizedPoint = CGPointMake(point.x / (4*self.dPadView.bounds.size.width) + 0.75,
-                                          point.y / self.dPadView.bounds.size.height);
-    NSNumber *objectID = [self.obsObjSelector checkForSelectedObject:normalizedPoint];
-    if(objectID) {
-      // Send message
-      NSLog(@"Selected Object %d\n", objectID.intValue);
-      [self._operator sendPickOrPlaceObject:objectID];
-    }
-  }];
-  
+  [self.dPadLiftView setDoubleTapAction:doubleTapActionBlock];
 
   self.objectBoundingBoxes = [[NSMutableArray alloc] init];
   
