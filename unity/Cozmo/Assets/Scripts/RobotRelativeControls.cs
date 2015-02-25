@@ -4,37 +4,39 @@ using System.Collections;
 
 public class RobotRelativeControls : MonoBehaviour {
 
+#region INSPECTOR FIELDS
 	//[SerializeField] ScreenRecorder recorder = null;
-
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
 	//[SerializeField] AccelControls accelInputs = null;
 	[SerializeField] Toggle gyroRollControl = null;
 	[SerializeField] Toggle gyroPitchControl = null;
-
 	[SerializeField] Text text_x = null;
 	[SerializeField] Text text_y = null;
-
 	[SerializeField] Text text_leftWheelSpeed = null;
 	[SerializeField] Text text_rightWheelSpeed = null;
-
 	[SerializeField] float swipeTurnAngle = 0f;
+#endregion
 
+#region MISC MEMBERS
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
 	float timeSinceLastCommand = 0f;
 	float refreshTime = 0f;
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;
-
 	//bool reverseLikeACar = false;
 	bool moveCommandLastFrame = false;
-
 	bool debugOverride = false;
+	float robotFacing = 0f;
+	float robotStartTurnFacing = 0f;
+	int swipeTurnIndex = 0;
+	bool swipeTurning = false;
+#endregion
 
+#region COMPONENT CALLBACKS
 	void OnEnable() {
-		//acquire the robot
 		//reset default state for this control scheme test
 		Debug.Log("RobotRelativeControls OnEnable");
 		if(gyroRollControl != null) {
@@ -51,6 +53,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		moveCommandLastFrame = false;
 		timeSinceLastCommand = 0f;
 		debugOverride = false;
+		swipeTurning = false;
 //		if(recorder != null) {
 //			recorder.videoFileName = "cozmoTest_screenRec_" + System.DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss") + "_" + gameObject.name + ".mp4";
 //			recorder.enabled = true;
@@ -58,6 +61,17 @@ public class RobotRelativeControls : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
+
+		bool robotFacingStale = true;
+		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+			Robot robot;
+			if(RobotEngineManager.instance.robots.TryGetValue(Intro.CurrentRobotID, out robot)) {
+				robotFacing = robot.poseAngle_rad * Mathf.Rad2Deg;
+				robotFacingStale = false;
+				//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
+			}
+		}
+
 		if(debugOverride) {
 			if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
 				RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
@@ -79,34 +93,72 @@ public class RobotRelativeControls : MonoBehaviour {
 		bool driveReverseOnlyMode = false;
 		bool turnInPlaceOnlyMode = false;
 
+		if(!swipeTurning)
+			swipeTurnIndex = 0;
+
 		if(horizontalStick != null) {
 			if(horizontalStick.SideModeEngaged) {
 				turnInPlaceOnlyMode = true;
 			}
 
-			if(swipeTurnAngle > 0f && horizontalStick.SwipeRequest && horizontalStick.SwipedDirection.sqrMagnitude > 0f) {
-				//Debug.Log("swipeTurnAngle("+swipeTurnAngle+")");
+			if(swipeTurnAngle > 0f && horizontalStick.SwipeRequest && horizontalStick.SwipeActive) {
 
 				float sideSwipeDot = Vector2.Dot(horizontalStick.SwipedDirection.normalized, Vector2.right);
-				if(sideSwipeDot > 0.9f) {
-					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-						RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
-						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, -swipeTurnAngle * Mathf.Deg2Rad);
+				if(Mathf.Abs(sideSwipeDot) > 0.9f) {
+					if(!swipeTurning) {
+						robotStartTurnFacing = robotFacing;
 					}
-					horizontalStick.AbsorbSwipeRequest();
-					return;
-				}
-				else if(sideSwipeDot < -0.9f) {
-					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-						RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
-						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, swipeTurnAngle * Mathf.Deg2Rad);
+					else {
+						swipeTurnIndex++;
 					}
+//					if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
+//						RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+//						RobotEngineManager.instance.TurnInPlace(Intro.CurrentRobotID, -swipeTurnAngle * Mathf.Deg2Rad);
+//					}
+
+					swipeTurning = true;
+					Debug.Log("frame("+Time.frameCount+") swipeTurning begin swipeTurnIndex("+swipeTurnIndex+")");
 					horizontalStick.AbsorbSwipeRequest();
-					return;
+
+					//return;
 				}
 			}
 
-			if(swipeTurnAngle == 0f || !horizontalStick.Swiping) inputs.x = horizontalStick.Horizontal;
+			if(!horizontalStick.SwipeActive) {
+				swipeTurning = false;
+				swipeTurnIndex = 0;
+			}
+
+			if(swipeTurning) {
+				float turnSoFar = robotFacing - robotStartTurnFacing;
+
+				while(turnSoFar > 180f) turnSoFar -= 360f;
+				while(turnSoFar < -180f) turnSoFar += 360f;
+
+				float goalAngle = swipeTurnAngle;
+
+				for(int i=0;i<swipeTurnIndex && i<3;i++) {
+					goalAngle *= 2f;
+				}
+
+				if(!horizontalStick.SwipeActive || Mathf.Abs(turnSoFar) > goalAngle) {
+					Debug.Log("frame("+Time.frameCount+") EndSwipe turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ")");
+					horizontalStick.EndSwipe();
+					swipeTurning = false;
+				}
+				else if(!horizontalStick.IsPressed) {
+					//Debug.Log("frame("+Time.frameCount+") swipeTurning turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ") input.x("+horizontalStick.Horizontal+")");
+					inputs.x = horizontalStick.Horizontal;
+				}
+			}
+			//for now lets ignore stick hor while swipe input is still underway
+			else {
+				inputs.x = horizontalStick.Horizontal;
+				//Debug.Log("frame("+Time.frameCount+") input.x("+horizontalStick.Horizontal+")");
+			}
+		}
+		else {
+			swipeTurning = false;
 		}
 
 		float maxAngle = 90f;
@@ -174,14 +226,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		RefreshDebugText();
 	}
 
-	void RefreshDebugText() {
-		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
-		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
-		
-		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
-		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
-	}
-
 	void OnDisable() {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
@@ -202,7 +246,19 @@ public class RobotRelativeControls : MonoBehaviour {
 //		GUILayout.Label("rightWheelSpeed("+rightWheelSpeed+")");
 //		GUILayout.EndArea();
 //	}
+#endregion
 
+#region PRIVATE METHODS
+	void RefreshDebugText() {
+		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
+		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
+		
+		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
+		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
+	}
+#endregion
+
+#region PUBLIC METHODS
 	public void ToggleRollControl() {
 		if(gyroRollControl != null) gyroRollControl.isOn = !gyroRollControl.isOn;
 	}
@@ -259,5 +315,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		debugOverride = true;
 		Debug.Log(gameObject.name + " NudgeRight");
 	}
+#endregion
 
 }

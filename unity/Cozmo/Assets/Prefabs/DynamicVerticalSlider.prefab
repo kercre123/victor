@@ -382,7 +382,7 @@ MonoBehaviour:
   bgHeightInches: 1.5
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 0
+  allowAxisSwipes: 1
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 0

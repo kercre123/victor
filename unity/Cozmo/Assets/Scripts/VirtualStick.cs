@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.EventSystems;
 
-
 [ExecuteInEditMode]
 public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
 
@@ -55,7 +54,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	public float MaxAngle { get { return verticalModeMaxAngleAllowance; } }
 	public Vector2 SwipedDirection { get; private set; }
 	public bool SwipeRequest { get; private set; }
-	public bool Swiping { get; private set; }
+	public bool SwipeActive { get { return SwipedDirection.sqrMagnitude > 0f; } }
+	public int SwipeIndex { get; private set; }
 	public bool UpModeEngaged { get; private set; }
 	public bool DownModeEngaged { get; private set; }
 	public bool SideModeEngaged { get; private set; }
@@ -131,6 +131,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 #endregion
 
+#region MISC MEMBERS
 	float radius;
 	RectTransform rTrans;
 	ScreenOrientation orientation;
@@ -139,13 +140,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	Vector2 touchDownValue = Vector2.zero;
 	bool wasClockwise = false;
 	bool wasCounterClockwise = false;
-	int swipeIndex = 0;
 	Vector2 oldSwipe;
+#endregion
 
+#region COMPONENT CALLBACKS
 	void Awake() {
 		//canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
-
 	}
 
 	void OnEnable() {
@@ -155,7 +156,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		bg.gameObject.SetActive(!dynamic);
 		stick.gameObject.SetActive(!dynamic);
 
-		swipeIndex = 0;
+		SwipeIndex = 0;
 	}
 
 	void Update() {
@@ -172,7 +173,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			PressedTime = 0f;
 			
 			//if we've allowed a swipe to override stick, then snap it here
-			if(SwipedDirection.sqrMagnitude > 0f) {
+			if(SwipeActive) {
 
 				float[] mags = swipeVerticalMagnitudes;
 				if(Vector2.Dot(SwipedDirection, Vector2.right) != 0f) {
@@ -180,14 +181,14 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				}
 
 				float mag = 1f;
-				swipeIndex = Mathf.Clamp(swipeIndex, 0, mags.Length-1);
-				mag = mags[swipeIndex];
+				SwipeIndex = Mathf.Clamp(SwipeIndex, 0, mags.Length-1);
+				mag = mags[SwipeIndex];
 				
 				Vector2 pos = SwipedDirection * radius * mag;
 				stick.anchoredPosition = pos;
 			}
 			else {
-				swipeIndex = 0;
+				SwipeIndex = 0;
 			}
 		}
 		
@@ -196,7 +197,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		RefreshCaps();
 		
 	}
+#endregion
 
+#region PRIVATE METHODS
 	void RefreshRadius() {
 		if(verticalOnly) {
 			radius = bg.rect.height * 0.5f;
@@ -401,10 +404,10 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		
 		//if our swipe dir has changed, start our stepwise magnitude index over
 		if(!underway && oldSwipe.sqrMagnitude > 0f) {
-			swipeIndex++;
+			SwipeIndex++;
 			
 			if(Vector2.Angle(oldSwipe, SwipedDirection) > 10f) {
-				swipeIndex = 0;
+				SwipeIndex = 0;
 			}
 		}
 		
@@ -581,6 +584,16 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			return;
 		}
 	}
+#endregion
+
+#region PUBLIC METHODS
+	public void EndSwipe() {
+
+		SwipedDirection = Vector2.zero;
+		SwipeRequest = false;
+		SwipeIndex = 0;
+		stick.anchoredPosition = Vector2.zero;
+	}
 
 	public void AbsorbSwipeRequest() {
 		Debug.Log("AbsorbSwipeRequest()");
@@ -598,9 +611,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		stick.gameObject.SetActive(true);
 
 		oldSwipe = SwipedDirection;
-		if(SwipedDirection.sqrMagnitude == 0f) swipeIndex = 0;
+		if(SwipedDirection.sqrMagnitude == 0f) SwipeIndex = 0;
 		SwipeRequest = false;
-		Swiping = false;
 		IsPressed = true;
 		PressedTime = 0f;
 		
@@ -622,13 +634,11 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		ProcessStick(eventData);
 		CheckForModeEngage();
 		ConsiderSwipe(eventData.position, true);
-		Swiping = SwipedDirection.sqrMagnitude > 0f;
 	}
 
 	public void OnPointerUp(PointerEventData eventData) {
 		ProcessStick(eventData);
 		ConsiderSwipe(eventData.position, false);
-		Swiping = SwipedDirection.sqrMagnitude > 0f;
 
 		Vector2 throwVector = stick.anchoredPosition;
 		
@@ -654,7 +664,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		UpModeEngaged = false;
 		DownModeEngaged = false;
 		SideModeEngaged = false;
-		
-		
 	}
+#endregion
+
 }

@@ -456,7 +456,7 @@ public class RobotEngineManager : MonoBehaviour {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
 
-		Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
+		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
 		U2G_DriveWheels message = new U2G_DriveWheels ();
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
