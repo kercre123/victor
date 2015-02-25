@@ -383,7 +383,7 @@ namespace Cozmo {
                            "Enough robots connected (%d), will run engine.\n",
                            _desiredNumRobots);
           // TODO: We could keep listening for others to join mid-game...
-          cozmoEngineHost->ListenForRobotConnections(false);
+          //cozmoEngineHost->ListenForRobotConnections(false);
           _runState = CozmoGame::ENGINE_RUNNING;
         }
         break;
