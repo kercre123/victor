@@ -389,6 +389,11 @@ namespace Anki {
       void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
      
       
+      // =========  Block messages  ============
+      // color: The desired colors of each LED ordered by BlockLEDPosition
+      Result SetBlockLights(const u8 blockID, const u32* color);
+      
+      
       // Abort everything the robot is doing, including path following, actions,
       // animations, and docking. This is like the big red E-stop button.
       // TODO: Probably need a more elegant way of doing this.
@@ -621,6 +626,13 @@ namespace Anki {
       
       Result SendAbortDocking();
       Result SendAbortAnimation();
+
+      
+      // =========  Block messages  ============
+      Result SendFlashBlockIDs();
+      Result SendSetBlockLights(const u8 blockID, const u32* color);
+      void ActiveBlockLightTest(const u8 blockID);  // For testing
+      
       
     }; // class Robot
 

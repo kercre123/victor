@@ -1,0 +1,3 @@
+[submodule "tools/build-tools"]
+	path = tools/build-tools
+	url = git@github.com:anki/build-tools.git

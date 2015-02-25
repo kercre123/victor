@@ -416,6 +416,13 @@ namespace Anki
 
       
       /////////////////////////////////////////////////////////////////////
+      // BLOCK COMMS
+      //
+      void FlashBlockIDs();
+      Result SetBlockLight(const u8 blockID, const u32* color);
+      
+      
+      /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //
 

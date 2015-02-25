@@ -780,6 +780,25 @@ namespace Anki {
         
       }
       
+      
+      // --------- Block control messages ----------
+      
+      void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
+      {
+        // Start flash pattern on blocks
+        HAL::FlashBlockIDs();
+        
+        // Send timestamp of when flash message was sent to blocks
+        Messages::BlockIDFlashStarted m;
+        m.timestamp = HAL::GetTimeStamp();
+        HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockIDFlashStarted), &m);
+      }
+      
+      void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
+      {
+        HAL::SetBlockLight(msg.blockID, msg.color);
+      }
+      
 // ----------- Send messages -----------------
       
       
