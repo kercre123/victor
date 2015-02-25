@@ -566,7 +566,7 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\blocks.cpp</PathWithFileName>
+      <PathWithFileName>.\arm_hal\hal\blocks.cpp</PathWithFileName>
       <FilenameWithoutPath>blocks.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>

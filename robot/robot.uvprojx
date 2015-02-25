@@ -471,7 +471,7 @@
             <File>
               <FileName>blocks.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\blocks.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1480,7 +1480,7 @@
             <File>
               <FileName>blocks.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\blocks.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
           </Files>
         </Group>
