@@ -84,7 +84,17 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 	Vector2 ZoneCenter {
 		get {
-			return (Vector2)rTrans.position + rTrans.rect.center;
+
+			Vector2 center = Vector2.zero;
+
+			Vector3[] corners = new Vector3[4];
+			rTrans.GetWorldCorners(corners);
+			if(corners == null || corners.Length == 0) return center;
+			center = (corners[0] + corners[2]) * 0.5f;
+
+			center = Camera.main.WorldToScreenPoint(center);
+
+			return center;
 		}
 	}
 	Vector2 JoystickData {
@@ -621,6 +631,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(dynamic) {
 			bg.anchoredPosition = eventData.position - ZoneCenter;
+			//Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+eventData.position+") ZoneCenter("+ZoneCenter+")");
 			stick.anchoredPosition = Vector2.zero;
 		}
 		
