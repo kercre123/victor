@@ -1896,6 +1896,10 @@ Prefab:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 2100000, guid: 616b723807396468abd8186ce158264c, type: 2}
+    - target: {fileID: 11455432, guid: 0532cd678e71448ec9109b5c9db3dea5, type: 2}
+      propertyPath: doubleTapDelayMax
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0532cd678e71448ec9109b5c9db3dea5, type: 2}
   m_RootGameObject: {fileID: 895829101}
@@ -2493,6 +2497,7 @@ MonoBehaviour:
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
   swipeTurnAngle: 0
+  doubleTapTurnAround: 1
 --- !u!1 &336529867
 GameObject:
   m_ObjectHideFlags: 0
@@ -2702,6 +2707,7 @@ MonoBehaviour:
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
   swipeTurnAngle: 0
+  doubleTapTurnAround: 1
 --- !u!1 &364171961
 GameObject:
   m_ObjectHideFlags: 0
@@ -3782,7 +3788,7 @@ MonoBehaviour:
   bgHeightInches: .0199999996
   stickWidthInches: .400000006
   stickHeightInches: .400000006
-  allowAxisSwipes: 1
+  allowAxisSwipes: 0
   allowPreciseSwipes: 0
   swipeMinSpeed: 4
   horizontalOnly: 1
@@ -3794,6 +3800,7 @@ MonoBehaviour:
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
+  doubleTapDelayMax: 0
 --- !u!114 &493839754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4905,6 +4912,7 @@ MonoBehaviour:
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
   swipeTurnAngle: 45
+  doubleTapTurnAround: 1
 --- !u!1 &700661453
 GameObject:
   m_ObjectHideFlags: 0
@@ -5616,6 +5624,7 @@ MonoBehaviour:
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
+  doubleTapDelayMax: 0
 --- !u!1 &792198614
 GameObject:
   m_ObjectHideFlags: 0
@@ -6028,6 +6037,7 @@ MonoBehaviour:
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
+  doubleTapDelayMax: 0
 --- !u!114 &895829104
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7407,7 +7417,8 @@ MonoBehaviour:
   text_y: {fileID: 66136252}
   text_leftWheelSpeed: {fileID: 510440857}
   text_rightWheelSpeed: {fileID: 826148280}
-  swipeTurnAngle: 22.5
+  swipeTurnAngle: 0
+  doubleTapTurnAround: 1
 --- !u!1 &1133578739
 GameObject:
   m_ObjectHideFlags: 0
@@ -10018,6 +10029,7 @@ MonoBehaviour:
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
+  doubleTapDelayMax: 0
 --- !u!114 &1555779518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10945,6 +10957,7 @@ MonoBehaviour:
   - 1
   smallScreenAnchorType: 4
   smallScreenAnchorPos: {x: 0, y: 0}
+  doubleTapDelayMax: 0
 --- !u!114 &1772411863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11808,7 +11821,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: allowAxisSwipes
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: swipeHorizontalMagnitudes.Array.data[0]

@@ -48,6 +48,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] float[] swipeHorizontalMagnitudes = { 0.25f, 0.5f, 1f };
 	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
 	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
+	[SerializeField] float doubleTapDelayMax = 0f;
 #endregion
 
 #region PROPERTIES
@@ -61,6 +62,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	public bool SideModeEngaged { get; private set; }
 	public bool IsPressed { get; private set; }
 	public float PressedTime { get; private set; }
+	public bool DoubleTapped { get; private set; }
 	public float Horizontal {
 		get { 
 			
@@ -141,6 +143,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	bool wasClockwise = false;
 	bool wasCounterClockwise = false;
 	Vector2 oldSwipe;
+	float pointerDownTime = 0f;
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -600,8 +603,22 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		SwipeRequest = false;
 	}
 
+	public void AbsorbDoubleTap() {
+		Debug.Log("AbsorbSwipeRequest()");
+		DoubleTapped = false;
+	}
+
 	public void OnPointerDown(PointerEventData eventData) {
-		
+
+		float newTime = Time.time;
+		if(doubleTapDelayMax > 0f) {
+			if(pointerDownTime != 0f && (newTime - pointerDownTime) <= doubleTapDelayMax) {
+				DoubleTapped = true;
+			}
+		}
+
+		pointerDownTime = newTime;
+
 		if(dynamic) {
 			bg.anchoredPosition = eventData.position - ZoneCenter;
 			stick.anchoredPosition = Vector2.zero;
