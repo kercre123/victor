@@ -3,7 +3,7 @@ A base class for sub servers
 """
 __author__ = "Daniel Casner"
 
-import sys, threading, socket
+import sys, threading, time, socket
 
 class BaseSubServer(threading.Thread):
 
@@ -24,6 +24,10 @@ class BaseSubServer(threading.Thread):
         "Stops the subserver thread the next time through it's main loop"
         self._continue = False
         self.sendSocket.close()
+
+    def threadYield(self):
+        "Have the thried yeild to other threads"
+        time.sleep(0)
 
     def giveMessage(self, message):
         "Passes in a message from the main server"
@@ -49,3 +53,4 @@ class BaseSubServer(threading.Thread):
             if self.v > 10:
                 sys.stdout.write("%s\n" % repr(self))
             self.step()
+            self.threadYield()

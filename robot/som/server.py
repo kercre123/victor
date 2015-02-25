@@ -58,7 +58,7 @@ class CozmoServer(socket.socket):
         self.subServers = [cam, mcu]
         self.client = None
         self.lastClientRecvTime = 0.0
-        subprocess.call(['renice', '-n', '10', '-p', str(os.getpid())]) # Renice ourselves so the encoder comes first
+        #subprocess.call(['renice', '-n', '10', '-p', str(os.getpid())]) # Renice ourselves so the encoder comes first
 
     def __del__(self):
         self.stop()
