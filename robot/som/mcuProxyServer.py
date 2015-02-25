@@ -59,7 +59,7 @@ class MCUProxyServer(BaseSubServer):
     def step(self):
         "A single execution step for this thread"
         try:
-            self.rawSerData += self.mcu.read(1000)
+            self.rawSerData += self.mcu.read(6)
         except Exception, e:
             if type(e) is ValueError and self._continue is False:
                 return # Shutting down just pass
