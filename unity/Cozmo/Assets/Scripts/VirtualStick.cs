@@ -604,7 +604,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 
 	public void AbsorbDoubleTap() {
-		Debug.Log("AbsorbSwipeRequest()");
+		Debug.Log("AbsorbDoubleTap()");
 		DoubleTapped = false;
 	}
 
