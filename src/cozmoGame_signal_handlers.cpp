@@ -74,10 +74,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::StopSoundForRobotSignal().ScopedSubscribe(cbStopSoundForRobotSignal));
     
-    auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectID,
+    auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectFamily,
+                                              uint32_t objectType, uint32_t objectID,
                                               float x_upperLeft,  float y_upperLeft,
                                               float width,  float height) {
-      this->HandleRobotObservedObjectSignal(robotID, objectID, x_upperLeft, y_upperLeft, width, height);
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, x_upperLeft, y_upperLeft, width, height);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -213,17 +214,22 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
-                                                          float x_upperLeft,  float y_upperLeft,
-                                                          float width,  float height) {
+  void CozmoGameImpl::HandleRobotObservedObjectSignal(uint8_t robotID,
+                                                      uint32_t objectFamily,
+                                                      uint32_t objectType,
+                                                      uint32_t objectID,
+                                                      float x_upperLeft,  float y_upperLeft,
+                                                      float width,  float height) {
     // Send a message out to UI that the device found a vision marker
     MessageG2U_RobotObservedObject msg;
-    msg.robotID   = robotID;
-    msg.objectID  = objectID;
-    msg.topLeft_x = x_upperLeft;
-    msg.topLeft_y = y_upperLeft;
-    msg.width     = width;
-    msg.height    = height;
+    msg.robotID      = robotID;
+    msg.objectFamily = objectFamily;
+    msg.objectType   = objectType;
+    msg.objectID     = objectID;
+    msg.topLeft_x    = x_upperLeft;
+    msg.topLeft_y    = y_upperLeft;
+    msg.width        = width;
+    msg.height       = height;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);

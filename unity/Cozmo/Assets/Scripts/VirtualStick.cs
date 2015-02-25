@@ -3,115 +3,94 @@ using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.EventSystems;
 
-
 [ExecuteInEditMode]
 public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
+
+#region INSPECTOR FIELDS
 	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
-
 	[SerializeField] RectTransform deadZoneRect = null;
-
 	[SerializeField] RectTransform capTop = null;
 	[SerializeField] RectTransform capBottom = null;
 	[SerializeField] RectTransform capLeft = null;
 	[SerializeField] RectTransform capRight = null;
-
 	[SerializeField] RectTransform originMarker = null;
-
 	[SerializeField] RectTransform bgDefaultMode = null;
 	[SerializeField] RectTransform bgUpMode = null;
 	[SerializeField] RectTransform bgDownMode = null;
 	[SerializeField] RectTransform bgSideMode = null;
-
 	[SerializeField] Image stickImageThrown = null;
 	[SerializeField] Image stickImageNeutral = null;
-
 	[SerializeField] bool clampRadially = true;
-
 	[SerializeField] Vector2 deadZone = new Vector2(0.01f, 0.01f);
 	[SerializeField] bool deadZoneRadial = false;
 	[SerializeField] bool scaleMagFromDeadZone = true;
-
 	[SerializeField] float horClampThrow = 1f;
-
 	[SerializeField] float verticalAxisSnapAngle = 0f;
 	[SerializeField] float horizontalAxisSnapAngle = 0f;
-
 	[SerializeField] float verticalModeEntryAngle = 0f;
 	[SerializeField] float horizontalModeEntryAngle = 0f;
-
 	[SerializeField] float verticalModeMaxAngleAllowance = 170f;
-
-	public float MaxAngle { get { return verticalModeMaxAngleAllowance; } }
-
 	[SerializeField] bool clearHorizontal = true;
 	[SerializeField] bool clearVertical = true;
-
 	[SerializeField] float bgWidthInches = -1f;
 	[SerializeField] float bgHeightInches = -1f;
-
 	[SerializeField] float stickWidthInches = -1f;
 	[SerializeField] float stickHeightInches = -1f;
-
 	[SerializeField] bool allowAxisSwipes = false;
 	[SerializeField] bool allowPreciseSwipes = false;
-
 	[SerializeField] float swipeMinSpeed = 4f;
-
 	[SerializeField] bool horizontalOnly = false;
 	[SerializeField] bool verticalOnly = false;
-
 	[SerializeField] bool scaleToScreen = false;
-
 	[SerializeField] float[] swipeVerticalMagnitudes = { 1f };
 	[SerializeField] float[] swipeHorizontalMagnitudes = { 0.25f, 0.5f, 1f };
-
 	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
 	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
+	[SerializeField] float doubleTapDelayMax = 0f;
+#endregion
 
-	int swipeIndex = 0;
-
-	float radius;
-	//Canvas canvas;
-	RectTransform rTrans;
-	ScreenOrientation orientation;
-	float lastScreenWidth = 0f;
-	float lastScreenHeight = 0f;
-
-	bool pressed = false;
-	float pressedTime = 0f;
-
-	Vector2 touchDownValue = Vector2.zero;
-	Vector2 swipedDirection = Vector2.zero;
-	//bool disallowSwipeForThisTouch = false;
-
+#region PROPERTIES
+	public float MaxAngle { get { return verticalModeMaxAngleAllowance; } }
+	public Vector2 SwipedDirection { get; private set; }
+	public bool SwipeRequest { get; private set; }
+	public bool SwipeActive { get { return SwipedDirection.sqrMagnitude > 0f; } }
+	public int SwipeIndex { get; private set; }
 	public bool UpModeEngaged { get; private set; }
 	public bool DownModeEngaged { get; private set; }
 	public bool SideModeEngaged { get; private set; }
-
-	private bool wasClockwise = false;
-	private bool wasCounterClockwise = false;
-
-	public bool IsPressed { get { return pressed; } }
-	public float PressedTime { get { return pressedTime; } }
-
-	public Vector2 StickCenterOnScreen {
+	public bool IsPressed { get; private set; }
+	public float PressedTime { get; private set; }
+	public bool DoubleTapped { get; private set; }
+	public float Horizontal {
+		get { 
+			
+			float hor = JoystickData.x;
+			if(Mathf.Abs(hor) > horClampThrow) hor = horClampThrow * (hor >= 0f ? 1f : -1f);
+			
+			return hor; 
+		}
+	}
+	public float Vertical {
+		get { 
+			return JoystickData.y; 
+		}
+	}
+	Vector2 StickCenterOnScreen {
 		get {
 			return ZoneCenter + bg.anchoredPosition;
 		}
 	}
-
-	public Vector2 ZoneCenter {
+	Vector2 ZoneCenter {
 		get {
 			return (Vector2)rTrans.position + rTrans.rect.center;
 		}
 	}
-
-	public Vector2 JoystickData {
+	Vector2 JoystickData {
 		get {
 			Vector2 res = stick.anchoredPosition;
-
+			
 			if(clampRadially && !horizontalOnly && !verticalOnly && !SideModeEngaged) {
 				res = res / radius;
 			}
@@ -119,9 +98,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				if(bg.rect.width > 0f) res.x /= bg.rect.width * 0.5f;
 				if(bg.rect.height > 0f) res.y /= bg.rect.height * 0.5f;
 			}
-
+			
 			//Debug.Log("res.x("+res.x+") deadZone.x("+deadZone.x+")");
-
+			
 			if(deadZoneRadial && !horizontalOnly && !verticalOnly && !SideModeEngaged) {
 				if(res.magnitude < deadZone.x) {
 					res = Vector2.zero;
@@ -148,31 +127,29 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					res.y = (res.y >= 0f ? 1f : -1f) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.y) - deadZone.y) / (1f - deadZone.y));
 				}
 			}
-
+			
 			return res;
 		}
 	}
+#endregion
 
-	public float Horizontal {
-		get { 
+#region MISC MEMBERS
+	float radius;
+	RectTransform rTrans;
+	ScreenOrientation orientation;
+	float lastScreenWidth = 0f;
+	float lastScreenHeight = 0f;
+	Vector2 touchDownValue = Vector2.zero;
+	bool wasClockwise = false;
+	bool wasCounterClockwise = false;
+	Vector2 oldSwipe;
+	float pointerDownTime = 0f;
+#endregion
 
-			float hor = JoystickData.x;
-			if(Mathf.Abs(hor) > horClampThrow) hor = horClampThrow * (hor >= 0f ? 1f : -1f);
-				
-			return hor; 
-		}
-	}
-
-	public float Vertical {
-		get { 
-			return JoystickData.y; 
-		}
-	}
-
+#region COMPONENT CALLBACKS
 	void Awake() {
 		//canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
-
 	}
 
 	void OnEnable() {
@@ -182,9 +159,50 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		bg.gameObject.SetActive(!dynamic);
 		stick.gameObject.SetActive(!dynamic);
 
-		swipeIndex = 0;
+		SwipeIndex = 0;
 	}
 
+	void Update() {
+		if(	Screen.orientation != orientation || lastScreenWidth != Screen.width || lastScreenHeight != Screen.height ) {
+			ResizeToScreen();
+		}
+		
+		if(!Application.isPlaying) return;
+		
+		if(IsPressed) {
+			PressedTime += Time.deltaTime;
+		}
+		else {
+			PressedTime = 0f;
+			
+			//if we've allowed a swipe to override stick, then snap it here
+			if(SwipeActive) {
+
+				float[] mags = swipeVerticalMagnitudes;
+				if(Vector2.Dot(SwipedDirection, Vector2.right) != 0f) {
+					mags = swipeHorizontalMagnitudes;
+				}
+
+				float mag = 1f;
+				SwipeIndex = Mathf.Clamp(SwipeIndex, 0, mags.Length-1);
+				mag = mags[SwipeIndex];
+				
+				Vector2 pos = SwipedDirection * radius * mag;
+				stick.anchoredPosition = pos;
+			}
+			else {
+				SwipeIndex = 0;
+			}
+		}
+		
+		RefreshStickImages();
+		RefreshBGImages();
+		RefreshCaps();
+		
+	}
+#endregion
+
+#region PRIVATE METHODS
 	void RefreshRadius() {
 		if(verticalOnly) {
 			radius = bg.rect.height * 0.5f;
@@ -313,45 +331,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		stick.anchoredPosition = Vector2.zero;
 	}
 
-	void Update() {
-		if(	Screen.orientation != orientation || lastScreenWidth != Screen.width || lastScreenHeight != Screen.height ) {
-			ResizeToScreen();
-		}
-
-		if(!Application.isPlaying) return;
-
-		if(pressed) {
-			pressedTime += Time.deltaTime;
-		}
-		else {
-			pressedTime = 0f;
-
-			//if we've allowed a swipe to override stick, then snap it here
-			if(swipedDirection.sqrMagnitude > 0f) {
-
-				float[] mags = swipeVerticalMagnitudes;
-				if(Vector2.Dot(swipedDirection, Vector2.right) != 0f) {
-					mags = swipeHorizontalMagnitudes;
-				}
-
-				float mag = 1f;
-				swipeIndex = Mathf.Clamp(swipeIndex, 0, mags.Length-1);
-				mag = mags[swipeIndex];
-
-				Vector2 pos = swipedDirection * radius * mag;
-				stick.anchoredPosition = pos;
-			}
-			else {
-				swipeIndex = 0;
-			}
-		}
-
-		RefreshStickImages();
-		RefreshBGImages();
-		RefreshCaps();
-
-	}
-
 	void RefreshStickImages() {
 		if(stickImageThrown == null) return;
 		if(stickImageNeutral == null) return;
@@ -408,180 +387,72 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	public void OnPointerDown(PointerEventData eventData) {
-
-		if(dynamic) {
-			bg.anchoredPosition = eventData.position - ZoneCenter;
-			stick.anchoredPosition = Vector2.zero;
-		}
-
-		bg.gameObject.SetActive(true);
-		stick.gameObject.SetActive(true);
-
-		ProcessStick(eventData);
-		pressed = true;
-		pressedTime = 0f;
-
-		//if this is first touch after a swipe, prevent swipe input for this touch
-		//disallowSwipeForThisTouch = swipedDirection.sqrMagnitude > 0f;
-		//swipedDirection = Vector2.zero;
-		touchDownValue = JoystickData;
-
-		UpModeEngaged = false;
-		DownModeEngaged = false;
-		SideModeEngaged = false;
-
-		wasClockwise = false;
-		wasCounterClockwise = false;
-
-		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
-	}
-
-	public void OnDrag(PointerEventData eventData) {
-		ProcessStick(eventData);
-		CheckForModeEngage();
-	}
-
-	public void CheckForModeEngage() {
-		if(verticalModeEntryAngle <= 0f && horizontalModeEntryAngle <= 0f)
-			return;
-
-		if(UpModeEngaged)
-			return;
-		if(DownModeEngaged)
-			return;
-		if(SideModeEngaged)
-			return;
-
-		Vector2 dragThusFar = JoystickData - touchDownValue;
-		if(dragThusFar.sqrMagnitude <= 0f)
-			return;
-
-		dragThusFar.Normalize();
-		float angleFromUp = Vector2.Angle(Vector2.up, dragThusFar);
-
-		if(angleFromUp <= verticalModeEntryAngle) {
-			UpModeEngaged = true;
-			return;
-		}
-
-		if(angleFromUp >= 180f - verticalModeEntryAngle) {
-			DownModeEngaged = true;
-			return;
-		}
-
-		if(angleFromUp >= 90f - horizontalModeEntryAngle && angleFromUp <= 90f + horizontalModeEntryAngle) {
-			SideModeEngaged = true;
-			return;
-		}
-	}
-
-	public void OnPointerUp(PointerEventData eventData) {
-		ProcessStick(eventData);
-		ConsiderSwipes(eventData.position);
-
-		Vector2 throwVector = stick.anchoredPosition;
-
-		//if(dynamic) bg.anchoredPosition = Vector3.zero;
-
-		if(clearHorizontal) {
-			throwVector.x = 0f;
-		}
-
-		if(clearVertical) {
-			throwVector.y = 0f;
-		}
-
-		stick.anchoredPosition = throwVector;
-
-		pressed = false;
-		pressedTime = 0f;
-		bool swiped = swipedDirection.sqrMagnitude > 0f;
-		bg.gameObject.SetActive(!dynamic || swiped);
-		stick.gameObject.SetActive(!dynamic || swiped);
-		//Debug.Log ("Joystick OnPointerUp StickCenterOnScreen(" + StickCenterOnScreen + ") stick.anchoredPosition("+stick.anchoredPosition+")");
-
-		UpModeEngaged = false;
-		DownModeEngaged = false;
-		SideModeEngaged = false;
-	}
-
-	void ConsiderSwipes(Vector2 pos) {
-		Vector3 oldSwipe = swipedDirection;
-		swipedDirection = Vector2.zero;
-		//if(disallowSwipeForThisTouch) return;
+	void ConsiderSwipe(Vector2 pos, bool underway) {
+		SwipedDirection = Vector2.zero;
 		if(!allowAxisSwipes && !allowPreciseSwipes) return;
-
-		if(pressedTime <= 0f) {
-			swipeIndex = 0;
+		
+		if(PressedTime <= 0f) {
 			return;
 		}
-		if(pressedTime > 1f) {
-			swipeIndex = 0;
+		if(PressedTime > 1f) {
 			return;
 		}
-
+		
 		Vector2 delta = JoystickData - touchDownValue;
 		float distance = delta.magnitude;
+		
+		if(distance < swipeMinSpeed * PressedTime) return;
 
-		if(distance < swipeMinSpeed * pressedTime) {
-			swipeIndex = 0;
-			return;
-		}
-
-		swipedDirection = delta.normalized;
-
+		SwipedDirection = delta.normalized;
+		
 		//if our swipe dir has changed, start our stepwise magnitude index over
-		if(oldSwipe.sqrMagnitude > 0f) {
-			swipeIndex++;
-
-			if(Vector2.Angle(oldSwipe, swipedDirection) > 10f) {
-				swipeIndex = 0;
+		if(!underway && oldSwipe.sqrMagnitude > 0f) {
+			SwipeIndex++;
+			
+			if(Vector2.Angle(oldSwipe, SwipedDirection) > 10f) {
+				SwipeIndex = 0;
 			}
-
-//			&& Vector2.Dot(oldSwipe, swipedDirection) < 0f) {
-//			swipedDirection = Vector2.zero;
 		}
-
+		
 		if(allowPreciseSwipes && !horizontalOnly && !verticalOnly) return;
-
-		float dotUp = Vector2.Dot(swipedDirection, Vector2.up);
-
+		
+		float dotUp = Vector2.Dot(SwipedDirection, Vector2.up);
+		
 		if(verticalOnly) {
 			if(dotUp >= 0f) {
-				swipedDirection = Vector2.up;
+				SwipedDirection = Vector2.up;
 			}
 			else {
-				swipedDirection = -Vector2.up;
+				SwipedDirection = -Vector2.up;
 			}
 			return;
 		}
-
-		float dotRight = Vector2.Dot(swipedDirection, Vector2.right);
-
+		
+		float dotRight = Vector2.Dot(SwipedDirection, Vector2.right);
+		
 		if(horizontalOnly || SideModeEngaged) {
 			if(dotRight >= 0f) {
-				swipedDirection = Vector2.right;
+				SwipedDirection = Vector2.right;
 			}
 			else {
-				swipedDirection = -Vector2.right;
+				SwipedDirection = -Vector2.right;
 			}
 			return;
 		}
-
+		
 		if(Mathf.Abs(dotUp) >= Mathf.Abs(dotRight)) {
 			if(dotUp >= 0f) {
-				swipedDirection = Vector2.up;
+				SwipedDirection = Vector2.up;
 			}
 			else { 
-				swipedDirection = -Vector2.up;
+				SwipedDirection = -Vector2.up;
 			}
 		}
 		else if(dotRight >= 0f) {
-			swipedDirection = Vector2.right;
+			SwipedDirection = Vector2.right;
 		}
 		else {
-			swipedDirection = -Vector2.right;
+			SwipedDirection = -Vector2.right;
 		}
 	}
 
@@ -682,4 +553,135 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		stick.anchoredPosition = delta;
 		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
+	
+	void CheckForModeEngage() {
+		if(verticalModeEntryAngle <= 0f && horizontalModeEntryAngle <= 0f)
+			return;
+		
+		if(UpModeEngaged)
+			return;
+		if(DownModeEngaged)
+			return;
+		if(SideModeEngaged)
+			return;
+		
+		Vector2 dragThusFar = JoystickData - touchDownValue;
+		if(dragThusFar.sqrMagnitude <= 0f)
+			return;
+		
+		dragThusFar.Normalize();
+		float angleFromUp = Vector2.Angle(Vector2.up, dragThusFar);
+		
+		if(angleFromUp <= verticalModeEntryAngle) {
+			UpModeEngaged = true;
+			return;
+		}
+		
+		if(angleFromUp >= 180f - verticalModeEntryAngle) {
+			DownModeEngaged = true;
+			return;
+		}
+		
+		if(angleFromUp >= 90f - horizontalModeEntryAngle && angleFromUp <= 90f + horizontalModeEntryAngle) {
+			SideModeEngaged = true;
+			return;
+		}
+	}
+#endregion
+
+#region PUBLIC METHODS
+	public void EndSwipe() {
+
+		SwipedDirection = Vector2.zero;
+		SwipeRequest = false;
+		SwipeIndex = 0;
+		stick.anchoredPosition = Vector2.zero;
+	}
+
+	public void AbsorbSwipeRequest() {
+		Debug.Log("AbsorbSwipeRequest()");
+		SwipeRequest = false;
+	}
+
+	public void AbsorbDoubleTap() {
+		Debug.Log("AbsorbSwipeRequest()");
+		DoubleTapped = false;
+	}
+
+	public void OnPointerDown(PointerEventData eventData) {
+
+		float newTime = Time.time;
+		if(doubleTapDelayMax > 0f) {
+			if(pointerDownTime != 0f && (newTime - pointerDownTime) <= doubleTapDelayMax) {
+				DoubleTapped = true;
+			}
+		}
+
+		pointerDownTime = newTime;
+
+		if(dynamic) {
+			bg.anchoredPosition = eventData.position - ZoneCenter;
+			stick.anchoredPosition = Vector2.zero;
+		}
+		
+		bg.gameObject.SetActive(true);
+		stick.gameObject.SetActive(true);
+
+		oldSwipe = SwipedDirection;
+		if(SwipedDirection.sqrMagnitude == 0f) SwipeIndex = 0;
+		SwipeRequest = false;
+		IsPressed = true;
+		PressedTime = 0f;
+		
+		ProcessStick(eventData);
+		
+		touchDownValue = JoystickData;
+		
+		UpModeEngaged = false;
+		DownModeEngaged = false;
+		SideModeEngaged = false;
+		
+		wasClockwise = false;
+		wasCounterClockwise = false;
+
+		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
+	}
+	
+	public void OnDrag(PointerEventData eventData) {
+		ProcessStick(eventData);
+		CheckForModeEngage();
+		ConsiderSwipe(eventData.position, true);
+	}
+
+	public void OnPointerUp(PointerEventData eventData) {
+		ProcessStick(eventData);
+		ConsiderSwipe(eventData.position, false);
+
+		Vector2 throwVector = stick.anchoredPosition;
+		
+		//if(dynamic) bg.anchoredPosition = Vector3.zero;
+		
+		if(clearHorizontal) {
+			throwVector.x = 0f;
+		}
+		
+		if(clearVertical) {
+			throwVector.y = 0f;
+		}
+		
+		stick.anchoredPosition = throwVector;
+		
+		IsPressed = false;
+		PressedTime = 0f;
+		SwipeRequest = SwipedDirection.sqrMagnitude > 0f;
+		bg.gameObject.SetActive(!dynamic || SwipeRequest);
+		stick.gameObject.SetActive(!dynamic || SwipeRequest);
+		//Debug.Log ("Joystick OnPointerUp StickCenterOnScreen(" + StickCenterOnScreen + ") stick.anchoredPosition("+stick.anchoredPosition+")");
+		
+		UpModeEngaged = false;
+		DownModeEngaged = false;
+		SideModeEngaged = false;
+	}
+#endregion
+
 }

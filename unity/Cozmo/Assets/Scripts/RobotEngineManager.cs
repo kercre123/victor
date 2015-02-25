@@ -452,7 +452,8 @@ public class RobotEngineManager : MonoBehaviour {
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-		
+
+		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
 		U2G_DriveWheels message = new U2G_DriveWheels ();
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
@@ -537,7 +538,7 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_TurnInPlace message = new U2G_TurnInPlace ();
 		message.robotID = (byte)robotID;
 		message.angle_rad = angle_rad;
-		
+		Debug.Log("TurnInPlace(robotID:"+robotID+", angle_rad:"+angle_rad+")");
 		channel.Send (message);
 	}
 }
