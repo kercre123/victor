@@ -43,8 +43,6 @@
 
 namespace Anki {
   namespace Cozmo {
-
-    const float ROBOT_STATE_MESSAGE_TIMEOUT_SEC = 1.0f;
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
@@ -162,13 +160,24 @@ namespace Anki {
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
-      
+
+      if (!_camera.IsCalibrated()) {
+        // Don't process RobotState messages until the robot has received
+        // the sync time message. (When the robot receives sync time it sends
+        // camera calib to basestation.)
+        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.Ignoring",
+                            "Robot has not received sync time yet. Timestamp might be in the future (t=%d)\n", msg.timestamp);
+        return RESULT_FAIL;
+      }
+
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
       // a working robot. Note that basestation and robot time aren't necessarily
       // sync'd, so don't use the message's (i.e. robot's) timestamp here, since
       // we're going to compare to basestation time to check for a timeout.
       _lastStateMsgTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      //PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Received robot state message at %f seconds\n", _lastStateMsgTime_sec);
       
       // Update head angle
       SetHeadAngle(msg.headAngle);
@@ -529,16 +538,28 @@ namespace Anki {
       return RESULT_OK;
 #endif
       
+      /* DEBUG
+      const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      static double lastUpdateTime = currentTime_sec;
+      
+      const double updateTimeDiff = currentTime_sec - lastUpdateTime;
+      if(updateTimeDiff > 1.0) {
+        PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
+      }
+      lastUpdateTime = currentTime_sec;
+      */
+      
       // Make sure physical robot is still alive and sending us state updates
       if(_lastStateMsgTime_sec > 0.f) {
         const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
-        if(timeDiff_sec > ROBOT_STATE_MESSAGE_TIMEOUT_SEC) {
+        if(timeDiff_sec > R2B_STATE_MESSAGE_TIMEOUT_SEC) {
           PRINT_NAMED_ERROR("Robot.Update",
                             "No state message received from robot %d in %.1f seconds, "
                             "sending disconnected signal.\n", GetID(), timeDiff_sec);
           
-          CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
           _lastStateMsgTime_sec = -1.f;
+          //CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
+          return RESULT_FAIL_IO_TIMEOUT;
         }
       }
       
