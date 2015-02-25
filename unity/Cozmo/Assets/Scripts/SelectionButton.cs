@@ -8,17 +8,17 @@ public class SelectionButton : MonoBehaviour
 
 	public Text text;
 	public LineRenderer line;
-	public ImageTest.SelectionBox selectionBox { get; set; }
+	public CozmoVision.SelectionBox selectionBox { get; set; }
 
 	public Vector3 position
 	{
 		get
 		{
-			Vector3 p = image.transform.position;
+			Vector3 p = Vector3.zero;
 			
-			p.x += image.rectTransform.rect.size.x * 0.5f;
-			p.y -= image.rectTransform.rect.size.y * 0.5f;
-			
+			p.x = image.rectTransform.rect.center.x;
+			p.y = image.rectTransform.rect.center.y;
+
 			return p;
 		}
 	}

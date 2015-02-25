@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ImageTest : MonoBehaviour
+public class CozmoVision : MonoBehaviour
 {
 	[System.Serializable]
 	public class SelectionBox
@@ -16,17 +16,15 @@ public class ImageTest : MonoBehaviour
 		{
 			get
 			{
-				Vector3 p = image.transform.position;
-
-				p.x += image.rectTransform.rect.size.x * 0.5f;
-				p.y -= image.rectTransform.rect.size.y * 0.5f;
-
+				Vector3 p = Vector3.zero;
+				
+				p.x = image.rectTransform.rect.center.x;
+				p.y = image.rectTransform.rect.center.y;
+				
 				return p;
 			}
 		}
 	}
-
-	public static ImageTest instance = null;
 
 	[SerializeField] protected Button button;
 	[SerializeField] protected Image image;
@@ -35,20 +33,16 @@ public class ImageTest : MonoBehaviour
 	[SerializeField] protected SelectionBox[] selectionBoxes;
 	[SerializeField] protected Button[] actionButtons;
 	[SerializeField] protected int maxBoxes;
+	[SerializeField] protected Vector2 lineWidth;
 	
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
-
-	protected void Awake()
-	{
-		instance = this;
-	}
 
 	protected void Update()
 	{
 		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
 
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
@@ -80,6 +74,7 @@ public class ImageTest : MonoBehaviour
 			for( int i = 0; i < selectionButtons.Length; ++i )
 			{
 				selectionButtons[i].selectionBox = null;
+				selectionButtons[i].gameObject.SetActive( false );
 			}
 
 			while( temp.Count > 0 )
@@ -88,7 +83,7 @@ public class ImageTest : MonoBehaviour
 				SelectionBox selectionBox = temp.Dequeue();
 				int index = -1;
 
-				for( int i = 0; i < selectionButtons.Length; ++i )
+				for( int i = 0; i < selectionButtons.Length && i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
 				{
 					if( selectionButtons[i].selectionBox == null )
 					{
@@ -103,11 +98,15 @@ public class ImageTest : MonoBehaviour
 					}
 				}
 
-				selectionButtons[index].selectionBox = selectionBox;
-				selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
-				selectionButtons[index].text.text = selectionBox.text.text;
-				selectionButtons[index].line.SetPosition( 0, selectionButtons[index].position );
-				selectionButtons[index].line.SetPosition( 1, selectionBox.position );
+				if( index != -1 )
+				{
+					selectionButtons[index].selectionBox = selectionBox;
+					selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
+					selectionButtons[index].text.text = selectionBox.text.text;
+					selectionButtons[index].line.SetPosition( 0, selectionButtons[index].position );
+					selectionButtons[index].line.SetPosition( 1, selectionBox.position );
+					selectionButtons[index].line.SetWidth( lineWidth.x, lineWidth.y );
+				}
 			}
 		}
 	}
