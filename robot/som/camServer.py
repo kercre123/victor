@@ -39,7 +39,6 @@ class CameraSubServer(BaseSubServer):
 
     ISP_MIN_RESOLUTION = messages.CAMERA_RES_QVGA
 
-    ENCODER_SOCK_BINDADDR = "~/"
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG
