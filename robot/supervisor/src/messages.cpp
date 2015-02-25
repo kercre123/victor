@@ -93,6 +93,7 @@ namespace Anki {
           
           // Treat any message as a ping
           lastPingTime_ = HAL::GetTimeStamp();
+          //PRINT("Received message, kicking ping time at %d\n", lastPingTime_);
         }
         
         if(lookForID_ != NO_MESSAGE_ID) {
@@ -275,8 +276,7 @@ namespace Anki {
         }
         
         // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
-        const u32 PING_DISCONNECT_TIMEOUT_MS = 1000;
-        if ((lastPingTime_ != 0) && (lastPingTime_ + PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
+        if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
           printf("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
         }

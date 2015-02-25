@@ -380,13 +380,16 @@ namespace Anki {
           u8* imgToSend = data;
           if (msg.imageEncoding > 0) {
             
-            /*
+#if(0)
             // Write image to file (recompressing as jpeg again!)
+            static u32 imgCnt = 0;
+            char imgFilename[32];
             vector<int> compression_params;
             compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
             compression_params.push_back(90);
-            imwrite("torpedo.jpg", rawImg);
-            */
+            sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
+            imwrite(imgFilename, rawImg);
+#endif
             
             imgToSend = rawImg.data;
           }
