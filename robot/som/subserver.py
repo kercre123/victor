@@ -3,7 +3,7 @@ A base class for sub servers
 """
 __author__ = "Daniel Casner"
 
-import sys, threading
+import sys, threading, socket
 
 class BaseSubServer(threading.Thread):
 
@@ -14,6 +14,7 @@ class BaseSubServer(threading.Thread):
         self.v = verbose
         if verbose:
             sys.stdout.write("%s will be verbose\n" % repr(self))
+        self.sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def __del__(self):
         "Call stop before deleating"
@@ -22,10 +23,16 @@ class BaseSubServer(threading.Thread):
     def stop(self):
         "Stops the subserver thread the next time through it's main loop"
         self._continue = False
+        self.sendSocket.close()
 
     def giveMessage(self, message):
         "Passes in a message from the main server"
         raise TypeError("BaseSubServer sub-classes must override giveMessage")
+
+    def clientSend(self, message):
+        "Sends a message to the servers client"
+        if self.server.client:
+            self.sendSocket.sendto(message, self.server.client)
 
     def standby(self):
         "Puts the subserver it a lower power state"

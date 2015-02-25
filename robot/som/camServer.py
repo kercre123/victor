@@ -5,7 +5,7 @@ __author__  = "Daniel Casner"
 __version__ = "0.0.1"
 
 
-import sys, socket, time, math, subprocess
+import sys, socket, time, math, subprocess, signal
 from subserver import *
 import messages
 
@@ -35,7 +35,7 @@ class CameraSubServer(BaseSubServer):
 
     SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
-    SENSOR_FPS     = 30
+    SENSOR_FPS     = 15
 
     ISP_MIN_RESOLUTION = messages.CAMERA_RES_QVGA
 
@@ -113,7 +113,8 @@ class CameraSubServer(BaseSubServer):
         self.encoderLock.acquire()
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG:
-                self.encoderProcess = subprocess.Popen(['gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
+                sys.stdout.write("Starting the encoder\n")
+                self.encoderProcess = subprocess.Popen(['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
                                                         'TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', 'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
                                                         'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
             else:
@@ -124,9 +125,9 @@ class CameraSubServer(BaseSubServer):
         "Stop the encoder subprocess if it is running"
         haveLock = self.encoderLock.acquire(blocking)
         if self.encoderProcess is not None:
-            if self.v: sys.stdout.write("Stopping the encoder\n")
+            sys.stdout.write("Stopping the encoder\n")
             if self.encoderProcess.poll() is None:
-                self.encoderProcess.kill()
+                self.encoderProcess.send_signal(signal.SIGINT)
                 self.encoderProcess.wait()
             self.encoderProcess = None
         if haveLock:
@@ -136,7 +137,7 @@ class CameraSubServer(BaseSubServer):
         "Process a message recieved by the server"
         if ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
-            if self.v: sys.stdout.write("New image request: %s\n" % str(inMsg))
+            sys.stdout.write("New image request: %s\n" % str(inMsg))
             self.sendMode = inMsg.imageSendMode
             if inMsg.imageSendMode == messages.ISM_OFF:
                 self.stopEncoder()
@@ -182,7 +183,7 @@ class CameraSubServer(BaseSubServer):
                 frame = msg.takeChunk(frame)
                 msg.chunkId = chunkNumber
                 chunkNumber += 1
-                self.server.clientSend(msg.serialize())
+                self.clientSend(msg.serialize())
 
 class Client(object):
     "Client for UDP camera server for testing"

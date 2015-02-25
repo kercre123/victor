@@ -33,7 +33,7 @@ class MCUProxyServer(BaseSubServer):
     def stop(self):
         sys.stdout.write("Closing MCUProxyServer\n")
         BaseSubServer.stop(self)
-        self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
+        #self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
         self.mcu.close()
         sys.stdout.flush()
 
@@ -47,13 +47,14 @@ class MCUProxyServer(BaseSubServer):
     def standby(self):
         "Put the sub server into standby mode"
         self.radioConnected = False
-        self.sentToMcu(messages.ClientConnectionStatus(0,0).serialize())
+        #self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
 
     def sendToMcu(self, message):
         "Send one message (with header and footer) to MCU over serial link"
         self.mcu.write(self.SERIAL_HEADER + struct.pack('I', len(message)))
         self.mcu.write(message)
         self.mcu.flush()
+        if self.v: sys.stdout.write("toMcu: %d[%d]\n" % (ord(message[0]), len(message)))
 
     def step(self):
         "A single execution step for this thread"
@@ -96,5 +97,5 @@ class MCUProxyServer(BaseSubServer):
             elif self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 sys.stdout.flush()
-            self.server.clientSend(self.rawSerData[:length])
+            self.clientSend(self.rawSerData[:length])
             self.rawSerData = self.rawSerData[length:]

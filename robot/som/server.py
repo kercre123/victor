@@ -5,12 +5,13 @@ Implements UDP server for robot comms and includes some useful library classes
 __author__ = "Daniel Casner"
 
 
-import sys, os, time, socket, threading
+import sys, os, time, socket, threading, subprocess
 import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
 PRINT_FRAMERATE = False
+FORCE_ADDRESS = False
 
 MTU = 1500
 
@@ -34,7 +35,8 @@ class TimestampExtrapolator(object):
     def get(self):
         "Retrive the estimated MCU time"
         self.lock.acquire()
-        ret = self.mcuTS + ((time.time()-self.toc)*self.tps)
+        #ret = self.mcuTS + ((time.time()-self.toc)*self.tps)
+        ret = self.mcuTS
         self.lock.release()
         return ret
 
@@ -48,38 +50,47 @@ class CozmoServer(socket.socket):
         "Initalize the server and start listening on UDP"
         if VERBOSE: sys.stdout.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+        self.settimeout(1.0)
         self.bind(address)
-        self.sendLock = threading.Lock()
         self.timestamp = TimestampExtrapolator()
         cam = camServer.CameraSubServer(self, 1.0, VERBOSE, PRINT_FRAMERATE)
         mcu = mcuProxyServer.MCUProxyServer(self, 1.0, VERBOSE)
         self.subServers = [cam, mcu]
         self.client = None
         self.lastClientRecvTime = 0.0
+        subprocess.call(['renice', '-n', '10', '-p', str(os.getpid())]) # Renice ourselves so the encoder comes first
 
     def __del__(self):
         self.stop()
 
     def stop(self):
+        self.client = None
         for ss in self.subServers:
             ss.stop()
         self.close()
 
-    def clientSend(self, data):
-        if self.client:
-            self.sendLock.acquire()
-            self.sendto(data, self.client)
-            self.sendLock.release()
-
     def step(self):
         "One main loop iteration"
-        data, self.client = self.recvfrom(MTU)
-        if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
-        self.lastClientRecvTime = time.time()
-        if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
-            return # Establish that we have a connection but don't pass the packet along
-        for ss in self.subServers:
-            ss.giveMessage(data)
+        try:
+            data, client = self.recvfrom(MTU)
+        except socket.timeout:
+            pass
+        except socket.error, e:
+            if e.errno == socket.EBADF and self.client is None:
+                return
+            else:
+                raise e
+        else:
+            if FORCE_ADDRESS:
+                self.client = FORCE_ADDRESS
+            else:
+                self.client = client
+            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
+            self.lastClientRecvTime = time.time()
+            if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
+                return # Establish that we have a connection but don't pass the packet along
+            for ss in self.subServers:
+                ss.giveMessage(data)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
             sys.stdout.write("Going to standby\n")
             sys.stdout.flush()
@@ -100,6 +111,10 @@ if __name__ == '__main__':
     if '-vv' in sys.argv: VERBOSE = 10
     if '-i'  in sys.argv: PRINT_INTERVAL = True
     if '-f'  in sys.argv: PRINT_FRAMERATE = True
+    if '-a'  in sys.argv:
+        aid = sys.argv.index('-a')
+        FORCE_ADDRESS = eval(sys.argv[aid+1])
+        sys.stdout.write("Forcing packets to go to: %s:%d\n" % FORCE_ADDRESS)
     address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
