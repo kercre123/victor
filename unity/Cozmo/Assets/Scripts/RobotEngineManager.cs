@@ -13,11 +13,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 	
-	public bool IsConnected {
-		get {
-			return (channel != null && channel.IsConnected);
-		}
-	}
+	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField]
 	private TextAsset configuration;
@@ -39,7 +35,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
 	
-	#if !UNITY_EDITOR
+#if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
 	private StringBuilder logBuilder = null;
@@ -101,8 +97,7 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 		}
 	}
-	#endif
-	
+#endif
 	public void AddRobot( byte robotID )
 	{
 		robots.Add( robotID, new Robot( robotID ) );
@@ -167,7 +162,7 @@ public class RobotEngineManager : MonoBehaviour {
 			channel.Disconnect ();
 
 			// only really needed in editor in case unhitting play
-			#if UNITY_EDITOR
+#if UNITY_EDITOR
 			float limit = Time.realtimeSinceStartup + 2.0f;
 			while (channel.HasPendingOperations) {
 				if (limit < Time.realtimeSinceStartup) {
@@ -176,7 +171,7 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 				System.Threading.Thread.Sleep (500);
 			}
-			#endif
+#endif
 		}
 	}
 
@@ -288,14 +283,14 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
-		current.box.UpdateInfo( message );
+		current.UpdateObservedObjectInfo( message );
 	}
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
 		//Debug.Log( "no box found at " + Time.time );
 
-		current.box.RemoveInfo();
+		current.observedObjects.Clear();
 	}
 	
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -397,8 +392,10 @@ public class RobotEngineManager : MonoBehaviour {
 				RobotImage( texture );
 			}
 		}
+
+		current.observedObjects.Clear();
 	}
-	
+
 	public void StartEngine(string vizHostIP)
 	{
 		U2G_StartEngine message = new U2G_StartEngine ();
@@ -489,15 +486,15 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
 	} 
 
-	public void PickUpBox()
+	public void PickAndPlaceObject()
 	{
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = (int)current.box.ID;
+		message.objectID = (int)current.selectedObject;
 		message.usePreDockPose = 0;
 		
 		channel.Send( message );
 
-		current.box.RemoveInfo();
+		current.observedObjects.Clear();
 	}
 
 	public void RequestImage(int robotID)

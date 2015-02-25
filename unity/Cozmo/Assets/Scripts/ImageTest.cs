@@ -1,17 +1,26 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ImageTest : MonoBehaviour
 {
+	[System.Serializable]
+	public class SelectionBox
+	{
+		public Image image;
+		public Text text;
+		public uint ID;
+	}
+
 	[SerializeField] protected Button button;
-	[SerializeField] protected Button actionButton;
-	[SerializeField] protected Image actionButtonImage;
-	[SerializeField] protected Text actionButtonText;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
-
-	//protected uint lastBoxID = uint.MaxValue;
+	[SerializeField] protected SelectionButton[] selectionButtons;
+	[SerializeField] protected SelectionBox[] selectionBoxes;
+	[SerializeField] protected Button[] actionButtons;
+	[SerializeField] protected int maxBoxes;
+	
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
@@ -19,28 +28,62 @@ public class ImageTest : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			//Debug.Log( RobotEngineManager.instance.current.box.ID + " vs " + lastBoxID );
-
-			if( RobotEngineManager.instance.current.box.ID != uint.MaxValue /*&& RobotEngineManager.instance.current.box.ID != lastBoxID*/ )
+			for( int i = 0; i < actionButtons.Length; ++i )
 			{
-				actionButtonImage.rectTransform.sizeDelta = new Vector2( RobotEngineManager.instance.current.box.width, RobotEngineManager.instance.current.box.height );
-				//Debug.Log( "x: " + RobotEngineManager.instance.current.box.topLeft_x );
-				//Debug.Log( "y: " + RobotEngineManager.instance.current.box.topLeft_y );
-
-				actionButtonImage.rectTransform.anchoredPosition = new Vector2( RobotEngineManager.instance.current.box.topLeft_x, -RobotEngineManager.instance.current.box.topLeft_y );
-
-				actionButtonText.text = "Action on ID: " + RobotEngineManager.instance.current.box.ID;
-
-				actionButton.gameObject.SetActive( true );
+				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject != uint.MaxValue );
 			}
-			else
-			{
-				actionButton.gameObject.SetActive( false );
 
-				/*if( RobotEngineManager.instance.current.box.ID == uint.MaxValue )
+			for( int i = 0; i < maxBoxes; ++i )
+			{
+				if( RobotEngineManager.instance.current.observedObjects.Count > i )
 				{
-					lastBoxID = uint.MaxValue;
-				}*/
+					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
+
+					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
+					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
+
+					selectionBoxes[i].text.text = "Select ID: " + observedObject.ID;
+					selectionBoxes[i].ID = observedObject.ID;
+
+					selectionBoxes[i].image.gameObject.SetActive( true );
+				}
+				else
+				{
+					selectionBoxes[i].image.gameObject.SetActive( false );
+				}
+			}
+
+			Queue<SelectionBox> temp = new Queue<SelectionBox>( selectionBoxes );
+
+			for( int i = 0; i < selectionButtons.Length; ++i )
+			{
+				selectionButtons[i].selectionBox = null;
+			}
+
+			while( temp.Count > 0 )
+			{
+				float distance = float.MaxValue;
+				SelectionBox selectionBox = temp.Dequeue();
+				int index = -1;
+
+				for( int i = 0; i < selectionButtons.Length; ++i )
+				{
+					if( selectionButtons[i].selectionBox == null )
+					{
+						float d = Vector3.Distance( selectionBox.image.transform.position, selectionButtons[i].transform.position );
+
+						if( d < distance )
+						{
+							distance = d;
+
+							index = i;
+						}
+					}
+				}
+
+				selectionButtons[index].selectionBox = selectionBox;
+				selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
+				selectionButtons[index].text.text = selectionBox.text.text;
 			}
 		}
 	}
@@ -64,12 +107,21 @@ public class ImageTest : MonoBehaviour
 			button.interactable = false;
 		}
 	}
-
+	
 	public void Action()
 	{
-		//lastBoxID = RobotEngineManager.instance.current.box.ID;
+		Debug.Log( "Action" );
 
-		RobotEngineManager.instance.PickUpBox();
+		RobotEngineManager.instance.PickAndPlaceObject();
+
+		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+	}
+
+	public void Cancel()
+	{
+		Debug.Log( "Cancel" );
+		
+		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
 	}
 
 	public void RequestImage()
