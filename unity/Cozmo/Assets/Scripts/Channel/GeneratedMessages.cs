@@ -630,6 +630,8 @@ public override int ID { get { return (int)NetworkMessageID.G2U_ImageChunk; } } 
 
 public partial class G2U_RobotObservedObject : NetworkMessage {
 public u32 robotID;
+public u32 objectFamily;
+public u32 objectType;
 public u32 objectID;
 public f32 topLeft_x;
 public f32 topLeft_y;
@@ -990,6 +992,8 @@ ByteSerializer.GetSerializationLength(this.data) +
 
 public partial class G2U_RobotObservedObject { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.objectFamily) +
+ByteSerializer.GetSerializationLength(this.objectType) +
 ByteSerializer.GetSerializationLength(this.objectID) +
 ByteSerializer.GetSerializationLength(this.topLeft_x) +
 ByteSerializer.GetSerializationLength(this.topLeft_y) +
@@ -1350,6 +1354,8 @@ serializer.Serialize(this.data);
 
 public partial class G2U_RobotObservedObject { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.robotID);
+serializer.Serialize(this.objectFamily);
+serializer.Serialize(this.objectType);
 serializer.Serialize(this.objectID);
 serializer.Serialize(this.topLeft_x);
 serializer.Serialize(this.topLeft_y);
@@ -1710,6 +1716,8 @@ serializer.Deserialize(this.data);
 
 public partial class G2U_RobotObservedObject { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.objectFamily);
+serializer.Deserialize(out this.objectType);
 serializer.Deserialize(out this.objectID);
 serializer.Deserialize(out this.topLeft_x);
 serializer.Deserialize(out this.topLeft_y);

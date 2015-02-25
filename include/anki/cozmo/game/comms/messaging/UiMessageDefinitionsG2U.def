@@ -96,11 +96,13 @@ ADD_MESSAGE_MEMBER_ARRAY(u8, data, G2U_IMAGE_CHUNK_SIZE)
 END_MESSAGE_DEFINITION(G2U_ImageChunk)
 
 
-// ObjectVisionMarker for telling the UI that an object
+// RobotObservedObject for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
 START_MESSAGE_DEFINITION(G2U_RobotObservedObject, 1)
-ADD_MESSAGE_MEMBER(u32, robotID)
-ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u32, robotID)       // Which robot observed this object
+ADD_MESSAGE_MEMBER(u32, objectFamily)  // Whether this is a block, a ramp, etc.
+ADD_MESSAGE_MEMBER(u32, objectType)    // Which type of block or ramp, etc
+ADD_MESSAGE_MEMBER(u32, objectID)      // The unique instance of this object
 ADD_MESSAGE_MEMBER(f32, topLeft_x)
 ADD_MESSAGE_MEMBER(f32, topLeft_y)
 ADD_MESSAGE_MEMBER(f32, width)
