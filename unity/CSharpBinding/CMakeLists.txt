@@ -35,7 +35,7 @@ if(ANKI_IOS_BUILD)
     CoreTech_Messaging_Basestation
     CoreTech_Common_Basestation 
   )
-endif(NOT ANKI_IOS_BUILD)
+endif(ANKI_IOS_BUILD)
 
 
 FILE(GLOB SOURCE_PRE_ROOT "GeneratedMessages.c")
