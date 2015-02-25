@@ -11,7 +11,22 @@ public class ImageTest : MonoBehaviour
 		public Image image;
 		public Text text;
 		public uint ID;
+
+		public Vector3 position
+		{
+			get
+			{
+				Vector3 p = image.transform.position;
+
+				p.x += image.rectTransform.rect.size.x * 0.5f;
+				p.y -= image.rectTransform.rect.size.y * 0.5f;
+
+				return p;
+			}
+		}
 	}
+
+	public static ImageTest instance = null;
 
 	[SerializeField] protected Button button;
 	[SerializeField] protected Image image;
@@ -24,8 +39,15 @@ public class ImageTest : MonoBehaviour
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
+	protected void Awake()
+	{
+		instance = this;
+	}
+
 	protected void Update()
 	{
+		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
+
 		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			for( int i = 0; i < actionButtons.Length; ++i )
@@ -42,7 +64,7 @@ public class ImageTest : MonoBehaviour
 					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
 
-					selectionBoxes[i].text.text = "Select ID: " + observedObject.ID;
+					selectionBoxes[i].text.text = "Select " + observedObject + observedObject.ID;
 					selectionBoxes[i].ID = observedObject.ID;
 
 					selectionBoxes[i].image.gameObject.SetActive( true );
@@ -84,6 +106,8 @@ public class ImageTest : MonoBehaviour
 				selectionButtons[index].selectionBox = selectionBox;
 				selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
 				selectionButtons[index].text.text = selectionBox.text.text;
+				selectionButtons[index].line.SetPosition( 0, selectionButtons[index].position );
+				selectionButtons[index].line.SetPosition( 1, selectionBox.position );
 			}
 		}
 	}
@@ -112,32 +136,47 @@ public class ImageTest : MonoBehaviour
 	{
 		Debug.Log( "Action" );
 
-		RobotEngineManager.instance.PickAndPlaceObject();
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.PickAndPlaceObject();
 
-		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+		}
 	}
 
 	public void Cancel()
 	{
 		Debug.Log( "Cancel" );
-		
-		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+		}
 	}
 
 	public void RequestImage()
 	{
 		Debug.Log( "request image" );
 
-		RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
+		}
 	}
 
 	protected void OnEnable()
 	{
-		RobotEngineManager.instance.RobotImage += RobotImage;
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RobotImage += RobotImage;
+		}
 	}
 
 	protected void OnDisable()
 	{
-		RobotEngineManager.instance.RobotImage -= RobotImage;
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RobotImage -= RobotImage;
+		}
 	}
 }
