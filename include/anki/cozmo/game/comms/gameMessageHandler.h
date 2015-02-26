@@ -29,9 +29,6 @@ namespace Anki {
 namespace Cozmo {
   
   
-#define MESSAGE_BASECLASS_NAME UiMessage
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
-  
   // Define interface for a GameMessage handler
   class IGameMessageHandler
   {
@@ -44,7 +41,7 @@ namespace Cozmo {
     
     virtual Result ProcessMessages() = 0;
     
-    virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) = 0;
+    virtual Result SendMessage(const UserDeviceID_t devID, const U2G_Message& msg) = 0;
     
   }; // class IGameMessageHandler
   
@@ -66,11 +63,12 @@ namespace Cozmo {
     virtual Result ProcessMessages();
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg);
+    Result SendMessage(const UserDeviceID_t devID, const U2G_Message& msg);
     
-    // Declare registration functions for message handling callbacks
-    #define MESSAGE_DEFINITION_MODE MESSAGE_UI_REG_CALLBACK_METHODS_MODE
-    #include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
+    inline void RegisterCallbackForMessage(const std::function<void(const G2U_Message&)>& messageCallback)
+    {
+      this->messageCallback = messageCallback;
+    }
     
   protected:
     
@@ -78,35 +76,37 @@ namespace Cozmo {
     
     bool isInitialized_;
     
+    std::function<void(const G2U_Message&)> messageCallback;
+    
     // Process a raw byte buffer as a message and send it to the specified
     // robot.
     // Returns RESULT_FAIL if no handler callback was registered for this message.
     Result ProcessPacket(const Comms::MsgPacket& packet);
     
     // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
+//#define MESSAGE_DEFINITION_MODE MESSAGE_UI_PROCESS_METHODS_MODE
+//#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
     
     // Fill in the message information lookup table for getting size and
     // ProcesBufferAs_MessageX function pointers according to enumerated
     // message ID.
-    struct {
-      u8 priority;
-      u16 size;
-      Result (GameMessageHandler::*ProcessPacketAs)(const u8* );
-    } lookupTable_[NUM_UI_MSG_IDS+1] = {
-      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
+//    struct {
+//      u8 priority;
+//      u16 size;
+//      Result (GameMessageHandler::*ProcessPacketAs)(const u8* );
+//    } lookupTable_[NUM_UI_MSG_IDS+1] = {
+//      {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
       
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
+//#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
+//#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
       
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#define MESSAGE_HANDLER_CLASSNAME GameMessageHandler
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
-#undef MESSAGE_HANDLER_CLASSNAME
+//#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+//#define MESSAGE_HANDLER_CLASSNAME GameMessageHandler
+//#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
+//#undef MESSAGE_HANDLER_CLASSNAME
 
-      {0, 0, 0} // Final dummy entry without comma at end
-    };
+//      {0, 0, 0} // Final dummy entry without comma at end
+//    };
     
   }; // class GameMessageHandler
   
@@ -132,7 +132,7 @@ namespace Cozmo {
     }
     
     // Send a message to a specified ID
-    virtual Result SendMessage(const UserDeviceID_t devID, const UiMessage& msg) override {
+    virtual Result SendMessage(const UserDeviceID_t devID, const U2G_Message& msg) override {
       return RESULT_OK;
     }
 

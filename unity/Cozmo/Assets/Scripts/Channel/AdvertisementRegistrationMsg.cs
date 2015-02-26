@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public partial class AdvertisementRegistrationMsg : NetworkMessage {
+public partial class AdvertisementRegistrationMsg {
 	public ushort port;
 	public byte[] ip = new byte[18];
 	public byte id;
@@ -11,44 +11,49 @@ public partial class AdvertisementRegistrationMsg : NetworkMessage {
 	public byte enableAdvertisement;
 	public byte oneShot;
 
-	public override int ID {
-		get {
-			return -1;
+	public AdvertisementRegistrationMsg()
+	{
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write (port);
+		writer.Write (ip);
+		writer.Write (id);
+		writer.Write (protocol);
+		writer.Write (enableAdvertisement);
+		writer.Write (oneShot);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		port = reader.ReadUInt16 ();
+		for (int i = 0; i < ip.Length; ++i) {
+			ip[i] = reader.ReadByte ();
 		}
+		id = reader.ReadByte ();
+		protocol = reader.ReadByte ();
+		enableAdvertisement = reader.ReadByte ();
+		oneShot = reader.ReadByte ();
+		return stream;
 	}
-
-	public override int SerializationLength
+	public int Size
 	{
 		get {
-			return
-				ByteSerializer.GetSerializationLength(this.port) +
-				ByteSerializer.GetSerializationLength(this.ip) +
-				ByteSerializer.GetSerializationLength(this.id) +
-				ByteSerializer.GetSerializationLength(this.protocol) +
-				ByteSerializer.GetSerializationLength(this.enableAdvertisement) +
-				ByteSerializer.GetSerializationLength(this.oneShot) +
-				0;
+			int result = 0;
+			result += 2;
+			result += 1 * 18;
+			result += 1;
+			result += 1;
+			result += 1;
+			result += 1;
+			return result;
 		}
-	}
-
-	public override void Serialize(ByteSerializer serializer)
-	{
-		serializer.Serialize (this.port);
-		serializer.Serialize (this.ip);
-		serializer.Serialize (this.id);
-		serializer.Serialize (this.protocol);
-		serializer.Serialize (this.enableAdvertisement);
-		serializer.Serialize (this.oneShot);
-	}
-
-	public override void Deserialize(ByteSerializer serializer)
-	{
-		serializer.Deserialize (out this.port);
-		serializer.Deserialize (this.ip);
-		serializer.Deserialize (out this.id);
-		serializer.Deserialize (out this.protocol);
-		serializer.Deserialize (out this.enableAdvertisement);
-		serializer.Deserialize (out this.oneShot);
 	}
 }
 

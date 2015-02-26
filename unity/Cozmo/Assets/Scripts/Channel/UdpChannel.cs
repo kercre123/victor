@@ -2,10 +2,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Net.NetworkInformation;
+using Anki.Cozmo;
 
 public class UdpChannel : ChannelBase {
 
@@ -14,7 +16,7 @@ public class UdpChannel : ChannelBase {
 		public readonly UdpChannel channel;
 		public Socket socket;
 		public EndPoint endPoint;
-		public readonly byte[] buffer;
+		public readonly MemoryStream stream;
 		public int length;
 		public SocketBufferState chainedSend;
 		public bool isSocketActive;
@@ -23,7 +25,7 @@ public class UdpChannel : ChannelBase {
 		public SocketBufferState(UdpChannel channel, Socket socket, EndPoint endPoint)
 		{
 			this.channel = channel;
-			this.buffer = new byte[MaxBufferSize];
+			this.stream = new MemoryStream(MaxBufferSize);
 			Reset (socket, endPoint);
 		}
 
@@ -31,6 +33,8 @@ public class UdpChannel : ChannelBase {
 		{
 			this.socket = socket;
 			this.endPoint = endPoint;
+			this.stream.Position = 0;
+			this.stream.SetLength (0);
 			this.length = 0;
 			this.chainedSend = null;
 			this.isSocketActive = true;
@@ -66,8 +70,8 @@ public class UdpChannel : ChannelBase {
 
 	// fixed messages
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg ();
-	private readonly U2G_Ping pingMessage = new U2G_Ping();
-	private readonly U2G_DisconnectFromUiDevice disconnectionMessage = new U2G_DisconnectFromUiDevice();
+	private readonly U2G_Message pingMessage = new U2G_Message {Ping = new U2G_Ping()};
+	private readonly U2G_Message disconnectionMessage = new U2G_Message { DisconnectFromUiDevice = new U2G_DisconnectFromUiDevice() };
 
 	// sockets
 	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -100,17 +104,10 @@ public class UdpChannel : ChannelBase {
 	// various queues
 	private readonly List<object> queuedLogs = new List<object>(MaxQueuedLogs);
 	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-	private readonly Queue<NetworkMessage> receivedMessages = new Queue<NetworkMessage> (MaxQueuedReceives);
+	private readonly Queue<G2U_Message> receivedMessages = new Queue<G2U_Message> (MaxQueuedReceives);
 
 	// lists of pooled objects
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
-	private readonly ByteSerializer serializer = new ByteSerializer (
-#if CHANNEL_USE_NATIVE_ARCHITECTURE
-		ByteSwappingArchitecture.Native
-#else
-		ByteSwappingArchitecture.LittleEndian
-#endif
-		);
 
 	// asynchronous callbacks (saved to reduce allocations)
 	private readonly AsyncCallback callback_SendAdvertisement_Complete;
@@ -161,8 +158,8 @@ public class UdpChannel : ChannelBase {
 			IPAddress localAddress = GetLocalIPv4();
 
 			try {
-				pingMessage.counter = 0;
-				disconnectionMessage.deviceID = (byte)deviceID;
+				pingMessage.Ping.counter = 0;
+				disconnectionMessage.DisconnectFromUiDevice.deviceID = (byte)deviceID;
 
 				// set up main socket
 				IPEndPoint localEndPoint = anyEndPoint;//new IPEndPoint (/*localAddress ?? */ IPAddress.Any, localPort);
@@ -240,10 +237,10 @@ public class UdpChannel : ChannelBase {
 	}
 
 	// synchronous
-	public override void Send(NetworkMessage message)
+	public override void Send(U2G_Message message)
 	{
-		if (message.ID < 0 || message.ID > 255) {
-			throw new ArgumentException("Message id is not in valid range.", "message");
+		if (message.GetTag() == U2G_Message.Tag.INVALID) {
+			throw new ArgumentException("Message id is not valid.", "message");
 		}
 
 		// IsConnected only becomes true synchronously
@@ -299,7 +296,7 @@ public class UdpChannel : ChannelBase {
 					if (lastPingTime + PingTimeout < lastUpdateTime) {
 						lastPingTime = lastUpdateTime;
 						SendInternal(pingMessage);
-						pingMessage.counter += 1;
+						pingMessage.Ping.counter += 1;
 					}
 				}
 			}
@@ -362,7 +359,7 @@ public class UdpChannel : ChannelBase {
 	private void ProcessMessages()
 	{
 		while (receivedMessages.Count > 0) {
-			NetworkMessage message = receivedMessages.Dequeue();
+			G2U_Message message = receivedMessages.Dequeue();
 			try {
 				// can trigger Disconnect, InternalUpdate
 				RaiseMessageReceived(message);
@@ -453,21 +450,17 @@ public class UdpChannel : ChannelBase {
 		bool success = false;
 		try {
 			state.needsCloseWhenDone = true;
-			
-			serializer.ByteBuffer = state.buffer;
+
 			try {
-				NetworkMessageSerializer.Serialize(serializer, disconnectionMessage);
-				state.length = serializer.Index;
+				state.length = disconnectionMessage.Size;
+				disconnectionMessage.Pack (state.stream);
 			}
 			catch (Exception e)
 			{
 				queuedLogs.Add(e);
 				return false;
 			}
-			finally {
-				serializer.Clear ();
-			}
-			
+
 			if (mainSend == null) {
 				SimpleSend (state);
 			}
@@ -490,25 +483,21 @@ public class UdpChannel : ChannelBase {
 	}
 
 	// synchronous
-	private void SendInternal(NetworkMessage message)
+	private void SendInternal(U2G_Message message)
 	{
 		bool success = false;
 		SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
 		try {
-			serializer.ByteBuffer = state.buffer;
 			try {
-				NetworkMessageSerializer.Serialize(serializer, message);
-				state.length = serializer.Index;
+				state.length = message.Size;
+				message.Pack(state.stream);
 			}
 			catch (Exception e)
 			{
 				DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
 				return;
 			}
-			finally {
-				serializer.Clear ();
-			}
-			
+
 			if (mainSend == null) {
 				try {
 					ServerSend (state);
@@ -616,7 +605,7 @@ public class UdpChannel : ChannelBase {
 		mainReceive = AllocateBufferState(mainServer, anyEndPoint);
 		bool success = false;
 		try {
-			mainReceive.length = mainReceive.buffer.Length;
+			mainReceive.length = mainReceive.stream.Capacity;
 			BeginReceive(mainReceive, callback_ServerReceive_Complete);
 			success = true;
 		}
@@ -660,18 +649,31 @@ public class UdpChannel : ChannelBase {
 					else if (mainEndPoint.Equals (ipEndPoint)) {
 
 						lastReceiveTime = lastUpdateTime;
-						
-						serializer.ByteBuffer = state.buffer;
-						NetworkMessage message;
+
+						G2U_Message message;
 						try {
-							NetworkMessageSerializer.Deserialize(serializer, state.length, out message);
+							message = new G2U_Message();
+							try {
+								message.Unpack(state.stream);
+							}
+							catch (Exception e) {
+								if (message.Size != state.length) {
+									throw new Exception("Could not parse message " + message.GetTag() + ": " +
+									                    "message size " + message.Size.ToString() +
+									                    " not equal to buffer size " + state.length.ToString(),
+									                    e);
+								}
+								throw;
+							}
+							if (message.Size != state.length) {
+								throw new Exception("Could not parse message " + message.GetTag() + ": " +
+								                    "message size " + message.Size.ToString() +
+								                    " not equal to buffer size " + state.length.ToString());
+							}
 						}
 						catch (Exception e) {
 							Destroy (DisconnectionReason.ReceivedInvalidData, e);
 							return;
-						}
-						finally {
-							serializer.Clear ();
 						}
 
 						if (receivedMessages.Count >= MaxQueuedReceives) {
@@ -711,20 +713,8 @@ public class UdpChannel : ChannelBase {
 		advertisementSend = AllocateBufferState(advertisementClient, advertisementEndPoint);
 		bool success = false;
 		try {
-			serializer.ByteBuffer = advertisementSend.buffer;
-			try {
-				advertisementRegistrationMessage.Serialize(serializer);
-				advertisementSend.length = serializer.Index;
-			}
-			catch (IndexOutOfRangeException e) {
-				throw new NetworkMessageSerializationException("Send buffer not large enough for AdvertisementRegistrationMsg. " +
-				                                               "(" + advertisementRegistrationMessage.SerializationLength.ToString() + " bytes required, " +
-				                                               advertisementSend.buffer.Length.ToString() + " bytes allowed in buffer.)",
-				                                               e);
-			}
-			finally {
-				serializer.Clear ();
-			}
+			advertisementSend.length = advertisementRegistrationMessage.Size;
+			advertisementRegistrationMessage.Pack (advertisementSend.stream);
 
 			AsyncCallback callback = callback_SendAdvertisement_Complete;
 			BeginSend(advertisementSend, callback);
@@ -814,7 +804,11 @@ public class UdpChannel : ChannelBase {
 
 	private void BeginSend(SocketBufferState state, AsyncCallback callback)
 	{
-		BeginSendUdp (state.socket, state.buffer, state.length, state.endPoint, callback, state);
+		if (state.stream.GetBuffer () == null) {
+			throw new ArgumentException("Stream buffer is null.", "state");
+		}
+
+		BeginSendUdp (state.socket, state.stream.GetBuffer(), state.length, state.endPoint, callback, state);
 
 		pendingOperations++;
 	}
@@ -850,7 +844,12 @@ public class UdpChannel : ChannelBase {
 
 	private void BeginReceive(SocketBufferState state, AsyncCallback callback)
 	{
-		state.socket.BeginReceiveFrom (state.buffer, 0, state.length, SocketFlags.None, ref state.endPoint, callback, state);
+		if (state.stream.GetBuffer () == null) {
+			throw new ArgumentException("Stream buffer is null.", "state");
+		}
+
+		state.stream.SetLength (state.length);
+		state.socket.BeginReceiveFrom (state.stream.GetBuffer (), 0, state.length, SocketFlags.None, ref state.endPoint, callback, state);
 		pendingOperations++;
 	}
 
@@ -862,6 +861,8 @@ public class UdpChannel : ChannelBase {
 		if (state.isSocketActive) {
 			try {
 				int length = state.socket.EndReceiveFrom (result, ref state.endPoint);
+				state.stream.SetLength(length);
+				state.stream.Position = 0;
 				state.length = length;
 			}
 			catch (ObjectDisposedException) {

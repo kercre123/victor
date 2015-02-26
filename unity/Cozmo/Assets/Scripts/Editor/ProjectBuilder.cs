@@ -125,8 +125,15 @@ public class ProjectBuilder {
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
 	
+	AssetDatabase.Refresh (ImportAssetOptions.ForceSynchronousImport);
+
     // run build
     string result = BuildPipeline.BuildPlayer(scenes.ToArray(), buildPath, buildTarget, buildOptions);
+	
+	// TODO: replace with whatever chapados comes up with
+	if (!string.IsNullOrEmpty (result)) {
+		throw new Exception(result);
+	}
 
     // restore player settings
     PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;

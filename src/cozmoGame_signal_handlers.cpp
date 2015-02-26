@@ -114,7 +114,7 @@ namespace Cozmo {
                                                              float x_lowerRight, float y_lowerRight)
   {
     // Notify the UI that the device camera saw a VisionMarker
-    MessageG2U_DeviceDetectedVisionMarker msg;
+    G2U_DeviceDetectedVisionMarker msg;
     msg.markerType = markerType;
     msg.x_upperLeft = x_upperLeft;
     msg.y_upperLeft = y_upperLeft;
@@ -127,7 +127,7 @@ namespace Cozmo {
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     // TODO: go back to actually sending this as a message instead of storing it for polling
-    //_uiMsgHandler.SendMessage(1, msg);
+    //_uiMsgHandler.SendMessage(1, message);
     _visionMarkersDetectedByDevice.push_back(msg);
   }
   
@@ -136,54 +136,66 @@ namespace Cozmo {
   void CozmoGameImpl::HandleRobotAvailableSignal(RobotID_t robotID) {
     
     // Notify UI that robot is availale and let it issue message to connect
-    MessageG2U_RobotAvailable msg;
+    G2U_RobotAvailable msg;
     msg.robotID = robotID;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotAvailable(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID) {
     
     // Notify UI that a UI device is availale and let it issue message to connect
-    MessageG2U_UiDeviceAvailable msg;
+    G2U_UiDeviceAvailable msg;
     msg.deviceID = deviceID;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_UiDeviceAvailable(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotConnectedSignal(RobotID_t robotID, bool successful)
   {
-    MessageG2U_RobotConnected msg;
+    G2U_RobotConnected msg;
     msg.robotID = robotID;
     msg.successful = successful;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotConnected(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec)
   {
-    MessageG2U_RobotDisconnected msg;
+    G2U_RobotDisconnected msg;
     msg.robotID = robotID;
     msg.timeSinceLastMsg_sec = timeSinceLastMsg_sec;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotDisconnected(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
   {
-    MessageG2U_UiDeviceConnected msg;
+    G2U_UiDeviceConnected msg;
     msg.deviceID = deviceID;
     msg.successful = successful;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_UiDeviceConnected(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
   {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to play a sound:
-    MessageG2U_PlaySound msg;
+    G2U_PlaySound msg;
     msg.numLoops = numLoops;
     msg.volume   = volume;
     const std::string& filename = SoundManager::getInstance()->GetSoundFile((SoundID_t)soundID);
     strncpy(&(msg.soundFilename[0]), filename.c_str(), msg.soundFilename.size());
     
-    bool success = RESULT_OK == _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_PlaySound(msg);
+    bool success = RESULT_OK == _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
     
 #   else
     // Use SoundManager:
@@ -204,8 +216,10 @@ namespace Cozmo {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to stop the sound
     // TODO: somehow use the robot ID?
-    MessageG2U_StopSound msg;
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_StopSound msg;
+    G2U_Message message;
+    message.Set_StopSound(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
 #   else
     // Use SoundManager:
     SoundManager::getInstance()->Stop();
@@ -217,7 +231,7 @@ namespace Cozmo {
                                                           float x_upperLeft,  float y_upperLeft,
                                                           float width,  float height) {
     // Send a message out to UI that the device found a vision marker
-    MessageG2U_RobotObservedObject msg;
+    G2U_RobotObservedObject msg;
     msg.robotID   = robotID;
     msg.objectID  = objectID;
     msg.topLeft_x = x_upperLeft;
@@ -226,15 +240,19 @@ namespace Cozmo {
     msg.height    = height;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotObservedObject(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotObservedNothingSignal(uint8_t robotID)
   {
-    MessageG2U_RobotObservedNothing msg;
+    G2U_RobotObservedNothing msg;
     msg.robotID = robotID;
     
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotObservedNothing(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   /*
