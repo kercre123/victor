@@ -18,15 +18,15 @@ class MCUProxyServer(BaseSubServer):
     BAUD_RATE = 3000000
     SERIAL_HEADER = "\xbe\xef"
 
-    def __init__(self, server, timeout, verbose=False):
+    def __init__(self, server, verbose=False):
         "Sets up the server instance"
-        BaseSubServer.__init__(self, server, timeout, verbose)
+        BaseSubServer.__init__(self, server, verbose)
         self.mcu = serial.Serial(port     = self.SERIAL_DEVICE,
                                  baudrate = self.BAUD_RATE,
                                  parity   = serial.PARITY_NONE,
                                  stopbits = serial.STOPBITS_ONE,
                                  bytesize = serial.EIGHTBITS,
-                                 timeout  = timeout)
+                                 timeout  = 1.0)
         self.radioConnected = False
         self.rawSerData = ""
 

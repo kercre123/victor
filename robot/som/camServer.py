@@ -5,7 +5,7 @@ __author__  = "Daniel Casner"
 __version__ = "0.0.1"
 
 
-import sys, socket, time, math, subprocess, signal
+import sys, socket, select, time, math, subprocess, signal
 from subserver import *
 import messages
 
@@ -42,13 +42,13 @@ class CameraSubServer(BaseSubServer):
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG
-    ENCODER_QUALITY       = 97
+    ENCODER_QUALITY       = 70
 
     ENCODER_LATEANCY = 5 # ms, SWAG
 
-    def __init__(self, server, timeout, verbose=False, test_framerate=False):
+    def __init__(self, server, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
-        BaseSubServer.__init__(self, server, timeout, verbose)
+        BaseSubServer.__init__(self, server, verbose)
         self.tfr = test_framerate
         if self.tfr:
             sys.stdout.write("Will print frame rate information\n")
@@ -60,7 +60,7 @@ class CameraSubServer(BaseSubServer):
         self.encoderProcess = None
         self.encoderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.encoderSocket.bind((self.ENCODER_SOCK_HOSTNAME, self.ENCODER_SOCK_PORT))
-        self.encoderSocket.settimeout(timeout)
+        self.encoderSocket.setblocking(0)
 
         hostname = socket.gethostname()
         assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
@@ -149,34 +149,42 @@ class CameraSubServer(BaseSubServer):
         "A single execution step for this thread"
         if self.encoderProcess is not None and self.encoderProcess.poll() is not None:
             raise Exception("Encoder sub-process has terminated")
+        rfds, wfds, efds = select.select([self.encoderSocket], [], [self.encoderSocket], 1.0)
+        if self.encoderSocket in efds:
+            if self._continue == False:
+                return
+            else:
+                sys.stderr.write("camServer.encoderSocket in exceptional condition\n")
+        if self.encoderSocket not in rfds: # Timeout
+            return
+        frame = None
         try:
-            frame = self.encoderSocket.recv(MTU)
-        except socket.timeout:
-            return # if no frame, skip the rest
+            while True: # Receive all the data grams and throw out all but the last one
+                frame = self.encoderSocket.recv(MTU)
         except socket.error, e:
-            if e.errno == socket.EBADF and self._continue == False:
+            if e.errno == 11: # No more data, this is how we expect to exit the loop
+                if self.tfr:
+                    tick = time.time()
+                    sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
+                    self.lastFrameOTime = tick
+                # If only sending single image
+                if self.sendMode == messages.ISM_SINGLE_SHOT:
+                    self.stopEncoder()
+                    self.sendMode = messages.ISM_OFF
+                self.imageNumber += 1
+                msg = messages.ImageChunk()
+                msg.imageId = self.imageNumber
+                msg.imageTimestamp = self.server.timestamp.get()
+                msg.imageEncoding = self.ENCODER_CODING
+                msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
+                msg.resolution = self.ISPResolution
+                chunkNumber = 0
+                while frame:
+                    frame = msg.takeChunk(frame)
+                    msg.chunkId = chunkNumber
+                    chunkNumber += 1
+                    self.clientSend(msg.serialize())
+            elif e.errno == socket.EBADF and self._continue == False:
                 return
             else:
                 raise e
-        else:
-            if self.tfr:
-                tick = time.time()
-                sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
-                self.lastFrameOTime = tick
-            # If only sending single image
-            if self.sendMode == messages.ISM_SINGLE_SHOT:
-                self.stopEncoder()
-                self.sendMode = messages.ISM_OFF
-            self.imageNumber += 1
-            msg = messages.ImageChunk()
-            msg.imageId = self.imageNumber
-            msg.imageTimestamp = self.server.timestamp.get()
-            msg.imageEncoding = self.ENCODER_CODING
-            msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-            msg.resolution = self.ISPResolution
-            chunkNumber = 0
-            while frame:
-                frame = msg.takeChunk(frame)
-                msg.chunkId = chunkNumber
-                chunkNumber += 1
-                self.clientSend(msg.serialize())

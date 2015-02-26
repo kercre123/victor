@@ -7,7 +7,7 @@ import sys, threading, time, socket
 
 class BaseSubServer(threading.Thread):
 
-    def __init__(self, server, timeout=1.0, verbose=False):
+    def __init__(self, server, verbose=False):
         threading.Thread.__init__(self)
         self._continue = True
         self.server = server
