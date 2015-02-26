@@ -44,8 +44,17 @@ public class CozmoVision : MonoBehaviour
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
+	RectTransform rTrans;
+
+	void Awake() {
+		rTrans = transform as RectTransform;
+	}
+
 	protected void Update()
 	{
+		//add res change check here if neeeded
+		//RefreshSizeToScreen();
+
 		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
 
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
@@ -119,6 +128,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected void RobotImage( Texture2D texture )
 	{
+		Debug.Log("frame("+Time.frameCount+") RobotImage received");
 		if( rect.height != texture.height || rect.width != texture.width )
 		{
 			rect = new Rect( 0, 0, texture.width, texture.height );
@@ -175,6 +185,8 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
 		}
+
+		RefreshSizeToScreen();
 	}
 
 	protected void OnDisable()
@@ -183,5 +195,15 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 		}
+	}
+
+	void RefreshSizeToScreen() {
+		if(rTrans == null) return;
+
+		float scale = (Screen.width * 0.5f) / 320f;
+		rTrans.localScale = Vector3.one * scale;
+		//don2dante: using scale instead of sizeDelta seems to preserve the rest of your selection box logic
+//		Vector2 size = new Vector2(Screen.width * 0.4f, Screen.width * 0.3f);
+//		rTrans.sizeDelta = size;
 	}
 }

@@ -338,13 +338,18 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
+
+		Debug.Log("ReceivedSpecificMessage G2U_ImageChunk");
+
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
-			
+
+			Debug.Log("ReceivedSpecificMessage G2U_ImageChunk length("+length+")");
+
 			if( colorArray == null || colorArray.Length != length )
 			{
 				colorArray = new Color32[ length ];
