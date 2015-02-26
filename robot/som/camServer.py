@@ -93,19 +93,15 @@ class CameraSubServer(BaseSubServer):
         # Camera resolution enum is backwards, smaller number -> larger image
         resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
         resolutionEnum = min(resolutionEnum, self.ISP_MIN_RESOLUTION) # ISP has minimum resolution
-        if resolutionEnum == self.ISPResolution:
+        self.stopEncoder()
+        if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
+                            tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + \
+                             self.RESOLUTION_TUPLES[resolutionEnum])]) == 0:
+            self.ISPResolution = resolutionEnum
             self.startEncoder()
             return True
         else:
-            self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
-                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + \
-                                 self.RESOLUTION_TUPLES[resolutionEnum])]) == 0:
-                self.ISPResolution = resolutionEnum
-                self.startEncoder()
-                return True
-            else:
-                return False
+            return False
 
 
     def startEncoder(self):
