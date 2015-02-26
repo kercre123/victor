@@ -541,7 +541,7 @@ GameObject:
   - 224: {fileID: 22462044}
   - 114: {fileID: 11462044}
   m_Layer: 5
-  m_Name: Cozmo Vision
+  m_Name: CozmoVision
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -629,7 +629,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 161984}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11461954}
@@ -885,7 +885,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 161996}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11461972}
@@ -1297,7 +1297,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 162020}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11462002}
@@ -1385,7 +1385,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 162022}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11462008}
@@ -1499,7 +1499,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 162026}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11462016}
@@ -1687,7 +1687,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 162032}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e98463c8ec9b4342a745dd86c768e30, type: 3}
+  m_Script: {fileID: 11500000, guid: c4243b88c0f7b4940a27034b73e7354d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11462028}
@@ -1821,12 +1821,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 162044}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5a271fce1ec441348560e06bb3e3684, type: 3}
+  m_Script: {fileID: 11500000, guid: 413f9e5c2bdc64e429f8c8990cdec237, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   button: {fileID: 11462026}
   image: {fileID: 11462024}
   text: {fileID: 11462014}
+  actionButtons:
+  - {fileID: 11461966}
+  - {fileID: 11461982}
+  maxBoxes: 6
   selectionButtons:
   - {fileID: 11462032}
   - {fileID: 11461958}
@@ -1847,10 +1851,6 @@ MonoBehaviour:
     text: {fileID: 11461994}
   - image: {fileID: 11462040}
     text: {fileID: 11461996}
-  actionButtons:
-  - {fileID: 11461966}
-  - {fileID: 11461982}
-  maxBoxes: 6
   lineWidth: {x: .100000001, y: .100000001}
 --- !u!120 &12096372
 LineRenderer:
