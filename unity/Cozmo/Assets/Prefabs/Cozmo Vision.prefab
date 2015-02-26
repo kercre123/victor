@@ -425,7 +425,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &162032
 GameObject:
   m_ObjectHideFlags: 1
@@ -1837,22 +1837,16 @@ MonoBehaviour:
   selectionBoxes:
   - image: {fileID: 11462034}
     text: {fileID: 11462038}
-    timeEnabled: 0
   - image: {fileID: 11461986}
     text: {fileID: 11461990}
-    timeEnabled: 0
   - image: {fileID: 11461968}
     text: {fileID: 11461984}
-    timeEnabled: 0
   - image: {fileID: 11461970}
     text: {fileID: 11461960}
-    timeEnabled: 0
   - image: {fileID: 11461998}
     text: {fileID: 11461994}
-    timeEnabled: 0
   - image: {fileID: 11462040}
     text: {fileID: 11461996}
-    timeEnabled: 0
   actionButtons:
   - {fileID: 11461966}
   - {fileID: 11461982}
