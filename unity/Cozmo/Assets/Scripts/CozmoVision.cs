@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ImageTest : MonoBehaviour
+public class CozmoVision : MonoBehaviour
 {
 	[System.Serializable]
 	public class SelectionBox
@@ -11,6 +11,25 @@ public class ImageTest : MonoBehaviour
 		public Image image;
 		public Text text;
 		public uint ID;
+
+		public Vector3 position
+		{
+			get
+			{
+				Vector3 center = Vector3.zero;
+				center.z = image.transform.position.z;
+				
+				Vector3[] corners = new Vector3[4];
+				image.rectTransform.GetWorldCorners( corners );
+				if( corners == null || corners.Length == 0 )
+				{
+					return center;
+				}
+				center = ( corners[0] + corners[2] ) * 0.5f;
+				
+				return center;
+			}
+		}
 	}
 
 	[SerializeField] protected Button button;
@@ -20,13 +39,16 @@ public class ImageTest : MonoBehaviour
 	[SerializeField] protected SelectionBox[] selectionBoxes;
 	[SerializeField] protected Button[] actionButtons;
 	[SerializeField] protected int maxBoxes;
+	[SerializeField] protected Vector2 lineWidth;
 	
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
 	protected void Update()
 	{
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
+
+		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
@@ -42,7 +64,7 @@ public class ImageTest : MonoBehaviour
 					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
 
-					selectionBoxes[i].text.text = "Select ID: " + observedObject.ID;
+					selectionBoxes[i].text.text = "Select " + observedObject.ID;
 					selectionBoxes[i].ID = observedObject.ID;
 
 					selectionBoxes[i].image.gameObject.SetActive( true );
@@ -58,6 +80,7 @@ public class ImageTest : MonoBehaviour
 			for( int i = 0; i < selectionButtons.Length; ++i )
 			{
 				selectionButtons[i].selectionBox = null;
+				selectionButtons[i].gameObject.SetActive( false );
 			}
 
 			while( temp.Count > 0 )
@@ -66,7 +89,7 @@ public class ImageTest : MonoBehaviour
 				SelectionBox selectionBox = temp.Dequeue();
 				int index = -1;
 
-				for( int i = 0; i < selectionButtons.Length; ++i )
+				for( int i = 0; i < selectionButtons.Length && i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
 				{
 					if( selectionButtons[i].selectionBox == null )
 					{
@@ -81,9 +104,15 @@ public class ImageTest : MonoBehaviour
 					}
 				}
 
-				selectionButtons[index].selectionBox = selectionBox;
-				selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
-				selectionButtons[index].text.text = selectionBox.text.text;
+				if( index != -1 )
+				{
+					selectionButtons[index].selectionBox = selectionBox;
+					selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
+					selectionButtons[index].text.text = selectionBox.text.text;
+					selectionButtons[index].line.SetPosition( 0, selectionButtons[index].position );
+					selectionButtons[index].line.SetPosition( 1, selectionBox.position );
+					selectionButtons[index].line.SetWidth( lineWidth.x, lineWidth.y );
+				}
 			}
 		}
 	}
@@ -112,32 +141,47 @@ public class ImageTest : MonoBehaviour
 	{
 		Debug.Log( "Action" );
 
-		RobotEngineManager.instance.PickAndPlaceObject();
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.PickAndPlaceObject();
 
-		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+		}
 	}
 
 	public void Cancel()
 	{
 		Debug.Log( "Cancel" );
-		
-		RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+		}
 	}
 
 	public void RequestImage()
 	{
 		Debug.Log( "request image" );
 
-		RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
+		}
 	}
 
 	protected void OnEnable()
 	{
-		RobotEngineManager.instance.RobotImage += RobotImage;
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RobotImage += RobotImage;
+		}
 	}
 
 	protected void OnDisable()
 	{
-		RobotEngineManager.instance.RobotImage -= RobotImage;
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.RobotImage -= RobotImage;
+		}
 	}
 }

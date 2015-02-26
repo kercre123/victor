@@ -17,5 +17,7 @@ public class ObservedObject
 		width = message.width;
 		topLeft_x = message.topLeft_x;
 		topLeft_y = message.topLeft_y;
+		//message.objectFamily;
+		//message.objectType;
 	}
 }
