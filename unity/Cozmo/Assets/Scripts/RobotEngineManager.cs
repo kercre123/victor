@@ -18,6 +18,8 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField]
 	private TextAsset configuration;
 
+	public float defaultHeadAngle;
+
 	[SerializeField]
 	[HideInInspector]
 	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
@@ -115,13 +117,13 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		Application.runInBackground = true;
 
-		robots = new Dictionary<int, Robot>();
-		AddRobot( Intro.CurrentRobotID );
-
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
 		channel.DisconnectedFromClient += Disconnected;
 		channel.MessageReceived += ReceivedMessage;
+
+		robots = new Dictionary<int, Robot>();
+		AddRobot( Intro.CurrentRobotID );
 	}
 
 	private void OnDisable()
@@ -302,7 +304,7 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		current.selectedObject = uint.MaxValue;
 
-		SetHeadAngle( -0.4f );
+		SetHeadAngle( defaultHeadAngle );
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
