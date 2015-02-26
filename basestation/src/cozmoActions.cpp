@@ -20,6 +20,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -721,6 +722,8 @@ namespace Anki {
     
     IAction::ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
     {
+      IAction::ActionResult result = FAILURE_ABORT;
+      
       switch(_dockAction)
       {
         case DA_PICKUP_LOW:
@@ -729,7 +732,8 @@ namespace Anki {
           if(robot.IsCarryingObject() == false) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.RobotNotCarryingObject",
                               "Expecting robot to think it's carrying an object at this point.\n");
-            return FAILURE_RETRY;
+            result = FAILURE_RETRY;
+            break;
           }
           
           BlockWorld& blockWorld = robot.GetBlockWorld();
@@ -742,7 +746,8 @@ namespace Anki {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
                               "Object %d we were carrying no longer exists in the world.\n",
                               robot.GetCarryingObject().GetValue());
-            return FAILURE_ABORT;
+            result = FAILURE_ABORT;
+            break;
           }
           
           const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
@@ -767,31 +772,32 @@ namespace Anki {
             robot.UnSetCarryingObject();
             
             PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
-            return FAILURE_RETRY;
+            result = FAILURE_RETRY;
           } else {
             //_carryingObjectID = _dockObjectID;  // Already set?
             //_carryingMarker   = _dockMarker;   //   "
             PRINT_INFO("Object pick-up SUCCEEDED!\n");
-            return SUCCESS;
+            result = SUCCESS;
           }
           break;
         } // PICKUP
           
         case DA_PLACE_LOW:
         case DA_PLACE_HIGH:
-          return VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
+          result = VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
+          break;
           
         default:
           PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
                             "Don't know how to verify unexpected dockAction %d.\n", _dockAction);
-          return FAILURE_ABORT;
+          result = FAILURE_ABORT;
+          break;
           
       } // switch(_dockAction)
       
-      // Should not get here
-      PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.UnexpectedReturn",
-                        "All cases in switch statement should always return!\n");
-      return FAILURE_ABORT;
+      CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().emit(robot.GetID(), result == SUCCESS);
+      
+      return result;
       
     } // Verify()
        
