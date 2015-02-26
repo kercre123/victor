@@ -230,9 +230,11 @@ namespace Cozmo {
     }
   
     // TODO: Handle images coming from connected robots
+    /*
     for(auto & robotKeyPair : _connectedRobots) {
-      //robotKeyPair.second.visionMsgHandler.ProcessMessages();
+      robotKeyPair.second.visionMsgHandler.ProcessMessages();
     }
+     */
     
     Result lastResult = UpdateInternal(currTime_ns);
     
@@ -525,7 +527,9 @@ namespace Cozmo {
   
   int CozmoEngineHostImpl::GetNumRobots() const
   {
-    return _robotMgr.GetNumRobots();
+    const size_t N = _robotMgr.GetNumRobots();
+    assert(N < INT_MAX);
+    return static_cast<int>(N);
   }
   
   Robot* CozmoEngineHostImpl::GetRobotByID(const RobotID_t robotID)

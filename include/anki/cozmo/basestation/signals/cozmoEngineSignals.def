@@ -45,3 +45,7 @@ DEF_SIGNAL(RobotObservedFace,
            float x_upperLeft, float y_upperLeft,
            float width, float height)
 
+DEF_SIGNAL(RobotCompletedPickAndPlaceAction,
+           uint8_t robotID,
+           uint8_t success) // TODO: currently just true/false, acutally return ActionResult codes
+
