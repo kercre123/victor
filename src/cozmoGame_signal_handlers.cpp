@@ -105,6 +105,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageAvailableSignal().ScopedSubscribe(cbRobotImageAvailable));
     
+    auto cbRobotCompletedPickAndPlaceAction = [this](RobotID_t robotID, uint8_t success) {
+      this->HandleRobotCompletedPickAndPlaceAction(robotID, success);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().ScopedSubscribe(cbRobotCompletedPickAndPlaceAction));
+    
   } // SetupSignalHandlers()
   
   
@@ -281,6 +286,17 @@ namespace Cozmo {
         ismIter->second = ISM_OFF;
       }
     }
+  }
+  
+  
+  void CozmoGameImpl::HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success)
+  {
+    MessageG2U_RobotCompletedPickAndPlaceAction msg;
+  
+    msg.robotID = robotID;
+    msg.success = success;
+    
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
   }
   
 } // namespace Cozmo

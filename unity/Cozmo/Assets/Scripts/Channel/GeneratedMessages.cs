@@ -292,6 +292,7 @@ G2U_RobotObservedNothing,
 
 
 G2U_DeviceDetectedVisionMarker,
+G2U_RobotCompletedPickAndPlaceAction,
 G2U_PlaySound,
 
 
@@ -655,6 +656,17 @@ public f32 y_upperRight;
 public f32 x_lowerRight;
 public f32 y_lowerRight;
 public override int ID { get { return (int)NetworkMessageID.G2U_DeviceDetectedVisionMarker; } } }
+
+
+
+
+
+
+
+public partial class G2U_RobotCompletedPickAndPlaceAction : NetworkMessage {
+public u32 robotID;
+public u8 success;
+public override int ID { get { return (int)NetworkMessageID.G2U_RobotCompletedPickAndPlaceAction; } } }
 public partial class G2U_PlaySound : NetworkMessage {
 public char[] soundFilename = new char[128];
 public u8 numLoops;
@@ -1016,6 +1028,17 @@ ByteSerializer.GetSerializationLength(this.x_upperRight) +
 ByteSerializer.GetSerializationLength(this.y_upperRight) +
 ByteSerializer.GetSerializationLength(this.x_lowerRight) +
 ByteSerializer.GetSerializationLength(this.y_lowerRight) +
+0; } } }
+
+
+
+
+
+
+
+public partial class G2U_RobotCompletedPickAndPlaceAction { public override int SerializationLength { get { return
+ByteSerializer.GetSerializationLength(this.robotID) +
+ByteSerializer.GetSerializationLength(this.success) +
 0; } } }
 public partial class G2U_PlaySound { public override int SerializationLength { get { return
 ByteSerializer.GetSerializationLength(this.soundFilename) +
@@ -1379,6 +1402,17 @@ serializer.Serialize(this.y_upperRight);
 serializer.Serialize(this.x_lowerRight);
 serializer.Serialize(this.y_lowerRight);
 } }
+
+
+
+
+
+
+
+public partial class G2U_RobotCompletedPickAndPlaceAction { public override void Serialize(ByteSerializer serializer) {
+serializer.Serialize(this.robotID);
+serializer.Serialize(this.success);
+} }
 public partial class G2U_PlaySound { public override void Serialize(ByteSerializer serializer) {
 serializer.Serialize(this.soundFilename);
 serializer.Serialize(this.numLoops);
@@ -1741,6 +1775,17 @@ serializer.Deserialize(out this.y_upperRight);
 serializer.Deserialize(out this.x_lowerRight);
 serializer.Deserialize(out this.y_lowerRight);
 } }
+
+
+
+
+
+
+
+public partial class G2U_RobotCompletedPickAndPlaceAction { public override void Deserialize(ByteSerializer serializer) {
+serializer.Deserialize(out this.robotID);
+serializer.Deserialize(out this.success);
+} }
 public partial class G2U_PlaySound { public override void Deserialize(ByteSerializer serializer) {
 serializer.Deserialize(this.soundFilename);
 serializer.Deserialize(out this.numLoops);
@@ -2019,6 +2064,7 @@ case NetworkMessageID.G2U_RobotObservedNothing: return new G2U_RobotObservedNoth
 
 
 case NetworkMessageID.G2U_DeviceDetectedVisionMarker: return new G2U_DeviceDetectedVisionMarker();
+case NetworkMessageID.G2U_RobotCompletedPickAndPlaceAction: return new G2U_RobotCompletedPickAndPlaceAction();
 case NetworkMessageID.G2U_PlaySound: return new G2U_PlaySound();
 
 
