@@ -473,6 +473,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1481,6 +1486,11 @@
               <FileName>blocks.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
           </Files>
         </Group>
