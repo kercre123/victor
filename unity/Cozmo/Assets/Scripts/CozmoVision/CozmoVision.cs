@@ -47,7 +47,7 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.PickAndPlaceObject();
 
-			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue - 1;
 		}
 	}
 
