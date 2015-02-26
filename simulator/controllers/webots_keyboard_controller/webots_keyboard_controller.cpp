@@ -225,8 +225,12 @@ namespace Anki {
           // Draw a rectangle in red with the object ID as text in the center
           cozmoCam_->setColor(0xff0000);          
           cozmoCam_->drawRectangle(msg.topLeft_x, msg.topLeft_y, msg.width, msg.height);
-          cozmoCam_->drawText(std::to_string(msg.objectID),
-                              msg.topLeft_x + msg.width/2,
+          //std::string dispStr(ObjectType::GetName(msg.objectType));
+          //dispStr += " ";
+          //dispStr += std::to_string(msg.objectID);
+          std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
+          cozmoCam_->drawText(dispStr,
+                              msg.topLeft_x + msg.width/4,
                               msg.topLeft_y + msg.height/2);
         }
       }
