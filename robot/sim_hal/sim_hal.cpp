@@ -935,6 +935,22 @@ namespace Anki {
       }
     }
     
+    u8 HAL::BatteryGetPercent()
+    {
+      // Return voltage*10 for now...
+      return 50;
+    }
+    
+    bool HAL::BatteryIsCharging()
+    {
+      return false; // XXX On Cozmo 3, head is off if robot is charging
+    }
+    
+    bool HAL::BatteryIsOnCharger()
+    {
+      return false; // XXX On Cozmo 3, head is off if robot is charging
+    }
+    
     void HAL::FlashBlockIDs() {
       flashBlockIdx_ = 0;
       flashStartTime_ = HAL::GetTimeStamp();
