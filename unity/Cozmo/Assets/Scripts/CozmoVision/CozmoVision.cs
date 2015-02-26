@@ -11,8 +11,13 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Button[] actionButtons;
 	[SerializeField] protected int maxBoxes;
 	
+	protected RectTransform rTrans;
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+
+	private void Awake() {
+		rTrans = transform as RectTransform;
+	}
 
 	protected void RobotImage( Texture2D texture )
 	{
@@ -72,6 +77,8 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
 		}
+
+		ResizeToScreen();
 	}
 
 	protected void OnDisable()
@@ -80,5 +87,12 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 		}
+	}
+
+	private void ResizeToScreen() {
+		if(rTrans == null) return;
+
+		float scale = (Screen.width * 0.5f) / 320f;
+		rTrans.localScale = Vector3.one * scale;
 	}
 }
