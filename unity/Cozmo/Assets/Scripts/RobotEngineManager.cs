@@ -390,10 +390,9 @@ public class RobotEngineManager : MonoBehaviour {
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
+				current.observedObjects.Clear();
 			}
 		}
-
-		current.observedObjects.Clear();
 	}
 
 	public void StartEngine(string vizHostIP)

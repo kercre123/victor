@@ -16,12 +16,18 @@ public class CozmoVision : MonoBehaviour
 		{
 			get
 			{
-				Vector3 p = Vector3.zero;
+				Vector3 center = Vector3.zero;
+				center.z = image.transform.position.z;
 				
-				p.x = image.rectTransform.rect.center.x;
-				p.y = image.rectTransform.rect.center.y;
+				Vector3[] corners = new Vector3[4];
+				image.rectTransform.GetWorldCorners( corners );
+				if( corners == null || corners.Length == 0 )
+				{
+					return center;
+				}
+				center = ( corners[0] + corners[2] ) * 0.5f;
 				
-				return p;
+				return center;
 			}
 		}
 	}
@@ -58,7 +64,7 @@ public class CozmoVision : MonoBehaviour
 					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
 
-					selectionBoxes[i].text.text = "Select " + observedObject + observedObject.ID;
+					selectionBoxes[i].text.text = "Select " + observedObject.ID;
 					selectionBoxes[i].ID = observedObject.ID;
 
 					selectionBoxes[i].image.gameObject.SetActive( true );
