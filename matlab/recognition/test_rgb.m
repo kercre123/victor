@@ -27,8 +27,32 @@ function [accuracy, results] = test_rgb(varargin)
         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue6/images_%05d.png', [0,99], [1,2], [6,6]},...
         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue7/images_%05d.png', [0,99], [2,1], [8,4]},...
         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue8/images_%05d.png', [0,99], [2,1], [8,4]},...
-        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue9/images_%05d.png', [0,99], [2,1], [8,4]}};
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue9/images_%05d.png', [0,99], [2,1], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [0,99], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [100,199], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [200,299], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [300,399], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [400,499], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [500,599], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [600,699], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [700,799], [1,2], [8,4]},...
+        {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [800,899], [1,2], [8,4]}};
     
+%     redBlueOnly = true;
+%     filenamePatterns = {...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [0,99], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [100,199], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [200,299], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [300,399], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [400,499], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [500,599], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [600,699], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [700,799], [1,2], [8,4]},...
+%         {'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [800,899], [1,2], [8,4]}};
+
+%     redBlueOnly = true;
+%     filenamePatterns = {{'~/Documents/Anki/drive-ar-large-files/blinkingLights/redBlue10/images_%05d.png', [0,999], [1,2], [8,4]}};
+
     if ispc()
         for i = 1:length(filenamePatterns)
             filenamePatterns{i}{1} = strrep(filenamePatterns{i}{1}, '~/Documents/', 'c:/');
@@ -97,11 +121,15 @@ function [accuracy, results] = test_rgb(varargin)
                     
                     assert(numFrames == length(whichFirstFrames));
                     
-                    numbers = reshape(numbers(2:end), [5, numFrames]);
+                    numbers = reshape(numbers(2:end), [8, numFrames]);
                     numbers(2:3, :) = numbers(2:3, :) + 1;
+                    numbers(6:8, :) = numbers(6:8, :) + 1;
                     
                     whichColors = numbers(2:3, :);
                     numPositives = numbers(4:5, :);
+                    locationX = numbers(6, :);
+                    locationY = numbers(7, :);
+                    locationScale = numbers(8, :);
                 else % if testCExecutable
                     if redBlueOnly
                         whichColors = -ones(2, length(whichFirstFrames));
@@ -166,7 +194,7 @@ function [accuracy, results] = test_rgb(varargin)
                     
                     groundTruthColors = filenamePatterns{iFilenamePattern}{3};
                     if whichColors(1,iFirstFrame) == whichColors(2,iFirstFrame)
-                        accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = 10;
+                        accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(iFirstFrame) = 20;
                         outString = [outString, ' *']; %#ok<AGROW>
                     elseif length(filenamePatterns{iFilenamePattern}{4}) == 2 && whichColors(1,iFirstFrame)==groundTruthColors(1) && whichColors(2,iFirstFrame)==groundTruthColors(2)
                         
@@ -205,11 +233,37 @@ function [accuracy, results] = test_rgb(varargin)
                 %                 plot(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType})
                 hold off
                 
-                markerSizes1 = 20 * ones(size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), 1);
-                scatter(1:size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1), markerSizes1, 'bo', 'filled');
+%                 markerSizes = 5 * ones(size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), 1);
+%                 scatter(1:size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1), markerSizes, 'bo', 'filled');
+
+                allInds = 1:size(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType},1);
+
+                % Detected invalid                
+                inds = find(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1) == 20);
+                markerSizes = 5 * ones(length(inds), 1);
+                scatter(allInds(inds), 10*ones(length(inds),1), markerSizes, 'bo', 'filled');
+
                 hold on;
                 
-                set(subplotHandle, 'XTick', [0:10:100]);
+                % Good
+                showGood = false;
+                if showGood
+                    inds = find(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1) <= 1);
+                    markerSizes = 5 * ones(length(inds), 1);
+                    scatter(allInds(inds), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(inds,1), markerSizes, 'go', 'filled');
+                end
+                
+                % Bad
+                inds = find(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1) > 1 & accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(:,1) ~= 20);
+                markerSizes = 5 * ones(length(inds), 1);
+                scatter(allInds(inds), accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}(inds,1), markerSizes, 'ro', 'filled');
+                
+                if length(allInds) <= 100
+                    set(subplotHandle, 'XTick', [0:10:100]);
+                else
+                    set(subplotHandle, 'XTick', [0:round(length(allInds)/20):length(allInds)]);
+                end
+                
                 title(sprintf('FilenamePattern %d', iFilenamePattern))
                 a = axis();
                 axis([a(1:2),-1,numFramesToTest+1]);
@@ -229,6 +283,20 @@ function [accuracy, results] = test_rgb(varargin)
         end % for iParsingType = 1:length(parsingTypes)
     end % for iAlignmentType = 1:length(alignmentTypes)
     
+    disp('Overall accuracy:');
+    for iAlignmentType = 1:length(alignmentTypes)
+        for iParsingType = 1:length(parsingTypes)
+            for iFilenamePattern = 1:length(filenamePatterns)
+                numGood = length(find(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType}<=1)) ;
+                numErrors = length(find(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} ~= 20 & accuracy{iFilenamePattern}{iParsingType}{iAlignmentType} > 1));
+                numTotal = length(accuracy{iFilenamePattern}{iParsingType}{iAlignmentType});
+                
+                percentCorrect = numGood / numTotal;
+                percentBadErrors = numErrors / numTotal;
+                disp(sprintf('%d %d %d) good:%d/%d=%0.2f%% veryBad:%d/%d=%0.2f%%', iAlignmentType, iParsingType, iFilenamePattern, numGood, numTotal, 100*percentCorrect, numErrors, numTotal, 100*percentBadErrors));
+            end
+        end
+    end
     
     keyboard
 end % function test_rgb()
