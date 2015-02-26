@@ -240,6 +240,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case (int)NetworkMessageID.G2U_RobotState:
 			ReceivedSpecificMessage((G2U_RobotState)message);
 			break;
+		case (int)NetworkMessageID.G2U_RobotCompletedPickAndPlaceAction:
+			ReceivedSpecificMessage((G2U_RobotCompletedPickAndPlaceAction)message);
+			break;
 		}
 	}
 	
@@ -292,7 +295,14 @@ public class RobotEngineManager : MonoBehaviour {
 
 		current.observedObjects.Clear();
 	}
-	
+
+	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
+	{
+		Debug.Log( "Action complete" );
+		
+		current.selectedObject = uint.MaxValue;
+	}
+
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
 	{
 

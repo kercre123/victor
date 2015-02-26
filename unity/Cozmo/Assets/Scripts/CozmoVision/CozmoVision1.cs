@@ -44,7 +44,8 @@ public class CozmoVision1 : CozmoVision
 		{
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
-				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject != uint.MaxValue );
+				// if no object selected or being actioned
+				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject < uint.MaxValue - 1 );
 			}
 
 			for( int i = 0; i < maxBoxes; ++i )
