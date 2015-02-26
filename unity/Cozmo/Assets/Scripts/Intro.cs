@@ -103,7 +103,7 @@ public class Intro : MonoBehaviour {
 
 	protected void SaveData() {
 		lastIp = ip.text;
-		lastId = engineIP.text;
+		lastEngineIp = engineIP.text;
 		lastVisualizerIp = visualizerIP.text;
 	}
 
