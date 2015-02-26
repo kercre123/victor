@@ -4,11 +4,8 @@ using System.Collections;
 
 public class SelectionButton : MonoBehaviour
 {
-	[SerializeField] protected Image image;
-
+	public Image image;
 	public Text text;
-	public LineRenderer line;
-	public CozmoVision.SelectionBox selectionBox { get; set; }
 
 	public Vector3 position
 	{
@@ -27,10 +24,5 @@ public class SelectionButton : MonoBehaviour
 
 			return center;
 		}
-	}
-
-	public void Selection()
-	{
-		RobotEngineManager.instance.current.selectedObject = selectionBox.ID;
 	}
 }
