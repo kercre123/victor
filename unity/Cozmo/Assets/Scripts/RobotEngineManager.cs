@@ -301,6 +301,8 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log( "Action complete" );
 		
 		current.selectedObject = uint.MaxValue;
+
+		SetHeadAngle( -0.4f );
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -499,6 +501,14 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_COUNT,
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
 	} 
+
+	public void SetHeadAngle( float angle_rad )
+	{
+		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
+		message.angle_rad = angle_rad;
+
+		channel.Send( message );
+	}
 
 	public void PickAndPlaceObject()
 	{
