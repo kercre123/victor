@@ -5,14 +5,41 @@ Implements UDP server for robot comms and includes some useful library classes
 __author__ = "Daniel Casner"
 
 
-import sys, os, time, socket, select
+import sys, os, time, socket, threading, subprocess
 import camServer, mcuProxyServer
 
 VERBOSE = False
 PRINT_INTERVAL = False
 PRINT_FRAMERATE = False
+FORCE_ADDRESS = False
 
 MTU = 1500
+
+class TimestampExtrapolator(object):
+    "A threadsafe class for extrapolating timestamps from the MCU"
+
+    def __init__(self, ticks_per_second=1000):
+        self.mcuTS = 0
+        self.toc = time.time()
+        self.tps = ticks_per_second
+        self.lock = threading.Lock()
+
+    def update(self, tick):
+        "Update the local copy of the MCU time"
+        toc = time.time()
+        self.lock.acquire()
+        self.mcuTS = tick
+        self.toc = toc
+        self.lock.release()
+
+    def get(self):
+        "Retrive the estimated MCU time"
+        self.lock.acquire()
+        #ret = self.mcuTS + ((time.time()-self.toc)*self.tps)
+        ret = self.mcuTS
+        self.lock.release()
+        return ret
+
 
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
@@ -23,77 +50,60 @@ class CozmoServer(socket.socket):
         "Initalize the server and start listening on UDP"
         if VERBOSE: sys.stdout.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+        self.settimeout(1.0)
         self.bind(address)
-        self.settimeout(0)
-        self.poller = select.poll()
-        self.poller.register(self, select.POLLIN | select.POLLOUT)
-        cam = camServer.CameraSubServer(self.poller, VERBOSE, PRINT_FRAMERATE)
-        mcu = mcuProxyServer.MCUProxyServer(self.poller, VERBOSE)
+        self.timestamp = TimestampExtrapolator()
+        cam = camServer.CameraSubServer(self, 1.0, VERBOSE, PRINT_FRAMERATE)
+        mcu = mcuProxyServer.MCUProxyServer(self, 1.0, VERBOSE)
         self.subServers = [cam, mcu]
-        mcu.timestampCB = cam.updateTimestamp # Setup crosslink for timestamps, hateful spaghetti
         self.client = None
         self.lastClientRecvTime = 0.0
+        subprocess.call(['renice', '-n', '10', '-p', str(os.getpid())]) # Renice ourselves so the encoder comes first
 
+    def __del__(self):
+        self.stop()
 
-    def fprintf(self, fh, fmt, *params):
-        "Writes to file handle"
-        fh.write(fmt % params)
+    def stop(self):
+        self.client = None
+        for ss in self.subServers:
+            ss.stop()
+        self.close()
 
-    def printOut(self, fmt, *params):
-        "Writes to stdout"
-        self.fprintf(sys.stdout, fmt, *params)
-
-    def printErr(self, fmt, *params):
-        "Writes to stderr"
-        self.fprintf(sys.stderr, fmt, *params)
-
-    def clientRecv(self, maxLen):
+    def step(self):
+        "One main loop iteration"
         try:
-            data, self.client = self.recvfrom(maxLen)
-            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
-        except:
-            return None
+            data, client = self.recvfrom(MTU)
+        except socket.timeout:
+            pass
+        except socket.error, e:
+            if e.errno == socket.EBADF and self.client is None:
+                return
+            else:
+                raise e
         else:
+            if FORCE_ADDRESS:
+                self.client = FORCE_ADDRESS
+            else:
+                self.client = client
+            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
             self.lastClientRecvTime = time.time()
             if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
-                return None # Establish that we have a connection but don't pass the packet along
-            else:
-                return data
-
-    def clientSend(self, data):
-        if self.client:
-            self.sendto(data, self.client)
-
-    def step(self, timeout=None):
-        "One main loop iteration"
-        didSome = False
-        if timeout is not 0:
-            self.poller.poll(timeout)
-        recvData = self.clientRecv(MTU)
-        if recvData is not None:
-            didSome = True
-        for ss in self.subServers:
-            outMsgs = ss.poll(recvData)
-            if outMsgs:
-                didSome = True
-                for m in outMsgs:
-                    self.clientSend(m)
+                return # Establish that we have a connection but don't pass the packet along
+            for ss in self.subServers:
+                ss.giveMessage(data)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
             sys.stdout.write("Going to standby\n")
             sys.stdout.flush()
             for ss in self.subServers:
                 ss.standby()
             self.client = None
-        return didSome
 
-    def run(self, loopHz):
+    def run(self):
         "Run main loop with target frequency"
-        targetPeriod = 1.0/loopHz
-        didSome = False
+        for ss in self.subServers:
+            ss.start()
         while True:
-            st = time.time()
-            didSome = self.step(0.0 if didSome else targetPeriod)
-            if PRINT_INTERVAL: sys.stdout.write('%d ms\n' % int((time.time()-st)*1000))
+            self.step()
 
 
 if __name__ == '__main__':
@@ -101,10 +111,18 @@ if __name__ == '__main__':
     if '-vv' in sys.argv: VERBOSE = 10
     if '-i'  in sys.argv: PRINT_INTERVAL = True
     if '-f'  in sys.argv: PRINT_FRAMERATE = True
+    if '-a'  in sys.argv:
+        aid = sys.argv.index('-a')
+        FORCE_ADDRESS = eval(sys.argv[aid+1])
+        sys.stdout.write("Forcing packets to go to: %s:%d\n" % FORCE_ADDRESS)
     address = ('', 5551)
     server = CozmoServer(address)
     sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
     try:
-        server.run(200)
+        server.run()
     except KeyboardInterrupt:
         sys.stdout.write("Shutting down server\n")
+        server.stop()
+        sys.stdout.write("Exiting\n")
+        sys.stdout.flush()
+        exit(0)
