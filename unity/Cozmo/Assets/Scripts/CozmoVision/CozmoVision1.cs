@@ -18,6 +18,7 @@ public class CozmoVision1 : CozmoVision
 		public Image image;
 		public Text text;
 		public uint ID;
+		public SelectionButton1 button;
 
 		public Vector3 position
 		{
@@ -64,7 +65,9 @@ public class CozmoVision1 : CozmoVision
 				if( RobotEngineManager.instance.current.observedObjects.Count > i )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
-					
+
+					selectionBoxes[i].button = null;
+
 					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
 					
@@ -73,7 +76,7 @@ public class CozmoVision1 : CozmoVision
 					
 					selectionBoxes[i].image.gameObject.SetActive( true );
 
-					for( int j = 0; j < selectionButtons.Length; ++j )
+					for( int j = 0; j < selectionButtons.Length && j < RobotEngineManager.instance.current.observedObjects.Count; ++j )
 					{
 						DistancePair dp = new DistancePair();
 
@@ -90,35 +93,25 @@ public class CozmoVision1 : CozmoVision
 				}
 			}
 
-			distancePairs.Sort( delegate( DistancePair x, DistancePair y )
-			{
-				return x.distance.CompareTo( y.distance );
-			});
+			distancePairs.Sort( delegate( DistancePair x, DistancePair y ) { return x.distance.CompareTo( y.distance ); } );
 
 			for( int i = 0; i < selectionButtons.Length; ++i )
 			{
-				selectionButtons[i].selectionBox = null;
+				selectionButtons[i].box = null;
 				selectionButtons[i].gameObject.SetActive( false );
 			}
 
-			for( int i = 0; i < selectionBoxes.Length; ++i )
+			for( int i = 0; i < distancePairs.Count; ++i )
 			{
-				for( int j = 0; j < distancePairs.Count; ++j )
+				if( distancePairs[i].button.box == null && distancePairs[i].box.button == null )
 				{
-					if( selectionBoxes[i] == distancePairs[j].box )
-					{
-						if( distancePairs[j].button.selectionBox == null )
-						{
-							distancePairs[j].button.selectionBox = distancePairs[j].box;
-							distancePairs[j].button.gameObject.SetActive( true );
-							distancePairs[j].button.text.text = distancePairs[j].box.text.text;
-							distancePairs[j].button.line.SetPosition( 0, distancePairs[j].button.position );
-							distancePairs[j].button.line.SetPosition( 1, distancePairs[j].box.position );
-							distancePairs[j].button.line.SetWidth( lineWidth.x, lineWidth.y );
-						}
-
-						break;
-					}
+					distancePairs[i].button.box = distancePairs[i].box;
+					distancePairs[i].box.button = distancePairs[i].button;
+					distancePairs[i].button.gameObject.SetActive( true );
+					distancePairs[i].button.text.text = distancePairs[i].box.text.text;
+					distancePairs[i].button.line.SetPosition( 0, distancePairs[i].button.position );
+					distancePairs[i].button.line.SetPosition( 1, distancePairs[i].box.position );
+					distancePairs[i].button.line.SetWidth( lineWidth.x, lineWidth.y );
 				}
 			}
 		}
