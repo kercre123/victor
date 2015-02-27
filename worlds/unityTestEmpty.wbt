@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.285767 0.287772 0.91407 4.61571
-  position -1.32252 0.179316 1.80128
+  orientation -0.279956 0.279115 0.918542 4.63053
+  position -1.29203 0.163592 1.83261
 }
 Background {
   skyColor [
@@ -116,60 +116,11 @@ DirectionalLight {
 }
 CozmoMat {
 }
-Platform {
-  translation 0.25592 0.207363 0.0219959
-  rotation 0.00029085 -0.000388175 1 -0.0224312
-}
-Ramp {
-  translation -0.148136 -0.272103 -2.98203e-06
-  rotation 0.000567901 0.000436514 1 0.01192
-}
 Ramp {
   hidden linearVelocity_0 -719.24 -1072.82 591.391
   hidden angularVelocity_0 -269.892 7949.93 6060.19
   translation 3339.79 -17196.9 13498.5
   rotation -0.603625 -0.762686 0.232264 0.863603
-}
-Platform {
-  translation 0.198652 -0.222466 0.0219942
-  rotation 0.00147457 -2.06474e-05 0.999999 0.0110961
-}
-Bridge {
-  translation 0.365421 0.0061259 0.0434518
-  rotation 0.367024 0.161761 0.916038 1.52775
-}
-Face {
-  translation -0.10613 -0.310172 0.17
-  image "face02.png"
-}
-DEF FireBlock Block1x1 {
-  name "Fire_01"
-  translation 0.15 0.02 0.0219969
-  rotation 1 4.29501e-13 -1.37138e-11 3.67342e-06
-  blockColor 0.85 0.5 0.5
-  markerImg "symbols/fire.png"
-}
-DEF AngryFaceBlock Block1x1 {
-  name "AngryFace_01"
-  translation 0.22 -1.69019e-07 0.0219969
-  rotation 7.34532e-05 -1.83671e-06 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
-}
-DEF AngryFaceBlockOnPlatform Block1x1 {
-  name "AngryFace_01"
-  translation 0.280636 -0.247055 0.0659925
-  rotation 0.000245789 -1.02485e-05 1 0.0665237
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
-}
-DEF DoubleBlock Block2x1 {
-  name "DoubleBlock"
-  translation -0.22 -0.1 0.0219952
-  rotation 1.59018e-05 -1.8365e-06 1 0.23
-  blockColor 0.5 0.85 0.5
-  longSideMarker "symbols/bangBangBang.png"
-  shortSideMarker "symbols/inverted/bangBangBang.png"
 }
 BlockWorldComms {
 }
@@ -181,37 +132,21 @@ DEF Cozmo_1 CozmoBot {
   hidden position_0_6 -1.24634e-07
   hidden linearVelocity_0 4.44452e-18 -1.49363e-11 -4.22089e-16
   hidden angularVelocity_0 6.85162e-15 4.55775e-15 1.51049e-10
-  hidden translation_5 -2.46034e-12 -3.01975e-14 -8.21841e-09
-  hidden rotation_5 -1.1391e-18 1 -3.54622e-19 0.390019
   hidden linearVelocity_5 3.03263e-16 -1.41621e-11 -5.59082e-16
   hidden angularVelocity_5 6.78371e-15 4.33549e-15 1.51049e-10
-  hidden translation_22 3.09524e-11 0.02385 1.0279e-07
-  hidden rotation_22 -0.999999 0.00149392 0.000301128 -2.45017e-09
   hidden linearVelocity_22 -3.60248e-12 -1.21967e-11 -1.33771e-16
   hidden angularVelocity_22 1.52739e-14 -9.79428e-14 1.51049e-10
-  hidden translation_23 3.05925e-11 -0.02385 1.02792e-07
-  hidden rotation_23 -0.999999 0.000992563 0.00029761 2.45018e-09
   hidden linearVelocity_23 3.6027e-12 -1.21968e-11 1.08847e-16
   hidden angularVelocity_23 1.13088e-14 1.06547e-13 1.51049e-10
-  hidden translation_24 -1.30035e-14 0.02385 -4.34079e-11
-  hidden rotation_24 -3.45665e-09 1 5.17942e-13 0.000299374
   hidden linearVelocity_24 -3.60238e-12 -1.67281e-11 6.89526e-17
   hidden angularVelocity_24 1.00443e-14 -5.57559e-16 1.51049e-10
-  hidden translation_25 -1.29965e-14 -0.02385 -4.34079e-11
-  hidden rotation_25 3.45767e-09 1 -5.13801e-13 0.000299365
   hidden linearVelocity_25 3.60265e-12 -1.67281e-11 -3.14117e-16
   hidden angularVelocity_25 3.25273e-23 -5.30048e-16 1.51049e-10
-  hidden translation_26 1.46952e-11 -3.12447e-15 -1.43495e-09
-  hidden rotation_26 -3.09926e-10 1 -1.53456e-09 8.72803e-08
   hidden position_26_0 -4.49433e-08
   hidden linearVelocity_26 -5.85564e-12 -1.35119e-11 -9.11864e-11
   hidden angularVelocity_26 6.94286e-15 2.91323e-09 1.5106e-10
-  hidden translation_27 1.48561e-11 -1.15014e-15 -8.97612e-10
-  hidden rotation_27 2.48154e-10 1 9.08911e-12 -4.49433e-08
   hidden linearVelocity_27 -3.49039e-11 -8.7396e-12 -1.82379e-10
   hidden angularVelocity_27 6.72857e-15 2.20004e-15 1.51049e-10
-  hidden translation_29 -1.52043e-11 -3.1247e-15 -2.65782e-10
-  hidden rotation_29 -2.14506e-10 1 -1.07664e-09 1.24634e-07
   hidden position_29_0 -8.2297e-08
   hidden linearVelocity_29 -5.85574e-12 -1.35113e-11 -9.1186e-11
   hidden angularVelocity_29 6.99087e-15 2.91323e-09 1.5106e-10
