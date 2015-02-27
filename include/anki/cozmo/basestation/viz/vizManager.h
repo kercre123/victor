@@ -23,6 +23,7 @@
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/VizStructs.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -260,8 +261,8 @@ namespace Anki {
 
       // ==== Saving Images ====
       
-      void SaveImages(bool on);
-      bool IsSavingImages() const;
+      void SaveImages(VizSaveImageMode_t mode);
+      VizSaveImageMode_t GetSaveImageMode() const;
       
       
       // ==== Misc. Debug functions =====
@@ -299,7 +300,8 @@ namespace Anki {
       std::map<RobotID_t, u8> _imgID;
       
       bool               _sendImages;
-      bool               _saveImages;
+      VizSaveImageMode_t _saveImageMode;
+      u32                _saveImageCounter;
     
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
@@ -317,12 +319,12 @@ namespace Anki {
       return _singletonInstance;
     }
     
-    inline void VizManager::SaveImages(bool on) {
-      _saveImages = on;
+    inline void VizManager::SaveImages(VizSaveImageMode_t mode) {
+      _saveImageMode = mode;
     }
     
-    inline bool VizManager::IsSavingImages() const {
-      return _saveImages;
+    inline VizSaveImageMode_t VizManager::GetSaveImageMode() const {
+      return _saveImageMode;
     }
     
     template<typename T>
