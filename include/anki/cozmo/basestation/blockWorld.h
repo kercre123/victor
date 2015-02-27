@@ -195,9 +195,8 @@ namespace Anki
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
-      size_t UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectsLibrary,
-                               PoseKeyObsMarkerMap_t& obsMarkers,
-                               ObjectsMapByType_t& existingObjects,
+      size_t UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkers,
+                               const ObjectFamily& inFamily,
                                const TimeStamp_t atTimestamp);
       
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
@@ -231,7 +230,7 @@ namespace Anki
       
       //template<class ObjectType>
       void AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                               ObjectsMapByType_t& objectsExisting,
+                               const ObjectFamily& inFamily,
                                const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used

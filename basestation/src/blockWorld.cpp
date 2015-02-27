@@ -240,9 +240,11 @@ namespace Anki
 
 
     void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                         ObjectsMapByType_t& objectsExisting,
+                                         const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
     {
+      ObjectsMapByType_t& objectsExisting = _existingObjects[inFamily];
+      
       for(auto objSeen : objectsSeen) {
 
         //const float minDimSeen = objSeen->GetMinDim();
@@ -272,6 +274,7 @@ namespace Anki
         std::vector<Point2f> projectedCorners;
         f32 observationDistance;
         ObjectID obsID;
+        ObjectType obsType;
 
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
@@ -291,6 +294,7 @@ namespace Anki
           _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           obsID = objSeen->GetID();
+          obsType = objSeen->GetType();
           
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
@@ -325,6 +329,7 @@ namespace Anki
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
           obsID = overlappingObjects[0]->GetID();
+          obsType = overlappingObjects[0]->GetType();
           
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
@@ -358,7 +363,10 @@ namespace Anki
         _currentObservedObjectIDs.push_back(obsID);
         
         // Signal the observation of this object, with its bounding box:
-        CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(), obsID,
+        CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
+                                                             inFamily,
+                                                             obsType,
+                                                             obsID,
                                                              boundingBox.GetX(),
                                                              boundingBox.GetY(),
                                                              boundingBox.GetWidth(),
@@ -898,11 +906,12 @@ namespace Anki
       
     } // UpdateRobotPose()
     
-    size_t BlockWorld::UpdateObjectPoses(const Vision::ObservableObjectLibrary& objectLibrary,
-                                         PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
-                                         ObjectsMapByType_t& existingObjects,
+    size_t BlockWorld::UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
+                                         const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
     {
+      const Vision::ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
+      
       std::vector<Vision::ObservableObject*> objectsSeen;
       
       // Don't bother with this update at all if we didn't see at least one
@@ -928,7 +937,7 @@ namespace Anki
         }
         
         // Use them to add or update existing blocks in our world
-        AddAndUpdateObjects(objectsSeen, existingObjects, atTimestamp);
+        AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
       }
       
       return objectsSeen.size();
@@ -1074,15 +1083,13 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::BLOCKS], currentObsMarkers,
-                                                _existingObjects[ObjectFamily::BLOCKS], atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp);
         
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(_objectLibrary[ObjectFamily::RAMPS], currentObsMarkers,
-                                                _existingObjects[ObjectFamily::RAMPS], atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp);
         
 
         if(numObjectsObserved == 0) {

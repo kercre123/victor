@@ -101,9 +101,9 @@ namespace Anki {
         
         // Send one-shot advertisements
         for (it = oneShotAdvertiseConnectionInfoMap_.begin(); it != oneShotAdvertiseConnectionInfoMap_.end(); it++) {
-          
+
           std::cout << serviceName_ << ": "
-          << "Advertising (one-shot): Device " << it->second.id
+          << "Advertising (one-shot): Device " << int(it->second.id)
           << " on host " << it->second.ip
           << " at port " << it->second.port
           << "(size=" << sizeof(AdvertisementMsg) << ")\n";

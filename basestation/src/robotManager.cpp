@@ -8,8 +8,10 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "robotMessageHandler.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -27,10 +29,32 @@ namespace Anki {
       }
       
       if (_robots.find(withID) == _robots.end()) {
+        PRINT_NAMED_INFO("RobotManager.AddRobot", "Adding robot with ID=%d\n", withID);
         _robots[withID] = new Robot(withID, msgHandler);
         _IDs.push_back(withID);
       } else {
         PRINT_NAMED_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID %d already exists. Ignoring.\n");
+      }
+    }
+    
+    
+    void RobotManager::RemoveRobot(const RobotID_t withID)
+    {
+      auto iter = _robots.find(withID);
+      if(iter != _robots.end()) {
+        PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
+        
+        iter = _robots.erase(iter);
+        
+        // Find the ID. This is inefficient, but this isn't a long list
+        for(auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
+          if(*idIter == withID) {
+            _IDs.erase(idIter);
+            break;
+          }
+        }
+      } else {
+        PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
       }
     }
     
@@ -62,9 +86,36 @@ namespace Anki {
     
     void RobotManager::UpdateAllRobots()
     {
-      for (auto &r : _robots) {
+      //for (auto &r : _robots) {
+      for(auto r = _robots.begin(); r != _robots.end(); ) {
         // Call update
-        r.second->Update();
+        Result result = r->second->Update();
+        
+        switch(result)
+        {
+          case RESULT_FAIL_IO_TIMEOUT:
+          {
+            // Find the ID. This is inefficient, but this isn't a long list
+            for(auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
+              if(*idIter == r->first) {
+                _IDs.erase(idIter);
+                break;
+              }
+            }
+
+            CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first, -1.f);
+            
+            r = _robots.erase(r);
+            
+            break;
+          }
+            
+            // TODO: Handle other return results here
+            
+          default:
+            ++r;
+            break;
+        }
       }
     }
     

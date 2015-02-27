@@ -305,6 +305,22 @@ namespace Anki {
     // UI device server port which listens for basestation/game clients
     const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
     
+    // Timeout for how long we are willing to wait to get a state message from
+    // the robot to the basestation
+#if SIMULATOR
+    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 3.0f; // Longer for simulator because we don't control network
+#else
+    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 1.0f;
+#endif
+    
+    // Timeout for how long the robot is willing to wait before receiving a ping
+    // (or any message) from basestatin
+#if SIMULATOR
+    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000; // Longer for simulator because we don't control network
+#else
+    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 1000;
+#endif
+    
 #if SIMULATOR
     // Channel number used by CozmoWorldComm Webots receiver
     // for robot messages bound for the basestation.

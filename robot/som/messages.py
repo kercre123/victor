@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "5d0e3b017381b0897e2df1ac8b3b1f64aeaca340" # Hash for the revision these python definitions are based on
+__version__ = "e3c5e279baa5b66938a1b63a0a46b4c9d0a86c2a" # Hash for the revision these python definitions are based on
 
 import struct
 
@@ -97,7 +97,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1024
-    ID = 70
+    ID = 72
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -149,7 +149,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    id = 59
+    ID = 61
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -181,6 +181,7 @@ class RobotState(MessageBase):
             self.pitch = pitch
 
     def __init__(self, buffer=None):
+        MessageBase.__init__(self)
         self.timestamp = 0
         self.poseFrameId = 0
         self.pose = Pose()
@@ -215,17 +216,18 @@ class RobotState(MessageBase):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
 
 class PrintText(MessageBase):
-    ID = 69
+    ID = 71
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
-    def __init__(self, buffer=None):
-        self.text = ""
+    def __init__(self, buffer=None, text=""):
+        MessageBase.__init__(self)
+        self.text = text
         if buffer:
             self.deserialize(buffer)
 
     def _getMembers(self):
-        return self.text
+        return (self.text,)
 
     def __setMembers(self, text):
         self.text = text

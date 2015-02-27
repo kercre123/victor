@@ -2,101 +2,72 @@
 Python UDP server to proxy messages to / from the MCU and the WiFi radio
 """
 __author__  = "Daniel Canser"
-__version__ = "0.0.1"
+__version__ = "0.0.3"
 
-import sys, os, socket, time, serial, select, struct
+import sys, os, socket, time, serial, struct
+from subserver import *
 import messages
 
 
 
-class MCUProxyServer(object):
+class MCUProxyServer(BaseSubServer):
     "Proxy server class"
 
     CLIENT_TIMEOUT = 60.0 # One minute for right now
     SERIAL_DEVICE = "/dev/ttyO2"
     BAUD_RATE = 3000000
-    MTU = 1500
     SERIAL_HEADER = "\xbe\xef"
 
-    def __init__(self, poller, verbose=False):
+    def __init__(self, server, verbose=False):
         "Sets up the server instance"
-        self.v=verbose
-        if self.v: sys.stdout.write("MCUProxyServer will be verbose\n")
-        self.poller = poller
+        BaseSubServer.__init__(self, server, verbose)
         self.mcu = serial.Serial(port     = self.SERIAL_DEVICE,
                                  baudrate = self.BAUD_RATE,
                                  parity   = serial.PARITY_NONE,
                                  stopbits = serial.STOPBITS_ONE,
                                  bytesize = serial.EIGHTBITS,
-                                 timeout  = 0.001 + (float(self.MTU)/self.BAUD_RATE))
+                                 timeout  = 1.0)
         self.radioConnected = False
-        self._toMcuQ   = []
-        self._fromMcuQ = []
-        self.poller.register(self.mcu, select.POLLIN)
         self.rawSerData = ""
-        def noop(timestamp):
-            return
-        self.timestampCB = noop
+        self.lastRSMTS = 0
 
-    def __del__(self):
-        "Send closeout messages"
-        self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
+    def stop(self):
+        sys.stdout.write("Closing MCUProxyServer\n")
+        BaseSubServer.stop(self)
+        #self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
+        self.mcu.close()
+        sys.stdout.flush()
 
-    def __addToMcuQ(self, msg):
-        self._toMcuQ.append(msg)
-        self.poller.modify(self.mcu, select.POLLIN | select.POLLOUT) # Register for ready to tx
-    def __getToMcuQ(self):
-        if len(self._toMcuQ):
-            ret = self._toMcuQ.pop(0)
-            if len(self._toMcuQ) == 0:
-                self.poller.modify(self.mcu, select.POLLIN) # Unregister since we have nothing to send
-            return ret
-        else:
-            return None
-    def __clearToMcuQ(self):
-        self._toMcuQ = []
-        self.poller.modify(self.mcu, select.POLLIN)
-    toMcuQ = property(__getToMcuQ, __addToMcuQ, __clearToMcuQ, "Meta accessor for messages queued to the MCU, set to queue a message, get to pop one, del to clear the queue.")
-
-    def __addFromMcuQ(self, msg):
-        self._fromMcuQ.append(msg)
-    def __getFromMcuQ(self):
-        ret = self._fromMcuQ
-        self._fromMcuQ = []
-        return ret
-    def __clearFromMcuQ(self):
-        self._fromMcuQ = []
-    fromMcuQ = property(__getFromMcuQ, __addFromMcuQ, __clearFromMcuQ, "Meta accessor for messages queued from the MCU to the radio. Set to queue a message, get to pop, del to clear queue.")
+    def giveMessage(self, message):
+        "Pass a message from the server along"
+        if self.radioConnected is False: # First message of connection
+            self.sendToMcu(messages.ClientConnectionStatus(1, 0).serialize())
+            self.radioConnected = True
+        self.sendToMcu(message)
 
     def standby(self):
         "Put the sub server into standby mode"
         self.radioConnected = False
-        self.toMcuQ = messages.ClientConnectionStatus(0,0).serialize()
-
-    def poll(self, message=None):
-        "Poll for this subserver, passing incoming message if any and returning outgoing message if any."
-        # Handle incoming messages if any
-        if message:
-            if self.radioConnected is False: # If first message of connection
-                self.toMcuQ = messages.ClientConnectionStatus(1, 0).serialize() # Queue message to tell the MCU we have a connection
-            self.toMcuQ = message # Queue the message
-        # Handle serial port
-        self.sendToMcu(self.toMcuQ)
-        self.recvFromMcu()
-        return self.fromMcuQ
+        #self.sendToMcu(messages.ClientConnectionStatus(0,0).serialize())
 
     def sendToMcu(self, message):
         "Send one message (with header and footer) to MCU over serial link"
-        if message is not None: # Skip if no message to send
-            length = len(message)
-            self.mcu.write(self.SERIAL_HEADER + struct.pack('I', length))
-            self.mcu.write(message)
-            self.mcu.flush()
+        self.mcu.write(self.SERIAL_HEADER + struct.pack('I', len(message)))
+        self.mcu.write(message)
+        self.mcu.flush()
+        if self.v: sys.stdout.write("toMcu: %d[%d]\n" % (ord(message[0]), len(message)))
 
-    def recvFromMcu(self):
-        "Read the serial connection to the MCU and append any messages to the receive queue"
-        self.rawSerData += self.mcu.read(self.MTU)
+    def step(self):
+        "A single execution step for this thread"
+        try:
+            self.rawSerData += self.mcu.read(6)
+        except Exception, e:
+            if type(e) is ValueError and self._continue is False:
+                return # Shutting down just pass
+            else:
+                raise e
         while len(self.rawSerData):
+            xmitM4Message = True
             if self.v > 9: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
@@ -108,7 +79,7 @@ class MCUProxyServer(object):
                 return
             length = struct.unpack('I', self.rawSerData[:4])[0]
             if self.v > 9: sys.stdout.write("\t length = %d\n" % length)
-            length = min(self.MTU, max(length, 4))
+            length = min(1500, max(length, 4))
             self.rawSerData = self.rawSerData[4:]
             if len(self.rawSerData) < length:
                 #if self.v: sys.stdout.write("sr read %d\n" % length)
@@ -122,12 +93,19 @@ class MCUProxyServer(object):
                 sys.stdout.write("M4: %s" % (self.rawSerData[1:length],)) # Print statement
             elif msgID == messages.RobotState.ID:
                 rsmts = struct.unpack('I', self.rawSerData[1:5])[0]
-                self.timestampCB(rsmts) # Unpack the timestamp member of the RobotState message
-                if self.v:
-                    sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+                if abs(rsmts - self.lastRSMTS) > 300:
+                    err = "TORP: ts jump %d -> %d\n" % (self.lastRSMTS, rsmts)
+                    self.clientSend(messages.PrintText(text=err).serialize())
+                    sys.stderr.write(err)
+                    xmitM4Message = False
+                else:
+                    self.server.timestamp.update(rsmts) # Unpack the timestamp member of the RobotState message
+                    if self.v:
+                        sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+                self.lastRSMTS = rsmts
             elif self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
-                #sys.stdout.write(repr([ord(c) for c in self.rawSerData[:10]]) + '\n')
                 sys.stdout.flush()
-            self.fromMcuQ = self.rawSerData[:length]
+            if xmitM4Message:
+                self.clientSend(self.rawSerData[:length])
             self.rawSerData = self.rawSerData[length:]
