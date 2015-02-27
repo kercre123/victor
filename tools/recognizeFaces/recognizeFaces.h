@@ -15,13 +15,24 @@ namespace Anki
     s32 padding;
     f64 angle;
     s64 faceId; // If less than 0, is unknown
+    std::string name;
   } Face;
 
-  // Finds one face in "image", and adds it to the database
-  Result AddFaceToDatabase(const cv::Mat_<u8> &image, const u32 faceId);
 
+  // handleArbitraryRotations– extends default in-plane face rotation angle from -15..15 degrees to -30..30 degrees.
+  // TRUE: extended in-plane rotation support is enabled at the cost of detection speed (3 times performance hit).
+  // FALSE: default fast detection -15..15 degrees.
+  //
+  // internalResizeWidth – controls the detection speed by setting the size of the image the detection functions will work with. Choose higher value to increase detection quality, or lower value to improve the performance.
+  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth);
+  
   // Find and recognize all faces in "image"
-  Result RecognizeFaces(const cv::Mat_<u8> &image, std::vector<Face> &faces);
+  // If knownName is not NULL, the largest detected face will be assigned name "knownName"
+  Result RecognizeFaces(const cv::Mat_<u8> &image, std::vector<Face> &faces, const char * knownName = NULL);
+  
+  // Load or save the face recognition database
+  Result LoadDatabase(const char * filename);
+  Result SaveDatabase(const char * filename);
 } // namespace Anki
 
 #endif // #ifndef _RECOGNIZE_FACES_H_

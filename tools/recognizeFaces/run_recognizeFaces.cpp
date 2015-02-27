@@ -6,7 +6,7 @@
 
 using namespace Anki;
 
-std::vector<std::vector<cv::Mat_<u8> > > GetTrainingImages()
+/*std::vector<std::vector<cv::Mat_<u8> > > GetTrainingImages()
 {
   // Change this to your directory
   const char *baseDirectory = "/Users/pbarnum/Documents/Anki/products-cozmo-large-files/faceRecognition/ankiPeople/";
@@ -58,11 +58,15 @@ std::vector<std::vector<cv::Mat_<u8> > > GetTrainingImages()
   
   return images;
 } // GetTrainingImages()
+*/
 
-int main(int argc, char ** argv)
+int main(int argc, const char *argv[])
 {
+  const f64 numSecondsToTrain = 5.0;
+  
   int cameraId = 0;
   cv::Size2i imageSize(640,480);
+  const char * databaseFilename = "faceDatabase.dat";
 
   if(argc == 1) {
     printf("Running with default parameters %d (%d,%d)\n", cameraId, imageSize.width, imageSize.height);
@@ -80,7 +84,7 @@ int main(int argc, char ** argv)
     return -1;
   }
 
-  std::vector<std::vector<cv::Mat_<u8> > > trainingImages = GetTrainingImages();
+/*  std::vector<std::vector<cv::Mat_<u8> > > trainingImages = GetTrainingImages();
     
   for(s32 iPerson=0; iPerson<trainingImages.size(); iPerson++) {
     for(s32 iImage=0; iImage<trainingImages.size(); iImage++) {
@@ -92,6 +96,9 @@ int main(int argc, char ** argv)
       }
     }
   } // for(s32 iPerson=0; iPerson<trainingImages.size(); iPerson++)
+  */
+  
+  LoadDatabase(databaseFilename);
 
   cv::VideoCapture capture(cameraId);
   
@@ -116,6 +123,11 @@ int main(int argc, char ** argv)
   
   cv::namedWindow("Camera Feed", CV_WINDOW_AUTOSIZE);
   
+  bool trainingOn = false;
+  f64 trainingStartTime;
+  char trainingName[16];
+  trainingName[1] = '\0';
+  
   bool isRunning = true;
   while(isRunning) {
     if(!capture.read(lastImage)) {
@@ -126,7 +138,13 @@ int main(int argc, char ** argv)
     cv::cvtColor(lastImage, lastImageGray, CV_BGR2GRAY);
     
     std::vector<Face> faces;
-    const Result recognizeResult = RecognizeFaces(lastImageGray, faces);
+    
+    Result recognizeResult;
+    if(trainingOn) {
+      recognizeResult = RecognizeFaces(lastImageGray, faces, &trainingName[0]);
+    } else {
+      recognizeResult = RecognizeFaces(lastImageGray, faces, NULL);
+    }
 
     cv::Mat toShowImage = lastImage.clone();
     
@@ -137,21 +155,38 @@ int main(int argc, char ** argv)
         cv::Point(faces[iFace].xc + faces[iFace].w/2, faces[iFace].yc + faces[iFace].w/2),
         cv::Scalar(0,255,0),
         5);
+      
+      char name[1024];
+      snprintf(name, 1024, "%d %s", faces[iFace].faceId, faces[iFace].name.data());
+      
+      cv::putText(toShowImage, name, cv::Point(faces[iFace].xc, faces[iFace].yc), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 255, 0));
+    }
+
+    if(ABS(Anki::Embedded::GetTimeF64() - trainingStartTime) > numSecondsToTrain) {
+      trainingOn = false;
+    }
+
+    if(trainingOn) {
+      char name[1024];
+      snprintf(name, 1024, "Training %s", trainingName);
+      cv::putText(toShowImage, name, cv::Point(30,30), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 0, 255));
     }
 
     cv::imshow("Camera Feed", toShowImage);
     const int pressedKey = cv::waitKey(10);
     
-    if((pressedKey & 0xFF) == 'h') {
-      printf("Hold 'q' to quit.\n");
-    } else if((pressedKey & 0xFF) == 'q') {
+    if((pressedKey & 0xFF) == 'q') {
       isRunning = false;
       continue;
+    } else if((pressedKey & 0xFF) >= 'a' && (pressedKey & 0xFF) <= 'z') {
+      trainingStartTime = Anki::Embedded::GetTimeF64();
+      trainingOn = true;
+      trainingName[0] = pressedKey & 0xFF;
     }
+
   } // while(isRunning)
 
-  //cv::Mat image(imageSize.height, imageSize.width, CV_8UC3);
-  //
+  SaveDatabase(databaseFilename);
 
   return 0;
 } // int main()

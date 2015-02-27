@@ -39,8 +39,7 @@ static Result InitializeTracker()
     return RESULT_FAIL;
   }
   
-  int err = 0; // set realtime face detection parameters
-	FSDK_SetTrackerMultipleParameters(tracker, "HandleArbitraryRotations=false; DetermineFaceRotationAngle=false; InternalResizeWidth=100; FaceDetectionThreshold=5;", &err);
+  FSDK_SetFaceDetectionParameters(false, false, 320);
   
   initialized = true;
   
@@ -59,26 +58,55 @@ static HImage OpencvToFsdk(const cv::Mat_<u8> &in) {
 
 namespace Anki
 {
-  Result AddFaceToDatabase(const cv::Mat_<u8> &image, const u32 faceId)
+  Result LoadDatabase(const char * filename)
+  {
+    if(initialized) {
+      FSDK_FreeTracker(tracker);
+      tracker = 0;
+      initialized = false;
+    }
+    
+    InitializeTracker();
+
+    int loadResult;
+  	if (FSDKE_OK != (loadResult = FSDK_LoadTrackerMemoryFromFile(&tracker, filename))) {
+      printf("Could not load file %s. Initializing an empty tracker.\n", filename);
+      return RESULT_FAIL;
+    }
+
+    initialized = true;
+
+    return RESULT_OK;
+  } // LoadDatabase()
+  
+  Result SaveDatabase(const char * filename)
+  {
+    if(!initialized) {
+      printf("Tracker is not initialized\n");
+      return RESULT_FAIL;
+    }
+    
+    if (FSDKE_OK != FSDK_SaveTrackerMemoryToFile(tracker, filename)) {
+      printf("Could not save file %s\n", filename);
+      return RESULT_FAIL;
+    }
+
+    return RESULT_OK;
+  } // SaveDatabase()
+
+  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth)
   {
     Result lastResult;
-    
     if((lastResult = InitializeTracker()) != RESULT_OK) {
       return RESULT_FAIL;
     }
     
-    HImage imageHandle = OpencvToFsdk(image);
-    
-    long long IDs[256]; // detected faces
-    long long faceCount = 0;
-    //FSDK_FeedFrame(tracker, 0, imageHandle, &faceCount, IDs, sizeof(IDs));
-    
-    FSDK_FreeImage(imageHandle);
+  	FSDK_SetFaceDetectionParameters(handleArbitraryRotations, false, internalResizeWidth);
     
     return RESULT_OK;
-  } // AddFaceToDatabase()
+  } // SetRecognitionParameters()
 
-  Result RecognizeFaces(const cv::Mat_<u8> &image, std::vector<Face> &faces)
+  Result RecognizeFaces(const cv::Mat_<u8> &image, std::vector<Face> &faces, const char * knownName)
   {
     Result lastResult;
     
@@ -104,11 +132,35 @@ namespace Anki
       newFace.w = facePosition.w;
       newFace.padding = facePosition.padding;
       newFace.angle = facePosition.angle;
-      newFace.faceId = -1;
+      newFace.faceId = IDs[iFace];
+      newFace.name = "";
+
+      char name[1024];
+      int res = FSDK_GetAllNames(tracker, IDs[iFace], name, sizeof(name));
+      
+      if (0 == res && strlen(name) > 0) { // draw name
+        newFace.name = name;
+      }
       
       faces.push_back(newFace);
-    } //     for(size_t iFace=0; iFace<faceCount; iFace++)
-    
+    } // for(size_t iFace=0; iFace<faceCount; iFace++)
+
+    if(knownName) {
+      s32 largestWidth = 0;
+      s32 bestId = -1;
+      for(size_t iFace=0; iFace<faceCount; iFace++) {
+        if(faces[iFace].w > largestWidth) {
+          largestWidth = faces[iFace].w;
+          bestId = iFace;
+        }
+      } // for(size_t iFace=0; iFace<faceCount; iFace++)
+      
+      if(bestId >= 0) {
+        FSDK_SetName(tracker, IDs[bestId], knownName);
+        faces[bestId].name = knownName;
+      }
+    } // if(knownName)
+ 
     FSDK_FreeImage(imageHandle);
   
     return RESULT_OK;

@@ -18,6 +18,8 @@ add_executable(run_recognizeFaces
 
 target_link_libraries(run_recognizeFaces
   ${ALL_EMBEDDED_LIBRARIES}
+  CoreTech_Common_Robot 
+  CoreTech_Vision_Robot
   libRecognizeFaces
   ${LUXAND_DIRECTORY}/bin/osx_x86_64/libfsdk.dylib
 )
