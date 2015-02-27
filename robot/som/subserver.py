@@ -27,7 +27,7 @@ class BaseSubServer(threading.Thread):
 
     def threadYield(self):
         "Have the thried yeild to other threads"
-        time.sleep(0)
+        time.sleep(0.0003) # Allow a little time for traffic to clear through various ISRs
 
     def giveMessage(self, message):
         "Passes in a message from the main server"
