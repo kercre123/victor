@@ -29,6 +29,7 @@ class MCUProxyServer(BaseSubServer):
                                  timeout  = 1.0)
         self.radioConnected = False
         self.rawSerData = ""
+        self.lastRSMTS = 0
 
     def stop(self):
         sys.stdout.write("Closing MCUProxyServer\n")
@@ -66,6 +67,7 @@ class MCUProxyServer(BaseSubServer):
             else:
                 raise e
         while len(self.rawSerData):
+            xmitM4Message = True
             if self.v > 9: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
@@ -91,11 +93,19 @@ class MCUProxyServer(BaseSubServer):
                 sys.stdout.write("M4: %s" % (self.rawSerData[1:length],)) # Print statement
             elif msgID == messages.RobotState.ID:
                 rsmts = struct.unpack('I', self.rawSerData[1:5])[0]
-                self.server.timestamp.update(rsmts) # Unpack the timestamp member of the RobotState message
-                if self.v:
-                    sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+                if abs(rsmts - self.lastRSMTS) > 300:
+                    err = "TORP: ts jump %d -> %d\n" % (self.lastRSMTS, rsmts)
+                    self.clientSend(messages.PrintText(text=err).serialize())
+                    sys.stderr.write(err)
+                    xmitM4Message = False
+                else:
+                    self.server.timestamp.update(rsmts) # Unpack the timestamp member of the RobotState message
+                    if self.v:
+                        sys.stdout.write("M4 RSM ts: %d\n" % rsmts)
+                self.lastRSMTS = rsmts
             elif self.v:
                 sys.stdout.write("M4 pkt: %d[%d]\n" % (ord(self.rawSerData[0]), length))
                 sys.stdout.flush()
-            self.clientSend(self.rawSerData[:length])
+            if xmitM4Message:
+                self.clientSend(self.rawSerData[:length])
             self.rawSerData = self.rawSerData[length:]

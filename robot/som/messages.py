@@ -181,6 +181,7 @@ class RobotState(MessageBase):
             self.pitch = pitch
 
     def __init__(self, buffer=None):
+        MessageBase.__init__(self)
         self.timestamp = 0
         self.poseFrameId = 0
         self.pose = Pose()
@@ -219,13 +220,14 @@ class PrintText(MessageBase):
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
-    def __init__(self, buffer=None):
-        self.text = ""
+    def __init__(self, buffer=None, text=""):
+        MessageBase.__init__(self)
+        self.text = text
         if buffer:
             self.deserialize(buffer)
 
     def _getMembers(self):
-        return self.text
+        return (self.text,)
 
     def __setMembers(self, text):
         self.text = text
