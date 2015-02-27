@@ -73,6 +73,7 @@ if(NOT ANKI_IOS_BUILD)
 
   if(APPLE)
     add_subdirectory(tools/showVoxels)
+    add_subdirectory(tools/recognizeFaces)
   endif()
   
   add_subdirectory(tools/captureImages)
