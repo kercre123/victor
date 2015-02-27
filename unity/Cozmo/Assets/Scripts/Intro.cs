@@ -95,7 +95,7 @@ public class Intro : MonoBehaviour {
 
 			SaveData ();
 			RobotEngineManager.instance.Connect (engineIP.text);
-			error.text = "<color=#ffffff>Connecting to engine at " + ip.text + "....</color>";
+			error.text = "<color=#ffffff>Connecting to engine at " + engineIP.text + "....</color>";
 		} else {
 			error.text = errorText;
 		}
