@@ -5,12 +5,20 @@ using System.Collections.Generic;
 
 public class CozmoVision1 : CozmoVision
 {
+	public class DistancePair
+	{
+		public float distance;
+		public SelectionButton1 button;
+		public SelectionBox box;
+	}
+
 	[System.Serializable]
 	public class SelectionBox
 	{
 		public Image image;
 		public Text text;
 		public uint ID;
+		public SelectionButton1 button;
 
 		public Vector3 position
 		{
@@ -36,10 +44,12 @@ public class CozmoVision1 : CozmoVision
 	[SerializeField] protected SelectionBox[] selectionBoxes;
 	[SerializeField] protected Vector2 lineWidth;
 
+	protected List<DistancePair> distancePairs = new List<DistancePair>();
+
 	protected void Update()
 	{
 		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
-
+		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			for( int i = 0; i < actionButtons.Length; ++i )
@@ -48,19 +58,34 @@ public class CozmoVision1 : CozmoVision
 				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject < uint.MaxValue - 1 );
 			}
 
+			distancePairs.Clear();
+
 			for( int i = 0; i < maxBoxes; ++i )
 			{
 				if( RobotEngineManager.instance.current.observedObjects.Count > i )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
 
+					selectionBoxes[i].button = null;
+
 					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
-
+					
 					selectionBoxes[i].text.text = "Select " + observedObject.ID;
 					selectionBoxes[i].ID = observedObject.ID;
-
+					
 					selectionBoxes[i].image.gameObject.SetActive( true );
+
+					for( int j = 0; j < selectionButtons.Length && j < RobotEngineManager.instance.current.observedObjects.Count; ++j )
+					{
+						DistancePair dp = new DistancePair();
+
+						dp.box = selectionBoxes[i];
+						dp.button = selectionButtons[j];
+						dp.distance = Vector3.Distance( dp.box.image.transform.position, dp.button.transform.position );
+
+						distancePairs.Add( dp );
+					}
 				}
 				else
 				{
@@ -68,43 +93,25 @@ public class CozmoVision1 : CozmoVision
 				}
 			}
 
-			Queue<SelectionBox> temp = new Queue<SelectionBox>( selectionBoxes );
+			distancePairs.Sort( delegate( DistancePair x, DistancePair y ) { return x.distance.CompareTo( y.distance ); } );
 
 			for( int i = 0; i < selectionButtons.Length; ++i )
 			{
-				selectionButtons[i].selectionBox = null;
+				selectionButtons[i].box = null;
 				selectionButtons[i].gameObject.SetActive( false );
 			}
 
-			while( temp.Count > 0 )
+			for( int i = 0; i < distancePairs.Count; ++i )
 			{
-				float distance = float.MaxValue;
-				SelectionBox selectionBox = temp.Dequeue();
-				int index = -1;
-
-				for( int i = 0; i < selectionButtons.Length && i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
+				if( distancePairs[i].button.box == null && distancePairs[i].box.button == null )
 				{
-					if( selectionButtons[i].selectionBox == null )
-					{
-						float d = Vector3.Distance( selectionBox.image.transform.position, selectionButtons[i].transform.position );
-
-						if( d < distance )
-						{
-							distance = d;
-
-							index = i;
-						}
-					}
-				}
-
-				if( index != -1 )
-				{
-					selectionButtons[index].selectionBox = selectionBox;
-					selectionButtons[index].gameObject.SetActive( selectionBox.image.gameObject.activeSelf );
-					selectionButtons[index].text.text = selectionBox.text.text;
-					selectionButtons[index].line.SetPosition( 0, selectionButtons[index].position );
-					selectionButtons[index].line.SetPosition( 1, selectionBox.position );
-					selectionButtons[index].line.SetWidth( lineWidth.x, lineWidth.y );
+					distancePairs[i].button.box = distancePairs[i].box;
+					distancePairs[i].box.button = distancePairs[i].button;
+					distancePairs[i].button.gameObject.SetActive( true );
+					distancePairs[i].button.text.text = distancePairs[i].box.text.text;
+					distancePairs[i].button.line.SetPosition( 0, distancePairs[i].button.position );
+					distancePairs[i].button.line.SetPosition( 1, distancePairs[i].box.position );
+					distancePairs[i].button.line.SetWidth( lineWidth.x, lineWidth.y );
 				}
 			}
 		}

@@ -5,10 +5,10 @@ using System.Collections;
 public class SelectionButton1 : SelectionButton
 {
 	public LineRenderer line;
-	public CozmoVision1.SelectionBox selectionBox { get; set; }
+	public CozmoVision1.SelectionBox box { get; set; }
 
 	public void Selection()
 	{
-		RobotEngineManager.instance.current.selectedObject = selectionBox.ID;
+		RobotEngineManager.instance.current.selectedObject = box.ID;
 	}
 }
