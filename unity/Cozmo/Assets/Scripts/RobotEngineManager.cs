@@ -353,7 +353,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
 
-		Debug.Log("ReceivedSpecificMessage G2U_ImageChunk");
+		//Debug.Log("ReceivedSpecificMessage G2U_ImageChunk");
 
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
@@ -362,7 +362,7 @@ public class RobotEngineManager : MonoBehaviour {
 			
 			int length = message.ncols * message.nrows;
 
-			Debug.Log("ReceivedSpecificMessage G2U_ImageChunk length("+length+")");
+			//Debug.Log("ReceivedSpecificMessage G2U_ImageChunk length("+length+")");
 
 			if( colorArray == null || colorArray.Length != length )
 			{
