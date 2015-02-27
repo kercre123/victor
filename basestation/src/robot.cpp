@@ -34,6 +34,8 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "opencv2/opencv.hpp"
+
 #include <fstream>
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
@@ -74,6 +76,7 @@ namespace Anki {
     , _isMoving(false)
     , _isAnimating(false)
     , _carryingMarker(nullptr)
+    , _saveNextImageToFile(false)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -1855,12 +1858,29 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
+      
+    void Robot::SaveNextImage()
+    {
+      _saveNextImageToFile = true;
+    }
     
     Result Robot::ProcessImage(const Vision::Image& image)
     {
       Result lastResult = RESULT_OK;
       
-
+      if (_saveNextImageToFile) {
+        // Write image to file (recompressing as jpeg again!)
+        static u32 imgCnt = 0;
+        char imgFilename[32];
+        std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(90);
+        sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
+        imwrite(imgFilename, image.get_CvMat_());
+        
+        _saveNextImageToFile = false;
+      }
+      
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision
       // implementation on the robot). We'll just reassemble that from
