@@ -17,19 +17,8 @@ public class GyroControls : MonoBehaviour {
 		get {
 			if(!SystemInfo.supportsGyroscope) return 0f;
 
-			float roll = MSP_Input.GyroAccel.GetRoll();
-			//bool crazy = false;
-			if(Mathf.Abs(roll) > 180f) {
-				//Debug.Log("GyroControls.Horizontal crazy roll("+roll+")");
-				while(roll > 180f) roll -= 360f;
-				while(roll < -180f) roll += 360f;
-
-				//crazy = true;
-			}
-
+			float roll = CozmoUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
 			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
-			//if(crazy) Debug.Log("GyroControls.Horizontal x("+x+") roll("+roll+")");
-
 			return x; 
 		}
 	}
