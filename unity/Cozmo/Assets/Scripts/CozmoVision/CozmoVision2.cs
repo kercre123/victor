@@ -21,7 +21,7 @@ public class CozmoVision2 : CozmoVision
 
 			for( int i = 0; i < maxBoxes; ++i )
 			{
-				if( RobotEngineManager.instance.current.observedObjects.Count > i )
+				if( RobotEngineManager.instance.current.observedObjects.Count > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
 

@@ -5,8 +5,7 @@ using System.Collections;
 public class OptionsScreen : MonoBehaviour {
 
 	[SerializeField] Slider slider_turnSpeed;
-	[SerializeField] Toggle toggle_cozmoVision;
-	[SerializeField] Toggle toggle_cozmoVision2;
+	[SerializeField] Toggle[] toggle_cozmoVisions;
 
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 	private const int DEFAULT_COZMO_VISION = 0;
@@ -19,12 +18,16 @@ public class OptionsScreen : MonoBehaviour {
 			slider_turnSpeed.onValueChanged.AddListener(MaxTurnSpeedChanged);
 		}
 
-		if(toggle_cozmoVision != null && toggle_cozmoVision.gameObject.activeSelf) {
-			toggle_cozmoVision.onValueChanged.AddListener(CozmoVisionChanged);
+		if(toggle_cozmoVisions.Length > 0 && toggle_cozmoVisions[0] != null && toggle_cozmoVisions[0].gameObject.activeSelf) {
+			toggle_cozmoVisions[0].onValueChanged.AddListener(CozmoVision1Changed);
 		}
 
-		if(toggle_cozmoVision2 != null && toggle_cozmoVision2.gameObject.activeSelf) {
-			toggle_cozmoVision2.onValueChanged.AddListener(CozmoVision2Changed);
+		if(toggle_cozmoVisions.Length > 1 && toggle_cozmoVisions[1] != null && toggle_cozmoVisions[1].gameObject.activeSelf) {
+			toggle_cozmoVisions[1].onValueChanged.AddListener(CozmoVision2Changed);
+		}
+
+		if(toggle_cozmoVisions.Length > 2 && toggle_cozmoVisions[2] != null && toggle_cozmoVisions[2].gameObject.activeSelf) {
+			toggle_cozmoVisions[2].onValueChanged.AddListener(CozmoVision3Changed);
 		}
 	}
 
@@ -32,32 +35,40 @@ public class OptionsScreen : MonoBehaviour {
 		if(slider_turnSpeed != null && slider_turnSpeed.gameObject.activeSelf) {
 			slider_turnSpeed.value = PlayerPrefs.GetFloat("MaxTurnFactor", DEFAULT_MAX_TURN_FACTOR);
 		}
-		if(toggle_cozmoVision !=null) {
-			toggle_cozmoVision.isOn = PlayerPrefs.GetInt("CozmoVision", DEFAULT_COZMO_VISION) == 1;
-		}
-		if(toggle_cozmoVision2 !=null) {
-			toggle_cozmoVision2.isOn = PlayerPrefs.GetInt("CozmoVision2", DEFAULT_COZMO_VISION) == 1;
+
+		for(int i = 0; i < toggle_cozmoVisions.Length; ++i) {
+			if(toggle_cozmoVisions[i] != null) {
+				toggle_cozmoVisions[i].isOn = PlayerPrefs.GetInt("CozmoVision" + (i + 1), DEFAULT_COZMO_VISION) == 1;
+			}
 		}
 	}
 
 	void OnDisable () {
 		if(slider_turnSpeed != null && slider_turnSpeed.gameObject.activeSelf) 
 			slider_turnSpeed.onValueChanged.RemoveListener(MaxTurnSpeedChanged);
-		if(toggle_cozmoVision != null && toggle_cozmoVision.gameObject.activeSelf) 
-			toggle_cozmoVision.onValueChanged.RemoveListener(CozmoVisionChanged);
-		if(toggle_cozmoVision2 != null && toggle_cozmoVision2.gameObject.activeSelf) 
-			toggle_cozmoVision2.onValueChanged.RemoveListener(CozmoVision2Changed);
+
+		if(toggle_cozmoVisions.Length > 0 && toggle_cozmoVisions[0] != null && toggle_cozmoVisions[0].gameObject.activeSelf) {
+			toggle_cozmoVisions[0].onValueChanged.RemoveListener(CozmoVision1Changed);
+		}
+		
+		if(toggle_cozmoVisions.Length > 1 && toggle_cozmoVisions[1] != null && toggle_cozmoVisions[1].gameObject.activeSelf) {
+			toggle_cozmoVisions[1].onValueChanged.RemoveListener(CozmoVision2Changed);
+		}
+		
+		if(toggle_cozmoVisions.Length > 2 && toggle_cozmoVisions[2] != null && toggle_cozmoVisions[2].gameObject.activeSelf) {
+			toggle_cozmoVisions[2].onValueChanged.RemoveListener(CozmoVision3Changed);
+		}
 	}
 
 	public void MaxTurnSpeedChanged (float val) {
 		PlayerPrefs.SetFloat("MaxTurnFactor", Mathf.Clamp01(val));
 	}
 
-	public void CozmoVisionChanged (bool val) {
+	public void CozmoVision1Changed (bool val) {
 		if(val) {
-			PlayerPrefs.SetInt("CozmoVision", 1);
+			PlayerPrefs.SetInt("CozmoVision1", 1);
 		} else {
-			PlayerPrefs.SetInt("CozmoVision", 0);
+			PlayerPrefs.SetInt("CozmoVision1", 0);
 		}
 	}
 
@@ -69,10 +80,19 @@ public class OptionsScreen : MonoBehaviour {
 		}
 	}
 
+	public void CozmoVision3Changed (bool val) {
+		if(val) {
+			PlayerPrefs.SetInt("CozmoVision3", 1);
+		} else {
+			PlayerPrefs.SetInt("CozmoVision3", 0);
+		}
+	}
+
 	public void ResetToDefaultSettings () {
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
-		PlayerPrefs.DeleteKey("CozmoVision");
-		PlayerPrefs.DeleteKey("CozmoVision2");
+		for(int i = 0; i < toggle_cozmoVisions.Length; ++i) {
+			PlayerPrefs.DeleteKey("CozmoVision" + (i + 1));
+		}
 		Init();
 	}
 }

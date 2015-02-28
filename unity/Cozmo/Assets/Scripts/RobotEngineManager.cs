@@ -295,7 +295,10 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		//Debug.Log( "no box found at " + Time.time );
 
-		current.observedObjects.Clear();
+		if( current.selectedObject == uint.MaxValue )
+		{
+			current.observedObjects.Clear();
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
@@ -352,17 +355,12 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
-
-		//Debug.Log("ReceivedSpecificMessage G2U_ImageChunk");
-
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
-
-			//Debug.Log("ReceivedSpecificMessage G2U_ImageChunk length("+length+")");
 
 			if( colorArray == null || colorArray.Length != length )
 			{
@@ -409,6 +407,7 @@ public class RobotEngineManager : MonoBehaviour {
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
+
 				current.observedObjects.Clear();
 			}
 		}

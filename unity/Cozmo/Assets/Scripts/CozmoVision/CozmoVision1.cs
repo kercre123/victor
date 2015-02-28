@@ -18,7 +18,7 @@ public class CozmoVision1 : CozmoVision
 		public Image image;
 		public Text text;
 		public uint ID;
-		public SelectionButton1 button;
+		public SelectionButton1 button { get; set; }
 
 		public Vector3 position
 		{
@@ -48,7 +48,7 @@ public class CozmoVision1 : CozmoVision
 
 	protected void Update()
 	{
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision" ) == 1 );
+		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision1" ) == 1 );
 		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
@@ -62,7 +62,7 @@ public class CozmoVision1 : CozmoVision
 
 			for( int i = 0; i < maxBoxes; ++i )
 			{
-				if( RobotEngineManager.instance.current.observedObjects.Count > i )
+				if( RobotEngineManager.instance.current.observedObjects.Count > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
 
