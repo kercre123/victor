@@ -250,18 +250,28 @@ namespace Anki {
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
-                HeadController::SetSpeedAndAccel(0.2, 1);
+                HeadController::SetSpeedAndAccel(2.5, 10);
                 //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 
                 // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
                 // or that the camera FOV center doesn't tilt below the marker center.
                 // Otherwise try to maintain the lowest tilt possible
-                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
-                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-                f32 desiredHeadAngle = MAX(minDesiredHeadAngle1, minDesiredHeadAngle2);
                 
-                HeadController::SetDesiredAngle(desiredHeadAngle);
-                //PRINT("desHeadAngle %f\n", desiredHeadAngle);
+                // Compute angle the head needs to face such that the bottom of the marker
+                // is at the bottom of the image.
+                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                
+                // Compute the angle the head needs to face such that it is looking
+                // directly at the center of the marker
+                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                
+                // Use the min of both angles
+                f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
+                
+                // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
+                //        Docking is smoother without it!
+                //HeadController::SetDesiredAngle(desiredHeadAngle);
+                //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
                 
                 // Track camera with lift.
                 // Do it only when it's a high block and we're within a certain distance of it.
