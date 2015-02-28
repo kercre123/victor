@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const float UI_PING_TIMEOUT_SEC = 1.0f;
+  const float UI_PING_TIMEOUT_SEC = 5.0f;
   
 #pragma mark - CozmoGame Implementation
     

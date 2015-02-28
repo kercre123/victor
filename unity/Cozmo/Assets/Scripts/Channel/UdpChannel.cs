@@ -89,8 +89,8 @@ public class UdpChannel : ChannelBase {
 	// timers
 	private const float AdvertiseTick = .25f;
 	private const float AdvertiseTimeout = 30.0f;
-	private const float PingTimeout = 0.1f;
-	private const float ReceiveTimeout = 1.0f;
+	private const float PingTick = 0.1f;
+	private const float ReceiveTimeout = 5.0f;
 	private float lastUpdateTime = 0;
 	private float lastAdvertiseTime = 0;
 	private float startAdvertiseTime = 0;
@@ -296,7 +296,7 @@ public class UdpChannel : ChannelBase {
 				InternalUpdate ();
 
 				if (connectionState == ConnectionState.Connected) {
-					if (lastPingTime + PingTimeout < lastUpdateTime) {
+					if (lastPingTime + PingTick < lastUpdateTime) {
 						lastPingTime = lastUpdateTime;
 						SendInternal(pingMessage);
 						pingMessage.counter += 1;
@@ -653,7 +653,7 @@ public class UdpChannel : ChannelBase {
 						connectionState = ConnectionState.Connected;
 						mainEndPoint = ipEndPoint;
 						lastReceiveTime = lastUpdateTime;
-						lastPingTime = lastUpdateTime - PingTimeout * 2;
+						lastPingTime = lastUpdateTime - PingTick * 2;
 
 						// ignore first message
 					}
