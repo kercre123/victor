@@ -54,7 +54,12 @@ public class ControlSchemeTester : MonoBehaviour {
 			enabled = false;
 			return;
 		}
+
+		Input.gyro.enabled = true;
+		Input.compass.enabled = true;
 		Input.multiTouchEnabled = true;
+		Input.location.Start();
+
 		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
 
 		if(reverseLikeACarToggle != null) {

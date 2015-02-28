@@ -29,6 +29,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 	void OnEnable() {
 		//reset default state for this control scheme test
 		Debug.Log("PlayerRelativeControls OnEnable");
+		Input.compass.enabled = true;
 
 		moveCommandLastFrame = false;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
@@ -36,7 +37,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 				//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 		}
 
-		compassStartHeading = CozmoUtil.ClampAngle(Input.compass.trueHeading);
+		compassStartHeading = CozmoUtil.ClampAngle(-Input.compass.trueHeading);
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 	}
@@ -61,8 +62,12 @@ public class PlayerRelativeControls : MonoBehaviour {
 		if(!moveCommandLastFrame && inputs.sqrMagnitude == 0f) {
 			return; // command not changed
 		}
+		if(inputs.sqrMagnitude == 0f) {
+			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			return; // command zero'd, let's full stop
+		}
 
-		float relativeScreenFacing = CozmoUtil.AngleDelta(compassStartHeading, CozmoUtil.ClampAngle(Input.compass.trueHeading));
+		float relativeScreenFacing = CozmoUtil.AngleDelta(compassStartHeading, CozmoUtil.ClampAngle(-Input.compass.trueHeading));
 		float relativeRobotFacing = CozmoUtil.AngleDelta(robotStartHeading, robotFacing);
 
 		float screenToRobot = CozmoUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
