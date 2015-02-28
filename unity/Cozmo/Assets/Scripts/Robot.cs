@@ -37,18 +37,15 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		if( selectedObject == uint.MaxValue )
+		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+
+		if( observedObject == null )
 		{
-			ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+			observedObject = new ObservedObject();
 
-			if( observedObject == null )
-			{
-				observedObject = new ObservedObject();
-
-				observedObjects.Add( observedObject );
-			}
-
-			observedObject.UpdateInfo( message );
+			observedObjects.Add( observedObject );
 		}
+
+		observedObject.UpdateInfo( message );
 	}
 }

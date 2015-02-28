@@ -41,6 +41,8 @@ public class CozmoVision3 : CozmoVision
 		{
 			if( RobotEngineManager.instance.current.observedObjects.Count > 0 )
 			{
+				box.image.gameObject.SetActive( true );
+
 				ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[0];
 
 				box.image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
@@ -48,12 +50,11 @@ public class CozmoVision3 : CozmoVision
 
 				box.text.text = "Select " + observedObject.ID;
 				RobotEngineManager.instance.current.selectedObject = observedObject.ID;
-
-				box.image.gameObject.SetActive( true );
 			}
 			else
 			{
 				box.image.gameObject.SetActive( false );
+				RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
 			}
 
 			for( int i = 0; i < actionButtons.Length; ++i )
