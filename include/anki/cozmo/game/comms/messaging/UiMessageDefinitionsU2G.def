@@ -138,7 +138,7 @@ END_MESSAGE_DEFINITION(U2G_SetRobotImageSendMode)
 
 // SaveImages
 START_MESSAGE_DEFINITION(U2G_SaveImages, 1)
-ADD_MESSAGE_MEMBER(u8, enableSave)
+ADD_MESSAGE_MEMBER(u8, mode)
 END_MESSAGE_DEFINITION(U2G_SaveImages)
 
 // EnableDisplay

@@ -314,8 +314,8 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages(msg.enableSave);
-    printf("Saving images: %s\n", VizManager::getInstance()->IsSavingImages() ? "ON" : "OFF");
+    VizManager::getInstance()->SaveImages((VizSaveImageMode_t)msg.mode);
+    printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
   }
   
   void CozmoGameImpl::ProcessMessage(MessageU2G_EnableDisplay const& msg)

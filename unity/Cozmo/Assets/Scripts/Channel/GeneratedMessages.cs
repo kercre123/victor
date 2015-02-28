@@ -399,7 +399,7 @@ public override int ID { get { return (int)NetworkMessageID.U2G_SetRobotImageSen
 
 
 public partial class U2G_SaveImages : NetworkMessage {
-public u8 enableSave;
+public u8 mode;
 public override int ID { get { return (int)NetworkMessageID.U2G_SaveImages; } } }
 
 
@@ -772,7 +772,7 @@ ByteSerializer.GetSerializationLength(this.resolution) +
 
 
 public partial class U2G_SaveImages { public override int SerializationLength { get { return
-ByteSerializer.GetSerializationLength(this.enableSave) +
+ByteSerializer.GetSerializationLength(this.mode) +
 0; } } }
 
 
@@ -1145,7 +1145,7 @@ serializer.Serialize(this.resolution);
 
 
 public partial class U2G_SaveImages { public override void Serialize(ByteSerializer serializer) {
-serializer.Serialize(this.enableSave);
+serializer.Serialize(this.mode);
 } }
 
 
@@ -1518,7 +1518,7 @@ serializer.Deserialize(out this.resolution);
 
 
 public partial class U2G_SaveImages { public override void Deserialize(ByteSerializer serializer) {
-serializer.Deserialize(out this.enableSave);
+serializer.Deserialize(out this.mode);
 } }
 
 
