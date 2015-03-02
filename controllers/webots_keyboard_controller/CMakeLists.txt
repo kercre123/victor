@@ -46,5 +46,4 @@ add_custom_command(
   TARGET webots_keyboard_controller
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:webots_keyboard_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:webots_keyboard_controller>
 )
