@@ -74,7 +74,7 @@ add_custom_command(
   TARGET blockworld_controller
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:blockworld_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
+#  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
 )
 
 
@@ -153,6 +153,6 @@ add_custom_command(
   TARGET cozmo_engine
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cozmo_engine> ${CMAKE_CURRENT_SOURCE_DIR}/
-  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_engine>
+#  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:cozmo_engine>
 )
 

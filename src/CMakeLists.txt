@@ -46,7 +46,7 @@ message(STATUS "COZMO_GAME_INCLUDE_DIR = ${COZMO_GAME_INCLUDE_DIR}")
 file(GLOB PUBLIC_HEADER_FILES_ROOT "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/*.h")
 file(GLOB PUBLIC_HEADER_FILES_SIGNALS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/signals/*.h")
 file(GLOB PUBLIC_HEADER_FILES_COMMS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/*.h")
-file(GLOB PUBLIC_HEADER_FILES_COMMS_MESSAGING "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/messaging*.h")
+file(GLOB PUBLIC_HEADER_FILES_COMMS_MESSAGING "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/messaging/*.h")
 
 set(PUBLIC_HEADER_FILES
   ${PUBLIC_HEADER_FILES_ROOT}
@@ -81,15 +81,21 @@ foreach(SOURCE ${CLAD_SOURCES})
     set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.h")
     set(CS_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.cs")
     set(CS_OUTPUT "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel/${SOURCE_BASE}.cs")
-    set(CLAD_COMMAND "${SOURCE_BASE}.xxx")
-    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CLAD_COMMAND})
+    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CPP_BUILD} ${CS_BUILD})
     add_custom_command(
-        OUTPUT ${CLAD_COMMAND}
+        OUTPUT ${CPP_BUILD}
         COMMAND mkdir -p ${CLAD_BUILD_DIR}
         COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -n Anki -n Cozmo ${SOURCE} > ${CPP_BUILD}
+        COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} > /dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT}
+        MAIN_DEPENDENCY ${SOURCE}
+        DEPENDS ${CLAD_DEPENDENCIES}
+        VERBATIM
+    )
+    add_custom_command(
+        OUTPUT ${CS_BUILD}
+        COMMAND mkdir -p ${CLAD_BUILD_DIR}
         COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -n Anki.Cozmo ${SOURCE} > ${CS_BUILD}
-        COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} >/dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT}
-        COMMAND diff ${CS_BUILD} ${CS_OUTPUT} >/dev/null || cp ${CS_BUILD} ${CS_OUTPUT}
+        COMMAND diff ${CS_BUILD} ${CS_OUTPUT} > /dev/null || cp ${CS_BUILD} ${CS_OUTPUT}
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         VERBATIM
@@ -103,7 +109,7 @@ endforeach()
 #    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CLAD_COMMAND})
 #    add_custom_command(
 #        OUTPUT ${CLAD_COMMAND}
-#        COMMAND diff ${SOURCE} ${OUTPUT} >/dev/null || cp ${SOURCE} ${OUTPUT}
+#        COMMAND diff ${SOURCE} ${OUTPUT} > /dev/null || cp ${SOURCE} ${OUTPUT}
 #        MAIN_DEPENDENCY ${SOURCE}
 #        VERBATIM
 #    )
