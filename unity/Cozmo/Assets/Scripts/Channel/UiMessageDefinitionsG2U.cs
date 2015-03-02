@@ -1081,8 +1081,9 @@ public class G2U_Message {
 		RobotObservedObject,	//8
 		RobotObservedNothing,	//9
 		DeviceDetectedVisionMarker,	//10
-		PlaySound,	//11
-		StopSound,	//12
+		RobotCompletedPickAndPlaceAction,	//11
+		PlaySound,	//12
+		StopSound,	//13
 		INVALID
 	};
 
@@ -1279,6 +1280,23 @@ public class G2U_Message {
 		}
 	}
 
+	public G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction
+	{
+		get {
+			if (_tag != Tag.RobotCompletedPickAndPlaceAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RobotCompletedPickAndPlaceAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (G2U_RobotCompletedPickAndPlaceAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RobotCompletedPickAndPlaceAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public G2U_PlaySound PlaySound
 	{
 		get {
@@ -1352,6 +1370,9 @@ public class G2U_Message {
 		case Tag.DeviceDetectedVisionMarker:
 			_state = new G2U_DeviceDetectedVisionMarker(stream);
 			break;
+		case Tag.RobotCompletedPickAndPlaceAction:
+			_state = new G2U_RobotCompletedPickAndPlaceAction(stream);
+			break;
 		case Tag.PlaySound:
 			_state = new G2U_PlaySound(stream);
 			break;
@@ -1403,6 +1424,9 @@ public class G2U_Message {
 		case Tag.DeviceDetectedVisionMarker:
 			DeviceDetectedVisionMarker.Pack(stream);
 			break;
+		case Tag.RobotCompletedPickAndPlaceAction:
+			RobotCompletedPickAndPlaceAction.Pack(stream);
+			break;
 		case Tag.PlaySound:
 			PlaySound.Pack(stream);
 			break;
@@ -1452,6 +1476,9 @@ public class G2U_Message {
 				break;
 			case Tag.DeviceDetectedVisionMarker:
 				result += DeviceDetectedVisionMarker.Size;
+				break;
+			case Tag.RobotCompletedPickAndPlaceAction:
+				result += RobotCompletedPickAndPlaceAction.Size;
 				break;
 			case Tag.PlaySound:
 				result += PlaySound.Size;

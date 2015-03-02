@@ -1371,8 +1371,9 @@ public:
 		RobotObservedObject,	// 8
 		RobotObservedNothing,	// 9
 		DeviceDetectedVisionMarker,	// 10
-		PlaySound,	// 11
-		StopSound,	// 12
+		RobotCompletedPickAndPlaceAction,	// 11
+		PlaySound,	// 12
+		StopSound,	// 13
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -1399,6 +1400,8 @@ public:
 			return "RobotObservedNothing";
 		case Type::DeviceDetectedVisionMarker:
 			return "DeviceDetectedVisionMarker";
+		case Type::RobotCompletedPickAndPlaceAction:
+			return "RobotCompletedPickAndPlaceAction";
 		case Type::PlaySound:
 			return "PlaySound";
 		case Type::StopSound:
@@ -1728,6 +1731,35 @@ public:
 		}
 	}
 
+	/** RobotCompletedPickAndPlaceAction **/
+	const G2U_RobotCompletedPickAndPlaceAction& Get_RobotCompletedPickAndPlaceAction() const
+	{
+		assert(_type == Type::RobotCompletedPickAndPlaceAction);
+		return _RobotCompletedPickAndPlaceAction;
+	}
+	void Set_RobotCompletedPickAndPlaceAction(const G2U_RobotCompletedPickAndPlaceAction& new_RobotCompletedPickAndPlaceAction)
+	{
+		if(this->_type == Type::RobotCompletedPickAndPlaceAction) {
+			_RobotCompletedPickAndPlaceAction = new_RobotCompletedPickAndPlaceAction;
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotCompletedPickAndPlaceAction) G2U_RobotCompletedPickAndPlaceAction{new_RobotCompletedPickAndPlaceAction};
+			_type = Type::RobotCompletedPickAndPlaceAction;
+		}
+	}
+	void Set_RobotCompletedPickAndPlaceAction(G2U_RobotCompletedPickAndPlaceAction&&  new_RobotCompletedPickAndPlaceAction)
+	{
+		if(this->_type == Type::RobotCompletedPickAndPlaceAction) {
+			_RobotCompletedPickAndPlaceAction = std::move(new_RobotCompletedPickAndPlaceAction);
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotCompletedPickAndPlaceAction) G2U_RobotCompletedPickAndPlaceAction{std::move(new_RobotCompletedPickAndPlaceAction)};
+			_type = Type::RobotCompletedPickAndPlaceAction;
+		}
+	}
+
 	/** PlaySound **/
 	const G2U_PlaySound& Get_PlaySound() const
 	{
@@ -1889,6 +1921,14 @@ public:
 			this->_DeviceDetectedVisionMarker.Unpack(buffer);
 			}
 			break;
+		case Type::RobotCompletedPickAndPlaceAction:
+			if (newType != oldType) {
+				new(&(this->_RobotCompletedPickAndPlaceAction)) G2U_RobotCompletedPickAndPlaceAction(buffer);
+			}
+			else {
+			this->_RobotCompletedPickAndPlaceAction.Unpack(buffer);
+			}
+			break;
 		case Type::PlaySound:
 			if (newType != oldType) {
 				new(&(this->_PlaySound)) G2U_PlaySound(buffer);
@@ -1956,6 +1996,9 @@ public:
 		case Type::DeviceDetectedVisionMarker:
 			this->_DeviceDetectedVisionMarker.Pack(buffer);
 			break;
+		case Type::RobotCompletedPickAndPlaceAction:
+			this->_RobotCompletedPickAndPlaceAction.Pack(buffer);
+			break;
 		case Type::PlaySound:
 			this->_PlaySound.Pack(buffer);
 			break;
@@ -2007,6 +2050,9 @@ public:
 		case Type::DeviceDetectedVisionMarker:
 			result += _DeviceDetectedVisionMarker.Size();
 			break;
+		case Type::RobotCompletedPickAndPlaceAction:
+			result += _RobotCompletedPickAndPlaceAction.Size();
+			break;
 		case Type::PlaySound:
 			result += _PlaySound.Size();
 			break;
@@ -2055,6 +2101,9 @@ private:
 		case Type::DeviceDetectedVisionMarker:
 			_DeviceDetectedVisionMarker.~G2U_DeviceDetectedVisionMarker();
 			break;
+		case Type::RobotCompletedPickAndPlaceAction:
+			_RobotCompletedPickAndPlaceAction.~G2U_RobotCompletedPickAndPlaceAction();
+			break;
 		case Type::PlaySound:
 			_PlaySound.~G2U_PlaySound();
 			break;
@@ -2080,6 +2129,7 @@ private:
 		G2U_RobotObservedObject _RobotObservedObject;
 		G2U_RobotObservedNothing _RobotObservedNothing;
 		G2U_DeviceDetectedVisionMarker _DeviceDetectedVisionMarker;
+		G2U_RobotCompletedPickAndPlaceAction _RobotCompletedPickAndPlaceAction;
 		G2U_PlaySound _PlaySound;
 		G2U_StopSound _StopSound;
 	};

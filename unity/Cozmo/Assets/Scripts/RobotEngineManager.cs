@@ -243,8 +243,8 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
 			break;
-		case (int)NetworkMessageID.G2U_RobotCompletedPickAndPlaceAction:
-			ReceivedSpecificMessage((G2U_RobotCompletedPickAndPlaceAction)message);
+		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
+			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
 			break;
 		}
 	}
@@ -509,7 +509,7 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
 		message.angle_rad = angle_rad;
 
-		channel.Send( message );
+		channel.Send( new U2G_Message { SetHeadAngle = message } );
 	}
 
 	public void PickAndPlaceObject()
@@ -565,8 +565,7 @@ public class RobotEngineManager : MonoBehaviour {
 		message.robotID = (byte)robotID;
 		message.angle_rad = angle_rad;
 		
-		channel.Send (new U2G_Message{TurnInPlace=message});
 		Debug.Log("TurnInPlace(robotID:"+robotID+", angle_rad:"+angle_rad+")");
-		channel.Send (message);
+		channel.Send (new U2G_Message{TurnInPlace=message});
 	}
 }

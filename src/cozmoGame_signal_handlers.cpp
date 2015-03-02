@@ -240,7 +240,7 @@ namespace Cozmo {
                                                       float x_upperLeft,  float y_upperLeft,
                                                       float width,  float height) {
     // Send a message out to UI that the device found a vision marker
-    MessageG2U_RobotObservedObject msg;
+    G2U_RobotObservedObject msg;
     msg.robotID      = robotID;
     msg.objectFamily = objectFamily;
     msg.objectType   = objectType;
@@ -309,12 +309,14 @@ namespace Cozmo {
   
   void CozmoGameImpl::HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success)
   {
-    MessageG2U_RobotCompletedPickAndPlaceAction msg;
+    G2U_RobotCompletedPickAndPlaceAction msg;
   
     msg.robotID = robotID;
     msg.success = success;
     
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+    G2U_Message message;
+    message.Set_RobotCompletedPickAndPlaceAction(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
 } // namespace Cozmo
