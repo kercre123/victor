@@ -95,6 +95,8 @@ message G2U_ImageChunk {
 //  with specified ID was seen at a particular location in the image
 message G2U_RobotObservedObject {
     uint_32 robotID,
+    uint_32 objectFamily,
+    uint_32 objectType,
     uint_32 objectID,
     float_32 topLeft_x,
     float_32 topLeft_y,
@@ -117,6 +119,16 @@ message G2U_DeviceDetectedVisionMarker {
     float_32 y_upperRight,
     float_32 x_lowerRight,
     float_32 y_lowerRight
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  ACTIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// RobotCompletedPickAndPlaceAction
+message G2U_RobotCompletedPickAndPlaceAction {
+    uint_32 robotID,
+    uint_8 success    
 }
 
 

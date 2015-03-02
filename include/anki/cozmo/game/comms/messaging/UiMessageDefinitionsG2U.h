@@ -768,6 +768,8 @@ struct G2U_ImageChunk
 struct G2U_RobotObservedObject
 {
 	uint32_t robotID;
+	uint32_t objectFamily;
+	uint32_t objectType;
 	uint32_t objectID;
 	float topLeft_x;
 	float topLeft_y;
@@ -783,12 +785,16 @@ struct G2U_RobotObservedObject
 	G2U_RobotObservedObject& operator=(G2U_RobotObservedObject&& other) noexcept = default;
 
 	explicit G2U_RobotObservedObject(uint32_t robotID
+		,uint32_t objectFamily
+		,uint32_t objectType
 		,uint32_t objectID
 		,float topLeft_x
 		,float topLeft_y
 		,float width
 		,float height)
 	:robotID(robotID)
+	,objectFamily(objectFamily)
+	,objectType(objectType)
 	,objectID(objectID)
 	,topLeft_x(topLeft_x)
 	,topLeft_y(topLeft_y)
@@ -816,6 +822,8 @@ struct G2U_RobotObservedObject
 	size_t Pack(SafeMessageBuffer& buffer) const
 	{
 		buffer.Write(this->robotID);
+		buffer.Write(this->objectFamily);
+		buffer.Write(this->objectType);
 		buffer.Write(this->objectID);
 		buffer.Write(this->topLeft_x);
 		buffer.Write(this->topLeft_y);
@@ -835,6 +843,8 @@ struct G2U_RobotObservedObject
 	size_t Unpack(const SafeMessageBuffer& buffer)
 	{
 		buffer.Read(this->robotID);
+		buffer.Read(this->objectFamily);
+		buffer.Read(this->objectType);
 		buffer.Read(this->objectID);
 		buffer.Read(this->topLeft_x);
 		buffer.Read(this->topLeft_y);
@@ -846,6 +856,10 @@ struct G2U_RobotObservedObject
 	{
 		size_t result{0};
 		//robotID
+		result += 4; // = uint_32
+		//objectFamily
+		result += 4; // = uint_32
+		//objectType
 		result += 4; // = uint_32
 		//objectID
 		result += 4; // = uint_32
@@ -863,6 +877,8 @@ struct G2U_RobotObservedObject
 	bool operator==(const G2U_RobotObservedObject& other) const
 	{
 		if (robotID != other.robotID
+		|| objectFamily != other.objectFamily
+		|| objectType != other.objectType
 		|| objectID != other.objectID
 		|| topLeft_x != other.topLeft_x
 		|| topLeft_y != other.topLeft_y
@@ -1086,6 +1102,88 @@ struct G2U_DeviceDetectedVisionMarker
 	}
 
 	bool operator!=(const G2U_DeviceDetectedVisionMarker& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
+struct G2U_RobotCompletedPickAndPlaceAction
+{
+	uint32_t robotID;
+	uint8_t success;
+
+	/**** Constructors ****/
+	G2U_RobotCompletedPickAndPlaceAction() = default;
+	G2U_RobotCompletedPickAndPlaceAction(const G2U_RobotCompletedPickAndPlaceAction& other) = default;
+	G2U_RobotCompletedPickAndPlaceAction(G2U_RobotCompletedPickAndPlaceAction& other) = default;
+	G2U_RobotCompletedPickAndPlaceAction(G2U_RobotCompletedPickAndPlaceAction&& other) noexcept = default;
+	G2U_RobotCompletedPickAndPlaceAction& operator=(const G2U_RobotCompletedPickAndPlaceAction& other) = default;
+	G2U_RobotCompletedPickAndPlaceAction& operator=(G2U_RobotCompletedPickAndPlaceAction&& other) noexcept = default;
+
+	explicit G2U_RobotCompletedPickAndPlaceAction(uint32_t robotID
+		,uint8_t success)
+	:robotID(robotID)
+	,success(success)
+	{}
+	explicit G2U_RobotCompletedPickAndPlaceAction(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit G2U_RobotCompletedPickAndPlaceAction(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->robotID);
+		buffer.Write(this->success);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->robotID);
+		buffer.Read(this->success);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//robotID
+		result += 4; // = uint_32
+		//success
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const G2U_RobotCompletedPickAndPlaceAction& other) const
+	{
+		if (robotID != other.robotID
+		|| success != other.success) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const G2U_RobotCompletedPickAndPlaceAction& other) const
 	{
 		return !(operator==(other));
 	}

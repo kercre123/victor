@@ -86,8 +86,8 @@ foreach(SOURCE ${CLAD_SOURCES})
     add_custom_command(
         OUTPUT ${CLAD_COMMAND}
         COMMAND mkdir -p ${CLAD_BUILD_DIR}
-        COMMAND python "${CLAD_DIR}/emitters/CPP_emitter.py" -n Anki -n Cozmo ${SOURCE} > ${CPP_BUILD}
-        COMMAND python "${CLAD_DIR}/emitters/CSharp_emitter.py" -n Anki.Cozmo ${SOURCE} > ${CS_BUILD}
+        COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -n Anki -n Cozmo ${SOURCE} > ${CPP_BUILD}
+        COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -n Anki.Cozmo ${SOURCE} > ${CS_BUILD}
         COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} >/dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT}
         COMMAND diff ${CS_BUILD} ${CS_OUTPUT} >/dev/null || cp ${CS_BUILD} ${CS_OUTPUT}
         MAIN_DEPENDENCY ${SOURCE}

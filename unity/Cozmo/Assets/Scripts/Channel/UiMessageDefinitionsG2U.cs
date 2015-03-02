@@ -607,6 +607,8 @@ public class G2U_ImageChunk
 public class G2U_RobotObservedObject
 {
 	public uint robotID;
+	public uint objectFamily;
+	public uint objectType;
 	public uint objectID;
 	public float topLeft_x;
 	public float topLeft_y;
@@ -620,6 +622,8 @@ public class G2U_RobotObservedObject
 	}
 
 	public G2U_RobotObservedObject(uint robotID,
+		uint objectFamily,
+		uint objectType,
 		uint objectID,
 		float topLeft_x,
 		float topLeft_y,
@@ -627,6 +631,8 @@ public class G2U_RobotObservedObject
 		float height)
 	{
 		this.robotID = robotID;
+		this.objectFamily = objectFamily;
+		this.objectType = objectType;
 		this.objectID = objectID;
 		this.topLeft_x = topLeft_x;
 		this.topLeft_y = topLeft_y;
@@ -639,6 +645,10 @@ public class G2U_RobotObservedObject
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
 		robotID = (uint)(reader.ReadUInt32());
+		//objectFamily
+		objectFamily = (uint)(reader.ReadUInt32());
+		//objectType
+		objectType = (uint)(reader.ReadUInt32());
 		//objectID
 		objectID = (uint)(reader.ReadUInt32());
 		//topLeft_x
@@ -656,6 +666,8 @@ public class G2U_RobotObservedObject
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
 		writer.Write((uint)robotID);
+		writer.Write((uint)objectFamily);
+		writer.Write((uint)objectType);
 		writer.Write((uint)objectID);
 		writer.Write((float)topLeft_x);
 		writer.Write((float)topLeft_y);
@@ -670,6 +682,10 @@ public class G2U_RobotObservedObject
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
 		robotID = (uint)(reader.ReadUInt32());
+		//objectFamily
+		objectFamily = (uint)(reader.ReadUInt32());
+		//objectType
+		objectType = (uint)(reader.ReadUInt32());
 		//objectID
 		objectID = (uint)(reader.ReadUInt32());
 		//topLeft_x
@@ -687,6 +703,10 @@ public class G2U_RobotObservedObject
 		get {
 			int result = 0;
 			//robotID
+			result += 4; // = uint_32
+			//objectFamily
+			result += 4; // = uint_32
+			//objectType
 			result += 4; // = uint_32
 			//objectID
 			result += 4; // = uint_32
@@ -876,6 +896,65 @@ public class G2U_DeviceDetectedVisionMarker
 			result += 4; // = float_32
 			//y_lowerRight
 			result += 4; // = float_32
+			return result;
+		}
+	}
+}
+
+public class G2U_RobotCompletedPickAndPlaceAction
+{
+	public uint robotID;
+	public byte success;
+
+	/**** Constructors ****/
+
+	public G2U_RobotCompletedPickAndPlaceAction()
+	{
+	}
+
+	public G2U_RobotCompletedPickAndPlaceAction(uint robotID,
+		byte success)
+	{
+		this.robotID = robotID;
+		this.success = success;
+	}
+
+	public G2U_RobotCompletedPickAndPlaceAction(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)robotID);
+		writer.Write((byte)success);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//robotID
+			result += 4; // = uint_32
+			//success
+			result += 1; // = uint_8
 			return result;
 		}
 	}
