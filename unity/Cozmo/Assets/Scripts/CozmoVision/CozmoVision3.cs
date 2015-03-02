@@ -40,8 +40,7 @@ public class CozmoVision3 : CozmoVision
 
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			if( RobotEngineManager.instance.current.observedObjects.Count > 0 && 
-			    RobotEngineManager.instance.current.observedObjects[0].width > reticle.rectTransform.rect.width && 
+			if( observedObjectsCount > 0 && RobotEngineManager.instance.current.observedObjects[0].width > reticle.rectTransform.rect.width && 
 			    RobotEngineManager.instance.current.observedObjects[0].height > reticle.rectTransform.rect.height )
 			{
 				box.image.gameObject.SetActive( true );

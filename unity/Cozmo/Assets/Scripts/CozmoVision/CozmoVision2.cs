@@ -19,9 +19,9 @@ public class CozmoVision2 : CozmoVision
 				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject < uint.MaxValue - 1 );
 			}
 
-			for( int i = 0; i < maxBoxes; ++i )
+			for( int i = 0; i < maxObservedObjects; ++i )
 			{
-				if( RobotEngineManager.instance.current.observedObjects.Count > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
+				if( observedObjectsCount > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
 

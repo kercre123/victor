@@ -9,11 +9,26 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 	[SerializeField] protected Button[] actionButtons;
-	[SerializeField] protected int maxBoxes;
+	[SerializeField] protected int maxObservedObjects;
 	
 	protected RectTransform rTrans;
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+
+	protected int observedObjectsCount
+	{
+		get
+		{
+			if( RobotEngineManager.instance.current.observedObjects.Count < maxObservedObjects )
+			{
+				return RobotEngineManager.instance.current.observedObjects.Count;
+			}
+			else
+			{
+				return maxObservedObjects;
+			}
+		}
+	}
 
 	private void Awake() {
 		rTrans = transform as RectTransform;
