@@ -99,7 +99,8 @@ namespace Cozmo {
     void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
     void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
-    void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectID,
+    void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectFamily,
+                                         uint32_t objectType, uint32_t objectID,
                                          float x_upperLeft,  float y_upperLeft,
                                          float width,  float height);
     void HandleRobotObservedNothingSignal(uint8_t robotID);    
@@ -111,6 +112,7 @@ namespace Cozmo {
                                                 float x_lowerLeft,  float y_lowerLeft,
                                                 float x_upperRight, float y_upperRight,
                                                 float x_lowerRight, float y_lowerRight);
+    void HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success);
     
     //
     // U2G Message Handling

@@ -14,12 +14,14 @@ public class Robot
 	public float pose_x { get; private set; }
 	public float pose_y { get; private set; }
 	public float pose_z { get; private set; }
-	public Box box { get; private set; }
+	public List<ObservedObject> observedObjects { get; private set; }
+	public uint selectedObject;
 
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		box = new Box();
+		selectedObject = uint.MaxValue;
+		observedObjects = new List<ObservedObject>();
 	}
 
 	public void UpdateInfo( G2U_RobotState message )
@@ -32,5 +34,19 @@ public class Robot
 		pose_x = message.pose_x;
 		pose_y = message.pose_y;
 		pose_z = message.pose_z;
+	}
+
+	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
+	{
+		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+
+		if( observedObject == null )
+		{
+			observedObject = new ObservedObject();
+
+			observedObjects.Add( observedObject );
+		}
+
+		observedObject.UpdateInfo( message );
 	}
 }

@@ -14,14 +14,12 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 	
-	public bool IsConnected {
-		get {
-			return (channel != null && channel.IsConnected);
-		}
-	}
+	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField]
 	private TextAsset configuration;
+
+	public float defaultHeadAngle;
 
 	[SerializeField]
 	[HideInInspector]
@@ -40,7 +38,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
 	
-	#if !UNITY_EDITOR
+#if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
 	private StringBuilder logBuilder = null;
@@ -102,8 +100,7 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 		}
 	}
-	#endif
-	
+#endif
 	public void AddRobot( byte robotID )
 	{
 		robots.Add( robotID, new Robot( robotID ) );
@@ -121,13 +118,13 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		Application.runInBackground = true;
 
-		robots = new Dictionary<int, Robot>();
-		AddRobot( Intro.CurrentRobotID );
-
 		channel = new UdpChannel ();
 		channel.ConnectedToClient += Connected;
 		channel.DisconnectedFromClient += Disconnected;
 		channel.MessageReceived += ReceivedMessage;
+
+		robots = new Dictionary<int, Robot>();
+		AddRobot( Intro.CurrentRobotID );
 	}
 
 	private void OnDisable()
@@ -168,7 +165,7 @@ public class RobotEngineManager : MonoBehaviour {
 			channel.Disconnect ();
 
 			// only really needed in editor in case unhitting play
-			#if UNITY_EDITOR
+#if UNITY_EDITOR
 			float limit = Time.realtimeSinceStartup + 2.0f;
 			while (channel.HasPendingOperations) {
 				if (limit < Time.realtimeSinceStartup) {
@@ -177,7 +174,7 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 				System.Threading.Thread.Sleep (500);
 			}
-			#endif
+#endif
 		}
 	}
 
@@ -246,6 +243,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
 			break;
+		case (int)NetworkMessageID.G2U_RobotCompletedPickAndPlaceAction:
+			ReceivedSpecificMessage((G2U_RobotCompletedPickAndPlaceAction)message);
+			break;
 		}
 	}
 	
@@ -289,16 +289,28 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
-		current.box.UpdateInfo( message );
+		current.UpdateObservedObjectInfo( message );
 	}
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
 		//Debug.Log( "no box found at " + Time.time );
 
-		current.box.RemoveInfo();
+		if( current.selectedObject == uint.MaxValue )
+		{
+			current.observedObjects.Clear();
+		}
 	}
-	
+
+	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
+	{
+		Debug.Log( "Action complete" );
+		
+		current.selectedObject = uint.MaxValue;
+
+		SetHeadAngle( defaultHeadAngle );
+	}
+
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
 	{
 
@@ -350,7 +362,7 @@ public class RobotEngineManager : MonoBehaviour {
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
-			
+
 			if( colorArray == null || colorArray.Length != length )
 			{
 				colorArray = new Color32[ length ];
@@ -396,10 +408,12 @@ public class RobotEngineManager : MonoBehaviour {
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
+
+				current.observedObjects.Clear();
 			}
 		}
 	}
-	
+
 	public void StartEngine(string vizHostIP)
 	{
 		U2G_StartEngine message = new U2G_StartEngine ();
@@ -456,7 +470,8 @@ public class RobotEngineManager : MonoBehaviour {
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
-		
+
+		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
 		U2G_DriveWheels message = new U2G_DriveWheels ();
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
@@ -489,15 +504,23 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
 	} 
 
-	public void PickUpBox()
+	public void SetHeadAngle( float angle_rad )
+	{
+		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
+		message.angle_rad = angle_rad;
+
+		channel.Send( message );
+	}
+
+	public void PickAndPlaceObject()
 	{
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = (int)current.box.ID;
+		message.objectID = (int)current.selectedObject;
 		message.usePreDockPose = 0;
 		
 		channel.Send( new U2G_Message{PickAndPlaceObject=message} );
 
-		current.box.RemoveInfo();
+		current.observedObjects.Clear();
 	}
 
 	public void RequestImage(int robotID)
@@ -543,5 +566,7 @@ public class RobotEngineManager : MonoBehaviour {
 		message.angle_rad = angle_rad;
 		
 		channel.Send (new U2G_Message{TurnInPlace=message});
+		Debug.Log("TurnInPlace(robotID:"+robotID+", angle_rad:"+angle_rad+")");
+		channel.Send (message);
 	}
 }

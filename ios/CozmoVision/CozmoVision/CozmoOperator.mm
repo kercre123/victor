@@ -530,6 +530,7 @@ using namespace Anki;
     Cozmo::MessageU2G_PickAndPlaceObject message;
     message.objectID = (int)objectID.integerValue;
     message.usePreDockPose = false;
+    message.useManualSpeed = false;
     [self sendMessage:message];
   }
 }

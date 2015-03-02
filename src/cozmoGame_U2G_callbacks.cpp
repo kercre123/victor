@@ -153,7 +153,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
     if(success) {
       PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to robot %d!\n", msg.robotID);
     } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connected to robot %d!\n", msg.robotID);
+      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connect to robot %d!\n", msg.robotID);
     }
   }
   
@@ -166,7 +166,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
     if(success) {
       PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to UI device %d!\n", msg.deviceID);
     } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connected to UI device %d!\n", msg.deviceID);
+      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connect to UI device %d!\n", msg.deviceID);
     }
   }
   

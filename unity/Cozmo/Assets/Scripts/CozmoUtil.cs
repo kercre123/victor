@@ -98,11 +98,35 @@ public static class CozmoUtil {
 		if(x == 0f) return;
 
 		float speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(x) * maxTurnFactor) * (x >= 0f ? 1f : -1f);
-		//x = x*x * (x < 0f ? -1f : 1f);
-		//float factor = Mathf.Min(1f, maxTurnFactor * 2f);
 
 		leftWheelSpeed = speed;
 		rightWheelSpeed = -speed;
+	}
+
+	public static float ClampAngle(float angle) {
+		float clamped = angle % 360f;
+
+		//Debug.Log("ClampAngle "+angle+" % 360f = "+clamped);
+
+		if(clamped < -180f) clamped += 360f;
+		if(clamped > 180f) clamped -= 360f;
+
+		return clamped;
+	}
+
+	public static float AngleDelta(float from, float to) {
+
+		from = ClampAngle(from);
+		to = ClampAngle(to);
+
+		if(from > 0f && to < 0f) {
+			from -= 360f;
+		}
+		else if(from < 0f && to > 0f) {
+			from += 360f;
+		} 
+
+		return ClampAngle(to - from);
 	}
 
 }
