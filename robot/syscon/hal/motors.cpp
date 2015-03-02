@@ -105,11 +105,7 @@ extern GlobalDataToBody g_dataToBody;
       LEFT_N1_PIN,
       LEFT_N2_PIN,
       LEFT_P_PIN,    
-#ifdef ROBOT2      
-      true,
-#else
       false,
-#endif      
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -120,11 +116,7 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N1_PIN,
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
-#ifdef ROBOT2      
-      false,
-#else
       true,
-#endif 
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
