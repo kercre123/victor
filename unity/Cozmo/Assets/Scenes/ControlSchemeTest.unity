@@ -385,7 +385,7 @@ GameObject:
   - 114: {fileID: 25463506}
   - 114: {fileID: 25463503}
   - 120: {fileID: 25463504}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -553,7 +553,7 @@ GameObject:
   - 224: {fileID: 25832823}
   - 222: {fileID: 25832825}
   - 114: {fileID: 25832824}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -835,7 +835,7 @@ GameObject:
   - 224: {fileID: 45930636}
   - 222: {fileID: 45930638}
   - 114: {fileID: 45930637}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1042,7 +1042,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -1068,7 +1068,7 @@ GameObject:
   - 224: {fileID: 54381308}
   - 222: {fileID: 54381310}
   - 114: {fileID: 54381309}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1191,6 +1191,66 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 1362912715}
   m_GameObject: {fileID: 54799946}
+--- !u!1 &58122459
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 58122461}
+  - 20: {fileID: 58122460}
+  m_Layer: 0
+  m_Name: UI Line Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!20 &58122460
+Camera:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 58122459}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 3
+  m_BackGroundColor: {r: .192156866, g: .301960796, b: .474509805, a: .0196078438}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: .300000012
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 1
+  orthographic size: 5
+  m_Depth: 11
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 16
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_HDR: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: .0219999999
+--- !u!4 &58122461
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 58122459}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
 --- !u!1 &66136250
 GameObject:
   m_ObjectHideFlags: 0
@@ -1267,7 +1327,7 @@ GameObject:
   - 224: {fileID: 67918836}
   - 222: {fileID: 67918838}
   - 114: {fileID: 67918837}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1381,7 +1441,7 @@ GameObject:
   - 114: {fileID: 77553116}
   - 114: {fileID: 77553113}
   - 120: {fileID: 77553114}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2666,7 +2726,7 @@ GameObject:
   - 114: {fileID: 126007736}
   - 114: {fileID: 126007733}
   - 120: {fileID: 126007734}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2937,7 +2997,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -3805,7 +3865,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -4007,7 +4067,7 @@ GameObject:
   - 224: {fileID: 154593320}
   - 222: {fileID: 154593322}
   - 114: {fileID: 154593321}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5129,7 +5189,7 @@ GameObject:
   - 224: {fileID: 212097349}
   - 222: {fileID: 212097351}
   - 114: {fileID: 212097350}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5531,7 +5591,7 @@ GameObject:
   - 114: {fileID: 230754561}
   - 114: {fileID: 230754558}
   - 120: {fileID: 230754559}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6725,7 +6785,7 @@ GameObject:
   - 114: {fileID: 280540506}
   - 114: {fileID: 280540503}
   - 120: {fileID: 280540504}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7016,7 +7076,7 @@ GameObject:
   - 114: {fileID: 295775802}
   - 114: {fileID: 295775799}
   - 120: {fileID: 295775800}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7420,7 +7480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -8240,7 +8300,7 @@ GameObject:
   - 224: {fileID: 338959687}
   - 222: {fileID: 338959689}
   - 114: {fileID: 338959688}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9258,7 +9318,7 @@ GameObject:
   - 114: {fileID: 375908189}
   - 114: {fileID: 375908186}
   - 120: {fileID: 375908187}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9761,7 +9821,7 @@ GameObject:
   - 114: {fileID: 397708076}
   - 114: {fileID: 397708073}
   - 120: {fileID: 397708074}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10092,7 +10152,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -10867,7 +10927,7 @@ GameObject:
   - 114: {fileID: 424721900}
   - 114: {fileID: 424721897}
   - 120: {fileID: 424721898}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11225,7 +11285,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -12123,7 +12183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -12149,7 +12209,7 @@ GameObject:
   - 224: {fileID: 463001620}
   - 222: {fileID: 463001622}
   - 114: {fileID: 463001621}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12613,7 +12673,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -13152,7 +13212,7 @@ GameObject:
   - 224: {fileID: 509558491}
   - 222: {fileID: 509558493}
   - 114: {fileID: 509558492}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14120,7 +14180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -14326,7 +14386,7 @@ GameObject:
   - 224: {fileID: 578418042}
   - 222: {fileID: 578418044}
   - 114: {fileID: 578418043}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15024,7 +15084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -15053,7 +15113,7 @@ GameObject:
   - 114: {fileID: 601513756}
   - 114: {fileID: 601513755}
   - 120: {fileID: 601513754}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15645,7 +15705,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -15671,7 +15731,7 @@ GameObject:
   - 224: {fileID: 625820195}
   - 222: {fileID: 625820197}
   - 114: {fileID: 625820196}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16061,7 +16121,7 @@ GameObject:
   - 114: {fileID: 658322136}
   - 114: {fileID: 658322133}
   - 120: {fileID: 658322134}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16298,7 +16358,7 @@ GameObject:
   - 224: {fileID: 662855892}
   - 222: {fileID: 662855894}
   - 114: {fileID: 662855893}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16549,7 +16609,7 @@ GameObject:
   - 114: {fileID: 667869661}
   - 114: {fileID: 667869658}
   - 120: {fileID: 667869659}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17024,7 +17084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -18054,7 +18114,7 @@ GameObject:
   - 114: {fileID: 710708993}
   - 114: {fileID: 710708990}
   - 120: {fileID: 710708991}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18225,7 +18285,7 @@ GameObject:
   - 114: {fileID: 717860856}
   - 114: {fileID: 717860853}
   - 120: {fileID: 717860854}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18396,7 +18456,7 @@ GameObject:
   - 114: {fileID: 718777810}
   - 114: {fileID: 718777809}
   - 120: {fileID: 718777808}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18567,7 +18627,7 @@ GameObject:
   - 114: {fileID: 719754363}
   - 114: {fileID: 719754360}
   - 120: {fileID: 719754361}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19574,7 +19634,7 @@ GameObject:
   - 224: {fileID: 744008660}
   - 222: {fileID: 744008662}
   - 114: {fileID: 744008661}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20073,7 +20133,7 @@ GameObject:
   - 224: {fileID: 755710474}
   - 222: {fileID: 755710476}
   - 114: {fileID: 755710475}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20564,7 +20624,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -20741,7 +20801,7 @@ GameObject:
   - 114: {fileID: 790445491}
   - 114: {fileID: 790445490}
   - 120: {fileID: 790445489}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21273,7 +21333,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -21802,7 +21862,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -22061,7 +22121,7 @@ GameObject:
   - 224: {fileID: 868894818}
   - 222: {fileID: 868894820}
   - 114: {fileID: 868894819}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23091,7 +23151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -23181,7 +23241,7 @@ GameObject:
   - 224: {fileID: 908139382}
   - 222: {fileID: 908139384}
   - 114: {fileID: 908139383}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23449,7 +23509,7 @@ GameObject:
   - 224: {fileID: 915977969}
   - 222: {fileID: 915977971}
   - 114: {fileID: 915977970}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23776,7 +23836,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -24647,7 +24707,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -24676,7 +24736,7 @@ GameObject:
   - 114: {fileID: 973404758}
   - 114: {fileID: 973404755}
   - 120: {fileID: 973404756}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25383,7 +25443,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -25670,7 +25730,7 @@ GameObject:
   - 224: {fileID: 1002116171}
   - 222: {fileID: 1002116173}
   - 114: {fileID: 1002116172}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25874,7 +25934,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -26312,7 +26372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -27542,7 +27602,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -27607,7 +27667,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -27792,7 +27852,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -27973,7 +28033,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -28060,7 +28120,7 @@ GameObject:
   - 224: {fileID: 1092738782}
   - 222: {fileID: 1092738784}
   - 114: {fileID: 1092738783}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29221,7 +29281,7 @@ GameObject:
   - 224: {fileID: 1153923899}
   - 222: {fileID: 1153923901}
   - 114: {fileID: 1153923900}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -30074,7 +30134,7 @@ GameObject:
   - 224: {fileID: 1201500181}
   - 222: {fileID: 1201500183}
   - 114: {fileID: 1201500182}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -30182,7 +30242,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -30494,7 +30554,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -30653,7 +30713,7 @@ GameObject:
   - 224: {fileID: 1227320317}
   - 222: {fileID: 1227320319}
   - 114: {fileID: 1227320318}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -31283,7 +31343,7 @@ GameObject:
   - 114: {fileID: 1250307035}
   - 114: {fileID: 1250307034}
   - 120: {fileID: 1250307033}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -31705,7 +31765,7 @@ GameObject:
   - 224: {fileID: 1257454631}
   - 222: {fileID: 1257454633}
   - 114: {fileID: 1257454632}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -31774,7 +31834,7 @@ GameObject:
   - 224: {fileID: 1261379910}
   - 222: {fileID: 1261379912}
   - 114: {fileID: 1261379911}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -32273,7 +32333,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -32302,7 +32362,7 @@ GameObject:
   - 114: {fileID: 1294167818}
   - 114: {fileID: 1294167815}
   - 120: {fileID: 1294167816}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -32727,7 +32787,7 @@ GameObject:
   - 114: {fileID: 1304844055}
   - 114: {fileID: 1304844052}
   - 120: {fileID: 1304844053}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -33079,7 +33139,7 @@ GameObject:
   - 224: {fileID: 1310984089}
   - 222: {fileID: 1310984091}
   - 114: {fileID: 1310984090}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -33692,7 +33752,7 @@ GameObject:
   - 114: {fileID: 1328305704}
   - 114: {fileID: 1328305701}
   - 120: {fileID: 1328305702}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34209,7 +34269,7 @@ GameObject:
   - 224: {fileID: 1355353586}
   - 222: {fileID: 1355353588}
   - 114: {fileID: 1355353587}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -35439,7 +35499,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -35822,7 +35882,7 @@ GameObject:
   - 224: {fileID: 1406409016}
   - 222: {fileID: 1406409018}
   - 114: {fileID: 1406409017}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -36060,7 +36120,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -36436,7 +36496,7 @@ GameObject:
   - 224: {fileID: 1429969909}
   - 222: {fileID: 1429969911}
   - 114: {fileID: 1429969910}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -36631,7 +36691,7 @@ GameObject:
   - 114: {fileID: 1433396743}
   - 114: {fileID: 1433396740}
   - 120: {fileID: 1433396741}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -36937,7 +36997,7 @@ GameObject:
   - 224: {fileID: 1445706288}
   - 222: {fileID: 1445706290}
   - 114: {fileID: 1445706289}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -37078,7 +37138,7 @@ GameObject:
   - 114: {fileID: 1452178795}
   - 114: {fileID: 1452178792}
   - 120: {fileID: 1452178793}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -38169,7 +38229,7 @@ GameObject:
   - 224: {fileID: 1494435004}
   - 222: {fileID: 1494435006}
   - 114: {fileID: 1494435005}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39377,7 +39437,7 @@ GameObject:
   - 114: {fileID: 1535368388}
   - 114: {fileID: 1535368385}
   - 120: {fileID: 1535368386}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39584,7 +39644,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -40433,7 +40493,7 @@ GameObject:
   - 114: {fileID: 1572494572}
   - 114: {fileID: 1572494569}
   - 120: {fileID: 1572494570}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40775,7 +40835,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -41008,7 +41068,7 @@ GameObject:
   - 114: {fileID: 1609697542}
   - 114: {fileID: 1609697541}
   - 120: {fileID: 1609697540}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41441,7 +41501,7 @@ GameObject:
   - 224: {fileID: 1633792910}
   - 222: {fileID: 1633792912}
   - 114: {fileID: 1633792911}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -42389,7 +42449,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -42415,7 +42475,7 @@ GameObject:
   - 224: {fileID: 1680968777}
   - 222: {fileID: 1680968779}
   - 114: {fileID: 1680968778}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -42575,7 +42635,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -42604,7 +42664,7 @@ GameObject:
   - 114: {fileID: 1693034564}
   - 114: {fileID: 1693034561}
   - 120: {fileID: 1693034562}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44889,7 +44949,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -45077,7 +45137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -45106,7 +45166,7 @@ GameObject:
   - 114: {fileID: 1815941804}
   - 114: {fileID: 1815941801}
   - 120: {fileID: 1815941802}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45675,7 +45735,7 @@ GameObject:
   - 114: {fileID: 1830881152}
   - 114: {fileID: 1830881149}
   - 120: {fileID: 1830881150}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46462,7 +46522,7 @@ GameObject:
   - 224: {fileID: 1857647947}
   - 222: {fileID: 1857647949}
   - 114: {fileID: 1857647948}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -47632,7 +47692,7 @@ GameObject:
   - 224: {fileID: 1890185807}
   - 222: {fileID: 1890185809}
   - 114: {fileID: 1890185808}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -48314,7 +48374,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -48448,7 +48508,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -48543,7 +48603,7 @@ GameObject:
   - 224: {fileID: 1958745403}
   - 222: {fileID: 1958745405}
   - 114: {fileID: 1958745404}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -48615,7 +48675,7 @@ GameObject:
   - 114: {fileID: 1959062306}
   - 114: {fileID: 1959062303}
   - 120: {fileID: 1959062304}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -50718,7 +50778,7 @@ GameObject:
   - 114: {fileID: 2030978293}
   - 114: {fileID: 2030978292}
   - 120: {fileID: 2030978291}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51688,7 +51748,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -51717,7 +51777,7 @@ GameObject:
   - 114: {fileID: 2079241165}
   - 114: {fileID: 2079241162}
   - 120: {fileID: 2079241163}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51888,7 +51948,7 @@ GameObject:
   - 114: {fileID: 2082636352}
   - 114: {fileID: 2082636351}
   - 120: {fileID: 2082636350}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -52361,7 +52421,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -52459,7 +52519,7 @@ GameObject:
   - 114: {fileID: 2100868306}
   - 114: {fileID: 2100868303}
   - 120: {fileID: 2100868304}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -52804,7 +52864,7 @@ GameObject:
   - 224: {fileID: 2109900377}
   - 222: {fileID: 2109900378}
   - 114: {fileID: 2109900376}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -52876,7 +52936,7 @@ GameObject:
   - 114: {fileID: 2113822672}
   - 114: {fileID: 2113822669}
   - 120: {fileID: 2113822670}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -53188,7 +53248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -53315,7 +53375,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0

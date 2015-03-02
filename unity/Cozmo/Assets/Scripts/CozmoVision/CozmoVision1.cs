@@ -60,9 +60,9 @@ public class CozmoVision1 : CozmoVision
 
 			distancePairs.Clear();
 
-			for( int i = 0; i < maxBoxes; ++i )
+			for( int i = 0; i < maxObservedObjects; ++i )
 			{
-				if( RobotEngineManager.instance.current.observedObjects.Count > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
+				if( observedObjectsCount > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
 				{
 					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
 
@@ -76,7 +76,7 @@ public class CozmoVision1 : CozmoVision
 					
 					selectionBoxes[i].image.gameObject.SetActive( true );
 
-					for( int j = 0; j < selectionButtons.Length && j < RobotEngineManager.instance.current.observedObjects.Count; ++j )
+					for( int j = 0; j < selectionButtons.Length && j < observedObjectsCount; ++j )
 					{
 						DistancePair dp = new DistancePair();
 
