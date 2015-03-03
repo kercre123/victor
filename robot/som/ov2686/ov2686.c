@@ -293,9 +293,10 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
     printk(KERN_INFO "\tSending frame rate config to OV2686\n");
     ov2686_write_script(client, &info->interval->script);
 
-    printk(KERN_INFO "\tSending crop config to OV2686\n");
     ret = 0;
     if (info->format.width < OV2686_WINDOW_MAX_WIDTH) crop_scale = 2; // If using skip scale crop by 1/2 as well
+    printk(KERN_INFO "\tSending crop config to OV2686: [%d, %d, %d, %d], scale=%d\n",
+    info->crop.left, info->crop.top, info->crop.width, info->crop.height, crop_scale);
 
     writeVal = info->crop.left*crop_scale;
     ret |= ov2686_reg_write(client, OV2686_REG_X_START_H, writeVal >> 8);
@@ -305,11 +306,11 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
     ret |= ov2686_reg_write(client, OV2686_REG_Y_START_H, writeVal >> 8);
     ret |= ov2686_reg_write(client, OV2686_REG_Y_START_L, writeVal & 0xff);
 
-    writeVal = info->crop.width*crop_scale;
+    writeVal = (info->crop.width*crop_scale)+15;
     ret |= ov2686_reg_write(client, OV2686_REG_X_END_H, writeVal >> 8);
     ret |= ov2686_reg_write(client, OV2686_REG_X_END_L, writeVal & 0xff);
 
-    writeVal = info->crop.height*crop_scale;
+    writeVal = (info->crop.height*crop_scale)+15;
     ret |= ov2686_reg_write(client, OV2686_REG_Y_END_H, writeVal >> 8);
     ret |= ov2686_reg_write(client, OV2686_REG_Y_END_L, writeVal & 0xff);
 
