@@ -22,7 +22,7 @@ struct OVRegSettings
 struct OVRegScript
 {
   u32 len;
-  OVRegSettings* script;
+  const struct OVRegSettings* script;
 };
 
 #endif
