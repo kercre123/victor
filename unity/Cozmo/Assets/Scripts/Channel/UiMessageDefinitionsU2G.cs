@@ -18,6 +18,7 @@ public class U2G_Ping
 	}
 
 	public U2G_Ping(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//counter
@@ -67,6 +68,7 @@ public class U2G_ConnectToRobot
 	}
 
 	public U2G_ConnectToRobot(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -116,6 +118,7 @@ public class U2G_ConnectToUiDevice
 	}
 
 	public U2G_ConnectToUiDevice(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -165,6 +168,7 @@ public class U2G_DisconnectFromUiDevice
 	}
 
 	public U2G_DisconnectFromUiDevice(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -224,6 +228,7 @@ public class U2G_ForceAddRobot
 	}
 
 	public U2G_ForceAddRobot(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//ipAddress
@@ -300,6 +305,7 @@ public class U2G_StartEngine
 	}
 
 	public U2G_StartEngine(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//asHost
@@ -365,6 +371,7 @@ public class U2G_DriveWheels
 	}
 
 	public U2G_DriveWheels(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//lwheel_speed_mmps
@@ -424,6 +431,7 @@ public class U2G_TurnInPlace
 	}
 
 	public U2G_TurnInPlace(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//angle_rad
@@ -480,6 +488,7 @@ public class U2G_MoveHead
 	}
 
 	public U2G_MoveHead(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//speed_rad_per_sec
@@ -529,6 +538,7 @@ public class U2G_MoveLift
 	}
 
 	public U2G_MoveLift(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//speed_rad_per_sec
@@ -584,6 +594,7 @@ public class U2G_SetLiftHeight
 	}
 
 	public U2G_SetLiftHeight(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//height_mm
@@ -653,6 +664,7 @@ public class U2G_SetHeadAngle
 	}
 
 	public U2G_SetHeadAngle(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//angle_rad
@@ -710,6 +722,7 @@ public class U2G_StopAllMotors
 	}
 
 	public U2G_StopAllMotors(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -752,6 +765,7 @@ public class U2G_ImageRequest
 	}
 
 	public U2G_ImageRequest(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -811,6 +825,7 @@ public class U2G_SetRobotImageSendMode
 	}
 
 	public U2G_SetRobotImageSendMode(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//mode
@@ -867,6 +882,7 @@ public class U2G_SaveImages
 	}
 
 	public U2G_SaveImages(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//enableSave
@@ -916,6 +932,7 @@ public class U2G_EnableDisplay
 	}
 
 	public U2G_EnableDisplay(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//enable
@@ -965,6 +982,7 @@ public class U2G_SetHeadlights
 	}
 
 	public U2G_SetHeadlights(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//intensity
@@ -1026,6 +1044,7 @@ public class U2G_GotoPose
 	}
 
 	public U2G_GotoPose(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//x_mm
@@ -1115,6 +1134,7 @@ public class U2G_PlaceObjectOnGround
 	}
 
 	public U2G_PlaceObjectOnGround(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//x_mm
@@ -1186,6 +1206,7 @@ public class U2G_PlaceObjectOnGroundHere
 	}
 
 	public U2G_PlaceObjectOnGroundHere(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1219,6 +1240,7 @@ public class U2G_ExecuteTestPlan
 	}
 
 	public U2G_ExecuteTestPlan(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1252,6 +1274,7 @@ public class U2G_SelectNextObject
 	}
 
 	public U2G_SelectNextObject(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1297,6 +1320,7 @@ public class U2G_PickAndPlaceObject
 	}
 
 	public U2G_PickAndPlaceObject(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//objectID
@@ -1363,6 +1387,7 @@ public class U2G_TraverseObject
 	}
 
 	public U2G_TraverseObject(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//usePreDockPose
@@ -1413,6 +1438,7 @@ public class U2G_ClearAllBlocks
 	}
 
 	public U2G_ClearAllBlocks(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1452,6 +1478,7 @@ public class U2G_ExecuteBehavior
 	}
 
 	public U2G_ExecuteBehavior(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//behaviorMode
@@ -1501,6 +1528,7 @@ public class U2G_SetBehaviorState
 	}
 
 	public U2G_SetBehaviorState(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//behaviorState
@@ -1544,6 +1572,7 @@ public class U2G_AbortPath
 	}
 
 	public U2G_AbortPath(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1577,6 +1606,7 @@ public class U2G_AbortAll
 	}
 
 	public U2G_AbortAll(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1625,6 +1655,7 @@ public class U2G_DrawPoseMarker
 	}
 
 	public U2G_DrawPoseMarker(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//x_mm
@@ -1689,6 +1720,7 @@ public class U2G_ErasePoseMarker
 	}
 
 	public U2G_ErasePoseMarker(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1734,6 +1766,7 @@ public class U2G_SetHeadControllerGains
 	}
 
 	public U2G_SetHeadControllerGains(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//kp
@@ -1803,6 +1836,7 @@ public class U2G_SetLiftControllerGains
 	}
 
 	public U2G_SetLiftControllerGains(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//kp
@@ -1860,6 +1894,7 @@ public class U2G_SelectNextSoundScheme
 	}
 
 	public U2G_SelectNextSoundScheme(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1908,6 +1943,7 @@ public class U2G_StartTestMode
 	}
 
 	public U2G_StartTestMode(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//p1
@@ -1978,6 +2014,7 @@ public class U2G_IMURequest
 	}
 
 	public U2G_IMURequest(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//length_ms
@@ -2030,6 +2067,7 @@ public class U2G_PlayAnimation
 	}
 
 	public U2G_PlayAnimation(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//numLoops
@@ -2086,6 +2124,7 @@ public class U2G_ReadAnimationFile
 	}
 
 	public U2G_ReadAnimationFile(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -2125,6 +2164,7 @@ public class U2G_StartFaceTracking
 	}
 
 	public U2G_StartFaceTracking(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//timeout_sec
@@ -2168,6 +2208,7 @@ public class U2G_StopFaceTracking
 	}
 
 	public U2G_StopFaceTracking(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -2201,6 +2242,7 @@ public class U2G_StartLookingForMarkers
 	}
 
 	public U2G_StartLookingForMarkers(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -2234,6 +2276,7 @@ public class U2G_StopLookingForMarkers
 	}
 
 	public U2G_StopLookingForMarkers(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -2294,6 +2337,7 @@ public class U2G_SetVisionSystemParams
 	}
 
 	public U2G_SetVisionSystemParams(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//autoexposureOn
@@ -2407,6 +2451,7 @@ public class U2G_SetFaceDetectParams
 	}
 
 	public U2G_SetFaceDetectParams(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//scaleFactor

@@ -18,6 +18,7 @@ public class G2U_Ping
 	}
 
 	public G2U_Ping(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//counter
@@ -67,6 +68,7 @@ public class G2U_RobotAvailable
 	}
 
 	public G2U_RobotAvailable(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -116,6 +118,7 @@ public class G2U_UiDeviceAvailable
 	}
 
 	public G2U_UiDeviceAvailable(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -168,6 +171,7 @@ public class G2U_RobotConnected
 	}
 
 	public G2U_RobotConnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -227,6 +231,7 @@ public class G2U_RobotDisconnected
 	}
 
 	public G2U_RobotDisconnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -286,6 +291,7 @@ public class G2U_UiDeviceConnected
 	}
 
 	public G2U_UiDeviceConnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -369,6 +375,7 @@ public class G2U_RobotState
 	}
 
 	public G2U_RobotState(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//pose_x
@@ -509,6 +516,7 @@ public class G2U_ImageChunk
 	}
 
 	public G2U_ImageChunk(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//imageId
@@ -641,6 +649,7 @@ public class G2U_RobotObservedObject
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -739,6 +748,7 @@ public class G2U_RobotObservedNothing
 	}
 
 	public G2U_RobotObservedNothing(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -812,6 +822,7 @@ public class G2U_DeviceDetectedVisionMarker
 	}
 
 	public G2U_DeviceDetectedVisionMarker(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//markerType
@@ -920,6 +931,7 @@ public class G2U_RobotCompletedPickAndPlaceAction
 	}
 
 	public G2U_RobotCompletedPickAndPlaceAction(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -982,6 +994,7 @@ public class G2U_PlaySound
 	}
 
 	public G2U_PlaySound(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//soundFilename
@@ -1045,6 +1058,7 @@ public class G2U_StopSound
 	}
 
 	public G2U_StopSound(System.IO.Stream stream)
+		: this()
 	{
 	}
 
