@@ -214,7 +214,11 @@ public class RobotRelativeControls : MonoBehaviour {
 		
 		
 		if(gyroSleepTimer <= gyroSleepTime && gyroInputs != null && gyroInputs.gameObject.activeSelf) { // && (verticalStick == null || verticalStick.IsPressed)) {
-			inputs.x = gyroInputs.Horizontal;
+
+			float h = gyroInputs.Horizontal;
+			inputs.x += h;
+			inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
+
 //			if(gyroPitchControl != null && gyroPitchControl.isOn) {
 //				inputs.y = gyroInputs.Vertical;
 //			}
@@ -245,6 +249,9 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 		else if(turnInPlaceOnlyMode || inputs.y == 0f) {
 			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
+		}
+		else if(verticalStick == horizontalStick) {
+			CozmoUtil.CalcWheelSpeedsForOldThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor);
 		}
 		else { //continuous input range mode...causes issues at thresholds
 			CozmoUtil.CalcWheelSpeedsForTwoAxisInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);

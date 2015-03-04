@@ -18,7 +18,6 @@ public class PlayerRelativeControls : MonoBehaviour {
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;
 	bool moveCommandLastFrame = false;
-	float maxTurnFactor = 1f;
 	float robotFacing = 0f;
 	float robotStartHeading = 0f;
 	float compassStartHeading = 0f;
@@ -39,7 +38,6 @@ public class PlayerRelativeControls : MonoBehaviour {
 
 		compassStartHeading = CozmoUtil.ClampAngle(-Input.compass.trueHeading);
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
-		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 	}
 	
 	void Update() {
@@ -77,14 +75,8 @@ public class PlayerRelativeControls : MonoBehaviour {
 		Debug.Log("RobotRelativeControls relativeScreenFacing("+relativeScreenFacing+") relativeRobotFacing("+relativeRobotFacing+") screenToRobot("+screenToRobot+") throwAngle("+throwAngle+") relativeAngle("+relativeAngle+")");
 		inputs = Quaternion.AngleAxis(-screenToRobot, Vector3.forward) * inputs;
 
-		if(Mathf.Abs(relativeAngle) > 30f) {
-			inputs.x = Mathf.Clamp01(Mathf.Abs(relativeAngle) / 90f) * (relativeAngle >= 0f ? -1f : 1f);
-			CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed, 1f);
-		}
-		else { //continuous input range mode...causes issues at thresholds
-			CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, 180f, maxTurnFactor);
-		}
-		
+		CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
 		}
