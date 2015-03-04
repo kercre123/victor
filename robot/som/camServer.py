@@ -38,6 +38,7 @@ class CameraSubServer(BaseSubServer):
     SENSOR_FPS     = 15
 
     ISP_MIN_RESOLUTION = messages.CAMERA_RES_QVGA
+    CROP_THRESHOLD = messages.CAMERA_RES_VGA
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
@@ -72,7 +73,7 @@ class CameraSubServer(BaseSubServer):
         assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"%s":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]' % self.camDev]) == 0, "media-ctl ISP links setup failure"
 
         # ISP resizer resolution
-        self.ISPResolution = messages.CAMERA_RES_NONE
+        self.resolution = messages.CAMERA_RES_NONE
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -92,17 +93,15 @@ class CameraSubServer(BaseSubServer):
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
         # Camera resolution enum is backwards, smaller number -> larger image
-        #resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
-        #resolutionEnum = min(resolutionEnum, self.ISP_MIN_RESOLUTION) # ISP has minimum resolution
-        resolutionEnum = messages.CAMERA_RES_QVGA # Forcing QVGA for now
-        if resolutionEnum == self.ISPResolution: # Already configured
+        resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
+        if resolutionEnum == self.resolution: # Already configured
             self.startEncoder()
             return True
         else:
             self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY 640x480]' % \
-                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2))]) == 0:
-                self.ISPResolution = resolutionEnum
+            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
+                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[min(resolutionEnum, self.CROP_THRESHOLD)])]) == 0:
+                self.resolution = resolutionEnum
                 self.startEncoder()
                 return True
             else:
@@ -115,10 +114,15 @@ class CameraSubServer(BaseSubServer):
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG:
                 sys.stdout.write("Starting the encoder\n")
-                self.encoderProcess = subprocess.Popen(['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
-                                                        'videocrop', 'left=160', 'top=120', 'right=160', 'bottom=120', '!', \
-                                                        'TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', 'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
-                                                        'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
+                encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
+                if self.resolution > self.CROP_THRESHOLD: # Cropping to QVGA
+                    h = (self.RESOLUTION_TUPLES[self.CROP_THRESHOLD][0] - self.RESOLUTION_TUPLES[self.resolution][0])/2
+                    v = (self.RESOLUTION_TUPLES[self.CROP_THRESHOLD][1] - self.RESOLUTION_TUPLES[self.resolution][1])/2
+                    encoderCall.extend(['videocrop', 'left=%d' % h, 'top=%d' % v, 'right=%d' % h, 'bottom=%d' % v, '!'])
+                encoderCall.extend(['TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', \
+                                    'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
+                                    'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
+                self.encoderProcess = subprocess.Popen(encoderCall)
             else:
                 raise ValueError("Unsupported encoder coding specified")
         self.encoderLock.release()
@@ -189,7 +193,7 @@ class CameraSubServer(BaseSubServer):
                     msg.imageTimestamp = self.server.timestamp.get()
                     msg.imageEncoding = self.ENCODER_CODING
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
-                    msg.resolution = self.ISPResolution
+                    msg.resolution = self.resolution
                     chunkNumber = 0
                     while frame:
                         frame = msg.takeChunk(frame)
