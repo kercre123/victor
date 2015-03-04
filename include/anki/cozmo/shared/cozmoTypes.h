@@ -211,6 +211,13 @@ namespace Anki {
       s32 maxObjectWidth;
     } FaceDetectParams_t;
 
+    
+    typedef enum {
+      VIZ_SAVE_OFF = 0,
+      VIZ_SAVE_ONE_SHOT,
+      VIZ_SAVE_CONTINUOUS
+    } VizSaveImageMode_t;
+    
   }
 }
 

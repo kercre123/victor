@@ -186,11 +186,9 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
 
-#ifndef OFFBOARD_VISION    
         lastResult = FaceTrackingController::Init(VisionSystem::GetFaceDetectionParams());
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "FaceTrackingController init failed.\n");
-#endif
         
         // Start calibration
         StartMotorCalibrationRoutine();
@@ -309,10 +307,8 @@ namespace Anki {
         
         PathFollower::Update();
         PickAndPlaceController::Update();
-#ifndef OFFBOARD_VISION
         DockingController::Update();
         FaceTrackingController::Update();
-#endif
         
         //////////////////////////////////////////////////////////////
         // State Machine
