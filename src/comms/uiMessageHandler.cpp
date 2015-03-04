@@ -56,14 +56,13 @@ namespace Anki {
     }
     
 
-    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const UiMessage& msg)
+    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const G2U_Message& msg)
     {
       #if(RUN_UI_MESSAGE_TCP_SERVER)
       
       Comms::MsgPacket p;
-      p.data[0] = msg.GetID();
-      msg.GetBytes(p.data+1);
-      p.dataLen = msg.GetSize() + 1;
+      msg.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+      p.dataLen = msg.Size();
       p.destId = devID;
       
       return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
@@ -82,21 +81,18 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      const u8 msgID = packet.data[0];
-      
-      if(lookupTable_[msgID].size != packet.dataLen-1) {
+      U2G_Message message;
+      if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
         PRINT_NAMED_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
-                          msgID,
-                          lookupTable_[msgID].size,
-                          packet.dataLen - 1
+                          "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
+                          U2G_Message::GetTypeName(message.GetType()),
+                          message.Size(), // not all messages are fixed size, so indeterminate
+                          packet.dataLen
                           );
       }
-      else {
-        
-        // This calls the registered callback for the message
-        retVal = (*this.*lookupTable_[msgID].ProcessPacketAs)(packet.data+1);
-        
+      
+      if (messageCallback != nullptr) {
+        messageCallback(message);
       }
       
       return retVal;
@@ -122,8 +118,6 @@ namespace Anki {
       
       return retVal;
     } // ProcessMessages()
-    
-    
     
   } // namespace Cozmo
 } // namespace Anki

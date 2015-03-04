@@ -99,7 +99,7 @@ namespace Cozmo {
     // TODO: Remove in favor of sending these messages to the UI
     //  (For now, this doesn't work on a client device because its game can't
     //   talk straight to the UI on the device it is running on)
-    const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
     void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
     

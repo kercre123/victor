@@ -33,7 +33,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &109570
 GameObject:
   m_ObjectHideFlags: 1
@@ -501,7 +501,7 @@ GameObject:
   - 224: {fileID: 22409622}
   - 222: {fileID: 22209618}
   - 114: {fileID: 11409700}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -518,7 +518,7 @@ GameObject:
   - 224: {fileID: 22409624}
   - 222: {fileID: 22209620}
   - 114: {fileID: 11409682}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -535,7 +535,7 @@ GameObject:
   - 224: {fileID: 22409626}
   - 222: {fileID: 22209622}
   - 114: {fileID: 11409694}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -572,7 +572,7 @@ GameObject:
   - 114: {fileID: 11409652}
   - 114: {fileID: 11409686}
   - 120: {fileID: 12009566}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -626,7 +626,7 @@ GameObject:
   - 114: {fileID: 11409654}
   - 114: {fileID: 11409704}
   - 120: {fileID: 12009572}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -646,7 +646,7 @@ GameObject:
   - 114: {fileID: 11409656}
   - 114: {fileID: 11409698}
   - 120: {fileID: 12009570}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Center
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -663,7 +663,7 @@ GameObject:
   - 224: {fileID: 22409640}
   - 222: {fileID: 22209638}
   - 114: {fileID: 11409688}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -732,7 +732,7 @@ GameObject:
   - 224: {fileID: 22409652}
   - 222: {fileID: 22209646}
   - 114: {fileID: 11409706}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -800,7 +800,7 @@ GameObject:
   - 224: {fileID: 22409660}
   - 222: {fileID: 22209654}
   - 114: {fileID: 11409732}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Action Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -820,7 +820,7 @@ GameObject:
   - 114: {fileID: 11409658}
   - 114: {fileID: 11409692}
   - 120: {fileID: 12009568}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -840,7 +840,7 @@ GameObject:
   - 114: {fileID: 11409660}
   - 114: {fileID: 11409710}
   - 120: {fileID: 12009574}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Bottom Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -912,7 +912,7 @@ GameObject:
   - 114: {fileID: 11409730}
   - 114: {fileID: 11409736}
   - 120: {fileID: 12009576}
-  m_Layer: 5
+  m_Layer: 4
   m_Name: Top Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1019,6 +1019,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &110968
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22410968}
+  - 222: {fileID: 22210968}
+  - 114: {fileID: 11410968}
+  m_Layer: 5
+  m_Name: Reticle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!114 &11409566
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1035,10 +1052,11 @@ MonoBehaviour:
   text: {fileID: 11409572}
   actionButtons:
   - {fileID: 11409576}
-  maxBoxes: 1
+  maxObservedObjects: 1
   box:
     image: {fileID: 11409582}
     text: {fileID: 11409580}
+  reticle: {fileID: 11410968}
 --- !u!114 &11409568
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1590,7 +1608,7 @@ MonoBehaviour:
   actionButtons:
   - {fileID: 11409594}
   - {fileID: 11409606}
-  maxBoxes: 6
+  maxObservedObjects: 6
   selectionButtons:
   - {fileID: 11409614}
   - {fileID: 11409636}
@@ -2566,7 +2584,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -2613,7 +2631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -2634,7 +2652,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -2681,7 +2699,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -2728,7 +2746,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -2775,7 +2793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .478431374, b: 0, a: 1}
+  m_Color: {r: 1, g: .478431374, b: 0, a: 0}
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
@@ -3254,7 +3272,7 @@ MonoBehaviour:
   actionButtons:
   - {fileID: 11409724}
   - {fileID: 11409714}
-  maxBoxes: 6
+  maxObservedObjects: 6
   selectionButtons:
   - {fileID: 11409710}
   - {fileID: 11409704}
@@ -3594,6 +3612,27 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Cancel
+--- !u!114 &11410968
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 110968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 0
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!120 &12009566
 LineRenderer:
   m_ObjectHideFlags: 1
@@ -4116,6 +4155,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 109674}
+--- !u!222 &22210968
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 110968}
 --- !u!224 &22409566
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4147,6 +4192,7 @@ RectTransform:
   - {fileID: 22409578}
   - {fileID: 22409570}
   - {fileID: 22409574}
+  - {fileID: 22410968}
   m_Father: {fileID: 22409566}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -5158,6 +5204,23 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: .5, y: .5}
+--- !u!224 &22410968
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 110968}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22409568}
+  m_RootOrder: 3
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

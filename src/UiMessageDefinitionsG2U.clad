@@ -1,0 +1,169 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message G2U_Ping {
+    uint_32 counter        // should count sequentially if no drops
+}
+
+// Let the UI know that a robot is advertising as available
+message G2U_RobotAvailable {
+    uint_32 robotID
+}
+
+message G2U_UiDeviceAvailable {
+    uint_32 deviceID
+}
+
+message G2U_RobotConnected {
+    uint_32 robotID,
+    uint_8 successful
+}
+
+message G2U_RobotDisconnected {
+    uint_32 robotID,
+    float_32 timeSinceLastMsg_sec
+}
+
+
+message G2U_UiDeviceConnected {
+    uint_32 deviceID,
+    uint_8 successful
+}
+
+/*
+message G2U_Bogus {
+}
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  ROBOT STATE  ///////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message G2U_RobotState {
+    float_32 pose_x,
+    float_32 pose_y,
+    float_32 pose_z,
+    float_32 poseAngle_rad,
+    float_32 leftWheelSpeed_mmps,
+    float_32 rightWheelSpeed_mmps,
+    float_32 headAngle_rad,
+    float_32 liftHeight_mm,
+    uint_8  status,  // See RobotStatusFlag in cozmoTypes.h
+    uint_8  robotID
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  VISION  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/*
+// Full QVGA Image from a specifed Robot
+message G2U_RobotImage_320x240 {
+    uint_32 robotID
+    uint_8 image[320*240]
+}
+
+// Full VGA Image from a specifed Robot
+message G2U_RobotImage_640x480 {
+    uint_32 robotID
+    uint_8 image[640*480]
+}
+*/
+
+// ImageChunk
+message G2U_ImageChunk {
+    uint_32 imageId,
+    uint_32 frameTimeStamp,
+    uint_16 nrows,
+    uint_16 ncols,
+    uint_16 chunkSize,
+    uint_8 imageEncoding,
+    uint_8 imageChunkCount,
+    uint_8 chunkId,
+    uint_8 data[1024]
+}
+
+
+// ObjectVisionMarker for telling the UI that an object
+//  with specified ID was seen at a particular location in the image
+message G2U_RobotObservedObject {
+    uint_32 robotID,
+    uint_32 objectFamily,
+    uint_32 objectType,
+    uint_32 objectID,
+    float_32 topLeft_x,
+    float_32 topLeft_y,
+    float_32 width,
+    float_32 height
+}
+
+// RobotObservedNothing
+message G2U_RobotObservedNothing {
+    uint_32 robotID
+}
+
+message G2U_DeviceDetectedVisionMarker {
+    uint_32 markerType,
+    float_32 x_upperLeft,
+    float_32 y_upperLeft,
+    float_32 x_lowerLeft,
+    float_32 y_lowerLeft,
+    float_32 x_upperRight,
+    float_32 y_upperRight,
+    float_32 x_lowerRight,
+    float_32 y_lowerRight
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  ACTIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// RobotCompletedPickAndPlaceAction
+message G2U_RobotCompletedPickAndPlaceAction {
+    uint_32 robotID,
+    uint_8 success    
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  SOUND  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Note: these should go away when the robot can play its own sounds and doesn't
+//       rely on the phone to do it.
+
+message G2U_PlaySound {
+    string soundFilename,
+    uint_8 numLoops,
+    uint_8 volume
+}
+
+message G2U_StopSound {
+}
+
+union G2U_Message {
+    G2U_Ping Ping,
+    G2U_RobotAvailable RobotAvailable,
+    G2U_UiDeviceAvailable UiDeviceAvailable,
+    G2U_RobotConnected RobotConnected,
+    G2U_RobotDisconnected RobotDisconnected,
+    G2U_UiDeviceConnected UiDeviceConnected,
+    //G2U_Bogus Bogus,
+    G2U_RobotState RobotState,
+    //G2U_RobotImage_320x240 RobotImage_320x240,
+    //G2U_RobotImage_640x480 RobotImage_640x480,
+    G2U_ImageChunk ImageChunk,
+    G2U_RobotObservedObject RobotObservedObject,
+    G2U_RobotObservedNothing RobotObservedNothing,
+    G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
+    G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction,
+    G2U_PlaySound PlaySound,
+    G2U_StopSound StopSound
+}

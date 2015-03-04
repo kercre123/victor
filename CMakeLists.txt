@@ -54,6 +54,8 @@ if (NOT SYSTEM_ROOT_PATH_DEFINED)
   set(SYSTEM_ROOT_PATH_DEFINED 1)
 endif(NOT SYSTEM_ROOT_PATH_DEFINED)
 
+set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
+
 include_directories(
   ${COZMO_ENGINE_INCLUDE_DIR}
   ${COZMO_GAME_INCLUDE_DIR}
@@ -61,6 +63,7 @@ include_directories(
   ${CORETECH_ROOT_DIR}/messaging/include
   ${CORETECH_ROOT_DIR}/vision/include
   ${CORETECH_ROOT_DIR}/planning/include
+  ${CLAD_DIR}/emitters
 )
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
@@ -78,4 +81,6 @@ if(NOT ANKI_IOS_BUILD)
   #endif()
 
 endif()
+
+
 

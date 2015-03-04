@@ -72,7 +72,7 @@ namespace Cozmo {
     
     void ProcessDeviceImage(const Vision::Image& image);
     
-    const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
     void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
     
@@ -120,16 +120,59 @@ namespace Cozmo {
     //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
     
     void RegisterCallbacksU2G();
-#   define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_NO_WRAPPERS_MODE
-#   define MESSAGE_BASECLASS_NAME UiMessage
-#   include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G.def"
-#   undef MESSAGE_BASECLASS_NAME
+#define REGISTER_CALLBACK(__MSG_TYPE__) void ProcessMessage(const __MSG_TYPE__& msg);
+    REGISTER_CALLBACK(U2G_Ping)
+    REGISTER_CALLBACK(U2G_ConnectToRobot)
+    REGISTER_CALLBACK(U2G_ConnectToUiDevice)
+    REGISTER_CALLBACK(U2G_DisconnectFromUiDevice)
+    REGISTER_CALLBACK(U2G_ForceAddRobot)
+    REGISTER_CALLBACK(U2G_StartEngine)
+    REGISTER_CALLBACK(U2G_DriveWheels)
+    REGISTER_CALLBACK(U2G_TurnInPlace)
+    REGISTER_CALLBACK(U2G_MoveHead)
+    REGISTER_CALLBACK(U2G_MoveLift)
+    REGISTER_CALLBACK(U2G_SetLiftHeight)
+    REGISTER_CALLBACK(U2G_SetHeadAngle)
+    REGISTER_CALLBACK(U2G_StopAllMotors)
+    REGISTER_CALLBACK(U2G_ImageRequest)
+    REGISTER_CALLBACK(U2G_SetRobotImageSendMode)
+    REGISTER_CALLBACK(U2G_SaveImages)
+    REGISTER_CALLBACK(U2G_EnableDisplay)
+    REGISTER_CALLBACK(U2G_SetHeadlights)
+    REGISTER_CALLBACK(U2G_GotoPose)
+    REGISTER_CALLBACK(U2G_PlaceObjectOnGround)
+    REGISTER_CALLBACK(U2G_PlaceObjectOnGroundHere)
+    REGISTER_CALLBACK(U2G_ExecuteTestPlan)
+    REGISTER_CALLBACK(U2G_SelectNextObject)
+    REGISTER_CALLBACK(U2G_PickAndPlaceObject)
+    REGISTER_CALLBACK(U2G_TraverseObject)
+    REGISTER_CALLBACK(U2G_ClearAllBlocks)
+    REGISTER_CALLBACK(U2G_ExecuteBehavior)
+    REGISTER_CALLBACK(U2G_SetBehaviorState)
+    REGISTER_CALLBACK(U2G_AbortPath)
+    REGISTER_CALLBACK(U2G_AbortAll)
+    REGISTER_CALLBACK(U2G_DrawPoseMarker)
+    REGISTER_CALLBACK(U2G_ErasePoseMarker)
+    REGISTER_CALLBACK(U2G_SetHeadControllerGains)
+    REGISTER_CALLBACK(U2G_SetLiftControllerGains)
+    REGISTER_CALLBACK(U2G_SelectNextSoundScheme)
+    REGISTER_CALLBACK(U2G_StartTestMode)
+    REGISTER_CALLBACK(U2G_IMURequest)
+    REGISTER_CALLBACK(U2G_PlayAnimation)
+    REGISTER_CALLBACK(U2G_ReadAnimationFile)
+    REGISTER_CALLBACK(U2G_StartFaceTracking)
+    REGISTER_CALLBACK(U2G_StopFaceTracking)
+    REGISTER_CALLBACK(U2G_StartLookingForMarkers)
+    REGISTER_CALLBACK(U2G_StopLookingForMarkers)
+    REGISTER_CALLBACK(U2G_SetVisionSystemParams)
+    REGISTER_CALLBACK(U2G_SetFaceDetectParams)
+#undef REGISTER_CALLBACK
     
     //
     // Member Variables
     //
     
-    Cozmo::MessageG2U_Ping           _pingToUI;
+    Cozmo::G2U_Ping                  _pingToUI;
     f32                              _lastPingTimeFromUI_sec;
     u32                              _lastPingCounterFromUI;
     
@@ -150,7 +193,7 @@ namespace Cozmo {
     
     std::map<RobotID_t, ImageSendMode_t> _imageSendMode;
     
-    std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
+    std::vector<Cozmo::G2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
     
     std::vector<Signal::SmartHandle> _signalHandles;
 

@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const float UI_PING_TIMEOUT_SEC = 1.0f;
+  const float UI_PING_TIMEOUT_SEC = 5.0f;
   
 #pragma mark - CozmoGame Implementation
     
@@ -45,8 +45,6 @@ namespace Cozmo {
     _pingToUI.counter = 0;
     
     SetupSignalHandlers();
-    
-    RegisterCallbacksU2G();
     
     
     PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -108,6 +106,7 @@ namespace Cozmo {
     }
     
     _uiMsgHandler.Init(&_uiComms);
+    RegisterCallbacksU2G();
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameHostImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
@@ -202,7 +201,7 @@ namespace Cozmo {
     _cozmoEngine->ProcessDeviceImage(image);
   }
 
-  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
+  const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
   {
     return _visionMarkersDetectedByDevice;
   }
@@ -272,7 +271,9 @@ namespace Cozmo {
       
       if(_uiComms.GetNumConnectedDevices() > 0) {
         // Ping the UI to let them know we're still here
-        _uiMsgHandler.SendMessage(_hostUiDeviceID, _pingToUI);
+        G2U_Message message;
+        message.Set_Ping(_pingToUI);
+        _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
         ++_pingToUI.counter;
       }
     }
@@ -405,7 +406,7 @@ namespace Cozmo {
               PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost", "Null robot returned for ID=%d!\n", robotID);
               lastResult = RESULT_FAIL;
             } else {
-              MessageG2U_RobotState msg;
+              G2U_RobotState msg;
               
               msg.robotID = robotID;
               
@@ -429,7 +430,9 @@ namespace Cozmo {
 
               // TODO: Add proximity sensor data to state message
               
-              _uiMsgHandler.SendMessage(_hostUiDeviceID, msg);
+              G2U_Message message;
+              message.Set_RobotState(msg);
+              _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
             }
           }
         }
@@ -475,7 +478,9 @@ namespace Cozmo {
       
       const u32 numTotalBytes = nrows*ncols;
       
-      MessageG2U_ImageChunk m;
+      const int G2U_IMAGE_CHUNK_SIZE = 1024;
+      
+      G2U_ImageChunk m;
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
       m.nrows = nrows;
@@ -491,6 +496,8 @@ namespace Cozmo {
       
       //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
       
+      G2U_Message message;
+      
       for(s32 i=0; i<nrows; ++i) {
         
         const u8* img_i = img.GetRow(i);
@@ -502,13 +509,15 @@ namespace Cozmo {
           
           if(chunkByteCnt == G2U_IMAGE_CHUNK_SIZE) {
             // Filled this chunk
-            _uiMsgHandler.SendMessage(_hostUiDeviceID, m);
+            message.Set_ImageChunk(m);
+            _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if(totalByteCnt == numTotalBytes) {
             // This is the last chunk!
             m.chunkSize = chunkByteCnt;
-            _uiMsgHandler.SendMessage(_hostUiDeviceID, m);
+            message.Set_ImageChunk(m);
+            _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
           }
         } // for each col
       } // for each row
@@ -570,7 +579,7 @@ namespace Cozmo {
     return _impl->GetRunState();
   }
   
-  const std::vector<Cozmo::MessageG2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
+  const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
   {
     return _impl->GetVisionMarkersDetectedByDevice();
   }

@@ -27,69 +27,75 @@ namespace Cozmo {
   /*
    *  Helper macro for generating a callback lambda that captures "this" and 
    *  calls the corresponding ProcessMessage method. For example, for a 
-   *  MessageU2G_FooBar, use REGISTER_CALLBACK(FooBar) and the following code
+   *  U2G_FooBar, use REGISTER_CALLBACK(FooBar) and the following code
    *  is generated:
    *
-   *    auto cbFooBar = [this](const MessageU2G_FooBar& msg) {
+   *    auto cbFooBar = [this](const U2G_FooBar& msg) {
    *      this->ProcessMessage(msg);
    *    };
-   *    _uiMsgHandler.RegisterCallbackForMessageU2G_FooBar(cbFooBar);
+   *    _uiMsgHandler.RegisterCallbackForU2G_FooBar(cbFooBar);
    * 
    * NOTE: For compactness, the lambda is not actually created and stored in
    *   cbFooBar. Instead, it is simply created inline within the RegisterCallback call.
    */
 #define REGISTER_CALLBACK(__MSG_TYPE__) \
-_uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__MSG_TYPE__& msg) { this->ProcessMessage(msg);});
+case U2G_Message::Type::__MSG_TYPE__: \
+  this->ProcessMessage(msg.Get_##__MSG_TYPE__()); \
+  break;
   
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
-    REGISTER_CALLBACK(U2G_Ping)
-    REGISTER_CALLBACK(U2G_ConnectToRobot)
-    REGISTER_CALLBACK(U2G_ConnectToUiDevice)
-    REGISTER_CALLBACK(U2G_DisconnectFromUiDevice)
-    REGISTER_CALLBACK(U2G_ForceAddRobot)
-    REGISTER_CALLBACK(U2G_StartEngine)
-    REGISTER_CALLBACK(U2G_DriveWheels)
-    REGISTER_CALLBACK(U2G_TurnInPlace)
-    REGISTER_CALLBACK(U2G_MoveHead)
-    REGISTER_CALLBACK(U2G_MoveLift)
-    REGISTER_CALLBACK(U2G_SetLiftHeight)
-    REGISTER_CALLBACK(U2G_SetHeadAngle)
-    REGISTER_CALLBACK(U2G_StopAllMotors)
-    REGISTER_CALLBACK(U2G_ImageRequest)
-    REGISTER_CALLBACK(U2G_SetRobotImageSendMode)
-    REGISTER_CALLBACK(U2G_SaveImages)
-    REGISTER_CALLBACK(U2G_EnableDisplay)
-    REGISTER_CALLBACK(U2G_SetHeadlights)
-    REGISTER_CALLBACK(U2G_GotoPose)
-    REGISTER_CALLBACK(U2G_PlaceObjectOnGround)
-    REGISTER_CALLBACK(U2G_PlaceObjectOnGroundHere)
-    REGISTER_CALLBACK(U2G_ExecuteTestPlan)
-    REGISTER_CALLBACK(U2G_SelectNextObject)
-    REGISTER_CALLBACK(U2G_PickAndPlaceObject)
-    REGISTER_CALLBACK(U2G_TraverseObject)
-    REGISTER_CALLBACK(U2G_ClearAllBlocks)
-    REGISTER_CALLBACK(U2G_ExecuteBehavior)
-    REGISTER_CALLBACK(U2G_SetBehaviorState)
-    REGISTER_CALLBACK(U2G_AbortPath)
-    REGISTER_CALLBACK(U2G_AbortAll)
-    REGISTER_CALLBACK(U2G_DrawPoseMarker)
-    REGISTER_CALLBACK(U2G_ErasePoseMarker)
-    REGISTER_CALLBACK(U2G_SetHeadControllerGains)
-    REGISTER_CALLBACK(U2G_SetLiftControllerGains)
-    REGISTER_CALLBACK(U2G_SelectNextSoundScheme)
-    REGISTER_CALLBACK(U2G_StartTestMode)
-    REGISTER_CALLBACK(U2G_IMURequest)
-    REGISTER_CALLBACK(U2G_PlayAnimation)
-    REGISTER_CALLBACK(U2G_ReadAnimationFile)
-    REGISTER_CALLBACK(U2G_StartFaceTracking)
-    REGISTER_CALLBACK(U2G_StopFaceTracking)
-    REGISTER_CALLBACK(U2G_StartLookingForMarkers)
-    REGISTER_CALLBACK(U2G_StopLookingForMarkers)
-    REGISTER_CALLBACK(U2G_SetVisionSystemParams)
-    REGISTER_CALLBACK(U2G_SetFaceDetectParams)
-    
+    _uiMsgHandler.RegisterCallbackForMessage([this](const U2G_Message& msg) {
+      switch (msg.GetType()) {
+        REGISTER_CALLBACK(Ping)
+        REGISTER_CALLBACK(ConnectToRobot)
+        REGISTER_CALLBACK(ConnectToUiDevice)
+        REGISTER_CALLBACK(DisconnectFromUiDevice)
+        REGISTER_CALLBACK(ForceAddRobot)
+        REGISTER_CALLBACK(StartEngine)
+        REGISTER_CALLBACK(DriveWheels)
+        REGISTER_CALLBACK(TurnInPlace)
+        REGISTER_CALLBACK(MoveHead)
+        REGISTER_CALLBACK(MoveLift)
+        REGISTER_CALLBACK(SetLiftHeight)
+        REGISTER_CALLBACK(SetHeadAngle)
+        REGISTER_CALLBACK(StopAllMotors)
+        REGISTER_CALLBACK(ImageRequest)
+        REGISTER_CALLBACK(SetRobotImageSendMode)
+        REGISTER_CALLBACK(SaveImages)
+        REGISTER_CALLBACK(EnableDisplay)
+        REGISTER_CALLBACK(SetHeadlights)
+        REGISTER_CALLBACK(GotoPose)
+        REGISTER_CALLBACK(PlaceObjectOnGround)
+        REGISTER_CALLBACK(PlaceObjectOnGroundHere)
+        REGISTER_CALLBACK(ExecuteTestPlan)
+        REGISTER_CALLBACK(SelectNextObject)
+        REGISTER_CALLBACK(PickAndPlaceObject)
+        REGISTER_CALLBACK(TraverseObject)
+        REGISTER_CALLBACK(ClearAllBlocks)
+        REGISTER_CALLBACK(ExecuteBehavior)
+        REGISTER_CALLBACK(SetBehaviorState)
+        REGISTER_CALLBACK(AbortPath)
+        REGISTER_CALLBACK(AbortAll)
+        REGISTER_CALLBACK(DrawPoseMarker)
+        REGISTER_CALLBACK(ErasePoseMarker)
+        REGISTER_CALLBACK(SetHeadControllerGains)
+        REGISTER_CALLBACK(SetLiftControllerGains)
+        REGISTER_CALLBACK(SelectNextSoundScheme)
+        REGISTER_CALLBACK(StartTestMode)
+        REGISTER_CALLBACK(IMURequest)
+        REGISTER_CALLBACK(PlayAnimation)
+        REGISTER_CALLBACK(ReadAnimationFile)
+        REGISTER_CALLBACK(StartFaceTracking)
+        REGISTER_CALLBACK(StopFaceTracking)
+        REGISTER_CALLBACK(StartLookingForMarkers)
+        REGISTER_CALLBACK(StopLookingForMarkers)
+        REGISTER_CALLBACK(SetVisionSystemParams)
+        REGISTER_CALLBACK(SetFaceDetectParams)
+      }
+    });
   } // RegisterCallbacksU2G()
+#undef REGISTER_CALLBACK
   
   Robot* CozmoGameImpl::GetRobotByID(const RobotID_t robotID)
   {
@@ -100,7 +106,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
       
       if(_cozmoEngine == nullptr) {
         PRINT_NAMED_ERROR("CozmoGameHostImpl.ProcessMessage",
-                          "Cannot process MessageU2G_DriveWheels with null cozmoEngine.\n");
+                          "Cannot process U2G_DriveWheels with null cozmoEngine.\n");
         return nullptr;
       }
       
@@ -119,7 +125,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     return robot;
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_Ping const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_Ping const& msg)
   {
     
     _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -138,7 +144,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToRobot const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ConnectToRobot const& msg)
   {
     // Tell the game to connect to a robot, using a signal
     // CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
@@ -151,7 +157,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ConnectToUiDevice const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ConnectToUiDevice const& msg)
   {
     // Tell the game to connect to a UI device, using a signal?
     // CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
@@ -164,7 +170,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_DisconnectFromUiDevice const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_DisconnectFromUiDevice const& msg)
   {
     // Do this with a signal?
     _uiComms.DisconnectDeviceByID(msg.deviceID);
@@ -177,7 +183,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ForceAddRobot const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ForceAddRobot const& msg)
   {
     char ip[16];
     assert(msg.ipAddress.size() <= 16);
@@ -185,7 +191,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     ForceAddRobot(msg.robotID, ip, msg.isSimulated);
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StartEngine const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StartEngine const& msg)
   {
     // Populate the Json configuration from the message members:
     Json::Value config;
@@ -203,7 +209,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_DriveWheels const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_DriveWheels const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -214,7 +220,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_TurnInPlace const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_TurnInPlace const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -223,7 +229,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_MoveHead const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_MoveHead const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -234,7 +240,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_MoveLift const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_MoveLift const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -245,7 +251,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetHeadAngle const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetHeadAngle const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -256,7 +262,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StopAllMotors const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StopAllMotors const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -267,7 +273,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetLiftHeight const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetLiftHeight const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -288,7 +294,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetRobotImageSendMode const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetRobotImageSendMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -307,23 +313,23 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ImageRequest const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ImageRequest const& msg)
   {
     SetImageSendMode(msg.robotID, static_cast<ImageSendMode_t>(msg.mode));
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SaveImages const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SaveImages const& msg)
   {
     VizManager::getInstance()->SaveImages(msg.enableSave);
     printf("Saving images: %s\n", VizManager::getInstance()->IsSavingImages() ? "ON" : "OFF");
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_EnableDisplay const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)
   {
     VizManager::getInstance()->ShowObjects(msg.enable);
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetHeadlights const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetHeadlights const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -334,7 +340,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_GotoPose const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_GotoPose const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -349,7 +355,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_PlaceObjectOnGround const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_PlaceObjectOnGround const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -364,7 +370,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_PlaceObjectOnGroundHere const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_PlaceObjectOnGroundHere const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -375,7 +381,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ExecuteTestPlan const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ExecuteTestPlan const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -386,7 +392,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ClearAllBlocks const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ClearAllBlocks const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -399,7 +405,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SelectNextObject const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SelectNextObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -410,7 +416,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_PickAndPlaceObject const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_PickAndPlaceObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -436,7 +442,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_TraverseObject const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_TraverseObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -459,7 +465,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
   }
   
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ExecuteBehavior const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ExecuteBehavior const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -470,7 +476,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetBehaviorState const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetBehaviorState const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -481,7 +487,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_AbortPath const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_AbortPath const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -492,7 +498,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_AbortAll const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_AbortAll const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -503,7 +509,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_DrawPoseMarker const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_DrawPoseMarker const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -516,12 +522,12 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ErasePoseMarker const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ErasePoseMarker const& msg)
   {
     VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetHeadControllerGains const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetHeadControllerGains const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -532,7 +538,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetLiftControllerGains const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetLiftControllerGains const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -543,7 +549,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SelectNextSoundScheme const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SelectNextSoundScheme const& msg)
   {
     SoundSchemeID_t nextSoundScheme = (SoundSchemeID_t)(SoundManager::getInstance()->GetScheme() + 1);
     if (nextSoundScheme == NUM_SOUND_SCHEMES) {
@@ -553,7 +559,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     SoundManager::getInstance()->SetScheme(nextSoundScheme);
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StartTestMode const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StartTestMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -564,7 +570,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_IMURequest const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_IMURequest const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -575,7 +581,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_PlayAnimation const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_PlayAnimation const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -586,7 +592,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_ReadAnimationFile const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_ReadAnimationFile const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -597,7 +603,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StartFaceTracking const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StartFaceTracking const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -608,7 +614,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StopFaceTracking const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StopFaceTracking const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -619,7 +625,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetVisionSystemParams const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetVisionSystemParams const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -641,7 +647,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_SetFaceDetectParams const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_SetFaceDetectParams const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -660,7 +666,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StartLookingForMarkers const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StartLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -671,7 +677,7 @@ _uiMsgHandler.RegisterCallbackForMessage##__MSG_TYPE__([this](const Message##__M
     }
   }
   
-  void CozmoGameImpl::ProcessMessage(MessageU2G_StopLookingForMarkers const& msg)
+  void CozmoGameImpl::ProcessMessage(U2G_StopLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
