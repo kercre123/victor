@@ -38,6 +38,7 @@ namespace Anki {
         POSE,
         SPEEDS,
         PROX_SENSORS,
+        BATTERY,
         LOCALIZED_TO,
         VISION_MODE,
         BEHAVIOR_STATE,

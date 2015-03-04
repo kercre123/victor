@@ -225,6 +225,11 @@ namespace Anki {
                                            IsProxSensorBlocked(PROX_LEFT),
                                            IsProxSensorBlocked(PROX_FORWARD),
                                            IsProxSensorBlocked(PROX_RIGHT));
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::BATTERY,
+                                           Anki::NamedColors::GREEN,
+                                           "Batt: %2.1f V",
+                                           (f32)msg.batteryPercent/10);
       }
       
       // Get ID of last/current path that the robot executed
