@@ -70,7 +70,8 @@ namespace Anki {
     VizManager::VizManager()
     : _isInitialized(false)
     , _sendImages(false)
-    , _saveImages(false)
+    , _saveImageMode(VIZ_SAVE_OFF)
+    , _saveImageCounter(0)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -579,7 +580,7 @@ namespace Anki {
         ++v.chunkId;
       }
       
-      if (VizManager::getInstance()->IsSavingImages()) {
+      if (_saveImageMode != VIZ_SAVE_OFF) {
         
         // Make sure image capture folder exists
         if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
@@ -590,9 +591,15 @@ namespace Anki {
         
         // Create image file
         char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _imgID[robotID]);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
+        ++_saveImageCounter;
         Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_saveImageMode == VIZ_SAVE_ONE_SHOT) {
+          _saveImageMode = VIZ_SAVE_OFF;
+        }
       }
     }
     

@@ -42,6 +42,9 @@ namespace Anki {
       // For displaying misc debug data
       webots::Display* disp;
       
+      // For displaying docking data
+      webots::Display* dockDisp;
+      
       // For displaying images
       webots::Display* camDisp;
       
@@ -74,6 +77,7 @@ namespace Anki {
     {
       // Get display devices
       disp = vizSupervisor.getDisplay("cozmo_viz_display");
+      dockDisp = vizSupervisor.getDisplay("cozmo_docking_display");
       camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
       
       
@@ -222,9 +226,9 @@ namespace Anki {
       
       // Pixel dimensions of display area
       const int baseXOffset = 8;
-      const int baseYOffset = 60;
-      const int rectW = 130;
-      const int rectH = 130;
+      const int baseYOffset = 40;
+      const int rectW = 180;
+      const int rectH = 180;
       const int halfBlockFaceLength = 20;
       
       const f32 MM_PER_PIXEL = 2.f;
@@ -236,14 +240,14 @@ namespace Anki {
       
       
       // Clear the space
-      disp->setColor(0x0);
-      disp->fillRectangle(baseXOffset, baseYOffset, rectW, rectH);
+      dockDisp->setColor(0x0);
+      dockDisp->fillRectangle(baseXOffset, baseYOffset, rectW, rectH);
       
-      disp->setColor(0xffffff);
-      disp->drawRectangle(baseXOffset, baseYOffset, rectW, rectH);
+      dockDisp->setColor(0xffffff);
+      dockDisp->drawRectangle(baseXOffset, baseYOffset, rectW, rectH);
       
       // Draw robot position
-      disp->drawOval(baseXOffset + 0.5f*rectW, baseYOffset + rectH, 3, 3);
+      dockDisp->drawOval(baseXOffset + 0.5f*rectW, baseYOffset + rectH, 3, 3);
       
       
       // Get pixel coordinates of block face center where
@@ -262,8 +266,8 @@ namespace Anki {
       // Draw line representing the block face
       int dx = halfBlockFaceLength * cosf(msg.angle);
       int dy = -halfBlockFaceLength * sinf(msg.angle);
-      disp->drawLine(blockFaceCenterX + dx, blockFaceCenterY + dy, blockFaceCenterX - dx, blockFaceCenterY - dy);
-      disp->drawOval(blockFaceCenterX, blockFaceCenterY, 2, 2);
+      dockDisp->drawLine(blockFaceCenterX + dx, blockFaceCenterY + dy, blockFaceCenterX - dx, blockFaceCenterY - dy);
+      dockDisp->drawOval(blockFaceCenterX, blockFaceCenterY, 2, 2);
       
     }
     
