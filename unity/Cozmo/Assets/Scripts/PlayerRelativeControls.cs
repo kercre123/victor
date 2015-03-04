@@ -42,7 +42,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 	}
 	
-	void FixedUpdate() {
+	void Update() {
 		
 		//bool robotFacingStale = true;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {

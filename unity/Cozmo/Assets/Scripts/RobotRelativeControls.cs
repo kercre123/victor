@@ -67,7 +67,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //		}
 	}
 
-	void FixedUpdate() {
+	void Update() {
 
 		//bool robotFacingStale = true;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {

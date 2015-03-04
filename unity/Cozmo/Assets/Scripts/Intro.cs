@@ -55,6 +55,8 @@ public class Intro : MonoBehaviour {
 			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
 			RobotEngineManager.instance.RobotConnected += RobotConnected;
 		}
+
+		Application.targetFrameRate = 100;
 	}
 
 	private void OnDestroy() {
