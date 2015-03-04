@@ -92,16 +92,16 @@ class CameraSubServer(BaseSubServer):
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
         # Camera resolution enum is backwards, smaller number -> larger image
-        resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
-        resolutionEnum = min(resolutionEnum, self.ISP_MIN_RESOLUTION) # ISP has minimum resolution
+        #resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
+        #resolutionEnum = min(resolutionEnum, self.ISP_MIN_RESOLUTION) # ISP has minimum resolution
+        resolutionEnum = messages.CAMERA_RES_QVGA # Forcing QVGA for now
         if resolutionEnum == self.ISPResolution: # Already configured
             self.startEncoder()
             return True
         else:
             self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
-                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + \
-                                 self.RESOLUTION_TUPLES[resolutionEnum])]) == 0:
+            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY 640x480]' % \
+                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2))]) == 0:
                 self.ISPResolution = resolutionEnum
                 self.startEncoder()
                 return True
@@ -116,6 +116,7 @@ class CameraSubServer(BaseSubServer):
             if self.ENCODER_CODING == messages.IE_JPEG:
                 sys.stdout.write("Starting the encoder\n")
                 self.encoderProcess = subprocess.Popen(['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
+                                                        'videocrop', 'left=160', 'top=120', 'right=160', 'bottom=120', '!', \
                                                         'TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', 'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
                                                         'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
             else:
