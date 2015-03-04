@@ -2,9 +2,8 @@
 Python UDP server to proxy messages to / from the MCU and the WiFi radio
 """
 __author__  = "Daniel Canser"
-__version__ = "0.0.3"
 
-import sys, os, socket, time, serial, struct
+import sys, os, time, serial, struct
 from subserver import *
 import messages
 
