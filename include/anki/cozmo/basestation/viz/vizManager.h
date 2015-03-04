@@ -35,6 +35,8 @@ namespace Anki {
       
       typedef enum : u8 {
         ACTION,
+        POSE,
+        SPEEDS,
         PROX_SENSORS,
         LOCALIZED_TO,
         VISION_MODE,

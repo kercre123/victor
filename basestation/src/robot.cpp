@@ -200,14 +200,25 @@ namespace Anki {
         //        msg.status & IS_PROX_FORWARD_BLOCKED,
         //        msg.status & IS_PROX_SIDE_BLOCKED);
 
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::POSE,
+                                           Anki::NamedColors::GREEN,
+                                           //"Pose: x=%4d y=%4d theta=%3d, h=%3d deg, lift=%3d mm",
+                                           //(int)msg.pose_x,
+                                           //(int)msg.pose_y,
+                                           //(int)RAD_TO_DEG_F32(msg.pose_angle),
+                                           "Pose: head=%3d deg, lift=%3d mm",
+                                           (int)RAD_TO_DEG_F32(msg.headAngle),
+                                           (int)msg.liftHeight);
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::SPEEDS,
+                                           Anki::NamedColors::GREEN,
+                                           "speed L: %4d  R: %4d mm/s",
+                                           (int)msg.lwheel_speed_mmps,
+                                           (int)msg.rwheel_speed_mmps);
+        
         VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
                                            Anki::NamedColors::GREEN,
-                                           "speed L: %4d  R: %4d mm/s\n"
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           
-                                           (int)msg.lwheel_speed_mmps,
-                                           (int)msg.rwheel_speed_mmps,
-                                           
                                            GetProxSensorVal(PROX_LEFT),
                                            GetProxSensorVal(PROX_FORWARD),
                                            GetProxSensorVal(PROX_RIGHT),
