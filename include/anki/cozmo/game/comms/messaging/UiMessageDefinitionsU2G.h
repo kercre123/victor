@@ -11,8 +11,6 @@ namespace Anki
 namespace Cozmo
 {
 using SafeMessageBuffer = Anki::Util::SafeMessageBuffer;
-// Generated from /Users/donovandrane/cozmo-game/src/UiMessageDefinitionsU2G.clad
-
 struct U2G_Ping
 {
 	uint32_t counter;

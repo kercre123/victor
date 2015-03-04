@@ -1,7 +1,5 @@
 namespace Anki.Cozmo
 {
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsG2U.clad
-
 public class G2U_Ping
 {
 	public uint counter;
