@@ -154,6 +154,8 @@ closeCameraFcn = @()[];
             frameList = getfnames(framePath, [pattern patternExt]);
             if isempty(frameList)
                 error('No frames found at %s.\n', device);
+            else
+              fprintf('Using %d frames found in %s.\n', length(frameList), framePath);
             end
             numFrames = min(numFrames, length(frameList));
             frame = readFrameFromFile(1, framePath, frameList);
@@ -196,15 +198,17 @@ closeCameraFcn = @()[];
     end
     
     %set(h_img, 'EraseMode', 'none');
-    pause(1/fps)
+    if fps > 0
+      pause(1/fps)
+    end
     
     if ~isempty(grabInc) 
         grabs = {frame};
     end
         
     % Capture remaining frames
-    i_frame = 2;
-    while i_frame < numFrames && ~escapePressed
+    i_frame = 1;
+    while i_frame <= numFrames && ~escapePressed
         t = tic;
         frame = getFrameFcn(i_frame);
         
@@ -235,7 +239,12 @@ closeCameraFcn = @()[];
         end
         
         drawnow
-        pause(max(0, 1/fps-toc(t)))
+        if fps == 0
+          pause
+        else
+          pause(max(0, 1/fps-toc(t)))
+        end
+        
         title(displayAxes, sprintf('%.1f FPS', 1/toc(t)));
     end
     
