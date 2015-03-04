@@ -9,10 +9,30 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 	[SerializeField] protected Button[] actionButtons;
-	[SerializeField] protected int maxBoxes;
+	[SerializeField] protected int maxObservedObjects;
 	
+	protected RectTransform rTrans;
 	protected Rect rect;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+
+	protected int observedObjectsCount
+	{
+		get
+		{
+			if( RobotEngineManager.instance.current.observedObjects.Count < maxObservedObjects )
+			{
+				return RobotEngineManager.instance.current.observedObjects.Count;
+			}
+			else
+			{
+				return maxObservedObjects;
+			}
+		}
+	}
+
+	private void Awake() {
+		rTrans = transform as RectTransform;
+	}
 
 	protected void RobotImage( Texture2D texture )
 	{
@@ -42,7 +62,7 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.PickAndPlaceObject();
 
-			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+			RobotEngineManager.instance.current.selectedObject = uint.MaxValue - 1;
 		}
 	}
 
@@ -63,6 +83,7 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
+			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
 		}
 	}
 
@@ -72,6 +93,8 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
 		}
+
+		ResizeToScreen();
 	}
 
 	protected void OnDisable()
@@ -80,5 +103,12 @@ public class CozmoVision : MonoBehaviour
 		{
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 		}
+	}
+
+	private void ResizeToScreen() {
+		if(rTrans == null) return;
+
+		float scale = (Screen.width * 0.5f) / 320f;
+		rTrans.localScale = Vector3.one * scale;
 	}
 }

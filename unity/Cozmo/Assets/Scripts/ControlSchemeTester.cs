@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 
+[ExecuteInEditMode]
 public class ControlSchemeTester : MonoBehaviour {
 
 	[SerializeField] GameObject[] screens = null;
@@ -9,6 +10,8 @@ public class ControlSchemeTester : MonoBehaviour {
 	[SerializeField] Text label = null;
 	[SerializeField] Text[] orientationLabels = null;
 	[SerializeField] Toggle reverseLikeACarToggle = null;
+
+	[SerializeField] Text[] buttonLabels = null;
 
 	public bool ReverseLikeACar {
 		get {
@@ -34,14 +37,29 @@ public class ControlSchemeTester : MonoBehaviour {
 
 	ScreenOrientation orientation = ScreenOrientation.Portrait;
 
+	void Awake() {
+		if(buttonLabels != null) {
+			for(int i=0; i<buttonLabels.Length && i<screens.Length-1; i++) {
+				buttonLabels[i].text = screens[i+1].name;
+			}
+		}
+	}
+
 	void OnEnable() {
+		if(!Application.isPlaying) return;
+
 		orientation = Screen.orientation;
 
 		if(screens == null || screens.Length == 0) {
 			enabled = false;
 			return;
 		}
+
+		Input.gyro.enabled = true;
+		Input.compass.enabled = true;
 		Input.multiTouchEnabled = true;
+		Input.location.Start();
+
 		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
 
 		if(reverseLikeACarToggle != null) {

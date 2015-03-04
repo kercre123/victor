@@ -1,0 +1,314 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+message U2G_Ping {
+    uint_32 counter
+}
+
+message U2G_ConnectToRobot {
+    uint_8 robotID
+}
+
+// ConnectToUiDevice
+message U2G_ConnectToUiDevice {
+    uint_8 deviceID
+}
+
+// DisconnectFromUiDevice
+message U2G_DisconnectFromUiDevice {
+    uint_8 deviceID
+}
+
+// ForceAddRobot
+// NOTE: This can be removed once physical robots can advertise (e.g. with BLE
+message U2G_ForceAddRobot {
+    uint_8 ipAddress[16],
+    uint_8 robotID,
+    uint_8 isSimulated
+}
+
+// StartEngine
+// Tell game to start the engine with the configuration specified by the message members.
+message U2G_StartEngine {
+    uint_8 asHost,
+    uint_8 vizHostIP[16] // if first char is '\0' disables viz
+}
+
+// DriveWheels
+message U2G_DriveWheels {
+    float_32 lwheel_speed_mmps,
+    float_32 rwheel_speed_mmps
+}
+
+// TurnInPlace
+message U2G_TurnInPlace {
+    float_32 angle_rad, // postive turns left negative turns right
+    uint_8 robotID
+}
+
+// MoveHead
+message U2G_MoveHead {
+    float_32 speed_rad_per_sec
+}
+
+// MoveLift
+message U2G_MoveLift {
+    float_32 speed_rad_per_sec
+}
+
+// SetLiftHeight
+message U2G_SetLiftHeight {
+    float_32 height_mm,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2
+}
+
+// SetHeadAngle
+message U2G_SetHeadAngle {
+    float_32 angle_rad,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2
+}
+
+// StopAllMotors
+message U2G_StopAllMotors {
+}
+
+// ImageRequest
+message U2G_ImageRequest {
+    uint_8 robotID,
+    uint_8 mode // See ImageSendMode_t in cozmoTypes.h
+}
+
+// SetRobotImageSendMode
+// NOTE: This can enable/disable streaming of images from the physical robot.
+//       It is intended for dev use since the robot will likely always stream
+//       its image in the product.
+message U2G_SetRobotImageSendMode {
+    uint_8 mode, // See ImageSendMode_t in cozmoTypes.h
+    uint_8 resolution
+}
+
+// SaveImages
+message U2G_SaveImages {
+    uint_8 mode
+}
+
+// EnableDisplay
+message U2G_EnableDisplay {
+    uint_8 enable
+}
+
+// SetHeadlights
+message U2G_SetHeadlights {
+    uint_8 intensity
+}
+
+// GotoPose
+message U2G_GotoPose {
+    float_32 x_mm,
+    float_32 y_mm,
+    float_32 rad,
+    uint_8 level,
+    uint_8 useManualSpeed
+}
+
+// PlaceObjectOnGround
+message U2G_PlaceObjectOnGround {
+    float_32 x_mm,
+    float_32 y_mm,
+    float_32 rad,
+    uint_8 level,
+    uint_8 useManualSpeed
+}
+
+// PlaceObjectOnGroundHere
+message U2G_PlaceObjectOnGroundHere {
+}
+
+// ExecuteTestPlan
+message U2G_ExecuteTestPlan {
+}
+
+// SelectNextObject
+message U2G_SelectNextObject {
+}
+
+// PickAndPlaceObject
+message U2G_PickAndPlaceObject {
+    int_32 objectID, // negative value means "currently selected object"
+    uint_8 usePreDockPose,
+    uint_8 useManualSpeed
+}
+
+// TraverseObject
+message U2G_TraverseObject {
+    uint_8 usePreDockPose,
+    uint_8 useManualSpeed
+}
+
+// ClearAllBlocks
+message U2G_ClearAllBlocks {
+}
+
+// ExecuteBehavior
+message U2G_ExecuteBehavior {
+    uint_8 behaviorMode
+}
+
+// SetBehaviorState
+message U2G_SetBehaviorState {
+    uint_8 behaviorState
+}
+
+// AbortPath
+message U2G_AbortPath {
+}
+
+// AbortAll
+message U2G_AbortAll {
+}
+
+// DrawPoseMarker
+message U2G_DrawPoseMarker {
+    float_32 x_mm,
+    float_32 y_mm,
+    float_32 rad,
+    uint_8 level
+}
+
+// ErasePoseMarker
+message U2G_ErasePoseMarker {
+}
+
+// SetHeadControllerGains
+message U2G_SetHeadControllerGains {
+    float_32 kp,
+    float_32 ki,
+    float_32 maxIntegralError
+}
+
+// SetLiftControllerGains
+message U2G_SetLiftControllerGains {
+    float_32 kp,
+    float_32 ki,
+    float_32 maxIntegralError
+}
+
+// SelectNextSoundScheme
+message U2G_SelectNextSoundScheme {
+}
+
+// StartTestMode
+message U2G_StartTestMode {
+    int_32 p1,
+    int_32 p2,
+    int_32 p3,
+    uint_8 mode
+}
+
+// IMURequest
+message U2G_IMURequest {
+    uint_32 length_ms
+}
+
+// PlayAnimation
+message U2G_PlayAnimation {
+    uint_32 numLoops,
+//    uint_8 animationID,
+    string animationName
+}
+
+// ReadAnimationFile
+message U2G_ReadAnimationFile {
+}
+
+// StartFaceTracking
+message U2G_StartFaceTracking {
+//TODO: add     uint_8 selectionMode
+    uint_8 timeout_sec
+}
+
+// StopFaceTracking
+message U2G_StopFaceTracking {
+}
+
+// StartLookingForMarkers
+message U2G_StartLookingForMarkers {
+}
+
+// StopLookingForMarkers
+message U2G_StopLookingForMarkers {
+}
+
+// SetVisionSystemParams
+message U2G_SetVisionSystemParams {
+    int_32 autoexposureOn,
+    float_32 exposureTime,
+    int_32 integerCountsIncrement,
+    float_32 minExposureTime,
+    float_32 maxExposureTime,
+    float_32 percentileToMakeHigh,
+    int_32 limitFramerate,
+    uint_8 highValue
+}
+
+// SetFaceDetectParams
+message U2G_SetFaceDetectParams {
+    float_32 scaleFactor,
+    int_32 minNeighbors,
+    int_32 minObjectHeight,
+    int_32 minObjectWidth,
+    int_32 maxObjectHeight,
+    int_32 maxObjectWidth
+}
+
+union U2G_Message {
+    U2G_Ping Ping,
+    U2G_ConnectToRobot ConnectToRobot,
+    U2G_ConnectToUiDevice ConnectToUiDevice,
+    U2G_DisconnectFromUiDevice DisconnectFromUiDevice,
+    U2G_ForceAddRobot ForceAddRobot,
+    U2G_StartEngine StartEngine,
+    U2G_DriveWheels DriveWheels,
+    U2G_TurnInPlace TurnInPlace,
+    U2G_MoveHead MoveHead,
+    U2G_MoveLift MoveLift,
+    U2G_SetLiftHeight SetLiftHeight,
+    U2G_SetHeadAngle SetHeadAngle,
+    U2G_StopAllMotors StopAllMotors,
+    U2G_ImageRequest ImageRequest,
+    U2G_SetRobotImageSendMode SetRobotImageSendMode,
+    U2G_SaveImages SaveImages,
+    U2G_EnableDisplay EnableDisplay,
+    U2G_SetHeadlights SetHeadlights,
+    U2G_GotoPose GotoPose,
+    U2G_PlaceObjectOnGround PlaceObjectOnGround,
+    U2G_PlaceObjectOnGroundHere PlaceObjectOnGroundHere,
+    U2G_ExecuteTestPlan ExecuteTestPlan,
+    U2G_SelectNextObject SelectNextObject,
+    U2G_PickAndPlaceObject PickAndPlaceObject,
+    U2G_TraverseObject TraverseObject,
+    U2G_ClearAllBlocks ClearAllBlocks,
+    U2G_ExecuteBehavior ExecuteBehavior,
+    U2G_SetBehaviorState SetBehaviorState,
+    U2G_AbortPath AbortPath,
+    U2G_AbortAll AbortAll,
+    U2G_DrawPoseMarker DrawPoseMarker,
+    U2G_ErasePoseMarker ErasePoseMarker,
+    U2G_SetHeadControllerGains SetHeadControllerGains,
+    U2G_SetLiftControllerGains SetLiftControllerGains,
+    U2G_SelectNextSoundScheme SelectNextSoundScheme,
+    U2G_StartTestMode StartTestMode,
+    U2G_IMURequest IMURequest,
+    U2G_PlayAnimation PlayAnimation,
+    U2G_ReadAnimationFile ReadAnimationFile,
+    U2G_StartFaceTracking StartFaceTracking,
+    U2G_StopFaceTracking StopFaceTracking,
+    U2G_StartLookingForMarkers StartLookingForMarkers,
+    U2G_StopLookingForMarkers StopLookingForMarkers,
+    U2G_SetVisionSystemParams SetVisionSystemParams,
+    U2G_SetFaceDetectParams SetFaceDetectParams
+}

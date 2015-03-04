@@ -55,6 +55,8 @@ public class Intro : MonoBehaviour {
 			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
 			RobotEngineManager.instance.RobotConnected += RobotConnected;
 		}
+
+		Application.targetFrameRate = 100;
 	}
 
 	private void OnDestroy() {
@@ -95,7 +97,7 @@ public class Intro : MonoBehaviour {
 
 			SaveData ();
 			RobotEngineManager.instance.Connect (engineIP.text);
-			error.text = "<color=#ffffff>Connecting to engine at " + ip.text + "....</color>";
+			error.text = "<color=#ffffff>Connecting to engine at " + engineIP.text + "....</color>";
 		} else {
 			error.text = errorText;
 		}
@@ -103,7 +105,7 @@ public class Intro : MonoBehaviour {
 
 	protected void SaveData() {
 		lastIp = ip.text;
-		lastId = engineIP.text;
+		lastEngineIp = engineIP.text;
 		lastVisualizerIp = visualizerIP.text;
 	}
 

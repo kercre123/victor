@@ -83,7 +83,8 @@ public static class CozmoUtil {
 		float speedB = speed;
 
 		if(turn != 0f) {
-			speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
+			speedA = Mathf.Lerp(speed, speed*maxTurnFactor, Mathf.Abs(turn));
+			speedB = Mathf.Lerp(speed, -speed*maxTurnFactor, Mathf.Abs(turn));
 		}
 
 		leftWheelSpeed = turn >= 0f ? speedA : speedB;
@@ -101,6 +102,100 @@ public static class CozmoUtil {
 
 		leftWheelSpeed = speed;
 		rightWheelSpeed = -speed;
+	}
+
+	public static void CalcWheelSpeedsForOldThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor) {
+		
+		leftWheelSpeed = 0f;
+		rightWheelSpeed = 0f;
+		
+		if(inputs.x == 0f && inputs.y == 0f) return;
+		
+		float speed = inputs.magnitude;
+		if(speed == 0f) return;
+		
+		float turn = 0f;
+		bool reverse = inputs.y < 0f;
+
+		if(!reverse) {
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+		}
+		else {
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			speed = -speed;
+		}
+		
+		speed = speed*speed * (speed < 0f ? -1f : 1f);
+		//turn = turn*turn * (turn < 0f ? -1f : 1f);
+		
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+		
+		float speedA = speed;
+		float speedB = speed;
+		
+		if(turn != 0f) {
+			speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
+		}
+		
+		leftWheelSpeed = turn >= 0f ? speedA : speedB;
+		rightWheelSpeed = turn < 0f ? speedA : speedB;
+		
+		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
+	}
+
+	public static void CalcWheelSpeedsForPlayerRelInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
+		
+		leftWheelSpeed = 0f;
+		rightWheelSpeed = 0f;
+		
+		if(inputs.x == 0f && inputs.y == 0f) return;
+		
+		float speed = inputs.magnitude;
+		if(speed == 0f) return;
+
+		speed = speed*speed * (speed < 0f ? -1f : 1f);
+		//turn = turn*turn * (turn < 0f ? -1f : 1f);
+		
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+		
+		float speedA = speed;
+
+		float angle = Vector2.Angle(Vector2.up, inputs);
+		float turn = Mathf.Clamp01(angle / 45f);
+		turn *= turn;
+		turn = turn * (inputs.x >= 0f ? 1f : -1f);
+		float speedB = Mathf.Lerp(speed, -speed, Mathf.Abs(turn));
+
+		leftWheelSpeed = turn >= 0f ? speedA : speedB;
+		rightWheelSpeed = turn < 0f ? speedA : speedB;
+		
+		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
+	}
+
+	public static float ClampAngle(float angle) {
+		float clamped = angle % 360f;
+
+		//Debug.Log("ClampAngle "+angle+" % 360f = "+clamped);
+
+		if(clamped < -180f) clamped += 360f;
+		if(clamped > 180f) clamped -= 360f;
+
+		return clamped;
+	}
+
+	public static float AngleDelta(float from, float to) {
+
+		from = ClampAngle(from);
+		to = ClampAngle(to);
+
+		if(from > 0f && to < 0f) {
+			from -= 360f;
+		}
+		else if(from < 0f && to > 0f) {
+			from += 360f;
+		} 
+
+		return ClampAngle(to - from);
 	}
 
 }
