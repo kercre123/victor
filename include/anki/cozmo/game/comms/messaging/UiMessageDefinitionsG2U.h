@@ -11,7 +11,7 @@ namespace Anki
 namespace Cozmo
 {
 using SafeMessageBuffer = Anki::Util::SafeMessageBuffer;
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsG2U.clad
+// Generated from /Users/andrew/Code/cozmo-game/src/UiMessageDefinitionsG2U.clad
 
 struct G2U_Ping
 {
@@ -770,7 +770,7 @@ struct G2U_RobotObservedObject
 	uint32_t robotID;
 	uint32_t objectFamily;
 	uint32_t objectType;
-	uint32_t objectID;
+	int32_t objectID;
 	float topLeft_x;
 	float topLeft_y;
 	float width;
@@ -787,7 +787,7 @@ struct G2U_RobotObservedObject
 	explicit G2U_RobotObservedObject(uint32_t robotID
 		,uint32_t objectFamily
 		,uint32_t objectType
-		,uint32_t objectID
+		,int32_t objectID
 		,float topLeft_x
 		,float topLeft_y
 		,float width
@@ -862,7 +862,7 @@ struct G2U_RobotObservedObject
 		//objectType
 		result += 4; // = uint_32
 		//objectID
-		result += 4; // = uint_32
+		result += 4; // = int_32
 		//topLeft_x
 		result += 4; // = float_32
 		//topLeft_y

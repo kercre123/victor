@@ -1,6 +1,6 @@
 namespace Anki.Cozmo
 {
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsG2U.clad
+// Generated from /Users/andrew/Code/cozmo-game/src/UiMessageDefinitionsG2U.clad
 
 public class G2U_Ping
 {
@@ -617,7 +617,7 @@ public class G2U_RobotObservedObject
 	public uint robotID;
 	public uint objectFamily;
 	public uint objectType;
-	public uint objectID;
+	public int objectID;
 	public float topLeft_x;
 	public float topLeft_y;
 	public float width;
@@ -632,7 +632,7 @@ public class G2U_RobotObservedObject
 	public G2U_RobotObservedObject(uint robotID,
 		uint objectFamily,
 		uint objectType,
-		uint objectID,
+		int objectID,
 		float topLeft_x,
 		float topLeft_y,
 		float width,
@@ -659,7 +659,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -677,7 +677,7 @@ public class G2U_RobotObservedObject
 		writer.Write((uint)robotID);
 		writer.Write((uint)objectFamily);
 		writer.Write((uint)objectType);
-		writer.Write((uint)objectID);
+		writer.Write((int)objectID);
 		writer.Write((float)topLeft_x);
 		writer.Write((float)topLeft_y);
 		writer.Write((float)width);
@@ -696,7 +696,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -718,7 +718,7 @@ public class G2U_RobotObservedObject
 			//objectType
 			result += 4; // = uint_32
 			//objectID
-			result += 4; // = uint_32
+			result += 4; // = int_32
 			//topLeft_x
 			result += 4; // = float_32
 			//topLeft_y

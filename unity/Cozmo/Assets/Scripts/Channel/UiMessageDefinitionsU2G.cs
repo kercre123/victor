@@ -1,6 +1,6 @@
 namespace Anki.Cozmo
 {
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsU2G.clad
+// Generated from /Users/andrew/Code/cozmo-game/src/UiMessageDefinitionsU2G.clad
 
 public class U2G_Ping
 {
