@@ -869,6 +869,8 @@ namespace Anki {
         
       } // if robot is not picking/placing or moving
       
+      CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().emit(robot.GetID(), actionResult == SUCCESS);
+      
       return actionResult;
       
     } // CheckIfDone()
