@@ -19,10 +19,4 @@ struct OVRegSettings
   u8  mask;
 };
 
-struct OVRegScript
-{
-  u32 len;
-  const struct OVRegSettings* script;
-};
-
 #endif

@@ -12,8 +12,7 @@
 #include <media/v4l2-mediabus.h>
 
 #include "ov2686.h"
-#include "ov2686_reg_script_1600x1200_15fps_customized.h"
-#include "ov2686_reg_script_800x600_30fps_customized.h"
+#include "ov2686_reg_script.h"
 #include "ov2686_code_timestamp.h"
 
 /*** Register definitions */
@@ -21,55 +20,34 @@
 static const u16 OV2686_REG_CHIP_ID_L = 0x300A; static const u8 OV2686_CHIP_ID_L_VALUE = 0x26;
 static const u16 OV2686_REG_CHIP_ID_M = 0x300B; static const u8 OV2686_CHIP_ID_M_VALUE = 0x85;
 static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H_VALUE = 0x00;
-static const u16 OV2686_REG_X_START_H = 0x3800;
-static const u16 OV2686_REG_X_START_L = 0x3801;
-static const u16 OV2686_REG_Y_START_H = 0x3802;
-static const u16 OV2686_REG_Y_START_L = 0x3803;
-static const u16 OV2686_REG_X_END_H   = 0x3804;
-static const u16 OV2686_REG_X_END_L   = 0x3805;
-static const u16 OV2686_REG_Y_END_H   = 0x3806;
-static const u16 OV2686_REG_Y_END_L   = 0x3807;
-static const u16 OV2686_REG_X_SIZE_H  = 0x3808;
-static const u16 OV2686_REG_X_SIZE_L  = 0x3809;
-static const u16 OV2686_REG_Y_SIZE_H  = 0x380A;
-static const u16 OV2686_REG_Y_SIZE_L  = 0x380B;
-
 
 /*** Camera format definitions */
 
-#define OV2686_WINDOW_MAX_WIDTH  1600
-#define OV2686_WINDOW_MIN_WIDTH   320
-#define OV2686_WINDOW_MAX_HEIGHT 1200
-#define OV2686_WINDOW_MIN_HEIGHT  240
+#define OV2686_WIDTH 800
+#define OV2686_HEIGHT 600
 
 static struct v4l2_mbus_framefmt FORMATS[] = {
   {
-    .width  = OV2686_WINDOW_MAX_WIDTH,
-    .height = OV2686_WINDOW_MAX_HEIGHT,
-    .code   = V4L2_MBUS_FMT_SRGGB12_1X12,
+    .width  = OV2686_WIDTH,
+    .height = OV2686_HEIGHT,
+    .code   = V4L2_MBUS_FMT_SGRBG12_1X12,
     .colorspace = V4L2_COLORSPACE_SRGB,
     .field      = V4L2_FIELD_NONE,
   },
-  {
-    .width  = OV2686_WINDOW_MAX_WIDTH/2,
-    .height = OV2686_WINDOW_MAX_HEIGHT/2,
-    .code   = V4L2_MBUS_FMT_SRGGB12_1X12,
-    .colorspace = V4L2_COLORSPACE_SRGB,
-    .field      = V4L2_FIELD_NONE,
-  }
 };
 
-static struct OVRegScript* FORMAT_SCRIPTS[] = {
-  &REG_SCRIPT_1600x1200,
-  &REG_SCRIPT_800x600
-};
+static const u32 NUM_FORMATS = 1;
 
-static const u32 NUM_FORMATS = ARRAY_SIZE(FORMATS);
+static const u32 OV2686_WINDOW_MAX_WIDTH  = OV2686_WIDTH;
+static const u32 OV2686_WINDOW_MIN_WIDTH  = OV2686_WIDTH;
+static const u32 OV2686_WINDOW_MAX_HEIGHT = OV2686_HEIGHT;
+static const u32 OV2686_WINDOW_MIN_HEIGHT = OV2686_HEIGHT;
 
 /*** Type definitions */
 
 struct ov2686_interval {
-  const struct OVRegScript script;
+  const struct OVRegSettings *regs;
+  const size_t reg_len;
   struct v4l2_fract interval;
 };
 
@@ -78,41 +56,36 @@ struct ov2686_info {
   struct media_pad pad;
   struct ov2686_platform_data *pdata;
   const struct ov2686_interval *interval;
-  struct v4l2_mbus_framefmt format;
-  int format_index;
-  struct v4l2_rect crop;
-  bool crop_set;
   struct mutex power_lock;
   int power_count;
   int streaming;
   int ident;
 };
 
-static const struct OVRegSettings OV2686_7p5fps_DATA[] = {
+static const struct OVRegSettings ov2686_7p5fps[1] = {
   {0x3086, 0x07, 0xff}
 };
 
-static const struct OVRegSettings OV2686_15fps_DATA[] = {
+static const struct OVRegSettings ov2686_15fps[1] = {
   {0x3086, 0x03, 0xff}
 };
 
-static const struct OVRegSettings OV2686_30fps_DATA[] = {
+static const struct OVRegSettings ov2686_30fps[1] = {
   {0x3086, 0x01, 0xff}
 };
 
-static const struct OVRegSettings OV2686_60fps_DATA[] = {
+static const struct OVRegSettings ov2686_60fps[1] = {
   {0x3086, 0x00, 0xff}
 };
 
-static const struct ov2686_interval ov2686_intervals[] = {
-  {{1, OV2686_7p5fps_DATA}, { 7500, 1000000}},
-  {{1, OV2686_15fps_DATA},  {15000, 1000000}},
-  {{1,  OV2686_30fps_DATA},  {30000, 1000000}},
-  {{1, OV2686_60fps_DATA},  {60000, 1000000}},
-};
+static const struct OVRegSettings OV2686_START = { 0x0100, 0x01, 0x01 };
 
-static const struct OVRegSettings OV2686_START_DATA = { 0x0100, 0x01, 0xff };
-static const struct OVRegScript OV2686_START = {1, &OV2686_START_DATA};
+static const struct ov2686_interval ov2686_intervals[] = {
+  {ov2686_7p5fps, 1, { 7500, 1000000}},
+  {ov2686_15fps,  1, {15000, 1000000}},
+  {ov2686_30fps,  1, {30000, 1000000}},
+  {ov2686_60fps,  1, {60000, 1000000}},
+};
 
 /*** Functions */
 
@@ -222,30 +195,6 @@ static int ov2686_reg_write(struct i2c_client *client, u16 reg, u8 val)
   return 0;
 }
 
-static int ov2686_write_script(struct i2c_client *client, const struct OVRegScript* script)
-{
-  int ret, i;
-  u8 val;
-  for (i=0; i<script->len; ++i)
-  {
-    const struct OVRegSettings* rs = &script->script[i];
-    if (rs->mask != 0xff) {
-      ret = ov2686_reg_read(client, rs->reg, &val);
-      if (ret < 0) return ret;
-      val &= ~(rs->mask);
-      val |= (rs->val & rs->mask);
-    }
-    else
-    {
-      val = rs->val;
-    }
-    ret = ov2686_reg_write(client, rs->reg, val);
-    if (ret < 0) return ret;
-  }
-
-  return 0;
-}
-
 // Returns 1 if the register equals value, 0 if it is not equal or a negative error number
 static int __ov2686_reg_equals(struct i2c_client *client, u16 reg, u8 value) {
   u8 data;
@@ -262,21 +211,12 @@ static int __ov2686_reg_equals(struct i2c_client *client, u16 reg, u8 value) {
   }
 }
 
-static void __ov2686_set_crop(struct ov2686_info* info, struct v4l2_rect* rect)
-{
-  info->crop.left   = clamp(ALIGN(rect->left,   2), 0,                        OV2686_WINDOW_MAX_WIDTH);
-  info->crop.top    = clamp(ALIGN(rect->top,    2), 0,                        OV2686_WINDOW_MAX_HEIGHT);
-  info->crop.width  = clamp(ALIGN(rect->width,  2), OV2686_WINDOW_MIN_WIDTH,  OV2686_WINDOW_MAX_WIDTH);
-  info->crop.height = clamp(ALIGN(rect->height, 2), OV2686_WINDOW_MIN_HEIGHT, OV2686_WINDOW_MAX_HEIGHT);
-}
-
 static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
   struct i2c_client *client;
   struct ov2686_info * info = to_state(subdev);
   int ret = 0;
-  int crop_scale = 1;
-  u16 writeVal;
   u8 readVal;
+  size_t r;
 
   printk(KERN_INFO "ov2686_s_stream %d\n", enable);
 
@@ -290,47 +230,15 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
     ret = ov2686_reg_write(client, 0x0100, 0x00); // Software standby
   }
   else {
-    printk(KERN_INFO "\tSending register script %d to OV2686\n", info->format_index);
-    ov2686_write_script(client, FORMAT_SCRIPTS[info->format_index]);
-
-    printk(KERN_INFO "\tSending frame rate config to OV2686\n");
-    ov2686_write_script(client, &info->interval->script);
-
-    if (info->crop_set)
-    {
-      ret = 0;
-      if (FORMATS[info->format_index].width < OV2686_WINDOW_MAX_WIDTH) crop_scale = 2; // If using skip scale crop by 1/2 as well
-      printk(KERN_INFO "\tSending crop config to OV2686: [%d, %d, %d, %d], scale=%d\n",
-      info->crop.left, info->crop.top, info->crop.width, info->crop.height, crop_scale);
-
-      writeVal = info->crop.left*crop_scale;
-      ret |= ov2686_reg_write(client, OV2686_REG_X_START_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_X_START_L, writeVal & 0xff);
-
-      writeVal = info->crop.top*crop_scale;
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_START_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_START_L, writeVal & 0xff);
-
-      writeVal = (info->crop.width*crop_scale)+15;
-      ret |= ov2686_reg_write(client, OV2686_REG_X_END_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_X_END_L, writeVal & 0xff);
-
-      writeVal = (info->crop.height*crop_scale)+15;
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_END_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_END_L, writeVal & 0xff);
-
-      writeVal = info->crop.width;
-      ret |= ov2686_reg_write(client, OV2686_REG_X_SIZE_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_X_SIZE_L, writeVal & 0xff);
-
-      writeVal = info->crop.height;
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_SIZE_H, writeVal >> 8);
-      ret |= ov2686_reg_write(client, OV2686_REG_Y_SIZE_L, writeVal & 0xff);
+    printk(KERN_INFO "\tSending register script to OV2686\n");
+    for (r=0; r<REG_SCRIPT_LEN; r++) {
+      ret = ov2686_reg_write(client, REG_SCRIPT[r].reg, REG_SCRIPT[r].val);
+      if (ret < 0) return ret;
     }
-
-    if (ret != 0) { // Using OR equals above so any error will flag though errno will be destroyed
-      printk(KERN_WARNING "\tError writing crop configuration\n");
-      return -EFAULT; // Just return a generic error
+    printk(KERN_INFO "\tSending frame rate config to OV2686\n");
+    for (r=0; r<info->interval->reg_len; r++) {
+      ret = ov2686_reg_write(client, info->interval->regs[r].reg, info->interval->regs[r].val);
+      if (ret < 0) return ret;
     }
 
     ret = ov2686_reg_read(client, 0x5080, &readVal);
@@ -342,7 +250,7 @@ static int ov2686_s_stream(struct v4l2_subdev *subdev, int enable) {
       printk(KERN_INFO "\tReg 0x5080 = 0x%02x\n", readVal);
     }
 
-    ret = ov2686_write_script(client, &OV2686_START);
+    ret = ov2686_reg_write(client, OV2686_START.reg, OV2686_START.val);
     if (ret < 0) {
       printk(KERN_WARNING "\tCouldn't enable streaming\n");
       return ret;
@@ -410,18 +318,21 @@ static int ov2686_enum_mbus_code(struct v4l2_subdev *subdev,
 static int ov2686_enum_frame_size(struct v4l2_subdev *subdev,
                                   struct v4l2_subdev_fh *fh,
                                   struct v4l2_subdev_frame_size_enum *fse) {
-  printk(KERN_INFO "ov2686_enum_frame_size: index=%d code=%d\n", fse->index, fse->code);
+  int i = NUM_FORMATS;
+  printk(KERN_INFO "ov2686_enum_frame_size\n");
 
-  if ((0 > fse->index) || (fse->index > NUM_FORMATS)) return -EINVAL;
-  else if (fse->code != FORMATS[fse->index].code) return -EINVAL;
-  else
-  {
-    fse->min_width  = OV2686_WINDOW_MIN_WIDTH;
-    fse->max_width  = OV2686_WINDOW_MAX_WIDTH;
-    fse->min_height = OV2686_WINDOW_MIN_HEIGHT;
-    fse->max_height = OV2686_WINDOW_MAX_HEIGHT;
-    return 0;
+  if (fse->code > 0) return -EINVAL;
+
+  while(--i) {
+    if (fse->code == FORMATS[i].code) break;
   }
+  fse->code = FORMATS[0].code;
+  fse->min_width  = OV2686_WINDOW_MIN_WIDTH;
+  fse->max_width  = OV2686_WINDOW_MAX_WIDTH;
+  fse->min_height = OV2686_WINDOW_MIN_HEIGHT;
+  fse->max_height = OV2686_WINDOW_MAX_HEIGHT;
+
+  return 0;
 }
 
 static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
@@ -448,7 +359,7 @@ static int ov2686_enum_frame_interval(struct v4l2_subdev *sd,
 static int ov2686_get_format(struct v4l2_subdev *subdev,
                              struct v4l2_subdev_fh *fh,
                              struct v4l2_subdev_format *fmt) {
-  struct ov2686_info * info = to_state(subdev);
+  //struct ov2686_info * info = to_state(subdev);
 
   printk(KERN_INFO "ov2686_get_format\n");
 
@@ -458,7 +369,7 @@ static int ov2686_get_format(struct v4l2_subdev *subdev,
       printk(KERN_INFO "\tTry format\n");
       break;
     case V4L2_SUBDEV_FORMAT_ACTIVE:
-      fmt->format = info->format;
+      fmt->format = FORMATS[0]; // Only one format supported TODO unstub this if nessisary
       printk(KERN_INFO "\tActive format\n");
       break;
     default:
@@ -466,8 +377,7 @@ static int ov2686_get_format(struct v4l2_subdev *subdev,
       return -EINVAL;
   }
 
-  printk(KERN_INFO "ov2686 format(%d): %dx%d code=%x colorspace=%x field=%x\n", fmt->which, fmt->format.width,
-         fmt->format.height, fmt->format.code, fmt->format.colorspace, fmt->format.field);
+  printk(KERN_INFO "ov2686 format: %dx%d code=%x colorspace=%x field=%x\n", fmt->format.width, fmt->format.height, fmt->format.code, fmt->format.colorspace, fmt->format.field);
 
   return 0;
 }
@@ -479,52 +389,19 @@ static int ov2686_set_format(struct v4l2_subdev *subdev,
 
   printk(KERN_INFO "ov2686_set_format\n");
 
-  if (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-  {
-    if (info->streaming)
-    {
-      printk(KERN_WARNING "\tov2686 device busy\n");
-      return -EBUSY;
-    }
-    else
-    {
-      if ((fmt->format.width > OV2686_WINDOW_MAX_WIDTH/2) || (fmt->format.height > OV2686_WINDOW_MAX_HEIGHT/2))
-      {
-        printk(KERN_INFO "\tusing full sensor resolution\n");
-        info->format_index = 0;
-        info->format = FORMATS[0];
-      }
-      else
-      {
-        printk(KERN_INFO "\tusing quarter scale resolution\n");
-        info->format_index = 1;
-        info->format = FORMATS[1];
-      }
-
-      if (info->crop_set) // Application has specified crop information
-      { // Adjust output format to match crop
-        info->format.width  = info->crop.width;
-        info->format.height = info->crop.height;
-      }
-      else // Application has not specified crop information
-      { // Adjust crop information to match format
-        struct v4l2_rect rect;
-        rect.left   = 0;
-        rect.top    = 0;
-        rect.width  = info->format.width;
-        rect.height = info->format.height;
-        __ov2686_set_crop(info, &rect);
-      }
-    }
+  if ((fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) && (info->streaming)) {
+    printk(KERN_WARNING "ov2686 device busy\n");
+    return -EBUSY;
   }
 
+  // Only support the one format so dumb stub TODO unstub this if nessisary
   return ov2686_get_format(subdev, fh, fmt);
 }
 
 static int ov2686_get_crop(struct v4l2_subdev *subdev,
                            struct v4l2_subdev_fh *fh,
                            struct v4l2_subdev_crop *crop) {
-  struct ov2686_info * info = to_state(subdev);
+  //struct ov2686_info * info = to_state(subdev);
 
   printk(KERN_INFO "ov2686_get_crop\n");
 
@@ -534,7 +411,10 @@ static int ov2686_get_crop(struct v4l2_subdev *subdev,
       crop->rect = *v4l2_subdev_get_try_crop(fh, crop->pad);
       break;
     case V4L2_SUBDEV_FORMAT_ACTIVE:
-      crop->rect = info->crop;
+      crop->rect.left   = 0;
+      crop->rect.top    = 0;
+      crop->rect.width  = OV2686_WIDTH;
+      crop->rect.height = OV2686_HEIGHT;
       break;
     default:
       return -EINVAL;
@@ -546,13 +426,10 @@ static int ov2686_get_crop(struct v4l2_subdev *subdev,
 static int ov2686_set_crop(struct v4l2_subdev *subdev,
                            struct v4l2_subdev_fh *fh,
                            struct v4l2_subdev_crop *crop) {
-  struct ov2686_info* info = to_state(subdev);
-
   printk(KERN_INFO "ov2686_set_crop\n");
 
-  info->crop_set = true;
-  __ov2686_set_crop(info, &(crop->rect));
-
+  // Don't support changing the crop so just stubout
+  // TODO unstub if nessisary
   return ov2686_get_crop(subdev, fh, crop);
 }
 
@@ -693,13 +570,6 @@ static int ov2686_probe(struct i2c_client *client, const struct i2c_device_id *d
     printk(KERN_WARNING "ov2686 media_entity_init failed: %d\n", ret);
     return ret;
   }
-
-  info->format_index = 0;
-  info->crop.left = 0;
-  info->crop.top  = 0;
-  info->crop.width  = OV2686_WINDOW_MAX_WIDTH;
-  info->crop.height = OV2686_WINDOW_MAX_HEIGHT;
-  info->crop_set = false;
 
   info->interval = &ov2686_intervals[0];
 
