@@ -8,6 +8,7 @@ if [ "$1" = "stop" -o "$1" = "restart" ]
 then
     echo "Stopping cozmo server: "
     killall python
+    killall gst-launch-0.10
 fi
 
 if [ "$1" = "start" -o "$1" = "restart" ]
