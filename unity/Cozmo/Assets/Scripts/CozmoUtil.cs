@@ -150,24 +150,24 @@ public static class CozmoUtil {
 		
 		if(inputs.x == 0f && inputs.y == 0f) return;
 		
-		float speed = inputs.magnitude;
+		float speed = inputs.sqrMagnitude;
 		if(speed == 0f) return;
 
-		speed = speed*speed * (speed < 0f ? -1f : 1f);
-		//turn = turn*turn * (turn < 0f ? -1f : 1f);
-		
-		speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+		bool clock = inputs.x >= 0f;
+
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED, MAX_WHEEL_SPEED, Mathf.Abs(speed));
 		
 		float speedA = speed;
 
 		float angle = Vector2.Angle(Vector2.up, inputs);
-		float turn = Mathf.Clamp01(angle / 45f);
+		float turn = Mathf.Clamp01(angle / 90f);
 		turn *= turn;
-		turn = turn * (inputs.x >= 0f ? 1f : -1f);
+		turn *= clock ? 1f : -1f;
+
 		float speedB = Mathf.Lerp(speed, -speed, Mathf.Abs(turn));
 
-		leftWheelSpeed = turn >= 0f ? speedA : speedB;
-		rightWheelSpeed = turn < 0f ? speedA : speedB;
+		leftWheelSpeed = clock ? speedA : speedB;
+		rightWheelSpeed = clock ? speedB : speedA;
 		
 		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 	}

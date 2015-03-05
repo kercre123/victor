@@ -246,6 +246,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
 			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
 			break;
+		case G2U_Message.Tag.RobotCompletedPlaceObjectOnGroundAction:
+			ReceivedSpecificMessage(message.RobotCompletedPlaceObjectOnGroundAction);
+			break;
 		}
 	}
 	
@@ -276,6 +279,11 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
+		if( current != null )
+		{
+			current.selectedObject = -1;
+			current.observedObjects.Clear();
+		}
 	}
 	
 	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
@@ -296,7 +304,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		//Debug.Log( "no box found at " + Time.time );
 
-		if( current.selectedObject == uint.MaxValue )
+		if( current.selectedObject == -1 )
 		{
 			current.observedObjects.Clear();
 		}
@@ -304,10 +312,19 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
 	{
-		Debug.Log( "Action complete" );
+		Debug.Log( "Pick And Place complete" );
 		
-		current.selectedObject = uint.MaxValue;
+		current.selectedObject = -1;
 
+		SetHeadAngle( defaultHeadAngle );
+	}
+
+	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
+	{
+		Debug.Log( "Place Object On Ground complete" );
+		
+		current.selectedObject = -1;
+		
 		SetHeadAngle( defaultHeadAngle );
 	}
 
@@ -414,6 +431,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
+	public void PlaceObjectOnGroundHere()
+	{
+		Debug.Log( "Place Object On Ground Here" );
+
+		U2G_PlaceObjectOnGroundHere message = new U2G_PlaceObjectOnGroundHere ();
+
+		channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
+	}
+
 	public void StartEngine(string vizHostIP)
 	{
 		U2G_StartEngine message = new U2G_StartEngine ();
@@ -514,6 +540,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void PickAndPlaceObject()
 	{
+		Debug.Log( "Pick And Place Object" );
+
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = (int)current.selectedObject;
 		message.usePreDockPose = 0;

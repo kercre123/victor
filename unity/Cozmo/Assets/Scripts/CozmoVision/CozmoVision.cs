@@ -13,6 +13,7 @@ public class CozmoVision : MonoBehaviour
 	
 	protected RectTransform rTrans;
 	protected Rect rect;
+	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 
 	protected int observedObjectsCount
@@ -60,9 +61,16 @@ public class CozmoVision : MonoBehaviour
 
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.PickAndPlaceObject();
+			if( RobotEngineManager.instance.current.status == Robot.StatusFlag.IS_CARRYING_BLOCK && RobotEngineManager.instance.current.selectedObject == -1 )
+			{
+				RobotEngineManager.instance.PlaceObjectOnGroundHere();
+			}
+			else
+			{
+				RobotEngineManager.instance.PickAndPlaceObject();
+			}
 
-			RobotEngineManager.instance.current.selectedObject = uint.MaxValue - 1;
+			RobotEngineManager.instance.current.selectedObject = -2;
 		}
 	}
 
@@ -72,7 +80,7 @@ public class CozmoVision : MonoBehaviour
 
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+			RobotEngineManager.instance.current.selectedObject = -1;
 		}
 	}
 

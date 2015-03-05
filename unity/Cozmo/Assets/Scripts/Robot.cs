@@ -15,12 +15,26 @@ public class Robot
 	public float pose_y { get; private set; }
 	public float pose_z { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
-	public uint selectedObject;
+	public StatusFlag status { get; private set; }
+	public int selectedObject;
+
+	private StatusFlag lastStatus;
+
+	public enum StatusFlag
+	{
+		//IS_TRAVERSING_PATH    = 1,
+		IS_CARRYING_BLOCK       = 0x2,
+		IS_PICKING_OR_PLACING   = 0x4,
+		IS_PICKED_UP            = 0x8,
+		IS_PROX_FORWARD_BLOCKED = 0x10,
+		IS_PROX_SIDE_BLOCKED    = 0x20,
+		IS_ANIMATING            = 0x40
+	};
 
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		selectedObject = uint.MaxValue;
+		selectedObject = -1;
 		observedObjects = new List<ObservedObject>();
 	}
 
@@ -34,6 +48,13 @@ public class Robot
 		pose_x = message.pose_x;
 		pose_y = message.pose_y;
 		pose_z = message.pose_z;
+		status = (StatusFlag)message.status;
+
+		if( (int)status != 0 && status != lastStatus )
+		{
+			Debug.Log( "Status: " + status );
+			lastStatus = status;
+		}
 	}
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )

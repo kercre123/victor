@@ -17,7 +17,7 @@ public class CozmoVision1 : CozmoVision
 	{
 		public Image image;
 		public Text text;
-		public uint ID;
+		public int ID;
 		public SelectionButton1 button { get; set; }
 
 		public Vector3 position
@@ -52,19 +52,21 @@ public class CozmoVision1 : CozmoVision
 		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
+			robot = RobotEngineManager.instance.current;
+
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
-				// if no object selected or being actioned
-				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject < uint.MaxValue - 1 );
+				// if no object selected or being actioned or holding block
+				actionButtons[i].gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) || robot.selectedObject > -1 );
 			}
 
 			distancePairs.Clear();
 
 			for( int i = 0; i < maxObservedObjects; ++i )
 			{
-				if( observedObjectsCount > i && RobotEngineManager.instance.current.selectedObject == uint.MaxValue )
+				if( observedObjectsCount > i && robot.selectedObject == -1 )
 				{
-					ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[i];
+					ObservedObject observedObject = robot.observedObjects[i];
 
 					selectionBoxes[i].button = null;
 
