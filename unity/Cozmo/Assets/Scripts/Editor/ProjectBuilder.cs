@@ -125,6 +125,8 @@ public class ProjectBuilder {
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
 	
+	EditorApplication.isPlaying = false;
+	
 	AssetDatabase.Refresh (ImportAssetOptions.ForceSynchronousImport);
 
     // run build
