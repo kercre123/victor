@@ -615,7 +615,7 @@ public class G2U_RobotObservedObject
 	public uint robotID;
 	public uint objectFamily;
 	public uint objectType;
-	public uint objectID;
+	public int objectID;
 	public float topLeft_x;
 	public float topLeft_y;
 	public float width;
@@ -630,7 +630,7 @@ public class G2U_RobotObservedObject
 	public G2U_RobotObservedObject(uint robotID,
 		uint objectFamily,
 		uint objectType,
-		uint objectID,
+		int objectID,
 		float topLeft_x,
 		float topLeft_y,
 		float width,
@@ -657,7 +657,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -675,7 +675,7 @@ public class G2U_RobotObservedObject
 		writer.Write((uint)robotID);
 		writer.Write((uint)objectFamily);
 		writer.Write((uint)objectType);
-		writer.Write((uint)objectID);
+		writer.Write((int)objectID);
 		writer.Write((float)topLeft_x);
 		writer.Write((float)topLeft_y);
 		writer.Write((float)width);
@@ -694,7 +694,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -716,7 +716,7 @@ public class G2U_RobotObservedObject
 			//objectType
 			result += 4; // = uint_32
 			//objectID
-			result += 4; // = uint_32
+			result += 4; // = int_32
 			//topLeft_x
 			result += 4; // = float_32
 			//topLeft_y
@@ -970,6 +970,66 @@ public class G2U_RobotCompletedPickAndPlaceAction
 	}
 }
 
+public class G2U_RobotCompletedPlaceObjectOnGroundAction
+{
+	public uint robotID;
+	public byte success;
+
+	/**** Constructors ****/
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction()
+	{
+	}
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction(uint robotID,
+		byte success)
+	{
+		this.robotID = robotID;
+		this.success = success;
+	}
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)robotID);
+		writer.Write((byte)success);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//robotID
+			result += 4; // = uint_32
+			//success
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class G2U_PlaySound
 {
 	public string soundFilename;
@@ -1094,8 +1154,9 @@ public class G2U_Message {
 		RobotObservedNothing,	//9
 		DeviceDetectedVisionMarker,	//10
 		RobotCompletedPickAndPlaceAction,	//11
-		PlaySound,	//12
-		StopSound,	//13
+		RobotCompletedPlaceObjectOnGroundAction,	//12
+		PlaySound,	//13
+		StopSound,	//14
 		INVALID
 	};
 
@@ -1309,6 +1370,23 @@ public class G2U_Message {
 		}
 	}
 
+	public G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction
+	{
+		get {
+			if (_tag != Tag.RobotCompletedPlaceObjectOnGroundAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RobotCompletedPlaceObjectOnGroundAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (G2U_RobotCompletedPlaceObjectOnGroundAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RobotCompletedPlaceObjectOnGroundAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public G2U_PlaySound PlaySound
 	{
 		get {
@@ -1385,6 +1463,9 @@ public class G2U_Message {
 		case Tag.RobotCompletedPickAndPlaceAction:
 			_state = new G2U_RobotCompletedPickAndPlaceAction(stream);
 			break;
+		case Tag.RobotCompletedPlaceObjectOnGroundAction:
+			_state = new G2U_RobotCompletedPlaceObjectOnGroundAction(stream);
+			break;
 		case Tag.PlaySound:
 			_state = new G2U_PlaySound(stream);
 			break;
@@ -1439,6 +1520,9 @@ public class G2U_Message {
 		case Tag.RobotCompletedPickAndPlaceAction:
 			RobotCompletedPickAndPlaceAction.Pack(stream);
 			break;
+		case Tag.RobotCompletedPlaceObjectOnGroundAction:
+			RobotCompletedPlaceObjectOnGroundAction.Pack(stream);
+			break;
 		case Tag.PlaySound:
 			PlaySound.Pack(stream);
 			break;
@@ -1491,6 +1575,9 @@ public class G2U_Message {
 				break;
 			case Tag.RobotCompletedPickAndPlaceAction:
 				result += RobotCompletedPickAndPlaceAction.Size;
+				break;
+			case Tag.RobotCompletedPlaceObjectOnGroundAction:
+				result += RobotCompletedPlaceObjectOnGroundAction.Size;
 				break;
 			case Tag.PlaySound:
 				result += PlaySound.Size;
