@@ -75,6 +75,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:blockworld_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
 #  COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:blockworld_controller>
+  VERBATIM
 )
 
 
