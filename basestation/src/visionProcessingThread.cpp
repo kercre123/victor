@@ -17,6 +17,9 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/markerCodeDefinitions.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
+
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
