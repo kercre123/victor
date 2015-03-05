@@ -920,7 +920,7 @@ namespace Anki {
       }
     }
     
-    u8 HAL::BatteryGetPercent()
+    u8 HAL::BatteryGetVoltage10x()
     {
       // Return voltage*10 for now...
       return 50;

@@ -151,7 +151,7 @@ namespace Anki {
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
-        robotState_.batteryPercent = HAL::BatteryGetPercent();
+        robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
         
         robotState_.status = 0;
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);

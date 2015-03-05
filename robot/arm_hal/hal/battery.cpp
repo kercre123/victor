@@ -10,7 +10,7 @@ namespace Anki
     {
       extern volatile GlobalDataToHead g_dataToHead;
 
-      u8 BatteryGetPercent()
+      u8 BatteryGetVoltage10x()
       {
         return (g_dataToHead.VBat * 10)/65535; // XXX Returning battery voltage * 10 for now
       }

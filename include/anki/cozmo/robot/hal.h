@@ -379,8 +379,8 @@ namespace Anki
       // BATTERY
       //
 
-      // Get the battery percent between [0, 100]
-      u8 BatteryGetPercent();
+      // Get the battery voltage x10
+      u8 BatteryGetVoltage10x();
 
       // Return whether or not the battery is charging
       bool BatteryIsCharging();

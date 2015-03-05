@@ -229,7 +229,7 @@ namespace Anki {
         VizManager::getInstance()->SetText(VizManager::TextLabelType::BATTERY,
                                            Anki::NamedColors::GREEN,
                                            "Batt: %2.1f V",
-                                           (f32)msg.batteryPercent/10);
+                                           (f32)msg.battVolt10x/10);
       }
       
       // Get ID of last/current path that the robot executed
