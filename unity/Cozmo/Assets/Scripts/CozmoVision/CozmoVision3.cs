@@ -63,7 +63,7 @@ public class CozmoVision3 : CozmoVision
 
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
-				actionButtons[i].gameObject.SetActive( robot.selectedObject > -1 );
+				actionButtons[i].gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) || robot.selectedObject > -1 );
 			}
 		}
 	}

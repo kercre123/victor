@@ -551,6 +551,7 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = (int)current.selectedObject;
 		message.usePreDockPose = 0;
+		message.useManualSpeed = 0;
 		
 		channel.Send( new U2G_Message{PickAndPlaceObject=message} );
 
