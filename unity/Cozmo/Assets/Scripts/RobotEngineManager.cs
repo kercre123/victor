@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,8 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	[SerializeField]
 	private TextAsset configuration;
+	[SerializeField]
+	private Text batteryPercentage;
 
 	public float defaultHeadAngle;
 
@@ -242,6 +245,7 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
+			batteryPercentage.text = current.batteryPercent.ToString() + "%";
 			break;
 		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
 			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);

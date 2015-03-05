@@ -14,6 +14,7 @@ public class Robot
 	public float pose_x { get; private set; }
 	public float pose_y { get; private set; }
 	public float pose_z { get; private set; }
+	public float batteryPercent { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
@@ -49,6 +50,7 @@ public class Robot
 		pose_y = message.pose_y;
 		pose_z = message.pose_z;
 		status = (StatusFlag)message.status;
+		batteryPercent = (float)message.batteryPercent;
 
 		if( (int)status != 0 && status != lastStatus )
 		{
