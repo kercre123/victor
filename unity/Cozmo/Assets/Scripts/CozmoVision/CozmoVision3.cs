@@ -40,28 +40,30 @@ public class CozmoVision3 : CozmoVision
 
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			if( observedObjectsCount > 0 && RobotEngineManager.instance.current.observedObjects[0].width > reticle.rectTransform.rect.width && 
-			    RobotEngineManager.instance.current.observedObjects[0].height > reticle.rectTransform.rect.height )
+			robot = RobotEngineManager.instance.current;
+
+			if( observedObjectsCount > 0 && robot.observedObjects[0].width > reticle.rectTransform.rect.width && 
+			    robot.observedObjects[0].height > reticle.rectTransform.rect.height )
 			{
 				box.image.gameObject.SetActive( true );
 
-				ObservedObject observedObject = RobotEngineManager.instance.current.observedObjects[0];
+				ObservedObject observedObject = robot.observedObjects[0];
 
 				box.image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
 				box.image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
 
 				box.text.text = "Select " + observedObject.ID;
-				RobotEngineManager.instance.current.selectedObject = observedObject.ID;
+				robot.selectedObject = observedObject.ID;
 			}
 			else
 			{
 				box.image.gameObject.SetActive( false );
-				RobotEngineManager.instance.current.selectedObject = uint.MaxValue;
+				robot.selectedObject = -1;
 			}
 
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
-				actionButtons[i].gameObject.SetActive( RobotEngineManager.instance.current.selectedObject < uint.MaxValue - 1 );
+				actionButtons[i].gameObject.SetActive( robot.selectedObject > -1 );
 			}
 		}
 	}

@@ -4,7 +4,7 @@ using System.Collections;
 
 public class SelectionButton2 : SelectionButton
 {
-	[System.NonSerialized] public uint ID;
+	[System.NonSerialized] public int ID;
 
 	public void Selection()
 	{
