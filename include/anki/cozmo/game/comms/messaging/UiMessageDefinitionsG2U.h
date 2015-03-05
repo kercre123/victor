@@ -11,8 +11,6 @@ namespace Anki
 namespace Cozmo
 {
 using SafeMessageBuffer = Anki::Util::SafeMessageBuffer;
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsG2U.clad
-
 struct G2U_Ping
 {
 	uint32_t counter;
@@ -770,7 +768,7 @@ struct G2U_RobotObservedObject
 	uint32_t robotID;
 	uint32_t objectFamily;
 	uint32_t objectType;
-	uint32_t objectID;
+	int32_t objectID;
 	float topLeft_x;
 	float topLeft_y;
 	float width;
@@ -787,7 +785,7 @@ struct G2U_RobotObservedObject
 	explicit G2U_RobotObservedObject(uint32_t robotID
 		,uint32_t objectFamily
 		,uint32_t objectType
-		,uint32_t objectID
+		,int32_t objectID
 		,float topLeft_x
 		,float topLeft_y
 		,float width
@@ -862,7 +860,7 @@ struct G2U_RobotObservedObject
 		//objectType
 		result += 4; // = uint_32
 		//objectID
-		result += 4; // = uint_32
+		result += 4; // = int_32
 		//topLeft_x
 		result += 4; // = float_32
 		//topLeft_y
@@ -1189,6 +1187,88 @@ struct G2U_RobotCompletedPickAndPlaceAction
 	}
 };
 
+struct G2U_RobotCompletedPlaceObjectOnGroundAction
+{
+	uint32_t robotID;
+	uint8_t success;
+
+	/**** Constructors ****/
+	G2U_RobotCompletedPlaceObjectOnGroundAction() = default;
+	G2U_RobotCompletedPlaceObjectOnGroundAction(const G2U_RobotCompletedPlaceObjectOnGroundAction& other) = default;
+	G2U_RobotCompletedPlaceObjectOnGroundAction(G2U_RobotCompletedPlaceObjectOnGroundAction& other) = default;
+	G2U_RobotCompletedPlaceObjectOnGroundAction(G2U_RobotCompletedPlaceObjectOnGroundAction&& other) noexcept = default;
+	G2U_RobotCompletedPlaceObjectOnGroundAction& operator=(const G2U_RobotCompletedPlaceObjectOnGroundAction& other) = default;
+	G2U_RobotCompletedPlaceObjectOnGroundAction& operator=(G2U_RobotCompletedPlaceObjectOnGroundAction&& other) noexcept = default;
+
+	explicit G2U_RobotCompletedPlaceObjectOnGroundAction(uint32_t robotID
+		,uint8_t success)
+	:robotID(robotID)
+	,success(success)
+	{}
+	explicit G2U_RobotCompletedPlaceObjectOnGroundAction(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit G2U_RobotCompletedPlaceObjectOnGroundAction(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->robotID);
+		buffer.Write(this->success);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->robotID);
+		buffer.Read(this->success);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//robotID
+		result += 4; // = uint_32
+		//success
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const G2U_RobotCompletedPlaceObjectOnGroundAction& other) const
+	{
+		if (robotID != other.robotID
+		|| success != other.success) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const G2U_RobotCompletedPlaceObjectOnGroundAction& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 struct G2U_PlaySound
 {
 	std::string soundFilename;
@@ -1372,8 +1452,9 @@ public:
 		RobotObservedNothing,	// 9
 		DeviceDetectedVisionMarker,	// 10
 		RobotCompletedPickAndPlaceAction,	// 11
-		PlaySound,	// 12
-		StopSound,	// 13
+		RobotCompletedPlaceObjectOnGroundAction,	// 12
+		PlaySound,	// 13
+		StopSound,	// 14
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -1402,6 +1483,8 @@ public:
 			return "DeviceDetectedVisionMarker";
 		case Type::RobotCompletedPickAndPlaceAction:
 			return "RobotCompletedPickAndPlaceAction";
+		case Type::RobotCompletedPlaceObjectOnGroundAction:
+			return "RobotCompletedPlaceObjectOnGroundAction";
 		case Type::PlaySound:
 			return "PlaySound";
 		case Type::StopSound:
@@ -1760,6 +1843,35 @@ public:
 		}
 	}
 
+	/** RobotCompletedPlaceObjectOnGroundAction **/
+	const G2U_RobotCompletedPlaceObjectOnGroundAction& Get_RobotCompletedPlaceObjectOnGroundAction() const
+	{
+		assert(_type == Type::RobotCompletedPlaceObjectOnGroundAction);
+		return _RobotCompletedPlaceObjectOnGroundAction;
+	}
+	void Set_RobotCompletedPlaceObjectOnGroundAction(const G2U_RobotCompletedPlaceObjectOnGroundAction& new_RobotCompletedPlaceObjectOnGroundAction)
+	{
+		if(this->_type == Type::RobotCompletedPlaceObjectOnGroundAction) {
+			_RobotCompletedPlaceObjectOnGroundAction = new_RobotCompletedPlaceObjectOnGroundAction;
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotCompletedPlaceObjectOnGroundAction) G2U_RobotCompletedPlaceObjectOnGroundAction{new_RobotCompletedPlaceObjectOnGroundAction};
+			_type = Type::RobotCompletedPlaceObjectOnGroundAction;
+		}
+	}
+	void Set_RobotCompletedPlaceObjectOnGroundAction(G2U_RobotCompletedPlaceObjectOnGroundAction&&  new_RobotCompletedPlaceObjectOnGroundAction)
+	{
+		if(this->_type == Type::RobotCompletedPlaceObjectOnGroundAction) {
+			_RobotCompletedPlaceObjectOnGroundAction = std::move(new_RobotCompletedPlaceObjectOnGroundAction);
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotCompletedPlaceObjectOnGroundAction) G2U_RobotCompletedPlaceObjectOnGroundAction{std::move(new_RobotCompletedPlaceObjectOnGroundAction)};
+			_type = Type::RobotCompletedPlaceObjectOnGroundAction;
+		}
+	}
+
 	/** PlaySound **/
 	const G2U_PlaySound& Get_PlaySound() const
 	{
@@ -1929,6 +2041,14 @@ public:
 			this->_RobotCompletedPickAndPlaceAction.Unpack(buffer);
 			}
 			break;
+		case Type::RobotCompletedPlaceObjectOnGroundAction:
+			if (newType != oldType) {
+				new(&(this->_RobotCompletedPlaceObjectOnGroundAction)) G2U_RobotCompletedPlaceObjectOnGroundAction(buffer);
+			}
+			else {
+			this->_RobotCompletedPlaceObjectOnGroundAction.Unpack(buffer);
+			}
+			break;
 		case Type::PlaySound:
 			if (newType != oldType) {
 				new(&(this->_PlaySound)) G2U_PlaySound(buffer);
@@ -1999,6 +2119,9 @@ public:
 		case Type::RobotCompletedPickAndPlaceAction:
 			this->_RobotCompletedPickAndPlaceAction.Pack(buffer);
 			break;
+		case Type::RobotCompletedPlaceObjectOnGroundAction:
+			this->_RobotCompletedPlaceObjectOnGroundAction.Pack(buffer);
+			break;
 		case Type::PlaySound:
 			this->_PlaySound.Pack(buffer);
 			break;
@@ -2053,6 +2176,9 @@ public:
 		case Type::RobotCompletedPickAndPlaceAction:
 			result += _RobotCompletedPickAndPlaceAction.Size();
 			break;
+		case Type::RobotCompletedPlaceObjectOnGroundAction:
+			result += _RobotCompletedPlaceObjectOnGroundAction.Size();
+			break;
 		case Type::PlaySound:
 			result += _PlaySound.Size();
 			break;
@@ -2104,6 +2230,9 @@ private:
 		case Type::RobotCompletedPickAndPlaceAction:
 			_RobotCompletedPickAndPlaceAction.~G2U_RobotCompletedPickAndPlaceAction();
 			break;
+		case Type::RobotCompletedPlaceObjectOnGroundAction:
+			_RobotCompletedPlaceObjectOnGroundAction.~G2U_RobotCompletedPlaceObjectOnGroundAction();
+			break;
 		case Type::PlaySound:
 			_PlaySound.~G2U_PlaySound();
 			break;
@@ -2130,6 +2259,7 @@ private:
 		G2U_RobotObservedNothing _RobotObservedNothing;
 		G2U_DeviceDetectedVisionMarker _DeviceDetectedVisionMarker;
 		G2U_RobotCompletedPickAndPlaceAction _RobotCompletedPickAndPlaceAction;
+		G2U_RobotCompletedPlaceObjectOnGroundAction _RobotCompletedPlaceObjectOnGroundAction;
 		G2U_PlaySound _PlaySound;
 		G2U_StopSound _StopSound;
 	};

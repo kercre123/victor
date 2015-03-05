@@ -320,8 +320,8 @@ case U2G_Message::Type::__MSG_TYPE__: \
   
   void CozmoGameImpl::ProcessMessage(U2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages(msg.enableSave);
-    printf("Saving images: %s\n", VizManager::getInstance()->IsSavingImages() ? "ON" : "OFF");
+    VizManager::getInstance()->SaveImages((VizSaveImageMode_t)msg.mode);
+    printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
   }
   
   void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)

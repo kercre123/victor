@@ -113,7 +113,7 @@ namespace Cozmo {
                                                 float x_upperRight, float y_upperRight,
                                                 float x_lowerRight, float y_lowerRight);
     void HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success);
-    
+    void HandleRobotCompletedPlaceObjectOnGroundAction(uint8_t robotID, uint8_t success);
     //
     // U2G Message Handling
     //
