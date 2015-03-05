@@ -88,57 +88,44 @@ namespace Anki {
     
     f32 ComputeLeftWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
     {
-      
-#ifdef COZMO2
-      f32 out_ol = 0, out_corr = 0;
-      f32 dir = desired_speed_mmps >= 0 ? 1 : -1;
-      
-      // Compute open loop component and error correction component of wheel motor command
-      if (ABS(desired_speed_mmps) >= TRANSITION_SPEED) {
-        out_ol = (desired_speed_mmps * HIGH_OPEN_LOOP_GAIN) + dir * HIGH_OPEN_LOOP_OFFSET;
-        out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
-      } else {
-        out_ol = (desired_speed_mmps) * LOW_OPEN_LOOP_GAIN;
-        out_corr = ( (DEFAULT_WHEEL_LOW_KP * error) + (error_sum * DEFAULT_WHEEL_LOW_KI) );
-      }
-      
-      return (out_ol + out_corr);
-#else
       // 3rd order polynomial
       // For x = speed in mm/s,
       // power = 5E-7x^3 - 0.0001x^2 + 0.0082x + 0.0149
       f32 x = ABS(desired_speed_mmps);
       f32 x2 = x*x;
       f32 x3 = x*x2;
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x + 0.0149;
+#ifdef COZMO_TREADS
+      f32 out_ol = 8E-7 * x3 - 0.0002 * x2 + 0.0134 * x - 0.0001;    // #2: With treads
+#else
+      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x + 0.0149;  // #1: No treads
+#endif
       if (desired_speed_mmps < 0) {
         out_ol *= -1;
       }
       f32 out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
       f32 out_total = out_ol + out_corr;
       return out_total;
-#endif
     }
 
     f32 ComputeRightWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
     {
-#ifdef COZMO2
-      return ComputeLeftWheelPower(desired_speed_mmps, error, error_sum);
-#else
       // 3rd order polynomial
       // For x = speed in mm/s,
       // power = 4E-7x^3 - 0.00008x^2 + 0.0072x + 0.0203
       f32 x = ABS(desired_speed_mmps);
       f32 x2 = x*x;
       f32 x3 = x*x2;
-      f32 out_ol = 4E-7 * x3 - 0.00008 * x2 + 0.0072 * x + 0.0203;
+#ifdef COZMO_TREADS
+      f32 out_ol = 5E-7 * x3 - 9E-5 * x2 + 0.0072 * x - 0.0073;        // #2: With treads
+#else
+      f32 out_ol = 4E-7 * x3 - 0.00008 * x2 + 0.0072 * x + 0.0203;   // #1: No treads
+#endif
       if (desired_speed_mmps < 0) {
         out_ol *= -1;
       }
       f32 out_corr = ( (Kp_ * error) + (error_sum * Ki_) );
       f32 out_total = out_ol + out_corr;
       return out_total;
-#endif
       
     }
     

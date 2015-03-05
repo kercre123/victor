@@ -9,8 +9,8 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Uncomment if using COZMO v2
-    //#define COZMO2
+    // Uncomment if using Cozmo v3 robot with treads
+    //#define COZMO_TREADS
 
     /***************************************************************************
      *
@@ -150,11 +150,7 @@ namespace Anki {
     const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
 
     // How fast (in mm/sec) can a wheel spin at max
-#ifdef COZMO2
-    const f32 MAX_WHEEL_SPEED_MMPS = 120.f;
-#else
     const f32 MAX_WHEEL_SPEED_MMPS = 170.f;
-#endif
     
     /***************************************************************************
      *
@@ -194,9 +190,22 @@ namespace Anki {
     };
      */
     
+#ifdef COZMO_TREADS
+    // From Calibration on Mar. 4, 2015, Cozmo Proto 3, #2,  Wide lens with QVGA crop
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 374.98139f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 371.84817f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 155.83712f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 117.87848f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.02865f,
+      0.14764f,
+      -0.00074f,
+      0.00046f
+    };
+#else
     // From Calibration on Feb. 25, 2015, Cozmo Proto 3, #2,  "Porthole" lens
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 231.79353f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 231.63924;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 231.63924f;
     const f32 HEAD_CAM_CALIB_CENTER_X       = 157.97552f;
     const f32 HEAD_CAM_CALIB_CENTER_Y       = 125.41319f;
     const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
@@ -205,6 +214,9 @@ namespace Anki {
       -0.00063f,
       -0.00083f
     };
+#endif
+    
+    
     
 #endif // #ifdef SIMULATOR
 
@@ -243,11 +255,7 @@ namespace Anki {
     // Comms type for Basestation-robot comms
     // 0: Use TCP
     // 1: Use UDP
-#ifdef COZMO2
-    #define USE_UDP_ROBOT_COMMS 0
-#else
     #define USE_UDP_ROBOT_COMMS 1
-#endif
     
     // Comms types for UI-game comms
     #define USE_UDP_UI_COMMS 1
