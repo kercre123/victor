@@ -11,8 +11,6 @@ namespace Anki
 namespace Cozmo
 {
 using SafeMessageBuffer = Anki::Util::SafeMessageBuffer;
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsU2G.clad
-
 struct U2G_Ping
 {
 	uint32_t counter;
@@ -1202,7 +1200,7 @@ struct U2G_SetRobotImageSendMode
 
 struct U2G_SaveImages
 {
-	uint8_t enableSave;
+	uint8_t mode;
 
 	/**** Constructors ****/
 	U2G_SaveImages() = default;
@@ -1212,8 +1210,8 @@ struct U2G_SaveImages
 	U2G_SaveImages& operator=(const U2G_SaveImages& other) = default;
 	U2G_SaveImages& operator=(U2G_SaveImages&& other) noexcept = default;
 
-	explicit U2G_SaveImages(uint8_t enableSave)
-	:enableSave(enableSave)
+	explicit U2G_SaveImages(uint8_t mode)
+	:mode(mode)
 	{}
 	explicit U2G_SaveImages(const uint8_t* buff, size_t len)
 	{
@@ -1235,7 +1233,7 @@ struct U2G_SaveImages
 
 	size_t Pack(SafeMessageBuffer& buffer) const
 	{
-		buffer.Write(this->enableSave);
+		buffer.Write(this->mode);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -1249,20 +1247,20 @@ struct U2G_SaveImages
 
 	size_t Unpack(const SafeMessageBuffer& buffer)
 	{
-		buffer.Read(this->enableSave);
+		buffer.Read(this->mode);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
 	{
 		size_t result{0};
-		//enableSave
+		//mode
 		result += 1; // = uint_8
 		return result;
 	}
 
 	bool operator==(const U2G_SaveImages& other) const
 	{
-		if (enableSave != other.enableSave) {
+		if (mode != other.mode) {
 			return false;
 		}
 		return true;

@@ -1,7 +1,5 @@
 namespace Anki.Cozmo
 {
-// Generated from /Users/gregnage/cozmo-game/src/UiMessageDefinitionsG2U.clad
-
 public class G2U_Ping
 {
 	public uint counter;
@@ -18,6 +16,7 @@ public class G2U_Ping
 	}
 
 	public G2U_Ping(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//counter
@@ -67,6 +66,7 @@ public class G2U_RobotAvailable
 	}
 
 	public G2U_RobotAvailable(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -116,6 +116,7 @@ public class G2U_UiDeviceAvailable
 	}
 
 	public G2U_UiDeviceAvailable(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -168,6 +169,7 @@ public class G2U_RobotConnected
 	}
 
 	public G2U_RobotConnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -227,6 +229,7 @@ public class G2U_RobotDisconnected
 	}
 
 	public G2U_RobotDisconnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -286,6 +289,7 @@ public class G2U_UiDeviceConnected
 	}
 
 	public G2U_UiDeviceConnected(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//deviceID
@@ -336,6 +340,7 @@ public class G2U_RobotState
 	public float rightWheelSpeed_mmps;
 	public float headAngle_rad;
 	public float liftHeight_mm;
+	public float batteryVoltage;
 	public byte status;
 	public byte robotID;
 
@@ -353,6 +358,7 @@ public class G2U_RobotState
 		float rightWheelSpeed_mmps,
 		float headAngle_rad,
 		float liftHeight_mm,
+		float batteryVoltage,
 		byte status,
 		byte robotID)
 	{
@@ -364,11 +370,13 @@ public class G2U_RobotState
 		this.rightWheelSpeed_mmps = rightWheelSpeed_mmps;
 		this.headAngle_rad = headAngle_rad;
 		this.liftHeight_mm = liftHeight_mm;
+		this.batteryVoltage = batteryVoltage;
 		this.status = status;
 		this.robotID = robotID;
 	}
 
 	public G2U_RobotState(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//pose_x
@@ -387,6 +395,8 @@ public class G2U_RobotState
 		headAngle_rad = (float)(reader.ReadSingle());
 		//liftHeight_mm
 		liftHeight_mm = (float)(reader.ReadSingle());
+		//batteryVoltage
+		batteryVoltage = (float)(reader.ReadSingle());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -405,6 +415,7 @@ public class G2U_RobotState
 		writer.Write((float)rightWheelSpeed_mmps);
 		writer.Write((float)headAngle_rad);
 		writer.Write((float)liftHeight_mm);
+		writer.Write((float)batteryVoltage);
 		writer.Write((byte)status);
 		writer.Write((byte)robotID);
 		return stream;
@@ -430,6 +441,8 @@ public class G2U_RobotState
 		headAngle_rad = (float)(reader.ReadSingle());
 		//liftHeight_mm
 		liftHeight_mm = (float)(reader.ReadSingle());
+		//batteryVoltage
+		batteryVoltage = (float)(reader.ReadSingle());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -455,6 +468,8 @@ public class G2U_RobotState
 			//headAngle_rad
 			result += 4; // = float_32
 			//liftHeight_mm
+			result += 4; // = float_32
+			//batteryVoltage
 			result += 4; // = float_32
 			//status
 			result += 1; // = uint_8
@@ -509,6 +524,7 @@ public class G2U_ImageChunk
 	}
 
 	public G2U_ImageChunk(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//imageId
@@ -609,7 +625,7 @@ public class G2U_RobotObservedObject
 	public uint robotID;
 	public uint objectFamily;
 	public uint objectType;
-	public uint objectID;
+	public int objectID;
 	public float topLeft_x;
 	public float topLeft_y;
 	public float width;
@@ -624,7 +640,7 @@ public class G2U_RobotObservedObject
 	public G2U_RobotObservedObject(uint robotID,
 		uint objectFamily,
 		uint objectType,
-		uint objectID,
+		int objectID,
 		float topLeft_x,
 		float topLeft_y,
 		float width,
@@ -641,6 +657,7 @@ public class G2U_RobotObservedObject
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -650,7 +667,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -668,7 +685,7 @@ public class G2U_RobotObservedObject
 		writer.Write((uint)robotID);
 		writer.Write((uint)objectFamily);
 		writer.Write((uint)objectType);
-		writer.Write((uint)objectID);
+		writer.Write((int)objectID);
 		writer.Write((float)topLeft_x);
 		writer.Write((float)topLeft_y);
 		writer.Write((float)width);
@@ -687,7 +704,7 @@ public class G2U_RobotObservedObject
 		//objectType
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
-		objectID = (uint)(reader.ReadUInt32());
+		objectID = (int)(reader.ReadInt32());
 		//topLeft_x
 		topLeft_x = (float)(reader.ReadSingle());
 		//topLeft_y
@@ -709,7 +726,7 @@ public class G2U_RobotObservedObject
 			//objectType
 			result += 4; // = uint_32
 			//objectID
-			result += 4; // = uint_32
+			result += 4; // = int_32
 			//topLeft_x
 			result += 4; // = float_32
 			//topLeft_y
@@ -739,6 +756,7 @@ public class G2U_RobotObservedNothing
 	}
 
 	public G2U_RobotObservedNothing(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -812,6 +830,7 @@ public class G2U_DeviceDetectedVisionMarker
 	}
 
 	public G2U_DeviceDetectedVisionMarker(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//markerType
@@ -920,6 +939,67 @@ public class G2U_RobotCompletedPickAndPlaceAction
 	}
 
 	public G2U_RobotCompletedPickAndPlaceAction(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)robotID);
+		writer.Write((byte)success);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//success
+		success = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//robotID
+			result += 4; // = uint_32
+			//success
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
+public class G2U_RobotCompletedPlaceObjectOnGroundAction
+{
+	public uint robotID;
+	public byte success;
+
+	/**** Constructors ****/
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction()
+	{
+	}
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction(uint robotID,
+		byte success)
+	{
+		this.robotID = robotID;
+		this.success = success;
+	}
+
+	public G2U_RobotCompletedPlaceObjectOnGroundAction(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//robotID
@@ -982,6 +1062,7 @@ public class G2U_PlaySound
 	}
 
 	public G2U_PlaySound(System.IO.Stream stream)
+		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//soundFilename
@@ -1045,6 +1126,7 @@ public class G2U_StopSound
 	}
 
 	public G2U_StopSound(System.IO.Stream stream)
+		: this()
 	{
 	}
 
@@ -1082,8 +1164,9 @@ public class G2U_Message {
 		RobotObservedNothing,	//9
 		DeviceDetectedVisionMarker,	//10
 		RobotCompletedPickAndPlaceAction,	//11
-		PlaySound,	//12
-		StopSound,	//13
+		RobotCompletedPlaceObjectOnGroundAction,	//12
+		PlaySound,	//13
+		StopSound,	//14
 		INVALID
 	};
 
@@ -1297,6 +1380,23 @@ public class G2U_Message {
 		}
 	}
 
+	public G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction
+	{
+		get {
+			if (_tag != Tag.RobotCompletedPlaceObjectOnGroundAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RobotCompletedPlaceObjectOnGroundAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (G2U_RobotCompletedPlaceObjectOnGroundAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RobotCompletedPlaceObjectOnGroundAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public G2U_PlaySound PlaySound
 	{
 		get {
@@ -1373,6 +1473,9 @@ public class G2U_Message {
 		case Tag.RobotCompletedPickAndPlaceAction:
 			_state = new G2U_RobotCompletedPickAndPlaceAction(stream);
 			break;
+		case Tag.RobotCompletedPlaceObjectOnGroundAction:
+			_state = new G2U_RobotCompletedPlaceObjectOnGroundAction(stream);
+			break;
 		case Tag.PlaySound:
 			_state = new G2U_PlaySound(stream);
 			break;
@@ -1427,6 +1530,9 @@ public class G2U_Message {
 		case Tag.RobotCompletedPickAndPlaceAction:
 			RobotCompletedPickAndPlaceAction.Pack(stream);
 			break;
+		case Tag.RobotCompletedPlaceObjectOnGroundAction:
+			RobotCompletedPlaceObjectOnGroundAction.Pack(stream);
+			break;
 		case Tag.PlaySound:
 			PlaySound.Pack(stream);
 			break;
@@ -1479,6 +1585,9 @@ public class G2U_Message {
 				break;
 			case Tag.RobotCompletedPickAndPlaceAction:
 				result += RobotCompletedPickAndPlaceAction.Size;
+				break;
+			case Tag.RobotCompletedPlaceObjectOnGroundAction:
+				result += RobotCompletedPlaceObjectOnGroundAction.Size;
 				break;
 			case Tag.PlaySound:
 				result += PlaySound.Size;

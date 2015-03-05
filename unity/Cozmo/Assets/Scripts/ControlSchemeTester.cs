@@ -9,16 +9,8 @@ public class ControlSchemeTester : MonoBehaviour {
 	[SerializeField] int defaultIndex = 0;
 	[SerializeField] Text label = null;
 	[SerializeField] Text[] orientationLabels = null;
-	[SerializeField] Toggle reverseLikeACarToggle = null;
 
 	[SerializeField] Text[] buttonLabels = null;
-
-	public bool ReverseLikeACar {
-		get {
-			if(reverseLikeACarToggle == null) return false;
-			return reverseLikeACarToggle.isOn;
-		}
-	}
 
 	int _index = -1;
 	private int index {
@@ -54,12 +46,13 @@ public class ControlSchemeTester : MonoBehaviour {
 			enabled = false;
 			return;
 		}
-		Input.multiTouchEnabled = true;
-		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
 
-		if(reverseLikeACarToggle != null) {
-			reverseLikeACarToggle.isOn = PlayerPrefs.GetInt("ReverseLikeACar", 0) == 1;
-		}
+		Input.gyro.enabled = true;
+		Input.compass.enabled = true;
+		Input.multiTouchEnabled = true;
+		Input.location.Start();
+
+		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
 	}
 
 	void Refresh() {
@@ -111,19 +104,6 @@ public class ControlSchemeTester : MonoBehaviour {
 
 	public void SetScreenIndex(int i) {
 		index = Mathf.Clamp(i, 0, screens.Length - 1);
-	}
-
-	public void ToggleReverseLikeACar(bool on) {
-		bool toggled = reverseLikeACarToggle.isOn;
-
-		for(int i=0; i<screens.Length; i++) {
-			if(screens[i] == null) continue;
-			RobotRelativeControls controls = screens[i].GetComponent<RobotRelativeControls>();
-			if(controls == null) continue;
-			controls.SetReverseLikeACar(toggled);
-		}
-
-		PlayerPrefs.SetInt("ReverseLikeACar", on ? 1 : 0);
 	}
 
 }

@@ -110,6 +110,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().ScopedSubscribe(cbRobotCompletedPickAndPlaceAction));
     
+    auto cbRobotCompletedPlaceObjectOnGroundAction = [this](RobotID_t robotID, uint8_t success) {
+      this->HandleRobotCompletedPlaceObjectOnGroundAction(robotID, success);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().ScopedSubscribe(cbRobotCompletedPlaceObjectOnGroundAction));
+    
   } // SetupSignalHandlers()
   
   
@@ -316,6 +321,18 @@ namespace Cozmo {
     
     G2U_Message message;
     message.Set_RobotCompletedPickAndPlaceAction(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+  }
+  
+  void CozmoGameImpl::HandleRobotCompletedPlaceObjectOnGroundAction(uint8_t robotID, uint8_t success)
+  {
+    G2U_RobotCompletedPlaceObjectOnGroundAction msg;
+    
+    msg.robotID = robotID;
+    msg.success = success;
+    
+    G2U_Message message;
+    message.Set_RobotCompletedPlaceObjectOnGroundAction(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
