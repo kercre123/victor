@@ -6,7 +6,7 @@ __author__ = "Daniel Casner"
 
 
 import sys, os, time, socket, threading, subprocess
-import camServer, mcuProxyServer
+import camServer, mcuProxyServer, blockProxy
 
 VERBOSE = False
 PRINT_INTERVAL = False
@@ -44,7 +44,7 @@ class TimestampExtrapolator(object):
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
 
-    CLIENT_IDLE_TIMEOUT = 1.0
+    CLIENT_IDLE_TIMEOUT = 10.0
 
     def __init__(self, address):
         "Initalize the server and start listening on UDP"
@@ -55,7 +55,8 @@ class CozmoServer(socket.socket):
         self.timestamp = TimestampExtrapolator()
         cam = camServer.CameraSubServer(self, VERBOSE, PRINT_FRAMERATE)
         mcu = mcuProxyServer.MCUProxyServer(self, VERBOSE)
-        self.subServers = [cam, mcu]
+        blk = blockProxy.BlockProxyServer(self, VERBOSE)
+        self.subServers = [cam, mcu, blk]
         self.client = None
         self.lastClientRecvTime = 0.0
         subprocess.call(['renice', '-n', '10', '-p', str(os.getpid())]) # Renice ourselves so the encoder comes first

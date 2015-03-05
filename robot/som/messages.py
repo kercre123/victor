@@ -239,6 +239,7 @@ class PrintText(MessageBase):
         return self.text
 
 class PingMessage(MessageBase):
+    "Just a ping with no payload"
     ID = 56
     FORMAT = []
 
@@ -276,11 +277,6 @@ class DriveWheelsMessage(MessageBase):
     def __repr__(self):
         return "DriveWheelsMessage(%f, %f)" % self._getMembers()
 
-
-
-class TestModeMessage(MessageBase):
-    pass
-
 class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""
@@ -306,3 +302,50 @@ class ClientConnectionStatus(MessageBase):
 
     def __repr__(self):
         return "SoMRadioState(wifi=%d, bluetooth=%d)" % self._getMembers
+
+
+class FlashBlockIDs(MessageBase):
+    """Instruct reach block to visually indicate it's ID"""
+    ID = 59
+    FORMAT = []
+
+    def _getMembers(self):
+        return tuple()
+
+    def _setMembers(self, *members):
+        pass
+
+    def __repr__(self):
+        return "FlashBlockIDs"
+
+
+class SetBlockLights(MessageBase):
+    """Instruct robot to instruct block to set lights to colors"""
+    NUM_LIGHTS = 8
+    ID = 60
+    FORMAT = [("%dI" % NUM_LIGHTS), # color
+              "u8",  # blockID
+             ]
+
+    def __init__(self, buffer=None, blockID=0, lights=None):
+        MessageBase.__init__(self)
+        self.blockID = blockID
+        if lights is not None:
+            if len(lights) != self.NUM_LIGHTS:
+                raise ValueError("SetBlockLights, lights argument must have exactly %d elements, given %d" % (self.NUM_LIGHTS, len(lights)))
+            else:
+                self.lights = lights
+        else:
+            self.lights = [0] * self.NUM_LIGHTS
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def __repr__(self):
+        return "SetBlockLights(blockID=%d, lights=%s)" % (self.blockID, repr(self.lights))
+
+    def _getMembers(self):
+        return self.lights + [self.blockID]
+
+    def _setMembers(self, *members):
+        self.lights = members[:self.NUM_LIGHTS]
+        self.blockID = members[self.NUM_LIGHTS]

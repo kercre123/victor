@@ -49,3 +49,6 @@ DEF_SIGNAL(RobotCompletedPickAndPlaceAction,
            uint8_t robotID,
            uint8_t success) // TODO: currently just true/false, acutally return ActionResult codes
 
+DEF_SIGNAL(RobotCompletedPlaceObjectOnGroundAction,
+           uint8_t robotID,
+           uint8_t success) // TODO: currently just true/false, acutally return ActionResult codes

@@ -34,6 +34,8 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "opencv2/opencv.hpp"
+
 #include <fstream>
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
@@ -74,6 +76,7 @@ namespace Anki {
     , _isMoving(false)
     , _isAnimating(false)
     , _carryingMarker(nullptr)
+    , _saveNextImageToFile(false)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -197,20 +200,36 @@ namespace Anki {
         //        msg.status & IS_PROX_FORWARD_BLOCKED,
         //        msg.status & IS_PROX_SIDE_BLOCKED);
 
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::POSE,
+                                           Anki::NamedColors::GREEN,
+                                           //"Pose: x=%4d y=%4d theta=%3d, h=%3d deg, lift=%3d mm",
+                                           //(int)msg.pose_x,
+                                           //(int)msg.pose_y,
+                                           //(int)RAD_TO_DEG_F32(msg.pose_angle),
+                                           "Pose: head=%3d deg, lift=%3d mm",
+                                           (int)RAD_TO_DEG_F32(msg.headAngle),
+                                           (int)msg.liftHeight);
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::SPEEDS,
+                                           Anki::NamedColors::GREEN,
+                                           "speed L: %4d  R: %4d mm/s",
+                                           (int)msg.lwheel_speed_mmps,
+                                           (int)msg.rwheel_speed_mmps);
+        
         VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
                                            Anki::NamedColors::GREEN,
-                                           "speed L: %4d  R: %4d mm/s\n"
                                            "prox: (%2u, %2u, %2u) %d%d%d",
-                                           
-                                           (int)msg.lwheel_speed_mmps,
-                                           (int)msg.rwheel_speed_mmps,
-                                           
                                            GetProxSensorVal(PROX_LEFT),
                                            GetProxSensorVal(PROX_FORWARD),
                                            GetProxSensorVal(PROX_RIGHT),
                                            IsProxSensorBlocked(PROX_LEFT),
                                            IsProxSensorBlocked(PROX_FORWARD),
                                            IsProxSensorBlocked(PROX_RIGHT));
+        
+        VizManager::getInstance()->SetText(VizManager::TextLabelType::BATTERY,
+                                           Anki::NamedColors::GREEN,
+                                           "Batt: %2.1f V",
+                                           (f32)msg.batteryPercent/10);
       }
       
       // Get ID of last/current path that the robot executed
@@ -1855,12 +1874,29 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
+      
+    void Robot::SaveNextImage()
+    {
+      _saveNextImageToFile = true;
+    }
     
     Result Robot::ProcessImage(const Vision::Image& image)
     {
       Result lastResult = RESULT_OK;
       
-
+      if (_saveNextImageToFile) {
+        // Write image to file (recompressing as jpeg again!)
+        static u32 imgCnt = 0;
+        char imgFilename[32];
+        std::vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(90);
+        sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
+        imwrite(imgFilename, image.get_CvMat_());
+        
+        _saveNextImageToFile = false;
+      }
+      
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision
       // implementation on the robot). We'll just reassemble that from

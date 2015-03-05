@@ -1361,11 +1361,12 @@ namespace Anki
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
+      ObjectID objID = object->GetID();
       ClearObjectHelper(object);
       
       // Actually erase the object from blockWorld's container of
       // existing objects
-      _existingObjects[fromFamily][withType].erase(object->GetID());
+      _existingObjects[fromFamily][withType].erase(objID);
     }
     
     

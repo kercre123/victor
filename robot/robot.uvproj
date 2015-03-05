@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,OFFBOARD_VISION</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -457,6 +457,16 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1450,6 +1460,16 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
           </Files>
         </Group>

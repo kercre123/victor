@@ -171,8 +171,8 @@ namespace Anki {
     // for completely unknown / not-understood reasons, computing the focal
     // length from fov_hor directly does not give us an accurate value for
     // the Webots camera.
-    const f32 HEAD_CAM_CALIB_FOV          = 0.92f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH = 338.58f;
+    const f32 HEAD_CAM_CALIB_FOV          = 1.22f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH = 231.f;
     
 #else // Real robot:
     
@@ -194,16 +194,16 @@ namespace Anki {
     };
      */
     
-    // From Calibration on June 28, 2014, Cozmo Proto 2.1, #2
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 328.87251f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 331.17332f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 160.10795f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 117.64527f;
+    // From Calibration on Feb. 25, 2015, Cozmo Proto 3, #2,  "Porthole" lens
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 231.79353f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 231.63924;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 157.97552f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 125.41319f;
     const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      -0.099922561981334f,
-      -0.027386549049312f,
-      -0.003826021624417f,
-       0.000534816869611f
+      -0.20314f,
+       0.26127f,
+      -0.00063f,
+      -0.00083f
     };
     
 #endif // #ifdef SIMULATOR
@@ -230,7 +230,7 @@ namespace Anki {
     // and roughly reflect image capture time.  If it's larger than or equal
     // to offboard_vision_processing timestep then we may send the same image
     // multiple times.
-    const s32 VISION_TIME_STEP = 20;
+    const s32 VISION_TIME_STEP = 60;
 #endif
     
     

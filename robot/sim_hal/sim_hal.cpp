@@ -700,15 +700,10 @@ namespace Anki {
       //f32 aspect = width/height;
       
       const f32 fov_hor = camera->getFov();
-      //f32 fov_ver = fov_hor / aspect; // This is wrong! It ignores the tan()'s.
-      // Correct would be:
-      //
-      //   fov_ver = 2*atan( nrows/ncols * tan(fov_hor/2) );
-      //
       
       // Make sure the fov reported by webots matches the one used to empircally
       // calibrate the Webots camera.
-      AnkiAssert(NEAR(fov_hor, HEAD_CAM_CALIB_FOV, 0.001f));
+      //AnkiAssert(NEAR(fov_hor, HEAD_CAM_CALIB_FOV, 0.001f));
       
       // Ideally, we would compute the focal length from the FOV dynamically,
       // but that isn't working for some reason, so just use the value
@@ -722,7 +717,6 @@ namespace Anki {
       
       info.focalLength_x = f;
       info.focalLength_y = f;
-      //info.fov_ver       = fov_ver;
       info.center_x      = 0.5f*width;
       info.center_y      = 0.5f*height;
       info.skew          = 0.f;
@@ -939,6 +933,22 @@ namespace Anki {
       {
         return 100000000;
       }
+    }
+    
+    u8 HAL::BatteryGetPercent()
+    {
+      // Return voltage*10 for now...
+      return 50;
+    }
+    
+    bool HAL::BatteryIsCharging()
+    {
+      return false; // XXX On Cozmo 3, head is off if robot is charging
+    }
+    
+    bool HAL::BatteryIsOnCharger()
+    {
+      return false; // XXX On Cozmo 3, head is off if robot is charging
     }
     
     void HAL::FlashBlockIDs() {

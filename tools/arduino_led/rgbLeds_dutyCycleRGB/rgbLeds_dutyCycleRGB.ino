@@ -6,7 +6,8 @@ Modulate LED based on input from serial communication
 
 // Each RGB LED counts as three LEDs
 const int numLeds = 3;
-const int ledPins[numLeds] = {31, 33, 35};
+const int centerLedPins[numLeds] = {31, 33, 35};
+const int headlightsPin = 37;
 
 const int modulationPeriodMicroseconds = 2000;
 
@@ -42,8 +43,8 @@ void setup()
   setDefaultTimings();
 
   for(int iLed=0; iLed<numLeds; iLed++) {
-    pinMode(ledPins[iLed], OUTPUT);
-    digitalWrite(ledPins[iLed], LIGHT_OFF);
+    pinMode(centerLedPins[iLed], OUTPUT);
+    digitalWrite(centerLedPins[iLed], LIGHT_OFF);
   }
 } // void setup()
 
@@ -122,9 +123,15 @@ void updateTimings()
   } // if(Serial.available()) {
 } // void updateTimings()
 
-static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn) 
+static inline void flashLed(const int whichCenterLedPin, const int whichHeadlightsPin, const int numMicrosecondsOn) 
 {
-  digitalWrite(whichLedPin, LIGHT_ON);
+  digitalWrite(whichCenterLedPin, LIGHT_ON);
+  
+  if(whichHeadlightsPin > 0) {
+    pinMode(whichHeadlightsPin, OUTPUT);
+    digitalWrite(whichHeadlightsPin, HIGH);
+  }
+  
   bool ledIsOn = true;
 
   // Inner loop, modulating on and off very quickly, to form a brightness
@@ -139,13 +146,19 @@ static inline void flashLed(const int whichLedPin, const int numMicrosecondsOn)
     }
 
     if(ledIsOn && (deltaTime > numMicrosecondsOn)) {
-      digitalWrite(whichLedPin, LIGHT_OFF);
+      digitalWrite(whichCenterLedPin, LIGHT_OFF);
+      if(whichHeadlightsPin > 0) {
+        pinMode(whichHeadlightsPin, INPUT);
+      }
       ledIsOn = false;
     }
   } // while(true)
 
   if(ledIsOn) {
-    digitalWrite(whichLedPin, LIGHT_OFF);
+    digitalWrite(whichCenterLedPin, LIGHT_OFF);
+    if(whichHeadlightsPin > 0) {
+      pinMode(whichHeadlightsPin, INPUT);
+    }
     ledIsOn = false;
   }
 }
@@ -159,7 +172,8 @@ void loop()
     const unsigned long ledLoopStartTime = micros();
     
     const int whichLed = whichLeds[iLed];
-    const int curLedPin = ledPins[whichLed];
+    const int curCenterLedPin = centerLedPins[whichLed];
+    const int curHeadlightsLedPin = (iLed==0) ? headlightsPin : -1;
     
     int numOnMicroseconds;
     if(iLed == 2) {
@@ -171,7 +185,7 @@ void loop()
     } else {
       numOnMicroseconds = numOnFrames[iLed] * microsecondsPerFrame;
     }
-    
+      
     bool ledIsOn = true;
   
     // Outer loop, for "On" vs Off
@@ -180,14 +194,14 @@ void loop()
     while(mainLoopTimeDelta <= numOnMicroseconds) {
       
       if(ledIsOn) {
-        flashLed(curLedPin, modulationOnMicroseconds[whichLed]);
+        flashLed(curCenterLedPin, curHeadlightsLedPin, modulationOnMicroseconds[whichLed]);
       }
   
       outerStartTime = micros();
       mainLoopTimeDelta = outerStartTime - ledLoopStartTime;
     } // while(true)
     
-    digitalWrite(curLedPin, LIGHT_OFF);
+    digitalWrite(curCenterLedPin, LIGHT_OFF);
   } // for(int iLed=0; iLed<3; iLed++)
 
   // Finish with dark
