@@ -75,6 +75,7 @@ namespace Anki {
     , _isPickedUp(false)
     , _isMoving(false)
     , _isAnimating(false)
+    , _batteryPercent(100)
     , _carryingMarker(nullptr)
     , _saveNextImageToFile(false)
     {
@@ -250,6 +251,8 @@ namespace Anki {
       SetPickedUp( msg.status & IS_PICKED_UP );
       
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
+      
+      _batteryPercent = msg.batteryPercent;
       
       // TODO: Make this a parameters somewhere?
       const f32 WheelSpeedToConsiderStopped = 2.f;
