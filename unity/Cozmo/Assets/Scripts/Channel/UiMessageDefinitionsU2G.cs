@@ -1,7 +1,5 @@
 namespace Anki.Cozmo
 {
-// Generated from /Users/andrew/Code/cozmo-game/src/UiMessageDefinitionsU2G.clad
-
 public class U2G_Ping
 {
 	public uint counter;
@@ -868,7 +866,7 @@ public class U2G_SetRobotImageSendMode
 
 public class U2G_SaveImages
 {
-	public byte enableSave;
+	public byte mode;
 
 	/**** Constructors ****/
 
@@ -876,24 +874,24 @@ public class U2G_SaveImages
 	{
 	}
 
-	public U2G_SaveImages(byte enableSave)
+	public U2G_SaveImages(byte mode)
 	{
-		this.enableSave = enableSave;
+		this.mode = mode;
 	}
 
 	public U2G_SaveImages(System.IO.Stream stream)
 		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//enableSave
-		enableSave = (byte)(reader.ReadByte());
+		//mode
+		mode = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
 	public System.IO.Stream Pack(System.IO.Stream stream)
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
-		writer.Write((byte)enableSave);
+		writer.Write((byte)mode);
 		return stream;
 	}
 
@@ -901,15 +899,15 @@ public class U2G_SaveImages
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//enableSave
-		enableSave = (byte)(reader.ReadByte());
+		//mode
+		mode = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
 	{
 		get {
 			int result = 0;
-			//enableSave
+			//mode
 			result += 1; // = uint_8
 			return result;
 		}

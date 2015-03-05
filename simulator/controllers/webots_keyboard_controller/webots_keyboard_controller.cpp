@@ -1529,7 +1529,8 @@ namespace Anki {
       void SendSaveImages(bool on)
       {
         U2G_SaveImages m;
-        m.enableSave = on;
+        // TODO: provide a means of using one-shot saving
+        m.mode = (on ? VIZ_SAVE_CONTINUOUS : VIZ_SAVE_ONE_SHOT);
         U2G_Message message;
         message.Set_SaveImages(m);
         SendMessage(message);

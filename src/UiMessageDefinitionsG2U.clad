@@ -131,6 +131,12 @@ message G2U_RobotCompletedPickAndPlaceAction {
     uint_8 success    
 }
 
+// RobotCompletedPlaceObjectOnGroundAction
+message G2U_RobotCompletedPlaceObjectOnGroundAction {
+    uint_32 robotID,
+    uint_8 success
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  SOUND  ////////////////////////////////////
@@ -164,6 +170,7 @@ union G2U_Message {
     G2U_RobotObservedNothing RobotObservedNothing,
     G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
     G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction,
+    G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction,
     G2U_PlaySound PlaySound,
     G2U_StopSound StopSound
 }
