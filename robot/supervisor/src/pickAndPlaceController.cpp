@@ -43,8 +43,8 @@ namespace Anki {
         
         const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
         
-        const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-20);
-        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(20);
+        const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
+        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(18);
 
         Mode mode_ = IDLE;
         
