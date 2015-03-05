@@ -337,7 +337,7 @@ class SetBlockLights(MessageBase):
                 self.lights = lights
         else:
             self.lights = [0] * self.NUM_LIGHTS
-        if self.buffer is not None:
+        if buffer is not None:
             self.deserialize(buffer)
 
     def __repr__(self):
