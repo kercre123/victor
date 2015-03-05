@@ -491,6 +491,7 @@ struct G2U_RobotState
 	float liftHeight_mm;
 	uint8_t status;
 	uint8_t robotID;
+	uint8_t batteryPercent;
 
 	/**** Constructors ****/
 	G2U_RobotState() = default;
@@ -509,7 +510,8 @@ struct G2U_RobotState
 		,float headAngle_rad
 		,float liftHeight_mm
 		,uint8_t status
-		,uint8_t robotID)
+		,uint8_t robotID
+		,uint8_t batteryPercent)
 	:pose_x(pose_x)
 	,pose_y(pose_y)
 	,pose_z(pose_z)
@@ -520,6 +522,7 @@ struct G2U_RobotState
 	,liftHeight_mm(liftHeight_mm)
 	,status(status)
 	,robotID(robotID)
+	,batteryPercent(batteryPercent)
 	{}
 	explicit G2U_RobotState(const uint8_t* buff, size_t len)
 	{
@@ -551,6 +554,7 @@ struct G2U_RobotState
 		buffer.Write(this->liftHeight_mm);
 		buffer.Write(this->status);
 		buffer.Write(this->robotID);
+		buffer.Write(this->batteryPercent);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -574,6 +578,7 @@ struct G2U_RobotState
 		buffer.Read(this->liftHeight_mm);
 		buffer.Read(this->status);
 		buffer.Read(this->robotID);
+		buffer.Read(this->batteryPercent);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -599,6 +604,8 @@ struct G2U_RobotState
 		result += 1; // = uint_8
 		//robotID
 		result += 1; // = uint_8
+		//batteryPercent
+		result += 1; // = uint_8
 		return result;
 	}
 
@@ -613,7 +620,8 @@ struct G2U_RobotState
 		|| headAngle_rad != other.headAngle_rad
 		|| liftHeight_mm != other.liftHeight_mm
 		|| status != other.status
-		|| robotID != other.robotID) {
+		|| robotID != other.robotID
+		|| batteryPercent != other.batteryPercent) {
 			return false;
 		}
 		return true;

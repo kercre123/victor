@@ -430,6 +430,8 @@ namespace Cozmo {
 
               // TODO: Add proximity sensor data to state message
               
+              msg.batteryPercent = robot->GetBatteryPercent();
+              
               G2U_Message message;
               message.Set_RobotState(msg);
               _uiMsgHandler.SendMessage(_hostUiDeviceID, message);

@@ -342,6 +342,7 @@ public class G2U_RobotState
 	public float liftHeight_mm;
 	public byte status;
 	public byte robotID;
+	public byte batteryPercent;
 
 	/**** Constructors ****/
 
@@ -358,7 +359,8 @@ public class G2U_RobotState
 		float headAngle_rad,
 		float liftHeight_mm,
 		byte status,
-		byte robotID)
+		byte robotID,
+		byte batteryPercent)
 	{
 		this.pose_x = pose_x;
 		this.pose_y = pose_y;
@@ -370,6 +372,7 @@ public class G2U_RobotState
 		this.liftHeight_mm = liftHeight_mm;
 		this.status = status;
 		this.robotID = robotID;
+		this.batteryPercent = batteryPercent;
 	}
 
 	public G2U_RobotState(System.IO.Stream stream)
@@ -396,6 +399,8 @@ public class G2U_RobotState
 		status = (byte)(reader.ReadByte());
 		//robotID
 		robotID = (byte)(reader.ReadByte());
+		//batteryPercent
+		batteryPercent = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
@@ -412,6 +417,7 @@ public class G2U_RobotState
 		writer.Write((float)liftHeight_mm);
 		writer.Write((byte)status);
 		writer.Write((byte)robotID);
+		writer.Write((byte)batteryPercent);
 		return stream;
 	}
 
@@ -439,6 +445,8 @@ public class G2U_RobotState
 		status = (byte)(reader.ReadByte());
 		//robotID
 		robotID = (byte)(reader.ReadByte());
+		//batteryPercent
+		batteryPercent = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
@@ -464,6 +472,8 @@ public class G2U_RobotState
 			//status
 			result += 1; // = uint_8
 			//robotID
+			result += 1; // = uint_8
+			//batteryPercent
 			result += 1; // = uint_8
 			return result;
 		}
