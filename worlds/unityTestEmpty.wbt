@@ -103,7 +103,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.279956 0.279115 0.918542 4.63053
-  position -1.29203 0.163592 1.83261
+  position -3.43957 0.157122 5.04004
 }
 Background {
   skyColor [
@@ -114,7 +114,7 @@ DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
 }
-CozmoMat {
+CozmoMatHuge {
 }
 Ramp {
   hidden linearVelocity_0 -719.24 -1072.82 591.391
