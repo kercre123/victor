@@ -340,9 +340,9 @@ public class G2U_RobotState
 	public float rightWheelSpeed_mmps;
 	public float headAngle_rad;
 	public float liftHeight_mm;
+	public float batteryVoltage;
 	public byte status;
 	public byte robotID;
-	public byte batteryPercent;
 
 	/**** Constructors ****/
 
@@ -358,9 +358,9 @@ public class G2U_RobotState
 		float rightWheelSpeed_mmps,
 		float headAngle_rad,
 		float liftHeight_mm,
+		float batteryVoltage,
 		byte status,
-		byte robotID,
-		byte batteryPercent)
+		byte robotID)
 	{
 		this.pose_x = pose_x;
 		this.pose_y = pose_y;
@@ -370,9 +370,9 @@ public class G2U_RobotState
 		this.rightWheelSpeed_mmps = rightWheelSpeed_mmps;
 		this.headAngle_rad = headAngle_rad;
 		this.liftHeight_mm = liftHeight_mm;
+		this.batteryVoltage = batteryVoltage;
 		this.status = status;
 		this.robotID = robotID;
-		this.batteryPercent = batteryPercent;
 	}
 
 	public G2U_RobotState(System.IO.Stream stream)
@@ -395,12 +395,12 @@ public class G2U_RobotState
 		headAngle_rad = (float)(reader.ReadSingle());
 		//liftHeight_mm
 		liftHeight_mm = (float)(reader.ReadSingle());
+		//batteryVoltage
+		batteryVoltage = (float)(reader.ReadSingle());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
 		robotID = (byte)(reader.ReadByte());
-		//batteryPercent
-		batteryPercent = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
@@ -415,9 +415,9 @@ public class G2U_RobotState
 		writer.Write((float)rightWheelSpeed_mmps);
 		writer.Write((float)headAngle_rad);
 		writer.Write((float)liftHeight_mm);
+		writer.Write((float)batteryVoltage);
 		writer.Write((byte)status);
 		writer.Write((byte)robotID);
-		writer.Write((byte)batteryPercent);
 		return stream;
 	}
 
@@ -441,12 +441,12 @@ public class G2U_RobotState
 		headAngle_rad = (float)(reader.ReadSingle());
 		//liftHeight_mm
 		liftHeight_mm = (float)(reader.ReadSingle());
+		//batteryVoltage
+		batteryVoltage = (float)(reader.ReadSingle());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
 		robotID = (byte)(reader.ReadByte());
-		//batteryPercent
-		batteryPercent = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
@@ -469,11 +469,11 @@ public class G2U_RobotState
 			result += 4; // = float_32
 			//liftHeight_mm
 			result += 4; // = float_32
+			//batteryVoltage
+			result += 4; // = float_32
 			//status
 			result += 1; // = uint_8
 			//robotID
-			result += 1; // = uint_8
-			//batteryPercent
 			result += 1; // = uint_8
 			return result;
 		}

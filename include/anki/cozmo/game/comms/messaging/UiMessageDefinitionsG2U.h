@@ -489,9 +489,9 @@ struct G2U_RobotState
 	float rightWheelSpeed_mmps;
 	float headAngle_rad;
 	float liftHeight_mm;
+	float batteryVoltage;
 	uint8_t status;
 	uint8_t robotID;
-	uint8_t batteryPercent;
 
 	/**** Constructors ****/
 	G2U_RobotState() = default;
@@ -509,9 +509,9 @@ struct G2U_RobotState
 		,float rightWheelSpeed_mmps
 		,float headAngle_rad
 		,float liftHeight_mm
+		,float batteryVoltage
 		,uint8_t status
-		,uint8_t robotID
-		,uint8_t batteryPercent)
+		,uint8_t robotID)
 	:pose_x(pose_x)
 	,pose_y(pose_y)
 	,pose_z(pose_z)
@@ -520,9 +520,9 @@ struct G2U_RobotState
 	,rightWheelSpeed_mmps(rightWheelSpeed_mmps)
 	,headAngle_rad(headAngle_rad)
 	,liftHeight_mm(liftHeight_mm)
+	,batteryVoltage(batteryVoltage)
 	,status(status)
 	,robotID(robotID)
-	,batteryPercent(batteryPercent)
 	{}
 	explicit G2U_RobotState(const uint8_t* buff, size_t len)
 	{
@@ -552,9 +552,9 @@ struct G2U_RobotState
 		buffer.Write(this->rightWheelSpeed_mmps);
 		buffer.Write(this->headAngle_rad);
 		buffer.Write(this->liftHeight_mm);
+		buffer.Write(this->batteryVoltage);
 		buffer.Write(this->status);
 		buffer.Write(this->robotID);
-		buffer.Write(this->batteryPercent);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -576,9 +576,9 @@ struct G2U_RobotState
 		buffer.Read(this->rightWheelSpeed_mmps);
 		buffer.Read(this->headAngle_rad);
 		buffer.Read(this->liftHeight_mm);
+		buffer.Read(this->batteryVoltage);
 		buffer.Read(this->status);
 		buffer.Read(this->robotID);
-		buffer.Read(this->batteryPercent);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -600,11 +600,11 @@ struct G2U_RobotState
 		result += 4; // = float_32
 		//liftHeight_mm
 		result += 4; // = float_32
+		//batteryVoltage
+		result += 4; // = float_32
 		//status
 		result += 1; // = uint_8
 		//robotID
-		result += 1; // = uint_8
-		//batteryPercent
 		result += 1; // = uint_8
 		return result;
 	}
@@ -619,9 +619,9 @@ struct G2U_RobotState
 		|| rightWheelSpeed_mmps != other.rightWheelSpeed_mmps
 		|| headAngle_rad != other.headAngle_rad
 		|| liftHeight_mm != other.liftHeight_mm
+		|| batteryVoltage != other.batteryVoltage
 		|| status != other.status
-		|| robotID != other.robotID
-		|| batteryPercent != other.batteryPercent) {
+		|| robotID != other.robotID) {
 			return false;
 		}
 		return true;
