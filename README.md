@@ -65,15 +65,17 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 lldb Commands
 ==========================
 
- * To exit lldb, type `safequit` and hit return. This is specific to ios-deploy.
-
  * Control-C seems to just crash the ios app without fully closing it.
 
- * Both `quit` and `exit` work as well, but you must confirm by typing y and hitting return.
+ * Type `quit` or `exit` and hit enter, then `y` and hit enter to confirm.
+
+ * ios-deploy also adds the `safequit` command, but sometimes it only kills the process and you have to `quit` afterward.
 
  * Note that all these commands work when logs are spamming, even if they get cut off.
 
  * Sometimes lldb hangs. In that case, use activity monitor to force quit lldb or open a new terminal and type `pkill lldb`.
+
+ * Sometimes it hides console input after it closes. In that case, you can type `reset` and hit enter.
 
 Here's a good link for basic commands: [I don't really want to learn lldb, I just want to fix a crash.](http://meowni.ca/posts/unscary-lldb/)
 
