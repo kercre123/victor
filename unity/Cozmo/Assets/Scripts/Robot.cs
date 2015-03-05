@@ -26,6 +26,7 @@ public class Robot
 
 	public enum StatusFlag
 	{
+		NONE                    = 0,
 		//IS_TRAVERSING_PATH    = 1,
 		IS_CARRYING_BLOCK       = 0x2,
 		IS_PICKING_OR_PLACING   = 0x4,
@@ -55,7 +56,7 @@ public class Robot
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 
-		if( (int)status != 0 && status != lastStatus )
+		if( status != lastStatus )
 		{
 			Debug.Log( "Status: " + status );
 			lastStatus = status;
