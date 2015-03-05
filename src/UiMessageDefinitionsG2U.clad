@@ -55,9 +55,9 @@ message G2U_RobotState {
     float_32 rightWheelSpeed_mmps,
     float_32 headAngle_rad,
     float_32 liftHeight_mm,
+    float_32 batteryVoltage,
     uint_8  status,  // See RobotStatusFlag in cozmoTypes.h
-    uint_8  robotID,
-    uint_8  batteryPercent
+    uint_8  robotID
 }
 
 
