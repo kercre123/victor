@@ -397,7 +397,7 @@ namespace Anki {
       Result SetBlockLights(const u8 blockID, const u32* color);
       
       // =========  Other State  ============
-      u8 GetBatteryPercent() const { return _batteryPercent; }
+      f32 GetBatteryVoltage() const { return _battVoltage; }
       
       // Abort everything the robot is doing, including path following, actions,
       // animations, and docking. This is like the big red E-stop button.
@@ -490,7 +490,7 @@ namespace Anki {
       bool             _isPickedUp;
       bool             _isMoving;
       bool             _isAnimating;
-      u8               _batteryPercent;
+      f32              _battVoltage;
       
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
