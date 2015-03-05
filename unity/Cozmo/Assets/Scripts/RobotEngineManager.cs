@@ -246,6 +246,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
 			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
 			break;
+		case G2U_Message.Tag.RobotCompletedPlaceObjectOnGroundAction:
+			ReceivedSpecificMessage(message.RobotCompletedPlaceObjectOnGroundAction);
+			break;
 		}
 	}
 	
@@ -309,10 +312,19 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
 	{
-		Debug.Log( "Action complete" );
+		Debug.Log( "Pick And Place complete" );
 		
 		current.selectedObject = -1;
 
+		SetHeadAngle( defaultHeadAngle );
+	}
+
+	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
+	{
+		Debug.Log( "Place Object On Ground complete" );
+		
+		current.selectedObject = -1;
+		
 		SetHeadAngle( defaultHeadAngle );
 	}
 

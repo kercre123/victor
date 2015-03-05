@@ -13,7 +13,7 @@ public class ObservedObject
 
 	public void UpdateInfo( G2U_RobotObservedObject message )
 	{
-		ID = (int)message.objectID;
+		ID = message.objectID;
 		height = message.height;
 		width = message.width;
 		topLeft_x = message.topLeft_x;
