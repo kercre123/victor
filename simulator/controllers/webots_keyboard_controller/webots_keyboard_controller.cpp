@@ -166,6 +166,9 @@ namespace Anki {
         u32 imgBytes_ = 0;
         u32 imgWidth_, imgHeight_ = 0;
         
+        // Save robot image to file
+        bool saveRobotImageToFile_ = false;
+        
       } // private namespace
       
       // Forward declarations
@@ -182,7 +185,7 @@ namespace Anki {
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode, u8 resolution);
-      void SendSaveImages(bool on);
+      void SendSaveImages(VizSaveImageMode_t mode);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -309,6 +312,16 @@ namespace Anki {
         
         img_ = cozmoCam_->imageNew(imgWidth_, imgHeight_, imgData_, webots::Display::RGB);
         cozmoCam_->imagePaste(img_, 0, 0);
+        
+        // Save image to file
+        if (saveRobotImageToFile_) {
+          static u32 imgCnt = 0;
+          char imgFileName[16];
+          printf("SAVING IMAGE\n");
+          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
+          cozmoCam_->imageSave(img_, imgFileName);
+          saveRobotImageToFile_ = false;
+        }
 
       } // HandleImageChunk()
       
@@ -777,9 +790,23 @@ namespace Anki {
               case CKEY_EXPORT_IMAGES:
               {
                 // Toggle saving of images to pgm
-                static bool saveImages = true;
-                SendSaveImages(saveImages);
-                saveImages = !saveImages;
+                VizSaveImageMode_t mode = VIZ_SAVE_ONE_SHOT;
+                
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool streamOn = false;
+                  if (streamOn) {
+                    mode = VIZ_SAVE_OFF;
+                    printf("Saving robot image stream OFF.\n");
+                  } else {
+                    mode = VIZ_SAVE_CONTINUOUS;
+                    printf("Saving robot image stream ON.\n");
+                  }
+                  streamOn = !streamOn;
+                } else {
+                  printf("Saving single robot image.\n");
+                }
+                
+                SendSaveImages(mode);
                 break;
               }
                 
@@ -1526,11 +1553,10 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(bool on)
+      void SendSaveImages(VizSaveImageMode_t mode)
       {
         U2G_SaveImages m;
-        // TODO: provide a means of using one-shot saving
-        m.mode = (on ? VIZ_SAVE_CONTINUOUS : VIZ_SAVE_ONE_SHOT);
+        m.mode = mode;
         U2G_Message message;
         message.Set_SaveImages(m);
         SendMessage(message);

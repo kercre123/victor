@@ -320,24 +320,8 @@ case U2G_Message::Type::__MSG_TYPE__: \
   
   void CozmoGameImpl::ProcessMessage(U2G_SaveImages const& msg)
   {
-    // TODO: Check validity of mode?
-    const VizSaveImageMode_t mode = static_cast<VizSaveImageMode_t>(msg.enableSave);
-    VizManager::getInstance()->SaveImages(mode);
-  
-    const char* modeStr = "INVALID";
-    switch(mode) {
-      case VIZ_SAVE_OFF:
-        modeStr = "OFF";
-        break;
-      case VIZ_SAVE_CONTINUOUS:
-        modeStr = "CONTINUOUS";
-        break;
-      case VIZ_SAVE_ONE_SHOT:
-        modeStr = "ONE_SHOT";
-        break;
-    }
-    
-    printf("Saving images: %s\n", modeStr);
+    VizManager::getInstance()->SaveImages((VizSaveImageMode_t)msg.mode);
+    printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
   }
   
   void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)
