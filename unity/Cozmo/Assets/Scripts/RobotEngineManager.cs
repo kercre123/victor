@@ -245,7 +245,9 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
-			batteryPercentage.text = current.batteryPercent.ToString() + "%";
+			if (current != null && batteryPercentage != null) {
+			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
+			}
 			break;
 		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
 			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);

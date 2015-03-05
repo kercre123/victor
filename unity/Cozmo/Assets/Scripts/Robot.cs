@@ -19,6 +19,9 @@ public class Robot
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
 
+	// er, should be 5?
+	private const float MaxVoltage = 5.0f;
+
 	private StatusFlag lastStatus;
 
 	public enum StatusFlag
@@ -50,7 +53,7 @@ public class Robot
 		pose_y = message.pose_y;
 		pose_z = message.pose_z;
 		status = (StatusFlag)message.status;
-		batteryPercent = (float)message.batteryPercent;
+		batteryPercent = (message.batteryVoltage / MaxVoltage);
 
 		if( (int)status != 0 && status != lastStatus )
 		{
