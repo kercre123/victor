@@ -95,9 +95,9 @@ namespace Anki {
       f32 x2 = x*x;
       f32 x3 = x*x2;
 #ifdef COZMO_TREADS
-      f32 out_ol = 8E-7 * x3 - 0.0002 * x2 + 0.0134 * x - 0.0001;    // #2: With treads
+      f32 out_ol = 8.4E-7 * x3 - 0.000166336 * x2 + 0.01343098 * x;    // #2: With treads
 #else
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x + 0.0149;  // #1: No treads
+      f32 out_ol = 5.12E-7 * x3 - 0.000107221 * x2 + 0.008739278 * x;  // #1: No treads
 #endif
       if (desired_speed_mmps < 0) {
         out_ol *= -1;
@@ -116,9 +116,9 @@ namespace Anki {
       f32 x2 = x*x;
       f32 x3 = x*x2;
 #ifdef COZMO_TREADS
-      f32 out_ol = 5E-7 * x3 - 9E-5 * x2 + 0.0072 * x - 0.0073;        // #2: With treads
+      f32 out_ol = 4.824E-7 * x3 - 8.98123E-5 * x2 + 0.007008705 * x;        // #2: With treads
 #else
-      f32 out_ol = 4E-7 * x3 - 0.00008 * x2 + 0.0072 * x + 0.0203;   // #1: No treads
+      f32 out_ol = 3.97E-7 * x3 - 0.000084032 * x2 + 0.008001138 * x;   // #1: No treads
 #endif
       if (desired_speed_mmps < 0) {
         out_ol *= -1;
