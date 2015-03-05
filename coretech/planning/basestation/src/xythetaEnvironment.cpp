@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/polygon_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/utilities_shared.h"

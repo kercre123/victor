@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/basestation/robot.h"
@@ -868,6 +869,10 @@ namespace Anki {
         actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
         
       } // if robot is not picking/placing or moving
+      
+      if(actionResult != RUNNING) {
+        CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().emit(robot.GetID(), actionResult == SUCCESS);
+      }
       
       return actionResult;
       
