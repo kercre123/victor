@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/basestation/robot.h"
