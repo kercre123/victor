@@ -5,69 +5,6 @@ add_definitions(-DCORETECH_BASESTATION)
 
 set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
-# root src dir
-file(GLOB SOURCE_FILES_ROOT "*.cpp")
-file(GLOB HEADER_FILES_ROOT "*.h")
-
-# signals src dir
-file(GLOB SOURCE_FILES_SIGNALS "signals/*.cpp")
-file(GLOB HEADER_FILES_SIGNALS "signals/*.h")
-
-# comms src dir
-file(GLOB SOURCE_FILES_COMMS "comms/*.cpp")
-file(GLOB HEADER_FILES_COMMS "comms/*.h")
-
-# comms/messaging src dir
-file(GLOB SOURCE_FILES_COMMS_MESSAGING "comms/messaging/*.cpp")
-file(GLOB HEADER_FILES_COMMS_MESSAGING "comms/messaging/*.h")
-
-set(SOURCE_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.cpp")
-
-set(PRIVATE_HEADER_FILES
-  ${HEADER_FILES_ROOT}
-  ${HEADER_FILES_SIGNALS}
-  ${HEADER_FILES_COMMS}
-  ${HEADER_FILES_COMMS_MESSAGING}
-)
-
-set(SOURCE_FILES
-  ${SOURCE_FILES_ROOT}
-  ${SOURCE_FILES_SIGNALS}
-  ${SOURCE_FILES_COMMS}
-  ${SOURCE_FILES_COMMS_MESSAGING}
-  ${SOURCE_FILES_CLAD}
-)
-
-# Enable ARC
-#add_compile_options(-fobjc-arc)
-
-message(STATUS "COZMO_GAME_INCLUDE_DIR = ${COZMO_GAME_INCLUDE_DIR}")
-
-file(GLOB PUBLIC_HEADER_FILES_ROOT "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/*.h")
-file(GLOB PUBLIC_HEADER_FILES_SIGNALS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/signals/*.h")
-file(GLOB PUBLIC_HEADER_FILES_COMMS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/*.h")
-file(GLOB PUBLIC_HEADER_FILES_COMMS_MESSAGING "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/messaging/*.h")
-
-set(PUBLIC_HEADER_FILES
-  ${PUBLIC_HEADER_FILES_ROOT}
-  ${PUBLIC_HEADER_FILES_SIGNALS}
-  ${PUBLIC_HEADER_FILES_COMMS}
-  ${PUBLIC_HEADER_FILES_COMMS_MESSAGING}
-)
-
-add_library(Cozmo_Game
-  ${SOURCE_FILES} 
-  ${PRIVATE_HEADER_FILES}
-  ${PUBLIC_HEADER_FILES}
-)
-
-target_link_libraries(Cozmo_Game
-  Cozmo_Basestation 
-  CoreTech_Messaging_Basestation
-  CoreTech_Common_Basestation 
-)
-
-
 file(GLOB CLAD_SOURCES "*.clad")
 
 file(GLOB CLAD_DEPENDENCIES "${CLAD_DIR}/parser/*.py" "${CLAD_DIR}/emitters/*.py")
@@ -123,6 +60,73 @@ add_custom_target(
     DEPENDS ${CLAD_COMMANDS}
     VERBATIM
 )
+
+# root src dir
+file(GLOB SOURCE_FILES_ROOT "*.cpp")
+file(GLOB HEADER_FILES_ROOT "*.h")
+
+# signals src dir
+file(GLOB SOURCE_FILES_SIGNALS "signals/*.cpp")
+file(GLOB HEADER_FILES_SIGNALS "signals/*.h")
+
+# comms src dir
+file(GLOB SOURCE_FILES_COMMS "comms/*.cpp")
+file(GLOB HEADER_FILES_COMMS "comms/*.h")
+
+# comms/messaging src dir
+file(GLOB SOURCE_FILES_COMMS_MESSAGING "comms/messaging/*.cpp")
+file(GLOB HEADER_FILES_COMMS_MESSAGING "comms/messaging/*.h")
+
+set(SOURCE_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.cpp")
+set(HEADER_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.h")
+
+set(PRIVATE_HEADER_FILES
+  ${HEADER_FILES_ROOT}
+  ${HEADER_FILES_SIGNALS}
+  ${HEADER_FILES_COMMS}
+  ${HEADER_FILES_COMMS_MESSAGING}
+  ${HEADER_FILES_CLAD}
+)
+
+set(SOURCE_FILES
+  ${SOURCE_FILES_ROOT}
+  ${SOURCE_FILES_SIGNALS}
+  ${SOURCE_FILES_COMMS}
+  ${SOURCE_FILES_COMMS_MESSAGING}
+  ${SOURCE_FILES_CLAD}
+)
+
+# Enable ARC
+#add_compile_options(-fobjc-arc)
+
+message(STATUS "COZMO_GAME_INCLUDE_DIR = ${COZMO_GAME_INCLUDE_DIR}")
+
+file(GLOB PUBLIC_HEADER_FILES_ROOT "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/*.h")
+file(GLOB PUBLIC_HEADER_FILES_SIGNALS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/signals/*")
+file(GLOB PUBLIC_HEADER_FILES_COMMS "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/*.h")
+file(GLOB PUBLIC_HEADER_FILES_COMMS_MESSAGING "${COZMO_GAME_INCLUDE_DIR}/anki/cozmo/game/comms/messaging/*.h")
+
+set(PUBLIC_HEADER_FILES
+  ${PUBLIC_HEADER_FILES_ROOT}
+  ${PUBLIC_HEADER_FILES_SIGNALS}
+  ${PUBLIC_HEADER_FILES_COMMS}
+  ${PUBLIC_HEADER_FILES_COMMS_MESSAGING}
+)
+
+add_library(Cozmo_Game
+  ${SOURCE_FILES} 
+  ${PRIVATE_HEADER_FILES}
+  ${PUBLIC_HEADER_FILES}
+)
+
+target_link_libraries(Cozmo_Game
+  Cozmo_Basestation 
+  CoreTech_Messaging_Basestation
+  CoreTech_Common_Basestation 
+)
+
+add_dependencies(Cozmo_Game CLAD)
+
 
 
 

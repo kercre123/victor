@@ -5,10 +5,17 @@ using System.Collections.Generic;
 
 public class CozmoVision : MonoBehaviour
 {
+	[System.Serializable]
+	public struct ActionButton
+	{
+		public Button button;
+		public Text text;
+	}
+
 	[SerializeField] protected Button button;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
-	[SerializeField] protected Button[] actionButtons;
+	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	
 	protected RectTransform rTrans;
