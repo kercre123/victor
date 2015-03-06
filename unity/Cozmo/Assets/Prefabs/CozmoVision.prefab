@@ -1051,7 +1051,8 @@ MonoBehaviour:
   image: {fileID: 11409570}
   text: {fileID: 11409572}
   actionButtons:
-  - {fileID: 11409576}
+  - button: {fileID: 11409576}
+    text: {fileID: 11409574}
   maxObservedObjects: 1
   box:
     image: {fileID: 11409582}
@@ -1606,8 +1607,10 @@ MonoBehaviour:
   image: {fileID: 11409598}
   text: {fileID: 11409596}
   actionButtons:
-  - {fileID: 11409594}
-  - {fileID: 11409606}
+  - button: {fileID: 11409594}
+    text: {fileID: 11409586}
+  - button: {fileID: 11409606}
+    text: {fileID: 11409616}
   maxObservedObjects: 6
   selectionButtons:
   - {fileID: 11409614}
@@ -3270,8 +3273,10 @@ MonoBehaviour:
   image: {fileID: 11409716}
   text: {fileID: 11409740}
   actionButtons:
-  - {fileID: 11409724}
-  - {fileID: 11409714}
+  - button: {fileID: 11409724}
+    text: {fileID: 11409738}
+  - button: {fileID: 11409714}
+    text: {fileID: 11409742}
   maxObservedObjects: 6
   selectionButtons:
   - {fileID: 11409710}
@@ -3283,16 +3288,22 @@ MonoBehaviour:
   selectionBoxes:
   - image: {fileID: 11409680}
     text: {fileID: 11409678}
+    ID: 0
   - image: {fileID: 11409676}
     text: {fileID: 11409674}
+    ID: 0
   - image: {fileID: 11409672}
     text: {fileID: 11409670}
+    ID: 0
   - image: {fileID: 11409668}
     text: {fileID: 11409728}
+    ID: 0
   - image: {fileID: 11409666}
     text: {fileID: 11409664}
+    ID: 0
   - image: {fileID: 11409662}
     text: {fileID: 11409726}
+    ID: 0
   lineWidth: {x: .100000001, y: .100000001}
 --- !u!114 &11409722
 MonoBehaviour:

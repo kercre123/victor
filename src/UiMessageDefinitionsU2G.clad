@@ -149,6 +149,14 @@ message U2G_TraverseObject {
     uint_8 useManualSpeed
 }
 
+// SetRobotCarryingObject
+// (Override robot's current belief about whether it's carrying a block)
+// (Ideally, for dev/prototyping only)
+message U2G_SetRobotCarryingObject {
+    int_32 objectID, // use -1 to specify "none"
+    uint_8 robotID
+}
+
 // ClearAllBlocks
 message U2G_ClearAllBlocks {
 }
@@ -291,6 +299,7 @@ union U2G_Message {
     U2G_SelectNextObject SelectNextObject,
     U2G_PickAndPlaceObject PickAndPlaceObject,
     U2G_TraverseObject TraverseObject,
+    U2G_SetRobotCarryingObject SetRobotCarryingObject,
     U2G_ClearAllBlocks ClearAllBlocks,
     U2G_ExecuteBehavior ExecuteBehavior,
     U2G_SetBehaviorState SetBehaviorState,
