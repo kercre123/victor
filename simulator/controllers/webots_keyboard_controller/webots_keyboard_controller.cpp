@@ -37,14 +37,6 @@
 #define BASESTATION_IP "127.0.0.1"
 #define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
-// For connecting to physical robot
-// TODO: Expose these to UI
-const bool FORCE_ADD_ROBOT = false;
-const bool FORCED_ROBOT_IS_SIM = false;
-const u8 forcedRobotId = 1;
-//const std::string forcedRobotIP = "192.168.3.34";   // cozmo2
-const std::string forcedRobotIP = "172.31.1.1";     // cozmo3
-
 namespace Anki {
   namespace Cozmo {
     
@@ -1272,7 +1264,7 @@ namespace Anki {
               bool pressed = sdlEvent_.jbutton.state; // If false, then this is a release event
               
               bool LT_held = gc_axisValues_[GC_LT_BUTTON];
-              bool RT_held = gc_axisValues_[GC_RT_BUTTON];
+              //bool RT_held = gc_axisValues_[GC_RT_BUTTON];
               
               // Process buttons that matter only when pressed
               if (pressed) {
@@ -1371,6 +1363,62 @@ namespace Anki {
 #endif
       }
       
+      
+      bool ForceAddRobotIfSpecified()
+      {
+        bool doForceAddRobot = false;
+        bool forcedRobotIsSim = false;
+        std::string forcedRobotIP;
+        int  forcedRobotId = 1;
+        
+        webots::Field* forceAddRobotField = root_->getField("forceAddRobot");
+        if(forceAddRobotField != nullptr) {
+          doForceAddRobot = forceAddRobotField->getSFBool();
+          if(doForceAddRobot) {
+            webots::Field *forcedRobotIsSimField = root_->getField("forcedRobotIsSimulated");
+            if(forcedRobotIsSimField == nullptr) {
+              PRINT_NAMED_ERROR("KeyboardController.Update",
+                                "Could not find 'forcedRobotIsSimulated' field.\n");
+              doForceAddRobot = false;
+            } else {
+              forcedRobotIsSim = forcedRobotIsSimField->getSFBool();
+            }
+            
+            webots::Field* forcedRobotIpField = root_->getField("forcedRobotIP");
+            if(forcedRobotIpField == nullptr) {
+              PRINT_NAMED_ERROR("KeyboardController.Update",
+                                "Could not find 'forcedRobotIP' field.\n");
+              doForceAddRobot = false;
+            } else {
+              forcedRobotIP = forcedRobotIpField->getSFString();
+            }
+            
+            webots::Field* forcedRobotIdField = root_->getField("forcedRobotID");
+            if(forcedRobotIdField == nullptr) {
+              
+            } else {
+              forcedRobotId = forcedRobotIdField->getSFInt32();
+            }
+          } // if(doForceAddRobot)
+        }
+        
+        if(doForceAddRobot) {
+          U2G_ForceAddRobot msg;
+          msg.isSimulated = forcedRobotIsSim;
+          msg.robotID = forcedRobotId;
+          
+          std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+          std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
+          
+          U2G_Message message;
+          message.Set_ForceAddRobot(msg);
+          msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+        }
+        
+        return doForceAddRobot;
+        
+      } // ForceAddRobotIfSpecified()
+      
       void Update()
       {
         gameComms_.Update();
@@ -1394,17 +1442,10 @@ namespace Anki {
               message.Set_StartEngine(msg);
               msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
 
-              if(FORCE_ADD_ROBOT) {
-                U2G_ForceAddRobot msg;
-                msg.isSimulated = FORCED_ROBOT_IS_SIM;
-                msg.robotID = forcedRobotId;
-                
-                std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
-                std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
-                
-                U2G_Message message;
-                message.Set_ForceAddRobot(msg);
-                msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+              bool didForceAdd = ForceAddRobotIfSpecified();
+              
+              if(didForceAdd) {
+                PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
               }
               
               uiState_ = UI_RUNNING;
