@@ -70,7 +70,7 @@ class MCUProxyServer(BaseSubServer):
             if self.v > 9: sys.stdout.write("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
-                self.rawSerData = self.rawSerData[-1*(len(self.SERIAL_HEADER)):] # Throw out stuff we know we won't find header for
+                self.rawSerData = self.rawSerData[len(self.rawSerData)-len(self.SERIAL_HEADER):] # Throw out stuff we know we won't find header for
                 return
             self.rawSerData = self.rawSerData[messageStart + len(self.SERIAL_HEADER):]
             if len(self.rawSerData) < 4: self.rawSerData += self.mcu.read(4 - len(self.rawSerData))
