@@ -325,7 +325,7 @@ namespace Anki {
               msg.robotID = HAL::GetIDCard()->esn;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
               HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
-         
+              
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
@@ -334,9 +334,28 @@ namespace Anki {
                 }
               }
               
-              mode_ = WAITING;
+              // Simple startup animation so can tell he's ready
+              // TODO: Remove once we have other indicators? This is mostly for dev.
+              HeadController::StartNodding(DEG_TO_RAD(-15), DEG_TO_RAD(15),
+                                           400, 3, .25f, .25f);
+              
+              EyeController::SetEyeColor(LED_CYAN);
+              EyeController::SetBlinkVariability(50);
+              EyeController::StartBlinking(1000, 100);
+
+              mode_ = PLAYING_STARTUP_ANIMATION;
             }
             
+            break;
+          }
+          case PLAYING_STARTUP_ANIMATION:
+          {
+            // Wait for head nod to complete and then center head and lower lift
+            if(!HeadController::IsNodding()) {
+              HeadController::SetDesiredAngle(0.f);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+              mode_ = WAITING;
+            }
             break;
           }
           case WAITING:

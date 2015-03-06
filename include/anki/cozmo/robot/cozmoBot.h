@@ -31,6 +31,7 @@ namespace Anki {
       //
       enum OperationMode {
         INIT_MOTOR_CALIBRATION,
+        PLAYING_STARTUP_ANIMATION,
         WAITING,
         PICK_UP_BLOCK,
         PUT_DOWN_BLOCK,
