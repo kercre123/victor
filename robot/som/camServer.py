@@ -31,7 +31,7 @@ class CameraSubServer(BaseSubServer):
 
     @classmethod
     def FPS2INTERVAL(cls, fps):
-        return [fps*1000, 1000000]
+        return (fps*1000, 1000000)
 
     SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
@@ -67,8 +67,10 @@ class CameraSubServer(BaseSubServer):
         assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
         if hostname == 'cozmo':
             self.camDev = "mt9p031"
+            self.camInt = ""
         else:
             self.camDev = "ov2686"
+            self.camInt = " @ %d/%d" % self.FPS2INTERVAL(self.SENSOR_FPS)
 
         assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"%s":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]' % self.camDev]) == 0, "media-ctl ISP links setup failure"
 
@@ -99,8 +101,8 @@ class CameraSubServer(BaseSubServer):
             return True
         else:
             self.stopEncoder()
-            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d @ %d/%d], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
-                                tuple([self.camDev] + self.SENSOR_RES_TPL + self.FPS2INTERVAL(self.SENSOR_FPS) + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[min(resolutionEnum, self.CROP_THRESHOLD)])]) == 0:
+            if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SBGGR12 %dx%d%s], "OMAP3 ISP CCDC":2 [SBGGR10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
+                                tuple([self.camDev] + self.SENSOR_RES_TPL + [self.camInt] + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[min(resolutionEnum, self.CROP_THRESHOLD)])]) == 0:
                 self.resolution = resolutionEnum
                 self.startEncoder()
                 return True
