@@ -146,6 +146,7 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_SelectNextObject)
     REGISTER_CALLBACK(U2G_PickAndPlaceObject)
     REGISTER_CALLBACK(U2G_TraverseObject)
+    REGISTER_CALLBACK(U2G_SetRobotCarryingObject)
     REGISTER_CALLBACK(U2G_ClearAllBlocks)
     REGISTER_CALLBACK(U2G_ExecuteBehavior)
     REGISTER_CALLBACK(U2G_SetBehaviorState)

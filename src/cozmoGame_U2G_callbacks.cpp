@@ -50,6 +50,9 @@ case U2G_Message::Type::__MSG_TYPE__: \
   {
     _uiMsgHandler.RegisterCallbackForMessage([this](const U2G_Message& msg) {
       switch (msg.GetType()) {
+        case U2G_Message::Type::INVALID:
+          break;
+          
         REGISTER_CALLBACK(Ping)
         REGISTER_CALLBACK(ConnectToRobot)
         REGISTER_CALLBACK(ConnectToUiDevice)
@@ -75,6 +78,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(SelectNextObject)
         REGISTER_CALLBACK(PickAndPlaceObject)
         REGISTER_CALLBACK(TraverseObject)
+        REGISTER_CALLBACK(SetRobotCarryingObject)
         REGISTER_CALLBACK(ClearAllBlocks)
         REGISTER_CALLBACK(ExecuteBehavior)
         REGISTER_CALLBACK(SetBehaviorState)
@@ -392,6 +396,20 @@ case U2G_Message::Type::__MSG_TYPE__: \
     
     if(robot != nullptr) {
       robot->ExecuteTestPath();
+    }
+  }
+  
+  void CozmoGameImpl::ProcessMessage(U2G_SetRobotCarryingObject const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    if(robot != nullptr) {
+      if(msg.objectID < 0) {
+        robot->UnSetCarryingObject();
+      } else {
+        ObjectID whichObject;
+        whichObject = msg.objectID;
+        robot->SetCarryingObject(whichObject);
+      }
     }
   }
   

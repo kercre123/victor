@@ -1426,6 +1426,66 @@ public class U2G_TraverseObject
 	}
 }
 
+public class U2G_SetRobotCarryingObject
+{
+	public int objectID;
+	public byte robotID;
+
+	/**** Constructors ****/
+
+	public U2G_SetRobotCarryingObject()
+	{
+	}
+
+	public U2G_SetRobotCarryingObject(int objectID,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		this.robotID = robotID;
+	}
+
+	public U2G_SetRobotCarryingObject(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (int)(reader.ReadInt32());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((int)objectID);
+		writer.Write((byte)robotID);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (int)(reader.ReadInt32());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//objectID
+			result += 4; // = int_32
+			//robotID
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class U2G_ClearAllBlocks
 {
 
@@ -2545,26 +2605,27 @@ public class U2G_Message {
 		SelectNextObject,	//22
 		PickAndPlaceObject,	//23
 		TraverseObject,	//24
-		ClearAllBlocks,	//25
-		ExecuteBehavior,	//26
-		SetBehaviorState,	//27
-		AbortPath,	//28
-		AbortAll,	//29
-		DrawPoseMarker,	//30
-		ErasePoseMarker,	//31
-		SetHeadControllerGains,	//32
-		SetLiftControllerGains,	//33
-		SelectNextSoundScheme,	//34
-		StartTestMode,	//35
-		IMURequest,	//36
-		PlayAnimation,	//37
-		ReadAnimationFile,	//38
-		StartFaceTracking,	//39
-		StopFaceTracking,	//40
-		StartLookingForMarkers,	//41
-		StopLookingForMarkers,	//42
-		SetVisionSystemParams,	//43
-		SetFaceDetectParams,	//44
+		SetRobotCarryingObject,	//25
+		ClearAllBlocks,	//26
+		ExecuteBehavior,	//27
+		SetBehaviorState,	//28
+		AbortPath,	//29
+		AbortAll,	//30
+		DrawPoseMarker,	//31
+		ErasePoseMarker,	//32
+		SetHeadControllerGains,	//33
+		SetLiftControllerGains,	//34
+		SelectNextSoundScheme,	//35
+		StartTestMode,	//36
+		IMURequest,	//37
+		PlayAnimation,	//38
+		ReadAnimationFile,	//39
+		StartFaceTracking,	//40
+		StopFaceTracking,	//41
+		StartLookingForMarkers,	//42
+		StopLookingForMarkers,	//43
+		SetVisionSystemParams,	//44
+		SetFaceDetectParams,	//45
 		INVALID
 	};
 
@@ -2999,6 +3060,23 @@ public class U2G_Message {
 		}
 	}
 
+	public U2G_SetRobotCarryingObject SetRobotCarryingObject
+	{
+		get {
+			if (_tag != Tag.SetRobotCarryingObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetRobotCarryingObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_SetRobotCarryingObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetRobotCarryingObject : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public U2G_ClearAllBlocks ClearAllBlocks
 	{
 		get {
@@ -3420,6 +3498,9 @@ public class U2G_Message {
 		case Tag.TraverseObject:
 			_state = new U2G_TraverseObject(stream);
 			break;
+		case Tag.SetRobotCarryingObject:
+			_state = new U2G_SetRobotCarryingObject(stream);
+			break;
 		case Tag.ClearAllBlocks:
 			_state = new U2G_ClearAllBlocks(stream);
 			break;
@@ -3567,6 +3648,9 @@ public class U2G_Message {
 		case Tag.TraverseObject:
 			TraverseObject.Pack(stream);
 			break;
+		case Tag.SetRobotCarryingObject:
+			SetRobotCarryingObject.Pack(stream);
+			break;
 		case Tag.ClearAllBlocks:
 			ClearAllBlocks.Pack(stream);
 			break;
@@ -3712,6 +3796,9 @@ public class U2G_Message {
 				break;
 			case Tag.TraverseObject:
 				result += TraverseObject.Size;
+				break;
+			case Tag.SetRobotCarryingObject:
+				result += SetRobotCarryingObject.Size;
 				break;
 			case Tag.ClearAllBlocks:
 				result += ClearAllBlocks.Size;
