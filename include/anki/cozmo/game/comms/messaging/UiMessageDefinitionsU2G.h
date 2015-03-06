@@ -1993,6 +1993,88 @@ struct U2G_TraverseObject
 	}
 };
 
+struct U2G_SetRobotCarryingObject
+{
+	int32_t objectID;
+	uint8_t robotID;
+
+	/**** Constructors ****/
+	U2G_SetRobotCarryingObject() = default;
+	U2G_SetRobotCarryingObject(const U2G_SetRobotCarryingObject& other) = default;
+	U2G_SetRobotCarryingObject(U2G_SetRobotCarryingObject& other) = default;
+	U2G_SetRobotCarryingObject(U2G_SetRobotCarryingObject&& other) noexcept = default;
+	U2G_SetRobotCarryingObject& operator=(const U2G_SetRobotCarryingObject& other) = default;
+	U2G_SetRobotCarryingObject& operator=(U2G_SetRobotCarryingObject&& other) noexcept = default;
+
+	explicit U2G_SetRobotCarryingObject(int32_t objectID
+		,uint8_t robotID)
+	:objectID(objectID)
+	,robotID(robotID)
+	{}
+	explicit U2G_SetRobotCarryingObject(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit U2G_SetRobotCarryingObject(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->objectID);
+		buffer.Write(this->robotID);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->objectID);
+		buffer.Read(this->robotID);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//objectID
+		result += 4; // = int_32
+		//robotID
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const U2G_SetRobotCarryingObject& other) const
+	{
+		if (objectID != other.objectID
+		|| robotID != other.robotID) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const U2G_SetRobotCarryingObject& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 struct U2G_ClearAllBlocks
 {
 
@@ -3601,26 +3683,27 @@ public:
 		SelectNextObject,	// 22
 		PickAndPlaceObject,	// 23
 		TraverseObject,	// 24
-		ClearAllBlocks,	// 25
-		ExecuteBehavior,	// 26
-		SetBehaviorState,	// 27
-		AbortPath,	// 28
-		AbortAll,	// 29
-		DrawPoseMarker,	// 30
-		ErasePoseMarker,	// 31
-		SetHeadControllerGains,	// 32
-		SetLiftControllerGains,	// 33
-		SelectNextSoundScheme,	// 34
-		StartTestMode,	// 35
-		IMURequest,	// 36
-		PlayAnimation,	// 37
-		ReadAnimationFile,	// 38
-		StartFaceTracking,	// 39
-		StopFaceTracking,	// 40
-		StartLookingForMarkers,	// 41
-		StopLookingForMarkers,	// 42
-		SetVisionSystemParams,	// 43
-		SetFaceDetectParams,	// 44
+		SetRobotCarryingObject,	// 25
+		ClearAllBlocks,	// 26
+		ExecuteBehavior,	// 27
+		SetBehaviorState,	// 28
+		AbortPath,	// 29
+		AbortAll,	// 30
+		DrawPoseMarker,	// 31
+		ErasePoseMarker,	// 32
+		SetHeadControllerGains,	// 33
+		SetLiftControllerGains,	// 34
+		SelectNextSoundScheme,	// 35
+		StartTestMode,	// 36
+		IMURequest,	// 37
+		PlayAnimation,	// 38
+		ReadAnimationFile,	// 39
+		StartFaceTracking,	// 40
+		StopFaceTracking,	// 41
+		StartLookingForMarkers,	// 42
+		StopLookingForMarkers,	// 43
+		SetVisionSystemParams,	// 44
+		SetFaceDetectParams,	// 45
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -3675,6 +3758,8 @@ public:
 			return "PickAndPlaceObject";
 		case Type::TraverseObject:
 			return "TraverseObject";
+		case Type::SetRobotCarryingObject:
+			return "SetRobotCarryingObject";
 		case Type::ClearAllBlocks:
 			return "ClearAllBlocks";
 		case Type::ExecuteBehavior:
@@ -4443,6 +4528,35 @@ public:
 			ClearCurrent();
 			new(&_TraverseObject) U2G_TraverseObject{std::move(new_TraverseObject)};
 			_type = Type::TraverseObject;
+		}
+	}
+
+	/** SetRobotCarryingObject **/
+	const U2G_SetRobotCarryingObject& Get_SetRobotCarryingObject() const
+	{
+		assert(_type == Type::SetRobotCarryingObject);
+		return _SetRobotCarryingObject;
+	}
+	void Set_SetRobotCarryingObject(const U2G_SetRobotCarryingObject& new_SetRobotCarryingObject)
+	{
+		if(this->_type == Type::SetRobotCarryingObject) {
+			_SetRobotCarryingObject = new_SetRobotCarryingObject;
+		}
+		else {
+			ClearCurrent();
+			new(&_SetRobotCarryingObject) U2G_SetRobotCarryingObject{new_SetRobotCarryingObject};
+			_type = Type::SetRobotCarryingObject;
+		}
+	}
+	void Set_SetRobotCarryingObject(U2G_SetRobotCarryingObject&&  new_SetRobotCarryingObject)
+	{
+		if(this->_type == Type::SetRobotCarryingObject) {
+			_SetRobotCarryingObject = std::move(new_SetRobotCarryingObject);
+		}
+		else {
+			ClearCurrent();
+			new(&_SetRobotCarryingObject) U2G_SetRobotCarryingObject{std::move(new_SetRobotCarryingObject)};
+			_type = Type::SetRobotCarryingObject;
 		}
 	}
 
@@ -5241,6 +5355,14 @@ public:
 			this->_TraverseObject.Unpack(buffer);
 			}
 			break;
+		case Type::SetRobotCarryingObject:
+			if (newType != oldType) {
+				new(&(this->_SetRobotCarryingObject)) U2G_SetRobotCarryingObject(buffer);
+			}
+			else {
+			this->_SetRobotCarryingObject.Unpack(buffer);
+			}
+			break;
 		case Type::ClearAllBlocks:
 			if (newType != oldType) {
 				new(&(this->_ClearAllBlocks)) U2G_ClearAllBlocks(buffer);
@@ -5494,6 +5616,9 @@ public:
 		case Type::TraverseObject:
 			this->_TraverseObject.Pack(buffer);
 			break;
+		case Type::SetRobotCarryingObject:
+			this->_SetRobotCarryingObject.Pack(buffer);
+			break;
 		case Type::ClearAllBlocks:
 			this->_ClearAllBlocks.Pack(buffer);
 			break;
@@ -5641,6 +5766,9 @@ public:
 		case Type::TraverseObject:
 			result += _TraverseObject.Size();
 			break;
+		case Type::SetRobotCarryingObject:
+			result += _SetRobotCarryingObject.Size();
+			break;
 		case Type::ClearAllBlocks:
 			result += _ClearAllBlocks.Size();
 			break;
@@ -5785,6 +5913,9 @@ private:
 		case Type::TraverseObject:
 			_TraverseObject.~U2G_TraverseObject();
 			break;
+		case Type::SetRobotCarryingObject:
+			_SetRobotCarryingObject.~U2G_SetRobotCarryingObject();
+			break;
 		case Type::ClearAllBlocks:
 			_ClearAllBlocks.~U2G_ClearAllBlocks();
 			break;
@@ -5878,6 +6009,7 @@ private:
 		U2G_SelectNextObject _SelectNextObject;
 		U2G_PickAndPlaceObject _PickAndPlaceObject;
 		U2G_TraverseObject _TraverseObject;
+		U2G_SetRobotCarryingObject _SetRobotCarryingObject;
 		U2G_ClearAllBlocks _ClearAllBlocks;
 		U2G_ExecuteBehavior _ExecuteBehavior;
 		U2G_SetBehaviorState _SetBehaviorState;

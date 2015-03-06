@@ -39,8 +39,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 dt_wheel_power 20
   
   # Force-add robot options
-  field SFString forceAddIP "192.168.3.34"
-  field SFInt32  forceAddID 1
+  field SFBool   forceAddRobot FALSE
+  field SFString forcedRobotIP "172.31.1.1"
+  field SFInt32  forcedRobotID 1
+  field SFBool   forcedRobotIsSimulated FALSE  
   
   # CozmoCam
   field SFString streamResolution "QVGA"

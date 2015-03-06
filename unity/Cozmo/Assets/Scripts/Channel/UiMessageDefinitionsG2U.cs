@@ -341,6 +341,7 @@ public class G2U_RobotState
 	public float headAngle_rad;
 	public float liftHeight_mm;
 	public float batteryVoltage;
+	public int carryingObjectID;
 	public byte status;
 	public byte robotID;
 
@@ -359,6 +360,7 @@ public class G2U_RobotState
 		float headAngle_rad,
 		float liftHeight_mm,
 		float batteryVoltage,
+		int carryingObjectID,
 		byte status,
 		byte robotID)
 	{
@@ -371,6 +373,7 @@ public class G2U_RobotState
 		this.headAngle_rad = headAngle_rad;
 		this.liftHeight_mm = liftHeight_mm;
 		this.batteryVoltage = batteryVoltage;
+		this.carryingObjectID = carryingObjectID;
 		this.status = status;
 		this.robotID = robotID;
 	}
@@ -397,6 +400,8 @@ public class G2U_RobotState
 		liftHeight_mm = (float)(reader.ReadSingle());
 		//batteryVoltage
 		batteryVoltage = (float)(reader.ReadSingle());
+		//carryingObjectID
+		carryingObjectID = (int)(reader.ReadInt32());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -416,6 +421,7 @@ public class G2U_RobotState
 		writer.Write((float)headAngle_rad);
 		writer.Write((float)liftHeight_mm);
 		writer.Write((float)batteryVoltage);
+		writer.Write((int)carryingObjectID);
 		writer.Write((byte)status);
 		writer.Write((byte)robotID);
 		return stream;
@@ -443,6 +449,8 @@ public class G2U_RobotState
 		liftHeight_mm = (float)(reader.ReadSingle());
 		//batteryVoltage
 		batteryVoltage = (float)(reader.ReadSingle());
+		//carryingObjectID
+		carryingObjectID = (int)(reader.ReadInt32());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -471,6 +479,8 @@ public class G2U_RobotState
 			result += 4; // = float_32
 			//batteryVoltage
 			result += 4; // = float_32
+			//carryingObjectID
+			result += 4; // = int_32
 			//status
 			result += 1; // = uint_8
 			//robotID
@@ -626,10 +636,13 @@ public class G2U_RobotObservedObject
 	public uint objectFamily;
 	public uint objectType;
 	public int objectID;
-	public float topLeft_x;
-	public float topLeft_y;
-	public float width;
-	public float height;
+	public float img_topLeft_x;
+	public float img_topLeft_y;
+	public float img_width;
+	public float img_height;
+	public float world_x;
+	public float world_y;
+	public float world_z;
 
 	/**** Constructors ****/
 
@@ -641,19 +654,25 @@ public class G2U_RobotObservedObject
 		uint objectFamily,
 		uint objectType,
 		int objectID,
-		float topLeft_x,
-		float topLeft_y,
-		float width,
-		float height)
+		float img_topLeft_x,
+		float img_topLeft_y,
+		float img_width,
+		float img_height,
+		float world_x,
+		float world_y,
+		float world_z)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
 		this.objectType = objectType;
 		this.objectID = objectID;
-		this.topLeft_x = topLeft_x;
-		this.topLeft_y = topLeft_y;
-		this.width = width;
-		this.height = height;
+		this.img_topLeft_x = img_topLeft_x;
+		this.img_topLeft_y = img_topLeft_y;
+		this.img_width = img_width;
+		this.img_height = img_height;
+		this.world_x = world_x;
+		this.world_y = world_y;
+		this.world_z = world_z;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -668,14 +687,20 @@ public class G2U_RobotObservedObject
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
 		objectID = (int)(reader.ReadInt32());
-		//topLeft_x
-		topLeft_x = (float)(reader.ReadSingle());
-		//topLeft_y
-		topLeft_y = (float)(reader.ReadSingle());
-		//width
-		width = (float)(reader.ReadSingle());
-		//height
-		height = (float)(reader.ReadSingle());
+		//img_topLeft_x
+		img_topLeft_x = (float)(reader.ReadSingle());
+		//img_topLeft_y
+		img_topLeft_y = (float)(reader.ReadSingle());
+		//img_width
+		img_width = (float)(reader.ReadSingle());
+		//img_height
+		img_height = (float)(reader.ReadSingle());
+		//world_x
+		world_x = (float)(reader.ReadSingle());
+		//world_y
+		world_y = (float)(reader.ReadSingle());
+		//world_z
+		world_z = (float)(reader.ReadSingle());
 	}
 
 	/**** Pack ****/
@@ -686,10 +711,13 @@ public class G2U_RobotObservedObject
 		writer.Write((uint)objectFamily);
 		writer.Write((uint)objectType);
 		writer.Write((int)objectID);
-		writer.Write((float)topLeft_x);
-		writer.Write((float)topLeft_y);
-		writer.Write((float)width);
-		writer.Write((float)height);
+		writer.Write((float)img_topLeft_x);
+		writer.Write((float)img_topLeft_y);
+		writer.Write((float)img_width);
+		writer.Write((float)img_height);
+		writer.Write((float)world_x);
+		writer.Write((float)world_y);
+		writer.Write((float)world_z);
 		return stream;
 	}
 
@@ -705,14 +733,20 @@ public class G2U_RobotObservedObject
 		objectType = (uint)(reader.ReadUInt32());
 		//objectID
 		objectID = (int)(reader.ReadInt32());
-		//topLeft_x
-		topLeft_x = (float)(reader.ReadSingle());
-		//topLeft_y
-		topLeft_y = (float)(reader.ReadSingle());
-		//width
-		width = (float)(reader.ReadSingle());
-		//height
-		height = (float)(reader.ReadSingle());
+		//img_topLeft_x
+		img_topLeft_x = (float)(reader.ReadSingle());
+		//img_topLeft_y
+		img_topLeft_y = (float)(reader.ReadSingle());
+		//img_width
+		img_width = (float)(reader.ReadSingle());
+		//img_height
+		img_height = (float)(reader.ReadSingle());
+		//world_x
+		world_x = (float)(reader.ReadSingle());
+		//world_y
+		world_y = (float)(reader.ReadSingle());
+		//world_z
+		world_z = (float)(reader.ReadSingle());
 		return stream;
 	}
 	public int Size
@@ -727,13 +761,19 @@ public class G2U_RobotObservedObject
 			result += 4; // = uint_32
 			//objectID
 			result += 4; // = int_32
-			//topLeft_x
+			//img_topLeft_x
 			result += 4; // = float_32
-			//topLeft_y
+			//img_topLeft_y
 			result += 4; // = float_32
-			//width
+			//img_width
 			result += 4; // = float_32
-			//height
+			//img_height
+			result += 4; // = float_32
+			//world_x
+			result += 4; // = float_32
+			//world_y
+			result += 4; // = float_32
+			//world_z
 			result += 4; // = float_32
 			return result;
 		}

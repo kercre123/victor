@@ -490,6 +490,7 @@ struct G2U_RobotState
 	float headAngle_rad;
 	float liftHeight_mm;
 	float batteryVoltage;
+	int32_t carryingObjectID;
 	uint8_t status;
 	uint8_t robotID;
 
@@ -510,6 +511,7 @@ struct G2U_RobotState
 		,float headAngle_rad
 		,float liftHeight_mm
 		,float batteryVoltage
+		,int32_t carryingObjectID
 		,uint8_t status
 		,uint8_t robotID)
 	:pose_x(pose_x)
@@ -521,6 +523,7 @@ struct G2U_RobotState
 	,headAngle_rad(headAngle_rad)
 	,liftHeight_mm(liftHeight_mm)
 	,batteryVoltage(batteryVoltage)
+	,carryingObjectID(carryingObjectID)
 	,status(status)
 	,robotID(robotID)
 	{}
@@ -553,6 +556,7 @@ struct G2U_RobotState
 		buffer.Write(this->headAngle_rad);
 		buffer.Write(this->liftHeight_mm);
 		buffer.Write(this->batteryVoltage);
+		buffer.Write(this->carryingObjectID);
 		buffer.Write(this->status);
 		buffer.Write(this->robotID);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -577,6 +581,7 @@ struct G2U_RobotState
 		buffer.Read(this->headAngle_rad);
 		buffer.Read(this->liftHeight_mm);
 		buffer.Read(this->batteryVoltage);
+		buffer.Read(this->carryingObjectID);
 		buffer.Read(this->status);
 		buffer.Read(this->robotID);
 		return buffer.GetBytesRead();
@@ -602,6 +607,8 @@ struct G2U_RobotState
 		result += 4; // = float_32
 		//batteryVoltage
 		result += 4; // = float_32
+		//carryingObjectID
+		result += 4; // = int_32
 		//status
 		result += 1; // = uint_8
 		//robotID
@@ -620,6 +627,7 @@ struct G2U_RobotState
 		|| headAngle_rad != other.headAngle_rad
 		|| liftHeight_mm != other.liftHeight_mm
 		|| batteryVoltage != other.batteryVoltage
+		|| carryingObjectID != other.carryingObjectID
 		|| status != other.status
 		|| robotID != other.robotID) {
 			return false;
@@ -777,10 +785,13 @@ struct G2U_RobotObservedObject
 	uint32_t objectFamily;
 	uint32_t objectType;
 	int32_t objectID;
-	float topLeft_x;
-	float topLeft_y;
-	float width;
-	float height;
+	float img_topLeft_x;
+	float img_topLeft_y;
+	float img_width;
+	float img_height;
+	float world_x;
+	float world_y;
+	float world_z;
 
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -794,18 +805,24 @@ struct G2U_RobotObservedObject
 		,uint32_t objectFamily
 		,uint32_t objectType
 		,int32_t objectID
-		,float topLeft_x
-		,float topLeft_y
-		,float width
-		,float height)
+		,float img_topLeft_x
+		,float img_topLeft_y
+		,float img_width
+		,float img_height
+		,float world_x
+		,float world_y
+		,float world_z)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
 	,objectID(objectID)
-	,topLeft_x(topLeft_x)
-	,topLeft_y(topLeft_y)
-	,width(width)
-	,height(height)
+	,img_topLeft_x(img_topLeft_x)
+	,img_topLeft_y(img_topLeft_y)
+	,img_width(img_width)
+	,img_height(img_height)
+	,world_x(world_x)
+	,world_y(world_y)
+	,world_z(world_z)
 	{}
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 	{
@@ -831,10 +848,13 @@ struct G2U_RobotObservedObject
 		buffer.Write(this->objectFamily);
 		buffer.Write(this->objectType);
 		buffer.Write(this->objectID);
-		buffer.Write(this->topLeft_x);
-		buffer.Write(this->topLeft_y);
-		buffer.Write(this->width);
-		buffer.Write(this->height);
+		buffer.Write(this->img_topLeft_x);
+		buffer.Write(this->img_topLeft_y);
+		buffer.Write(this->img_width);
+		buffer.Write(this->img_height);
+		buffer.Write(this->world_x);
+		buffer.Write(this->world_y);
+		buffer.Write(this->world_z);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -852,10 +872,13 @@ struct G2U_RobotObservedObject
 		buffer.Read(this->objectFamily);
 		buffer.Read(this->objectType);
 		buffer.Read(this->objectID);
-		buffer.Read(this->topLeft_x);
-		buffer.Read(this->topLeft_y);
-		buffer.Read(this->width);
-		buffer.Read(this->height);
+		buffer.Read(this->img_topLeft_x);
+		buffer.Read(this->img_topLeft_y);
+		buffer.Read(this->img_width);
+		buffer.Read(this->img_height);
+		buffer.Read(this->world_x);
+		buffer.Read(this->world_y);
+		buffer.Read(this->world_z);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -869,13 +892,19 @@ struct G2U_RobotObservedObject
 		result += 4; // = uint_32
 		//objectID
 		result += 4; // = int_32
-		//topLeft_x
+		//img_topLeft_x
 		result += 4; // = float_32
-		//topLeft_y
+		//img_topLeft_y
 		result += 4; // = float_32
-		//width
+		//img_width
 		result += 4; // = float_32
-		//height
+		//img_height
+		result += 4; // = float_32
+		//world_x
+		result += 4; // = float_32
+		//world_y
+		result += 4; // = float_32
+		//world_z
 		result += 4; // = float_32
 		return result;
 	}
@@ -886,10 +915,13 @@ struct G2U_RobotObservedObject
 		|| objectFamily != other.objectFamily
 		|| objectType != other.objectType
 		|| objectID != other.objectID
-		|| topLeft_x != other.topLeft_x
-		|| topLeft_y != other.topLeft_y
-		|| width != other.width
-		|| height != other.height) {
+		|| img_topLeft_x != other.img_topLeft_x
+		|| img_topLeft_y != other.img_topLeft_y
+		|| img_width != other.img_width
+		|| img_height != other.img_height
+		|| world_x != other.world_x
+		|| world_y != other.world_y
+		|| world_z != other.world_z) {
 			return false;
 		}
 		return true;
