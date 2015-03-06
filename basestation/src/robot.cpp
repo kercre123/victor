@@ -1691,15 +1691,16 @@ namespace Anki {
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
       Result result = _msgHandler->SendMessage(_ID, m);
-
-      /*
-      // For specifying resolution for basestation vision:
-      // (Start with QVGA)
-      MessageImageRequest mImg;
-      mImg.imageSendMode = ISM_STREAM;
-      mImg.resolution    = Vision::CAMERA_RES_QVGA;
-      _msgHandler->SendMessage(_ID, mImg);
-      */
+      
+      if(result == RESULT_OK) {
+        // For specifying resolution for basestation vision:
+        // (Start with QVGA)
+        MessageImageRequest m;
+        m.imageSendMode = ISM_STREAM;
+        m.resolution    = Vision::CAMERA_RES_QVGA;
+        result = _msgHandler->SendMessage(_ID, m);
+      }
+      
       return result;
     }
     
