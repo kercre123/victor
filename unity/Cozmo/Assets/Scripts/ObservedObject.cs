@@ -14,10 +14,10 @@ public class ObservedObject
 	public void UpdateInfo( G2U_RobotObservedObject message )
 	{
 		ID = message.objectID;
-		height = message.height;
-		width = message.width;
-		topLeft_x = message.topLeft_x;
-		topLeft_y = message.topLeft_y;
+		height = message.img_height;
+		width = message.img_width;
+		topLeft_x = message.img_topLeft_x;
+		topLeft_y = message.img_topLeft_y;
 		//message.objectFamily;
 		//message.objectType;
 	}
