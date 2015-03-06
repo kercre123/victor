@@ -57,7 +57,7 @@ public class CozmoVision1 : CozmoVision
 			for( int i = 0; i < actionButtons.Length; ++i )
 			{
 				// if no object selected or being actioned or holding block
-				actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) || robot.selectedObject > -1 );
+				actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
 
 				if( i == 0 )
 				{
