@@ -35,8 +35,9 @@ DEF_SIGNAL(RobotObservedObject,
            uint32_t objectFamily,
            uint32_t objectType,
            uint32_t objectID,
-           float x_upperLeft,  float y_upperLeft,
-           float width,  float height)
+           float img_x_upperLeft,  float img_y_upperLeft,
+           float img_width,  float img_height,
+           float world_x, float world_y, float world_z)
 
 DEF_SIGNAL(RobotObservedNothing, uint8_t robotID)
 

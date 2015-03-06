@@ -273,8 +273,7 @@ namespace Anki
         
         std::vector<Point2f> projectedCorners;
         f32 observationDistance;
-        ObjectID obsID;
-        ObjectType obsType;
+        Vision::ObservableObject* observedObject = nullptr;
 
         if(overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
@@ -293,8 +292,7 @@ namespace Anki
           // Project this new object into the robot's camera:
           _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
-          obsID = objSeen->GetID();
-          obsType = objSeen->GetType();
+          observedObject = objSeen;
           
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
@@ -328,8 +326,7 @@ namespace Anki
           overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
           overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
           
-          obsID = overlappingObjects[0]->GetID();
-          obsType = overlappingObjects[0]->GetType();
+          observedObject = overlappingObjects[0];
           
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
@@ -354,6 +351,11 @@ namespace Anki
         // bounding quads of all the observed objects in this Update
         _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
         
+        CORETECH_ASSERT(observedObject != nullptr);
+        
+        const ObjectID obsID = observedObject->GetID();
+        const ObjectType obsType = observedObject->GetType();
+        
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
@@ -363,6 +365,7 @@ namespace Anki
         _currentObservedObjectIDs.push_back(obsID);
         
         // Signal the observation of this object, with its bounding box:
+        const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
                                                              inFamily,
                                                              obsType,
@@ -370,7 +373,10 @@ namespace Anki
                                                              boundingBox.GetX(),
                                                              boundingBox.GetY(),
                                                              boundingBox.GetWidth(),
-                                                             boundingBox.GetHeight());
+                                                             boundingBox.GetHeight(),
+                                                             obsObjTrans.x(),
+                                                             obsObjTrans.y(),
+                                                             obsObjTrans.z());
 
         _didObjectsChange = true;
       } // for each object seen
