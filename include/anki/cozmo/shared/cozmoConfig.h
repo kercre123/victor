@@ -316,17 +316,17 @@ namespace Anki {
     // Timeout for how long we are willing to wait to get a state message from
     // the robot to the basestation
 #if SIMULATOR
-    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 3.0f; // Longer for simulator because we don't control network
+    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 5.0f; // Longer for simulator because we don't control network
 #else
-    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 1.0f;
+    const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 3.0f;
 #endif
     
     // Timeout for how long the robot is willing to wait before receiving a ping
     // (or any message) from basestatin
 #if SIMULATOR
-    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000; // Longer for simulator because we don't control network
+    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 5000; // Longer for simulator because we don't control network
 #else
-    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 1000;
+    const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000;
 #endif
     
 #if SIMULATOR
