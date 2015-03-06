@@ -61,8 +61,17 @@ namespace Anki {
       
       const f32 rowNorm = this->GetRow(i).Length();
       
-      // If the row norm is crazy, throw an exception / error
-      CORETECH_ASSERT(NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceHigh));
+      // Check if the row norm is crazy
+      // TODO: Somehow throw an error?
+      if(!NEAR(rowNorm, 1.f, RotationMatrixBase<DIM>::OrthogonalityToleranceHigh)) {
+        CoreTechPrint("Norm of row %d = %f! (Expecting near 1.0) Row = [ ", i, rowNorm);
+        for(s32 j=0; j<DIM; ++j) {
+          CoreTechPrint("%d ", this->operator()(i,j));
+        }
+        CoreTechPrint("]\n");
+        needsRenormalization = true;
+        break;
+      }
       
       // If the row norm isn't crazy, but has gotten outside our tolerances
       // then renormalize the matrix
