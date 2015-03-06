@@ -490,6 +490,7 @@ struct G2U_RobotState
 	float headAngle_rad;
 	float liftHeight_mm;
 	float batteryVoltage;
+	int32_t carryingObjectID;
 	uint8_t status;
 	uint8_t robotID;
 
@@ -510,6 +511,7 @@ struct G2U_RobotState
 		,float headAngle_rad
 		,float liftHeight_mm
 		,float batteryVoltage
+		,int32_t carryingObjectID
 		,uint8_t status
 		,uint8_t robotID)
 	:pose_x(pose_x)
@@ -521,6 +523,7 @@ struct G2U_RobotState
 	,headAngle_rad(headAngle_rad)
 	,liftHeight_mm(liftHeight_mm)
 	,batteryVoltage(batteryVoltage)
+	,carryingObjectID(carryingObjectID)
 	,status(status)
 	,robotID(robotID)
 	{}
@@ -553,6 +556,7 @@ struct G2U_RobotState
 		buffer.Write(this->headAngle_rad);
 		buffer.Write(this->liftHeight_mm);
 		buffer.Write(this->batteryVoltage);
+		buffer.Write(this->carryingObjectID);
 		buffer.Write(this->status);
 		buffer.Write(this->robotID);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -577,6 +581,7 @@ struct G2U_RobotState
 		buffer.Read(this->headAngle_rad);
 		buffer.Read(this->liftHeight_mm);
 		buffer.Read(this->batteryVoltage);
+		buffer.Read(this->carryingObjectID);
 		buffer.Read(this->status);
 		buffer.Read(this->robotID);
 		return buffer.GetBytesRead();
@@ -602,6 +607,8 @@ struct G2U_RobotState
 		result += 4; // = float_32
 		//batteryVoltage
 		result += 4; // = float_32
+		//carryingObjectID
+		result += 4; // = int_32
 		//status
 		result += 1; // = uint_8
 		//robotID
@@ -620,6 +627,7 @@ struct G2U_RobotState
 		|| headAngle_rad != other.headAngle_rad
 		|| liftHeight_mm != other.liftHeight_mm
 		|| batteryVoltage != other.batteryVoltage
+		|| carryingObjectID != other.carryingObjectID
 		|| status != other.status
 		|| robotID != other.robotID) {
 			return false;

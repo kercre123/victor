@@ -423,10 +423,15 @@ namespace Cozmo {
               msg.liftHeight_mm = robot->GetLiftHeight();
               
               msg.status = 0;
-              if(robot->IsCarryingObject())   { msg.status |= IS_CARRYING_BLOCK; }
               if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
               if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
               if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
+              if(robot->IsCarryingObject())   {
+                msg.status |= IS_CARRYING_BLOCK;
+                msg.carryingObjectID = robot->GetCarryingObject();
+              } else {
+                msg.carryingObjectID = -1;
+              }
 
               // TODO: Add proximity sensor data to state message
               

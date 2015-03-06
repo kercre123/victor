@@ -341,6 +341,7 @@ public class G2U_RobotState
 	public float headAngle_rad;
 	public float liftHeight_mm;
 	public float batteryVoltage;
+	public int carryingObjectID;
 	public byte status;
 	public byte robotID;
 
@@ -359,6 +360,7 @@ public class G2U_RobotState
 		float headAngle_rad,
 		float liftHeight_mm,
 		float batteryVoltage,
+		int carryingObjectID,
 		byte status,
 		byte robotID)
 	{
@@ -371,6 +373,7 @@ public class G2U_RobotState
 		this.headAngle_rad = headAngle_rad;
 		this.liftHeight_mm = liftHeight_mm;
 		this.batteryVoltage = batteryVoltage;
+		this.carryingObjectID = carryingObjectID;
 		this.status = status;
 		this.robotID = robotID;
 	}
@@ -397,6 +400,8 @@ public class G2U_RobotState
 		liftHeight_mm = (float)(reader.ReadSingle());
 		//batteryVoltage
 		batteryVoltage = (float)(reader.ReadSingle());
+		//carryingObjectID
+		carryingObjectID = (int)(reader.ReadInt32());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -416,6 +421,7 @@ public class G2U_RobotState
 		writer.Write((float)headAngle_rad);
 		writer.Write((float)liftHeight_mm);
 		writer.Write((float)batteryVoltage);
+		writer.Write((int)carryingObjectID);
 		writer.Write((byte)status);
 		writer.Write((byte)robotID);
 		return stream;
@@ -443,6 +449,8 @@ public class G2U_RobotState
 		liftHeight_mm = (float)(reader.ReadSingle());
 		//batteryVoltage
 		batteryVoltage = (float)(reader.ReadSingle());
+		//carryingObjectID
+		carryingObjectID = (int)(reader.ReadInt32());
 		//status
 		status = (byte)(reader.ReadByte());
 		//robotID
@@ -471,6 +479,8 @@ public class G2U_RobotState
 			result += 4; // = float_32
 			//batteryVoltage
 			result += 4; // = float_32
+			//carryingObjectID
+			result += 4; // = int_32
 			//status
 			result += 1; // = uint_8
 			//robotID
