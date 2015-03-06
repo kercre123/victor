@@ -76,9 +76,10 @@ namespace Cozmo {
     
     auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectFamily,
                                               uint32_t objectType, uint32_t objectID,
-                                              float x_upperLeft,  float y_upperLeft,
-                                              float width,  float height) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, x_upperLeft, y_upperLeft, width, height);
+                                              float img_x_upperLeft,  float img_y_upperLeft,
+                                              float img_width,  float img_height,
+                                              float world_x, float world_y, float world_z) {
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -242,18 +243,25 @@ namespace Cozmo {
                                                       uint32_t objectFamily,
                                                       uint32_t objectType,
                                                       uint32_t objectID,
-                                                      float x_upperLeft,  float y_upperLeft,
-                                                      float width,  float height) {
-    // Send a message out to UI that the device found a vision marker
+                                                      float img_x_upperLeft,  float img_y_upperLeft,
+                                                      float img_width,  float img_height,
+                                                      float world_x,
+                                                      float world_y,
+                                                      float world_z)
+  {
+    // Send a message out to UI that the robot saw an object
     G2U_RobotObservedObject msg;
-    msg.robotID      = robotID;
-    msg.objectFamily = objectFamily;
-    msg.objectType   = objectType;
-    msg.objectID     = objectID;
-    msg.topLeft_x    = x_upperLeft;
-    msg.topLeft_y    = y_upperLeft;
-    msg.width        = width;
-    msg.height       = height;
+    msg.robotID       = robotID;
+    msg.objectFamily  = objectFamily;
+    msg.objectType    = objectType;
+    msg.objectID      = objectID;
+    msg.img_topLeft_x = img_x_upperLeft;
+    msg.img_topLeft_y = img_y_upperLeft;
+    msg.img_width     = img_width;
+    msg.img_height    = img_height;
+    msg.world_x       = world_x;
+    msg.world_y       = world_y;
+    msg.world_z       = world_z;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     G2U_Message message;
