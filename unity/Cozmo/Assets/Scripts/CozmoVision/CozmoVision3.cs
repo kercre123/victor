@@ -20,10 +20,12 @@ public class CozmoVision3 : CozmoVision
 				
 				Vector3[] corners = new Vector3[4];
 				image.rectTransform.GetWorldCorners( corners );
+
 				if( corners == null || corners.Length == 0 )
 				{
 					return center;
 				}
+
 				center = ( corners[0] + corners[2] ) * 0.5f;
 				
 				return center;
@@ -34,6 +36,27 @@ public class CozmoVision3 : CozmoVision
 	[SerializeField] protected SelectionBox box;
 	[SerializeField] protected Image reticle;
 
+	protected bool inReticle
+	{
+		get
+		{
+			Vector3[] corners = new Vector3[4];
+			reticle.rectTransform.GetWorldCorners( corners );
+
+			/*Debug.Log( "min x " + box.position.x + " " + corners[0].x );
+			Debug.Log( "max x " + box.position.x + " " + corners[2].x );
+			Debug.Log( "min y " + box.position.y + " " + corners[0].y );
+			Debug.Log( "max y " + box.position.y + " " + corners[2].y );*/
+
+			return box.image.rectTransform.rect.width > reticle.rectTransform.rect.width && 
+				  	box.image.rectTransform.rect.height > reticle.rectTransform.rect.height &&
+					box.position.x > corners[0].x && 
+					box.position.x < corners[2].x &&
+					box.position.y > corners[0].y && 
+					box.position.y < corners[2].y;
+		}
+	}
+
 	protected void Update()
 	{
 		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 );
@@ -42,48 +65,31 @@ public class CozmoVision3 : CozmoVision
 		{
 			robot = RobotEngineManager.instance.current;
 
-			if( observedObjectsCount > 0 && robot.observedObjects[0].width > reticle.rectTransform.rect.width && 
-			    robot.observedObjects[0].height > reticle.rectTransform.rect.height )
+			box.image.gameObject.SetActive( false );
+			robot.selectedObject = -1;
+
+			for( int i = 0; i < robot.observedObjects.Count; ++i )
 			{
-				box.image.gameObject.SetActive( true );
+				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].width, robot.observedObjects[i].height );
+				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].topLeft_x, -robot.observedObjects[i].topLeft_y );
 
-				ObservedObject observedObject = robot.observedObjects[0];
-
-				box.image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
-				box.image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
-
-				box.text.text = "Select " + observedObject.ID;
-				robot.selectedObject = observedObject.ID;
-			}
-			else
-			{
-				box.image.gameObject.SetActive( false );
-				robot.selectedObject = -1;
-			}
-
-			for( int i = 0; i < actionButtons.Length; ++i )
-			{
-				actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
-
-				if( i == 0 )
+				if( inReticle )
 				{
-					if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-					{
-						if( robot.selectedObject > -1 )
-						{
-							actionButtons[i].text.text = "Stack";
-						}
-						else
-						{
-							actionButtons[i].text.text = "Drop";
-						}
-					}
-					else
-					{
-						actionButtons[i].text.text = "Pick Up";
-					}
+					box.image.gameObject.SetActive( true );
+
+					box.text.text = "Select " + robot.observedObjects[i].ID;
+					robot.selectedObject = robot.observedObjects[i].ID;
+					//reticle.color = Color.red;
+
+					break;
 				}
+				/*else
+				{
+					reticle.color = Color.yellow;
+				}*/
 			}
+
+			SetActionButtons();
 		}
 	}
 }

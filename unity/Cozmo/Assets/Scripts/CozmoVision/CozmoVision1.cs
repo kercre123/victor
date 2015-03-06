@@ -29,10 +29,12 @@ public class CozmoVision1 : CozmoVision
 				
 				Vector3[] corners = new Vector3[4];
 				image.rectTransform.GetWorldCorners( corners );
+
 				if( corners == null || corners.Length == 0 )
 				{
 					return center;
 				}
+
 				center = ( corners[0] + corners[2] ) * 0.5f;
 				
 				return center;
@@ -52,32 +54,7 @@ public class CozmoVision1 : CozmoVision
 		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			robot = RobotEngineManager.instance.current;
-
-			for( int i = 0; i < actionButtons.Length; ++i )
-			{
-				// if no object selected or being actioned or holding block
-				actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
-
-				if( i == 0 )
-				{
-					if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-					{
-						if( robot.selectedObject > -1 )
-						{
-							actionButtons[i].text.text = "Stack";
-						}
-						else
-						{
-							actionButtons[i].text.text = "Drop";
-						}
-					}
-					else
-					{
-						actionButtons[i].text.text = "Pick Up";
-					}
-				}
-			}
+			SetActionButtons();
 
 			distancePairs.Clear();
 
