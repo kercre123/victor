@@ -67,6 +67,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 		reverseLikeACar = PlayerPrefs.GetInt("ReverseLikeACar", OptionsScreen.REVERSE_LIKE_A_CAR) == 1;
 		//Debug.Log(gameObject.name + " OnEnable reverseLikeACar("+reverseLikeACar+")");
+
 	}
 
 	void Update() {
@@ -109,7 +110,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		bool turnInPlaceOnlyMode = false;
 
 		float maxAngle = 90f;
-		
+
 		if(verticalStick != null) {
 
 			if(doubleTapTurnAround && verticalStick.DoubleTapped) {
@@ -125,11 +126,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(verticalStick.UpModeEngaged) {
 				driveForwardOnlyMode = true;
-				//maxAngle = verticalStick.MaxAngle;
+				maxAngle = verticalStick.MaxAngle;
 			}
 			else if(verticalStick.DownModeEngaged) {
 				driveReverseOnlyMode = true;
-				//maxAngle = verticalStick.MaxAngle;
+				maxAngle = verticalStick.MaxAngle;
 			}
 
 			inputs.y = verticalStick.Vertical;
@@ -339,6 +340,15 @@ public class RobotRelativeControls : MonoBehaviour {
 		debugOverride = true;
 		Debug.Log(gameObject.name + " NudgeRight");
 	}
+
+	public void ReverseButtonPressed(bool pressed) {
+		if(verticalStick == null)
+			return;
+
+		verticalStick.SetForceReverse(pressed);
+
+	}
+
 #endregion
 
 }
