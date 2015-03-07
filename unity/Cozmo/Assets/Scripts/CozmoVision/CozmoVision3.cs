@@ -99,7 +99,26 @@ public class CozmoVision3 : CozmoVision
 				}
 			}
 
-			SetActionButtons();
+			if( actionButtons.Length > 1 )
+			{
+				actionButtons[1].button.gameObject.SetActive( robot.selectedObject > -1 );
+
+				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+				{
+					actionButtons[0].button.gameObject.SetActive( true );
+					actionButtons[0].text.text = "Drop " + robot.carryingObjectID;
+
+					if( robot.selectedObject > -1 )
+					{
+						actionButtons[1].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+					}
+				}
+				else
+				{
+					actionButtons[0].button.gameObject.SetActive( false );
+					actionButtons[1].text.text = "Pick Up " + robot.selectedObject;
+				}
+			}
 		}
 	}
 }
