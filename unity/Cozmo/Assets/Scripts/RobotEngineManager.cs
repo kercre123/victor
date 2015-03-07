@@ -21,6 +21,10 @@ public class RobotEngineManager : MonoBehaviour {
 	private TextAsset configuration;
 	[SerializeField]
 	private Text batteryPercentage;
+	[SerializeField]
+	private AudioClip successSound;
+	[SerializeField]
+	private AudioClip failureSound;
 
 	public float defaultHeadAngle;
 
@@ -323,6 +327,15 @@ public class RobotEngineManager : MonoBehaviour {
 		current.selectedObject = -1;
 
 		SetHeadAngle( defaultHeadAngle );
+
+		if( message.success > 0 )
+		{
+			audio.PlayOneShot( successSound );
+		}
+		else
+		{
+			audio.PlayOneShot( failureSound );
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
@@ -332,6 +345,15 @@ public class RobotEngineManager : MonoBehaviour {
 		current.selectedObject = -1;
 		
 		SetHeadAngle( defaultHeadAngle );
+
+		if( message.success > 0 )
+		{
+			audio.PlayOneShot( successSound );
+		}
+		else
+		{
+			audio.PlayOneShot( failureSound );
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
