@@ -17,14 +17,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
-	[SerializeField]
-	private TextAsset configuration;
-	[SerializeField]
-	private Text batteryPercentage;
-	[SerializeField]
-	private AudioClip successSound;
-	[SerializeField]
-	private AudioClip failureSound;
+	[SerializeField] private TextAsset configuration;
+	[SerializeField] private Text batteryPercentage;
+	[SerializeField] private AudioClip successSound;
+	[SerializeField] private AudioClip failureSound;
+	[SerializeField] private Text successOrFailureText;
 
 	public float defaultHeadAngle;
 
@@ -320,6 +317,22 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
+	private void SuccessOrFailure( bool success )
+	{
+		if( success )
+		{
+			audio.PlayOneShot( successSound );
+			successOrFailureText.text = "SUCCESS";
+		}
+		else
+		{
+			audio.PlayOneShot( failureSound );
+			successOrFailureText.text = "FAILURE";
+		}
+		
+		StartCoroutine( TurnOffText() );
+	}
+
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
 	{
 		Debug.Log( "Pick And Place complete" );
@@ -328,14 +341,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 		SetHeadAngle( defaultHeadAngle );
 
-		if( message.success > 0 )
-		{
-			audio.PlayOneShot( successSound );
-		}
-		else
-		{
-			audio.PlayOneShot( failureSound );
-		}
+		SuccessOrFailure( message.success > 0 );
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
@@ -346,14 +352,21 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		SetHeadAngle( defaultHeadAngle );
 
-		if( message.success > 0 )
+		SuccessOrFailure( message.success > 0 );
+	}
+
+	protected IEnumerator TurnOffText()
+	{
+		successOrFailureText.gameObject.SetActive( true );
+		
+		float time = Time.time + 5f;
+		
+		while( time > Time.time )
 		{
-			audio.PlayOneShot( successSound );
+			yield return null;
 		}
-		else
-		{
-			audio.PlayOneShot( failureSound );
-		}
+		
+		successOrFailureText.gameObject.SetActive( false );
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
