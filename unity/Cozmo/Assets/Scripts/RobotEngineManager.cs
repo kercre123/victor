@@ -549,13 +549,31 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log( "Pick And Place Object" );
 
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = (int)current.selectedObject;
+		message.objectID = current.selectedObject;
 		message.usePreDockPose = 0;
 		message.useManualSpeed = 0;
 		
-		channel.Send( new U2G_Message{PickAndPlaceObject=message} );
+		channel.Send( new U2G_Message{PickAndPlaceObject = message} );
 
 		current.observedObjects.Clear();
+	}
+
+	public void SetRobotCarryingObject()
+	{
+		Debug.Log( "Set Robot Carrying Object" );
+		
+		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
+
+		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+		{
+			message.objectID = -1;
+		}
+		/*else
+		{
+			message.objectID = 0;
+		}*/
+		
+		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
 	}
 
 	public void RequestImage(int robotID)
@@ -568,13 +586,13 @@ public class RobotEngineManager : MonoBehaviour {
 		message.resolution = (byte)CameraResolution.CAMERA_RES_QVGA;
 		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
-		channel.Send (new U2G_Message{SetRobotImageSendMode=message});
+		channel.Send (new U2G_Message{SetRobotImageSendMode = message});
 		
 		U2G_ImageRequest message2 = new U2G_ImageRequest ();
 		message2.robotID = (byte)robotID;
 		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
-		channel.Send (new U2G_Message{ImageRequest=message2});
+		channel.Send (new U2G_Message{ImageRequest = message2});
 		
 		Debug.Log( "image request message sent" );
 	}

@@ -15,6 +15,7 @@ public class Robot
 	public Vector3 WorldPosition { get; private set; }
 
 	public float batteryPercent { get; private set; }
+	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
@@ -53,6 +54,7 @@ public class Robot
 		WorldPosition = new Vector3(message.pose_x, message.pose_y,	message.pose_z);
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
+		carryingObjectID = message.carryingObjectID;
 
 		if( status != lastStatus )
 		{
