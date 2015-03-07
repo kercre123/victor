@@ -644,7 +644,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Cozmo Vision
+  m_Text: Cozmo Vision 1
 --- !u!114 &11412370
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1220,7 +1220,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11469686}
   toggleTransition: 1
   graphic: {fileID: 11469690}
-  m_Group: {fileID: 11447310}
+  m_Group: {fileID: 0}
   onValueChanged:
     m_PersistentCalls:
       m_Calls:

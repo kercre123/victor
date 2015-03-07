@@ -57,6 +57,12 @@ public class Intro : MonoBehaviour {
 		}
 
 		Application.targetFrameRate = 100;
+		
+		Input.gyro.enabled = true;
+		Input.compass.enabled = true;
+		Input.multiTouchEnabled = true;
+		Input.location.Start();
+
 	}
 
 	private void OnDestroy() {

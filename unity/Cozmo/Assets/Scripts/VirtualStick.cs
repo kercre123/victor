@@ -49,6 +49,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
 	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
 	[SerializeField] float doubleTapDelayMax = 0f;
+	[SerializeField] bool forceUpOnly = false;
+	[SerializeField] bool forceDownOnly = false;
 #endregion
 
 #region PROPERTIES
@@ -505,7 +507,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					wasCounterClockwise = false;
 				}
 
-				if(angle > verticalModeMaxAngleAllowance) {
+				if(angle > verticalModeMaxAngleAllowance || (wasClockwise && delta.x <= 0f) || (wasCounterClockwise && delta.x >= 0f)) {
 					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
 					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * Vector2.up * delta.magnitude;
 				}
@@ -528,7 +530,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					wasCounterClockwise = false;
 				}
 
-				if(angle > verticalModeMaxAngleAllowance) {
+				if(angle > verticalModeMaxAngleAllowance || (wasClockwise && delta.x >= 0f) || (wasCounterClockwise && delta.x <= 0f)) {
 					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
 					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * -Vector2.up * delta.magnitude;
 				}
@@ -537,8 +539,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				delta.y = Mathf.Min(0f, delta.y);
 			}
 		}
-		
-		if(verticalAxisSnapAngle > 0f) {
+
+		//only vert snap if not in mode or pointed in mode direction
+		if(verticalAxisSnapAngle > 0f && ( (!UpModeEngaged || delta.y > 0f) && (!DownModeEngaged || delta.y < 0f))) {
 			float angleFromUp = Vector2.Angle(Vector2.up, delta.normalized);
 			
 			if(angleFromUp <= verticalAxisSnapAngle) {
@@ -565,6 +568,15 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 	
 	void CheckForModeEngage() {
+		if(forceUpOnly) {
+			UpModeEngaged = true;
+			return;
+		}
+		if(forceDownOnly) {
+			DownModeEngaged = true;
+			return;
+		}
+
 		if(verticalModeEntryAngle <= 0f && horizontalModeEntryAngle <= 0f)
 			return;
 		
@@ -693,6 +705,12 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		DownModeEngaged = false;
 		SideModeEngaged = false;
 	}
+
+	public void SetForceReverse(bool reverse) {
+		forceDownOnly = reverse;
+		forceUpOnly = !reverse;
+	}
+
 #endregion
 
 }

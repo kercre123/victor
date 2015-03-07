@@ -17,10 +17,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
-	[SerializeField]
-	private TextAsset configuration;
-	[SerializeField]
-	private Text batteryPercentage;
+	[SerializeField] private TextAsset configuration;
+	[SerializeField] private Text batteryPercentage;
+	[SerializeField] private AudioClip successSound;
+	[SerializeField] private AudioClip failureSound;
+	[SerializeField] private Text successOrFailureText;
 
 	public float defaultHeadAngle;
 
@@ -316,6 +317,22 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
+	private void SuccessOrFailure( bool success )
+	{
+		if( success )
+		{
+			audio.PlayOneShot( successSound );
+			successOrFailureText.text = "SUCCESS";
+		}
+		else
+		{
+			audio.PlayOneShot( failureSound );
+			successOrFailureText.text = "FAILURE";
+		}
+		
+		StartCoroutine( TurnOffText() );
+	}
+
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
 	{
 		Debug.Log( "Pick And Place complete" );
@@ -323,6 +340,8 @@ public class RobotEngineManager : MonoBehaviour {
 		current.selectedObject = -1;
 
 		SetHeadAngle( defaultHeadAngle );
+
+		SuccessOrFailure( message.success > 0 );
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
@@ -332,6 +351,22 @@ public class RobotEngineManager : MonoBehaviour {
 		current.selectedObject = -1;
 		
 		SetHeadAngle( defaultHeadAngle );
+
+		SuccessOrFailure( message.success > 0 );
+	}
+
+	protected IEnumerator TurnOffText()
+	{
+		successOrFailureText.gameObject.SetActive( true );
+		
+		float time = Time.time + 5f;
+		
+		while( time > Time.time )
+		{
+			yield return null;
+		}
+		
+		successOrFailureText.gameObject.SetActive( false );
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -549,13 +584,31 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log( "Pick And Place Object" );
 
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = (int)current.selectedObject;
+		message.objectID = current.selectedObject;
 		message.usePreDockPose = 0;
 		message.useManualSpeed = 0;
 		
-		channel.Send( new U2G_Message{PickAndPlaceObject=message} );
+		channel.Send( new U2G_Message{PickAndPlaceObject = message} );
 
 		current.observedObjects.Clear();
+	}
+
+	public void SetRobotCarryingObject()
+	{
+		Debug.Log( "Set Robot Carrying Object" );
+		
+		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
+
+		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+		{
+			message.objectID = -1;
+		}
+		/*else
+		{
+			message.objectID = 0;
+		}*/
+		
+		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
 	}
 
 	public void RequestImage(int robotID)
@@ -568,13 +621,13 @@ public class RobotEngineManager : MonoBehaviour {
 		message.resolution = (byte)CameraResolution.CAMERA_RES_QVGA;
 		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
-		channel.Send (new U2G_Message{SetRobotImageSendMode=message});
+		channel.Send (new U2G_Message{SetRobotImageSendMode = message});
 		
 		U2G_ImageRequest message2 = new U2G_ImageRequest ();
 		message2.robotID = (byte)robotID;
 		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
-		channel.Send (new U2G_Message{ImageRequest=message2});
+		channel.Send (new U2G_Message{ImageRequest = message2});
 		
 		Debug.Log( "image request message sent" );
 	}
