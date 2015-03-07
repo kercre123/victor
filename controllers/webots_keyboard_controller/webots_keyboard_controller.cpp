@@ -212,7 +212,7 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void ProcessMessageObjectVisionMarker(G2U_RobotObservedObject const& msg)
+      void HandleRobotObservedObject(G2U_RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
@@ -337,7 +337,7 @@ namespace Anki {
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
             case G2U_Message::Type::RobotObservedObject:
-              ProcessMessageObjectVisionMarker(message.Get_RobotObservedObject());
+              HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
             case G2U_Message::Type::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
