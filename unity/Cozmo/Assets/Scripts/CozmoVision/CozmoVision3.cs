@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,15 +42,15 @@ public class CozmoVision3 : CozmoVision
 		{
 			robot = RobotEngineManager.instance.current;
 
-			if( observedObjectsCount > 0 && robot.observedObjects[0].width > reticle.rectTransform.rect.width && 
-			    robot.observedObjects[0].height > reticle.rectTransform.rect.height )
+			if( observedObjectsCount > 0 && robot.observedObjects[0].VizRect.width > reticle.rectTransform.rect.width && 
+			   robot.observedObjects[0].VizRect.height > reticle.rectTransform.rect.height )
 			{
 				box.image.gameObject.SetActive( true );
 
 				ObservedObject observedObject = robot.observedObjects[0];
 
-				box.image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
-				box.image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
+				box.image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
+				box.image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
 
 				box.text.text = "Select " + observedObject.ID;
 				robot.selectedObject = observedObject.ID;

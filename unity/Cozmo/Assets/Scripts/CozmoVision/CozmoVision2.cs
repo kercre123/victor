@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -46,8 +46,8 @@ public class CozmoVision2 : CozmoVision
 				{
 					ObservedObject observedObject = robot.observedObjects[i];
 
-					selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
-					selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
+					selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
+					selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
 
 					selectionButtons[i].text.text = "Select " + observedObject.ID;
 					selectionButtons[i].ID = observedObject.ID;
