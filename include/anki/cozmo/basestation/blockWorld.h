@@ -241,11 +241,10 @@ namespace Anki
       void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
                             std::list<Vision::ObservedMarker*>& lst);
       
-
       void ClearObjectHelper(Vision::ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
-
+      void UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject);
       
       //
       // Member Variables

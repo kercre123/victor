@@ -188,8 +188,8 @@ namespace Anki {
       // Object Docking / Carrying
       //
 
-      const ObjectID              GetDockObject()     const {return _dockObjectID;}
-      const ObjectID              GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID&             GetDockObject()     const {return _dockObjectID;}
+      const ObjectID&             GetCarryingObject() const {return _carryingObjectID;}
       const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
       bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -287,6 +287,13 @@ namespace Anki {
       Result MoveHeadToAngle(const f32 angle_rad,
                              const f32 max_speed_rad_per_sec,
                              const f32 accel_rad_per_sec2);
+      
+      // If robot observes the given object ID, it will adjust its head angle to look
+      // at last-observed marker. Fails if objectID doesn't exist.
+      Result EnableTrackHeadToObject(const u32 objectID);
+      Result DisableTrackHeadToObject();
+      
+      const ObjectID& GetTrackHeadToObject() const { return _trackHeadToObjectID; }
       
       Result DriveWheels(const f32 lwheel_speed_mmps,
                          const f32 rwheel_speed_mmps);
@@ -518,6 +525,9 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryingMarker;
+      
+      // Object to keep head tracked to this object whenever it is observed
+      ObjectID                    _trackHeadToObjectID;
       
       /*
       // Plan a path to the pre-ascent/descent pose (depending on current

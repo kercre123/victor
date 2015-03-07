@@ -940,7 +940,28 @@ namespace Anki {
     {
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
     }
-    
+      
+    Result Robot::EnableTrackHeadToObject(const u32 objectID)
+    {
+      _trackHeadToObjectID = objectID;
+      
+      if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
+                          "Cannot track head to object ID=%d, which does not exist.\n",
+                          objectID);
+        _trackHeadToObjectID.UnSet();
+        return RESULT_FAIL;
+      }
+    }
+      
+    Result Robot::DisableTrackHeadToObject()
+    {
+      _trackHeadToObjectID.UnSet();
+      return RESULT_OK;
+    }
+      
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
     {

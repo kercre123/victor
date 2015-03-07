@@ -377,6 +377,11 @@ namespace Anki
                                                              obsObjTrans.x(),
                                                              obsObjTrans.y(),
                                                              obsObjTrans.z());
+        
+        if(_robot->GetTrackHeadToObject().IsSet() && obsID == _robot->GetTrackHeadToObject())
+        {
+          UpdateTrackHeadToObject(observedObject);
+        }
 
         _didObjectsChange = true;
       } // for each object seen
@@ -384,6 +389,57 @@ namespace Anki
       
     } // AddAndUpdateObjects()
     
+    void BlockWorld::UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject)
+    {
+      assert(observedObject != nullptr);
+      
+      // Find the observed marker closest to the robot and use that as the one we
+      // track to
+      std::vector<const Vision::KnownMarker*> observedMarkers;
+      observedObject->GetObservedMarkers(observedMarkers, observedObject->GetLastObservedTime());
+      
+      if(observedMarkers.empty()) {
+        PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                          "No markers on observed object %d marked as observed since time %d, "
+                          "expecting at least one.\n",
+                          observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
+      } else {
+        const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+        
+        const Vision::KnownMarker* closestMarker = nullptr;
+        f32 minDistSq = std::numeric_limits<f32>::max();
+        f32 zDist = 0.f;
+        
+        for(auto marker : observedMarkers) {
+          Pose3d markerPose;
+          if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
+            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                              "Could not get pose of observed marker w.r.t. world for head tracking.\n");
+          } else {
+            
+            const f32 xDist = markerPose.GetTranslation().x() - robotTrans.x();
+            const f32 yDist = markerPose.GetTranslation().y() - robotTrans.y();
+            
+            const f32 currentDistSq = xDist*xDist + yDist*yDist;
+            if(currentDistSq < minDistSq) {
+              closestMarker = marker;
+              minDistSq = currentDistSq;
+              
+              // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
+              zDist = markerPose.GetTranslation().z() - robotTrans.z();
+            }
+          }
+        } // For all markers
+        
+        if(closestMarker == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects", "No closest marker found!\n");
+        } else {
+          const f32 headAngle = atanf(-zDist/(sqrtf(minDistSq + 1e-6f)));
+          _robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
+        }
+      } // if/else observedMarkers.empty()
+      
+    } // UpdateTrackHeadToObject()
     
     void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
@@ -1286,6 +1342,15 @@ namespace Anki
                            object->GetType().GetName().c_str(),
                            object->GetID().GetValue());
           _selectedObject.UnSet();
+        }
+        
+        if(_robot->GetTrackHeadToObject() == object->GetID()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject"
+                           "Clearing %s object %d which robot %d is currently tracking its head to.\n",
+                           object->GetType().GetName().c_str(),
+                           object->GetID().GetValue(),
+                           _robot->GetID());
+          _robot->DisableTrackHeadToObject();
         }
         
         // NOTE: The object should erase its own visualization upon destruction
