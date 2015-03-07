@@ -130,7 +130,9 @@ int UdpServer::Send(const char* data, int size)
   for (client_list_it it = client_list.begin(); it != client_list.end(); it++ ) {
     DEBUG_UDP_SERVER("Sending to client ");
     bytes_sent = sendto(socketfd, data, size, 0, (struct sockaddr *)&(*it), sizeof(*it));
-    assert(bytes_sent == size);
+    if(bytes_sent != size) {
+      std::cerr << "*** ERROR: UdpServer reported sending " << bytes_sent << " bytes instead of " << size << "! ***\n";
+    }
   }
 
   if(bytes_sent > std::numeric_limits<int>::max()) {
