@@ -20,6 +20,7 @@ public class CozmoVision1 : CozmoVision
 		public int ID;
 		public SelectionButton1 button { get; set; }
 
+		private Vector3[] corners;
 		public Vector3 position
 		{
 			get
@@ -27,14 +28,18 @@ public class CozmoVision1 : CozmoVision
 				Vector3 center = Vector3.zero;
 				center.z = image.transform.position.z;
 				
-				Vector3[] corners = new Vector3[4];
+				if( corners == null )
+				{
+					corners = new Vector3[4];
+				}
+				
 				image.rectTransform.GetWorldCorners( corners );
-
-				if( corners == null || corners.Length == 0 )
+				
+				if( corners.Length == 0 )
 				{
 					return center;
 				}
-
+				
 				center = ( corners[0] + corners[2] ) * 0.5f;
 				
 				return center;

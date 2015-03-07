@@ -57,16 +57,16 @@ public class CozmoVision : MonoBehaviour
 				{
 					if( robot.selectedObject > -1 )
 					{
-						actionButtons[i].text.text = "Stack";
+						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
 					}
 					else
 					{
-						actionButtons[i].text.text = "Drop";
+						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
 					}
 				}
 				else
 				{
-					actionButtons[i].text.text = "Pick Up";
+					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
 				}
 			}
 		}
@@ -91,7 +91,15 @@ public class CozmoVision : MonoBehaviour
 			button.interactable = false;
 		}
 	}
-	
+
+	public void ForceDropBox()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.SetRobotCarryingObject();
+		}
+	}
+
 	public void Action()
 	{
 		Debug.Log( "Action" );
@@ -139,6 +147,7 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.RobotImage += RobotImage;
 		}
 
+		RequestImage();
 		ResizeToScreen();
 	}
 
