@@ -65,6 +65,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(MoveLift)
         REGISTER_CALLBACK(SetLiftHeight)
         REGISTER_CALLBACK(SetHeadAngle)
+        REGISTER_CALLBACK(TrackHeadToObject)
         REGISTER_CALLBACK(StopAllMotors)
         REGISTER_CALLBACK(ImageRequest)
         REGISTER_CALLBACK(SetRobotImageSendMode)
@@ -75,10 +76,10 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(PlaceObjectOnGround)
         REGISTER_CALLBACK(PlaceObjectOnGroundHere)
         REGISTER_CALLBACK(ExecuteTestPlan)
+        REGISTER_CALLBACK(SetRobotCarryingObject)
         REGISTER_CALLBACK(SelectNextObject)
         REGISTER_CALLBACK(PickAndPlaceObject)
         REGISTER_CALLBACK(TraverseObject)
-        REGISTER_CALLBACK(SetRobotCarryingObject)
         REGISTER_CALLBACK(ClearAllBlocks)
         REGISTER_CALLBACK(ExecuteBehavior)
         REGISTER_CALLBACK(SetBehaviorState)
@@ -265,9 +266,20 @@ case U2G_Message::Type::__MSG_TYPE__: \
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
+      robot->DisableTrackHeadToObject();
       robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
     }
   }
+  
+  void CozmoGameImpl::ProcessMessage(U2G_TrackHeadToObject const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->EnableTrackHeadToObject(msg.objectID);
+    }
+  }
+  
   
   void CozmoGameImpl::ProcessMessage(U2G_StopAllMotors const& msg)
   {

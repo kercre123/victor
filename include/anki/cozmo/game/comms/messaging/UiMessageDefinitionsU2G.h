@@ -971,6 +971,88 @@ struct U2G_SetHeadAngle
 	}
 };
 
+struct U2G_TrackHeadToObject
+{
+	uint32_t objectID;
+	uint8_t robotID;
+
+	/**** Constructors ****/
+	U2G_TrackHeadToObject() = default;
+	U2G_TrackHeadToObject(const U2G_TrackHeadToObject& other) = default;
+	U2G_TrackHeadToObject(U2G_TrackHeadToObject& other) = default;
+	U2G_TrackHeadToObject(U2G_TrackHeadToObject&& other) noexcept = default;
+	U2G_TrackHeadToObject& operator=(const U2G_TrackHeadToObject& other) = default;
+	U2G_TrackHeadToObject& operator=(U2G_TrackHeadToObject&& other) noexcept = default;
+
+	explicit U2G_TrackHeadToObject(uint32_t objectID
+		,uint8_t robotID)
+	:objectID(objectID)
+	,robotID(robotID)
+	{}
+	explicit U2G_TrackHeadToObject(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit U2G_TrackHeadToObject(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->objectID);
+		buffer.Write(this->robotID);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->objectID);
+		buffer.Read(this->robotID);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//objectID
+		result += 4; // = uint_32
+		//robotID
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const U2G_TrackHeadToObject& other) const
+	{
+		if (objectID != other.objectID
+		|| robotID != other.robotID) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const U2G_TrackHeadToObject& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 struct U2G_StopAllMotors
 {
 
@@ -3670,40 +3752,41 @@ public:
 		MoveLift,	// 9
 		SetLiftHeight,	// 10
 		SetHeadAngle,	// 11
-		StopAllMotors,	// 12
-		ImageRequest,	// 13
-		SetRobotImageSendMode,	// 14
-		SaveImages,	// 15
-		EnableDisplay,	// 16
-		SetHeadlights,	// 17
-		GotoPose,	// 18
-		PlaceObjectOnGround,	// 19
-		PlaceObjectOnGroundHere,	// 20
-		ExecuteTestPlan,	// 21
-		SelectNextObject,	// 22
-		PickAndPlaceObject,	// 23
-		TraverseObject,	// 24
-		SetRobotCarryingObject,	// 25
-		ClearAllBlocks,	// 26
-		ExecuteBehavior,	// 27
-		SetBehaviorState,	// 28
-		AbortPath,	// 29
-		AbortAll,	// 30
-		DrawPoseMarker,	// 31
-		ErasePoseMarker,	// 32
-		SetHeadControllerGains,	// 33
-		SetLiftControllerGains,	// 34
-		SelectNextSoundScheme,	// 35
-		StartTestMode,	// 36
-		IMURequest,	// 37
-		PlayAnimation,	// 38
-		ReadAnimationFile,	// 39
-		StartFaceTracking,	// 40
-		StopFaceTracking,	// 41
-		StartLookingForMarkers,	// 42
-		StopLookingForMarkers,	// 43
-		SetVisionSystemParams,	// 44
-		SetFaceDetectParams,	// 45
+		TrackHeadToObject,	// 12
+		StopAllMotors,	// 13
+		ImageRequest,	// 14
+		SetRobotImageSendMode,	// 15
+		SaveImages,	// 16
+		EnableDisplay,	// 17
+		SetHeadlights,	// 18
+		GotoPose,	// 19
+		PlaceObjectOnGround,	// 20
+		PlaceObjectOnGroundHere,	// 21
+		ExecuteTestPlan,	// 22
+		SelectNextObject,	// 23
+		PickAndPlaceObject,	// 24
+		TraverseObject,	// 25
+		SetRobotCarryingObject,	// 26
+		ClearAllBlocks,	// 27
+		ExecuteBehavior,	// 28
+		SetBehaviorState,	// 29
+		AbortPath,	// 30
+		AbortAll,	// 31
+		DrawPoseMarker,	// 32
+		ErasePoseMarker,	// 33
+		SetHeadControllerGains,	// 34
+		SetLiftControllerGains,	// 35
+		SelectNextSoundScheme,	// 36
+		StartTestMode,	// 37
+		IMURequest,	// 38
+		PlayAnimation,	// 39
+		ReadAnimationFile,	// 40
+		StartFaceTracking,	// 41
+		StopFaceTracking,	// 42
+		StartLookingForMarkers,	// 43
+		StopLookingForMarkers,	// 44
+		SetVisionSystemParams,	// 45
+		SetFaceDetectParams,	// 46
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -3732,6 +3815,8 @@ public:
 			return "SetLiftHeight";
 		case Type::SetHeadAngle:
 			return "SetHeadAngle";
+		case Type::TrackHeadToObject:
+			return "TrackHeadToObject";
 		case Type::StopAllMotors:
 			return "StopAllMotors";
 		case Type::ImageRequest:
@@ -4151,6 +4236,35 @@ public:
 			ClearCurrent();
 			new(&_SetHeadAngle) U2G_SetHeadAngle{std::move(new_SetHeadAngle)};
 			_type = Type::SetHeadAngle;
+		}
+	}
+
+	/** TrackHeadToObject **/
+	const U2G_TrackHeadToObject& Get_TrackHeadToObject() const
+	{
+		assert(_type == Type::TrackHeadToObject);
+		return _TrackHeadToObject;
+	}
+	void Set_TrackHeadToObject(const U2G_TrackHeadToObject& new_TrackHeadToObject)
+	{
+		if(this->_type == Type::TrackHeadToObject) {
+			_TrackHeadToObject = new_TrackHeadToObject;
+		}
+		else {
+			ClearCurrent();
+			new(&_TrackHeadToObject) U2G_TrackHeadToObject{new_TrackHeadToObject};
+			_type = Type::TrackHeadToObject;
+		}
+	}
+	void Set_TrackHeadToObject(U2G_TrackHeadToObject&&  new_TrackHeadToObject)
+	{
+		if(this->_type == Type::TrackHeadToObject) {
+			_TrackHeadToObject = std::move(new_TrackHeadToObject);
+		}
+		else {
+			ClearCurrent();
+			new(&_TrackHeadToObject) U2G_TrackHeadToObject{std::move(new_TrackHeadToObject)};
+			_type = Type::TrackHeadToObject;
 		}
 	}
 
@@ -5251,6 +5365,14 @@ public:
 			this->_SetHeadAngle.Unpack(buffer);
 			}
 			break;
+		case Type::TrackHeadToObject:
+			if (newType != oldType) {
+				new(&(this->_TrackHeadToObject)) U2G_TrackHeadToObject(buffer);
+			}
+			else {
+			this->_TrackHeadToObject.Unpack(buffer);
+			}
+			break;
 		case Type::StopAllMotors:
 			if (newType != oldType) {
 				new(&(this->_StopAllMotors)) U2G_StopAllMotors(buffer);
@@ -5577,6 +5699,9 @@ public:
 		case Type::SetHeadAngle:
 			this->_SetHeadAngle.Pack(buffer);
 			break;
+		case Type::TrackHeadToObject:
+			this->_TrackHeadToObject.Pack(buffer);
+			break;
 		case Type::StopAllMotors:
 			this->_StopAllMotors.Pack(buffer);
 			break;
@@ -5727,6 +5852,9 @@ public:
 		case Type::SetHeadAngle:
 			result += _SetHeadAngle.Size();
 			break;
+		case Type::TrackHeadToObject:
+			result += _TrackHeadToObject.Size();
+			break;
 		case Type::StopAllMotors:
 			result += _StopAllMotors.Size();
 			break;
@@ -5874,6 +6002,9 @@ private:
 		case Type::SetHeadAngle:
 			_SetHeadAngle.~U2G_SetHeadAngle();
 			break;
+		case Type::TrackHeadToObject:
+			_TrackHeadToObject.~U2G_TrackHeadToObject();
+			break;
 		case Type::StopAllMotors:
 			_StopAllMotors.~U2G_StopAllMotors();
 			break;
@@ -5996,6 +6127,7 @@ private:
 		U2G_MoveLift _MoveLift;
 		U2G_SetLiftHeight _SetLiftHeight;
 		U2G_SetHeadAngle _SetHeadAngle;
+		U2G_TrackHeadToObject _TrackHeadToObject;
 		U2G_StopAllMotors _StopAllMotors;
 		U2G_ImageRequest _ImageRequest;
 		U2G_SetRobotImageSendMode _SetRobotImageSendMode;

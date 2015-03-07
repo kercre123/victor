@@ -72,6 +72,14 @@ message U2G_SetHeadAngle {
     float_32 accel_rad_per_sec2
 }
 
+// TrackHeadToObject
+//   Robot will automatically adjust head angle to look at this object ID, if it
+//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
+message U2G_TrackHeadToObject {
+    uint_32 objectID,
+    uint_8 robotID
+}
+
 // StopAllMotors
 message U2G_StopAllMotors {
 }
@@ -286,6 +294,7 @@ union U2G_Message {
     U2G_MoveLift MoveLift,
     U2G_SetLiftHeight SetLiftHeight,
     U2G_SetHeadAngle SetHeadAngle,
+    U2G_TrackHeadToObject TrackHeadToObject,
     U2G_StopAllMotors StopAllMotors,
     U2G_ImageRequest ImageRequest,
     U2G_SetRobotImageSendMode SetRobotImageSendMode,
