@@ -13,6 +13,7 @@ public class Robot
 	public float liftHeight_mm { get; private set; }
 
 	public Vector3 WorldPosition { get; private set; }
+	public Quaternion Rotation { get; private set; }
 
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
@@ -55,6 +56,9 @@ public class Robot
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
+
+		//stubbing in rot until we have it sent over
+		Rotation = Quaternion.identity;
 
 		if( status != lastStatus )
 		{

@@ -11,6 +11,7 @@ public class ObservedObject
 	public int ID { get; private set; }
 	public Rect VizRect { get; private set; }
 	public Vector3 WorldPosition { get; private set; }
+	public Quaternion Rotation { get; private set; }
 
 	public void UpdateInfo( G2U_RobotObservedObject message )
 	{
@@ -22,5 +23,8 @@ public class ObservedObject
 
 		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
 		WorldPosition = new Vector3(message.world_x, message.world_y, message.world_z);
+
+		//stubbing in rot until we have it sent over
+		Rotation = Quaternion.identity;
 	}
 }
