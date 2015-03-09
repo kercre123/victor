@@ -8,6 +8,7 @@ public class SlalomController : GameController {
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
 	[SerializeField] bool firstPassClockwise = true;
 	[SerializeField] bool firstPassEitherDirection = true;
+	[SerializeField] bool trackWithCornerTriggers = false;
 
 	bool currentPassClockwise = true;
 
@@ -76,10 +77,19 @@ public class SlalomController : GameController {
 		}
 
 		//design query: how to order our obstacles?  by distance from coz at game start?
-		obstacles.Sort(delegate(ObservedObject obj1, ObservedObject obj2){
-			return (obj1.WorldPosition - robot.WorldPosition).sqrMagnitude.CompareTo
-				((obj2.WorldPosition - robot.WorldPosition).sqrMagnitude);   
-		});
+		obstacles.Sort( 
+			delegate(ObservedObject obj1, ObservedObject obj2) {
+				float d1 = (obj1.WorldPosition - robot.WorldPosition).sqrMagnitude;
+				float d2 = (obj2.WorldPosition - robot.WorldPosition).sqrMagnitude;
+
+				return d1.CompareTo(d2);   
+			}
+		);
+
+		if(trackWithCornerTriggers) {
+			//activate corners on first cube
+			//pulse next corner
+		}
 
 		lastRobotPos = robot.WorldPosition;
 		currentObjPos = currentObstacle.WorldPosition;
@@ -109,14 +119,17 @@ public class SlalomController : GameController {
 		//use lastPassClockwise to determine if we are orbiting in the right dir
 		// not sure how the orbiting behavior works in classic slalom runs (ie, zig zags instead of the figure eights of our default case)
 
-		if(multiObstacle) {
+		if(trackWithCornerTriggers) {
+			//if coz is crossed over active corner angle since last frame, NextCorner();
+		}
+		else if(multiObstacle) {
 			//only check this if our current obstacle cube has three corners lit already?
 			if(MathUtil.AreLineSegmentsCrossing(cozPos, lastRobotPos, currentObjPos, nextObjPos)) {
 				//Vector2 delta = cozPos - lastRobotPos;
 				Vector2 cozToCurrent = currentObjPos - cozPos;
 				Vector2 tape = nextObjPos - currentObjPos;
 				if((firstPassEitherDirection && !passedFirstObstacle) || (Vector2.Dot(cozToCurrent, tape.normalized) < 0f ^ currentPassClockwise)) {
-					TapeCrossed();
+					NextObstacle();
 				}
 				else {
 					//design query: crossed between obstacles in the wrong direction?
@@ -149,7 +162,16 @@ public class SlalomController : GameController {
 		return false;
 	}
 
-	void TapeCrossed() {
+	void NextCorner() {
+
+		//activate corner
+		//if this is last active corner of cube, NextObstacle()
+		//pulse next target corner
+
+	}
+
+
+	void NextObstacle() {
 
 		passedFirstObstacle = true;
 
