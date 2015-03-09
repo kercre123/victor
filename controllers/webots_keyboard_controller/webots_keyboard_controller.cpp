@@ -445,58 +445,6 @@ namespace Anki {
       //Check the keyboard keys and issue robot commands
       void ProcessKeystroke()
       {
-        
-        // these are the ascii codes for the capital letter
-        //Numbers, spacebar etc. work, letters are different, why?
-        //a, z, s, x, Space
-        const s32 CKEY_CANCEL_PATH = (s32)'Q';
-        const s32 CKEY_LIFT_UP     = (s32)'A';
-        const s32 CKEY_LIFT_DOWN   = (s32)'Z';  // z
-
-        const s32 CKEY_HEAD_UP     = (s32)'S';
-        const s32 CKEY_HEAD_DOWN   = (s32)'X';
-        const s32 CKEY_UNLOCK      = (s32)' ';
-        const s32 CKEY_REQUEST_IMG = (s32)'U';
-        const s32 CKEY_SET_ROBOT_SEND_IMAGE_MODE = (s32)'I';
-        const s32 CKEY_DISPLAY_TOGGLE = (s32)'D';
-        const s32 CKEY_HEADLIGHT   = (s32)'H';
-        const s32 CKEY_GOTO_POSE   = (s32)'G';
-        const s32 CKEY_CLEAR_BLOCKS = (s32)'C';
-
-        const s32 CKEY_CYCLE_BLOCK_SELECT   = (s32)'.';
-        //const s32 CKEY_FWDSLASH    = 47; // '/'
-        //const s32 CKEY_BACKSLASH   = 92 // '\'
-
-        const s32 CKEY_PICK_AND_PLACE  = (s32)'P';
-        const s32 CKEY_USE_RAMP        = (s32)'R';
-        const s32 CKEY_QUESTION_MARK   = (s32)'/';
-        
-        const s32 CKEY_START_DICE_DEMO = (s32)'J';
-        const s32 CKEY_SET_GAINS       = (s32)'K';
-        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = (s32)'V';
-        
-        const s32 CKEY_TEST_PLAN          = (s32)'T';
-        const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
-        const s32 CKEY_EXPORT_IMAGES      = (s32)'E';
-        const s32 CKEY_IMU_REQUEST        = (s32)'O';
-        
-        const s32 CKEY_ANIMATION_NOD            = (s32)'!';
-        const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
-        const s32 CKEY_ANIMATION_BLINK          = (s32)'#';
-        const s32 CKEY_ANIMATION_TOGGLE         = (s32) '~';
-        const s32 CKEY_ANIMATION_SEND_FILE      = 197; // ALT+A
-        
-        const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
-        
-        // For CREEP test
-        const s32 CKEY_BEHAVIOR_EXCITED   = (s32)'7';
-        const s32 CKEY_BEHAVIOR_FLEE      = (s32)'8';
-        const s32 CKEY_BEHAVIOR_SCAN      = (s32)'9';
-        const s32 CKEY_BEHAVIOR_DANCE     = (s32)'0';
-        const s32 CKEY_BEHAVIOR_HELPME    = (s32)'-';
-        const s32 CKEY_BEHAVIOR_WHAT_NEXT = (s32)'=';
-        const s32 CKEY_BEHAVIOR_IDLE      = (s32)'&';
-        
         bool movingHead   = false;
         bool movingLift   = false;
         bool movingWheels = false;
@@ -659,21 +607,21 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_HEAD_UP: //s-key: move head UP
+              case (s32)'S':
               {
                 commandedHeadSpeed += headSpeed;
                 movingHead = true;
                 break;
               }
                 
-              case CKEY_HEAD_DOWN: //x-key: move head DOWN
+              case (s32)'X':
               {
                 commandedHeadSpeed -= headSpeed;
                 movingHead = true;
                 break;
               }
                 
-              case CKEY_LIFT_UP: //a-key: move lift up
+              case (s32)'A':
               {
                 if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
                   // Re-read animations and send them to physical robot
@@ -685,7 +633,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_LIFT_DOWN: //z-key: move lift down
+              case (s32)'Z':
               {
                 commandedLiftSpeed -= liftSpeed;
                 movingLift = true;
@@ -728,13 +676,13 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_UNLOCK: // Stop all motors
+              case (s32)' ': // (space bar)
               {
                 SendStopAllMotors();
                 break;
               }
                 
-              case CKEY_SET_ROBOT_SEND_IMAGE_MODE:
+              case (s32)'I':
               {
                 //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
                 // CTRL/CMD+I - Tell physical robot to send a single image
@@ -775,7 +723,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_REQUEST_IMG:
+              case (s32)'U':
               {
                 // TODO: How to choose which robot
                 const RobotID_t robotID = 1;
@@ -803,7 +751,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_EXPORT_IMAGES:
+              case (s32)'E':
               {
                 // Toggle saving of images to pgm
                 VizSaveImageMode_t mode = VIZ_SAVE_ONE_SHOT;
@@ -826,7 +774,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_DISPLAY_TOGGLE:
+              case (s32)'D':
               {
                 static bool showObjects = false;
                 SendEnableDisplay(showObjects);
@@ -834,14 +782,15 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_HEADLIGHT:
+              case (s32)'H':
               {
                 static bool headlightsOn = false;
                 headlightsOn = !headlightsOn;
                 SendSetHeadlights(headlightsOn ? 128 : 0);
                 break;
               }
-              case CKEY_GOTO_POSE:
+                
+              case (s32)'G':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   poseMarkerMode_ = !poseMarkerMode_;
@@ -867,18 +816,19 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_TEST_PLAN:
+              case (s32)'T':
               {
                 SendExecuteTestPlan();
                 break;
               }
                 
-              case CKEY_CYCLE_BLOCK_SELECT:
+              case (s32)'.':
               {
                 SendSelectNextObject();
                 break;
               }
-              case CKEY_CLEAR_BLOCKS:
+                
+              case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   if(BehaviorManager::CREEP == behaviorMode_) {
@@ -894,7 +844,8 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_PICK_AND_PLACE:
+                
+              case (s32)'P':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
@@ -902,7 +853,8 @@ namespace Anki {
                 SendPickAndPlaceSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
-              case CKEY_USE_RAMP:
+                
+              case (s32)'R':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
@@ -910,7 +862,8 @@ namespace Anki {
                 SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
-              case CKEY_START_DICE_DEMO:
+                
+              case (s32)'J':
               {
                 if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
                   SendExecuteBehavior(BehaviorManager::None);
@@ -919,7 +872,8 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_CANCEL_PATH:
+                
+              case (s32)'Q':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
@@ -931,7 +885,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_SET_GAINS:
+              case (s32)'K':
               {
                 if (root_) {
                   // Head and lift gains
@@ -951,7 +905,8 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_SET_VISIONSYSTEM_PARAMS:
+                
+              case (s32)'V':
               {
                 SendVisionSystemParams();
                 
@@ -959,32 +914,25 @@ namespace Anki {
                 
                 break;
               }
-              case CKEY_CYCLE_SOUND_SCHEME:
+                
+              case (s32)'M':
               {
                 SendSelectNextSoundScheme();
                 break;
               }
-              case CKEY_IMU_REQUEST:
+                
+              case (s32)'O':
               {
                 SendIMURequest(2000);
                 break;
               }
-                
-              // Animations
-              /*case CKEY_ANIMATION_SEND_FILE:
-              {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
-                  // Re-read animations and send them to physical robot
-                  SendReadAnimationFile();
-                }
-                break;
-              }*/
-              case CKEY_ANIMATION_BACK_AND_FORTH:
+
+              case (s32)'@':
               {
                 SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
                 break;
               }
-              case CKEY_ANIMATION_BLINK:
+              case (s32)'#':
               {
                 SendAnimation("ANIM_BLINK", 0);
                 break;
@@ -994,12 +942,12 @@ namespace Anki {
                 SendAnimation("ANIM_LIFT_NOD", 1);
                 break;
               }
-              case (s32) '%':
+              case (s32)'%':
               {
                 SendAnimation("ANIM_ALERT", 1);
                 break;
               }
-              case CKEY_ANIMATION_TOGGLE:
+              case (s32)'~':
               {
                 //const s32 NUM_ANIM_TESTS = 4;
                 //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
@@ -1020,54 +968,54 @@ namespace Anki {
               //
               // CREEP Behavior States:
               //
-              case CKEY_BEHAVIOR_DANCE:
+              case (s32)'0':
               {
                 SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
                 break;
               }
-              case CKEY_BEHAVIOR_EXCITED:
+              case (s32)'7':
               {
                 SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
                 break;
               }
-              case CKEY_BEHAVIOR_FLEE:
+              case (s32)'8':
               {
                 SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
                 break;
               }
-              case CKEY_BEHAVIOR_HELPME:
+              case (s32)'-':
               {
                 SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
                 break;
               }
-              case CKEY_BEHAVIOR_WHAT_NEXT:
+              case (s32)'=':
               {
                 SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
                 break;
               }
-              case CKEY_BEHAVIOR_SCAN:
+              case (s32)'9':
               {
                 SendSetNextBehaviorState(BehaviorManager::SCAN);
                 break;
               }
-              case CKEY_BEHAVIOR_IDLE:
+              case (s32)'&':
               {
                 SendSetNextBehaviorState(BehaviorManager::IDLE);
                 break;
               }
-              case CKEY_ANIMATION_NOD:
+              case (s32)'!':
               {
                 SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
                 break;
               }
                 
-              case CKEY_QUESTION_MARK:
+              case (s32)'/':
               {
                 PrintHelp();
                 break;
               }
                 
-              case CKEY_TOGGLE_FACE_TRACKING:
+              case (s32)'F':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   SendStopFaceTracking();
