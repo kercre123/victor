@@ -1,1 +1,1 @@
-rsync -avz --exclude='*.pyc' --exclude='*.jpg' --exclude=uImage ./ $1:som/
+rsync -av *.py $1:som/

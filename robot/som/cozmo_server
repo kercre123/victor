@@ -14,7 +14,8 @@ fi
 if [ "$1" = "start" -o "$1" = "restart" ]
 then
     echo "Starting cozmo server: "
-    cd /root/som
+    rsync -a /root/som/ /ramdisk
+    cd /ramdisk
     /usr/bin/python server.py &
     cd -
     sleep 1
