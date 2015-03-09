@@ -30,13 +30,12 @@ BLOCK_TABLE = {
     4: Block(4, '172.31.1.14', BLOCK_PORT)
 }
 
-BLOCK_BROADCAST = Block(255, '172.31.1.255', BLOCK_PORT)
-
 class BlockProxyServer(BaseSubServer):
     "A proxy server for connecting to blocks"
 
     BLOCK_SOCK_HOST = "172.31.1.1"
     BLOCK_SOCK_PORT = 6001
+    SERIAL_HEADER = "\xbe\xef"
 
     def __init__(self, server, verbose=False):
         "Sets up the subserver instance"
@@ -52,24 +51,35 @@ class BlockProxyServer(BaseSubServer):
     def standby(self):
         "Tell all the blocks to shut down"
         # Tell all the blocks to turn off their lights
-        lightsOut = messages.SetBlockLights(blockID=BLOCK_BROADCAST.alias)
-        self.sendTo(BLOCK_BROADCAST, lightsOut.serialize())
+        lightsOut = messages.SetBlockLights(blockID=255)
         # TODO add/replace with a full standby message
+        self.sendBroadcast(lightsOut.serialize())
 
     def giveMessage(self, message):
         "Pass a message from the phone along"
         msgID = ord(message[0])
+        if self.v:
+            sys.stdout.write("BP UDP in: %d[%d]\n" % (msgID, len(message)))
         if msgID == messages.SetBlockLights.ID:
             msg = messages.SetBlockLights(message)
             self.sentTo(BLOCK_TABLE[msg.blockID], msg.serialize())
         elif msgID == messages.FlashBlockIDs.ID:
-            self.sendTo(BLOCK_BROADCAST, message)
+            self.sendBroadcast(message)
 
-    def sendTo(self, block, data):
+    def sendTo(self, block, message):
         "send a message to a given block"
         if self.v:
-            sys.stdout.write("BP sendTo %d, %d[%d]\n" % (block.alias, ord(data[0]), len(data)))
+            sys.stdout.write("BP sendTo %d, %d[%d]\n" % (block.alias, ord(message[0]), len(message)))
+        data = self.SERIAL_HEADER + struct.pack('I', len(message)) + message
         self.blockSocket.sendto(data, block.address)
+
+    def sendBroadcast(self, message):
+        "Send a message to all blocks"
+        if self.v:
+            sys.stdout.write("BP broadcast...\n")
+        # UDP broadcast doesn't seem to work so iterate over all blocks instead :-/
+        for b in BLOCK_TABLE.values():
+            self.sendTo(b, message)
 
     def step(self):
         "Main loop execution step for block proxy"
@@ -87,4 +97,18 @@ class BlockProxyServer(BaseSubServer):
             if e.errno == socket.EBADF and self._continue == False:
                 return # This happens during shutdown
         else: # Got a message
-            self.clientSend(msg) # Just pass it back to the phone
+            if self.v:
+                sys.stdout.write("BP recv %d from %s\n" % (len(msg), blockAddr))
+            assert msg.startswith(self.SERIAL_HEADER)
+            lenStart = len(self.SERIAL_HEADER)
+            msgLength = struct.unpack('I', msg[lenStart:lenStart+4])
+            message = msg[lenStart+4:]
+            assert len(message) == msgLength
+            if self.v:
+                sys.stdout.write("\t%d[%d]" % (ord(message[0]), len(message)))
+            self.clientSend(message) # Just pass it back to the phone
+
+
+if __name__ == '__main__':
+    # Test code for block proxy
+    socket.socket(type=socket.SOCK_DGRAM).sendto(messages.FlashBlockIDs().serialize(), ("172.31.1.1", 5551))
