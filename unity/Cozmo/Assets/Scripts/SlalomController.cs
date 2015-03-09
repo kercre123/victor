@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class SlalomController : GameController {
 
-	[SerializeField] bool thereAndBackAgain = true;
+	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
 	[SerializeField] bool firstPassClockwise = true;
 	[SerializeField] bool firstPassEitherDirection = true;
