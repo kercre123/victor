@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class GameController : MonoBehaviour {
@@ -12,6 +13,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
+	[SerializeField] protected Text textScore = null;
+
 
 	protected GameState state = GameState.PRE_GAME;
 	protected float stateTimer = 0f;
@@ -38,6 +41,8 @@ public class GameController : MonoBehaviour {
 		else {
 			UpdateState();
 		}
+
+		RefreshScoreBoard();
 	}
 
 	GameState GetNextState() {
@@ -83,6 +88,14 @@ public class GameController : MonoBehaviour {
 			case GameState.PLAYING: 	Exit_PLAYING(); break;
 			case GameState.RESULTS: 	Exit_RESULTS(); break;
 		}
+	}
+
+	protected virtual void RefreshScoreBoard() {
+		if(textScore == null) return;
+		if(scores == null) return;
+		if(scores.Length == 0) return;
+
+		textScore.text = "score: " + scores[0];
 	}
 
 	protected virtual void Enter_PRE_GAME() {
