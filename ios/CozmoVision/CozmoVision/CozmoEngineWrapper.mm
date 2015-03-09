@@ -445,7 +445,7 @@ using namespace Anki;
 
 -(NSArray*)getVisionMarkersDetectedByDevice
 {
-  const std::vector<Anki::Cozmo::MessageG2U_DeviceDetectedVisionMarker>& markers = _cozmoGame->GetVisionMarkersDetectedByDevice();
+  const std::vector<Anki::Cozmo::G2U_DeviceDetectedVisionMarker>& markers = _cozmoGame->GetVisionMarkersDetectedByDevice();
   
   if(!markers.empty()) {
     
