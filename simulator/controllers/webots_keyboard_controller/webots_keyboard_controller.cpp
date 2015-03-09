@@ -228,6 +228,24 @@ namespace Anki {
           cozmoCam_->drawText(dispStr,
                               msg.img_topLeft_x + msg.img_width/4,
                               msg.img_topLeft_y + msg.img_height/2);
+          
+          /*
+          // DEBUG!!!
+          // Track head to last object seen
+          static u32 lastObjectID = u32_MAX;
+          if(msg.objectID != lastObjectID) {
+            lastObjectID = msg.objectID;
+            
+            printf("Telling robot to track head to object %d\n", msg.objectID);
+            U2G_TrackHeadToObject m;
+            m.robotID = msg.robotID;
+            m.objectID = msg.objectID;
+            
+            U2G_Message message;
+            message.Set_TrackHeadToObject(m);
+            SendMessage(message);
+          }
+           */
         }
       }
 
