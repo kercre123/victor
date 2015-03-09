@@ -657,8 +657,13 @@ namespace Anki {
                 
               case CKEY_LIFT_UP: //a-key: move lift up
               {
-                commandedLiftSpeed += liftSpeed;
-                movingLift = true;
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReadAnimationFile();
+                } else {
+                  commandedLiftSpeed += liftSpeed;
+                  movingLift = true;
+                }
                 break;
               }
                 
@@ -948,14 +953,14 @@ namespace Anki {
               }
                 
               // Animations
-              case CKEY_ANIMATION_SEND_FILE:
+              /*case CKEY_ANIMATION_SEND_FILE:
               {
                 if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
                   // Re-read animations and send them to physical robot
                   SendReadAnimationFile();
                 }
                 break;
-              }
+              }*/
               case CKEY_ANIMATION_BACK_AND_FORTH:
               {
                 SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
