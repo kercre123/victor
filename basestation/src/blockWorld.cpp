@@ -1353,6 +1353,9 @@ namespace Anki
           _robot->DisableTrackHeadToObject();
         }
         
+        // Notify any listeners that this object is being deleted
+        CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
+        
         // NOTE: The object should erase its own visualization upon destruction
         delete object;
         

@@ -41,6 +41,8 @@ DEF_SIGNAL(RobotObservedObject,
 
 DEF_SIGNAL(RobotObservedNothing, uint8_t robotID)
 
+DEF_SIGNAL(RobotDeletedObject, uint8_t robotID, uint32_t objectID) // TODO: Add "reason" for deletion?
+
 DEF_SIGNAL(RobotObservedFace,
            uint8_t robotID,
            float x_upperLeft, float y_upperLeft,
