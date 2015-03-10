@@ -643,6 +643,7 @@ public class G2U_RobotObservedObject
 	public float world_x;
 	public float world_y;
 	public float world_z;
+	public byte isActive;
 
 	/**** Constructors ****/
 
@@ -660,7 +661,8 @@ public class G2U_RobotObservedObject
 		float img_height,
 		float world_x,
 		float world_y,
-		float world_z)
+		float world_z,
+		byte isActive)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
@@ -673,6 +675,7 @@ public class G2U_RobotObservedObject
 		this.world_x = world_x;
 		this.world_y = world_y;
 		this.world_z = world_z;
+		this.isActive = isActive;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -701,6 +704,8 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//isActive
+		isActive = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
@@ -718,6 +723,7 @@ public class G2U_RobotObservedObject
 		writer.Write((float)world_x);
 		writer.Write((float)world_y);
 		writer.Write((float)world_z);
+		writer.Write((byte)isActive);
 		return stream;
 	}
 
@@ -747,6 +753,8 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//isActive
+		isActive = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
@@ -775,6 +783,8 @@ public class G2U_RobotObservedObject
 			result += 4; // = float_32
 			//world_z
 			result += 4; // = float_32
+			//isActive
+			result += 1; // = uint_8
 			return result;
 		}
 	}

@@ -78,8 +78,9 @@ namespace Cozmo {
                                               uint32_t objectType, uint32_t objectID,
                                               float img_x_upperLeft,  float img_y_upperLeft,
                                               float img_width,  float img_height,
-                                              float world_x, float world_y, float world_z) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z);
+                                              float world_x, float world_y, float world_z,
+                                              bool isActive) {
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, isActive);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -247,7 +248,8 @@ namespace Cozmo {
                                                       float img_width,  float img_height,
                                                       float world_x,
                                                       float world_y,
-                                                      float world_z)
+                                                      float world_z,
+                                                      bool isActive)
   {
     // Send a message out to UI that the robot saw an object
     G2U_RobotObservedObject msg;
@@ -262,6 +264,7 @@ namespace Cozmo {
     msg.world_x       = world_x;
     msg.world_y       = world_y;
     msg.world_z       = world_z;
+    msg.isActive      = static_cast<uint8_t>(isActive);
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     G2U_Message message;

@@ -80,6 +80,22 @@ namespace Anki {
           ,{0.8, 0.1, 0.1} // Place object color
         };
         
+        struct {
+          s32 family;
+          s32 type;
+          s32 id;
+          f32 area;
+          bool isActive;
+          
+          void Reset() {
+            family = -1;
+            type = -1;
+            id = -1;
+            area = 0;
+            isActive = false;
+          }
+        } currentlyObservedObject;
+        
         BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
         
         // Socket connection to basestation
@@ -229,6 +245,15 @@ namespace Anki {
                               msg.img_topLeft_x + msg.img_width/4,
                               msg.img_topLeft_y + msg.img_height/2);
           
+          const f32 area = msg.img_width * msg.img_height;
+          if(area > currentlyObservedObject.area) {
+            currentlyObservedObject.family = msg.objectFamily;
+            currentlyObservedObject.type   = msg.objectType;
+            currentlyObservedObject.id     = msg.objectID;
+            currentlyObservedObject.isActive = msg.isActive;
+            currentlyObservedObject.area   = area;
+          }
+          
           /*
           // DEBUG!!!
           // Track head to last object seen
@@ -247,6 +272,11 @@ namespace Anki {
           }
            */
         }
+      }
+      
+      void HandleRobotObservedNothing(G2U_RobotObservedNothing const& msg)
+      {
+        currentlyObservedObject.Reset();
       }
 
       void HandleRobotConnection(const G2U_RobotAvailable& msgIn)
@@ -915,6 +945,31 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'B':
+              {
+                if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
+                {
+                  // Proof of concept: cycle colors
+                  const s32 NUM_COLORS = 4;
+                  const u32 colorList[NUM_COLORS] = {0xFF0000, 0x00FF00, 0x0000FF, 0}; // R, G, B, off
+                  static s32 colorIndex = 0;
+                  
+                  U2G_SetActiveObjectLEDs msg;
+                  msg.objectID = currentlyObservedObject.id;
+                  msg.ledColors= colorList[colorIndex++];
+                  msg.onPeriod_ms = 250;
+                  msg.offPeriod_ms = 250;
+                  if(colorIndex == NUM_COLORS) {
+                    colorIndex = 0;
+                  }
+                  
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_SetActiveObjectLEDs(msg);
+                  SendMessage(msgWrapper);
+                }
+                break;
+              }
+                
               case (s32)'M':
               {
                 SendSelectNextSoundScheme();
@@ -1460,6 +1515,13 @@ namespace Anki {
             
             ProcessKeystroke();
             ProcessJoystick();
+            
+            // DEBUG!!!!!
+            U2G_SetRobotCarryingObject m;
+            m.objectID = 500;
+            m.robotID = 1;
+            message.Set_SetRobotCarryingObject(m);
+            SendMessage(message);
             
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;

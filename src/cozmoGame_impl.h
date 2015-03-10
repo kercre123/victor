@@ -105,7 +105,8 @@ namespace Cozmo {
                                          float img_width,  float img_height,
                                          float world_x,
                                          float world_y,
-                                         float world_z);
+                                         float world_z,
+                                         bool  isActive);
     void HandleRobotObservedNothingSignal(uint8_t robotID);
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
@@ -171,6 +172,7 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_StopLookingForMarkers)
     REGISTER_CALLBACK(U2G_SetVisionSystemParams)
     REGISTER_CALLBACK(U2G_SetFaceDetectParams)
+    REGISTER_CALLBACK(U2G_SetActiveObjectLEDs)
 #undef REGISTER_CALLBACK
     
     //

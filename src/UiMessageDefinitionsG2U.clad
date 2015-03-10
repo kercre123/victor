@@ -106,7 +106,8 @@ message G2U_RobotObservedObject {
     float_32 img_height,     //     "
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
-    float_32 world_z         //     "
+    float_32 world_z,        //     "
+    uint_8   isActive
 }
 
 // RobotObservedNothing

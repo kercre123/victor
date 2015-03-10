@@ -3723,6 +3723,104 @@ struct U2G_SetFaceDetectParams
 	}
 };
 
+struct U2G_SetActiveObjectLEDs
+{
+	uint32_t objectID;
+	uint32_t ledColors;
+	uint32_t onPeriod_ms;
+	uint32_t offPeriod_ms;
+
+	/**** Constructors ****/
+	U2G_SetActiveObjectLEDs() = default;
+	U2G_SetActiveObjectLEDs(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	U2G_SetActiveObjectLEDs& operator=(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs& operator=(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+
+	explicit U2G_SetActiveObjectLEDs(uint32_t objectID
+		,uint32_t ledColors
+		,uint32_t onPeriod_ms
+		,uint32_t offPeriod_ms)
+	:objectID(objectID)
+	,ledColors(ledColors)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	{}
+	explicit U2G_SetActiveObjectLEDs(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit U2G_SetActiveObjectLEDs(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->objectID);
+		buffer.Write(this->ledColors);
+		buffer.Write(this->onPeriod_ms);
+		buffer.Write(this->offPeriod_ms);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->objectID);
+		buffer.Read(this->ledColors);
+		buffer.Read(this->onPeriod_ms);
+		buffer.Read(this->offPeriod_ms);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//objectID
+		result += 4; // = uint_32
+		//ledColors
+		result += 4; // = uint_32
+		//onPeriod_ms
+		result += 4; // = uint_32
+		//offPeriod_ms
+		result += 4; // = uint_32
+		return result;
+	}
+
+	bool operator==(const U2G_SetActiveObjectLEDs& other) const
+	{
+		if (objectID != other.objectID
+		|| ledColors != other.ledColors
+		|| onPeriod_ms != other.onPeriod_ms
+		|| offPeriod_ms != other.offPeriod_ms) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const U2G_SetActiveObjectLEDs& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 class U2G_Message
 {
 public:
@@ -3787,6 +3885,7 @@ public:
 		StopLookingForMarkers,	// 44
 		SetVisionSystemParams,	// 45
 		SetFaceDetectParams,	// 46
+		SetActiveObjectLEDs,	// 47
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -3885,6 +3984,8 @@ public:
 			return "SetVisionSystemParams";
 		case Type::SetFaceDetectParams:
 			return "SetFaceDetectParams";
+		case Type::SetActiveObjectLEDs:
+			return "SetActiveObjectLEDs";
 		default:
 			return "INVALID";
 		}
@@ -5254,6 +5355,35 @@ public:
 		}
 	}
 
+	/** SetActiveObjectLEDs **/
+	const U2G_SetActiveObjectLEDs& Get_SetActiveObjectLEDs() const
+	{
+		assert(_type == Type::SetActiveObjectLEDs);
+		return _SetActiveObjectLEDs;
+	}
+	void Set_SetActiveObjectLEDs(const U2G_SetActiveObjectLEDs& new_SetActiveObjectLEDs)
+	{
+		if(this->_type == Type::SetActiveObjectLEDs) {
+			_SetActiveObjectLEDs = new_SetActiveObjectLEDs;
+		}
+		else {
+			ClearCurrent();
+			new(&_SetActiveObjectLEDs) U2G_SetActiveObjectLEDs{new_SetActiveObjectLEDs};
+			_type = Type::SetActiveObjectLEDs;
+		}
+	}
+	void Set_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs&&  new_SetActiveObjectLEDs)
+	{
+		if(this->_type == Type::SetActiveObjectLEDs) {
+			_SetActiveObjectLEDs = std::move(new_SetActiveObjectLEDs);
+		}
+		else {
+			ClearCurrent();
+			new(&_SetActiveObjectLEDs) U2G_SetActiveObjectLEDs{std::move(new_SetActiveObjectLEDs)};
+			_type = Type::SetActiveObjectLEDs;
+		}
+	}
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len)
 	{
@@ -5645,6 +5775,14 @@ public:
 			this->_SetFaceDetectParams.Unpack(buffer);
 			}
 			break;
+		case Type::SetActiveObjectLEDs:
+			if (newType != oldType) {
+				new(&(this->_SetActiveObjectLEDs)) U2G_SetActiveObjectLEDs(buffer);
+			}
+			else {
+			this->_SetActiveObjectLEDs.Unpack(buffer);
+			}
+			break;
 		default:
 			break;
 		}
@@ -5804,6 +5942,9 @@ public:
 		case Type::SetFaceDetectParams:
 			this->_SetFaceDetectParams.Pack(buffer);
 			break;
+		case Type::SetActiveObjectLEDs:
+			this->_SetActiveObjectLEDs.Pack(buffer);
+			break;
 		default:
 			break;
 		}
@@ -5957,6 +6098,9 @@ public:
 		case Type::SetFaceDetectParams:
 			result += _SetFaceDetectParams.Size();
 			break;
+		case Type::SetActiveObjectLEDs:
+			result += _SetActiveObjectLEDs.Size();
+			break;
 		default:
 			return 0;
 		}
@@ -6107,6 +6251,9 @@ private:
 		case Type::SetFaceDetectParams:
 			_SetFaceDetectParams.~U2G_SetFaceDetectParams();
 			break;
+		case Type::SetActiveObjectLEDs:
+			_SetActiveObjectLEDs.~U2G_SetActiveObjectLEDs();
+			break;
 		default:
 			break;
 		}
@@ -6162,6 +6309,7 @@ private:
 		U2G_StopLookingForMarkers _StopLookingForMarkers;
 		U2G_SetVisionSystemParams _SetVisionSystemParams;
 		U2G_SetFaceDetectParams _SetFaceDetectParams;
+		U2G_SetActiveObjectLEDs _SetActiveObjectLEDs;
 	};
 };
 

@@ -2638,6 +2638,86 @@ public class U2G_SetFaceDetectParams
 	}
 }
 
+public class U2G_SetActiveObjectLEDs
+{
+	public uint objectID;
+	public uint ledColors;
+	public uint onPeriod_ms;
+	public uint offPeriod_ms;
+
+	/**** Constructors ****/
+
+	public U2G_SetActiveObjectLEDs()
+	{
+	}
+
+	public U2G_SetActiveObjectLEDs(uint objectID,
+		uint ledColors,
+		uint onPeriod_ms,
+		uint offPeriod_ms)
+	{
+		this.objectID = objectID;
+		this.ledColors = ledColors;
+		this.onPeriod_ms = onPeriod_ms;
+		this.offPeriod_ms = offPeriod_ms;
+	}
+
+	public U2G_SetActiveObjectLEDs(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//ledColors
+		ledColors = (uint)(reader.ReadUInt32());
+		//onPeriod_ms
+		onPeriod_ms = (uint)(reader.ReadUInt32());
+		//offPeriod_ms
+		offPeriod_ms = (uint)(reader.ReadUInt32());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)objectID);
+		writer.Write((uint)ledColors);
+		writer.Write((uint)onPeriod_ms);
+		writer.Write((uint)offPeriod_ms);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//ledColors
+		ledColors = (uint)(reader.ReadUInt32());
+		//onPeriod_ms
+		onPeriod_ms = (uint)(reader.ReadUInt32());
+		//offPeriod_ms
+		offPeriod_ms = (uint)(reader.ReadUInt32());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//objectID
+			result += 4; // = uint_32
+			//ledColors
+			result += 4; // = uint_32
+			//onPeriod_ms
+			result += 4; // = uint_32
+			//offPeriod_ms
+			result += 4; // = uint_32
+			return result;
+		}
+	}
+}
+
 public class U2G_Message {
 	public enum Tag {
 		Ping,	//0
@@ -2687,6 +2767,7 @@ public class U2G_Message {
 		StopLookingForMarkers,	//44
 		SetVisionSystemParams,	//45
 		SetFaceDetectParams,	//46
+		SetActiveObjectLEDs,	//47
 		INVALID
 	};
 
@@ -3495,6 +3576,23 @@ public class U2G_Message {
 		}
 	}
 
+	public U2G_SetActiveObjectLEDs SetActiveObjectLEDs
+	{
+		get {
+			if (_tag != Tag.SetActiveObjectLEDs) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetActiveObjectLEDs\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_SetActiveObjectLEDs)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetActiveObjectLEDs : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -3641,6 +3739,9 @@ public class U2G_Message {
 			break;
 		case Tag.SetFaceDetectParams:
 			_state = new U2G_SetFaceDetectParams(stream);
+			break;
+		case Tag.SetActiveObjectLEDs:
+			_state = new U2G_SetActiveObjectLEDs(stream);
 			break;
 		default:
 			break;
@@ -3795,6 +3896,9 @@ public class U2G_Message {
 		case Tag.SetFaceDetectParams:
 			SetFaceDetectParams.Pack(stream);
 			break;
+		case Tag.SetActiveObjectLEDs:
+			SetActiveObjectLEDs.Pack(stream);
+			break;
 		default:
 			break;
 		}
@@ -3946,6 +4050,9 @@ public class U2G_Message {
 				break;
 			case Tag.SetFaceDetectParams:
 				result += SetFaceDetectParams.Size;
+				break;
+			case Tag.SetActiveObjectLEDs:
+				result += SetActiveObjectLEDs.Size;
 				break;
 			default:
 				return 0;

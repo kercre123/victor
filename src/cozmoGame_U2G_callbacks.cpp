@@ -100,6 +100,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(StopLookingForMarkers)
         REGISTER_CALLBACK(SetVisionSystemParams)
         REGISTER_CALLBACK(SetFaceDetectParams)
+        REGISTER_CALLBACK(SetActiveObjectLEDs)
       }
     });
   } // RegisterCallbacksU2G()
@@ -721,6 +722,15 @@ case U2G_Message::Type::__MSG_TYPE__: \
     }
   }
   
+  void CozmoGameImpl::ProcessMessage(U2G_SetActiveObjectLEDs const& msg)
+  {
+    const RobotID_t hostRobotID = 1; // TODO: Is the "host" robot that talks to the blocks always 1?
+    Robot* robot = GetRobotByID(hostRobotID);
+    
+    if(robot != nullptr) {
+      robot->SetBlockLights(msg.objectID, msg.ledColors, msg.onPeriod_ms, msg.offPeriod_ms);
+    }
+  }
   
 }
 }

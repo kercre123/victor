@@ -792,6 +792,7 @@ struct G2U_RobotObservedObject
 	float world_x;
 	float world_y;
 	float world_z;
+	uint8_t isActive;
 
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -811,7 +812,8 @@ struct G2U_RobotObservedObject
 		,float img_height
 		,float world_x
 		,float world_y
-		,float world_z)
+		,float world_z
+		,uint8_t isActive)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
@@ -823,6 +825,7 @@ struct G2U_RobotObservedObject
 	,world_x(world_x)
 	,world_y(world_y)
 	,world_z(world_z)
+	,isActive(isActive)
 	{}
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 	{
@@ -855,6 +858,7 @@ struct G2U_RobotObservedObject
 		buffer.Write(this->world_x);
 		buffer.Write(this->world_y);
 		buffer.Write(this->world_z);
+		buffer.Write(this->isActive);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -879,6 +883,7 @@ struct G2U_RobotObservedObject
 		buffer.Read(this->world_x);
 		buffer.Read(this->world_y);
 		buffer.Read(this->world_z);
+		buffer.Read(this->isActive);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -906,6 +911,8 @@ struct G2U_RobotObservedObject
 		result += 4; // = float_32
 		//world_z
 		result += 4; // = float_32
+		//isActive
+		result += 1; // = uint_8
 		return result;
 	}
 
@@ -921,7 +928,8 @@ struct G2U_RobotObservedObject
 		|| img_height != other.img_height
 		|| world_x != other.world_x
 		|| world_y != other.world_y
-		|| world_z != other.world_z) {
+		|| world_z != other.world_z
+		|| isActive != other.isActive) {
 			return false;
 		}
 		return true;
