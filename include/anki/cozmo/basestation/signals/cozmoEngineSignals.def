@@ -11,7 +11,7 @@
 
 DEF_SIGNAL(RobotConnected, RobotID_t robotID, bool successful)
 DEF_SIGNAL(RobotAvailable, RobotID_t robotID)
-DEF_SIGNAL(RobotDisconnected, RobotID_t robotID, float timeSinceLastMessage_sec)
+DEF_SIGNAL(RobotDisconnected, RobotID_t robotID)
       
 // Robot signals
 DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)

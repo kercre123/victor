@@ -101,8 +101,8 @@ namespace Cozmo {
   {
     
     // Handle robot disconnection:
-    auto cbRobotDisconnected = [this](RobotID_t robotID, float timeSinceLastMsg_sec) {
-      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in %.2fsec\n", robotID, timeSinceLastMsg_sec);
+    auto cbRobotDisconnected = [this](RobotID_t robotID) {
+      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.\n", robotID);
       this->DisconnectFromRobot(robotID);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));

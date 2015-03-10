@@ -103,8 +103,9 @@ namespace Anki {
               }
             }
 
-            CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first, -1.f);
+            CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
             
+            delete r->second;
             r = _robots.erase(r);
             
             break;
@@ -113,6 +114,7 @@ namespace Anki {
             // TODO: Handle other return results here
             
           default:
+            // No problems, simply move to next robot
             ++r;
             break;
         }

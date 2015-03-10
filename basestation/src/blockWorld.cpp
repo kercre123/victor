@@ -1126,7 +1126,7 @@ namespace Anki
           if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetCamera().GetID()) &&
               !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
             PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
-            poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair++);
+            poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair);
           } else {
             ++poseKeyMarkerPair;
           }
