@@ -290,6 +290,7 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			current.selectedObject = -1;
 			current.observedObjects.Clear();
+			current.knownObjects.Clear();
 		}
 	}
 	
@@ -575,6 +576,8 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
 		message.angle_rad = angle_rad;
+		message.accel_rad_per_sec2 = 2f;
+		message.max_speed_rad_per_sec = 5f;
 
 		channel.Send( new U2G_Message { SetHeadAngle = message } );
 	}
@@ -599,6 +602,7 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
 
+		message.robotID = (byte)Intro.CurrentRobotID;
 		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
 		{
 			message.objectID = -1;

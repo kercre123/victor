@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class GameController : MonoBehaviour {
@@ -12,32 +13,48 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
+	[SerializeField] protected Text textScore = null;
+	[SerializeField] protected Text textState = null;
+
 
 	protected GameState state = GameState.PRE_GAME;
 	protected float stateTimer = 0f;
 	protected int[] scores;
 	protected int winnerIndex;
+	protected bool firstFrame = true;
 
 	void OnEnable () {
 		state = GameState.PRE_GAME;
 		stateTimer = 0f;
 		scores = new int[numPlayers];
 		winnerIndex = -1;
+		firstFrame = true;
 	}
 
 	void Update () {
 		stateTimer += Time.deltaTime;
 
-		GameState nextState = GetNextState();
-
-		if(nextState != state) {
-			ExitState();
-			state = nextState;
+		//force our initial state to enter in case there is set up code there
+		if(firstFrame) {
 			EnterState();
 		}
 		else {
-			UpdateState();
+
+			GameState nextState = GetNextState();
+
+			if(nextState != state) {
+				ExitState();
+				state = nextState;
+				EnterState();
+			}
+			else {
+				UpdateState();
+			}
+
 		}
+
+		RefreshText();
+		firstFrame = false;
 	}
 
 	GameState GetNextState() {
@@ -85,19 +102,46 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
+	protected virtual void RefreshText() {
+		if(textScore != null && scores != null && scores.Length > 0) {
+			textScore.text = "score: " + scores[0];
+		}
+
+		if(textState != null) {
+			textState.text = state.ToString();
+		}
+	}
+
 	protected virtual void Enter_PRE_GAME() {
 		winnerIndex = -1;
+		Debug.Log(gameObject.name + " Enter_PRE_GAME");
 	}
-	protected virtual void Update_PRE_GAME() {}
-	protected virtual void Exit_PRE_GAME() {}
+	protected virtual void Update_PRE_GAME() {
+		//Debug.Log(gameObject.name + " Update_PRE_GAME");
+	}
+	protected virtual void Exit_PRE_GAME() {
+		Debug.Log(gameObject.name + " Exit_PRE_GAME");
+	}
 		
-	protected virtual void Enter_PLAYING() {}
-	protected virtual void Update_PLAYING() {}
-	protected virtual void Exit_PLAYING() {}
+	protected virtual void Enter_PLAYING() {
+		Debug.Log(gameObject.name + " Enter_PLAYING");
+	}
+	protected virtual void Update_PLAYING() {
+		//Debug.Log(gameObject.name + " Update_PLAYING");
+	}
+	protected virtual void Exit_PLAYING() {
+		Debug.Log(gameObject.name + " Exit_PLAYING");
+	}
 
-	protected virtual void Enter_RESULTS() {}
-	protected virtual void Update_RESULTS() {}
-	protected virtual void Exit_RESULTS() {}
+	protected virtual void Enter_RESULTS() {
+		Debug.Log(gameObject.name + " Enter_RESULTS");
+	}
+	protected virtual void Update_RESULTS() {
+		//Debug.Log(gameObject.name + " Update_RESULTS");
+	}
+	protected virtual void Exit_RESULTS() {
+		Debug.Log(gameObject.name + " Exit_RESULTS");
+	}
 
 	protected virtual bool IsGameReady() {
 

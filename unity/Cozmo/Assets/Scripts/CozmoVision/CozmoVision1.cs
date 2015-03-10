@@ -53,8 +53,10 @@ public class CozmoVision1 : CozmoVision
 
 	protected List<DistancePair> distancePairs = new List<DistancePair>();
 
-	protected void Update()
+	protected override void Update()
 	{
+		base.Update();
+
 		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision1" ) == 1 );
 		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )

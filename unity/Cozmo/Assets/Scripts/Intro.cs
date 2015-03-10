@@ -8,6 +8,7 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Text error;
 
+	private bool simulated = false;
 	private string currentRobotIP;
 	private string currentScene;
 	private string currentVizHostIP;
@@ -46,6 +47,11 @@ public class Intro : MonoBehaviour {
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
 		visualizerIP.text = lastVisualizerIp;
+
+		if (RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			RobotEngineManager.instance.current.knownObjects.Clear();
+		}
+
 	}
 
 	private void Start()
@@ -62,7 +68,6 @@ public class Intro : MonoBehaviour {
 		Input.compass.enabled = true;
 		Input.multiTouchEnabled = true;
 		Input.location.Start();
-
 	}
 
 	private void OnDestroy() {
@@ -83,7 +88,6 @@ public class Intro : MonoBehaviour {
 		}
 	}
 
-	bool simulated =false;
 	public void Play(bool sim) {
 		simulated = sim;
 		RobotEngineManager.instance.Disconnect ();

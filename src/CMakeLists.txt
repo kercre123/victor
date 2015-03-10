@@ -1,5 +1,7 @@
 # products-cozmo/game/src/CMakeLists.txt
 
+cmake_minimum_required(VERSION 2.8)
+
 add_definitions(-DCOZMO_BASESTATION)
 add_definitions(-DCORETECH_BASESTATION)
 
@@ -14,8 +16,8 @@ set(CLAD_CPP_OUTPUTS)
 set(CLAD_CS_OUTPUTS)
 foreach(SOURCE ${CLAD_SOURCES})
     GET_FILENAME_COMPONENT(SOURCE_BASE ${SOURCE} NAME_WE)
-    set(CPP_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.h")
-    set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.h")
+    set(CPP_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.def")
+    set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.def")
     set(CS_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.cs")
     set(CS_OUTPUT "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel/${SOURCE_BASE}.cs")
     set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CPP_BUILD} ${CS_BUILD})
@@ -23,7 +25,7 @@ foreach(SOURCE ${CLAD_SOURCES})
         OUTPUT ${CPP_BUILD}
         COMMAND mkdir -p ${CLAD_BUILD_DIR}
         COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -n Anki -n Cozmo ${SOURCE} > ${CPP_BUILD}
-        COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} > /dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT}
+        COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} > /dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT} && touch ${CPP_OUTPUT}
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         VERBATIM
@@ -32,7 +34,7 @@ foreach(SOURCE ${CLAD_SOURCES})
         OUTPUT ${CS_BUILD}
         COMMAND mkdir -p ${CLAD_BUILD_DIR}
         COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -n Anki.Cozmo ${SOURCE} > ${CS_BUILD}
-        COMMAND diff ${CS_BUILD} ${CS_OUTPUT} > /dev/null || cp ${CS_BUILD} ${CS_OUTPUT}
+        COMMAND diff ${CS_BUILD} ${CS_OUTPUT} > /dev/null || cp ${CS_BUILD} ${CS_OUTPUT} && touch ${CS_OUTPUT}
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         VERBATIM
@@ -75,7 +77,7 @@ file(GLOB HEADER_FILES_COMMS "comms/*.h")
 
 # comms/messaging src dir
 file(GLOB SOURCE_FILES_COMMS_MESSAGING "comms/messaging/*.cpp")
-file(GLOB HEADER_FILES_COMMS_MESSAGING "comms/messaging/*.h")
+file(GLOB HEADER_FILES_COMMS_MESSAGING "comms/messaging/*")
 
 set(SOURCE_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.cpp")
 set(HEADER_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.h")
