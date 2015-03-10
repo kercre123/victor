@@ -17,11 +17,14 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Text text;
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
+	[SerializeField] protected Slider headAngleSlider;
+
 	
 	protected RectTransform rTrans;
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+	protected float lastHeadAngle = 0f;
 
 	protected int observedObjectsCount
 	{
@@ -149,6 +152,20 @@ public class CozmoVision : MonoBehaviour
 
 		RequestImage();
 		ResizeToScreen();
+
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
+			headAngleSlider.value = Mathf.Clamp(lastHeadAngle * Mathf.Rad2Deg, -90f, 90f);
+			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;
+		}
+	}
+
+	protected virtual void Update()
+	{
+//		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
+//			headAngleSlider.value = Mathf.Clamp(lastHeadAngle * Mathf.Rad2Deg, -90f, 90f);
+//			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;
+//		}
+
 	}
 
 	private void OnDisable()
@@ -169,4 +186,11 @@ public class CozmoVision : MonoBehaviour
 		float scale = ( Screen.width * 0.5f ) / 320f;
 		rTrans.localScale = Vector3.one * scale;
 	}
+
+	public void OnHeadAngleSliderReleased() {
+		lastHeadAngle = headAngleSlider.value * Mathf.Deg2Rad;
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SetHeadAngle(lastHeadAngle);
+		Debug.Log("OnHeadAngleSliderReleased lastHeadAngle("+lastHeadAngle+") headAngleSlider.value("+headAngleSlider.value+")");
+	}
+
 }

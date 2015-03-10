@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
 	[SerializeField] protected Text textScore = null;
+	[SerializeField] protected Text textState = null;
 
 
 	protected GameState state = GameState.PRE_GAME;
@@ -52,7 +53,7 @@ public class GameController : MonoBehaviour {
 
 		}
 
-		RefreshScoreBoard();
+		RefreshText();
 		firstFrame = false;
 	}
 
@@ -101,12 +102,14 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected virtual void RefreshScoreBoard() {
-		if(textScore == null) return;
-		if(scores == null) return;
-		if(scores.Length == 0) return;
+	protected virtual void RefreshText() {
+		if(textScore != null && scores != null && scores.Length > 0) {
+			textScore.text = "score: " + scores[0];
+		}
 
-		textScore.text = "score: " + scores[0];
+		if(textState != null) {
+			textState.text = state.ToString();
+		}
 	}
 
 	protected virtual void Enter_PRE_GAME() {

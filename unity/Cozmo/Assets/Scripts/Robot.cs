@@ -18,6 +18,7 @@ public class Robot
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
+	public List<ObservedObject> knownObjects { get; private set; }
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
 
@@ -43,6 +44,7 @@ public class Robot
 		ID = robotID;
 		selectedObject = -1;
 		observedObjects = new List<ObservedObject>();
+		knownObjects = new List<ObservedObject>();
 	}
 
 	public void UpdateInfo( G2U_RobotState message )
@@ -79,5 +81,12 @@ public class Robot
 		}
 
 		observedObject.UpdateInfo( message );
+
+		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
+
+		if(knownObject == null)
+		{
+			knownObjects.Add( observedObject );
+		}
 	}
 }

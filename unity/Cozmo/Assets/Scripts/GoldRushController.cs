@@ -20,7 +20,7 @@ public class GoldRushController : GameController {
 		goldCubes.Clear();
 		robot = RobotEngineManager.instance.current;
 
-		foreach(ObservedObject obj in robot.observedObjects) {
+		foreach(ObservedObject obj in robot.knownObjects) {
 			//if(obj.objectType == ObservedObjectType.Gold) {
 				goldCubes.Add(obj);
 			//}

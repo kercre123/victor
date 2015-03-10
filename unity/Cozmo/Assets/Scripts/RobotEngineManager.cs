@@ -290,6 +290,7 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			current.selectedObject = -1;
 			current.observedObjects.Clear();
+			current.knownObjects.Clear();
 		}
 	}
 	

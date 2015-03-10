@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -9,6 +10,7 @@ public class SlalomController : GameController {
 	[SerializeField] bool firstPassClockwise = true;
 	[SerializeField] bool firstPassEitherDirection = true;
 	[SerializeField] bool trackWithCornerTriggers = false;
+	[SerializeField] Text textObservedCount = null;
 
 	bool currentPassClockwise = true;
 
@@ -25,9 +27,20 @@ public class SlalomController : GameController {
 	bool passedFirstObstacle = false;
 
 
-	ObservedObject currentObstacle { get { return obstacles[currentObstacleIndex]; } }
+	ObservedObject currentObstacle { 
+		get {
+			if(obstacles == null) return null;
+			if(currentObstacleIndex < 0) return null;
+			if(currentObstacleIndex >= obstacles.Count) return null;
+
+			return obstacles[currentObstacleIndex];
+		}
+	}
+
 	ObservedObject nextObstacle { 
 		get { 
+			if(obstacles == null) return null;
+
 			int nextIndex;
 			if(forward) {
 				nextIndex = currentObstacleIndex + 1;
@@ -56,8 +69,21 @@ public class SlalomController : GameController {
 					}
 				}
 			}
+
+			if(nextIndex < 0) return null;
+			if(nextIndex >= obstacles.Count) return null;
+
 			return obstacles[nextIndex];
 		}
+	}
+
+	protected override void Update_PRE_GAME() {
+		base.Update_PRE_GAME();
+
+		if(textObservedCount != null) {
+			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
+		}
+
 	}
 
 	protected override void Enter_PLAYING() {
@@ -67,14 +93,6 @@ public class SlalomController : GameController {
 		currentPassClockwise = firstPassClockwise;
 		courseCompleted = false;
 		currentObstacleIndex = 0;
-		obstacles.Clear();
-		robot = RobotEngineManager.instance.current;
-
-		foreach(ObservedObject obj in robot.observedObjects) {
-			//if(obj.objectType == ObservedObjectType.Gold) {
-				obstacles.Add(obj);
-			//}
-		}
 
 		//design query: how to order our obstacles?  by distance from coz at game start?
 		obstacles.Sort( 
@@ -142,14 +160,26 @@ public class SlalomController : GameController {
 		}
 
 		lastRobotPos = cozPos;
+
+		if(textObservedCount != null) {
+			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
+		}
 	}
 
 	protected override bool IsGameReady() {
 		if(!base.IsGameReady()) return false;
 		
 		//game specific start conditions...
+		robot = RobotEngineManager.instance.current;
+		
+		obstacles.Clear();
+		foreach(ObservedObject obj in robot.knownObjects) {
+			//if(obj.objectType == ObservedObjectType.Gold) {
+			obstacles.Add(obj);
+			//}
+		}
 
-		return true;
+		return obstacles.Count > 0;
 	}
 
 	protected override bool IsGameOver() {
@@ -169,7 +199,6 @@ public class SlalomController : GameController {
 		//pulse next target corner
 
 	}
-
 
 	void NextObstacle() {
 

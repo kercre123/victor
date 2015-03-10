@@ -47,6 +47,11 @@ public class Intro : MonoBehaviour {
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
 		visualizerIP.text = lastVisualizerIp;
+
+		if (RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			RobotEngineManager.instance.current.knownObjects.Clear();
+		}
+
 	}
 
 	private void Start()
@@ -63,7 +68,6 @@ public class Intro : MonoBehaviour {
 		Input.compass.enabled = true;
 		Input.multiTouchEnabled = true;
 		Input.location.Start();
-
 	}
 
 	private void OnDestroy() {
