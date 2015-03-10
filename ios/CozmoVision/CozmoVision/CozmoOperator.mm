@@ -37,7 +37,7 @@ using namespace Anki;
   
   UIState _uiState;
   
-  Cozmo::MessageU2G_Ping _pingMsg;
+  Cozmo::U2G_Ping _pingMsg;
   
   Cozmo::GameMessageHandler* _gameMsgHandler;
   Cozmo::GameComms* _gameComms;
@@ -99,32 +99,40 @@ using namespace Anki;
 
 #pragma mark - Game Message Callbacks
 
-- (void) handleRobotAvailable:(const Cozmo::MessageG2U_RobotAvailable&) msg
+- (void) handleRobotAvailable:(const Cozmo::G2U_RobotAvailable&) msg
 {
   // For now, just tell the game to connect to all robots that advertise
   // TODO: Probably want to display available robots in the UI somewhere and only connect once selected
-  Cozmo::MessageU2G_ConnectToRobot msgOut;
-  msgOut.robotID = msg.robotID;
-  [self sendMessage:msgOut];
+  Cozmo::U2G_ConnectToRobot msgConnect;
+  msgConnect.robotID = msg.robotID;
+  
+  Cozmo::U2G_Message msgSend;
+  msgSend.Set_ConnectToRobot(msgConnect);
+  
+  [self sendMessage:msgSend];
 }
 
-- (void) handleUiDeviceAvailable:(const Cozmo::MessageG2U_UiDeviceAvailable&) msg
+- (void) handleUiDeviceAvailable:(const Cozmo::G2U_UiDeviceAvailable&) msg
 {
   // For now, just tell the game to connect to all UI devices that advertise
   // TODO: Probably want to display available devices in the UI somewhere and only connect once selected
-  Cozmo::MessageU2G_ConnectToUiDevice msgOut;
-  msgOut.deviceID = msg.deviceID;
-  [self sendMessage:msgOut];
+  Cozmo::U2G_ConnectToUiDevice msgConnect;
+  msgConnect.deviceID = msg.deviceID;
+  
+  Cozmo::U2G_Message msgSend;
+  msgSend.Set_ConnectToUiDevice(msgConnect);
+
+  [self sendMessage:msgSend];
 }
 
-- (void) handlePlayRobotSound:(const Cozmo::MessageG2U_PlaySound&) msg
+- (void) handlePlaySound:(const Cozmo::G2U_PlaySound&) msg
 {
   std::string str(std::begin(msg.soundFilename), std::end(msg.soundFilename));
   NSString* filename = [NSString stringWithUTF8String:str.c_str()];
   [[SoundCoordinator defaultCoordinator] playSoundWithFilename:filename];
 }
 
-- (void) handleStopRobotSound:(const Cozmo::MessageG2U_StopSound&) msg
+- (void) handleStopSound:(const Cozmo::G2U_StopSound&) msg
 {
   [[SoundCoordinator defaultCoordinator] stop];
 }
@@ -194,76 +202,71 @@ using namespace Anki;
 {
   _gameMsgHandler->Init(_gameComms);
   
-  auto robotAvailableCallbackLambda = [self](const Cozmo::MessageG2U_RobotAvailable& msg) {
-    [self handleRobotAvailable:msg];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotAvailable(robotAvailableCallbackLambda);
-  
-  auto playRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_PlaySound& msg) {
-    [self handlePlayRobotSound:msg];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_PlaySound(playRobotSoundCallbackLambda);
-  
-  auto uiDeviceAvailableCallbackLambda = [self](const Cozmo::MessageG2U_UiDeviceAvailable& msg) {
-    [self handleUiDeviceAvailable:msg];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceAvailable(uiDeviceAvailableCallbackLambda);
-  
-  auto stopRobotSoundCallbackLambda = [self](const Cozmo::MessageG2U_StopSound& msg) {
-    [self handleStopRobotSound:msg];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_StopSound(stopRobotSoundCallbackLambda);
-  
-  auto robotObservedObjectLamda = [self](const Cozmo::MessageG2U_RobotObservedObject& msg) {
-    if(self.handleRobotObservedObject) {
-      CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
-      
-      observation.objectID = msg.objectID;
-      observation.boundingBox = CGRectMake(msg.topLeft_x,
-                                           msg.topLeft_y,
-                                           msg.width,
-                                           msg.height);
-      
-      self.handleRobotObservedObject(observation);
-    }
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotObservedObject(robotObservedObjectLamda);
-  
-  auto deviceDetectedVisionMarkerLambda = [self](const Cozmo::MessageG2U_DeviceDetectedVisionMarker& msg) {
-    if(self.handleDeviceDetectedVisionMarker) {
-      CozmoVisionMarkerBBox* marker = [[CozmoVisionMarkerBBox alloc] init];
-      
-      marker.markerType = msg.markerType;
-      [marker setBoundingBoxFromCornersWithXupperLeft:msg.x_upperLeft  YupperLeft: msg.y_upperLeft
-                                           XlowerLeft:msg.x_lowerLeft  YlowerLeft: msg.y_lowerLeft
-                                          XupperRight:msg.x_upperRight YupperRight:msg.y_upperRight
-                                          XlowerRight:msg.x_lowerRight YlowerRight:msg.y_lowerRight];
-      
-      self.handleDeviceDetectedVisionMarker(marker);
-    }
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_DeviceDetectedVisionMarker(deviceDetectedVisionMarkerLambda);
-  
-  auto robotConnectedLambda = [self](const Cozmo::MessageG2U_RobotConnected& msg) {
-    NSNumber* robotID = [NSNumber numberWithInt:msg.robotID];
-    [self.robotConnectedListeners makeObjectsPerformSelector:@selector(robotConnectedWithID:) withObject:robotID];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_RobotConnected(robotConnectedLambda);
+#define REGISTER_CALLBACK(__MSG_TYPE__) \
+case Cozmo::G2U_Message::Type::__MSG_TYPE__: \
+[self handle##__MSG_TYPE__:msg.Get_##__MSG_TYPE__()]; \
+break;
 
+  _gameMsgHandler->RegisterCallbackForMessage([self](const Cozmo::G2U_Message& msg) {
+      switch (msg.GetType()) {
+        case Cozmo::G2U_Message::Type::INVALID:
+          break;
+          
+          // Simple wrappers:
+          
+          REGISTER_CALLBACK(RobotAvailable)
+          REGISTER_CALLBACK(PlaySound)
+          REGISTER_CALLBACK(UiDeviceAvailable)
+          REGISTER_CALLBACK(StopSound)
+          
+          // Special cases:
+        case Cozmo::G2U_Message::Type::RobotConnected:
+        {
+          NSNumber* robotID = [NSNumber numberWithInt:msg.Get_RobotConnected().robotID];
+          [self.robotConnectedListeners makeObjectsPerformSelector:@selector(robotConnectedWithID:) withObject:robotID];
+          break;
+        }
+          
+        case Cozmo::G2U_Message::Type::UiDeviceConnected:
+        {
+          NSNumber* deviceID = [NSNumber numberWithInt:msg.Get_UiDeviceConnected().deviceID];
+          [self.uiDeviceConnectedListeners makeObjectsPerformSelector:@selector(uiDeviceConnectedWithID:) withObject:deviceID];
+          break;
+        }
+          
+        case Cozmo::G2U_Message::Type::RobotObservedObject:
+          if(self.handleRobotObservedObject) {
+            CozmoObsObjectBBox* observation = [[CozmoObsObjectBBox alloc] init];
+            
+            const Cozmo::G2U_RobotObservedObject& obsObjMsg= msg.Get_RobotObservedObject();
+            observation.objectID = obsObjMsg.objectID;
+            observation.boundingBox = CGRectMake(obsObjMsg.img_topLeft_x,
+                                                 obsObjMsg.img_topLeft_y,
+                                                 obsObjMsg.img_width,
+                                                 obsObjMsg.img_height);
+            
+            self.handleRobotObservedObject(observation);
+          }
+          break;
 
-  auto uiDeviceConnectedLambda = [self](const Cozmo::MessageG2U_UiDeviceConnected& msg) {
-    NSNumber* deviceID = [NSNumber numberWithInt:msg.deviceID];
-    [self.uiDeviceConnectedListeners makeObjectsPerformSelector:@selector(uiDeviceConnectedWithID:) withObject:deviceID];
-  };
-  
-  _gameMsgHandler->RegisterCallbackForMessageG2U_UiDeviceConnected(uiDeviceConnectedLambda);
+        case Cozmo::G2U_Message::Type::DeviceDetectedVisionMarker:
+          if(self.handleDeviceDetectedVisionMarker) {
+            CozmoVisionMarkerBBox* marker = [[CozmoVisionMarkerBBox alloc] init];
+            
+            const Cozmo::G2U_DeviceDetectedVisionMarker& markerMsg = msg.Get_DeviceDetectedVisionMarker();
+            marker.markerType = markerMsg.markerType;
+            [marker setBoundingBoxFromCornersWithXupperLeft:markerMsg.x_upperLeft  YupperLeft: markerMsg.y_upperLeft
+                                                 XlowerLeft:markerMsg.x_lowerLeft  YlowerLeft: markerMsg.y_lowerLeft
+                                                XupperRight:markerMsg.x_upperRight YupperRight:markerMsg.y_upperRight
+                                                XlowerRight:markerMsg.x_lowerRight YlowerRight:markerMsg.y_lowerRight];
+            
+            self.handleDeviceDetectedVisionMarker(marker);
+          }
+          break;
+      }
+    });
+#undef REGISTER_CALLBACK
+
 }
 
 - (void)disconnectFromEngine
@@ -274,7 +277,7 @@ using namespace Anki;
   }
 }
 
-- (void)sendMessage:(Cozmo::UiMessage&)message
+- (void)sendMessage:(Cozmo::U2G_Message&)message
 {
   if (self.isConnected) {
     
@@ -310,7 +313,7 @@ using namespace Anki;
           /*
            NSLog(@"Sending StartEngine message.\n");
            
-           MessageU2G_StartEngine msg;
+           U2G_StartEngine msg;
            msg.asHost = 1; // TODO: Support running as client?
            std::string vizIpStr = "127.0.0.1";
            std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
@@ -320,7 +323,7 @@ using namespace Anki;
           
           if(false && _forceAddRobotIP != nil) {
             NSLog(@"Sending message to force-add robot at IP %@.\n", _forceAddRobotIP);
-            Cozmo::MessageU2G_ForceAddRobot msg;
+            Cozmo::U2G_ForceAddRobot msg;
             std::string tempStr = [_forceAddRobotIP UTF8String];
             
             std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
@@ -329,7 +332,9 @@ using namespace Anki;
             msg.isSimulated = false;
             msg.robotID = 1;
             
-            [self sendMessage:msg];
+            Cozmo::U2G_Message msgWrapper;
+            msgWrapper.Set_ForceAddRobot(msg);
+            [self sendMessage:msgWrapper];
           }
           
           _uiState = UI_RUNNING;
@@ -449,18 +454,24 @@ using namespace Anki;
 #endif
   }
 
-  Cozmo::MessageU2G_DriveWheels message;
+  Cozmo::U2G_DriveWheels message;
   message.lwheel_speed_mmps = _leftWheelSpeed_mmps;
   message.rwheel_speed_mmps = _rightWheelSpeed_mmps;
-  [self sendMessage:message];
+  
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_DriveWheels(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendWheelCommandWithLeftSpeed:(float)left right:(float)right
 {
-  Cozmo::MessageU2G_DriveWheels message;
+  Cozmo::U2G_DriveWheels message;
   message.lwheel_speed_mmps = left;
   message.rwheel_speed_mmps = right;
-  [self sendMessage:message];
+
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_DriveWheels(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendHeadCommandWithAngleRatio:(float)angle accelerationSpeedRatio:(float)acceleration maxSpeedRatio:(float)maxSpeed
@@ -468,13 +479,15 @@ using namespace Anki;
   const float headAcceleration = 2.0;
   const float headMaxSpeed = 5.0;
 
-  Cozmo::MessageU2G_SetHeadAngle message;
+  Cozmo::U2G_SetHeadAngle message;
   //message.angle_rad = ABS((f32)angle) * ((f32)angle < 0 ? Cozmo::MIN_HEAD_ANGLE  : Cozmo::MAX_HEAD_ANGLE);
   message.angle_rad = (f32)angle * (Cozmo::MAX_HEAD_ANGLE - Cozmo::MIN_HEAD_ANGLE) + Cozmo::MIN_HEAD_ANGLE;
   message.accel_rad_per_sec2 = (f32)headAcceleration;
   message.max_speed_rad_per_sec = (f32)headMaxSpeed;
 
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_SetHeadAngle(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendHeadCommandWithAngleRatio:(float)angle
@@ -488,12 +501,14 @@ using namespace Anki;
   const float liftAcceleration = 2.0;
   const float liftMaxSpeed = 5.0;
 
-  Cozmo::MessageU2G_SetLiftHeight message;
+  Cozmo::U2G_SetLiftHeight message;
   message.height_mm = (f32)height * (Cozmo::LIFT_HEIGHT_CARRY - Cozmo::LIFT_HEIGHT_LOWDOCK) + Cozmo::LIFT_HEIGHT_LOWDOCK;
   message.accel_rad_per_sec2 = (f32)liftAcceleration;
   message.max_speed_rad_per_sec = (f32)liftMaxSpeed;
 
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_SetLiftHeight(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendLiftCommandWithHeightRatio:(float)height
@@ -505,90 +520,117 @@ using namespace Anki;
 - (void)sendMoveLiftCommandWithSpeed:(float)speed
 {
   NSLog(@"Commanding lift with speed = %f\n", speed);
-  Cozmo::MessageU2G_MoveLift message;
+  Cozmo::U2G_MoveLift message;
   message.speed_rad_per_sec = speed;
-  [self sendMessage:message];
+  
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_MoveLift(message);
+  [self sendMessage:messageWrapper];
+  
 }
 
 - (void)sendMoveHeadCommandWithSpeed:(float)speed
 {
   NSLog(@"Commanding head with speed = %f\n", speed);
-  Cozmo::MessageU2G_MoveHead message;
+  Cozmo::U2G_MoveHead message;
   message.speed_rad_per_sec = speed;
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_MoveHead(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendStopAllMotorsCommand
 {
-  Cozmo::MessageU2G_StopAllMotors message;
-  [self sendMessage:message];
+  Cozmo::U2G_StopAllMotors message;
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_StopAllMotors(message);
+  [self sendMessage:messageWrapper];
 }
 
 -(void)sendPickOrPlaceObject:(NSNumber*)objectID
 {
   if(objectID) {
-    Cozmo::MessageU2G_PickAndPlaceObject message;
+    Cozmo::U2G_PickAndPlaceObject message;
     message.objectID = (int)objectID.integerValue;
     message.usePreDockPose = false;
     message.useManualSpeed = false;
-    [self sendMessage:message];
+    
+    Cozmo::U2G_Message messageWrapper;
+    messageWrapper.Set_PickAndPlaceObject(message);
+    [self sendMessage:messageWrapper];
   }
 }
 
 -(void)sendPlaceObjectOnGroundHere
 {
-  Cozmo::MessageU2G_PlaceObjectOnGroundHere message;
-  [self sendMessage:message];
+  Cozmo::U2G_PlaceObjectOnGroundHere message;
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_PlaceObjectOnGroundHere(message);
+  [self sendMessage:messageWrapper];
 }
 
 -(void)sendEnableFaceTracking:(BOOL)enable
 {
   if(enable) {
-    Cozmo::MessageU2G_StartFaceTracking message;
-    [self sendMessage:message];
+    Cozmo::U2G_StartFaceTracking message;
+    Cozmo::U2G_Message messageWrapper;
+    messageWrapper.Set_StartFaceTracking(message);
+    [self sendMessage:messageWrapper];
   } else {
-    Cozmo::MessageU2G_StopFaceTracking message;
-    [self sendMessage:message];
+    Cozmo::U2G_StopFaceTracking message;
+    Cozmo::U2G_Message messageWrapper;
+    messageWrapper.Set_StopFaceTracking(message);
+    [self sendMessage:messageWrapper];
     
-    // For now, we have to re-enable looking for markers because enabling
-    // face tracking turned it off
-    Cozmo::MessageU2G_StartLookingForMarkers tempMessage;
-    [self sendMessage:tempMessage];
+    {
+      // For now, we have to re-enable looking for markers because enabling
+      // face tracking turned it off
+      Cozmo::U2G_StartLookingForMarkers message;
+      Cozmo::U2G_Message messageWrapper;
+      messageWrapper.Set_StartLookingForMarkers(message);
+      [self sendMessage:messageWrapper];
+    }
   }
 }
 
 
 - (void)sendAnimationWithName:(NSString*)animName
 {
-  Cozmo::MessageU2G_PlayAnimation message;
+  Cozmo::U2G_PlayAnimation message;
   
   // TODO: This is icky. Get actual ID from somewhere and use that
   strncpy(&(message.animationName[0]), [animName UTF8String], 32);
   message.numLoops = 1;
   
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_PlayAnimation(message);
+  [self sendMessage:messageWrapper];
 
 }
 
 
 - (void)sendCameraResolution:(BOOL)isHigh
 {
-  Cozmo::MessageU2G_SetRobotImageSendMode message;
+  Cozmo::U2G_SetRobotImageSendMode message;
   // HACK
   message.mode = 1;
   message.resolution = isHigh ? Vision::CAMERA_RES_QVGA : Vision::CAMERA_RES_QQQVGA;
 
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_SetRobotImageSendMode(message);
+  [self sendMessage:messageWrapper];
 }
 
 - (void)sendEnableRobotImageStreaming:(BOOL)enable
 {
-  Cozmo::MessageU2G_SetRobotImageSendMode message;
+  Cozmo::U2G_SetRobotImageSendMode message;
   // HACK
   message.mode = (enable ? 1 : 0); // 1 is ISM_STREAM, 0 is ISM_OFF
   message.resolution = Vision::CAMERA_RES_QVGA;
   
-  [self sendMessage:message];
+  Cozmo::U2G_Message messageWrapper;
+  messageWrapper.Set_SetRobotImageSendMode(message);
+  [self sendMessage:messageWrapper];
 }
 
 @end

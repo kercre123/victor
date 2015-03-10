@@ -49,5 +49,6 @@ DEF WorldComms BlockWorldComms {
 CozmoVizDisplay{
 }
 WebotsKeyboardController{
+  forceAddRobot TRUE
 }
 
