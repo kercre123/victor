@@ -248,6 +248,11 @@ namespace Anki {
            */
         }
       }
+      
+      void HandleRobotDeletedObject(G2U_RobotDeletedObject const& msg)
+      {
+        printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
+      }
 
       void HandleRobotConnection(const G2U_RobotAvailable& msgIn)
       {
@@ -352,6 +357,7 @@ namespace Anki {
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
+        // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
             case G2U_Message::Type::RobotObservedObject:
@@ -365,6 +371,9 @@ namespace Anki {
               break;
             case G2U_Message::Type::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
+              break;
+            case G2U_Message::Type::RobotDeletedObject:
+              HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
               // ignore
