@@ -5,20 +5,26 @@ using Anki.Cozmo;
 
 public class ObservedObject
 {
+	public uint RobotID { get; private set; }
+	public uint Family { get; private set; }
+	public uint ObjectType { get; private set; }
 	public int ID { get; private set; }
-	public float height { get; private set; }
-	public float width { get; private set; }
-	public float topLeft_x { get; private set; }
-	public float topLeft_y { get; private set; }
+	public Rect VizRect { get; private set; }
+	public Vector3 WorldPosition { get; private set; }
+	public Quaternion Rotation { get; private set; }
 
 	public void UpdateInfo( G2U_RobotObservedObject message )
 	{
+		RobotID = message.robotID;
+		Family = message.objectFamily;
+		ObjectType = message.objectType;
 		ID = message.objectID;
-		height = message.height;
-		width = message.width;
-		topLeft_x = message.topLeft_x;
-		topLeft_y = message.topLeft_y;
-		//message.objectFamily;
-		//message.objectType;
+		VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
+
+		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
+		WorldPosition = new Vector3(message.world_x, message.world_y, message.world_z);
+
+		//stubbing in rot until we have it sent over
+		Rotation = Quaternion.identity;
 	}
 }

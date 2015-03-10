@@ -11,10 +11,12 @@ public class Robot
 	public float leftWheelSpeed_mmps { get; private set; }
 	public float rightWheelSpeed_mmps { get; private set; }
 	public float liftHeight_mm { get; private set; }
-	public float pose_x { get; private set; }
-	public float pose_y { get; private set; }
-	public float pose_z { get; private set; }
+
+	public Vector3 WorldPosition { get; private set; }
+	public Quaternion Rotation { get; private set; }
+
 	public float batteryPercent { get; private set; }
+	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
@@ -50,11 +52,13 @@ public class Robot
 		leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
 		rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
 		liftHeight_mm = message.liftHeight_mm;
-		pose_x = message.pose_x;
-		pose_y = message.pose_y;
-		pose_z = message.pose_z;
+		WorldPosition = new Vector3(message.pose_x, message.pose_y,	message.pose_z);
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
+		carryingObjectID = message.carryingObjectID;
+
+		//stubbing in rot until we have it sent over
+		Rotation = Quaternion.identity;
 
 		if( status != lastStatus )
 		{

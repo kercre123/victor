@@ -38,11 +38,41 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	private void Awake() {
+	private void Awake()
+	{
 		rTrans = transform as RectTransform;
 	}
 
-	protected void RobotImage( Texture2D texture )
+	protected void SetActionButtons()
+	{
+		robot = RobotEngineManager.instance.current;
+
+		for( int i = 0; i < actionButtons.Length; ++i )
+		{
+			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
+			
+			if( i == 0 )
+			{
+				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+				{
+					if( robot.selectedObject > -1 )
+					{
+						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+					}
+					else
+					{
+						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
+					}
+				}
+				else
+				{
+					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
+				}
+			}
+		}
+	}
+
+	private void RobotImage( Texture2D texture )
 	{
 		if( rect.height != texture.height || rect.width != texture.width )
 		{
@@ -61,7 +91,15 @@ public class CozmoVision : MonoBehaviour
 			button.interactable = false;
 		}
 	}
-	
+
+	public void ForceDropBox()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.SetRobotCarryingObject();
+		}
+	}
+
 	public void Action()
 	{
 		Debug.Log( "Action" );
@@ -102,17 +140,18 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected void OnEnable()
+	private void OnEnable()
 	{
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
 		}
 
+		RequestImage();
 		ResizeToScreen();
 	}
 
-	protected void OnDisable()
+	private void OnDisable()
 	{
 		if( RobotEngineManager.instance != null )
 		{
@@ -120,10 +159,14 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	private void ResizeToScreen() {
-		if(rTrans == null) return;
+	private void ResizeToScreen()
+	{
+		if( rTrans == null )
+		{
+			return;
+		}
 
-		float scale = (Screen.width * 0.5f) / 320f;
+		float scale = ( Screen.width * 0.5f ) / 320f;
 		rTrans.localScale = Vector3.one * scale;
 	}
 }

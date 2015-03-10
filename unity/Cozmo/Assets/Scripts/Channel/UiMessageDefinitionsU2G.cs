@@ -710,6 +710,66 @@ public class U2G_SetHeadAngle
 	}
 }
 
+public class U2G_TrackHeadToObject
+{
+	public uint objectID;
+	public byte robotID;
+
+	/**** Constructors ****/
+
+	public U2G_TrackHeadToObject()
+	{
+	}
+
+	public U2G_TrackHeadToObject(uint objectID,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		this.robotID = robotID;
+	}
+
+	public U2G_TrackHeadToObject(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)objectID);
+		writer.Write((byte)robotID);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//objectID
+			result += 4; // = uint_32
+			//robotID
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class U2G_StopAllMotors
 {
 
@@ -2592,40 +2652,41 @@ public class U2G_Message {
 		MoveLift,	//9
 		SetLiftHeight,	//10
 		SetHeadAngle,	//11
-		StopAllMotors,	//12
-		ImageRequest,	//13
-		SetRobotImageSendMode,	//14
-		SaveImages,	//15
-		EnableDisplay,	//16
-		SetHeadlights,	//17
-		GotoPose,	//18
-		PlaceObjectOnGround,	//19
-		PlaceObjectOnGroundHere,	//20
-		ExecuteTestPlan,	//21
-		SelectNextObject,	//22
-		PickAndPlaceObject,	//23
-		TraverseObject,	//24
-		SetRobotCarryingObject,	//25
-		ClearAllBlocks,	//26
-		ExecuteBehavior,	//27
-		SetBehaviorState,	//28
-		AbortPath,	//29
-		AbortAll,	//30
-		DrawPoseMarker,	//31
-		ErasePoseMarker,	//32
-		SetHeadControllerGains,	//33
-		SetLiftControllerGains,	//34
-		SelectNextSoundScheme,	//35
-		StartTestMode,	//36
-		IMURequest,	//37
-		PlayAnimation,	//38
-		ReadAnimationFile,	//39
-		StartFaceTracking,	//40
-		StopFaceTracking,	//41
-		StartLookingForMarkers,	//42
-		StopLookingForMarkers,	//43
-		SetVisionSystemParams,	//44
-		SetFaceDetectParams,	//45
+		TrackHeadToObject,	//12
+		StopAllMotors,	//13
+		ImageRequest,	//14
+		SetRobotImageSendMode,	//15
+		SaveImages,	//16
+		EnableDisplay,	//17
+		SetHeadlights,	//18
+		GotoPose,	//19
+		PlaceObjectOnGround,	//20
+		PlaceObjectOnGroundHere,	//21
+		ExecuteTestPlan,	//22
+		SelectNextObject,	//23
+		PickAndPlaceObject,	//24
+		TraverseObject,	//25
+		SetRobotCarryingObject,	//26
+		ClearAllBlocks,	//27
+		ExecuteBehavior,	//28
+		SetBehaviorState,	//29
+		AbortPath,	//30
+		AbortAll,	//31
+		DrawPoseMarker,	//32
+		ErasePoseMarker,	//33
+		SetHeadControllerGains,	//34
+		SetLiftControllerGains,	//35
+		SelectNextSoundScheme,	//36
+		StartTestMode,	//37
+		IMURequest,	//38
+		PlayAnimation,	//39
+		ReadAnimationFile,	//40
+		StartFaceTracking,	//41
+		StopFaceTracking,	//42
+		StartLookingForMarkers,	//43
+		StopLookingForMarkers,	//44
+		SetVisionSystemParams,	//45
+		SetFaceDetectParams,	//46
 		INVALID
 	};
 
@@ -2835,6 +2896,23 @@ public class U2G_Message {
 		
 		set {
 			_tag = (value != null) ? Tag.SetHeadAngle : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public U2G_TrackHeadToObject TrackHeadToObject
+	{
+		get {
+			if (_tag != Tag.TrackHeadToObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"TrackHeadToObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_TrackHeadToObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.TrackHeadToObject : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -3459,6 +3537,9 @@ public class U2G_Message {
 		case Tag.SetHeadAngle:
 			_state = new U2G_SetHeadAngle(stream);
 			break;
+		case Tag.TrackHeadToObject:
+			_state = new U2G_TrackHeadToObject(stream);
+			break;
 		case Tag.StopAllMotors:
 			_state = new U2G_StopAllMotors(stream);
 			break;
@@ -3609,6 +3690,9 @@ public class U2G_Message {
 		case Tag.SetHeadAngle:
 			SetHeadAngle.Pack(stream);
 			break;
+		case Tag.TrackHeadToObject:
+			TrackHeadToObject.Pack(stream);
+			break;
 		case Tag.StopAllMotors:
 			StopAllMotors.Pack(stream);
 			break;
@@ -3757,6 +3841,9 @@ public class U2G_Message {
 				break;
 			case Tag.SetHeadAngle:
 				result += SetHeadAngle.Size;
+				break;
+			case Tag.TrackHeadToObject:
+				result += TrackHeadToObject.Size;
 				break;
 			case Tag.StopAllMotors:
 				result += StopAllMotors.Size;

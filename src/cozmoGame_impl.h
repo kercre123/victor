@@ -136,6 +136,7 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_MoveLift)
     REGISTER_CALLBACK(U2G_SetLiftHeight)
     REGISTER_CALLBACK(U2G_SetHeadAngle)
+    REGISTER_CALLBACK(U2G_TrackHeadToObject)
     REGISTER_CALLBACK(U2G_StopAllMotors)
     REGISTER_CALLBACK(U2G_ImageRequest)
     REGISTER_CALLBACK(U2G_SetRobotImageSendMode)
