@@ -41,17 +41,15 @@ public class SlalomController : GameController {
 		get { 
 			if(obstacles == null) return null;
 
-			int nextIndex;
+			int nextIndex = 0;
 			if(forward) {
 				nextIndex = currentObstacleIndex + 1;
 				if(nextIndex >= obstacles.Count) {
 					if(thereAndBackAgain) {
-						forward = false;
 						nextIndex = obstacles.Count-2;
 					}
-					else {
+					else {//loop
 						nextIndex = 0;
-						if(!endless) courseCompleted = true;
 					}
 				}
 			}
@@ -59,12 +57,9 @@ public class SlalomController : GameController {
 				nextIndex = currentObstacleIndex - 1;
 				if(nextIndex < 0) {
 					if(thereAndBackAgain) {
-
-						forward = true;
 						nextIndex = 1;
-						if(!endless) courseCompleted = true;
 					}
-					else {
+					else {//loop
 						nextIndex = obstacles.Count-1;
 					}
 				}
@@ -152,11 +147,13 @@ public class SlalomController : GameController {
 				else {
 					//design query: crossed between obstacles in the wrong direction?
 					//scores[0]--;
+					Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") crossed between obstacles in the wrong direction currentPassClockwise("+currentPassClockwise+")");
 				}
 			}
 		}
 		else {
 			//todo: single obstacle mode just records laps
+			Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") multiObstacle("+multiObstacle+") currentPassClockwise("+currentPassClockwise+")");
 		}
 
 		lastRobotPos = cozPos;
@@ -210,12 +207,14 @@ public class SlalomController : GameController {
 		if(forward) {
 			currentObstacleIndex++;
 			if(currentObstacleIndex >= obstacles.Count) {
+
 				if(thereAndBackAgain) {
 					forward = false;
 					currentObstacleIndex = obstacles.Count-2;
 				}
-				else if(endless) {
+				else {//looping course
 					currentObstacleIndex = 0;
+					if(!endless) courseCompleted = true;
 				}
 			}
 		}
@@ -226,13 +225,18 @@ public class SlalomController : GameController {
 					forward = true;
 					currentObstacleIndex = 1;
 				}
-				else {
+				else {//looping course
 					currentObstacleIndex = obstacles.Count-1;
 				}
+
+				//nonEndless thereAndBackAgain ends when it gets back passed the first obstacle again
+				if(!endless) courseCompleted = true;
 			}
 		}
 
 		currentPassClockwise = !currentPassClockwise;
+
+		Debug.Log("NextObstacle scores[0]("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+")");
 	}
 
 }
