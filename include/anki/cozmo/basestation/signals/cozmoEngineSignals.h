@@ -24,6 +24,7 @@ namespace Anki {
       // 1. Initial include just defines the definition modes for use below
       #include "anki/cozmo/basestation/signals/cozmoEngineSignals.def"
     
+      #undef SIGNAL_CLASS_NAME
       #define SIGNAL_CLASS_NAME CozmoEngineSignals
       
       // 2. Define all the signal types

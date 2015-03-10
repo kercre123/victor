@@ -99,8 +99,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define USE_M4_HOST_INTRINSICS 1
 #endif
 
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-
 #endif // #if defined(__APPLE_CC__)
 
 #if defined(__GNUC__) // GCC
