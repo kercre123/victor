@@ -728,7 +728,9 @@ case U2G_Message::Type::__MSG_TYPE__: \
     Robot* robot = GetRobotByID(hostRobotID);
     
     if(robot != nullptr) {
-      robot->SetBlockLights(msg.objectID, msg.ledColors, msg.onPeriod_ms, msg.offPeriod_ms);
+      ObjectID whichObject;
+      whichObject = msg.objectID;
+      robot->SetObjectLights(whichObject, msg.ledColors, msg.onPeriod_ms, msg.offPeriod_ms);
     }
   }
   

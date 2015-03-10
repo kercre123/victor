@@ -949,6 +949,7 @@ namespace Anki {
               {
                 if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
                 {
+                  printf("Cycling active block color\n");
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
                   const u32 colorList[NUM_COLORS] = {0xFF0000, 0x00FF00, 0x0000FF, 0}; // R, G, B, off
@@ -1516,13 +1517,14 @@ namespace Anki {
             ProcessKeystroke();
             ProcessJoystick();
             
+            /*
             // DEBUG!!!!!
             U2G_SetRobotCarryingObject m;
             m.objectID = 500;
             m.robotID = 1;
             message.Set_SetRobotCarryingObject(m);
             SendMessage(message);
-            
+            */
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;
           }
