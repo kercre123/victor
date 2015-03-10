@@ -38,7 +38,6 @@ namespace Anki {
     // Pairing of a pose and the match which implies it
     using PoseMatchPair = std::pair<Pose3d, MarkerMatch>;
     
-    
     class ObservableObject
     {
     public:
@@ -79,6 +78,10 @@ namespace Anki {
       // other object. If the other object is not the same type, RESULT_FAIL
       // is returned.
       Result UpdateMarkerObservationTimes(const ObservableObject& otherObject);
+      
+      
+      // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
+      virtual bool IsActive() const { return false; }
       
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this

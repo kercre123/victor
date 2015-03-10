@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <vector>
+#include <set>
 
 // Our Includes
 #include "anki/common/robot/errorHandling.h"
@@ -357,16 +358,26 @@ namespace Anki {
       webots::Field* rootChildren = root->getField("children");
       int numRootChildren = rootChildren->getCount();
       
+      // For making sure there aren't too active blocks with the same ID
+      std::set<s32> uniqueActiveIDs;
+      
       for (s32 n = 0 ; n<numRootChildren; ++n) {
 
         // Check for nodes that have a 'blockColor' and 'active' field
         webots::Node* nd = rootChildren->getMFNode(n);
         webots::Field* blockColorField = nd->getField("blockColor");
         webots::Field* activeField = nd->getField("active");
-        if (blockColorField && activeField) {
+        webots::Field* activeIdField = nd->getField("activeID");
+        if (blockColorField && activeField && activeIdField) {
           if (activeField->getSFBool()) {
-            printf("Found active block %d\n", n);
-            blockIDs_.push_back(n);
+            const s32 activeID = activeIdField->getSFInt32();
+            printf("Found active block %d\n", activeID);
+            if(uniqueActiveIDs.count(activeID) > 0) {
+              printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);
+            } else {
+              blockIDs_.push_back(activeID);
+              uniqueActiveIDs.insert(activeID);
+            }
             continue;
           }
         }
@@ -941,11 +952,13 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color) {
-      
+    Result HAL::SetBlockLight(const u8 blockID, const u32* color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
         m.color[i] = color[i];
+        m.onPeriod_ms[i] = onPeriod_ms;
+        m.offPeriod_ms[i] = offPeriod_ms;
       }
       
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);

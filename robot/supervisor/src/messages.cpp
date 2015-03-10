@@ -797,7 +797,7 @@ namespace Anki {
       
       void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.color);
+        HAL::SetBlockLight(msg.blockID, msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
       }
       
 // ----------- Send messages -----------------

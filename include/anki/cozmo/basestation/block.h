@@ -182,6 +182,7 @@ namespace Anki {
         std::string          name;
         ColorRGBA            color;
         Point3f              size;
+        bool                 isActive;
         std::vector<BlockFaceDef_t> faces;
       } BlockInfoTableEntry_t;
       
@@ -278,6 +279,48 @@ namespace Anki {
       }
       
     };
+    
+    
+    
+    class ActiveCube : public Block
+    {
+    public:
+      
+      ActiveCube(Type type) : ActiveCube(static_cast<ObjectType>(type)) { }
+      
+      virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
+      
+      virtual ActiveCube* CloneType() const override {
+        return new ActiveCube(this->_type);
+      }
+      
+      // Example means of specifying common patterns of LEDs
+      enum class WhichLEDs : u8 {
+        NONE        = 0x00,
+        ALL         = 0xFF,
+        TOP_FOUR    = 0xF0,
+        BOTTOM_FOUR = 0x0F
+      };
+      
+      // Set the color of one or more LEDs on the block
+      // NOTE: Alpha is ignored.
+      void SetLightColor(const WhichLEDs whichLEDs, const ColorRGBA& color);
+      
+      // Set the flashing frequencyof one or more LEDs on the block
+      void SetFlashing(const WhichLEDs whichLEDs, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      
+      // Trigger a brief change in flash/color to allow identification of this block
+      // (Possibly actually flash out the block's ID? TBD...)
+      void Identify();
+      
+      virtual bool IsActive() const override { return true; } // From ActionableObject
+      
+    protected:
+      ActiveCube(ObjectType type);
+      
+    }; // class ActiveCube
+    
+
 #pragma mark --- Inline Accessors Implementations ---
     
        

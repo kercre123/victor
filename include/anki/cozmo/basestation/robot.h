@@ -39,6 +39,8 @@
 #include "anki/planning/shared/path.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
@@ -400,8 +402,14 @@ namespace Anki {
      
       
       // =========  Block messages  ============
-      // color: The desired colors of each LED ordered by BlockLEDPosition
-      Result SetBlockLights(const u8 blockID, const u32* color);
+      // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
+      Result SetBlockLights(const u8 blockID,
+                            const std::array<u32,NUM_BLOCK_LEDS>& color,
+                            const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                            const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms);
+      
+      // Set all LEDs of the specified block to the same color/flashrate
+      Result SetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }
@@ -648,7 +656,7 @@ namespace Anki {
       
       // =========  Block messages  ============
       Result SendFlashBlockIDs();
-      Result SendSetBlockLights(const u8 blockID, const u32* color);
+      Result SendSetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
       void ActiveBlockLightTest(const u8 blockID);  // For testing
       
       

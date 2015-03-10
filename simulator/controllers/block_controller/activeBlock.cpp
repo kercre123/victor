@@ -96,6 +96,8 @@ namespace Anki {
       {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           ledParams_[i].color = msg.color[i];
+          ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
+          ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
         }
       }
       
@@ -204,11 +206,26 @@ namespace Anki {
         return fp;
       }
       
-      void ApplyLEDParams() {
+      void ApplyLEDParams(TimeStamp_t currentTime) {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          led_[ ledPositionToIdx_[GetOrientation()][i] ]->set(ledParams_[i].color);
-        }
-      }
+          if(currentTime > ledParams_[i].nextSwitchTime) {
+
+            const u8 ledIndex = ledPositionToIdx_[GetOrientation()][i];
+            
+            if(ledParams_[i].isOn) {
+              // Time to turn off
+              led_[ledIndex]->set(0x0);
+              ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
+              ledParams_[i].isOn = false;
+            } else {
+              // Time to turn on
+              led_[ledIndex]->set(ledParams_[i].color);
+              ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
+              ledParams_[i].isOn = true;
+            }
+          }
+        } // for each LED
+      } // ApplyLEDParams()
       
       void SetLED(BlockLEDPosition p, u32 color) {
         led_[ ledPositionToIdx_[GetOrientation()][p] ]->set(color);
@@ -265,7 +282,7 @@ namespace Anki {
           switch(state_) {
             case NORMAL:
               // Apply ledParams
-              ApplyLEDParams();
+              ApplyLEDParams(static_cast<TimeStamp_t>(currTime*1000));
               break;
             case FLASHING_ID:
               if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {

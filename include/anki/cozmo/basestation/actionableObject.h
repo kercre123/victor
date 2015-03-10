@@ -25,6 +25,17 @@
 namespace Anki {
   namespace Cozmo {
     
+    // TODO: Move to separate file
+    class ActiveLED
+    {
+    public:
+      ActiveLED();
+      
+    private:
+      ColorRGBA _currentColor;
+      
+    };
+    
     class ActionableObject : public Vision::ObservableObject
     {
     public:
@@ -65,6 +76,9 @@ namespace Anki {
       bool IsSelected() const;
       void SetSelected(const bool tf);
       
+      // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
+      std::list<ActiveLED> const& GetLEDs() const { return _activeLEDs; }
+      
     protected:
 
       // Wrappers for each of the PreActionPose constructors:
@@ -92,6 +106,9 @@ namespace Anki {
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
                                         const Pose3d* reachableFromPose) const;
       
+      // TODO: Define a method for adding LEDs to active objects
+      //void AddActiveLED(const Pose3d& poseWrtObject);
+      
     private:
       
       std::vector<PreActionPose> _preActionPoses;
@@ -100,6 +117,8 @@ namespace Anki {
       
       bool _isBeingCarried;
       bool _isSelected;
+      
+      std::list<ActiveLED> _activeLEDs;
       
     }; // class ActionableObject
     

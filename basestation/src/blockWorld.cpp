@@ -54,6 +54,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
     
     // Instantiating an object family increments the unique counter:
@@ -76,7 +77,7 @@ namespace Anki
       
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
       
@@ -105,6 +106,11 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
+      
+      //////////////////////////////////////////////////////////////////////////
+      // 1x1 Cubes
+      //
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -376,7 +382,8 @@ namespace Anki
                                                              boundingBox.GetHeight(),
                                                              obsObjTrans.x(),
                                                              obsObjTrans.y(),
-                                                             obsObjTrans.z());
+                                                             obsObjTrans.z(),
+                                                             observedObject->IsActive());
         
         if(_robot->GetTrackHeadToObject().IsSet() && obsID == _robot->GetTrackHeadToObject())
         {
@@ -1146,6 +1153,12 @@ namespace Anki
         //
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp);
+        
+        //
+        // Find any observed active blocks from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp);
         
         //
         // Find any observed ramps from the remaining markers

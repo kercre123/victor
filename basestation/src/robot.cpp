@@ -27,8 +27,6 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/shared/activeBlockTypes.h"
-
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -2310,9 +2308,9 @@ namespace Anki {
     }
     
       
-    Result Robot::SetBlockLights(const u8 blockID, const u32* color)
+    Result Robot::SetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
-      return SendSetBlockLights(blockID, color);
+      return SendSetBlockLights(blockID, color, onPeriod_ms, offPeriod_ms);
     }
       
       
@@ -2382,12 +2380,30 @@ namespace Anki {
       MessageFlashBlockIDs m;
       return _msgHandler->SendMessage(GetID(), m);
     }
-      
-    Result Robot::SendSetBlockLights(const u8 blockID, const u32* color)
+     
+      /*
+    Result Robot::SendSetBlockLights(const u8 blockID,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& color,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms)
     {
       MessageSetBlockLights m;
       m.blockID = blockID;
-      std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
+      m.color = color;
+      m.onPeriod_ms = onPeriod_ms;
+      m.offPeriod_ms = offPeriod_ms;
+
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+       */
+      
+    Result Robot::SendSetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    {
+      MessageSetBlockLights m;
+      m.blockID = blockID;
+      m.color.fill(color);
+      m.onPeriod_ms = onPeriod_ms;
+      m.offPeriod_ms = offPeriod_ms;
       return _msgHandler->SendMessage(GetID(), m);
     }
     

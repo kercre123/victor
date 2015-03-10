@@ -51,6 +51,10 @@ namespace Anki {
     // TODO: This will expand as we want the lights to do fancier things
     typedef struct {
       u32 color;
+      u32 onPeriod_ms;
+      u32 offPeriod_ms;
+      TimeStamp_t nextSwitchTime; // for changing state when flashing
+      bool        isOn;
     } LEDParams;
 
     

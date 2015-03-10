@@ -553,5 +553,7 @@ END_MESSAGE_DEFINITION(FlashBlockIDs)
 // SetBlockLights
 START_MESSAGE_DEFINITION(SetBlockLights, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u32, color, 8)
+ADD_MESSAGE_MEMBER(u32, onPeriod_ms)  // TODO: make per-LED
+ADD_MESSAGE_MEMBER(u32, offPeriod_ms) // TODO: make per-LED
 ADD_MESSAGE_MEMBER(u8, blockID)
 END_MESSAGE_DEFINITION(SetBlockLights)

@@ -419,7 +419,11 @@ namespace Anki
       // BLOCK COMMS
       //
       void FlashBlockIDs();
-      Result SetBlockLight(const u8 blockID, const u32* color);
+      
+      // Set all LEDs of the specified block to the same color and flash rate
+      Result SetBlockLight(const u8 blockID, const u32* color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      
+      // TODO: Add API to specify colors/flashrates of individual LEDs on a block?
       
       
       /////////////////////////////////////////////////////////////////////

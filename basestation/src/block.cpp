@@ -439,6 +439,39 @@ namespace Anki {
       return RotationAmbiguities;
     }
 
+#pragma mark ---  ActiveCube Implementation ---
     
+    std::vector<RotationMatrix3d> const& ActiveCube::GetRotationAmbiguities() const
+    {
+      // TODO: Adjust if/when active blocks aren't fully ambiguous
+      static const std::vector<RotationMatrix3d> RotationAmbiguities = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+      
+      return RotationAmbiguities;
+    }
+    
+    ActiveCube::ActiveCube(ObjectType type)
+    : Block(type)
+    {
+      /*
+      // For now, assume 6 different markers, so we can avoid rotation ambiguities
+      // Verify that here by making sure a set of markers has as many elements
+      // as the original list:
+      std::list<Vision::KnownMarker> const& markerList = GetMarkers();
+      std::set<Vision::Marker::Code> uniqueCodes;
+      for(auto & marker : markerList) {
+        uniqueCodes.insert(marker.GetCode());
+      }
+      CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
+       */
+    }
+  
+  
   } // namespace Cozmo
 } // namespace Anki
