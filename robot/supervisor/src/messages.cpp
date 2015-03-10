@@ -278,7 +278,7 @@ namespace Anki {
         
         // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
         if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
-          printf("WARN: Disconnecting radio due to ping timeout\n");
+          PRINT("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
         }
         
