@@ -523,7 +523,8 @@ namespace Anki {
 
     
     // Flashes a pattern on an active block
-    void Robot::ActiveBlockLightTest(const u8 blockID) {
+    void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
+      /*
       static int p=0;
       static int currFrame = 0;
       const u32 onColor = 0x00ff00;
@@ -548,6 +549,7 @@ namespace Anki {
         
         p = 0;
       }
+       */
     }
     
     
@@ -2308,9 +2310,9 @@ namespace Anki {
     }
     
       
-    Result Robot::SetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    Result Robot::SetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
-      return SendSetBlockLights(blockID, color, onPeriod_ms, offPeriod_ms);
+      return SendSetObjectLights(objectID, color, onPeriod_ms, offPeriod_ms);
     }
       
       
@@ -2375,7 +2377,7 @@ namespace Anki {
     }
  
       
-    Result Robot::SendFlashBlockIDs()
+    Result Robot::SendFlashObjectIDs()
     {
       MessageFlashBlockIDs m;
       return _msgHandler->SendMessage(GetID(), m);
@@ -2397,10 +2399,34 @@ namespace Anki {
     }
        */
       
-    Result Robot::SendSetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 color,
+                                      const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
+      // Need to determing the blockID (meaning its internal "active" ID) from the
+      // objectID known to the robot / UI
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(objectID);
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d does not appear to be an active object.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      if(!object->IsIdentified()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d is active but has not been identified.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
+      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d could not be cast to an ActiveCube.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
       MessageSetBlockLights m;
-      m.blockID = blockID;
+      m.blockID = activeCube->GetActiveID();
       m.color.fill(color);
       m.onPeriod_ms = onPeriod_ms;
       m.offPeriod_ms = offPeriod_ms;

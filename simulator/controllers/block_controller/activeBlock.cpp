@@ -109,22 +109,13 @@ namespace Anki {
       s32 GetBlockID() {
         webots::Node* selfNode = block_controller.getSelf();
         
-        // Get world root node
-        webots::Node* root = block_controller.getRoot();
-        
-        // Look for the index of selfNode within the root's children
-        webots::Field* rootChildren = root->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        
-        for (s32 n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          
-          if (nd == selfNode) {
-            return n;
-          }
+        webots::Field* activeIdField = selfNode->getField("activeID");
+        if(activeIdField) {
+          return activeIdField->getSFInt32();
+        } else {
+          printf("Missing activeID field in active block.\n");
+          return -1;
         }
-        
-        return -1;
       }
 
       

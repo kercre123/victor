@@ -458,6 +458,7 @@ namespace Anki {
     
     ActiveCube::ActiveCube(ObjectType type)
     : Block(type)
+    , _activeID(-1)
     {
       /*
       // For now, assume 6 different markers, so we can avoid rotation ambiguities
@@ -472,6 +473,11 @@ namespace Anki {
        */
     }
   
-  
+    void ActiveCube::Identify()
+    {
+      // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
+      _activeID = 1;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

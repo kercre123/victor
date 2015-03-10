@@ -311,12 +311,17 @@ namespace Anki {
       
       // Trigger a brief change in flash/color to allow identification of this block
       // (Possibly actually flash out the block's ID? TBD...)
-      void Identify();
+      virtual void Identify() override;
+      virtual bool IsIdentified() const override { return _activeID >= 0; }
       
-      virtual bool IsActive() const override { return true; } // From ActionableObject
+      virtual bool IsActive() const override { return true; }
+      
+      virtual s32 GetActiveID() const override { return _activeID; }
       
     protected:
       ActiveCube(ObjectType type);
+      
+      s32 _activeID;
       
     }; // class ActiveCube
     

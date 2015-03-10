@@ -112,7 +112,7 @@ namespace Anki {
       TimeStamp_t flashStartTime_ = 0;
       
       // List of all blockIDs
-      std::vector<u8> blockIDs_;
+      std::set<s32> blockIDs_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -190,15 +190,18 @@ namespace Anki {
         liftMotor_->setVelocity(rad_per_sec);
       }
       
-      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer) {
+      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
+      {
         
         // Check that blockID is valid
-        if (blockID >= blockIDs_.size()) {
+        //if (blockID >= blockIDs_.size()) {
+        if (blockIDs_.count(blockID) == 0) {
+          PRINT("***ERROR (SendBlockMessage): Unknown active block ID %d\n", blockID);
           return RESULT_FAIL;
         }
         
         // Set channel
-        blockCommsEmitter_->setChannel( blockIDs_[blockID] );
+        blockCommsEmitter_->setChannel( blockID );
         
         // Prepend msgID to buffer
         u16 msgSize = BlockMessages::GetSize(msgID);
@@ -358,9 +361,6 @@ namespace Anki {
       webots::Field* rootChildren = root->getField("children");
       int numRootChildren = rootChildren->getCount();
       
-      // For making sure there aren't too active blocks with the same ID
-      std::set<s32> uniqueActiveIDs;
-      
       for (s32 n = 0 ; n<numRootChildren; ++n) {
 
         // Check for nodes that have a 'blockColor' and 'active' field
@@ -371,12 +371,12 @@ namespace Anki {
         if (blockColorField && activeField && activeIdField) {
           if (activeField->getSFBool()) {
             const s32 activeID = activeIdField->getSFInt32();
-            printf("Found active block %d\n", activeID);
-            if(uniqueActiveIDs.count(activeID) > 0) {
+            
+            if(blockIDs_.count(activeID) > 0) {
               printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);
             } else {
-              blockIDs_.push_back(activeID);
-              uniqueActiveIDs.insert(activeID);
+              printf("Found active block %d\n", activeID);
+              blockIDs_.insert(activeID);
             }
             continue;
           }

@@ -403,13 +403,13 @@ namespace Anki {
       
       // =========  Block messages  ============
       // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
-      Result SetBlockLights(const u8 blockID,
+      Result SetObjectLights(const ObjectID& objectID,
                             const std::array<u32,NUM_BLOCK_LEDS>& color,
                             const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
                             const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms);
       
       // Set all LEDs of the specified block to the same color/flashrate
-      Result SetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      Result SetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }
@@ -654,10 +654,10 @@ namespace Anki {
       Result SendAbortAnimation();
 
       
-      // =========  Block messages  ============
-      Result SendFlashBlockIDs();
-      Result SendSetBlockLights(const u8 blockID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
-      void ActiveBlockLightTest(const u8 blockID);  // For testing
+      // =========  Active Object messages  ============
+      Result SendFlashObjectIDs();
+      Result SendSetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
       
       
     }; // class Robot

@@ -370,6 +370,13 @@ namespace Anki
         //_obsProjectedObjects.emplace_back(obsID, boundingBox);
         _currentObservedObjectIDs.push_back(obsID);
         
+        // If this is an active object and has not been identified yet, identify
+        // it now.
+        if(observedObject->IsActive() && !observedObject->IsIdentified()) {
+          // TODO: Need to do more here probably...
+          observedObject->Identify();
+        }
+        
         // Signal the observation of this object, with its bounding box:
         const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
