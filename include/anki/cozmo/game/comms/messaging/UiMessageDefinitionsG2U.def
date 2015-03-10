@@ -1007,6 +1007,88 @@ struct G2U_RobotObservedNothing
 	}
 };
 
+struct G2U_RobotDeletedObject
+{
+	uint32_t robotID;
+	uint32_t objectID;
+
+	/**** Constructors ****/
+	G2U_RobotDeletedObject() = default;
+	G2U_RobotDeletedObject(const G2U_RobotDeletedObject& other) = default;
+	G2U_RobotDeletedObject(G2U_RobotDeletedObject& other) = default;
+	G2U_RobotDeletedObject(G2U_RobotDeletedObject&& other) noexcept = default;
+	G2U_RobotDeletedObject& operator=(const G2U_RobotDeletedObject& other) = default;
+	G2U_RobotDeletedObject& operator=(G2U_RobotDeletedObject&& other) noexcept = default;
+
+	explicit G2U_RobotDeletedObject(uint32_t robotID
+		,uint32_t objectID)
+	:robotID(robotID)
+	,objectID(objectID)
+	{}
+	explicit G2U_RobotDeletedObject(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit G2U_RobotDeletedObject(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->robotID);
+		buffer.Write(this->objectID);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->robotID);
+		buffer.Read(this->objectID);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//robotID
+		result += 4; // = uint_32
+		//objectID
+		result += 4; // = uint_32
+		return result;
+	}
+
+	bool operator==(const G2U_RobotDeletedObject& other) const
+	{
+		if (robotID != other.robotID
+		|| objectID != other.objectID) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const G2U_RobotDeletedObject& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 struct G2U_DeviceDetectedVisionMarker
 {
 	uint32_t markerType;
@@ -1490,11 +1572,12 @@ public:
 		ImageChunk,	// 7
 		RobotObservedObject,	// 8
 		RobotObservedNothing,	// 9
-		DeviceDetectedVisionMarker,	// 10
-		RobotCompletedPickAndPlaceAction,	// 11
-		RobotCompletedPlaceObjectOnGroundAction,	// 12
-		PlaySound,	// 13
-		StopSound,	// 14
+		RobotDeletedObject,	// 10
+		DeviceDetectedVisionMarker,	// 11
+		RobotCompletedPickAndPlaceAction,	// 12
+		RobotCompletedPlaceObjectOnGroundAction,	// 13
+		PlaySound,	// 14
+		StopSound,	// 15
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -1519,6 +1602,8 @@ public:
 			return "RobotObservedObject";
 		case Type::RobotObservedNothing:
 			return "RobotObservedNothing";
+		case Type::RobotDeletedObject:
+			return "RobotDeletedObject";
 		case Type::DeviceDetectedVisionMarker:
 			return "DeviceDetectedVisionMarker";
 		case Type::RobotCompletedPickAndPlaceAction:
@@ -1825,6 +1910,35 @@ public:
 		}
 	}
 
+	/** RobotDeletedObject **/
+	const G2U_RobotDeletedObject& Get_RobotDeletedObject() const
+	{
+		assert(_type == Type::RobotDeletedObject);
+		return _RobotDeletedObject;
+	}
+	void Set_RobotDeletedObject(const G2U_RobotDeletedObject& new_RobotDeletedObject)
+	{
+		if(this->_type == Type::RobotDeletedObject) {
+			_RobotDeletedObject = new_RobotDeletedObject;
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotDeletedObject) G2U_RobotDeletedObject{new_RobotDeletedObject};
+			_type = Type::RobotDeletedObject;
+		}
+	}
+	void Set_RobotDeletedObject(G2U_RobotDeletedObject&&  new_RobotDeletedObject)
+	{
+		if(this->_type == Type::RobotDeletedObject) {
+			_RobotDeletedObject = std::move(new_RobotDeletedObject);
+		}
+		else {
+			ClearCurrent();
+			new(&_RobotDeletedObject) G2U_RobotDeletedObject{std::move(new_RobotDeletedObject)};
+			_type = Type::RobotDeletedObject;
+		}
+	}
+
 	/** DeviceDetectedVisionMarker **/
 	const G2U_DeviceDetectedVisionMarker& Get_DeviceDetectedVisionMarker() const
 	{
@@ -2065,6 +2179,14 @@ public:
 			this->_RobotObservedNothing.Unpack(buffer);
 			}
 			break;
+		case Type::RobotDeletedObject:
+			if (newType != oldType) {
+				new(&(this->_RobotDeletedObject)) G2U_RobotDeletedObject(buffer);
+			}
+			else {
+			this->_RobotDeletedObject.Unpack(buffer);
+			}
+			break;
 		case Type::DeviceDetectedVisionMarker:
 			if (newType != oldType) {
 				new(&(this->_DeviceDetectedVisionMarker)) G2U_DeviceDetectedVisionMarker(buffer);
@@ -2153,6 +2275,9 @@ public:
 		case Type::RobotObservedNothing:
 			this->_RobotObservedNothing.Pack(buffer);
 			break;
+		case Type::RobotDeletedObject:
+			this->_RobotDeletedObject.Pack(buffer);
+			break;
 		case Type::DeviceDetectedVisionMarker:
 			this->_DeviceDetectedVisionMarker.Pack(buffer);
 			break;
@@ -2210,6 +2335,9 @@ public:
 		case Type::RobotObservedNothing:
 			result += _RobotObservedNothing.Size();
 			break;
+		case Type::RobotDeletedObject:
+			result += _RobotDeletedObject.Size();
+			break;
 		case Type::DeviceDetectedVisionMarker:
 			result += _DeviceDetectedVisionMarker.Size();
 			break;
@@ -2264,6 +2392,9 @@ private:
 		case Type::RobotObservedNothing:
 			_RobotObservedNothing.~G2U_RobotObservedNothing();
 			break;
+		case Type::RobotDeletedObject:
+			_RobotDeletedObject.~G2U_RobotDeletedObject();
+			break;
 		case Type::DeviceDetectedVisionMarker:
 			_DeviceDetectedVisionMarker.~G2U_DeviceDetectedVisionMarker();
 			break;
@@ -2297,6 +2428,7 @@ private:
 		G2U_ImageChunk _ImageChunk;
 		G2U_RobotObservedObject _RobotObservedObject;
 		G2U_RobotObservedNothing _RobotObservedNothing;
+		G2U_RobotDeletedObject _RobotDeletedObject;
 		G2U_DeviceDetectedVisionMarker _DeviceDetectedVisionMarker;
 		G2U_RobotCompletedPickAndPlaceAction _RobotCompletedPickAndPlaceAction;
 		G2U_RobotCompletedPlaceObjectOnGroundAction _RobotCompletedPlaceObjectOnGroundAction;

@@ -88,6 +88,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedNothingSignal().ScopedSubscribe(cbRobotObservedNothingSignal));
     
+    auto cbRobotDeletedObjectSignal = [this](uint8_t robotID, uint32_t objectID) {
+      this->HandleRobotDeletedObjectSignal(robotID, objectID);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotDeletedObjectSignal().ScopedSubscribe(cbRobotDeletedObjectSignal));
+    
     /* Now using U2G message handlers for these
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
       this->HandleConnectToRobotSignal(robotID);
@@ -275,6 +280,17 @@ namespace Cozmo {
     
     G2U_Message message;
     message.Set_RobotObservedNothing(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+  }
+  
+  void CozmoGameImpl::HandleRobotDeletedObjectSignal(uint8_t robotID, uint32_t objectID)
+  {
+    G2U_RobotDeletedObject msg;
+    msg.robotID = robotID;
+    msg.objectID = objectID;
+    
+    G2U_Message message;
+    message.Set_RobotDeletedObject(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
