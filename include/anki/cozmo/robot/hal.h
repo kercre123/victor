@@ -207,7 +207,7 @@ namespace Anki
       // Does not actually guarantee a physical connection.
       void EngageGripper();
       void DisengageGripper();
-      
+
       // Returns pointer to IPv4 address
       const char* const GetLocalIP();
 #endif
@@ -215,7 +215,7 @@ namespace Anki
       //
       // Hardware Interface Methods:
       //
-            
+
       // Get the number of microseconds since boot
       u32 GetMicroCounter(void);
       void MicroWait(u32 microseconds);
@@ -249,7 +249,7 @@ namespace Anki
       // IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
       struct IMU_DataStructure
       {
-        f32 acc_x;      // mm/s/s    
+        f32 acc_x;      // mm/s/s
         f32 acc_y;
         f32 acc_z;
         f32 rate_x;     // rad/s
@@ -274,7 +274,7 @@ namespace Anki
       // Puts an entire message, with the usual header/footer
       // Returns false is there wasn't enough space to buffer the message
       bool UARTPutMessage(u8 msgID, u8* buffer, u32 length);
-      
+
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
 
@@ -326,7 +326,7 @@ namespace Anki
         u16 nrows, ncols;
         f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
       } CameraInfo;
-      
+
       const CameraInfo* GetHeadCamInfo();
 
       // Set the camera capture resolution with CAMERA_RES_XXXXX_HEADER.
@@ -336,14 +336,14 @@ namespace Anki
       // Sets the camera exposure (non-blocking call)
       // exposure is clipped to [0.0, 1.0]
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection);
-      
+
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
 
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
 
-      
+
       /////////////////////////////////////////////////////////////////////
       // PROXIMITY SENSORS
       //
@@ -362,8 +362,8 @@ namespace Anki
         u16           forward;
         sharpID       latest;   // Most up to date sensor value
       } ProximityValues;
-      
-      
+
+
       // Interrupt driven proxmity (CALL AT BEGINNING OF LOOP)
       // Note: this function is pipelined. // latency ~= 5 ms (1 main loop)
       //       - returns data (from last function call)
@@ -373,7 +373,7 @@ namespace Anki
       // Only call once every 5ms (1 main loop)
       // current order is left -> right -> forward
       void GetProximity(ProximityValues *prox);
-      
+
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
       // BATTERY
@@ -391,21 +391,23 @@ namespace Anki
 // #pragma mark --- UI LEDS ---
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
-      
+
       // Set the intensity for each LED channel in the range [0, 255]
       void LEDSet(u8 leds[NUM_LEDS]);
-      
+
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color);
-      
+
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
-      
+
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
       // RADIO
       //
       bool RadioIsConnected();
+
+      void RadioUpdateState(u8 wifi, u8 blue);
 
       void DisconnectRadio();
 
@@ -414,14 +416,14 @@ namespace Anki
       // Returns true if the message has been sent to the basestation
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
 
-      
+
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS
       //
       void FlashBlockIDs();
       Result SetBlockLight(const u8 blockID, const u32* color);
-      
-      
+
+
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //
@@ -458,4 +460,3 @@ namespace Anki
 } // namespace Anki
 
 #endif // ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-

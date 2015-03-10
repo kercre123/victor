@@ -29,6 +29,7 @@ class MCUProxyServer(BaseSubServer):
         self.radioConnected = False
         self.rawSerData = ""
         self.lastRSMTS = 0
+        self.sendToMcu(messages.ClientConnectionStatus().serialize())
 
     def stop(self):
         sys.stdout.write("Closing MCUProxyServer\n")

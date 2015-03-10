@@ -4,14 +4,14 @@
 #include "anki/common/types.h"
 
 namespace Anki {
-  
+
   namespace Cozmo {
-    
+
     namespace Robot {
-      
+
       Result Init();
       void Destroy();
-      
+
       //
       // Stepping Functions
       //
@@ -25,27 +25,26 @@ namespace Anki {
       //
       Result step_MainExecution();
       Result step_LongExecution();
-      
+
       //
       // State Machine Operation Modes
       //
       enum OperationMode {
         INIT_MOTOR_CALIBRATION,
-        PLAYING_STARTUP_ANIMATION,
         WAITING,
         PICK_UP_BLOCK,
         PUT_DOWN_BLOCK,
         FOLLOW_PATH
       };
-      
+
       OperationMode GetOperationMode();
       void SetOperationMode(OperationMode newMode);
 
-      
+
     } // namespace Robot
-    
+
   } // namespace Cozmo
-  
+
 } // namespace Anki
 
 #endif // ANKI_COZMOBOT_H
