@@ -114,6 +114,13 @@ message G2U_RobotObservedNothing {
     uint_32 robotID
 }
 
+// RobotDeletedObject
+message G2U_RobotDeletedObject {
+    uint_32 robotID,
+    uint_32 objectID
+}
+
+// DeviceDetectedVisionMarker
 message G2U_DeviceDetectedVisionMarker {
     uint_32 markerType,
     float_32 x_upperLeft,
@@ -173,6 +180,7 @@ union G2U_Message {
     G2U_ImageChunk ImageChunk,
     G2U_RobotObservedObject RobotObservedObject,
     G2U_RobotObservedNothing RobotObservedNothing,
+    G2U_RobotDeletedObject RobotDeletedObject,
     G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
     G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction,
     G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction,

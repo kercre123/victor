@@ -830,6 +830,66 @@ public class G2U_RobotObservedNothing
 	}
 }
 
+public class G2U_RobotDeletedObject
+{
+	public uint robotID;
+	public uint objectID;
+
+	/**** Constructors ****/
+
+	public G2U_RobotDeletedObject()
+	{
+	}
+
+	public G2U_RobotDeletedObject(uint robotID,
+		uint objectID)
+	{
+		this.robotID = robotID;
+		this.objectID = objectID;
+	}
+
+	public G2U_RobotDeletedObject(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)robotID);
+		writer.Write((uint)objectID);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//robotID
+			result += 4; // = uint_32
+			//objectID
+			result += 4; // = uint_32
+			return result;
+		}
+	}
+}
+
 public class G2U_DeviceDetectedVisionMarker
 {
 	public uint markerType;
@@ -1202,11 +1262,12 @@ public class G2U_Message {
 		ImageChunk,	//7
 		RobotObservedObject,	//8
 		RobotObservedNothing,	//9
-		DeviceDetectedVisionMarker,	//10
-		RobotCompletedPickAndPlaceAction,	//11
-		RobotCompletedPlaceObjectOnGroundAction,	//12
-		PlaySound,	//13
-		StopSound,	//14
+		RobotDeletedObject,	//10
+		DeviceDetectedVisionMarker,	//11
+		RobotCompletedPickAndPlaceAction,	//12
+		RobotCompletedPlaceObjectOnGroundAction,	//13
+		PlaySound,	//14
+		StopSound,	//15
 		INVALID
 	};
 
@@ -1386,6 +1447,23 @@ public class G2U_Message {
 		}
 	}
 
+	public G2U_RobotDeletedObject RobotDeletedObject
+	{
+		get {
+			if (_tag != Tag.RobotDeletedObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RobotDeletedObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (G2U_RobotDeletedObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RobotDeletedObject : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker
 	{
 		get {
@@ -1507,6 +1585,9 @@ public class G2U_Message {
 		case Tag.RobotObservedNothing:
 			_state = new G2U_RobotObservedNothing(stream);
 			break;
+		case Tag.RobotDeletedObject:
+			_state = new G2U_RobotDeletedObject(stream);
+			break;
 		case Tag.DeviceDetectedVisionMarker:
 			_state = new G2U_DeviceDetectedVisionMarker(stream);
 			break;
@@ -1564,6 +1645,9 @@ public class G2U_Message {
 		case Tag.RobotObservedNothing:
 			RobotObservedNothing.Pack(stream);
 			break;
+		case Tag.RobotDeletedObject:
+			RobotDeletedObject.Pack(stream);
+			break;
 		case Tag.DeviceDetectedVisionMarker:
 			DeviceDetectedVisionMarker.Pack(stream);
 			break;
@@ -1619,6 +1703,9 @@ public class G2U_Message {
 				break;
 			case Tag.RobotObservedNothing:
 				result += RobotObservedNothing.Size;
+				break;
+			case Tag.RobotDeletedObject:
+				result += RobotDeletedObject.Size;
 				break;
 			case Tag.DeviceDetectedVisionMarker:
 				result += DeviceDetectedVisionMarker.Size;
