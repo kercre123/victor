@@ -575,12 +575,10 @@ namespace Anki {
       if(_lastStateMsgTime_sec > 0.f) {
         const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
         if(timeDiff_sec > R2B_STATE_MESSAGE_TIMEOUT_SEC) {
-          PRINT_NAMED_ERROR("Robot.Update",
-                            "No state message received from robot %d in %.1f seconds, "
-                            "sending disconnected signal.\n", GetID(), timeDiff_sec);
+          PRINT_NAMED_ERROR("Robot.Update", "No state message received from robot %d in %.1f seconds!\n",
+                            GetID(), timeDiff_sec);
           
           _lastStateMsgTime_sec = -1.f;
-          //CozmoEngineSignals::RobotDisconnectedSignal().emit(GetID(), timeDiff_sec);
           return RESULT_FAIL_IO_TIMEOUT;
         }
       }

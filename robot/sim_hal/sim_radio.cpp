@@ -33,10 +33,10 @@
 
 namespace Anki {
   namespace Cozmo {
-    
+
     namespace { // "Private members"
       const size_t RECV_BUFFER_SIZE = 1024;
-      
+
       // For communications with basestation
 #if(USE_UDP_ROBOT_COMMS)
       UdpServer server;
@@ -47,7 +47,7 @@ namespace Anki {
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       size_t recvBufSize_ = 0;
-      
+
       Comms::AdvertisementRegistrationMsg regMsg;
     }
 
@@ -56,18 +56,18 @@ namespace Anki {
     {
       static TimeStamp_t lastAdvertisedTime = 0;
       if (lastAdvertisedTime + ROBOT_ADVERTISING_PERIOD_MS < HAL::GetTimeStamp()) {
-      
+
         PRINT("sim_radio: Sending registration for robot %d at address %s on port %d (time: %u)\n",
               regMsg.id, regMsg.ip, regMsg.port, HAL::GetTimeStamp());
         regMsg.enableAdvertisement = 1;
         regMsg.oneShot = 1;
         advRegClient.Send((char*)&regMsg, sizeof(regMsg));
-        
+
         lastAdvertisedTime = HAL::GetTimeStamp();
       }
-      
+
     }
-    
+
     const char* const HAL::GetLocalIP()
     {
       // Get robot's IPv4 address.
@@ -77,15 +77,15 @@ namespace Anki {
         PRINT("getifaddrs failed\n");
         assert(false);
       }
-      
+
       int family, s, n;
       static char host[NI_MAXHOST];
       for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
         if (ifa->ifa_addr == NULL)
           continue;
-        
+
         family = ifa->ifa_addr->sa_family;
-        
+
         // Display IPv4 addresses only
         if (family == AF_INET) {
           s = getnameinfo(ifa->ifa_addr,
@@ -97,7 +97,7 @@ namespace Anki {
             PRINT("getnameinfo() failed\n");
             assert(false);
           }
-          
+
           // Does address start with 192?
           if (strncmp(host, "192.", 4) == 0)
           {
@@ -107,41 +107,40 @@ namespace Anki {
         }
       }
       freeifaddrs(ifaddr);
-      
+
       return host;
     }
 
-    // A little hacky, but this is technically not a message that supervisor level code needs to worry about
-    // since it comes from the torpedo rather than basestation.
-    void Messages::ProcessClientConnectionStatusMessage(const Messages::ClientConnectionStatus& msg) {
-      
-    }
-
-    
     Result InitSimRadio(const char* advertisementIP)
     {
       server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
-      
+
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
       //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
-      
+
       // Fill in advertisement registration message
       regMsg.id = (u8)HAL::GetIDCard()->esn;
       regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.id;
       regMsg.protocol = (USE_UDP_ROBOT_COMMS == 1) ? Anki::Comms::UDP : Anki::Comms::TCP;
       memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
-      
+
       recvBufSize_ = 0;
-      
+
       return RESULT_OK;
     }
-    
+
     bool HAL::RadioIsConnected(void)
     {
       return server.HasClient();
+    }
+
+
+    void HAL::RadioUpdateState(u8 wifi, u8 blue)
+    {
+      if (wifi == 0 && blue == 0) DisconnectRadio();
     }
 
     void HAL::DisconnectRadio(void)
@@ -149,13 +148,13 @@ namespace Anki {
       server.DisconnectClient();
       recvBufSize_ = 0;
     }
-    
+
     bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
     {
       if (server.HasClient()) {
-        
+
         const u16 size = Messages::GetSize(msgID);
-        
+
 #if(USE_UDP_ROBOT_COMMS==0)
         // Send the message header (0xBEEF + size(of following bytes) + msgID)
         // For TCP comms, send timestamp immediately after the header.
@@ -167,9 +166,9 @@ namespace Anki {
                     RADIO_PACKET_HEADER[1],
                     size + 1,
                     msgID);
-        
+
         assert (packRes == UTILMSG_OK);
-        
+
         // Send header and message content
         u32 bytesSent = 0;
         bytesSent = server.Send((char*)header, HEADER_LENGTH);
@@ -205,14 +204,14 @@ namespace Anki {
         }
         printf("\n");
         */
-        
+
         return true;
       }
       return false;
-      
+
     } // RadioSendMessage()
-    
-    
+
+
     size_t RadioGetNumBytesAvailable(void)
     {
 #if(USE_UDP_ROBOT_COMMS==0)
@@ -220,10 +219,10 @@ namespace Anki {
         return 0;
       }
 #endif
-      
+
       // Check for incoming data and add it to receive buffer
       int dataSize;
-      
+
       // Read available data
       const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
       assert(tempSize < std::numeric_limits<int>::max());
@@ -234,23 +233,23 @@ namespace Anki {
         // Something went wrong
         HAL::DisconnectRadio();
       }
-      
+
       return recvBufSize_;
-      
+
     } // RadioGetNumBytesAvailable()
-    
+
     /*
     s32 HAL::RadioPeekChar(u32 offset)
     {
       if(RadioGetNumBytesAvailable() <= offset) {
         return -1;
       }
-      
+
       return static_cast<s32>(recvBuf_[offset]);
     }
-    
+
     s32 HAL::RadioGetChar(void) { return RadioGetChar(0); }
-    
+
     s32 HAL::RadioGetChar(u32 timeout)
     {
       u8 c;
@@ -262,20 +261,20 @@ namespace Anki {
       }
     }
      */
-    
+
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
     Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
     {
       Messages::ID retVal = Messages::NO_MESSAGE_ID;
-      
+
 #if(USE_UDP_ROBOT_COMMS==0)
       if (server.HasClient()) {
         const size_t bytesAvailable = RadioGetNumBytesAvailable();
         const u32 headerSize = sizeof(RADIO_PACKET_HEADER);
         if(bytesAvailable >= headerSize) {
-          
+
           // Look for valid header
           int n = -1;
           for(int i = 0; i < recvBufSize_-1; ++i) {
@@ -286,7 +285,7 @@ namespace Anki {
               }
             }
           }
-          
+
           if (n < 0) {
             // Header not found at all
             // Delete everything
@@ -298,7 +297,7 @@ namespace Anki {
             memcpy(recvBuf_, recvBuf_ + n, recvBufSize_ - n);
             recvBufSize_ -= n;
           }
-          
+
           // Check if expected number of bytes are in the msg
           if (recvBufSize_ > headerSize) {
             const u32 dataLen = recvBuf_[headerSize] +
@@ -306,20 +305,20 @@ namespace Anki {
                                 (recvBuf_[headerSize+2] << 16) +
                                 (recvBuf_[headerSize+3] << 24);
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
-            
+
               // Check that message size is correct
               Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
               const u16 size = Messages::GetSize(msgID);
               const u32 msgLen = dataLen - 1;  // Doesn't include msgID
-              
+
               if (msgLen != size) {
                 PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
               }
-              
+
               // Copy message contents to buffer
               std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
               retVal = msgID;
-              
+
               // Shift recvBuf contents down
               const u32 entireMsgSize = headerSize + 4 + 1 + msgLen;
               memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
@@ -341,23 +340,23 @@ namespace Anki {
       } else {
         return retVal;
       }
-      
+
       Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[0]);
       const u16 expectedSize = Messages::GetSize(msgID);
 
       if ((recvBufSize_ - 1) != expectedSize) {
         PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, expectedSize, recvBufSize_ - 1);
       }
-      
+
       // Copy message contents to buffer
       std::memcpy((void*)buffer, recvBuf_+1, expectedSize);
       retVal = msgID;
 
 #endif
-      
+
       return retVal;
     } // RadioGetNextMessage()
-    
+
 
     void RadioUpdate()
     {
@@ -374,6 +373,6 @@ namespace Anki {
 #endif
     }
 
-    
+
   } // namespace Cozmo
 } // namespace Anki

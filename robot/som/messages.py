@@ -303,6 +303,31 @@ class ClientConnectionStatus(MessageBase):
     def __repr__(self):
         return "SoMRadioState(wifi=%d, bluetooth=%d)" % self._getMembers
 
+class StartTestMode(MessageBase):
+    """Start a test with given parameters"""
+    ID = 21
+    FORMAT = ["s32",
+              "s32",
+              "s32",
+              "u8" # Mode]
+
+    def __init__(self, mode=0, parameters=[0,0,0], buffer=None):
+        MessageBase.__init__(self)
+        self.mode = mode
+        self.p = parameters
+        if buffer:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.p + [self.mode]
+
+    def _setMembers(self, *members):
+        self.p = members[:3]
+        self.mode = members[3]
+
+    def __repr__(self):
+        return "StartTestMode(mode=%d parameters=%s)" % (self.mode, repr(self.p))
+
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
