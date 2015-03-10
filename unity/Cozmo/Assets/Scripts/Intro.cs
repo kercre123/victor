@@ -8,6 +8,7 @@ public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Text error;
 
+	private bool simulated = false;
 	private string currentRobotIP;
 	private string currentScene;
 	private string currentVizHostIP;
@@ -83,7 +84,6 @@ public class Intro : MonoBehaviour {
 		}
 	}
 
-	bool simulated =false;
 	public void Play(bool sim) {
 		simulated = sim;
 		RobotEngineManager.instance.Disconnect ();
