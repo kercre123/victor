@@ -105,6 +105,7 @@ namespace Anki {
 
             CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first, -1.f);
             
+            delete r->second;
             r = _robots.erase(r);
             
             break;
