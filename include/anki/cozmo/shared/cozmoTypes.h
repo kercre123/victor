@@ -105,7 +105,7 @@ namespace Anki {
 
     // Bit flags for RobotState message
     typedef enum {
-      //IS_TRAVERSING_PATH    = 1,
+      IS_MOVING               = 0x1,  // Head, lift, or wheels
       IS_CARRYING_BLOCK       = 0x2,
       IS_PICKING_OR_PLACING   = 0x4,
       IS_PICKED_UP            = 0x8,

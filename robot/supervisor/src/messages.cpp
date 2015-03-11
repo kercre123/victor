@@ -153,6 +153,13 @@ namespace Anki {
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
+        
+        // TODO: Make this a parameters somewhere?
+        const f32 WHEEL_SPEED_STOPPED = 2.f;
+        robotState_.status |= (HeadController::IsMoving() ||
+                               LiftController::IsMoving() ||
+                               fabs(robotState_.lwheel_speed_mmps) > WHEEL_SPEED_STOPPED ||
+                               fabs(robotState_.rwheel_speed_mmps) > WHEEL_SPEED_STOPPED ? IS_MOVING : 0);
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);

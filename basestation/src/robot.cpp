@@ -254,15 +254,7 @@ namespace Anki {
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
-      // TODO: Make this a parameters somewhere?
-      const f32 WheelSpeedToConsiderStopped = 2.f;
-      if(std::abs(msg.lwheel_speed_mmps) < WheelSpeedToConsiderStopped &&
-         std::abs(msg.rwheel_speed_mmps) < WheelSpeedToConsiderStopped)
-      {
-        _isMoving = false;
-      } else {
-        _isMoving = true;
-      }
+      _isMoving = static_cast<bool>(msg.status & IS_MOVING);
       
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
