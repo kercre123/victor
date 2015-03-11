@@ -95,6 +95,7 @@ public class ProjectBuilder {
         buildTarget = BuildTarget.Android;
         break;
       }
+    case "mac":
     case "osx":
       {
         buildTarget = BuildTarget.StandaloneOSXIntel64;
@@ -115,27 +116,18 @@ public class ProjectBuilder {
 
     // Later on use this to switch between building for different targets
     // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
-	
-	try {
-		System.IO.Directory.CreateDirectory (buildPath);
-	}
-	catch (Exception) {
-	}
-
+		
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
-	
-	EditorApplication.isPlaying = false;
-	
-	AssetDatabase.Refresh (ImportAssetOptions.ForceSynchronousImport);
 
+    // Stop playing
+    EditorApplication.isPlaying = false;
+
+    // Force-Reimport Assets
+    AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+	
     // run build
     string result = BuildPipeline.BuildPlayer(scenes.ToArray(), buildPath, buildTarget, buildOptions);
-	
-	// TODO: replace with whatever chapados comes up with
-	if (!string.IsNullOrEmpty (result)) {
-		throw new Exception(result);
-	}
 
     // restore player settings
     PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
@@ -154,7 +146,7 @@ public class ProjectBuilder {
       options = BuildOptions.None;
     }
     if (config == "debug") {
-      options = (options | BuildOptions.AllowDebugging | BuildOptions.Development);
+      options = (options | BuildOptions.Development);
     }
     if (enableDebugging) {
       options = (options | BuildOptions.AllowDebugging);
