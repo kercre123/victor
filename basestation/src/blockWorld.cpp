@@ -426,7 +426,10 @@ namespace Anki
               minDistSq = currentDistSq;
               
               // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
-              zDist = markerPose.GetTranslation().z() - robotTrans.z();
+              // NOTE: This isn't perfectly accurate since it doesn't take into account the
+              // the head angle and is simply using the neck joint (which should also
+              // probably be queried from the robot instead of using the constant here)
+              zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
             }
           }
         } // For all markers
@@ -434,7 +437,7 @@ namespace Anki
         if(closestMarker == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects", "No closest marker found!\n");
         } else {
-          const f32 headAngle = atanf(-zDist/(sqrtf(minDistSq + 1e-6f)));
+          const f32 headAngle = atanf(zDist/(sqrtf(minDistSq + 1e-6f)));
           _robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
         }
       } // if/else observedMarkers.empty()
