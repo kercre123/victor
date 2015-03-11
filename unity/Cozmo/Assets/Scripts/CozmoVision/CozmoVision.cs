@@ -99,7 +99,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.SetRobotCarryingObject();
+			RobotEngineManager.instance.SetRobotCarryingObject( Intro.CurrentRobotID );
 		}
 	}
 
@@ -129,6 +129,7 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.current.selectedObject = -1;
+			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
 		}
 	}
 

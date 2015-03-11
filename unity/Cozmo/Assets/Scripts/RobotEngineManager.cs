@@ -446,17 +446,14 @@ public class RobotEngineManager : MonoBehaviour {
 			int width = message.ncols;
 			int height = message.nrows;
 			
-			if( texture != null )
+			if( texture == null || texture.width != width || texture.height != height )
 			{
-				if( texture.width != width || texture.height != height )
+				if( texture != null )
 				{
 					Destroy( texture );
 					texture = null;
 				}
-			}
-			
-			if( texture == null )
-			{
+				
 				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
 			}
 			
@@ -574,6 +571,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void SetHeadAngle( float angle_rad )
 	{
+		Debug.Log( "Set Head Angle " + angle_rad );
+
 		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
 		message.angle_rad = angle_rad;
 		message.accel_rad_per_sec2 = 2f;
@@ -582,9 +581,24 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send( new U2G_Message { SetHeadAngle = message } );
 	}
 
+	public void TrackHeadToObject( int objectID, byte robotID )
+	{
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+		}
+
+		Debug.Log( "Track Head To Object " + objectID );
+
+		U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
+		message.objectID = (uint)objectID;
+		message.robotID = robotID;
+		
+		channel.Send( new U2G_Message { TrackHeadToObject = message } );
+	}
+
 	public void PickAndPlaceObject()
 	{
-		Debug.Log( "Pick And Place Object" );
+		Debug.Log( "Pick And Place Object " + current.selectedObject );
 
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = current.selectedObject;
@@ -596,13 +610,17 @@ public class RobotEngineManager : MonoBehaviour {
 		current.observedObjects.Clear();
 	}
 
-	public void SetRobotCarryingObject()
+	public void SetRobotCarryingObject( byte robotID )
 	{
+		if (robotID < 0 || robotID > 255) {
+			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+		}
+
 		Debug.Log( "Set Robot Carrying Object" );
 		
 		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
 
-		message.robotID = (byte)Intro.CurrentRobotID;
+		message.robotID = robotID;
 		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
 		{
 			message.objectID = -1;
@@ -615,7 +633,7 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
 	}
 
-	public void RequestImage(int robotID)
+	public void RequestImage(byte robotID)
 	{
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
@@ -628,7 +646,7 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send (new U2G_Message{SetRobotImageSendMode = message});
 		
 		U2G_ImageRequest message2 = new U2G_ImageRequest ();
-		message2.robotID = (byte)robotID;
+		message2.robotID = robotID;
 		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
 		
 		channel.Send (new U2G_Message{ImageRequest = message2});
