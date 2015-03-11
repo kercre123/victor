@@ -9,9 +9,13 @@
 namespace Anki {
   namespace Cozmo {
 
+#ifndef SIMULATOR
+    
     // Uncomment if using Cozmo v3 robot with treads
     #define COZMO_TREADS
-
+    
+#endif
+    
     /***************************************************************************
      *
      *                          Physical Robot Geometry
