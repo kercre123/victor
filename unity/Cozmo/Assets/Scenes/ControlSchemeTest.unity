@@ -46189,7 +46189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1307186281
 Transform:
   m_ObjectHideFlags: 0
@@ -54002,7 +54002,7 @@ MonoBehaviour:
   deadZone: {x: .100000001, y: .100000001}
   deadZoneRadial: 0
   scaleMagFromDeadZone: 1
-  horClampThrow: 1
+  horClampThrow: .5
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
@@ -56613,7 +56613,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11406224, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: horClampThrow
-      value: 1
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 11406226, guid: 047dcb7a590b04804ba22450dcc70d89, type: 2}
       propertyPath: m_Color.a
