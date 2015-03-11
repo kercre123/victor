@@ -1929,8 +1929,8 @@ namespace Anki {
       
       RobotPoseStamp p;
       TimeStamp_t actualTimestamp;
-      lastResult = _poseHistory->GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
-      //lastResult = _poseHistory->ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, false); // TODO: use interpolation??
+      //lastResult = _poseHistory->GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
+      lastResult = _poseHistory->ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, true); // TODO: use interpolation??
       if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
                         "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
