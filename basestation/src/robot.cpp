@@ -416,7 +416,7 @@ namespace Anki {
       HistPoseKey poseKey;
       lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
       if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("MessageHandler.ProcessMessageVisionMarker.HistoricalPoseNotFound",
+        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
                             msg.timestamp, _poseHistory->GetOldestTimeStamp(),
                             _poseHistory->GetNewestTimeStamp());

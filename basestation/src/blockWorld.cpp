@@ -1156,15 +1156,6 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp);
         
-
-        if(numObjectsObserved == 0) {
-          if(_didObjectsChange) {
-            PRINT_NAMED_WARNING("BlockWorld.Update", "NumObjectsObserved==0 but didObjectsChange==true.\n");
-          }
-          // If we didn't see/update anything, send a signal saying so
-          CozmoEngineSignals::RobotObservedNothingSignal().emit(_robot->GetID());
-        }
-        
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1176,6 +1167,11 @@ namespace Anki
         CheckForUnobservedObjects(atTimestamp);
         
       } // for element in _obsMarkers
+      
+      if(numObjectsObserved == 0) {
+        // If we didn't see/update anything, send a signal saying so
+        CozmoEngineSignals::RobotObservedNothingSignal().emit(_robot->GetID());
+      }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
       

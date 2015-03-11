@@ -276,6 +276,9 @@ namespace Anki {
     // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
     const u16 ROBOT_RADIO_BASE_PORT = 5551;
 
+    /* 
+     THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientComms.h 
+     
     // Expected message receive latency
     // It is assumed that this value does not fluctuate greatly.
     // The more inaccurate this value is, the more invalid our
@@ -287,7 +290,8 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-
+     */
+    
     // Rate at which the robot advertises itself
     const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
 
