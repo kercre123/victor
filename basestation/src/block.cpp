@@ -479,5 +479,27 @@ namespace Anki {
       _activeID = 1;
     }
     
+    std::map<s32,bool>& ActiveCube::GetAvailableIDs()
+    {
+      static std::map<s32,bool> availableIDs;
+      return availableIDs;
+    }
+    
+    void ActiveCube::RegisterAvailableID(s32 activeID)
+    {
+      if(ActiveCube::GetAvailableIDs().count(activeID) > 0) {
+        PRINT_NAMED_WARNING("ActiveCube.RegisterAvailableID",
+                            "Ignoring duplicate registration of available ID %d.\n", activeID);
+      } else {
+        ActiveCube::GetAvailableIDs()[activeID] = false;
+      }
+      
+    }
+    
+    void ActiveCube::ClearAvailableIDs()
+    {
+      ActiveCube::GetAvailableIDs().clear();
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

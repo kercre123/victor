@@ -318,10 +318,17 @@ namespace Anki {
       
       virtual s32 GetActiveID() const override { return _activeID; }
       
+      static void RegisterAvailableID(s32 activeID);
+      static void ClearAvailableIDs();
+      
     protected:
       ActiveCube(ObjectType type);
       
       s32 _activeID;
+      
+      // Map of available active IDs that the robot knows are around, and an
+      // indicator of whether or not we've seen each yet.
+      static std::map<s32,bool>& GetAvailableIDs();
       
     }; // class ActiveCube
     
