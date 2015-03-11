@@ -73,11 +73,11 @@ public class RobotRelativeControls : MonoBehaviour {
 	void Update() {
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotFacing = CozmoUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
 		}
 
 		if(aboutFace) {
-			float turnSoFar = CozmoUtil.AngleDelta(robotStartTurnFacing, robotFacing);
+			float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
 			if(Mathf.Abs(turnSoFar) > 180f) {
 				//Debug.Log("frame(" + Time.frameCount + ") EndSwipe turnSoFar(" + turnSoFar + ")");
 				aboutFace = false;
@@ -167,7 +167,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(swipeTurning) {
 
-				float turnSoFar = CozmoUtil.AngleDelta(robotStartTurnFacing, robotFacing);
+				float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
 
 				float goalAngle = swipeTurnAngle;
 

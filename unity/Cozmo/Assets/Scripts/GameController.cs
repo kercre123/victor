@@ -15,8 +15,10 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected int numPlayers = 1;
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textState = null;
+	[SerializeField] protected Text textTime = null;
+	[SerializeField] protected bool autoPlay = false;
 
-
+	protected bool playRequested = false;
 	protected GameState state = GameState.PRE_GAME;
 	protected float stateTimer = 0f;
 	protected int[] scores;
@@ -29,6 +31,7 @@ public class GameController : MonoBehaviour {
 		scores = new int[numPlayers];
 		winnerIndex = -1;
 		firstFrame = true;
+		playRequested = autoPlay;
 	}
 
 	void Update () {
@@ -110,6 +113,16 @@ public class GameController : MonoBehaviour {
 		if(textState != null) {
 			textState.text = state.ToString();
 		}
+
+		if(textTime != null) {
+			if(maxPlayTime > 0f) {
+				textTime.text = Mathf.FloorToInt(maxPlayTime - stateTimer).ToString();
+			}
+			else {
+				textTime.text = Mathf.FloorToInt(stateTimer).ToString();
+			}
+		}
+
 	}
 
 	protected virtual void Enter_PRE_GAME() {
@@ -144,7 +157,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual bool IsGameReady() {
-
+		if(!playRequested) return false;
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
 
@@ -164,5 +177,9 @@ public class GameController : MonoBehaviour {
 		}
 		
 		return false;
+	}
+
+	public void PlayRequested() {
+		playRequested = true;
 	}
 }

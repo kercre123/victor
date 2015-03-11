@@ -17,7 +17,7 @@ public class GyroControls : MonoBehaviour {
 		get {
 			if(!SystemInfo.supportsGyroscope) return 0f;
 
-			float roll = CozmoUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
+			float roll = MathUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
 			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
 			return x; 
 		}

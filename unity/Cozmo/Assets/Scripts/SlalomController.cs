@@ -7,25 +7,21 @@ public class SlalomController : GameController {
 
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
-	[SerializeField] bool firstPassClockwise = true;
-	[SerializeField] bool firstPassEitherDirection = true;
 	[SerializeField] bool trackWithCornerTriggers = false;
 	[SerializeField] Text textObservedCount = null;
 
-	bool currentPassClockwise = true;
-
 	List<ObservedObject> obstacles = new List<ObservedObject>();
+	List<Vector2> obstaclePositions = new List<Vector2>();
+
 	int currentObstacleIndex = 0;
+	bool lastPassCrossUp = true;
 	bool forward = true;
 	Robot robot;
 	Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
-	Vector2 crossDirection;
-	Vector2 currentObjPos;
-	Vector2 nextObjPos;
+	float totalAngleFromObstacleTraversed;
 	bool courseCompleted = false;
-	bool passedFirstObstacle = false;
-
+	int tapesCrossed = 0;
 
 	ObservedObject currentObstacle { 
 		get {
@@ -36,7 +32,6 @@ public class SlalomController : GameController {
 			return obstacles[currentObstacleIndex];
 		}
 	}
-
 	ObservedObject nextObstacle { 
 		get { 
 			if(obstacles == null) return null;
@@ -72,6 +67,52 @@ public class SlalomController : GameController {
 		}
 	}
 
+	Vector2 currentObstaclePos { 
+		get {
+			if(obstaclePositions == null) return Vector2.zero;
+			if(currentObstacleIndex < 0) return Vector2.zero;
+			if(currentObstacleIndex >= obstaclePositions.Count) return Vector2.zero;
+			
+			return obstaclePositions[currentObstacleIndex];
+		}
+	}
+	Vector2 nextObstaclePos { 
+		get { 
+			if(obstaclePositions == null) return Vector2.zero;
+			if(obstaclePositions.Count == 0) return Vector2.zero;
+			if(obstaclePositions.Count == 1) return currentObstaclePos;
+			
+			int nextIndex = 0;
+			if(forward) {
+				nextIndex = currentObstacleIndex + 1;
+				if(nextIndex >= obstaclePositions.Count) {
+					if(thereAndBackAgain) {
+						nextIndex = obstaclePositions.Count-2;
+					}
+					else {//loop
+						nextIndex = 0;
+					}
+				}
+			}
+			else {
+				nextIndex = currentObstacleIndex - 1;
+				if(nextIndex < 0) {
+					if(thereAndBackAgain) {
+						nextIndex = 1;
+					}
+					else {//loop
+						nextIndex = obstaclePositions.Count-1;
+					}
+				}
+			}
+			
+			if(nextIndex < 0) return Vector2.zero;
+			if(nextIndex >= obstaclePositions.Count) return Vector2.zero;
+			
+			return obstaclePositions[nextIndex];
+		}
+	}
+
 	protected override void Update_PRE_GAME() {
 		base.Update_PRE_GAME();
 
@@ -84,8 +125,7 @@ public class SlalomController : GameController {
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
 
-		passedFirstObstacle = false;
-		currentPassClockwise = firstPassClockwise;
+		tapesCrossed = 0;
 		courseCompleted = false;
 		currentObstacleIndex = 0;
 
@@ -99,33 +139,32 @@ public class SlalomController : GameController {
 			}
 		);
 
+		obstaclePositions.Clear();
+		foreach(ObservedObject obj in obstacles) {
+			obstaclePositions.Add(obj.WorldPosition);
+		}
+
 		if(trackWithCornerTriggers) {
 			//activate corners on first cube
 			//pulse next corner
 		}
 
+		totalAngleFromObstacleTraversed = 0f;
 		lastRobotPos = robot.WorldPosition;
-		currentObjPos = currentObstacle.WorldPosition;
-
-		//we might as well handle the one obstacle case for robustness
-		bool multiObstacle = nextObstacle != null && nextObstacle != currentObstacle;
-		if(multiObstacle) nextObjPos = nextObstacle.WorldPosition;
-
-		lastAngleFromObstacle = Vector2.Angle(Vector2.up, lastRobotPos - currentObjPos);
+		Vector2 currentObstacleToRobot = lastRobotPos - currentObstaclePos;
+		lastAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
 	}
 
 	protected override void Update_PLAYING() {
 		base.Update_PLAYING();
 
-		Vector2 cozPos = robot.WorldPosition;
+		Vector2 robotPos = robot.WorldPosition;
 
-		currentObjPos = currentObstacle.WorldPosition;
-		bool multiObstacle = nextObstacle != null && nextObstacle != currentObstacle;
-		if(multiObstacle) {
-			nextObjPos = nextObstacle.WorldPosition;
-		}
+		Vector2 currentObstacleToRobot = robotPos - currentObstaclePos;
+		float newAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
+		float angleDeltaThisFrame = MathUtil.AngleDelta(lastAngleFromObstacle, newAngleFromObstacle);
 
-		float newAngleFromObstacle = Vector2.Angle(Vector2.up, cozPos - currentObjPos);
+		totalAngleFromObstacleTraversed += angleDeltaThisFrame;
 
 		//design query: calc if we've crossed a quadrant of our current obstacle cube and signal it to light it's corner?
 		//need object rotation angle to do this properly
@@ -135,28 +174,32 @@ public class SlalomController : GameController {
 		if(trackWithCornerTriggers) {
 			//if coz is crossed over active corner angle since last frame, NextCorner();
 		}
-		else if(multiObstacle) {
+		else if(obstaclePositions.Count > 1) {
 			//only check this if our current obstacle cube has three corners lit already?
-			if(MathUtil.AreLineSegmentsCrossing(cozPos, lastRobotPos, currentObjPos, nextObjPos)) {
-				//Vector2 delta = cozPos - lastRobotPos;
-				Vector2 cozToCurrent = currentObjPos - cozPos;
-				Vector2 tape = nextObjPos - currentObjPos;
-				if((firstPassEitherDirection && !passedFirstObstacle) || (Vector2.Dot(cozToCurrent, tape.normalized) < 0f ^ currentPassClockwise)) {
+			bool allowedToCrossTape = tapesCrossed == 0 || Mathf.Abs(totalAngleFromObstacleTraversed) > 90f;
+
+			if(allowedToCrossTape && MathUtil.AreLineSegmentsCrossing(robotPos, lastRobotPos, currentObstaclePos, nextObstaclePos)) {
+				Vector2 delta = robotPos - lastRobotPos;
+				Vector2 tape = nextObstaclePos - currentObstaclePos;
+				Vector3 cross = Vector3.Cross(delta.normalized, tape.normalized);
+
+				if(tapesCrossed == 0 || (cross.z > 0f ^ lastPassCrossUp)) {
+					lastPassCrossUp = cross.z > 0f;
 					NextObstacle();
 				}
 				else {
 					//design query: crossed between obstacles in the wrong direction?
-					//scores[0]--;
-					Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") crossed between obstacles in the wrong direction currentPassClockwise("+currentPassClockwise+")");
+					tapesCrossed--;
+					Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") crossed between obstacles in the wrong direction currentPassClockwise("+lastPassCrossUp+")");
 				}
 			}
 		}
 		else {
 			//todo: single obstacle mode just records laps
-			Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") multiObstacle("+multiObstacle+") currentPassClockwise("+currentPassClockwise+")");
+			Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") single obstacle? currentPassClockwise("+lastPassCrossUp+")");
 		}
 
-		lastRobotPos = cozPos;
+		lastRobotPos = robotPos;
 
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
@@ -199,18 +242,18 @@ public class SlalomController : GameController {
 
 	void NextObstacle() {
 
-		passedFirstObstacle = true;
+		tapesCrossed++;
 
-		scores[0]++;
+		scores[0] = tapesCrossed;
 
 		//design query: reset lights on current cube now or when we've completed a circuit?
 		if(forward) {
 			currentObstacleIndex++;
-			if(currentObstacleIndex >= obstacles.Count) {
+			if(currentObstacleIndex >= obstaclePositions.Count) {
 
 				if(thereAndBackAgain) {
 					forward = false;
-					currentObstacleIndex = obstacles.Count-2;
+					currentObstacleIndex = obstaclePositions.Count-2;
 				}
 				else {//looping course
 					currentObstacleIndex = 0;
@@ -226,7 +269,7 @@ public class SlalomController : GameController {
 					currentObstacleIndex = 1;
 				}
 				else {//looping course
-					currentObstacleIndex = obstacles.Count-1;
+					currentObstacleIndex = obstaclePositions.Count-1;
 				}
 
 				//nonEndless thereAndBackAgain ends when it gets back passed the first obstacle again
@@ -234,9 +277,9 @@ public class SlalomController : GameController {
 			}
 		}
 
-		currentPassClockwise = !currentPassClockwise;
+		totalAngleFromObstacleTraversed = 0f;
 
-		Debug.Log("NextObstacle scores[0]("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+")");
+		Debug.Log("NextObstacle scores("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+") lastPassCrossUp("+lastPassCrossUp+")");
 	}
 
 }

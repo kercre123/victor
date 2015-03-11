@@ -27,7 +27,35 @@ public class MathUtil {
 		//set the parent
 		tempChild.parent = tempParent;
 	}
-	
+
+	//clamps an angle in degrees between -180 to 180
+	public static float ClampAngle(float angle) {
+		float clamped = angle % 360f;
+		
+		//Debug.Log("ClampAngle "+angle+" % 360f = "+clamped);
+		
+		if(clamped < -180f) clamped += 360f;
+		if(clamped > 180f) clamped -= 360f;
+		
+		return clamped;
+	}
+
+	//finds the difference between two angles in degrees, clamped between -180 and 180
+	public static float AngleDelta(float from, float to) {
+		
+		from = ClampAngle(from);
+		to = ClampAngle(to);
+		
+		if(from > 0f && to < 0f) {
+			from -= 360f;
+		}
+		else if(from < 0f && to > 0f) {
+			from += 360f;
+		} 
+		
+		return ClampAngle(to - from);
+	}
+
 	
 	//increase or decrease the length of vector by size
 	public static Vector3 AddVectorLength(Vector3 vector, float size){

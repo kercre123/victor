@@ -49,6 +49,7 @@ public class Intro : MonoBehaviour {
 		visualizerIP.text = lastVisualizerIp;
 
 		if (RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			Debug.Log("knownObjects cleared!");
 			RobotEngineManager.instance.current.knownObjects.Clear();
 		}
 
