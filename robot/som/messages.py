@@ -309,7 +309,8 @@ class StartTestMode(MessageBase):
     FORMAT = ["s32",
               "s32",
               "s32",
-              "u8" # Mode]
+              "u8" # Mode
+              ]
 
     def __init__(self, mode=0, parameters=[0,0,0], buffer=None):
         MessageBase.__init__(self)

@@ -80,7 +80,10 @@ class MCUProxyServer(BaseSubServer):
                 return
             length = struct.unpack('I', self.rawSerData[:4])[0]
             if self.v > 9: sys.stdout.write("\t length = %d\n" % length)
-            length = min(1500, max(length, 4))
+            if length > 1500: # Should never happen, means corrupt data
+                sys.stdout.write("MCU bad length: %d\n" % length)
+                self.rawSerData = "" # Throw out what we have since we can't process it
+                return
             self.rawSerData = self.rawSerData[4:]
             if len(self.rawSerData) < length:
                 #if self.v: sys.stdout.write("sr read %d\n" % length)

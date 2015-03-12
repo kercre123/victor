@@ -286,6 +286,7 @@ namespace Anki {
         if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
           PRINT("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
+          lastPingTime_ = 0;
         }
 
       } // ProcessBTLEMessages()
