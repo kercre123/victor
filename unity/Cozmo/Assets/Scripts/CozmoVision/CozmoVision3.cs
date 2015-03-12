@@ -50,24 +50,15 @@ public class CozmoVision3 : CozmoVision
 	
 	protected List<ObservedObject> inReticle = new List<ObservedObject>();
 	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
-	protected Vector3[] reticleCorners;
+
 	protected bool isInReticle
 	{
 		get
 		{
-			if( reticleCorners == null )
-			{
-				reticleCorners = new Vector3[4];
-				reticle.rectTransform.GetWorldCorners( reticleCorners );
-			}
-
-			/*Debug.Log( "min x " + box.position.x + " " + reticleCorners[0].x );
-			Debug.Log( "max x " + box.position.x + " " + reticleCorners[2].x );
-			Debug.Log( "min y " + box.position.y + " " + reticleCorners[0].y );
-			Debug.Log( "max y " + box.position.y + " " + reticleCorners[2].y );*/
-
-			return box.position.x > reticleCorners[0].x && box.position.x < reticleCorners[2].x &&
-				   box.position.y > reticleCorners[0].y && box.position.y < reticleCorners[2].y;
+			return box.image.rectTransform.rect.center.x > reticle.rectTransform.rect.xMin && 
+				   box.image.rectTransform.rect.center.x < reticle.rectTransform.rect.xMax &&
+				   box.image.rectTransform.rect.center.y > reticle.rectTransform.rect.yMin && 
+				   box.image.rectTransform.rect.center.y < reticle.rectTransform.rect.yMax;
 		}
 	}
 
@@ -103,6 +94,7 @@ public class CozmoVision3 : CozmoVision
 
 				for( int i = 0; i < robot.observedObjects.Count; ++i )
 				{
+					//box.image.gameObject.SetActive( true );
 					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
 					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
 

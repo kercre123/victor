@@ -42,7 +42,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
-	
+
+	private bool imageRequested = false;
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -660,6 +661,11 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void RequestImage(byte robotID)
 	{
+		if( imageRequested )
+		{
+			return;
+		}
+
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
@@ -677,6 +683,8 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send (new U2G_Message{ImageRequest = message2});
 		
 		Debug.Log( "image request message sent" );
+
+		imageRequested = true;
 	}
 	
 	public void StopAllMotors(int robotID)
