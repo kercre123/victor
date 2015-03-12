@@ -691,7 +691,11 @@ namespace Anki {
       
       
       //////// Update Robot's State Machine /////////////
-      _actionList.Update(*this);
+      Result actionResult = _actionList.Update(*this);
+      if(actionResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n");
+      }
+        
       
       /////////// Update visualization ////////////
       

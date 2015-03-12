@@ -796,8 +796,6 @@ namespace Anki {
           
       } // switch(_dockAction)
       
-      CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().emit(robot.GetID(), result == SUCCESS);
-      
       return result;
       
     } // Verify()
@@ -869,10 +867,6 @@ namespace Anki {
         actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
         
       } // if robot is not picking/placing or moving
-      
-      if(actionResult != RUNNING) {
-        CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().emit(robot.GetID(), actionResult == SUCCESS);
-      }
       
       return actionResult;
       
