@@ -66,10 +66,8 @@ public class CozmoVision3 : CozmoVision
 			Debug.Log( "min y " + box.position.y + " " + reticleCorners[0].y );
 			Debug.Log( "max y " + box.position.y + " " + reticleCorners[2].y );*/
 
-			return box.position.x > reticleCorners[0].x && 
-					box.position.x < reticleCorners[2].x &&
-					box.position.y > reticleCorners[0].y && 
-					box.position.y < reticleCorners[2].y;
+			return box.position.x > reticleCorners[0].x && box.position.x < reticleCorners[2].x &&
+				   box.position.y > reticleCorners[0].y && box.position.y < reticleCorners[2].y;
 		}
 	}
 
@@ -105,10 +103,10 @@ public class CozmoVision3 : CozmoVision
 
 				for( int i = 0; i < robot.observedObjects.Count; ++i )
 				{
-					//box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-					//box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
+					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
+					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
 
-					if( /*isInReticle &&*/ Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+					if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
 					{
 						inReticle.Add( robot.observedObjects[i] );
 					}
@@ -129,7 +127,7 @@ public class CozmoVision3 : CozmoVision
 				{
 					if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
 					{
-						if( inReticle.Count > 0 ) // if can see at least one block
+						if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 						{
 							robot.selectedObject = inReticle[0].ID; // select the block closest to ground
 						}
