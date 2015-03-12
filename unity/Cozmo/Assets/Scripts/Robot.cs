@@ -21,6 +21,7 @@ public class Robot
 	public List<ObservedObject> knownObjects { get; private set; }
 	public StatusFlag status { get; private set; }
 	public int selectedObject;
+	public int lastObjectHeadTracked;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
@@ -43,6 +44,7 @@ public class Robot
 	{
 		ID = robotID;
 		selectedObject = -1;
+		lastObjectHeadTracked = -1;
 		observedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 	}
@@ -71,7 +73,7 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectType ); // HACK
 
 		if( observedObject == null )
 		{

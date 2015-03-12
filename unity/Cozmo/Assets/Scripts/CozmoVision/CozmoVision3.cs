@@ -130,6 +130,11 @@ public class CozmoVision3 : CozmoVision
 						if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 						{
 							robot.selectedObject = inReticle[0].ID; // select the block closest to ground
+
+							if( inReticle.Count == 1 )
+							{
+								RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+							}
 						}
 
 						actionButtons[0].button.gameObject.SetActive( true );
@@ -152,6 +157,11 @@ public class CozmoVision3 : CozmoVision
 							actionButtons[0].text.text = "Pick Up " + inReticle[0].ID;
 							actionButtons[0].button.gameObject.SetActive( true );
 							robot.selectedObject = inReticle[0].ID;
+
+							if( inReticle.Count == 1 )
+							{
+								RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+							}
 						}
 
 						if( inReticle.Count > 1 )
