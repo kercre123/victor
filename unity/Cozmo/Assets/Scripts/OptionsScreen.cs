@@ -43,6 +43,7 @@ public class OptionsScreen : MonoBehaviour {
 			combo_vision.SelectedIndex = PlayerPrefs.GetInt("VisionSchemeIndex", 0);
 		}
 
+
 	}
 
 	void ControlsSelected(int index) {
