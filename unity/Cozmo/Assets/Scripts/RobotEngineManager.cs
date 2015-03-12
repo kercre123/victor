@@ -412,7 +412,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
-		if( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 )
+		if( PlayerPrefs.GetInt( "VisionSchemeIndex" ) == 2 )
 		{
 			return;
 		}
