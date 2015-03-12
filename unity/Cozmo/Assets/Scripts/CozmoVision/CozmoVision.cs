@@ -18,13 +18,15 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
-
 	
 	protected RectTransform rTrans;
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	protected float lastHeadAngle = 0f;
+	protected List<int> lastObservedObjects = new List<int>();
+
+	private float time = 0f;
 
 	protected int observedObjectsCount
 	{
@@ -100,6 +102,8 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.SetRobotCarryingObject( Intro.CurrentRobotID );
+
+			RobotEngineManager.instance.current.selectedObject = -1;
 		}
 	}
 
@@ -160,6 +164,32 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
+	protected void DetectNewObservedObjects()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			for( int i = 0; i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
+			{
+				if( RobotEngineManager.instance.current.selectedObject == -1 && !lastObservedObjects.Contains( RobotEngineManager.instance.current.observedObjects[i].ID ) )
+				{
+					Ding();
+					
+					break;
+				}
+			}
+		}
+	}
+
+	protected void Ding()
+	{
+		if( time + 2f < Time.time )
+		{
+			RobotEngineManager.instance.NewObjectObserved();
+			
+			time = Time.time;
+		}
+	}
+
 	protected virtual void Update()
 	{
 //		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
@@ -167,6 +197,19 @@ public class CozmoVision : MonoBehaviour
 //			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;
 //		}
 
+	}
+
+	protected virtual void LateUpdate()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			lastObservedObjects.Clear();
+
+			for( int i = 0; i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
+			{
+				lastObservedObjects.Add( RobotEngineManager.instance.current.observedObjects[i].ID );
+			}
+		}
 	}
 
 	private void OnDisable()
