@@ -1328,7 +1328,7 @@ namespace Anki
         // Check to see if this object is the one the robot is carrying.
         if(_robot->GetCarryingObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                           "Clearing %s object %d which robot %d think it is carrying.\n",
+                           "Clearing %s object %d which robot %d thinks it is carrying.\n",
                            object->GetType().GetName().c_str(),
                            object->GetID().GetValue(),
                            _robot->GetID());
@@ -1344,7 +1344,7 @@ namespace Anki
         }
         
         if(_robot->GetTrackHeadToObject() == object->GetID()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject"
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
                            "Clearing %s object %d which robot %d is currently tracking its head to.\n",
                            object->GetType().GetName().c_str(),
                            object->GetID().GetValue(),
