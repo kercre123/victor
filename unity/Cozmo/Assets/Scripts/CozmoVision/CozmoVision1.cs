@@ -61,6 +61,7 @@ public class CozmoVision1 : CozmoVision
 		
 		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
+			DetectNewObservedObjects();
 			SetActionButtons();
 
 			distancePairs.Clear();

@@ -42,7 +42,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
-	
+
+	private bool imageRequested = false;
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -251,11 +252,8 @@ public class RobotEngineManager : MonoBehaviour {
 			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
 			}
 			break;
-		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
-			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
-			break;
-		case G2U_Message.Tag.RobotCompletedPlaceObjectOnGroundAction:
-			ReceivedSpecificMessage(message.RobotCompletedPlaceObjectOnGroundAction);
+		case G2U_Message.Tag.RobotCompletedAction:
+			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
 		}
 	}
@@ -290,6 +288,7 @@ public class RobotEngineManager : MonoBehaviour {
 		if( current != null )
 		{
 			current.selectedObject = -1;
+			current.lastObjectHeadTracked = -1;
 			current.observedObjects.Clear();
 			current.knownObjects.Clear();
 		}
@@ -317,6 +316,8 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			current.observedObjects.Clear();
 		}
+
+		current.lastObjectHeadTracked = -1;
 	}
 
 	private void SuccessOrFailure( bool success )
@@ -340,23 +341,13 @@ public class RobotEngineManager : MonoBehaviour {
 		audio.PlayOneShot( newObjectObservedSound );
 	}
 
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
+	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
 	{
-		Debug.Log( "Pick And Place complete" );
+		Debug.Log( "Action completed" );
 		
 		current.selectedObject = -1;
+		current.lastObjectHeadTracked = -1;
 
-		SetHeadAngle( defaultHeadAngle );
-
-		SuccessOrFailure( message.success > 0 );
-	}
-
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
-	{
-		Debug.Log( "Place Object On Ground complete" );
-		
-		current.selectedObject = -1;
-		
 		SetHeadAngle( defaultHeadAngle );
 
 		SuccessOrFailure( message.success > 0 );
@@ -421,6 +412,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
+		if( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 )
+		{
+			return;
+		}
+
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
@@ -585,6 +581,8 @@ public class RobotEngineManager : MonoBehaviour {
 		message.max_speed_rad_per_sec = 5f;
 
 		channel.Send( new U2G_Message { SetHeadAngle = message } );
+
+		current.lastObjectHeadTracked = -1;
 	}
 
 	public void TrackHeadToObject( int objectID, byte robotID )
@@ -593,13 +591,18 @@ public class RobotEngineManager : MonoBehaviour {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
 
-		Debug.Log( "Track Head To Object " + objectID );
+		if( current.lastObjectHeadTracked != objectID )
+		{
+			Debug.Log( "Track Head To Object " + objectID );
 
-		U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
-		message.objectID = (uint)objectID;
-		message.robotID = robotID;
-		
-		channel.Send( new U2G_Message { TrackHeadToObject = message } );
+			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
+			message.objectID = (uint)objectID;
+			message.robotID = robotID;
+			
+			channel.Send( new U2G_Message { TrackHeadToObject = message } );
+
+			current.lastObjectHeadTracked = objectID;
+		}
 	}
 
 	public void PickAndPlaceObject()
@@ -614,6 +617,7 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send( new U2G_Message{PickAndPlaceObject = message} );
 
 		current.observedObjects.Clear();
+		current.lastObjectHeadTracked = -1;
 	}
 
 	public void SetRobotCarryingObject( byte robotID )
@@ -637,10 +641,16 @@ public class RobotEngineManager : MonoBehaviour {
 		}*/
 		
 		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
+		current.lastObjectHeadTracked = -1;
 	}
 
 	public void RequestImage(byte robotID)
 	{
+		if( imageRequested )
+		{
+			return;
+		}
+
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
@@ -658,6 +668,8 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send (new U2G_Message{ImageRequest = message2});
 		
 		Debug.Log( "image request message sent" );
+
+		imageRequested = true;
 	}
 	
 	public void StopAllMotors(int robotID)

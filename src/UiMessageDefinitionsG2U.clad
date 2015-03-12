@@ -137,17 +137,13 @@ message G2U_DeviceDetectedVisionMarker {
 //////////////////////////////////  ACTIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// RobotCompletedPickAndPlaceAction
-message G2U_RobotCompletedPickAndPlaceAction {
+// RobotCompletedAction
+// TODO: Add action type, more informative result codes...
+message G2U_RobotCompletedAction {
     uint_32 robotID,
     uint_8 success    
 }
 
-// RobotCompletedPlaceObjectOnGroundAction
-message G2U_RobotCompletedPlaceObjectOnGroundAction {
-    uint_32 robotID,
-    uint_8 success
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -182,8 +178,7 @@ union G2U_Message {
     G2U_RobotObservedNothing RobotObservedNothing,
     G2U_RobotDeletedObject RobotDeletedObject,
     G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
-    G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction,
-    G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction,
+    G2U_RobotCompletedAction RobotCompletedAction,
     G2U_PlaySound PlaySound,
     G2U_StopSound StopSound
 }

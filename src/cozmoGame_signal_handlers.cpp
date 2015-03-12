@@ -111,15 +111,10 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageAvailableSignal().ScopedSubscribe(cbRobotImageAvailable));
     
-    auto cbRobotCompletedPickAndPlaceAction = [this](RobotID_t robotID, uint8_t success) {
-      this->HandleRobotCompletedPickAndPlaceAction(robotID, success);
+    auto cbRobotCompletedAction = [this](RobotID_t robotID, uint8_t success) {
+      this->HandleRobotCompletedAction(robotID, success);
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().ScopedSubscribe(cbRobotCompletedPickAndPlaceAction));
-    
-    auto cbRobotCompletedPlaceObjectOnGroundAction = [this](RobotID_t robotID, uint8_t success) {
-      this->HandleRobotCompletedPlaceObjectOnGroundAction(robotID, success);
-    };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().ScopedSubscribe(cbRobotCompletedPlaceObjectOnGroundAction));
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
   } // SetupSignalHandlers()
   
@@ -335,29 +330,17 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success)
+  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, uint8_t success)
   {
-    G2U_RobotCompletedPickAndPlaceAction msg;
+    G2U_RobotCompletedAction msg;
   
     msg.robotID = robotID;
     msg.success = success;
     
     G2U_Message message;
-    message.Set_RobotCompletedPickAndPlaceAction(msg);
+    message.Set_RobotCompletedAction(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
-  
-  void CozmoGameImpl::HandleRobotCompletedPlaceObjectOnGroundAction(uint8_t robotID, uint8_t success)
-  {
-    G2U_RobotCompletedPlaceObjectOnGroundAction msg;
-    
-    msg.robotID = robotID;
-    msg.success = success;
-    
-    G2U_Message message;
-    message.Set_RobotCompletedPlaceObjectOnGroundAction(msg);
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
-  }
-  
+
 } // namespace Cozmo
 } // namespace Anki

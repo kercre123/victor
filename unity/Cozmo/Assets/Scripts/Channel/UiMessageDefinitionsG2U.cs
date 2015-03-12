@@ -1020,85 +1020,25 @@ public class G2U_DeviceDetectedVisionMarker
 	}
 }
 
-public class G2U_RobotCompletedPickAndPlaceAction
+public class G2U_RobotCompletedAction
 {
 	public uint robotID;
 	public byte success;
 
 	/**** Constructors ****/
 
-	public G2U_RobotCompletedPickAndPlaceAction()
+	public G2U_RobotCompletedAction()
 	{
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction(uint robotID,
+	public G2U_RobotCompletedAction(uint robotID,
 		byte success)
 	{
 		this.robotID = robotID;
 		this.success = success;
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction(System.IO.Stream stream)
-		: this()
-	{
-		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//robotID
-		robotID = (uint)(reader.ReadUInt32());
-		//success
-		success = (byte)(reader.ReadByte());
-	}
-
-	/**** Pack ****/
-	public System.IO.Stream Pack(System.IO.Stream stream)
-	{
-		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
-		writer.Write((uint)robotID);
-		writer.Write((byte)success);
-		return stream;
-	}
-
-	/**** Unpack ****/
-	public System.IO.Stream Unpack(System.IO.Stream stream)
-	{
-		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//robotID
-		robotID = (uint)(reader.ReadUInt32());
-		//success
-		success = (byte)(reader.ReadByte());
-		return stream;
-	}
-	public int Size
-	{
-		get {
-			int result = 0;
-			//robotID
-			result += 4; // = uint_32
-			//success
-			result += 1; // = uint_8
-			return result;
-		}
-	}
-}
-
-public class G2U_RobotCompletedPlaceObjectOnGroundAction
-{
-	public uint robotID;
-	public byte success;
-
-	/**** Constructors ****/
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction()
-	{
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction(uint robotID,
-		byte success)
-	{
-		this.robotID = robotID;
-		this.success = success;
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction(System.IO.Stream stream)
+	public G2U_RobotCompletedAction(System.IO.Stream stream)
 		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -1264,10 +1204,9 @@ public class G2U_Message {
 		RobotObservedNothing,	//9
 		RobotDeletedObject,	//10
 		DeviceDetectedVisionMarker,	//11
-		RobotCompletedPickAndPlaceAction,	//12
-		RobotCompletedPlaceObjectOnGroundAction,	//13
-		PlaySound,	//14
-		StopSound,	//15
+		RobotCompletedAction,	//12
+		PlaySound,	//13
+		StopSound,	//14
 		INVALID
 	};
 
@@ -1481,36 +1420,19 @@ public class G2U_Message {
 		}
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction
+	public G2U_RobotCompletedAction RobotCompletedAction
 	{
 		get {
-			if (_tag != Tag.RobotCompletedPickAndPlaceAction) {
+			if (_tag != Tag.RobotCompletedAction) {
 				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"RobotCompletedPickAndPlaceAction\" when a value of type {0} is stored.",
+					"Cannot access union member \"RobotCompletedAction\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (G2U_RobotCompletedPickAndPlaceAction)this._state;
+			return (G2U_RobotCompletedAction)this._state;
 		}
 		
 		set {
-			_tag = (value != null) ? Tag.RobotCompletedPickAndPlaceAction : Tag.INVALID;
-			_state = value;
-		}
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction
-	{
-		get {
-			if (_tag != Tag.RobotCompletedPlaceObjectOnGroundAction) {
-				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"RobotCompletedPlaceObjectOnGroundAction\" when a value of type {0} is stored.",
-					_tag.ToString()));
-			}
-			return (G2U_RobotCompletedPlaceObjectOnGroundAction)this._state;
-		}
-		
-		set {
-			_tag = (value != null) ? Tag.RobotCompletedPlaceObjectOnGroundAction : Tag.INVALID;
+			_tag = (value != null) ? Tag.RobotCompletedAction : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -1591,11 +1513,8 @@ public class G2U_Message {
 		case Tag.DeviceDetectedVisionMarker:
 			_state = new G2U_DeviceDetectedVisionMarker(stream);
 			break;
-		case Tag.RobotCompletedPickAndPlaceAction:
-			_state = new G2U_RobotCompletedPickAndPlaceAction(stream);
-			break;
-		case Tag.RobotCompletedPlaceObjectOnGroundAction:
-			_state = new G2U_RobotCompletedPlaceObjectOnGroundAction(stream);
+		case Tag.RobotCompletedAction:
+			_state = new G2U_RobotCompletedAction(stream);
 			break;
 		case Tag.PlaySound:
 			_state = new G2U_PlaySound(stream);
@@ -1651,11 +1570,8 @@ public class G2U_Message {
 		case Tag.DeviceDetectedVisionMarker:
 			DeviceDetectedVisionMarker.Pack(stream);
 			break;
-		case Tag.RobotCompletedPickAndPlaceAction:
-			RobotCompletedPickAndPlaceAction.Pack(stream);
-			break;
-		case Tag.RobotCompletedPlaceObjectOnGroundAction:
-			RobotCompletedPlaceObjectOnGroundAction.Pack(stream);
+		case Tag.RobotCompletedAction:
+			RobotCompletedAction.Pack(stream);
 			break;
 		case Tag.PlaySound:
 			PlaySound.Pack(stream);
@@ -1710,11 +1626,8 @@ public class G2U_Message {
 			case Tag.DeviceDetectedVisionMarker:
 				result += DeviceDetectedVisionMarker.Size;
 				break;
-			case Tag.RobotCompletedPickAndPlaceAction:
-				result += RobotCompletedPickAndPlaceAction.Size;
-				break;
-			case Tag.RobotCompletedPlaceObjectOnGroundAction:
-				result += RobotCompletedPlaceObjectOnGroundAction.Size;
+			case Tag.RobotCompletedAction:
+				result += RobotCompletedAction.Size;
 				break;
 			case Tag.PlaySound:
 				result += PlaySound.Size;
