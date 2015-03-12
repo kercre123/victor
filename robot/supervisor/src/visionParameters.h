@@ -181,7 +181,7 @@ namespace Anki {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 30;
         static const u32 FACE_DETECTION_SPEED_HZ     = 30;
-        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 15;
+        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 20;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
