@@ -2,16 +2,15 @@
 using UnityEngine.UI;
 using System.Collections;
 
-[ExecuteInEditMode]
-public class ScreenController : MonoBehaviour {
+
+public class GameObjectSelector : MonoBehaviour {
 
 	[SerializeField] GameObject[] screens = null;
 	[SerializeField] int defaultIndex = 0;
 	[SerializeField] Text label = null;
-	[SerializeField] Text[] buttonLabels = null;
 
 	int _index = -1;
-	int index {
+	protected int index {
 		get {
 			return _index;
 		}
@@ -25,17 +24,7 @@ public class ScreenController : MonoBehaviour {
 		}
 	}
 
-	void Awake() {
-		if(buttonLabels != null) {
-			for(int i=0; i<buttonLabels.Length && i<screens.Length-1; i++) {
-				buttonLabels[i].text = screens[i+1].name;
-			}
-		}
-	}
-
 	void OnEnable() {
-		if(!Application.isPlaying) return;
-
 		if(screens == null || screens.Length == 0) {
 			enabled = false;
 			return;
@@ -69,12 +58,8 @@ public class ScreenController : MonoBehaviour {
 
 	}
 
-	public void Exit() {
-		RobotEngineManager.instance.Disconnect ();
-		Application.LoadLevel("Shell");
-	}
-
 	public void SetScreenIndex(int i) {
+		Debug.Log("SetScreenIndex("+i+")");
 		index = Mathf.Clamp(i, 0, screens.Length - 1);
 	}
 

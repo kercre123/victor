@@ -155,7 +155,7 @@ public class Intro : MonoBehaviour {
 		}
 
 		error.text = "";
-		Application.LoadLevel("ControlSchemeTest");
+		Application.LoadLevel("Games");
 	}
 
 }

@@ -189,8 +189,8 @@ public class SlalomController : GameController {
 				}
 				else {
 					//design query: crossed between obstacles in the wrong direction?
-					tapesCrossed--;
-					Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") crossed between obstacles in the wrong direction currentPassClockwise("+lastPassCrossUp+")");
+					//tapesCrossed = scores[0] - 1;
+					//Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") crossed between obstacles in the wrong direction currentPassClockwise("+lastPassCrossUp+")");
 				}
 			}
 		}

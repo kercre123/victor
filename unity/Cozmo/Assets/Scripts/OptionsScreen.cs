@@ -7,10 +7,18 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Slider slider_turnSpeed;
 	[SerializeField] Toggle[] toggle_cozmoVisions;
 	[SerializeField] Toggle toggle_reverseLikeACar;
+	[SerializeField] ComboBox combo_controls;
+	[SerializeField] ComboBox combo_vision;
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 	public const int DEFAULT_COZMO_VISION = 0;
+
+	public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
+	public const int DEFAULT_CONTROL_SCHEME = 0;
+
+	public string[] visionStyles = { "CozmoVision1", "CozmoVision2", "CozmoVision3" };
+	public const int DEFAULT_VISION_SCHEME = 0;
 
 	void OnEnable () {
 		Init();
@@ -32,6 +40,25 @@ public class OptionsScreen : MonoBehaviour {
 			toggle_reverseLikeACar.isOn = PlayerPrefs.GetInt("ReverseLikeACar", REVERSE_LIKE_A_CAR) == 1;
 			//Debug.Log("Init toggle_reverseLikeACar.isOn("+toggle_reverseLikeACar.isOn+")");
 		}
+
+		if(combo_controls != null) {
+			combo_controls.AddItems(controlStyles);
+			combo_controls.OnSelectionChanged = ControlsSelected;
+		}
+
+		if(combo_vision != null) {
+			combo_vision.AddItems(visionStyles);
+			combo_vision.OnSelectionChanged = VisionSelected;
+		}
+
+	}
+
+	void ControlsSelected(int index) {
+		PlayerPrefs.SetInt("ControlSchemeIndex", index);
+	}
+
+	void VisionSelected(int index) {
+		PlayerPrefs.SetInt("VisionSchemeIndex", index);
 	}
 
 	void AddListeners() {
