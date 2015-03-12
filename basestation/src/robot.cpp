@@ -384,6 +384,12 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
+      if(IsMoving()) {
+        PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                            "Ignoring VisionMarker seen while moving.\n");
+        return RESULT_OK;
+      }
+      
       if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
