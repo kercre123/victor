@@ -139,12 +139,11 @@ public class CozmoVision : MonoBehaviour
 
 	public void RequestImage()
 	{
-		Debug.Log( "request image" );
-
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
 			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
+			RobotEngineManager.instance.SetLiftHeight( 0f );
 		}
 	}
 

@@ -608,16 +608,28 @@ public class RobotEngineManager : MonoBehaviour {
 	public void PickAndPlaceObject()
 	{
 		Debug.Log( "Pick And Place Object " + current.selectedObject );
-
+		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = current.selectedObject;
 		message.usePreDockPose = 0;
 		message.useManualSpeed = 0;
 		
-		channel.Send( new U2G_Message{PickAndPlaceObject = message} );
-
+		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
+		
 		current.observedObjects.Clear();
 		current.lastObjectHeadTracked = -1;
+	}
+	
+	public void SetLiftHeight( float height )
+	{
+		Debug.Log( "Set Lift Height " + height );
+		
+		U2G_SetLiftHeight message = new U2G_SetLiftHeight();
+		message.accel_rad_per_sec2 = 5f;
+		message.max_speed_rad_per_sec = 10f;
+		message.height_mm = height;
+		
+		channel.Send( new U2G_Message{ SetLiftHeight = message } );
 	}
 
 	public void SetRobotCarryingObject( byte robotID )
