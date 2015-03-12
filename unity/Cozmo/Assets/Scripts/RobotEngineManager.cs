@@ -252,11 +252,8 @@ public class RobotEngineManager : MonoBehaviour {
 			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
 			}
 			break;
-		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
-			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
-			break;
-		case G2U_Message.Tag.RobotCompletedPlaceObjectOnGroundAction:
-			ReceivedSpecificMessage(message.RobotCompletedPlaceObjectOnGroundAction);
+		case G2U_Message.Tag.RobotCompletedAction:
+			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
 		}
 	}
@@ -344,25 +341,13 @@ public class RobotEngineManager : MonoBehaviour {
 		audio.PlayOneShot( newObjectObservedSound );
 	}
 
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
+	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
 	{
-		Debug.Log( "Pick And Place complete" );
+		Debug.Log( "Action completed" );
 		
 		current.selectedObject = -1;
 		current.lastObjectHeadTracked = -1;
 
-		SetHeadAngle( defaultHeadAngle );
-
-		SuccessOrFailure( message.success > 0 );
-	}
-
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
-	{
-		Debug.Log( "Place Object On Ground complete" );
-		
-		current.selectedObject = -1;
-		current.lastObjectHeadTracked = -1;
-		
 		SetHeadAngle( defaultHeadAngle );
 
 		SuccessOrFailure( message.success > 0 );
