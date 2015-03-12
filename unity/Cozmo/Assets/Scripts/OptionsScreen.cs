@@ -34,11 +34,13 @@ public class OptionsScreen : MonoBehaviour {
 		if(combo_controls != null) {
 			combo_controls.AddItems(controlStyles);
 			combo_controls.OnSelectionChanged = ControlsSelected;
+			combo_controls.SelectedIndex = PlayerPrefs.GetInt("ControlSchemeIndex", 0);
 		}
 
 		if(combo_vision != null) {
 			combo_vision.AddItems(visionStyles);
 			combo_vision.OnSelectionChanged = VisionSelected;
+			combo_vision.SelectedIndex = PlayerPrefs.GetInt("VisionSchemeIndex", 0);
 		}
 
 	}

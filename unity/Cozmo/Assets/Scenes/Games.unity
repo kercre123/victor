@@ -2853,7 +2853,7 @@ MonoBehaviour:
     image: {fileID: 1045241081}
     text: {fileID: 1383011020}
   reticle: {fileID: 246114843}
-  distance: 0
+  distance: 100
 --- !u!120 &166635988
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -14627,6 +14627,10 @@ Prefab:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11409566, guid: 09e755f1f73244951a8d70c4279e9b30, type: 2}
+      propertyPath: distance
+      value: 100
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 09e755f1f73244951a8d70c4279e9b30, type: 2}
   m_RootGameObject: {fileID: 949026788}
@@ -17906,8 +17910,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1908714835}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: .502777755}
-  m_AnchorMax: {x: 1, y: .502777755}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 20}
   m_Pivot: {x: .5, y: .5}
@@ -20943,7 +20947,7 @@ RectTransform:
   m_Father: {fileID: 903222175}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: .502777755}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 10}
   m_Pivot: {x: .5, y: .5}
