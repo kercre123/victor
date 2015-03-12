@@ -190,15 +190,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected virtual void Update()
-	{
-//		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
-//			headAngleSlider.value = Mathf.Clamp(lastHeadAngle * Mathf.Rad2Deg, -90f, 90f);
-//			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;
-//		}
-
-	}
-
 	protected virtual void LateUpdate()
 	{
 		if( RobotEngineManager.instance != null )

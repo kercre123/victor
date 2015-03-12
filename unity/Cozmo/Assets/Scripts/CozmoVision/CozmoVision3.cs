@@ -75,13 +75,9 @@ public class CozmoVision3 : CozmoVision
 		Action();
 	}
 
-	protected override void Update()
+	protected void Update()
 	{
-		base.Update();
-
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 );
-
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			robot = RobotEngineManager.instance.current;
 

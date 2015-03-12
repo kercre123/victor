@@ -53,71 +53,62 @@ public class CozmoVision1 : CozmoVision
 
 	protected List<DistancePair> distancePairs = new List<DistancePair>();
 
-	protected override void Update()
+	protected void Update()
 	{
-		base.Update();
 
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision1" ) == 1 );
-		
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
-		{
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
 			DetectNewObservedObjects();
 			SetActionButtons();
 
 			distancePairs.Clear();
 
-			for( int i = 0; i < maxObservedObjects; ++i )
-			{
-				if( observedObjectsCount > i && robot.selectedObject == -1 )
-				{
+			for(int i = 0; i < maxObservedObjects; ++i) {
+				if(observedObjectsCount > i && robot.selectedObject == -1) {
 					ObservedObject observedObject = robot.observedObjects[i];
 
 					selectionBoxes[i].button = null;
 
-					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
-					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
+					selectionBoxes[i].image.rectTransform.sizeDelta = new Vector2(observedObject.VizRect.width, observedObject.VizRect.height);
+					selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2(observedObject.VizRect.x, -observedObject.VizRect.y);
 					
 					selectionBoxes[i].text.text = "Select " + observedObject.ID;
 					selectionBoxes[i].ID = observedObject.ID;
 					
-					selectionBoxes[i].image.gameObject.SetActive( true );
+					selectionBoxes[i].image.gameObject.SetActive(true);
 
-					for( int j = 0; j < selectionButtons.Length && j < observedObjectsCount; ++j )
-					{
+					for(int j = 0; j < selectionButtons.Length && j < observedObjectsCount; ++j) {
 						DistancePair dp = new DistancePair();
 
 						dp.box = selectionBoxes[i];
 						dp.button = selectionButtons[j];
-						dp.distance = Vector3.Distance( dp.box.image.transform.position, dp.button.transform.position );
+						dp.distance = Vector3.Distance(dp.box.image.transform.position, dp.button.transform.position);
 
-						distancePairs.Add( dp );
+						distancePairs.Add(dp);
 					}
 				}
-				else
-				{
-					selectionBoxes[i].image.gameObject.SetActive( false );
+				else {
+					selectionBoxes[i].image.gameObject.SetActive(false);
 				}
 			}
 
-			distancePairs.Sort( delegate( DistancePair x, DistancePair y ) { return x.distance.CompareTo( y.distance ); } );
+			distancePairs.Sort(delegate( DistancePair x, DistancePair y ) {
+				return x.distance.CompareTo(y.distance);
+			});
 
-			for( int i = 0; i < selectionButtons.Length; ++i )
-			{
+			for(int i = 0; i < selectionButtons.Length; ++i) {
 				selectionButtons[i].box = null;
-				selectionButtons[i].gameObject.SetActive( false );
+				selectionButtons[i].gameObject.SetActive(false);
 			}
 
-			for( int i = 0; i < distancePairs.Count; ++i )
-			{
-				if( distancePairs[i].button.box == null && distancePairs[i].box.button == null )
-				{
+			for(int i = 0; i < distancePairs.Count; ++i) {
+				if(distancePairs[i].button.box == null && distancePairs[i].box.button == null) {
 					distancePairs[i].button.box = distancePairs[i].box;
 					distancePairs[i].box.button = distancePairs[i].button;
-					distancePairs[i].button.gameObject.SetActive( true );
+					distancePairs[i].button.gameObject.SetActive(true);
 					distancePairs[i].button.text.text = distancePairs[i].box.text.text;
-					distancePairs[i].button.line.SetPosition( 0, distancePairs[i].button.position );
-					distancePairs[i].button.line.SetPosition( 1, distancePairs[i].box.position );
-					distancePairs[i].button.line.SetWidth( lineWidth.x, lineWidth.y );
+					distancePairs[i].button.line.SetPosition(0, distancePairs[i].button.position);
+					distancePairs[i].button.line.SetPosition(1, distancePairs[i].box.position);
+					distancePairs[i].button.line.SetWidth(lineWidth.x, lineWidth.y);
 				}
 			}
 		}

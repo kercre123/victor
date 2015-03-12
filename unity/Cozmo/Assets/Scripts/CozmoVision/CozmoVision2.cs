@@ -7,13 +7,9 @@ public class CozmoVision2 : CozmoVision
 {
 	[SerializeField] protected SelectionButton2[] selectionButtons;
 
-	protected override void Update()
+	protected void Update()
 	{
-		base.Update();
-
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision2" ) == 1 );
-
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
 			DetectNewObservedObjects();
 			SetActionButtons();
