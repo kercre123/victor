@@ -50,7 +50,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &109572
 GameObject:
   m_ObjectHideFlags: 1
@@ -1530,7 +1530,7 @@ MonoBehaviour:
     m_HighlightedTrigger: Highlighted
     m_PressedTrigger: Pressed
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 11409570}
   m_OnClick:
     m_PersistentCalls:
@@ -1561,7 +1561,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
@@ -1621,7 +1621,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Action
+  m_Text: Action 2
 --- !u!114 &11409576
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1662,7 +1662,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 11409566}
-        m_MethodName: Action
+        m_MethodName: Action2
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4906,7 +4906,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Action
+  m_Text: Action 1
 --- !u!120 &12009566
 LineRenderer:
   m_ObjectHideFlags: 1
@@ -5553,7 +5553,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 320, y: 240}
+  m_SizeDelta: {x: 320, y: 350}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22409568
 RectTransform:
@@ -5626,11 +5626,11 @@ RectTransform:
   - {fileID: 22409572}
   m_Father: {fileID: 22409568}
   m_RootOrder: 4
-  m_AnchorMin: {x: .5, y: 0}
-  m_AnchorMax: {x: .5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 30}
-  m_SizeDelta: {x: 160, y: 30}
-  m_Pivot: {x: .5, y: 0}
+  m_AnchorMin: {x: .5, y: 1}
+  m_AnchorMax: {x: .5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 320, y: 175}
+  m_Pivot: {x: .5, y: 1}
 --- !u!224 &22409576
 RectTransform:
   m_ObjectHideFlags: 1
@@ -7047,7 +7047,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: 0}
   m_AnchorMax: {x: .5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 320, y: 175}
   m_Pivot: {x: .5, y: 0}
 --- !u!224 &22489076
 RectTransform:

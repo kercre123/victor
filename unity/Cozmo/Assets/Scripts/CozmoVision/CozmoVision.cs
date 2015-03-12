@@ -162,7 +162,7 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected virtual void Update()
+	protected void DetectNewObservedObjects()
 	{
 		if( RobotEngineManager.instance != null )
 		{
@@ -170,17 +170,26 @@ public class CozmoVision : MonoBehaviour
 			{
 				if( RobotEngineManager.instance.current.selectedObject == -1 && !lastObservedObjects.Contains( RobotEngineManager.instance.current.observedObjects[i].ID ) )
 				{
-					if( time + 5f < Time.time )
-					{
-						RobotEngineManager.instance.NewObjectObserved();
-
-						time = Time.time;
-					}
-
+					Ding();
+					
 					break;
 				}
 			}
 		}
+	}
+
+	protected void Ding()
+	{
+		if( time + 2f < Time.time )
+		{
+			RobotEngineManager.instance.NewObjectObserved();
+			
+			time = Time.time;
+		}
+	}
+
+	protected virtual void Update()
+	{
 //		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
 //			headAngleSlider.value = Mathf.Clamp(lastHeadAngle * Mathf.Rad2Deg, -90f, 90f);
 //			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;

@@ -421,6 +421,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
+		if( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 )
+		{
+			return;
+		}
+
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;

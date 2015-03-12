@@ -38,11 +38,20 @@ public class CozmoVision3 : CozmoVision
 		}
 	}
 
+	public struct ActionButtonState
+	{
+		public bool activeSelf;
+		public string text;
+	}
+
 	[SerializeField] protected SelectionBox box;
 	[SerializeField] protected Image reticle;
-
+	[SerializeField] protected float distance;
+	
+	protected List<ObservedObject> inReticle = new List<ObservedObject>();
+	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
 	protected Vector3[] reticleCorners;
-	protected bool inReticle
+	protected bool isInReticle
 	{
 		get
 		{
@@ -57,13 +66,24 @@ public class CozmoVision3 : CozmoVision
 			Debug.Log( "min y " + box.position.y + " " + reticleCorners[0].y );
 			Debug.Log( "max y " + box.position.y + " " + reticleCorners[2].y );*/
 
-			return box.image.rectTransform.rect.width > reticle.rectTransform.rect.width && 
-				  	box.image.rectTransform.rect.height > reticle.rectTransform.rect.height &&
-					box.position.x > reticleCorners[0].x && 
+			return box.position.x > reticleCorners[0].x && 
 					box.position.x < reticleCorners[2].x &&
 					box.position.y > reticleCorners[0].y && 
 					box.position.y < reticleCorners[2].y;
 		}
+	}
+
+	public void Action2()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			if( inReticle.Count > 1 )
+			{
+				RobotEngineManager.instance.current.selectedObject = inReticle[1].ID;
+			}
+		}
+
+		Action();
 	}
 
 	protected override void Update()
@@ -81,46 +101,91 @@ public class CozmoVision3 : CozmoVision
 			if( robot.selectedObject > -2 )
 			{
 				robot.selectedObject = -1;
-				//reticle.color = Color.yellow;
+				inReticle.Clear();
 
 				for( int i = 0; i < robot.observedObjects.Count; ++i )
 				{
-					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
+					//box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
+					//box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
 
-					if( inReticle )
+					if( /*isInReticle &&*/ Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
 					{
-						box.image.gameObject.SetActive( true );
-
-						box.text.text = "Select " + robot.observedObjects[i].ID;
-						robot.selectedObject = robot.observedObjects[i].ID;
-						//reticle.color = Color.red;
-
-						break;
+						inReticle.Add( robot.observedObjects[i] );
 					}
 				}
+
+				inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+				{
+					return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+				} );
 			}
 
 			if( actionButtons.Length > 1 )
 			{
-				actionButtons[1].button.gameObject.SetActive( robot.selectedObject > -1 );
+				actionButtons[0].button.gameObject.SetActive( false );
+				actionButtons[1].button.gameObject.SetActive( false );
 
-				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+				if( robot.selectedObject > -2 ) // if not in action
 				{
-					actionButtons[0].button.gameObject.SetActive( true );
-					actionButtons[0].text.text = "Drop " + robot.carryingObjectID;
-
-					if( robot.selectedObject > -1 )
+					if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
 					{
-						actionButtons[1].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+						if( inReticle.Count > 0 ) // if can see at least one block
+						{
+							robot.selectedObject = inReticle[0].ID; // select the block closest to ground
+						}
+
+						actionButtons[0].button.gameObject.SetActive( true );
+						actionButtons[0].text.text = "Drop " + robot.carryingObjectID;
+						actionButtons[1].button.gameObject.SetActive( true );
+
+						if( robot.selectedObject > -1 )
+						{
+							actionButtons[1].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+						}
+						else
+						{
+							actionButtons[1].text.text = "Change " + robot.carryingObjectID;
+						}
+					}
+					else // if not holding a block
+					{
+						if( inReticle.Count > 0 )
+						{
+							actionButtons[0].text.text = "Pick Up " + inReticle[0].ID;
+							actionButtons[0].button.gameObject.SetActive( true );
+							robot.selectedObject = inReticle[0].ID;
+						}
+
+						if( inReticle.Count > 1 )
+						{
+							actionButtons[1].text.text = "Pick Up " + inReticle[1].ID;
+							actionButtons[1].button.gameObject.SetActive( true );
+						}
 					}
 				}
-				else
+			}
+
+			for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+			{
+				if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
+				   	( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
 				{
-					actionButtons[0].button.gameObject.SetActive( false );
-					actionButtons[1].text.text = "Pick Up " + robot.selectedObject;
+					Ding();
+
+					break;
 				}
 			}
+		}
+	}
+
+	protected override void LateUpdate()
+	{
+		base.LateUpdate();
+
+		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+		{
+			lastActionButtonActiveSelf[i].activeSelf = actionButtons[i].button.gameObject.activeSelf;
+			lastActionButtonActiveSelf[i].text = actionButtons[i].text.text;
 		}
 	}
 }
