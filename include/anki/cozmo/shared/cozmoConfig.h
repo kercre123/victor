@@ -242,11 +242,8 @@ namespace Anki {
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
 #ifdef SIMULATOR
-    // Should be less than the timestep of offboard_vision_processing,
-    // and roughly reflect image capture time.  If it's larger than or equal
-    // to offboard_vision_processing timestep then we may send the same image
-    // multiple times.
-    const s32 VISION_TIME_STEP = 60;
+    // Simulated camera's frame rate, specified by its period in milliseconds
+    const s32 VISION_TIME_STEP = 33;
 #endif
 
 
