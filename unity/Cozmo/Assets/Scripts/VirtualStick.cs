@@ -156,11 +156,12 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	bool wasCounterClockwise = false;
 	Vector2 oldSwipe;
 	float pointerDownTime = 0f;
+	Canvas canvas;	
 #endregion
 
 #region COMPONENT CALLBACKS
 	void Awake() {
-		//canvas = GetComponentInParent<Canvas>();
+		canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
 	}
 
@@ -230,11 +231,14 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
 
+		float screenW = Screen.width / canvas.transform.localScale.x;
+		float screenH = Screen.height / canvas.transform.localScale.y;
+
 		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
 
 		if(scaleToScreen) {
 			rTrans.anchoredPosition = Vector2.zero;
-			float length = Mathf.Min(Screen.height, Screen.width);
+			float length = Mathf.Min(screenW, screenH);
 			rTrans.sizeDelta = new Vector2(length, length);
 		}
 
@@ -247,8 +251,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(stickWidthInches > 0f && stickHeightInches > 0f) {
 			Vector3 size = stick.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, Screen.width);
-			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, Screen.height);;
+			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, screenW);
+			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, screenH);;
 			stick.sizeDelta = size;
 
 			if(capTop != null) capTop.sizeDelta = size;
