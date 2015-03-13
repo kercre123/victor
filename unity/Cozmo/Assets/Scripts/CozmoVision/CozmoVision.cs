@@ -5,11 +5,65 @@ using System.Collections.Generic;
 
 public class CozmoVision : MonoBehaviour
 {
+	public enum ActionButtonMode {
+		DISABLED,
+		PICK_UP,
+		DROP,
+		STACK,
+		ROLL,
+		ALIGN,
+		CHANGE,
+		CANCEL,
+		NUM_MODES
+	}
+
 	[System.Serializable]
-	public struct ActionButton
+	public class ActionButton
 	{
 		public Button button;
+		public Image image;
 		public Text text;
+
+		private Sprite[] sprites;
+
+		public void SetSprites(Sprite[] modeSprites) {
+			sprites = modeSprites;
+		}
+
+		public void SetMode(ActionButtonMode mode) {
+			if(mode == ActionButtonMode.DISABLED) {
+				button.gameObject.SetActive(false);
+				return;
+			}
+			
+			image.sprite = sprites[(int)mode];
+
+			switch(mode) {
+				case ActionButtonMode.PICK_UP:
+					text.text = "Pick Up";
+					break;
+				case ActionButtonMode.DROP:
+					text.text = "Drop";
+					break;
+				case ActionButtonMode.STACK:
+					text.text = "Stack";
+					break;
+				case ActionButtonMode.ROLL:
+					text.text = "Roll";
+					break;
+				case ActionButtonMode.ALIGN:
+					text.text = "Align";
+					break;
+				case ActionButtonMode.CHANGE:
+					text.text = "Change";
+					break;
+				case ActionButtonMode.CANCEL:
+					text.text = "Cancel";
+					break;
+			}
+
+			button.gameObject.SetActive(true);
+		}
 	}
 
 	[SerializeField] protected Button button;
@@ -18,7 +72,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
-	
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+
 	protected RectTransform rTrans;
 	protected Rect rect;
 	protected Robot robot;
@@ -47,39 +102,56 @@ public class CozmoVision : MonoBehaviour
 	private void Awake()
 	{
 		rTrans = transform as RectTransform;
+
+		foreach(ActionButton button in actionButtons) button.SetSprites(actionSprites);
 	}
 
-	protected void HideButtons() {
-		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].button.gameObject.SetActive(false);
+	protected void DisableButtons() {
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
 	}
 
-	protected void SetActionButtons()
+	protected virtual void SetActionButtons()
 	{
+		DisableButtons();
 		robot = RobotEngineManager.instance.current;
+		if(robot == null) return;
 
-		for( int i = 0; i < actionButtons.Length; ++i )
-		{
-			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
-			
-			if( i == 0 )
-			{
-				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-				{
-					if( robot.selectedObject > -1 )
-					{
-						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
-					}
-					else
-					{
-						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
-					}
-				}
-				else
-				{
-					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
-				}
-			}
+		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+			if(robot.selectedObject > -1) actionButtons[0].SetMode(ActionButtonMode.STACK);
+			actionButtons[1].SetMode(ActionButtonMode.DROP);
 		}
+		else {
+			if(robot.selectedObject > -1) actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+		}
+
+		if(robot.selectedObject > -1) actionButtons[2].SetMode(ActionButtonMode.CANCEL);
+
+//		for( int i = 0; i < actionButtons.Length; ++i )
+//		{
+//			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
+//			
+//			if( i == 0 )
+//			{
+//				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+//				{
+//					if( robot.selectedObject > -1 )
+//					{
+//						actionButtons[i].image.sprite = sprite_stack;
+//						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+//					}
+//					else
+//					{
+//						actionButtons[i].image.sprite = sprite_drop;
+//						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
+//					}
+//				}
+//				else
+//				{
+//					actionButtons[i].image.sprite = sprite_pickUp;
+//					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
+//				}
+//			}
+//		}
 	}
 
 	private void RobotImage( Texture2D texture )

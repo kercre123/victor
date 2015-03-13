@@ -57,7 +57,7 @@ public class CozmoVision1 : CozmoVision
 	{
 
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
-			HideButtons();
+			DisableButtons();
 			return;
 		}
 

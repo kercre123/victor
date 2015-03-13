@@ -24,7 +24,7 @@ public class GameObjectSelector : MonoBehaviour {
 		}
 	}
 
-	protected virtual void OnEnable() {
+	void OnEnable() {
 		if(screens == null || screens.Length == 0) {
 			enabled = false;
 			return;

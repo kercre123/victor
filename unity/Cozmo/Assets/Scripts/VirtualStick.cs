@@ -231,8 +231,17 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
 
-		float screenW = Screen.width / canvas.transform.localScale.x;
-		float screenH = Screen.height / canvas.transform.localScale.y;
+		float screenW = Screen.width;
+		float screenH = Screen.height;
+		CanvasScaler scalar = canvas.gameObject.GetComponent<CanvasScaler>();
+
+		float yScaler = 1f;
+
+		if(scalar != null) {
+			yScaler = scalar.referenceResolution.y / Screen.height;
+			screenW = scalar.referenceResolution.x;
+			screenH = scalar.referenceResolution.y;
+		}
 
 		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
 
@@ -244,15 +253,15 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
-			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
+			size.x = Mathf.Clamp(yScaler * Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
+			size.y = Mathf.Clamp(yScaler * Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
 			bg.sizeDelta = size;
 		}
 
 		if(stickWidthInches > 0f && stickHeightInches > 0f) {
 			Vector3 size = stick.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, screenW);
-			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, screenH);;
+			size.x = Mathf.Clamp(yScaler * Screen.dpi * stickWidthInches, 0f, screenW);
+			size.y = Mathf.Clamp(yScaler * Screen.dpi * stickHeightInches, 0f, screenH);
 			stick.sizeDelta = size;
 
 			if(capTop != null) capTop.sizeDelta = size;

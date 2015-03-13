@@ -5,16 +5,16 @@ using System.Collections;
 
 public class GameSelector : GameObjectSelector {
 
-	public static bool InMenu { get; private set; }
+	public static bool InMenu { get { return instance != null && instance.index == 0; } }
 
+	public static GameSelector instance = null;
 
-	protected override void OnEnable() {
-		base.OnEnable();
-		InMenu = true;
+	void Awake() {
+		instance = this;
 	}
 
-	protected void OnDisable() {
-		InMenu = false;
+	void OnDestroy() {
+		if(instance == this) instance = null;
 	}
 
 	public void Disconnect() {

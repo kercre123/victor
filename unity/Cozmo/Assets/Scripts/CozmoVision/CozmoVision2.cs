@@ -10,7 +10,7 @@ public class CozmoVision2 : CozmoVision
 	protected void Update()
 	{
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
-			HideButtons();
+			DisableButtons();
 			return;
 		}
 
