@@ -87,6 +87,7 @@ namespace Anki {
       // Cameras / Vision Processing
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
+      u32 cameraStartTime_ms_;
       
       // For pose information
       webots::GPS* gps_;
@@ -255,7 +256,13 @@ namespace Anki {
       
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
-
+      
+      // HACK: Figure out when first camera image will actually be taken (next
+      // timestep from now), so we can reference to it when computing frame
+      // capture time from now on.
+      // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
+      cameraStartTime_ms_ = HAL::GetTimeStamp() + TIME_STEP;
+      PRINT("Setting camera start time as %d.\n", cameraStartTime_ms_);
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -768,6 +775,11 @@ namespace Anki {
       
     } // HAL::CameraSetParameters()
     
+    
+    u32 HAL::GetCameraStartTime()
+    {
+      return cameraStartTime_ms_;
+    }
     
     // Starts camera frame synchronization
     void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
