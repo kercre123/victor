@@ -11,7 +11,7 @@ public class CozmoVision2 : CozmoVision
 	{
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			DetectNewObservedObjects();
+			DetectObservedObjects();
 			SetActionButtons();
 
 			for( int i = 0; i < maxObservedObjects; ++i )
