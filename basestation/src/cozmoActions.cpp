@@ -753,7 +753,7 @@ namespace Anki {
           
           const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
           
-          bool objectInOriginalPoseFound = false;
+          Vision::ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
             if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
@@ -761,15 +761,21 @@ namespace Anki {
                                                                carryObject->GetSameDistanceTolerance(),
                                                                carryObject->GetSameAngleTolerance(), true))
             {
-              objectInOriginalPoseFound = true;
+              objectInOriginalPose = object.second;
               break;
             }
           }
           
-          if(objectInOriginalPoseFound)
+          if(objectInOriginalPose != nullptr)
           {
             // Must not actually be carrying the object I thought I was!
-            blockWorld.ClearObject(robot.GetCarryingObject());
+            // Put the object I thought I was carrying in the position of the
+            // object I matched to it above, and then delete that object.
+            // (This prevents a new object with different ID being created.)
+            if(carryObject->GetID() != objectInOriginalPose->GetID()) {
+              carryObject->SetPose(objectInOriginalPose->GetPose());
+              blockWorld.ClearObject(objectInOriginalPose->GetID());
+            }
             robot.UnSetCarryingObject();
             
             PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
