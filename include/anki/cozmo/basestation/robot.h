@@ -109,6 +109,7 @@ namespace Anki {
       //
       // Camera / Vision
       //
+      void                              EnableVisionWhileMoving(bool enable);
       const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
@@ -459,6 +460,7 @@ namespace Anki {
       // cameras (e.g. those stored inside the pose history)
       Vision::CameraCalibration _cameraCalibration;
       Vision::Camera            _camera;
+      bool                      _visionWhileMovingEnabled;
       
       // Proximity sensors
       u8               _proxVals[NUM_PROX];
@@ -665,6 +667,10 @@ namespace Anki {
     
     inline const Pose3d& Robot::GetPose(void) const
     { return _pose; }
+    
+    
+    inline void Robot::EnableVisionWhileMoving(bool enable)
+    { _visionWhileMovingEnabled = enable; }
     
     inline const Vision::Camera& Robot::GetCamera(void) const
     { return _camera; }

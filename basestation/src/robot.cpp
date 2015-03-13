@@ -60,6 +60,7 @@ namespace Anki {
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
     , _camera(robotID)
+    , _visionWhileMovingEnabled(false)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -390,12 +391,16 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      if(IsMoving() && !IsPickingOrPlacing()) {
-        PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-                            "Ignoring VisionMarker seen while moving.\n");
-        return RESULT_OK;
+      if(!_visionWhileMovingEnabled) {
+        // If we are not allowing use of markers while moving, check to see if
+        // we are moving (but not picking and placing)
+        if(IsMoving() && !IsPickingOrPlacing()) {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                              "Ignoring VisionMarker seen while moving.\n");
+          return RESULT_OK;
+        }
       }
-      
+    
       if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
