@@ -316,7 +316,8 @@ namespace Anki {
           frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
         }
         static void SetSendWifiImageReadyTime() {
-          frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::SEND_WIFI_IMAGE_PERIOD_US;
+          frameReadyTime_ = 0; // Don't use this method of determining frame readiness (IsFrameReady() always true)
+          //HAL::GetMicroCounter() + SimulatorParameters::SEND_WIFI_IMAGE_PERIOD_US;
         }
 #else
         static Result Initialize() { return RESULT_OK; }
@@ -2018,64 +2019,6 @@ namespace Anki {
 
         // This should be called from elsewhere first, but calling it again won't hurt
         Init();
-        
-        
-#       ifdef SIMULATOR
-        // ------------------------------------------------------
-        // ------- Begin Just Send Images to Basestation --------
-        
-        if(mode_ == VISION_MODE_SEND_IMAGES_TO_BASESTATION)
-        {
-          TimeStamp_t currentTime = HAL::GetTimeStamp();
-          
-          // This computation is based on Cyberbotics support's explaination for how to compute
-          // the actual capture time of the current available image from the simulated
-          // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
-          // (The available frame is still one frame behind? I.e. we are just *about* to capture
-          //  the next one?)
-          TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
-          
-          // Keep up with the capture time of the last image we sent
-          static TimeStamp_t lastImageSentTime = 0;
-          
-          // Have we already sent the currently-available image?
-          if(lastImageSentTime != currentImageTime)
-          {
-            // Nope, so get the (new) available frame from the camera:
-            VisionMemory::ResetBuffers();
-            const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-            const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
-            
-            Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                     VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
-            
-            HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-                                captureResolution_, false);
-            
-            // Make sure that we send the robot state message associated with the
-            // image we are about to send.
-            Messages::SendRobotStateMsg(&robotState);
-            
-            // Send the image, with its actual capture time (not the current system time)
-#           if USE_COMPRESSION_FOR_SENDING_IMAGES
-            CompressAndSendImage(grayscaleImage, currentImageTime);
-#           else
-            DownsampleAndSendImage(grayscaleImage, currentImageTime);
-#           endif
-            
-            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
-            //      robotState.timestamp, currentImageTime);
-            
-            // Mark that we've already sent the image for the current time
-            lastImageSentTime = currentImageTime;
-          }
-          return lastResult;
-        } // if(mode_ == VISION_MODE_SEND_IMAGES_TO_BASESTATION)
-        
-
-        // -------- End Just Send Images to Basestation ---------
-        // ------------------------------------------------------
-#       endif
 
         frameNumber++;
 
@@ -2601,74 +2544,102 @@ namespace Anki {
           
         } else if(mode_ == VISION_MODE_SEND_IMAGES_TO_BASESTATION) {
 
-          Simulator::SetSendWifiImageReadyTime();
-
-          VisionMemory::ResetBuffers();
-          
-          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
-          
-          Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                   VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
-          
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-                              captureResolution_, false);
-          const TimeStamp_t frameCaptureTime = GetFrameCaptureTime();
-          
-          BeginBenchmark("VisionSystem_CameraImagingPipeline");
-          
-          if(vignettingCorrection == VignettingCorrection_Software) {
-            BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+          if(imageSendMode_ != ISM_OFF)  {
+            // TODO: Do I even need the #ifdef SIMULATOR anymore? is this code even compiled into the real robot?
+#           ifdef SIMULATOR
             
-            MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
-            FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+            Simulator::SetSendWifiImageReadyTime();
             
-            for(s32 i=0; i<5; i++)
-              polynomialParameters[i] = vignettingCorrectionParameters[i];
+            TimeStamp_t currentTime = HAL::GetTimeStamp();
             
-            CorrectVignetting(grayscaleImage, polynomialParameters);
+            // This computation is based on Cyberbotics support's explaination for how to compute
+            // the actual capture time of the current available image from the simulated
+            // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
+            // (The available frame is still one frame behind? I.e. we are just *about* to capture
+            //  the next one?)
+            TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
             
-            EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-          } // if(vignettingCorrection == VignettingCorrection_Software)
-          
-          if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
-            BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+            // Keep up with the capture time of the last image we sent
+            static TimeStamp_t lastImageSentTime = 0;
             
-            ComputeBestCameraParameters(
-                                        grayscaleImage,
-                                        Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                        autoExposure_integerCountsIncrement,
-                                        autoExposure_highValue,
-                                        autoExposure_percentileToMakeHigh,
-                                        autoExposure_minExposureTime, autoExposure_maxExposureTime,
-                                        autoExposure_tooHighPercentMultiplier,
-                                        exposureTime_,
-                                        VisionMemory::ccmScratch_);
+            // Have we already sent the currently-available image?
+            if(lastImageSentTime != currentImageTime)
+            {
+              // Nope, so get the (new) available frame from the camera:
+              VisionMemory::ResetBuffers();
+              const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+              const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width;
+              
+              Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                       VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+              
+              HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
+                                  captureResolution_, false);
+              
+              //
+              // BEGIN camera/image adjustment stuff (exposure/vignetting...)
+              //
+              BeginBenchmark("VisionSystem_CameraImagingPipeline");
+              
+              if(vignettingCorrection == VignettingCorrection_Software) {
+                BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+                
+                MemoryStack onchipScratch_local = VisionMemory::onchipScratch_;
+                FixedLengthList<f32> polynomialParameters(5, onchipScratch_local, Flags::Buffer(false, false, true));
+                
+                for(s32 i=0; i<5; i++)
+                  polynomialParameters[i] = vignettingCorrectionParameters[i];
+                
+                CorrectVignetting(grayscaleImage, polynomialParameters);
+                
+                EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+              } // if(vignettingCorrection == VignettingCorrection_Software)
+              
+              if(autoExposure_enabled && (frameNumber % autoExposure_adjustEveryNFrames) == 0) {
+                BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+                
+                ComputeBestCameraParameters(
+                                            grayscaleImage,
+                                            Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+                                            autoExposure_integerCountsIncrement,
+                                            autoExposure_highValue,
+                                            autoExposure_percentileToMakeHigh,
+                                            autoExposure_minExposureTime, autoExposure_maxExposureTime,
+                                            autoExposure_tooHighPercentMultiplier,
+                                            exposureTime_,
+                                            VisionMemory::ccmScratch_);
+                
+                EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+              }
+              
+              HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
+              
+              EndBenchmark("VisionSystem_CameraImagingPipeline");
+              
+              //
+              // END camera/image adjustment stuff
+              //
+              
+              // Send the image, with its actual capture time (not the current system time)
+#             if USE_COMPRESSION_FOR_SENDING_IMAGES
+              CompressAndSendImage(grayscaleImage, currentImageTime);
+#             else
+              DownsampleAndSendImage(grayscaleImage, currentImageTime);
+#             endif
+              // Turn off image sending if sending single image only.
+              if (imageSendMode_ == ISM_SINGLE_SHOT) {
+                imageSendMode_ = ISM_OFF;
+              }
+              
+              //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
+              //      robotState.timestamp, currentImageTime);
+              
+              // Mark that we've already sent the image for the current time
+              lastImageSentTime = currentImageTime;
+            } // if(lastImageSentTime != currentImageTime)
             
-            EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-          }
-          
-          HAL::CameraSetParameters(exposureTime_, vignettingCorrection == VignettingCorrection_CameraHardware);
-          
-          EndBenchmark("VisionSystem_CameraImagingPipeline");
-          
-          //SetImageSendMode(ISM_STREAM, captureResolution_);
-          
-          
-          if (imageSendMode_ != ISM_OFF) {
-
-#if USE_COMPRESSION_FOR_SENDING_IMAGES
-          CompressAndSendImage(grayscaleImage, frameCaptureTime);
-#else
-          DownsampleAndSendImage(grayscaleImage, frameCaptureTime);
-#endif
-            // Turn off image sending if sending single image only.
-            if (imageSendMode_ == ISM_SINGLE_SHOT) {
-              imageSendMode_ = ISM_OFF;
-            }
-          }
-          
-          //PRINT("Sent image to basestation.\n");
+#           endif // ifdef SIMULATOR
+          } // if(imageSendMode_ != ISM_OFF)
           
         } else {
           PRINT("VisionSystem::Update(): unknown mode = %d.", mode_);
