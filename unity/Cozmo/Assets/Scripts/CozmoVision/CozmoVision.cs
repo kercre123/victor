@@ -139,12 +139,11 @@ public class CozmoVision : MonoBehaviour
 
 	public void RequestImage()
 	{
-		Debug.Log( "request image" );
-
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
 			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
+			RobotEngineManager.instance.SetLiftHeight( 0f );
 		}
 	}
 
@@ -218,8 +217,14 @@ public class CozmoVision : MonoBehaviour
 			return;
 		}
 
-		float scale = ( Screen.width * 0.5f ) / 320f;
-		rTrans.localScale = Vector3.one * scale;
+//		RectTransform parentT = rTrans.parent as RectTransform;
+//		Vector3[] corners = new Vector3[4];
+//		parentT.GetWorldCorners(corners);
+//
+//		float w = corners[0] - corners[2];
+//
+//		float scale = ( w * 0.5f ) / 320f;
+//		rTrans.localScale = Vector3.one * scale;
 	}
 
 	public void OnHeadAngleSliderReleased() {

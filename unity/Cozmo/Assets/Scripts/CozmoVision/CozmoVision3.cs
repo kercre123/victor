@@ -90,9 +90,24 @@ public class CozmoVision3 : CozmoVision
 
 				for( int i = 0; i < robot.observedObjects.Count; ++i )
 				{
+					//Debug.Log( i );
 					//box.image.gameObject.SetActive( true );
 					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
 					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
+
+					/*if( isInReticle )
+					{
+						Debug.Log( "in reticle" );
+					}*/
+
+					/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+					{
+						Debug.Log( "in distance" );
+					}
+					else
+					{
+						Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
+					}*/
 
 					if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
 					{
