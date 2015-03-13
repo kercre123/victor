@@ -9,29 +9,31 @@ public class CozmoVision2 : CozmoVision
 
 	protected void Update()
 	{
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+			HideButtons();
+			return;
+		}
+
+		DetectObservedObjects();
+		SetActionButtons();
+
+		for( int i = 0; i < maxObservedObjects; ++i )
 		{
-			DetectObservedObjects();
-			SetActionButtons();
-
-			for( int i = 0; i < maxObservedObjects; ++i )
+			if( observedObjectsCount > i && robot.selectedObject == -1 )
 			{
-				if( observedObjectsCount > i && robot.selectedObject == -1 )
-				{
-					ObservedObject observedObject = robot.observedObjects[i];
+				ObservedObject observedObject = robot.observedObjects[i];
 
-					selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
-					selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
+				selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
+				selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
 
-					selectionButtons[i].text.text = "Select " + observedObject.ID;
-					selectionButtons[i].ID = observedObject.ID;
+				selectionButtons[i].text.text = "Select " + observedObject.ID;
+				selectionButtons[i].ID = observedObject.ID;
 
-					selectionButtons[i].image.gameObject.SetActive( true );
-				}
-				else
-				{
-					selectionButtons[i].image.gameObject.SetActive( false );
-				}
+				selectionButtons[i].image.gameObject.SetActive( true );
+			}
+			else
+			{
+				selectionButtons[i].image.gameObject.SetActive( false );
 			}
 		}
 	}

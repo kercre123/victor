@@ -14,7 +14,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public Dictionary<int, Robot> robots { get; private set; }
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
-	
+
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;

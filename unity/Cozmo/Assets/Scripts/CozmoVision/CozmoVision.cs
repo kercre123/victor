@@ -49,6 +49,10 @@ public class CozmoVision : MonoBehaviour
 		rTrans = transform as RectTransform;
 	}
 
+	protected void HideButtons() {
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].button.gameObject.SetActive(false);
+	}
+
 	protected void SetActionButtons()
 	{
 		robot = RobotEngineManager.instance.current;
