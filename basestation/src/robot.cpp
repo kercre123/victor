@@ -49,6 +49,7 @@ namespace Anki {
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
     , _lastStateMsgTime_sec(-1.f)
+    , _newStateMsgAvailable(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
 #   if !ASYNC_VISION_PROCESSING
@@ -180,6 +181,7 @@ namespace Anki {
       // sync'd, so don't use the message's (i.e. robot's) timestamp here, since
       // we're going to compare to basestation time to check for a timeout.
       _lastStateMsgTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _newStateMsgAvailable = true;
       
       //PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Received robot state message at %f seconds\n", _lastStateMsgTime_sec);
       
@@ -379,6 +381,10 @@ namespace Anki {
       
     } // UpdateFullRobotState()
     
+    bool Robot::HasReceivedRobotState() const
+    {
+      return _newStateMsgAvailable;
+    }
     
     Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
     {
