@@ -176,10 +176,17 @@ public class CozmoVision3 : CozmoVision
 
 					for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
 					{
-						if( ( actionButtons[i].button.gameObject.activeSelf != lastActionButtonActiveSelf[i].activeSelf ) || 
-						   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
+						if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
+						    ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
 						{
 							Ding( true );
+							
+							break;
+						}
+						else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
+						         ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
+						{
+							Ding( false );
 							
 							break;
 						}
