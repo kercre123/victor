@@ -424,6 +424,7 @@ namespace Cozmo {
                 msg.liftHeight_mm = robot->GetLiftHeight();
                 
                 msg.status = 0;
+                if(robot->IsMoving())           { msg.status |= IS_MOVING; }
                 if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
                 if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
                 if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
