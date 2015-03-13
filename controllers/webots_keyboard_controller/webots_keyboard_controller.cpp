@@ -917,10 +917,20 @@ namespace Anki {
                 
               case (s32)'V':
               {
-                SendVisionSystemParams();
-                
-                SendFaceDetectParams();
-                
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool visionWhileMovingEnabled = false;
+                  visionWhileMovingEnabled = !visionWhileMovingEnabled;
+                  printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
+                  U2G_VisionWhileMoving msg;
+                  msg.enable = visionWhileMovingEnabled;
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_VisionWhileMoving(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendVisionSystemParams();
+                  
+                  SendFaceDetectParams();
+                }
                 break;
               }
                 
