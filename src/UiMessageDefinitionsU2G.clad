@@ -169,6 +169,14 @@ message U2G_SetRobotCarryingObject {
 message U2G_ClearAllBlocks {
 }
 
+// VisionWhileMoving
+// For development, enable/disable robots' ability to use VisionMarkers while moving
+// May be necessary to have this disabled while we have frame sync issues.
+// NOTE: This will apply to all robots currently connected.
+message U2G_VisionWhileMoving {
+    uint_8 enable // True or false
+}
+
 // ExecuteBehavior
 message U2G_ExecuteBehavior {
     uint_8 behaviorMode
@@ -310,6 +318,7 @@ union U2G_Message {
     U2G_TraverseObject TraverseObject,
     U2G_SetRobotCarryingObject SetRobotCarryingObject,
     U2G_ClearAllBlocks ClearAllBlocks,
+    U2G_VisionWhileMoving VisionWhileMoving,
     U2G_ExecuteBehavior ExecuteBehavior,
     U2G_SetBehaviorState SetBehaviorState,
     U2G_AbortPath AbortPath,

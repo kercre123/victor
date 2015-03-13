@@ -1580,6 +1580,56 @@ public class U2G_ClearAllBlocks
 	}
 }
 
+public class U2G_VisionWhileMoving
+{
+	public byte enable;
+
+	/**** Constructors ****/
+
+	public U2G_VisionWhileMoving()
+	{
+	}
+
+	public U2G_VisionWhileMoving(byte enable)
+	{
+		this.enable = enable;
+	}
+
+	public U2G_VisionWhileMoving(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//enable
+		enable = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((byte)enable);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//enable
+		enable = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//enable
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class U2G_ExecuteBehavior
 {
 	public byte behaviorMode;
@@ -2668,25 +2718,26 @@ public class U2G_Message {
 		TraverseObject,	//25
 		SetRobotCarryingObject,	//26
 		ClearAllBlocks,	//27
-		ExecuteBehavior,	//28
-		SetBehaviorState,	//29
-		AbortPath,	//30
-		AbortAll,	//31
-		DrawPoseMarker,	//32
-		ErasePoseMarker,	//33
-		SetHeadControllerGains,	//34
-		SetLiftControllerGains,	//35
-		SelectNextSoundScheme,	//36
-		StartTestMode,	//37
-		IMURequest,	//38
-		PlayAnimation,	//39
-		ReadAnimationFile,	//40
-		StartFaceTracking,	//41
-		StopFaceTracking,	//42
-		StartLookingForMarkers,	//43
-		StopLookingForMarkers,	//44
-		SetVisionSystemParams,	//45
-		SetFaceDetectParams,	//46
+		VisionWhileMoving,	//28
+		ExecuteBehavior,	//29
+		SetBehaviorState,	//30
+		AbortPath,	//31
+		AbortAll,	//32
+		DrawPoseMarker,	//33
+		ErasePoseMarker,	//34
+		SetHeadControllerGains,	//35
+		SetLiftControllerGains,	//36
+		SelectNextSoundScheme,	//37
+		StartTestMode,	//38
+		IMURequest,	//39
+		PlayAnimation,	//40
+		ReadAnimationFile,	//41
+		StartFaceTracking,	//42
+		StopFaceTracking,	//43
+		StartLookingForMarkers,	//44
+		StopLookingForMarkers,	//45
+		SetVisionSystemParams,	//46
+		SetFaceDetectParams,	//47
 		INVALID
 	};
 
@@ -3172,6 +3223,23 @@ public class U2G_Message {
 		}
 	}
 
+	public U2G_VisionWhileMoving VisionWhileMoving
+	{
+		get {
+			if (_tag != Tag.VisionWhileMoving) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"VisionWhileMoving\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_VisionWhileMoving)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.VisionWhileMoving : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public U2G_ExecuteBehavior ExecuteBehavior
 	{
 		get {
@@ -3585,6 +3653,9 @@ public class U2G_Message {
 		case Tag.ClearAllBlocks:
 			_state = new U2G_ClearAllBlocks(stream);
 			break;
+		case Tag.VisionWhileMoving:
+			_state = new U2G_VisionWhileMoving(stream);
+			break;
 		case Tag.ExecuteBehavior:
 			_state = new U2G_ExecuteBehavior(stream);
 			break;
@@ -3738,6 +3809,9 @@ public class U2G_Message {
 		case Tag.ClearAllBlocks:
 			ClearAllBlocks.Pack(stream);
 			break;
+		case Tag.VisionWhileMoving:
+			VisionWhileMoving.Pack(stream);
+			break;
 		case Tag.ExecuteBehavior:
 			ExecuteBehavior.Pack(stream);
 			break;
@@ -3889,6 +3963,9 @@ public class U2G_Message {
 				break;
 			case Tag.ClearAllBlocks:
 				result += ClearAllBlocks.Size;
+				break;
+			case Tag.VisionWhileMoving:
+				result += VisionWhileMoving.Size;
 				break;
 			case Tag.ExecuteBehavior:
 				result += ExecuteBehavior.Size;
