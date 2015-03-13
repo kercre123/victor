@@ -26,7 +26,8 @@ public class CozmoVision : MonoBehaviour
 	protected float lastHeadAngle = 0f;
 	protected List<int> lastObservedObjects = new List<int>();
 
-	private float time = 0f;
+	private float dingTime = 0f;
+	private float dongTime = 0f;
 
 	protected int observedObjectsCount
 	{
@@ -163,7 +164,7 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected void DetectNewObservedObjects()
+	protected void DetectObservedObjects()
 	{
 		if( RobotEngineManager.instance != null )
 		{
@@ -171,7 +172,19 @@ public class CozmoVision : MonoBehaviour
 			{
 				if( RobotEngineManager.instance.current.selectedObject == -1 && !lastObservedObjects.Contains( RobotEngineManager.instance.current.observedObjects[i].ID ) )
 				{
-					Ding();
+					Ding( true );
+					
+					break;
+				}
+			}
+
+			for( int i = 0; i < lastObservedObjects.Count; ++i )
+			{
+				ObservedObject lastObservedObject = RobotEngineManager.instance.current.observedObjects.Find( x => x.ID == lastObservedObjects[i] );
+				
+				if( RobotEngineManager.instance.current.selectedObject == -1 && lastObservedObject == null )
+				{
+					Ding( false );
 					
 					break;
 				}
@@ -179,13 +192,25 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected void Ding()
+	protected void Ding( bool found )
 	{
-		if( time + 2f < Time.time )
+		if( found )
 		{
-			RobotEngineManager.instance.NewObjectObserved();
+			if( dingTime + 2f < Time.time )
+			{
+				RobotEngineManager.instance.ObjectObserved( found );
 			
-			time = Time.time;
+				dingTime = Time.time;
+			}
+		}
+		else
+		{
+			if( dongTime + 2f < Time.time )
+			{
+				RobotEngineManager.instance.ObjectObserved( found );
+				
+				dongTime = Time.time;
+			}
 		}
 	}
 

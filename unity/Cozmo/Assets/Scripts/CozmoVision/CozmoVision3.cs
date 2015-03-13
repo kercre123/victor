@@ -173,17 +173,17 @@ public class CozmoVision3 : CozmoVision
 							actionButtons[1].button.gameObject.SetActive( true );
 						}
 					}
-				}
-			}
 
-			for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
-			{
-				if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
-				   	( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
-				{
-					Ding();
-
-					break;
+					for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+					{
+						if( ( actionButtons[i].button.gameObject.activeSelf != lastActionButtonActiveSelf[i].activeSelf ) || 
+						   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
+						{
+							Ding( true );
+							
+							break;
+						}
+					}
 				}
 			}
 		}

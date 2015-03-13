@@ -22,6 +22,7 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField] private AudioClip successSound;
 	[SerializeField] private AudioClip failureSound;
 	[SerializeField] private AudioClip newObjectObservedSound;
+	[SerializeField] private AudioClip objectObservedLostSound;
 	[SerializeField] private Text successOrFailureText;
 
 	public float defaultHeadAngle;
@@ -336,9 +337,16 @@ public class RobotEngineManager : MonoBehaviour {
 		StartCoroutine( TurnOffText() );
 	}
 
-	public void NewObjectObserved()
+	public void ObjectObserved( bool found )
 	{
-		audio.PlayOneShot( newObjectObservedSound );
+		if( found )
+		{
+			audio.PlayOneShot( newObjectObservedSound );
+		}
+		else
+		{
+			audio.PlayOneShot( objectObservedLostSound );
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
