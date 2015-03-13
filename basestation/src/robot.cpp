@@ -390,7 +390,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      if(IsMoving()) {
+      if(IsMoving() && !IsPickingOrPlacing()) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
                             "Ignoring VisionMarker seen while moving.\n");
         return RESULT_OK;
