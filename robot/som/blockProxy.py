@@ -58,11 +58,9 @@ class BlockProxyServer(BaseSubServer):
     def giveMessage(self, message):
         "Pass a message from the phone along"
         msgID = ord(message[0])
-        if self.v:
-            sys.stdout.write("BP UDP in: %d[%d]\n" % (msgID, len(message)))
         if msgID == messages.SetBlockLights.ID:
             msg = messages.SetBlockLights(message)
-            self.sentTo(BLOCK_TABLE[msg.blockID], msg.serialize())
+            self.sendTo(BLOCK_TABLE[msg.blockID], msg.serialize())
         elif msgID == messages.FlashBlockIDs.ID:
             self.sendBroadcast(message)
 

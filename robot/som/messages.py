@@ -60,7 +60,7 @@ class MessageBase(struct.Struct):
 
     def serialize(self):
         "Convert python struct into C compatable binary struct"
-        return chr(self.ID) + self.pack(*self._getMembers())
+        return struct.pack('b', self.ID) + self.pack(*self._getMembers())
 
     def deserialize(self, buffer):
         "Deserialize the received buffer"
@@ -123,7 +123,7 @@ class ImageChunk(MessageBase):
 
     def _getMembers(self):
         "Convert the python class into a C struct compatible serial byte buffer"
-        its = max(0, min(int(self.imageTimestamp), 4294967295L))
+        its = max(0, min(int(self.imageTimestamp), 4294967295))
         return self.imageId, its, len(self.data), self.imageEncoding, self.imageChunkCount, self.chunkId, self.resolution, self.data
 
     def _setMembers(self, *members):
@@ -373,5 +373,5 @@ class SetBlockLights(MessageBase):
         return self.lights + [self.blockID]
 
     def _setMembers(self, *members):
-        self.lights = members[:self.NUM_LIGHTS]
+        self.lights = list(members[:self.NUM_LIGHTS])
         self.blockID = members[self.NUM_LIGHTS]
