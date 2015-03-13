@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -24,41 +26,50 @@ public class CozmoVision : MonoBehaviour
 		public Image image;
 		public Text text;
 
-		private Sprite[] sprites;
+		CozmoVision vision;
 
-		public void SetSprites(Sprite[] modeSprites) {
-			sprites = modeSprites;
+		public void ClaimOwnership(CozmoVision vision) {
+			this.vision = vision;
 		}
 
 		public void SetMode(ActionButtonMode mode) {
+
 			if(mode == ActionButtonMode.DISABLED) {
 				button.gameObject.SetActive(false);
+				button.onClick.RemoveAllListeners();
 				return;
 			}
 			
-			image.sprite = sprites[(int)mode];
+			image.sprite = vision.actionSprites[(int)mode];
 
 			switch(mode) {
 				case ActionButtonMode.PICK_UP:
 					text.text = "Pick Up";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.DROP:
 					text.text = "Drop";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.STACK:
 					text.text = "Stack";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.ROLL:
 					text.text = "Roll";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.ALIGN:
 					text.text = "Align";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.CHANGE:
 					text.text = "Change";
+					button.onClick.AddListener(vision.Action);
 					break;
 				case ActionButtonMode.CANCEL:
 					text.text = "Cancel";
+					button.onClick.AddListener(vision.Cancel);
 					break;
 			}
 
@@ -73,6 +84,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
 	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+
+	public UnityAction[] actions;
 
 	protected RectTransform rTrans;
 	protected Rect rect;
@@ -103,7 +116,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		rTrans = transform as RectTransform;
 
-		foreach(ActionButton button in actionButtons) button.SetSprites(actionSprites);
+		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
 
 	protected void DisableButtons() {
