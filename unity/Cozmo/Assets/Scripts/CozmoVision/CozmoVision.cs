@@ -103,8 +103,14 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.SetRobotCarryingObject( Intro.CurrentRobotID );
+		}
+	}
 
-			RobotEngineManager.instance.current.selectedObject = -1;
+	public void ForceClearAll()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.ClearAllBlocks();
 		}
 	}
 

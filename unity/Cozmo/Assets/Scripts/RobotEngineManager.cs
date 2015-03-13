@@ -651,17 +651,26 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
 
 		message.robotID = robotID;
-		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-		{
-			message.objectID = -1;
-		}
-		/*else
-		{
-			message.objectID = 0;
-		}*/
-		
-		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
+		message.objectID = -1;
+
+		channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
 		current.lastObjectHeadTracked = -1;
+		current.selectedObject = -1;
+
+		SetLiftHeight( 0f );
+	}
+
+	public void ClearAllBlocks()
+	{
+		Debug.Log( "Clear All Blocks" );
+		
+		U2G_ClearAllBlocks message = new U2G_ClearAllBlocks();
+		
+		channel.Send( new U2G_Message{ ClearAllBlocks = message } );
+		current.lastObjectHeadTracked = -1;
+		current.selectedObject = -1;
+
+		SetLiftHeight( 0f );
 	}
 
 	public void RequestImage(byte robotID)
