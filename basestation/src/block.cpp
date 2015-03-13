@@ -257,7 +257,7 @@ namespace Anki {
      */
     
     Point3f Block::GetSameDistanceTolerance() const {
-      return _size; // TODO: too loose?
+      return _size*1.5f; // TODO: too loose?
     }
     
     Radians Block::GetSameAngleTolerance() const {
