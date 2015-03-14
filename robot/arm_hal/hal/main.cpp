@@ -131,7 +131,7 @@ int main(void)
   Startup();
 
   // Initialize the hardware
-  LightsInit();
+  //LightsInit();
   UARTInit();
   printf("UART..");
   GetId();
@@ -187,7 +187,7 @@ int main(void)
 #elif defined(DO_LED_TESTING)
 
   for (int i=0; i<8; ++i) {
-    SetLED((LEDId)i, 0xFFFFffff);
+    SetLED((LEDId)i, 0x010101 << i);
   }
   while (1) {
     // Spin

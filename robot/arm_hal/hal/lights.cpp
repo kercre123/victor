@@ -60,17 +60,18 @@ namespace Anki
       // Initialize LED head/face light hardware
       void LightsInit()
       {
-        return;
-        
         int i;
 
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+        
         // Leave the high side pins off until first LED is set
         for (i=0; i<NUM_EYEnEN; ++i)
         {
           GPIO_SET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
           PIN_OD(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
           PIN_OUT(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
-          GPIO_RESET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
         }
 
         // Initialize all face LED colors to OFF
@@ -100,7 +101,7 @@ namespace Anki
         // Set up clock to multiplex the LEDs - must keep above 100Hz to hide flicker
         // 98Hz = 90MHz/2 eyes/(255^2)/(Prescaler+1)
         TIM_TimeBaseStructure.TIM_Prescaler = 6;
-        TIM_TimeBaseStructure.TIM_Period = 12857143; // Wait one second before resetting
+        TIM_TimeBaseStructure.TIM_Period = 65535;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseInit(TIM11, &TIM_TimeBaseStructure);
@@ -193,14 +194,20 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler(void)
   nexttime = 0;
   for (i=0; i<NUM_COLOR_CHANNELS; ++i)
   {
-    if (s_now == s_color[i].asLEDs[CH_BLUE]) GPIO_RESET(BLU_GPIO[i], BLU_PIN[i]);
-    else if (s_color[i].asLEDs[CH_BLUE] < s_now) nexttime = s_color[i].asLEDs[CH_BLUE];
+    if (s_now == s_color[i].asLEDs[CH_BLUE])
+      GPIO_RESET(BLU_GPIO[i], BLU_PIN[i]);
+    else if (s_color[i].asLEDs[CH_BLUE] < s_now)
+      nexttime = s_color[i].asLEDs[CH_BLUE];
 
-    if (s_now == s_color[i].asLEDs[CH_GREEN]) GPIO_RESET(GRN_GPIO[i], GRN_PIN[i]);
-    else if (s_color[i].asLEDs[CH_GREEN] < s_now && s_color[i].asLEDs[CH_GREEN] > nexttime) nexttime = s_color[i].asLEDs[CH_GREEN];
+    if (s_now == s_color[i].asLEDs[CH_GREEN])
+      GPIO_RESET(GRN_GPIO[i], GRN_PIN[i]);
+    else if (s_color[i].asLEDs[CH_GREEN] < s_now && s_color[i].asLEDs[CH_GREEN] > nexttime)
+      nexttime = s_color[i].asLEDs[CH_GREEN];
 
-    if (s_now == s_color[i].asLEDs[CH_RED]) GPIO_RESET(RED_GPIO[i], RED_PIN[i]);
-    else if (s_color[i].asLEDs[CH_RED] < s_now && s_color[i].asLEDs[CH_RED] > nexttime) nexttime = s_color[i].asLEDs[CH_RED];
+    if (s_now == s_color[i].asLEDs[CH_RED])
+      GPIO_RESET(RED_GPIO[i], RED_PIN[i]);
+    else if (s_color[i].asLEDs[CH_RED] < s_now && s_color[i].asLEDs[CH_RED] > nexttime)
+      nexttime = s_color[i].asLEDs[CH_RED];
   }
   // Figure out how many cycles to wait before the next color turns on
   // Gamma correction requires us to use the square of intensity here (linear PWM = RGB^2)
