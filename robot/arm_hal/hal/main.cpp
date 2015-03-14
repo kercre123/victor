@@ -185,12 +185,22 @@ int main(void)
   }
 
 #elif defined(DO_LED_TESTING)
-
-  for (int i=0; i<8; ++i) {
-    SetLED((LEDId)i, 0x010101 << i);
-  }
   while (1) {
-    // Spin
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_RED);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_GREEN);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_BLUE);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
   }
 
 #else
