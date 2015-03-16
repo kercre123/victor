@@ -9,6 +9,7 @@ public class CozmoVision : MonoBehaviour
 {
 	public enum ActionButtonMode {
 		DISABLED,
+		TARGET,
 		PICK_UP,
 		DROP,
 		STACK,
@@ -43,6 +44,10 @@ public class CozmoVision : MonoBehaviour
 			image.sprite = vision.actionSprites[(int)mode];
 
 			switch(mode) {
+				case ActionButtonMode.TARGET:
+					text.text = "Target";
+					button.onClick.AddListener(vision.Action);
+					break;
 				case ActionButtonMode.PICK_UP:
 					text.text = "Pick Up";
 					button.onClick.AddListener(vision.Action);
@@ -83,7 +88,7 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 
 	public UnityAction[] actions;
 
@@ -112,7 +117,7 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	private void Awake()
+	protected virtual void Awake()
 	{
 		rTrans = transform as RectTransform;
 

@@ -66,7 +66,7 @@ public class Robot
 
 		if( status != lastStatus )
 		{
-			Debug.Log( "Status: " + status );
+			//Debug.Log( "Status: " + status );
 			lastStatus = status;
 		}
 	}

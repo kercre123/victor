@@ -876,9 +876,10 @@ MonoBehaviour:
   - DriveThumb
   - PlayerThumb
   visionStyles:
-  - CozmoVision1
-  - CozmoVision2
-  - CozmoVision3
+  - ObjectSelectWithButtons
+  - ObjectSelect
+  - TwoButton
+  - InteractionSlider
 --- !u!114 &11451904
 MonoBehaviour:
   m_ObjectHideFlags: 1
