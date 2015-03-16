@@ -66,6 +66,9 @@ public class Intro : MonoBehaviour {
 
 	private void Start()
 	{
+
+		if(RobotEngineManager.instance != null &&RobotEngineManager.instance.IsConnected) RobotEngineManager.instance.Disconnect ();
+
 		if (RobotEngineManager.instance != null) {
 			RobotEngineManager.instance.ConnectedToClient += Connected;
 			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;

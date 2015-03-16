@@ -12,7 +12,7 @@ public class GoldRushController : GameController {
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 
 	Robot robot;
-	int lastHeldID;
+	//int lastHeldID;
 
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
@@ -45,14 +45,14 @@ public class GoldRushController : GameController {
 					//show 'found' light pattern
 				}
 				else if(distance <= detectRadius) {
-					float warmthFactor = Mathf.Clamp01((distance - findRadius) / (detectRadius - findRadius));
+					//float warmthFactor = Mathf.Clamp01((distance - findRadius) / (detectRadius - findRadius));
 					//show 'warmer' light pattern to indicate proximity
 				}
 			}
 		}
 		//else if lead cube dropped within findRadius, Transmute(lastHeldID)
 
-		lastHeldID = robot.carryingObjectID;
+		//lastHeldID = robot.carryingObjectID;
 	}
 
 	protected override bool IsGameReady() {

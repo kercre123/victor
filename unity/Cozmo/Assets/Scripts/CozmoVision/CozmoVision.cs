@@ -1,15 +1,80 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 public class CozmoVision : MonoBehaviour
 {
+	public enum ActionButtonMode {
+		DISABLED,
+		PICK_UP,
+		DROP,
+		STACK,
+		ROLL,
+		ALIGN,
+		CHANGE,
+		CANCEL,
+		NUM_MODES
+	}
+
 	[System.Serializable]
-	public struct ActionButton
+	public class ActionButton
 	{
 		public Button button;
+		public Image image;
 		public Text text;
+
+		CozmoVision vision;
+
+		public void ClaimOwnership(CozmoVision vision) {
+			this.vision = vision;
+		}
+
+		public void SetMode(ActionButtonMode mode) {
+
+			if(mode == ActionButtonMode.DISABLED) {
+				button.gameObject.SetActive(false);
+				button.onClick.RemoveAllListeners();
+				return;
+			}
+			
+			image.sprite = vision.actionSprites[(int)mode];
+
+			switch(mode) {
+				case ActionButtonMode.PICK_UP:
+					text.text = "Pick Up";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.DROP:
+					text.text = "Drop";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.STACK:
+					text.text = "Stack";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.ROLL:
+					text.text = "Roll";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.ALIGN:
+					text.text = "Align";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.CHANGE:
+					text.text = "Change";
+					button.onClick.AddListener(vision.Action);
+					break;
+				case ActionButtonMode.CANCEL:
+					text.text = "Cancel";
+					button.onClick.AddListener(vision.Cancel);
+					break;
+			}
+
+			button.gameObject.SetActive(true);
+		}
 	}
 
 	[SerializeField] protected Button button;
@@ -18,7 +83,10 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
-	
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+
+	public UnityAction[] actions;
+
 	protected RectTransform rTrans;
 	protected Rect rect;
 	protected Robot robot;
@@ -47,35 +115,56 @@ public class CozmoVision : MonoBehaviour
 	private void Awake()
 	{
 		rTrans = transform as RectTransform;
+
+		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
 
-	protected void SetActionButtons()
-	{
-		robot = RobotEngineManager.instance.current;
+	protected void DisableButtons() {
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
+	}
 
-		for( int i = 0; i < actionButtons.Length; ++i )
-		{
-			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
-			
-			if( i == 0 )
-			{
-				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-				{
-					if( robot.selectedObject > -1 )
-					{
-						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
-					}
-					else
-					{
-						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
-					}
-				}
-				else
-				{
-					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
-				}
-			}
+	protected virtual void SetActionButtons()
+	{
+		DisableButtons();
+		robot = RobotEngineManager.instance.current;
+		if(robot == null) return;
+
+		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+			if(robot.selectedObject > -1) actionButtons[0].SetMode(ActionButtonMode.STACK);
+			actionButtons[1].SetMode(ActionButtonMode.DROP);
 		}
+		else {
+			if(robot.selectedObject > -1) actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+		}
+
+		if(robot.selectedObject > -1) actionButtons[2].SetMode(ActionButtonMode.CANCEL);
+
+//		for( int i = 0; i < actionButtons.Length; ++i )
+//		{
+//			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
+//			
+//			if( i == 0 )
+//			{
+//				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
+//				{
+//					if( robot.selectedObject > -1 )
+//					{
+//						actionButtons[i].image.sprite = sprite_stack;
+//						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
+//					}
+//					else
+//					{
+//						actionButtons[i].image.sprite = sprite_drop;
+//						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
+//					}
+//				}
+//				else
+//				{
+//					actionButtons[i].image.sprite = sprite_pickUp;
+//					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
+//				}
+//			}
+//		}
 	}
 
 	private void RobotImage( Texture2D texture )
@@ -103,8 +192,14 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.SetRobotCarryingObject( Intro.CurrentRobotID );
+		}
+	}
 
-			RobotEngineManager.instance.current.selectedObject = -1;
+	public void ForceClearAll()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			RobotEngineManager.instance.ClearAllBlocks();
 		}
 	}
 

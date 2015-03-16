@@ -138,7 +138,6 @@ DEF Cozmo_1 CozmoBot {
   hidden position_0_6 -1.24634e-07
   hidden position_26_0 -4.49433e-08
   hidden position_29_0 -8.2297e-08
-  translation -0.2 0 0
   rotation 0 -1 0 0.000299392
   name "CozmoBot_1"
   headAngle -0.390023

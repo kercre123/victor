@@ -96,7 +96,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 			center = Camera.main.WorldToScreenPoint(center);
 
-			return center;
+			return center * screenScaleFactor;
 		}
 	}
 	Vector2 JoystickData {
@@ -157,6 +157,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	Vector2 oldSwipe;
 	float pointerDownTime = 0f;
 	Canvas canvas;	
+	float screenScaleFactor = 1f;
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -231,8 +232,17 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
 
-		float screenW = Screen.width / canvas.transform.localScale.x;
-		float screenH = Screen.height / canvas.transform.localScale.y;
+		float screenW = Screen.width;
+		float screenH = Screen.height;
+		CanvasScaler scalar = canvas.gameObject.GetComponent<CanvasScaler>();
+
+		screenScaleFactor = 1f;
+
+		if(scalar != null) {
+			screenScaleFactor = scalar.referenceResolution.y / Screen.height;
+			screenW = scalar.referenceResolution.x;
+			screenH = scalar.referenceResolution.y;
+		}
 
 		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
 
@@ -244,15 +254,15 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
-			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
+			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
+			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
 			bg.sizeDelta = size;
 		}
 
 		if(stickWidthInches > 0f && stickHeightInches > 0f) {
 			Vector3 size = stick.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, screenW);
-			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, screenH);;
+			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickWidthInches, 0f, screenW);
+			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickHeightInches, 0f, screenH);
 			stick.sizeDelta = size;
 
 			if(capTop != null) capTop.sizeDelta = size;
@@ -403,7 +413,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	void ConsiderSwipe(Vector2 pos, bool underway) {
+	void ConsiderSwipe(bool underway) {
 		SwipedDirection = Vector2.zero;
 		if(!allowAxisSwipes && !allowPreciseSwipes) return;
 		
@@ -472,9 +482,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	void ProcessStick(PointerEventData evnt) {
-		Vector2 delta = Vector2.zero;
-		delta = evnt.position - StickCenterOnScreen;
+	void ProcessStick(Vector2 pointerPos) {
+		Vector2 delta = pointerPos - StickCenterOnScreen;
 
 		if(clampRadially) {
 			delta = Vector3.ClampMagnitude(delta, radius);
@@ -568,7 +577,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 
 		stick.anchoredPosition = delta;
-		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
+		//Debug.Log ("Joystick pointerPos(" + pointerPos + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
 	
 	void CheckForModeEngage() {
@@ -636,6 +645,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public void OnPointerDown(PointerEventData eventData) {
 
+		Vector2 pointerPos = eventData.position * screenScaleFactor;
+
 		float newTime = Time.time;
 		if(doubleTapDelayMax > 0f) {
 			if(pointerDownTime != 0f && (newTime - pointerDownTime) <= doubleTapDelayMax) {
@@ -646,8 +657,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		pointerDownTime = newTime;
 
 		if(dynamic) {
-			bg.anchoredPosition = eventData.position - ZoneCenter;
-			//Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+eventData.position+") ZoneCenter("+ZoneCenter+")");
+			bg.anchoredPosition = pointerPos - ZoneCenter;
+			//Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+pointerPos+") ZoneCenter("+ZoneCenter+")");
 			stick.anchoredPosition = Vector2.zero;
 		}
 		
@@ -660,7 +671,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		IsPressed = true;
 		PressedTime = 0f;
 		
-		ProcessStick(eventData);
+		ProcessStick(pointerPos);
 		
 		touchDownValue = JoystickData;
 		
@@ -671,18 +682,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		wasClockwise = false;
 		wasCounterClockwise = false;
 
-		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
+		//Debug.Log ("Joystick OnPointerDown pointerPos(" + pointerPos + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
 	}
 	
 	public void OnDrag(PointerEventData eventData) {
-		ProcessStick(eventData);
+
+		ProcessStick(eventData.position * screenScaleFactor);
 		CheckForModeEngage();
-		ConsiderSwipe(eventData.position, true);
+		ConsiderSwipe(true);
 	}
 
 	public void OnPointerUp(PointerEventData eventData) {
-		ProcessStick(eventData);
-		ConsiderSwipe(eventData.position, false);
+		ProcessStick(eventData.position * screenScaleFactor);
+		ConsiderSwipe(false);
 
 		Vector2 throwVector = stick.anchoredPosition;
 		

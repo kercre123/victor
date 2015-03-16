@@ -17,6 +17,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
+	[SerializeField] protected Button playButton = null;
 
 	protected bool playRequested = false;
 	protected GameState state = GameState.PRE_GAME;
@@ -56,7 +57,7 @@ public class GameController : MonoBehaviour {
 
 		}
 
-		RefreshText();
+		RefreshHUD();
 		firstFrame = false;
 	}
 
@@ -105,7 +106,7 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected virtual void RefreshText() {
+	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
 			textScore.text = "score: " + scores[0];
 		}
@@ -122,6 +123,8 @@ public class GameController : MonoBehaviour {
 				textTime.text = Mathf.FloorToInt(stateTimer).ToString();
 			}
 		}
+
+		if(playButton != null) playButton.gameObject.SetActive(state == GameState.PRE_GAME);
 
 	}
 

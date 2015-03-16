@@ -77,121 +77,98 @@ public class CozmoVision3 : CozmoVision
 
 	protected void Update()
 	{
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+			DisableButtons();
+			return;
+		}
+
+		robot = RobotEngineManager.instance.current;
+
+		box.image.gameObject.SetActive( false );
+
+		if( robot.selectedObject > -2 )
 		{
-			robot = RobotEngineManager.instance.current;
+			robot.selectedObject = -1;
+			inReticle.Clear();
 
-			box.image.gameObject.SetActive( false );
-
-			if( robot.selectedObject > -2 )
+			for( int i = 0; i < robot.observedObjects.Count; ++i )
 			{
-				robot.selectedObject = -1;
-				inReticle.Clear();
+				//Debug.Log( i );
+				//box.image.gameObject.SetActive( true );
+				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
+				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
 
-				for( int i = 0; i < robot.observedObjects.Count; ++i )
+				/*if( isInReticle )
 				{
-					//Debug.Log( i );
-					//box.image.gameObject.SetActive( true );
-					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
+					Debug.Log( "in reticle" );
+				}*/
 
-					/*if( isInReticle )
-					{
-						Debug.Log( "in reticle" );
-					}*/
-
-					/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
-					{
-						Debug.Log( "in distance" );
-					}
-					else
-					{
-						Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
-					}*/
-
-					if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
-					{
-						inReticle.Add( robot.observedObjects[i] );
-					}
+				/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+				{
+					Debug.Log( "in distance" );
 				}
-
-				inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+				else
 				{
-					return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
-				} );
+					Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
+				}*/
+
+				if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+				{
+					inReticle.Add( robot.observedObjects[i] );
+				}
 			}
 
-			if( actionButtons.Length > 1 )
+			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
 			{
-				actionButtons[0].button.gameObject.SetActive( false );
-				actionButtons[1].button.gameObject.SetActive( false );
+				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+			} );
+		}
 
-				if( robot.selectedObject > -2 ) // if not in action
+		
+		if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
+		{
+			if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
+			{
+				robot.selectedObject = inReticle[0].ID; // select the block closest to ground
+				
+				if( inReticle.Count == 1 )
 				{
-					if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
-					{
-						if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
-						{
-							robot.selectedObject = inReticle[0].ID; // select the block closest to ground
-
-							if( inReticle.Count == 1 )
-							{
-								RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
-							}
-						}
-
-						actionButtons[0].button.gameObject.SetActive( true );
-						actionButtons[0].text.text = "Drop " + robot.carryingObjectID;
-						actionButtons[1].button.gameObject.SetActive( true );
-
-						if( robot.selectedObject > -1 )
-						{
-							actionButtons[1].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
-						}
-						else
-						{
-							actionButtons[1].text.text = "Change " + robot.carryingObjectID;
-						}
-					}
-					else // if not holding a block
-					{
-						if( inReticle.Count > 0 )
-						{
-							actionButtons[0].text.text = "Pick Up " + inReticle[0].ID;
-							actionButtons[0].button.gameObject.SetActive( true );
-							robot.selectedObject = inReticle[0].ID;
-
-							if( inReticle.Count == 1 )
-							{
-								RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
-							}
-						}
-
-						if( inReticle.Count > 1 )
-						{
-							actionButtons[1].text.text = "Pick Up " + inReticle[1].ID;
-							actionButtons[1].button.gameObject.SetActive( true );
-						}
-					}
-
-					for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
-					{
-						if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
-						    ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
-						{
-							Ding( true );
-							
-							break;
-						}
-						else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
-						         ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
-						{
-							Ding( false );
-							
-							break;
-						}
-					}
+					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
 				}
+			}
+
+		}
+		else // if not holding a block
+		{
+			if( inReticle.Count > 0 )
+			{
+				robot.selectedObject = inReticle[0].ID;
+				
+				if( inReticle.Count == 1 )
+				{
+					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+				}
+			}
+
+		}
+
+		SetActionButtons();
+		
+		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+		{
+			if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
+			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
+			{
+				Ding( true );
+				
+				break;
+			}
+			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
+			        ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
+			{
+				Ding( false );
+				
+				break;
 			}
 		}
 	}
@@ -206,4 +183,25 @@ public class CozmoVision3 : CozmoVision
 			lastActionButtonActiveSelf[i].text = actionButtons[i].text.text;
 		}
 	}
+
+	protected override void SetActionButtons()
+	{
+
+		DisableButtons();
+		robot = RobotEngineManager.instance.current;
+		if(robot == null)
+			return;
+		
+		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+			if(robot.selectedObject > -1)
+				actionButtons[0].SetMode(ActionButtonMode.STACK);
+			actionButtons[1].SetMode(ActionButtonMode.DROP);
+		}
+		else {
+			if(robot.selectedObject > -1)
+				actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+		}
+		
+	}
+
 }
