@@ -336,6 +336,10 @@ public class G2U_RobotState
 	public float pose_y;
 	public float pose_z;
 	public float poseAngle_rad;
+	public float pose_quaternion0;
+	public float pose_quaternion1;
+	public float pose_quaternion2;
+	public float pose_quaternion3;
 	public float leftWheelSpeed_mmps;
 	public float rightWheelSpeed_mmps;
 	public float headAngle_rad;
@@ -355,6 +359,10 @@ public class G2U_RobotState
 		float pose_y,
 		float pose_z,
 		float poseAngle_rad,
+		float pose_quaternion0,
+		float pose_quaternion1,
+		float pose_quaternion2,
+		float pose_quaternion3,
 		float leftWheelSpeed_mmps,
 		float rightWheelSpeed_mmps,
 		float headAngle_rad,
@@ -368,6 +376,10 @@ public class G2U_RobotState
 		this.pose_y = pose_y;
 		this.pose_z = pose_z;
 		this.poseAngle_rad = poseAngle_rad;
+		this.pose_quaternion0 = pose_quaternion0;
+		this.pose_quaternion1 = pose_quaternion1;
+		this.pose_quaternion2 = pose_quaternion2;
+		this.pose_quaternion3 = pose_quaternion3;
 		this.leftWheelSpeed_mmps = leftWheelSpeed_mmps;
 		this.rightWheelSpeed_mmps = rightWheelSpeed_mmps;
 		this.headAngle_rad = headAngle_rad;
@@ -390,6 +402,14 @@ public class G2U_RobotState
 		pose_z = (float)(reader.ReadSingle());
 		//poseAngle_rad
 		poseAngle_rad = (float)(reader.ReadSingle());
+		//pose_quaternion0
+		pose_quaternion0 = (float)(reader.ReadSingle());
+		//pose_quaternion1
+		pose_quaternion1 = (float)(reader.ReadSingle());
+		//pose_quaternion2
+		pose_quaternion2 = (float)(reader.ReadSingle());
+		//pose_quaternion3
+		pose_quaternion3 = (float)(reader.ReadSingle());
 		//leftWheelSpeed_mmps
 		leftWheelSpeed_mmps = (float)(reader.ReadSingle());
 		//rightWheelSpeed_mmps
@@ -416,6 +436,10 @@ public class G2U_RobotState
 		writer.Write((float)pose_y);
 		writer.Write((float)pose_z);
 		writer.Write((float)poseAngle_rad);
+		writer.Write((float)pose_quaternion0);
+		writer.Write((float)pose_quaternion1);
+		writer.Write((float)pose_quaternion2);
+		writer.Write((float)pose_quaternion3);
 		writer.Write((float)leftWheelSpeed_mmps);
 		writer.Write((float)rightWheelSpeed_mmps);
 		writer.Write((float)headAngle_rad);
@@ -439,6 +463,14 @@ public class G2U_RobotState
 		pose_z = (float)(reader.ReadSingle());
 		//poseAngle_rad
 		poseAngle_rad = (float)(reader.ReadSingle());
+		//pose_quaternion0
+		pose_quaternion0 = (float)(reader.ReadSingle());
+		//pose_quaternion1
+		pose_quaternion1 = (float)(reader.ReadSingle());
+		//pose_quaternion2
+		pose_quaternion2 = (float)(reader.ReadSingle());
+		//pose_quaternion3
+		pose_quaternion3 = (float)(reader.ReadSingle());
 		//leftWheelSpeed_mmps
 		leftWheelSpeed_mmps = (float)(reader.ReadSingle());
 		//rightWheelSpeed_mmps
@@ -468,6 +500,14 @@ public class G2U_RobotState
 			//pose_z
 			result += 4; // = float_32
 			//poseAngle_rad
+			result += 4; // = float_32
+			//pose_quaternion0
+			result += 4; // = float_32
+			//pose_quaternion1
+			result += 4; // = float_32
+			//pose_quaternion2
+			result += 4; // = float_32
+			//pose_quaternion3
 			result += 4; // = float_32
 			//leftWheelSpeed_mmps
 			result += 4; // = float_32

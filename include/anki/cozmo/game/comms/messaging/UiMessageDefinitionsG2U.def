@@ -485,6 +485,10 @@ struct G2U_RobotState
 	float pose_y;
 	float pose_z;
 	float poseAngle_rad;
+	float pose_quaternion0;
+	float pose_quaternion1;
+	float pose_quaternion2;
+	float pose_quaternion3;
 	float leftWheelSpeed_mmps;
 	float rightWheelSpeed_mmps;
 	float headAngle_rad;
@@ -506,6 +510,10 @@ struct G2U_RobotState
 		,float pose_y
 		,float pose_z
 		,float poseAngle_rad
+		,float pose_quaternion0
+		,float pose_quaternion1
+		,float pose_quaternion2
+		,float pose_quaternion3
 		,float leftWheelSpeed_mmps
 		,float rightWheelSpeed_mmps
 		,float headAngle_rad
@@ -518,6 +526,10 @@ struct G2U_RobotState
 	,pose_y(pose_y)
 	,pose_z(pose_z)
 	,poseAngle_rad(poseAngle_rad)
+	,pose_quaternion0(pose_quaternion0)
+	,pose_quaternion1(pose_quaternion1)
+	,pose_quaternion2(pose_quaternion2)
+	,pose_quaternion3(pose_quaternion3)
 	,leftWheelSpeed_mmps(leftWheelSpeed_mmps)
 	,rightWheelSpeed_mmps(rightWheelSpeed_mmps)
 	,headAngle_rad(headAngle_rad)
@@ -551,6 +563,10 @@ struct G2U_RobotState
 		buffer.Write(this->pose_y);
 		buffer.Write(this->pose_z);
 		buffer.Write(this->poseAngle_rad);
+		buffer.Write(this->pose_quaternion0);
+		buffer.Write(this->pose_quaternion1);
+		buffer.Write(this->pose_quaternion2);
+		buffer.Write(this->pose_quaternion3);
 		buffer.Write(this->leftWheelSpeed_mmps);
 		buffer.Write(this->rightWheelSpeed_mmps);
 		buffer.Write(this->headAngle_rad);
@@ -576,6 +592,10 @@ struct G2U_RobotState
 		buffer.Read(this->pose_y);
 		buffer.Read(this->pose_z);
 		buffer.Read(this->poseAngle_rad);
+		buffer.Read(this->pose_quaternion0);
+		buffer.Read(this->pose_quaternion1);
+		buffer.Read(this->pose_quaternion2);
+		buffer.Read(this->pose_quaternion3);
 		buffer.Read(this->leftWheelSpeed_mmps);
 		buffer.Read(this->rightWheelSpeed_mmps);
 		buffer.Read(this->headAngle_rad);
@@ -596,6 +616,14 @@ struct G2U_RobotState
 		//pose_z
 		result += 4; // = float_32
 		//poseAngle_rad
+		result += 4; // = float_32
+		//pose_quaternion0
+		result += 4; // = float_32
+		//pose_quaternion1
+		result += 4; // = float_32
+		//pose_quaternion2
+		result += 4; // = float_32
+		//pose_quaternion3
 		result += 4; // = float_32
 		//leftWheelSpeed_mmps
 		result += 4; // = float_32
@@ -622,6 +650,10 @@ struct G2U_RobotState
 		|| pose_y != other.pose_y
 		|| pose_z != other.pose_z
 		|| poseAngle_rad != other.poseAngle_rad
+		|| pose_quaternion0 != other.pose_quaternion0
+		|| pose_quaternion1 != other.pose_quaternion1
+		|| pose_quaternion2 != other.pose_quaternion2
+		|| pose_quaternion3 != other.pose_quaternion3
 		|| leftWheelSpeed_mmps != other.leftWheelSpeed_mmps
 		|| rightWheelSpeed_mmps != other.rightWheelSpeed_mmps
 		|| headAngle_rad != other.headAngle_rad
