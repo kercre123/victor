@@ -50,8 +50,9 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
+        const f32 DRIVE_VELOCITY_TURBO = 150.f; // mm/s -- while holding ALT
+        const f32 DRIVE_VELOCITY_FAST  = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW  = 20.f; // mm/s -- while holding SHIFT
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -525,6 +526,8 @@ namespace Anki {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
             liftSpeed *= 0.4;
             headSpeed *= 0.5;
+          } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+            wheelSpeed = DRIVE_VELOCITY_TURBO;
           }
           
           
