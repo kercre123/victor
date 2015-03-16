@@ -5,83 +5,84 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+public enum ActionButtonMode {
+	DISABLED,
+	TARGET,
+	PICK_UP,
+	DROP,
+	STACK,
+	ROLL,
+	ALIGN,
+	CHANGE,
+	CANCEL,
+	NUM_MODES
+}
+
+
+[System.Serializable]
+public class ActionButton
+{
+	public Button button;
+	public Image image;
+	public Text text;
+	
+	CozmoVision vision;
+	
+	public void ClaimOwnership(CozmoVision vision) {
+		this.vision = vision;
+	}
+	
+	public void SetMode(ActionButtonMode mode) {
+		
+		if(mode == ActionButtonMode.DISABLED) {
+			button.gameObject.SetActive(false);
+			button.onClick.RemoveAllListeners();
+			return;
+		}
+		
+		image.sprite = vision.actionSprites[(int)mode];
+		
+		switch(mode) {
+			case ActionButtonMode.TARGET:
+				text.text = "Target";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.PICK_UP:
+				text.text = "Pick Up";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.DROP:
+				text.text = "Drop";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.STACK:
+				text.text = "Stack";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.ROLL:
+				text.text = "Roll";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.ALIGN:
+				text.text = "Align";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.CHANGE:
+				text.text = "Change";
+				button.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.CANCEL:
+				text.text = "Cancel";
+				button.onClick.AddListener(vision.Cancel);
+				break;
+		}
+		
+		button.gameObject.SetActive(true);
+	}
+}
+
 public class CozmoVision : MonoBehaviour
 {
-	public enum ActionButtonMode {
-		DISABLED,
-		TARGET,
-		PICK_UP,
-		DROP,
-		STACK,
-		ROLL,
-		ALIGN,
-		CHANGE,
-		CANCEL,
-		NUM_MODES
-	}
-
-	[System.Serializable]
-	public class ActionButton
-	{
-		public Button button;
-		public Image image;
-		public Text text;
-
-		CozmoVision vision;
-
-		public void ClaimOwnership(CozmoVision vision) {
-			this.vision = vision;
-		}
-
-		public void SetMode(ActionButtonMode mode) {
-
-			if(mode == ActionButtonMode.DISABLED) {
-				button.gameObject.SetActive(false);
-				button.onClick.RemoveAllListeners();
-				return;
-			}
-			
-			image.sprite = vision.actionSprites[(int)mode];
-
-			switch(mode) {
-				case ActionButtonMode.TARGET:
-					text.text = "Target";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.PICK_UP:
-					text.text = "Pick Up";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.DROP:
-					text.text = "Drop";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.STACK:
-					text.text = "Stack";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.ROLL:
-					text.text = "Roll";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.ALIGN:
-					text.text = "Align";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.CHANGE:
-					text.text = "Change";
-					button.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.CANCEL:
-					text.text = "Cancel";
-					button.onClick.AddListener(vision.Cancel);
-					break;
-			}
-
-			button.gameObject.SetActive(true);
-		}
-	}
-
 	[SerializeField] protected Button button;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;

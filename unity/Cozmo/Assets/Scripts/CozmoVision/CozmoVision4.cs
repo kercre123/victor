@@ -3,81 +3,83 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class CozmoVision4 : CozmoVision
+[System.Serializable]
+public class ActionSlider
 {
+	public Slider slider;
+	public Image image;
+	public Text text;
+	
+	CozmoVision vision;
+	bool pressed = false;
 
-	[System.Serializable]
-	public class ActionSlider
-	{
-		public Slider slider;
-		public Image image;
-		public Text text;
+	public ActionButtonMode Mode { get; private set; }
+	
+	public void ClaimOwnership(CozmoVision vision) {
+		this.vision = vision;
+	}
+	
+	public void SetMode(ActionButtonMode mode) {
+		if(Mode == mode) return;
 		
-		CozmoVision vision;
-
-		public ActionButtonMode Mode { get; private set; }
-
-		public void ClaimOwnership(CozmoVision vision) {
-			this.vision = vision;
+		Debug.Log("ActionSlider.SetMode("+mode+")");
+		
+		Mode = mode;
+		
+		if(mode == ActionButtonMode.DISABLED) {
+			slider.gameObject.SetActive(false);
+			//slider.onClick.RemoveAllListeners();
+			return;
 		}
 		
-		public void SetMode(ActionButtonMode mode) {
-			if(Mode == mode) return;
-
-			Debug.Log("ActionSlider.SetMode("+mode+")");
-
-			Mode = mode;
-
-			if(mode == ActionButtonMode.DISABLED) {
-				slider.gameObject.SetActive(false);
-				//slider.onClick.RemoveAllListeners();
-				return;
-			}
-			
-			image.sprite = vision.actionSprites[(int)mode];
-			
-			switch(mode) {
-				case ActionButtonMode.TARGET:
-					text.text = "Searching";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.PICK_UP:
-					text.text = "Pick Up";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.DROP:
-					text.text = "Drop";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.STACK:
-					text.text = "Stack";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.ROLL:
-					text.text = "Roll";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.ALIGN:
-					text.text = "Align";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.CHANGE:
-					text.text = "Change";
-					//slider.onClick.AddListener(vision.Action);
-					break;
-				case ActionButtonMode.CANCEL:
-					text.text = "Cancel";
-					//slider.onClick.AddListener(vision.Cancel);
-					break;
-			}
-			
-			slider.gameObject.SetActive(true);
+		image.sprite = vision.actionSprites[(int)mode];
+		
+		switch(mode) {
+			case ActionButtonMode.TARGET:
+				text.text = "Searching";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.PICK_UP:
+				text.text = "Pick Up";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.DROP:
+				text.text = "Drop";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.STACK:
+				text.text = "Stack";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.ROLL:
+				text.text = "Roll";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.ALIGN:
+				text.text = "Align";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.CHANGE:
+				text.text = "Change";
+				//slider.onClick.AddListener(vision.Action);
+				break;
+			case ActionButtonMode.CANCEL:
+				text.text = "Cancel";
+				//slider.onClick.AddListener(vision.Cancel);
+				break;
 		}
+		
+		slider.gameObject.SetActive(true);
 	}
 
+}
+
+public class CozmoVision4 : CozmoVision
+{
 	[SerializeField] ActionSlider actionSlider = null;
 
 	int lastSelected = -1;
+	float targetLockTimer = 0f;
 
 	protected override void Awake()
 	{
@@ -94,6 +96,9 @@ public class CozmoVision4 : CozmoVision
 
 	protected void Update()
 	{
+
+		if(targetLockTimer > 0) targetLockTimer -= Time.deltaTime;
+
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
 			DisableButtons();
 			return;
@@ -108,29 +113,9 @@ public class CozmoVision4 : CozmoVision
 
 		DetectObservedObjects();
 
-		AcquireTarget();
+		if(robot.selectedObject < 0 || targetLockTimer <= 0 && robot.status != Robot.StatusFlag.IS_PICKING_OR_PLACING) AcquireTarget();
 
-		List<ActionButtonMode> modes = new List<ActionButtonMode>();
-		
-		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
-			modes.Add(ActionButtonMode.DROP);
-			if(robot.selectedObject > -1) modes.Add(ActionButtonMode.STACK);
-		}
-		else if(robot.selectedObject > -1) {
-			modes.Add(ActionButtonMode.PICK_UP);
-			modes.Add(ActionButtonMode.ROLL);
-		}
-		else {
-			modes.Add(ActionButtonMode.TARGET);
-		}
-		
-		ActionButtonMode currentMode = modes[0];
-		
-		if(actionSlider.slider.value > 0.25f && modes.Count > 1) {
-			currentMode = modes[1];
-		}
-		
-		actionSlider.SetMode(currentMode);
+		RefreshSliderMode();
 
 		if(robot.selectedObject > -1 && lastSelected != robot.selectedObject) {
 			InitiateAssistedInteraction();
@@ -188,12 +173,39 @@ public class CozmoVision4 : CozmoVision
 		}
 	}
 
-	public void InitiateAssistedInteraction() {
+	private void RefreshSliderMode() {
+	
+		List<ActionButtonMode> modes = new List<ActionButtonMode>();
+	
+		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+			modes.Add(ActionButtonMode.DROP);
+			if(robot.selectedObject > -1)
+				modes.Add(ActionButtonMode.STACK);
+		}
+		else if(robot.selectedObject > -1) {
+			modes.Add(ActionButtonMode.PICK_UP);
+			modes.Add(ActionButtonMode.ROLL);
+		}
+		else {
+			modes.Add(ActionButtonMode.TARGET);
+		}
+	
+		ActionButtonMode currentMode = modes[0];
+	
+		if(actionSlider.slider.value > 0.25f && modes.Count > 1) {
+			currentMode = modes[1];
+		}
+	
+		actionSlider.SetMode(currentMode);
+	}
+
+	private void InitiateAssistedInteraction() {
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.TARGET:
 				break;
 			case ActionButtonMode.PICK_UP:
 				RobotEngineManager.instance.ManualPickAndPlaceObject();
+				targetLockTimer = 1f;
 				break;
 			case ActionButtonMode.DROP:
 				RobotEngineManager.instance.ManualPickAndPlaceObject();

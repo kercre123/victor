@@ -85,24 +85,11 @@
      <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D 2.js" />
      <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D 3.js" />
      <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D.js" />
-     <None Include="Assets\Plugins\VectrosityDemos\Image Effects (Pro Only)\_Sources\Shaders\GlowConeTap.shader" />
-     <None Include="Assets\Plugins\VectrosityDemos\Image Effects (Pro Only)\_Sources\Shaders\GlowCompose.shader" />
-     <None Include="Assets\Plugins\VectrosityDemos\Image Effects (Pro Only)\_Sources\Shaders\GlowEffectDownsample.shader" />
      <None Include="Assets\Vectrosity\Demos\Shaders\DepthMask.shader" />
      <None Include="Assets\Vectrosity\Demos\Shaders\SolidColor.shader" />
- <Reference Include="Assembly-UnityScript-firstpass">
- <HintPath>/Users/donovandrane/cozmo-game/unity/Cozmo/Library/ScriptAssemblies/Assembly-UnityScript-firstpass.dll</HintPath>
- </Reference>
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/4.6.2/UnityEngine.UI.dll</HintPath>
  </Reference>
- <Reference Include="Vectrosity">
- <HintPath>/Users/donovandrane/cozmo-game/unity/Cozmo/Assets/Plugins/Vectrosity.dll</HintPath>
- </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="Assembly-CSharp-firstpass-vs.csproj">
-      <Project>{6817CAF2-2F1E-0192-EE2F-0B7275EBBDA1}</Project>      <Name>Assembly-CSharp-firstpass-vs</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

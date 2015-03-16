@@ -614,7 +614,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void ManualPickAndPlaceObject()
 	{
-		Debug.Log( "Pick And Place Object " + current.selectedObject );
+		Debug.Log( "ManualPickAndPlaceObject " + current.selectedObject );
 		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = current.selectedObject;
@@ -623,8 +623,8 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
 		
-		current.observedObjects.Clear();
-		current.lastObjectHeadTracked = -1;
+		//current.observedObjects.Clear();
+		//current.lastObjectHeadTracked = -1;
 	}
 
 	public void PickAndPlaceObject()
