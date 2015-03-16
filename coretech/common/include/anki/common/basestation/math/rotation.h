@@ -142,18 +142,33 @@ namespace Anki {
   }; // class UnitQuaternion
   
   
+  // A general storage class for storing and converting between different Rotation
+  // formats. Internally, uses a UnitQuaternion, but can be constructed from and
+  // converted to RotationMatrices and RotationVectors.
   class Rotation3d
   {
   public:
+
     Rotation3d(const Radians& angle, const Vec3f& axis);
     Rotation3d(const RotationVector3d& Rvec);
+    Rotation3d(const RotationMatrix3d& Rmat);
     
-    Rotation3d operator*(const Rotation3d& other) const;
+    Rotation3d& operator*=(const Rotation3d& other);
+    Rotation3d  operator* (const Rotation3d& other) const;
+    
+    const UnitQuaternion<float>& GetQuaternion()     const { return _q; }
+    const RotationMatrix3d       GetRotationMatrix() const;
+    const RotationVector3d       GetRotationVector() const;
+    
+    const Radians GetAngle() const;
+    const Vec3f   GetAxis()  const;
     
   private:
     UnitQuaternion<float> _q;
     
   }; // Rotation3d
+  
+  bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance);
   
   
   class RotationMatrix3d : public RotationMatrixBase<3>

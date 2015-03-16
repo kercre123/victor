@@ -252,6 +252,75 @@ namespace Anki {
   
   
 #if 0
+#pragma mark --- Rotation3d ---
+#endif
+  
+  Rotation3d::Rotation3d(const Radians& angle, const Vec3f& axis)
+  {
+    const f32 halfAngle = angle.ToFloat() * 0.5f;
+    const f32 q1 = std::cos(halfAngle);
+    
+    const f32 sinHalfAngle = std::sin(halfAngle);
+    const f32 q2 = sinHalfAngle * axis[0];
+    const f32 q3 = sinHalfAngle * axis[1];
+    const f32 q4 = sinHalfAngle * axis[2];
+    
+    _q = {q1, q2, q3, q4};
+  }
+  
+  Rotation3d::Rotation3d(const RotationVector3d& Rvec)
+  : Rotation3d(Rvec.GetAngle(), Rvec.GetAxis())
+  {
+    
+  }
+
+  Rotation3d::Rotation3d(const RotationMatrix3d& Rmat)
+  : Rotation3d(RotationVector3d(Rmat))
+  {
+    
+  }
+  
+  const Radians Rotation3d::GetAngle() const
+  {
+    return 2.f*std::acos(_q[0]);
+  }
+  
+  const Vec3f Rotation3d::GetAxis() const
+  {
+    Vec3f axis(_q[1], _q[2], _q[3]);
+    axis.MakeUnitLength();
+    return axis;
+  }
+  
+  const RotationMatrix3d Rotation3d::GetRotationMatrix() const
+  {
+    return RotationMatrix3d(GetAngle(), GetAxis());
+  }
+  
+  const RotationVector3d Rotation3d::GetRotationVector() const
+  {
+    return RotationVector3d(GetAngle(), GetAxis());
+  }
+  
+  Rotation3d& Rotation3d::operator*=(const Rotation3d& other)
+  {
+    _q *= other._q;
+    return *this;
+  }
+  
+  Rotation3d Rotation3d::operator*(const Rotation3d& other) const
+  {
+    Rotation3d retVal(*this);
+    retVal *= other;
+    return retVal;
+  }
+  
+  bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance)
+  {
+    return IsNearlyEqual(R1.GetQuaternion(), R2.GetQuaternion(), tolerance);
+  }
+  
+#if 0
 #pragma mark --- UnitQuaternion ----
 #endif
   
