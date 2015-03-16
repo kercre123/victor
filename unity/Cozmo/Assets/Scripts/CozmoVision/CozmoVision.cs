@@ -135,7 +135,7 @@ public class CozmoVision : MonoBehaviour
 		robot = RobotEngineManager.instance.current;
 		if(robot == null) return;
 
-		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			if(robot.selectedObject > -1) actionButtons[0].SetMode(ActionButtonMode.STACK);
 			actionButtons[1].SetMode(ActionButtonMode.DROP);
 		}
@@ -215,7 +215,7 @@ public class CozmoVision : MonoBehaviour
 
 		if( RobotEngineManager.instance != null )
 		{
-			if( RobotEngineManager.instance.current.status == Robot.StatusFlag.IS_CARRYING_BLOCK && RobotEngineManager.instance.current.selectedObject == -1 )
+			if( RobotEngineManager.instance.current.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) && RobotEngineManager.instance.current.selectedObject == -1 )
 			{
 				RobotEngineManager.instance.PlaceObjectOnGroundHere();
 			}

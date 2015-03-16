@@ -28,10 +28,11 @@ public class Robot
 
 	private StatusFlag lastStatus;
 
+	[System.FlagsAttribute]
 	public enum StatusFlag
 	{
 		NONE                    = 0,
-		//IS_TRAVERSING_PATH    = 1,
+		IS_MOVING               = 0x1,  // Head, lift, or wheels
 		IS_CARRYING_BLOCK       = 0x2,
 		IS_PICKING_OR_PLACING   = 0x4,
 		IS_PICKED_UP            = 0x8,
@@ -39,6 +40,11 @@ public class Robot
 		IS_PROX_SIDE_BLOCKED    = 0x20,
 		IS_ANIMATING            = 0x40
 	};
+
+	public bool Status( StatusFlag s )
+	{
+		return (status & s) == s;
+	}
 
 	public Robot( byte robotID )
 	{
@@ -73,7 +79,7 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectType ); // HACK
+		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectID );
 
 		if( observedObject == null )
 		{

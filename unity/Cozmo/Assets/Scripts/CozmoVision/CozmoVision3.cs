@@ -50,6 +50,7 @@ public class CozmoVision3 : CozmoVision
 	
 	protected List<ObservedObject> inReticle = new List<ObservedObject>();
 	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
+	protected int lastSelectedObject = -1;
 
 	protected bool isInReticle
 	{
@@ -125,7 +126,7 @@ public class CozmoVision3 : CozmoVision
 		}
 
 		
-		if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
+		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 		{
 			if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 			{
@@ -160,13 +161,15 @@ public class CozmoVision3 : CozmoVision
 			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
 			{
 				Ding( true );
+				lastSelectedObject = robot.selectedObject;
 				
 				break;
 			}
 			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
-			        ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
+			        ( robot.selectedObject == -1 && lastSelectedObject != -1 ) )
 			{
 				Ding( false );
+				lastSelectedObject = -1;
 				
 				break;
 			}
@@ -192,7 +195,7 @@ public class CozmoVision3 : CozmoVision
 		if(robot == null)
 			return;
 		
-		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			if(robot.selectedObject > -1)
 				actionButtons[0].SetMode(ActionButtonMode.STACK);
 			actionButtons[1].SetMode(ActionButtonMode.DROP);

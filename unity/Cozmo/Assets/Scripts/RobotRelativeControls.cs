@@ -77,7 +77,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
 
 			//if coz is picked up, let's zero our wheels and abort control logic
-			if(RobotEngineManager.instance.current.status == Robot.StatusFlag.IS_PICKED_UP) {
+			if(RobotEngineManager.instance.current.Status(Robot.StatusFlag.IS_PICKED_UP)) {
 				if(Intro.CurrentRobotID != 0) {
 					RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
 					return;
@@ -207,15 +207,9 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(verticalStick == null || verticalStick.IsPressed) {
 			gyroSleepTimer = 0f;
 		}
-		else if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			switch(RobotEngineManager.instance.current.status) {
-				case Robot.StatusFlag.IS_ANIMATING:
-				case Robot.StatusFlag.IS_PICKING_OR_PLACING:
-					gyroSleepTimer = 0f;
-					break;
-			}
+		else if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null && !RobotEngineManager.instance.current.Status(Robot.StatusFlag.NONE)) {
+			gyroSleepTimer = 0f;
 		}
-		
 		
 		if(gyroSleepTimer <= gyroSleepTime && gyroInputs != null && gyroInputs.gameObject.activeSelf) { // && (verticalStick == null || verticalStick.IsPressed)) {
 
