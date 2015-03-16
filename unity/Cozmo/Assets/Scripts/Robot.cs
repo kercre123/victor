@@ -79,7 +79,7 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectType ); // HACK
+		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectID );
 
 		if( observedObject == null )
 		{

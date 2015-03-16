@@ -50,6 +50,7 @@ public class CozmoVision3 : CozmoVision
 	
 	protected List<ObservedObject> inReticle = new List<ObservedObject>();
 	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
+	protected int lastSelectedObject = -1;
 
 	protected bool isInReticle
 	{
@@ -160,13 +161,15 @@ public class CozmoVision3 : CozmoVision
 			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
 			{
 				Ding( true );
+				lastSelectedObject = robot.selectedObject;
 				
 				break;
 			}
 			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
-			        ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
+			        ( robot.selectedObject == -1 && lastSelectedObject != -1 ) )
 			{
 				Ding( false );
+				lastSelectedObject = -1;
 				
 				break;
 			}
