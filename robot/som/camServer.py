@@ -178,7 +178,7 @@ class CameraSubServer(BaseSubServer):
             return
         frame = None
         try:
-            while True: # Receive all the data grams and throw out all but the last one
+            while True: # Receive all the datagrams and throw out all but the last one
                 frame = self.encoderSocket.recv(MTU)
         except socket.error, e:
             if e.errno == 11: # No more data, this is how we expect to exit the loop
@@ -186,13 +186,12 @@ class CameraSubServer(BaseSubServer):
                     tick = time.time()
                     sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
                     self.lastFrameOTime = tick
-                # If only sending single image
                 self.sendModeLock.acquire()
                 if self.sendMode != messages.ISM_OFF:
                     self.imageNumber += 1
                     msg = messages.ImageChunk()
                     msg.imageId = self.imageNumber
-                    msg.imageTimestamp = self.server.timestamp.get()
+                    msg.imageTimestamp = self.server.timestamp.get() + int((2.0/self.SENSOR_FPS)*1000)
                     msg.imageEncoding = self.ENCODER_CODING
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     msg.resolution = self.resolution

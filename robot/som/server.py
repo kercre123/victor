@@ -35,8 +35,7 @@ class TimestampExtrapolator(object):
     def get(self):
         "Retrive the estimated MCU time"
         self.lock.acquire()
-        #ret = self.mcuTS + ((time.time()-self.toc)*self.tps)
-        ret = self.mcuTS
+        ret = self.mcuTS + int((time.time()-self.toc)*self.tps)
         self.lock.release()
         return ret
 
