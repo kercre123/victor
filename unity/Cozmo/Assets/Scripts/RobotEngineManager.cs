@@ -311,14 +311,13 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
-		//Debug.Log( "no box found at " + Time.time );
-
 		if( current.selectedObject == -1 )
 		{
-			current.observedObjects.Clear();
-		}
+			//Debug.Log( "no box found" );
 
-		current.lastObjectHeadTracked = -1;
+			current.observedObjects.Clear();
+			current.lastObjectHeadTracked = -1;
+		}
 	}
 
 	private void SuccessOrFailure( bool success )
