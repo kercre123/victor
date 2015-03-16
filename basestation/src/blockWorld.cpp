@@ -366,6 +366,7 @@ namespace Anki
         
         // Signal the observation of this object, with its bounding box:
         const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
+        const UnitQuaternion<float> q = Rotation3d(observedObject->GetPose().GetRotationVector()).GetQuaternion();
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
                                                              inFamily,
                                                              obsType,
@@ -376,7 +377,8 @@ namespace Anki
                                                              boundingBox.GetHeight(),
                                                              obsObjTrans.x(),
                                                              obsObjTrans.y(),
-                                                             obsObjTrans.z());
+                                                             obsObjTrans.z(),
+                                                             q.w(), q.x(), q.y(), q.z());
         
         if(_robot->GetTrackHeadToObject().IsSet() && obsID == _robot->GetTrackHeadToObject())
         {
