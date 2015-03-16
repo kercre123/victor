@@ -125,7 +125,7 @@ public class CozmoVision3 : CozmoVision
 		}
 
 		
-		if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
+		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 		{
 			if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 			{
@@ -192,7 +192,7 @@ public class CozmoVision3 : CozmoVision
 		if(robot == null)
 			return;
 		
-		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			if(robot.selectedObject > -1)
 				actionButtons[0].SetMode(ActionButtonMode.STACK);
 			actionButtons[1].SetMode(ActionButtonMode.DROP);
