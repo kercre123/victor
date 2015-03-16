@@ -78,8 +78,9 @@ namespace Cozmo {
                                               uint32_t objectType, uint32_t objectID,
                                               float img_x_upperLeft,  float img_y_upperLeft,
                                               float img_width,  float img_height,
-                                              float world_x, float world_y, float world_z) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z);
+                                              float world_x, float world_y, float world_z,
+                                              float q0, float q1, float q2, float q3) {
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -246,7 +247,8 @@ namespace Cozmo {
                                                       float img_width,  float img_height,
                                                       float world_x,
                                                       float world_y,
-                                                      float world_z)
+                                                      float world_z,
+                                                      float q0, float q1, float q2, float q3)
   {
     // Send a message out to UI that the robot saw an object
     G2U_RobotObservedObject msg;
@@ -261,6 +263,10 @@ namespace Cozmo {
     msg.world_x       = world_x;
     msg.world_y       = world_y;
     msg.world_z       = world_z;
+    msg.quaternion0   = q0;
+    msg.quaternion1   = q1;
+    msg.quaternion2   = q2;
+    msg.quaternion3   = q3;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     G2U_Message message;

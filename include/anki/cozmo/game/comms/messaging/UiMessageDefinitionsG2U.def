@@ -792,6 +792,10 @@ struct G2U_RobotObservedObject
 	float world_x;
 	float world_y;
 	float world_z;
+	float quaternion0;
+	float quaternion1;
+	float quaternion2;
+	float quaternion3;
 
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -811,7 +815,11 @@ struct G2U_RobotObservedObject
 		,float img_height
 		,float world_x
 		,float world_y
-		,float world_z)
+		,float world_z
+		,float quaternion0
+		,float quaternion1
+		,float quaternion2
+		,float quaternion3)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
@@ -823,6 +831,10 @@ struct G2U_RobotObservedObject
 	,world_x(world_x)
 	,world_y(world_y)
 	,world_z(world_z)
+	,quaternion0(quaternion0)
+	,quaternion1(quaternion1)
+	,quaternion2(quaternion2)
+	,quaternion3(quaternion3)
 	{}
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 	{
@@ -855,6 +867,10 @@ struct G2U_RobotObservedObject
 		buffer.Write(this->world_x);
 		buffer.Write(this->world_y);
 		buffer.Write(this->world_z);
+		buffer.Write(this->quaternion0);
+		buffer.Write(this->quaternion1);
+		buffer.Write(this->quaternion2);
+		buffer.Write(this->quaternion3);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -879,6 +895,10 @@ struct G2U_RobotObservedObject
 		buffer.Read(this->world_x);
 		buffer.Read(this->world_y);
 		buffer.Read(this->world_z);
+		buffer.Read(this->quaternion0);
+		buffer.Read(this->quaternion1);
+		buffer.Read(this->quaternion2);
+		buffer.Read(this->quaternion3);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -906,6 +926,14 @@ struct G2U_RobotObservedObject
 		result += 4; // = float_32
 		//world_z
 		result += 4; // = float_32
+		//quaternion0
+		result += 4; // = float_32
+		//quaternion1
+		result += 4; // = float_32
+		//quaternion2
+		result += 4; // = float_32
+		//quaternion3
+		result += 4; // = float_32
 		return result;
 	}
 
@@ -921,7 +949,11 @@ struct G2U_RobotObservedObject
 		|| img_height != other.img_height
 		|| world_x != other.world_x
 		|| world_y != other.world_y
-		|| world_z != other.world_z) {
+		|| world_z != other.world_z
+		|| quaternion0 != other.quaternion0
+		|| quaternion1 != other.quaternion1
+		|| quaternion2 != other.quaternion2
+		|| quaternion3 != other.quaternion3) {
 			return false;
 		}
 		return true;

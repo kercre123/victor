@@ -643,6 +643,10 @@ public class G2U_RobotObservedObject
 	public float world_x;
 	public float world_y;
 	public float world_z;
+	public float quaternion0;
+	public float quaternion1;
+	public float quaternion2;
+	public float quaternion3;
 
 	/**** Constructors ****/
 
@@ -660,7 +664,11 @@ public class G2U_RobotObservedObject
 		float img_height,
 		float world_x,
 		float world_y,
-		float world_z)
+		float world_z,
+		float quaternion0,
+		float quaternion1,
+		float quaternion2,
+		float quaternion3)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
@@ -673,6 +681,10 @@ public class G2U_RobotObservedObject
 		this.world_x = world_x;
 		this.world_y = world_y;
 		this.world_z = world_z;
+		this.quaternion0 = quaternion0;
+		this.quaternion1 = quaternion1;
+		this.quaternion2 = quaternion2;
+		this.quaternion3 = quaternion3;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -701,6 +713,14 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//quaternion0
+		quaternion0 = (float)(reader.ReadSingle());
+		//quaternion1
+		quaternion1 = (float)(reader.ReadSingle());
+		//quaternion2
+		quaternion2 = (float)(reader.ReadSingle());
+		//quaternion3
+		quaternion3 = (float)(reader.ReadSingle());
 	}
 
 	/**** Pack ****/
@@ -718,6 +738,10 @@ public class G2U_RobotObservedObject
 		writer.Write((float)world_x);
 		writer.Write((float)world_y);
 		writer.Write((float)world_z);
+		writer.Write((float)quaternion0);
+		writer.Write((float)quaternion1);
+		writer.Write((float)quaternion2);
+		writer.Write((float)quaternion3);
 		return stream;
 	}
 
@@ -747,6 +771,14 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//quaternion0
+		quaternion0 = (float)(reader.ReadSingle());
+		//quaternion1
+		quaternion1 = (float)(reader.ReadSingle());
+		//quaternion2
+		quaternion2 = (float)(reader.ReadSingle());
+		//quaternion3
+		quaternion3 = (float)(reader.ReadSingle());
 		return stream;
 	}
 	public int Size
@@ -774,6 +806,14 @@ public class G2U_RobotObservedObject
 			//world_y
 			result += 4; // = float_32
 			//world_z
+			result += 4; // = float_32
+			//quaternion0
+			result += 4; // = float_32
+			//quaternion1
+			result += 4; // = float_32
+			//quaternion2
+			result += 4; // = float_32
+			//quaternion3
 			result += 4; // = float_32
 			return result;
 		}
