@@ -243,7 +243,7 @@ namespace Anki {
 
 #ifdef SIMULATOR
     // Simulated camera's frame rate, specified by its period in milliseconds
-    const s32 VISION_TIME_STEP = 30; // Try keep this a multiple of the world's basic time step?
+    const s32 VISION_TIME_STEP = 30; // This should be a multiple of the world's basic time step!
 #endif
 
 
