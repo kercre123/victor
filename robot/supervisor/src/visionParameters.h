@@ -181,7 +181,9 @@ namespace Anki {
 #ifdef SIMULATOR
         static const u32 FIDUCIAL_DETECTION_SPEED_HZ = 30;
         static const u32 FACE_DETECTION_SPEED_HZ     = 30;
-        static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 30;
+
+        // This is now controlled by VISION_TIME_STEP
+        //static const u32 SEND_WIFI_IMAGE_SPEED_HZ    = 30;
         
 #if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         static const u32 TRACKING_ALGORITHM_SPEED_HZ = 60;
@@ -192,7 +194,7 @@ namespace Anki {
         static const u32 TRACK_BLOCK_PERIOD_US        = 1e6 / TRACKING_ALGORITHM_SPEED_HZ;
         static const u32 FIDUCIAL_DETECTION_PERIOD_US = 1e6 / FIDUCIAL_DETECTION_SPEED_HZ;
         static const u32 FACE_DETECTION_PERIOD_US     = 1e6 / FACE_DETECTION_SPEED_HZ;
-        static const u32 SEND_WIFI_IMAGE_PERIOD_US    = 1e6 / SEND_WIFI_IMAGE_SPEED_HZ;
+        //static const u32 SEND_WIFI_IMAGE_PERIOD_US    = 1e6 / SEND_WIFI_IMAGE_SPEED_HZ;
 #endif
       }; // struct SimulatorParameters
       
