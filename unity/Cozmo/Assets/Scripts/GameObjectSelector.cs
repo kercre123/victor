@@ -5,9 +5,11 @@ using System.Collections;
 
 public class GameObjectSelector : MonoBehaviour {
 
-	[SerializeField] GameObject[] screens = null;
+	[SerializeField] GameObject[] gameObjects = null;
 	[SerializeField] int defaultIndex = 0;
 	[SerializeField] Text label = null;
+
+	bool set = false;
 
 	int _index = -1;
 	protected int index {
@@ -17,50 +19,51 @@ public class GameObjectSelector : MonoBehaviour {
 
 		set {
 			if(value != _index) {
-				if(_index >= 0 && _index < screens.Length) Debug.Log("ControlSchemeTester screen changed from " + screens[_index].name + " to " + screens[value].name );
+				if(_index >= 0 && _index < gameObjects.Length) Debug.Log(gameObject.name + " GameObjectSelector changed from " + gameObjects[_index].name + " to " + gameObjects[value].name );
 				_index = value;
 				Refresh();
 			}
 		}
 	}
 
-	void OnEnable() {
-		if(screens == null || screens.Length == 0) {
+	protected virtual void OnEnable() {
+		if(gameObjects == null || gameObjects.Length == 0) {
 			enabled = false;
 			return;
 		}
 
-		index = Mathf.Clamp(defaultIndex, 0, screens.Length - 1);
+		if(!set) index = Mathf.Clamp(defaultIndex, 0, gameObjects.Length - 1);
 	}
 
 	void Refresh() {
-		if(screens == null || screens.Length == 0) {
+		if(gameObjects == null || gameObjects.Length == 0) {
 			enabled = false;
 			return;
 		}
 
-		_index = Mathf.Clamp(_index, 0, screens.Length - 1);
+		_index = Mathf.Clamp(_index, 0, gameObjects.Length - 1);
 
 		//first disable the old screen(s)
-		for(int i=0; i<screens.Length; i++) {
-			if(screens[i] == null) continue;
+		for(int i=0; i<gameObjects.Length; i++) {
+			if(gameObjects[i] == null) continue;
 			if(index == i) continue;
-			screens[i].SetActive(false);
+			gameObjects[i].SetActive(false);
 		}
 
 		//then enable the new one
-		screens[index].SetActive(true);
+		gameObjects[index].SetActive(true);
 		
 		//then refresh our test title field
-		if(label != null && label.text != screens[index].name) {
-			label.text = screens[index].name;
+		if(label != null && label.text != gameObjects[index].name) {
+			label.text = gameObjects[index].name;
 		}
 
 	}
 
 	public void SetScreenIndex(int i) {
-		Debug.Log("SetScreenIndex("+i+")");
-		index = Mathf.Clamp(i, 0, screens.Length - 1);
+		Debug.Log(gameObject.name + " SetScreenIndex("+i+")");
+		index = Mathf.Clamp(i, 0, gameObjects.Length - 1);
+		set = true;
 	}
 
 }

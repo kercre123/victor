@@ -72,14 +72,6 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void Update() {
 
-		//if in menu
-		if(GameSelector.InMenu) {
-			if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-				RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
-				return;
-			}
-		}
-
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
 			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);

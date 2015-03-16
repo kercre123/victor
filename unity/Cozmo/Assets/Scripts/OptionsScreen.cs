@@ -9,6 +9,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_reverseLikeACar;
 	[SerializeField] ComboBox combo_controls;
 	[SerializeField] ComboBox combo_vision;
+	[SerializeField] Toggle toggle_debug;
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
@@ -31,6 +32,11 @@ public class OptionsScreen : MonoBehaviour {
 			//Debug.Log("Init toggle_reverseLikeACar.isOn("+toggle_reverseLikeACar.isOn+")");
 		}
 
+		if(toggle_debug != null) {
+			toggle_debug.isOn = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
 		if(combo_controls != null) {
 			combo_controls.AddItems(controlStyles);
 			combo_controls.OnSelectionChanged = ControlsSelected;
@@ -46,14 +52,6 @@ public class OptionsScreen : MonoBehaviour {
 
 	}
 
-	void ControlsSelected(int index) {
-		PlayerPrefs.SetInt("ControlSchemeIndex", index);
-	}
-
-	void VisionSelected(int index) {
-		PlayerPrefs.SetInt("VisionSchemeIndex", index);
-	}
-
 	void AddListeners() {
 		
 		if(slider_turnSpeed != null) {
@@ -63,6 +61,11 @@ public class OptionsScreen : MonoBehaviour {
 		if(toggle_reverseLikeACar != null) {
 			toggle_reverseLikeACar.onValueChanged.AddListener(ToggleReverseLikeACar);
 		}
+
+		if(toggle_debug != null) {
+			toggle_debug.onValueChanged.AddListener(ToggleShowDebugInfo);
+		}
+
 	}
 
 	void OnDisable () {
@@ -77,6 +80,18 @@ public class OptionsScreen : MonoBehaviour {
 		if(toggle_reverseLikeACar != null) {
 			toggle_reverseLikeACar.onValueChanged.RemoveListener(ToggleReverseLikeACar);
 		}
+
+		if(toggle_debug != null) {
+			toggle_debug.onValueChanged.RemoveListener(ToggleShowDebugInfo);
+		}
+	}
+
+	void ControlsSelected(int index) {
+		PlayerPrefs.SetInt("ControlSchemeIndex", index);
+	}
+	
+	void VisionSelected(int index) {
+		PlayerPrefs.SetInt("VisionSchemeIndex", index);
 	}
 
 	public void MaxTurnSpeedChanged (float val) {
@@ -84,21 +99,20 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	public void ToggleReverseLikeACar (bool val) {
-		if(val) {
-			PlayerPrefs.SetInt("ReverseLikeACar", 1);
-		} else {
-			PlayerPrefs.SetInt("ReverseLikeACar", 0);
-		}
+		PlayerPrefs.SetInt("ReverseLikeACar", val ? 1 : 0);
+	}
 
-		//Debug.Log("ToggleReverseLikeACar("+val+") PlayerPrefs.SetInt(ReverseLikeACar, "+PlayerPrefs.GetInt("ReverseLikeACar", REVERSE_LIKE_A_CAR)+")");
+	public void ToggleShowDebugInfo (bool val) {
+		PlayerPrefs.SetInt("ShowDebugInfo", val ? 1 : 0);
 	}
 
 	public void ResetToDefaultSettings () {
+
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
-		for(int i = 0; i < toggle_cozmoVisions.Length; ++i) {
-			PlayerPrefs.DeleteKey("CozmoVision" + (i + 1));
-		}
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
+		PlayerPrefs.DeleteKey("ControlSchemeIndex");
+		PlayerPrefs.DeleteKey("VisionSchemeIndex");
+		PlayerPrefs.DeleteKey("ShowDebugInfo");
 
 		RemoveListeners();
 		Init();
