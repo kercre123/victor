@@ -485,6 +485,10 @@ struct G2U_RobotState
 	float pose_y;
 	float pose_z;
 	float poseAngle_rad;
+	float pose_quaternion0;
+	float pose_quaternion1;
+	float pose_quaternion2;
+	float pose_quaternion3;
 	float leftWheelSpeed_mmps;
 	float rightWheelSpeed_mmps;
 	float headAngle_rad;
@@ -506,6 +510,10 @@ struct G2U_RobotState
 		,float pose_y
 		,float pose_z
 		,float poseAngle_rad
+		,float pose_quaternion0
+		,float pose_quaternion1
+		,float pose_quaternion2
+		,float pose_quaternion3
 		,float leftWheelSpeed_mmps
 		,float rightWheelSpeed_mmps
 		,float headAngle_rad
@@ -518,6 +526,10 @@ struct G2U_RobotState
 	,pose_y(pose_y)
 	,pose_z(pose_z)
 	,poseAngle_rad(poseAngle_rad)
+	,pose_quaternion0(pose_quaternion0)
+	,pose_quaternion1(pose_quaternion1)
+	,pose_quaternion2(pose_quaternion2)
+	,pose_quaternion3(pose_quaternion3)
 	,leftWheelSpeed_mmps(leftWheelSpeed_mmps)
 	,rightWheelSpeed_mmps(rightWheelSpeed_mmps)
 	,headAngle_rad(headAngle_rad)
@@ -551,6 +563,10 @@ struct G2U_RobotState
 		buffer.Write(this->pose_y);
 		buffer.Write(this->pose_z);
 		buffer.Write(this->poseAngle_rad);
+		buffer.Write(this->pose_quaternion0);
+		buffer.Write(this->pose_quaternion1);
+		buffer.Write(this->pose_quaternion2);
+		buffer.Write(this->pose_quaternion3);
 		buffer.Write(this->leftWheelSpeed_mmps);
 		buffer.Write(this->rightWheelSpeed_mmps);
 		buffer.Write(this->headAngle_rad);
@@ -576,6 +592,10 @@ struct G2U_RobotState
 		buffer.Read(this->pose_y);
 		buffer.Read(this->pose_z);
 		buffer.Read(this->poseAngle_rad);
+		buffer.Read(this->pose_quaternion0);
+		buffer.Read(this->pose_quaternion1);
+		buffer.Read(this->pose_quaternion2);
+		buffer.Read(this->pose_quaternion3);
 		buffer.Read(this->leftWheelSpeed_mmps);
 		buffer.Read(this->rightWheelSpeed_mmps);
 		buffer.Read(this->headAngle_rad);
@@ -596,6 +616,14 @@ struct G2U_RobotState
 		//pose_z
 		result += 4; // = float_32
 		//poseAngle_rad
+		result += 4; // = float_32
+		//pose_quaternion0
+		result += 4; // = float_32
+		//pose_quaternion1
+		result += 4; // = float_32
+		//pose_quaternion2
+		result += 4; // = float_32
+		//pose_quaternion3
 		result += 4; // = float_32
 		//leftWheelSpeed_mmps
 		result += 4; // = float_32
@@ -622,6 +650,10 @@ struct G2U_RobotState
 		|| pose_y != other.pose_y
 		|| pose_z != other.pose_z
 		|| poseAngle_rad != other.poseAngle_rad
+		|| pose_quaternion0 != other.pose_quaternion0
+		|| pose_quaternion1 != other.pose_quaternion1
+		|| pose_quaternion2 != other.pose_quaternion2
+		|| pose_quaternion3 != other.pose_quaternion3
 		|| leftWheelSpeed_mmps != other.leftWheelSpeed_mmps
 		|| rightWheelSpeed_mmps != other.rightWheelSpeed_mmps
 		|| headAngle_rad != other.headAngle_rad
@@ -792,6 +824,10 @@ struct G2U_RobotObservedObject
 	float world_x;
 	float world_y;
 	float world_z;
+	float quaternion0;
+	float quaternion1;
+	float quaternion2;
+	float quaternion3;
 
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -811,7 +847,11 @@ struct G2U_RobotObservedObject
 		,float img_height
 		,float world_x
 		,float world_y
-		,float world_z)
+		,float world_z
+		,float quaternion0
+		,float quaternion1
+		,float quaternion2
+		,float quaternion3)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
@@ -823,6 +863,10 @@ struct G2U_RobotObservedObject
 	,world_x(world_x)
 	,world_y(world_y)
 	,world_z(world_z)
+	,quaternion0(quaternion0)
+	,quaternion1(quaternion1)
+	,quaternion2(quaternion2)
+	,quaternion3(quaternion3)
 	{}
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 	{
@@ -855,6 +899,10 @@ struct G2U_RobotObservedObject
 		buffer.Write(this->world_x);
 		buffer.Write(this->world_y);
 		buffer.Write(this->world_z);
+		buffer.Write(this->quaternion0);
+		buffer.Write(this->quaternion1);
+		buffer.Write(this->quaternion2);
+		buffer.Write(this->quaternion3);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -879,6 +927,10 @@ struct G2U_RobotObservedObject
 		buffer.Read(this->world_x);
 		buffer.Read(this->world_y);
 		buffer.Read(this->world_z);
+		buffer.Read(this->quaternion0);
+		buffer.Read(this->quaternion1);
+		buffer.Read(this->quaternion2);
+		buffer.Read(this->quaternion3);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -906,6 +958,14 @@ struct G2U_RobotObservedObject
 		result += 4; // = float_32
 		//world_z
 		result += 4; // = float_32
+		//quaternion0
+		result += 4; // = float_32
+		//quaternion1
+		result += 4; // = float_32
+		//quaternion2
+		result += 4; // = float_32
+		//quaternion3
+		result += 4; // = float_32
 		return result;
 	}
 
@@ -921,7 +981,11 @@ struct G2U_RobotObservedObject
 		|| img_height != other.img_height
 		|| world_x != other.world_x
 		|| world_y != other.world_y
-		|| world_z != other.world_z) {
+		|| world_z != other.world_z
+		|| quaternion0 != other.quaternion0
+		|| quaternion1 != other.quaternion1
+		|| quaternion2 != other.quaternion2
+		|| quaternion3 != other.quaternion3) {
 			return false;
 		}
 		return true;
