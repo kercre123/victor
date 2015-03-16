@@ -50,7 +50,11 @@ message G2U_RobotState {
     float_32 pose_x,
     float_32 pose_y,
     float_32 pose_z,
-    float_32 poseAngle_rad,
+    float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 pose_quaternion0, // full 3d rotation as a quaternion
+    float_32 pose_quaternion1, //  "
+    float_32 pose_quaternion2, //  "
+    float_32 pose_quaternion3, //  "
     float_32 leftWheelSpeed_mmps,
     float_32 rightWheelSpeed_mmps,
     float_32 headAngle_rad,
@@ -106,7 +110,11 @@ message G2U_RobotObservedObject {
     float_32 img_height,     //     "
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
-    float_32 world_z         //     "
+    float_32 world_z,        //     "
+    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
+    float_32 quaternion1,    //     "
+    float_32 quaternion2,    //     "
+    float_32 quaternion3     //     "
 }
 
 // RobotObservedNothing
