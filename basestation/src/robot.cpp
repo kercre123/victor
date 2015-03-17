@@ -176,6 +176,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      // Send state to visualizer for saving/displaying
+      VizManager::getInstance()->SendRobotState(msg);
+      
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
       // a working robot. Note that basestation and robot time aren't necessarily

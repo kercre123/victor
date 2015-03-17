@@ -10,6 +10,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include <fstream>
+
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
@@ -552,6 +554,30 @@ namespace Anki {
     }
     
 
+    void VizManager::SendRobotState(MessageRobotState msg)
+    {
+      
+      // TODO: Display state stuff somewhere...
+      
+      if(_saveRobotStateMode != VIZ_SAVE_OFF)
+      {
+        // Write state message to JSON file
+        std::string msgFilename("cozmoState_" + std::to_string(msg.timestamp) + ".json");
+        
+        Json::Value json = msg.CreateJson();
+        std::ofstream jsonFile(msgFilename, std::ofstream::out);
+        
+        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
+        jsonFile << json.toStyledString();
+        jsonFile.close();
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_saveRobotStateMode == VIZ_SAVE_ONE_SHOT) {
+          _saveRobotStateMode = VIZ_SAVE_OFF;
+        }
+      }
+    } // SendRobotState()
+    
     void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
     {
       if(!_sendImages) {
@@ -591,6 +617,7 @@ namespace Anki {
         
         // Create image file
         char imgCaptureFilename[64];
+        // TODO: Use image timestep instead of _saveImageCounter
         snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
         ++_saveImageCounter;
