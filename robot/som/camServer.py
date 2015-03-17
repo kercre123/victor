@@ -191,7 +191,7 @@ class CameraSubServer(BaseSubServer):
                     self.imageNumber += 1
                     msg = messages.ImageChunk()
                     msg.imageId = self.imageNumber
-                    msg.imageTimestamp = self.server.timestamp.get() + int((2.0/self.SENSOR_FPS)*1000)
+                    msg.imageTimestamp = self.server.timestamp.get() - int((2.0/self.SENSOR_FPS)*1000)
                     msg.imageEncoding = self.ENCODER_CODING
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     msg.resolution = self.resolution
