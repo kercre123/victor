@@ -974,6 +974,56 @@ public class U2G_SaveImages
 	}
 }
 
+public class U2G_SaveRobotState
+{
+	public byte mode;
+
+	/**** Constructors ****/
+
+	public U2G_SaveRobotState()
+	{
+	}
+
+	public U2G_SaveRobotState(byte mode)
+	{
+		this.mode = mode;
+	}
+
+	public U2G_SaveRobotState(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//mode
+		mode = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((byte)mode);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//mode
+		mode = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//mode
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class U2G_EnableDisplay
 {
 	public byte enable;
@@ -2707,37 +2757,38 @@ public class U2G_Message {
 		ImageRequest,	//14
 		SetRobotImageSendMode,	//15
 		SaveImages,	//16
-		EnableDisplay,	//17
-		SetHeadlights,	//18
-		GotoPose,	//19
-		PlaceObjectOnGround,	//20
-		PlaceObjectOnGroundHere,	//21
-		ExecuteTestPlan,	//22
-		SelectNextObject,	//23
-		PickAndPlaceObject,	//24
-		TraverseObject,	//25
-		SetRobotCarryingObject,	//26
-		ClearAllBlocks,	//27
-		VisionWhileMoving,	//28
-		ExecuteBehavior,	//29
-		SetBehaviorState,	//30
-		AbortPath,	//31
-		AbortAll,	//32
-		DrawPoseMarker,	//33
-		ErasePoseMarker,	//34
-		SetHeadControllerGains,	//35
-		SetLiftControllerGains,	//36
-		SelectNextSoundScheme,	//37
-		StartTestMode,	//38
-		IMURequest,	//39
-		PlayAnimation,	//40
-		ReadAnimationFile,	//41
-		StartFaceTracking,	//42
-		StopFaceTracking,	//43
-		StartLookingForMarkers,	//44
-		StopLookingForMarkers,	//45
-		SetVisionSystemParams,	//46
-		SetFaceDetectParams,	//47
+		SaveRobotState,	//17
+		EnableDisplay,	//18
+		SetHeadlights,	//19
+		GotoPose,	//20
+		PlaceObjectOnGround,	//21
+		PlaceObjectOnGroundHere,	//22
+		ExecuteTestPlan,	//23
+		SelectNextObject,	//24
+		PickAndPlaceObject,	//25
+		TraverseObject,	//26
+		SetRobotCarryingObject,	//27
+		ClearAllBlocks,	//28
+		VisionWhileMoving,	//29
+		ExecuteBehavior,	//30
+		SetBehaviorState,	//31
+		AbortPath,	//32
+		AbortAll,	//33
+		DrawPoseMarker,	//34
+		ErasePoseMarker,	//35
+		SetHeadControllerGains,	//36
+		SetLiftControllerGains,	//37
+		SelectNextSoundScheme,	//38
+		StartTestMode,	//39
+		IMURequest,	//40
+		PlayAnimation,	//41
+		ReadAnimationFile,	//42
+		StartFaceTracking,	//43
+		StopFaceTracking,	//44
+		StartLookingForMarkers,	//45
+		StopLookingForMarkers,	//46
+		SetVisionSystemParams,	//47
+		SetFaceDetectParams,	//48
 		INVALID
 	};
 
@@ -3032,6 +3083,23 @@ public class U2G_Message {
 		
 		set {
 			_tag = (value != null) ? Tag.SaveImages : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public U2G_SaveRobotState SaveRobotState
+	{
+		get {
+			if (_tag != Tag.SaveRobotState) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SaveRobotState\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_SaveRobotState)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SaveRobotState : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -3620,6 +3688,9 @@ public class U2G_Message {
 		case Tag.SaveImages:
 			_state = new U2G_SaveImages(stream);
 			break;
+		case Tag.SaveRobotState:
+			_state = new U2G_SaveRobotState(stream);
+			break;
 		case Tag.EnableDisplay:
 			_state = new U2G_EnableDisplay(stream);
 			break;
@@ -3776,6 +3847,9 @@ public class U2G_Message {
 		case Tag.SaveImages:
 			SaveImages.Pack(stream);
 			break;
+		case Tag.SaveRobotState:
+			SaveRobotState.Pack(stream);
+			break;
 		case Tag.EnableDisplay:
 			EnableDisplay.Pack(stream);
 			break;
@@ -3930,6 +4004,9 @@ public class U2G_Message {
 				break;
 			case Tag.SaveImages:
 				result += SaveImages.Size;
+				break;
+			case Tag.SaveRobotState:
+				result += SaveRobotState.Size;
 				break;
 			case Tag.EnableDisplay:
 				result += EnableDisplay.Size;
