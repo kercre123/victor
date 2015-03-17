@@ -54,3 +54,7 @@ class BaseSubServer(threading.Thread):
                 sys.stdout.write("%s\n" % repr(self))
             self.step()
             self.threadYield()
+
+    def log(self, data):
+        "Write something to the log and echo to console. Use instead of writing to stdout."
+        return self.server.logger.write(data)
