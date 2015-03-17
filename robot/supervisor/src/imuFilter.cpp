@@ -1,3 +1,19 @@
+/**
+ * File: imuFilter.cpp
+ *
+ * Author: Kevin Yoon
+ * Created: 4/1/2014
+ *
+ * Description:
+ *
+ *   Filter for gyro and accelerometer
+ *   Orientation of gyro axes is assumed to be identical to that of robot when the head is at 0 degrees.
+ *   i.e. x-axis points forward, y-axis points to robot's left, z-axis points up.
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
 #include "anki/common/robot/trig_fast.h"
 #include "imuFilter.h"
 #include "headController.h"
