@@ -450,7 +450,7 @@ namespace Anki {
         
         const u32 numTotalBytes = compressedBuffer.size();
         
-        PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
+        //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
         Messages::ImageChunk m;
         m.frameTimeStamp = captureTime;
         m.resolution = captureResolution_;
