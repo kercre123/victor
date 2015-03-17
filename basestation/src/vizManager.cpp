@@ -73,7 +73,6 @@ namespace Anki {
     : _isInitialized(false)
     , _sendImages(false)
     , _saveImageMode(VIZ_SAVE_OFF)
-    , _saveImageCounter(0)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -561,8 +560,15 @@ namespace Anki {
       
       if(_saveRobotStateMode != VIZ_SAVE_OFF)
       {
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("VizManager.SendRobotState.CreateDirFailed","\n");
+          }
+        }
+        
         // Write state message to JSON file
-        std::string msgFilename("cozmoState_" + std::to_string(msg.timestamp) + ".json");
+        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmoState_" + std::to_string(msg.timestamp) + ".json");
         
         Json::Value json = msg.CreateJson();
         std::ofstream jsonFile(msgFilename, std::ofstream::out);
@@ -578,7 +584,10 @@ namespace Anki {
       }
     } // SendRobotState()
     
-    void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
+    void VizManager::SendGreyImage(const RobotID_t robotID,
+                                   const u8* data,
+                                   const Vision::CameraResolution res,
+                                   const TimeStamp_t timestamp)
     {
       if(!_sendImages) {
         return;
@@ -611,16 +620,14 @@ namespace Anki {
         // Make sure image capture folder exists
         if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
           if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessImageChunk.CreateDirFailed","\n");
+            PRINT_NAMED_WARNING("VizManager.SendGreyImage.CreateDirFailed","\n");
           }
         }
         
         // Create image file
         char imgCaptureFilename[64];
-        // TODO: Use image timestep instead of _saveImageCounter
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img_%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, timestamp);
         PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
-        ++_saveImageCounter;
         Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
         
         // Turn off save mode if we were in one-shot mode

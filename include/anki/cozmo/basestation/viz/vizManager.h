@@ -275,7 +275,10 @@ namespace Anki {
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
-      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
+      void SendGreyImage(const RobotID_t robotID,
+                         const u8* data,
+                         const Vision::CameraResolution res,
+                         const TimeStamp_t timestamp);
       
       void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                             const u16 topRight_x, const u16 topRight_y,
@@ -309,7 +312,6 @@ namespace Anki {
       
       bool               _sendImages;
       VizSaveMode_t      _saveImageMode;
-      u32                _saveImageCounter;
     
       VizSaveMode_t      _saveRobotStateMode;
       
