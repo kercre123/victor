@@ -44,7 +44,7 @@ class BlockProxyServer(BaseSubServer):
         self.blockSocket.bind((self.BLOCK_SOCK_HOST, self.BLOCK_SOCK_PORT))
 
     def stop(self):
-        sys.stdout.write("Closing BlockProxyServer\n")
+        self.log("Closing BlockProxyServer\n")
         BaseSubServer.stop(self)
         self.standby()
 
@@ -66,15 +66,15 @@ class BlockProxyServer(BaseSubServer):
 
     def sendTo(self, block, message):
         "send a message to a given block"
-        if self.v:
-            sys.stdout.write("BP sendTo %d, %d[%d]\n" % (block.alias, ord(message[0]), len(message)))
+        if self.v or True:
+            self.log("BP sendTo %d, %d[%d]\n" % (block.alias, ord(message[0]), len(message)))
         data = self.SERIAL_HEADER + struct.pack('I', len(message)) + message
         self.blockSocket.sendto(data, block.address)
 
     def sendBroadcast(self, message):
         "Send a message to all blocks"
         if self.v:
-            sys.stdout.write("BP broadcast...\n")
+            self.log("BP broadcast...\n")
         # UDP broadcast doesn't seem to work so iterate over all blocks instead :-/
         for b in BLOCK_TABLE.values():
             self.sendTo(b, message)
@@ -96,14 +96,17 @@ class BlockProxyServer(BaseSubServer):
                 return # This happens during shutdown
         else: # Got a message
             if self.v:
-                sys.stdout.write("BP recv %d from %s\n" % (len(msg), blockAddr))
+                self.log("BP recv %d from %s\n" % (len(msg), blockAddr))
             assert msg.startswith(self.SERIAL_HEADER)
             lenStart = len(self.SERIAL_HEADER)
             msgLength = struct.unpack('I', msg[lenStart:lenStart+4])
             message = msg[lenStart+4:]
             assert len(message) == msgLength
-            if self.v:
-                sys.stdout.write("\t%d[%d]" % (ord(message[0]), len(message)))
+            msgID = ord(message[0])
+            if msgID == messages.PrintText.ID:
+                self.log("%s: %s" % (blockAddr, mesage[1:msgLength]))
+            elif self.v:
+                self.log("\t%d[%d]" % (ord(message[0]), len(message)))
             self.clientSend(message) # Just pass it back to the phone
 
 

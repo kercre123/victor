@@ -39,6 +39,71 @@ class TimestampExtrapolator(object):
         self.lock.release()
         return ret
 
+class Logger(threading.Thread):
+    "A simple (but thread safe) log size manager and file rotator for Cozmo server."
+
+    ACTIVE_FILE = 'cozmo_server_log.txt'
+    ROTATE_FILE = 'cozmo_server_log1.txt'
+
+    def __init__(self, file_size_limit=1000000):
+        threading.Thread.__init__(self)
+        self.fh = open(self.ACTIVE_FILE, 'w')
+        self.fh.write(time.ctime() + '\n')
+        self.fh.flush()
+        self.bytes = 0
+        self.WQ = []
+        self.fileSizeLimit = file_size_limit
+        self.qLock = threading.Lock()
+        self.fLock = threading.Lock()
+        self._continue = True
+
+    def __del__(self):
+        self.stop()
+        self.fh.close()
+
+    def stop(self):
+        sys.stdout.write("Stopping logging thread\n")
+        self._continue = False
+        self.flush()
+
+    def write(self, data):
+        "Add data to the log"
+        sys.stdout.write(data) # Echo to console
+        self.qLock.acquire()
+        self.WQ.append(data)
+        self.qLock.release()
+
+    def flush(self):
+        "Write queued data to disk"
+        self.fLock.acquire()
+        # Exchange to queue quickly so as not to block other tasks for long
+        self.qLock.acquire()
+        q = self.WQ
+        self.WQ = []
+        self.qLock.release()
+        # Now that we've got our own queue
+        if q: # If there is anything to write out
+            data = ''.join(q)
+            self.fh.write(data)
+            self.fh.flush()
+            self.bytes += len(data)
+            if self.bytes > self.fileSizeLimit: # Size exceeded, rotate log
+                # Rotate the log files
+                self.fh.close()
+                if os.path.isfile(self.ROTATE_FILE):
+                    os.remove(self.ROTATE_FILE)
+                os.rename(self.ACTIVE_FILE, self.ROTATE_FILE)
+                self.fh = open(self.ACTIVE_FILE, 'w')
+                self.fh.write(time.ctime() + '\n')
+                self.bytes = 0
+        self.fLock.release()
+
+    def run(self):
+        "Thread to flush queued data to disk"
+        while self._continue:
+            self.flush()
+            time.sleep(2.0) # Don't need to write to disk too often
+
 
 class CozmoServer(socket.socket):
     "Cozmo UDP robot comms server"
@@ -47,7 +112,8 @@ class CozmoServer(socket.socket):
 
     def __init__(self, address):
         "Initalize the server and start listening on UDP"
-        if VERBOSE: sys.stdout.write("Server will be verbose\n")
+        self.logger = Logger()
+        if VERBOSE: self.logger.write("Server will be verbose\n")
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         self.settimeout(1.0)
         self.bind(address)
@@ -68,6 +134,7 @@ class CozmoServer(socket.socket):
         for ss in self.subServers:
             ss.stop()
         self.close()
+        self.logger.stop()
 
     def step(self):
         "One main loop iteration"
@@ -85,14 +152,14 @@ class CozmoServer(socket.socket):
                 self.client = FORCE_ADDRESS
             else:
                 self.client = client
-            if VERBOSE: sys.stdout.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
+            if VERBOSE: self.logger.write("UDP pkt: %d[%d]\n" % (ord(data[0]), len(data)))
             self.lastClientRecvTime = time.time()
             if data[0] == '0' and len(data) == 1: # This is a special "non message" send by UdpClient.cpp
                 return # Establish that we have a connection but don't pass the packet along
             for ss in self.subServers:
                 ss.giveMessage(data)
         if self.client and (time.time() - self.lastClientRecvTime > self.CLIENT_IDLE_TIMEOUT):
-            sys.stdout.write("Going to standby\n")
+            self.logger.write("Going to standby\n")
             sys.stdout.flush()
             for ss in self.subServers:
                 ss.standby()
@@ -100,6 +167,7 @@ class CozmoServer(socket.socket):
 
     def run(self):
         "Run main loop with target frequency"
+        self.logger.start()
         for ss in self.subServers:
             ss.start()
         while True:
@@ -117,12 +185,12 @@ if __name__ == '__main__':
         sys.stdout.write("Forcing packets to go to: %s:%d\n" % FORCE_ADDRESS)
     address = ('', 5551)
     server = CozmoServer(address)
-    sys.stdout.write("Starting server listening at ('%s', %d)\n" % address)
+    server.logger.write("Starting server listening at ('%s', %d)\n" % address)
     try:
         server.run()
     except KeyboardInterrupt:
-        sys.stdout.write("Shutting down server\n")
+        server.logger.write("Shutting down server\n")
         server.stop()
-        sys.stdout.write("Exiting\n")
-        sys.stdout.flush()
+        server.logger.write("Exiting\n")
+        server.logger.flush()
         exit(0)
