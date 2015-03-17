@@ -687,6 +687,16 @@ public class RobotEngineManager : MonoBehaviour {
 		SetLiftHeight( 0f );
 	}
 
+	public void VisionWhileMoving( bool enable )
+	{
+		Debug.Log( "Vision While Moving " + enable );
+		
+		U2G_VisionWhileMoving message = new U2G_VisionWhileMoving();
+		message.enable = Convert.ToByte( enable );
+
+		channel.Send( new U2G_Message{ VisionWhileMoving = message } );
+	}
+
 	public void RequestImage(byte robotID)
 	{
 		if( imageRequested )
