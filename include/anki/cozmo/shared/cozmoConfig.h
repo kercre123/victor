@@ -363,6 +363,8 @@ namespace Anki {
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
+    // Default distance from marker for predock pose
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 60.f;
 
     /***************************************************************************
      *
