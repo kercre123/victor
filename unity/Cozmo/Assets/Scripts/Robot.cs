@@ -95,7 +95,8 @@ public class Robot
 
 		if( status != lastStatus )
 		{
-			Debug.Log( "Status: " + status );
+			RobotEngineManager.instance.statusText.text = "Status: " + status;
+			Debug.Log( RobotEngineManager.instance.statusText.text );
 			lastStatus = status;
 		}
 	}

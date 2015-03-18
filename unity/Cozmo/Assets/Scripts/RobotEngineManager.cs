@@ -25,6 +25,7 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField] private AudioClip objectObservedLostSound;
 	[SerializeField] private Text successOrFailureText;
 
+	public Text statusText;
 	public float defaultHeadAngle;
 
 	[SerializeField]
