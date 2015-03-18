@@ -14,12 +14,12 @@ public class CozmoVision2 : CozmoVision
 			return;
 		}
 
-		DetectObservedObjects();
+		Dings();
 		SetActionButtons();
 
 		for( int i = 0; i < maxObservedObjects; ++i )
 		{
-			if( observedObjectsCount > i && robot.selectedObject == -1 )
+			if( observedObjectsCount > i && robot.selectedObjects.Count == 0 && !robot.isBusy )
 			{
 				ObservedObject observedObject = robot.observedObjects[i];
 
