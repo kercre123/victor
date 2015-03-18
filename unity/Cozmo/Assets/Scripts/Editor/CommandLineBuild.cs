@@ -22,7 +22,12 @@ public class CommandLineBuild {
     }
 
     ProjectBuilder builder = new ProjectBuilder();
-    builder.Build(argv);
+	
+    string result = builder.Build(argv);
+	if (!string.IsNullOrEmpty(result)) {
+		// nonempty string is an error
+		throw new Exception(result);
+	}
   }
           
 }

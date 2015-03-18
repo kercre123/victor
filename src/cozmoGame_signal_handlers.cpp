@@ -44,8 +44,8 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotConnectedSignal().ScopedSubscribe(cbRobotConnectedSignal));
     
-    auto cbRobotDisconnectedSignal = [this](RobotID_t robotID, float timeSinceLastMsg_sec) {
-      this->HandleRobotDisconnectedSignal(robotID, timeSinceLastMsg_sec);
+    auto cbRobotDisconnectedSignal = [this](RobotID_t robotID) {
+      this->HandleRobotDisconnectedSignal(robotID);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnectedSignal));
     
@@ -76,9 +76,11 @@ namespace Cozmo {
     
     auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectFamily,
                                               uint32_t objectType, uint32_t objectID,
-                                              float x_upperLeft,  float y_upperLeft,
-                                              float width,  float height) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, x_upperLeft, y_upperLeft, width, height);
+                                              float img_x_upperLeft,  float img_y_upperLeft,
+                                              float img_width,  float img_height,
+                                              float world_x, float world_y, float world_z,
+                                              float q0, float q1, float q2, float q3) {
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -86,6 +88,11 @@ namespace Cozmo {
       this->HandleRobotObservedNothingSignal(robotID);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedNothingSignal().ScopedSubscribe(cbRobotObservedNothingSignal));
+    
+    auto cbRobotDeletedObjectSignal = [this](uint8_t robotID, uint32_t objectID) {
+      this->HandleRobotDeletedObjectSignal(robotID, objectID);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotDeletedObjectSignal().ScopedSubscribe(cbRobotDeletedObjectSignal));
     
     /* Now using U2G message handlers for these
     auto cbConnectToRobotSignal = [this](RobotID_t robotID) {
@@ -105,15 +112,10 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageAvailableSignal().ScopedSubscribe(cbRobotImageAvailable));
     
-    auto cbRobotCompletedPickAndPlaceAction = [this](RobotID_t robotID, uint8_t success) {
-      this->HandleRobotCompletedPickAndPlaceAction(robotID, success);
+    auto cbRobotCompletedAction = [this](RobotID_t robotID, uint8_t success) {
+      this->HandleRobotCompletedAction(robotID, success);
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().ScopedSubscribe(cbRobotCompletedPickAndPlaceAction));
-    
-    auto cbRobotCompletedPlaceObjectOnGroundAction = [this](RobotID_t robotID, uint8_t success) {
-      this->HandleRobotCompletedPlaceObjectOnGroundAction(robotID, success);
-    };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().ScopedSubscribe(cbRobotCompletedPlaceObjectOnGroundAction));
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
   } // SetupSignalHandlers()
   
@@ -174,11 +176,10 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
-  void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec)
+  void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID)
   {
     G2U_RobotDisconnected msg;
     msg.robotID = robotID;
-    msg.timeSinceLastMsg_sec = timeSinceLastMsg_sec;
     G2U_Message message;
     message.Set_RobotDisconnected(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
@@ -242,18 +243,30 @@ namespace Cozmo {
                                                       uint32_t objectFamily,
                                                       uint32_t objectType,
                                                       uint32_t objectID,
-                                                      float x_upperLeft,  float y_upperLeft,
-                                                      float width,  float height) {
-    // Send a message out to UI that the device found a vision marker
+                                                      float img_x_upperLeft,  float img_y_upperLeft,
+                                                      float img_width,  float img_height,
+                                                      float world_x,
+                                                      float world_y,
+                                                      float world_z,
+                                                      float q0, float q1, float q2, float q3)
+  {
+    // Send a message out to UI that the robot saw an object
     G2U_RobotObservedObject msg;
-    msg.robotID      = robotID;
-    msg.objectFamily = objectFamily;
-    msg.objectType   = objectType;
-    msg.objectID     = objectID;
-    msg.topLeft_x    = x_upperLeft;
-    msg.topLeft_y    = y_upperLeft;
-    msg.width        = width;
-    msg.height       = height;
+    msg.robotID       = robotID;
+    msg.objectFamily  = objectFamily;
+    msg.objectType    = objectType;
+    msg.objectID      = objectID;
+    msg.img_topLeft_x = img_x_upperLeft;
+    msg.img_topLeft_y = img_y_upperLeft;
+    msg.img_width     = img_width;
+    msg.img_height    = img_height;
+    msg.world_x       = world_x;
+    msg.world_y       = world_y;
+    msg.world_z       = world_z;
+    msg.quaternion0   = q0;
+    msg.quaternion1   = q1;
+    msg.quaternion2   = q2;
+    msg.quaternion3   = q3;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     G2U_Message message;
@@ -268,6 +281,17 @@ namespace Cozmo {
     
     G2U_Message message;
     message.Set_RobotObservedNothing(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+  }
+  
+  void CozmoGameImpl::HandleRobotDeletedObjectSignal(uint8_t robotID, uint32_t objectID)
+  {
+    G2U_RobotDeletedObject msg;
+    msg.robotID = robotID;
+    msg.objectID = objectID;
+    
+    G2U_Message message;
+    message.Set_RobotDeletedObject(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
@@ -312,29 +336,17 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success)
+  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, uint8_t success)
   {
-    G2U_RobotCompletedPickAndPlaceAction msg;
+    G2U_RobotCompletedAction msg;
   
     msg.robotID = robotID;
     msg.success = success;
     
     G2U_Message message;
-    message.Set_RobotCompletedPickAndPlaceAction(msg);
+    message.Set_RobotCompletedAction(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
-  
-  void CozmoGameImpl::HandleRobotCompletedPlaceObjectOnGroundAction(uint8_t robotID, uint8_t success)
-  {
-    G2U_RobotCompletedPlaceObjectOnGroundAction msg;
-    
-    msg.robotID = robotID;
-    msg.success = success;
-    
-    G2U_Message message;
-    message.Set_RobotCompletedPlaceObjectOnGroundAction(msg);
-    _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
-  }
-  
+
 } // namespace Cozmo
 } // namespace Anki

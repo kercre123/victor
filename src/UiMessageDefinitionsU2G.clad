@@ -72,6 +72,14 @@ message U2G_SetHeadAngle {
     float_32 accel_rad_per_sec2
 }
 
+// TrackHeadToObject
+//   Robot will automatically adjust head angle to look at this object ID, if it
+//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
+message U2G_TrackHeadToObject {
+    uint_32 objectID,
+    uint_8 robotID
+}
+
 // StopAllMotors
 message U2G_StopAllMotors {
 }
@@ -149,8 +157,24 @@ message U2G_TraverseObject {
     uint_8 useManualSpeed
 }
 
+// SetRobotCarryingObject
+// (Override robot's current belief about whether it's carrying a block)
+// (Ideally, for dev/prototyping only)
+message U2G_SetRobotCarryingObject {
+    int_32 objectID, // use -1 to specify "none"
+    uint_8 robotID
+}
+
 // ClearAllBlocks
 message U2G_ClearAllBlocks {
+}
+
+// VisionWhileMoving
+// For development, enable/disable robots' ability to use VisionMarkers while moving
+// May be necessary to have this disabled while we have frame sync issues.
+// NOTE: This will apply to all robots currently connected.
+message U2G_VisionWhileMoving {
+    uint_8 enable // True or false
 }
 
 // ExecuteBehavior
@@ -278,6 +302,7 @@ union U2G_Message {
     U2G_MoveLift MoveLift,
     U2G_SetLiftHeight SetLiftHeight,
     U2G_SetHeadAngle SetHeadAngle,
+    U2G_TrackHeadToObject TrackHeadToObject,
     U2G_StopAllMotors StopAllMotors,
     U2G_ImageRequest ImageRequest,
     U2G_SetRobotImageSendMode SetRobotImageSendMode,
@@ -291,7 +316,9 @@ union U2G_Message {
     U2G_SelectNextObject SelectNextObject,
     U2G_PickAndPlaceObject PickAndPlaceObject,
     U2G_TraverseObject TraverseObject,
+    U2G_SetRobotCarryingObject SetRobotCarryingObject,
     U2G_ClearAllBlocks ClearAllBlocks,
+    U2G_VisionWhileMoving VisionWhileMoving,
     U2G_ExecuteBehavior ExecuteBehavior,
     U2G_SetBehaviorState SetBehaviorState,
     U2G_AbortPath AbortPath,

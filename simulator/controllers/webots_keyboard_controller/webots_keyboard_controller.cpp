@@ -37,14 +37,6 @@
 #define BASESTATION_IP "127.0.0.1"
 #define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
 
-// For connecting to physical robot
-// TODO: Expose these to UI
-const bool FORCE_ADD_ROBOT = false;
-const bool FORCED_ROBOT_IS_SIM = false;
-const u8 forcedRobotId = 1;
-//const std::string forcedRobotIP = "192.168.3.34";   // cozmo2
-const std::string forcedRobotIP = "172.31.1.1";     // cozmo3
-
 namespace Anki {
   namespace Cozmo {
     
@@ -58,8 +50,9 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
+        const f32 DRIVE_VELOCITY_TURBO = 150.f; // mm/s -- while holding ALT
+        const f32 DRIVE_VELOCITY_FAST  = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW  = 20.f; // mm/s -- while holding SHIFT
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -220,22 +213,46 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void ProcessMessageObjectVisionMarker(G2U_RobotObservedObject const& msg)
+      void HandleRobotObservedObject(G2U_RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
         } else {
           // Draw a rectangle in red with the object ID as text in the center
           cozmoCam_->setColor(0xff0000);          
-          cozmoCam_->drawRectangle(msg.topLeft_x, msg.topLeft_y, msg.width, msg.height);
+          cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
+                                   msg.img_width, msg.img_height);
           //std::string dispStr(ObjectType::GetName(msg.objectType));
           //dispStr += " ";
           //dispStr += std::to_string(msg.objectID);
           std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
           cozmoCam_->drawText(dispStr,
-                              msg.topLeft_x + msg.width/4,
-                              msg.topLeft_y + msg.height/2);
+                              msg.img_topLeft_x + msg.img_width/4,
+                              msg.img_topLeft_y + msg.img_height/2);
+          
+          /*
+          // DEBUG!!!
+          // Track head to last object seen
+          static u32 lastObjectID = u32_MAX;
+          if(msg.objectID != lastObjectID) {
+            lastObjectID = msg.objectID;
+            
+            printf("Telling robot to track head to object %d\n", msg.objectID);
+            U2G_TrackHeadToObject m;
+            m.robotID = msg.robotID;
+            m.objectID = msg.objectID;
+            
+            U2G_Message message;
+            message.Set_TrackHeadToObject(m);
+            SendMessage(message);
+          }
+           */
         }
+      }
+      
+      void HandleRobotDeletedObject(G2U_RobotDeletedObject const& msg)
+      {
+        printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
       }
 
       void HandleRobotConnection(const G2U_RobotAvailable& msgIn)
@@ -341,10 +358,11 @@ namespace Anki {
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
+        // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
             case G2U_Message::Type::RobotObservedObject:
-              ProcessMessageObjectVisionMarker(message.Get_RobotObservedObject());
+              HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
             case G2U_Message::Type::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
@@ -354,6 +372,9 @@ namespace Anki {
               break;
             case G2U_Message::Type::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
+              break;
+            case G2U_Message::Type::RobotDeletedObject:
+              HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
               // ignore
@@ -434,58 +455,6 @@ namespace Anki {
       //Check the keyboard keys and issue robot commands
       void ProcessKeystroke()
       {
-        
-        // these are the ascii codes for the capital letter
-        //Numbers, spacebar etc. work, letters are different, why?
-        //a, z, s, x, Space
-        const s32 CKEY_CANCEL_PATH = (s32)'Q';
-        const s32 CKEY_LIFT_UP     = (s32)'A';
-        const s32 CKEY_LIFT_DOWN   = (s32)'Z';  // z
-
-        const s32 CKEY_HEAD_UP     = (s32)'S';
-        const s32 CKEY_HEAD_DOWN   = (s32)'X';
-        const s32 CKEY_UNLOCK      = (s32)' ';
-        const s32 CKEY_REQUEST_IMG = (s32)'U';
-        const s32 CKEY_SET_ROBOT_SEND_IMAGE_MODE = (s32)'I';
-        const s32 CKEY_DISPLAY_TOGGLE = (s32)'D';
-        const s32 CKEY_HEADLIGHT   = (s32)'H';
-        const s32 CKEY_GOTO_POSE   = (s32)'G';
-        const s32 CKEY_CLEAR_BLOCKS = (s32)'C';
-
-        const s32 CKEY_CYCLE_BLOCK_SELECT   = (s32)'.';
-        //const s32 CKEY_FWDSLASH    = 47; // '/'
-        //const s32 CKEY_BACKSLASH   = 92 // '\'
-
-        const s32 CKEY_PICK_AND_PLACE  = (s32)'P';
-        const s32 CKEY_USE_RAMP        = (s32)'R';
-        const s32 CKEY_QUESTION_MARK   = (s32)'/';
-        
-        const s32 CKEY_START_DICE_DEMO = (s32)'J';
-        const s32 CKEY_SET_GAINS       = (s32)'K';
-        const s32 CKEY_SET_VISIONSYSTEM_PARAMS = (s32)'V';
-        
-        const s32 CKEY_TEST_PLAN          = (s32)'T';
-        const s32 CKEY_CYCLE_SOUND_SCHEME = (s32)'M';
-        const s32 CKEY_EXPORT_IMAGES      = (s32)'E';
-        const s32 CKEY_IMU_REQUEST        = (s32)'O';
-        
-        const s32 CKEY_ANIMATION_NOD            = (s32)'!';
-        const s32 CKEY_ANIMATION_BACK_AND_FORTH = (s32)'@';
-        const s32 CKEY_ANIMATION_BLINK          = (s32)'#';
-        const s32 CKEY_ANIMATION_TOGGLE         = (s32) '~';
-        const s32 CKEY_ANIMATION_SEND_FILE      = 197; // ALT+A
-        
-        const s32 CKEY_TOGGLE_FACE_TRACKING = (s32)'F';
-        
-        // For CREEP test
-        const s32 CKEY_BEHAVIOR_EXCITED   = (s32)'7';
-        const s32 CKEY_BEHAVIOR_FLEE      = (s32)'8';
-        const s32 CKEY_BEHAVIOR_SCAN      = (s32)'9';
-        const s32 CKEY_BEHAVIOR_DANCE     = (s32)'0';
-        const s32 CKEY_BEHAVIOR_HELPME    = (s32)'-';
-        const s32 CKEY_BEHAVIOR_WHAT_NEXT = (s32)'=';
-        const s32 CKEY_BEHAVIOR_IDLE      = (s32)'&';
-        
         bool movingHead   = false;
         bool movingLift   = false;
         bool movingWheels = false;
@@ -557,6 +526,8 @@ namespace Anki {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
             liftSpeed *= 0.4;
             headSpeed *= 0.5;
+          } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+            wheelSpeed = DRIVE_VELOCITY_TURBO;
           }
           
           
@@ -648,28 +619,33 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_HEAD_UP: //s-key: move head UP
+              case (s32)'S':
               {
                 commandedHeadSpeed += headSpeed;
                 movingHead = true;
                 break;
               }
                 
-              case CKEY_HEAD_DOWN: //x-key: move head DOWN
+              case (s32)'X':
               {
                 commandedHeadSpeed -= headSpeed;
                 movingHead = true;
                 break;
               }
                 
-              case CKEY_LIFT_UP: //a-key: move lift up
+              case (s32)'A':
               {
-                commandedLiftSpeed += liftSpeed;
-                movingLift = true;
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReadAnimationFile();
+                } else {
+                  commandedLiftSpeed += liftSpeed;
+                  movingLift = true;
+                }
                 break;
               }
                 
-              case CKEY_LIFT_DOWN: //z-key: move lift down
+              case (s32)'Z':
               {
                 commandedLiftSpeed -= liftSpeed;
                 movingLift = true;
@@ -712,13 +688,13 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_UNLOCK: // Stop all motors
+              case (s32)' ': // (space bar)
               {
                 SendStopAllMotors();
                 break;
               }
                 
-              case CKEY_SET_ROBOT_SEND_IMAGE_MODE:
+              case (s32)'I':
               {
                 //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
                 // CTRL/CMD+I - Tell physical robot to send a single image
@@ -759,7 +735,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_REQUEST_IMG:
+              case (s32)'U':
               {
                 // TODO: How to choose which robot
                 const RobotID_t robotID = 1;
@@ -787,7 +763,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_EXPORT_IMAGES:
+              case (s32)'E':
               {
                 // Toggle saving of images to pgm
                 VizSaveImageMode_t mode = VIZ_SAVE_ONE_SHOT;
@@ -810,7 +786,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_DISPLAY_TOGGLE:
+              case (s32)'D':
               {
                 static bool showObjects = false;
                 SendEnableDisplay(showObjects);
@@ -818,14 +794,15 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_HEADLIGHT:
+              case (s32)'H':
               {
                 static bool headlightsOn = false;
                 headlightsOn = !headlightsOn;
                 SendSetHeadlights(headlightsOn ? 128 : 0);
                 break;
               }
-              case CKEY_GOTO_POSE:
+                
+              case (s32)'G':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   poseMarkerMode_ = !poseMarkerMode_;
@@ -851,18 +828,19 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_TEST_PLAN:
+              case (s32)'T':
               {
                 SendExecuteTestPlan();
                 break;
               }
                 
-              case CKEY_CYCLE_BLOCK_SELECT:
+              case (s32)'.':
               {
                 SendSelectNextObject();
                 break;
               }
-              case CKEY_CLEAR_BLOCKS:
+                
+              case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   if(BehaviorManager::CREEP == behaviorMode_) {
@@ -878,7 +856,8 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_PICK_AND_PLACE:
+                
+              case (s32)'P':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
@@ -886,7 +865,8 @@ namespace Anki {
                 SendPickAndPlaceSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
-              case CKEY_USE_RAMP:
+                
+              case (s32)'R':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
@@ -894,7 +874,8 @@ namespace Anki {
                 SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
-              case CKEY_START_DICE_DEMO:
+                
+              case (s32)'J':
               {
                 if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
                   SendExecuteBehavior(BehaviorManager::None);
@@ -903,7 +884,8 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_CANCEL_PATH:
+                
+              case (s32)'Q':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
@@ -915,7 +897,7 @@ namespace Anki {
                 break;
               }
                 
-              case CKEY_SET_GAINS:
+              case (s32)'K':
               {
                 if (root_) {
                   // Head and lift gains
@@ -935,40 +917,44 @@ namespace Anki {
                 }
                 break;
               }
-              case CKEY_SET_VISIONSYSTEM_PARAMS:
+                
+              case (s32)'V':
               {
-                SendVisionSystemParams();
-                
-                SendFaceDetectParams();
-                
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool visionWhileMovingEnabled = false;
+                  visionWhileMovingEnabled = !visionWhileMovingEnabled;
+                  printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
+                  U2G_VisionWhileMoving msg;
+                  msg.enable = visionWhileMovingEnabled;
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_VisionWhileMoving(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendVisionSystemParams();
+                  
+                  SendFaceDetectParams();
+                }
                 break;
               }
-              case CKEY_CYCLE_SOUND_SCHEME:
+                
+              case (s32)'M':
               {
                 SendSelectNextSoundScheme();
                 break;
               }
-              case CKEY_IMU_REQUEST:
+                
+              case (s32)'O':
               {
                 SendIMURequest(2000);
                 break;
               }
-                
-              // Animations
-              case CKEY_ANIMATION_SEND_FILE:
-              {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
-                  // Re-read animations and send them to physical robot
-                  SendReadAnimationFile();
-                }
-                break;
-              }
-              case CKEY_ANIMATION_BACK_AND_FORTH:
+
+              case (s32)'@':
               {
                 SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
                 break;
               }
-              case CKEY_ANIMATION_BLINK:
+              case (s32)'#':
               {
                 SendAnimation("ANIM_BLINK", 0);
                 break;
@@ -978,12 +964,12 @@ namespace Anki {
                 SendAnimation("ANIM_LIFT_NOD", 1);
                 break;
               }
-              case (s32) '%':
+              case (s32)'%':
               {
                 SendAnimation("ANIM_ALERT", 1);
                 break;
               }
-              case CKEY_ANIMATION_TOGGLE:
+              case (s32)'~':
               {
                 //const s32 NUM_ANIM_TESTS = 4;
                 //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
@@ -1004,54 +990,54 @@ namespace Anki {
               //
               // CREEP Behavior States:
               //
-              case CKEY_BEHAVIOR_DANCE:
+              case (s32)'0':
               {
                 SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
                 break;
               }
-              case CKEY_BEHAVIOR_EXCITED:
+              case (s32)'7':
               {
                 SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
                 break;
               }
-              case CKEY_BEHAVIOR_FLEE:
+              case (s32)'8':
               {
                 SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
                 break;
               }
-              case CKEY_BEHAVIOR_HELPME:
+              case (s32)'-':
               {
                 SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
                 break;
               }
-              case CKEY_BEHAVIOR_WHAT_NEXT:
+              case (s32)'=':
               {
                 SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
                 break;
               }
-              case CKEY_BEHAVIOR_SCAN:
+              case (s32)'9':
               {
                 SendSetNextBehaviorState(BehaviorManager::SCAN);
                 break;
               }
-              case CKEY_BEHAVIOR_IDLE:
+              case (s32)'&':
               {
                 SendSetNextBehaviorState(BehaviorManager::IDLE);
                 break;
               }
-              case CKEY_ANIMATION_NOD:
+              case (s32)'!':
               {
                 SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
                 break;
               }
                 
-              case CKEY_QUESTION_MARK:
+              case (s32)'/':
               {
                 PrintHelp();
                 break;
               }
                 
-              case CKEY_TOGGLE_FACE_TRACKING:
+              case (s32)'F':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   SendStopFaceTracking();
@@ -1271,7 +1257,7 @@ namespace Anki {
               bool pressed = sdlEvent_.jbutton.state; // If false, then this is a release event
               
               bool LT_held = gc_axisValues_[GC_LT_BUTTON];
-              bool RT_held = gc_axisValues_[GC_RT_BUTTON];
+              //bool RT_held = gc_axisValues_[GC_RT_BUTTON];
               
               // Process buttons that matter only when pressed
               if (pressed) {
@@ -1370,6 +1356,62 @@ namespace Anki {
 #endif
       }
       
+      
+      bool ForceAddRobotIfSpecified()
+      {
+        bool doForceAddRobot = false;
+        bool forcedRobotIsSim = false;
+        std::string forcedRobotIP;
+        int  forcedRobotId = 1;
+        
+        webots::Field* forceAddRobotField = root_->getField("forceAddRobot");
+        if(forceAddRobotField != nullptr) {
+          doForceAddRobot = forceAddRobotField->getSFBool();
+          if(doForceAddRobot) {
+            webots::Field *forcedRobotIsSimField = root_->getField("forcedRobotIsSimulated");
+            if(forcedRobotIsSimField == nullptr) {
+              PRINT_NAMED_ERROR("KeyboardController.Update",
+                                "Could not find 'forcedRobotIsSimulated' field.\n");
+              doForceAddRobot = false;
+            } else {
+              forcedRobotIsSim = forcedRobotIsSimField->getSFBool();
+            }
+            
+            webots::Field* forcedRobotIpField = root_->getField("forcedRobotIP");
+            if(forcedRobotIpField == nullptr) {
+              PRINT_NAMED_ERROR("KeyboardController.Update",
+                                "Could not find 'forcedRobotIP' field.\n");
+              doForceAddRobot = false;
+            } else {
+              forcedRobotIP = forcedRobotIpField->getSFString();
+            }
+            
+            webots::Field* forcedRobotIdField = root_->getField("forcedRobotID");
+            if(forcedRobotIdField == nullptr) {
+              
+            } else {
+              forcedRobotId = forcedRobotIdField->getSFInt32();
+            }
+          } // if(doForceAddRobot)
+        }
+        
+        if(doForceAddRobot) {
+          U2G_ForceAddRobot msg;
+          msg.isSimulated = forcedRobotIsSim;
+          msg.robotID = forcedRobotId;
+          
+          std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
+          std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
+          
+          U2G_Message message;
+          message.Set_ForceAddRobot(msg);
+          msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+        }
+        
+        return doForceAddRobot;
+        
+      } // ForceAddRobotIfSpecified()
+      
       void Update()
       {
         gameComms_.Update();
@@ -1393,17 +1435,10 @@ namespace Anki {
               message.Set_StartEngine(msg);
               msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
 
-              if(FORCE_ADD_ROBOT) {
-                U2G_ForceAddRobot msg;
-                msg.isSimulated = FORCED_ROBOT_IS_SIM;
-                msg.robotID = forcedRobotId;
-                
-                std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
-                std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
-                
-                U2G_Message message;
-                message.Set_ForceAddRobot(msg);
-                msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+              bool didForceAdd = ForceAddRobotIfSpecified();
+              
+              if(didForceAdd) {
+                PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
               }
               
               uiState_ = UI_RUNNING;

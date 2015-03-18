@@ -561,9 +561,10 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/Users/andrew/Code/products-cozmo/coretech/common/include",
-					"/Users/andrew/Code/products-cozmo/include",
-					"/Users/andrew/Code/coretech-external/jsoncpp",
+					"$(SRCROOT)/../coretech/common/include",
+					"$(SRCROOT)/../include",
+					"$(SRCROOT)/../../../coretech-external/jsoncpp",
+					"$(SRCROOT)/../../lib/anki/cozmo-engine/tools/message-buffers/emitters/SafeMessageBuffer.h",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -605,9 +606,10 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/Users/andrew/Code/products-cozmo/coretech/common/include",
-					"/Users/andrew/Code/products-cozmo/include",
-					"/Users/andrew/Code/coretech-external/jsoncpp",
+					"$(SRCROOT)/../coretech/common/include",
+					"$(SRCROOT)/../include",
+					"$(SRCROOT)/../../../coretech-external/jsoncpp",
+					"$(SRCROOT)/../../lib/anki/cozmo-engine/tools/message-buffers/emitters/SafeMessageBuffer.h",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -642,6 +644,7 @@
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
 					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/include\"",
 					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/messaging/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/tools/message-buffers/emitters\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -683,6 +686,7 @@
 					"\"$(SRCROOT)/../../../coretech-external/jsoncpp\"",
 					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/include\"",
 					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/coretech/messaging/include\"",
+					"\"$(SRCROOT)/../../lib/anki/cozmo-engine/tools/message-buffers/emitters\"",
 				);
 				INFOPLIST_FILE = CozmoVision/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;

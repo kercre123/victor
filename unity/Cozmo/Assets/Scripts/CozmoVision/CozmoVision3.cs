@@ -10,20 +10,27 @@ public class CozmoVision3 : CozmoVision
 	{
 		public Image image;
 		public Text text;
-		
+
+		private Vector3[] corners;
 		public Vector3 position
 		{
 			get
 			{
 				Vector3 center = Vector3.zero;
 				center.z = image.transform.position.z;
-				
-				Vector3[] corners = new Vector3[4];
+
+				if( corners == null )
+				{
+					corners = new Vector3[4];
+				}
+
 				image.rectTransform.GetWorldCorners( corners );
-				if( corners == null || corners.Length == 0 )
+
+				if( corners.Length == 0 )
 				{
 					return center;
 				}
+
 				center = ( corners[0] + corners[2] ) * 0.5f;
 				
 				return center;
@@ -31,40 +38,173 @@ public class CozmoVision3 : CozmoVision
 		}
 	}
 
+	public struct ActionButtonState
+	{
+		public bool activeSelf;
+		public string text;
+	}
+
 	[SerializeField] protected SelectionBox box;
 	[SerializeField] protected Image reticle;
+	[SerializeField] protected float distance;
+	
+	protected List<ObservedObject> inReticle = new List<ObservedObject>();
+	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
+	protected int lastSelectedObject = -1;
+
+	protected bool isInReticle
+	{
+		get
+		{
+			return box.image.rectTransform.rect.center.x > reticle.rectTransform.rect.xMin && 
+				   box.image.rectTransform.rect.center.x < reticle.rectTransform.rect.xMax &&
+				   box.image.rectTransform.rect.center.y > reticle.rectTransform.rect.yMin && 
+				   box.image.rectTransform.rect.center.y < reticle.rectTransform.rect.yMax;
+		}
+	}
+
+	public void Action2()
+	{
+		if( RobotEngineManager.instance != null )
+		{
+			if( inReticle.Count > 1 )
+			{
+				RobotEngineManager.instance.current.selectedObject = inReticle[1].ID;
+			}
+		}
+
+		Action();
+	}
 
 	protected void Update()
 	{
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 );
+		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+			DisableButtons();
+			return;
+		}
 
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		robot = RobotEngineManager.instance.current;
+
+		box.image.gameObject.SetActive( false );
+
+		if( robot.selectedObject > -2 )
 		{
-			robot = RobotEngineManager.instance.current;
+			robot.selectedObject = -1;
+			inReticle.Clear();
 
-			if( observedObjectsCount > 0 && robot.observedObjects[0].width > reticle.rectTransform.rect.width && 
-			    robot.observedObjects[0].height > reticle.rectTransform.rect.height )
+			for( int i = 0; i < robot.observedObjects.Count; ++i )
 			{
-				box.image.gameObject.SetActive( true );
+				//Debug.Log( i );
+				//box.image.gameObject.SetActive( true );
+				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
+				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
 
-				ObservedObject observedObject = robot.observedObjects[0];
+				/*if( isInReticle )
+				{
+					Debug.Log( "in reticle" );
+				}*/
 
-				box.image.rectTransform.sizeDelta = new Vector2( observedObject.width, observedObject.height );
-				box.image.rectTransform.anchoredPosition = new Vector2( observedObject.topLeft_x, -observedObject.topLeft_y );
+				/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+				{
+					Debug.Log( "in distance" );
+				}
+				else
+				{
+					Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
+				}*/
 
-				box.text.text = "Select " + observedObject.ID;
-				robot.selectedObject = observedObject.ID;
+				if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+				{
+					inReticle.Add( robot.observedObjects[i] );
+				}
 			}
-			else
+
+			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
 			{
-				box.image.gameObject.SetActive( false );
-				robot.selectedObject = -1;
+				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+			} );
+		}
+
+		
+		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
+		{
+			if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
+			{
+				robot.selectedObject = inReticle[0].ID; // select the block closest to ground
+				
+				if( inReticle.Count == 1 )
+				{
+					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+				}
 			}
 
-			for( int i = 0; i < actionButtons.Length; ++i )
+		}
+		else // if not holding a block
+		{
+			if( inReticle.Count > 0 )
 			{
-				actionButtons[i].gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) || robot.selectedObject > -1 );
+				robot.selectedObject = inReticle[0].ID;
+				
+				if( inReticle.Count == 1 )
+				{
+					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+				}
+			}
+
+		}
+
+		SetActionButtons();
+		
+		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+		{
+			if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
+			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
+			{
+				Ding( true );
+				lastSelectedObject = robot.selectedObject;
+				
+				break;
+			}
+			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
+			        ( robot.selectedObject == -1 && lastSelectedObject != -1 ) )
+			{
+				Ding( false );
+				lastSelectedObject = -1;
+				
+				break;
 			}
 		}
 	}
+
+	protected override void LateUpdate()
+	{
+		base.LateUpdate();
+
+		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+		{
+			lastActionButtonActiveSelf[i].activeSelf = actionButtons[i].button.gameObject.activeSelf;
+			lastActionButtonActiveSelf[i].text = actionButtons[i].text.text;
+		}
+	}
+
+	protected override void SetActionButtons()
+	{
+
+		DisableButtons();
+		robot = RobotEngineManager.instance.current;
+		if(robot == null)
+			return;
+		
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
+			if(robot.selectedObject > -1)
+				actionButtons[0].SetMode(ActionButtonMode.STACK);
+			actionButtons[1].SetMode(ActionButtonMode.DROP);
+		}
+		else {
+			if(robot.selectedObject > -1)
+				actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+		}
+		
+	}
+
 }

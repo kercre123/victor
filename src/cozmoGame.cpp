@@ -406,35 +406,48 @@ namespace Cozmo {
               PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost", "Null robot returned for ID=%d!\n", robotID);
               lastResult = RESULT_FAIL;
             } else {
-              G2U_RobotState msg;
-              
-              msg.robotID = robotID;
-              
-              msg.pose_x = robot->GetPose().GetTranslation().x();
-              msg.pose_y = robot->GetPose().GetTranslation().y();
-              msg.pose_z = robot->GetPose().GetTranslation().z();
-              
-              msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
-
-              msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
-              msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
-              
-              msg.headAngle_rad = robot->GetHeadAngle();
-              msg.liftHeight_mm = robot->GetLiftHeight();
-              
-              msg.status = 0;
-              if(robot->IsCarryingObject())   { msg.status |= IS_CARRYING_BLOCK; }
-              if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
-              if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
-              if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
-
-              // TODO: Add proximity sensor data to state message
-              
-              msg.batteryVoltage = robot->GetBatteryVoltage();
-              
-              G2U_Message message;
-              message.Set_RobotState(msg);
-              _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+              if(robot->HasReceivedRobotState()) {
+                G2U_RobotState msg;
+                
+                msg.robotID = robotID;
+                
+                msg.pose_x = robot->GetPose().GetTranslation().x();
+                msg.pose_y = robot->GetPose().GetTranslation().y();
+                msg.pose_z = robot->GetPose().GetTranslation().z();
+                
+                msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
+                UnitQuaternion<float> q(Rotation3d(robot->GetPose().GetRotationVector()).GetQuaternion());
+                msg.pose_quaternion0 = q.w();
+                msg.pose_quaternion1 = q.x();
+                msg.pose_quaternion2 = q.y();
+                msg.pose_quaternion3 = q.z();
+                
+                msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
+                msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
+                
+                msg.headAngle_rad = robot->GetHeadAngle();
+                msg.liftHeight_mm = robot->GetLiftHeight();
+                
+                msg.status = 0;
+                if(robot->IsMoving())           { msg.status |= IS_MOVING; }
+                if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
+                if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
+                if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
+                if(robot->IsCarryingObject())   {
+                  msg.status |= IS_CARRYING_BLOCK;
+                  msg.carryingObjectID = robot->GetCarryingObject();
+                } else {
+                  msg.carryingObjectID = -1;
+                }
+                
+                // TODO: Add proximity sensor data to state message
+                
+                msg.batteryVoltage = robot->GetBatteryVoltage();
+                
+                G2U_Message message;
+                message.Set_RobotState(msg);
+                _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+              }
             }
           }
         }

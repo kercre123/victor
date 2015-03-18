@@ -95,15 +95,20 @@ namespace Cozmo {
     void HandleRobotAvailableSignal(RobotID_t robotID);
     void HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID);
     void HandleRobotConnectedSignal(RobotID_t robotID, bool successful);
-    void HandleRobotDisconnectedSignal(RobotID_t robotID, float timeSinceLastMsg_sec);
+    void HandleRobotDisconnectedSignal(RobotID_t robotID);
     void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
     void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectFamily,
                                          uint32_t objectType, uint32_t objectID,
-                                         float x_upperLeft,  float y_upperLeft,
-                                         float width,  float height);
-    void HandleRobotObservedNothingSignal(uint8_t robotID);    
+                                         float img_x_upperLeft,  float img_y_upperLeft,
+                                         float img_width,  float img_height,
+                                         float world_x,
+                                         float world_y,
+                                         float world_z,
+                                         float q0, float q1, float q2, float q3);
+    void HandleRobotObservedNothingSignal(uint8_t robotID);
+    void HandleRobotDeletedObjectSignal(uint8_t robotID, uint32_t objectID);
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
     void HandleRobotImageAvailable(RobotID_t robotID);
@@ -112,8 +117,7 @@ namespace Cozmo {
                                                 float x_lowerLeft,  float y_lowerLeft,
                                                 float x_upperRight, float y_upperRight,
                                                 float x_lowerRight, float y_lowerRight);
-    void HandleRobotCompletedPickAndPlaceAction(uint8_t robotID, uint8_t success);
-    void HandleRobotCompletedPlaceObjectOnGroundAction(uint8_t robotID, uint8_t success);
+    void HandleRobotCompletedAction(uint8_t robotID, uint8_t success);
     //
     // U2G Message Handling
     //
@@ -133,6 +137,7 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_MoveLift)
     REGISTER_CALLBACK(U2G_SetLiftHeight)
     REGISTER_CALLBACK(U2G_SetHeadAngle)
+    REGISTER_CALLBACK(U2G_TrackHeadToObject)
     REGISTER_CALLBACK(U2G_StopAllMotors)
     REGISTER_CALLBACK(U2G_ImageRequest)
     REGISTER_CALLBACK(U2G_SetRobotImageSendMode)
@@ -146,7 +151,9 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_SelectNextObject)
     REGISTER_CALLBACK(U2G_PickAndPlaceObject)
     REGISTER_CALLBACK(U2G_TraverseObject)
+    REGISTER_CALLBACK(U2G_SetRobotCarryingObject)
     REGISTER_CALLBACK(U2G_ClearAllBlocks)
+    REGISTER_CALLBACK(U2G_VisionWhileMoving)
     REGISTER_CALLBACK(U2G_ExecuteBehavior)
     REGISTER_CALLBACK(U2G_SetBehaviorState)
     REGISTER_CALLBACK(U2G_AbortPath)

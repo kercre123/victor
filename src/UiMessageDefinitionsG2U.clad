@@ -50,14 +50,19 @@ message G2U_RobotState {
     float_32 pose_x,
     float_32 pose_y,
     float_32 pose_z,
-    float_32 poseAngle_rad,
+    float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 pose_quaternion0, // full 3d rotation as a quaternion
+    float_32 pose_quaternion1, //  "
+    float_32 pose_quaternion2, //  "
+    float_32 pose_quaternion3, //  "
     float_32 leftWheelSpeed_mmps,
     float_32 rightWheelSpeed_mmps,
     float_32 headAngle_rad,
     float_32 liftHeight_mm,
     float_32 batteryVoltage,
-    uint_8  status,  // See RobotStatusFlag in cozmoTypes.h
-    uint_8  robotID
+    int_32   carryingObjectID,  // will be -1 if not carrying object
+    uint_8   status,            // See RobotStatusFlag in cozmoTypes.h
+    uint_8   robotID
 }
 
 
@@ -99,10 +104,17 @@ message G2U_RobotObservedObject {
     uint_32 objectFamily,
     uint_32 objectType,
     int_32  objectID, // signed to match U2G_PickAndPlaceObject which has the option to have objectID<0
-    float_32 topLeft_x,
-    float_32 topLeft_y,
-    float_32 width,
-    float_32 height
+    float_32 img_topLeft_x,  // position in image coords
+    float_32 img_topLeft_y,  //     "
+    float_32 img_width,      //     "
+    float_32 img_height,     //     "
+    float_32 world_x,        // absolute 3D position in world coords
+    float_32 world_y,        //     "
+    float_32 world_z,        //     "
+    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
+    float_32 quaternion1,    //     "
+    float_32 quaternion2,    //     "
+    float_32 quaternion3     //     "
 }
 
 // RobotObservedNothing
@@ -110,6 +122,13 @@ message G2U_RobotObservedNothing {
     uint_32 robotID
 }
 
+// RobotDeletedObject
+message G2U_RobotDeletedObject {
+    uint_32 robotID,
+    uint_32 objectID
+}
+
+// DeviceDetectedVisionMarker
 message G2U_DeviceDetectedVisionMarker {
     uint_32 markerType,
     float_32 x_upperLeft,
@@ -126,17 +145,13 @@ message G2U_DeviceDetectedVisionMarker {
 //////////////////////////////////  ACTIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// RobotCompletedPickAndPlaceAction
-message G2U_RobotCompletedPickAndPlaceAction {
+// RobotCompletedAction
+// TODO: Add action type, more informative result codes...
+message G2U_RobotCompletedAction {
     uint_32 robotID,
     uint_8 success    
 }
 
-// RobotCompletedPlaceObjectOnGroundAction
-message G2U_RobotCompletedPlaceObjectOnGroundAction {
-    uint_32 robotID,
-    uint_8 success
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,9 +184,9 @@ union G2U_Message {
     G2U_ImageChunk ImageChunk,
     G2U_RobotObservedObject RobotObservedObject,
     G2U_RobotObservedNothing RobotObservedNothing,
+    G2U_RobotDeletedObject RobotDeletedObject,
     G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
-    G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction,
-    G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction,
+    G2U_RobotCompletedAction RobotCompletedAction,
     G2U_PlaySound PlaySound,
     G2U_StopSound StopSound
 }

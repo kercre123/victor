@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+	<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+	<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+	<ProductVersion>10.0.20506</ProductVersion>
+	<SchemaVersion>2.0</SchemaVersion>
+	<ProjectGuid>{779FB32B-2ECC-0C52-2B8D-456DBE24176B}</ProjectGuid>
+	<OutputType>Library</OutputType>
+	<AppDesignerFolder>Properties</AppDesignerFolder>
+	<RootNamespace></RootNamespace>
+	<AssemblyName>Assembly-UnityScript</AssemblyName>
+	<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+	<FileAlignment>512</FileAlignment>
+	<BaseDirectory>Assets</BaseDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<DebugSymbols>true</DebugSymbols>
+	<DebugType>full</DebugType>
+	<Optimize>false</Optimize>
+	<OutputPath>Temp\bin\Debug\</OutputPath>
+	<DefineConstants>DEBUG;TRACE;UNITY_4_6_2;UNITY_4_6;UNITY_IPHONE;ENABLE_MICROPHONE;ENABLE_TEXTUREID_MAP;ENABLE_UNITYEVENTS;ENABLE_NEW_HIERARCHY ;ENABLE_AUDIO_FMOD;ENABLE_TERRAIN;ENABLE_SUBSTANCE;ENABLE_GENERICS;INCLUDE_IL2CPP;INCLUDE_WP8SUPPORT;ENABLE_WWW;ENABLE_IMAGEEFFECTS;UNITY_IPHONE_API;ENABLE_4_6_FEATURES;INCLUDE_WP_BLUE_SUPPORT;ENABLE_WEBCAM;INCLUDE_METROSUPPORT;ENABLE_NETWORK;ENABLE_PHYSICS;UNITY5_SCRIPTING_IN_UNITY4;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_2D_PHYSICS;ENABLE_GAMECENTER;UNITY_IOS;ENABLE_SHADOWS;ENABLE_AUDIO;ENABLE_NAVMESH_CARVING;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_MONO;ENABLE_PROFILER;UNITY_EDITOR;UNITY_EDITOR_OSX;UNITY_PRO_LICENSE</DefineConstants>
+	<ErrorReport>prompt</ErrorReport>
+	<WarningLevel>4</WarningLevel>
+	<NoWarn>0169</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<DebugType>pdbonly</DebugType>
+	<Optimize>true</Optimize>
+	<OutputPath>Temp\bin\Release\</OutputPath>
+	<DefineConstants>TRACE</DefineConstants>
+	<ErrorReport>prompt</ErrorReport>
+	<WarningLevel>4</WarningLevel>
+	<NoWarn>0169</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+	<Reference Include="System" />
+    <Reference Include="System.XML" />
+	<Reference Include="System.Core" />
+	<Reference Include="System.Xml.Linq" />
+	<Reference Include="UnityEngine">
+	  <HintPath>/Applications/Unity/Unity.app/Contents/Frameworks/Managed/UnityEngine.dll</HintPath>
+	</Reference>
+	<Reference Include="UnityEditor">
+	  <HintPath>/Applications/Unity/Unity.app/Contents/Frameworks/Managed/UnityEditor.dll</HintPath>
+	</Reference>
+  </ItemGroup>
+  <ItemGroup>
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Curve\CurvePointControl.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Curve\DrawCurve.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Curve\SimpleCurve.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\DrawLines\DrawLines.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\DrawLines\DrawLinesMouse.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\DrawLines\DrawLinesTouch.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Ellipse\Ellipse1.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Ellipse\Ellipse2.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\EndCap\EndCapDemo.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Grid\DrawGrid.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Highlight\Highlight.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Highlight\MakeSpheres.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Highlight\RotateAroundY.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Orbit\CreateStars.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Orbit\Orbit.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Orbit\RotateViewpoint.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\PartialLine\AnimatePartialLine.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Path\DrawPath.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Points\DrawPoints.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\PowerBar\PowerBar.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\RandomHills\CreateHills.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Scribblecube\CameraZoom.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Scribblecube\Scribblecube.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\SelectLine\SelectLine.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\SelectionBox\SelectionBox.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\SelectionBox\SelectionBox2.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Spline\MakeSpline.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\SplineFollow\SplineFollow2D.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\SplineFollow\SplineFollow3D.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Text\TextDemo.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Xray\DrawBox.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Xray\VectorObject.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\Xray\XrayLineData.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple2DLine\Line.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple2DLine\ReallyBasicLine.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple2DLine\UniformTexturedLine.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D 2.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D 3.js" />
+     <Compile Include="Assets\Vectrosity\Demos\Scripts\_Simple3DObject\Simple3D.js" />
+     <None Include="Assets\Vectrosity\Demos\Shaders\DepthMask.shader" />
+     <None Include="Assets\Vectrosity\Demos\Shaders\SolidColor.shader" />
+ <Reference Include="UnityEngine.UI">
+ <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/4.6.2/UnityEngine.UI.dll</HintPath>
+ </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	   Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  
+</Project>

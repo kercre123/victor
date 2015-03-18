@@ -5,9 +5,11 @@ using System.Collections;
 public class Intro : MonoBehaviour {
 	[SerializeField] protected InputField engineIP;
 	[SerializeField] protected InputField ip;
+	[SerializeField] protected InputField simIP;
 	[SerializeField] protected InputField visualizerIP;
 	[SerializeField] protected Text error;
 
+	private bool simulated = false;
 	private string currentRobotIP;
 	private string currentScene;
 	private string currentVizHostIP;
@@ -23,9 +25,16 @@ public class Intro : MonoBehaviour {
 
 	private string lastIp
 	{
-		get { return PlayerPrefs.GetString("LastIP", "127.0.0.1"); }
+		get { return PlayerPrefs.GetString("LastIP", "172.31.1.1"); }
 		
 		set { PlayerPrefs.SetString("LastIP", value); }
+	}
+
+	private string lastSimIp
+	{
+		get { return PlayerPrefs.GetString("LastSimIP", "127.0.0.1"); }
+		
+		set { PlayerPrefs.SetString("LastSimIP", value); }
 	}
 	
 	private string lastId
@@ -45,18 +54,33 @@ public class Intro : MonoBehaviour {
 	protected void OnEnable() {
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
+		simIP.text = lastSimIp;
 		visualizerIP.text = lastVisualizerIp;
+
+		if (RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			Debug.Log("knownObjects cleared!");
+			RobotEngineManager.instance.current.knownObjects.Clear();
+		}
+
 	}
 
 	private void Start()
 	{
+
+		if(RobotEngineManager.instance != null &&RobotEngineManager.instance.IsConnected) RobotEngineManager.instance.Disconnect ();
+
 		if (RobotEngineManager.instance != null) {
 			RobotEngineManager.instance.ConnectedToClient += Connected;
 			RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
 			RobotEngineManager.instance.RobotConnected += RobotConnected;
 		}
 
-		Application.targetFrameRate = 100;
+		Application.targetFrameRate = 30;
+		
+		Input.gyro.enabled = true;
+		Input.compass.enabled = true;
+		Input.multiTouchEnabled = true;
+		Input.location.Start();
 	}
 
 	private void OnDestroy() {
@@ -77,22 +101,21 @@ public class Intro : MonoBehaviour {
 		}
 	}
 
-	bool simulated =false;
 	public void Play(bool sim) {
 		simulated = sim;
 		RobotEngineManager.instance.Disconnect ();
 
 		string errorText = null;
-
+		string ipText = simulated ? simIP.text : ip.text;
 		if(string.IsNullOrEmpty(engineIP.text)) {
 			errorText = "You must enter a device ip address.";
 		}
-		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ip.text)) {
+		if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
 			errorText = "You must enter a robot ip address.";
 		}
 
 		if (string.IsNullOrEmpty (errorText)) {
-			currentRobotIP = ip.text;
+			currentRobotIP = ipText;
 			currentVizHostIP = visualizerIP.text;
 
 			SaveData ();
@@ -105,6 +128,7 @@ public class Intro : MonoBehaviour {
 
 	protected void SaveData() {
 		lastIp = ip.text;
+		lastSimIp = simIP.text;
 		lastEngineIp = engineIP.text;
 		lastVisualizerIp = visualizerIP.text;
 	}
@@ -134,7 +158,7 @@ public class Intro : MonoBehaviour {
 		}
 
 		error.text = "";
-		Application.LoadLevel("ControlSchemeTest");
+		Application.LoadLevel("Games");
 	}
 
 }

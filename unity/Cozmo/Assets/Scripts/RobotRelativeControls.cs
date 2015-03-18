@@ -67,16 +67,27 @@ public class RobotRelativeControls : MonoBehaviour {
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 		reverseLikeACar = PlayerPrefs.GetInt("ReverseLikeACar", OptionsScreen.REVERSE_LIKE_A_CAR) == 1;
 		//Debug.Log(gameObject.name + " OnEnable reverseLikeACar("+reverseLikeACar+")");
+
 	}
 
 	void Update() {
 
+
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotFacing = CozmoUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+
+			//if coz is picked up, let's zero our wheels and abort control logic
+			if(RobotEngineManager.instance.current.Status(Robot.StatusFlag.IS_PICKED_UP)) {
+				if(Intro.CurrentRobotID != 0) {
+					RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+					return;
+				}
+			}
+
 		}
 
 		if(aboutFace) {
-			float turnSoFar = CozmoUtil.AngleDelta(robotStartTurnFacing, robotFacing);
+			float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
 			if(Mathf.Abs(turnSoFar) > 180f) {
 				//Debug.Log("frame(" + Time.frameCount + ") EndSwipe turnSoFar(" + turnSoFar + ")");
 				aboutFace = false;
@@ -94,10 +105,9 @@ public class RobotRelativeControls : MonoBehaviour {
 			RefreshDebugText();
 			return;
 		}
-		timeSinceLastCommand += Time.deltaTime;
 
-		if(timeSinceLastCommand < refreshTime)
-			return;
+		timeSinceLastCommand += Time.deltaTime;
+		if(timeSinceLastCommand < refreshTime) return;
 
 		timeSinceLastCommand = 0f;
 
@@ -109,7 +119,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		bool turnInPlaceOnlyMode = false;
 
 		float maxAngle = 90f;
-		
+
 		if(verticalStick != null) {
 
 			if(doubleTapTurnAround && verticalStick.DoubleTapped) {
@@ -125,18 +135,17 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(verticalStick.UpModeEngaged) {
 				driveForwardOnlyMode = true;
-				//maxAngle = verticalStick.MaxAngle;
+				maxAngle = verticalStick.MaxAngle;
 			}
 			else if(verticalStick.DownModeEngaged) {
 				driveReverseOnlyMode = true;
-				//maxAngle = verticalStick.MaxAngle;
+				maxAngle = verticalStick.MaxAngle;
 			}
 
 			inputs.y = verticalStick.Vertical;
 		}
 
-		if(!swipeTurning)
-			swipeTurnIndex = 0;
+		if(!swipeTurning) swipeTurnIndex = 0;
 
 		if(horizontalStick != null) {
 			if(horizontalStick.SideModeEngaged) {
@@ -166,7 +175,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(swipeTurning) {
 
-				float turnSoFar = CozmoUtil.AngleDelta(robotStartTurnFacing, robotFacing);
+				float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
 
 				float goalAngle = swipeTurnAngle;
 
@@ -195,8 +204,12 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		gyroSleepTimer += Time.deltaTime;
-		if(verticalStick == null || verticalStick.IsPressed) gyroSleepTimer = 0f;
-		
+		if(verticalStick == null || verticalStick.IsPressed) {
+			gyroSleepTimer = 0f;
+		}
+		else if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null && !RobotEngineManager.instance.current.Status(Robot.StatusFlag.NONE)) {
+			gyroSleepTimer = 0f;
+		}
 		
 		if(gyroSleepTimer <= gyroSleepTime && gyroInputs != null && gyroInputs.gameObject.activeSelf) { // && (verticalStick == null || verticalStick.IsPressed)) {
 
@@ -267,14 +280,6 @@ public class RobotRelativeControls : MonoBehaviour {
 //		}
 	}
 
-//	void OnGUI() {
-//		GUILayout.BeginArea(new Rect(Screen.width*0.5f-150f, 300f, 300f, 300f));
-//		GUILayout.Label("input("+inputs+")");
-//		GUILayout.Label("leftWheelSpeed("+leftWheelSpeed+")");
-//		GUILayout.Label("rightWheelSpeed("+rightWheelSpeed+")");
-//		GUILayout.EndArea();
-//	}
-
 #endregion
 
 #region PRIVATE METHODS
@@ -339,6 +344,15 @@ public class RobotRelativeControls : MonoBehaviour {
 		debugOverride = true;
 		Debug.Log(gameObject.name + " NudgeRight");
 	}
+
+	public void ReverseButtonPressed(bool pressed) {
+		if(verticalStick == null)
+			return;
+
+		verticalStick.SetForceReverse(pressed);
+
+	}
+
 #endregion
 
 }

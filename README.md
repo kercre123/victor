@@ -80,3 +80,8 @@ lldb Commands
 Here's a good link for basic commands: [I don't really want to learn lldb, I just want to fix a crash.](http://meowni.ca/posts/unscary-lldb/)
 
 
+webots orphaned processes
+==========================
+
+ * happens often when simulator crashes
+ * 

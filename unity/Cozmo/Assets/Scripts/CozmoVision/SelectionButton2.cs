@@ -9,5 +9,6 @@ public class SelectionButton2 : SelectionButton
 	public void Selection()
 	{
 		RobotEngineManager.instance.current.selectedObject = ID;
+		RobotEngineManager.instance.TrackHeadToObject( ID, Intro.CurrentRobotID );
 	}
 }

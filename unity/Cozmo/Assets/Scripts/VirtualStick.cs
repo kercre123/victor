@@ -49,6 +49,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
 	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
 	[SerializeField] float doubleTapDelayMax = 0f;
+	[SerializeField] bool forceUpOnly = false;
+	[SerializeField] bool forceDownOnly = false;
 #endregion
 
 #region PROPERTIES
@@ -94,7 +96,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 			center = Camera.main.WorldToScreenPoint(center);
 
-			return center;
+			return center * screenScaleFactor;
 		}
 	}
 	Vector2 JoystickData {
@@ -154,11 +156,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	bool wasCounterClockwise = false;
 	Vector2 oldSwipe;
 	float pointerDownTime = 0f;
+	Canvas canvas;	
+	float screenScaleFactor = 1f;
 #endregion
 
 #region COMPONENT CALLBACKS
 	void Awake() {
-		//canvas = GetComponentInParent<Canvas>();
+		canvas = GetComponentInParent<Canvas>();
 		rTrans = transform as RectTransform;
 	}
 
@@ -228,25 +232,37 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	void ResizeToScreen() {
 		if(Screen.dpi == 0f) return;
 
+		float screenW = Screen.width;
+		float screenH = Screen.height;
+		CanvasScaler scalar = canvas.gameObject.GetComponent<CanvasScaler>();
+
+		screenScaleFactor = 1f;
+
+		if(scalar != null) {
+			screenScaleFactor = scalar.referenceResolution.y / Screen.height;
+			screenW = scalar.referenceResolution.x;
+			screenH = scalar.referenceResolution.y;
+		}
+
 		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
 
 		if(scaleToScreen) {
 			rTrans.anchoredPosition = Vector2.zero;
-			float length = Mathf.Min(Screen.height, Screen.width);
+			float length = Mathf.Min(screenW, screenH);
 			rTrans.sizeDelta = new Vector2(length, length);
 		}
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
-			size.y = Mathf.Clamp(Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
+			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
+			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
 			bg.sizeDelta = size;
 		}
 
 		if(stickWidthInches > 0f && stickHeightInches > 0f) {
 			Vector3 size = stick.sizeDelta;
-			size.x = Mathf.Clamp(Screen.dpi * stickWidthInches, 0f, Screen.width);
-			size.y = Mathf.Clamp(Screen.dpi * stickHeightInches, 0f, Screen.height);;
+			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickWidthInches, 0f, screenW);
+			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickHeightInches, 0f, screenH);
 			stick.sizeDelta = size;
 
 			if(capTop != null) capTop.sizeDelta = size;
@@ -397,7 +413,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	void ConsiderSwipe(Vector2 pos, bool underway) {
+	void ConsiderSwipe(bool underway) {
 		SwipedDirection = Vector2.zero;
 		if(!allowAxisSwipes && !allowPreciseSwipes) return;
 		
@@ -466,9 +482,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 	}
 
-	void ProcessStick(PointerEventData evnt) {
-		Vector2 delta = Vector2.zero;
-		delta = evnt.position - StickCenterOnScreen;
+	void ProcessStick(Vector2 pointerPos) {
+		Vector2 delta = pointerPos - StickCenterOnScreen;
 
 		if(clampRadially) {
 			delta = Vector3.ClampMagnitude(delta, radius);
@@ -505,7 +520,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					wasCounterClockwise = false;
 				}
 
-				if(angle > verticalModeMaxAngleAllowance) {
+				if(angle > verticalModeMaxAngleAllowance || (wasClockwise && delta.x <= 0f) || (wasCounterClockwise && delta.x >= 0f)) {
 					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
 					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * Vector2.up * delta.magnitude;
 				}
@@ -528,7 +543,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 					wasCounterClockwise = false;
 				}
 
-				if(angle > verticalModeMaxAngleAllowance) {
+				if(angle > verticalModeMaxAngleAllowance || (wasClockwise && delta.x >= 0f) || (wasCounterClockwise && delta.x <= 0f)) {
 					float signedAngle = verticalModeMaxAngleAllowance * (wasClockwise ? -1f : 1f);
 					delta = Quaternion.AngleAxis(signedAngle, Vector3.forward) * -Vector2.up * delta.magnitude;
 				}
@@ -537,8 +552,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				delta.y = Mathf.Min(0f, delta.y);
 			}
 		}
-		
-		if(verticalAxisSnapAngle > 0f) {
+
+		//only vert snap if not in mode or pointed in mode direction
+		if(verticalAxisSnapAngle > 0f && ( (!UpModeEngaged || delta.y > 0f) && (!DownModeEngaged || delta.y < 0f))) {
 			float angleFromUp = Vector2.Angle(Vector2.up, delta.normalized);
 			
 			if(angleFromUp <= verticalAxisSnapAngle) {
@@ -561,10 +577,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 
 		stick.anchoredPosition = delta;
-		//Debug.Log ("Joystick evnt.position(" + evnt.position + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
+		//Debug.Log ("Joystick pointerPos(" + pointerPos + ") radius(" + radius + ") delta(" + delta + ") bg.anchoredPosition("+bg.anchoredPosition+") stick.anchoredPosition("+stick.anchoredPosition+")");
 	}
 	
 	void CheckForModeEngage() {
+		if(forceUpOnly) {
+			UpModeEngaged = true;
+			return;
+		}
+		if(forceDownOnly) {
+			DownModeEngaged = true;
+			return;
+		}
+
 		if(verticalModeEntryAngle <= 0f && horizontalModeEntryAngle <= 0f)
 			return;
 		
@@ -620,6 +645,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 	public void OnPointerDown(PointerEventData eventData) {
 
+		Vector2 pointerPos = eventData.position * screenScaleFactor;
+
 		float newTime = Time.time;
 		if(doubleTapDelayMax > 0f) {
 			if(pointerDownTime != 0f && (newTime - pointerDownTime) <= doubleTapDelayMax) {
@@ -630,8 +657,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		pointerDownTime = newTime;
 
 		if(dynamic) {
-			bg.anchoredPosition = eventData.position - ZoneCenter;
-			//Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+eventData.position+") ZoneCenter("+ZoneCenter+")");
+			bg.anchoredPosition = pointerPos - ZoneCenter;
+			//Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+pointerPos+") ZoneCenter("+ZoneCenter+")");
 			stick.anchoredPosition = Vector2.zero;
 		}
 		
@@ -644,7 +671,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		IsPressed = true;
 		PressedTime = 0f;
 		
-		ProcessStick(eventData);
+		ProcessStick(pointerPos);
 		
 		touchDownValue = JoystickData;
 		
@@ -655,18 +682,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		wasClockwise = false;
 		wasCounterClockwise = false;
 
-		//Debug.Log ("Joystick OnPointerDown eventData.position(" + eventData.position + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
+		//Debug.Log ("Joystick OnPointerDown pointerPos(" + pointerPos + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
 	}
 	
 	public void OnDrag(PointerEventData eventData) {
-		ProcessStick(eventData);
+
+		ProcessStick(eventData.position * screenScaleFactor);
 		CheckForModeEngage();
-		ConsiderSwipe(eventData.position, true);
+		ConsiderSwipe(true);
 	}
 
 	public void OnPointerUp(PointerEventData eventData) {
-		ProcessStick(eventData);
-		ConsiderSwipe(eventData.position, false);
+		ProcessStick(eventData.position * screenScaleFactor);
+		ConsiderSwipe(false);
 
 		Vector2 throwVector = stick.anchoredPosition;
 		
@@ -693,6 +721,12 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		DownModeEngaged = false;
 		SideModeEngaged = false;
 	}
+
+	public void SetForceReverse(bool reverse) {
+		forceDownOnly = reverse;
+		forceUpOnly = !reverse;
+	}
+
 #endregion
 
 }
