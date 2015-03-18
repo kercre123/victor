@@ -274,20 +274,21 @@ namespace Anki
   
 
   template<typename T>
-  void Array2d<T>::ApplyScalarFunction(T (*fcn)(T))
+  //void Array2d<T>::ApplyScalarFunction(T (*fcn)(T))
+  void Array2d<T>::ApplyScalarFunction(std::function<T(T)>fcn)
   {
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
-    if (this->isContinuous()) {
+    if (this->IsContinuous()) {
       ncols *= nrows;
       nrows = 1;
     }
 
     for(s32 i=0; i<nrows; ++i)
     {
-      T *data_i = (*this)[i];
-
+      T *data_i = this->GetRow(i);
+      
       for (s32 j=0; j<ncols; ++j)
       {
         data_i[j] = fcn(data_i[j]);
@@ -297,23 +298,25 @@ namespace Anki
 
   template<typename T>
   template<typename Tresult>
-  void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
-    Array2d<Tresult> &result) const
+  //void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
+  void Array2d<T>::ApplyScalarFunction(std::function<void(const T&, Tresult&)>fcn,
+                                       Array2d<Tresult> &result) const
   {
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
-    assert(result.size() == this->size());
+    assert(result.GetNumRows() == this->GetNumRows() &&
+           result.GetNumCols() == this->GetNumCols());
 
-    if (this->isContinuous() && result.isContinuous() ) {
+    if (this->IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;
       nrows = 1;
     }
 
     for(s32 i=0; i<nrows; ++i)
     {
-      const T *data_i = (*this)[i];
-      Tresult *result_i = result[i];
+      const T *data_i = this->GetRow(i);
+      Tresult *result_i = result.GetRow(i);
 
       for (s32 j=0; j<ncols; ++j)
       {
@@ -321,8 +324,6 @@ namespace Anki
       }
     }
   } // applyScalarFunction() to separate result
-
-  
   
   template<typename T>
   Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other)
