@@ -25,8 +25,8 @@ public class ActionButton
 	public Button button;
 	public Image image;
 	public Text text;
-	public int index;
-	
+
+	private int index;
 	private CozmoVision vision;
 	
 	public void ClaimOwnership(CozmoVision vision) {
