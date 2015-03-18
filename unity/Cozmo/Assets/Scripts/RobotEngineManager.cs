@@ -206,6 +206,8 @@ public class RobotEngineManager : MonoBehaviour {
 		isRobotConnected = false;
 		Application.LoadLevel ("Shell");
 
+		imageRequested = false;
+
 		lastDisconnectionReason = reason;
 		if (DisconnectedFromClient != null) {
 			DisconnectedFromClient(reason);
