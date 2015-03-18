@@ -422,12 +422,16 @@ namespace Anki {
 
       void SetImageSendMode(ImageSendMode_t mode, Vision::CameraResolution res)
       {
-        if (res == Vision::CAMERA_RES_QVGA ||
-          res == Vision::CAMERA_RES_QQVGA ||
-          res == Vision::CAMERA_RES_QQQVGA ||
-          res == Vision::CAMERA_RES_QQQQVGA) {
-            imageSendMode_ = mode;
-            nextSendImageResolution_ = res;
+        if (res == Vision::CAMERA_RES_VGA ||
+            res == Vision::CAMERA_RES_QVGA ||
+            res == Vision::CAMERA_RES_QQVGA ||
+            res == Vision::CAMERA_RES_QQQVGA ||
+            res == Vision::CAMERA_RES_QQQQVGA)
+        {
+          imageSendMode_ = mode;
+          nextSendImageResolution_ = res;
+        } else {
+          AnkiWarn("SetImageSendMode", "Ignoring unsupported ImageSend resolution %d.\n", res);
         }
       }
 
