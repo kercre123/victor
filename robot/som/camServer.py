@@ -42,7 +42,7 @@ class CameraSubServer(BaseSubServer):
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
-    ENCODER_CODING        = messages.IE_JPEG
+    ENCODER_CODING        = messages.IE_JPEG_COLOR
     ENCODER_QUALITY       = 70
 
     ENCODER_LATEANCY = 5 # ms, SWAG
