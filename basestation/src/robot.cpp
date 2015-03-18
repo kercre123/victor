@@ -496,21 +496,25 @@ namespace Anki {
         // will request them at a "canonical" pose (no rotation/translation)
         const Pose3d canonicalPose;
         
-        /*
-         // Block Markers
-         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
-         for(auto block : blocks) {
-         std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-         
-         for(auto blockMarker : blockMarkers) {
-         
-         Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-         blockMarker->Get3dCorners(canonicalPose));
-         markerPose = markerPose.GetWithRespectTo(Pose3d::World);
-         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
-         }
-         }
-         */
+        
+        // Block Markers
+        std::set<const Vision::ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::BLOCKS).GetObjectsWithMarker(marker);
+        for(auto block : blocks) {
+          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+          
+          for(auto blockMarker : blockMarkers) {
+            
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose));
+            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+            }
+          }
+        }
+        
         
         // Mat Markers
         std::set<const Vision::ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithMarker(marker);
