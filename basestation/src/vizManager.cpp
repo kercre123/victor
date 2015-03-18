@@ -73,6 +73,7 @@ namespace Anki {
     : _isInitialized(false)
     , _sendImages(false)
     , _saveImageMode(VIZ_SAVE_OFF)
+    , _saveRobotStateMode(VIZ_SAVE_OFF)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
