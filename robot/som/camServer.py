@@ -52,7 +52,7 @@ class CameraSubServer(BaseSubServer):
         BaseSubServer.__init__(self, server, verbose)
         self.tfr = test_framerate
         if self.tfr:
-            sys.stdout.write("Will print frame rate information\n")
+            self.log("Will print frame rate information\n")
 
         subprocess.call(['ifconfig', 'lo', 'up']) # Bring up the loopback interface if it isn't already
 
@@ -86,7 +86,7 @@ class CameraSubServer(BaseSubServer):
         self.lastFrameITime = 0
 
     def stop(self):
-        sys.stdout.write("Closing camServer\n")
+        self.log("Closing camServer\n")
         BaseSubServer.stop(self)
         self.stopEncoder(False)
         self.encoderSocket.close()
@@ -115,7 +115,7 @@ class CameraSubServer(BaseSubServer):
         self.encoderLock.acquire()
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG:
-                sys.stdout.write("Starting the encoder\n")
+                self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
                 if self.resolution > self.CROP_THRESHOLD: # Cropping to QVGA
                     h = (self.RESOLUTION_TUPLES[self.CROP_THRESHOLD][0] - self.RESOLUTION_TUPLES[self.resolution][0])/2
@@ -133,7 +133,7 @@ class CameraSubServer(BaseSubServer):
         "Stop the encoder subprocess if it is running"
         haveLock = self.encoderLock.acquire(blocking)
         if self.encoderProcess is not None:
-            sys.stdout.write("Stopping the encoder\n")
+            self.log("Stopping the encoder\n")
             if self.encoderProcess.poll() is None:
                 self.encoderProcess.send_signal(signal.SIGINT)
                 self.encoderProcess.wait()
@@ -146,7 +146,7 @@ class CameraSubServer(BaseSubServer):
         "Process a message recieved by the server"
         if ord(message[0]) == messages.ImageRequest.ID:
             inMsg = messages.ImageRequest(message)
-            sys.stdout.write("New image request: %s\n" % str(inMsg))
+            self.log("New image request: %s\n" % str(inMsg))
             self.sendModeLock.acquire()
             self.sendMode = inMsg.imageSendMode
             if inMsg.imageSendMode == messages.ISM_OFF:
@@ -178,21 +178,20 @@ class CameraSubServer(BaseSubServer):
             return
         frame = None
         try:
-            while True: # Receive all the data grams and throw out all but the last one
+            while True: # Receive all the datagrams and throw out all but the last one
                 frame = self.encoderSocket.recv(MTU)
         except socket.error, e:
             if e.errno == 11: # No more data, this is how we expect to exit the loop
                 if self.tfr:
                     tick = time.time()
-                    sys.stdout.write('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
+                    self.log('FP: %f ms\n' % ((tick - self.lastFrameOTime)*1000))
                     self.lastFrameOTime = tick
-                # If only sending single image
                 self.sendModeLock.acquire()
                 if self.sendMode != messages.ISM_OFF:
                     self.imageNumber += 1
                     msg = messages.ImageChunk()
                     msg.imageId = self.imageNumber
-                    msg.imageTimestamp = self.server.timestamp.get()
+                    msg.imageTimestamp = self.server.timestamp.get() - int((2.0/self.SENSOR_FPS)*1000)
                     msg.imageEncoding = self.ENCODER_CODING
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     msg.resolution = self.resolution
