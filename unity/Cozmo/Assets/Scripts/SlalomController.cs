@@ -9,6 +9,7 @@ public class SlalomController : GameController {
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
 	[SerializeField] bool trackWithCornerTriggers = false;
 	[SerializeField] Text textObservedCount = null;
+	[SerializeField] Text textProgress = null;
 
 	List<ObservedObject> obstacles = new List<ObservedObject>();
 	List<Vector2> obstaclePositions = new List<Vector2>();
@@ -161,11 +162,13 @@ public class SlalomController : GameController {
 		Vector2 robotPos = robot.WorldPosition;
 
 		Vector2 currentObstacleToRobot = robotPos - currentObstaclePos;
-		float newAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
+		float newAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot.normalized) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
 		float angleDeltaThisFrame = MathUtil.AngleDelta(lastAngleFromObstacle, newAngleFromObstacle);
 
 		totalAngleFromObstacleTraversed += angleDeltaThisFrame;
+		//Debug.Log("oldAngle("+lastAngleFromObstacle+")->newAngle("+newAngleFromObstacle+") delta("+angleDeltaThisFrame+") totalAngleFromObstacleTraversed("+totalAngleFromObstacleTraversed+")" );
 
+		lastAngleFromObstacle = newAngleFromObstacle;
 		//design query: calc if we've crossed a quadrant of our current obstacle cube and signal it to light it's corner?
 		//need object rotation angle to do this properly
 		//use lastPassClockwise to determine if we are orbiting in the right dir
@@ -204,6 +207,10 @@ public class SlalomController : GameController {
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
 		}
+
+		if(textProgress != null) {
+			textProgress.text = "index("+currentObstacleIndex+") angle("+totalAngleFromObstacleTraversed+")";
+		}
 	}
 
 	protected override bool IsGameReady() {
@@ -213,9 +220,10 @@ public class SlalomController : GameController {
 		robot = RobotEngineManager.instance.current;
 		
 		obstacles.Clear();
-		foreach(ObservedObject obj in robot.knownObjects) {
-			//if(obj.objectType == ObservedObjectType.Gold) {
-			obstacles.Add(obj);
+		for(int i=0;i<robot.knownObjects.Count;i++) {
+			//if(robot.knownObjects[i].objectType == ObservedObjectType.Gold) {
+			//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
+			obstacles.Add(robot.knownObjects[i]);
 			//}
 		}
 
@@ -278,6 +286,11 @@ public class SlalomController : GameController {
 		}
 
 		totalAngleFromObstacleTraversed = 0f;
+
+		Vector2 robotPos = robot.WorldPosition;
+		
+		Vector2 currentObstacleToRobot = robotPos - currentObstaclePos;
+		lastAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot.normalized) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
 
 		Debug.Log("NextObstacle scores("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+") lastPassCrossUp("+lastPassCrossUp+")");
 	}
