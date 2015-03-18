@@ -101,7 +101,12 @@ message U2G_SetRobotImageSendMode {
 
 // SaveImages
 message U2G_SaveImages {
-    uint_8 mode // See VizSaveImageMode_t in cozmoTypes.h
+    uint_8 mode // See VizSaveMode_t in cozmoTypes.h
+}
+
+// SaveRobotState
+message U2G_SaveRobotState {
+    uint_8 mode // See VizSaveMode_t in cozmoTypes.h
 }
 
 // EnableDisplay
@@ -307,6 +312,7 @@ union U2G_Message {
     U2G_ImageRequest ImageRequest,
     U2G_SetRobotImageSendMode SetRobotImageSendMode,
     U2G_SaveImages SaveImages,
+    U2G_SaveRobotState SaveRobotState,
     U2G_EnableDisplay EnableDisplay,
     U2G_SetHeadlights SetHeadlights,
     U2G_GotoPose GotoPose,
