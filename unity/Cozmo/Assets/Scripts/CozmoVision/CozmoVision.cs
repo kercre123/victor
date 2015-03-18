@@ -118,8 +118,7 @@ public class CozmoVision : MonoBehaviour
 	protected float lastHeadAngle = 0f;
 	protected List<int> lastObservedObjects = new List<int>();
 
-	private float dingTime = 0f;
-	private float dongTime = 0f;
+	private float[] dingTimes = new float[2] { 0f, 0f };
 
 	protected int observedObjectsCount
 	{
@@ -138,8 +137,11 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
-		dingTime = 0f;
-		dongTime = 0f;
+		for( int i = 0; i < dingTimes.Length; ++i )
+		{
+			dingTimes[i] = 0f;
+		}
+
 		lastObservedObjects.Clear();
 		lastHeadAngle = 0f;
 		robot = null;
@@ -304,20 +306,20 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( found )
 		{
-			if( dingTime + 2f < Time.time )
+			if( dingTimes[0] + 2f < Time.time )
 			{
 				RobotEngineManager.instance.ObjectObserved( found );
 			
-				dingTime = Time.time;
+				dingTimes[0] = Time.time;
 			}
 		}
 		else
 		{
-			if( dongTime + 2f < Time.time )
+			if( dingTimes[1] + 2f < Time.time )
 			{
 				RobotEngineManager.instance.ObjectObserved( found );
 				
-				dongTime = Time.time;
+				dingTimes[1] = Time.time;
 			}
 		}
 	}
