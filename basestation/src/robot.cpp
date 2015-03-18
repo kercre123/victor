@@ -60,7 +60,7 @@ namespace Anki {
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
     , _camera(robotID)
-    , _visionWhileMovingEnabled(false)
+    , _visionWhileMovingEnabled(true)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
