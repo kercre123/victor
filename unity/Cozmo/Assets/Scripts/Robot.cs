@@ -96,7 +96,7 @@ public class Robot
 		if( status != lastStatus )
 		{
 			RobotEngineManager.instance.statusText.text = "Status: " + status;
-			Debug.Log( RobotEngineManager.instance.statusText.text );
+			//Debug.Log( RobotEngineManager.instance.statusText.text );
 			lastStatus = status;
 		}
 	}
@@ -104,6 +104,8 @@ public class Robot
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
 		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+
+		//Debug.Log( "found " + message.objectID );
 
 		if( observedObject == null )
 		{
