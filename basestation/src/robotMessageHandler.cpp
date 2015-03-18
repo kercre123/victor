@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
+#include "anki/common/basestation/array2d_impl.h"
 
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
@@ -290,7 +291,7 @@ namespace Anki {
     {
       static u32 imgID = 0;
       static u32 totalImgSize = 0;
-      static u8 data[ 3*640*480 ];
+      static u8  data[ 3*640*480 ];
       static u32 dataSize = 0;
       static u32 width;
       static u32 height;
@@ -314,7 +315,7 @@ namespace Anki {
       if (msg.imageId != imgID) {
         imgID = msg.imageId;
         dataSize = 0;
-        width = Vision::CameraResInfo[msg.resolution].width;
+        width  = Vision::CameraResInfo[msg.resolution].width;
         height = Vision::CameraResInfo[msg.resolution].height;
         totalImgSize = width * height;
         isImgValid = msg.chunkId == 0;
@@ -337,7 +338,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      
       // Msgs are guaranteed to be received in order (with TCP) so just append data to array
       memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
       dataSize += msg.chunkSize;
@@ -347,28 +347,55 @@ namespace Anki {
       cv::Mat rawImg;
       if (isLastChunk) {
 
+        u32 numChannels = 1;
+        
         // Decompress image if necessary
-        if (msg.imageEncoding > 0) {
-#if ANKICORETECH_USE_OPENCV
-          cv::vector<u8> inputVec(data, data+dataSize);
-          rawImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
-
-          // Check size
-          u32 w = rawImg.cols;
-          u32 h = rawImg.rows;
-          u32 numChannels = rawImg.channels();
-          imgBytes = w * h * numChannels;
-          //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
-#else
-          PRINT_NAMED_ERROR("MessageImageChunk.NeedOpenCVtoDecode",
-                            "ANKICORETECH_USE_OPENCV must be 1 to use compressed images.\n");
-          return RESULT_FAIL;
-#endif
-        } else {
-          // Already decompressed.
-          // Raw image bytes is the same as total received bytes.
-          imgBytes = dataSize;
-        }
+        switch(msg.imageEncoding)
+        {
+          case IE_JPEG_COLOR:
+            totalImgSize *= 3;
+            
+          case IE_JPEG_GRAY:
+          {
+#           if ANKICORETECH_USE_OPENCV
+            cv::vector<u8> inputVec(data, data+dataSize);
+            
+            rawImg = cv::imdecode(inputVec, (msg.imageEncoding==IE_JPEG_COLOR ? CV_LOAD_IMAGE_COLOR : CV_LOAD_IMAGE_GRAYSCALE));
+            
+            // Check size
+            u32 w = rawImg.cols;
+            u32 h = rawImg.rows;
+            numChannels = rawImg.channels();
+            imgBytes = w * h * numChannels;
+            //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
+#           else
+            PRINT_NAMED_ERROR("MessageImageChunk.NeedOpenCVtoDecode",
+                              "ANKICORETECH_USE_OPENCV must be 1 to use compressed images.\n");
+            return RESULT_FAIL;
+#           endif
+            
+            break;
+          }
+            
+          case IE_RAW_GRAY:
+          case IE_RAW_RGB:
+          case IE_NONE:
+            // Already decompressed.
+            // Raw image bytes is the same as total received bytes.
+            imgBytes = dataSize;
+            break;
+            
+          default:
+            PRINT_NAMED_ERROR("MessageImageChunk.UnsupportedEncoding",
+                              "Encoding %d not yet supported for decoding image chunks.\n", msg.imageEncoding);
+            return RESULT_FAIL;
+            
+        } // switch(msg.imageEncoding)
+        
+        VizManager::getInstance()->SendImage(robot->GetID(), data, dataSize,
+                                             (Vision::CameraResolution)msg.resolution,
+                                             msg.frameTimeStamp,
+                                             (ImageEncoding_t)msg.imageEncoding);
         
         // Make sure the final image contains the expected number of bytes
         if (imgBytes != totalImgSize) {
@@ -393,17 +420,35 @@ namespace Anki {
             
             imgToSend = rawImg.data;
           }
-          // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
-          // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
-          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
-                                                   (Vision::CameraResolution)msg.resolution,
-                                                   msg.frameTimeStamp);
+          
+          Vision::Image image;
+          if(numChannels == 1) {
+            image = Vision::Image(height, width, imgToSend);
+          
+            // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
+            // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
+//            VizManager::getInstance()->SendGreyImage(robot->GetID(), image.GetDataPointer(),
+//                                                     (Vision::CameraResolution)msg.resolution);
 
-          // TODO: Stuff and things on the image that imgToSend now points to.
-          // ...
+          } else {
+            
+            cv::Mat_<u8> grayMat;
+            cv::cvtColor(rawImg, grayMat, CV_BGR2GRAY);
+            imgToSend = grayMat.data;
+            
+            // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
+            // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
+//            VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
+//                                                     (Vision::CameraResolution)msg.resolution);
 
-          Vision::Image image(height, width, imgToSend);
+//            VizManager::getInstance()->SendColorImage(robot->GetID(), rawImg.data,
+//                                                      (Vision::CameraResolution)msg.resolution);
+
+            image = Vision::Image(height, width, imgToSend);
+          }
+          
           image.SetTimestamp(msg.frameTimeStamp);
+          
           
 #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
           // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`

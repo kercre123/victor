@@ -28,5 +28,15 @@ namespace Anki {
       fclose(fp);
     }
     
+    void WritePPM(const char* filename, const u8* imgData, u32 width, u32 height) {
+      FILE * fp = fopen(filename, "w");
+      
+      fprintf(fp, "P6 \r\n%d %d \r\n255 \r\n", width, height);
+      
+      fwrite(imgData, height*width*3, sizeof(u8), fp);
+      
+      fclose(fp);
+    }
+    
   } // namespace Vision
 } // namespace Anki
