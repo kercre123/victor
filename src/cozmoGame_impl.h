@@ -142,6 +142,7 @@ namespace Cozmo {
     REGISTER_CALLBACK(U2G_ImageRequest)
     REGISTER_CALLBACK(U2G_SetRobotImageSendMode)
     REGISTER_CALLBACK(U2G_SaveImages)
+    REGISTER_CALLBACK(U2G_SaveRobotState)
     REGISTER_CALLBACK(U2G_EnableDisplay)
     REGISTER_CALLBACK(U2G_SetHeadlights)
     REGISTER_CALLBACK(U2G_GotoPose)

@@ -8,7 +8,8 @@ public class SelectionButton2 : SelectionButton
 
 	public void Selection()
 	{
-		RobotEngineManager.instance.current.selectedObject = ID;
+		RobotEngineManager.instance.current.selectedObjects.Clear();
+		RobotEngineManager.instance.current.selectedObjects.Add( ID );
 		RobotEngineManager.instance.TrackHeadToObject( ID, Intro.CurrentRobotID );
 	}
 }
