@@ -83,7 +83,7 @@ public class ActionButton
 				break;
 			case ActionButtonMode.ALIGN:
 				text.text = "Align";
-				//button.onClick.AddListener(vision.Action);
+				button.onClick.AddListener(RobotEngineManager.instance.PlaceObjectOnGroundHere);
 				break;
 			case ActionButtonMode.CHANGE:
 				text.text = "Change";
