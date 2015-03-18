@@ -127,12 +127,15 @@ public class VectorLine {
 		set {
 			m_active = value;
 			if (m_canvasRenderer != null) {
+				Debug.Log(name + " m_active("+m_active+") m_canvasRenderer.SetVertices");
 				m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);
 			}
 			if (m_capRenderer != null) {
+				Debug.Log(name + " m_active("+m_active+") m_capRenderer.SetVertices");
 				m_capRenderer.SetVertices (m_capVertices, m_active? 8 : 0);
 			}
 			if (m_fillRenderer != null) {
+				Debug.Log(name + " m_active("+m_active+") m_fillRenderer.SetVertices");
 				m_fillRenderer.SetVertices (m_fillVertices, m_active? m_fillVertexCount : 0);
 			}
 		}
@@ -878,11 +881,12 @@ public class VectorLine {
 		}
 		while (m_canvases.Count < id+1) {
 			var go = new GameObject((m_canvases.Count == 0)? "VectorCanvas" : "VectorCanvas_"+(m_canvases.Count));
-			go.layer = LayerMask.NameToLayer ("UI");
+			//go.layer = LayerMask.NameToLayer ("UI");
 			var pos = go.transform.position;
 			go.transform.position = pos;
 			var canvas = go.AddComponent<Canvas>();
 			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+			//canvas.worldCamera = Camera.main;
 			canvas.sortingOrder = 1;
 			m_canvases.Add (canvas);
 		}
@@ -932,7 +936,7 @@ public class VectorLine {
 		if (m_canvases == null || m_canvases.Count < id+1 || m_canvases[id] == null) {
 			SetCanvas (id);
 		}
-		m_canvases[id].renderMode = RenderMode.ScreenSpaceCamera;
+		m_canvases[id].renderMode = RenderMode.ScreenSpaceOverlay;
 		m_canvases[id].worldCamera = cam;
 	}
 	

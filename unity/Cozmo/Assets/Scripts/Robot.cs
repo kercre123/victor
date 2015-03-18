@@ -90,8 +90,7 @@ public class Robot
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
 
-		//stubbing in rot until we have it sent over
-		Rotation = Quaternion.identity;
+		Rotation = new Quaternion(message.pose_quaternion0, message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3);
 
 		if( status != lastStatus )
 		{
