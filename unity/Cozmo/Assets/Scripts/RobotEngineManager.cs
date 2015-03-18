@@ -34,7 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
-	public event Action<Texture2D> RobotImage; 
+	public event Action<Texture2D> RobotImage;
 
 	private ChannelBase channel;
 	private float lastRobotStateMessage = 0;
@@ -288,10 +288,7 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 		if( current != null )
 		{
-			current.selectedObject = -1;
-			current.lastObjectHeadTracked = -1;
-			current.observedObjects.Clear();
-			current.knownObjects.Clear();
+			current.Reset();
 		}
 	}
 	
@@ -311,7 +308,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
-		if( current.selectedObject == -1 )
+		if( current.selectedObjects.Count == 0 && !current.isBusy )
 		{
 			//Debug.Log( "no box found" );
 
@@ -350,14 +347,21 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
 	{
-		Debug.Log( "Action completed" );
+		bool success = message.success > 0;
+
+		Debug.Log( "Action completed " + success );
 		
-		current.selectedObject = -1;
+		current.selectedObjects.Clear();
 		current.lastObjectHeadTracked = -1;
 
 		SetHeadAngle( defaultHeadAngle );
 
-		SuccessOrFailure( message.success > 0 );
+		if( !success )
+		{
+			SetLiftHeight( 0f );
+		}
+
+		SuccessOrFailure( success );
 	}
 
 	protected IEnumerator TurnOffText()
@@ -612,29 +616,14 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	public void ManualPickAndPlaceObject()
+	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
 	{
-		Debug.Log( "ManualPickAndPlaceObject " + current.selectedObject );
+		Debug.Log( "Pick And Place Object " + current.selectedObjects[index] + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
 		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = current.selectedObject;
-		message.usePreDockPose = 0;
-		message.useManualSpeed = 1;
-		
-		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
-		
-		//current.observedObjects.Clear();
-		//current.lastObjectHeadTracked = -1;
-	}
-
-	public void PickAndPlaceObject()
-	{
-		Debug.Log( "Pick And Place Object " + current.selectedObject );
-		
-		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = current.selectedObject;
-		message.usePreDockPose = 0;
-		message.useManualSpeed = 0;
+		message.objectID = current.selectedObjects[index];
+		message.usePreDockPose = Convert.ToByte( usePreDockPose );
+		message.useManualSpeed = Convert.ToByte( useManualSpeed );
 		
 		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
 		
@@ -669,9 +658,10 @@ public class RobotEngineManager : MonoBehaviour {
 
 		channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
 		current.lastObjectHeadTracked = -1;
-		current.selectedObject = -1;
+		current.selectedObjects.Clear();
 
 		SetLiftHeight( 0f );
+		SetHeadAngle( defaultHeadAngle );
 	}
 
 	public void ClearAllBlocks()
@@ -681,10 +671,10 @@ public class RobotEngineManager : MonoBehaviour {
 		U2G_ClearAllBlocks message = new U2G_ClearAllBlocks();
 		
 		channel.Send( new U2G_Message{ ClearAllBlocks = message } );
-		current.lastObjectHeadTracked = -1;
-		current.selectedObject = -1;
+		current.Reset();
 
 		SetLiftHeight( 0f );
+		SetHeadAngle( defaultHeadAngle );
 	}
 
 	public void VisionWhileMoving( bool enable )

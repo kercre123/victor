@@ -61,13 +61,13 @@ public class CozmoVision1 : CozmoVision
 			return;
 		}
 
-		DetectObservedObjects();
+		Dings();
 		SetActionButtons();
 
 		distancePairs.Clear();
 
 		for(int i = 0; i < maxObservedObjects; ++i) {
-			if(observedObjectsCount > i && robot.selectedObject == -1) {
+			if (observedObjectsCount > i && robot.selectedObjects.Count == 0 && !robot.isBusy) {
 				ObservedObject observedObject = robot.observedObjects[i];
 
 				selectionBoxes[i].button = null;

@@ -19,13 +19,14 @@ public class Robot
 	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
-	public StatusFlag status { get; private set; }
-	public int selectedObject;
+	public List<int> selectedObjects { get; private set; }
+	public List<int> lastSelectedObjects { get; private set; }
 	public int lastObjectHeadTracked;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
 
+	private StatusFlag status;
 	private StatusFlag lastStatus;
 
 	[System.FlagsAttribute]
@@ -41,6 +42,14 @@ public class Robot
 		IS_ANIMATING            = 0x40
 	};
 
+	public bool isBusy
+	{
+		get
+		{
+			return Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
+		}
+	}
+
 	public bool Status( StatusFlag s )
 	{
 		return (status & s) == s;
@@ -49,11 +58,25 @@ public class Robot
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		selectedObject = -1;
+		selectedObjects = new List<int>();
+		lastSelectedObjects = new List<int>();
 		lastObjectHeadTracked = -1;
 		observedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
+
+		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
+
+	public void Reset( DisconnectionReason reason = DisconnectionReason.None )
+	{
+		selectedObjects.Clear();
+		lastSelectedObjects.Clear();
+		lastObjectHeadTracked = -1;
+		observedObjects.Clear();
+		knownObjects.Clear();
+		lastStatus = StatusFlag.NONE;
+	}
+
 
 	public void UpdateInfo( G2U_RobotState message )
 	{
@@ -72,14 +95,14 @@ public class Robot
 
 		if( status != lastStatus )
 		{
-			//Debug.Log( "Status: " + status );
+			Debug.Log( "Status: " + status );
 			lastStatus = status;
 		}
 	}
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ObjectType == message.objectID );
+		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
 
 		if( observedObject == null )
 		{
