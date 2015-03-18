@@ -358,7 +358,17 @@ Supervisor {
 						near 0.018
 						antiAliasing TRUE
 						%{ if fields.vizMode then }%
-						pixelSize 0
+              pixelSize 0
+						%{ else }%
+              %{ if fields.cameraWidth == 640 then }%
+                pixelSize 0.5
+              %{ elseif fields.cameraWidth == 320 then }%
+                pixelSize 1
+              %{ elseif fields.cameraWidth == 160 then }%
+                pixelSize 2
+              %{ elseif fields.cameraWidth == 80 then }%
+                pixelSize 4
+              %{ end }%      
 						%{ end }%
 
 				  }
