@@ -2518,10 +2518,10 @@ MonoBehaviour:
   text: {fileID: 11403550}
   actionButtons:
   - button: {fileID: 11409724}
-    image: {fileID: 11409722}
+    image: {fileID: 11480656}
     text: {fileID: 11403554}
   - button: {fileID: 11447120}
-    image: {fileID: 11447122}
+    image: {fileID: 11480654}
     text: {fileID: 11447118}
   maxObservedObjects: 1
   headAngleSlider: {fileID: 11460600}
