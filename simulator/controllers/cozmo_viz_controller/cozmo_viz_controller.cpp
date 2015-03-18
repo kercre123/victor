@@ -11,7 +11,11 @@
 #include <cstdio>
 #include <string>
 #include <webots/Supervisor.hpp>
+
+#include <opencv2/highgui/highgui.hpp>
+
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
@@ -56,6 +60,7 @@ namespace Anki {
       u8 imgData[3*640*480];
       u32 imgBytes = 0;
       u32 imgWidth, imgHeight = 0;
+      u8 expectedChunkId = 0;
       
       // Cozmo bots for visualization
       typedef struct  {
@@ -308,33 +313,80 @@ namespace Anki {
         imgBytes = 0;
         imgWidth = Vision::CameraResInfo[msg.resolution].width;
         imgHeight = Vision::CameraResInfo[msg.resolution].height;
+        expectedChunkId = 0;
       }
       
-      // Copy chunk into the appropriate location in the imgData array.
-      // Triplicate channels for viewability. (Webots only supports RGB)
-      //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
-      u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
-      for(int i=0; i<msg.chunkSize; ++i) {
-        chunkStart[3*i] = msg.data[i];
-        chunkStart[3*i+1] = msg.data[i];
-        chunkStart[3*i+2] = msg.data[i];
+      if(msg.chunkId != expectedChunkId) {
+        printf("Expected image chunk %d, got %d\n", expectedChunkId, msg.chunkId);
       }
+      // Copy chunk into the appropriate location in the imgData array.
+      ImageEncoding_t encoding = (ImageEncoding_t)msg.encoding;
+      if(encoding == IE_RAW_GRAY) {
+        u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
+        for(int i=0; i<msg.chunkSize; ++i) {
+          chunkStart[3*i] = msg.data[i];
+          chunkStart[3*i+1] = msg.data[i];
+          chunkStart[3*i+2] = msg.data[i];
+        }
+      } else {
+        //u8* chunkStart = imgData + msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
+        //memcpy(chunkStart, msg.data, msg.chunkSize*sizeof(u8));
+        memcpy(imgData + imgBytes, msg.data, msg.chunkSize);
+      }
+      expectedChunkId = msg.chunkId + 1;
+      
+      imgBytes += msg.chunkSize;
+      
+      const bool isLastChunk =  msg.chunkId == msg.chunkCount-1;
+      
+      /*
+      printf("Receiving image chunk %d of size %d. Total bytes now %d%s - first/lastByte=%d/%d.\n",
+             msg.chunkId, msg.chunkSize, imgBytes,
+             (isLastChunk ? " (last chunk!)" : ""),
+             msg.data[0], msg.data[msg.chunkSize-1]);
+      */
       
       // Do we have all the data for this image?
-      imgBytes += msg.chunkSize;
-      if (imgBytes < imgWidth * imgHeight) {
-        return;
+      if(isLastChunk)
+      {
+        cv::Mat cvImg;
+        u8* imgToDisp = nullptr;
+        
+        switch(encoding)
+        {
+          case IE_JPEG_COLOR:
+          case IE_JPEG_GRAY:
+          {
+            cv::vector<u8> inputVec(imgData, imgData+imgBytes);
+            cvImg = cv::imdecode(inputVec, (encoding==IE_JPEG_COLOR ? CV_LOAD_IMAGE_COLOR : CV_LOAD_IMAGE_GRAYSCALE));
+            imgToDisp = cvImg.data;
+            break;
+          }
+          case IE_RAW_GRAY:
+          case IE_RAW_RGB:
+          case IE_NONE:
+            // Already decompressed.
+            // Raw image bytes is the same as total received bytes.
+            imgToDisp = imgData;
+            break;
+            
+          default:
+            printf("***ERRROR - ProcessVizImageChunkMessage: Encoding %d not yet supported for decoding image chunks.\n", encoding);
+            return;
+        } // switch(encoding)
+        
+        assert(imgToDisp != nullptr);
+        
+        // Delete existing image if there is one.
+        if (camImg != nullptr) {
+          camDisp->imageDelete(camImg);
+        }
+        
+        //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+        
+        camImg = camDisp->imageNew(imgWidth, imgHeight, imgToDisp, webots::Display::RGB);
+        camDisp->imagePaste(camImg, 0, 0);
       }
-      
-      // Delete existing image if there is one.
-      if (camImg != nullptr) {
-        camDisp->imageDelete(camImg);
-      }
-      
-      //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
-      
-      camImg = camDisp->imageNew(imgWidth, imgHeight, imgData, webots::Display::RGB);
-      camDisp->imagePaste(camImg, 0, 0);
     };
   
     

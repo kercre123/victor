@@ -800,6 +800,24 @@ namespace Anki {
       AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
       
+#     if USE_COLOR_IMAGES
+      
+      s32 pixel = 0;
+      for (s32 y=0; y < headCamInfo_.nrows; y++) {
+        for (s32 x=0; x < headCamInfo_.ncols; x++) {
+          frame[pixel++] = webots::Camera::imageGetRed(image,   headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetGreen(image, headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetBlue(image,  headCam_->getWidth(), x, y);
+        }
+      }
+      
+#     if BLUR_CAPTURED_IMAGES
+      // Add some blur to simulated images
+      cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
+      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
+#     endif
+
+#     else // !USE_COLOR_IMAGES
       // Set the increment / windowsize for downsampling
       s32 inc = 1;
       s32 pixel = 0;
@@ -843,15 +861,16 @@ namespace Anki {
         }
       } // if averaging or not
       
-#if BLUR_CAPTURED_IMAGES
+#     if BLUR_CAPTURED_IMAGES
       // Add some blur to simulated images
       cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
       cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#endif
+#     endif
 
+#     endif // USE_COLOR_IMAGES
       
     } // CameraGetFrame()
-    
+  
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)

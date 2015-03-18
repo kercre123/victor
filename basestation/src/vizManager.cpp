@@ -10,6 +10,10 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#if ANKICORETECH_USE_OPENCV
+#include <opencv2/highgui/highgui.hpp>
+#endif
+
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
@@ -558,23 +562,58 @@ namespace Anki {
         return;
       }
       
+      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      SendImage(robotID, data, dataLength, res, IE_RAW_GRAY);
+    }
+    
+    
+    void VizManager::SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
+    {
+      if(!_sendImages) {
+        return;
+      }
+      
+      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
+      SendImage(robotID, data, dataLength, res, IE_RAW_RGB);
+    }
+    
+    
+    void VizManager::SendImage(const RobotID_t robotID,
+                               const u8* data,
+                               const u32 dataLength,
+                               const Vision::CameraResolution res,
+                               const ImageEncoding_t encoding)
+    {
+      if(!_sendImages) {
+        return;
+      }
+
       VizImageChunk v;
       v.resolution = res;
       v.imgId = ++(_imgID[robotID]);
       v.chunkId = 0;
+      f32 chunkCount = ceilf((f32)dataLength / MAX_VIZ_IMAGE_CHUNK_SIZE);
+      if(chunkCount > static_cast<f32>(u8_MAX)) {
+        PRINT_NAMED_ERROR("VizManager.SendImage", "Too many chunks (>255) required to send image of %d bytes.\n", dataLength);
+        return;
+      }
+      v.chunkCount = static_cast<u8>(chunkCount);
       v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
+      v.encoding = encoding;
       
-      s32 bytesToSend = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      s32 bytesToSend = dataLength;
       
-
       while (bytesToSend > 0) {
         if (bytesToSend < MAX_VIZ_IMAGE_CHUNK_SIZE) {
           v.chunkSize = bytesToSend;
+          assert(v.chunkId == v.chunkCount-1);
         }
         bytesToSend -= v.chunkSize;
-
-        //printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
+        
+        
         memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
+        // printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d of %d, first/lastByte=%d/%d\n",
+        //       v.imgId, v.chunkId, v.chunkSize, bytesToSend, dataLength, v.data[0], v.data[v.chunkSize-1]);
         SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
         
         ++v.chunkId;
@@ -589,19 +628,50 @@ namespace Anki {
           }
         }
         
+        const char *ext = "";
+        switch(encoding) {
+          case IE_RAW_GRAY:
+            ext = "pgm";
+            break;
+          case IE_RAW_RGB:
+            ext = "ppm";
+            break;
+          case IE_JPEG_COLOR:
+          case IE_JPEG_GRAY:
+            ext = "jpg";
+            break;
+          default:
+            ext = "raw";
+        }
         // Create image file
         char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter);
-        PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
-        ++_saveImageCounter;
-        Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.%s",
+                 AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter, ext);
         
+        switch(encoding)
+        {
+          case IE_RAW_RGB:
+            Vision::WritePPM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+            break;
+          case IE_RAW_GRAY:
+            Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+            break;
+          default:
+            // Just dump already-encoded data to file:
+            FILE * fp = fopen(imgCaptureFilename, "w");
+            fwrite(data, dataLength, sizeof(u8), fp);
+            fclose(fp);
+        }
+        
+        PRINT_INFO("Saved image to %s\n", imgCaptureFilename);
+        ++_saveImageCounter;
+
         // Turn off save mode if we were in one-shot mode
         if (_saveImageMode == VIZ_SAVE_ONE_SHOT) {
           _saveImageMode = VIZ_SAVE_OFF;
         }
       }
-    }
+    } // SendImage()
     
     void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                                       const u16 topRight_x, const u16 topRight_y,
