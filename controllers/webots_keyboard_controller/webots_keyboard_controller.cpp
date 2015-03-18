@@ -1599,7 +1599,7 @@ namespace Anki {
         
         if(alsoSaveState) {
           U2G_SaveRobotState msgSaveState;
-          m.mode = mode;
+          msgSaveState.mode = mode;
           U2G_Message messageWrapper;
           messageWrapper.Set_SaveRobotState(msgSaveState);
           SendMessage(messageWrapper);
