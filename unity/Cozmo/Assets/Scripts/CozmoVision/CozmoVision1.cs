@@ -17,7 +17,7 @@ public class CozmoVision1 : CozmoVision
 	{
 		public Image image;
 		public Text text;
-		public int ID;
+		public ObservedObject observedObject;
 		public SelectionButton1 button { get; set; }
 
 		private Vector3[] corners;
@@ -76,7 +76,7 @@ public class CozmoVision1 : CozmoVision
 				selectionBoxes[i].image.rectTransform.anchoredPosition = new Vector2(observedObject.VizRect.x, -observedObject.VizRect.y);
 				
 				selectionBoxes[i].text.text = "Select " + observedObject.ID;
-				selectionBoxes[i].ID = observedObject.ID;
+				selectionBoxes[i].observedObject = observedObject;
 				
 				selectionBoxes[i].image.gameObject.SetActive(true);
 

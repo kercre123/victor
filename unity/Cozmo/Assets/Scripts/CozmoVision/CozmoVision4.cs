@@ -258,19 +258,19 @@ public class CozmoVision4 : CozmoVision
 			case ActionButtonMode.TARGET:
 				break;
 			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.PickAndPlaceObject( 0, false, true );
+				RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
 				targetLockTimer = 1f;
 				break;
 			case ActionButtonMode.DROP:
 				break;
 			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.PickAndPlaceObject( 0, false, true );
+				RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
 				break;
 			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.PickAndPlaceObject( 0, false, true );
+				//RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
 				break;
 			case ActionButtonMode.ALIGN:
-				//RobotEngineManager.instance.PickAndPlaceObject( 0, false, true );
+				//RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
 				break;
 			case ActionButtonMode.CHANGE:
 				break;
@@ -280,22 +280,22 @@ public class CozmoVision4 : CozmoVision
 	private void DoReleaseAction() {
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
 			case ActionButtonMode.DROP:
-				RobotEngineManager.instance.PlaceObjectOnGroundHere();
+				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
 				break;
 			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
 			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.PickAndPlaceObject();
+				//RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
 			case ActionButtonMode.ALIGN:
-				RobotEngineManager.instance.PlaceObjectOnGroundHere();
+				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
 				break;
 			case ActionButtonMode.CHANGE:
-				RobotEngineManager.instance.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
 		}
 	}

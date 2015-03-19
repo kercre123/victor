@@ -79,7 +79,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			//if coz is picked up, let's zero our wheels and abort control logic
 			if(RobotEngineManager.instance.current.Status(Robot.StatusFlag.IS_PICKED_UP)) {
 				if(Intro.CurrentRobotID != 0) {
-					RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+					RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 					return;
 				}
 			}
@@ -92,7 +92,7 @@ public class RobotRelativeControls : MonoBehaviour {
 				//Debug.Log("frame(" + Time.frameCount + ") EndSwipe turnSoFar(" + turnSoFar + ")");
 				aboutFace = false;
 				if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-					RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+					RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 				}
 			}
 			return;
@@ -100,7 +100,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(debugOverride) {
 			if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-				RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+				RobotEngineManager.instance.current.DriveWheels(leftWheelSpeed, rightWheelSpeed);
 			}
 			RefreshDebugText();
 			return;
@@ -128,7 +128,7 @@ public class RobotRelativeControls : MonoBehaviour {
 					robotStartTurnFacing = robotFacing;
 
 					verticalStick.AbsorbDoubleTap();
-					RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, CozmoUtil.MAX_WHEEL_SPEED, -CozmoUtil.MAX_WHEEL_SPEED);
+					RobotEngineManager.instance.current.DriveWheels(CozmoUtil.MAX_WHEEL_SPEED, -CozmoUtil.MAX_WHEEL_SPEED);
 					return;
 				}
 			}
@@ -259,7 +259,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null && Intro.CurrentRobotID != 0) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+			RobotEngineManager.instance.current.DriveWheels(leftWheelSpeed, rightWheelSpeed);
 		}
 
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
@@ -272,7 +272,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		//Debug.Log("RobotRelativeControls OnDisable");
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 		}
 
 //		if(recorder != null) {
