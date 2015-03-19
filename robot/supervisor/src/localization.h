@@ -30,7 +30,7 @@ namespace Anki {
       // Uses the keyframe ("ground truth") pose at some past time as given
       // by the basestation after it has processed a mat marker to
       // update the current pose by transforming the given keyframe pose
-      // by the pose-diff between the historical at time t and the current pose.
+      // by the pose-diff between the historical pose at time t and the current pose.
       // Also updates the current pose frame ID.
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
 
