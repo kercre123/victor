@@ -280,7 +280,7 @@ namespace Anki {
           
           // NOTE: Assuming there is only z-axis rotation!
           // TODO: Make generic?
-          Radians interpRotation = prev_it->second.GetPose().GetRotationAngle() + Radians(pTransform.GetRotationAngle() * timeScale);
+          Radians interpRotation = prev_it->second.GetPose().GetRotationAngle<'Z'>() + Radians(pTransform.GetRotationAngle<'Z'>() * timeScale);
           
           // Interp head angle
           f32 interpHeadAngle = prev_it->second.GetHeadAngle() + timeScale * (it->second.GetHeadAngle() - prev_it->second.GetHeadAngle());

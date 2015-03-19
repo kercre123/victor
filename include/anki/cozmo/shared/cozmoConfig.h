@@ -245,7 +245,7 @@ namespace Anki {
 
 #ifdef SIMULATOR
     // Simulated camera's frame rate, specified by its period in milliseconds
-    const s32 VISION_TIME_STEP = 30; // This should be a multiple of the world's basic time step!
+    const s32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
 #endif
 
 
@@ -365,7 +365,12 @@ namespace Anki {
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
+    // Default distance from marker for predock pose
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 60.f;
 
+    // Max speed the robot can travel when in assisted RC mode
+    const f32 MAX_ASSISTED_RC_SPEED = 50.f;
+    
     /***************************************************************************
      *
      *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~

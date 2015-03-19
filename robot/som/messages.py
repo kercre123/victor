@@ -40,6 +40,7 @@ CAMERA_RES_SXGA = 3
 CAMERA_RES_XGA = 4
 CAMERA_RES_SVGA = 5
 CAMERA_RES_VGA = 6
+CAMERA_RES_QSVGA = 6.5 # HACK! Not in the C++ code
 CAMERA_RES_QVGA = 7
 CAMERA_RES_QQVGA = 8
 CAMERA_RES_QQQVGA = 9
@@ -64,10 +65,10 @@ class MessageBase(struct.Struct):
         argtype = type(msg)
         if argtype is int:
             return msg == cls.ID
+        elif argtype is str: # Str has to come before bytes because they are the same in python 2
+            return ord(msg[0]) == cls.ID
         elif argtype is bytes:
             return msg[0] == cls.ID
-        elif argtype is str:
-            return ord(msg[0]) == cls.ID
         else:
             raise ValueError("MessageBase doesn't know how to interprate a %s \"%s\"" % (argtype, msg))
 
