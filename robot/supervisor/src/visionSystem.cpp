@@ -2037,7 +2037,9 @@ namespace Anki {
         
         // Make sure that we send the robot state message associated with the
         // image we are about to process.
-        Messages::SendRobotStateMsg(&robotState);
+        if(mode_ != VISION_MODE_SEND_IMAGES_TO_BASESTATION) {
+          Messages::SendRobotStateMsg(&robotState);
+        }
         
         UpdateRobotState(robotState);
         
