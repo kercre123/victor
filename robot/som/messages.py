@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "e3c5e279baa5b66938a1b63a0a46b4c9d0a86c2a" # Hash for the revision these python definitions are based on
+__version__ = "66bd2879483115a6b4cafb35a2be89efac4c8512" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -28,11 +28,16 @@ def portableNamesToStructFormat(names):
 ISM_OFF = 0
 ISM_STREAM = 1
 ISM_SINGLE_SHOT = 2
+
 IE_NONE  = 0
-IE_YUYV  = 1
-IE_BAYER = 2
-IE_JPEG  = 3
-IE_WEBP  = 4
+IE_RAW_GREY = 1
+IE_RAW_RGB = 2
+IE_YUYV  = 3
+IE_BAYER = 4
+IE_JPEG_GRAY  = 5
+IE_JPEG_COLOR = 6
+IE_WEBP  = 7
+
 CAMERA_RES_QUXGA = 0
 CAMERA_RES_QXGA = 1
 CAMERA_RES_UXGA = 2

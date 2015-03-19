@@ -53,7 +53,7 @@ class CameraSubServer(BaseSubServer):
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
-    ENCODER_CODING        = messages.IE_JPEG
+    ENCODER_CODING        = messages.IE_JPEG_COLOR
     ENCODER_QUALITY       = 70
 
     ENCODER_LATEANCY = 2.0 # ms, determiend imperically
@@ -132,7 +132,7 @@ class CameraSubServer(BaseSubServer):
         "Starts the encoder subprocess"
         self.encoderLock.acquire()
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            if self.ENCODER_CODING == messages.IE_JPEG:
+            if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
                 if self.ispRes != self.resolution:
