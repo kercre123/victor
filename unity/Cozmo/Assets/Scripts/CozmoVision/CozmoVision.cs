@@ -273,31 +273,18 @@ public class CozmoVision : MonoBehaviour
 		{
 			robot = RobotEngineManager.instance.current;
 
-			if( robot.isBusy )
+			if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 )
 			{
 				return;
 			}
 
-			for( int i = 0; i < robot.observedObjects.Count; ++i )
+			if( robot.observedObjects.Count > lastObservedObjects.Count )
 			{
-				if( robot.selectedObjects.Count == 0 && !robot.isBusy && !lastObservedObjects.Contains( robot.observedObjects[i].ID ) )
-				{
-					Ding( true );
-					
-					break;
-				}
+				Ding( true );
 			}
-
-			for( int i = 0; i < lastObservedObjects.Count; ++i )
+			else if( robot.observedObjects.Count < lastObservedObjects.Count )
 			{
-				ObservedObject lastObservedObject = RobotEngineManager.instance.current.observedObjects.Find( x => x.ID == lastObservedObjects[i] );
-				
-				if( robot.selectedObjects.Count == 0 && !robot.isBusy && lastObservedObject == null )
-				{
-					Ding( false );
-					
-					break;
-				}
+				Ding( false );
 			}
 		}
 	}

@@ -173,3 +173,9 @@ build_xcode/game_sim
 generated
 unity/ios/UnityBuild
 unity/ios/build
+unity/Cozmo/Assembly-UnityScript-Editor-vs.unityproj
+unity/Cozmo/Assembly-UnityScript-Editor.unityproj
+unity/Cozmo/Assembly-UnityScript-firstpass-vs.unityproj
+unity/Cozmo/Assembly-UnityScript-firstpass.unityproj
+unity/Cozmo/Assembly-UnityScript-vs.unityproj
+unity/Cozmo/Assembly-UnityScript.unityproj

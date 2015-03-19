@@ -359,11 +359,6 @@ public class RobotEngineManager : MonoBehaviour {
 
 		SetHeadAngle( defaultHeadAngle );
 
-		if( !success )
-		{
-			SetLiftHeight( 0f );
-		}
-
 		SuccessOrFailure( success );
 	}
 
@@ -426,11 +421,6 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
-		if( PlayerPrefs.GetInt( "VisionSchemeIndex" ) == 2 )
-		{
-			return;
-		}
-
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
@@ -630,7 +620,7 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
 		
-		current.observedObjects.Clear();
+		//current.observedObjects.Clear();
 		current.lastObjectHeadTracked = -1;
 	}
 	
