@@ -333,7 +333,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
@@ -1086,7 +1086,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
@@ -1155,7 +1155,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
@@ -1301,7 +1301,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
@@ -1900,7 +1900,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 30
     m_FontStyle: 0
     m_BestFit: 1
@@ -2185,7 +2185,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 30
     m_FontStyle: 0
     m_BestFit: 1
@@ -2318,7 +2318,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
@@ -2387,7 +2387,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
@@ -2464,9 +2464,10 @@ MonoBehaviour:
   - DriveThumb
   - PlayerThumb
   visionStyles:
-  - CozmoVision1
-  - CozmoVision2
-  - CozmoVision3
+  - ObjectSelectWithButtons
+  - ObjectSelect
+  - TwoButton
+  - InteractionSlider
 --- !u!1001 &1812580673
 Prefab:
   m_ObjectHideFlags: 0
@@ -2512,24 +2513,69 @@ Prefab:
       objectReference: {fileID: 792198615}
     - target: {fileID: 22451912, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: .25
       objectReference: {fileID: 0}
     - target: {fileID: 22451912, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22451908, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: .25
       objectReference: {fileID: 0}
     - target: {fileID: 22451908, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: .25
       objectReference: {fileID: 0}
     - target: {fileID: 22451908, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11469692, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11474600, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11412376, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11474598, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11412382, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11412388, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11474590, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11451904, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
+    - target: {fileID: 11474588, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
   m_RootGameObject: {fileID: 1727736957}
@@ -2620,7 +2666,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1

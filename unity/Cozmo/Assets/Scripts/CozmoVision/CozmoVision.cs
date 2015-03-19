@@ -149,7 +149,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void Awake()
 	{
-		RobotEngineManager.instance.DisconnectedFromClient += Reset;
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
 		rTrans = transform as RectTransform;
 

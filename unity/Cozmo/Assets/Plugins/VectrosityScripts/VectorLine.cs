@@ -127,15 +127,15 @@ public class VectorLine {
 		set {
 			m_active = value;
 			if (m_canvasRenderer != null) {
-				Debug.Log(name + " m_active("+m_active+") m_canvasRenderer.SetVertices");
+				//Debug.Log(name + " m_active("+m_active+") m_canvasRenderer.SetVertices");
 				m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);
 			}
 			if (m_capRenderer != null) {
-				Debug.Log(name + " m_active("+m_active+") m_capRenderer.SetVertices");
+				//Debug.Log(name + " m_active("+m_active+") m_capRenderer.SetVertices");
 				m_capRenderer.SetVertices (m_capVertices, m_active? 8 : 0);
 			}
 			if (m_fillRenderer != null) {
-				Debug.Log(name + " m_active("+m_active+") m_fillRenderer.SetVertices");
+				//Debug.Log(name + " m_active("+m_active+") m_fillRenderer.SetVertices");
 				m_fillRenderer.SetVertices (m_fillVertices, m_active? m_fillVertexCount : 0);
 			}
 		}

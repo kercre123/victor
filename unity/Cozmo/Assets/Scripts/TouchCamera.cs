@@ -3,12 +3,22 @@
 using UnityEngine;
 
 public class TouchCamera : MonoBehaviour {
+
+	Camera cam;
+
 	Vector2?[] oldTouchPositions = {
 		null,
 		null
 	};
 	Vector2 oldTouchVector;
 	float oldTouchDistance;
+
+	Rect rect;
+
+	void Awake() {
+		cam = GetComponent<Camera>();
+		rect = new Rect(0, 0, 1, 1);
+	}
 
 	int touchCount {
 		get {
@@ -35,8 +45,13 @@ public class TouchCamera : MonoBehaviour {
 		if (touchCount == 0) {
 			oldTouchPositions[0] = null;
 			oldTouchPositions[1] = null;
+			return;
 		}
-		else if (touchCount == 1) {
+
+		Vector2 viewPortTouchPos = cam.ScreenToViewportPoint(touch0);
+		if(!rect.Contains(viewPortTouchPos)) return;
+
+		if (touchCount == 1) {
 			if (oldTouchPositions[0] == null || oldTouchPositions[1] != null) {
 				oldTouchPositions[0] = touch0;
 				oldTouchPositions[1] = null;

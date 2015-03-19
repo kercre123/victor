@@ -46,7 +46,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void OnEnable() {
 		//reset default state for this control scheme test
-		Debug.Log("RobotRelativeControls OnEnable");
+		//Debug.Log("RobotRelativeControls OnEnable");
 		if(gyroRollControl != null) {
 			gyroRollControl.isOn = true;
 			//gyroRollControl.gameObject.SetActive(gyroInputs != null);
@@ -269,7 +269,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void OnDisable() {
 		//clean up this controls test if needed
-		Debug.Log("RobotRelativeControls OnDisable");
+		//Debug.Log("RobotRelativeControls OnDisable");
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
 			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);

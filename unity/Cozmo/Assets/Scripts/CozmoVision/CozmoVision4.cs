@@ -22,7 +22,7 @@ public class ActionSlider
 	public void SetMode(ActionButtonMode mode, bool down) {
 		if(Mode == mode && down == pressed) return;
 
-		Debug.Log("ActionSlider.SetMode("+mode+", "+down+")");
+		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+")");
 		
 		Mode = mode;
 		pressed = down;
