@@ -2027,10 +2027,13 @@ namespace Anki {
           return RESULT_OK;
         }
         
+        /*
+        // ** RobotState msg should only be sent from mainExecution **
         // Make sure that we send the robot state message associated with the
         // image we are about to process.
         Messages::SendRobotStateMsg(&robotState);
-        
+        */
+         
         UpdateRobotState(robotState);
         
         // If SetMarkerToTrack() was called by main() during previous Update(),
