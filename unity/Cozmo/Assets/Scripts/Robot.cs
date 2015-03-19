@@ -19,9 +19,9 @@ public class Robot
 	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
-	public List<int> selectedObjects { get; private set; }
-	public List<int> lastSelectedObjects { get; private set; }
-	public int lastObjectHeadTracked;
+	public List<ObservedObject> selectedObjects { get; private set; }
+	public List<ObservedObject> lastSelectedObjects { get; private set; }
+	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
@@ -58,9 +58,9 @@ public class Robot
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		selectedObjects = new List<int>();
-		lastSelectedObjects = new List<int>();
-		lastObjectHeadTracked = -1;
+		selectedObjects = new List<ObservedObject>();
+		lastSelectedObjects = new List<ObservedObject>();
+		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
@@ -71,7 +71,7 @@ public class Robot
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
-		lastObjectHeadTracked = -1;
+		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		knownObjects.Clear();
 		lastStatus = StatusFlag.NONE;
@@ -90,13 +90,12 @@ public class Robot
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
 
-		//stubbing in rot until we have it sent over
-		Rotation = Quaternion.identity;
+		Rotation = new Quaternion(message.pose_quaternion0, message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3);
 
 		if( status != lastStatus )
 		{
 			RobotEngineManager.instance.statusText.text = "Status: " + status;
-			Debug.Log( RobotEngineManager.instance.statusText.text );
+			//Debug.Log( RobotEngineManager.instance.statusText.text );
 			lastStatus = status;
 		}
 	}
@@ -104,6 +103,8 @@ public class Robot
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
 		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+
+		//Debug.Log( "found " + message.objectID );
 
 		if( observedObject == null )
 		{

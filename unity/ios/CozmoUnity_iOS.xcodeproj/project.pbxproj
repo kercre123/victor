@@ -60,6 +60,10 @@
 		468C75D61A96B6B6001011B7 /* libCozmo_Game.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75CD1A96B6B6001011B7 /* libCozmo_Game.a */; };
 		468C75D71A96B6B6001011B7 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75CE1A96B6B6001011B7 /* libjsoncpp.a */; };
 		468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75E81A96C18D001011B7 /* libc++.dylib */; };
+		4690638C1ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 469063881ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s */; };
+		4690638D1ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 469063891ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s */; };
+		4690638E1ABB4ED800A1558A /* Assembly-UnityScript.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 4690638A1ABB4ED800A1558A /* Assembly-UnityScript.dll.s */; };
+		4690638F1ABB4ED800A1558A /* Boo.Lang.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 4690638B1ABB4ED800A1558A /* Boo.Lang.dll.s */; };
 		46F5C0AE1A96C7830078F6E7 /* liblibjpeg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75D81A96C17D001011B7 /* liblibjpeg.a */; };
 		46F5C0AF1A96C7830078F6E7 /* liblibpng.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75D91A96C17D001011B7 /* liblibpng.a */; };
 		46F5C0B01A96C7830078F6E7 /* libopencv_calib3d.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75DA1A96C17D001011B7 /* libopencv_calib3d.a */; };
@@ -203,6 +207,10 @@
 		468C75DE1A96C17D001011B7 /* libopencv_objdetect.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_objdetect.a; path = "../../../coretech-external/build/opencv-ios/multiArchLibs/libopencv_objdetect.a"; sourceTree = "<group>"; };
 		468C75DF1A96C17D001011B7 /* libzlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzlib.a; path = "../../../coretech-external/build/opencv-ios/multiArchLibs/libzlib.a"; sourceTree = "<group>"; };
 		468C75E81A96C18D001011B7 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
+		469063881ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = "Assembly-CSharp-firstpass.dll.s"; sourceTree = "<group>"; };
+		469063891ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = "Assembly-UnityScript-firstpass.dll.s"; sourceTree = "<group>"; };
+		4690638A1ABB4ED800A1558A /* Assembly-UnityScript.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = "Assembly-UnityScript.dll.s"; sourceTree = "<group>"; };
+		4690638B1ABB4ED800A1558A /* Boo.Lang.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = Boo.Lang.dll.s; sourceTree = "<group>"; };
 		46F5C0B81A96CAE90078F6E7 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = ../../generated/ios.xcconfig; sourceTree = "<group>"; };
 		46F5C0BA1A96CC360078F6E7 /* libCSharpBinding.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCSharpBinding.a; path = "../../generated/game-ios/Xcode/lib/Debug/libCSharpBinding.a"; sourceTree = "<group>"; };
 		46F5C1561A97E65C0078F6E7 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "../../build/unity/ios/Debug-iphoneos/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
@@ -465,6 +473,10 @@
 		465B5EF41A98177A00AB809E /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				469063881ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s */,
+				469063891ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s */,
+				4690638A1ABB4ED800A1558A /* Assembly-UnityScript.dll.s */,
+				4690638B1ABB4ED800A1558A /* Boo.Lang.dll.s */,
 				465B5EF51A98177A00AB809E /* Assembly-CSharp.dll.s */,
 				465B5EF71A98177A00AB809E /* Mono.Security.dll.s */,
 				465B5EF81A98177A00AB809E /* mscorlib.dll.s */,
@@ -683,7 +695,6 @@
 				465B5F251A98177A00AB809E /* RegisterFeatures.cpp in Sources */,
 				465B5F181A98177A00AB809E /* DisplayManager.mm in Sources */,
 				465B5F281A98177A00AB809E /* System.Core.dll.s in Sources */,
-				465B5F231A98177A00AB809E /* Mono.Security.dll.s in Sources */,
 				465B5F121A98177A00AB809E /* UnityView.mm in Sources */,
 				465B5F201A98177A00AB809E /* UnityAppController.mm in Sources */,
 				465B5F031A98177A00AB809E /* iPhone_OrientationSupport.mm in Sources */,
@@ -710,7 +721,6 @@
 				465B5F2B1A98177A00AB809E /* UnityEngine.UI.dll.s in Sources */,
 				465B5F0A1A98177A00AB809E /* RenderPluginDelegate.mm in Sources */,
 				465B5F131A98177A00AB809E /* UnityViewControllerBase.mm in Sources */,
-				465B5F211A98177A00AB809E /* Assembly-CSharp.dll.s in Sources */,
 				465B5F041A98177A00AB809E /* iPhone_Profiler.cpp in Sources */,
 				465B5F191A98177A00AB809E /* EAGLContextHelper.mm in Sources */,
 				465B5F1C1A98177A00AB809E /* VideoPlayer.mm in Sources */,
@@ -718,6 +728,12 @@
 				465B5F091A98177A00AB809E /* MainViewControllerListener.mm in Sources */,
 				465B5F111A98177A00AB809E /* UnityAppController+ViewHandling.mm in Sources */,
 				465B5F1B1A98177A00AB809E /* ScriptIntegration.mm in Sources */,
+				4690638C1ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s in Sources */,
+				4690638D1ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s in Sources */,
+				4690638E1ABB4ED800A1558A /* Assembly-UnityScript.dll.s in Sources */,
+				4690638F1ABB4ED800A1558A /* Boo.Lang.dll.s in Sources */,
+				465B5F211A98177A00AB809E /* Assembly-CSharp.dll.s in Sources */,
+				465B5F231A98177A00AB809E /* Mono.Security.dll.s in Sources */,
 				465B5F261A98177A00AB809E /* RegisterMonoModules.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

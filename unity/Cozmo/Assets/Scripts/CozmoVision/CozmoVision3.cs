@@ -49,18 +49,6 @@ public class CozmoVision3 : CozmoVision
 	[SerializeField] protected float distance;
 	
 	protected List<ObservedObject> inReticle = new List<ObservedObject>();
-	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
-
-	protected override void Reset( DisconnectionReason reason )
-	{
-		base.Reset( reason );
-
-		for( int i = 0; i < lastActionButtonActiveSelf.Length; ++i )
-		{
-			lastActionButtonActiveSelf[i].activeSelf = false;
-			lastActionButtonActiveSelf[i].text = string.Empty;
-		}
-	}
 
 	protected bool isInReticle
 	{
@@ -91,7 +79,7 @@ public class CozmoVision3 : CozmoVision
 
 			for( int i = 0; i < robot.observedObjects.Count; ++i )
 			{
-				//Debug.Log( i );
+				//Debug.Log( (i + 1) );
 				//box.image.gameObject.SetActive( true );
 				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
 				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
@@ -110,9 +98,22 @@ public class CozmoVision3 : CozmoVision
 					Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
 				}*/
 
-				if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+				if( isInReticle && robot.observedObjects[i].Distance < distance )
 				{
 					inReticle.Add( robot.observedObjects[i] );
+				}
+			}
+
+			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+			{
+				return obj1.Distance.CompareTo( obj2.Distance );   
+			} );
+
+			for( int i = 1; i < inReticle.Count; ++i )
+			{
+				if( Vector2.Distance( inReticle[0].WorldPosition, inReticle[i].WorldPosition ) > inReticle[0].Size.x * 0.5f )
+				{
+					inReticle.RemoveAt( i-- );
 				}
 			}
 
@@ -125,7 +126,7 @@ public class CozmoVision3 : CozmoVision
 			{
 				if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 				{
-					robot.selectedObjects.Add( inReticle[0].ID );
+					robot.selectedObjects.Add( inReticle[0] );
 					
 					if( inReticle.Count == 1 )
 					{
@@ -140,7 +141,7 @@ public class CozmoVision3 : CozmoVision
 				{
 					for( int i = 0; i < 2 && i < inReticle.Count; ++i )
 					{
-						robot.selectedObjects.Add( inReticle[i].ID );
+						robot.selectedObjects.Add( inReticle[i] );
 					}
 					
 					if( inReticle.Count == 1 )
@@ -158,44 +159,29 @@ public class CozmoVision3 : CozmoVision
 
 	protected override void Dings()
 	{
-		if( robot.isBusy )
+		if( RobotEngineManager.instance != null )
 		{
-			return;
-		}
+			robot = RobotEngineManager.instance.current;
+			
+			if( robot == null || robot.isBusy )
+			{
+				return;
+			}
 
-		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
-		{
-			if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
-			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) ||
-			   ( robot.selectedObjects.Count > robot.lastSelectedObjects.Count ) )
+			if( robot.selectedObjects.Count > robot.lastSelectedObjects.Count )
 			{
 				Ding( true );
 				robot.lastSelectedObjects.Clear();
 				robot.lastSelectedObjects.AddRange( robot.selectedObjects );
-				
-				break;
 			}
-			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
-			        ( robot.selectedObjects.Count < robot.lastSelectedObjects.Count ) )
+			else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
 			{
 				Ding( false );
 				robot.lastSelectedObjects.Clear();
-				
-				break;
 			}
 		}
 	}
 
-	protected override void LateUpdate()
-	{
-		base.LateUpdate();
-
-		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
-		{
-			lastActionButtonActiveSelf[i].activeSelf = actionButtons[i].button.gameObject.activeSelf;
-			lastActionButtonActiveSelf[i].text = actionButtons[i].text.text;
-		}
-	}
 
 	protected override void SetActionButtons()
 	{
