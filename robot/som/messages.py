@@ -64,10 +64,10 @@ class MessageBase(struct.Struct):
         argtype = type(msg)
         if argtype is int:
             return msg == cls.ID
+        elif argtype is str: # Str has to come before bytes because they are the same in python 2
+            return ord(msg[0]) == cls.ID
         elif argtype is bytes:
             return msg[0] == cls.ID
-        elif argtype is str:
-            return ord(msg[0]) == cls.ID
         else:
             raise ValueError("MessageBase doesn't know how to interprate a %s \"%s\"" % (argtype, msg))
 
