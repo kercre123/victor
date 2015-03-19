@@ -1479,7 +1479,7 @@ namespace Anki {
         Result result = RESULT_OK;
 
         if(!isInitialized_) {
-          captureResolution_ = Vision::CAMERA_RES_QVGA;
+          captureResolution_ = Vision::CAMERA_RES_VGA;
 
           // WARNING: the order of these initializations matter!
 

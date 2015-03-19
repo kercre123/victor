@@ -37,7 +37,7 @@ namespace Anki {
         
       void DetectFiducialMarkersParameters::Initialize()
       {
-        detectionResolution = Vision::CAMERA_RES_QVGA;
+        detectionResolution = Vision::CAMERA_RES_VGA;
         detectionWidth  = Vision::CameraResInfo[detectionResolution].width;
         detectionHeight = Vision::CameraResInfo[detectionResolution].height;
 
@@ -158,7 +158,7 @@ namespace Anki {
         // LK tracker parameter initialization
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        trackingResolution   = Vision::CAMERA_RES_QVGA; // 320x240
+        trackingResolution   = Vision::CAMERA_RES_VGA; // 320x240
         numPyramidLevels     = 3;
 #else
         //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
@@ -216,7 +216,7 @@ namespace Anki {
       
       void FaceDetectionParameters::Initialize()
       {
-        detectionResolution = Vision::CAMERA_RES_QVGA;
+        detectionResolution = Vision::CAMERA_RES_VGA;
         
         faceDetectionHeight = Vision::CameraResInfo[detectionResolution].height;
         faceDetectionWidth  = Vision::CameraResInfo[detectionResolution].width;

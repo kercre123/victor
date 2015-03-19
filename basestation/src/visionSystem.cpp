@@ -1373,7 +1373,7 @@ namespace Cozmo {
     Result result = RESULT_OK;
     
     if(!_isInitialized) {
-      _captureResolution = Vision::CAMERA_RES_QVGA;
+      _captureResolution = Vision::CAMERA_RES_VGA;
       
       // WARNING: the order of these initializations matter!
       
