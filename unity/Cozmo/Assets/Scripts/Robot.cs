@@ -19,9 +19,9 @@ public class Robot
 	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
-	public List<int> selectedObjects { get; private set; }
-	public List<int> lastSelectedObjects { get; private set; }
-	public int lastObjectHeadTracked;
+	public List<ObservedObject> selectedObjects { get; private set; }
+	public List<ObservedObject> lastSelectedObjects { get; private set; }
+	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
@@ -58,9 +58,9 @@ public class Robot
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		selectedObjects = new List<int>();
-		lastSelectedObjects = new List<int>();
-		lastObjectHeadTracked = -1;
+		selectedObjects = new List<ObservedObject>();
+		lastSelectedObjects = new List<ObservedObject>();
+		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
@@ -71,7 +71,7 @@ public class Robot
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
-		lastObjectHeadTracked = -1;
+		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		knownObjects.Clear();
 		lastStatus = StatusFlag.NONE;

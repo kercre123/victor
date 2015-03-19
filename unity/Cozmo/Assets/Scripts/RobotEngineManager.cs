@@ -316,7 +316,7 @@ public class RobotEngineManager : MonoBehaviour {
 			//Debug.Log( "no box found" );
 
 			current.observedObjects.Clear();
-			current.lastObjectHeadTracked = -1;
+			current.lastObjectHeadTracked = null;
 		}
 	}
 
@@ -355,7 +355,7 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log( "Action completed " + success );
 		
 		current.selectedObjects.Clear();
-		current.lastObjectHeadTracked = -1;
+		current.lastObjectHeadTracked = null;
 
 		SetHeadAngle( defaultHeadAngle );
 
@@ -586,42 +586,42 @@ public class RobotEngineManager : MonoBehaviour {
 
 		channel.Send( new U2G_Message { SetHeadAngle = message } );
 
-		current.lastObjectHeadTracked = -1;
+		current.lastObjectHeadTracked = null;
 	}
 
-	public void TrackHeadToObject( int objectID, byte robotID )
+	public void TrackHeadToObject( ObservedObject observedObject, byte robotID )
 	{
 		if (robotID < 0 || robotID > 255) {
 			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
 		}
 
-		if( current.lastObjectHeadTracked != objectID )
+		if( observedObject != null && current.lastObjectHeadTracked != observedObject )
 		{
-			Debug.Log( "Track Head To Object " + objectID );
+			Debug.Log( "Track Head To Object " + observedObject.ID );
 
 			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
-			message.objectID = (uint)objectID;
+			message.objectID = (uint)observedObject.ID;
 			message.robotID = robotID;
 			
 			channel.Send( new U2G_Message { TrackHeadToObject = message } );
 
-			current.lastObjectHeadTracked = objectID;
+			current.lastObjectHeadTracked = observedObject;
 		}
 	}
 
 	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
 	{
-		Debug.Log( "Pick And Place Object " + current.selectedObjects[index] + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
+		Debug.Log( "Pick And Place Object " + current.selectedObjects[index].ID + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
 		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = current.selectedObjects[index];
+		message.objectID = current.selectedObjects[index].ID;
 		message.usePreDockPose = Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = Convert.ToByte( useManualSpeed );
 		
 		channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
 		
 		//current.observedObjects.Clear();
-		current.lastObjectHeadTracked = -1;
+		current.lastObjectHeadTracked = null;
 	}
 	
 	public void SetLiftHeight( float height )
@@ -650,7 +650,7 @@ public class RobotEngineManager : MonoBehaviour {
 		message.objectID = -1;
 
 		channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
-		current.lastObjectHeadTracked = -1;
+		current.lastObjectHeadTracked = null;
 		current.selectedObjects.Clear();
 
 		SetLiftHeight( 0f );

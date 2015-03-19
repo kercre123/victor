@@ -126,7 +126,7 @@ public class CozmoVision3 : CozmoVision
 			{
 				if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 				{
-					robot.selectedObjects.Add( inReticle[0].ID );
+					robot.selectedObjects.Add( inReticle[0] );
 					
 					if( inReticle.Count == 1 )
 					{
@@ -141,7 +141,7 @@ public class CozmoVision3 : CozmoVision
 				{
 					for( int i = 0; i < 2 && i < inReticle.Count; ++i )
 					{
-						robot.selectedObjects.Add( inReticle[i].ID );
+						robot.selectedObjects.Add( inReticle[i] );
 					}
 					
 					if( inReticle.Count == 1 )

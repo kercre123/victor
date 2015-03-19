@@ -97,6 +97,22 @@ public class ActionButton
 		
 		button.gameObject.SetActive(true);
 	}
+
+	public static string GetModeName(ActionButtonMode mode) {
+
+		switch(mode) {
+			case ActionButtonMode.TARGET: return "Search";
+			case ActionButtonMode.PICK_UP: return "Pick Up";
+			case ActionButtonMode.DROP: return "Drop";
+			case ActionButtonMode.STACK: return "Stack";
+			case ActionButtonMode.ROLL: return "Roll";
+			case ActionButtonMode.ALIGN: return "Align";
+			case ActionButtonMode.CHANGE: return "Change";
+			case ActionButtonMode.CANCEL: return "Cancel";
+		}
+
+		return "None";
+	}
 }
 
 public class CozmoVision : MonoBehaviour
