@@ -35,7 +35,7 @@ public class ActionButton
 
 	protected void PickAndPlaceObject()
 	{
-		RobotEngineManager.instance.PickAndPlaceObject( index );
+		RobotEngineManager.instance.current.PickAndPlaceObject( index );
 	}
 	
 	public void Cancel()
@@ -45,7 +45,7 @@ public class ActionButton
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.current.selectedObjects.Clear();
-			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
+			RobotEngineManager.instance.current.SetHeadAngle();
 		}
 	}
 
@@ -71,7 +71,7 @@ public class ActionButton
 				break;
 			case ActionButtonMode.DROP:
 				text.text = "Drop";
-				button.onClick.AddListener(RobotEngineManager.instance.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
 				break;
 			case ActionButtonMode.STACK:
 				text.text = "Stack";
@@ -83,7 +83,7 @@ public class ActionButton
 				break;
 			case ActionButtonMode.ALIGN:
 				text.text = "Align";
-				button.onClick.AddListener(RobotEngineManager.instance.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
 				break;
 			case ActionButtonMode.CHANGE:
 				text.text = "Change";
@@ -117,12 +117,14 @@ public class ActionButton
 
 public class CozmoVision : MonoBehaviour
 {
-	[SerializeField] protected Button button;
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected Slider headAngleSlider;
+	[SerializeField] protected AudioClip newObjectObservedSound;
+	[SerializeField] protected AudioClip objectObservedLostSound;
+	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 
 	public UnityAction[] actions;
@@ -233,18 +235,13 @@ public class CozmoVision : MonoBehaviour
 		{
 			text.gameObject.SetActive( false );
 		}
-
-		if( button.interactable )
-		{
-			button.interactable = false;
-		}
 	}
 
 	public void ForceDropBox()
 	{
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.SetRobotCarryingObject( Intro.CurrentRobotID );
+			RobotEngineManager.instance.current.SetRobotCarryingObject();
 		}
 	}
 
@@ -252,7 +249,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.ClearAllBlocks();
+			RobotEngineManager.instance.current.ClearAllBlocks();
 		}
 	}
 
@@ -260,9 +257,9 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null )
 		{
-			RobotEngineManager.instance.RequestImage( Intro.CurrentRobotID );
-			RobotEngineManager.instance.SetHeadAngle( RobotEngineManager.instance.defaultHeadAngle );
-			RobotEngineManager.instance.SetLiftHeight( 0f );
+			RobotEngineManager.instance.current.RequestImage();
+			RobotEngineManager.instance.current.SetHeadAngle();
+			RobotEngineManager.instance.current.SetLiftHeight( 0f );
 		}
 	}
 
@@ -309,18 +306,18 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( found )
 		{
-			if( dingTimes[0] + 2f < Time.time )
+			if( dingTimes[0] + soundDelay < Time.time )
 			{
-				RobotEngineManager.instance.ObjectObserved( found );
-			
+				audio.PlayOneShot( newObjectObservedSound );
+				
 				dingTimes[0] = Time.time;
 			}
 		}
 		else
 		{
-			if( dingTimes[1] + 2f < Time.time )
+			if( dingTimes[1] + soundDelay < Time.time )
 			{
-				RobotEngineManager.instance.ObjectObserved( found );
+				audio.PlayOneShot( objectObservedLostSound );
 				
 				dingTimes[1] = Time.time;
 			}
@@ -367,7 +364,9 @@ public class CozmoVision : MonoBehaviour
 
 	public void OnHeadAngleSliderReleased() {
 		lastHeadAngle = headAngleSlider.value * Mathf.Deg2Rad;
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SetHeadAngle(lastHeadAngle);
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			RobotEngineManager.instance.current.SetHeadAngle(lastHeadAngle);
+		}
 		Debug.Log("OnHeadAngleSliderReleased lastHeadAngle("+lastHeadAngle+") headAngleSlider.value("+headAngleSlider.value+")");
 	}
 

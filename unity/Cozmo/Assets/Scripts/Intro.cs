@@ -157,8 +157,8 @@ public class Intro : MonoBehaviour {
 			return;
 		}
 
-		if(simulated && RobotEngineManager.instance != null) {
-			RobotEngineManager.instance.VisionWhileMoving(true);				
+		if(simulated && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+			RobotEngineManager.instance.current.VisionWhileMoving(true);				
 		}
 
 		error.text = "";
