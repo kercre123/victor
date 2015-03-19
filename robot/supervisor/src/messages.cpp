@@ -235,13 +235,15 @@ namespace Anki {
         f32 currentMatX       = msg.xPosition;
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
-        Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
+        Result res = Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
         //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
 
-        PRINT("Robot received localization update from "
-              "basestation for time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+        PRINT("Robot %s localization update from "
+              "basestation  at currTime=%d for frame at time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              res == RESULT_OK ? "PROCESSED" : "IGNORED",
+              HAL::GetTimeStamp(),
               msg.timestamp,
               currentMatX, currentMatY,
               currentMatHeading.getDegrees(),
