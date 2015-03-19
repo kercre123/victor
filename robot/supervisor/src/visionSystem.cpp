@@ -80,15 +80,16 @@ namespace Anki {
 
       namespace VisionMemory
       {
-        /* 10X the memory for debugging on a PC
+        /*
+        // 10X the memory for debugging on a PC
         static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
         static const s32 ONCHIP_BUFFER_SIZE = 1700000; // The max here is somewhere between 175000 and 180000 bytes
         static const s32 CCM_BUFFER_SIZE = 500000; // The max here is probably 65536 (0x10000) bytes
         */
-        static const s32 OFFCHIP_BUFFER_SIZE = 2000000;
-        static const s32 ONCHIP_BUFFER_SIZE  = 170000; // The max here is somewhere between 175000 and 180000 bytes
-        static const s32 CCM_BUFFER_SIZE     = 50000; // The max here is probably 65536 (0x10000) bytes
-
+        static const s32 OFFCHIP_BUFFER_SIZE = 4000000;
+        static const s32 ONCHIP_BUFFER_SIZE  = 600000; // The max here is somewhere between 175000 and 180000 bytes
+        static const s32 CCM_BUFFER_SIZE     = 200000; // The max here is probably 65536 (0x10000) bytes
+         
         static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
 
         static OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
