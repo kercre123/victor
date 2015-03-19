@@ -170,8 +170,12 @@ BlockWorldComms {
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   usbChannel 10
+  cameraWidth 640
+  cameraHeight 480
 }
 WebotsKeyboardController {
+  streamResolution "VGA"
 }
 CozmoVizDisplay {
+  streamResolution "VGA"
 }
