@@ -114,7 +114,7 @@ class CameraSubServer(BaseSubServer):
         "Starts the encoder subprocess"
         self.encoderLock.acquire()
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
-            if self.ENCODER_CODING == messages.IE_JPEG:
+            if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 sys.stdout.write("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
                 if self.resolution > self.CROP_THRESHOLD: # Cropping to QVGA
