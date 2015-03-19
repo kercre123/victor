@@ -23,6 +23,7 @@ class CameraSubServer(BaseSubServer):
         messages.CAMERA_RES_XGA: [1024, 768],
         messages.CAMERA_RES_SVGA: [800, 600],
         messages.CAMERA_RES_VGA: [640, 480],
+        messages.CAMERA_RES_QSVGA: [400, 300],
         messages.CAMERA_RES_QVGA: [320, 240],
         messages.CAMERA_RES_QQVGA: [160, 120],
         messages.CAMERA_RES_QQQVGA: [80, 60],
@@ -35,6 +36,7 @@ class CameraSubServer(BaseSubServer):
         messages.CAMERA_RES_QQQVGA:  messages.CAMERA_RES_QQVGA,
         messages.CAMERA_RES_QQVGA:   messages.CAMERA_RES_QVGA,
         messages.CAMERA_RES_QVGA:    messages.CAMERA_RES_VGA,
+        messages.CAMERA_RES_QSVGA:   messages.CAMERA_RES_SVGA,
         messages.CAMERA_RES_VGA:     messages.CAMERA_RES_SXGA,
         messages.CAMERA_RES_SVGA:    messages.CAMERA_RES_UXGA,
     }
@@ -47,7 +49,7 @@ class CameraSubServer(BaseSubServer):
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
     SENSOR_FPS     = 15
 
-    ISP_MIN_RESOLUTION = messages.CAMERA_RES_QVGA
+    ISP_MIN_RESOLUTION = messages.CAMERA_RES_QSVGA
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
@@ -85,8 +87,8 @@ class CameraSubServer(BaseSubServer):
 
         assert subprocess.call(['media-ctl', '-v', '-r', '-l', '"%s":0->"OMAP3 ISP CCDC":0[1], "OMAP3 ISP CCDC":2->"OMAP3 ISP preview":0[1], "OMAP3 ISP preview":1->"OMAP3 ISP resizer":0[1], "OMAP3 ISP resizer":1->"OMAP3 ISP resizer output":0[1]' % self.camDev]) == 0, "media-ctl ISP links setup failure"
 
-        # ISP resizer resolution
         self.resolution = messages.CAMERA_RES_NONE
+        self.ispRes     = messages.CAMERA_RES_NONE
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -105,20 +107,20 @@ class CameraSubServer(BaseSubServer):
 
     def setResolution(self, resolutionEnum):
         "Adjust the camera resolution if nessisary and (re)start the encoder"
-        # Camera resolution enum is backwards, smaller number -> larger image
-        resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
-        resolutionEnum = min(resolutionEnum, self.ISP_MIN_RESOLUTION) # Can't provide an image smaller than ISP minimum
         if resolutionEnum == self.resolution: # Already configured
             self.startEncoder()
             return True
         else:
+            # Camera resolution enum is backwards, smaller number -> larger image
+            resolutionEnum = max(resolutionEnum, self.SENSOR_RESOLUTION) # Can't provide image larger than sensor
             self.stopEncoder()
             if self.FOV_CROP:
-                ispRes = self.RESOLUTION_2X[resolutionEnum]
+                self.ispRes = self.RESOLUTION_2X[resolutionEnum]
             else:
-                ispRes = resolutionEnum
+                self.ispRes = resolutionEnum
+            self.ispRes = min(self.ispRes, self.ISP_MIN_RESOLUTION)
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SRGGB12 %dx%d%s], "OMAP3 ISP CCDC":2 [SRGGB10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
-                                tuple([self.camDev] + self.SENSOR_RES_TPL + [self.camInt] + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[ispRes])]) == 0:
+                                tuple([self.camDev] + self.SENSOR_RES_TPL + [self.camInt] + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[self.ispRes])]) == 0:
                 self.resolution = resolutionEnum
                 self.startEncoder()
                 return True
@@ -133,9 +135,9 @@ class CameraSubServer(BaseSubServer):
             if self.ENCODER_CODING == messages.IE_JPEG:
                 self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
-                if self.FOV_CROP:
-                    h = (self.RESOLUTION_TUPLES[self.RESOLUTION_2X[self.resolution]][0] - self.RESOLUTION_TUPLES[self.resolution][0])/2
-                    v = (self.RESOLUTION_TUPLES[self.RESOLUTION_2X[self.resolution]][1] - self.RESOLUTION_TUPLES[self.resolution][1])/2
+                if self.ispRes != self.resolution:
+                    h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
+                    v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
                     encoderCall.extend(['videocrop', 'left=%d' % h, 'top=%d' % v, 'right=%d' % h, 'bottom=%d' % v, '!'])
                 encoderCall.extend(['TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', \
                                     'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
