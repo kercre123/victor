@@ -10,7 +10,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] Color[] typeColors = new Color[10];
 	[SerializeField] Material invalidatedLineMaterial;
 	[SerializeField] Material validatedLineMaterial;
-	[SerializeField] int propType = 0;
+	[SerializeField] public int propType = 0;
 
 	int lastPropType = -1;
 	bool lastValidated = false;
@@ -74,5 +74,27 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
 	}
-	
+
+	public string GetPropTypeName() {
+
+		switch(propType) {
+			case 0: return "Basic";
+			case 1: return "Bomb";
+			case 2: return "Green";
+			case 3: return "Blue";
+			case 4: return "Cyan";
+			case 5: return "Gold";
+			case 6: return "Pink";
+			case 7: return "Purple";
+			case 8: return "Orange";
+			case 9: return "White";
+		}
+
+		return "Basic";
+	}
+
+	public string GetPropFamilyName() {
+		return "Cube";
+	}
+
 }

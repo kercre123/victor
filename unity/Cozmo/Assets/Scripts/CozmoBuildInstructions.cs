@@ -34,6 +34,18 @@ public class CozmoBuildInstructions : MonoBehaviour {
 				cubes[i].Validated = false;
 			}
 		}
+
+		if(instructions != null) {
+			if(currentPage <= 0) {
+				instructions.text = "Press 'Next' to start building this game's layout!";
+			}
+			else if(currentPage >= cubes.Length+1) {
+				instructions.text = "Press 'Play' to validate the build and start playing!";
+			}
+			else {
+				instructions.text = "Step " + currentPage + ": Place a " + cubes[currentPage-1].GetPropTypeName() + " " + cubes[currentPage-1].GetPropFamilyName() + "." ;
+			}
+		}
 	}
 
 	public void NextInstruction() {
