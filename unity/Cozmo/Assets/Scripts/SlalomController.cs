@@ -114,8 +114,8 @@ public class SlalomController : GameController {
 		}
 	}
 
-	protected override void Update_PRE_GAME() {
-		base.Update_PRE_GAME();
+	protected override void Update_BUILDING() {
+		base.Update_BUILDING();
 
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();

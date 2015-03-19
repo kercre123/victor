@@ -94,7 +94,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			if(corners == null || corners.Length == 0) return center;
 			center = (corners[0] + corners[2]) * 0.5f;
 
-			center = Camera.main.WorldToScreenPoint(center);
+			center = canvas.worldCamera.WorldToScreenPoint(center);
 
 			return center * screenScaleFactor;
 		}
