@@ -254,6 +254,11 @@ namespace Anki {
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
       
+      if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
+        PRINT("VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).\n",
+              VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
+        return RESULT_FAIL;
+      }
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
       
