@@ -261,8 +261,8 @@ namespace Anki {
       // timestep from now), so we can reference to it when computing frame
       // capture time from now on.
       // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
-      cameraStartTime_ms_ = HAL::GetTimeStamp() + TIME_STEP;
-      PRINT("Setting camera start time as %d.\n", cameraStartTime_ms_);
+      cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
+      printf("Setting camera start time as %d.\n", cameraStartTime_ms_);
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -271,12 +271,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          PRINT("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          printf("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
           return RESULT_FAIL;
         }
-        PRINT("Initializing robot ID: %d\n", robotID_);
+        printf("Initializing robot ID: %d\n", robotID_);
       } else {
-        PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        printf("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return RESULT_FAIL;
       }
       
@@ -390,7 +390,7 @@ namespace Anki {
       }
       
       if(InitSimRadio(advertisementIP.c_str()) == RESULT_FAIL) {
-        PRINT("Failed to initialize Simulated Radio.\n");
+        printf("Failed to initialize Simulated Radio.\n");
         return RESULT_FAIL;
       }
       
@@ -868,13 +868,13 @@ namespace Anki {
     
     TimeStamp_t HAL::GetTimeStamp(void)
     {
-      //return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
-      return timeStamp_;
+      return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
+      //return timeStamp_;
     }
     
     void HAL::SetTimeStamp(TimeStamp_t t)
     {
-      timeStamp_ = t;
+      //timeStamp_ = t;
     };
     
     void HAL::SetLED(LEDId led_id, u32 color) {
