@@ -10,12 +10,7 @@ public class SelectionButton1 : SelectionButton
 	public void Selection()
 	{
 		RobotEngineManager.instance.current.selectedObjects.Clear();
-
-		for(int i=0; i<RobotEngineManager.instance.current.observedObjects.Count; i++) {
-			if(RobotEngineManager.instance.current.observedObjects[i].ID != box.ID) continue;
-			RobotEngineManager.instance.current.selectedObjects.Add(RobotEngineManager.instance.current.observedObjects[i]);
-			RobotEngineManager.instance.TrackHeadToObject( RobotEngineManager.instance.current.observedObjects[i], Intro.CurrentRobotID );
-			break;
-		}
+		RobotEngineManager.instance.current.selectedObjects.Add(box.observedObject);
+		RobotEngineManager.instance.current.TrackHeadToObject(box.observedObject);
 	}
 }

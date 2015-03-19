@@ -27,7 +27,7 @@ public class CozmoVision2 : CozmoVision
 				selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
 
 				selectionButtons[i].text.text = "Select " + observedObject.ID;
-				selectionButtons[i].ID = observedObject.ID;
+				selectionButtons[i].observedObject = observedObject;
 
 				selectionButtons[i].image.gameObject.SetActive( true );
 			}
