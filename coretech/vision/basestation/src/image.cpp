@@ -109,5 +109,31 @@ namespace Vision {
     
   } // GetConnectedComponents()
   
+  
+  void Image::Resize(f32 scaleFactor)
+  {
+    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
+  }
+  
+  void Image::Resize(s32 desiredRows, s32 desiredCols)
+  {
+    if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
+      const cv::Size desiredSize(desiredCols, desiredRows);
+      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  void Image::Resize(Image& resizedImage) const
+  {
+    if(resizedImage.IsEmpty()) {
+      printf("Image::Resize - Output image should already be the desired size.\n");
+    } else {
+      const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
+      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  
+  
 } // namespace Vision
 } // namespace Anki
