@@ -546,7 +546,7 @@ public class G2U_ImageChunk
 
 	public G2U_ImageChunk()
 	{
-		this.data = new byte[1024];
+		this.data = new byte[1400];
 	}
 
 	public G2U_ImageChunk(uint imageId,
@@ -567,8 +567,8 @@ public class G2U_ImageChunk
 		this.imageEncoding = imageEncoding;
 		this.imageChunkCount = imageChunkCount;
 		this.chunkId = chunkId;
-		if (data.Length != 1024) {
-			throw new System.ArgumentException("Argument has wrong length. Expected length 1024.", "data");
+		if (data.Length != 1400) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 1400.", "data");
 		}
 		this.data = data;
 	}
@@ -594,7 +594,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 	}
@@ -638,7 +638,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 		return stream;
@@ -664,7 +664,7 @@ public class G2U_ImageChunk
 			//chunkId
 			result += 1; // = uint_8
 			//data
-			result += 1 * 1024; // = uint_8 * 1024
+			result += 1 * 1400; // = uint_8 * 1400
 			return result;
 		}
 	}

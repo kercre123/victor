@@ -683,7 +683,7 @@ struct G2U_ImageChunk
 	uint8_t imageEncoding;
 	uint8_t imageChunkCount;
 	uint8_t chunkId;
-	std::array<uint8_t, 1024> data;
+	std::array<uint8_t, 1400> data;
 
 	/**** Constructors ****/
 	G2U_ImageChunk() = default;
@@ -701,7 +701,7 @@ struct G2U_ImageChunk
 		,uint8_t imageEncoding
 		,uint8_t imageChunkCount
 		,uint8_t chunkId
-		,const std::array<uint8_t, 1024>& data)
+		,const std::array<uint8_t, 1400>& data)
 	:imageId(imageId)
 	,frameTimeStamp(frameTimeStamp)
 	,nrows(nrows)
@@ -740,7 +740,7 @@ struct G2U_ImageChunk
 		buffer.Write(this->imageEncoding);
 		buffer.Write(this->imageChunkCount);
 		buffer.Write(this->chunkId);
-		buffer.WriteFArray<uint8_t, 1024>(this->data);
+		buffer.WriteFArray<uint8_t, 1400>(this->data);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -762,7 +762,7 @@ struct G2U_ImageChunk
 		buffer.Read(this->imageEncoding);
 		buffer.Read(this->imageChunkCount);
 		buffer.Read(this->chunkId);
-		buffer.ReadFArray<uint8_t, 1024>(this->data);
+		buffer.ReadFArray<uint8_t, 1400>(this->data);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -785,7 +785,7 @@ struct G2U_ImageChunk
 		//chunkId
 		result += 1; // = uint_8
 		//data
-		result += 1 * 1024; // = uint_8 * 1024
+		result += 1 * 1400; // = uint_8 * 1400
 		return result;
 	}
 
