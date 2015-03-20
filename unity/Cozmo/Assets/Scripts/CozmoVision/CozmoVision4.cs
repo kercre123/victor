@@ -10,6 +10,8 @@ public class ActionSlider
 	public Image image;
 	public Text text;
 
+	public Image image_handle;
+
 	public Image image_action1;
 	public Image image_action2;
 
@@ -38,9 +40,17 @@ public class ActionSlider
 			//slider.onClick.RemoveAllListeners();
 			return;
 		}
-		
+
+
+		Color handleColor = image_handle.color;
+		handleColor.a = pressed ? 1f : 0f;
+		image_handle.color = handleColor;
+
+		text.gameObject.SetActive(pressed);
+
 		image.sprite = vision.actionSprites[(int)mode];
 		text.text = ActionButton.GetModeName(mode);
+
 		switch(mode) {
 			case ActionButtonMode.TARGET:
 				if(pressed) {
@@ -52,7 +62,7 @@ public class ActionSlider
 						text.text = "Cube " + RobotEngineManager.instance.current.selectedObjects[0].ID;
 					}
 					else {
-						text.text = "Searching";
+						text.text = "Target";
 					}
 				}
 				break;
@@ -251,23 +261,7 @@ public class CozmoVision4 : CozmoVision
 	private void InitiateAssistedInteraction() {
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.TARGET:
-				break;
-			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
-				targetLockTimer = 1f;
-				break;
-			case ActionButtonMode.DROP:
-				break;
-			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
-				break;
-			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
-				break;
-			case ActionButtonMode.ALIGN:
-				//RobotEngineManager.instance.current.PickAndPlaceObject( 0, false, true );
-				break;
-			case ActionButtonMode.CHANGE:
+				//do auto-targeting here!
 				break;
 		}
 	}

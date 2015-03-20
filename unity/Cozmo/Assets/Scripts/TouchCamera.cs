@@ -101,7 +101,7 @@ public class TouchCamera : MonoBehaviour {
 				oldTouchDistance = oldTouchVector.magnitude;
 			}
 			else {
-				Vector2 screen = new Vector2(camera.pixelWidth, camera.pixelHeight);
+				//Vector2 screen = new Vector2(camera.pixelWidth, camera.pixelHeight);
 				
 				Vector2[] newTouchPositions = {
 					touch0,

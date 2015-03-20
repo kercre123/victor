@@ -227,7 +227,7 @@ public class SlalomController : GameController {
 			//}
 		}
 
-		return obstacles.Count > 0;
+		return obstacles.Count > 1;
 	}
 
 	protected override bool IsGameOver() {

@@ -19,11 +19,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
-	[SerializeField] protected Image playTitle = null;
-	[SerializeField] protected Button buildButton = null;
-	[SerializeField] protected Image buildTitle = null;
 	[SerializeField] protected CozmoBuildInstructions buildInstructions = null;
-	[SerializeField] protected Image resultsTitle = null;
 	[SerializeField] protected Image resultsPanel = null;
 
 	protected bool playRequested = false;
@@ -49,11 +45,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(playTitle != null) playTitle.gameObject.SetActive(false);
-		if(buildButton != null) buildButton.gameObject.SetActive(false);
-		if(buildTitle != null) buildTitle.gameObject.SetActive(false);
 		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
-		if(resultsTitle != null) resultsTitle.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -82,29 +74,6 @@ public class GameController : MonoBehaviour {
 
 		RefreshHUD();
 		firstFrame = false;
-
-		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
-			if(textError != null) {
-				//set specific text once we have analyzer
-				textError.gameObject.SetActive(true);
-			}
-			errorMsgTimer = 5f;
-		}
-
-		if(errorMsgTimer > 0f) {
-			errorMsgTimer -= Time.deltaTime;
-			if(errorMsgTimer <= 0f) {
-				if(textError != null) {
-					textError.gameObject.SetActive(false);
-				}
-			}
-			else {
-				Color color = textError.color;
-				color.a = Mathf.Lerp(0f, 1f, errorMsgTimer);
-				textError.color = color;
-			}
-		}
-
 		playRequested = false;
 		buildRequested = false;
 	}
@@ -112,11 +81,7 @@ public class GameController : MonoBehaviour {
 	void OnDisable () {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(playTitle != null) playTitle.gameObject.SetActive(false);
-		if(buildButton != null) buildButton.gameObject.SetActive(false);
-		if(buildTitle != null) buildTitle.gameObject.SetActive(false);
 		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
-		if(resultsTitle != null) resultsTitle.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -185,6 +150,29 @@ public class GameController : MonoBehaviour {
 				textTime.text = Mathf.FloorToInt(stateTimer).ToString();
 			}
 		}
+
+		
+		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
+			if(textError != null) {
+				//set specific text once we have analyzer
+				textError.gameObject.SetActive(true);
+			}
+			errorMsgTimer = 5f;
+		}
+		
+		if(errorMsgTimer > 0f) {
+			errorMsgTimer -= Time.deltaTime;
+			if(errorMsgTimer <= 0f) {
+				if(textError != null) {
+					textError.gameObject.SetActive(false);
+				}
+			}
+			else {
+				Color color = textError.color;
+				color.a = Mathf.Lerp(0f, 1f, errorMsgTimer);
+				textError.color = color;
+			}
+		}
 	}
 
 	protected virtual void Enter_BUILDING() {
@@ -192,7 +180,6 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
-		if(buildTitle != null) buildTitle.gameObject.SetActive(true);
 		if(buildInstructions != null) buildInstructions.gameObject.SetActive(true);
 	}
 	protected virtual void Update_BUILDING() {
@@ -202,14 +189,11 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildTitle != null) buildTitle.gameObject.SetActive(false);
 		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 	}
 		
 	protected virtual void Enter_PLAYING() {
 		Debug.Log(gameObject.name + " Enter_PLAYING");
-		if(buildButton != null) buildButton.gameObject.SetActive(true);
-		if(playTitle != null) playTitle.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
 	}
@@ -218,14 +202,11 @@ public class GameController : MonoBehaviour {
 	}
 	protected virtual void Exit_PLAYING() {
 		Debug.Log(gameObject.name + " Exit_PLAYING");
-		if(buildButton != null) buildButton.gameObject.SetActive(false);
-		if(playTitle != null) playTitle.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 	}
 
 	protected virtual void Enter_RESULTS() {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
-		if(resultsTitle != null) resultsTitle.gameObject.SetActive(true);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 	}
@@ -235,7 +216,6 @@ public class GameController : MonoBehaviour {
 	protected virtual void Exit_RESULTS() {
 		Debug.Log(gameObject.name + " Exit_RESULTS");
 
-		if(resultsTitle != null) resultsTitle.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 	}
