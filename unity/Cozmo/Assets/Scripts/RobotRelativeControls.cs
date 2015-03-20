@@ -8,6 +8,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	//[SerializeField] ScreenRecorder recorder = null;
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
+	[SerializeField] VirtualStick headAngleStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
 	[SerializeField] float gyroSleepTime = 3f;
 	//[SerializeField] AccelControls accelInputs = null;
@@ -19,6 +20,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] Text text_rightWheelSpeed = null;
 	[SerializeField] float swipeTurnAngle = 0f;
 	[SerializeField] bool doubleTapTurnAround = true;
+	[SerializeField] float headAngleChangeRate = 1f;
 
 #endregion
 
@@ -31,6 +33,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float rightWheelSpeed = 0f;
 	//bool reverseLikeACar = false;
 	bool moveCommandLastFrame = false;
+	bool headCommandLastFrame = false;
 	bool debugOverride = false;
 	float robotFacing = 0f;
 	float robotStartTurnFacing = 0f;
@@ -58,6 +61,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		lastInputs = Vector2.zero;
+		headCommandLastFrame = false;
 		moveCommandLastFrame = false;
 		timeSinceLastCommand = 0f;
 		debugOverride = false;
@@ -96,6 +100,16 @@ public class RobotRelativeControls : MonoBehaviour {
 				}
 			}
 			return;
+		}
+
+		if(headAngleStick != null) {
+			if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+				float headInput = headAngleStick.Vertical;
+				if(headCommandLastFrame || headInput != 0f) {
+					RobotEngineManager.instance.current.SetHeadAngle(RobotEngineManager.instance.current.headAngle_rad + headInput * Time.deltaTime * headAngleChangeRate);
+					//headCommandLastFrame = headInput != 0f;
+				}
+			}
 		}
 
 		if(debugOverride) {

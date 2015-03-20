@@ -10,13 +10,11 @@ public class ActionSlider
 	public Image image;
 	public Text text;
 
-	public Image action1FrameSmall;
-	public Image action2FrameSmall;
-	public Image action1FrameBig;
+	public Image image_action1;
+	public Image image_action2;
 
-	public Text text_action1Small;
-	public Text text_action2Small;
-	public Text text_action1Big;
+	public Text text_action1;
+	public Text text_action2;
 
 	CozmoVision vision;
 	bool pressed = false;
@@ -61,35 +59,32 @@ public class ActionSlider
 		}
 
 		if(modes == null || modes.Count <= 1) {
-			action1FrameSmall.gameObject.SetActive(false);
-			action2FrameSmall.gameObject.SetActive(false);
-			action1FrameBig.gameObject.SetActive(false);
-			text_action1Small.gameObject.SetActive(false);
-			text_action2Small.gameObject.SetActive(false);
-			text_action1Big.gameObject.SetActive(false);
+			image_action1.gameObject.SetActive(false);
+			image_action2.gameObject.SetActive(false);
+			text_action1.gameObject.SetActive(false);
+			text_action2.gameObject.SetActive(false);
+
 		}
 		else if(modes.Count == 2) {
-			action1FrameSmall.gameObject.SetActive(false);
-			action2FrameSmall.gameObject.SetActive(false);
-			action1FrameBig.gameObject.SetActive(true);
-			text_action1Small.gameObject.SetActive(false);
-			text_action2Small.gameObject.SetActive(false);
+			image_action1.gameObject.SetActive(true);
+			image_action2.gameObject.SetActive(false);
+			text_action1.gameObject.SetActive(true);
+			text_action2.gameObject.SetActive(false);
 
-			text_action1Big.text = ActionButton.GetModeName(modes[1]);
-			text_action1Big.gameObject.SetActive(true);
+			image_action1.sprite = vision.actionSprites[(int)modes[1]];
+			text_action1.text = ActionButton.GetModeName(modes[1]);
 		}
 		else if(modes.Count >= 3) {
-			action1FrameSmall.gameObject.SetActive(true);
-			action2FrameSmall.gameObject.SetActive(true);
+			image_action1.gameObject.SetActive(true);
+			image_action2.gameObject.SetActive(true);
+			text_action1.gameObject.SetActive(true);
+			text_action2.gameObject.SetActive(true);
+			
+			image_action1.sprite = vision.actionSprites[(int)modes[1]];
+			text_action1.text = ActionButton.GetModeName(modes[1]);
 
-			text_action1Small.text = ActionButton.GetModeName(modes[1]);
-			text_action2Small.text = ActionButton.GetModeName(modes[2]);
-
-			text_action1Small.gameObject.SetActive(true);
-			text_action2Small.gameObject.SetActive(true);
-
-			action1FrameBig.gameObject.SetActive(false);
-			text_action1Big.gameObject.SetActive(false);
+			image_action2.sprite = vision.actionSprites[(int)modes[2]];
+			text_action2.text = ActionButton.GetModeName(modes[2]);
 		}
 
 		slider.gameObject.SetActive(true);
@@ -243,7 +238,7 @@ public class CozmoVision4 : CozmoVision
 	
 		ActionButtonMode currentMode = modes[0];
 	
-		if(actionSlider.slider.value > 0.8f && modes.Count > 2) {
+		if(actionSlider.slider.value < -0.2f && modes.Count > 2) {
 			currentMode = modes[2];
 		}
 		else if(actionSlider.slider.value > 0.2f && modes.Count > 1) {

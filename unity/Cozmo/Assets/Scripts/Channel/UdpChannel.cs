@@ -3,10 +3,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
+using LostPolygon.System.Net;
+using LostPolygon.System.Net.Sockets;
 using System.Text;
-using System.Net.NetworkInformation;
+using LostPolygon.System.Net.NetworkInformation;
 using Anki.Cozmo;
 
 public class UdpChannel : ChannelBase {
