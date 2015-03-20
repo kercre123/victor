@@ -697,16 +697,9 @@ namespace Anki {
       //f32 aspect = width/height;
       
       const f32 fov_hor = camera->getFov();
-      
-      // Make sure the fov reported by webots matches the one used to empircally
-      // calibrate the Webots camera.
-      //AnkiAssert(NEAR(fov_hor, HEAD_CAM_CALIB_FOV, 0.001f));
-      
-      // Ideally, we would compute the focal length from the FOV dynamically,
-      // but that isn't working for some reason, so just use the value
-      // hard-coded in the config file.
+
+      // Compute focal length from simulated camera's reported FOV:
       const f32 f = width / (2.f * std::tan(0.5f*fov_hor));
-      //const f32 f = HEAD_CAM_CALIB_FOCAL_LENGTH;
       
       // There should only be ONE focal length, because simulated pixels are
       // square, so no need to compute/define a separate fy
