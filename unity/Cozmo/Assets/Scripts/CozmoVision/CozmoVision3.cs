@@ -5,61 +5,13 @@ using System.Collections.Generic;
 
 public class CozmoVision3 : CozmoVision
 {
-	[System.Serializable]
-	public class SelectionBox
-	{
-		public Image image;
-		public Text text;
-
-		private Vector3[] corners;
-		public Vector3 position
-		{
-			get
-			{
-				Vector3 center = Vector3.zero;
-				center.z = image.transform.position.z;
-
-				if( corners == null )
-				{
-					corners = new Vector3[4];
-				}
-
-				image.rectTransform.GetWorldCorners( corners );
-
-				if( corners.Length == 0 )
-				{
-					return center;
-				}
-
-				center = ( corners[0] + corners[2] ) * 0.5f;
-				
-				return center;
-			}
-		}
-	}
-
 	public struct ActionButtonState
 	{
 		public bool activeSelf;
 		public string text;
 	}
 
-	[SerializeField] protected SelectionBox box;
-	[SerializeField] protected Image reticle;
-	[SerializeField] protected float distance;
-	
-	protected List<ObservedObject> inReticle = new List<ObservedObject>();
-
-	protected bool isInReticle
-	{
-		get
-		{
-			return box.image.rectTransform.rect.center.x > reticle.rectTransform.rect.xMin && 
-				   box.image.rectTransform.rect.center.x < reticle.rectTransform.rect.xMax &&
-				   box.image.rectTransform.rect.center.y > reticle.rectTransform.rect.yMin && 
-				   box.image.rectTransform.rect.center.y < reticle.rectTransform.rect.yMax;
-		}
-	}
+	[SerializeField] protected float maxDistance = 200f;
 
 	protected void Update()
 	{
@@ -70,65 +22,49 @@ public class CozmoVision3 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
-		box.image.gameObject.SetActive( false );
-
 		if( !robot.isBusy )
 		{
 			robot.selectedObjects.Clear();
-			inReticle.Clear();
 
-			for( int i = 0; i < robot.observedObjects.Count; ++i )
-			{
-				//Debug.Log( (i + 1) );
-				//box.image.gameObject.SetActive( true );
-				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
-
-				/*if( isInReticle )
-				{
-					Debug.Log( "in reticle" );
-				}*/
-
-				/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
-				{
-					Debug.Log( "in distance" );
-				}
-				else
-				{
-					Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
-				}*/
-
-				if( isInReticle && robot.observedObjects[i].Distance < distance )
-				{
-					inReticle.Add( robot.observedObjects[i] );
-				}
-			}
-
-			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+			/*robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by distance from robot
 			{
 				return obj1.Distance.CompareTo( obj2.Distance );   
+			} );*/
+
+			robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by most center of view
+			{
+				return Vector2.Distance( obj1.VizRect.center, image.rectTransform.rect.center ).CompareTo( 
+					   Vector2.Distance( obj2.VizRect.center, image.rectTransform.rect.center ) );   
 			} );
 
-			for( int i = 1; i < inReticle.Count; ++i )
+			for( int i = 0; i < robot.observedObjects.Count && robot.observedObjects.Count > 1; ++i )
 			{
-				if( Vector2.Distance( inReticle[0].WorldPosition, inReticle[i].WorldPosition ) > inReticle[0].Size.x * 0.5f )
+				if( robot.observedObjects[i].Distance > maxDistance ) // if multiple in view and too far away
 				{
-					inReticle.RemoveAt( i-- );
+					robot.observedObjects.RemoveAt( i-- );
 				}
 			}
 
-			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+			for( int i = 1; i < robot.observedObjects.Count; ++i ) // if not on top of selected block, remove
+			{
+				if( Vector2.Distance( robot.observedObjects[0].WorldPosition, robot.observedObjects[i].WorldPosition ) > robot.observedObjects[0].Size.x * 0.5f )
+				{
+					robot.observedObjects.RemoveAt( i-- );
+				}
+			}
+
+			robot.observedObjects.Sort( ( obj1, obj2 ) =>
 			{
 				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
 			} );
 
 			if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 			{
-				if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
+				if( robot.observedObjects.Count > 0 && robot.observedObjects[0].ID != robot.carryingObjectID ) // if can see at least one block
 				{
-					robot.selectedObjects.Add( inReticle[0] );
+					robot.selectedObjects.Add( robot.observedObjects[0] );
 					
-					if( inReticle.Count == 1 )
+					if( robot.observedObjects.Count == 1 )
 					{
 						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
 					}
@@ -137,14 +73,14 @@ public class CozmoVision3 : CozmoVision
 			}
 			else // if not holding a block
 			{
-				if( inReticle.Count > 0 )
+				if( robot.observedObjects.Count > 0 )
 				{
-					for( int i = 0; i < 2 && i < inReticle.Count; ++i )
+					for( int i = 0; i < 2 && i < robot.observedObjects.Count; ++i )
 					{
-						robot.selectedObjects.Add( inReticle[i] );
+						robot.selectedObjects.Add( robot.observedObjects[i] );
 					}
 					
-					if( inReticle.Count == 1 )
+					if( robot.observedObjects.Count == 1 )
 					{
 						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
 					}
