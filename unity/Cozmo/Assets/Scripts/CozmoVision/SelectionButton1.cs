@@ -10,7 +10,7 @@ public class SelectionButton1 : SelectionButton
 	public void Selection()
 	{
 		RobotEngineManager.instance.current.selectedObjects.Clear();
-		RobotEngineManager.instance.current.selectedObjects.Add( box.ID );
-		RobotEngineManager.instance.TrackHeadToObject( box.ID, Intro.CurrentRobotID );
+		RobotEngineManager.instance.current.selectedObjects.Add(box.observedObject);
+		RobotEngineManager.instance.current.TrackHeadToObject(box.observedObject);
 	}
 }

@@ -719,14 +719,25 @@ namespace Anki {
                 
                 if (root_) {
                   const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
-                  if(camera_horizontalResolution == 320) {
-                    localStreamRes = Vision::CAMERA_RES_QVGA;
-                  } else if(camera_horizontalResolution == 160) {
-                    localStreamRes = Vision::CAMERA_RES_QQVGA;
-                  } else if(camera_horizontalResolution == 80) {
-                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
-                  } else if(camera_horizontalResolution == 40) {
-                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  switch(camera_horizontalResolution)
+                  {
+                    case 640:
+                      localStreamRes = Vision::CAMERA_RES_VGA;
+                      break;
+                    case 320:
+                      localStreamRes = Vision::CAMERA_RES_QVGA;
+                      break;
+                    case 160:
+                      localStreamRes = Vision::CAMERA_RES_QQVGA;
+                      break;
+                    case 80:
+                      localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                      break;
+                    case 40:
+                      localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                      break;
+                    default:
+                      printf("Unsupported camera_horizontalResolution = %d\n", camera_horizontalResolution);
                   }
                 }
                 

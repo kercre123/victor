@@ -126,11 +126,11 @@ public class CozmoVision3 : CozmoVision
 			{
 				if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
 				{
-					robot.selectedObjects.Add( inReticle[0].ID );
+					robot.selectedObjects.Add( inReticle[0] );
 					
 					if( inReticle.Count == 1 )
 					{
-						RobotEngineManager.instance.TrackHeadToObject( robot.selectedObjects[0], Intro.CurrentRobotID );
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
 					}
 				}
 				
@@ -141,12 +141,12 @@ public class CozmoVision3 : CozmoVision
 				{
 					for( int i = 0; i < 2 && i < inReticle.Count; ++i )
 					{
-						robot.selectedObjects.Add( inReticle[i].ID );
+						robot.selectedObjects.Add( inReticle[i] );
 					}
 					
 					if( inReticle.Count == 1 )
 					{
-						RobotEngineManager.instance.TrackHeadToObject( robot.selectedObjects[0], Intro.CurrentRobotID );
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
 					}
 				}
 				
@@ -165,24 +165,24 @@ public class CozmoVision3 : CozmoVision
 			
 			if( robot == null || robot.isBusy )
 			{
+				robot.lastSelectedObjects.Clear();
 				return;
 			}
-
+			
 			if( robot.selectedObjects.Count > robot.lastSelectedObjects.Count )
 			{
 				Ding( true );
-				robot.lastSelectedObjects.Clear();
-				robot.lastSelectedObjects.AddRange( robot.selectedObjects );
 			}
 			else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
 			{
 				Ding( false );
-				robot.lastSelectedObjects.Clear();
 			}
+			
+			robot.lastSelectedObjects.Clear();
+			robot.lastSelectedObjects.AddRange( robot.selectedObjects );
 		}
 	}
-
-
+	
 	protected override void SetActionButtons()
 	{
 		DisableButtons();

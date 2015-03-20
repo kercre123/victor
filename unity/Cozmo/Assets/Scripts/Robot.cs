@@ -15,19 +15,20 @@ public class Robot
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
 
+	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
-	public List<int> selectedObjects { get; private set; }
-	public List<int> lastSelectedObjects { get; private set; }
-	public int lastObjectHeadTracked;
+	public List<ObservedObject> selectedObjects { get; private set; }
+	public List<ObservedObject> lastSelectedObjects { get; private set; }
+	public ObservedObject lastObjectHeadTracked;
+
+	private bool imageRequested = false;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
-
-	private StatusFlag status;
-	private StatusFlag lastStatus;
+	private const float defaultHeadAngle = 0f;
 
 	[System.FlagsAttribute]
 	public enum StatusFlag
@@ -58,25 +59,29 @@ public class Robot
 	public Robot( byte robotID )
 	{
 		ID = robotID;
-		selectedObjects = new List<int>();
-		lastSelectedObjects = new List<int>();
-		lastObjectHeadTracked = -1;
+		selectedObjects = new List<ObservedObject>();
+		lastSelectedObjects = new List<ObservedObject>();
+		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
 
-	public void Reset( DisconnectionReason reason = DisconnectionReason.None )
+	private void Reset( DisconnectionReason reason = DisconnectionReason.None )
+	{
+		ClearData();
+		imageRequested = false;
+	}
+	
+	public void ClearData()
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
-		lastObjectHeadTracked = -1;
+		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		knownObjects.Clear();
-		lastStatus = StatusFlag.NONE;
 	}
-
 
 	public void UpdateInfo( G2U_RobotState message )
 	{
@@ -91,13 +96,6 @@ public class Robot
 		carryingObjectID = message.carryingObjectID;
 
 		Rotation = new Quaternion(message.pose_quaternion0, message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3);
-
-		if( status != lastStatus )
-		{
-			RobotEngineManager.instance.statusText.text = "Status: " + status;
-			//Debug.Log( RobotEngineManager.instance.statusText.text );
-			lastStatus = status;
-		}
 	}
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
@@ -121,5 +119,162 @@ public class Robot
 		{
 			knownObjects.Add( observedObject );
 		}
+	}
+
+	public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
+	{
+		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
+		U2G_DriveWheels message = new U2G_DriveWheels ();
+		message.lwheel_speed_mmps = leftWheelSpeedMmps;
+		message.rwheel_speed_mmps = rightWheelSpeedMmps;
+		
+		RobotEngineManager.instance.channel.Send (new U2G_Message{DriveWheels=message});
+	}
+
+	public void PlaceObjectOnGroundHere()
+	{
+		Debug.Log( "Place Object On Ground Here" );
+		
+		U2G_PlaceObjectOnGroundHere message = new U2G_PlaceObjectOnGroundHere ();
+		
+		RobotEngineManager.instance.channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
+	}
+
+	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
+	{
+		Debug.Log( "Set Head Angle " + angle_rad );
+		
+		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
+		message.angle_rad = angle_rad;
+		message.accel_rad_per_sec2 = 2f;
+		message.max_speed_rad_per_sec = 5f;
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message { SetHeadAngle = message } );
+		
+		lastObjectHeadTracked = null;
+	}
+	
+	public void TrackHeadToObject( ObservedObject observedObject )
+	{
+		if( lastObjectHeadTracked == null || lastObjectHeadTracked.ID != observedObject.ID )
+		{
+			Debug.Log( "Track Head To Object " + observedObject.ID );
+			
+			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
+			message.objectID = (uint)observedObject.ID;
+			message.robotID = ID;
+			
+			RobotEngineManager.instance.channel.Send( new U2G_Message { TrackHeadToObject = message } );
+			
+			lastObjectHeadTracked = observedObject;
+		}
+	}
+	
+	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
+	{
+		Debug.Log( "Pick And Place Object " + selectedObjects[index] + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
+		
+		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
+		message.objectID = selectedObjects[index].ID;
+		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
+		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
+		
+		//current.observedObjects.Clear();
+		lastObjectHeadTracked = null;
+	}
+	
+	public void SetLiftHeight( float height )
+	{
+		Debug.Log( "Set Lift Height " + height );
+		
+		U2G_SetLiftHeight message = new U2G_SetLiftHeight();
+		message.accel_rad_per_sec2 = 5f;
+		message.max_speed_rad_per_sec = 10f;
+		message.height_mm = height;
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetLiftHeight = message } );
+	}
+	
+	public void SetRobotCarryingObject( int objectID = -1 )
+	{
+		Debug.Log( "Set Robot Carrying Object" );
+		
+		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
+		
+		message.robotID = ID;
+		message.objectID = objectID;
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
+		lastObjectHeadTracked = null;
+		selectedObjects.Clear();
+		
+		SetLiftHeight( 0f );
+		SetHeadAngle( defaultHeadAngle );
+	}
+	
+	public void ClearAllBlocks()
+	{
+		Debug.Log( "Clear All Blocks" );
+		
+		U2G_ClearAllBlocks message = new U2G_ClearAllBlocks();
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ ClearAllBlocks = message } );
+		Reset();
+		
+		SetLiftHeight( 0f );
+		SetHeadAngle( defaultHeadAngle );
+	}
+	
+	public void VisionWhileMoving( bool enable )
+	{
+		Debug.Log( "Vision While Moving " + enable );
+		
+		U2G_VisionWhileMoving message = new U2G_VisionWhileMoving();
+		message.enable = System.Convert.ToByte( enable );
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ VisionWhileMoving = message } );
+	}
+	
+	public void RequestImage()
+	{
+		if( imageRequested )
+		{
+			return;
+		}
+		
+		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
+		message.resolution = (byte)RobotEngineManager.CameraResolution.CAMERA_RES_QVGA;
+		message.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		
+		RobotEngineManager.instance.channel.Send (new U2G_Message{SetRobotImageSendMode = message});
+		
+		U2G_ImageRequest message2 = new U2G_ImageRequest ();
+		message2.robotID = ID;
+		message2.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		
+		RobotEngineManager.instance.channel.Send (new U2G_Message{ImageRequest = message2});
+		
+		Debug.Log( "image request message sent" );
+		
+		imageRequested = true;
+	}
+	
+	public void StopAllMotors()
+	{
+		U2G_StopAllMotors message = new U2G_StopAllMotors ();
+		
+		RobotEngineManager.instance.channel.Send (new U2G_Message{StopAllMotors=message});
+	}
+	
+	public void TurnInPlace(float angle_rad)
+	{
+		U2G_TurnInPlace message = new U2G_TurnInPlace ();
+		message.robotID = ID;
+		message.angle_rad = angle_rad;
+		
+		Debug.Log("TurnInPlace(robotID:"+ID+", angle_rad:"+angle_rad+")");
+		RobotEngineManager.instance.channel.Send (new U2G_Message{TurnInPlace=message});
 	}
 }
