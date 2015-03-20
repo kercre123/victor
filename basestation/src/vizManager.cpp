@@ -10,6 +10,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include <fstream>
+
 #if ANKICORETECH_USE_OPENCV
 #include <opencv2/highgui/highgui.hpp>
 #endif
@@ -75,7 +77,7 @@ namespace Anki {
     : _isInitialized(false)
     , _sendImages(false)
     , _saveImageMode(VIZ_SAVE_OFF)
-    , _saveImageCounter(0)
+    , _saveRobotStateMode(VIZ_SAVE_OFF)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -556,25 +558,59 @@ namespace Anki {
     }
     
 
-    void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
+    void VizManager::SendRobotState(MessageRobotState msg)
+    {
+      
+      // TODO: Display state stuff somewhere...
+      
+      if(_saveRobotStateMode != VIZ_SAVE_OFF)
+      {
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("VizManager.SendRobotState.CreateDirFailed","\n");
+          }
+        }
+        
+        // Write state message to JSON file
+        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmoState_" + std::to_string(msg.timestamp) + ".json");
+        
+        Json::Value json = msg.CreateJson();
+        std::ofstream jsonFile(msgFilename, std::ofstream::out);
+        
+        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
+        jsonFile << json.toStyledString();
+        jsonFile.close();
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_saveRobotStateMode == VIZ_SAVE_ONE_SHOT) {
+          _saveRobotStateMode = VIZ_SAVE_OFF;
+        }
+      }
+    } // SendRobotState()
+    
+    void VizManager::SendGreyImage(const RobotID_t robotID,
+                                   const u8* data,
+                                   const Vision::CameraResolution res,
+                                   const TimeStamp_t timestamp)
     {
       if(!_sendImages) {
         return;
       }
       
       const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
-      SendImage(robotID, data, dataLength, res, IE_RAW_GRAY);
+      SendImage(robotID, data, dataLength, res, timestamp, IE_RAW_GRAY);
     }
     
     
-    void VizManager::SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
+    void VizManager::SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp)
     {
       if(!_sendImages) {
         return;
       }
       
       const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
-      SendImage(robotID, data, dataLength, res, IE_RAW_RGB);
+      SendImage(robotID, data, dataLength, res, timestamp, IE_RAW_RGB);
     }
     
     
@@ -582,6 +618,7 @@ namespace Anki {
                                const u8* data,
                                const u32 dataLength,
                                const Vision::CameraResolution res,
+                               const TimeStamp_t timestamp,
                                const ImageEncoding_t encoding)
     {
       if(!_sendImages) {
@@ -624,7 +661,7 @@ namespace Anki {
         // Make sure image capture folder exists
         if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
           if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessImageChunk.CreateDirFailed","\n");
+            PRINT_NAMED_WARNING("VizManager.SendGreyImage.CreateDirFailed","\n");
           }
         }
         
@@ -645,8 +682,8 @@ namespace Anki {
         }
         // Create image file
         char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.%s",
-                 AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter, ext);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img_%d.%s",
+                 AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, timestamp, ext);
         
         switch(encoding)
         {
@@ -664,7 +701,6 @@ namespace Anki {
         }
         
         PRINT_INFO("Saved image to %s\n", imgCaptureFilename);
-        ++_saveImageCounter;
 
         // Turn off save mode if we were in one-shot mode
         if (_saveImageMode == VIZ_SAVE_ONE_SHOT) {

@@ -8,7 +8,7 @@ will need to be updated as well.
 __author__  = "Daniel Casner"
 __version__ = "e3c5e279baa5b66938a1b63a0a46b4c9d0a86c2a" # Hash for the revision these python definitions are based on
 
-import struct
+import sys, struct
 
 def portableNamesToStructFormat(names):
     table = {
@@ -41,6 +41,7 @@ CAMERA_RES_SXGA = 3
 CAMERA_RES_XGA = 4
 CAMERA_RES_SVGA = 5
 CAMERA_RES_VGA = 6
+CAMERA_RES_QSVGA = 6.5 # HACK! Not in the C++ code
 CAMERA_RES_QVGA = 7
 CAMERA_RES_QQVGA = 8
 CAMERA_RES_QQQVGA = 9
@@ -59,13 +60,26 @@ class MessageBase(struct.Struct):
         "Initalize the structure definition from the class format field"
         struct.Struct.__init__(self, portableNamesToStructFormat(self.FORMAT))
 
+    @classmethod
+    def isa(cls, msg):
+        "Returns true if the provided msg matches the type tag for this class. Argument can be bytes, string or int"
+        argtype = type(msg)
+        if argtype is int:
+            return msg == cls.ID
+        elif argtype is str: # Str has to come before bytes because they are the same in python 2
+            return ord(msg[0]) == cls.ID
+        elif argtype is bytes:
+            return msg[0] == cls.ID
+        else:
+            raise ValueError("MessageBase doesn't know how to interprate a %s \"%s\"" % (argtype, msg))
+
     def serialize(self):
         "Convert python struct into C compatable binary struct"
         return struct.pack('b', self.ID) + self.pack(*self._getMembers())
 
     def deserialize(self, buffer):
         "Deserialize the received buffer"
-        assert ord(buffer[0]) == self.ID, ("Wrong message ID: %d, expected %d" % (ord(buffer[0]), self.ID))
+        assert self.isa(buffer)
         self._setMembers(*self.unpack(buffer[1:]))
 
 
@@ -228,10 +242,19 @@ class PrintText(MessageBase):
             self.deserialize(buffer)
 
     def _getMembers(self):
-        return (self.text,)
+        if sys.version_info.major < 3:
+            return (self.text,)
+        else:
+            return (bytes(self.text, encoding="ASCII"),)
 
-    def __setMembers(self, text):
-        self.text = text
+    def _setMembers(self, text):
+        end = text.find(b"\x00")
+        if end > -1:
+            text = text[:end]
+        if sys.version_info.major < 3:
+            self.text = text
+        else:
+            self.text = text.decode("utf-8")
 
     def __repr__(self):
         return "PrintText(%s)" % self.text

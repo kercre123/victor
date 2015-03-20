@@ -152,9 +152,9 @@ namespace Anki {
         // pDiff by chaining pDiffs per frame all the way up to current frame.
         // The frame distance between the historical pose and current pose depends on the comms latency!
         // ... as well as how often the mat markers are sent, obviously.
-        if (lastKeyframeUpdate_ > hist_[i].t) {
+        if (lastKeyframeUpdate_ >= hist_[i].t) {
           #if(DEBUG_POSE_HISTORY)
-          PRINT("Ignoring keyframe %d\n", frameId_);
+          PRINT("Ignoring keyframe %d at time %d\n", frameID, t);
           #endif
           return RESULT_FAIL;
         }

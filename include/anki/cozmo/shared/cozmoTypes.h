@@ -219,7 +219,7 @@ namespace Anki {
       VIZ_SAVE_OFF = 0,
       VIZ_SAVE_ONE_SHOT,
       VIZ_SAVE_CONTINUOUS
-    } VizSaveImageMode_t;
+    } VizSaveMode_t;
     
   }
 }

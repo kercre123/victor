@@ -19,6 +19,7 @@ class Pinger(threading.Thread, socket.socket):
     def __init__(self, robotAddress):
         threading.Thread.__init__(self)
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+        self.settimeout(0.030)
         self.pingAddr = (robotAddress, ROBOT_PORT)
         self.pingData = messages.PingMessage().serialize()
         self._continue = True
@@ -30,7 +31,15 @@ class Pinger(threading.Thread, socket.socket):
         "Thread main method"
         while self._continue:
             self.sendto(self.pingData, self.pingAddr)
-            time.sleep(0.030)
+            try:
+                msg = self.recv(1500)
+            except socket.timeout:
+                continue
+            else:
+                #print(msg)
+                if messages.PrintText.isa(msg):
+                    printMsg = messages.PrintText(buffer=msg)
+                    sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
 
     def stop(self):
         "Stop the thread running"

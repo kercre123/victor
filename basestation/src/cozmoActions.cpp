@@ -872,6 +872,13 @@ namespace Anki {
 
         actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
         
+        if(actionResult != SUCCESS) {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
+                            "VerityObjectPlaceHelper reported failure, just deleting object %d.\n",
+                            _carryingObjectID.GetValue());
+          robot.GetBlockWorld().ClearObject(_carryingObjectID);
+        }
+        
       } // if robot is not picking/placing or moving
       
       return actionResult;

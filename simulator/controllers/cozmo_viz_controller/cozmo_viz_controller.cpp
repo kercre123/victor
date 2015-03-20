@@ -13,6 +13,7 @@
 #include <webots/Supervisor.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -355,11 +356,19 @@ namespace Anki {
         switch(encoding)
         {
           case IE_JPEG_COLOR:
+          {
+            cv::vector<u8> inputVec(imgData, imgData+imgBytes);
+            cvImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_COLOR);
+            imgToDisp = cvImg.data;
+            break;
+          }
           case IE_JPEG_GRAY:
           {
             cv::vector<u8> inputVec(imgData, imgData+imgBytes);
-            cvImg = cv::imdecode(inputVec, (encoding==IE_JPEG_COLOR ? CV_LOAD_IMAGE_COLOR : CV_LOAD_IMAGE_GRAYSCALE));
+            cvImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
+            cvtColor(cvImg, cvImg, CV_GRAY2RGB);
             imgToDisp = cvImg.data;
+            
             break;
           }
           case IE_RAW_GRAY:
