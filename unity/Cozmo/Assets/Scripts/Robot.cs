@@ -277,4 +277,15 @@ public class Robot
 		Debug.Log("TurnInPlace(robotID:"+ID+", angle_rad:"+angle_rad+")");
 		RobotEngineManager.instance.channel.Send (new U2G_Message{TurnInPlace=message});
 	}
+
+	public void TraverseObject( int objectID, bool usePreDockPose = false, bool useManualSpeed = false )
+	{
+		Debug.Log( "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose );
+		
+		U2G_TraverseObject message = new U2G_TraverseObject();
+		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ TraverseObject = message } );
+	}
 }
