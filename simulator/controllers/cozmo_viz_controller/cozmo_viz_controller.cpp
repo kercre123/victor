@@ -359,6 +359,7 @@ namespace Anki {
           {
             cv::vector<u8> inputVec(imgData, imgData+imgBytes);
             cvImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_COLOR);
+            cvtColor(cvImg, cvImg, CV_BGR2RGB);
             imgToDisp = cvImg.data;
             break;
           }

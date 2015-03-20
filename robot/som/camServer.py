@@ -133,7 +133,7 @@ class CameraSubServer(BaseSubServer):
         self.encoderLock.acquire()
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
-                sys.stdout.write("Starting the encoder\n")
+                self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
                 if self.ispRes != self.resolution:
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
