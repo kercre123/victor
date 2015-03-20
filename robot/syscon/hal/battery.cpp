@@ -188,6 +188,8 @@ void BatteryUpdate()
           
         // If contact state has changed, and we are debounced, commit the change
         } else {
+          debounceContacts = 0;   // Reset debounce time
+         
           m_onContacts = onContacts;
           
           // If we are now on contacts, start charging
