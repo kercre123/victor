@@ -446,6 +446,7 @@ namespace Anki {
         cv::Mat cvImg;
 #       if USE_COLOR_IMAGES
         cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
 #       else
         Result lastResult = ArrayToCvMat(img, &cvImg);
         AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
@@ -466,7 +467,7 @@ namespace Anki {
         m.chunkId = 0;
         m.chunkSize = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        m.imageEncoding = (USE_COLOR_IMAGES ? IE_JPEG_COLOR : IE_JPEG_GRAY);
+        m.imageEncoding = (USE_COLOR_IMAGES ? Vision::IE_JPEG_COLOR : Vision::IE_JPEG_GRAY);
         
         u32 totalByteCnt = 0;
         u32 chunkByteCnt = 0;

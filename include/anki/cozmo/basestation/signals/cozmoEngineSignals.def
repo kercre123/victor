@@ -23,6 +23,10 @@ DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
 DEF_SIGNAL(RobotImageAvailable,
            uint8_t robotID)
 
+DEF_SIGNAL(RobotImageChunkAvailable,
+           uint8_t robotID,
+           const void *imageChunkMsg)
+
 DEF_SIGNAL(DeviceDetectedVisionMarker,
            uint8_t engineID, uint32_t markerType,
            float x_upperLeft,  float y_upperLeft,
