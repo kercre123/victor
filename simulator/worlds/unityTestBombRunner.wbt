@@ -114,6 +114,10 @@ DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
 }
+DirectionalLight {
+  ambientIntensity 1
+  direction 1 -1 -1
+}
 CozmoMat {
 }
 Ramp {
@@ -138,11 +142,8 @@ DEF AngryFaceBlock Block1x1 {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  translation 0 0 0
   rotation 0 -1 0 0
   name "CozmoBot_1"
-  headAngle 0
-  liftAngle 0
   usbChannel 10
 }
 CozmoVizDisplay {
