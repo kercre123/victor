@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
-using System.Net.Sockets;
-using System.Net;
+using LostPolygon.System.Net.Sockets;
+using LostPolygon.System.Net;
 using System.Threading;
 
   
