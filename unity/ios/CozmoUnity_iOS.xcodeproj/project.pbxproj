@@ -9,6 +9,12 @@
 /* Begin PBXBuildFile section */
 		08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B24F75137BFDFA00FBA309 /* iAd.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
+		461ED4401ABCA9E800683D5A /* RegisterFeatures.h in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EFA1A98177A00AB809E /* RegisterFeatures.h */; };
+		461ED4411ABCA9E800683D5A /* RegisterMonoModules.cpp.in in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EFC1A98177A00AB809E /* RegisterMonoModules.cpp.in */; };
+		461ED4421ABCA9E800683D5A /* RegisterMonoModules.h in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EFD1A98177A00AB809E /* RegisterMonoModules.h */; };
+		461ED4461ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */; };
+		461ED4471ABCAA3700683D5A /* UnityScript.Lang.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */; };
+		461ED4481ABCAA3700683D5A /* GoodOldSockets.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */; };
 		465B5F021A98177A00AB809E /* CrashReporter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB21A98177A00AB809E /* CrashReporter.mm */; };
 		465B5F031A98177A00AB809E /* iPhone_OrientationSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB51A98177A00AB809E /* iPhone_OrientationSupport.mm */; };
 		465B5F041A98177A00AB809E /* iPhone_Profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB61A98177A00AB809E /* iPhone_Profiler.cpp */; };
@@ -113,6 +119,9 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* cozmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cozmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		20174B35BB16A48E77D12521 /* LaunchScreen.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LaunchScreen.xib; sourceTree = SOURCE_ROOT; };
+		461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = System.GoodOldSockets.Helper.dll.s; sourceTree = "<group>"; };
+		461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = UnityScript.Lang.dll.s; sourceTree = "<group>"; };
+		461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = GoodOldSockets.dll.s; sourceTree = "<group>"; };
 		465B5EB11A98177A00AB809E /* CrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporter.h; sourceTree = "<group>"; };
 		465B5EB21A98177A00AB809E /* CrashReporter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CrashReporter.mm; sourceTree = "<group>"; };
 		465B5EB31A98177A00AB809E /* iPhone_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iPhone_Common.h; sourceTree = "<group>"; };
@@ -473,6 +482,9 @@
 		465B5EF41A98177A00AB809E /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */,
+				461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */,
+				461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */,
 				469063881ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s */,
 				469063891ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s */,
 				4690638A1ABB4ED800A1558A /* Assembly-UnityScript.dll.s */,
@@ -692,15 +704,32 @@
 			buildActionMask = 2147483647;
 			files = (
 				465B5F0D1A98177A00AB809E /* iAD.mm in Sources */,
-				465B5F251A98177A00AB809E /* RegisterFeatures.cpp in Sources */,
 				465B5F181A98177A00AB809E /* DisplayManager.mm in Sources */,
-				465B5F281A98177A00AB809E /* System.Core.dll.s in Sources */,
 				465B5F121A98177A00AB809E /* UnityView.mm in Sources */,
 				465B5F201A98177A00AB809E /* UnityAppController.mm in Sources */,
 				465B5F031A98177A00AB809E /* iPhone_OrientationSupport.mm in Sources */,
 				465B5F0E1A98177A00AB809E /* iAD_Scripting.mm in Sources */,
 				465B5F021A98177A00AB809E /* CrashReporter.mm in Sources */,
 				465B5F0B1A98177A00AB809E /* RegisterClasses.cpp in Sources */,
+				461ED4461ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s in Sources */,
+				461ED4471ABCAA3700683D5A /* UnityScript.Lang.dll.s in Sources */,
+				461ED4481ABCAA3700683D5A /* GoodOldSockets.dll.s in Sources */,
+				4690638C1ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s in Sources */,
+				4690638D1ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s in Sources */,
+				4690638E1ABB4ED800A1558A /* Assembly-UnityScript.dll.s in Sources */,
+				4690638F1ABB4ED800A1558A /* Boo.Lang.dll.s in Sources */,
+				465B5F211A98177A00AB809E /* Assembly-CSharp.dll.s in Sources */,
+				465B5F231A98177A00AB809E /* Mono.Security.dll.s in Sources */,
+				465B5F241A98177A00AB809E /* mscorlib.dll.s in Sources */,
+				465B5F251A98177A00AB809E /* RegisterFeatures.cpp in Sources */,
+				461ED4401ABCA9E800683D5A /* RegisterFeatures.h in Sources */,
+				465B5F261A98177A00AB809E /* RegisterMonoModules.cpp in Sources */,
+				461ED4411ABCA9E800683D5A /* RegisterMonoModules.cpp.in in Sources */,
+				461ED4421ABCA9E800683D5A /* RegisterMonoModules.h in Sources */,
+				465B5F281A98177A00AB809E /* System.Core.dll.s in Sources */,
+				465B5F291A98177A00AB809E /* System.dll.s in Sources */,
+				465B5F2A1A98177A00AB809E /* UnityEngine.dll.s in Sources */,
+				465B5F2B1A98177A00AB809E /* UnityEngine.UI.dll.s in Sources */,
 				465B5F161A98177A00AB809E /* CVTextureCache.mm in Sources */,
 				465B5F151A98177A00AB809E /* CMVideoSampling.mm in Sources */,
 				465B5F0C1A98177A00AB809E /* ActivityIndicator.mm in Sources */,
@@ -709,32 +738,21 @@
 				465B5F051A98177A00AB809E /* iPhone_Sensors.mm in Sources */,
 				465B5F071A98177A00AB809E /* AppDelegateListener.mm in Sources */,
 				465B5F061A98177A00AB809E /* main.mm in Sources */,
-				465B5F241A98177A00AB809E /* mscorlib.dll.s in Sources */,
 				465B5F1D1A98177A00AB809E /* WWWConnection.mm in Sources */,
 				465B5F171A98177A00AB809E /* DeviceSettings.mm in Sources */,
-				465B5F291A98177A00AB809E /* System.dll.s in Sources */,
 				465B5F081A98177A00AB809E /* LifeCycleListener.mm in Sources */,
 				465B5F0F1A98177A00AB809E /* Keyboard.mm in Sources */,
 				465B5F1E1A98177A00AB809E /* UnityAppController+Rendering.mm in Sources */,
 				465B5F1A1A98177A00AB809E /* GlesHelper.mm in Sources */,
 				465B5F101A98177A00AB809E /* SplashScreen.mm in Sources */,
-				465B5F2B1A98177A00AB809E /* UnityEngine.UI.dll.s in Sources */,
 				465B5F0A1A98177A00AB809E /* RenderPluginDelegate.mm in Sources */,
 				465B5F131A98177A00AB809E /* UnityViewControllerBase.mm in Sources */,
 				465B5F041A98177A00AB809E /* iPhone_Profiler.cpp in Sources */,
 				465B5F191A98177A00AB809E /* EAGLContextHelper.mm in Sources */,
 				465B5F1C1A98177A00AB809E /* VideoPlayer.mm in Sources */,
-				465B5F2A1A98177A00AB809E /* UnityEngine.dll.s in Sources */,
 				465B5F091A98177A00AB809E /* MainViewControllerListener.mm in Sources */,
 				465B5F111A98177A00AB809E /* UnityAppController+ViewHandling.mm in Sources */,
 				465B5F1B1A98177A00AB809E /* ScriptIntegration.mm in Sources */,
-				4690638C1ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s in Sources */,
-				4690638D1ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s in Sources */,
-				4690638E1ABB4ED800A1558A /* Assembly-UnityScript.dll.s in Sources */,
-				4690638F1ABB4ED800A1558A /* Boo.Lang.dll.s in Sources */,
-				465B5F211A98177A00AB809E /* Assembly-CSharp.dll.s in Sources */,
-				465B5F231A98177A00AB809E /* Mono.Security.dll.s in Sources */,
-				465B5F261A98177A00AB809E /* RegisterMonoModules.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
