@@ -192,30 +192,6 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-        // Send back camera calibration
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
-        }
-        else {
-          Messages::CameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-
-
-          if(!HAL::RadioSendMessage(CameraCalibration_ID,
-                                    &headCalibMsg))
-          {
-            PRINT("Failed to send camera calibration message.\n");
-          }
-        }
-
       } // ProcessRobotInit()
 
 
@@ -423,10 +399,58 @@ namespace Anki {
         }
       }
 
-      void ProcessImageRequestMessage(const ImageRequest& msg) {
+      void ProcessImageRequestMessage(const ImageRequest& msg)
+      {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
         VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
-      }
+        
+        // Send back camera calibration for this resolution
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        
+        // TODO: Just store CameraResolution in calibration data instead of height/width?
+        
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          HAL::CameraInfo headCamInfoScaled(*headCamInfo);
+          const s32 width  = Vision::CameraResInfo[msg.resolution].width;
+          const s32 height = Vision::CameraResInfo[msg.resolution].height;
+          const f32 xScale = static_cast<f32>(width/headCamInfo->ncols);
+          const f32 yScale = static_cast<f32>(height/headCamInfo->nrows);
+          
+          if(xScale != 1.f || yScale != 1.f)
+          {
+            PRINT("Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.\n",
+                  headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
+            
+            // Stored calibration info does not requested resolution, so scale it
+            // accordingly and adjust the pointer so we send this scaled info below.
+            headCamInfoScaled.focalLength_x *= xScale;
+            headCamInfoScaled.focalLength_y *= yScale;
+            headCamInfoScaled.center_x      *= xScale;
+            headCamInfoScaled.center_y      *= yScale;
+            headCamInfoScaled.nrows = height;
+            headCamInfoScaled.ncols = width;
+           
+            headCamInfo = &headCamInfoScaled;
+          }
+
+          Messages::CameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          if(!HAL::RadioSendMessage(CameraCalibration_ID, &headCalibMsg)) {
+            PRINT("Failed to send camera calibration message.\n");
+          }
+        }
+      } // ProcessImageRequestMessage()
 
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
         HAL::SetHeadlights(msg.intensity > 0);
