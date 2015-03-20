@@ -878,15 +878,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   configuration: {fileID: 4900000, guid: ce0a268add4e241f8806d3f356ec5b07, type: 3}
   batteryPercentage: {fileID: 2008905966}
-  successSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
-  failureSound: {fileID: 8300000, guid: c2d7cb9f542d84cf8b013f2629c683f3, type: 3}
-  newObjectObservedSound: {fileID: 8300000, guid: 8d4693d8ab8f04766adab16c27d82931,
-    type: 3}
-  objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
-    type: 3}
-  successOrFailureText: {fileID: 927264641}
-  statusText: {fileID: 777621469}
-  defaultHeadAngle: 0
   lastDisconnectionReason: 6
 --- !u!82 &474542237
 AudioSource:
