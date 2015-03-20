@@ -21,6 +21,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Button playButton = null;
 	[SerializeField] protected CozmoBuildInstructions buildInstructions = null;
 	[SerializeField] protected Image resultsPanel = null;
+	[SerializeField] protected AudioClip playerScoreSound;
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -28,6 +29,7 @@ public class GameController : MonoBehaviour {
 	protected GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
 	protected int[] scores;
+
 	protected int winnerIndex;
 	protected bool firstFrame = true;
 

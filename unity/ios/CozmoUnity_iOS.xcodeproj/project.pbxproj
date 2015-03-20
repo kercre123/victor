@@ -10,7 +10,6 @@
 		08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B24F75137BFDFA00FBA309 /* iAd.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		461ED4461ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */; };
-		461ED4471ABCAA3700683D5A /* UnityScript.Lang.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */; };
 		461ED4481ABCAA3700683D5A /* GoodOldSockets.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */; };
 		461ED44B1ABCBCA100683D5A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 461ED44A1ABCBCA100683D5A /* Images.xcassets */; };
 		461ED4531ABCBCEA00683D5A /* Unity-iPhone Tests-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 461ED44F1ABCBCEA00683D5A /* Unity-iPhone Tests-Info.plist */; };
@@ -119,7 +118,6 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* cozmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cozmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = System.GoodOldSockets.Helper.dll.s; sourceTree = "<group>"; };
-		461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = UnityScript.Lang.dll.s; sourceTree = "<group>"; };
 		461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = GoodOldSockets.dll.s; sourceTree = "<group>"; };
 		461ED44A1ABCBCA100683D5A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		461ED44F1ABCBCEA00683D5A /* Unity-iPhone Tests-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Unity-iPhone Tests-Info.plist"; sourceTree = "<group>"; };
@@ -510,7 +508,6 @@
 			isa = PBXGroup;
 			children = (
 				461ED4431ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s */,
-				461ED4441ABCAA3700683D5A /* UnityScript.Lang.dll.s */,
 				461ED4451ABCAA3700683D5A /* GoodOldSockets.dll.s */,
 				469063881ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s */,
 				469063891ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s */,
@@ -717,7 +714,6 @@
 				465B5F021A98177A00AB809E /* CrashReporter.mm in Sources */,
 				465B5F0B1A98177A00AB809E /* RegisterClasses.cpp in Sources */,
 				461ED4461ABCAA3700683D5A /* System.GoodOldSockets.Helper.dll.s in Sources */,
-				461ED4471ABCAA3700683D5A /* UnityScript.Lang.dll.s in Sources */,
 				461ED4481ABCAA3700683D5A /* GoodOldSockets.dll.s in Sources */,
 				4690638C1ABB4ED800A1558A /* Assembly-CSharp-firstpass.dll.s in Sources */,
 				4690638D1ABB4ED800A1558A /* Assembly-UnityScript-firstpass.dll.s in Sources */,

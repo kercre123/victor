@@ -252,6 +252,8 @@ public class SlalomController : GameController {
 
 		tapesCrossed++;
 
+		audio.PlayOneShot(playerScoreSound);
+
 		scores[0] = tapesCrossed;
 
 		//design query: reset lights on current cube now or when we've completed a circuit?
