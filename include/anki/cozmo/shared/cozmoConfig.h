@@ -162,7 +162,7 @@ namespace Anki {
      *
      **************************************************************************/
 
-#   define USE_COLOR_IMAGES 0
+#   define USE_COLOR_IMAGES 1
     
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 

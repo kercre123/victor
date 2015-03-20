@@ -403,53 +403,18 @@ namespace Anki {
           PRINT_NAMED_WARNING("MessageImageChunk.WrongNumBytesInImg",
                               "Expected %d bytes in decompressed image. Got %d bytes\n", totalImgSize, imgBytes);
         } else {
-          
-          // Send image to Viz
-          u8* imgToSend = data;
-          if (msg.imageEncoding > 0) {
-            
-#if(0)
-            // Write image to file (recompressing as jpeg again!)
-            static u32 imgCnt = 0;
-            char imgFilename[32];
-            vector<int> compression_params;
-            compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-            compression_params.push_back(90);
-            sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
-            imwrite(imgFilename, rawImg);
-#endif
-            
-            imgToSend = rawImg.data;
-          }
-          
           Vision::Image image;
-          if(numChannels == 1) {
-            image = Vision::Image(height, width, imgToSend);
           
-            // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
-            // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
-//            VizManager::getInstance()->SendGreyImage(robot->GetID(), image.GetDataPointer(),
-//                                                     (Vision::CameraResolution)msg.resolution, msg.frameTimeStamp);
-
+          if(numChannels == 1) {
+            image = Vision::Image(height, width, rawImg.data);
           } else {
-            
+            // TODO: Actually support processing color data (and have ImageRGB object)
             cv::Mat_<u8> grayMat;
             cv::cvtColor(rawImg, grayMat, CV_BGR2GRAY);
-            imgToSend = grayMat.data;
-            
-            // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
-            // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
-//            VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
-//                                                     (Vision::CameraResolution)msg.resolution);
-
-//            VizManager::getInstance()->SendColorImage(robot->GetID(), rawImg.data,
-//                                                      (Vision::CameraResolution)msg.resolution);
-
-            image = Vision::Image(height, width, imgToSend);
+            image = Vision::Image(height, width, grayMat.data);
           }
           
           image.SetTimestamp(msg.frameTimeStamp);
-          
           
 #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
           // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`

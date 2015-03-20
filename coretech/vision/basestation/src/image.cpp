@@ -23,33 +23,35 @@
 namespace Anki {
 namespace Vision {
   
+  
   Image::Image()
-  : Array2d<u8>()
+  : ImageBase<u8>()
   {
     
   }
   
   Image::Image(s32 nrows, s32 ncols)
-  : Array2d<u8>(nrows, ncols)
+  : ImageBase<u8>(nrows, ncols)
   {
     
   }
   
   Image::Image(s32 nrows, s32 ncols, u8* data)
-  : Array2d<u8>(nrows,ncols,data)
+  : ImageBase<u8>(nrows,ncols,data)
   {
     
   }
   
 #if ANKICORETECH_USE_OPENCV
   Image::Image(cv::Mat_<u8>& cvMat)
-  : Array2d<u8>(cvMat)
+  : ImageBase<u8>(cvMat)
   {
     
   }
 #endif
   
-  void Image::Display(const char *windowName, bool pause) const
+  template<typename T>
+  void ImageBase<T>::Display(const char *windowName, bool pause) const
   {
 #   if ANKICORETECH_USE_OPENCV
     cv::imshow(windowName, this->get_CvMat_());
@@ -134,6 +136,55 @@ namespace Vision {
   }
   
   
+  
+#if 0
+#pragma mark --- ImageRGBA ---
+#endif
+  
+  ImageRGBA::ImageRGBA()
+  : ImageBase<u32>()
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols)
+  : ImageBase<u32>(nrows, ncols)
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u32* data)
+  : ImageBase<u32>(nrows, ncols, data)
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u8* data24)
+  : ImageRGBA(nrows,ncols)
+  {
+    s32 index=0;
+    u32* data32 = GetDataPointer();
+    for(s32 i=0; i<nrows*ncols; ++i, index+=3) {
+      data32[i] = ((static_cast<u32>(data24[index])  <<24) +
+                   (static_cast<u32>(data24[index+1])<<16) +
+                   (static_cast<u32>(data24[index+2])<<8));
+    }
+  }
+  
+  Image ImageRGBA::ToGray() const
+  {
+    // Create a little lambda wrapper for converting a pixel to gray, in the
+    // std::function form req'd by ApplyScalarFunction
+    std::function<void(const u32&, u8&)> convertToGrayHelper = [](const u32& rgbPixel, u8& grayValue) {
+      grayValue = ImageRGBA::GetGray(rgbPixel);
+    };
+    
+    // Call the grayscale conversion on every pixel of this color image
+    Image grayImage(GetNumRows(), GetNumCols());
+    ApplyScalarFunction(convertToGrayHelper, grayImage);
+    
+    return grayImage;
+  }
   
 } // namespace Vision
 } // namespace Anki
