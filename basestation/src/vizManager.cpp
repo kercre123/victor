@@ -55,6 +55,7 @@ namespace Anki {
         //_isInitialized = false;
       }
      
+      PRINT_INFO("VizManager connected.\n");
       _isInitialized = true;
       
       return _isInitialized ? RESULT_OK : RESULT_FAIL;
@@ -65,6 +66,7 @@ namespace Anki {
       if(_isInitialized) {
         if (_vizClient.Disconnect()) {
           _isInitialized = false;
+          PRINT_INFO("VizManager disconnected.\n");
           return RESULT_OK;
         }
         return RESULT_FAIL;
