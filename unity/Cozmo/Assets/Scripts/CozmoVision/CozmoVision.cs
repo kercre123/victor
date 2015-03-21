@@ -121,7 +121,6 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Text text;
 	[SerializeField] protected ActionButton[] actionButtons;
 	[SerializeField] protected int maxObservedObjects;
-	[SerializeField] protected Slider headAngleSlider;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected float soundDelay = 2f;
@@ -130,10 +129,12 @@ public class CozmoVision : MonoBehaviour
 	public UnityAction[] actions;
 
 	protected RectTransform rTrans;
+	protected RectTransform imageRectTrans;
+	protected Canvas canvas;
+	protected CanvasScaler canvasScaler;
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
-	protected float lastHeadAngle = 0f;
 	protected List<int> lastObservedObjects = new List<int>();
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
@@ -161,7 +162,6 @@ public class CozmoVision : MonoBehaviour
 		}
 
 		lastObservedObjects.Clear();
-		lastHeadAngle = 0f;
 		robot = null;
 	}
 
@@ -170,6 +170,9 @@ public class CozmoVision : MonoBehaviour
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
 		rTrans = transform as RectTransform;
+		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
+		canvas = GetComponentInParent<Canvas>();
+		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
 		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
@@ -273,11 +276,6 @@ public class CozmoVision : MonoBehaviour
 		Reset();
 		RequestImage();
 		ResizeToScreen();
-
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current.headAngle_rad != lastHeadAngle) {
-			headAngleSlider.value = Mathf.Clamp(lastHeadAngle * Mathf.Rad2Deg, -90f, 90f);
-			lastHeadAngle = RobotEngineManager.instance.current.headAngle_rad;
-		}
 	}
 
 	protected virtual void Dings()
@@ -360,14 +358,6 @@ public class CozmoVision : MonoBehaviour
 //
 //		float scale = ( w * 0.5f ) / 320f;
 //		rTrans.localScale = Vector3.one * scale;
-	}
-
-	public void OnHeadAngleSliderReleased() {
-		lastHeadAngle = headAngleSlider.value * Mathf.Deg2Rad;
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.current.SetHeadAngle(lastHeadAngle);
-		}
-		Debug.Log("OnHeadAngleSliderReleased lastHeadAngle("+lastHeadAngle+") headAngleSlider.value("+headAngleSlider.value+")");
 	}
 
 }

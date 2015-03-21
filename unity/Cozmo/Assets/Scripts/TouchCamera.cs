@@ -58,9 +58,38 @@ public class TouchCamera : MonoBehaviour {
 			}
 			else {
 				Vector2 newTouchPosition = touch0;
-				
-				transform.position += transform.TransformDirection((Vector3)((oldTouchPositions[0] - newTouchPosition) * camera.orthographicSize / camera.pixelHeight * 2f));
-				
+
+				Vector2 delta = (Vector2)newTouchPosition - (Vector2)oldTouchPositions[0];
+
+				float panFactor = Mathf.Abs(delta.x) / camera.pixelWidth;
+				float panAngle = Mathf.Lerp(0f, 180f, panFactor ) * (delta.x >= 0f ? 1f : -1f);
+
+				float pitchFactor = Mathf.Abs(delta.y) / camera.pixelHeight;
+				float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor ) * (delta.y >= 0f ? -1f : 1f);
+
+				//for now target is origin...this will likely change to a transform
+				Vector3 targetToCam = transform.position - Vector3.zero;
+
+				targetToCam = Quaternion.AngleAxis(pitchAngle, transform.right) * targetToCam;
+
+				float angleFromUp = Vector3.Angle(Vector3.up, targetToCam);
+
+				if(angleFromUp > 70f) {
+					float overPitch = angleFromUp - 70f;
+					targetToCam = Quaternion.AngleAxis(overPitch, transform.right) * targetToCam;
+				}
+				else if(angleFromUp < 10f) {
+					float underPitch = 10f - angleFromUp;
+					targetToCam = Quaternion.AngleAxis(-underPitch, transform.right) * targetToCam;
+				}
+
+				targetToCam = Quaternion.AngleAxis(panAngle, Vector3.up) * targetToCam;
+
+				//for now target is origin...this will likely change to a transform
+				transform.position = targetToCam + Vector3.zero;
+				transform.rotation = Quaternion.LookRotation(-targetToCam);
+				//transform.position += transform.TransformDirection((Vector3)((oldTouchPositions[0] - newTouchPosition) * camera.orthographicSize / camera.pixelHeight * 2f));
+				//Debug.Log("panAngle("+panAngle+") panFactor("+panFactor+") pitchAngle("+pitchAngle+") pitchAngle("+pitchAngle+") delta("+delta+")");
 				oldTouchPositions[0] = newTouchPosition;
 			}
 		}
@@ -72,7 +101,7 @@ public class TouchCamera : MonoBehaviour {
 				oldTouchDistance = oldTouchVector.magnitude;
 			}
 			else {
-				Vector2 screen = new Vector2(camera.pixelWidth, camera.pixelHeight);
+				//Vector2 screen = new Vector2(camera.pixelWidth, camera.pixelHeight);
 				
 				Vector2[] newTouchPositions = {
 					touch0,
@@ -81,10 +110,10 @@ public class TouchCamera : MonoBehaviour {
 				Vector2 newTouchVector = newTouchPositions[0] - newTouchPositions[1];
 				float newTouchDistance = newTouchVector.magnitude;
 
-				transform.position += transform.TransformDirection((Vector3)((oldTouchPositions[0] + oldTouchPositions[1] - screen) * camera.orthographicSize / screen.y));
-				transform.localRotation *= Quaternion.Euler(new Vector3(0, 0, Mathf.Asin(Mathf.Clamp((oldTouchVector.y * newTouchVector.x - oldTouchVector.x * newTouchVector.y) / oldTouchDistance / newTouchDistance, -1f, 1f)) / 0.0174532924f));
+				//transform.position += transform.TransformDirection((Vector3)((oldTouchPositions[0] + oldTouchPositions[1] - screen) * camera.orthographicSize / screen.y));
+				//transform.localRotation *= Quaternion.Euler(new Vector3(0, 0, Mathf.Asin(Mathf.Clamp((oldTouchVector.y * newTouchVector.x - oldTouchVector.x * newTouchVector.y) / oldTouchDistance / newTouchDistance, -1f, 1f)) / 0.0174532924f));
 				camera.orthographicSize *= oldTouchDistance / newTouchDistance;
-				transform.position -= transform.TransformDirection((newTouchPositions[0] + newTouchPositions[1] - screen) * camera.orthographicSize / screen.y);
+				//transform.position -= transform.TransformDirection((newTouchPositions[0] + newTouchPositions[1] - screen) * camera.orthographicSize / screen.y);
 
 				oldTouchPositions[0] = newTouchPositions[0];
 				oldTouchPositions[1] = newTouchPositions[1];
