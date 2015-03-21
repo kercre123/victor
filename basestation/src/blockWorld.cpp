@@ -371,6 +371,7 @@ namespace Anki
                                                              inFamily,
                                                              obsType,
                                                              obsID,
+                                                             true, // markers are visible
                                                              boundingBox.GetX(),
                                                              boundingBox.GetY(),
                                                              boundingBox.GetWidth(),
@@ -446,8 +447,10 @@ namespace Anki
       
     } // UpdateTrackHeadToObject()
     
-    void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
+    u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
+      u32 numVisibleObjects = 0;
+      
       // Create a list of unobserved objects for further consideration below.
       struct UnobservedObjectContainer {
         ObjectFamily family;
@@ -489,7 +492,11 @@ namespace Anki
       // visibility in each camera
       for(auto unobserved : unobservedObjects) {
         
-        if(unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, true) &&
+        // Remove objects that should have been visible based on their last known
+        // location, but which must not be there because we saw something behind
+        // that location:
+        const Vision::Camera& camera = _robot->GetCamera();
+        if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true) &&
            (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
         {
           // We "should" have seen the object! Delete it or mark it somehow
@@ -497,10 +504,49 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
+        } else if(!unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false)) {
+          // If the object should _not_ be visible (i.e. none of its markers project
+          // into the camera), but some part of the object is within frame, then
+          // let listeners know it's "visible" but not identifiable, so we can
+          // still interact with it in the UI, for example.
+          f32 distance;
+          std::vector<Point2f> projectedCorners;
+          _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+          if(distance > 0.f) { // in front of camera?
+            for(auto & corner : projectedCorners) {
+              
+              if(camera.IsWithinFieldOfView(corner)) {
+                
+                Rectangle<f32> boundingBox(projectedCorners);
+                //_obsProjectedObjects.emplace_back(obsID, boundingBox);
+                _currentObservedObjectIDs.push_back(unobserved.object->GetID());
+                
+                // Signal the observation of this object, with its bounding box:
+                const Vec3f& obsObjTrans = unobserved.object->GetPose().GetTranslation();
+                // TODO: just directly access the quaternion
+                const UnitQuaternion<float> q = Rotation3d(unobserved.object->GetPose().GetRotationVector()).GetQuaternion();
+                CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
+                                                                     unobserved.family,
+                                                                     unobserved.type,
+                                                                     unobserved.object->GetID(),
+                                                                     false, // marker not visible
+                                                                     boundingBox.GetX(),
+                                                                     boundingBox.GetY(),
+                                                                     boundingBox.GetWidth(),
+                                                                     boundingBox.GetHeight(),
+                                                                     obsObjTrans.x(),
+                                                                     obsObjTrans.y(),
+                                                                     obsObjTrans.z(),
+                                                                     q.w(), q.x(), q.y(), q.z());
+                ++numVisibleObjects;
+              } // if(IsWithinFieldOfView)
+            } // for(each projectedCorner)
+          } // if(distance > 0)
         }
         
       } // for each unobserved object
       
+      return numVisibleObjects;
     } // CheckForUnobservedObjects()
     
     void BlockWorld::GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
@@ -1166,9 +1212,16 @@ namespace Anki
         
         // Delete any objects that should have been observed but weren't,
         // visualize objects that were observed:
-        CheckForUnobservedObjects(atTimestamp);
+        numObjectsObserved += CheckForUnobservedObjects(atTimestamp);
         
       } // for element in _obsMarkers
+      
+      if(_obsMarkers.empty()) {
+        // Even if there were no markers observed, check to see if there are
+        // any previously-observed objects that are partially visible (some part
+        // of them projects into the image even if none of their markers fully do)
+        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastMsgTimestamp());
+      }
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so

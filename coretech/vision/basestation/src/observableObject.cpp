@@ -49,7 +49,6 @@ namespace Anki {
       
     } // ObservableObject::IsObservableBy()
     
-    
     Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                            const Pose3d&        atPose,
                                                            const f32            size_mm)
