@@ -310,9 +310,8 @@ namespace Anki {
           image = Vision::Image(height, width, cvImg.data);
         } else {
           // TODO: Actually support processing color data (and have ImageRGB object)
-          cv::Mat_<u8> grayMat;
-          cv::cvtColor(cvImg, grayMat, CV_RGB2GRAY);
-          image = Vision::Image(height, width, grayMat.data);
+          cv::cvtColor(cvImg, cvImg, CV_RGB2GRAY);
+          image = Vision::Image(height, width, cvImg.data);
         }
         
         image.SetTimestamp(msg.frameTimeStamp);
