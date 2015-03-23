@@ -113,6 +113,11 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageAvailableSignal().ScopedSubscribe(cbRobotImageAvailable));
     
+    auto cbRobotImageChunkAvailable = [this](RobotID_t robotId, const void* chunk) {
+      this->HandleRobotImageChunkAvailable(robotId, chunk);
+    };
+    _signalHandles.emplace_back( CozmoEngineSignals::RobotImageChunkAvailableSignal().ScopedSubscribe(cbRobotImageChunkAvailable));
+    
     auto cbRobotCompletedAction = [this](RobotID_t robotID, uint8_t success) {
       this->HandleRobotCompletedAction(robotID, success);
     };
@@ -338,6 +343,41 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::HandleRobotImageChunkAvailable(RobotID_t robotID, const void *chunkMsg)
+  {
+    auto ismIter = _imageSendMode.find(robotID);
+    
+    if(ismIter == _imageSendMode.end()) {
+      _imageSendMode[robotID] = ISM_OFF;
+    } else if (ismIter->second != ISM_OFF) {
+      
+      const MessageImageChunk *robotImgChunk = reinterpret_cast<const MessageImageChunk*>(chunkMsg);
+      G2U_ImageChunk uiImgChunk;
+      uiImgChunk.imageId = robotImgChunk->imageId;
+      uiImgChunk.frameTimeStamp = robotImgChunk->frameTimeStamp;
+      uiImgChunk.nrows = Vision::CameraResInfo[robotImgChunk->resolution].height;
+      uiImgChunk.ncols = Vision::CameraResInfo[robotImgChunk->resolution].width;
+      assert(uiImgChunk.data.size() == robotImgChunk->data.size());
+      uiImgChunk.chunkSize = robotImgChunk->chunkSize;
+      uiImgChunk.imageEncoding = robotImgChunk->imageEncoding;
+      uiImgChunk.imageChunkCount = robotImgChunk->imageChunkCount;
+      uiImgChunk.chunkId = robotImgChunk->chunkId;
+      std::copy(robotImgChunk->data.begin(), robotImgChunk->data.end(),
+                uiImgChunk.data.begin());
+      
+      G2U_Message msgWrapper;
+      msgWrapper.Set_ImageChunk(uiImgChunk);
+      _uiMsgHandler.SendMessage(_hostUiDeviceID, msgWrapper);
+      
+      const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
+      
+      if(wasLastChunk && ismIter->second == ISM_SINGLE_SHOT) {
+        // We were just in single-image send mode, and the image got sent, so
+        // go back to "off". (If in stream mode, stay in stream mode.)
+        ismIter->second = ISM_OFF;
+      }
+    }
+  }
   
   void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, uint8_t success)
   {

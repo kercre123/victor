@@ -113,6 +113,7 @@ namespace Cozmo {
     void HandleConnectToRobotSignal(RobotID_t robotID);
     void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
     void HandleRobotImageAvailable(RobotID_t robotID);
+    void HandleRobotImageChunkAvailable(RobotID_t robotID, const void *chunkMsg);
     void HandleDeviceDetectedVisionMarkerSignal(uint8_t engineID, uint32_t markerType,
                                                 float x_upperLeft,  float y_upperLeft,
                                                 float x_lowerLeft,  float y_lowerLeft,

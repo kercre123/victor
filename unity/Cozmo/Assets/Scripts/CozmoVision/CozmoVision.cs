@@ -138,6 +138,7 @@ public class CozmoVision : MonoBehaviour
 	protected List<int> lastObservedObjects = new List<int>();
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
+	private static bool imageRequested = false;
 
 	protected int observedObjectsCount
 	{
@@ -163,12 +164,11 @@ public class CozmoVision : MonoBehaviour
 
 		lastObservedObjects.Clear();
 		robot = null;
+		imageRequested = false;
 	}
 
 	protected virtual void Awake()
 	{
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.DisconnectedFromClient += Reset;
-
 		rTrans = transform as RectTransform;
 		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
@@ -258,11 +258,12 @@ public class CozmoVision : MonoBehaviour
 
 	public void RequestImage()
 	{
-		if( RobotEngineManager.instance != null )
+		if( !imageRequested && RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.current.RequestImage();
 			RobotEngineManager.instance.current.SetHeadAngle();
 			RobotEngineManager.instance.current.SetLiftHeight( 0f );
+			imageRequested = true;
 		}
 	}
 
@@ -271,9 +272,9 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
+			RobotEngineManager.instance.DisconnectedFromClient += Reset;
 		}
 
-		Reset();
 		RequestImage();
 		ResizeToScreen();
 	}
@@ -340,6 +341,7 @@ public class CozmoVision : MonoBehaviour
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage -= RobotImage;
+			RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 		}
 	}
 
