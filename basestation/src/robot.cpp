@@ -60,7 +60,7 @@ namespace Anki {
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
     , _camera(robotID)
-    , _visionWhileMovingEnabled(false)
+    , _visionWhileMovingEnabled(true)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -176,6 +176,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      // Send state to visualizer for saving/displaying
+      VizManager::getInstance()->SendRobotState(msg);
+      
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
       // a working robot. Note that basestation and robot time aren't necessarily
@@ -493,21 +496,25 @@ namespace Anki {
         // will request them at a "canonical" pose (no rotation/translation)
         const Pose3d canonicalPose;
         
-        /*
-         // Block Markers
-         std::set<const Vision::ObservableObject*> const& blocks = blockLibrary_.GetObjectsWithMarker(marker);
-         for(auto block : blocks) {
-         std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-         
-         for(auto blockMarker : blockMarkers) {
-         
-         Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-         blockMarker->Get3dCorners(canonicalPose));
-         markerPose = markerPose.GetWithRespectTo(Pose3d::World);
-         VizManager::getInstance()->DrawQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
-         }
-         }
-         */
+        
+        // Block Markers
+        std::set<const Vision::ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::BLOCKS).GetObjectsWithMarker(marker);
+        for(auto block : blocks) {
+          std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
+          
+          for(auto blockMarker : blockMarkers) {
+            
+            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose));
+            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+            }
+          }
+        }
+        
         
         // Mat Markers
         std::set<const Vision::ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithMarker(marker);
@@ -710,7 +717,7 @@ namespace Anki {
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);
       if(actionResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n");
+        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n", GetID());
       }
         
       

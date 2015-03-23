@@ -23,33 +23,35 @@
 namespace Anki {
 namespace Vision {
   
+  
   Image::Image()
-  : Array2d<u8>()
+  : ImageBase<u8>()
   {
     
   }
   
   Image::Image(s32 nrows, s32 ncols)
-  : Array2d<u8>(nrows, ncols)
+  : ImageBase<u8>(nrows, ncols)
   {
     
   }
   
   Image::Image(s32 nrows, s32 ncols, u8* data)
-  : Array2d<u8>(nrows,ncols,data)
+  : ImageBase<u8>(nrows,ncols,data)
   {
     
   }
   
 #if ANKICORETECH_USE_OPENCV
   Image::Image(cv::Mat_<u8>& cvMat)
-  : Array2d<u8>(cvMat)
+  : ImageBase<u8>(cvMat)
   {
     
   }
 #endif
   
-  void Image::Display(const char *windowName, bool pause) const
+  template<typename T>
+  void ImageBase<T>::Display(const char *windowName, bool pause) const
   {
 #   if ANKICORETECH_USE_OPENCV
     cv::imshow(windowName, this->get_CvMat_());
@@ -109,5 +111,183 @@ namespace Vision {
     
   } // GetConnectedComponents()
   
+#if 0
+#pragma mark --- ImageRGBA ---
+#endif
+  
+  ImageRGBA::ImageRGBA()
+  : ImageBase<u32>()
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols)
+  : ImageBase<u32>(nrows, ncols)
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u32* data)
+  : ImageBase<u32>(nrows, ncols, data)
+  {
+    
+  }
+  
+  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u8* data24)
+  : ImageRGBA(nrows,ncols)
+  {
+    s32 index=0;
+    u32* data32 = GetDataPointer();
+    for(s32 i=0; i<nrows*ncols; ++i, index+=3) {
+      data32[i] = ((static_cast<u32>(data24[index])  <<24) +
+                   (static_cast<u32>(data24[index+1])<<16) +
+                   (static_cast<u32>(data24[index+2])<<8));
+    }
+  }
+  
+  Image ImageRGBA::ToGray() const
+  {
+    // Create a little lambda wrapper for converting a pixel to gray, in the
+    // std::function form req'd by ApplyScalarFunction
+    std::function<void(const u32&, u8&)> convertToGrayHelper = [](const u32& rgbPixel, u8& grayValue) {
+      grayValue = ImageRGBA::GetGray(rgbPixel);
+    };
+    
+    // Call the grayscale conversion on every pixel of this color image
+    Image grayImage(GetNumRows(), GetNumCols());
+    ApplyScalarFunction(convertToGrayHelper, grayImage);
+    
+    return grayImage;
+  }
+  
+  
+#if 0
+#pragma mark --- ImageDeChunker ---
+#endif
+  
+  ImageDeChunker::ImageDeChunker()
+  : _imgID(0)
+  , _imgBytes(0)
+  , _imgWidth(0)
+  , _imgHeight(0)
+  , _expectedChunkId(0)
+  {
+    
+  }
+  
+  bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
+                                   ImageEncoding_t encoding, u8 totalChunkCount,
+                                   u8 chunkId, const u8* data, u32 chunkSize)
+  {
+    if(chunkSize > ImageDeChunker::CHUNK_SIZE) {
+      PRINT_NAMED_ERROR("ImageDeChunker.AppendChunk", "Expecting chunks of size no more than %d, got %d.\n",
+                        ImageDeChunker::CHUNK_SIZE, chunkSize);
+      return false;
+    }
+    
+    bool isImgValid = false;
+    
+    // If msgID has changed, then start over.
+    if (newImageId != _imgID) {
+      _imgID = newImageId;
+      _imgBytes = 0;
+      _imgWidth  = ncols;
+      _imgHeight = nrows;
+      _imgData.resize(_imgWidth*_imgHeight*3);
+      isImgValid = chunkId == 0;
+      _expectedChunkId = 0;
+    }
+    
+    // Check if a chunk was received out of order
+    if (chunkId != _expectedChunkId) {
+      PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
+                       "Expected chunk %d, got %d\n", _expectedChunkId, chunkId);
+      isImgValid = false;
+    } else {
+      isImgValid = true;
+    }
+    _expectedChunkId = chunkId + 1;
+    
+    // We've received all data when the msg chunkSize is less than the max
+    const bool isLastChunk =  chunkId == totalChunkCount-1;
+    
+    if (!isImgValid) {
+      if (isLastChunk) {
+        PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
+                         "Received last chunk of invalidated image\n");
+      }
+      return RESULT_FAIL;
+    }
+    
+    // Msgs are guaranteed to be received in order (with TCP) so just append data to array
+    std::copy(data, data + chunkSize, _imgData.begin() + _imgBytes);
+    _imgBytes += chunkSize;
+    
+    if (isLastChunk) {
+      
+      switch(encoding)
+      {
+        case IE_JPEG_COLOR:
+        {
+          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_COLOR);
+          cvtColor(_img, _img, CV_BGR2RGB);
+          break;
+        }
+        case IE_JPEG_GRAY:
+        {
+          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_GRAYSCALE);
+          break;
+        }
+        case IE_RAW_GRAY:
+        {
+          // Already decompressed.
+          // Raw image bytes is the same as total received bytes.
+          _img = cv::Mat_<u8>(_imgHeight, _imgWidth, &(_imgData[0]));
+          break;
+        }
+        case IE_RAW_RGB:
+          // Already decompressed.
+          // Raw image bytes is the same as total received bytes.
+          _img = cv::Mat(_imgHeight, _imgWidth, CV_8UC3, &(_imgData[0]));
+          break;
+          
+        default:
+          printf("***ERRROR - ProcessVizImageChunkMessage: Encoding %d not yet supported for decoding image chunks.\n", encoding);
+          return false;
+      } // switch(encoding)
+      
+      if(_img.rows != _imgHeight || _img.cols != _imgWidth) {
+        printf("***ERROR - ImageDeChunker.AppendChunk: expected %dx%d image after decoding, got %dx%d.\n", _imgWidth, _imgHeight, _img.cols, _img.rows);
+      }
+    } // if(isLastChunk)
+    
+    return isLastChunk;
+    
+  }
+  
+  bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
+                                   ImageEncoding_t encoding, u8 totalChunkCount,
+                                   u8 chunkId, const std::array<u8, CHUNK_SIZE>& data)
+  {
+    return AppendChunk(newImageId, frameTimeStamp, nrows, ncols, encoding, totalChunkCount,
+                       chunkId, &(data[0]), ImageDeChunker::CHUNK_SIZE);
+  } // AppendChunk()
+  
+  /*
+  Image ImageDeChunker::GetImage() const
+  {
+    if(_img.channels() == 3) {
+      Image grayImage(_img.rows, _img.cols);
+      cvtColor(_img, grayImage.get_CvMat_(), CV_RGB2GRAY);
+    } else {
+      return Vision::Image(_img.rows, _img.cols, _img.data);
+    }
+  }
+  
+  ImageRGBA ImageDeChunker::GetImageRGBA() const
+  {
+    // TODO Fill this in!
+  }
+  */
 } // namespace Vision
 } // namespace Anki

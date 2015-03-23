@@ -24,6 +24,7 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -262,17 +263,27 @@ namespace Anki {
       */
       //void ClearAllColors();
 
-      // ==== Saving Images ====
+      // ==== Saving Images / RobotState ====
       
-      void SaveImages(VizSaveImageMode_t mode);
-      VizSaveImageMode_t GetSaveImageMode() const;
+      void SaveImages(VizSaveMode_t mode);
+      VizSaveMode_t GetSaveImageMode() const;
       
-      
+      void SaveRobotState(VizSaveMode_t mode);
+      VizSaveMode_t GetSaveRobotStateMode() const;
+        
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
-      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res);
+      void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
+      void SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
+      
+      void SendImage(const RobotID_t robotID, const u8* data, const u32 dataLength,
+                     const Vision::CameraResolution res,
+                     const TimeStamp_t timestamp,
+                     const Vision::ImageEncoding_t encoding);
+      
+      void SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk);
       
       void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                             const u16 topRight_x, const u16 topRight_y,
@@ -284,6 +295,8 @@ namespace Anki {
                            const u16 topRight_x, const u16 topRight_y,
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
+      
+      void SendRobotState(MessageRobotState msg);
       
     protected:
       
@@ -303,9 +316,10 @@ namespace Anki {
       std::map<RobotID_t, u8> _imgID;
       
       bool               _sendImages;
-      VizSaveImageMode_t _saveImageMode;
-      u32                _saveImageCounter;
+      VizSaveMode_t      _saveImageMode;
     
+      VizSaveMode_t      _saveRobotStateMode;
+      
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
@@ -322,12 +336,20 @@ namespace Anki {
       return _singletonInstance;
     }
     
-    inline void VizManager::SaveImages(VizSaveImageMode_t mode) {
+    inline void VizManager::SaveImages(VizSaveMode_t mode) {
       _saveImageMode = mode;
     }
     
-    inline VizSaveImageMode_t VizManager::GetSaveImageMode() const {
+    inline VizSaveMode_t VizManager::GetSaveImageMode() const {
       return _saveImageMode;
+    }
+    
+    inline void VizManager::SaveRobotState(VizSaveMode_t mode) {
+      _saveRobotStateMode = mode;
+    }
+    
+    inline VizSaveMode_t VizManager::GetSaveRobotStateMode() const {
+      return _saveRobotStateMode;
     }
     
     template<typename T>

@@ -8,7 +8,7 @@ import sys, os, socket, threading, time, select
 # XXX Replace this with importing the CLAD python messages
 assert os.path.split(os.path.abspath(os.path.curdir))[1] == 'products-cozmo', "Script must be run from root cozmo directory"
 sys.path.append(os.path.join(os.path.curdir, 'robot', 'som'))
-import messages
+from messages import *
 
 ROBOT_PORT = 5551
 
@@ -19,8 +19,9 @@ class Pinger(threading.Thread, socket.socket):
     def __init__(self, robotAddress):
         threading.Thread.__init__(self)
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+        self.settimeout(0.030)
         self.pingAddr = (robotAddress, ROBOT_PORT)
-        self.pingData = messages.PingMessage().serialize()
+        self.pingData = PingMessage().serialize()
         self._continue = True
 
     def __del__(self):
@@ -30,7 +31,15 @@ class Pinger(threading.Thread, socket.socket):
         "Thread main method"
         while self._continue:
             self.sendto(self.pingData, self.pingAddr)
-            time.sleep(0.030)
+            try:
+                msg = self.recv(1500)
+            except socket.timeout:
+                continue
+            else:
+                #print(msg)
+                if PrintText.isa(msg):
+                    printMsg = PrintText(buffer=msg)
+                    sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
 
     def stop(self):
         "Stop the thread running"
@@ -91,7 +100,7 @@ class CozmoCLI(socket.socket):
 
     def FlashBlockIDs(self, *args):
         "Sends a FlashBlockIDs message to the robot"
-        self.sendto(messages.FlashBlockIDs().serialize(), self.robot)
+        self.sendto(FlashBlockIDs().serialize(), self.robot)
         return True
 
     def SetBlockLights(self, *args):
@@ -99,7 +108,7 @@ class CozmoCLI(socket.socket):
         if len(args) > 9:
             sys.stderr.write("Too many arguments for SetBlockLights\n")
             return False
-        msg = messages.SetBlockLights(blockID=eval(args[0]))
+        msg = SetBlockLights(blockID=eval(args[0]))
         for i, a in enumerate(args[1:]):
             try:
                 val = int(eval(a))
@@ -111,6 +120,24 @@ class CozmoCLI(socket.socket):
         self.sendto(msg.serialize(), self.robot)
         return True
 
+    def ImageRequest(self, *args):
+        "Send an image request to the robot. Args: <command> <resolution>"
+        if len(args) != 2:
+            sys.stderr.write("ImageRequest needs command and resolution specified\n")
+            return False
+        else:
+            try:
+                cmd = int(eval(args[0]))
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as an image request command\n" % args[0])
+                return False
+            try:
+                res = int(eval(args[1]))
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as an image request resolution\n" % args[1])
+                return False
+            self.sendto(ImageRequest(imageSendMode=cmd, resolution=res).serialize(), self.robot)
+            return True
 
 
 
@@ -119,6 +146,7 @@ class CozmoCLI(socket.socket):
         "exit": exitFtn,
         "FlashBlockIDs": FlashBlockIDs,
         "SetBlockLights": SetBlockLights,
+        "ImageRequest": ImageRequest,
     }
 
 

@@ -6,9 +6,9 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "e3c5e279baa5b66938a1b63a0a46b4c9d0a86c2a" # Hash for the revision these python definitions are based on
+__version__ = "3e246afb27b2e31897a8be87f9f60d1964dcb7ad" # Hash for the revision these python definitions are based on
 
-import struct
+import sys, struct
 
 def portableNamesToStructFormat(names):
     table = {
@@ -28,11 +28,16 @@ def portableNamesToStructFormat(names):
 ISM_OFF = 0
 ISM_STREAM = 1
 ISM_SINGLE_SHOT = 2
+
 IE_NONE  = 0
-IE_YUYV  = 1
-IE_BAYER = 2
-IE_JPEG  = 3
-IE_WEBP  = 4
+IE_RAW_GREY = 1
+IE_RAW_RGB = 2
+IE_YUYV  = 3
+IE_BAYER = 4
+IE_JPEG_GRAY  = 5
+IE_JPEG_COLOR = 6
+IE_WEBP  = 7
+
 CAMERA_RES_QUXGA = 0
 CAMERA_RES_QXGA = 1
 CAMERA_RES_UXGA = 2
@@ -40,6 +45,7 @@ CAMERA_RES_SXGA = 3
 CAMERA_RES_XGA = 4
 CAMERA_RES_SVGA = 5
 CAMERA_RES_VGA = 6
+CAMERA_RES_QSVGA = 6.5 # HACK! Not in the C++ code
 CAMERA_RES_QVGA = 7
 CAMERA_RES_QQVGA = 8
 CAMERA_RES_QQQVGA = 9
@@ -58,13 +64,26 @@ class MessageBase(struct.Struct):
         "Initalize the structure definition from the class format field"
         struct.Struct.__init__(self, portableNamesToStructFormat(self.FORMAT))
 
+    @classmethod
+    def isa(cls, msg):
+        "Returns true if the provided msg matches the type tag for this class. Argument can be bytes, string or int"
+        argtype = type(msg)
+        if argtype is int:
+            return msg == cls.ID
+        elif argtype is str: # Str has to come before bytes because they are the same in python 2
+            return ord(msg[0]) == cls.ID
+        elif argtype is bytes:
+            return msg[0] == cls.ID
+        else:
+            raise ValueError("MessageBase doesn't know how to interprate a %s \"%s\"" % (argtype, msg))
+
     def serialize(self):
         "Convert python struct into C compatable binary struct"
         return struct.pack('b', self.ID) + self.pack(*self._getMembers())
 
     def deserialize(self, buffer):
         "Deserialize the received buffer"
-        assert ord(buffer[0]) == self.ID, ("Wrong message ID: %d, expected %d" % (ord(buffer[0]), self.ID))
+        assert self.isa(buffer)
         self._setMembers(*self.unpack(buffer[1:]))
 
 
@@ -76,10 +95,10 @@ class ImageRequest(MessageBase):
               "u8", # Resolution
              ]
 
-    def __init__(self, buffer=None):
+    def __init__(self, buffer=None, imageSendMode=ISM_OFF, resolution=CAMERA_RES_NONE):
         MessageBase.__init__(self)
-        self.imageSendMode = ISM_OFF
-        self.resolution = CAMERA_RES_NONE
+        self.imageSendMode = imageSendMode
+        self.resolution    = resolution
         if buffer:
             self.deserialize(buffer)
 
@@ -96,7 +115,7 @@ class ImageRequest(MessageBase):
 class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
-    IMAGE_CHUNK_SIZE = 1024
+    IMAGE_CHUNK_SIZE = 1400
     ID = 72
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
@@ -227,10 +246,19 @@ class PrintText(MessageBase):
             self.deserialize(buffer)
 
     def _getMembers(self):
-        return (self.text,)
+        if sys.version_info.major < 3:
+            return (self.text,)
+        else:
+            return (bytes(self.text, encoding="ASCII"),)
 
-    def __setMembers(self, text):
-        self.text = text
+    def _setMembers(self, text):
+        end = text.find(b"\x00")
+        if end > -1:
+            text = text[:end]
+        if sys.version_info.major < 3:
+            self.text = text
+        else:
+            self.text = text.decode("utf-8")
 
     def __repr__(self):
         return "PrintText(%s)" % self.text
