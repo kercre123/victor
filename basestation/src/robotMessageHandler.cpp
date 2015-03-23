@@ -299,7 +299,7 @@ namespace Anki {
                                                             msg.imageChunkCount,
                                                             msg.chunkId, msg.data);
 
-      //CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
       
       if(isImageReady)
