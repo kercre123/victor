@@ -16,7 +16,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/basestation/robot.h"
-
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 namespace Anki {
   
@@ -141,11 +141,15 @@ namespace Anki {
         result = RUNNING;
       }
       
-#     if USE_ACTION_CALLBACKS
       if(result != RUNNING) {
+#       if USE_ACTION_CALLBACKS
         RunCallbacks(result);
+#       endif
+        
+        // Notify any listeners about this action's completion.
+        // TODO: Populate the signal with any action-specific info?
+        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
       }
-#     endif
       
       return result;
     } // Update()

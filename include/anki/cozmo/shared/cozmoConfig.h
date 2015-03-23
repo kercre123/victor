@@ -9,9 +9,13 @@
 namespace Anki {
   namespace Cozmo {
 
+#ifndef SIMULATOR
+    
     // Uncomment if using Cozmo v3 robot with treads
     #define COZMO_TREADS
-
+    
+#endif
+    
     /***************************************************************************
      *
      *                          Physical Robot Geometry
@@ -157,7 +161,7 @@ namespace Anki {
      *                          Camera Calibration
      *
      **************************************************************************/
-
+    
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
 #ifdef SIMULATOR
@@ -238,11 +242,8 @@ namespace Anki {
     const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
 #ifdef SIMULATOR
-    // Should be less than the timestep of offboard_vision_processing,
-    // and roughly reflect image capture time.  If it's larger than or equal
-    // to offboard_vision_processing timestep then we may send the same image
-    // multiple times.
-    const s32 VISION_TIME_STEP = 60;
+    // Simulated camera's frame rate, specified by its period in milliseconds
+    const s32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
 #endif
 
 
@@ -272,6 +273,9 @@ namespace Anki {
     // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
     const u16 ROBOT_RADIO_BASE_PORT = 5551;
 
+    /* 
+     THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientComms.h 
+     
     // Expected message receive latency
     // It is assumed that this value does not fluctuate greatly.
     // The more inaccurate this value is, the more invalid our
@@ -283,7 +287,8 @@ namespace Anki {
     // of the system one message cycle latency in the future. This way, commanded actions are applied
     // at the time they are expected in the physical world.
     const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
-
+     */
+    
     // Rate at which the robot advertises itself
     const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
 
@@ -358,7 +363,12 @@ namespace Anki {
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
+    // Default distance from marker for predock pose
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 60.f;
 
+    // Max speed the robot can travel when in assisted RC mode
+    const f32 MAX_ASSISTED_RC_SPEED = 50.f;
+    
     /***************************************************************************
      *
      *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~

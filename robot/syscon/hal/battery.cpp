@@ -17,7 +17,7 @@ namespace
   
   const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
   const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
-  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(3.40); // V
+  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
   const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
   
   const u8 PIN_I_SENSE     = 6;
@@ -188,6 +188,8 @@ void BatteryUpdate()
           
         // If contact state has changed, and we are debounced, commit the change
         } else {
+          debounceContacts = 0;   // Reset debounce time
+         
           m_onContacts = onContacts;
           
           // If we are now on contacts, start charging

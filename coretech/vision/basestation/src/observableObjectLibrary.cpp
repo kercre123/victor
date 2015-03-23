@@ -142,22 +142,6 @@ namespace Anki {
           
         } // FOR each observed marker
         
-        // Now we have a list of poses, each paired with the matched marker pair
-        // that generated it.  We will now cluster those individual poses which
-        // are the "same" according to the object's matching function (which will
-        // internally take symmetry ambiguities into account during matching
-        // and adjust the known markers' poses accordingly)
-        /*
-         if(seenOnlyBy == NULL) {
-         // First put them all in a common World coordinate frame if multiple
-         // observers are possible.  Otherwise they'll be clustered in the
-         // coordinate frame of the (single) observer.
-         for(auto & poseMatch : possiblePoses) {
-         poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
-         }
-         }
-         */
-        
         // TODO: make the distance/angle thresholds parameters or else object-type-specific
         std::vector<PoseCluster> poseClusters;
         ClusterObjectPoses(possiblePoses, libObject,
@@ -172,26 +156,12 @@ namespace Anki {
           // NOTE: this does nothing for singleton clusters
           poseCluster.RecomputePose();
           
-          // Add to list of objects seen -- using pose in World frame
+          // Create a new object of the observed type from the library, and set
+          // its pose to the computed pose, in _historical_ world frame (since
+          // it is computed w.r.t. a camera from a pose in history).
           objectsSeen.push_back(libObject->CloneType());
-          
-          // Compute pose wrt camera, or world if no camera specified
-          //if (seenOnlyBy == ANY_CAMERA) {
           Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
-          
-          //if(poseCluster.GetPose().GetWithRespectTo(poseCluster.GetPose().FindOrigin(), newPose) == true) {
           objectsSeen.back()->SetPose(newPose);
-          //} else {
-          //  PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectsFromMarkers.CouldNotFindWorldOrigin",
-          //                    "Could not get the pose cluster w.r.t. the world pose.\n");
-          // TODO: this may indicate that we should be getting the pose w.r.t. the origin
-          // of the camera that saw this object.
-          // We are probably not handling the case that two robot's saw the same thing
-          // but are not both localized to the same world frame yet.
-          //}
-          //} else {
-          //  objectsSeen.back()->SetPose(poseCluster.GetPose());
-          //}
           
           // Set the markers in the object corresponding to those from the pose
           // cluster from which it was computed as "observed"

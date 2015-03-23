@@ -15,14 +15,6 @@ namespace Anki {
     } ImageSendMode_t;
 
     typedef enum {
-      IE_NONE,
-      IE_YUYV,
-      IE_BAYER,
-      IE_JPEG,
-      IE_WEBP
-    } ImageEncoding_t;
-
-    typedef enum {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH,      // Placing block atop another block at level 0
@@ -105,7 +97,7 @@ namespace Anki {
 
     // Bit flags for RobotState message
     typedef enum {
-      //IS_TRAVERSING_PATH    = 1,
+      IS_MOVING               = 0x1,  // Head, lift, or wheels
       IS_CARRYING_BLOCK       = 0x2,
       IS_PICKING_OR_PLACING   = 0x4,
       IS_PICKED_UP            = 0x8,
@@ -216,7 +208,7 @@ namespace Anki {
       VIZ_SAVE_OFF = 0,
       VIZ_SAVE_ONE_SHOT,
       VIZ_SAVE_CONTINUOUS
-    } VizSaveImageMode_t;
+    } VizSaveMode_t;
     
   }
 }

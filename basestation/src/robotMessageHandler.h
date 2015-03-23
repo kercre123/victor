@@ -25,6 +25,8 @@
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
+#include "anki/vision/basestation/image.h"
+
 #include "anki/messaging/basestation/IComms.h"
 
 namespace Anki {
@@ -80,6 +82,7 @@ namespace Anki {
       
       bool isInitialized_;
 
+      Vision::ImageDeChunker _imageDeChunker;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot

@@ -153,6 +153,37 @@ GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
   
 } // TestRotation:ExtractAnglesFromMatrix
 
+
+GTEST_TEST(TestRotation, ExtractAnglesFromRotation3d)
+{
+  std::vector<f32> testAngles = {
+    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
+    291.f, 333.f, 352.f, 360.f, 378.f
+  };
+  
+  const f32 signs[2] = {-1.f, 1.f};
+  
+  const f32 TOLERANCE = 1e-6f;
+  
+  for(auto angle : testAngles) {
+    for(auto sign : signs) {
+      const Radians curAngle = DEG_TO_RAD(sign*angle);
+      
+      Rotation3d Rx(curAngle, X_AXIS_3D);
+      Rotation3d Ry(curAngle, Y_AXIS_3D);
+      Rotation3d Rz(curAngle, Z_AXIS_3D);
+      
+      EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+    }
+  }
+  
+} // TestRotation:ExtractAnglesFromRotation3d
+
 /*
 GTEST_TEST(TestRotation, EulerAngles)
 {
@@ -246,6 +277,55 @@ GTEST_TEST(TestRotation, AxisRotation3d)
   EXPECT_TRUE( IsNearlyEqual(q, negYaxis) );
   
 } // TestRotation:AxisRotation3d
+
+GTEST_TEST(TestRotation, Rotation3d)
+{
+  // pi/7 radians around [0.6651 0.7395 0.1037] axis
+  const RotationMatrix3d Rmat1 = {
+     0.944781277013538,   0.003728131819389,   0.327680392513508,
+     0.093691220482485,   0.955123218207869,  -0.281001055593651,
+    -0.314022760017760,   0.296185312048692,   0.902033240583432
+  };
+  
+  // 0.6283 radians around [-0.8190   -0.5670   -0.0875] axis
+  const RotationMatrix3d Rmat2 = {
+    0.937130929836233,   0.140108185633360,  -0.319617453626684,
+    0.037286544290262,   0.870425010004489,   0.490886968225451,
+    0.346980307739744,  -0.471942791318199,   0.810478048909173
+  };
+  
+  // Matrix product as computed in Matlab, R1*R2
+  const RotationMatrix3d Rprod = {
+    0.999221409206381,  -0.019029749384142,  -0.034560729477129,
+    0.025912352001530,   0.977106466215908,   0.211167004271049,
+    0.029751057079763,  -0.211898141373248,   0.976838805681470
+  };
+  
+  Rotation3d R1(Rmat1), R2(Rmat2);
+  
+  const f32 TOL = 1e-4f;
+  
+  EXPECT_NEAR(R1.GetAngle().ToFloat(), M_PI/7.f, TOL);
+  EXPECT_NEAR(R2.GetAngle().ToFloat(), 0.62832, TOL);
+  EXPECT_TRUE(IsNearlyEqual(R1.GetAxis(), {0.6651, 0.7395, 0.1037}, TOL));
+  EXPECT_TRUE(IsNearlyEqual(R2.GetAxis(), {-0.8190, -0.5670, -0.0875}, TOL));
+  
+  // Testing rotation multiplication (as well as conversion from quaternion to Rotation Matrix)
+  Rotation3d R3( R1 * R2 );
+  
+  EXPECT_TRUE(IsNearlyEqual(R3.GetRotationMatrix(), Rprod, 1e-6f));
+  
+  // Testing multiplication in place
+  Rotation3d R4(R1);
+  R4 *= R2;
+  
+  EXPECT_TRUE(IsNearlyEqual(R3, R4, 1e-6f));
+  
+  const RotationVector3d Rvec(R3.GetRotationVector());
+  EXPECT_NEAR(Rvec.GetAngle().ToFloat(), 0.2168, TOL);
+  EXPECT_TRUE(IsNearlyEqual(Rvec.GetAxis(), {-0.9832, -0.1495, 0.1044}, TOL));
+  
+} // TestRotation:Rotation3d
 
 
 // TODO: move these pose tests to their own testPose.cpp file

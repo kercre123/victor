@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
+#include "anki/common/basestation/array2d_impl.h"
 
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
@@ -20,6 +21,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -288,145 +290,52 @@ namespace Anki {
     // Sends complete images to VizManager for visualization (and possible saving).
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageImageChunk const& msg)
     {
-      static u32 imgID = 0;
-      static u32 totalImgSize = 0;
-      static u8 data[ 3*640*480 ];
-      static u32 dataSize = 0;
-      static u32 width;
-      static u32 height;
-      
-      // Whether or not the current image that is being composed is valid.
-      // A dropped chunk can invalidate an image.
-      static bool isImgValid = false;
-      static u8 expectedChunkId = 0;
-      
-      //PRINT_INFO("Img %d, chunk %d, totalChunks %d, size %d, res %d, encoding %d, dataSize %d\n",
-      //           msg.imageId, msg.chunkId, msg.imageChunkCount, msg.chunkSize, msg.resolution, msg.imageEncoding, dataSize);
-      
-      // Check that resolution is supported
-      if (msg.resolution >= Vision::CAMERA_RES_COUNT) {
-        return RESULT_FAIL;
-      }
-      
-      bool isLastChunk =  msg.chunkId == msg.imageChunkCount-1;
-      
-      // If msgID has changed, then start over.
-      if (msg.imageId != imgID) {
-        imgID = msg.imageId;
-        dataSize = 0;
-        width = Vision::CameraResInfo[msg.resolution].width;
-        height = Vision::CameraResInfo[msg.resolution].height;
-        totalImgSize = width * height;
-        isImgValid = msg.chunkId == 0;
-        expectedChunkId = 0;
-      }
-      
-      // Check if a chunk was received out of order
-      if (msg.chunkId != expectedChunkId) {
-        PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
-                         "Expected chunk %d, got %d\n", expectedChunkId, msg.chunkId);
-        isImgValid = false;
-      }
-      expectedChunkId = msg.chunkId + 1;
-      
-      if (!isImgValid) {
-        if (isLastChunk) {
-          PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
-                           "Received last chunk of invalidated image\n");
-        }
-        return RESULT_FAIL;
-      }
-      
-      
-      // Msgs are guaranteed to be received in order (with TCP) so just append data to array
-      memcpy(data + dataSize, msg.data.data(), msg.chunkSize);
-      dataSize += msg.chunkSize;
-      
-      // We've received all data when the msg chunkSize is less than the max
-      u32 imgBytes = 0;
-      cv::Mat rawImg;
-      if (isLastChunk) {
+      const u16 width  = Vision::CameraResInfo[msg.resolution].width;
+      const u16 height = Vision::CameraResInfo[msg.resolution].height;
 
-        // Decompress image if necessary
-        if (msg.imageEncoding > 0) {
-#if ANKICORETECH_USE_OPENCV
-          cv::vector<u8> inputVec(data, data+dataSize);
-          rawImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp,
+                                                            height, width,
+                                                            (Vision::ImageEncoding_t)msg.imageEncoding,
+                                                            msg.imageChunkCount,
+                                                            msg.chunkId, msg.data);
 
-          // Check size
-          u32 w = rawImg.cols;
-          u32 h = rawImg.rows;
-          u32 numChannels = rawImg.channels();
-          imgBytes = w * h * numChannels;
-          //PRINT_INFO("rawImg size: %u x %u (channels %d)\n", w, h, numChannels);
-#else
-          PRINT_NAMED_ERROR("MessageImageChunk.NeedOpenCVtoDecode",
-                            "ANKICORETECH_USE_OPENCV must be 1 to use compressed images.\n");
-          return RESULT_FAIL;
-#endif
+      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
+      
+      if(isImageReady)
+      {
+        Vision::Image image;
+        cv::Mat cvImg = _imageDeChunker.GetImage();
+        if(cvImg.channels() == 1) {
+          image = Vision::Image(height, width, cvImg.data);
         } else {
-          // Already decompressed.
-          // Raw image bytes is the same as total received bytes.
-          imgBytes = dataSize;
+          // TODO: Actually support processing color data (and have ImageRGB object)
+          cv::cvtColor(cvImg, cvImg, CV_RGB2GRAY);
+          image = Vision::Image(height, width, cvImg.data);
         }
         
-        // Make sure the final image contains the expected number of bytes
-        if (imgBytes != totalImgSize) {
-          PRINT_NAMED_WARNING("MessageImageChunk.WrongNumBytesInImg",
-                              "Expected %d bytes in decompressed image. Got %d bytes\n", totalImgSize, imgBytes);
-        } else {
-          
-          // Send image to Viz
-          u8* imgToSend = data;
-          if (msg.imageEncoding > 0) {
-            
-#if(0)
-            // Write image to file (recompressing as jpeg again!)
-            static u32 imgCnt = 0;
-            char imgFilename[32];
-            vector<int> compression_params;
-            compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-            compression_params.push_back(90);
-            sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
-            imwrite(imgFilename, rawImg);
-#endif
-            
-            imgToSend = rawImg.data;
-          }
-          // TODO: Send _compressed_ data to vizManager directly (it needs to support compressed image data)
-          // NOTE: This will only actually send if EnableImageSend(true) was called somewhere previously
-          VizManager::getInstance()->SendGreyImage(robot->GetID(), imgToSend,
-                                                   (Vision::CameraResolution)msg.resolution);
-
-          // TODO: Stuff and things on the image that imgToSend now points to.
-          // ...
-
-          Vision::Image image(height, width, imgToSend);
-          image.SetTimestamp(msg.frameTimeStamp);
-          
-#if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
-          // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
-          static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
-          static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
-          static s32 g_queueImages_queueIndex = 0;
-          
-          char filename[256];
-          snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
-          
-          cv::imwrite(filename, image.get_CvMat_());
-
-          g_queueImages_queueIndex++;
-          
-          if(g_queueImages_queueIndex >= g_queueImages_queueLength)
-            g_queueImages_queueIndex = 0;
-#endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
-          
-          robot->ProcessImage(image);          
-        }
-
-        imgID = 0;
-        isImgValid = false;
-      }
+        image.SetTimestamp(msg.frameTimeStamp);
+        
+#       if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+        // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
+        static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
+        static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
+        static s32 g_queueImages_queueIndex = 0;
+        
+        char filename[256];
+        snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
+        
+        cv::imwrite(filename, image.get_CvMat_());
+        
+        g_queueImages_queueIndex++;
+        
+        if(g_queueImages_queueIndex >= g_queueImages_queueLength)
+          g_queueImages_queueIndex = 0;
+#       endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+        
+        robot->ProcessImage(image);
+        
+      } // if(isImageReady)
       
       return RESULT_OK;
     }
@@ -454,7 +363,8 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s picking up block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s picking up block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -464,13 +374,17 @@ namespace Anki {
         // TODO: what do we do on failure? Need to trigger reattempt?
       }
       
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
+      
       return lastResult;
     }
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s placing block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s placing block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -479,6 +393,9 @@ namespace Anki {
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?
       }
+      
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
       
       return lastResult;
     }

@@ -75,9 +75,9 @@ namespace Anki
       {
         // XXX: Replace with flash identification block
         printf("My ID: %08x", *(int*)(0x1FFF7A10));
-        m_idCard.esn = 2;
-        if (*(int*)(0x1FFF7A10) == 0x00250031)
-          m_idCard.esn = 1;
+        //m_idCard.esn = 2;
+        //if (*(int*)(0x1FFF7A10) == 0x00250031)
+        m_idCard.esn = 1;
       }
     }
   }
@@ -125,13 +125,13 @@ int main(void)
 {
   using namespace Anki::Cozmo::HAL;
   using namespace Anki::Cozmo;
-  
+
   // Timer, than Startup, must be called FIRST in main() to do hardware sanity check
   TimerInit();
   Startup();
 
   // Initialize the hardware
-  LightsInit();
+  //LightsInit();
   UARTInit();
   printf("UART..");
   GetId();
@@ -184,15 +184,25 @@ int main(void)
     MicroWait(500000);
   }
 
-#elif defined(DO_LED_TESTING) 
-  
-  for (int i=0; i<8; ++i) {
-    SetLED((LEDId)i, 0xFFFFffff);
-  }
+#elif defined(DO_LED_TESTING)
   while (1) {
-    // Spin
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_RED);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_GREEN);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
+    for (int i=0; i<8; ++i) {
+      SetLED((LEDId)i, LED_BLUE);
+      MicroWait(250000);
+      SetLED((LEDId)i, 0);
+    }
   }
-  
+
 #else
 
   Anki::Cozmo::Robot::Init();

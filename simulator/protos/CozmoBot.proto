@@ -9,7 +9,8 @@ PROTO CozmoBot [
 
   field SFInt32  cameraWidth  320
   field SFInt32  cameraHeight 240
-  field SFFloat fieldOfView   1.22
+  field SFFloat  fieldOfView   1.22
+  field SFBool   hideCameraDisplay FALSE
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
@@ -357,8 +358,19 @@ Supervisor {
 						fieldOfView IS fieldOfView
 						near 0.018
 						antiAliasing TRUE
-						%{ if fields.vizMode then }%
-						pixelSize 0
+						
+						%{ if fields.vizMode or fields.hideCameraDisplay then }%
+              pixelSize 0
+						%{ else }%
+              %{ if fields.cameraWidth == 640 then }%
+                pixelSize 0.5
+              %{ elseif fields.cameraWidth == 320 then }%
+                pixelSize 1
+              %{ elseif fields.cameraWidth == 160 then }%
+                pixelSize 2
+              %{ elseif fields.cameraWidth == 80 then }%
+                pixelSize 4
+              %{ end }%      
 						%{ end }%
 
 				  }

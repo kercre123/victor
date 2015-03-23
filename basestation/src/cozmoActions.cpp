@@ -753,23 +753,31 @@ namespace Anki {
           
           const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
           
-          bool objectInOriginalPoseFound = false;
+          Vision::ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
-            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
-                                                               GetRotationAmbiguities(),
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
+                                                               carryObject->GetRotationAmbiguities(),
                                                                carryObject->GetSameDistanceTolerance(),
                                                                carryObject->GetSameAngleTolerance(), true))
             {
-              objectInOriginalPoseFound = true;
+              PRINT_INFO("Seeing object %d in original pose.\n", object.first.GetValue());
+              objectInOriginalPose = object.second;
               break;
             }
           }
           
-          if(objectInOriginalPoseFound)
+          if(objectInOriginalPose != nullptr)
           {
             // Must not actually be carrying the object I thought I was!
-            blockWorld.ClearObject(robot.GetCarryingObject());
+            // Put the object I thought I was carrying in the position of the
+            // object I matched to it above, and then delete that object.
+            // (This prevents a new object with different ID being created.)
+            if(carryObject->GetID() != objectInOriginalPose->GetID()) {
+              PRINT_INFO("Moving carried object to object seen in original pose and clearing that object.\n");
+              carryObject->SetPose(objectInOriginalPose->GetPose());
+              blockWorld.ClearObject(objectInOriginalPose->GetID());
+            }
             robot.UnSetCarryingObject();
             
             PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
@@ -795,8 +803,6 @@ namespace Anki {
           break;
           
       } // switch(_dockAction)
-      
-      CozmoEngineSignals::RobotCompletedPickAndPlaceActionSignal().emit(robot.GetID(), result == SUCCESS);
       
       return result;
       
@@ -868,11 +874,14 @@ namespace Anki {
 
         actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
         
+        if(actionResult != SUCCESS) {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
+                            "VerityObjectPlaceHelper reported failure, just deleting object %d.\n",
+                            _carryingObjectID.GetValue());
+          robot.GetBlockWorld().ClearObject(_carryingObjectID);
+        }
+        
       } // if robot is not picking/placing or moving
-      
-      if(actionResult != RUNNING) {
-        CozmoEngineSignals::RobotCompletedPlaceObjectOnGroundActionSignal().emit(robot.GetID(), actionResult == SUCCESS);
-      }
       
       return actionResult;
       

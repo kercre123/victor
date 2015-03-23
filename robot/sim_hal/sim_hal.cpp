@@ -88,6 +88,7 @@ namespace Anki {
       // Cameras / Vision Processing
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
+      u32 cameraStartTime_ms_;
       
       // For pose information
       webots::GPS* gps_;
@@ -257,9 +258,20 @@ namespace Anki {
       //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
       
+      if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
+        PRINT("VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).\n",
+              VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
+        return RESULT_FAIL;
+      }
       //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
-
+      
+      // HACK: Figure out when first camera image will actually be taken (next
+      // timestep from now), so we can reference to it when computing frame
+      // capture time from now on.
+      // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
+      cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
+      printf("Setting camera start time as %d.\n", cameraStartTime_ms_);
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -268,12 +280,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          PRINT("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          printf("***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
           return RESULT_FAIL;
         }
-        PRINT("Initializing robot ID: %d\n", robotID_);
+        printf("Initializing robot ID: %d\n", robotID_);
       } else {
-        PRINT("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        printf("***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
         return RESULT_FAIL;
       }
       
@@ -394,7 +406,7 @@ namespace Anki {
       }
       
       if(InitSimRadio(advertisementIP.c_str()) == RESULT_FAIL) {
-        PRINT("Failed to initialize Simulated Radio.\n");
+        printf("Failed to initialize Simulated Radio.\n");
         return RESULT_FAIL;
       }
       
@@ -780,6 +792,11 @@ namespace Anki {
     } // HAL::CameraSetParameters()
     
     
+    u32 HAL::GetCameraStartTime()
+    {
+      return cameraStartTime_ms_;
+    }
+    
     // Starts camera frame synchronization
     void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
     {
@@ -788,63 +805,34 @@ namespace Anki {
                                     "NULL frame pointer provided to CameraGetFrame(), check "
                                     "to make sure the image allocation succeeded.\n");
       
+      static u32 lastFrameTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
+      u32 currentTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
+      AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(),
+                          "SimHAL.CameraGetFrame",
+                          "Image requested too soon -- new frame may not be ready yet.\n");
+      
       const u8* image = headCam_->getImage();
       
       AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
-      
-      // Set the increment / windowsize for downsampling
-      s32 inc = 1;
+
       s32 pixel = 0;
-      
-      // TODO: add averaging once we support it in hardware
-      const bool supportAveraging = false;
-      
-      if(supportAveraging) {
-        AnkiAssert(false);
-        // Need a way to get downsampling increment (LUT for resolution based on res?)
-        //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
-        //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
+      for (s32 y=0; y < headCamInfo_.nrows; y++) {
+        for (s32 x=0; x < headCamInfo_.ncols; x++) {
+          frame[pixel++] = webots::Camera::imageGetRed(image,   headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetGreen(image, headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetBlue(image,  headCam_->getWidth(), x, y);
+        }
       }
       
-      if(inc == 1)
-      {
-        // No averaging
-        for (s32 y=0; y < headCamInfo_.nrows; y++) {
-          for (s32 x=0; x < headCamInfo_.ncols; x++) {
-            frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
-          }
-        }
-      } else {
-        // Average [inc x inc] windows
-        for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
-        {
-          for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
-          {
-            s32 sum = 0;
-            for (s32 y1 = y; y1 < y + inc; y1++)
-            {
-              for (s32 x1 = x; x1 < x + inc; x1++)
-              {
-                //int index = x1 + y1 * headCamInfo_.ncols;
-                //sum += frame[index];
-                sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
-              }
-            }
-            frame[pixel++] = (sum / (inc * inc));
-          }
-        }
-      } // if averaging or not
-      
-#if BLUR_CAPTURED_IMAGES
+#     if BLUR_CAPTURED_IMAGES
       // Add some blur to simulated images
-      cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
+      cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
       cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#endif
-
+#     endif
       
     } // CameraGetFrame()
-    
+  
     
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
@@ -861,13 +849,13 @@ namespace Anki {
     
     TimeStamp_t HAL::GetTimeStamp(void)
     {
-      //return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
-      return timeStamp_;
+      return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
+      //return timeStamp_;
     }
     
     void HAL::SetTimeStamp(TimeStamp_t t)
     {
-      timeStamp_ = t;
+      //timeStamp_ = t;
     };
     
     void HAL::SetLED(LEDId led_id, u32 color) {

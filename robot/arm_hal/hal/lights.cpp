@@ -34,7 +34,7 @@ namespace Anki
         u8  asLEDs[4];
       } ColorValue;
       
-      static const u8 HW_CHANNELS[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+      static const u8 HW_CHANNELS[8] = {2, 3, 1, 0, 6, 7, 5, 4};
       static ColorValue m_channels[8];   // The actual RGB color values in use
 
       // Make some nice array handles into macro defined GPIOs
@@ -60,17 +60,18 @@ namespace Anki
       // Initialize LED head/face light hardware
       void LightsInit()
       {
-        return;
-        
         int i;
 
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+        
         // Leave the high side pins off until first LED is set
         for (i=0; i<NUM_EYEnEN; ++i)
         {
           GPIO_SET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
           PIN_OD(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
           PIN_OUT(EYEnEN_GPIO[i], EYEnEN_SOURCE[i]);
-          GPIO_RESET(EYEnEN_GPIO[i], EYEnEN_PIN[i]);
         }
 
         // Initialize all face LED colors to OFF
@@ -100,7 +101,7 @@ namespace Anki
         // Set up clock to multiplex the LEDs - must keep above 100Hz to hide flicker
         // 98Hz = 90MHz/2 eyes/(255^2)/(Prescaler+1)
         TIM_TimeBaseStructure.TIM_Prescaler = 6;
-        TIM_TimeBaseStructure.TIM_Period = 12857143; // Wait one second before resetting
+        TIM_TimeBaseStructure.TIM_Period = 65535;
         TIM_TimeBaseStructure.TIM_ClockDivision = 0;
         TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
         TIM_TimeBaseInit(TIM11, &TIM_TimeBaseStructure);
@@ -156,51 +157,64 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler(void)
   // If this is the end of the last LED, switch to the next LED
   if (0 == s_now)
   {
+    // Turn everything off
+    GPIO_SET(  GPIO_EYE2nEN, PIN_EYE2nEN);
+    GPIO_SET(  GPIO_EYE1nEN, PIN_EYE1nEN);
+    for (i=0; i<NUM_COLOR_GPIO; ++i)
+    { // Concatination hack
+      GPIO_SET(RED_GPIO[i], RED_PIN[i]);
+    }
+
     if (s_which == 0)
     {
-      // Select eye 1
-      GPIO_SET(  GPIO_EYE2nEN, PIN_EYE2nEN);
-      GPIO_RESET(GPIO_EYE1nEN, PIN_EYE1nEN);
       // Cache the new colors for this eye
       s_color[0] = m_channels[0];
       s_color[1] = m_channels[1];
       s_color[2] = m_channels[2];
       s_color[3] = m_channels[3];
       s_which = 1; // Next time do other eye.
+      // Select eye 1
+      GPIO_RESET(GPIO_EYE1nEN, PIN_EYE1nEN);
     }
     else
     {
-      // Select eye 2
-      GPIO_SET(  GPIO_EYE1nEN, PIN_EYE1nEN);
-      GPIO_RESET(GPIO_EYE2nEN, PIN_EYE2nEN);
       // Cache the colors for this eye
       s_color[0] = m_channels[4];
       s_color[1] = m_channels[5];
       s_color[2] = m_channels[6];
       s_color[3] = m_channels[7];
       s_which = 0; // Next time do other eye
+      // Select eye 2
+      GPIO_RESET(GPIO_EYE2nEN, PIN_EYE2nEN);
     }  
-
-    // Turn everything off
-    for (i=0; i<NUM_COLOR_GPIO; ++i)
-    { // Concatination hack
-      GPIO_SET(RED_GPIO[i], RED_PIN[i]);
-    }
+      
     s_now = 255;
+    
+    // Now, we have to wait ~70uS for the other eye's gate to turn off
+    TIM11->SR = 0;        // Acknowledge interrupt
+    TIM11->ARR = 1000;    // Next time to trigger is 78uS
+    TIM11->CR1 = TIM_CR1_CEN | TIM_CR1_URS | TIM_CR1_OPM; // Fire off one pulse  
+    return;    
   }
 
   // If the LED is due to turn, turn it on - if not, see if it is next to turn on
   nexttime = 0;
   for (i=0; i<NUM_COLOR_CHANNELS; ++i)
   {
-    if (s_now == s_color[i].asLEDs[CH_BLUE]) GPIO_RESET(BLU_GPIO[i], BLU_PIN[i]);
-    else if (s_color[i].asLEDs[CH_BLUE] < s_now) nexttime = s_color[i].asLEDs[CH_BLUE];
+    if (s_now == s_color[i].asLEDs[CH_BLUE])
+      GPIO_RESET(BLU_GPIO[i], BLU_PIN[i]);
+    else if (s_color[i].asLEDs[CH_BLUE] < s_now)
+      nexttime = s_color[i].asLEDs[CH_BLUE];
 
-    if (s_now == s_color[i].asLEDs[CH_GREEN]) GPIO_RESET(GRN_GPIO[i], GRN_PIN[i]);
-    else if (s_color[i].asLEDs[CH_GREEN] < s_now && s_color[i].asLEDs[CH_GREEN] > nexttime) nexttime = s_color[i].asLEDs[CH_GREEN];
+    if (s_now == s_color[i].asLEDs[CH_GREEN])
+      GPIO_RESET(GRN_GPIO[i], GRN_PIN[i]);
+    else if (s_color[i].asLEDs[CH_GREEN] < s_now && s_color[i].asLEDs[CH_GREEN] > nexttime)
+      nexttime = s_color[i].asLEDs[CH_GREEN];
 
-    if (s_now == s_color[i].asLEDs[CH_RED]) GPIO_RESET(RED_GPIO[i], RED_PIN[i]);
-    else if (s_color[i].asLEDs[CH_RED] < s_now && s_color[i].asLEDs[CH_RED] > nexttime) nexttime = s_color[i].asLEDs[CH_RED];
+    if (s_now == s_color[i].asLEDs[CH_RED])
+      GPIO_RESET(RED_GPIO[i], RED_PIN[i]);
+    else if (s_color[i].asLEDs[CH_RED] < s_now && s_color[i].asLEDs[CH_RED] > nexttime)
+      nexttime = s_color[i].asLEDs[CH_RED];
   }
   // Figure out how many cycles to wait before the next color turns on
   // Gamma correction requires us to use the square of intensity here (linear PWM = RGB^2)

@@ -11,11 +11,17 @@
 #include <cstdio>
 #include <string>
 #include <webots/Supervisor.hpp>
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/image.h"
 
 webots::Supervisor vizSupervisor;
 
@@ -51,12 +57,6 @@ namespace Anki {
       // Image reference for display in camDisp
       webots::ImageRef* camImg = nullptr;
       
-      // Image message processing
-      u8 imgID = 0;
-      u8 imgData[3*640*480];
-      u32 imgBytes = 0;
-      u32 imgWidth, imgHeight = 0;
-      
       // Cozmo bots for visualization
       typedef struct  {
         webots::Supervisor* supNode = NULL;
@@ -71,6 +71,9 @@ namespace Anki {
       
       // Map of robotID to vizBot index
       std::map<u8, u8> robotIDToVizBotIdxMap_;
+
+      // Image message processing
+      Vision::ImageDeChunker _imageDeChunker;
     }
     
     void Init()
@@ -301,40 +304,31 @@ namespace Anki {
     
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
-      // If this is a new image, then reset everything
-      if (msg.imgId != imgID) {
-        //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
-        imgID = msg.imgId;
-        imgBytes = 0;
-        imgWidth = Vision::CameraResInfo[msg.resolution].width;
-        imgHeight = Vision::CameraResInfo[msg.resolution].height;
+      // TODO: Support timestamps
+      const u16 width = Vision::CameraResInfo[msg.resolution].width;
+      const u16 height = Vision::CameraResInfo[msg.resolution].height;
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imgId, 0, height, width,
+                                                            (Vision::ImageEncoding_t)msg.encoding,
+                                                            msg.chunkCount, msg.chunkId, msg.data,
+                                                            msg.chunkSize);
+      
+      if(isImageReady)
+      {
+        cv::Mat cvImg = _imageDeChunker.GetImage();
+        
+        if(cvImg.channels() == 1) {
+          cvtColor(cvImg, cvImg, CV_GRAY2RGB);
+        }
+              // Delete existing image if there is one.
+        if (camImg != nullptr) {
+          camDisp->imageDelete(camImg);
+        }
+        
+        //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+        
+        camImg = camDisp->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
+        camDisp->imagePaste(camImg, 0, 0);
       }
-      
-      // Copy chunk into the appropriate location in the imgData array.
-      // Triplicate channels for viewability. (Webots only supports RGB)
-      //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
-      u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
-      for(int i=0; i<msg.chunkSize; ++i) {
-        chunkStart[3*i] = msg.data[i];
-        chunkStart[3*i+1] = msg.data[i];
-        chunkStart[3*i+2] = msg.data[i];
-      }
-      
-      // Do we have all the data for this image?
-      imgBytes += msg.chunkSize;
-      if (imgBytes < imgWidth * imgHeight) {
-        return;
-      }
-      
-      // Delete existing image if there is one.
-      if (camImg != nullptr) {
-        camDisp->imageDelete(camImg);
-      }
-      
-      //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
-      
-      camImg = camDisp->imageNew(imgWidth, imgHeight, imgData, webots::Display::RGB);
-      camDisp->imagePaste(camImg, 0, 0);
     };
   
     

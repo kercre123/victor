@@ -76,6 +76,7 @@ namespace Anki {
       
       Result UpdateFullRobotState(const MessageRobotState& msg);
       
+      bool HasReceivedRobotState() const;
       
       // Accessors
       const RobotID_t        GetID()           const;
@@ -110,6 +111,7 @@ namespace Anki {
       //
       // Camera / Vision
       //
+      void                              EnableVisionWhileMoving(bool enable);
       const Vision::Camera&             GetCamera() const;
       Vision::Camera&                   GetCamera();
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
@@ -425,7 +427,8 @@ namespace Anki {
       RobotID_t         _ID;
       
       // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
-      double       _lastStateMsgTime_sec;
+      double            _lastStateMsgTime_sec;
+      bool              _newStateMsgAvailable;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IRobotMessageHandler* _msgHandler;
@@ -465,6 +468,7 @@ namespace Anki {
       // cameras (e.g. those stored inside the pose history)
       Vision::CameraCalibration _cameraCalibration;
       Vision::Camera            _camera;
+      bool                      _visionWhileMovingEnabled;
       
       // Proximity sensors
       u8               _proxVals[NUM_PROX];
@@ -671,6 +675,10 @@ namespace Anki {
     
     inline const Pose3d& Robot::GetPose(void) const
     { return _pose; }
+    
+    
+    inline void Robot::EnableVisionWhileMoving(bool enable)
+    { _visionWhileMovingEnabled = enable; }
     
     inline const Vision::Camera& Robot::GetCamera(void) const
     { return _camera; }

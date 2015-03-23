@@ -134,9 +134,11 @@ namespace Anki {
     
     
     bool KnownMarker::IsVisibleFrom(const Camera& camera,
-                                    const f32 maxAngleRad,
-                                    const f32 minImageSize,
-                                    const bool requireSomethingBehind) const
+                                    const f32     maxAngleRad,
+                                    const f32     minImageSize,
+                                    const bool    requireSomethingBehind,
+                                    const u16     xBorderPad,
+                                    const u16     yBorderPad) const
     {
       using namespace Quad;
       
@@ -186,10 +188,10 @@ namespace Anki {
       
       // Make sure the projected corners are within the camera's field of view
       // TODO: add some border padding?
-      if(not camera.IsWithinFieldOfView(imgCorners[TopLeft])    ||
-         not camera.IsWithinFieldOfView(imgCorners[TopRight])   ||
-         not camera.IsWithinFieldOfView(imgCorners[BottomLeft]) ||
-         not camera.IsWithinFieldOfView(imgCorners[BottomRight]))
+      if(not camera.IsWithinFieldOfView(imgCorners[TopLeft], xBorderPad, yBorderPad)    ||
+         not camera.IsWithinFieldOfView(imgCorners[TopRight], xBorderPad, yBorderPad)   ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomLeft], xBorderPad, yBorderPad) ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomRight], xBorderPad, yBorderPad))
       {
         return false;
       }

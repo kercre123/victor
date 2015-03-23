@@ -53,6 +53,17 @@ namespace Anki {
       {16,   16}
     };
 
+    typedef enum {
+      IE_NONE,
+      IE_RAW_GRAY, // no compression
+      IE_RAW_RGB,  // no compression, just [RGBRGBRG...]
+      IE_YUYV,
+      IE_BAYER,
+      IE_JPEG_GRAY,
+      IE_JPEG_COLOR,
+      IE_WEBP
+    } ImageEncoding_t;
+    
   } // namespace Vision
 } // namespace Anki
 

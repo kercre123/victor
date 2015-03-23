@@ -115,9 +115,9 @@ namespace Anki {
   }
   
   template<MatDimType DIM>
-  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::preMultiplyBy(const RotationMatrixBase<DIM>& R_other)
+  RotationMatrixBase<DIM>& RotationMatrixBase<DIM>::PreMultiplyBy(const RotationMatrixBase<DIM>& R_other)
   {
-    SmallSquareMatrix<DIM,float>::preMultiplyBy(R_other);
+    SmallSquareMatrix<DIM,float>::PreMultiplyBy(R_other);
     this->Renormalize();
     return *this;
   }
@@ -252,6 +252,159 @@ namespace Anki {
   
   
 #if 0
+#pragma mark --- Rotation3d ---
+#endif
+  
+  Rotation3d::Rotation3d(const Radians& angle, const Vec3f& axis)
+  {
+    const f32 halfAngle = angle.ToFloat() * 0.5f;
+    const f32 q1 = std::cos(halfAngle);
+    
+    const f32 sinHalfAngle = std::sin(halfAngle);
+    const f32 q2 = sinHalfAngle * axis[0];
+    const f32 q3 = sinHalfAngle * axis[1];
+    const f32 q4 = sinHalfAngle * axis[2];
+    
+    _q = {q1, q2, q3, q4};
+  }
+  
+  Rotation3d::Rotation3d(const RotationVector3d& Rvec)
+  : Rotation3d(Rvec.GetAngle(), Rvec.GetAxis())
+  {
+    
+  }
+
+  Rotation3d::Rotation3d(const RotationMatrix3d& Rmat)
+  : Rotation3d(RotationVector3d(Rmat))
+  {
+    
+  }
+  
+  const Radians Rotation3d::GetAngle() const
+  {
+    return 2.f*std::acos(_q[0]);
+  }
+  
+  Radians Rotation3d::GetAngleAroundXaxis() const
+  {
+    // Apply the quaternion to the Y axis and see where its (y,z) coordinates
+    // end up.
+    const float w2 = _q.w()*_q.w();
+    const float x2 = _q.x()*_q.x();
+    const float y2 = _q.y()*_q.y();
+    const float z2 = _q.z()*_q.z();
+    const float yz = _q.y()*_q.z();
+    const float wx = _q.w()*_q.x();
+    
+    const float Ynew = w2-x2+y2-z2;
+    const float Znew = 2*yz+2*wx;
+    
+    return Radians(atan2f(Znew, Ynew));
+  }
+  
+  Radians Rotation3d::GetAngleAroundYaxis() const
+  {
+    // Apply the matrix to the X axis and see where its (x,z) coordinates
+    // end up.
+    const float w2 = _q.w()*_q.w();
+    const float x2 = _q.x()*_q.x();
+    const float y2 = _q.y()*_q.y();
+    const float z2 = _q.z()*_q.z();
+    const float xz = _q.x()*_q.z();
+    const float wy = _q.w()*_q.y();
+    
+    const float Xnew = w2+x2-y2-z2;
+    const float Znew = 2*xz-2*wy;
+
+    return Radians(atan2f(-Znew, Xnew));
+  }
+  
+
+  
+  Radians Rotation3d::GetAngleAroundZaxis() const
+  {
+    // Apply the quaternion to the X axis and see where its (x,y) coordinates
+    // end up.
+    const float w2 = _q.w()*_q.w();
+    const float x2 = _q.x()*_q.x();
+    const float y2 = _q.y()*_q.y();
+    const float z2 = _q.z()*_q.z();
+    const float xy = _q.x()*_q.y();
+    const float wz = _q.w()*_q.z();
+    
+    const float Xnew = w2+x2-y2-z2;
+    const float Ynew = 2*xy+2*wz;
+    
+    return Radians(atan2f(Ynew, Xnew));
+  }
+  
+  
+  
+  const Vec3f Rotation3d::GetAxis() const
+  {
+    Vec3f axis(_q[1], _q[2], _q[3]);
+    axis.MakeUnitLength();
+    return axis;
+  }
+  
+  const RotationMatrix3d Rotation3d::GetRotationMatrix() const
+  {
+    return RotationMatrix3d(GetAngle(), GetAxis());
+  }
+  
+  const RotationVector3d Rotation3d::GetRotationVector() const
+  {
+    return RotationVector3d(GetAngle(), GetAxis());
+  }
+  
+  Rotation3d& Rotation3d::operator*=(const Rotation3d& other)
+  {
+    _q *= other._q;
+    return *this;
+  }
+  
+  Rotation3d Rotation3d::operator*(const Rotation3d& other) const
+  {
+    Rotation3d retVal(*this);
+    retVal *= other;
+    return retVal;
+  }
+  
+  Rotation3d& Rotation3d::PreMultiplyBy(const Rotation3d& other)
+  {
+    _q = other._q * _q;
+    return *this;
+  }
+  
+  Point3<float> Rotation3d::operator*(const Point3<float>& p) const
+  {
+    return _q*p;
+  }
+  
+  bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance)
+  {
+    return IsNearlyEqual(R1.GetQuaternion(), R2.GetQuaternion(), tolerance);
+  }
+  
+  Rotation3d& Rotation3d::Invert()
+  {
+    _q.Conj();
+    return *this;
+  }
+  
+  Rotation3d Rotation3d::GetInverse() const
+  {
+    Rotation3d R(*this);
+    R._q.Conj();
+    return R;
+  }
+  
+  bool Rotation3d::operator==(const Rotation3d &other) const
+  {
+    return _q == other._q;
+  }
+  
+#if 0
 #pragma mark --- UnitQuaternion ----
 #endif
   
@@ -298,6 +451,24 @@ namespace Anki {
   }
   
   template<typename T>
+  UnitQuaternion<T>& UnitQuaternion<T>::Conj()
+  {
+    // (w stays same)
+    x() = -x();
+    y() = -y();
+    z() = -z();
+    return *this;
+  }
+  
+  template<typename T>
+  UnitQuaternion<T> UnitQuaternion<T>::GetConj() const
+  {
+    UnitQuaternion<T> q_new(*this);
+    q_new.Conj();
+    return q_new;
+  }
+  
+  template<typename T>
   UnitQuaternion<T>& UnitQuaternion<T>::operator*=(const UnitQuaternion<T>& other)
   {
     const T wNew = (this->w()*other.w()) - (this->x()*other.x()) - (this->y()*other.y()) - (this->z()*other.z());
@@ -310,12 +481,43 @@ namespace Anki {
     this->y() = yNew;
     this->z() = zNew;
     
+    Normalize();
+    /*
+     // TODO: Only normalize when things get outside some tolerance?
     const T newLength = Point<4,T>::Length();
     if(!NEAR(newLength, 1.f, UnitQuaternion<T>::NormalizationTolerance)) {
       Point<4,T>::operator/=(newLength);
     }
+     */
     
     return *this;
+  }
+  
+  template<typename T>
+  Point3<T> UnitQuaternion<T>::operator*(const Point3<T>& p) const
+  {
+    const T w2 = w()*w();
+    const T x2 = x()*x();
+    const T y2 = y()*y();
+    const T z2 = z()*z();
+    const T xy = x()*y();
+    const T xz = x()*z();
+    const T yz = y()*z();
+    const T wx = w()*x();
+    const T wy = w()*y();
+    const T wz = w()*z();
+    
+    Point3<T> p_out((w2+x2-y2-z2) * p.x() + (2*xy-2*wz)   * p.y() + (2*xz+2*wy)   * p.z(),
+                    (2*xy+2*wz)   * p.x() + (w2-x2+y2-z2) * p.y() + (2*yz-2*wx)   * p.z(),
+                    (2*xz-2*wy)   * p.x() + (2*yz+2*wx)   * p.y() + (w2-x2-y2+z2) * p.z());
+  
+    return p_out;
+  }
+  
+  template<typename T>
+  bool UnitQuaternion<T>::operator==(const UnitQuaternion<T>& other) const
+  {
+    return Point<4,T>::operator==(other);
   }
   
   // Explicit instantiation for single and double precision
@@ -373,7 +575,7 @@ namespace Anki {
     // R = R_this * R_other^T
     RotationMatrix3d R;
     other.GetTranspose(R);
-    R.preMultiplyBy(*this);
+    R.PreMultiplyBy(*this);
     
     //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
     return R.GetAngle();

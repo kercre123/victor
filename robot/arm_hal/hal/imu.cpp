@@ -179,7 +179,7 @@
 // 16 bits, +/- 500 deg 1000/2^16 ~= 0.01526 deg / LSB = 2.663E-4 rad/LSB
 #define RANGE_CONST_500D    2.663E-4f
 
-#define POST_WRITE_DELAY_US 20
+#define POST_WRITE_DELAY_US 2
 
 //-8.5
 //10.9
@@ -315,7 +315,7 @@ namespace Anki
         GPIO_Init(GPIO_IMU_MOSI, &GPIO_InitStructure);
         
         // Set CS output pins
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
         

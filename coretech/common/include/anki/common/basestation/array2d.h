@@ -86,12 +86,12 @@ namespace Anki
     const T* GetDataPointer() const;
 
     // Apply a function to every element, in place:
-    void ApplyScalarFunction(T (*fcn)(T));
+    void ApplyScalarFunction(std::function<T(T)>fcn); //T (*fcn)(T));
 
     // Apply a function pointer to every element, storing the
     // result in a separate, possibly differently-typed, result:
     template<class Tresult>
-    void ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
+    void ApplyScalarFunction(std::function<void(const T&, Tresult&)>fcn,//void(*fcn)(const T&, Tresult&),
       Array2d<Tresult> &result) const;
     
     Array2d<T>& operator+=(const Array2d<T>& other);
@@ -107,9 +107,12 @@ namespace Anki
     // Absolute value, in place
     Array2d<T>& Abs();
     
+    bool IsContinuous() const { return cv::Mat_<T>::isContinuous(); }
+    
   protected:
     // Sub-classes can get write access to the data:
     T* GetDataPointer();
+    
   }; // class Array2d(Managed)
 
   

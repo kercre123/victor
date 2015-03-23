@@ -340,6 +340,9 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
 
+#     if SIMULATOR
+      u32 GetCameraStartTime();
+#     endif
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
 

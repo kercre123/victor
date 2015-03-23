@@ -153,6 +153,13 @@ namespace Anki {
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
+        
+        // TODO: Make this a parameters somewhere?
+        const f32 WHEEL_SPEED_STOPPED = 2.f;
+        robotState_.status |= (HeadController::IsMoving() ||
+                               LiftController::IsMoving() ||
+                               fabs(robotState_.lwheel_speed_mmps) > WHEEL_SPEED_STOPPED ||
+                               fabs(robotState_.rwheel_speed_mmps) > WHEEL_SPEED_STOPPED ? IS_MOVING : 0);
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
@@ -228,13 +235,15 @@ namespace Anki {
         f32 currentMatX       = msg.xPosition;
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
-        Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
+        Result res = Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
         //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
 
-        PRINT("Robot received localization update from "
-              "basestation for time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+        PRINT("Robot %s localization update from "
+              "basestation  at currTime=%d for frame at time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
+              res == RESULT_OK ? "PROCESSED" : "IGNORED",
+              HAL::GetTimeStamp(),
               msg.timestamp,
               currentMatX, currentMatY,
               currentMatHeading.getDegrees(),
@@ -279,6 +288,7 @@ namespace Anki {
         if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
           PRINT("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
+          lastPingTime_ = 0;
         }
 
       } // ProcessBTLEMessages()
@@ -350,6 +360,7 @@ namespace Anki {
             // TODO: Maybe want to set manual speed via a different message?
             //       For now, using average wheel speed.
             f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
+            manualSpeed = CLIP(manualSpeed, -MAX_ASSISTED_RC_SPEED, MAX_ASSISTED_RC_SPEED);
             PRINT("Commanding manual path speed %f mm/s.\n", manualSpeed);
             PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
           } else {

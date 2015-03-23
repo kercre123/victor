@@ -10,6 +10,12 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include <fstream>
+
+#if ANKICORETECH_USE_OPENCV
+#include <opencv2/highgui/highgui.hpp>
+#endif
+
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
@@ -49,6 +55,7 @@ namespace Anki {
         //_isInitialized = false;
       }
      
+      PRINT_INFO("VizManager connected.\n");
       _isInitialized = true;
       
       return _isInitialized ? RESULT_OK : RESULT_FAIL;
@@ -59,6 +66,7 @@ namespace Anki {
       if(_isInitialized) {
         if (_vizClient.Disconnect()) {
           _isInitialized = false;
+          PRINT_INFO("VizManager disconnected.\n");
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -71,7 +79,7 @@ namespace Anki {
     : _isInitialized(false)
     , _sendImages(false)
     , _saveImageMode(VIZ_SAVE_OFF)
-    , _saveImageCounter(0)
+    , _saveRobotStateMode(VIZ_SAVE_OFF)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -552,29 +560,121 @@ namespace Anki {
     }
     
 
-    void VizManager::SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res)
+    void VizManager::SendRobotState(MessageRobotState msg)
+    {
+      
+      // TODO: Display state stuff somewhere...
+      
+      if(_saveRobotStateMode != VIZ_SAVE_OFF)
+      {
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("VizManager.SendRobotState.CreateDirFailed","\n");
+          }
+        }
+        
+        // Write state message to JSON file
+        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmoState_" + std::to_string(msg.timestamp) + ".json");
+        
+        Json::Value json = msg.CreateJson();
+        std::ofstream jsonFile(msgFilename, std::ofstream::out);
+        
+        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
+        jsonFile << json.toStyledString();
+        jsonFile.close();
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_saveRobotStateMode == VIZ_SAVE_ONE_SHOT) {
+          _saveRobotStateMode = VIZ_SAVE_OFF;
+        }
+      }
+    } // SendRobotState()
+    
+    void VizManager::SendGreyImage(const RobotID_t robotID,
+                                   const u8* data,
+                                   const Vision::CameraResolution res,
+                                   const TimeStamp_t timestamp)
+    {
+      if(!_sendImages) {
+        return;
+      }
+      
+      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_GRAY);
+    }
+    
+    
+    void VizManager::SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp)
+    {
+      if(!_sendImages) {
+        return;
+      }
+      
+      const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
+      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_RGB);
+    }
+    
+    
+    void VizManager::SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk)
     {
       if(!_sendImages) {
         return;
       }
       
       VizImageChunk v;
+      static_assert(robotImageChunk.data.size() == MAX_VIZ_IMAGE_CHUNK_SIZE,
+                    "MessageImageChunk and VizImageChunk must have the same chunk size.");
+      
+      v.chunkSize = robotImageChunk.chunkSize;
+      v.chunkId = robotImageChunk.chunkId;
+      v.chunkCount = robotImageChunk.imageChunkCount;
+      v.imgId = robotImageChunk.imageId;
+      v.resolution = robotImageChunk.resolution;
+      v.encoding = robotImageChunk.imageEncoding;
+      
+      std::copy(robotImageChunk.data.begin(), robotImageChunk.data.end(), v.data);
+      
+      SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
+    }
+    
+    void VizManager::SendImage(const RobotID_t robotID,
+                               const u8* data,
+                               const u32 dataLength,
+                               const Vision::CameraResolution res,
+                               const TimeStamp_t timestamp,
+                               const Vision::ImageEncoding_t encoding)
+    {
+      if(!_sendImages) {
+        return;
+      }
+
+      VizImageChunk v;
       v.resolution = res;
       v.imgId = ++(_imgID[robotID]);
       v.chunkId = 0;
+      f32 chunkCount = ceilf((f32)dataLength / MAX_VIZ_IMAGE_CHUNK_SIZE);
+      if(chunkCount > static_cast<f32>(u8_MAX)) {
+        PRINT_NAMED_ERROR("VizManager.SendImage", "Too many chunks (>255) required to send image of %d bytes.\n", dataLength);
+        return;
+      }
+      v.chunkCount = static_cast<u8>(chunkCount);
       v.chunkSize = MAX_VIZ_IMAGE_CHUNK_SIZE;
+      v.encoding = encoding;
       
-      s32 bytesToSend = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
+      s32 bytesToSend = dataLength;
       
-
       while (bytesToSend > 0) {
         if (bytesToSend < MAX_VIZ_IMAGE_CHUNK_SIZE) {
           v.chunkSize = bytesToSend;
+          assert(v.chunkId == v.chunkCount-1);
         }
         bytesToSend -= v.chunkSize;
-
-        //printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d\n", v.imgId, v.chunkId, v.chunkSize, bytesToSend);
+        
+        
         memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
+        // printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d of %d, first/lastByte=%d/%d\n",
+        //       v.imgId, v.chunkId, v.chunkSize, bytesToSend, dataLength, v.data[0], v.data[v.chunkSize-1]);
         SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
         
         ++v.chunkId;
@@ -585,23 +685,53 @@ namespace Anki {
         // Make sure image capture folder exists
         if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
           if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessImageChunk.CreateDirFailed","\n");
+            PRINT_NAMED_WARNING("VizManager.SendGreyImage.CreateDirFailed","\n");
           }
         }
         
+        const char *ext = "";
+        switch(encoding) {
+          case Vision::IE_RAW_GRAY:
+            ext = "pgm";
+            break;
+          case Vision::IE_RAW_RGB:
+            ext = "ppm";
+            break;
+          case Vision::IE_JPEG_COLOR:
+          case Vision::IE_JPEG_GRAY:
+            ext = "jpg";
+            break;
+          default:
+            ext = "raw";
+        }
         // Create image file
         char imgCaptureFilename[64];
-        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img%d.pgm", AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, _saveImageCounter);
-        PRINT_INFO("Printing image to %s\n", imgCaptureFilename);
-        ++_saveImageCounter;
-        Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+        snprintf(imgCaptureFilename, sizeof(imgCaptureFilename), "%s/robot%d_img_%d.%s",
+                 AnkiUtil::kP_IMG_CAPTURE_DIR, robotID, timestamp, ext);
         
+        switch(encoding)
+        {
+          case Vision::IE_RAW_RGB:
+            Vision::WritePPM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+            break;
+          case Vision::IE_RAW_GRAY:
+            Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
+            break;
+          default:
+            // Just dump already-encoded data to file:
+            FILE * fp = fopen(imgCaptureFilename, "w");
+            fwrite(data, dataLength, sizeof(u8), fp);
+            fclose(fp);
+        }
+        
+        PRINT_INFO("Saved image to %s\n", imgCaptureFilename);
+
         // Turn off save mode if we were in one-shot mode
         if (_saveImageMode == VIZ_SAVE_ONE_SHOT) {
           _saveImageMode = VIZ_SAVE_OFF;
         }
       }
-    }
+    } // SendImage()
     
     void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                                       const u16 topRight_x, const u16 topRight_y,

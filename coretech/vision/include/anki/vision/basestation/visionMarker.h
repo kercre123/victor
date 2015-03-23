@@ -93,9 +93,11 @@ namespace Anki {
       // facing it) and have a diaonal image size at least the given image size
       // tolerance.
       bool IsVisibleFrom(const Camera& camera,
-                         const f32 maxAngleRad,
-                         const f32 minImageSize,
-                         const bool requireSomethingBehind) const;
+                         const f32     maxAngleRad,
+                         const f32     minImageSize,
+                         const bool    requireSomethingBehind,
+                         const u16     xBorderPad = 0,
+                         const u16     yBorderPad = 0) const;
       
       // Accessors
       Quad3f const& Get3dCorners() const; // at current pose

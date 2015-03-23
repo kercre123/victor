@@ -222,7 +222,13 @@ namespace Anki
                                    std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
                                    f32 padding_mm) const;
       
-      void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
+      // 1. Looks for objects that should have been seen (markers should have been visible
+      //    but something was seen through/behind their last known location) and delete
+      //    them.
+      // 2. Looks for objects whose markers are not visible but which still have
+      //    a corner in the camera's field of view, so the _object_ is technically
+      //    still visible. Return the number of these.
+      u32 CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.

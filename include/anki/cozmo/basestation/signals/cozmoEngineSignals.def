@@ -23,6 +23,10 @@ DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
 DEF_SIGNAL(RobotImageAvailable,
            uint8_t robotID)
 
+DEF_SIGNAL(RobotImageChunkAvailable,
+           uint8_t robotID,
+           const void *imageChunkMsg)
+
 DEF_SIGNAL(DeviceDetectedVisionMarker,
            uint8_t engineID, uint32_t markerType,
            float x_upperLeft,  float y_upperLeft,
@@ -35,22 +39,26 @@ DEF_SIGNAL(RobotObservedObject,
            uint32_t objectFamily,
            uint32_t objectType,
            uint32_t objectID,
+           uint8_t  markersVisible,
            float img_x_upperLeft,  float img_y_upperLeft,
            float img_width,  float img_height,
-           float world_x, float world_y, float world_z,
+           float world_x, float world_y, float world_z,  // Absolute translation vector
+           float q0, float q1, float q2, float q3,       // Absolute rotation, as a quaternion
            bool isActive)
 
 DEF_SIGNAL(RobotObservedNothing, uint8_t robotID)
+
+DEF_SIGNAL(RobotDeletedObject, uint8_t robotID, uint32_t objectID) // TODO: Add "reason" for deletion?
 
 DEF_SIGNAL(RobotObservedFace,
            uint8_t robotID,
            float x_upperLeft, float y_upperLeft,
            float width, float height)
 
-DEF_SIGNAL(RobotCompletedPickAndPlaceAction,
+// Generic message when an Action completes, and whether it succeeded
+// TODO: currently success is just true/false, acutally return ActionResult codes
+// TODO: add a an actionType member?
+DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
-           uint8_t success) // TODO: currently just true/false, acutally return ActionResult codes
+           uint8_t success)
 
-DEF_SIGNAL(RobotCompletedPlaceObjectOnGroundAction,
-           uint8_t robotID,
-           uint8_t success) // TODO: currently just true/false, acutally return ActionResult codes

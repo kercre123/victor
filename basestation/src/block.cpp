@@ -113,9 +113,8 @@ namespace Anki {
       // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
       {
-        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
         for(auto const& Rvec : preActionPoseRotations) {
-          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -halfHeight}}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -halfHeight}}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
         }
@@ -124,9 +123,8 @@ namespace Anki {
       // Add a pre-HIGH-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
       {
-        const f32 DefaultPreDockPoseDistance = 100.f; // TODO: define elsewhere
         for(auto const& Rvec : preActionPoseRotations) {
-          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPreDockPoseDistance, -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -(halfHeight+this->GetHeight())}}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15)); // Note: low head angle to still look at (and dock to) block below
         }
@@ -257,7 +255,7 @@ namespace Anki {
      */
     
     Point3f Block::GetSameDistanceTolerance() const {
-      return _size*.5f;
+      return _size*1.5f; // TODO: too loose?
     }
     
     Radians Block::GetSameAngleTolerance() const {

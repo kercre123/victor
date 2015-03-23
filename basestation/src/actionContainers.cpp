@@ -169,6 +169,10 @@ namespace Anki {
           // Current action just finished, pop it
           PopCurrentAction();
           
+          if(actionResult != IAction::SUCCESS) {
+            lastResult = RESULT_FAIL;
+          }
+          
           VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty

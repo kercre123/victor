@@ -75,7 +75,7 @@ namespace Anki {
       const Pose3d backPose(M_PI_2, Z_AXIS_3D, {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::SideMarkerSize);
       
-      const Vec3f PreDockPoseOffset(0.f, -100.f, -SideMarkerHeight);
+      const Vec3f PreDockPoseOffset(0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
       
       const Pose3d rightPose(0.f, Z_AXIS_3D, {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::SideMarkerSize);
