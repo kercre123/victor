@@ -128,14 +128,6 @@ public class CozmoVision4 : CozmoVision
 		actionSlider.SetMode(ActionButtonMode.TARGET, false);
 	}
 
-	protected override void OnEnable()
-	{
-		base.OnEnable();
-
-		Reset();
-	}
-
-
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
 	protected void Update()
 	{
