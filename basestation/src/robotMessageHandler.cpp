@@ -363,7 +363,8 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s picking up block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s picking up block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -373,13 +374,17 @@ namespace Anki {
         // TODO: what do we do on failure? Need to trigger reattempt?
       }
       
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
+      
       return lastResult;
     }
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s placing block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s placing block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -388,6 +393,9 @@ namespace Anki {
       else {
         // TODO: what do we do on failure? Need to trigger reattempt?
       }
+      
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
       
       return lastResult;
     }

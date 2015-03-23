@@ -116,7 +116,7 @@ namespace Anki {
                             p.GetPose().GetTranslation().x(),
                             p.GetPose().GetTranslation().y(),
                             p.GetPose().GetTranslation().z(),
-                            p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                            p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle(),
                             p.GetLiftAngle());
     }
@@ -177,7 +177,7 @@ namespace Anki {
                                p.GetPose().GetTranslation().x(),
                                p.GetPose().GetTranslation().y(),
                                p.GetPose().GetTranslation().z(),
-                               p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                               p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                p.GetHeadAngle(),
                                p.GetLiftAngle());
     }
