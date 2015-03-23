@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.373885 -0.37395 -0.848747 1.73423
-  position -1.65882 0.0497176 1.46613
+  orientation -0.285767 0.287772 0.91407 4.61571
+  position -0.97993 0.0169182 1.30949
 }
 Background {
   skyColor [
@@ -114,34 +114,36 @@ DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
 }
+DirectionalLight {
+  ambientIntensity 1
+  direction 1 -1 -1
+}
 CozmoMat {
+}
+Ramp {
+  hidden linearVelocity_0 -719.24 -1072.82 591.391
+  hidden angularVelocity_0 -269.892 7949.93 6060.19
+  translation 3339.79 -17196.9 13498.5
+  rotation -0.603625 -0.762686 0.232264 0.863603
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
   translation -0.2 -0.2 0.0219969
+  rotation 1 0 0 0
   blockColor 0.85 0.5 0.5
   markerImg "symbols/fire.png"
 }
-DEF FireBlock Block1x1 {
-  name "Fire_01"
+DEF AngryFaceBlock Block1x1 {
+  name "AngryFace_01"
   translation 0.2 0.2 0.0219969
-  blockColor 0.85 0.5 0.5
-  markerImg "symbols/fire.png"
+  blockColor 0.5 0.5 0.85
+  markerImg "symbols/angryFace.png"
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_1 -3.66036e-12
-  hidden position_0_2 2.43196e-12
-  hidden position_0_3 0.000299374
-  hidden position_0_4 0.000299365
-  hidden position_0_6 -1.24634e-07
-  hidden position_26_0 -4.49433e-08
-  hidden position_29_0 -8.2297e-08
-  rotation 0 -1 0 0.000299392
+  rotation 0 -1 0 0
   name "CozmoBot_1"
-  headAngle -0.390023
-  liftAngle -8.72803e-08
   usbChannel 10
 }
 CozmoVizDisplay {

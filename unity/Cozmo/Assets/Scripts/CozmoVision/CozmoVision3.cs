@@ -5,75 +5,13 @@ using System.Collections.Generic;
 
 public class CozmoVision3 : CozmoVision
 {
-	[System.Serializable]
-	public class SelectionBox
-	{
-		public Image image;
-		public Text text;
-
-		private Vector3[] corners;
-		public Vector3 position
-		{
-			get
-			{
-				Vector3 center = Vector3.zero;
-				center.z = image.transform.position.z;
-
-				if( corners == null )
-				{
-					corners = new Vector3[4];
-				}
-
-				image.rectTransform.GetWorldCorners( corners );
-
-				if( corners.Length == 0 )
-				{
-					return center;
-				}
-
-				center = ( corners[0] + corners[2] ) * 0.5f;
-				
-				return center;
-			}
-		}
-	}
-
 	public struct ActionButtonState
 	{
 		public bool activeSelf;
 		public string text;
 	}
 
-	[SerializeField] protected SelectionBox box;
-	[SerializeField] protected Image reticle;
-	[SerializeField] protected float distance;
-	
-	protected List<ObservedObject> inReticle = new List<ObservedObject>();
-	protected ActionButtonState[] lastActionButtonActiveSelf = new ActionButtonState[2];
-
-	protected bool isInReticle
-	{
-		get
-		{
-			return box.image.rectTransform.rect.center.x > reticle.rectTransform.rect.xMin && 
-				   box.image.rectTransform.rect.center.x < reticle.rectTransform.rect.xMax &&
-				   box.image.rectTransform.rect.center.y > reticle.rectTransform.rect.yMin && 
-				   box.image.rectTransform.rect.center.y < reticle.rectTransform.rect.yMax;
-		}
-	}
-
-	public void Action2()
-	{
-		if( RobotEngineManager.instance != null )
-		{
-			if( inReticle.Count > 1 )
-			{
-				RobotEngineManager.instance.current.selectedObject = inReticle[1].ID;
-			}
-		}
-
-		Action();
-	}
+	[SerializeField] protected float maxDistance = 200f;
 
 	protected void Update()
 	{
@@ -84,124 +22,120 @@ public class CozmoVision3 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
-		box.image.gameObject.SetActive( false );
-
-		if( robot.selectedObject > -2 )
+		if( !robot.isBusy )
 		{
-			robot.selectedObject = -1;
-			inReticle.Clear();
+			robot.selectedObjects.Clear();
 
-			for( int i = 0; i < robot.observedObjects.Count; ++i )
+			/*robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by distance from robot
 			{
-				//Debug.Log( i );
-				//box.image.gameObject.SetActive( true );
-				box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-				box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
+				return obj1.Distance.CompareTo( obj2.Distance );   
+			} );*/
 
-				/*if( isInReticle )
-				{
-					Debug.Log( "in reticle" );
-				}*/
+			robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by most center of view
+			{
+				return Vector2.Distance( obj1.VizRect.center, image.rectTransform.rect.center ).CompareTo( 
+					   Vector2.Distance( obj2.VizRect.center, image.rectTransform.rect.center ) );   
+			} );
 
-				/*if( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
+			for( int i = 0; i < robot.observedObjects.Count && robot.observedObjects.Count > 1; ++i )
+			{
+				if( robot.observedObjects[i].Distance > maxDistance ) // if multiple in view and too far away
 				{
-					Debug.Log( "in distance" );
-				}
-				else
-				{
-					Debug.Log( Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) );
-				}*/
-
-				if( isInReticle && Vector2.Distance( robot.WorldPosition, robot.observedObjects[i].WorldPosition ) < distance )
-				{
-					inReticle.Add( robot.observedObjects[i] );
+					robot.observedObjects.RemoveAt( i-- );
 				}
 			}
 
-			inReticle.Sort( delegate( ObservedObject obj1, ObservedObject obj2 )
+			for( int i = 1; i < robot.observedObjects.Count; ++i ) // if not on top of selected block, remove
+			{
+				if( Vector2.Distance( robot.observedObjects[0].WorldPosition, robot.observedObjects[i].WorldPosition ) > robot.observedObjects[0].Size.x * 0.5f )
+				{
+					robot.observedObjects.RemoveAt( i-- );
+				}
+			}
+
+			robot.observedObjects.Sort( ( obj1, obj2 ) =>
 			{
 				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
 			} );
-		}
 
-		
-		if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK ) // if holding a block
-		{
-			if( inReticle.Count > 0 && inReticle[0].ID != robot.carryingObjectID ) // if can see at least one block
+			if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 			{
-				robot.selectedObject = inReticle[0].ID; // select the block closest to ground
-				
-				if( inReticle.Count == 1 )
+				if( robot.observedObjects.Count > 0 && robot.observedObjects[0].ID != robot.carryingObjectID ) // if can see at least one block
 				{
-					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+					robot.selectedObjects.Add( robot.observedObjects[0] );
+					
+					if( robot.observedObjects.Count == 1 )
+					{
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+					}
 				}
+				
 			}
-
-		}
-		else // if not holding a block
-		{
-			if( inReticle.Count > 0 )
+			else // if not holding a block
 			{
-				robot.selectedObject = inReticle[0].ID;
-				
-				if( inReticle.Count == 1 )
+				if( robot.observedObjects.Count > 0 )
 				{
-					RobotEngineManager.instance.TrackHeadToObject( robot.selectedObject, Intro.CurrentRobotID );
+					for( int i = 0; i < 2 && i < robot.observedObjects.Count; ++i )
+					{
+						robot.selectedObjects.Add( robot.observedObjects[i] );
+					}
+					
+					if( robot.observedObjects.Count == 1 )
+					{
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+					}
 				}
+				
 			}
-
 		}
 
 		SetActionButtons();
-		
-		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
+		Dings();
+	}
+
+	protected override void Dings()
+	{
+		if( RobotEngineManager.instance != null )
 		{
-			if( ( actionButtons[i].button.gameObject.activeSelf && !lastActionButtonActiveSelf[i].activeSelf ) || 
-			   ( actionButtons[i].text.text != lastActionButtonActiveSelf[i].text ) )
+			robot = RobotEngineManager.instance.current;
+			
+			if( robot == null || robot.isBusy )
+			{
+				robot.lastSelectedObjects.Clear();
+				return;
+			}
+			
+			if( robot.selectedObjects.Count > robot.lastSelectedObjects.Count )
 			{
 				Ding( true );
-				
-				break;
 			}
-			else if( ( lastActionButtonActiveSelf[i].activeSelf && !actionButtons[i].button.gameObject.activeSelf ) ||
-			        ( robot.selectedObject == -1 && lastActionButtonActiveSelf[i].text.Contains( "Stack" ) ) )
+			else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
 			{
 				Ding( false );
-				
-				break;
 			}
+			
+			robot.lastSelectedObjects.Clear();
+			robot.lastSelectedObjects.AddRange( robot.selectedObjects );
 		}
 	}
-
-	protected override void LateUpdate()
-	{
-		base.LateUpdate();
-
-		for( int i = 0; i < actionButtons.Length && i < lastActionButtonActiveSelf.Length; ++i )
-		{
-			lastActionButtonActiveSelf[i].activeSelf = actionButtons[i].button.gameObject.activeSelf;
-			lastActionButtonActiveSelf[i].text = actionButtons[i].text.text;
-		}
-	}
-
+	
 	protected override void SetActionButtons()
 	{
-
 		DisableButtons();
 		robot = RobotEngineManager.instance.current;
-		if(robot == null)
+		if(robot == null || robot.isBusy)
 			return;
 		
-		if(robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK) {
-			if(robot.selectedObject > -1)
-				actionButtons[0].SetMode(ActionButtonMode.STACK);
-			actionButtons[1].SetMode(ActionButtonMode.DROP);
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
+			if(robot.selectedObjects.Count > 0)
+				actionButtons[1].SetMode(ActionButtonMode.STACK);
+			actionButtons[0].SetMode(ActionButtonMode.DROP);
 		}
 		else {
-			if(robot.selectedObject > -1)
-				actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+			for(int i = 0; i < robot.selectedObjects.Count; ++i) {
+				actionButtons[i].SetMode(ActionButtonMode.PICK_UP, i);
+			}
 		}
-		
 	}
 
 }

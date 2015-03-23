@@ -155,7 +155,6 @@ tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 
 # Unity
 build_unity
-unity/Cozmo/Assets/Plugins/iOS.meta
 unity/Cozmo/Builds
 unity/Cozmo/Library
 unity/Cozmo/Temp
@@ -163,8 +162,7 @@ unity/Cozmo/*.sln
 unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
-*.orig.meta
-*.a.meta
+unity/Cozmo/*.unityproj
 
 build_xcode/*.xcworkspace
 build_xcode/game_osx

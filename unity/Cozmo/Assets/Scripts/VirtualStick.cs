@@ -11,12 +11,15 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
 	[SerializeField] RectTransform deadZoneRect = null;
+	[SerializeField] RectTransform deadZoneVModeRect = null;
+	[SerializeField] RectTransform deadZoneHModeRect = null;
 	[SerializeField] RectTransform capTop = null;
 	[SerializeField] RectTransform capBottom = null;
 	[SerializeField] RectTransform capLeft = null;
 	[SerializeField] RectTransform capRight = null;
 	[SerializeField] RectTransform originMarker = null;
 	[SerializeField] RectTransform bgDefaultMode = null;
+	[SerializeField] RectTransform bgVertMode = null;
 	[SerializeField] RectTransform bgUpMode = null;
 	[SerializeField] RectTransform bgDownMode = null;
 	[SerializeField] RectTransform bgSideMode = null;
@@ -30,6 +33,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] float verticalAxisSnapAngle = 0f;
 	[SerializeField] float horizontalAxisSnapAngle = 0f;
 	[SerializeField] float verticalModeEntryAngle = 0f;
+	[SerializeField] bool verticalModeBothWays = false;
 	[SerializeField] float horizontalModeEntryAngle = 0f;
 	[SerializeField] float verticalModeMaxAngleAllowance = 170f;
 	[SerializeField] bool clearHorizontal = true;
@@ -62,6 +66,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	public bool UpModeEngaged { get; private set; }
 	public bool DownModeEngaged { get; private set; }
 	public bool SideModeEngaged { get; private set; }
+	public bool VertModeEngaged { get; private set; }
 	public bool IsPressed { get; private set; }
 	public float PressedTime { get; private set; }
 	public bool DoubleTapped { get; private set; }
@@ -94,7 +99,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			if(corners == null || corners.Length == 0) return center;
 			center = (corners[0] + corners[2]) * 0.5f;
 
-			center = Camera.main.WorldToScreenPoint(center);
+			center = canvas.worldCamera.WorldToScreenPoint(center);
 
 			return center * screenScaleFactor;
 		}
@@ -103,7 +108,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		get {
 			Vector2 res = stick.anchoredPosition;
 			
-			if(clampRadially && !horizontalOnly && !verticalOnly && !SideModeEngaged) {
+			if(clampRadially && !horizontalOnly && !verticalOnly && !SideModeEngaged && !VertModeEngaged) {
 				res = res / radius;
 			}
 			else {
@@ -113,7 +118,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			
 			//Debug.Log("res.x("+res.x+") deadZone.x("+deadZone.x+")");
 			
-			if(deadZoneRadial && !horizontalOnly && !verticalOnly && !SideModeEngaged) {
+			if(deadZoneRadial && !horizontalOnly && !verticalOnly && !SideModeEngaged && !VertModeEngaged) {
 				if(res.magnitude < deadZone.x) {
 					res = Vector2.zero;
 				}
@@ -157,12 +162,14 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	Vector2 oldSwipe;
 	float pointerDownTime = 0f;
 	Canvas canvas;	
+	CanvasScaler canvasScalar;	
 	float screenScaleFactor = 1f;
 #endregion
 
 #region COMPONENT CALLBACKS
 	void Awake() {
 		canvas = GetComponentInParent<Canvas>();
+		canvasScalar = canvas.gameObject.GetComponent<CanvasScaler>();
 		rTrans = transform as RectTransform;
 	}
 
@@ -234,14 +241,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		float screenW = Screen.width;
 		float screenH = Screen.height;
-		CanvasScaler scalar = canvas.gameObject.GetComponent<CanvasScaler>();
 
 		screenScaleFactor = 1f;
 
-		if(scalar != null) {
-			screenScaleFactor = scalar.referenceResolution.y / Screen.height;
-			screenW = scalar.referenceResolution.x;
-			screenH = scalar.referenceResolution.y;
+		if(canvasScalar != null) {
+			screenScaleFactor = canvasScalar.referenceResolution.y / Screen.height;
+			screenW = canvasScalar.referenceResolution.x;
+			screenH = canvasScalar.referenceResolution.y;
 		}
 
 		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
@@ -276,6 +282,13 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				deadZoneRect.sizeDelta = size;
 			}
 
+			if(deadZoneHModeRect != null) {
+				deadZoneHModeRect.sizeDelta = size;
+			}
+
+			if(deadZoneVModeRect != null) {
+				deadZoneVModeRect.sizeDelta = size;
+			}
 		}
 
 		bg.anchoredPosition = Vector3.zero;
@@ -301,6 +314,18 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			}
 
 			deadZoneRect.sizeDelta = size;
+		}
+
+		if(deadZoneHModeRect != null) {
+			Vector3 size = deadZoneHModeRect.sizeDelta;
+			size.x = deadZone.x * width;
+			deadZoneHModeRect.sizeDelta = size;
+		}
+
+		if(deadZoneVModeRect != null) {
+			Vector3 size = deadZoneVModeRect.sizeDelta;
+			size.y = deadZone.y * height;
+			deadZoneVModeRect.sizeDelta = size;
 		}
 
 		RefreshRadius();
@@ -365,7 +390,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 		bool thrown = throwVector.sqrMagnitude > 0f;
 		if(horizontalOnly || SideModeEngaged) thrown = throwVector.x != 0f;
-		if(verticalOnly) thrown = throwVector.y != 0f;
+		if(verticalOnly || VertModeEngaged) thrown = throwVector.y != 0f;
 
 		stickImageThrown.enabled = thrown;
 		stickImageNeutral.enabled = !thrown;
@@ -383,15 +408,21 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 
 	void RefreshBGImages() {
-		if(bgDefaultMode != null) bgDefaultMode.gameObject.SetActive(!UpModeEngaged && !DownModeEngaged && !SideModeEngaged);
+		if(bgDefaultMode != null) bgDefaultMode.gameObject.SetActive(!UpModeEngaged && !DownModeEngaged && !SideModeEngaged && !VertModeEngaged);
+
+		if(bgVertMode != null) bgVertMode.gameObject.SetActive(VertModeEngaged);
 		if(bgUpMode != null) bgUpMode.gameObject.SetActive(UpModeEngaged);
 		if(bgDownMode != null) bgDownMode.gameObject.SetActive(DownModeEngaged);
 		if(bgSideMode != null) bgSideMode.gameObject.SetActive(SideModeEngaged);
+
+
+		if(deadZoneHModeRect != null) deadZoneHModeRect.gameObject.SetActive(SideModeEngaged);
+		if(deadZoneVModeRect != null) deadZoneVModeRect.gameObject.SetActive(VertModeEngaged);
 	}
 
 	void RefreshCaps() {
 
-		if(!UpModeEngaged && !DownModeEngaged && !SideModeEngaged) {
+		if(!UpModeEngaged && !DownModeEngaged && !SideModeEngaged && !VertModeEngaged) {
 			if(capTop != null)
 				capTop.gameObject.SetActive(true);
 			if(capBottom != null)
@@ -403,9 +434,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		}
 		else {
 			if(capTop != null)
-				capTop.gameObject.SetActive(UpModeEngaged);
+				capTop.gameObject.SetActive(UpModeEngaged || VertModeEngaged);
 			if(capBottom != null)
-				capBottom.gameObject.SetActive(DownModeEngaged);
+				capBottom.gameObject.SetActive(DownModeEngaged || VertModeEngaged);
 			if(capLeft != null)
 				capLeft.gameObject.SetActive(SideModeEngaged);
 			if(capRight != null)
@@ -444,7 +475,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		
 		float dotUp = Vector2.Dot(SwipedDirection, Vector2.up);
 		
-		if(verticalOnly) {
+		if(verticalOnly || VertModeEngaged) {
 			if(dotUp >= 0f) {
 				SwipedDirection = Vector2.up;
 			}
@@ -502,10 +533,10 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			delta.y = 0f;
 		}
 		
-		if(verticalOnly) {
+		if(verticalOnly || VertModeEngaged) {
 			delta.x = 0f;
 		}
-		
+
 		if(UpModeEngaged) {
 
 			if(verticalModeMaxAngleAllowance > 0f) {
@@ -599,7 +630,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			return;
 		if(SideModeEngaged)
 			return;
-		
+		if(VertModeEngaged)
+			return;
+
 		Vector2 dragThusFar = JoystickData - touchDownValue;
 		if(dragThusFar.sqrMagnitude <= 0f)
 			return;
@@ -608,12 +641,22 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		float angleFromUp = Vector2.Angle(Vector2.up, dragThusFar);
 		
 		if(angleFromUp <= verticalModeEntryAngle) {
-			UpModeEngaged = true;
+			if(verticalModeBothWays) {
+				VertModeEngaged = true;
+			}
+			else {
+				UpModeEngaged = true;
+			}
 			return;
 		}
 		
 		if(angleFromUp >= 180f - verticalModeEntryAngle) {
-			DownModeEngaged = true;
+			if(verticalModeBothWays) {
+				VertModeEngaged = true;
+			}
+			else {
+				DownModeEngaged = true;
+			}
 			return;
 		}
 		
@@ -678,7 +721,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		UpModeEngaged = false;
 		DownModeEngaged = false;
 		SideModeEngaged = false;
-		
+		VertModeEngaged = false;
+
 		wasClockwise = false;
 		wasCounterClockwise = false;
 
@@ -720,6 +764,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		UpModeEngaged = false;
 		DownModeEngaged = false;
 		SideModeEngaged = false;
+		VertModeEngaged = false;
 	}
 
 	public void SetForceReverse(bool reverse) {

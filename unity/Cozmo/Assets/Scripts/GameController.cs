@@ -5,7 +5,7 @@ using System.Collections;
 public class GameController : MonoBehaviour {
 
 	public enum GameState {
-		PRE_GAME,
+		BUILDING,
 		PLAYING,
 		RESULTS
 	}
@@ -14,29 +14,46 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
 	[SerializeField] protected Text textScore = null;
+	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
+	[SerializeField] protected CozmoBuildInstructions buildInstructions = null;
+	[SerializeField] protected Image resultsPanel = null;
+	[SerializeField] protected AudioClip playerScoreSound;
 
 	protected bool playRequested = false;
-	protected GameState state = GameState.PRE_GAME;
+	protected bool buildRequested = false;
+
+	protected GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
 	protected int[] scores;
+
 	protected int winnerIndex;
 	protected bool firstFrame = true;
 
+	float errorMsgTimer = 0f;
+
 	void OnEnable () {
-		state = GameState.PRE_GAME;
+		state = GameState.BUILDING;
 		stateTimer = 0f;
 		scores = new int[numPlayers];
 		winnerIndex = -1;
+		errorMsgTimer = 0f;
 		firstFrame = true;
 		playRequested = autoPlay;
+		buildRequested = !autoPlay;
+
+		if(textError != null) textError.gameObject.SetActive(false);
+		if(playButton != null) playButton.gameObject.SetActive(false);
+		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
 	void Update () {
 		stateTimer += Time.deltaTime;
+
 
 		//force our initial state to enter in case there is set up code there
 		if(firstFrame) {
@@ -59,20 +76,31 @@ public class GameController : MonoBehaviour {
 
 		RefreshHUD();
 		firstFrame = false;
+		playRequested = false;
+		buildRequested = false;
+	}
+
+	void OnDisable () {
+		if(textError != null) textError.gameObject.SetActive(false);
+		if(playButton != null) playButton.gameObject.SetActive(false);
+		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
 	GameState GetNextState() {
 
 		//consider switching states
 		switch(state) {
-			case GameState.PRE_GAME:
-				if(IsGameReady()) return GameState.PLAYING; 
+			case GameState.BUILDING:
+				if(playRequested && IsGameReady()) return GameState.PLAYING; 
 				break;
 			case GameState.PLAYING:
+				if(buildRequested) return GameState.BUILDING;
 				if(IsGameOver()) return GameState.RESULTS;
 				break;
 			case GameState.RESULTS:
-				
+				if(buildRequested) return GameState.BUILDING;
+				if(playRequested && IsGameReady()) return GameState.PLAYING;
 				break;
 		}
 
@@ -84,7 +112,7 @@ public class GameController : MonoBehaviour {
 		stateTimer = 0f;
 
 		switch(state) {
-			case GameState.PRE_GAME: 	Enter_PRE_GAME(); break;
+			case GameState.BUILDING: 	Enter_BUILDING(); break;
 			case GameState.PLAYING: 	Enter_PLAYING(); break;
 			case GameState.RESULTS: 	Enter_RESULTS(); break;
 		}
@@ -92,7 +120,7 @@ public class GameController : MonoBehaviour {
 
 	void UpdateState() {
 		switch(state) {
-			case GameState.PRE_GAME: 	Update_PRE_GAME(); break;
+			case GameState.BUILDING: 	Update_BUILDING(); break;
 			case GameState.PLAYING: 	Update_PLAYING(); break;
 			case GameState.RESULTS: 	Update_RESULTS(); break;
 		}
@@ -100,7 +128,7 @@ public class GameController : MonoBehaviour {
 
 	void ExitState() {
 		switch(state) {
-			case GameState.PRE_GAME: 	Exit_PRE_GAME(); break;
+			case GameState.BUILDING: 	Exit_BUILDING(); break;
 			case GameState.PLAYING: 	Exit_PLAYING(); break;
 			case GameState.RESULTS: 	Exit_RESULTS(); break;
 		}
@@ -109,6 +137,7 @@ public class GameController : MonoBehaviour {
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
 			textScore.text = "score: " + scores[0];
+
 		}
 
 		if(textState != null) {
@@ -124,43 +153,76 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
-		if(playButton != null) playButton.gameObject.SetActive(state == GameState.PRE_GAME);
-
+		
+		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
+			if(textError != null) {
+				//set specific text once we have analyzer
+				textError.gameObject.SetActive(true);
+			}
+			errorMsgTimer = 5f;
+		}
+		
+		if(errorMsgTimer > 0f) {
+			errorMsgTimer -= Time.deltaTime;
+			if(errorMsgTimer <= 0f) {
+				if(textError != null) {
+					textError.gameObject.SetActive(false);
+				}
+			}
+			else {
+				Color color = textError.color;
+				color.a = Mathf.Lerp(0f, 1f, errorMsgTimer);
+				textError.color = color;
+			}
+		}
 	}
 
-	protected virtual void Enter_PRE_GAME() {
+	protected virtual void Enter_BUILDING() {
 		winnerIndex = -1;
-		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+		Debug.Log(gameObject.name + " Enter_BUILDING");
+
+		if(playButton != null) playButton.gameObject.SetActive(true);
+		if(buildInstructions != null) buildInstructions.gameObject.SetActive(true);
 	}
-	protected virtual void Update_PRE_GAME() {
-		//Debug.Log(gameObject.name + " Update_PRE_GAME");
+	protected virtual void Update_BUILDING() {
+		//Debug.Log(gameObject.name + " Update_BUILDING");
 	}
-	protected virtual void Exit_PRE_GAME() {
-		Debug.Log(gameObject.name + " Exit_PRE_GAME");
+	protected virtual void Exit_BUILDING() {
+		Debug.Log(gameObject.name + " Exit_BUILDING");
+
+		if(playButton != null) playButton.gameObject.SetActive(false);
+		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 	}
 		
 	protected virtual void Enter_PLAYING() {
 		Debug.Log(gameObject.name + " Enter_PLAYING");
+		if(textScore != null) textScore.gameObject.SetActive(true);
+		if(textError != null) textError.gameObject.SetActive(false);
 	}
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
 	protected virtual void Exit_PLAYING() {
 		Debug.Log(gameObject.name + " Exit_PLAYING");
+		if(textScore != null) textScore.gameObject.SetActive(false);
 	}
 
 	protected virtual void Enter_RESULTS() {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
+		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
+		if(textScore != null) textScore.gameObject.SetActive(true);
 	}
 	protected virtual void Update_RESULTS() {
 		//Debug.Log(gameObject.name + " Update_RESULTS");
 	}
 	protected virtual void Exit_RESULTS() {
 		Debug.Log(gameObject.name + " Exit_RESULTS");
+
+		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
+		if(textScore != null) textScore.gameObject.SetActive(false);
 	}
 
 	protected virtual bool IsGameReady() {
-		if(!playRequested) return false;
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
 
@@ -184,5 +246,9 @@ public class GameController : MonoBehaviour {
 
 	public void PlayRequested() {
 		playRequested = true;
+	}
+
+	public void BuildRequested() {
+		buildRequested = true;
 	}
 }

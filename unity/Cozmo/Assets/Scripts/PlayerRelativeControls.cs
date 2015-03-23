@@ -61,7 +61,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 			return; // command not changed
 		}
 		if(inputs.sqrMagnitude == 0f) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 			return; // command zero'd, let's full stop
 		}
 
@@ -78,7 +78,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+			RobotEngineManager.instance.current.DriveWheels(leftWheelSpeed, rightWheelSpeed);
 		}
 		
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
@@ -91,7 +91,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		Debug.Log("RobotRelativeControls OnDisable");
 		
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 		}
 	}
 

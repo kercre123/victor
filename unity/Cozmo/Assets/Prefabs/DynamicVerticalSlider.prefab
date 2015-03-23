@@ -321,12 +321,15 @@ MonoBehaviour:
   bg: {fileID: 22493614}
   stick: {fileID: 22493166}
   deadZoneRect: {fileID: 22477826}
+  deadZoneVModeRect: {fileID: 0}
+  deadZoneHModeRect: {fileID: 0}
   capTop: {fileID: 22426390}
   capBottom: {fileID: 22493168}
   capLeft: {fileID: 0}
   capRight: {fileID: 0}
   originMarker: {fileID: 22455428}
   bgDefaultMode: {fileID: 22493616}
+  bgVertMode: {fileID: 0}
   bgUpMode: {fileID: 22493618}
   bgDownMode: {fileID: 22455430}
   bgSideMode: {fileID: 0}
@@ -340,6 +343,7 @@ MonoBehaviour:
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
+  verticalModeBothWays: 0
   horizontalModeEntryAngle: 0
   verticalModeMaxAngleAllowance: 170
   clearHorizontal: 1
@@ -614,7 +618,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 256, y: 576}
+  m_SizeDelta: {x: 128, y: 576}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22477826
 RectTransform:

@@ -492,9 +492,7 @@ namespace Cozmo {
       const s32 nrows = img.GetNumRows();
       
       const u32 numTotalBytes = nrows*ncols;
-      
-      const int G2U_IMAGE_CHUNK_SIZE = 1024;
-      
+
       G2U_ImageChunk m;
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
@@ -502,9 +500,9 @@ namespace Cozmo {
       m.ncols = ncols;
       m.imageId = ++imgID;
       m.chunkId = 0;
-      m.chunkSize = G2U_IMAGE_CHUNK_SIZE;
-      m.imageChunkCount = ceilf((f32)numTotalBytes / G2U_IMAGE_CHUNK_SIZE);
-      m.imageEncoding = 0;
+      m.chunkSize = m.data.size();
+      m.imageChunkCount = ceilf((f32)numTotalBytes / m.data.size());
+      m.imageEncoding = Vision::IE_RAW_GRAY;
       
       u32 totalByteCnt = 0;
       u32 chunkByteCnt = 0;
@@ -522,7 +520,7 @@ namespace Cozmo {
           ++chunkByteCnt;
           ++totalByteCnt;
           
-          if(chunkByteCnt == G2U_IMAGE_CHUNK_SIZE) {
+          if(chunkByteCnt == m.data.size()) {
             // Filled this chunk
             message.Set_ImageChunk(m);
             _uiMsgHandler.SendMessage(_hostUiDeviceID, message);

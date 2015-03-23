@@ -70,6 +70,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(ImageRequest)
         REGISTER_CALLBACK(SetRobotImageSendMode)
         REGISTER_CALLBACK(SaveImages)
+        REGISTER_CALLBACK(SaveRobotState)
         REGISTER_CALLBACK(EnableDisplay)
         REGISTER_CALLBACK(SetHeadlights)
         REGISTER_CALLBACK(GotoPose)
@@ -340,8 +341,14 @@ case U2G_Message::Type::__MSG_TYPE__: \
   
   void CozmoGameImpl::ProcessMessage(U2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages((VizSaveImageMode_t)msg.mode);
+    VizManager::getInstance()->SaveImages((VizSaveMode_t)msg.mode);
     printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
+  }
+  
+  void CozmoGameImpl::ProcessMessage(U2G_SaveRobotState const& msg)
+  {
+    VizManager::getInstance()->SaveRobotState((VizSaveMode_t)msg.mode);
+    printf("Saving robot state: %d\n", VizManager::getInstance()->GetSaveRobotStateMode());
   }
   
   void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)

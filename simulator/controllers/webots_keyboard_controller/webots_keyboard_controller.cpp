@@ -178,7 +178,7 @@ namespace Anki {
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode, u8 resolution);
-      void SendSaveImages(VizSaveImageMode_t mode);
+      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -719,14 +719,25 @@ namespace Anki {
                 
                 if (root_) {
                   const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
-                  if(camera_horizontalResolution == 320) {
-                    localStreamRes = Vision::CAMERA_RES_QVGA;
-                  } else if(camera_horizontalResolution == 160) {
-                    localStreamRes = Vision::CAMERA_RES_QQVGA;
-                  } else if(camera_horizontalResolution == 80) {
-                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
-                  } else if(camera_horizontalResolution == 40) {
-                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  switch(camera_horizontalResolution)
+                  {
+                    case 640:
+                      localStreamRes = Vision::CAMERA_RES_VGA;
+                      break;
+                    case 320:
+                      localStreamRes = Vision::CAMERA_RES_QVGA;
+                      break;
+                    case 160:
+                      localStreamRes = Vision::CAMERA_RES_QQVGA;
+                      break;
+                    case 80:
+                      localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                      break;
+                    case 40:
+                      localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                      break;
+                    default:
+                      printf("Unsupported camera_horizontalResolution = %d\n", camera_horizontalResolution);
                   }
                 }
                 
@@ -766,23 +777,25 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                VizSaveImageMode_t mode = VIZ_SAVE_ONE_SHOT;
+                VizSaveMode_t mode = VIZ_SAVE_ONE_SHOT;
+                
+                const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
                     mode = VIZ_SAVE_OFF;
-                    printf("Saving robot image stream OFF.\n");
+                    printf("Saving robot image/state stream OFF.\n");
                   } else {
                     mode = VIZ_SAVE_CONTINUOUS;
-                    printf("Saving robot image stream ON.\n");
+                    printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
                 } else {
-                  printf("Saving single robot image.\n");
+                  printf("Saving single robot image%s.\n", alsoSaveState ? " and state message" : "");
                 }
                 
-                SendSaveImages(mode);
+                SendSaveImages(mode, alsoSaveState);
                 break;
               }
                 
@@ -1410,8 +1423,7 @@ namespace Anki {
         
         return doForceAddRobot;
         
-      } // ForceAddRobotIfSpecified()
-      
+      } // ForceAddRobotIfSpecified()       
       void Update()
       {
         gameComms_.Update();
@@ -1588,13 +1600,21 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(VizSaveImageMode_t mode)
+      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState)
       {
         U2G_SaveImages m;
         m.mode = mode;
         U2G_Message message;
         message.Set_SaveImages(m);
         SendMessage(message);
+        
+        if(alsoSaveState) {
+          U2G_SaveRobotState msgSaveState;
+          msgSaveState.mode = mode;
+          U2G_Message messageWrapper;
+          messageWrapper.Set_SaveRobotState(msgSaveState);
+          SendMessage(messageWrapper);
+        }
       }
       
       void SendEnableDisplay(bool on)
