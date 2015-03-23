@@ -282,15 +282,18 @@ namespace Anki {
                                                       const Quad3f& worldQuad) const;
 
     
-    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint) const
+    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint,
+                                     const u16 xBorderPad,
+                                     const u16 yBorderPad) const
     {
       CORETECH_THROW_IF(this->IsCalibrated() == false);
       
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
-              projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < _calibration->GetNcols() &&
-              projectedPoint.y() < _calibration->GetNrows());
+              projectedPoint.x() >= (0.f + static_cast<f32>(xBorderPad)) &&
+              projectedPoint.y() >= (0.f + static_cast<f32>(yBorderPad)) &&
+              projectedPoint.x() <  static_cast<f32>(_calibration->GetNcols() - xBorderPad) &&
+              projectedPoint.y() <  static_cast<f32>(_calibration->GetNrows() - yBorderPad));
       
     } // Camera::IsVisible()
 
