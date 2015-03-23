@@ -3336,8 +3336,8 @@ MonoBehaviour:
     highlight: {fileID: 138208}
     image_action1: {fileID: 11474980}
     image_action2: {fileID: 11498380}
-    text_action1: {fileID: 11474976}
-    text_action2: {fileID: 11498376}
+    text_action1: {fileID: 11498376}
+    text_action2: {fileID: 11474976}
     selectedIndex: 0
 --- !u!114 &11498406
 MonoBehaviour:

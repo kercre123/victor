@@ -158,7 +158,8 @@ public class CozmoVision4 : CozmoVision
 
 		Dings();
 
-		if((robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
+		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
+		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
 
 		RefreshSliderMode();
 
@@ -189,7 +190,7 @@ public class CozmoVision4 : CozmoVision
 		Vector2 forward = robot.Forward;
 
 		for(int i=0; i<robot.knownObjects.Count; i++) {
-
+			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
 			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
 
 			float angleFromCoz = Vector2.Angle(forward, atTarget);
@@ -227,8 +228,9 @@ public class CozmoVision4 : CozmoVision
 		//find any other objects in a 'stack' with our selected
 		for(int i=0; i<robot.knownObjects.Count; i++) {
 			if(best == robot.knownObjects[i]) continue;
+			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
 
-			float dist = (robot.knownObjects[i].WorldPosition - best.WorldPosition).magnitude;
+			float dist = ((Vector2)robot.knownObjects[i].WorldPosition - (Vector2)best.WorldPosition).magnitude;
 			if(dist > best.Size.x * 0.5f) continue;
 
 			robot.selectedObjects.Add(robot.knownObjects[i]);
@@ -262,7 +264,7 @@ public class CozmoVision4 : CozmoVision
 
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			modes.Add(ActionButtonMode.DROP);
-			if(robot.selectedObjects.Count > 0) modes.Add(ActionButtonMode.STACK);
+			if(robot.selectedObjects.Count == 1) modes.Add(ActionButtonMode.STACK);
 		}
 		else if(robot.selectedObjects.Count > 1) {
 			modes.Add(ActionButtonMode.PICK_UP);
