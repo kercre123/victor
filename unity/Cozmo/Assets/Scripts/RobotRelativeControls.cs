@@ -19,13 +19,14 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] float swipeTurnAngle = 0f;
 	[SerializeField] bool doubleTapTurnAround = true;
 	[SerializeField] float headAngleChangeRate = 1f;
+	[SerializeField] float targetLockMaxTurnAngle = 25f;
+	[SerializeField] float targetLockMinTurnAngle = 4f;
 
 #endregion
 
 #region MISC MEMBERS
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
-	float refreshTime = 0f;
 	float leftWheelSpeed = 0f;
 	float rightWheelSpeed = 0f;
 	bool moveCommandLastFrame = false;
@@ -137,20 +138,26 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(!swipeTurning) swipeTurnIndex = 0;
 
 		bool targetLocked = false;
-		if(snapHeadingToSelectedObject && robot.selectedObjects.Count > 0) {
+		Vector2 robotForward = robot.Forward;
+		Vector2 robotRight = robot.Right;
+		if(snapHeadingToSelectedObject && robot.selectedObjects.Count > 0 && robot.selectedObjects[0] != null) {
 			targetLocked = true;
 
 			Vector2 atTarget = robot.selectedObjects[0].WorldPosition - robot.WorldPosition;
-			Vector2 robotForward = robot.Rotation * Vector2.right;
-			Vector2 robotRight = robot.Rotation * -Vector2.up;
-			float turn = Vector2.Angle(robotForward, atTarget);
-			inputs.x = Mathf.Lerp(0f, 1f, turn / 90f) * (Vector2.Dot(atTarget, robotRight) >= 0f ? -1f: 1f);
-			Debug.Log("snapHeadingToSelectedObject turn("+turn+")");
 
-			Debug.DrawRay(Vector3.zero, atTarget, Color.cyan);
-			Debug.DrawRay(Vector3.zero, robotForward, Color.green);
-			Debug.DrawRay(Vector3.zero, robotRight, Color.yellow);
+			float turn = Vector2.Angle(robotForward, atTarget);
+
+			if(turn > targetLockMinTurnAngle) {
+				turn = Mathf.Lerp(0f, 1f, turn / targetLockMaxTurnAngle);
+				turn = turn*turn;
+				inputs.x = turn * (Vector2.Dot(atTarget, robotRight) >= 0f ? 1f: -1f);
+				//Debug.Log("frame("+Time.frameCount+") time("+Time.timeSinceLevelLoad+") snapHeadingToSelectedObject turn("+turn+") selected("+robot.selectedObjects[0].ID+") robot.Rotation("+robot.Rotation+")");
+			}
+
+			Debug.DrawRay(Vector3.zero, atTarget.normalized * 5f, Color.cyan);
 		}
+		Debug.DrawRay(Vector3.zero, robotForward * 4f, Color.green);
+		Debug.DrawRay(Vector3.zero, robotRight * 4f, Color.yellow);
 
 		if(!targetLocked && horizontalStick != null) {
 			if(horizontalStick.SideModeEngaged) {
@@ -226,7 +233,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		if(inputs.x == 0f && inputs.y == 0f) {
-			inputs.x = Input.GetAxis("Horizontal");
+			if(!targetLocked) inputs.x = Input.GetAxis("Horizontal");
 			inputs.y = Input.GetAxis("Vertical");
 		}
 

@@ -10,7 +10,7 @@ public class ActionSlider
 	public Image image;
 	public Text text;
 
-	public Image image_handle;
+	public GameObject highlight;
 
 	public Image image_action1;
 	public Image image_action2;
@@ -42,9 +42,7 @@ public class ActionSlider
 		}
 
 
-		Color handleColor = image_handle.color;
-		handleColor.a = pressed ? 1f : 0f;
-		image_handle.color = handleColor;
+		highlight.SetActive(pressed);
 
 		text.gameObject.SetActive(pressed);
 
@@ -159,14 +157,13 @@ public class CozmoVision4 : CozmoVision
 			interactLastFrame = false;
 
 			actionSlider.SetMode(ActionButtonMode.TARGET, false);
+			robot.selectedObjects.Clear();
 			return;
 		}
 
-		interactLastFrame = true;
-
 		Dings();
 
-		if((robot.selectedObjects.Count == 0 || targetLockTimer <= 0) && !robot.isBusy) AcquireTarget();
+		if((robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
 
 		RefreshSliderMode();
 
@@ -182,41 +179,54 @@ public class CozmoVision4 : CozmoVision
 
 		robot.lastSelectedObjects.Clear();
 		robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+
+		interactLastFrame = true;
 	}
 
 	Vector2 centerViz = new Vector2(160f, 120f);
 
 	private void AcquireTarget() {
-		ObservedObject nearestToCoz = null;
-		ObservedObject nearestToVizCenter = null;
+		ObservedObject nearest = null;
+		ObservedObject mostFacing = null;
 
 		float bestDistFromCoz = float.MaxValue;
-		float bestDistFromCenterViz = float.MaxValue;
+		float bestAngleFromCoz = float.MaxValue;
+		Vector2 forward = robot.Forward;
 
-		for(int i=0; i<robot.observedObjects.Count; i++) {
-			float distFromCoz = (robot.observedObjects[i].WorldPosition - robot.WorldPosition).sqrMagnitude;
+		for(int i=0; i<robot.knownObjects.Count; i++) {
+
+			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
+
+			float angleFromCoz = Vector2.Angle(forward, atTarget);
+			//if(angleFromCoz > 90f) return;
+
+			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
 				bestDistFromCoz = distFromCoz;
-				nearestToCoz = robot.observedObjects[i];
+				nearest = robot.knownObjects[i];
 			}
 
-			float distFromCenterViz = (robot.observedObjects[i].VizRect.center - centerViz).sqrMagnitude;
-			if(distFromCenterViz < bestDistFromCenterViz) {
-				bestDistFromCenterViz = distFromCenterViz;
-				nearestToVizCenter = robot.observedObjects[i];
+			if(angleFromCoz < bestAngleFromCoz) {
+				bestAngleFromCoz = angleFromCoz;
+				mostFacing = robot.knownObjects[i];
 			}
 		}
 
-		ObservedObject best = nearestToVizCenter;
-		if(nearestToCoz != null && nearestToCoz != best) {
+		ObservedObject best = mostFacing;
+		if(nearest != null && nearest != best) {
 			//Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
+			//float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
+			//if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
 		}
 
 		robot.selectedObjects.Clear();
 
 		if(best != null) {
-			//Debug.Log("AcquireTarget " + best.ID);
-			robot.selectedObjects.Add( best );
+			Debug.Log("AcquireTarget " + best.ID + " from robot.knownObjects.Count("+robot.knownObjects.Count+")");
+			robot.selectedObjects.Add(best);
+		}
+		else {
+			Debug.Log("No Target Acquired from robot.knownObjects.Count("+robot.knownObjects.Count+")");
 		}
 	}
 

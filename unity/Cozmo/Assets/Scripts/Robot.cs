@@ -14,6 +14,16 @@ public class Robot
 
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
+	public Vector3 Forward { 
+		get {
+			return Rotation * Vector3.right;		
+		}
+	}
+	public Vector3 Right { 
+		get {
+			return Rotation * -Vector3.up;		
+		}
+	}
 
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
@@ -23,6 +33,8 @@ public class Robot
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
+
+
 
 	private bool imageRequested = false;
 
@@ -95,7 +107,7 @@ public class Robot
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
 
-		Rotation = new Quaternion(message.pose_quaternion0, message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3);
+		Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
 	}
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
