@@ -206,6 +206,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedMessage(G2U_Message message)
 	{
 		switch (message.GetTag ()) {
+		case G2U_Message.Tag.Ping:
+			break;
 		case G2U_Message.Tag.RobotAvailable:
 			ReceivedSpecificMessage(message.RobotAvailable);
 			break;
@@ -247,6 +249,9 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case G2U_Message.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
+			break;
+		default:
+			Debug.LogWarning( message.GetTag() + " is not supported" );
 			break;
 		}
 	}
@@ -361,28 +366,46 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private Texture2D texture;
 	private int currentImageIndex;
+	private int currentChunkIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
 	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
-	private Color32[] colorArray;
+	private Color32[] grayArray;
+	private byte[] colorArray;
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
-		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		switch( (ImageEncoding_t)message.imageEncoding )
+		{
+			case ImageEncoding_t.IE_JPEG_COLOR:
+				ColorJpeg( message );
+				break;
+			case ImageEncoding_t.IE_RAW_GRAY:
+				GrayRaw( message );
+				break;
+			default:
+				Debug.LogWarning( (ImageEncoding_t)message.imageEncoding + " is not supported" );
+				break;
+		}
+	}
+
+	private void GrayRaw( G2U_ImageChunk message )
+	{
+		if( grayArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
-
-			if( colorArray == null || colorArray.Length != length )
+			
+			if( grayArray == null || grayArray.Length < length )
 			{
-				colorArray = new Color32[ length ];
+				grayArray = new Color32[ length ];
 			}
 			
 			currentImageIndex = 0;
 		}
 		
-		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		for( int messageIndex = 0; currentImageIndex < grayArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
 			byte gray = message.data[ messageIndex ];
 			
@@ -390,10 +413,10 @@ public class RobotEngineManager : MonoBehaviour {
 			int y = currentImageIndex / message.ncols;
 			int index = message.ncols * ( message.nrows - y - 1 ) + x;
 			
-			colorArray[ index ] = new Color32( gray, gray, gray, 255 );
+			grayArray[ index ] = new Color32( gray, gray, gray, 255 );
 		}
 		
-		if( currentImageIndex == colorArray.Length )
+		if( currentImageIndex == grayArray.Length )
 		{
 			int width = message.ncols;
 			int height = message.nrows;
@@ -409,14 +432,63 @@ public class RobotEngineManager : MonoBehaviour {
 				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
 			}
 			
-			texture.SetPixels32( colorArray );
-			
+			texture.SetPixels32( grayArray );
 			texture.Apply( false );
 			
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
+				
+				current.observedObjects.Clear();
+			}
+		}
+	}
 
+	private void ColorJpeg( G2U_ImageChunk message )
+	{
+		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		{
+			currentImageID = message.imageId;
+			currentImageFrameTimeStamp = message.frameTimeStamp;
+
+			int length = message.chunkSize * message.imageChunkCount;
+			
+			if( colorArray == null || colorArray.Length < length )
+			{
+				colorArray = new byte[ length ];
+			}
+			
+			currentImageIndex = 0;
+			currentChunkIndex = 0;
+		}
+		
+		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		{
+			colorArray[ currentImageIndex ] = message.data[ messageIndex ];
+		}
+
+		if( ++currentChunkIndex == message.imageChunkCount )
+		{
+			int width = message.ncols;
+			int height = message.nrows;
+			
+			if( texture == null || texture.width != width || texture.height != height )
+			{
+				if( texture != null )
+				{
+					Destroy( texture );
+					texture = null;
+				}
+				
+				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
+			}
+
+			texture.LoadImage( colorArray );
+			
+			if( RobotImage != null )
+			{
+				RobotImage( texture );
+				
 				current.observedObjects.Clear();
 			}
 		}
@@ -491,5 +563,17 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_VERIFICATION_SNAPSHOT, // 16 x 16
 		CAMERA_RES_COUNT,
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
+	}
+
+	public enum ImageEncoding_t
+	{
+		IE_NONE,
+		IE_RAW_GRAY, // no compression
+		IE_RAW_RGB,  // no compression, just [RGBRGBRG...]
+		IE_YUYV,
+		IE_BAYER,
+		IE_JPEG_GRAY,
+		IE_JPEG_COLOR,
+		IE_WEBP
 	}
 }
