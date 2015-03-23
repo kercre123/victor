@@ -504,44 +504,72 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(!unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false)) {
+        } else {
           // If the object should _not_ be visible (i.e. none of its markers project
-          // into the camera), but some part of the object is within frame, then
+          // into the camera), but some part of the object is within frame, it is
+          // close enough, and was seen fairly recently, then
           // let listeners know it's "visible" but not identifiable, so we can
           // still interact with it in the UI, for example.
-          f32 distance;
-          std::vector<Point2f> projectedCorners;
-          _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
-          if(distance > 0.f) { // in front of camera?
-            for(auto & corner : projectedCorners) {
-              
-              if(camera.IsWithinFieldOfView(corner)) {
+          
+          // Did we see this currently-unobserved object in the last 10 seconds?
+          // This is to avoid using this feature (reporting unobserved objects
+          // that project into the image as observed) too liberally, and instead
+          // only for objects seen pretty recently, e.g. for the case that we
+          // have driven in too close and can't see an object we were just approaching.
+          // TODO: Expose / remove / fine-tune this setting
+          const bool seenRecently = _robot->GetLastMsgTimestamp() - unobserved.object->GetLastObservedTime() < 10000;
+          
+          // How far away is the object from our current position. Again, to be
+          // conservative, we are only going to use this feature if the object is
+          // pretty close to the robot.
+          // TODO: Expose / remove / fine-tune this setting
+          const f32 distThreshold_mm = 150.f;
+          const bool closeEnough = (_robot->GetPose().GetTranslation() -
+                                    unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm;
+          
+          // Check any of the markers should be visible.
+          // For now just ignore the left and right 22.5% of the image blocked by the lift
+          // TODO: Actually project a lift into the image and figure out what it will occlude
+          const u16 xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+          const bool markersShouldBeVisible = unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad);
+          
+          if(seenRecently && closeEnough && !markersShouldBeVisible)
+          {
+            // First three checks for object passed, now see if any of the object's
+            // corners are in our FOV
+            f32 distance;
+            std::vector<Point2f> projectedCorners;
+            _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+            if(distance > 0.f) { // in front of camera?
+              for(auto & corner : projectedCorners) {
                 
-                Rectangle<f32> boundingBox(projectedCorners);
-                //_obsProjectedObjects.emplace_back(obsID, boundingBox);
-                _currentObservedObjectIDs.push_back(unobserved.object->GetID());
-                
-                // Signal the observation of this object, with its bounding box:
-                const Vec3f& obsObjTrans = unobserved.object->GetPose().GetTranslation();
-                // TODO: just directly access the quaternion
-                const UnitQuaternion<float> q = Rotation3d(unobserved.object->GetPose().GetRotationVector()).GetQuaternion();
-                CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
-                                                                     unobserved.family,
-                                                                     unobserved.type,
-                                                                     unobserved.object->GetID(),
-                                                                     false, // marker not visible
-                                                                     boundingBox.GetX(),
-                                                                     boundingBox.GetY(),
-                                                                     boundingBox.GetWidth(),
-                                                                     boundingBox.GetHeight(),
-                                                                     obsObjTrans.x(),
-                                                                     obsObjTrans.y(),
-                                                                     obsObjTrans.z(),
-                                                                     q.w(), q.x(), q.y(), q.z());
-                ++numVisibleObjects;
-              } // if(IsWithinFieldOfView)
-            } // for(each projectedCorner)
-          } // if(distance > 0)
+                if(camera.IsWithinFieldOfView(corner)) {
+                  
+                  Rectangle<f32> boundingBox(projectedCorners);
+                  //_obsProjectedObjects.emplace_back(obsID, boundingBox);
+                  _currentObservedObjectIDs.push_back(unobserved.object->GetID());
+                  
+                  // Signal the observation of this object, with its bounding box:
+                  const Vec3f& obsObjTrans = unobserved.object->GetPose().GetTranslation();
+                  const UnitQuaternion<float>& q = unobserved.object->GetPose().GetRotation().GetQuaternion();
+                  CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
+                                                                       unobserved.family,
+                                                                       unobserved.type,
+                                                                       unobserved.object->GetID(),
+                                                                       false, // marker not visible
+                                                                       boundingBox.GetX(),
+                                                                       boundingBox.GetY(),
+                                                                       boundingBox.GetWidth(),
+                                                                       boundingBox.GetHeight(),
+                                                                       obsObjTrans.x(),
+                                                                       obsObjTrans.y(),
+                                                                       obsObjTrans.z(),
+                                                                       q.w(), q.x(), q.y(), q.z());
+                  ++numVisibleObjects;
+                } // if(IsWithinFieldOfView)
+              } // for(each projectedCorner)
+            } // if(distance > 0)
+          }
         }
         
       } // for each unobserved object
