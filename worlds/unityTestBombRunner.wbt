@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.390203 -0.37123 -0.842573 1.69194
-  position -1.70072 0.262078 1.43661
+  orientation -0.285767 0.287772 0.91407 4.61571
+  position -0.97993 0.0169182 1.30949
 }
 Background {
   skyColor [
@@ -113,6 +113,10 @@ Background {
 DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
+}
+DirectionalLight {
+  ambientIntensity 1
+  direction 1 -1 -1
 }
 CozmoMat {
 }
@@ -124,49 +128,22 @@ Ramp {
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
-  translation 0.2 -0.2 0.0219969
+  translation -0.2 -0.2 0.0219969
+  rotation 1 0 0 0
   blockColor 0.85 0.5 0.5
   markerImg "symbols/fire.png"
 }
-DEF FireBlock Block1x1 {
-  name "Fire_01"
+DEF AngryFaceBlock Block1x1 {
+  name "AngryFace_01"
   translation 0.2 0.2 0.0219969
-  blockColor 0.85 0.5 0.5
-  markerImg "symbols/fire.png"
+  blockColor 0.5 0.5 0.85
+  markerImg "symbols/angryFace.png"
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_1 -3.66036e-12
-  hidden position_0_2 2.43196e-12
-  hidden position_0_3 0.000299374
-  hidden position_0_4 0.000299365
-  hidden position_0_6 -1.24634e-07
-  hidden linearVelocity_0 4.44452e-18 -1.49363e-11 -4.22089e-16
-  hidden angularVelocity_0 6.85162e-15 4.55775e-15 1.51049e-10
-  hidden linearVelocity_5 3.03263e-16 -1.41621e-11 -5.59082e-16
-  hidden angularVelocity_5 6.78371e-15 4.33549e-15 1.51049e-10
-  hidden linearVelocity_22 -3.60248e-12 -1.21967e-11 -1.33771e-16
-  hidden angularVelocity_22 1.52739e-14 -9.79428e-14 1.51049e-10
-  hidden linearVelocity_23 3.6027e-12 -1.21968e-11 1.08847e-16
-  hidden angularVelocity_23 1.13088e-14 1.06547e-13 1.51049e-10
-  hidden linearVelocity_24 -3.60238e-12 -1.67281e-11 6.89526e-17
-  hidden angularVelocity_24 1.00443e-14 -5.57559e-16 1.51049e-10
-  hidden linearVelocity_25 3.60265e-12 -1.67281e-11 -3.14117e-16
-  hidden angularVelocity_25 3.25273e-23 -5.30048e-16 1.51049e-10
-  hidden position_26_0 -4.49433e-08
-  hidden linearVelocity_26 -5.85564e-12 -1.35119e-11 -9.11864e-11
-  hidden angularVelocity_26 6.94286e-15 2.91323e-09 1.5106e-10
-  hidden linearVelocity_27 -3.49039e-11 -8.7396e-12 -1.82379e-10
-  hidden angularVelocity_27 6.72857e-15 2.20004e-15 1.51049e-10
-  hidden position_29_0 -8.2297e-08
-  hidden linearVelocity_29 -5.85574e-12 -1.35113e-11 -9.1186e-11
-  hidden angularVelocity_29 6.99087e-15 2.91323e-09 1.5106e-10
-  translation 2.97243e-09 -4.84013e-09 -8.24058e-06
-  rotation 0.0122738 -0.999925 1.32498e-05 0.000299392
+  rotation 0 -1 0 0
   name "CozmoBot_1"
-  headAngle -0.390023
-  liftAngle -8.72803e-08
   usbChannel 10
 }
 CozmoVizDisplay {
