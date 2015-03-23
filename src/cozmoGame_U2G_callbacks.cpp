@@ -70,6 +70,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(ImageRequest)
         REGISTER_CALLBACK(SetRobotImageSendMode)
         REGISTER_CALLBACK(SaveImages)
+        REGISTER_CALLBACK(SaveRobotState)
         REGISTER_CALLBACK(EnableDisplay)
         REGISTER_CALLBACK(SetHeadlights)
         REGISTER_CALLBACK(GotoPose)
@@ -81,6 +82,7 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(PickAndPlaceObject)
         REGISTER_CALLBACK(TraverseObject)
         REGISTER_CALLBACK(ClearAllBlocks)
+        REGISTER_CALLBACK(VisionWhileMoving)
         REGISTER_CALLBACK(ExecuteBehavior)
         REGISTER_CALLBACK(SetBehaviorState)
         REGISTER_CALLBACK(AbortPath)
@@ -113,16 +115,16 @@ case U2G_Message::Type::__MSG_TYPE__: \
     if(_isHost) {
       CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
       
-      if(_cozmoEngine == nullptr) {
-        PRINT_NAMED_ERROR("CozmoGameHostImpl.ProcessMessage",
-                          "Cannot process U2G_DriveWheels with null cozmoEngine.\n");
+      if(cozmoEngineHost == nullptr) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
+                          "Could not reinterpret cozmoEngine as a cozmoEngineHost.\n");
         return nullptr;
       }
       
       robot = cozmoEngineHost->GetRobotByID(robotID);
       
       if(robot == nullptr) {
-        PRINT_NAMED_ERROR("CozmoGameHostImpl.ProcessMessage",
+        PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
                           "No robot with ID=%d found.\n", robotID);
       }
       
@@ -340,8 +342,14 @@ case U2G_Message::Type::__MSG_TYPE__: \
   
   void CozmoGameImpl::ProcessMessage(U2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages((VizSaveImageMode_t)msg.mode);
+    VizManager::getInstance()->SaveImages((VizSaveMode_t)msg.mode);
     printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
+  }
+  
+  void CozmoGameImpl::ProcessMessage(U2G_SaveRobotState const& msg)
+  {
+    VizManager::getInstance()->SaveRobotState((VizSaveMode_t)msg.mode);
+    printf("Saving robot state: %d\n", VizManager::getInstance()->GetSaveRobotStateMode());
   }
   
   void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)
@@ -733,6 +741,34 @@ case U2G_Message::Type::__MSG_TYPE__: \
       robot->SetObjectLights(whichObject, msg.ledColors, msg.onPeriod_ms, msg.offPeriod_ms);
     }
   }
+
+  void CozmoGameImpl::ProcessMessage(U2G_VisionWhileMoving const& msg)
+  {
+    if(_isHost) {
+      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
+      
+      if(cozmoEngineHost == nullptr) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
+                          "Could not reinterpret cozmoEngine as a cozmoEngineHost.\n");
+      }
+      
+      const std::vector<RobotID_t>& robotIDs = cozmoEngineHost->GetRobotIDList();
+      
+      for(auto robotID : robotIDs) {
+        Robot* robot = cozmoEngineHost->GetRobotByID(robotID);
+        if(robot == nullptr) {
+          PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
+                            "No robot with ID=%d found, even though it is in the ID list.\n", robotID);
+        } else {
+          robot->EnableVisionWhileMoving(msg.enable);
+        }
+      }
+    } else {
+      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage.VisionWhileMoving",
+                        "Cannot process VisionWhileMoving message on a client engine.\n");
+    }
+  }
+  
   
 }
 }

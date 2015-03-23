@@ -8,4 +8,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Shell.unity
   - enabled: 1
-    path: Assets/Scenes/ControlSchemeTest.unity
+    path: Assets/Scenes/Games.unity
+  - enabled: 1
+    path: Assets/Scenes/Options.unity

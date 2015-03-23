@@ -5,36 +5,53 @@ using System.Collections.Generic;
 
 public class CozmoVision2 : CozmoVision
 {
-	[SerializeField] protected SelectionButton2[] selectionButtons;
+	[SerializeField] protected GameObject selectionButtonPrefab;
 
-	protected override void Update()
+	protected SelectionButton2[] selectionButtons;
+
+	protected override void Awake() {
+		base.Awake();
+
+		GameObject obj = (GameObject)GameObject.Instantiate(selectionButtonPrefab);
+		selectionButtons = obj.GetComponentsInChildren<SelectionButton2>(true);
+
+	}
+
+	protected void Update()
 	{
-		base.Update();
+		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+			DisableButtons();
+			return;
+		}
 
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision2" ) == 1 );
+		Dings();
+		SetActionButtons();
 
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		float w = imageRectTrans.sizeDelta.x;
+		float h = imageRectTrans.sizeDelta.y;
+
+		for( int i = 0; i < maxObservedObjects; ++i )
 		{
-			SetActionButtons();
-
-			for( int i = 0; i < maxObservedObjects; ++i )
+			if( observedObjectsCount > i && robot.selectedObjects.Count == 0 && !robot.isBusy )
 			{
-				if( observedObjectsCount > i && robot.selectedObject == -1 )
-				{
-					ObservedObject observedObject = robot.observedObjects[i];
+				ObservedObject observedObject = robot.observedObjects[i];
 
-					selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( observedObject.VizRect.width, observedObject.VizRect.height );
-					selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( observedObject.VizRect.x, -observedObject.VizRect.y );
+				float boxX = (observedObject.VizRect.x / 320f) * w;
+				float boxY = (observedObject.VizRect.y / 240f) * h;
+				float boxW = (observedObject.VizRect.width / 320f) * w;
+				float boxH = (observedObject.VizRect.height / 240f) * h;
 
-					selectionButtons[i].text.text = "Select " + observedObject.ID;
-					selectionButtons[i].ID = observedObject.ID;
+				selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
+				selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 
-					selectionButtons[i].image.gameObject.SetActive( true );
-				}
-				else
-				{
-					selectionButtons[i].image.gameObject.SetActive( false );
-				}
+				selectionButtons[i].text.text = "Select " + observedObject.ID;
+				selectionButtons[i].observedObject = observedObject;
+
+				selectionButtons[i].image.gameObject.SetActive( true );
+			}
+			else
+			{
+				selectionButtons[i].image.gameObject.SetActive( false );
 			}
 		}
 	}

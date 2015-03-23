@@ -1354,6 +1354,80 @@ struct U2G_SaveImages
 	}
 };
 
+struct U2G_SaveRobotState
+{
+	uint8_t mode;
+
+	/**** Constructors ****/
+	U2G_SaveRobotState() = default;
+	U2G_SaveRobotState(const U2G_SaveRobotState& other) = default;
+	U2G_SaveRobotState(U2G_SaveRobotState& other) = default;
+	U2G_SaveRobotState(U2G_SaveRobotState&& other) noexcept = default;
+	U2G_SaveRobotState& operator=(const U2G_SaveRobotState& other) = default;
+	U2G_SaveRobotState& operator=(U2G_SaveRobotState&& other) noexcept = default;
+
+	explicit U2G_SaveRobotState(uint8_t mode)
+	:mode(mode)
+	{}
+	explicit U2G_SaveRobotState(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit U2G_SaveRobotState(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->mode);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->mode);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//mode
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const U2G_SaveRobotState& other) const
+	{
+		if (mode != other.mode) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const U2G_SaveRobotState& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
 struct U2G_EnableDisplay
 {
 	uint8_t enable;
@@ -2215,6 +2289,80 @@ struct U2G_ClearAllBlocks
 	}
 
 	bool operator!=(const U2G_ClearAllBlocks& other) const
+	{
+		return !(operator==(other));
+	}
+};
+
+struct U2G_VisionWhileMoving
+{
+	uint8_t enable;
+
+	/**** Constructors ****/
+	U2G_VisionWhileMoving() = default;
+	U2G_VisionWhileMoving(const U2G_VisionWhileMoving& other) = default;
+	U2G_VisionWhileMoving(U2G_VisionWhileMoving& other) = default;
+	U2G_VisionWhileMoving(U2G_VisionWhileMoving&& other) noexcept = default;
+	U2G_VisionWhileMoving& operator=(const U2G_VisionWhileMoving& other) = default;
+	U2G_VisionWhileMoving& operator=(U2G_VisionWhileMoving&& other) noexcept = default;
+
+	explicit U2G_VisionWhileMoving(uint8_t enable)
+	:enable(enable)
+	{}
+	explicit U2G_VisionWhileMoving(const uint8_t* buff, size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		Unpack(buffer);
+	}
+
+	explicit U2G_VisionWhileMoving(const SafeMessageBuffer& buffer)
+	{
+		Unpack(buffer);
+	}
+
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const
+	{
+		SafeMessageBuffer buffer(buff, len, false);
+		return Pack(buffer);
+	}
+
+	size_t Pack(SafeMessageBuffer& buffer) const
+	{
+		buffer.Write(this->enable);
+		const size_t bytesWritten {buffer.GetBytesWritten()};
+		return bytesWritten;
+	}
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len)
+	{
+		const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+		return Unpack(buffer);
+	}
+
+	size_t Unpack(const SafeMessageBuffer& buffer)
+	{
+		buffer.Read(this->enable);
+		return buffer.GetBytesRead();
+	}
+	size_t Size() const 
+	{
+		size_t result{0};
+		//enable
+		result += 1; // = uint_8
+		return result;
+	}
+
+	bool operator==(const U2G_VisionWhileMoving& other) const
+	{
+		if (enable != other.enable) {
+			return false;
+		}
+		return true;
+	}
+
+	bool operator!=(const U2G_VisionWhileMoving& other) const
 	{
 		return !(operator==(other));
 	}
@@ -3855,37 +4003,39 @@ public:
 		ImageRequest,	// 14
 		SetRobotImageSendMode,	// 15
 		SaveImages,	// 16
-		EnableDisplay,	// 17
-		SetHeadlights,	// 18
-		GotoPose,	// 19
-		PlaceObjectOnGround,	// 20
-		PlaceObjectOnGroundHere,	// 21
-		ExecuteTestPlan,	// 22
-		SelectNextObject,	// 23
-		PickAndPlaceObject,	// 24
-		TraverseObject,	// 25
-		SetRobotCarryingObject,	// 26
-		ClearAllBlocks,	// 27
-		ExecuteBehavior,	// 28
-		SetBehaviorState,	// 29
-		AbortPath,	// 30
-		AbortAll,	// 31
-		DrawPoseMarker,	// 32
-		ErasePoseMarker,	// 33
-		SetHeadControllerGains,	// 34
-		SetLiftControllerGains,	// 35
-		SelectNextSoundScheme,	// 36
-		StartTestMode,	// 37
-		IMURequest,	// 38
-		PlayAnimation,	// 39
-		ReadAnimationFile,	// 40
-		StartFaceTracking,	// 41
-		StopFaceTracking,	// 42
-		StartLookingForMarkers,	// 43
-		StopLookingForMarkers,	// 44
-		SetVisionSystemParams,	// 45
-		SetFaceDetectParams,	// 46
-		SetActiveObjectLEDs,	// 47
+		SaveRobotState,	// 17
+		EnableDisplay,	// 18
+		SetHeadlights,	// 19
+		GotoPose,	// 20
+		PlaceObjectOnGround,	// 21
+		PlaceObjectOnGroundHere,	// 22
+		ExecuteTestPlan,	// 23
+		SelectNextObject,	// 24
+		PickAndPlaceObject,	// 25
+		TraverseObject,	// 26
+		SetRobotCarryingObject,	// 27
+		ClearAllBlocks,	// 28
+		VisionWhileMoving,	// 29
+		ExecuteBehavior,	// 30
+		SetBehaviorState,	// 31
+		AbortPath,	// 32
+		AbortAll,	// 33
+		DrawPoseMarker,	// 34
+		ErasePoseMarker,	// 35
+		SetHeadControllerGains,	// 36
+		SetLiftControllerGains,	// 37
+		SelectNextSoundScheme,	// 38
+		StartTestMode,	// 39
+		IMURequest,	// 40
+		PlayAnimation,	// 41
+		ReadAnimationFile,	// 42
+		StartFaceTracking,	// 43
+		StopFaceTracking,	// 44
+		StartLookingForMarkers,	// 45
+		StopLookingForMarkers,	// 46
+		SetVisionSystemParams,	// 47
+		SetFaceDetectParams,	// 48
+		SetActiveObjectLEDs,	// 49
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -3924,6 +4074,8 @@ public:
 			return "SetRobotImageSendMode";
 		case Type::SaveImages:
 			return "SaveImages";
+		case Type::SaveRobotState:
+			return "SaveRobotState";
 		case Type::EnableDisplay:
 			return "EnableDisplay";
 		case Type::SetHeadlights:
@@ -3946,6 +4098,8 @@ public:
 			return "SetRobotCarryingObject";
 		case Type::ClearAllBlocks:
 			return "ClearAllBlocks";
+		case Type::VisionWhileMoving:
+			return "VisionWhileMoving";
 		case Type::ExecuteBehavior:
 			return "ExecuteBehavior";
 		case Type::SetBehaviorState:
@@ -4485,6 +4639,35 @@ public:
 		}
 	}
 
+	/** SaveRobotState **/
+	const U2G_SaveRobotState& Get_SaveRobotState() const
+	{
+		assert(_type == Type::SaveRobotState);
+		return _SaveRobotState;
+	}
+	void Set_SaveRobotState(const U2G_SaveRobotState& new_SaveRobotState)
+	{
+		if(this->_type == Type::SaveRobotState) {
+			_SaveRobotState = new_SaveRobotState;
+		}
+		else {
+			ClearCurrent();
+			new(&_SaveRobotState) U2G_SaveRobotState{new_SaveRobotState};
+			_type = Type::SaveRobotState;
+		}
+	}
+	void Set_SaveRobotState(U2G_SaveRobotState&&  new_SaveRobotState)
+	{
+		if(this->_type == Type::SaveRobotState) {
+			_SaveRobotState = std::move(new_SaveRobotState);
+		}
+		else {
+			ClearCurrent();
+			new(&_SaveRobotState) U2G_SaveRobotState{std::move(new_SaveRobotState)};
+			_type = Type::SaveRobotState;
+		}
+	}
+
 	/** EnableDisplay **/
 	const U2G_EnableDisplay& Get_EnableDisplay() const
 	{
@@ -4801,6 +4984,35 @@ public:
 			ClearCurrent();
 			new(&_ClearAllBlocks) U2G_ClearAllBlocks{std::move(new_ClearAllBlocks)};
 			_type = Type::ClearAllBlocks;
+		}
+	}
+
+	/** VisionWhileMoving **/
+	const U2G_VisionWhileMoving& Get_VisionWhileMoving() const
+	{
+		assert(_type == Type::VisionWhileMoving);
+		return _VisionWhileMoving;
+	}
+	void Set_VisionWhileMoving(const U2G_VisionWhileMoving& new_VisionWhileMoving)
+	{
+		if(this->_type == Type::VisionWhileMoving) {
+			_VisionWhileMoving = new_VisionWhileMoving;
+		}
+		else {
+			ClearCurrent();
+			new(&_VisionWhileMoving) U2G_VisionWhileMoving{new_VisionWhileMoving};
+			_type = Type::VisionWhileMoving;
+		}
+	}
+	void Set_VisionWhileMoving(U2G_VisionWhileMoving&&  new_VisionWhileMoving)
+	{
+		if(this->_type == Type::VisionWhileMoving) {
+			_VisionWhileMoving = std::move(new_VisionWhileMoving);
+		}
+		else {
+			ClearCurrent();
+			new(&_VisionWhileMoving) U2G_VisionWhileMoving{std::move(new_VisionWhileMoving)};
+			_type = Type::VisionWhileMoving;
 		}
 	}
 
@@ -5535,6 +5747,14 @@ public:
 			this->_SaveImages.Unpack(buffer);
 			}
 			break;
+		case Type::SaveRobotState:
+			if (newType != oldType) {
+				new(&(this->_SaveRobotState)) U2G_SaveRobotState(buffer);
+			}
+			else {
+			this->_SaveRobotState.Unpack(buffer);
+			}
+			break;
 		case Type::EnableDisplay:
 			if (newType != oldType) {
 				new(&(this->_EnableDisplay)) U2G_EnableDisplay(buffer);
@@ -5621,6 +5841,14 @@ public:
 			}
 			else {
 			this->_ClearAllBlocks.Unpack(buffer);
+			}
+			break;
+		case Type::VisionWhileMoving:
+			if (newType != oldType) {
+				new(&(this->_VisionWhileMoving)) U2G_VisionWhileMoving(buffer);
+			}
+			else {
+			this->_VisionWhileMoving.Unpack(buffer);
 			}
 			break;
 		case Type::ExecuteBehavior:
@@ -5852,6 +6080,9 @@ public:
 		case Type::SaveImages:
 			this->_SaveImages.Pack(buffer);
 			break;
+		case Type::SaveRobotState:
+			this->_SaveRobotState.Pack(buffer);
+			break;
 		case Type::EnableDisplay:
 			this->_EnableDisplay.Pack(buffer);
 			break;
@@ -5884,6 +6115,9 @@ public:
 			break;
 		case Type::ClearAllBlocks:
 			this->_ClearAllBlocks.Pack(buffer);
+			break;
+		case Type::VisionWhileMoving:
+			this->_VisionWhileMoving.Pack(buffer);
 			break;
 		case Type::ExecuteBehavior:
 			this->_ExecuteBehavior.Pack(buffer);
@@ -6008,6 +6242,9 @@ public:
 		case Type::SaveImages:
 			result += _SaveImages.Size();
 			break;
+		case Type::SaveRobotState:
+			result += _SaveRobotState.Size();
+			break;
 		case Type::EnableDisplay:
 			result += _EnableDisplay.Size();
 			break;
@@ -6040,6 +6277,9 @@ public:
 			break;
 		case Type::ClearAllBlocks:
 			result += _ClearAllBlocks.Size();
+			break;
+		case Type::VisionWhileMoving:
+			result += _VisionWhileMoving.Size();
 			break;
 		case Type::ExecuteBehavior:
 			result += _ExecuteBehavior.Size();
@@ -6161,6 +6401,9 @@ private:
 		case Type::SaveImages:
 			_SaveImages.~U2G_SaveImages();
 			break;
+		case Type::SaveRobotState:
+			_SaveRobotState.~U2G_SaveRobotState();
+			break;
 		case Type::EnableDisplay:
 			_EnableDisplay.~U2G_EnableDisplay();
 			break;
@@ -6193,6 +6436,9 @@ private:
 			break;
 		case Type::ClearAllBlocks:
 			_ClearAllBlocks.~U2G_ClearAllBlocks();
+			break;
+		case Type::VisionWhileMoving:
+			_VisionWhileMoving.~U2G_VisionWhileMoving();
 			break;
 		case Type::ExecuteBehavior:
 			_ExecuteBehavior.~U2G_ExecuteBehavior();
@@ -6279,6 +6525,7 @@ private:
 		U2G_ImageRequest _ImageRequest;
 		U2G_SetRobotImageSendMode _SetRobotImageSendMode;
 		U2G_SaveImages _SaveImages;
+		U2G_SaveRobotState _SaveRobotState;
 		U2G_EnableDisplay _EnableDisplay;
 		U2G_SetHeadlights _SetHeadlights;
 		U2G_GotoPose _GotoPose;
@@ -6290,6 +6537,7 @@ private:
 		U2G_TraverseObject _TraverseObject;
 		U2G_SetRobotCarryingObject _SetRobotCarryingObject;
 		U2G_ClearAllBlocks _ClearAllBlocks;
+		U2G_VisionWhileMoving _VisionWhileMoving;
 		U2G_ExecuteBehavior _ExecuteBehavior;
 		U2G_SetBehaviorState _SetBehaviorState;
 		U2G_AbortPath _AbortPath;

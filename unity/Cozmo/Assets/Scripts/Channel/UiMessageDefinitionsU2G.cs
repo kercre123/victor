@@ -974,6 +974,56 @@ public class U2G_SaveImages
 	}
 }
 
+public class U2G_SaveRobotState
+{
+	public byte mode;
+
+	/**** Constructors ****/
+
+	public U2G_SaveRobotState()
+	{
+	}
+
+	public U2G_SaveRobotState(byte mode)
+	{
+		this.mode = mode;
+	}
+
+	public U2G_SaveRobotState(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//mode
+		mode = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((byte)mode);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//mode
+		mode = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//mode
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
 public class U2G_EnableDisplay
 {
 	public byte enable;
@@ -1575,6 +1625,56 @@ public class U2G_ClearAllBlocks
 	{
 		get {
 			int result = 0;
+			return result;
+		}
+	}
+}
+
+public class U2G_VisionWhileMoving
+{
+	public byte enable;
+
+	/**** Constructors ****/
+
+	public U2G_VisionWhileMoving()
+	{
+	}
+
+	public U2G_VisionWhileMoving(byte enable)
+	{
+		this.enable = enable;
+	}
+
+	public U2G_VisionWhileMoving(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//enable
+		enable = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((byte)enable);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//enable
+		enable = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//enable
+			result += 1; // = uint_8
 			return result;
 		}
 	}
@@ -2737,37 +2837,39 @@ public class U2G_Message {
 		ImageRequest,	//14
 		SetRobotImageSendMode,	//15
 		SaveImages,	//16
-		EnableDisplay,	//17
-		SetHeadlights,	//18
-		GotoPose,	//19
-		PlaceObjectOnGround,	//20
-		PlaceObjectOnGroundHere,	//21
-		ExecuteTestPlan,	//22
-		SelectNextObject,	//23
-		PickAndPlaceObject,	//24
-		TraverseObject,	//25
-		SetRobotCarryingObject,	//26
-		ClearAllBlocks,	//27
-		ExecuteBehavior,	//28
-		SetBehaviorState,	//29
-		AbortPath,	//30
-		AbortAll,	//31
-		DrawPoseMarker,	//32
-		ErasePoseMarker,	//33
-		SetHeadControllerGains,	//34
-		SetLiftControllerGains,	//35
-		SelectNextSoundScheme,	//36
-		StartTestMode,	//37
-		IMURequest,	//38
-		PlayAnimation,	//39
-		ReadAnimationFile,	//40
-		StartFaceTracking,	//41
-		StopFaceTracking,	//42
-		StartLookingForMarkers,	//43
-		StopLookingForMarkers,	//44
-		SetVisionSystemParams,	//45
-		SetFaceDetectParams,	//46
-		SetActiveObjectLEDs,	//47
+		SaveRobotState,	//17
+		EnableDisplay,	//18
+		SetHeadlights,	//19
+		GotoPose,	//20
+		PlaceObjectOnGround,	//21
+		PlaceObjectOnGroundHere,	//22
+		ExecuteTestPlan,	//23
+		SelectNextObject,	//24
+		PickAndPlaceObject,	//25
+		TraverseObject,	//26
+		SetRobotCarryingObject,	//27
+		ClearAllBlocks,	//28
+		VisionWhileMoving,	//29
+		ExecuteBehavior,	//30
+		SetBehaviorState,	//31
+		AbortPath,	//32
+		AbortAll,	//33
+		DrawPoseMarker,	//34
+		ErasePoseMarker,	//35
+		SetHeadControllerGains,	//36
+		SetLiftControllerGains,	//37
+		SelectNextSoundScheme,	//38
+		StartTestMode,	//39
+		IMURequest,	//40
+		PlayAnimation,	//41
+		ReadAnimationFile,	//42
+		StartFaceTracking,	//43
+		StopFaceTracking,	//44
+		StartLookingForMarkers,	//45
+		StopLookingForMarkers,	//46
+		SetVisionSystemParams,	//47
+		SetFaceDetectParams,	//48
+		SetActiveObjectLEDs,	//49
 		INVALID
 	};
 
@@ -3066,6 +3168,23 @@ public class U2G_Message {
 		}
 	}
 
+	public U2G_SaveRobotState SaveRobotState
+	{
+		get {
+			if (_tag != Tag.SaveRobotState) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SaveRobotState\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_SaveRobotState)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SaveRobotState : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public U2G_EnableDisplay EnableDisplay
 	{
 		get {
@@ -3249,6 +3368,23 @@ public class U2G_Message {
 		
 		set {
 			_tag = (value != null) ? Tag.ClearAllBlocks : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public U2G_VisionWhileMoving VisionWhileMoving
+	{
+		get {
+			if (_tag != Tag.VisionWhileMoving) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"VisionWhileMoving\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_VisionWhileMoving)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.VisionWhileMoving : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -3650,6 +3786,9 @@ public class U2G_Message {
 		case Tag.SaveImages:
 			_state = new U2G_SaveImages(stream);
 			break;
+		case Tag.SaveRobotState:
+			_state = new U2G_SaveRobotState(stream);
+			break;
 		case Tag.EnableDisplay:
 			_state = new U2G_EnableDisplay(stream);
 			break;
@@ -3682,6 +3821,9 @@ public class U2G_Message {
 			break;
 		case Tag.ClearAllBlocks:
 			_state = new U2G_ClearAllBlocks(stream);
+			break;
+		case Tag.VisionWhileMoving:
+			_state = new U2G_VisionWhileMoving(stream);
 			break;
 		case Tag.ExecuteBehavior:
 			_state = new U2G_ExecuteBehavior(stream);
@@ -3806,6 +3948,9 @@ public class U2G_Message {
 		case Tag.SaveImages:
 			SaveImages.Pack(stream);
 			break;
+		case Tag.SaveRobotState:
+			SaveRobotState.Pack(stream);
+			break;
 		case Tag.EnableDisplay:
 			EnableDisplay.Pack(stream);
 			break;
@@ -3838,6 +3983,9 @@ public class U2G_Message {
 			break;
 		case Tag.ClearAllBlocks:
 			ClearAllBlocks.Pack(stream);
+			break;
+		case Tag.VisionWhileMoving:
+			VisionWhileMoving.Pack(stream);
 			break;
 		case Tag.ExecuteBehavior:
 			ExecuteBehavior.Pack(stream);
@@ -3961,6 +4109,9 @@ public class U2G_Message {
 			case Tag.SaveImages:
 				result += SaveImages.Size;
 				break;
+			case Tag.SaveRobotState:
+				result += SaveRobotState.Size;
+				break;
 			case Tag.EnableDisplay:
 				result += EnableDisplay.Size;
 				break;
@@ -3993,6 +4144,9 @@ public class U2G_Message {
 				break;
 			case Tag.ClearAllBlocks:
 				result += ClearAllBlocks.Size;
+				break;
+			case Tag.VisionWhileMoving:
+				result += VisionWhileMoving.Size;
 				break;
 			case Tag.ExecuteBehavior:
 				result += ExecuteBehavior.Size;

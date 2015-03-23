@@ -6,11 +6,14 @@
  * Modifications: 
  */
 
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
+
+#include "anki/vision/basestation/image.h"
 
 #include "anki/cozmo/game/comms/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
@@ -50,8 +53,9 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_FAST = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW = 20.f; // mm/s
+        const f32 DRIVE_VELOCITY_TURBO = 150.f; // mm/s -- while holding ALT
+        const f32 DRIVE_VELOCITY_FAST  = 60.f; // mm/s
+        const f32 DRIVE_VELOCITY_SLOW  = 20.f; // mm/s -- while holding SHIFT
         
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
@@ -169,10 +173,13 @@ namespace Anki {
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
+        /*
         u32 imgID_ = 0;
         u8 imgData_[3*640*480];
         u32 imgBytes_ = 0;
         u32 imgWidth_, imgHeight_ = 0;
+        */
+        Vision::ImageDeChunker _imageDeChunker;
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
@@ -193,7 +200,7 @@ namespace Anki {
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode, u8 resolution);
-      void SendSaveImages(VizSaveImageMode_t mode);
+      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -278,6 +285,11 @@ namespace Anki {
       {
         currentlyObservedObject.Reset();
       }
+      
+      void HandleRobotDeletedObject(G2U_RobotDeletedObject const& msg)
+      {
+        printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
+      }
 
       void HandleRobotConnection(const G2U_RobotAvailable& msgIn)
       {
@@ -303,66 +315,60 @@ namespace Anki {
         SendMessage(message);
       }
       
+      
+      
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
       void HandleImageChunk(G2U_ImageChunk const& msg)
       {
-        // If this is a new image, then reset everything
-        if (msg.imageId != imgID_) {
-          //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
-          imgID_     = msg.imageId;
-          imgBytes_  = 0;
-          imgWidth_  = msg.ncols;
-          imgHeight_ = msg.nrows;
-        }
+        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
         
-        // Copy chunk into the appropriate location in the imgData array.
-        // Use green channel for no good reason
-        //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
-        const int G2U_IMAGE_CHUNK_SIZE = 1024;
-        u8* chunkStart = imgData_ + 3 * msg.chunkId * G2U_IMAGE_CHUNK_SIZE;
-        for(int i=0; i<msg.chunkSize; ++i) {
-          //chunkStart[3*i] = msg.data[i];
-          chunkStart[3*i+1] = msg.data[i];
-          chunkStart[3*i+2] = msg.data[i]/3;
+        
+        if(isImageReady)
+        {
+          cv::Mat img = _imageDeChunker.GetImage();
+          if(img.channels() == 1) {
+            cvtColor(img, img, CV_GRAY2RGB);
+          }
           
-          // [Optional] Add a bit of noise
-          f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
-          chunkStart[3*i+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(chunkStart[3*i+1]) + noise)));
-        }
-        
-        // Do we have all the data for this image?
-        imgBytes_ += msg.chunkSize;
-        if (imgBytes_ < imgWidth_ * imgHeight_) {
-          return;
-        }
-        
-        // [Optional] Remove every other line for interlacing effect
-        for(int i=0; i<msg.nrows; i+=2) {
-          memset(imgData_ + i*3*msg.ncols, 0, 3*msg.ncols*sizeof(u8));
-        }
-        
-        // TODO: Handle compressed image data?
-        
-        // Delete existing image if there is one.
-        if (img_ != nullptr) {
-          cozmoCam_->imageDelete(img_);
-        }
-        
-        //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
-        
-        img_ = cozmoCam_->imageNew(imgWidth_, imgHeight_, imgData_, webots::Display::RGB);
-        cozmoCam_->imagePaste(img_, 0, 0);
-        
-        // Save image to file
-        if (saveRobotImageToFile_) {
-          static u32 imgCnt = 0;
-          char imgFileName[16];
-          printf("SAVING IMAGE\n");
-          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
-          cozmoCam_->imageSave(img_, imgFileName);
-          saveRobotImageToFile_ = false;
-        }
+          for(s32 i=0; i<img.rows; ++i) {
+            
+            if(i % 2 == 0) {
+              cv::Mat img_i = img.row(i);
+              img_i.setTo(0);
+            } else {
+              u8* img_i = img.ptr(i);
+              for(s32 j=0; j<img.cols; ++j) {
+                img_i[3*j] = 0;
+                img_i[3*j+2] /= 3;
+                
+                // [Optional] Add a bit of noise
+                f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
+                img_i[3*j+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+1]) + noise)));
+                
+              }
+            }
+          }
+          
+          // Delete existing image if there is one.
+          if (img_ != nullptr) {
+            cozmoCam_->imageDelete(img_);
+          }
+          
+          img_ = cozmoCam_->imageNew(img.cols, img.rows, img.data, webots::Display::RGB);
+          cozmoCam_->imagePaste(img_, 0, 0);
+          
+          // Save image to file
+          if (saveRobotImageToFile_) {
+            static u32 imgCnt = 0;
+            char imgFileName[16];
+            printf("SAVING IMAGE\n");
+            sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
+            cozmoCam_->imageSave(img_, imgFileName);
+            saveRobotImageToFile_ = false;
+          }
+          
+        } // if(isImageReady)
 
       } // HandleImageChunk()
       
@@ -382,6 +388,7 @@ namespace Anki {
         msgHandler_.Init(&gameComms_);
         
         // Register callbacks for incoming messages from game
+        // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
             case G2U_Message::Type::RobotObservedObject:
@@ -395,6 +402,9 @@ namespace Anki {
               break;
             case G2U_Message::Type::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
+              break;
+            case G2U_Message::Type::RobotDeletedObject:
+              HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
               // ignore
@@ -546,6 +556,8 @@ namespace Anki {
             wheelSpeed = DRIVE_VELOCITY_SLOW;
             liftSpeed *= 0.4;
             headSpeed *= 0.5;
+          } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+            wheelSpeed = DRIVE_VELOCITY_TURBO;
           }
           
           
@@ -737,14 +749,25 @@ namespace Anki {
                 
                 if (root_) {
                   const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
-                  if(camera_horizontalResolution == 320) {
-                    localStreamRes = Vision::CAMERA_RES_QVGA;
-                  } else if(camera_horizontalResolution == 160) {
-                    localStreamRes = Vision::CAMERA_RES_QQVGA;
-                  } else if(camera_horizontalResolution == 80) {
-                    localStreamRes = Vision::CAMERA_RES_QQQVGA;
-                  } else if(camera_horizontalResolution == 40) {
-                    localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                  switch(camera_horizontalResolution)
+                  {
+                    case 640:
+                      localStreamRes = Vision::CAMERA_RES_VGA;
+                      break;
+                    case 320:
+                      localStreamRes = Vision::CAMERA_RES_QVGA;
+                      break;
+                    case 160:
+                      localStreamRes = Vision::CAMERA_RES_QQVGA;
+                      break;
+                    case 80:
+                      localStreamRes = Vision::CAMERA_RES_QQQVGA;
+                      break;
+                    case 40:
+                      localStreamRes = Vision::CAMERA_RES_QQQQVGA;
+                      break;
+                    default:
+                      printf("Unsupported camera_horizontalResolution = %d\n", camera_horizontalResolution);
                   }
                 }
                 
@@ -784,23 +807,25 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                VizSaveImageMode_t mode = VIZ_SAVE_ONE_SHOT;
+                VizSaveMode_t mode = VIZ_SAVE_ONE_SHOT;
+                
+                const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
                     mode = VIZ_SAVE_OFF;
-                    printf("Saving robot image stream OFF.\n");
+                    printf("Saving robot image/state stream OFF.\n");
                   } else {
                     mode = VIZ_SAVE_CONTINUOUS;
-                    printf("Saving robot image stream ON.\n");
+                    printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
                 } else {
-                  printf("Saving single robot image.\n");
+                  printf("Saving single robot image%s.\n", alsoSaveState ? " and state message" : "");
                 }
                 
-                SendSaveImages(mode);
+                SendSaveImages(mode, alsoSaveState);
                 break;
               }
                 
@@ -938,10 +963,20 @@ namespace Anki {
                 
               case (s32)'V':
               {
-                SendVisionSystemParams();
-                
-                SendFaceDetectParams();
-                
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool visionWhileMovingEnabled = false;
+                  visionWhileMovingEnabled = !visionWhileMovingEnabled;
+                  printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
+                  U2G_VisionWhileMoving msg;
+                  msg.enable = visionWhileMovingEnabled;
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_VisionWhileMoving(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendVisionSystemParams();
+                  
+                  SendFaceDetectParams();
+                }
                 break;
               }
                 
@@ -1444,8 +1479,7 @@ namespace Anki {
         
         return doForceAddRobot;
         
-      } // ForceAddRobotIfSpecified()
-      
+      } // ForceAddRobotIfSpecified()       
       void Update()
       {
         gameComms_.Update();
@@ -1630,13 +1664,21 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(VizSaveImageMode_t mode)
+      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState)
       {
         U2G_SaveImages m;
         m.mode = mode;
         U2G_Message message;
         message.Set_SaveImages(m);
         SendMessage(message);
+        
+        if(alsoSaveState) {
+          U2G_SaveRobotState msgSaveState;
+          msgSaveState.mode = mode;
+          U2G_Message messageWrapper;
+          messageWrapper.Set_SaveRobotState(msgSaveState);
+          SendMessage(messageWrapper);
+        }
       }
       
       void SendEnableDisplay(bool on)

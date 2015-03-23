@@ -18,9 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
-using System.Net.Sockets;
+using     System.Net.Sockets;
 using System.IO;
-using System.Net;
+using     System.Net;
 using System.Threading;
   
 /// <summary>
@@ -29,7 +29,7 @@ using System.Threading;
 class ConnectionHandler {
   public const int MAX_MSG_SIZE = 5000;
   private TcpClient _client;
-  string buildResult;
+  string buildResult = null;
 
   public ConnectionHandler(TcpClient client) {
     _client = client;
@@ -76,10 +76,30 @@ class ConnectionHandler {
       }
 
       // send back status
-      byte[] resultBuffer = Encoding.UTF8.GetBytes("build completed\n" + buildResult);
+      // ProjectBuilder returns a non-empty string if the build fails.
+      // Default to Success and handle the failure case below.
+
+      byte returnCode = 0;
+      string response = "[SUCCESS] build completed\n";
+
+      if (buildResult.Length > 0) {
+        // FAILED!
+        returnCode = 1;
+        response = "[ERROR] build failed\n" + buildResult;
+      }
+
+	  Debug.Log (response);
+
+      // Encode the response to send back.
+      // Format [ responseCode, ...message... ]
+      int resultBufferLen = Encoding.UTF8.GetByteCount(response);
+      byte[] resultBuffer = new byte[resultBufferLen + 1];
+
+      resultBuffer[0] = returnCode;
+      Encoding.UTF8.GetBytes(response, 0, response.Length, resultBuffer, 1);
       stream.Write(resultBuffer, 0, resultBuffer.Length);
 
-
+      buildResult = null;
     }  // try
     catch (Exception e) {
       Debug.Log("Exception: " + e.ToString());

@@ -406,40 +406,48 @@ namespace Cozmo {
               PRINT_NAMED_ERROR("CozmoGameImpl.UpdateAsHost", "Null robot returned for ID=%d!\n", robotID);
               lastResult = RESULT_FAIL;
             } else {
-              G2U_RobotState msg;
-              
-              msg.robotID = robotID;
-              
-              msg.pose_x = robot->GetPose().GetTranslation().x();
-              msg.pose_y = robot->GetPose().GetTranslation().y();
-              msg.pose_z = robot->GetPose().GetTranslation().z();
-              
-              msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
-
-              msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
-              msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
-              
-              msg.headAngle_rad = robot->GetHeadAngle();
-              msg.liftHeight_mm = robot->GetLiftHeight();
-              
-              msg.status = 0;
-              if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
-              if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
-              if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
-              if(robot->IsCarryingObject())   {
-                msg.status |= IS_CARRYING_BLOCK;
-                msg.carryingObjectID = robot->GetCarryingObject();
-              } else {
-                msg.carryingObjectID = -1;
+              if(robot->HasReceivedRobotState()) {
+                G2U_RobotState msg;
+                
+                msg.robotID = robotID;
+                
+                msg.pose_x = robot->GetPose().GetTranslation().x();
+                msg.pose_y = robot->GetPose().GetTranslation().y();
+                msg.pose_z = robot->GetPose().GetTranslation().z();
+                
+                msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
+                const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
+                msg.pose_quaternion0 = q.w();
+                msg.pose_quaternion1 = q.x();
+                msg.pose_quaternion2 = q.y();
+                msg.pose_quaternion3 = q.z();
+                
+                msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
+                msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
+                
+                msg.headAngle_rad = robot->GetHeadAngle();
+                msg.liftHeight_mm = robot->GetLiftHeight();
+                
+                msg.status = 0;
+                if(robot->IsMoving())           { msg.status |= IS_MOVING; }
+                if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
+                if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
+                if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
+                if(robot->IsCarryingObject())   {
+                  msg.status |= IS_CARRYING_BLOCK;
+                  msg.carryingObjectID = robot->GetCarryingObject();
+                } else {
+                  msg.carryingObjectID = -1;
+                }
+                
+                // TODO: Add proximity sensor data to state message
+                
+                msg.batteryVoltage = robot->GetBatteryVoltage();
+                
+                G2U_Message message;
+                message.Set_RobotState(msg);
+                _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
               }
-
-              // TODO: Add proximity sensor data to state message
-              
-              msg.batteryVoltage = robot->GetBatteryVoltage();
-              
-              G2U_Message message;
-              message.Set_RobotState(msg);
-              _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
             }
           }
         }
@@ -470,6 +478,9 @@ namespace Cozmo {
   
   bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
   {
+    PRINT_NAMED_WARNING("CozmoGameImpl.SendRobotImage",
+                        "SendRobotImage is deprecated. Expecting to use direct forwarding of compressed image chunks to UI.\n");
+    
     // Get the image from the robot
     Vision::Image img;
     // TODO: fill in the timestamp?
@@ -484,9 +495,7 @@ namespace Cozmo {
       const s32 nrows = img.GetNumRows();
       
       const u32 numTotalBytes = nrows*ncols;
-      
-      const int G2U_IMAGE_CHUNK_SIZE = 1024;
-      
+
       G2U_ImageChunk m;
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
@@ -494,9 +503,9 @@ namespace Cozmo {
       m.ncols = ncols;
       m.imageId = ++imgID;
       m.chunkId = 0;
-      m.chunkSize = G2U_IMAGE_CHUNK_SIZE;
-      m.imageChunkCount = ceilf((f32)numTotalBytes / G2U_IMAGE_CHUNK_SIZE);
-      m.imageEncoding = 0;
+      m.chunkSize = m.data.size();
+      m.imageChunkCount = ceilf((f32)numTotalBytes / m.data.size());
+      m.imageEncoding = Vision::IE_RAW_GRAY;
       
       u32 totalByteCnt = 0;
       u32 chunkByteCnt = 0;
@@ -514,7 +523,7 @@ namespace Cozmo {
           ++chunkByteCnt;
           ++totalByteCnt;
           
-          if(chunkByteCnt == G2U_IMAGE_CHUNK_SIZE) {
+          if(chunkByteCnt == m.data.size()) {
             // Filled this chunk
             message.Set_ImageChunk(m);
             _uiMsgHandler.SendMessage(_hostUiDeviceID, message);

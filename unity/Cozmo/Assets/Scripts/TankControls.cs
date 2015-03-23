@@ -30,7 +30,7 @@ public class TankControls : MonoBehaviour {
 		float right = sliderRight.Vertical;
 
 		if(Intro.CurrentRobotID != 0) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, left * CozmoUtil.MAX_WHEEL_SPEED, right * CozmoUtil.MAX_WHEEL_SPEED);
+			RobotEngineManager.instance.current.DriveWheels(left * CozmoUtil.MAX_WHEEL_SPEED, right * CozmoUtil.MAX_WHEEL_SPEED);
 			return;
 		}
 

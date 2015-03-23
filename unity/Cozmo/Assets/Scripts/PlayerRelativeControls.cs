@@ -32,11 +32,11 @@ public class PlayerRelativeControls : MonoBehaviour {
 
 		moveCommandLastFrame = false;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotStartHeading = CozmoUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+			robotStartHeading = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
 				//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 		}
 
-		compassStartHeading = CozmoUtil.ClampAngle(-Input.compass.trueHeading);
+		compassStartHeading = MathUtil.ClampAngle(-Input.compass.trueHeading);
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
 	}
 	
@@ -44,7 +44,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		
 		//bool robotFacingStale = true;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotFacing = CozmoUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
 			//robotFacingStale = false;
 			//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 		}
@@ -61,16 +61,16 @@ public class PlayerRelativeControls : MonoBehaviour {
 			return; // command not changed
 		}
 		if(inputs.sqrMagnitude == 0f) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 			return; // command zero'd, let's full stop
 		}
 
-		float relativeScreenFacing = CozmoUtil.AngleDelta(compassStartHeading, CozmoUtil.ClampAngle(-Input.compass.trueHeading));
-		float relativeRobotFacing = CozmoUtil.AngleDelta(robotStartHeading, robotFacing);
+		float relativeScreenFacing = MathUtil.AngleDelta(compassStartHeading, MathUtil.ClampAngle(-Input.compass.trueHeading));
+		float relativeRobotFacing = MathUtil.AngleDelta(robotStartHeading, robotFacing);
 
-		float screenToRobot = CozmoUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
+		float screenToRobot = MathUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
 		float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * (Vector2.Dot(inputs.normalized, Vector2.right) >= 0f ? -1f : 1f);
-		float relativeAngle = CozmoUtil.AngleDelta(screenToRobot, throwAngle);
+		float relativeAngle = MathUtil.AngleDelta(screenToRobot, throwAngle);
 
 		Debug.Log("RobotRelativeControls relativeScreenFacing("+relativeScreenFacing+") relativeRobotFacing("+relativeRobotFacing+") screenToRobot("+screenToRobot+") throwAngle("+throwAngle+") relativeAngle("+relativeAngle+")");
 		inputs = Quaternion.AngleAxis(-screenToRobot, Vector3.forward) * inputs;
@@ -78,7 +78,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, leftWheelSpeed, rightWheelSpeed);
+			RobotEngineManager.instance.current.DriveWheels(leftWheelSpeed, rightWheelSpeed);
 		}
 		
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
@@ -91,7 +91,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		Debug.Log("RobotRelativeControls OnDisable");
 		
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
-			RobotEngineManager.instance.DriveWheels(Intro.CurrentRobotID, 0f, 0f);
+			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 		}
 	}
 

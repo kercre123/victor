@@ -336,6 +336,10 @@ public class G2U_RobotState
 	public float pose_y;
 	public float pose_z;
 	public float poseAngle_rad;
+	public float pose_quaternion0;
+	public float pose_quaternion1;
+	public float pose_quaternion2;
+	public float pose_quaternion3;
 	public float leftWheelSpeed_mmps;
 	public float rightWheelSpeed_mmps;
 	public float headAngle_rad;
@@ -355,6 +359,10 @@ public class G2U_RobotState
 		float pose_y,
 		float pose_z,
 		float poseAngle_rad,
+		float pose_quaternion0,
+		float pose_quaternion1,
+		float pose_quaternion2,
+		float pose_quaternion3,
 		float leftWheelSpeed_mmps,
 		float rightWheelSpeed_mmps,
 		float headAngle_rad,
@@ -368,6 +376,10 @@ public class G2U_RobotState
 		this.pose_y = pose_y;
 		this.pose_z = pose_z;
 		this.poseAngle_rad = poseAngle_rad;
+		this.pose_quaternion0 = pose_quaternion0;
+		this.pose_quaternion1 = pose_quaternion1;
+		this.pose_quaternion2 = pose_quaternion2;
+		this.pose_quaternion3 = pose_quaternion3;
 		this.leftWheelSpeed_mmps = leftWheelSpeed_mmps;
 		this.rightWheelSpeed_mmps = rightWheelSpeed_mmps;
 		this.headAngle_rad = headAngle_rad;
@@ -390,6 +402,14 @@ public class G2U_RobotState
 		pose_z = (float)(reader.ReadSingle());
 		//poseAngle_rad
 		poseAngle_rad = (float)(reader.ReadSingle());
+		//pose_quaternion0
+		pose_quaternion0 = (float)(reader.ReadSingle());
+		//pose_quaternion1
+		pose_quaternion1 = (float)(reader.ReadSingle());
+		//pose_quaternion2
+		pose_quaternion2 = (float)(reader.ReadSingle());
+		//pose_quaternion3
+		pose_quaternion3 = (float)(reader.ReadSingle());
 		//leftWheelSpeed_mmps
 		leftWheelSpeed_mmps = (float)(reader.ReadSingle());
 		//rightWheelSpeed_mmps
@@ -416,6 +436,10 @@ public class G2U_RobotState
 		writer.Write((float)pose_y);
 		writer.Write((float)pose_z);
 		writer.Write((float)poseAngle_rad);
+		writer.Write((float)pose_quaternion0);
+		writer.Write((float)pose_quaternion1);
+		writer.Write((float)pose_quaternion2);
+		writer.Write((float)pose_quaternion3);
 		writer.Write((float)leftWheelSpeed_mmps);
 		writer.Write((float)rightWheelSpeed_mmps);
 		writer.Write((float)headAngle_rad);
@@ -439,6 +463,14 @@ public class G2U_RobotState
 		pose_z = (float)(reader.ReadSingle());
 		//poseAngle_rad
 		poseAngle_rad = (float)(reader.ReadSingle());
+		//pose_quaternion0
+		pose_quaternion0 = (float)(reader.ReadSingle());
+		//pose_quaternion1
+		pose_quaternion1 = (float)(reader.ReadSingle());
+		//pose_quaternion2
+		pose_quaternion2 = (float)(reader.ReadSingle());
+		//pose_quaternion3
+		pose_quaternion3 = (float)(reader.ReadSingle());
 		//leftWheelSpeed_mmps
 		leftWheelSpeed_mmps = (float)(reader.ReadSingle());
 		//rightWheelSpeed_mmps
@@ -468,6 +500,14 @@ public class G2U_RobotState
 			//pose_z
 			result += 4; // = float_32
 			//poseAngle_rad
+			result += 4; // = float_32
+			//pose_quaternion0
+			result += 4; // = float_32
+			//pose_quaternion1
+			result += 4; // = float_32
+			//pose_quaternion2
+			result += 4; // = float_32
+			//pose_quaternion3
 			result += 4; // = float_32
 			//leftWheelSpeed_mmps
 			result += 4; // = float_32
@@ -506,7 +546,7 @@ public class G2U_ImageChunk
 
 	public G2U_ImageChunk()
 	{
-		this.data = new byte[1024];
+		this.data = new byte[1400];
 	}
 
 	public G2U_ImageChunk(uint imageId,
@@ -527,8 +567,8 @@ public class G2U_ImageChunk
 		this.imageEncoding = imageEncoding;
 		this.imageChunkCount = imageChunkCount;
 		this.chunkId = chunkId;
-		if (data.Length != 1024) {
-			throw new System.ArgumentException("Argument has wrong length. Expected length 1024.", "data");
+		if (data.Length != 1400) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 1400.", "data");
 		}
 		this.data = data;
 	}
@@ -554,7 +594,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 	}
@@ -598,7 +638,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 		return stream;
@@ -624,7 +664,7 @@ public class G2U_ImageChunk
 			//chunkId
 			result += 1; // = uint_8
 			//data
-			result += 1 * 1024; // = uint_8 * 1024
+			result += 1 * 1400; // = uint_8 * 1400
 			return result;
 		}
 	}
@@ -643,6 +683,11 @@ public class G2U_RobotObservedObject
 	public float world_x;
 	public float world_y;
 	public float world_z;
+	public float quaternion0;
+	public float quaternion1;
+	public float quaternion2;
+	public float quaternion3;
+	public byte markersVisible;
 	public byte isActive;
 
 	/**** Constructors ****/
@@ -662,6 +707,11 @@ public class G2U_RobotObservedObject
 		float world_x,
 		float world_y,
 		float world_z,
+		float quaternion0,
+		float quaternion1,
+		float quaternion2,
+		float quaternion3,
+		byte markersVisible,
 		byte isActive)
 	{
 		this.robotID = robotID;
@@ -675,6 +725,11 @@ public class G2U_RobotObservedObject
 		this.world_x = world_x;
 		this.world_y = world_y;
 		this.world_z = world_z;
+		this.quaternion0 = quaternion0;
+		this.quaternion1 = quaternion1;
+		this.quaternion2 = quaternion2;
+		this.quaternion3 = quaternion3;
+		this.markersVisible = markersVisible;
 		this.isActive = isActive;
 	}
 
@@ -704,6 +759,16 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//quaternion0
+		quaternion0 = (float)(reader.ReadSingle());
+		//quaternion1
+		quaternion1 = (float)(reader.ReadSingle());
+		//quaternion2
+		quaternion2 = (float)(reader.ReadSingle());
+		//quaternion3
+		quaternion3 = (float)(reader.ReadSingle());
+		//markersVisible
+		markersVisible = (byte)(reader.ReadByte());
 		//isActive
 		isActive = (byte)(reader.ReadByte());
 	}
@@ -723,6 +788,11 @@ public class G2U_RobotObservedObject
 		writer.Write((float)world_x);
 		writer.Write((float)world_y);
 		writer.Write((float)world_z);
+		writer.Write((float)quaternion0);
+		writer.Write((float)quaternion1);
+		writer.Write((float)quaternion2);
+		writer.Write((float)quaternion3);
+		writer.Write((byte)markersVisible);
 		writer.Write((byte)isActive);
 		return stream;
 	}
@@ -753,6 +823,16 @@ public class G2U_RobotObservedObject
 		world_y = (float)(reader.ReadSingle());
 		//world_z
 		world_z = (float)(reader.ReadSingle());
+		//quaternion0
+		quaternion0 = (float)(reader.ReadSingle());
+		//quaternion1
+		quaternion1 = (float)(reader.ReadSingle());
+		//quaternion2
+		quaternion2 = (float)(reader.ReadSingle());
+		//quaternion3
+		quaternion3 = (float)(reader.ReadSingle());
+		//markersVisible
+		markersVisible = (byte)(reader.ReadByte());
 		//isActive
 		isActive = (byte)(reader.ReadByte());
 		return stream;
@@ -783,6 +863,16 @@ public class G2U_RobotObservedObject
 			result += 4; // = float_32
 			//world_z
 			result += 4; // = float_32
+			//quaternion0
+			result += 4; // = float_32
+			//quaternion1
+			result += 4; // = float_32
+			//quaternion2
+			result += 4; // = float_32
+			//quaternion3
+			result += 4; // = float_32
+			//markersVisible
+			result += 1; // = uint_8
 			//isActive
 			result += 1; // = uint_8
 			return result;
@@ -834,6 +924,66 @@ public class G2U_RobotObservedNothing
 		get {
 			int result = 0;
 			//robotID
+			result += 4; // = uint_32
+			return result;
+		}
+	}
+}
+
+public class G2U_RobotDeletedObject
+{
+	public uint robotID;
+	public uint objectID;
+
+	/**** Constructors ****/
+
+	public G2U_RobotDeletedObject()
+	{
+	}
+
+	public G2U_RobotDeletedObject(uint robotID,
+		uint objectID)
+	{
+		this.robotID = robotID;
+		this.objectID = objectID;
+	}
+
+	public G2U_RobotDeletedObject(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)robotID);
+		writer.Write((uint)objectID);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//robotID
+		robotID = (uint)(reader.ReadUInt32());
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//robotID
+			result += 4; // = uint_32
+			//objectID
 			result += 4; // = uint_32
 			return result;
 		}
@@ -970,85 +1120,25 @@ public class G2U_DeviceDetectedVisionMarker
 	}
 }
 
-public class G2U_RobotCompletedPickAndPlaceAction
+public class G2U_RobotCompletedAction
 {
 	public uint robotID;
 	public byte success;
 
 	/**** Constructors ****/
 
-	public G2U_RobotCompletedPickAndPlaceAction()
+	public G2U_RobotCompletedAction()
 	{
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction(uint robotID,
+	public G2U_RobotCompletedAction(uint robotID,
 		byte success)
 	{
 		this.robotID = robotID;
 		this.success = success;
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction(System.IO.Stream stream)
-		: this()
-	{
-		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//robotID
-		robotID = (uint)(reader.ReadUInt32());
-		//success
-		success = (byte)(reader.ReadByte());
-	}
-
-	/**** Pack ****/
-	public System.IO.Stream Pack(System.IO.Stream stream)
-	{
-		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
-		writer.Write((uint)robotID);
-		writer.Write((byte)success);
-		return stream;
-	}
-
-	/**** Unpack ****/
-	public System.IO.Stream Unpack(System.IO.Stream stream)
-	{
-		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		//robotID
-		robotID = (uint)(reader.ReadUInt32());
-		//success
-		success = (byte)(reader.ReadByte());
-		return stream;
-	}
-	public int Size
-	{
-		get {
-			int result = 0;
-			//robotID
-			result += 4; // = uint_32
-			//success
-			result += 1; // = uint_8
-			return result;
-		}
-	}
-}
-
-public class G2U_RobotCompletedPlaceObjectOnGroundAction
-{
-	public uint robotID;
-	public byte success;
-
-	/**** Constructors ****/
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction()
-	{
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction(uint robotID,
-		byte success)
-	{
-		this.robotID = robotID;
-		this.success = success;
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction(System.IO.Stream stream)
+	public G2U_RobotCompletedAction(System.IO.Stream stream)
 		: this()
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -1212,9 +1302,9 @@ public class G2U_Message {
 		ImageChunk,	//7
 		RobotObservedObject,	//8
 		RobotObservedNothing,	//9
-		DeviceDetectedVisionMarker,	//10
-		RobotCompletedPickAndPlaceAction,	//11
-		RobotCompletedPlaceObjectOnGroundAction,	//12
+		RobotDeletedObject,	//10
+		DeviceDetectedVisionMarker,	//11
+		RobotCompletedAction,	//12
 		PlaySound,	//13
 		StopSound,	//14
 		INVALID
@@ -1396,6 +1486,23 @@ public class G2U_Message {
 		}
 	}
 
+	public G2U_RobotDeletedObject RobotDeletedObject
+	{
+		get {
+			if (_tag != Tag.RobotDeletedObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RobotDeletedObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (G2U_RobotDeletedObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RobotDeletedObject : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker
 	{
 		get {
@@ -1413,36 +1520,19 @@ public class G2U_Message {
 		}
 	}
 
-	public G2U_RobotCompletedPickAndPlaceAction RobotCompletedPickAndPlaceAction
+	public G2U_RobotCompletedAction RobotCompletedAction
 	{
 		get {
-			if (_tag != Tag.RobotCompletedPickAndPlaceAction) {
+			if (_tag != Tag.RobotCompletedAction) {
 				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"RobotCompletedPickAndPlaceAction\" when a value of type {0} is stored.",
+					"Cannot access union member \"RobotCompletedAction\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (G2U_RobotCompletedPickAndPlaceAction)this._state;
+			return (G2U_RobotCompletedAction)this._state;
 		}
 		
 		set {
-			_tag = (value != null) ? Tag.RobotCompletedPickAndPlaceAction : Tag.INVALID;
-			_state = value;
-		}
-	}
-
-	public G2U_RobotCompletedPlaceObjectOnGroundAction RobotCompletedPlaceObjectOnGroundAction
-	{
-		get {
-			if (_tag != Tag.RobotCompletedPlaceObjectOnGroundAction) {
-				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"RobotCompletedPlaceObjectOnGroundAction\" when a value of type {0} is stored.",
-					_tag.ToString()));
-			}
-			return (G2U_RobotCompletedPlaceObjectOnGroundAction)this._state;
-		}
-		
-		set {
-			_tag = (value != null) ? Tag.RobotCompletedPlaceObjectOnGroundAction : Tag.INVALID;
+			_tag = (value != null) ? Tag.RobotCompletedAction : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -1517,14 +1607,14 @@ public class G2U_Message {
 		case Tag.RobotObservedNothing:
 			_state = new G2U_RobotObservedNothing(stream);
 			break;
+		case Tag.RobotDeletedObject:
+			_state = new G2U_RobotDeletedObject(stream);
+			break;
 		case Tag.DeviceDetectedVisionMarker:
 			_state = new G2U_DeviceDetectedVisionMarker(stream);
 			break;
-		case Tag.RobotCompletedPickAndPlaceAction:
-			_state = new G2U_RobotCompletedPickAndPlaceAction(stream);
-			break;
-		case Tag.RobotCompletedPlaceObjectOnGroundAction:
-			_state = new G2U_RobotCompletedPlaceObjectOnGroundAction(stream);
+		case Tag.RobotCompletedAction:
+			_state = new G2U_RobotCompletedAction(stream);
 			break;
 		case Tag.PlaySound:
 			_state = new G2U_PlaySound(stream);
@@ -1574,14 +1664,14 @@ public class G2U_Message {
 		case Tag.RobotObservedNothing:
 			RobotObservedNothing.Pack(stream);
 			break;
+		case Tag.RobotDeletedObject:
+			RobotDeletedObject.Pack(stream);
+			break;
 		case Tag.DeviceDetectedVisionMarker:
 			DeviceDetectedVisionMarker.Pack(stream);
 			break;
-		case Tag.RobotCompletedPickAndPlaceAction:
-			RobotCompletedPickAndPlaceAction.Pack(stream);
-			break;
-		case Tag.RobotCompletedPlaceObjectOnGroundAction:
-			RobotCompletedPlaceObjectOnGroundAction.Pack(stream);
+		case Tag.RobotCompletedAction:
+			RobotCompletedAction.Pack(stream);
 			break;
 		case Tag.PlaySound:
 			PlaySound.Pack(stream);
@@ -1630,14 +1720,14 @@ public class G2U_Message {
 			case Tag.RobotObservedNothing:
 				result += RobotObservedNothing.Size;
 				break;
+			case Tag.RobotDeletedObject:
+				result += RobotDeletedObject.Size;
+				break;
 			case Tag.DeviceDetectedVisionMarker:
 				result += DeviceDetectedVisionMarker.Size;
 				break;
-			case Tag.RobotCompletedPickAndPlaceAction:
-				result += RobotCompletedPickAndPlaceAction.Size;
-				break;
-			case Tag.RobotCompletedPlaceObjectOnGroundAction:
-				result += RobotCompletedPlaceObjectOnGroundAction.Size;
+			case Tag.RobotCompletedAction:
+				result += RobotCompletedAction.Size;
 				break;
 			case Tag.PlaySound:
 				result += PlaySound.Size;

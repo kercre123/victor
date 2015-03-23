@@ -5,122 +5,137 @@ using System.Collections.Generic;
 
 public class CozmoVision3 : CozmoVision
 {
-	[System.Serializable]
-	public class SelectionBox
+	public struct ActionButtonState
 	{
-		public Image image;
-		public Text text;
+		public bool activeSelf;
+		public string text;
+	}
 
-		private Vector3[] corners;
-		public Vector3 position
+	[SerializeField] protected float maxDistance = 200f;
+
+	protected void Update()
+	{
+		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+			DisableButtons();
+			return;
+		}
+
+		robot = RobotEngineManager.instance.current;
+
+		if( !robot.isBusy )
 		{
-			get
+			robot.selectedObjects.Clear();
+
+			/*robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by distance from robot
 			{
-				Vector3 center = Vector3.zero;
-				center.z = image.transform.position.z;
+				return obj1.Distance.CompareTo( obj2.Distance );   
+			} );*/
 
-				if( corners == null )
+			robot.observedObjects.Sort( ( obj1 ,obj2 ) => // sort by most center of view
+			{
+				return Vector2.Distance( obj1.VizRect.center, image.rectTransform.rect.center ).CompareTo( 
+					   Vector2.Distance( obj2.VizRect.center, image.rectTransform.rect.center ) );   
+			} );
+
+			for( int i = 0; i < robot.observedObjects.Count && robot.observedObjects.Count > 1; ++i )
+			{
+				if( robot.observedObjects[i].Distance > maxDistance ) // if multiple in view and too far away
 				{
-					corners = new Vector3[4];
+					robot.observedObjects.RemoveAt( i-- );
 				}
+			}
 
-				image.rectTransform.GetWorldCorners( corners );
-
-				if( corners.Length == 0 )
+			for( int i = 1; i < robot.observedObjects.Count; ++i ) // if not on top of selected block, remove
+			{
+				if( Vector2.Distance( robot.observedObjects[0].WorldPosition, robot.observedObjects[i].WorldPosition ) > robot.observedObjects[0].Size.x * 0.5f )
 				{
-					return center;
+					robot.observedObjects.RemoveAt( i-- );
 				}
+			}
 
-				center = ( corners[0] + corners[2] ) * 0.5f;
+			robot.observedObjects.Sort( ( obj1, obj2 ) =>
+			{
+				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+			} );
+
+			if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
+			{
+				if( robot.observedObjects.Count > 0 && robot.observedObjects[0].ID != robot.carryingObjectID ) // if can see at least one block
+				{
+					robot.selectedObjects.Add( robot.observedObjects[0] );
+					
+					if( robot.observedObjects.Count == 1 )
+					{
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+					}
+				}
 				
-				return center;
 			}
-		}
-	}
-
-	[SerializeField] protected SelectionBox box;
-	[SerializeField] protected Image reticle;
-
-	protected Vector3[] reticleCorners;
-	protected bool inReticle
-	{
-		get
-		{
-			if( reticleCorners == null )
+			else // if not holding a block
 			{
-				reticleCorners = new Vector3[4];
-				reticle.rectTransform.GetWorldCorners( reticleCorners );
+				if( robot.observedObjects.Count > 0 )
+				{
+					for( int i = 0; i < 2 && i < robot.observedObjects.Count; ++i )
+					{
+						robot.selectedObjects.Add( robot.observedObjects[i] );
+					}
+					
+					if( robot.observedObjects.Count == 1 )
+					{
+						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+					}
+				}
+				
 			}
-
-			/*Debug.Log( "min x " + box.position.x + " " + reticleCorners[0].x );
-			Debug.Log( "max x " + box.position.x + " " + reticleCorners[2].x );
-			Debug.Log( "min y " + box.position.y + " " + reticleCorners[0].y );
-			Debug.Log( "max y " + box.position.y + " " + reticleCorners[2].y );*/
-
-			return box.image.rectTransform.rect.width > reticle.rectTransform.rect.width && 
-				  	box.image.rectTransform.rect.height > reticle.rectTransform.rect.height &&
-					box.position.x > reticleCorners[0].x && 
-					box.position.x < reticleCorners[2].x &&
-					box.position.y > reticleCorners[0].y && 
-					box.position.y < reticleCorners[2].y;
 		}
+
+		SetActionButtons();
+		Dings();
 	}
 
-	protected override void Update()
+	protected override void Dings()
 	{
-		base.Update();
-
-		image.gameObject.SetActive( PlayerPrefs.GetInt( "CozmoVision3" ) == 1 );
-
-		if( image.gameObject.activeSelf && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( RobotEngineManager.instance != null )
 		{
 			robot = RobotEngineManager.instance.current;
-
-			box.image.gameObject.SetActive( false );
-
-			if( robot.selectedObject > -2 )
+			
+			if( robot == null || robot.isBusy )
 			{
-				robot.selectedObject = -1;
-				//reticle.color = Color.yellow;
-
-				for( int i = 0; i < robot.observedObjects.Count; ++i )
-				{
-					box.image.rectTransform.sizeDelta = new Vector2( robot.observedObjects[i].VizRect.width, robot.observedObjects[i].VizRect.height );
-					box.image.rectTransform.anchoredPosition = new Vector2( robot.observedObjects[i].VizRect.x, -robot.observedObjects[i].VizRect.y );
-
-					if( inReticle )
-					{
-						box.image.gameObject.SetActive( true );
-
-						box.text.text = "Select " + robot.observedObjects[i].ID;
-						robot.selectedObject = robot.observedObjects[i].ID;
-						//reticle.color = Color.red;
-
-						break;
-					}
-				}
+				robot.lastSelectedObjects.Clear();
+				return;
 			}
-
-			if( actionButtons.Length > 1 )
+			
+			if( robot.selectedObjects.Count > robot.lastSelectedObjects.Count )
 			{
-				actionButtons[1].button.gameObject.SetActive( robot.selectedObject > -1 );
-
-				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-				{
-					actionButtons[0].button.gameObject.SetActive( true );
-					actionButtons[0].text.text = "Drop " + robot.carryingObjectID;
-
-					if( robot.selectedObject > -1 )
-					{
-						actionButtons[1].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
-					}
-				}
-				else
-				{
-					actionButtons[0].button.gameObject.SetActive( false );
-					actionButtons[1].text.text = "Pick Up " + robot.selectedObject;
-				}
+				Ding( true );
+			}
+			else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
+			{
+				Ding( false );
+			}
+			
+			robot.lastSelectedObjects.Clear();
+			robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+		}
+	}
+	
+	protected override void SetActionButtons()
+	{
+		DisableButtons();
+		robot = RobotEngineManager.instance.current;
+		if(robot == null || robot.isBusy)
+			return;
+		
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
+			if(robot.selectedObjects.Count > 0)
+				actionButtons[1].SetMode(ActionButtonMode.STACK);
+			actionButtons[0].SetMode(ActionButtonMode.DROP);
+		}
+		else {
+			for(int i = 0; i < robot.selectedObjects.Count; ++i) {
+				actionButtons[i].SetMode(ActionButtonMode.PICK_UP, i);
 			}
 		}
 	}
+
 }

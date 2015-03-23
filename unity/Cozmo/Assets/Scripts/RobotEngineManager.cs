@@ -14,16 +14,11 @@ public class RobotEngineManager : MonoBehaviour {
 	public Dictionary<int, Robot> robots { get; private set; }
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
-	
+
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
 	[SerializeField] private Text batteryPercentage;
-	[SerializeField] private AudioClip successSound;
-	[SerializeField] private AudioClip failureSound;
-	[SerializeField] private Text successOrFailureText;
-
-	public float defaultHeadAngle;
 
 	[SerializeField]
 	[HideInInspector]
@@ -32,16 +27,16 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
-	public event Action<Texture2D> RobotImage; 
+	public event Action<Texture2D> RobotImage;
+	public event Action<bool> SuccessOrFailure;
 
-	private ChannelBase channel;
+	public ChannelBase channel { get; private set; }
 	private float lastRobotStateMessage = 0;
 	private bool isRobotConnected = false;
 
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
-	
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -211,6 +206,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedMessage(G2U_Message message)
 	{
 		switch (message.GetTag ()) {
+		case G2U_Message.Tag.Ping:
+			break;
 		case G2U_Message.Tag.RobotAvailable:
 			ReceivedSpecificMessage(message.RobotAvailable);
 			break;
@@ -250,11 +247,11 @@ public class RobotEngineManager : MonoBehaviour {
 			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
 			}
 			break;
-		case G2U_Message.Tag.RobotCompletedPickAndPlaceAction:
-			ReceivedSpecificMessage(message.RobotCompletedPickAndPlaceAction);
+		case G2U_Message.Tag.RobotCompletedAction:
+			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
-		case G2U_Message.Tag.RobotCompletedPlaceObjectOnGroundAction:
-			ReceivedSpecificMessage(message.RobotCompletedPlaceObjectOnGroundAction);
+		default:
+			Debug.LogWarning( message.GetTag() + " is not supported" );
 			break;
 		}
 	}
@@ -286,12 +283,6 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
-		if( current != null )
-		{
-			current.selectedObject = -1;
-			current.observedObjects.Clear();
-			current.knownObjects.Clear();
-		}
 	}
 	
 	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
@@ -310,64 +301,30 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
 	{
-		//Debug.Log( "no box found at " + Time.time );
-
-		if( current.selectedObject == -1 )
+		if( current.selectedObjects.Count == 0 && !current.isBusy )
 		{
+			//Debug.Log( "no box found" );
+
 			current.observedObjects.Clear();
+			current.lastObjectHeadTracked = null;
 		}
 	}
 
-	private void SuccessOrFailure( bool success )
+	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
 	{
-		if( success )
+		bool success = message.success > 0;
+		
+		Debug.Log( "Action completed " + success );
+		
+		current.selectedObjects.Clear();
+		current.lastObjectHeadTracked = null;
+		
+		current.SetHeadAngle();
+		
+		if( SuccessOrFailure != null )
 		{
-			audio.PlayOneShot( successSound );
-			successOrFailureText.text = "SUCCESS";
+			SuccessOrFailure( success );
 		}
-		else
-		{
-			audio.PlayOneShot( failureSound );
-			successOrFailureText.text = "FAILURE";
-		}
-		
-		StartCoroutine( TurnOffText() );
-	}
-
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPickAndPlaceAction message)
-	{
-		Debug.Log( "Pick And Place complete" );
-		
-		current.selectedObject = -1;
-
-		SetHeadAngle( defaultHeadAngle );
-
-		SuccessOrFailure( message.success > 0 );
-	}
-
-	private void ReceivedSpecificMessage(G2U_RobotCompletedPlaceObjectOnGroundAction message)
-	{
-		Debug.Log( "Place Object On Ground complete" );
-		
-		current.selectedObject = -1;
-		
-		SetHeadAngle( defaultHeadAngle );
-
-		SuccessOrFailure( message.success > 0 );
-	}
-
-	protected IEnumerator TurnOffText()
-	{
-		successOrFailureText.gameObject.SetActive( true );
-		
-		float time = Time.time + 5f;
-		
-		while( time > Time.time )
-		{
-			yield return null;
-		}
-		
-		successOrFailureText.gameObject.SetActive( false );
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -409,28 +366,46 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private Texture2D texture;
 	private int currentImageIndex;
+	private int currentChunkIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
 	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
-	private Color32[] colorArray;
+	private Color32[] grayArray;
+	private byte[] colorArray;
 	
 	private void ReceivedSpecificMessage( G2U_ImageChunk message )
 	{
-		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		switch( (ImageEncoding_t)message.imageEncoding )
+		{
+			case ImageEncoding_t.IE_JPEG_COLOR:
+				ColorJpeg( message );
+				break;
+			case ImageEncoding_t.IE_RAW_GRAY:
+				GrayRaw( message );
+				break;
+			default:
+				Debug.LogWarning( (ImageEncoding_t)message.imageEncoding + " is not supported" );
+				break;
+		}
+	}
+
+	private void GrayRaw( G2U_ImageChunk message )
+	{
+		if( grayArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
-
-			if( colorArray == null || colorArray.Length != length )
+			
+			if( grayArray == null || grayArray.Length < length )
 			{
-				colorArray = new Color32[ length ];
+				grayArray = new Color32[ length ];
 			}
 			
 			currentImageIndex = 0;
 		}
 		
-		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		for( int messageIndex = 0; currentImageIndex < grayArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
 			byte gray = message.data[ messageIndex ];
 			
@@ -438,48 +413,85 @@ public class RobotEngineManager : MonoBehaviour {
 			int y = currentImageIndex / message.ncols;
 			int index = message.ncols * ( message.nrows - y - 1 ) + x;
 			
-			colorArray[ index ] = new Color32( gray, gray, gray, 255 );
+			grayArray[ index ] = new Color32( gray, gray, gray, 255 );
 		}
 		
-		if( currentImageIndex == colorArray.Length )
+		if( currentImageIndex == grayArray.Length )
 		{
 			int width = message.ncols;
 			int height = message.nrows;
 			
-			if( texture != null )
+			if( texture == null || texture.width != width || texture.height != height )
 			{
-				if( texture.width != width || texture.height != height )
+				if( texture != null )
 				{
 					Destroy( texture );
 					texture = null;
 				}
-			}
-			
-			if( texture == null )
-			{
+				
 				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
 			}
 			
-			texture.SetPixels32( colorArray );
-			
+			texture.SetPixels32( grayArray );
 			texture.Apply( false );
 			
 			if( RobotImage != null )
 			{
 				RobotImage( texture );
-
+				
 				current.observedObjects.Clear();
 			}
 		}
 	}
 
-	public void PlaceObjectOnGroundHere()
+	private void ColorJpeg( G2U_ImageChunk message )
 	{
-		Debug.Log( "Place Object On Ground Here" );
+		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		{
+			currentImageID = message.imageId;
+			currentImageFrameTimeStamp = message.frameTimeStamp;
 
-		U2G_PlaceObjectOnGroundHere message = new U2G_PlaceObjectOnGroundHere ();
+			int length = message.chunkSize * message.imageChunkCount;
+			
+			if( colorArray == null || colorArray.Length < length )
+			{
+				colorArray = new byte[ length ];
+			}
+			
+			currentImageIndex = 0;
+			currentChunkIndex = 0;
+		}
+		
+		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		{
+			colorArray[ currentImageIndex ] = message.data[ messageIndex ];
+		}
 
-		channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
+		if( ++currentChunkIndex == message.imageChunkCount )
+		{
+			int width = message.ncols;
+			int height = message.nrows;
+			
+			if( texture == null || texture.width != width || texture.height != height )
+			{
+				if( texture != null )
+				{
+					Destroy( texture );
+					texture = null;
+				}
+				
+				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
+			}
+
+			texture.LoadImage( colorArray );
+			
+			if( RobotImage != null )
+			{
+				RobotImage( texture );
+				
+				current.observedObjects.Clear();
+			}
+		}
 	}
 
 	public void StartEngine(string vizHostIP)
@@ -528,25 +540,6 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send (new U2G_Message{ForceAddRobot=message});
 	}
 	
-	/// <summary>
-	/// Set wheel speed.
-	/// </summary>
-	/// <param name="left_wheel_speed_mmps">Left wheel speed in millimeters per second.</param>
-	/// <param name="right_wheel_speed_mmps">Right wheel speed in millimeters per second.</param>
-	public void DriveWheels(int robotID, float leftWheelSpeedMmps, float rightWheelSpeedMmps)
-	{
-		if (robotID < 0 || robotID > 255) {
-			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
-		}
-
-		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
-		U2G_DriveWheels message = new U2G_DriveWheels ();
-		message.lwheel_speed_mmps = leftWheelSpeedMmps;
-		message.rwheel_speed_mmps = rightWheelSpeedMmps;
-		
-		channel.Send (new U2G_Message{DriveWheels=message});
-	}
-	
 	public enum ImageSendMode_t
 	{
 		ISM_OFF,
@@ -570,94 +563,17 @@ public class RobotEngineManager : MonoBehaviour {
 		CAMERA_RES_VERIFICATION_SNAPSHOT, // 16 x 16
 		CAMERA_RES_COUNT,
 		CAMERA_RES_NONE = CAMERA_RES_COUNT
-	} 
-
-	public void SetHeadAngle( float angle_rad )
-	{
-		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
-		message.angle_rad = angle_rad;
-		message.accel_rad_per_sec2 = 2f;
-		message.max_speed_rad_per_sec = 5f;
-
-		channel.Send( new U2G_Message { SetHeadAngle = message } );
 	}
 
-	public void PickAndPlaceObject()
+	public enum ImageEncoding_t
 	{
-		Debug.Log( "Pick And Place Object" );
-
-		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
-		message.objectID = current.selectedObject;
-		message.usePreDockPose = 0;
-		message.useManualSpeed = 0;
-		
-		channel.Send( new U2G_Message{PickAndPlaceObject = message} );
-
-		current.observedObjects.Clear();
-	}
-
-	public void SetRobotCarryingObject()
-	{
-		Debug.Log( "Set Robot Carrying Object" );
-		
-		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
-
-		message.robotID = (byte)Intro.CurrentRobotID;
-		//if( current.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-		{
-			message.objectID = -1;
-		}
-		/*else
-		{
-			message.objectID = 0;
-		}*/
-		
-		channel.Send( new U2G_Message{SetRobotCarryingObject = message} );
-	}
-
-	public void RequestImage(int robotID)
-	{
-		if (robotID < 0 || robotID > 255) {
-			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
-		}
-		
-		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
-		message.resolution = (byte)CameraResolution.CAMERA_RES_QVGA;
-		message.mode = (byte)ImageSendMode_t.ISM_STREAM;
-		
-		channel.Send (new U2G_Message{SetRobotImageSendMode = message});
-		
-		U2G_ImageRequest message2 = new U2G_ImageRequest ();
-		message2.robotID = (byte)robotID;
-		message2.mode = (byte)ImageSendMode_t.ISM_STREAM;
-		
-		channel.Send (new U2G_Message{ImageRequest = message2});
-		
-		Debug.Log( "image request message sent" );
-	}
-	
-	public void StopAllMotors(int robotID)
-	{
-		if (robotID < 0 || robotID > 255) {
-			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
-		}
-		
-		U2G_StopAllMotors message = new U2G_StopAllMotors ();
-
-		channel.Send (new U2G_Message{StopAllMotors=message});
-	}
-
-	public void TurnInPlace(int robotID, float angle_rad)
-	{
-		if (robotID < 0 || robotID > 255) {
-			throw new ArgumentException("ID must be between 0 and 255.", "robotID");
-		}
-		
-		U2G_TurnInPlace message = new U2G_TurnInPlace ();
-		message.robotID = (byte)robotID;
-		message.angle_rad = angle_rad;
-		
-		Debug.Log("TurnInPlace(robotID:"+robotID+", angle_rad:"+angle_rad+")");
-		channel.Send (new U2G_Message{TurnInPlace=message});
+		IE_NONE,
+		IE_RAW_GRAY, // no compression
+		IE_RAW_RGB,  // no compression, just [RGBRGBRG...]
+		IE_YUYV,
+		IE_BAYER,
+		IE_JPEG_GRAY,
+		IE_JPEG_COLOR,
+		IE_WEBP
 	}
 }
