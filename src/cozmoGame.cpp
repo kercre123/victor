@@ -416,7 +416,7 @@ namespace Cozmo {
                 msg.pose_z = robot->GetPose().GetTranslation().z();
                 
                 msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
-                UnitQuaternion<float> q(Rotation3d(robot->GetPose().GetRotationVector()).GetQuaternion());
+                const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
                 msg.pose_quaternion0 = q.w();
                 msg.pose_quaternion1 = q.x();
                 msg.pose_quaternion2 = q.y();
@@ -478,6 +478,9 @@ namespace Cozmo {
   
   bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
   {
+    PRINT_NAMED_WARNING("CozmoGameImpl.SendRobotImage",
+                        "SendRobotImage is deprecated. Expecting to use direct forwarding of compressed image chunks to UI.\n");
+    
     // Get the image from the robot
     Vision::Image img;
     // TODO: fill in the timestamp?

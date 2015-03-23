@@ -546,7 +546,7 @@ public class G2U_ImageChunk
 
 	public G2U_ImageChunk()
 	{
-		this.data = new byte[1024];
+		this.data = new byte[1400];
 	}
 
 	public G2U_ImageChunk(uint imageId,
@@ -567,8 +567,8 @@ public class G2U_ImageChunk
 		this.imageEncoding = imageEncoding;
 		this.imageChunkCount = imageChunkCount;
 		this.chunkId = chunkId;
-		if (data.Length != 1024) {
-			throw new System.ArgumentException("Argument has wrong length. Expected length 1024.", "data");
+		if (data.Length != 1400) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 1400.", "data");
 		}
 		this.data = data;
 	}
@@ -594,7 +594,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 	}
@@ -638,7 +638,7 @@ public class G2U_ImageChunk
 		//chunkId
 		chunkId = (byte)(reader.ReadByte());
 		//data
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1400; i++) {
 			data[i] = (byte)reader.ReadByte();
 		}
 		return stream;
@@ -664,7 +664,7 @@ public class G2U_ImageChunk
 			//chunkId
 			result += 1; // = uint_8
 			//data
-			result += 1 * 1024; // = uint_8 * 1024
+			result += 1 * 1400; // = uint_8 * 1400
 			return result;
 		}
 	}
@@ -687,6 +687,7 @@ public class G2U_RobotObservedObject
 	public float quaternion1;
 	public float quaternion2;
 	public float quaternion3;
+	public byte markersVisible;
 
 	/**** Constructors ****/
 
@@ -708,7 +709,8 @@ public class G2U_RobotObservedObject
 		float quaternion0,
 		float quaternion1,
 		float quaternion2,
-		float quaternion3)
+		float quaternion3,
+		byte markersVisible)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
@@ -725,6 +727,7 @@ public class G2U_RobotObservedObject
 		this.quaternion1 = quaternion1;
 		this.quaternion2 = quaternion2;
 		this.quaternion3 = quaternion3;
+		this.markersVisible = markersVisible;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -761,6 +764,8 @@ public class G2U_RobotObservedObject
 		quaternion2 = (float)(reader.ReadSingle());
 		//quaternion3
 		quaternion3 = (float)(reader.ReadSingle());
+		//markersVisible
+		markersVisible = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
@@ -782,6 +787,7 @@ public class G2U_RobotObservedObject
 		writer.Write((float)quaternion1);
 		writer.Write((float)quaternion2);
 		writer.Write((float)quaternion3);
+		writer.Write((byte)markersVisible);
 		return stream;
 	}
 
@@ -819,6 +825,8 @@ public class G2U_RobotObservedObject
 		quaternion2 = (float)(reader.ReadSingle());
 		//quaternion3
 		quaternion3 = (float)(reader.ReadSingle());
+		//markersVisible
+		markersVisible = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
@@ -855,6 +863,8 @@ public class G2U_RobotObservedObject
 			result += 4; // = float_32
 			//quaternion3
 			result += 4; // = float_32
+			//markersVisible
+			result += 1; // = uint_8
 			return result;
 		}
 	}

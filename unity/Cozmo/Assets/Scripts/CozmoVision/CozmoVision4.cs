@@ -18,6 +18,8 @@ public class ActionSlider
 	public Text text_action1;
 	public Text text_action2;
 
+	public int selectedIndex = 0;
+
 	CozmoVision vision;
 	bool pressed = false;
 
@@ -27,13 +29,14 @@ public class ActionSlider
 		this.vision = vision;
 	}
 	
-	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes=null) {
+	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes=null, int index=0) {
 		//if(Mode == mode && down == pressed) return;
 
 		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+")");
 		
 		Mode = mode;
 		pressed = down;
+		selectedIndex = index;
 
 		if(mode == ActionButtonMode.DISABLED) {
 			slider.gameObject.SetActive(false);
@@ -126,14 +129,6 @@ public class CozmoVision4 : CozmoVision
 		actionSlider.SetMode(ActionButtonMode.TARGET, false);
 	}
 
-	protected override void OnEnable()
-	{
-		base.OnEnable();
-
-		Reset();
-	}
-
-
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
 	protected void Update()
 	{
@@ -183,7 +178,7 @@ public class CozmoVision4 : CozmoVision
 		interactLastFrame = true;
 	}
 
-	Vector2 centerViz = new Vector2(160f, 120f);
+	//Vector2 centerViz = new Vector2(160f, 120f);
 
 	private void AcquireTarget() {
 		ObservedObject nearest = null;
@@ -228,6 +223,21 @@ public class CozmoVision4 : CozmoVision
 		else {
 			Debug.Log("No Target Acquired from robot.knownObjects.Count("+robot.knownObjects.Count+")");
 		}
+
+		//find any other objects in a 'stack' with our selected
+		for(int i=0; i<robot.knownObjects.Count; i++) {
+			if(best == robot.knownObjects[i]) continue;
+
+			float dist = (robot.knownObjects[i].WorldPosition - best.WorldPosition).magnitude;
+			if(dist > best.Size.x * 0.5f) continue;
+
+			robot.selectedObjects.Add(robot.knownObjects[i]);
+		}
+
+		//sort selected from ground up
+		robot.selectedObjects.Sort( ( obj1, obj2 ) => {
+			return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+		} );
 	}
 
 	bool interactPressed = false;
@@ -247,25 +257,35 @@ public class CozmoVision4 : CozmoVision
 		modes.Clear();
 		modes.Add(ActionButtonMode.TARGET);
 
+		int index1 = 0;
+		int index2 = 0;
+
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			modes.Add(ActionButtonMode.DROP);
 			if(robot.selectedObjects.Count > 0) modes.Add(ActionButtonMode.STACK);
 		}
-		else if(robot.selectedObjects.Count > 0) {
+		else if(robot.selectedObjects.Count > 1) {
 			modes.Add(ActionButtonMode.PICK_UP);
+			modes.Add(ActionButtonMode.PICK_UP);
+			index2 = 1;
+		}
+		else if(robot.selectedObjects.Count == 1) {
 			modes.Add(ActionButtonMode.ROLL);
+			modes.Add(ActionButtonMode.PICK_UP);
 		}
-	
+
 		ActionButtonMode currentMode = modes[0];
-	
-		if(actionSlider.slider.value < -0.2f && modes.Count > 2) {
-			currentMode = modes[2];
-		}
-		else if(actionSlider.slider.value > 0.2f && modes.Count > 1) {
+		int index = index1;
+
+		if(actionSlider.slider.value < -0.2f && modes.Count > 1) {
 			currentMode = modes[1];
 		}
+		else if(actionSlider.slider.value > 0.2f && modes.Count > 2) {
+			currentMode = modes[2];
+			index = index2;
+		}
 	
-		actionSlider.SetMode(currentMode, interactPressed, modes);
+		actionSlider.SetMode(currentMode, interactPressed, modes, index);
 	}
 
 	private void InitiateAssistedInteraction() {
@@ -279,16 +299,16 @@ public class CozmoVision4 : CozmoVision
 	private void DoReleaseAction() {
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.current.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.DROP:
 				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
 				break;
 			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.current.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.current.PickAndPlaceObject();
+				//RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.ALIGN:
 				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();

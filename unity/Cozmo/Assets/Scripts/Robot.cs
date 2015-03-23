@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -33,10 +33,6 @@ public class Robot
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
-
-
-
-	private bool imageRequested = false;
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
@@ -83,7 +79,6 @@ public class Robot
 	private void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
 		ClearData();
-		imageRequested = false;
 	}
 	
 	public void ClearData()
@@ -93,6 +88,10 @@ public class Robot
 		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		knownObjects.Clear();
+		status = StatusFlag.NONE;
+		WorldPosition = Vector3.zero;
+		Rotation = Quaternion.identity;
+		carryingObjectID = -1;
 	}
 
 	public void UpdateInfo( G2U_RobotState message )
@@ -251,11 +250,6 @@ public class Robot
 	
 	public void RequestImage()
 	{
-		if( imageRequested )
-		{
-			return;
-		}
-		
 		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
 		message.resolution = (byte)RobotEngineManager.CameraResolution.CAMERA_RES_QVGA;
 		message.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
@@ -269,8 +263,6 @@ public class Robot
 		RobotEngineManager.instance.channel.Send (new U2G_Message{ImageRequest = message2});
 		
 		Debug.Log( "image request message sent" );
-		
-		imageRequested = true;
 	}
 	
 	public void StopAllMotors()
