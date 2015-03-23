@@ -478,6 +478,9 @@ namespace Cozmo {
   
   bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
   {
+    PRINT_NAMED_WARNING("CozmoGameImpl.SendRobotImage",
+                        "SendRobotImage is deprecated. Expecting to use direct forwarding of compressed image chunks to UI.\n");
+    
     // Get the image from the robot
     Vision::Image img;
     // TODO: fill in the timestamp?
