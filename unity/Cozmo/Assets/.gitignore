@@ -1,0 +1,11 @@
+!*.dll
+!*.a
+!*.dylib
+!*.la
+!*.so
+!*.obj
+!*.o
+!*.ko
+!*.exe
+!*.lib
+!*.pyc

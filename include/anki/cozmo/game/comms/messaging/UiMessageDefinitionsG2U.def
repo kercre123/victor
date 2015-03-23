@@ -828,6 +828,7 @@ struct G2U_RobotObservedObject
 	float quaternion1;
 	float quaternion2;
 	float quaternion3;
+	uint8_t markersVisible;
 
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -851,7 +852,8 @@ struct G2U_RobotObservedObject
 		,float quaternion0
 		,float quaternion1
 		,float quaternion2
-		,float quaternion3)
+		,float quaternion3
+		,uint8_t markersVisible)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
@@ -867,6 +869,7 @@ struct G2U_RobotObservedObject
 	,quaternion1(quaternion1)
 	,quaternion2(quaternion2)
 	,quaternion3(quaternion3)
+	,markersVisible(markersVisible)
 	{}
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 	{
@@ -903,6 +906,7 @@ struct G2U_RobotObservedObject
 		buffer.Write(this->quaternion1);
 		buffer.Write(this->quaternion2);
 		buffer.Write(this->quaternion3);
+		buffer.Write(this->markersVisible);
 		const size_t bytesWritten {buffer.GetBytesWritten()};
 		return bytesWritten;
 	}
@@ -931,6 +935,7 @@ struct G2U_RobotObservedObject
 		buffer.Read(this->quaternion1);
 		buffer.Read(this->quaternion2);
 		buffer.Read(this->quaternion3);
+		buffer.Read(this->markersVisible);
 		return buffer.GetBytesRead();
 	}
 	size_t Size() const 
@@ -966,6 +971,8 @@ struct G2U_RobotObservedObject
 		result += 4; // = float_32
 		//quaternion3
 		result += 4; // = float_32
+		//markersVisible
+		result += 1; // = uint_8
 		return result;
 	}
 
@@ -985,7 +992,8 @@ struct G2U_RobotObservedObject
 		|| quaternion0 != other.quaternion0
 		|| quaternion1 != other.quaternion1
 		|| quaternion2 != other.quaternion2
-		|| quaternion3 != other.quaternion3) {
+		|| quaternion3 != other.quaternion3
+		|| markersVisible != other.markersVisible) {
 			return false;
 		}
 		return true;

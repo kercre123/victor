@@ -101,6 +101,7 @@ namespace Cozmo {
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectFamily,
                                          uint32_t objectType, uint32_t objectID,
+                                         uint8_t markersVisible,
                                          float img_x_upperLeft,  float img_y_upperLeft,
                                          float img_width,  float img_height,
                                          float world_x,

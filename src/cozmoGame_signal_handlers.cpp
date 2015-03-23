@@ -76,11 +76,12 @@ namespace Cozmo {
     
     auto cbRobotObservedObjectSignal = [this](uint8_t robotID, uint32_t objectFamily,
                                               uint32_t objectType, uint32_t objectID,
+                                              uint8_t markersVisible,
                                               float img_x_upperLeft,  float img_y_upperLeft,
                                               float img_width,  float img_height,
                                               float world_x, float world_y, float world_z,
                                               float q0, float q1, float q2, float q3) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3);
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, markersVisible, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -248,6 +249,7 @@ namespace Cozmo {
                                                       uint32_t objectFamily,
                                                       uint32_t objectType,
                                                       uint32_t objectID,
+                                                      uint8_t  markersVisible,
                                                       float img_x_upperLeft,  float img_y_upperLeft,
                                                       float img_width,  float img_height,
                                                       float world_x,
@@ -272,6 +274,7 @@ namespace Cozmo {
     msg.quaternion1   = q1;
     msg.quaternion2   = q2;
     msg.quaternion3   = q3;
+    msg.markersVisible= markersVisible;
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
     G2U_Message message;
