@@ -631,6 +631,27 @@ void webots_physics_draw(int pass, const char *view) {
           break;
         case Anki::Cozmo::VIZ_OBJECT_CUBOID:
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
+          
+          
+          // AXES:
+          glColor4ub(255, 0, 0, 255);
+          glBegin(GL_LINES);
+          glVertex3f(0,0,0);
+          glVertex3f(obj->x_size_m, 0, 0);
+          glEnd();
+          
+          glColor4ub(0, 255, 0, 255);
+          glBegin(GL_LINES);
+          glVertex3f(0, 0, 0);
+          glVertex3f(0, obj->y_size_m, 0);
+          glEnd();
+          
+          glColor4ub(0, 0, 255, 255);
+          glBegin(GL_LINES);
+          glVertex3f(0, 0, 0);
+          glVertex3f(0, 0, obj->z_size_m);
+          glEnd();
+          
           break;
         case Anki::Cozmo::VIZ_OBJECT_RAMP:
         {
