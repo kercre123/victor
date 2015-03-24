@@ -5,7 +5,6 @@ using System.Collections;
 public class OptionsScreen : MonoBehaviour {
 
 	[SerializeField] Slider slider_turnSpeed;
-	[SerializeField] Toggle[] toggle_cozmoVisions;
 	[SerializeField] Toggle toggle_reverseLikeACar;
 	[SerializeField] ComboBox combo_controls;
 	[SerializeField] ComboBox combo_vision;
@@ -15,7 +14,7 @@ public class OptionsScreen : MonoBehaviour {
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 
 	public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
-	public string[] visionStyles = { "CozmoVision1", "CozmoVision2", "CozmoVision3" };
+	public string[] visionStyles = { "CozmoVision2", "CozmoVision3", "CozmoVision4" };
 
 	void OnEnable () {
 		Init();
