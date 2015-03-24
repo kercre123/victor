@@ -10,6 +10,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] VirtualStick headAngleStick = null;
 	[SerializeField] GyroControls gyroInputs = null;
+	[SerializeField] RectTransform gyroSleepWarning = null;
 	[SerializeField] float gyroSleepTime = 3f;
 	[SerializeField] Text text_x = null;
 	[SerializeField] Text text_y = null;
@@ -77,6 +78,8 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastHorStickX = 0f;
 		lastHeadStickY = 0f;
 		lastDebugAxesX = 0f;
+
+		gyroSleepTimer = gyroSleepTime;
 	}
 
 	void Update() {
@@ -132,6 +135,8 @@ public class RobotRelativeControls : MonoBehaviour {
 			CheckDebugHorizontalAxesTurning();
 		}
 		else {
+			gyroSleepTimer = gyroSleepTime;
+
 			targetSwapDirection += CheckHeadStickTargetSwap();
 			targetSwapDirection += CheckHorizontalStickTargetSwap();
 			targetSwapDirection += CheckGyroTargetSwap();
@@ -141,6 +146,8 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			robot.TrackHeadToObject( targetLock );
 		}
+
+		if(gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive(gyroSleepTime <= 0f);
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -357,23 +364,21 @@ public class RobotRelativeControls : MonoBehaviour {
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
 		
-		gyroSleepTimer += Time.deltaTime;
-		if(verticalStick == null || verticalStick.IsPressed) {
-			gyroSleepTimer = 0f;
+		if(gyroSleepTime > 0f) gyroSleepTimer -= Time.deltaTime;
+
+		bool wakeGyro = Input.touchCount > 0;
+		wakeGyro |= robot.status != Robot.StatusFlag.NONE;
+		wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
+
+		if(wakeGyro) {
+			gyroSleepTimer = gyroSleepTime;
 		}
-		else if(!robot.Status(Robot.StatusFlag.NONE)) {
-			gyroSleepTimer = 0f;
-		}
-		
-		if(gyroSleepTimer <= gyroSleepTime && gyroInputs != null && gyroInputs.gameObject.activeSelf) {
+
+		if(gyroSleepTimer <= 0f) return;
 			
-			float h = gyroInputs.Horizontal;
-			inputs.x += h;
-			inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
-			
-			if(gyroInputs.Horizontal != 0f)
-				gyroSleepTimer = 0f;
-		}
+		float h = gyroInputs.Horizontal;
+		inputs.x += h;
+		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
 	}
 
 	Vector2 CheckGyroTargetSwap() {
