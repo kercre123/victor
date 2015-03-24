@@ -756,11 +756,12 @@ namespace Anki {
           Vision::ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
-            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, carryObject->
-                                                               GetRotationAmbiguities(),
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
+                                                               carryObject->GetRotationAmbiguities(),
                                                                carryObject->GetSameDistanceTolerance(),
                                                                carryObject->GetSameAngleTolerance(), true))
             {
+              PRINT_INFO("Seeing object %d in original pose.\n", object.first.GetValue());
               objectInOriginalPose = object.second;
               break;
             }
@@ -773,6 +774,7 @@ namespace Anki {
             // object I matched to it above, and then delete that object.
             // (This prevents a new object with different ID being created.)
             if(carryObject->GetID() != objectInOriginalPose->GetID()) {
+              PRINT_INFO("Moving carried object to object seen in original pose and clearing that object.\n");
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.ClearObject(objectInOriginalPose->GetID());
             }

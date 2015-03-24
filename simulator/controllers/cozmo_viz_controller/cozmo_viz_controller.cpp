@@ -21,6 +21,7 @@
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/image.h"
 
 webots::Supervisor vizSupervisor;
 
@@ -56,13 +57,6 @@ namespace Anki {
       // Image reference for display in camDisp
       webots::ImageRef* camImg = nullptr;
       
-      // Image message processing
-      u8 imgID = 0;
-      u8 imgData[3*640*480];
-      u32 imgBytes = 0;
-      u32 imgWidth, imgHeight = 0;
-      u8 expectedChunkId = 0;
-      
       // Cozmo bots for visualization
       typedef struct  {
         webots::Supervisor* supNode = NULL;
@@ -77,6 +71,9 @@ namespace Anki {
       
       // Map of robotID to vizBot index
       std::map<u8, u8> robotIDToVizBotIdxMap_;
+
+      // Image message processing
+      Vision::ImageDeChunker _imageDeChunker;
     }
     
     void Init()
@@ -307,93 +304,29 @@ namespace Anki {
     
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
-      // If this is a new image, then reset everything
-      if (msg.imgId != imgID) {
-        //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
-        imgID = msg.imgId;
-        imgBytes = 0;
-        imgWidth = Vision::CameraResInfo[msg.resolution].width;
-        imgHeight = Vision::CameraResInfo[msg.resolution].height;
-        expectedChunkId = 0;
-      }
+      // TODO: Support timestamps
+      const u16 width = Vision::CameraResInfo[msg.resolution].width;
+      const u16 height = Vision::CameraResInfo[msg.resolution].height;
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imgId, 0, height, width,
+                                                            (Vision::ImageEncoding_t)msg.encoding,
+                                                            msg.chunkCount, msg.chunkId, msg.data,
+                                                            msg.chunkSize);
       
-      if(msg.chunkId != expectedChunkId) {
-        printf("Expected image chunk %d, got %d\n", expectedChunkId, msg.chunkId);
-      }
-      // Copy chunk into the appropriate location in the imgData array.
-      ImageEncoding_t encoding = (ImageEncoding_t)msg.encoding;
-      if(encoding == IE_RAW_GRAY) {
-        u8* chunkStart = imgData + 3 * msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
-        for(int i=0; i<msg.chunkSize; ++i) {
-          chunkStart[3*i] = msg.data[i];
-          chunkStart[3*i+1] = msg.data[i];
-          chunkStart[3*i+2] = msg.data[i];
-        }
-      } else {
-        //u8* chunkStart = imgData + msg.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE;
-        //memcpy(chunkStart, msg.data, msg.chunkSize*sizeof(u8));
-        memcpy(imgData + imgBytes, msg.data, msg.chunkSize);
-      }
-      expectedChunkId = msg.chunkId + 1;
-      
-      imgBytes += msg.chunkSize;
-      
-      const bool isLastChunk =  msg.chunkId == msg.chunkCount-1;
-      
-      /*
-      printf("Receiving image chunk %d of size %d. Total bytes now %d%s - first/lastByte=%d/%d.\n",
-             msg.chunkId, msg.chunkSize, imgBytes,
-             (isLastChunk ? " (last chunk!)" : ""),
-             msg.data[0], msg.data[msg.chunkSize-1]);
-      */
-      
-      // Do we have all the data for this image?
-      if(isLastChunk)
+      if(isImageReady)
       {
-        cv::Mat cvImg;
-        u8* imgToDisp = nullptr;
+        cv::Mat cvImg = _imageDeChunker.GetImage();
         
-        switch(encoding)
-        {
-          case IE_JPEG_COLOR:
-          {
-            cv::vector<u8> inputVec(imgData, imgData+imgBytes);
-            cvImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_COLOR);
-            imgToDisp = cvImg.data;
-            break;
-          }
-          case IE_JPEG_GRAY:
-          {
-            cv::vector<u8> inputVec(imgData, imgData+imgBytes);
-            cvImg = cv::imdecode(inputVec, CV_LOAD_IMAGE_GRAYSCALE);
-            cvtColor(cvImg, cvImg, CV_GRAY2RGB);
-            imgToDisp = cvImg.data;
-            
-            break;
-          }
-          case IE_RAW_GRAY:
-          case IE_RAW_RGB:
-          case IE_NONE:
-            // Already decompressed.
-            // Raw image bytes is the same as total received bytes.
-            imgToDisp = imgData;
-            break;
-            
-          default:
-            printf("***ERRROR - ProcessVizImageChunkMessage: Encoding %d not yet supported for decoding image chunks.\n", encoding);
-            return;
-        } // switch(encoding)
-        
-        assert(imgToDisp != nullptr);
-        
-        // Delete existing image if there is one.
+        if(cvImg.channels() == 1) {
+          cvtColor(cvImg, cvImg, CV_GRAY2RGB);
+        }
+              // Delete existing image if there is one.
         if (camImg != nullptr) {
           camDisp->imageDelete(camImg);
         }
         
         //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
         
-        camImg = camDisp->imageNew(imgWidth, imgHeight, imgToDisp, webots::Display::RGB);
+        camImg = camDisp->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
         camDisp->imagePaste(camImg, 0, 0);
       }
     };

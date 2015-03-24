@@ -15,17 +15,6 @@ namespace Anki {
     } ImageSendMode_t;
 
     typedef enum {
-      IE_NONE,
-      IE_RAW_GRAY, // no compression
-      IE_RAW_RGB,  // no compression, just [RGBRGBRG...]
-      IE_YUYV,
-      IE_BAYER,
-      IE_JPEG_GRAY,
-      IE_JPEG_COLOR,
-      IE_WEBP
-    } ImageEncoding_t;
-
-    typedef enum {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH,      // Placing block atop another block at level 0

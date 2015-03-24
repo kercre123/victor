@@ -612,7 +612,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
+        //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -1854,7 +1854,7 @@ namespace Anki {
       m.xPosition = pose.GetTranslation().x();
       m.yPosition = pose.GetTranslation().y();
       
-      m.headingAngle = pose.GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
+      m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -2046,7 +2046,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix2d R(atPose.GetRotationMatrix().GetAngleAroundZaxis());
+      const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
       
       Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
