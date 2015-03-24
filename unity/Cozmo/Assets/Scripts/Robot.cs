@@ -111,24 +111,23 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
+		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
 		//Debug.Log( "found " + message.objectID );
 
-		if( observedObject == null )
+		if( knownObject == null )
 		{
-			observedObject = new ObservedObject();
+			knownObject = new ObservedObject();
 
-			observedObjects.Add( observedObject );
+			knownObjects.Add( knownObject );
 		}
 
-		observedObject.UpdateInfo( message );
+		knownObject.UpdateInfo( message );
 
-		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
+		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
 
-		if(knownObject == null)
-		{
-			knownObjects.Add( observedObject );
+		if(observedObject == null) {
+			observedObjects.Add(knownObject);
 		}
 	}
 
@@ -183,7 +182,7 @@ public class Robot
 	
 	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
 	{
-		Debug.Log( "Pick And Place Object " + selectedObjects[index] + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
+		Debug.Log( "Pick And Place Object index(" + index + ") usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
 		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
