@@ -23,6 +23,10 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
+// Ignore rotation completely when calling IsSameAs()? If so, just match position
+// (translation) and block type.
+#define IGNORE_ROTATION_FOR_IS_SAME_AS 1
+
 namespace Anki {
   namespace Vision {
     
@@ -122,6 +126,12 @@ namespace Anki {
           CORETECH_ASSERT(otherPose.GetParent() == _pose.GetParent() ||
                           (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
           
+#         if IGNORE_ROTATION_FOR_IS_SAME_AS
+          Point3f Tdiff(_pose.GetTranslation());
+          Tdiff -= otherPose.GetTranslation();
+          Tdiff.Abs();
+          isSame = Tdiff < distThreshold;
+#         else
           if(this->GetRotationAmbiguities().empty()) {
             isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold);
           }
@@ -130,6 +140,8 @@ namespace Anki {
                                                         this->GetRotationAmbiguities(),
                                                         distThreshold, angleThreshold, true);
           } // if/else there are ambiguities
+#         endif // IGNORE_ROTATION_FOR_IS_SAME_AS
+          
         } // if(isSame) [inner]
       } // if(isSame) [outer]
       
