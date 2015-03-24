@@ -179,9 +179,6 @@ public class CozmoVision4 : CozmoVision
 			}
 		}
 
-		robot.lastSelectedObjects.Clear();
-		robot.lastSelectedObjects.AddRange( robot.selectedObjects );
-
 		interactLastFrame = true;
 	}
 
@@ -327,6 +324,21 @@ public class CozmoVision4 : CozmoVision
 			case ActionButtonMode.CHANGE:
 				RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
+		}
+	}
+
+	protected override void Dings()
+	{
+		if( robot != null )
+		{
+			if( robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/ )
+			{
+				Ding( true );
+			}
+			/*else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
+			{
+				Ding( false );
+			}*/
 		}
 	}
 }

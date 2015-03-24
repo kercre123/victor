@@ -95,30 +95,19 @@ public class CozmoVision3 : CozmoVision
 
 	protected override void Dings()
 	{
-		if( RobotEngineManager.instance != null )
+		if( robot != null )
 		{
-			robot = RobotEngineManager.instance.current;
-			
-			if( robot == null || robot.isBusy )
-			{
-				robot.lastSelectedObjects.Clear();
-				return;
-			}
-			
-			if( robot.selectedObjects.Count > robot.lastSelectedObjects.Count )
+			if( robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/ )
 			{
 				Ding( true );
 			}
-			else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
+			/*else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
 			{
 				Ding( false );
-			}
-			
-			robot.lastSelectedObjects.Clear();
-			robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+			}*/
 		}
 	}
-	
+
 	protected override void SetActionButtons()
 	{
 		DisableButtons();
