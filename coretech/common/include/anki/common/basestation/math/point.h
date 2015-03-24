@@ -162,10 +162,14 @@ namespace Anki {
   
   const Vec2f X_AXIS_2D(1.f, 0.f);
   const Vec2f Y_AXIS_2D(0.f, 1.f);
-  
+  /*
   const Vec3f X_AXIS_3D(1.f, 0.f, 0.f);
   const Vec3f Y_AXIS_3D(0.f, 1.f, 0.f);
   const Vec3f Z_AXIS_3D(0.f, 0.f, 1.f);
+  */
+  #define X_AXIS_3D Vec3f(1.f, 0.f, 0.f)
+  #define Y_AXIS_3D Vec3f(0.f, 1.f, 0.f)
+  #define Z_AXIS_3D Vec3f(0.f, 0.f, 1.f)
   
   /*
   template<PointDimType N, typename T>
