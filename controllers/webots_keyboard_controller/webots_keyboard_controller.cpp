@@ -6,11 +6,14 @@
  * Modifications: 
  */
 
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
+
+#include "anki/vision/basestation/image.h"
 
 #include "anki/cozmo/game/comms/messaging/uiMessages.h"
 #include "anki/messaging/shared/TcpClient.h"
@@ -154,10 +157,13 @@ namespace Anki {
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
+        /*
         u32 imgID_ = 0;
         u8 imgData_[3*640*480];
         u32 imgBytes_ = 0;
         u32 imgWidth_, imgHeight_ = 0;
+        */
+        Vision::ImageDeChunker _imageDeChunker;
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
@@ -279,66 +285,60 @@ namespace Anki {
         SendMessage(message);
       }
       
+      
+      
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
       void HandleImageChunk(G2U_ImageChunk const& msg)
       {
-        // If this is a new image, then reset everything
-        if (msg.imageId != imgID_) {
-          //printf("Resetting image (img %d, res %d)\n", msg.imgId, msg.resolution);
-          imgID_     = msg.imageId;
-          imgBytes_  = 0;
-          imgWidth_  = msg.ncols;
-          imgHeight_ = msg.nrows;
-        }
+        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
         
-        // Copy chunk into the appropriate location in the imgData array.
-        // Use green channel for no good reason
-        //printf("Processing chunk %d of size %d\n", msg.chunkId, msg.chunkSize);
-        const int G2U_IMAGE_CHUNK_SIZE = 1024;
-        u8* chunkStart = imgData_ + 3 * msg.chunkId * G2U_IMAGE_CHUNK_SIZE;
-        for(int i=0; i<msg.chunkSize; ++i) {
-          //chunkStart[3*i] = msg.data[i];
-          chunkStart[3*i+1] = msg.data[i];
-          chunkStart[3*i+2] = msg.data[i]/3;
+        
+        if(isImageReady)
+        {
+          cv::Mat img = _imageDeChunker.GetImage();
+          if(img.channels() == 1) {
+            cvtColor(img, img, CV_GRAY2RGB);
+          }
           
-          // [Optional] Add a bit of noise
-          f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
-          chunkStart[3*i+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(chunkStart[3*i+1]) + noise)));
-        }
-        
-        // Do we have all the data for this image?
-        imgBytes_ += msg.chunkSize;
-        if (imgBytes_ < imgWidth_ * imgHeight_) {
-          return;
-        }
-        
-        // [Optional] Remove every other line for interlacing effect
-        for(int i=0; i<msg.nrows; i+=2) {
-          memset(imgData_ + i*3*msg.ncols, 0, 3*msg.ncols*sizeof(u8));
-        }
-        
-        // TODO: Handle compressed image data?
-        
-        // Delete existing image if there is one.
-        if (img_ != nullptr) {
-          cozmoCam_->imageDelete(img_);
-        }
-        
-        //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
-        
-        img_ = cozmoCam_->imageNew(imgWidth_, imgHeight_, imgData_, webots::Display::RGB);
-        cozmoCam_->imagePaste(img_, 0, 0);
-        
-        // Save image to file
-        if (saveRobotImageToFile_) {
-          static u32 imgCnt = 0;
-          char imgFileName[16];
-          printf("SAVING IMAGE\n");
-          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
-          cozmoCam_->imageSave(img_, imgFileName);
-          saveRobotImageToFile_ = false;
-        }
+          for(s32 i=0; i<img.rows; ++i) {
+            
+            if(i % 2 == 0) {
+              cv::Mat img_i = img.row(i);
+              img_i.setTo(0);
+            } else {
+              u8* img_i = img.ptr(i);
+              for(s32 j=0; j<img.cols; ++j) {
+                img_i[3*j] = 0;
+                img_i[3*j+2] /= 3;
+                
+                // [Optional] Add a bit of noise
+                f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
+                img_i[3*j+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+1]) + noise)));
+                
+              }
+            }
+          }
+          
+          // Delete existing image if there is one.
+          if (img_ != nullptr) {
+            cozmoCam_->imageDelete(img_);
+          }
+          
+          img_ = cozmoCam_->imageNew(img.cols, img.rows, img.data, webots::Display::RGB);
+          cozmoCam_->imagePaste(img_, 0, 0);
+          
+          // Save image to file
+          if (saveRobotImageToFile_) {
+            static u32 imgCnt = 0;
+            char imgFileName[16];
+            printf("SAVING IMAGE\n");
+            sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
+            cozmoCam_->imageSave(img_, imgFileName);
+            saveRobotImageToFile_ = false;
+          }
+          
+        } // if(isImageReady)
 
       } // HandleImageChunk()
       
