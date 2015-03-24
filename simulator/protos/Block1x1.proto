@@ -12,17 +12,18 @@ PROTO Block1x1 [
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFInt32 activeID 1   # Must be unique in the world among all active blocks
   field SFFloat width 0.044    # Length of one edge in meters
+  
+  field SFString markerImg_front ""
+  field SFString markerImg_back  ""
+  field SFString markerImg_left  ""
+  field SFString markerImg_right ""
+  field SFString markerImg_top   ""
+  field SFString markerImg_bottom ""
 ]
 {
 Supervisor {
 
   %{
-    # Set markerURL
-    markerURL = ""
-    if fields.markerImg ~= "" then
-      markerURL = "textures/" .. fields.markerImg
-    end 
-
     # Set some dimensions
     hWidth = fields.width/2
     ledWidth = 0.004
@@ -44,7 +45,11 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 -1.5708
 			translation %{=-hWidth}% 0 0
-			image IS markerImg
+			%{ if fields.markerImg_front ~= "" then }%
+			  image IS markerImg_front
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorFront"
 			connectorRotation 0 1 0 -1.57079
 		}
@@ -53,7 +58,11 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 1.5708
 			translation %{=hWidth}% 0 0
-			image IS markerImg
+			%{ if fields.markerImg_back ~= "" then }%
+			  image IS markerImg_back
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorBack"
 			connectorRotation 0 1 0 1.57079
 		}
@@ -62,7 +71,11 @@ Supervisor {
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation 0 0 %{=-hWidth}%
-			image IS markerImg
+			%{ if fields.markerImg_bottom ~= "" then }%
+			  image IS markerImg_bottom
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorBottom"
 			connectorRotation 0 1 0 3.14159
 		}
@@ -71,7 +84,11 @@ Supervisor {
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation 0 0 %{=hWidth}%
-			image IS markerImg
+			%{ if fields.markerImg_top ~= "" then }%
+			  image IS markerImg_top
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorTop"
 			connectorRotation 0 1 0 0
 		}
@@ -80,7 +97,11 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 3.1415
 			translation 0 %{=hWidth}% 0
-			image IS markerImg
+			%{ if fields.markerImg_left ~= "" then }%
+			  image IS markerImg_left
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorLeft"
 			connectorRotation 1 0 0 -1.57079
 		}
@@ -89,7 +110,11 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 0
 			translation 0 %{=-hWidth}% 0
-			image IS markerImg
+			%{ if fields.markerImg_right ~= "" then }%
+			  image IS markerImg_right
+			%{ else }%
+			  image IS markerImg
+			%{ end }%
 			connectorName "connectorRight"
 			connectorRotation 1 0 0 1.57079
 		}
