@@ -250,6 +250,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U_Message.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
+		case G2U_Message.Tag.RobotDeletedObject:
+			ReceivedSpecificMessage(message.RobotDeletedObject);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported" );
 			break;
@@ -307,6 +310,25 @@ public class RobotEngineManager : MonoBehaviour {
 
 			current.observedObjects.Clear();
 			current.lastObjectHeadTracked = null;
+		}
+	}
+
+	private void ReceivedSpecificMessage( G2U_RobotDeletedObject message )
+	{
+		Debug.Log( "Deleted object with ID " +message.objectID );
+
+		ObservedObject deleted = current.knownObjects.Find( x=> x.ID == message.objectID );
+
+		if( deleted != null )
+		{
+			current.knownObjects.Remove( deleted );
+		}
+
+		deleted = current.selectedObjects.Find( x=> x.ID == message.objectID );
+
+		if( deleted != null )
+		{
+			current.selectedObjects.Remove( deleted );
 		}
 	}
 

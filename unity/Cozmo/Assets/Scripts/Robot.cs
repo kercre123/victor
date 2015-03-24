@@ -247,28 +247,28 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ VisionWhileMoving = message } );
 	}
 	
-	public void RequestImage()
+	public void RequestImage( RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode )
 	{
 		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
-		message.resolution = (byte)RobotEngineManager.CameraResolution.CAMERA_RES_QVGA;
-		message.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		message.resolution = (byte)resolution;
+		message.mode = (byte)mode;
 		
 		RobotEngineManager.instance.channel.Send (new U2G_Message{SetRobotImageSendMode = message});
 		
-		U2G_ImageRequest message2 = new U2G_ImageRequest ();
+		U2G_ImageRequest message2 = new U2G_ImageRequest();
 		message2.robotID = ID;
-		message2.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		message2.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{ImageRequest = message2});
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ ImageRequest = message2 } );
 		
-		Debug.Log( "image request message sent" );
+		Debug.Log( "image request message sent with " + mode + " at " + resolution );
 	}
 	
 	public void StopAllMotors()
 	{
 		U2G_StopAllMotors message = new U2G_StopAllMotors ();
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{StopAllMotors=message});
+		RobotEngineManager.instance.channel.Send(new U2G_Message{ StopAllMotors = message } );
 	}
 	
 	public void TurnInPlace(float angle_rad)
@@ -278,7 +278,7 @@ public class Robot
 		message.angle_rad = angle_rad;
 		
 		Debug.Log("TurnInPlace(robotID:"+ID+", angle_rad:"+angle_rad+")");
-		RobotEngineManager.instance.channel.Send (new U2G_Message{TurnInPlace=message});
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ TurnInPlace = message } );
 	}
 
 	public void TraverseObject( int objectID, bool usePreDockPose = false, bool useManualSpeed = false )
