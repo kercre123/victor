@@ -135,7 +135,6 @@ public class CozmoVision : MonoBehaviour
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
-	protected List<int> lastObservedObjects = new List<int>();
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
@@ -162,7 +161,6 @@ public class CozmoVision : MonoBehaviour
 			dingTimes[i] = 0f;
 		}
 
-		lastObservedObjects.Clear();
 		robot = null;
 		imageRequested = false;
 	}
@@ -281,23 +279,21 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void Dings()
 	{
-		if( RobotEngineManager.instance != null )
+		if( robot != null )
 		{
-			robot = RobotEngineManager.instance.current;
-
-			if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 )
+			if( robot.isBusy || robot.selectedObjects.Count > 0 )
 			{
 				return;
 			}
 
-			if( robot.observedObjects.Count > lastObservedObjects.Count )
+			if( robot.observedObjects.Count > 0/*lastObservedObjects.Count*/ )
 			{
 				Ding( true );
 			}
-			else if( robot.observedObjects.Count < lastObservedObjects.Count )
+			/*else if( robot.observedObjects.Count < lastObservedObjects.Count )
 			{
 				Ding( false );
-			}
+			}*/
 		}
 	}
 
@@ -305,33 +301,35 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( found )
 		{
-			if( dingTimes[0] + soundDelay < Time.time )
+			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
 			{
 				audio.PlayOneShot( newObjectObservedSound );
 				
 				dingTimes[0] = Time.time;
 			}
 		}
-		else
+		/*else
 		{
-			if( dingTimes[1] + soundDelay < Time.time )
+			if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
 			{
 				audio.PlayOneShot( objectObservedLostSound );
 				
 				dingTimes[1] = Time.time;
 			}
-		}
+		}*/
 	}
 
 	protected virtual void LateUpdate()
 	{
-		if( RobotEngineManager.instance != null )
+		if( robot != null )
 		{
-			lastObservedObjects.Clear();
+			robot.lastObservedObjects.Clear();
+			robot.lastSelectedObjects.Clear();
 
-			for( int i = 0; i < RobotEngineManager.instance.current.observedObjects.Count; ++i )
+			if( !robot.isBusy )
 			{
-				lastObservedObjects.Add( RobotEngineManager.instance.current.observedObjects[i].ID );
+				robot.lastObservedObjects.AddRange( robot.observedObjects );
+				robot.lastSelectedObjects.AddRange( robot.selectedObjects );
 			}
 		}
 	}

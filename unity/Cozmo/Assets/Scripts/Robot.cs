@@ -32,6 +32,7 @@ public class Robot
 	public List<ObservedObject> knownObjects { get; private set; }
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
+	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
@@ -71,6 +72,7 @@ public class Robot
 		lastSelectedObjects = new List<ObservedObject>();
 		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
+		lastObservedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
@@ -87,6 +89,7 @@ public class Robot
 		lastSelectedObjects.Clear();
 		lastObjectHeadTracked = null;
 		observedObjects.Clear();
+		lastObservedObjects.Clear();
 		knownObjects.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
