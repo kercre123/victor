@@ -38,6 +38,9 @@ namespace Anki
       def_.line.endPt_x = x_end;
       def_.line.endPt_y = y_end;
       
+      // Compute end angle
+      def_.line.endAngle = ATAN2_ACC(y_end - y_start, x_end - x_start);
+      
       SetSpeedProfile(targetSpeed, accel, decel);
     }
     
@@ -50,6 +53,16 @@ namespace Anki
       def_.arc.radius = radius;
       def_.arc.startRad = startRad;
       def_.arc.sweepRad = sweepRad;
+
+      // Compute end angle
+      f32 radiusAngle = startRad + sweepRad;
+      if (sweepRad > 0) {
+        // Turning CCW so add 90 degree
+        radiusAngle += PIDIV2_F;
+      } else {
+        radiusAngle -= PIDIV2_F;
+      }
+      def_.arc.endAngle = Radians(radiusAngle).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
@@ -133,23 +146,26 @@ namespace Anki
       }
     }
     
-    void PathSegment::GetEndPoint(f32 &x, f32 &y) const
+    void PathSegment::GetEndPose(f32 &x, f32 &y, f32 &angle) const
     {
       switch(type_){
         case PST_LINE:
           x = def_.line.endPt_x;
           y = def_.line.endPt_y;
+          angle = def_.line.endAngle;
           break;
         case PST_ARC:
           x = def_.arc.centerPt_x + def_.arc.radius * cosf(def_.arc.startRad + def_.arc.sweepRad);
           y = def_.arc.centerPt_y + def_.arc.radius * sinf(def_.arc.startRad + def_.arc.sweepRad);
+          angle = def_.arc.endAngle;
           break;
         case PST_POINT_TURN:
           x = def_.turn.x;
           y = def_.turn.y;
+          angle = def_.turn.targetAngle;
           break;
         default:
-          CoreTechPrint("ERROR (GetEndPoint): Undefined segment %d\n", type_);
+          CoreTechPrint("ERROR (GetEndPose): Undefined segment %d\n", type_);
           assert(false);
       }
     }
@@ -959,9 +975,9 @@ namespace Anki
         return true;
     
       // Compute distance between start point of specified segment to end point of previous segment
-      f32 start_x, start_y, end_x, end_y;
+      f32 start_x, start_y, end_x, end_y, end_angle;
       path_[pathSegmentIdx].GetStartPoint(start_x, start_y);
-      path_[pathSegmentIdx-1].GetEndPoint(end_x, end_y);
+      path_[pathSegmentIdx-1].GetEndPose(end_x, end_y, end_angle);
       if ((start_x - end_x)*(start_x - end_x) + (start_y - end_y)*(start_y - end_y) < tolerance_distance_squared) {
         return true;
       }

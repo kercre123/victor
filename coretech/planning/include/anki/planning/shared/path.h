@@ -54,6 +54,7 @@ namespace Anki
         f32 startPt_y;
         f32 endPt_x;
         f32 endPt_y;
+        f32 endAngle;
       } line;
       
       // Arc
@@ -63,6 +64,7 @@ namespace Anki
         f32 radius;
         f32 startRad;
         f32 sweepRad;  // +ve means CCW
+        f32 endAngle;
       } arc;
       
       // Point turn
@@ -109,7 +111,7 @@ namespace Anki
       f32 GetLength() const;
       
       void GetStartPoint(f32 &x, f32 &y) const;
-      void GetEndPoint(f32 &x, f32 &y) const;
+      void GetEndPose(f32 &x, f32 &y, f32 &angle) const;
       
       void Print() const;
 
