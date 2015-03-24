@@ -262,7 +262,7 @@ public class Robot
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ ImageRequest = message2 } );
 		
-		Debug.Log( "image request message sent with mode " + mode + " at " + resolution );
+		Debug.Log( "image request message sent with " + mode + " at " + resolution );
 	}
 	
 	public void StopAllMotors()
