@@ -77,7 +77,7 @@ namespace Anki
       
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
       
@@ -91,13 +91,14 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
+      /*
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
-
+       */
       //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
@@ -108,9 +109,10 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
       
       //////////////////////////////////////////////////////////////////////////
-      // 1x1 Cubes
+      // 1x1 Active Cubes
       //
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
+      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER));
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
