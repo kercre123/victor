@@ -111,6 +111,12 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
+
+		if(message.objectFamily == 0) {
+			Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!" );
+			return;
+		}
+
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
 		//Debug.Log( "found " + message.objectID );

@@ -19,7 +19,6 @@ public class ActionSlider
 	public Text text_action2;
 
 	public int selectedIndex = 0;
-	public List<ActionButtonMode> modes;
 
 	CozmoVision vision;
 	bool pressed = false;
@@ -30,20 +29,20 @@ public class ActionSlider
 		this.vision = vision;
 	}
 
-	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes, int index=0) {
-		selectedIndex = index;
-		this.modes = modes;
-		SetMode(mode, down);
+	public void SetMode(ActionButtonMode mode, bool down) {
+		SetMode(mode, down, null, selectedIndex);
 	}
 
-	public void SetMode(ActionButtonMode mode, bool down) {
+	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes, int index=0) {
+
+
 		//if(Mode == mode && down == pressed) return;
 
-		Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
+		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
 		
 		Mode = mode;
 		pressed = down;
-
+		selectedIndex = index;
 
 		if(mode == ActionButtonMode.DISABLED) {
 			slider.gameObject.SetActive(false);
@@ -235,7 +234,7 @@ public class CozmoVision4 : CozmoVision
 
 			float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
 			if(dist > best.Size.x * 0.5f) {
-				Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
+				//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
 				continue;
 			}
 
@@ -247,7 +246,7 @@ public class CozmoVision4 : CozmoVision
 			return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
 		} );
 
-		Debug.Log("AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
+		//Debug.Log("AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}
 
 	bool interactPressed = false;
@@ -278,7 +277,7 @@ public class CozmoVision4 : CozmoVision
 			modes.Add(ActionButtonMode.PICK_UP);
 			modes.Add(ActionButtonMode.PICK_UP);
 			index2 = 1;
-			Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
+			//Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
 		}
 		else if(robot.selectedObjects.Count == 1) {
 			modes.Add(ActionButtonMode.ROLL);
@@ -294,7 +293,7 @@ public class CozmoVision4 : CozmoVision
 		else if(actionSlider.slider.value > 0.2f && modes.Count > 2) {
 			currentMode = modes[2];
 			index = index2;
-			Debug.Log("RefreshSliderMode index = index2("+index2+")");
+			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 	
 		actionSlider.SetMode(currentMode, interactPressed, modes, index);
