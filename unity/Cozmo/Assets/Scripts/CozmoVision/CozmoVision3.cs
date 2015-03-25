@@ -97,7 +97,7 @@ public class CozmoVision3 : CozmoVision
 	{
 		if( robot != null )
 		{
-			if( robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/ )
+			if( !robot.isBusy && robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/ )
 			{
 				Ding( true );
 			}
