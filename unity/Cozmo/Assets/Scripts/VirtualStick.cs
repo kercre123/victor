@@ -8,6 +8,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 #region INSPECTOR FIELDS
 	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
+	[SerializeField] bool staticOnSmallScreens = true;
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
 	[SerializeField] RectTransform deadZoneRect = null;
@@ -334,7 +335,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		lastScreenHeight = Screen.height;
 		orientation = Screen.orientation;
 
-		if(Application.isPlaying && screenHeightInches < 3f) {
+		if(staticOnSmallScreens && Application.isPlaying && screenHeightInches < 3f) {
 			dynamic = false;
 
 			Vector2 anchor = new Vector2(0.5f,0.5f);
