@@ -205,7 +205,12 @@ namespace Anki {
             headCamInfo->center_y,
             headCamInfo->skew,
             headCamInfo->nrows,
-            headCamInfo->ncols
+            headCamInfo->ncols,
+#ifdef SIMULATOR
+            0
+#else
+            1
+#endif
           };
 
 
