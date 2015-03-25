@@ -53,6 +53,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float lastHorStickX = 0;
 	float lastHeadStickY = 0;
 	float lastDebugAxesX = 0f;
+	Quaternion lastAttitude = Quaternion.identity;
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -62,6 +63,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		//Debug.Log("RobotRelativeControls OnEnable");
 
 		lastInputs = Vector2.zero;
+
 		moveCommandLastFrame = false;
 		debugOverride = false;
 		swipeTurning = false;
@@ -79,6 +81,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastHeadStickY = 0f;
 		lastDebugAxesX = 0f;
 
+		lastAttitude = Quaternion.identity;
 		gyroSleepTimer = gyroSleepTime;
 	}
 
@@ -147,7 +150,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			robot.TrackHeadToObject( targetLock );
 		}
 
-		if(gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive(gyroSleepTime <= 0f);
+		if(gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive(gyroSleepTimer <= 0f);
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -364,11 +367,28 @@ public class RobotRelativeControls : MonoBehaviour {
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
 		
-		if(gyroSleepTime > 0f) gyroSleepTimer -= Time.deltaTime;
+		if(gyroSleepTimer > 0f) gyroSleepTimer -= Time.deltaTime;
 
 		bool wakeGyro = Input.touchCount > 0;
-		wakeGyro |= robot.status != Robot.StatusFlag.NONE;
-		wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
+		//if(wakeGyro) {
+		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
+		//}
+
+		if(!wakeGyro) {
+			wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
+			//if(wakeGyro) Debug.Log("wakeGyro: robot.status(" + robot.status.ToString() + ")");
+		}
+		//wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
+
+		Quaternion attitude = Input.gyro.attitude;
+
+		if(!wakeGyro) {
+			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
+			wakeGyro = attitudeDelta > 0.5f;
+			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
+		}
+
+		lastAttitude = attitude;
 
 		if(wakeGyro) {
 			gyroSleepTimer = gyroSleepTime;
@@ -379,6 +399,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		float h = gyroInputs.Horizontal;
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
+		//if(gyroInputs.Horizontal != 0f) Debug.Log("gyroInputs.Horizontal("+gyroInputs.Horizontal+")");
 	}
 
 	Vector2 CheckGyroTargetSwap() {

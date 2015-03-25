@@ -39,15 +39,16 @@ public class PlayerRelativeControls : MonoBehaviour {
 		compassStartHeading = MathUtil.ClampAngle(-Input.compass.trueHeading);
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
 	}
-	
+
+	Robot robot;
 	void Update() {
-		
-		//bool robotFacingStale = true;
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+
+		robot = RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null;
+		if(robot == null) return;
+
+		robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
 			//robotFacingStale = false;
 			//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
-		}
 
 		//take our v-pad control axes and calc translate to robot
 		inputs = Vector2.zero;
@@ -61,7 +62,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 			return; // command not changed
 		}
 		if(inputs.sqrMagnitude == 0f) {
-			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
+			robot.DriveWheels(0f, 0f);
 			return; // command zero'd, let's full stop
 		}
 
@@ -77,10 +78,8 @@ public class PlayerRelativeControls : MonoBehaviour {
 
 		CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.current.DriveWheels(leftWheelSpeed, rightWheelSpeed);
-		}
-		
+		robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
+
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
 		
 		RefreshDebugText();
@@ -90,7 +89,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
 		
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) {
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected && RobotEngineManager.instance.current != null) {
 			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
 		}
 	}

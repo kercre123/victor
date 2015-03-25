@@ -112,7 +112,10 @@ public class ActionSlider
 public class CozmoVision4 : CozmoVision
 {
 	[SerializeField] ActionSlider actionSlider = null;
-	
+	[SerializeField] bool snapWidthToSideBar = true;
+	[SerializeField] float sideBarSnapScaler = 1f;
+	[SerializeField] RectTransform sliderAnchor;
+
 	float targetLockTimer = 0f;
 	bool interactLastFrame = false;
 
@@ -192,29 +195,49 @@ public class CozmoVision4 : CozmoVision
 
 	
 	void ResizeToScreen() {
-		if(Screen.dpi == 0f) return;
+		float dpi = Screen.dpi;
+
+		if(dpi == 0f) return;
 		
-		float screenW = Screen.width;
-		float screenH = Screen.height;
+		float refW = Screen.width;
+		float refH = Screen.height;
 		
-		float screenScaleFactor = 1f;
+		//float screenScaleFactor = 1f;
 		
 		if(canvasScaler != null) {
-			screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
-			screenW = canvasScaler.referenceResolution.x;
-			screenH = canvasScaler.referenceResolution.y;
+			//screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
+			refW = canvasScaler.referenceResolution.x;
+			refH = canvasScaler.referenceResolution.y;
 		}
-		
-		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
+
+		float refAspect = refW / refH;
+		float actualAspect = (float)Screen.width / (float)Screen.height;
+
+		float totalRefWidth = (refW / refAspect) * actualAspect;
+		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
+
+		RectTransform sliderTransform = actionSlider.slider.gameObject.GetComponent<RectTransform>();
+
+		if( sideBarWidth > 50f && snapWidthToSideBar) {
+			Vector2 size = sliderAnchor.sizeDelta;
+			size.x = sideBarWidth * sideBarSnapScaler;
+			sliderAnchor.sizeDelta = size;
+
+			Vector3 anchor = sliderTransform.anchoredPosition;
+			anchor.x = 0f;
+			sliderTransform.anchoredPosition = anchor;
+		}
+
+		float screenHeightInches = (float)Screen.height / (float)dpi;
 		if(screenHeightInches < 3f) {
-			RectTransform sliderTransform = actionSlider.slider.gameObject.GetComponent<RectTransform>();
+
 			Vector2 size = sliderTransform.sizeDelta;
-			float newScale = (screenH * 0.5f) / size.y;
+			float newScale = (refH * 0.5f) / size.y;
 
 			sliderTransform.localScale = Vector3.one * newScale;
 			Vector3 anchor = sliderTransform.anchoredPosition;
 			anchor.y = 0f;
-			anchor.x = 10f;
+			anchor.x = 0f; //-sideBarWidth * 0.5f;
 			sliderTransform.anchoredPosition = anchor;
 		}
 

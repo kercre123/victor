@@ -116,7 +116,7 @@ public class Robot
 	{
 
 		if(message.objectFamily == 0) {
-			Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!" );
+			//Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!" );
 			return;
 		}
 
