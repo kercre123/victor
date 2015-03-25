@@ -8,6 +8,9 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 #region INSPECTOR FIELDS
 	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
+	[SerializeField] bool staticOnSmallScreens = true;
+	[SerializeField] bool snapWidthToSideBar = true;
+	[SerializeField] float sideBarSnapScaler = 1f;
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
 	[SerializeField] RectTransform deadZoneRect = null;
@@ -50,7 +53,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] bool scaleToScreen = false;
 	[SerializeField] float[] swipeVerticalMagnitudes = { 1f };
 	[SerializeField] float[] swipeHorizontalMagnitudes = { 0.25f, 0.5f, 1f };
-	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
+//	[SerializeField] TextAnchor smallScreenAnchorType = TextAnchor.MiddleCenter;
 	[SerializeField] Vector2 smallScreenAnchorPos = Vector2.zero;
 	[SerializeField] float doubleTapDelayMax = 0f;
 	[SerializeField] bool forceUpOnly = false;
@@ -237,38 +240,48 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	}
 
 	void ResizeToScreen() {
-		if(Screen.dpi == 0f) return;
 
-		float screenW = Screen.width;
-		float screenH = Screen.height;
+		float dpi = Screen.dpi;
+
+		//Debug.Log("ResizeToScreen dpi("+dpi+")"); //326
+		if(dpi == 0f) return;
+
+		float refW = Screen.width;
+		float refH = Screen.height;
 
 		screenScaleFactor = 1f;
 
 		if(canvasScalar != null) {
 			screenScaleFactor = canvasScalar.referenceResolution.y / Screen.height;
-			screenW = canvasScalar.referenceResolution.x;
-			screenH = canvasScalar.referenceResolution.y;
+			refW = canvasScalar.referenceResolution.x;
+			refH = canvasScalar.referenceResolution.y;
 		}
 
-		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
+		float refAspect = refW / refH;
+		float actualAspect = (float)Screen.width / (float)Screen.height;
+		
+		float totalRefWidth = (refW / refAspect) * actualAspect;
+		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
+
+		float screenHeightInches = (float)Screen.height / (float)dpi;
 
 		if(scaleToScreen) {
 			rTrans.anchoredPosition = Vector2.zero;
-			float length = Mathf.Min(screenW, screenH);
+			float length = Mathf.Min(refW, refH);
 			rTrans.sizeDelta = new Vector2(length, length);
 		}
 
 		if(bgWidthInches > 0f && bgHeightInches > 0f) {
 			Vector3 size = bg.sizeDelta;
-			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
-			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
+			size.x = Mathf.Clamp(screenScaleFactor * dpi * bgWidthInches, 0f, rTrans.rect.width);// * 0.75f);
+			size.y = Mathf.Clamp(screenScaleFactor * dpi * bgHeightInches, 0f, rTrans.rect.height);// * 0.75f);
 			bg.sizeDelta = size;
 		}
 
 		if(stickWidthInches > 0f && stickHeightInches > 0f) {
 			Vector3 size = stick.sizeDelta;
-			size.x = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickWidthInches, 0f, screenW);
-			size.y = Mathf.Clamp(screenScaleFactor * Screen.dpi * stickHeightInches, 0f, screenH);
+			size.x = Mathf.Clamp(screenScaleFactor * dpi * stickWidthInches, 0f, refW);
+			size.y = Mathf.Clamp(screenScaleFactor * dpi * stickHeightInches, 0f, refH);
 			stick.sizeDelta = size;
 
 			if(capTop != null) capTop.sizeDelta = size;
@@ -334,47 +347,55 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		lastScreenHeight = Screen.height;
 		orientation = Screen.orientation;
 
-		if(Application.isPlaying && screenHeightInches < 3f) {
+		if(staticOnSmallScreens && Application.isPlaying && screenHeightInches < 3f) {
 			dynamic = false;
+			//Vector2 anchor = bg.pivot;
+			//Vector2 anchor = new Vector2(0.5f,0.5f);
+//			switch(smallScreenAnchorType) {
+//				case TextAnchor.UpperLeft:
+//					anchor.x = 0f;
+//					anchor.y = 1f;
+//					break;
+//				case TextAnchor.UpperCenter:
+//					anchor.y = 1f;
+//					break;
+//				case TextAnchor.UpperRight:
+//					anchor.x = 1f;
+//					anchor.y = 1f;
+//					break;
+//				case TextAnchor.MiddleLeft:
+//					anchor.x = 0f;
+//					break;
+//				case TextAnchor.MiddleCenter:
+//					break;
+//				case TextAnchor.MiddleRight:
+//					anchor.x = 1f;
+//					break;
+//				case TextAnchor.LowerLeft:
+//					anchor.x = 0f;
+//					anchor.y = 0f;
+//					break;
+//				case TextAnchor.LowerCenter:
+//					anchor.y = 0f;
+//					break;
+//				case TextAnchor.LowerRight:
+//					anchor.x = 1f;
+//					anchor.y = 0f;
+//					break;
+//			}
 
-			Vector2 anchor = new Vector2(0.5f,0.5f);
-			switch(smallScreenAnchorType) {
-				case TextAnchor.UpperLeft:
-					anchor.x = 0f;
-					anchor.y = 1f;
-					break;
-				case TextAnchor.UpperCenter:
-					anchor.y = 1f;
-					break;
-				case TextAnchor.UpperRight:
-					anchor.x = 1f;
-					anchor.y = 1f;
-					break;
-				case TextAnchor.MiddleLeft:
-					anchor.x = 0f;
-					break;
-				case TextAnchor.MiddleCenter:
-					break;
-				case TextAnchor.MiddleRight:
-					anchor.x = 1f;
-					break;
-				case TextAnchor.LowerLeft:
-					anchor.x = 0f;
-					anchor.y = 0f;
-					break;
-				case TextAnchor.LowerCenter:
-					anchor.y = 0f;
-					break;
-				case TextAnchor.LowerRight:
-					anchor.x = 1f;
-					anchor.y = 0f;
-					break;
-			}
-
-			bg.anchorMin = anchor;
-			bg.anchorMax = anchor;
-			bg.pivot = anchor;
+			//bg.anchorMin = anchor;
+			//bg.anchorMax = anchor;
+			//bg.pivot = anchor;
+			//smallScreenAnchorPos.x = Mathf.Max(sideBarWidth * 0.5f, bg.sizeDelta.x * 0.75f);
 			bg.anchoredPosition = smallScreenAnchorPos;
+			Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
+
+			if(snapWidthToSideBar) {
+				Vector2 size = rTrans.sizeDelta;
+				size.x = sideBarWidth * sideBarSnapScaler;
+				rTrans.sizeDelta = size;
+			}
 		}
 
 		//Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");

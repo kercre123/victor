@@ -15,6 +15,8 @@ public class CozmoVision2 : CozmoVision
 		GameObject obj = (GameObject)GameObject.Instantiate(selectionButtonPrefab);
 		selectionButtons = obj.GetComponentsInChildren<SelectionButton2>(true);
 
+		foreach(SelectionButton2 butt in selectionButtons) butt.gameObject.SetActive(false);
+		DisableButtons();
 	}
 
 	protected void Update()
