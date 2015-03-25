@@ -175,8 +175,8 @@ namespace Anki {
            const std::string& name = "");
     
     // Construct from an angle, axis, and translation vector
-    Pose3d(const Radians angle, const Vec3f axis,
-           const Vec3f translation,
+    Pose3d(const Radians &angle, const Vec3f &axis,
+           const Vec3f &translation,
            const Pose3d *parentPose = nullptr,
            const std::string& name = "");
     

@@ -144,8 +144,8 @@ namespace Anki {
 
   } // Constructor: Pose3d(Rmat, T)
   
-  Pose3d::Pose3d(const Radians angle, const Vec3f axis,
-                 const Vec3f T, const Pose3d *parentPose, const std::string& name)
+  Pose3d::Pose3d(const Radians &angle, const Vec3f &axis,
+                 const Vec3f &T, const Pose3d *parentPose, const std::string& name)
   : Pose3d(Rotation3d(angle, axis), T, parentPose, name)
   {
     
