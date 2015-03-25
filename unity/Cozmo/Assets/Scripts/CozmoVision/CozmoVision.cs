@@ -194,33 +194,6 @@ public class CozmoVision : MonoBehaviour
 		}
 
 		if(robot.selectedObjects.Count > 0) actionButtons[2].SetMode(ActionButtonMode.CANCEL);
-
-//		for( int i = 0; i < actionButtons.Length; ++i )
-//		{
-//			actionButtons[i].button.gameObject.SetActive( ( i == 0 && robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK && robot.selectedObject == -1 ) || robot.selectedObject > -1 );
-//			
-//			if( i == 0 )
-//			{
-//				if( robot.status == Robot.StatusFlag.IS_CARRYING_BLOCK )
-//				{
-//					if( robot.selectedObject > -1 )
-//					{
-//						actionButtons[i].image.sprite = sprite_stack;
-//						actionButtons[i].text.text = "Stack " + robot.carryingObjectID + " on " + robot.selectedObject;
-//					}
-//					else
-//					{
-//						actionButtons[i].image.sprite = sprite_drop;
-//						actionButtons[i].text.text = "Drop " + robot.carryingObjectID;
-//					}
-//				}
-//				else
-//				{
-//					actionButtons[i].image.sprite = sprite_pickUp;
-//					actionButtons[i].text.text = "Pick Up " + robot.selectedObject;
-//				}
-//			}
-//		}
 	}
 
 	private void RobotImage( Texture2D texture )

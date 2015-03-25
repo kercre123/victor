@@ -14,16 +14,8 @@ public class Robot
 
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
-	public Vector3 Forward { 
-		get {
-			return Rotation * Vector3.right;		
-		}
-	}
-	public Vector3 Right { 
-		get {
-			return Rotation * -Vector3.up;		
-		}
-	}
+	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
+	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
 
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
@@ -114,9 +106,9 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-
-		if(message.objectFamily == 0) {
-			Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!" );
+		if( message.objectFamily == 0 )
+		{
+			Debug.LogWarning( "UpdateObservedObjectInfo received message about the Mat!" );
 			return;
 		}
 
@@ -133,10 +125,9 @@ public class Robot
 
 		knownObject.UpdateInfo( message );
 
-		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
-
-		if(observedObject == null) {
-			observedObjects.Add(knownObject);
+		if( observedObjects.Find( x => x.ID == message.objectID ) == null )
+		{
+			observedObjects.Add( knownObject );
 		}
 	}
 
@@ -280,13 +271,13 @@ public class Robot
 		RobotEngineManager.instance.channel.Send(new U2G_Message{ StopAllMotors = message } );
 	}
 	
-	public void TurnInPlace(float angle_rad)
+	public void TurnInPlace( float angle_rad )
 	{
 		U2G_TurnInPlace message = new U2G_TurnInPlace ();
 		message.robotID = ID;
 		message.angle_rad = angle_rad;
 		
-		Debug.Log("TurnInPlace(robotID:"+ID+", angle_rad:"+angle_rad+")");
+		Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ TurnInPlace = message } );
 	}
 
