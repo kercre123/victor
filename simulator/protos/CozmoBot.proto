@@ -9,7 +9,7 @@ PROTO CozmoBot [
 
   field SFInt32  cameraWidth  320
   field SFInt32  cameraHeight 240
-  field SFFloat  fieldOfView   0.773  # 45 degrees
+  field SFFloat  fieldOfView   1.22
   field SFBool   hideCameraDisplay FALSE
 
   field SFFloat headAngle          0
