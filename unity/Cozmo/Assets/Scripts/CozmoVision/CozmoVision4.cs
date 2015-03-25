@@ -135,6 +135,14 @@ public class CozmoVision4 : CozmoVision
 		actionSlider.SetMode(ActionButtonMode.TARGET, false);
 	}
 
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+
+		ResizeToScreen();
+
+	}
+
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
 	protected void Update()
 	{
@@ -181,6 +189,37 @@ public class CozmoVision4 : CozmoVision
 
 		interactLastFrame = true;
 	}
+
+	
+	void ResizeToScreen() {
+		if(Screen.dpi == 0f) return;
+		
+		float screenW = Screen.width;
+		float screenH = Screen.height;
+		
+		float screenScaleFactor = 1f;
+		
+		if(canvasScaler != null) {
+			screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
+			screenW = canvasScaler.referenceResolution.x;
+			screenH = canvasScaler.referenceResolution.y;
+		}
+		
+		float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
+		if(screenHeightInches < 3f) {
+			RectTransform sliderTransform = actionSlider.slider.gameObject.GetComponent<RectTransform>();
+			Vector2 size = sliderTransform.sizeDelta;
+			float newScale = (screenH * 0.5f) / size.y;
+
+			sliderTransform.localScale = Vector3.one * newScale;
+			Vector3 anchor = sliderTransform.anchoredPosition;
+			anchor.y = 0f;
+			anchor.x = 10f;
+			sliderTransform.anchoredPosition = anchor;
+		}
+
+	}
+
 
 	//Vector2 centerViz = new Vector2(160f, 120f);
 
