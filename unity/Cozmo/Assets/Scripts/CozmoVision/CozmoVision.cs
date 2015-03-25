@@ -227,7 +227,7 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	public void RequestImage()
+	private void RequestImage()
 	{
 		if( !imageRequested && RobotEngineManager.instance != null )
 		{
@@ -248,6 +248,19 @@ public class CozmoVision : MonoBehaviour
 
 		RequestImage();
 		ResizeToScreen();
+		VisionEnabled();
+	}
+
+	private void VisionEnabled()
+	{
+		if( PlayerPrefs.GetInt( "VisionDisabled" ) > 0 )
+		{
+			image.color = new Color( 0f, 0f, 0f, 0f );
+		}
+		else
+		{
+			image.color = new Color( 1f, 1f, 1f, 1f );
+		}
 	}
 
 	protected virtual void Dings()

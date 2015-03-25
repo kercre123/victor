@@ -9,6 +9,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] ComboBox combo_controls;
 	[SerializeField] ComboBox combo_vision;
 	[SerializeField] Toggle toggle_debug;
+	[SerializeField] Toggle toggle_vision;
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
@@ -33,6 +34,11 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_debug != null) {
 			toggle_debug.isOn = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
+		if(toggle_vision != null) {
+			toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled", 0) == 1;
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
 		}
 
@@ -65,6 +71,9 @@ public class OptionsScreen : MonoBehaviour {
 			toggle_debug.onValueChanged.AddListener(ToggleShowDebugInfo);
 		}
 
+		if(toggle_vision != null) {
+			toggle_vision.onValueChanged.AddListener(ToggleDisableVision);
+		}
 	}
 
 	void OnDisable () {
@@ -82,6 +91,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_debug != null) {
 			toggle_debug.onValueChanged.RemoveListener(ToggleShowDebugInfo);
+		}
+
+		if(toggle_vision != null) {
+			toggle_vision.onValueChanged.RemoveListener(ToggleDisableVision);
 		}
 	}
 
@@ -103,6 +116,10 @@ public class OptionsScreen : MonoBehaviour {
 
 	public void ToggleShowDebugInfo (bool val) {
 		PlayerPrefs.SetInt("ShowDebugInfo", val ? 1 : 0);
+	}
+
+	public void ToggleDisableVision (bool val) {
+		PlayerPrefs.SetInt("VisionDisabled", val ? 1 : 0);
 	}
 
 	public void ResetToDefaultSettings () {
