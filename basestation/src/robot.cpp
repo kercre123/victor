@@ -83,6 +83,7 @@ namespace Anki {
     , _isAnimating(false)
     , _battVoltage(5)
     , _carryingMarker(nullptr)
+    , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     {
       _poseHistory = new RobotPoseHistory();
@@ -180,8 +181,36 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      // Send state to visualizer for saving/displaying
+      // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(msg);
+      
+      // Save state to file
+      if(_stateSaveMode != SAVE_OFF)
+      {
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.CreateDirFailed","\n");
+          }
+        }
+        
+        // Write state message to JSON file
+        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
+        
+        Json::Value json = msg.CreateJson();
+        std::ofstream jsonFile(msgFilename, std::ofstream::out);
+        
+        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
+        jsonFile << json.toStyledString();
+        jsonFile.close();
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_stateSaveMode == SAVE_ONE_SHOT) {
+          _stateSaveMode = SAVE_OFF;
+        }
+      }
+
+      
       
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
@@ -1941,6 +1970,12 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
+
+    void Robot::SetSaveStateMode(const SaveMode_t mode)
+    {
+      _stateSaveMode = mode;
+    }
+
       
     void Robot::SetSaveImageMode(const SaveMode_t mode)
     {

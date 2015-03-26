@@ -78,8 +78,6 @@ namespace Anki {
     VizManager::VizManager()
     : _isInitialized(false)
     , _sendImages(false)
-    , _saveImageMode(SAVE_OFF)
-    , _saveRobotStateMode(SAVE_OFF)
     {
       // Compute the max IDs permitted by VizObject type
       for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
@@ -565,30 +563,6 @@ namespace Anki {
       
       // TODO: Display state stuff somewhere...
       
-      if(_saveRobotStateMode != SAVE_OFF)
-      {
-        // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("VizManager.SendRobotState.CreateDirFailed","\n");
-          }
-        }
-        
-        // Write state message to JSON file
-        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmoState_" + std::to_string(msg.timestamp) + ".json");
-        
-        Json::Value json = msg.CreateJson();
-        std::ofstream jsonFile(msgFilename, std::ofstream::out);
-        
-        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
-        jsonFile << json.toStyledString();
-        jsonFile.close();
-        
-        // Turn off save mode if we were in one-shot mode
-        if (_saveRobotStateMode == SAVE_ONE_SHOT) {
-          _saveRobotStateMode = SAVE_OFF;
-        }
-      }
     } // SendRobotState()
     
     void VizManager::SendGreyImage(const RobotID_t robotID,
@@ -679,7 +653,7 @@ namespace Anki {
         
         ++v.chunkId;
       }
-      
+/*
       if (_saveImageMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
@@ -731,6 +705,7 @@ namespace Anki {
           _saveImageMode = SAVE_OFF;
         }
       }
+ */
     } // SendImage()
     
     void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,

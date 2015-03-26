@@ -263,13 +263,6 @@ namespace Anki {
       */
       //void ClearAllColors();
 
-      // ==== Saving Images / RobotState ====
-      
-      void SaveImages(SaveMode_t mode);
-      SaveMode_t GetSaveImageMode() const;
-      
-      void SaveRobotState(SaveMode_t mode);
-      SaveMode_t GetSaveRobotStateMode() const;
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
@@ -316,9 +309,6 @@ namespace Anki {
       std::map<RobotID_t, u8> _imgID;
       
       bool               _sendImages;
-      SaveMode_t      _saveImageMode;
-    
-      SaveMode_t      _saveRobotStateMode;
       
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
@@ -334,22 +324,6 @@ namespace Anki {
       }
       
       return _singletonInstance;
-    }
-    
-    inline void VizManager::SaveImages(SaveMode_t mode) {
-      _saveImageMode = mode;
-    }
-    
-    inline SaveMode_t VizManager::GetSaveImageMode() const {
-      return _saveImageMode;
-    }
-    
-    inline void VizManager::SaveRobotState(SaveMode_t mode) {
-      _saveRobotStateMode = mode;
-    }
-    
-    inline SaveMode_t VizManager::GetSaveRobotStateMode() const {
-      return _saveRobotStateMode;
     }
     
     template<typename T>

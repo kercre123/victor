@@ -264,6 +264,9 @@ namespace Anki {
       Result StopFaceTracking();
       Result StartLookingForMarkers();
       Result StopLookingForMarkers();
+
+      // Set how to save incoming robot state messages
+      void SetSaveStateMode(const SaveMode_t mode);
       
       // Set how to save incoming robot images to file
       void SetSaveImageMode(const SaveMode_t mode);
@@ -551,6 +554,9 @@ namespace Anki {
       // A place to store reaction callback functions, indexed by the type of
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
+      
+      // Save mode for robot state
+      SaveMode_t _stateSaveMode;
       
       // Save mode for robot images
       SaveMode_t _imageSaveMode;
