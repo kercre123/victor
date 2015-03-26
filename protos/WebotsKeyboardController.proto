@@ -86,9 +86,6 @@ Supervisor {
     }
       
     DEF CAM_DISPLAY_PLANE Display {
-      # Hide display plane far away
-      translation 1000 0.1 0
-
       children [
         DEF SHAPE Shape {
           appearance Appearance {
@@ -99,7 +96,8 @@ Supervisor {
             }
           }
           geometry Plane {
-	         size 1 1
+		 # Make display plane have no dims in 3D view so as to be invisible
+	         size 0 0
           }
         }
       ]
