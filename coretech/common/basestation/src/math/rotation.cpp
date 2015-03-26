@@ -285,6 +285,21 @@ namespace Anki {
     return 2.f*std::acos(_q[0]);
   }
   
+  Radians Rotation3d::GetAngleDiffFrom(const Rotation3d& otherRotation) const
+  {
+    const UnitQuaternion<float>& q_this = this->GetQuaternion();
+    const UnitQuaternion<float>& q_other = otherRotation.GetQuaternion();
+    
+    const f32 innerProd = std::min(1.f, std::max(-1.f, (q_this.w()*q_other.w() +
+                                                        q_this.x()*q_other.x() +
+                                                        q_this.y()*q_other.y() +
+                                                        q_this.z()*q_other.z())));
+    
+    Radians angleDiff(std::acos(2.f * innerProd*innerProd - 1.f));
+    
+    return angleDiff;
+  }
+  
   Radians Rotation3d::GetAngleAroundXaxis() const
   {
     // Apply the quaternion to the Y axis and see where its (y,z) coordinates

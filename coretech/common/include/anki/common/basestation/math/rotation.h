@@ -183,6 +183,8 @@ namespace Anki {
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
     
+    Radians GetAngleDiffFrom(const Rotation3d& otherRotation) const;
+    
     Rotation3d& Invert();
     Rotation3d  GetInverse() const;
     
