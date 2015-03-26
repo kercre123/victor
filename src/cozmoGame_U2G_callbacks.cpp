@@ -352,8 +352,13 @@ case U2G_Message::Type::__MSG_TYPE__: \
   
   void CozmoGameImpl::ProcessMessage(U2G_SaveRobotState const& msg)
   {
-    VizManager::getInstance()->SaveRobotState((SaveMode_t)msg.mode);
-    printf("Saving robot state: %d\n", VizManager::getInstance()->GetSaveRobotStateMode());
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+    printf("Saving robot state: %d\n", msg.mode);
+      robot->SetSaveStateMode((SaveMode_t)msg.mode);
+    }
   }
   
   void CozmoGameImpl::ProcessMessage(U2G_EnableDisplay const& msg)
