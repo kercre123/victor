@@ -18,7 +18,6 @@ public class RobotEngineManager : MonoBehaviour {
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
-	[SerializeField] private Text batteryPercentage;
 
 	[SerializeField]
 	[HideInInspector]
@@ -243,12 +242,12 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
-			if (current != null && batteryPercentage != null) {
-			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
-			}
 			break;
 		case G2U_Message.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
+			break;
+		case G2U_Message.Tag.RobotDeletedObject:
+			ReceivedSpecificMessage(message.RobotDeletedObject);
 			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported" );
@@ -307,6 +306,25 @@ public class RobotEngineManager : MonoBehaviour {
 
 			current.observedObjects.Clear();
 			current.lastObjectHeadTracked = null;
+		}
+	}
+
+	private void ReceivedSpecificMessage( G2U_RobotDeletedObject message )
+	{
+		Debug.Log( "Deleted object with ID " +message.objectID );
+
+		ObservedObject deleted = current.knownObjects.Find( x=> x.ID == message.objectID );
+
+		if( deleted != null )
+		{
+			current.knownObjects.Remove( deleted );
+		}
+
+		deleted = current.selectedObjects.Find( x=> x.ID == message.objectID );
+
+		if( deleted != null )
+		{
+			current.selectedObjects.Remove( deleted );
 		}
 	}
 

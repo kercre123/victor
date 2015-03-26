@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -14,6 +14,8 @@ public class Robot
 
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
+	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
+	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
 
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
@@ -22,6 +24,7 @@ public class Robot
 	public List<ObservedObject> knownObjects { get; private set; }
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
+	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
@@ -61,6 +64,7 @@ public class Robot
 		lastSelectedObjects = new List<ObservedObject>();
 		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
+		lastObservedObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
@@ -77,6 +81,7 @@ public class Robot
 		lastSelectedObjects.Clear();
 		lastObjectHeadTracked = null;
 		observedObjects.Clear();
+		lastObservedObjects.Clear();
 		knownObjects.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
@@ -96,29 +101,33 @@ public class Robot
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
 
-		Rotation = new Quaternion(message.pose_quaternion0, message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3);
+		Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
 	}
 
 	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
 	{
-		ObservedObject observedObject = observedObjects.Find( x => x.ID == message.objectID );
-
-		//Debug.Log( "found " + message.objectID );
-
-		if( observedObject == null )
+		if( message.objectFamily == 0 )
 		{
-			observedObject = new ObservedObject();
-
-			observedObjects.Add( observedObject );
+			Debug.LogWarning( "UpdateObservedObjectInfo received message about the Mat!" );
+			return;
 		}
-
-		observedObject.UpdateInfo( message );
 
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
-		if(knownObject == null)
+		//Debug.Log( "found " + message.objectID );
+
+		if( knownObject == null )
 		{
-			knownObjects.Add( observedObject );
+			knownObject = new ObservedObject();
+
+			knownObjects.Add( knownObject );
+		}
+
+		knownObject.UpdateInfo( message );
+
+		if( observedObjects.Find( x => x.ID == message.objectID ) == null )
+		{
+			observedObjects.Add( knownObject );
 		}
 	}
 
@@ -173,7 +182,7 @@ public class Robot
 	
 	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
 	{
-		Debug.Log( "Pick And Place Object " + selectedObjects[index] + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
+		Debug.Log( "Pick And Place Object index(" + index + ") usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
 		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
@@ -238,38 +247,38 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ VisionWhileMoving = message } );
 	}
 	
-	public void RequestImage()
+	public void RequestImage( RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode )
 	{
 		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
-		message.resolution = (byte)RobotEngineManager.CameraResolution.CAMERA_RES_QVGA;
-		message.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		message.resolution = (byte)resolution;
+		message.mode = (byte)mode;
 		
 		RobotEngineManager.instance.channel.Send (new U2G_Message{SetRobotImageSendMode = message});
 		
-		U2G_ImageRequest message2 = new U2G_ImageRequest ();
+		U2G_ImageRequest message2 = new U2G_ImageRequest();
 		message2.robotID = ID;
-		message2.mode = (byte)RobotEngineManager.ImageSendMode_t.ISM_STREAM;
+		message2.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{ImageRequest = message2});
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ ImageRequest = message2 } );
 		
-		Debug.Log( "image request message sent" );
+		Debug.Log( "image request message sent with " + mode + " at " + resolution );
 	}
 	
 	public void StopAllMotors()
 	{
 		U2G_StopAllMotors message = new U2G_StopAllMotors ();
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{StopAllMotors=message});
+		RobotEngineManager.instance.channel.Send(new U2G_Message{ StopAllMotors = message } );
 	}
 	
-	public void TurnInPlace(float angle_rad)
+	public void TurnInPlace( float angle_rad )
 	{
 		U2G_TurnInPlace message = new U2G_TurnInPlace ();
 		message.robotID = ID;
 		message.angle_rad = angle_rad;
 		
-		Debug.Log("TurnInPlace(robotID:"+ID+", angle_rad:"+angle_rad+")");
-		RobotEngineManager.instance.channel.Send (new U2G_Message{TurnInPlace=message});
+		Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ TurnInPlace = message } );
 	}
 
 	public void TraverseObject( int objectID, bool usePreDockPose = false, bool useManualSpeed = false )

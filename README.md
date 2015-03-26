@@ -12,7 +12,7 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 
 2. Install the python ply module.
 
-        sudo easy-install ply
+        sudo easy_install ply
 
 3. In cozmo-game, run this command:
 

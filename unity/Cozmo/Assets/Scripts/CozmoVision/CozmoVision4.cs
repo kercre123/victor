@@ -10,13 +10,15 @@ public class ActionSlider
 	public Image image;
 	public Text text;
 
-	public Image image_handle;
+	public GameObject highlight;
 
 	public Image image_action1;
 	public Image image_action2;
 
 	public Text text_action1;
 	public Text text_action2;
+
+	public int selectedIndex = 0;
 
 	CozmoVision vision;
 	bool pressed = false;
@@ -26,14 +28,21 @@ public class ActionSlider
 	public void ClaimOwnership(CozmoVision vision) {
 		this.vision = vision;
 	}
-	
-	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes=null) {
+
+	public void SetMode(ActionButtonMode mode, bool down) {
+		SetMode(mode, down, null, selectedIndex);
+	}
+
+	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes, int index=0) {
+
+
 		//if(Mode == mode && down == pressed) return;
 
-		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+")");
+		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
 		
 		Mode = mode;
 		pressed = down;
+		selectedIndex = index;
 
 		if(mode == ActionButtonMode.DISABLED) {
 			slider.gameObject.SetActive(false);
@@ -42,9 +51,7 @@ public class ActionSlider
 		}
 
 
-		Color handleColor = image_handle.color;
-		handleColor.a = pressed ? 1f : 0f;
-		image_handle.color = handleColor;
+		highlight.SetActive(pressed);
 
 		text.gameObject.SetActive(pressed);
 
@@ -105,7 +112,7 @@ public class ActionSlider
 public class CozmoVision4 : CozmoVision
 {
 	[SerializeField] ActionSlider actionSlider = null;
-	
+
 	float targetLockTimer = 0f;
 	bool interactLastFrame = false;
 
@@ -151,14 +158,14 @@ public class CozmoVision4 : CozmoVision
 			interactLastFrame = false;
 
 			actionSlider.SetMode(ActionButtonMode.TARGET, false);
+			robot.selectedObjects.Clear();
 			return;
 		}
 
-		interactLastFrame = true;
-
 		Dings();
 
-		if((robot.selectedObjects.Count == 0 || targetLockTimer <= 0) && !robot.isBusy) AcquireTarget();
+		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
+		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
 
 		RefreshSliderMode();
 
@@ -172,44 +179,71 @@ public class CozmoVision4 : CozmoVision
 			}
 		}
 
-		robot.lastSelectedObjects.Clear();
-		robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+		interactLastFrame = true;
 	}
 
-	Vector2 centerViz = new Vector2(160f, 120f);
+	//Vector2 centerViz = new Vector2(160f, 120f);
 
 	private void AcquireTarget() {
-		ObservedObject nearestToCoz = null;
-		ObservedObject nearestToVizCenter = null;
+		ObservedObject nearest = null;
+		ObservedObject mostFacing = null;
 
 		float bestDistFromCoz = float.MaxValue;
-		float bestDistFromCenterViz = float.MaxValue;
+		float bestAngleFromCoz = float.MaxValue;
+		Vector2 forward = robot.Forward;
 
-		for(int i=0; i<robot.observedObjects.Count; i++) {
-			float distFromCoz = (robot.observedObjects[i].WorldPosition - robot.WorldPosition).sqrMagnitude;
+		for(int i=0; i<robot.knownObjects.Count; i++) {
+			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
+			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
+
+			float angleFromCoz = Vector2.Angle(forward, atTarget);
+			//if(angleFromCoz > 90f) return;
+
+			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
 				bestDistFromCoz = distFromCoz;
-				nearestToCoz = robot.observedObjects[i];
+				nearest = robot.knownObjects[i];
 			}
 
-			float distFromCenterViz = (robot.observedObjects[i].VizRect.center - centerViz).sqrMagnitude;
-			if(distFromCenterViz < bestDistFromCenterViz) {
-				bestDistFromCenterViz = distFromCenterViz;
-				nearestToVizCenter = robot.observedObjects[i];
+			if(angleFromCoz < bestAngleFromCoz) {
+				bestAngleFromCoz = angleFromCoz;
+				mostFacing = robot.knownObjects[i];
 			}
 		}
 
-		ObservedObject best = nearestToVizCenter;
-		if(nearestToCoz != null && nearestToCoz != best) {
+		ObservedObject best = mostFacing;
+		if(nearest != null && nearest != best) {
 			//Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
+			//float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
+			//if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
 		}
 
 		robot.selectedObjects.Clear();
 
 		if(best != null) {
-			//Debug.Log("AcquireTarget " + best.ID);
-			robot.selectedObjects.Add( best );
+			robot.selectedObjects.Add(best);
 		}
+
+		//find any other objects in a 'stack' with our selected
+		for(int i=0; i<robot.knownObjects.Count; i++) {
+			if(best == robot.knownObjects[i]) continue;
+			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
+
+			float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+			if(dist > best.Size.x * 0.5f) {
+				//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
+				continue;
+			}
+
+			robot.selectedObjects.Add(robot.knownObjects[i]);
+		}
+
+		//sort selected from ground up
+		robot.selectedObjects.Sort( ( obj1, obj2 ) => {
+			return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
+		} );
+
+		//Debug.Log("AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}
 
 	bool interactPressed = false;
@@ -229,25 +263,37 @@ public class CozmoVision4 : CozmoVision
 		modes.Clear();
 		modes.Add(ActionButtonMode.TARGET);
 
+		int index1 = 0;
+		int index2 = 0;
+
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			modes.Add(ActionButtonMode.DROP);
-			if(robot.selectedObjects.Count > 0) modes.Add(ActionButtonMode.STACK);
+			if(robot.selectedObjects.Count == 1) modes.Add(ActionButtonMode.STACK);
 		}
-		else if(robot.selectedObjects.Count > 0) {
+		else if(robot.selectedObjects.Count > 1) {
 			modes.Add(ActionButtonMode.PICK_UP);
+			modes.Add(ActionButtonMode.PICK_UP);
+			index2 = 1;
+			//Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
+		}
+		else if(robot.selectedObjects.Count == 1) {
 			modes.Add(ActionButtonMode.ROLL);
+			modes.Add(ActionButtonMode.PICK_UP);
 		}
-	
+
 		ActionButtonMode currentMode = modes[0];
-	
-		if(actionSlider.slider.value < -0.2f && modes.Count > 2) {
-			currentMode = modes[2];
-		}
-		else if(actionSlider.slider.value > 0.2f && modes.Count > 1) {
+		int index = index1;
+
+		if(actionSlider.slider.value < -0.2f && modes.Count > 1) {
 			currentMode = modes[1];
 		}
+		else if(actionSlider.slider.value > 0.2f && modes.Count > 2) {
+			currentMode = modes[2];
+			index = index2;
+			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
+		}
 	
-		actionSlider.SetMode(currentMode, interactPressed, modes);
+		actionSlider.SetMode(currentMode, interactPressed, modes, index);
 	}
 
 	private void InitiateAssistedInteraction() {
@@ -261,16 +307,16 @@ public class CozmoVision4 : CozmoVision
 	private void DoReleaseAction() {
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.current.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.DROP:
 				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
 				break;
 			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.current.PickAndPlaceObject();
+				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.current.PickAndPlaceObject();
+				//RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
 				break;
 			case ActionButtonMode.ALIGN:
 				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
@@ -278,6 +324,21 @@ public class CozmoVision4 : CozmoVision
 			case ActionButtonMode.CHANGE:
 				RobotEngineManager.instance.current.PickAndPlaceObject();
 				break;
+		}
+	}
+
+	protected override void Dings()
+	{
+		if( robot != null )
+		{
+			if( !robot.isBusy && robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/ )
+			{
+				Ding( true );
+			}
+			/*else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
+			{
+				Ding( false );
+			}*/
 		}
 	}
 }

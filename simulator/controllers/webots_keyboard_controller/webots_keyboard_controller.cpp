@@ -874,7 +874,11 @@ namespace Anki {
                   
                 if (poseMarkerMode_ == 0) {
                   // Execute path to pose
-                  printf("Going to pose marker (useManualSpeed: %d)\n", useManualSpeed);
+                  printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
+                         poseMarkerPose_.GetTranslation().x(),
+                         poseMarkerPose_.GetTranslation().y(),
+                         poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
+                         useManualSpeed);
                   SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
                   SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                 } else {
