@@ -125,6 +125,10 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	[SerializeField] protected RectTransform anchorToSnapToSideBar;
+	[SerializeField] protected float snapToSideBarScale = 1f;
+	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
+	[SerializeField] protected RectTransform anchorToScaleOnSmallScreens;
 
 	public UnityAction[] actions;
 
@@ -251,6 +255,55 @@ public class CozmoVision : MonoBehaviour
 		VisionEnabled();
 	}
 
+	protected virtual void ResizeToScreen() {
+		float dpi = 361; //Screen.dpi;
+		
+		if(dpi == 0f) return;
+		
+		float refW = Screen.width;
+		float refH = Screen.height;
+		
+		//float screenScaleFactor = 1f;
+		
+		if(canvasScaler != null) {
+			//screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
+			refW = canvasScaler.referenceResolution.x;
+			refH = canvasScaler.referenceResolution.y;
+		}
+		
+		float refAspect = refW / refH;
+		float actualAspect = (float)Screen.width / (float)Screen.height;
+		
+		float totalRefWidth = (refW / refAspect) * actualAspect;
+		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
+
+		if( sideBarWidth > 50f && anchorToSnapToSideBar != null) {
+			Vector2 size = anchorToSnapToSideBar.sizeDelta;
+			size.x = sideBarWidth * snapToSideBarScale;
+			anchorToSnapToSideBar.sizeDelta = size;
+
+			if(anchorToCenterOnSideBar != null) {
+				Vector3 anchor = anchorToCenterOnSideBar.anchoredPosition;
+				anchor.x = 0f;
+				anchorToCenterOnSideBar.anchoredPosition = anchor;
+			}
+		}
+		
+		float screenHeightInches = (float)Screen.height / (float)dpi;
+		if(screenHeightInches < 3f && anchorToScaleOnSmallScreens != null) {
+			
+			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
+			float newScale = (refH * 0.5f) / size.y;
+			
+			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
+			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
+			anchor.y = 0f;
+			anchor.x = 0f;
+			anchorToScaleOnSmallScreens.anchoredPosition = anchor;
+		}
+		
+	}
+
 	private void VisionEnabled()
 	{
 		if( PlayerPrefs.GetInt( "VisionDisabled" ) > 0 )
@@ -327,23 +380,6 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 		}
-	}
-
-	private void ResizeToScreen()
-	{
-		if( rTrans == null )
-		{
-			return;
-		}
-
-//		RectTransform parentT = rTrans.parent as RectTransform;
-//		Vector3[] corners = new Vector3[4];
-//		parentT.GetWorldCorners(corners);
-//
-//		float w = corners[0] - corners[2];
-//
-//		float scale = ( w * 0.5f ) / 320f;
-//		rTrans.localScale = Vector3.one * scale;
 	}
 
 }
