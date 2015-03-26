@@ -3,6 +3,9 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
+namespace Anki {
+namespace Cozmo {
+
 message U2G_Ping {
     uint_32 counter
 }
@@ -344,4 +347,7 @@ union U2G_Message {
     U2G_StopLookingForMarkers StopLookingForMarkers,
     U2G_SetVisionSystemParams SetVisionSystemParams,
     U2G_SetFaceDetectParams SetFaceDetectParams
+}
+
+}
 }
