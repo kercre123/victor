@@ -129,6 +129,7 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected float snapToSideBarScale = 1f;
 	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
 	[SerializeField] protected RectTransform anchorToScaleOnSmallScreens;
+	[SerializeField] protected float scaleOnSmallScreensFactor = 0.5f;
 
 	public UnityAction[] actions;
 
@@ -256,7 +257,7 @@ public class CozmoVision : MonoBehaviour
 	}
 
 	protected virtual void ResizeToScreen() {
-		float dpi = 361; //Screen.dpi;
+		float dpi = Screen.dpi;//361; //
 		
 		if(dpi == 0f) return;
 		
@@ -293,7 +294,7 @@ public class CozmoVision : MonoBehaviour
 		if(screenHeightInches < 3f && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
-			float newScale = (refH * 0.5f) / size.y;
+			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
 			
 			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
 			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
