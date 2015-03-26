@@ -281,7 +281,8 @@ namespace Anki
           AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
-                           "Adding new %s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
+                           "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
+                           objSeen->IsActive() ? "active " : "",
                            objSeen->GetType().GetName().c_str(),
                            objSeen->GetID().GetValue(),
                            objSeen->GetPose().GetTranslation().x(),
@@ -504,7 +505,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else {
+        } else if(unobserved.family != ObjectFamily::MATS) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
