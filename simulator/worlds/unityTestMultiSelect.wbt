@@ -118,14 +118,14 @@ CozmoMat {
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
-  translation 0.2 0.2 0.0219969
+  translation 0.2 0.35 0.0219969
   rotation 1 4.29501e-13 -1.37138e-11 3.67342e-06
   blockColor 0.85 0.5 0.5
   markerImg "symbols/fire.png"
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
-  translation 0.2 -0.2 0.0219969
+  translation 0.2 -0.35 0.0219969
   rotation 1 4.29501e-13 -1.37138e-11 3.67342e-06
   blockColor 0.85 0.5 0.5
   markerImg "symbols/fire.png"
@@ -139,14 +139,14 @@ DEF FireBlock Block1x1 {
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
-  translation 0.2 0.1 0.0219969
+  translation 0.2 0.175 0.0219969
   rotation 7.34532e-05 -1.83671e-06 1 0.05
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
-  translation 0.2 -0.1 0.0219969
+  translation 0.2 -0.175 0.0219969
   rotation 7.34532e-05 -1.83671e-06 1 0.05
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
@@ -154,7 +154,6 @@ DEF AngryFaceBlock Block1x1 {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  translation 0 0 0
   rotation 0 -1 0 0
   name "CozmoBot_1"
   usbChannel 10
