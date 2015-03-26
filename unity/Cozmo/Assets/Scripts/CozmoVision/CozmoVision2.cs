@@ -57,4 +57,10 @@ public class CozmoVision2 : CozmoVision
 			}
 		}
 	}
+
+	protected override void OnDisable() {
+		base.OnDisable();
+		foreach(SelectionButton2 butt in selectionButtons) butt.gameObject.SetActive(false);
+	}
+
 }
