@@ -184,7 +184,7 @@ namespace Anki {
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode, u8 resolution);
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState=false);
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -777,17 +777,17 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                VizSaveMode_t mode = VIZ_SAVE_ONE_SHOT;
+                SaveMode_t mode = SAVE_ONE_SHOT;
                 
                 const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = VIZ_SAVE_OFF;
+                    mode = SAVE_OFF;
                     printf("Saving robot image/state stream OFF.\n");
                   } else {
-                    mode = VIZ_SAVE_CONTINUOUS;
+                    mode = SAVE_CONTINUOUS;
                     printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
@@ -1604,7 +1604,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState)
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState)
       {
         U2G_SaveImages m;
         m.mode = mode;
