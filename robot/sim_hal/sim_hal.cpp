@@ -940,13 +940,14 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    Result HAL::SetBlockLight(const u8 blockID, const u32* color,
+                              const u32* onPeriod_ms, const u32* offPeriod_ms)
     {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
         m.color[i] = color[i];
-        m.onPeriod_ms[i] = onPeriod_ms;
-        m.offPeriod_ms[i] = offPeriod_ms;
+        m.onPeriod_ms[i] = onPeriod_ms[i];
+        m.offPeriod_ms[i] = offPeriod_ms[i];
       }
       
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);

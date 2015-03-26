@@ -404,14 +404,22 @@ namespace Anki {
      
       
       // =========  Block messages  ============
+      
+      // Return nullptr on failure to find ActiveObject
+      ActiveCube* GetActiveObject(const ObjectID objectID);
+      
       // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
       Result SetObjectLights(const ObjectID& objectID,
-                            const std::array<u32,NUM_BLOCK_LEDS>& color,
-                            const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
-                            const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms);
+                             const std::array<u32,NUM_BLOCK_LEDS>& color,
+                             const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms);
       
       // Set all LEDs of the specified block to the same color/flashrate
-      Result SetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      Result SetObjectLights(const ObjectID& objectID,
+                             const WhichLEDs whichLEDs,
+                             const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const bool turnOffUnspecifiedLEDs,
+                             const bool makeRelative, const Point2f& relativeToPoint);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }
@@ -660,6 +668,7 @@ namespace Anki {
       
       // =========  Active Object messages  ============
       Result SendFlashObjectIDs();
+      Result SendSetObjectLights(const ActiveCube* activeCube);
       Result SendSetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
       void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
       

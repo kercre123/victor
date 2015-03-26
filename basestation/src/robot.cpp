@@ -2328,9 +2328,56 @@ namespace Anki {
     }
     
       
-    Result Robot::SetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms)
+    ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
-      return SendSetObjectLights(objectID, color, onPeriod_ms, offPeriod_ms);
+      Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d does not appear to be an active object.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      if(!object->IsIdentified()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d is active but has not been identified.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
+      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d could not be cast to an ActiveCube.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      return activeCube;
+    }
+      
+    Result Robot::SetObjectLights(const ObjectID& objectID,
+                                  const WhichLEDs whichLEDs,
+                                  const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                                  const bool turnOffUnspecifiedLEDs,
+                                  const bool makeRelative, const Point2f& relativeToPoint)
+    {
+      ActiveCube* activeCube = GetActiveObject(objectID);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      } else {
+        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms, turnOffUnspecifiedLEDs);
+        if(makeRelative) {
+          activeCube->MakeStateRelativeToXY(relativeToPoint);
+        }
+        
+        MessageSetBlockLights m;
+        activeCube->FillMessage(m);
+        return _msgHandler->SendMessage(GetID(), m);
+      }
     }
       
       
@@ -2420,9 +2467,12 @@ namespace Anki {
     Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 color,
                                       const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
+      PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Deprecated.\n");
+      return RESULT_FAIL;
+      /*
       // Need to determing the blockID (meaning its internal "active" ID) from the
       // objectID known to the robot / UI
-      Vision::ObservableObject* object = _blockWorld.GetObjectByID(objectID);
+      Vision::ObservableObject* object = _blockWorld.GetObjectByIDandFamily(objectID, BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
       if(!object->IsActive()) {
         PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
                           "Object %d does not appear to be an active object.\n", objectID.GetValue());
@@ -2443,13 +2493,23 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      activeCube->SetLEDs(ActiveCube::WhichLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      
+      return SendSetObjectLights(activeCube);
+      */
+    } // SendSetObjectLights()
+      
+    Result Robot::SendSetObjectLights(const ActiveCube* activeCube)
+    {
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Null active object pointer provided.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      }
+      
       MessageSetBlockLights m;
-      m.blockID = activeCube->GetActiveID();
-      m.color.fill(color);
-      m.onPeriod_ms = onPeriod_ms;
-      m.offPeriod_ms = offPeriod_ms;
+      activeCube->FillMessage(m);
       return _msgHandler->SendMessage(GetID(), m);
     }
-    
+      
   } // namespace Cozmo
 } // namespace Anki

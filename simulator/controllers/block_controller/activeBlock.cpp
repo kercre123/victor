@@ -38,38 +38,39 @@ namespace Anki {
         webots::LED* led_[NUM_BLOCK_LEDS];
         LEDParams ledParams_[NUM_BLOCK_LEDS];
         
-        // Top-Front face pairs
         typedef enum {
-          ZX = 0,
-          Xz,
-          zx,
-          xZ,
-          Yx,
-          yX,
-          NUM_TOP_FRONT_FACE_PAIRS
-        } TopFrontFacePair;
+          UNKNOWN = -1,
+          Xneg = 0,
+          Xpos,
+          Yneg,
+          Ypos,
+          Zneg,
+          Zpos,
+          NUM_UP_AXES
+        } UpAxis;
         
-        const u8 ledPositionToIdx_[NUM_TOP_FRONT_FACE_PAIRS][NUM_BLOCK_LEDS] =
+        // Lookup table for which four LEDs are on top, given the current up axis
+        // (in the order upper left, upper right, lower left, lower right)
+        const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
-          // ZX
-          { 6, 7, 5, 4, 2, 3, 1, 0 },
+          // Xneg (Front Face on top)
+          {2, 3, 6, 7, 0, 1, 4, 5},
           
-          // Xz
-          { 2, 3, 6, 7, 1, 0, 5, 4},
+          // Xpos (Back Face on top)
+          {4, 5, 0, 1, 6, 7, 2, 3},
           
-          // zx
-          { 1, 0, 2, 3, 5, 4, 6, 7},
+          // Yneg (Right on top)
+          {1, 3, 0, 2, 5, 7, 4, 6},
           
-          // xZ
-          { 5, 4, 1, 0, 6, 7, 2, 3},
+          // Ypos (Left Face on top)
+          {2, 0, 3, 1, 6, 4, 7, 5},
           
-          // Yx
-          { 2, 6, 1, 5, 3, 7, 0, 4},
+          // Zneg (Bottom Face on top) -- NOTE: Flipped 180deg around X axis!!
+          {3, 2, 1, 0, 7, 6, 5, 4},
           
-          // yX
-          { 7, 3, 4, 0, 6, 2, 5, 1}
+          // Zpos (Top Face on top)
+          {0, 1, 2, 3, 4, 5, 6, 7}
         };
-        
         
         // Flash ID params
         double flashIDStartTime_ = 0;
@@ -98,6 +99,9 @@ namespace Anki {
           ledParams_[i].color = msg.color[i];
           ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
           ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
+          
+          ledParams_[i].isOn = true;
+          ledParams_[i].nextSwitchTime = 0; // force immediate upate
         }
       }
       
@@ -167,6 +171,51 @@ namespace Anki {
         }
       }
       
+      
+      UpAxis GetCurrentUpAxis()
+      {
+#       define X 0
+#       define Y 1
+#       define Z 2
+        const double* accelVals = accel_->getValues();
+
+        // Determine the axis with the largest absolute acceleration
+        UpAxis retVal = UNKNOWN;
+        double maxAbsAccel = -1;
+
+        s32 whichAxis = -1;
+        for(s32 i=0; i<3; ++i) {
+          const double absAccel = abs(accelVals[i]);
+          if(absAccel > maxAbsAccel) {
+            whichAxis = i;
+            maxAbsAccel = absAccel;
+          }
+        }
+        
+        // Return the corresponding signed axis
+        switch(whichAxis)
+        {
+          case X:
+            retVal = (accelVals[X] < 0 ? Xneg : Xpos);
+            break;
+          case Y:
+            retVal = (accelVals[Y] < 0 ? Yneg : Ypos);
+            break;
+          case Z:
+            retVal = (accelVals[Z] < 0 ? Zneg : Zpos);
+            break;
+          default:
+            printf("Unexpected whichAxis = %d\n", whichAxis);
+        }
+        
+        return retVal;
+        
+#       undef X
+#       undef Y
+#       undef Z
+      } // GetCurrentUpAxis()
+      
+      /*
       TopFrontFacePair GetOrientation() {
         const double* vals = accel_->getValues();
         const double x = vals[0];
@@ -196,21 +245,46 @@ namespace Anki {
         
         return fp;
       }
+       */
       
-      void ApplyLEDParams(TimeStamp_t currentTime) {
+      // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
+      // to make it suitable for webots LED 24bit RGB color
+      inline void SetLED_helper(u32 index, u32 rgbaColor) {
+        led_[index]->set(rgbaColor>>8);
+      }
+      
+      void SetLED(WhichLEDs whichLEDs, u32 color)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
+        static const u8 FIRST_BIT = 0x01;
+        u8 shiftedLEDs = static_cast<u8>(whichLEDs);
+        for(u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
+          if(shiftedLEDs & FIRST_BIT) {
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], color);
+          }
+          shiftedLEDs = shiftedLEDs >> 1;
+        }
+      }
+      
+      inline void SetLED(u32 ledIndex, u32 color)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
+        SetLED_helper(ledIndexLUT[currentUpAxis][ledIndex], color);
+      }
+      
+      void ApplyLEDParams(TimeStamp_t currentTime)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           if(currentTime > ledParams_[i].nextSwitchTime) {
-
-            const u8 ledIndex = ledPositionToIdx_[GetOrientation()][i];
-            
             if(ledParams_[i].isOn) {
               // Time to turn off
-              led_[ledIndex]->set(0x0);
+              SetLED_helper(ledIndexLUT[currentUpAxis][i], 0);
               ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
               ledParams_[i].isOn = false;
             } else {
               // Time to turn on
-              led_[ledIndex]->set(ledParams_[i].color);
+              SetLED_helper(ledIndexLUT[currentUpAxis][i], ledParams_[i].color);
               ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
               ledParams_[i].isOn = true;
             }
@@ -218,13 +292,11 @@ namespace Anki {
         } // for each LED
       } // ApplyLEDParams()
       
-      void SetLED(BlockLEDPosition p, u32 color) {
-        led_[ ledPositionToIdx_[GetOrientation()][p] ]->set(color);
-      }
+
       
       void SetAllLEDs(u32 color) {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          led_[i]->set(color);
+          SetLED_helper(i, color);
         }
       }
       
@@ -235,23 +307,23 @@ namespace Anki {
 #if(0)
           // Test: Blink all LEDs in order
           static u32 p=0;
-          static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
+          //static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
+          static WhichLEDs prevIdx = WhichLEDs::TOP_UPPER_LEFT, idx = WhichLEDs::TOP_UPPER_LEFT;
           if (p++ == 100) {
             SetLED(prevIdx, 0);
-            if (idx == TopFrontLeft) {
-              // TopFrontLeft is green
-              SetLED(idx, 0x00ff00);
+            if (idx == WhichLEDs::TOP_UPPER_LEFT) {
+              // Top upper left is green
+              SetLED(idx, 0x00ff0000);
             } else {
               // All other LEDs are red
-              SetLED(idx, 0xff0000);
+              SetLED(idx, 0xff000000);
             }
             prevIdx = idx;
 
             // Increment LED position index
-            if (idx == BottomBackRight) {
-              idx = TopFrontLeft;
-            } else {
-              idx = (BlockLEDPosition)(idx + 1);
+            idx = static_cast<WhichLEDs>(static_cast<u8>(idx)<<1);
+            if(idx == WhichLEDs::NONE) {
+              idx = WhichLEDs::TOP_UPPER_LEFT;
             }
             p = 0;
           }
