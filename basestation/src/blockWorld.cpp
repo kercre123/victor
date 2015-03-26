@@ -281,8 +281,7 @@ namespace Anki
           AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
-                           "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
-                           objSeen->IsActive() ? "active " : "",
+                           "Adding new %s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
                            objSeen->GetType().GetName().c_str(),
                            objSeen->GetID().GetValue(),
                            objSeen->GetPose().GetTranslation().x(),
