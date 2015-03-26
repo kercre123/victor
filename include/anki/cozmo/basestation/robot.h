@@ -265,8 +265,8 @@ namespace Anki {
       Result StartLookingForMarkers();
       Result StopLookingForMarkers();
       
-      // Save the next image passed into ProcessImage() to file
-      void SaveNextImage();
+      // Set how to save incoming robot images to file
+      void SetSaveImageMode(const SaveMode_t mode);
       
       // =========== Actions Commands =============
       
@@ -552,8 +552,8 @@ namespace Anki {
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
       
-      // Flag for saving next processed image to file
-      bool _saveNextImageToFile;
+      // Save mode for robot images
+      SaveMode_t _imageSaveMode;
       
       ///////// Modifiers ////////
       

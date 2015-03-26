@@ -205,10 +205,10 @@ namespace Anki {
 
     
     typedef enum {
-      VIZ_SAVE_OFF = 0,
-      VIZ_SAVE_ONE_SHOT,
-      VIZ_SAVE_CONTINUOUS
-    } VizSaveMode_t;
+      SAVE_OFF = 0,
+      SAVE_ONE_SHOT,
+      SAVE_CONTINUOUS
+    } SaveMode_t;
     
   }
 }

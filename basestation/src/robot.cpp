@@ -15,12 +15,15 @@
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/fileManagement.h"
+
 
 #include "anki/vision/CameraSettings.h"
 
@@ -80,7 +83,7 @@ namespace Anki {
     , _isAnimating(false)
     , _battVoltage(5)
     , _carryingMarker(nullptr)
-    , _saveNextImageToFile(false)
+    , _imageSaveMode(SAVE_OFF)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -1939,26 +1942,35 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
       
-    void Robot::SaveNextImage()
+    void Robot::SetSaveImageMode(const SaveMode_t mode)
     {
-      _saveNextImageToFile = true;
+      _imageSaveMode = mode;
     }
     
     Result Robot::ProcessImage(const Vision::Image& image)
     {
       Result lastResult = RESULT_OK;
       
-      if (_saveNextImageToFile) {
+      if (_imageSaveMode != SAVE_OFF) {
+        
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","\n");
+          }
+        }
+        
         // Write image to file (recompressing as jpeg again!)
-        static u32 imgCnt = 0;
-        char imgFilename[32];
+        char imgFilename[256];
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
-        imwrite(imgFilename, image.get_CvMat_());
+        sprintf(imgFilename, "%s/cozmo%d_img_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp());
+        imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
-        _saveNextImageToFile = false;
+        if (_imageSaveMode == SAVE_ONE_SHOT) {
+          _imageSaveMode = SAVE_OFF;
+        }
       }
       
       // For now, we need to reassemble a RobotState message to provide the

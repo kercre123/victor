@@ -265,11 +265,11 @@ namespace Anki {
 
       // ==== Saving Images / RobotState ====
       
-      void SaveImages(VizSaveMode_t mode);
-      VizSaveMode_t GetSaveImageMode() const;
+      void SaveImages(SaveMode_t mode);
+      SaveMode_t GetSaveImageMode() const;
       
-      void SaveRobotState(VizSaveMode_t mode);
-      VizSaveMode_t GetSaveRobotStateMode() const;
+      void SaveRobotState(SaveMode_t mode);
+      SaveMode_t GetSaveRobotStateMode() const;
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
@@ -316,9 +316,9 @@ namespace Anki {
       std::map<RobotID_t, u8> _imgID;
       
       bool               _sendImages;
-      VizSaveMode_t      _saveImageMode;
+      SaveMode_t      _saveImageMode;
     
-      VizSaveMode_t      _saveRobotStateMode;
+      SaveMode_t      _saveRobotStateMode;
       
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
@@ -336,19 +336,19 @@ namespace Anki {
       return _singletonInstance;
     }
     
-    inline void VizManager::SaveImages(VizSaveMode_t mode) {
+    inline void VizManager::SaveImages(SaveMode_t mode) {
       _saveImageMode = mode;
     }
     
-    inline VizSaveMode_t VizManager::GetSaveImageMode() const {
+    inline SaveMode_t VizManager::GetSaveImageMode() const {
       return _saveImageMode;
     }
     
-    inline void VizManager::SaveRobotState(VizSaveMode_t mode) {
+    inline void VizManager::SaveRobotState(SaveMode_t mode) {
       _saveRobotStateMode = mode;
     }
     
-    inline VizSaveMode_t VizManager::GetSaveRobotStateMode() const {
+    inline SaveMode_t VizManager::GetSaveRobotStateMode() const {
       return _saveRobotStateMode;
     }
     
