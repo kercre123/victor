@@ -47,6 +47,7 @@ class BlockProxyServer(BaseSubServer):
         self.log("Closing BlockProxyServer\n")
         BaseSubServer.stop(self)
         self.standby()
+        self.blockSocket.close()
 
     def standby(self):
         "Tell all the blocks to shut down"

@@ -48,6 +48,18 @@
 // how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
 #define PLAN_ERROR_FOR_REPLAN 20.0
 
+
+// The min absolute difference between the commanded end pose angle
+// and the end pose angle of the generated plan that is required
+// in order for a point turn to be appended to the path such that
+// the end pose angle of the path is the commanded one.
+const f32 TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD = DEG_TO_RAD_F32(2.f);
+
+const f32 TERMINAL_POINT_TURN_SPEED = 1.5f;
+const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
+const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -72,6 +84,7 @@ public:
   xythetaEnvironment env_;
   xythetaPlanner planner_;
   xythetaPlan totalPlan_;
+  Pose3d targetPose_orig_;
 
   const LatticePlanner* _parent;
 };
@@ -193,6 +206,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     return PLAN_NEEDED_BUT_PLAN_FAILURE;
   }
    */
+  
+  // Save original target pose
+  impl_->targetPose_orig_ = targetPose;
   
   State_c target(targetPose.GetTranslation().x(),
                     targetPose.GetTranslation().y(),
@@ -403,6 +419,50 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         }
       }
     }
+    
+
+    // Do final check on how close the plan's goal angle is to the originally requested goal angle
+    // and either add a point turn at the end or modify the last point turn action.
+    u8 numSegments = path.GetNumSegments();
+    Radians desiredGoalAngle = impl_->targetPose_orig_.GetRotationAngle<'Z'>();
+    
+    if (numSegments > 0) {
+        // TODO: Should we expect to see empty paths here? Ask Brad.
+    
+      const PathSegment& lastSeg = path.GetSegmentConstRef(numSegments-1);
+      f32 end_x, end_y, end_angle;
+      lastSeg.GetEndPose(end_x, end_y, end_angle);
+      Radians plannedGoalAngle(end_angle);
+      f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
+      
+      if (abs(angDiff) > TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD) {
+        
+        f32 turnDir = angDiff > 0 ? 1.f : -1.f;
+        f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
+        
+        switch(lastSeg.GetType()) {
+          case Planning::PST_LINE:
+          case Planning::PST_ARC:
+          {
+            break;
+          }
+          case Planning::PST_POINT_TURN:
+          {
+            rotSpeed = abs(lastSeg.GetTargetSpeed()) * turnDir;
+            path.PopBack(1);
+            break;
+          }
+        }
+        
+        path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
+                             rotSpeed,
+                             TERMINAL_POINT_TURN_ACCEL,
+                             TERMINAL_POINT_TURN_DECEL);
+        
+      }
+    }
+    
+    
 
     return DID_PLAN;
   }

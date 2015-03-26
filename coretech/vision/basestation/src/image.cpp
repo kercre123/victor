@@ -171,6 +171,7 @@ namespace Vision {
   , _imgWidth(0)
   , _imgHeight(0)
   , _expectedChunkId(0)
+  , _isImgValid(false)
   {
     
   }
@@ -185,8 +186,6 @@ namespace Vision {
       return false;
     }
     
-    bool isImgValid = false;
-    
     // If msgID has changed, then start over.
     if (newImageId != _imgID) {
       _imgID = newImageId;
@@ -194,7 +193,7 @@ namespace Vision {
       _imgWidth  = ncols;
       _imgHeight = nrows;
       _imgData.resize(_imgWidth*_imgHeight*3);
-      isImgValid = chunkId == 0;
+      _isImgValid = chunkId == 0;
       _expectedChunkId = 0;
     }
     
@@ -202,21 +201,20 @@ namespace Vision {
     if (chunkId != _expectedChunkId) {
       PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
                        "Expected chunk %d, got %d\n", _expectedChunkId, chunkId);
-      isImgValid = false;
-    } else {
-      isImgValid = true;
+      _isImgValid = false;
     }
+    
     _expectedChunkId = chunkId + 1;
     
     // We've received all data when the msg chunkSize is less than the max
     const bool isLastChunk =  chunkId == totalChunkCount-1;
     
-    if (!isImgValid) {
+    if (!_isImgValid) {
       if (isLastChunk) {
         PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
                          "Received last chunk of invalidated image\n");
       }
-      return RESULT_FAIL;
+      return false;
     }
     
     // Msgs are guaranteed to be received in order (with TCP) so just append data to array

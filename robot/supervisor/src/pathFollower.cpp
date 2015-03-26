@@ -560,9 +560,9 @@ namespace Anki
           
           PRINT("PathFollower.DriveStraight.VPGRetry: Trying simple path with instantaneous accel");
 
-          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01 * duration_sec,
-                                              dist_mm, 0.01 * duration_sec,
-                                              10000, 10000,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01f * duration_sec,
+                                              dist_mm, 0.01f * duration_sec,
+                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT) ) {
           
             PRINT("PathFollower.DriveStraight.VPGFail");
@@ -630,9 +630,9 @@ namespace Anki
           
           PRINT("PathFollower.DriveArc.VPGRetry: Trying simple path with instantaneous accel");
           
-          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01 * duration_sec,
-                                              sweep_rad, 0.01 * duration_sec,
-                                              100, 100,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01f * duration_sec,
+                                              sweep_rad, 0.01f * duration_sec,
+                                              100.f, 100.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT) ) {
             
             PRINT("PathFollower.DriveArc.VPGFail");
@@ -699,12 +699,12 @@ namespace Anki
         
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
-                                            10000, 10000,  // TODO: maxVel, maxAccel
+                                            10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                             duration_sec, CONTROL_DT)) {
           
-          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01 * duration_sec,
-                                              sweep_rad, 0.01 * duration_sec,
-                                              10000, 10000,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01f * duration_sec,
+                                              sweep_rad, 0.01f * duration_sec,
+                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT)) {
 
             PRINT("WARN: DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version \n", sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
