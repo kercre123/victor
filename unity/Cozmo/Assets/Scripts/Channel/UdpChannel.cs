@@ -6,16 +6,14 @@ using System.IO;
 using System.Text;
 using Anki.Cozmo;
 
-// LostPolygon System.Net replacement only seems to work in editor
-#if UNITY_EDITOR
-using LostPolygon.System.Net;
-using LostPolygon.System.Net.Sockets;
-using LostPolygon.System.Net.NetworkInformation;
-#else
+// LostPolygon replacement doesn't seem to work on device
+// eventually we should replace this file with reliable C++ UDP anyway though
+//using LostPolygon.System.Net;
+//using LostPolygon.System.Net.Sockets;
+//using LostPolygon.System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
-#endif
 
 public class UdpChannel : ChannelBase {
 
