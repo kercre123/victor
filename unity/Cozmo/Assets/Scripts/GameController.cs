@@ -47,7 +47,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -83,7 +83,7 @@ public class GameController : MonoBehaviour {
 	void OnDisable () {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -182,7 +182,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
-		if(buildInstructions != null) buildInstructions.gameObject.SetActive(true);
+		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(true);
 	}
 	protected virtual void Update_BUILDING() {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
@@ -191,7 +191,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 	}
 		
 	protected virtual void Enter_PLAYING() {
