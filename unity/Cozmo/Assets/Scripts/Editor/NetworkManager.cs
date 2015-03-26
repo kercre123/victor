@@ -15,11 +15,10 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
-using     System.Net.Sockets;
-using     System.Net;
 using System.Threading;
-
   
 /// <summary>
 /// simple implementation of tcp server. listens for incomming connections and spawns a new worker thread for each connection
