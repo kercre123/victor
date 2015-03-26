@@ -78,7 +78,7 @@ class CameraSubServer(BaseSubServer):
 
         hostname = socket.gethostname()
         assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
-        if hostname == 'cozmo':
+        if isfile('mt9p031'):
             self.camDev = "mt9p031"
             self.camInt = ""
         else:
