@@ -216,22 +216,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	public void ForceDropBox()
-	{
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.SetRobotCarryingObject();
-		}
-	}
-
-	public void ForceClearAll()
-	{
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.ClearAllBlocks();
-		}
-	}
-
 	private void RequestImage()
 	{
 		if( !imageRequested && RobotEngineManager.instance != null )

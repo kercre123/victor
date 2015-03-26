@@ -18,7 +18,6 @@ public class RobotEngineManager : MonoBehaviour {
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
-	[SerializeField] private Text batteryPercentage;
 
 	[SerializeField]
 	[HideInInspector]
@@ -243,9 +242,6 @@ public class RobotEngineManager : MonoBehaviour {
 			break;
 		case G2U_Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
-			if (current != null && batteryPercentage != null) {
-			   batteryPercentage.text = current.batteryPercent.ToString("0.0%");
-			}
 			break;
 		case G2U_Message.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
