@@ -7,52 +7,31 @@ add_definitions(-DCORETECH_BASESTATION)
 
 set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
-file(GLOB CLAD_SOURCES "*.clad")
+file(GLOB_RECURSE CLAD_SOURCES "*.clad")
 
-file(GLOB CLAD_DEPENDENCIES "${CLAD_DIR}/parser/*.py" "${CLAD_DIR}/emitters/*.py")
-set(CLAD_BUILD_DIR "${CMAKE_BINARY_DIR}/clad")
+file(GLOB CLAD_DEPENDENCIES "${CLAD_DIR}/clad/*.py" "${CLAD_DIR}/emitters/*.py" "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
 
-set(CLAD_CPP_OUTPUTS)
-set(CLAD_CS_OUTPUTS)
 foreach(SOURCE ${CLAD_SOURCES})
     GET_FILENAME_COMPONENT(SOURCE_BASE ${SOURCE} NAME_WE)
-    set(CPP_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.def")
-    set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.def")
-    set(CS_BUILD "${CLAD_BUILD_DIR}/${SOURCE_BASE}.cs")
+    set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/src/comms/messaging/${SOURCE_BASE}.cpp")
+    set(HPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.def")
     set(CS_OUTPUT "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel/${SOURCE_BASE}.cs")
-    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CPP_BUILD} ${CS_BUILD})
+    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CPP_OUTPUT} ${HPP_OUTPUT} ${CS_OUTPUT})
     add_custom_command(
-        OUTPUT ${CPP_BUILD}
-        COMMAND mkdir -p ${CLAD_BUILD_DIR}
-        COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -n Anki -n Cozmo ${SOURCE} > ${CPP_BUILD}
-        COMMAND diff ${CPP_BUILD} ${CPP_OUTPUT} > /dev/null || cp ${CPP_BUILD} ${CPP_OUTPUT} && touch ${CPP_OUTPUT}
+        OUTPUT ${CPP_OUTPUT}
+        COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -o ${CPP_OUTPUT} -r ${HPP_OUTPUT} "${SOURCE}"
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         VERBATIM
     )
     add_custom_command(
-        OUTPUT ${CS_BUILD}
-        COMMAND mkdir -p ${CLAD_BUILD_DIR}
-        COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -n Anki.Cozmo ${SOURCE} > ${CS_BUILD}
-        COMMAND diff ${CS_BUILD} ${CS_OUTPUT} > /dev/null || cp ${CS_BUILD} ${CS_OUTPUT} && touch ${CS_OUTPUT}
+        OUTPUT ${CS_OUTPUT}
+        COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -o ${CS_OUTPUT} "${SOURCE}"
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         VERBATIM
     )
 endforeach()
-
-#set(SAFE_MESSAGE_BUFFER_FILES "${CLAD_DIR}/emitters/SafeMessageBuffer.h" "${CLAD_DIR}/emitters/SafeMessageBuffer.cpp")
-#foreach(SOURCE ${SAFE_MESSAGE_BUFFER_FILES})
-#    set(OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE}")
-#    set(CLAD_COMMAND "${SOURCE}.xxx")
-#    set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CLAD_COMMAND})
-#    add_custom_command(
-#        OUTPUT ${CLAD_COMMAND}
-#        COMMAND diff ${SOURCE} ${OUTPUT} > /dev/null || cp ${SOURCE} ${OUTPUT}
-#        MAIN_DEPENDENCY ${SOURCE}
-#        VERBATIM
-#    )
-#endforeach()
 
 #include_directories(
 #    "${CLAD_DIR}/emitters")
@@ -77,10 +56,11 @@ file(GLOB HEADER_FILES_COMMS "comms/*.h")
 
 # comms/messaging src dir
 file(GLOB SOURCE_FILES_COMMS_MESSAGING "comms/messaging/*.cpp")
-file(GLOB HEADER_FILES_COMMS_MESSAGING "comms/messaging/*")
+file(GLOB HEADER_FILES_COMMS_MESSAGING_H "comms/messaging/*.h")
+file(GLOB HEADER_FILES_COMMS_MESSAGING_DEF "comms/messaging/*.def")
 
-set(SOURCE_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.cpp")
-set(HEADER_FILES_CLAD "${CLAD_DIR}/emitters/SafeMessageBuffer.h")
+file(GLOB_RECURSE SOURCE_FILES_CLAD "${CLAD_DIR}/support/cpp/*.cpp")
+file(GLOB_RECURSE HEADER_FILES_CLAD "${CLAD_DIR}/support/cpp/*.h")
 
 set(PRIVATE_HEADER_FILES
   ${HEADER_FILES_ROOT}
@@ -112,7 +92,8 @@ set(PUBLIC_HEADER_FILES
   ${PUBLIC_HEADER_FILES_ROOT}
   ${PUBLIC_HEADER_FILES_SIGNALS}
   ${PUBLIC_HEADER_FILES_COMMS}
-  ${PUBLIC_HEADER_FILES_COMMS_MESSAGING}
+  ${PUBLIC_HEADER_FILES_COMMS_MESSAGING_H}
+  ${PUBLIC_HEADER_FILES_COMMS_MESSAGING_DEF}
 )
 
 add_library(Cozmo_Game
