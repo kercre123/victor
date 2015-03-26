@@ -214,6 +214,7 @@ namespace Anki {
                                       msg.skew);
       
       robot->SetCameraCalibration(calib);
+      robot->SetPhysicalRobot(msg.isPhysicalRobot);
       
       return RESULT_OK;
     }

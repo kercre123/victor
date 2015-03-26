@@ -438,7 +438,8 @@ namespace Anki {
     void ManagePointTurn()
     {
       if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
-        RunLineFollowControllerNL(0,0);
+        f32 headingError = SpeedController::GetControllerCommandedVehicleSpeed() < 0 ? PI_F : 0;
+        RunLineFollowControllerNL(0,headingError);
         return;
       }
 

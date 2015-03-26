@@ -145,6 +145,7 @@ namespace Vision {
     u32              _imgBytes;
     u32              _imgWidth, _imgHeight;
     u8               _expectedChunkId;
+    bool             _isImgValid;
     
     cv::Mat          _img;
     

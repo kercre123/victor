@@ -9,6 +9,7 @@ then
     echo "Stopping cozmo server: "
     killall python
     killall gst-launch-0.10
+    sleep 10
 fi
 
 if [ "$1" = "start" -o "$1" = "restart" ]
