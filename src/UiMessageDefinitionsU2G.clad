@@ -295,12 +295,29 @@ message U2G_SetFaceDetectParams {
 }
 
 // SetActiveObjectLEDs
-// TODO: Support setting individual LEDs colors/flashrates
 message U2G_SetActiveObjectLEDs {
-    uint_32 objectID,
-    uint_32 ledColors,
-    uint_32 onPeriod_ms,
-    uint_32 offPeriod_ms
+    uint_32  objectID,
+    uint_32  color,
+    uint_32  onPeriod_ms,
+    uint_32  offPeriod_ms,
+    float_32 relativeToX,
+    float_32 relativeToY,
+    uint_8   whichLEDs,    // Bit pattern: see ActiveBlock.h
+    uint_8   makeRelative, // if 0, ignores relativeX/relativeY
+    uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
+    uint_8   robotID
+}
+
+// SetAllActiveObjectLEDs
+message U2G_SetAllActiveObjectLEDs {
+  uint_32  objectID,
+  uint_32  color[8],
+  uint_32  onPeriod_ms[8],
+  uint_32  offPeriod_ms[8],
+  float_32 relativeToX,
+  float_32 relativeToY,
+  uint_8   makeRelative,  // if 0, ignores relativeX/relativeY
+  uint_8   robotID
 }
 
 union U2G_Message {
@@ -353,5 +370,6 @@ union U2G_Message {
     U2G_StopLookingForMarkers StopLookingForMarkers,
     U2G_SetVisionSystemParams SetVisionSystemParams,
     U2G_SetFaceDetectParams SetFaceDetectParams,
-    U2G_SetActiveObjectLEDs SetActiveObjectLEDs
+    U2G_SetActiveObjectLEDs SetActiveObjectLEDs,
+    U2G_SetAllActiveObjectLEDs SetAllActiveObjectLEDs
 }

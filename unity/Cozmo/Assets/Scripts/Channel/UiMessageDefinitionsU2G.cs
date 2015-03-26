@@ -2741,9 +2741,15 @@ public class U2G_SetFaceDetectParams
 public class U2G_SetActiveObjectLEDs
 {
 	public uint objectID;
-	public uint ledColors;
+	public uint color;
 	public uint onPeriod_ms;
 	public uint offPeriod_ms;
+	public float relativeToX;
+	public float relativeToY;
+	public byte whichLEDs;
+	public byte makeRelative;
+	public byte turnOffUnspecifiedLEDs;
+	public byte robotID;
 
 	/**** Constructors ****/
 
@@ -2752,14 +2758,26 @@ public class U2G_SetActiveObjectLEDs
 	}
 
 	public U2G_SetActiveObjectLEDs(uint objectID,
-		uint ledColors,
+		uint color,
 		uint onPeriod_ms,
-		uint offPeriod_ms)
+		uint offPeriod_ms,
+		float relativeToX,
+		float relativeToY,
+		byte whichLEDs,
+		byte makeRelative,
+		byte turnOffUnspecifiedLEDs,
+		byte robotID)
 	{
 		this.objectID = objectID;
-		this.ledColors = ledColors;
+		this.color = color;
 		this.onPeriod_ms = onPeriod_ms;
 		this.offPeriod_ms = offPeriod_ms;
+		this.relativeToX = relativeToX;
+		this.relativeToY = relativeToY;
+		this.whichLEDs = whichLEDs;
+		this.makeRelative = makeRelative;
+		this.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
+		this.robotID = robotID;
 	}
 
 	public U2G_SetActiveObjectLEDs(System.IO.Stream stream)
@@ -2768,12 +2786,24 @@ public class U2G_SetActiveObjectLEDs
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//objectID
 		objectID = (uint)(reader.ReadUInt32());
-		//ledColors
-		ledColors = (uint)(reader.ReadUInt32());
+		//color
+		color = (uint)(reader.ReadUInt32());
 		//onPeriod_ms
 		onPeriod_ms = (uint)(reader.ReadUInt32());
 		//offPeriod_ms
 		offPeriod_ms = (uint)(reader.ReadUInt32());
+		//relativeToX
+		relativeToX = (float)(reader.ReadSingle());
+		//relativeToY
+		relativeToY = (float)(reader.ReadSingle());
+		//whichLEDs
+		whichLEDs = (byte)(reader.ReadByte());
+		//makeRelative
+		makeRelative = (byte)(reader.ReadByte());
+		//turnOffUnspecifiedLEDs
+		turnOffUnspecifiedLEDs = (byte)(reader.ReadByte());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
 	}
 
 	/**** Pack ****/
@@ -2781,9 +2811,15 @@ public class U2G_SetActiveObjectLEDs
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
 		writer.Write((uint)objectID);
-		writer.Write((uint)ledColors);
+		writer.Write((uint)color);
 		writer.Write((uint)onPeriod_ms);
 		writer.Write((uint)offPeriod_ms);
+		writer.Write((float)relativeToX);
+		writer.Write((float)relativeToY);
+		writer.Write((byte)whichLEDs);
+		writer.Write((byte)makeRelative);
+		writer.Write((byte)turnOffUnspecifiedLEDs);
+		writer.Write((byte)robotID);
 		return stream;
 	}
 
@@ -2793,12 +2829,24 @@ public class U2G_SetActiveObjectLEDs
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
 		//objectID
 		objectID = (uint)(reader.ReadUInt32());
-		//ledColors
-		ledColors = (uint)(reader.ReadUInt32());
+		//color
+		color = (uint)(reader.ReadUInt32());
 		//onPeriod_ms
 		onPeriod_ms = (uint)(reader.ReadUInt32());
 		//offPeriod_ms
 		offPeriod_ms = (uint)(reader.ReadUInt32());
+		//relativeToX
+		relativeToX = (float)(reader.ReadSingle());
+		//relativeToY
+		relativeToY = (float)(reader.ReadSingle());
+		//whichLEDs
+		whichLEDs = (byte)(reader.ReadByte());
+		//makeRelative
+		makeRelative = (byte)(reader.ReadByte());
+		//turnOffUnspecifiedLEDs
+		turnOffUnspecifiedLEDs = (byte)(reader.ReadByte());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
 		return stream;
 	}
 	public int Size
@@ -2807,12 +2855,174 @@ public class U2G_SetActiveObjectLEDs
 			int result = 0;
 			//objectID
 			result += 4; // = uint_32
-			//ledColors
+			//color
 			result += 4; // = uint_32
 			//onPeriod_ms
 			result += 4; // = uint_32
 			//offPeriod_ms
 			result += 4; // = uint_32
+			//relativeToX
+			result += 4; // = float_32
+			//relativeToY
+			result += 4; // = float_32
+			//whichLEDs
+			result += 1; // = uint_8
+			//makeRelative
+			result += 1; // = uint_8
+			//turnOffUnspecifiedLEDs
+			result += 1; // = uint_8
+			//robotID
+			result += 1; // = uint_8
+			return result;
+		}
+	}
+}
+
+public class U2G_SetAllActiveObjectLEDs
+{
+	public uint objectID;
+	public uint[] color;
+	public uint[] onPeriod_ms;
+	public uint[] offPeriod_ms;
+	public float relativeToX;
+	public float relativeToY;
+	public byte makeRelative;
+	public byte robotID;
+
+	/**** Constructors ****/
+
+	public U2G_SetAllActiveObjectLEDs()
+	{
+		this.color = new uint[8];
+		this.onPeriod_ms = new uint[8];
+		this.offPeriod_ms = new uint[8];
+	}
+
+	public U2G_SetAllActiveObjectLEDs(uint objectID,
+		uint[] color,
+		uint[] onPeriod_ms,
+		uint[] offPeriod_ms,
+		float relativeToX,
+		float relativeToY,
+		byte makeRelative,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		if (color.Length != 8) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 8.", "color");
+		}
+		this.color = color;
+		if (onPeriod_ms.Length != 8) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 8.", "onPeriod_ms");
+		}
+		this.onPeriod_ms = onPeriod_ms;
+		if (offPeriod_ms.Length != 8) {
+			throw new System.ArgumentException("Argument has wrong length. Expected length 8.", "offPeriod_ms");
+		}
+		this.offPeriod_ms = offPeriod_ms;
+		this.relativeToX = relativeToX;
+		this.relativeToY = relativeToY;
+		this.makeRelative = makeRelative;
+		this.robotID = robotID;
+	}
+
+	public U2G_SetAllActiveObjectLEDs(System.IO.Stream stream)
+		: this()
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//color
+		for (int i = 0; i < 8; i++) {
+			color[i] = (uint)reader.ReadUInt32();
+		}
+		//onPeriod_ms
+		for (int i = 0; i < 8; i++) {
+			onPeriod_ms[i] = (uint)reader.ReadUInt32();
+		}
+		//offPeriod_ms
+		for (int i = 0; i < 8; i++) {
+			offPeriod_ms[i] = (uint)reader.ReadUInt32();
+		}
+		//relativeToX
+		relativeToX = (float)(reader.ReadSingle());
+		//relativeToY
+		relativeToY = (float)(reader.ReadSingle());
+		//makeRelative
+		makeRelative = (byte)(reader.ReadByte());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+	}
+
+	/**** Pack ****/
+	public System.IO.Stream Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		writer.Write((uint)objectID);
+		for (int i = 0; i < color.Length; i++) {
+			writer.Write((uint)color[i]);
+		}
+		for (int i = 0; i < onPeriod_ms.Length; i++) {
+			writer.Write((uint)onPeriod_ms[i]);
+		}
+		for (int i = 0; i < offPeriod_ms.Length; i++) {
+			writer.Write((uint)offPeriod_ms[i]);
+		}
+		writer.Write((float)relativeToX);
+		writer.Write((float)relativeToY);
+		writer.Write((byte)makeRelative);
+		writer.Write((byte)robotID);
+		return stream;
+	}
+
+	/**** Unpack ****/
+	public System.IO.Stream Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		//objectID
+		objectID = (uint)(reader.ReadUInt32());
+		//color
+		for (int i = 0; i < 8; i++) {
+			color[i] = (uint)reader.ReadUInt32();
+		}
+		//onPeriod_ms
+		for (int i = 0; i < 8; i++) {
+			onPeriod_ms[i] = (uint)reader.ReadUInt32();
+		}
+		//offPeriod_ms
+		for (int i = 0; i < 8; i++) {
+			offPeriod_ms[i] = (uint)reader.ReadUInt32();
+		}
+		//relativeToX
+		relativeToX = (float)(reader.ReadSingle());
+		//relativeToY
+		relativeToY = (float)(reader.ReadSingle());
+		//makeRelative
+		makeRelative = (byte)(reader.ReadByte());
+		//robotID
+		robotID = (byte)(reader.ReadByte());
+		return stream;
+	}
+	public int Size
+	{
+		get {
+			int result = 0;
+			//objectID
+			result += 4; // = uint_32
+			//color
+			result += 4 * 8; // = uint_32 * 8
+			//onPeriod_ms
+			result += 4 * 8; // = uint_32 * 8
+			//offPeriod_ms
+			result += 4 * 8; // = uint_32 * 8
+			//relativeToX
+			result += 4; // = float_32
+			//relativeToY
+			result += 4; // = float_32
+			//makeRelative
+			result += 1; // = uint_8
+			//robotID
+			result += 1; // = uint_8
 			return result;
 		}
 	}
@@ -2870,6 +3080,7 @@ public class U2G_Message {
 		SetVisionSystemParams,	//47
 		SetFaceDetectParams,	//48
 		SetActiveObjectLEDs,	//49
+		SetAllActiveObjectLEDs,	//50
 		INVALID
 	};
 
@@ -3729,6 +3940,23 @@ public class U2G_Message {
 		}
 	}
 
+	public U2G_SetAllActiveObjectLEDs SetAllActiveObjectLEDs
+	{
+		get {
+			if (_tag != Tag.SetAllActiveObjectLEDs) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetAllActiveObjectLEDs\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (U2G_SetAllActiveObjectLEDs)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetAllActiveObjectLEDs : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -3884,6 +4112,9 @@ public class U2G_Message {
 			break;
 		case Tag.SetActiveObjectLEDs:
 			_state = new U2G_SetActiveObjectLEDs(stream);
+			break;
+		case Tag.SetAllActiveObjectLEDs:
+			_state = new U2G_SetAllActiveObjectLEDs(stream);
 			break;
 		default:
 			break;
@@ -4047,6 +4278,9 @@ public class U2G_Message {
 		case Tag.SetActiveObjectLEDs:
 			SetActiveObjectLEDs.Pack(stream);
 			break;
+		case Tag.SetAllActiveObjectLEDs:
+			SetAllActiveObjectLEDs.Pack(stream);
+			break;
 		default:
 			break;
 		}
@@ -4207,6 +4441,9 @@ public class U2G_Message {
 				break;
 			case Tag.SetActiveObjectLEDs:
 				result += SetActiveObjectLEDs.Size;
+				break;
+			case Tag.SetAllActiveObjectLEDs:
+				result += SetAllActiveObjectLEDs.Size;
 				break;
 			default:
 				return 0;

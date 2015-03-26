@@ -103,6 +103,12 @@ case U2G_Message::Type::__MSG_TYPE__: \
         REGISTER_CALLBACK(SetVisionSystemParams)
         REGISTER_CALLBACK(SetFaceDetectParams)
         REGISTER_CALLBACK(SetActiveObjectLEDs)
+        REGISTER_CALLBACK(SetAllActiveObjectLEDs)
+          
+        default:
+          PRINT_NAMED_ERROR("CozmoGameImpl.RegisterCallbacksU2G",
+                            "Should not reach default case in message type switch "
+                            "statement (type=%d).\n", msg.GetType());
       }
     });
   } // RegisterCallbacksU2G()
@@ -730,15 +736,53 @@ case U2G_Message::Type::__MSG_TYPE__: \
     }
   }
   
+  
   void CozmoGameImpl::ProcessMessage(U2G_SetActiveObjectLEDs const& msg)
   {
-    const RobotID_t hostRobotID = 1; // TODO: Is the "host" robot that talks to the blocks always 1?
-    Robot* robot = GetRobotByID(hostRobotID);
+    Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
+      assert(msg.objectID <= s32_MAX);
       ObjectID whichObject;
       whichObject = msg.objectID;
-      robot->SetObjectLights(whichObject, msg.ledColors, msg.onPeriod_ms, msg.offPeriod_ms);
+      
+      robot->SetObjectLights(whichObject,
+                             static_cast<WhichLEDs>(msg.whichLEDs),
+                             msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+                             msg.turnOffUnspecifiedLEDs,
+                             msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+
+      /*
+      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
+      if(activeCube != nullptr) {
+        activeCube->SetLEDs(static_cast<ActiveCube::WhichLEDs>(msg.whichLEDs),
+                            msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
+        
+        if(msg.makeRelative) {
+          activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY));
+        }
+        
+             }
+       */
+    }
+  }
+  
+  void CozmoGameImpl::ProcessMessage(U2G_SetAllActiveObjectLEDs const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      assert(msg.objectID <= s32_MAX);
+      ObjectID whichObject;
+      whichObject = msg.objectID;
+      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
+      if(activeCube != nullptr) {
+        activeCube->SetLEDs(msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
+        
+        if(msg.makeRelative) {
+          activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY));
+        }
+      }
     }
   }
 

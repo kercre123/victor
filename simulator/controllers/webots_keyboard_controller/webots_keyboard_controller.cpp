@@ -6,6 +6,9 @@
  * Modifications: 
  */
 
+// TODO: Have CMake define this
+#define CORETECH_BASESTATION
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -21,6 +24,7 @@
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/block.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -173,6 +177,9 @@ namespace Anki {
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
+        
+        Point2f robotPosition_;
+        
         /*
         u32 imgID_ = 0;
         u8 imgData_[3*640*480];
@@ -235,6 +242,11 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
+      void HandleRobotStateUpdate(G2U_RobotState const& msg)
+      {
+        robotPosition_ = {msg.pose_x, msg.pose_y};
+      }
+      
       void HandleRobotObservedObject(G2U_RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
@@ -253,13 +265,13 @@ namespace Anki {
                               msg.img_topLeft_y + msg.img_height/2);
           
           const f32 area = msg.img_width * msg.img_height;
-          if(area > currentlyObservedObject.area) {
+          //if(area > currentlyObservedObject.area) {
             currentlyObservedObject.family = msg.objectFamily;
             currentlyObservedObject.type   = msg.objectType;
             currentlyObservedObject.id     = msg.objectID;
             currentlyObservedObject.isActive = msg.isActive;
             currentlyObservedObject.area   = area;
-          }
+          //}
           
           /*
           // DEBUG!!!
@@ -391,6 +403,9 @@ namespace Anki {
         // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
+            case G2U_Message::Type::RobotState:
+              HandleRobotStateUpdate(message.Get_RobotState());
+              break;
             case G2U_Message::Type::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
@@ -984,17 +999,45 @@ namespace Anki {
               {
                 if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
                 {
-                  printf("Cycling active block color\n");
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
-                  const u32 colorList[NUM_COLORS] = {0xFF0000, 0x00FF00, 0x0000FF, 0}; // R, G, B, off
+                  const ColorRGBA colorList[NUM_COLORS] = {
+                    NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+                    NamedColors::BLACK
+                  };
                   static s32 colorIndex = 0;
                   
                   U2G_SetActiveObjectLEDs msg;
                   msg.objectID = currentlyObservedObject.id;
-                  msg.ledColors= colorList[colorIndex++];
+                  msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
+                  msg.turnOffUnspecifiedLEDs = 1;
+                  if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                    printf("Updating active block corner\n");
+                    msg.color = NamedColors::RED;
+                    
+                    /*
+                    static WhichLEDs cornerList[NUM_COLORS] = {
+                      WhichLEDs::TOP_BTM_UPPER_LEFT,
+                      WhichLEDs::TOP_BTM_UPPER_RIGHT,
+                      WhichLEDs::TOP_BTM_LOWER_RIGHT,
+                      WhichLEDs::TOP_BTM_LOWER_LEFT
+                    };
+                    msg.whichLEDs = static_cast<u8>(cornerList[colorIndex++]);
+                    */
+                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_BTM_UPPER_LEFT);
+                    msg.makeRelative = 1;
+                    msg.relativeToX = robotPosition_.x();
+                    msg.relativeToY = robotPosition_.y();
+                    
+                  } else {
+                    printf("Cycling active block color\n");
+                    msg.color = colorList[colorIndex++];
+                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_FACE);
+                    msg.makeRelative = 0;
+                  }
+                  
                   if(colorIndex == NUM_COLORS) {
                     colorIndex = 0;
                   }
