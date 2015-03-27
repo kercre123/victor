@@ -18,6 +18,9 @@ file(GLOB CLAD_DEPENDENCIES
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
 
 foreach(SOURCE ${CLAD_SOURCES})
+    file(RELATIVE_PATH RELATIVE_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${SOURCE}")
+    
     GET_FILENAME_COMPONENT(SOURCE_BASE ${SOURCE} NAME_WE)
     file(RELATIVE_PATH CPP_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CMAKE_SOURCE_DIR}/src/comms/messaging/${SOURCE_BASE}.cpp")
@@ -29,7 +32,7 @@ foreach(SOURCE ${CLAD_SOURCES})
     
     add_custom_command(
         OUTPUT ${CPP_OUTPUT} ${HPP_OUTPUT}
-        COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -o ${CPP_OUTPUT} -r ${HPP_OUTPUT} "${SOURCE}"
+        COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -o ${CPP_OUTPUT} -r ${HPP_OUTPUT} ${RELATIVE_SOURCE}
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -37,7 +40,7 @@ foreach(SOURCE ${CLAD_SOURCES})
     )
     add_custom_command(
         OUTPUT ${CS_OUTPUT}
-        COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -o ${CS_OUTPUT} "${SOURCE}"
+        COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -o ${CS_OUTPUT} ${RELATIVE_SOURCE}
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
