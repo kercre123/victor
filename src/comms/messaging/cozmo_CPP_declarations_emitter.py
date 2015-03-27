@@ -30,7 +30,7 @@ class UnionDeclarationEmitter(ast.NodeVisitor):
     
     def visit_UnionDecl(self, node):
         for member in node.members():
-            self.buf.write('\tvoid Process_{member_name}(const {member_type}& msg);\n'.format(
+            self.buf.write('void Process_{member_name}(const {member_type}& msg);\n'.format(
                 member_name=member.name, member_type=cast_type(member.type)))
 
 if __name__ == '__main__':

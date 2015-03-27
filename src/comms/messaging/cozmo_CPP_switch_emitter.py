@@ -38,20 +38,20 @@ class UnionSwitchEmitter(ast.NodeVisitor):
         
     def writeHeader(self, node, globals):
         self.buf.write(textwrap.dedent('''\
-        \tswitch(msg.GetType()) {{
-        \tdefault:
-        \t\tProcessBadType_{union_name}(msg.GetType());
-        \t\tbreak;
+        switch(msg.GetType()) {{
+        default:
+        \tProcessBadType_{union_name}(msg.GetType());
+        \tbreak;
         #''')[:-1].format(**globals))
     
     def writeFooter(self, node, globals):
-        self.buf.write('\t}\n')
+        self.buf.write('}\n')
         
     def writeMemberCases(self, node, globals):
         for member in node.members():
             self.buf.write(textwrap.dedent('''\
-                \tcase {qualified_union_name}::Type::{member_name}:
-                \t\tProcess_{member_name}(msg.Get_{member_name}());
+                case {qualified_union_name}::Type::{member_name}:
+                \tProcess_{member_name}(msg.Get_{member_name}());
                 #''')[:-1].format(member_name=member.name, **globals))
 
 if __name__ == '__main__':
