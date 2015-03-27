@@ -37,7 +37,7 @@ public class ActionButton
 	{
 		RobotEngineManager.instance.current.PickAndPlaceObject( index );
 	}
-	
+
 	public void Cancel()
 	{
 		Debug.Log( "Cancel" );
@@ -68,14 +68,17 @@ public class ActionButton
 			case ActionButtonMode.PICK_UP:
 				text.text = "Pick Up";
 				button.onClick.AddListener(PickAndPlaceObject);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.DROP:
 				text.text = "Drop";
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.STACK:
 				text.text = "Stack";
 				button.onClick.AddListener(PickAndPlaceObject);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.ROLL:
 				text.text = "Roll";
@@ -84,6 +87,7 @@ public class ActionButton
 			case ActionButtonMode.ALIGN:
 				text.text = "Align";
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.CHANGE:
 				text.text = "Change";
@@ -92,6 +96,7 @@ public class ActionButton
 			case ActionButtonMode.CANCEL:
 				text.text = "Cancel";
 				button.onClick.AddListener(Cancel);
+				button.onClick.AddListener(vision.CancelButtonClick);
 				break;
 		}
 		
@@ -123,6 +128,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
+	[SerializeField] protected AudioClip actionButtonSound;
+	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
@@ -341,6 +348,16 @@ public class CozmoVision : MonoBehaviour
 				dingTimes[1] = Time.time;
 			}
 		}*/
+	}
+
+	public void ActionButtonClick()
+	{
+		audio.PlayOneShot( actionButtonSound );
+	}
+
+	public void CancelButtonClick()
+	{
+		audio.PlayOneShot( cancelButtonSound );
 	}
 
 	protected virtual void LateUpdate()
