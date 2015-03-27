@@ -445,15 +445,9 @@ namespace Anki {
         };
         
         cv::Mat cvImg;
-#       if USE_COLOR_IMAGES
         cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
-#       else
-        Result lastResult = ArrayToCvMat(img, &cvImg);
-        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK,
-                                      "CompressAndSendImage.ArrayToCvMat failure.",
-                                      "Failed to convert input array to cv::Mat for compression.\n");
-#       endif
-        
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
         
@@ -467,7 +461,7 @@ namespace Anki {
         m.chunkId = 0;
         m.chunkSize = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        m.imageEncoding = (USE_COLOR_IMAGES ? IE_JPEG_COLOR : IE_JPEG_GRAY);
+        m.imageEncoding = Vision::IE_JPEG_COLOR;
         
         u32 totalByteCnt = 0;
         u32 chunkByteCnt = 0;
@@ -2579,10 +2573,10 @@ namespace Anki {
               // Nope, so get the (new) available frame from the camera:
               VisionMemory::ResetBuffers();
               const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-              const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width * (USE_COLOR_IMAGES ? 3 : 1);
+              const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
               
               Array<u8> image(captureHeight, captureWidth,
-                                       VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
+                              VisionMemory::offchipScratch_, Flags::Buffer(false,false,false));
               
               HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
                                   captureResolution_, false);

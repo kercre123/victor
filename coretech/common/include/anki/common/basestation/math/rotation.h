@@ -46,7 +46,7 @@ namespace Anki {
     // also make sure things stay normalized
     RotationMatrixBase<DIM>  operator* (const RotationMatrixBase<DIM>& R_other) const;
     RotationMatrixBase<DIM>& operator*=(const RotationMatrixBase<DIM>& R_other);
-    RotationMatrixBase<DIM>& preMultiplyBy(const RotationMatrixBase<DIM>& R_other);
+    RotationMatrixBase<DIM>& PreMultiplyBy(const RotationMatrixBase<DIM>& R_other);
     
     // Matrix inversion and transpose just negate the change the sign of the
     // rotation angle
@@ -128,12 +128,21 @@ namespace Anki {
     inline T& y() { return this->operator[](2); }
     inline T& z() { return this->operator[](3); }
     
+    bool operator==(const UnitQuaternion<T>& other) const;
+    
     // Quaternion multiplication
     UnitQuaternion<T>  operator* (const UnitQuaternion<T>& other) const;
     UnitQuaternion<T>& operator*=(const UnitQuaternion<T>& other);
     
+    // Rotation of a point/vector
+    Point3<T> operator*(const Point3<T>& p) const;
+    
     // Normalize to unit length
     UnitQuaternion<T>& Normalize();
+    
+    // Conjugate
+    UnitQuaternion<T>& Conj(); // in place
+    UnitQuaternion<T>  GetConj() const;
     
     // How far from unit length the quaternion needs to get in order to trigger
     // a renormalization
@@ -153,8 +162,15 @@ namespace Anki {
     Rotation3d(const RotationVector3d& Rvec);
     Rotation3d(const RotationMatrix3d& Rmat);
     
+    bool operator==(const Rotation3d& other) const;
+    
+    // Compose rotations
     Rotation3d& operator*=(const Rotation3d& other);
     Rotation3d  operator* (const Rotation3d& other) const;
+    Rotation3d& PreMultiplyBy(const Rotation3d& other);
+    
+    // Rotate a point/vector
+    Point3<float> operator*(const Point3<float>& p) const;    
     
     const UnitQuaternion<float>& GetQuaternion()     const { return _q; }
     const RotationMatrix3d       GetRotationMatrix() const;
@@ -162,6 +178,13 @@ namespace Anki {
     
     const Radians GetAngle() const;
     const Vec3f   GetAxis()  const;
+    
+    Radians GetAngleAroundXaxis() const;
+    Radians GetAngleAroundYaxis() const;
+    Radians GetAngleAroundZaxis() const;
+    
+    Rotation3d& Invert();
+    Rotation3d  GetInverse() const;
     
   private:
     UnitQuaternion<float> _q;
@@ -227,6 +250,10 @@ namespace Anki {
   }
   
   inline const Vec3f& RotationVector3d::GetAxis(void) const {
+    if (_angle == 0) {
+      // A zero degree rotation means the axis of rotation will be a null vector
+      return Z_AXIS_3D;
+    }
     return _axis;
   }
   

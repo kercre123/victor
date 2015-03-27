@@ -197,7 +197,7 @@ namespace Anki {
     SmallSquareMatrix<DIM,T>& operator*=(const SmallSquareMatrix<DIM,T_other> &other);
     // ... this = other * this;
     template<typename T_other>
-    SmallSquareMatrix<DIM,T>& preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
+    SmallSquareMatrix<DIM,T>& PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
        
     // Transpose: (Note that we can transpose square matrices in place)
     using SmallMatrix<DIM,DIM,T>::GetTranspose;

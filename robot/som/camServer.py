@@ -54,7 +54,7 @@ class CameraSubServer(BaseSubServer):
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG_COLOR
-    ENCODER_QUALITY       = 70
+    ENCODER_QUALITY       = 50
 
     ENCODER_LATEANCY = 2.0 # ms, determiend imperically
 
@@ -78,7 +78,7 @@ class CameraSubServer(BaseSubServer):
 
         hostname = socket.gethostname()
         assert hostname.startswith('cozmo'), "Hostname must be of the format cozmo#"
-        if hostname == 'cozmo':
+        if isfile('mt9p031'):
             self.camDev = "mt9p031"
             self.camInt = ""
         else:
@@ -195,9 +195,11 @@ class CameraSubServer(BaseSubServer):
         if self.encoderSocket not in rfds: # Timeout
             return
         frame = None
+        nFramesBuffered = 0
         try:
             while True: # Receive all the datagrams and throw out all but the last one
                 frame = self.encoderSocket.recv(MTU)
+                nFramesBuffered += 1
         except socket.error, e:
             if e.errno == 11: # No more data, this is how we expect to exit the loop
                 if self.tfr:
@@ -222,6 +224,8 @@ class CameraSubServer(BaseSubServer):
                         time.sleep(0.001) # Allow a little time for the UDP socket to process
                     if self.sendMode == messages.ISM_SINGLE_SHOT:
                         self.sendMode = messages.ISM_OFF
+                    if nFramesBuffered > 1:
+                        self.log("Dropped %d frames, chunk count=%d\n" % (nFramesBuffered - 1, msg.imageChunkCount))
                 self.sendModeLock.release()
             elif e.errno == socket.EBADF and self._continue == False:
                 return

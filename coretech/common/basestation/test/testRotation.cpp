@@ -153,6 +153,37 @@ GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
   
 } // TestRotation:ExtractAnglesFromMatrix
 
+
+GTEST_TEST(TestRotation, ExtractAnglesFromRotation3d)
+{
+  std::vector<f32> testAngles = {
+    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
+    291.f, 333.f, 352.f, 360.f, 378.f
+  };
+  
+  const f32 signs[2] = {-1.f, 1.f};
+  
+  const f32 TOLERANCE = 1e-6f;
+  
+  for(auto angle : testAngles) {
+    for(auto sign : signs) {
+      const Radians curAngle = DEG_TO_RAD(sign*angle);
+      
+      Rotation3d Rx(curAngle, X_AXIS_3D);
+      Rotation3d Ry(curAngle, Y_AXIS_3D);
+      Rotation3d Rz(curAngle, Z_AXIS_3D);
+      
+      EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+    }
+  }
+  
+} // TestRotation:ExtractAnglesFromRotation3d
+
 /*
 GTEST_TEST(TestRotation, EulerAngles)
 {

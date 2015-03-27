@@ -48,6 +48,7 @@ namespace Anki {
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
+    , _isPhysical(false)
     , _lastStateMsgTime_sec(-1.f)
     , _newStateMsgAvailable(false)
     , _msgHandler(msgHandler)
@@ -390,6 +391,26 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetPhysicalRobot(bool isPhysical)
+    {
+      if (_isPhysical != isPhysical) {
+        if (isPhysical) {
+          // "Recalibrate" camera pose within head for physical robot
+          // TODO: Do this properly!
+          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D));
+          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D));
+          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
+          PRINT_INFO("Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, x_trans_corr=%fmm\n", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_TRANS_X_CORR);
+        } else {
+          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
+          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
+          PRINT_INFO("Slop factor removed from head cam pose for simulated robot\n");
+        }
+        _isPhysical = isPhysical;
+      }
+      
+    }
+    
     Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
     {
       Result lastResult = RESULT_OK;
@@ -612,7 +633,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
+        //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -1854,7 +1875,7 @@ namespace Anki {
       m.xPosition = pose.GetTranslation().x();
       m.yPosition = pose.GetTranslation().y();
       
-      m.headingAngle = pose.GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
+      m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -2046,7 +2067,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix2d R(atPose.GetRotationMatrix().GetAngleAroundZaxis());
+      const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
       
       Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {

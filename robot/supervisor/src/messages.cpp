@@ -444,6 +444,11 @@ namespace Anki {
             headCamInfo->skew,
             headCamInfo->nrows,
             headCamInfo->ncols
+#           ifdef SIMULATOR
+            0
+#           else
+            1
+#           endif
           };
           
           if(!HAL::RadioSendMessage(CameraCalibration_ID, &headCalibMsg)) {

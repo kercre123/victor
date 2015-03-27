@@ -120,6 +120,10 @@ namespace Anki {
       // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
+      // Specify whether this robot is a physical robot or not.
+      // Currently, adjusts headCamPose by slop factor if it's physical.
+      void SetPhysicalRobot(bool isPhysical);
+      
       //
       // Pose (of the robot or its parts)
       //
@@ -417,6 +421,7 @@ namespace Anki {
       
       // The robot's identifier
       RobotID_t         _ID;
+      bool              _isPhysical;
       
       // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
       double            _lastStateMsgTime_sec;
@@ -477,7 +482,7 @@ namespace Anki {
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
       const Pose3d     _neckPose;     // joint around which head rotates
-      const Pose3d     _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+      Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
       const Pose3d     _liftBasePose; // around which the base rotates/lifts
       Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 

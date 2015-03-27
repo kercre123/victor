@@ -153,6 +153,11 @@ namespace Anki {
     // Default pose: no rotation, no translation, world as parent
     Pose3d();
     
+    // Construct from generic rotation and translation vector
+    Pose3d(const Rotation3d& R, const Vec3f& T,
+           const Pose3d* parentPose = nullptr,
+           const std::string& name = "");
+    
     // Construct from rotation vector and translation vector
     Pose3d(const RotationVector3d &Rvec, const Vec3f &T,
            const Pose3d *parentPose = nullptr,
@@ -170,8 +175,8 @@ namespace Anki {
            const std::string& name = "");
     
     // Construct from an angle, axis, and translation vector
-    Pose3d(const Radians angle, const Vec3f axis,
-           const Vec3f translation,
+    Pose3d(const Radians &angle, const Vec3f &axis,
+           const Vec3f &translation,
            const Pose3d *parentPose = nullptr,
            const std::string& name = "");
     
@@ -184,9 +189,10 @@ namespace Anki {
     //bool IsOrigin() const { return parent == nullptr; }
 
     // Accessors:
-    const RotationMatrix3d& GetRotationMatrix() const;
+    const Rotation3d&       GetRotation()       const;
     const Vec3f&            GetTranslation()    const;
     
+    RotationMatrix3d        GetRotationMatrix() const;
     RotationVector3d        GetRotationVector() const;
     Vec3f                   GetRotationAxis()   const;
 
@@ -197,6 +203,7 @@ namespace Anki {
     template<char AXIS = ' '>
     Radians GetRotationAngle() const;
     
+    void SetRotation(const Rotation3d       &R);
     void SetRotation(const RotationMatrix3d &Rmat);
     void SetRotation(const RotationVector3d &Rvec);
     void SetRotation(const Radians angle, const Vec3f &axis);
@@ -287,7 +294,8 @@ namespace Anki {
   protected:
     
     //RotationVector3d  rotationVector;
-    RotationMatrix3d  _rotationMatrix;
+    //RotationMatrix3d  _rotationMatrix;
+    Rotation3d        _rotation;
     Vec3f             _translation;
     
     /* TODO: Add and use 6DOF covariance.
@@ -358,12 +366,14 @@ namespace Anki {
   }
   
   // Pose3d
+  inline const Rotation3d& Pose3d::GetRotation() const
+  { return _rotation; }
   
-  inline const RotationMatrix3d& Pose3d::GetRotationMatrix() const
-  { return _rotationMatrix; }
+  inline RotationMatrix3d Pose3d::GetRotationMatrix() const
+  { return _rotation.GetRotationMatrix(); }
   
   inline RotationVector3d Pose3d::GetRotationVector() const
-  { return RotationVector3d(_rotationMatrix); }
+  { return _rotation.GetRotationVector(); }
   
   inline const Vec3f& Pose3d::GetTranslation() const
   { return _translation; }
@@ -385,7 +395,7 @@ namespace Anki {
   inline Radians Pose3d::GetRotationAngle<' '>() const
   {
     // return the inherient axis of the rotation
-    return GetRotationVector().GetAngle();
+    return GetRotation().GetAngle();
   }
 
   template<>
@@ -424,27 +434,24 @@ namespace Anki {
     return GetRotationMatrix().GetAngleAroundZaxis();
   }
   
+  inline void Pose3d::SetRotation(const Rotation3d& R)
+  {
+    _rotation = R;
+  }
   
   inline void Pose3d::SetRotation(const RotationMatrix3d &Rmat)
   {
-    if(&(_rotationMatrix) != &Rmat) {
-      _rotationMatrix = Rmat;
-    }
-    //this->rotationVector = RotationVector3d(Rmat);
+    _rotation = Rotation3d(Rmat);
   }
   
   inline void Pose3d::SetRotation(const RotationVector3d &Rvec)
   {
-    //if(&(this->rotationVector) != &Rvec) {
-    //  this->rotationVector = Rvec;
-    //}
-    _rotationMatrix = RotationMatrix3d(Rvec);
+    _rotation = Rotation3d(Rvec);
   }
   
   inline void Pose3d::SetRotation(const Radians angle, const Vec3f &axis)
   {
-    //this->rotationVector = RotationVector3d(angle, axis);
-    _rotationMatrix = RotationMatrix3d(angle, axis);
+    _rotation = Rotation3d(angle, axis);
   }
   
   inline void Pose3d::SetTranslation(const Vec3f &T)
@@ -506,7 +513,7 @@ namespace Anki {
   template<typename T>
   Point<3,T> Pose3d::operator*(const Point<3,T> &pointIn) const
   {
-    Point3f pointOut( _rotationMatrix * pointIn );
+    Point3f pointOut( _rotation * pointIn );
     pointOut += _translation;
     
     return pointOut;

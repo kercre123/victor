@@ -155,12 +155,19 @@ namespace Cozmo {
   
   void VisionSystem::EnableModeHelper(Mode mode)
   {
-    // For now only allow one thing to be enabled at a time:
-    // TODO: Allow multiple modes to run simultaneously (remove this line)
-    _mode = IDLE;
-    
-    
-    _mode |= mode;
+    const bool modeAlreadyEnabled = _mode & mode;
+    if(!modeAlreadyEnabled) {
+      PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
+                       "Switching from vision mode %s to mode %s.\n",
+                       VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str(),
+                       VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str());
+      
+      // For now only allow one thing to be enabled at a time:
+      // TODO: Allow multiple modes to run simultaneously (remove this line)
+      _mode = IDLE;
+      
+      _mode |= mode;
+    }
   }
   
   void VisionSystem::DisableModeHelper(Mode mode)
@@ -1333,7 +1340,11 @@ namespace Cozmo {
     return _faceDetectionParameters;
   }
   
-  const std::string& VisionSystem::GetCurrentModeName() const
+  const std::string& VisionSystem::GetCurrentModeName() const {
+    return VisionSystem::GetModeName(static_cast<Mode>(_mode));
+  }
+  
+  const std::string& VisionSystem::GetModeName(Mode mode)
   {
     static const std::map<Mode, std::string> LUT = {
       {IDLE,                  "IDLE"}
@@ -1346,13 +1357,13 @@ namespace Cozmo {
     
     static const std::string UNKNOWN("UNKNOWN_VISION_MODE");
     
-    auto result = LUT.find(static_cast<Mode>(_mode));
+    auto result = LUT.find(static_cast<Mode>(mode));
     if(result == LUT.end()) {
       return UNKNOWN;
     } else {
       return result->second;
     }
-  } // GetCurrentModeName()
+  } // GetModeName()
   
   VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
   : focalLength_x(camCalib.GetFocalLength_x())

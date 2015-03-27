@@ -124,7 +124,10 @@ namespace Anki {
       // Returns true when the point (computed by one of the projection functions
       // above) is BOTH in front of the camera AND within image dimensions.
       // Occlusion by registered occluders is not considered.
-      bool IsWithinFieldOfView(const Point2f& projectedPoint) const;
+      // Inset padding, in pixels, can also be specified.
+      bool IsWithinFieldOfView(const Point2f& projectedPoint,
+                               const u16 xBorderPad = 0,
+                               const u16 yBorderPad = 0) const;
       //bool IsVisible(const Quad2f& projectedQuad) const; // TODO: Implement
 
       // Returns true when a point in image, seen at the specified distance,

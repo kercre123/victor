@@ -185,6 +185,7 @@ namespace Cozmo {
     
     const FaceDetectionParameters& GetFaceDetectionParams();
     
+    static const std::string& GetModeName(Mode mode);
     const std::string& GetCurrentModeName() const;
     
     void SetParams(const bool autoExposureOn,

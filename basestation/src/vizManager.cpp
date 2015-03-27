@@ -601,7 +601,7 @@ namespace Anki {
       }
       
       const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height;
-      SendImage(robotID, data, dataLength, res, timestamp, IE_RAW_GRAY);
+      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_GRAY);
     }
     
     
@@ -612,16 +612,38 @@ namespace Anki {
       }
       
       const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
-      SendImage(robotID, data, dataLength, res, timestamp, IE_RAW_RGB);
+      SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_RGB);
     }
     
+    
+    void VizManager::SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk)
+    {
+      if(!_sendImages) {
+        return;
+      }
+      
+      VizImageChunk v;
+      static_assert(robotImageChunk.data.size() == MAX_VIZ_IMAGE_CHUNK_SIZE,
+                    "MessageImageChunk and VizImageChunk must have the same chunk size.");
+      
+      v.chunkSize = robotImageChunk.chunkSize;
+      v.chunkId = robotImageChunk.chunkId;
+      v.chunkCount = robotImageChunk.imageChunkCount;
+      v.imgId = robotImageChunk.imageId;
+      v.resolution = robotImageChunk.resolution;
+      v.encoding = robotImageChunk.imageEncoding;
+      
+      std::copy(robotImageChunk.data.begin(), robotImageChunk.data.end(), v.data);
+      
+      SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
+    }
     
     void VizManager::SendImage(const RobotID_t robotID,
                                const u8* data,
                                const u32 dataLength,
                                const Vision::CameraResolution res,
                                const TimeStamp_t timestamp,
-                               const ImageEncoding_t encoding)
+                               const Vision::ImageEncoding_t encoding)
     {
       if(!_sendImages) {
         return;
@@ -669,14 +691,14 @@ namespace Anki {
         
         const char *ext = "";
         switch(encoding) {
-          case IE_RAW_GRAY:
+          case Vision::IE_RAW_GRAY:
             ext = "pgm";
             break;
-          case IE_RAW_RGB:
+          case Vision::IE_RAW_RGB:
             ext = "ppm";
             break;
-          case IE_JPEG_COLOR:
-          case IE_JPEG_GRAY:
+          case Vision::IE_JPEG_COLOR:
+          case Vision::IE_JPEG_GRAY:
             ext = "jpg";
             break;
           default:
@@ -689,10 +711,10 @@ namespace Anki {
         
         switch(encoding)
         {
-          case IE_RAW_RGB:
+          case Vision::IE_RAW_RGB:
             Vision::WritePPM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
             break;
-          case IE_RAW_GRAY:
+          case Vision::IE_RAW_GRAY:
             Vision::WritePGM(imgCaptureFilename, data, Vision::CameraResInfo[res].width, Vision::CameraResInfo[res].height);
             break;
           default:

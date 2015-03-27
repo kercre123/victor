@@ -797,9 +797,7 @@ namespace Anki {
       
       AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
-      
-#     if USE_COLOR_IMAGES
-      
+
       s32 pixel = 0;
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
@@ -814,58 +812,6 @@ namespace Anki {
       cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
       cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
 #     endif
-
-#     else // !USE_COLOR_IMAGES
-      // Set the increment / windowsize for downsampling
-      s32 inc = 1;
-      s32 pixel = 0;
-      
-      // TODO: add averaging once we support it in hardware
-      const bool supportAveraging = false;
-      
-      if(supportAveraging) {
-        AnkiAssert(false);
-        // Need a way to get downsampling increment (LUT for resolution based on res?)
-        //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
-        //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
-      }
-      
-      if(inc == 1)
-      {
-        // No averaging
-        for (s32 y=0; y < headCamInfo_.nrows; y++) {
-          for (s32 x=0; x < headCamInfo_.ncols; x++) {
-            frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
-          }
-        }
-      } else {
-        // Average [inc x inc] windows
-        for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
-        {
-          for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
-          {
-            s32 sum = 0;
-            for (s32 y1 = y; y1 < y + inc; y1++)
-            {
-              for (s32 x1 = x; x1 < x + inc; x1++)
-              {
-                //int index = x1 + y1 * headCamInfo_.ncols;
-                //sum += frame[index];
-                sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
-              }
-            }
-            frame[pixel++] = (sum / (inc * inc));
-          }
-        }
-      } // if averaging or not
-      
-#     if BLUR_CAPTURED_IMAGES
-      // Add some blur to simulated images
-      cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
-      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#     endif
-
-#     endif // USE_COLOR_IMAGES
       
     } // CameraGetFrame()
   

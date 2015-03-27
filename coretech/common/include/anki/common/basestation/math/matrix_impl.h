@@ -625,7 +625,7 @@ namespace Anki {
 
   template<MatDimType DIM, typename T>
   template<typename T_other>
-  SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::preMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
+  SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
   {
     // TODO: Come up with our own in-place, super-awesome pre-multiplcation
     // method (since opencv doesn't give us one, and this causes a copy)

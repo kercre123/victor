@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "66bd2879483115a6b4cafb35a2be89efac4c8512" # Hash for the revision these python definitions are based on
+__version__ = "3e246afb27b2e31897a8be87f9f60d1964dcb7ad" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -95,10 +95,10 @@ class ImageRequest(MessageBase):
               "u8", # Resolution
              ]
 
-    def __init__(self, buffer=None):
+    def __init__(self, buffer=None, imageSendMode=ISM_OFF, resolution=CAMERA_RES_NONE):
         MessageBase.__init__(self)
-        self.imageSendMode = ISM_OFF
-        self.resolution = CAMERA_RES_NONE
+        self.imageSendMode = imageSendMode
+        self.resolution    = resolution
         if buffer:
             self.deserialize(buffer)
 
@@ -115,7 +115,7 @@ class ImageRequest(MessageBase):
 class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
-    IMAGE_CHUNK_SIZE = 1024
+    IMAGE_CHUNK_SIZE = 1400
     ID = 72
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp

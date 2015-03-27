@@ -24,6 +24,7 @@ add_executable(cozmo_viz_controller
 
 target_link_libraries(cozmo_viz_controller 
   CoreTech_Messaging_Basestation
+  CoreTech_Vision_Basestation
   CppController # Webots C++ Controller
   ${OPENCV_LIBS}
 )
