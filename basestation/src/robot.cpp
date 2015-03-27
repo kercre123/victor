@@ -1754,10 +1754,10 @@ namespace Anki {
       
       if(result == RESULT_OK) {
         // For specifying resolution for basestation vision:
-        // (Start with VGA)
+        // (Start with QVGA)
         MessageImageRequest m;
         m.imageSendMode = ISM_STREAM;
-        m.resolution    = Vision::CAMERA_RES_VGA;
+        m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
       }
       
