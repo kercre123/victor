@@ -52,6 +52,7 @@ class UnionSwitchEmitter(ast.NodeVisitor):
             self.buf.write(textwrap.dedent('''\
                 case {qualified_union_name}::Type::{member_name}:
                 \tProcess_{member_name}(msg.Get_{member_name}());
+                \tbreak;
                 #''')[:-1].format(member_name=member.name, **globals))
 
 if __name__ == '__main__':
