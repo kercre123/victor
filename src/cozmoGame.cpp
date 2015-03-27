@@ -416,7 +416,7 @@ namespace Cozmo {
                 msg.pose_z = robot->GetPose().GetTranslation().z();
                 
                 msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
-                UnitQuaternion<float> q(Rotation3d(robot->GetPose().GetRotationVector()).GetQuaternion());
+                const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
                 msg.pose_quaternion0 = q.w();
                 msg.pose_quaternion1 = q.x();
                 msg.pose_quaternion2 = q.y();
@@ -478,6 +478,9 @@ namespace Cozmo {
   
   bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
   {
+    PRINT_NAMED_WARNING("CozmoGameImpl.SendRobotImage",
+                        "SendRobotImage is deprecated. Expecting to use direct forwarding of compressed image chunks to UI.\n");
+    
     // Get the image from the robot
     Vision::Image img;
     // TODO: fill in the timestamp?
@@ -506,9 +509,9 @@ namespace Cozmo {
       m.ncols = ncols;
       m.imageId = ++imgID;
       m.chunkId = 0;
-      m.chunkSize = G2U_IMAGE_CHUNK_SIZE;
-      m.imageChunkCount = ceilf((f32)numTotalBytes / G2U_IMAGE_CHUNK_SIZE);
-      m.imageEncoding = 0;
+      m.chunkSize = m.data.size();
+      m.imageChunkCount = ceilf((f32)numTotalBytes / m.data.size());
+      m.imageEncoding = Vision::IE_RAW_GRAY;
       
       u32 totalByteCnt = 0;
       u32 chunkByteCnt = 0;
@@ -526,7 +529,7 @@ namespace Cozmo {
           ++chunkByteCnt;
           ++totalByteCnt;
           
-          if(chunkByteCnt == G2U_IMAGE_CHUNK_SIZE) {
+          if(chunkByteCnt == m.data.size()) {
             // Filled this chunk
             message.Set_ImageChunk(m);
             _uiMsgHandler.SendMessage(_hostUiDeviceID, message);

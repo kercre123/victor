@@ -79,6 +79,7 @@ GameObject:
   - 222: {fileID: 22255432}
   - 114: {fileID: 11455430}
   - 114: {fileID: 11455432}
+  - 114: {fileID: 11416678}
   m_Layer: 5
   m_Name: DynamicVerticalSlider
   m_TagString: Untagged
@@ -201,6 +202,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!114 &11416678
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 155432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd558404a613492389cc2af984842be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gradientMode: 0
+  gradientDir: 1
+  overwriteAllColor: 0
+  vertex1: {r: 0, g: 0, b: 0, a: 1}
+  vertex2: {r: 0, g: 0, b: 0, a: 0}
+  targetGraphic: {fileID: 11455430}
 --- !u!114 &11426390
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -297,8 +315,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: .392156869, b: 0, a: 1}
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 0
@@ -321,12 +339,15 @@ MonoBehaviour:
   bg: {fileID: 22493614}
   stick: {fileID: 22493166}
   deadZoneRect: {fileID: 22477826}
+  deadZoneVModeRect: {fileID: 0}
+  deadZoneHModeRect: {fileID: 0}
   capTop: {fileID: 22426390}
   capBottom: {fileID: 22493168}
   capLeft: {fileID: 0}
   capRight: {fileID: 0}
   originMarker: {fileID: 22455428}
   bgDefaultMode: {fileID: 22493616}
+  bgVertMode: {fileID: 0}
   bgUpMode: {fileID: 22493618}
   bgDownMode: {fileID: 22455430}
   bgSideMode: {fileID: 0}
@@ -340,6 +361,7 @@ MonoBehaviour:
   verticalAxisSnapAngle: 0
   horizontalAxisSnapAngle: 0
   verticalModeEntryAngle: 0
+  verticalModeBothWays: 0
   horizontalModeEntryAngle: 0
   verticalModeMaxAngleAllowance: 170
   clearHorizontal: 1
@@ -614,7 +636,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 256, y: 576}
+  m_SizeDelta: {x: 192, y: 768}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22477826
 RectTransform:

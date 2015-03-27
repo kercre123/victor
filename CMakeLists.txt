@@ -63,7 +63,7 @@ include_directories(
   ${CORETECH_ROOT_DIR}/messaging/include
   ${CORETECH_ROOT_DIR}/vision/include
   ${CORETECH_ROOT_DIR}/planning/include
-  ${CLAD_DIR}/emitters
+  ${CLAD_DIR}/support/cpp/include
 )
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
