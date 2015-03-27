@@ -1621,6 +1621,8 @@ MonoBehaviour:
   scaleOnSmallScreensFactor: .75
   selectionButtonPrefab: {fileID: 147200, guid: 2da8dac0b478c4b3d8b9ed8996ed3a8e,
     type: 2}
+  selected: {r: 0, g: 1, b: 0, a: 1}
+  select: {r: 1, g: .478431374, b: 0, a: 1}
 --- !u!114 &11409722
 MonoBehaviour:
   m_ObjectHideFlags: 1
