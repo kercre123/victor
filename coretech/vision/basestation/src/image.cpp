@@ -19,6 +19,9 @@
 #include "opencv2/highgui/highgui.hpp"
 #endif
 
+// Uncomment this to test cropping the 4:3 image to 16:9 format by simply
+// adding block bars to the top and bottom 12.5% of the image
+//#define TEST_16_9_ASPECT_RATIO
 
 namespace Anki {
 namespace Vision {
@@ -257,6 +260,13 @@ namespace Vision {
       if(_img.rows != _imgHeight || _img.cols != _imgWidth) {
         printf("***ERROR - ImageDeChunker.AppendChunk: expected %dx%d image after decoding, got %dx%d.\n", _imgWidth, _imgHeight, _img.cols, _img.rows);
       }
+      
+#     ifdef TEST_16_9_ASPECT_RATIO
+      // TEST 16:9 format by blacking out 25% of the rows (12.5% at top and bottom)
+      _img(cv::Range(0,_img.rows*.125),cv::Range::all()).setTo(0);
+      _img(cv::Range(0.875*_img.rows,_img.rows),cv::Range::all()).setTo(0);
+#     endif
+      
     } // if(isLastChunk)
     
     return isLastChunk;
