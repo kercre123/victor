@@ -1474,7 +1474,6 @@ namespace Anki {
         Result result = RESULT_OK;
 
         if(!isInitialized_) {
-          captureResolution_ = Vision::CAMERA_RES_VGA;
 
           // WARNING: the order of these initializations matter!
 
@@ -1494,6 +1493,24 @@ namespace Anki {
             PRINT("Initialize() - HeadCam Info pointer is NULL!\n");
             return RESULT_FAIL;
           }
+          
+          bool resolutionValid = false;
+          switch(headCamInfo_->ncols)
+          {
+            case 640:
+              resolutionValid = headCamInfo_->nrows == 480;
+              captureResolution_ = Vision::CAMERA_RES_VGA;
+              break;
+              
+            case 320:
+              resolutionValid = headCamInfo_->nrows == 240;
+              captureResolution_ = Vision::CAMERA_RES_QVGA;
+              break;
+          }
+          
+          AnkiConditionalErrorAndReturnValue(resolutionValid, RESULT_FAIL_INVALID_SIZE,
+                                             "VisionSystem.Init", "Invalid resolution: %dx%d\n",
+                                             headCamInfo_->ncols, headCamInfo_->nrows);
 
           // Compute FOV from focal length (currently used for tracker prediciton)
           headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo_->nrows) /
