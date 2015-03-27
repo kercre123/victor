@@ -114,6 +114,10 @@ DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
 }
+PointLight {
+  ambientIntensity 1
+  location 0 0.3 0
+}
 CozmoMat {
 }
 DEF FireBlock Block1x1 {
