@@ -2,9 +2,14 @@
 // Source: UiMessageDefinitionsG2U.clad
 // Full command line: ../lib/anki/cozmo-engine/tools/message-buffers/emitters/CPP_emitter.py -o comms/messaging/UiMessageDefinitionsG2U.cpp -r ../include/anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def /Users/gregnage/cozmo-game/src/comms/messaging/UiMessageDefinitionsG2U.clad
 
-#include "../include/anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
+#include "../../../include/anki/cozmo/game/comms/messaging/UiMessageDefinitionsG2U.def"
+
 namespace Anki {
+
 namespace Cozmo {
+
+// MESSAGE G2U_Ping
+
 G2U_Ping::G2U_Ping(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -62,10 +67,9 @@ bool G2U_Ping::operator!=(const G2U_Ping& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotAvailable
+
 G2U_RobotAvailable::G2U_RobotAvailable(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -123,10 +127,9 @@ bool G2U_RobotAvailable::operator!=(const G2U_RobotAvailable& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_UiDeviceAvailable
+
 G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -184,10 +187,9 @@ bool G2U_UiDeviceAvailable::operator!=(const G2U_UiDeviceAvailable& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotConnected
+
 G2U_RobotConnected::G2U_RobotConnected(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -250,10 +252,9 @@ bool G2U_RobotConnected::operator!=(const G2U_RobotConnected& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotDisconnected
+
 G2U_RobotDisconnected::G2U_RobotDisconnected(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -316,10 +317,9 @@ bool G2U_RobotDisconnected::operator!=(const G2U_RobotDisconnected& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_UiDeviceConnected
+
 G2U_UiDeviceConnected::G2U_UiDeviceConnected(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -382,10 +382,9 @@ bool G2U_UiDeviceConnected::operator!=(const G2U_UiDeviceConnected& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotState
+
 G2U_RobotState::G2U_RobotState(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -518,10 +517,9 @@ bool G2U_RobotState::operator!=(const G2U_RobotState& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_ImageChunk
+
 G2U_ImageChunk::G2U_ImageChunk(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -619,10 +617,9 @@ bool G2U_ImageChunk::operator!=(const G2U_ImageChunk& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotObservedObject
+
 G2U_RobotObservedObject::G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -755,10 +752,9 @@ bool G2U_RobotObservedObject::operator!=(const G2U_RobotObservedObject& other) c
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotObservedNothing
+
 G2U_RobotObservedNothing::G2U_RobotObservedNothing(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -816,10 +812,9 @@ bool G2U_RobotObservedNothing::operator!=(const G2U_RobotObservedNothing& other)
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotDeletedObject
+
 G2U_RobotDeletedObject::G2U_RobotDeletedObject(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -882,10 +877,9 @@ bool G2U_RobotDeletedObject::operator!=(const G2U_RobotDeletedObject& other) con
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_DeviceDetectedVisionMarker
+
 G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -983,10 +977,9 @@ bool G2U_DeviceDetectedVisionMarker::operator!=(const G2U_DeviceDetectedVisionMa
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_RobotCompletedAction
+
 G2U_RobotCompletedAction::G2U_RobotCompletedAction(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -1049,10 +1042,9 @@ bool G2U_RobotCompletedAction::operator!=(const G2U_RobotCompletedAction& other)
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_PlaySound
+
 G2U_PlaySound::G2U_PlaySound(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -1121,10 +1113,9 @@ bool G2U_PlaySound::operator!=(const G2U_PlaySound& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// MESSAGE G2U_StopSound
+
 G2U_StopSound::G2U_StopSound(const uint8_t* buff, size_t len)
 {
 	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -1175,10 +1166,8 @@ bool G2U_StopSound::operator!=(const G2U_StopSound& other) const
 	return !(operator==(other));
 }
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+
+// UNION G2U_Message
 
 G2U_Message::G2U_Message(const SafeMessageBuffer& buff) :_type(Type::INVALID)
 {
@@ -1939,5 +1928,8 @@ void G2U_Message::ClearCurrent()
 	}
 	_type = Type::INVALID;
 }
-} // namespace Anki
+
 } // namespace Cozmo
+
+} // namespace Anki
+

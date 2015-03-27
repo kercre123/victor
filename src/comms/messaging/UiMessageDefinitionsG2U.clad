@@ -195,5 +195,5 @@ union G2U_Message {
     G2U_StopSound StopSound
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
