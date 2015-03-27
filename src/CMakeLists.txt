@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 add_definitions(-DCOZMO_BASESTATION)
 add_definitions(-DCORETECH_BASESTATION)
 
-set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
+file(RELATIVE_PATH CLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
 file(GLOB_RECURSE CLAD_SOURCES "*.clad")
 
@@ -13,15 +13,16 @@ file(GLOB CLAD_DEPENDENCIES "${CLAD_DIR}/clad/*.py" "${CLAD_DIR}/emitters/*.py" 
 
 foreach(SOURCE ${CLAD_SOURCES})
     GET_FILENAME_COMPONENT(SOURCE_BASE ${SOURCE} NAME_WE)
-    set(CPP_OUTPUT "${CMAKE_SOURCE_DIR}/src/comms/messaging/${SOURCE_BASE}.cpp")
-    set(HPP_OUTPUT "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.def")
-    set(CS_OUTPUT "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel/${SOURCE_BASE}.cs")
+    file(RELATIVE_PATH CPP_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src/comms/messaging/${SOURCE_BASE}.cpp")
+    file(RELATIVE_PATH HPP_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game/comms/messaging/${SOURCE_BASE}.def")
+    file(RELATIVE_PATH CS_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel/${SOURCE_BASE}.cs")
     set(CLAD_COMMANDS ${CLAD_COMMANDS} ${CPP_OUTPUT} ${HPP_OUTPUT} ${CS_OUTPUT})
     add_custom_command(
         OUTPUT ${CPP_OUTPUT}
         COMMAND python -u "${CLAD_DIR}/emitters/CPP_emitter.py" -o ${CPP_OUTPUT} -r ${HPP_OUTPUT} "${SOURCE}"
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         VERBATIM
     )
     add_custom_command(
@@ -29,6 +30,7 @@ foreach(SOURCE ${CLAD_SOURCES})
         COMMAND python -u "${CLAD_DIR}/emitters/CSharp_emitter.py" -o ${CS_OUTPUT} "${SOURCE}"
         MAIN_DEPENDENCY ${SOURCE}
         DEPENDS ${CLAD_DEPENDENCIES}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         VERBATIM
     )
 endforeach()
