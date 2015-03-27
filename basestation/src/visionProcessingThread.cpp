@@ -42,7 +42,7 @@ namespace Cozmo {
   {
     // Updating camera calibration invalidates the current vision system
     // (assuming it is a different calibration!)
-    if(_visionSystem == nullptr) {
+    if(_visionSystem != nullptr) {
       delete _visionSystem;
       _visionSystem = nullptr;
     }
