@@ -1383,8 +1383,35 @@ namespace Cozmo {
   {
     Result result = RESULT_OK;
     
-    if(!_isInitialized) {
-      _captureResolution = Vision::CAMERA_RES_VGA;
+    bool gotNewCalibration = true;
+    if(_isInitialized) {
+      gotNewCalibration = (camCalib.GetFocalLength_x() != _headCamInfo->focalLength_x ||
+                           camCalib.GetFocalLength_y() != _headCamInfo->focalLength_y ||
+                           camCalib.GetCenter_x()      != _headCamInfo->center_x      ||
+                           camCalib.GetCenter_y()      != _headCamInfo->center_y      ||
+                           camCalib.GetSkew()          != _headCamInfo->skew          ||
+                           camCalib.GetNrows()         != _headCamInfo->nrows         ||
+                           camCalib.GetNcols()         != _headCamInfo->ncols);
+    }
+    
+    if(gotNewCalibration) {
+      bool calibSizeValid = false;
+      switch(camCalib.GetNcols())
+      {
+        case 640:
+          calibSizeValid = camCalib.GetNrows() == 480;
+          _captureResolution = Vision::CAMERA_RES_VGA;
+          break;
+          
+        case 320:
+          calibSizeValid = camCalib.GetNrows() == 240;
+          _captureResolution = Vision::CAMERA_RES_QVGA;
+          break;
+      }
+      AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
+                                         "VisionSystem.InvalidCalibrationResolution",
+                                         "Unexpected calibration resolution (%dx%d)\n",
+                                         camCalib.GetNcols(), camCalib.GetNrows());
       
       // WARNING: the order of these initializations matter!
       
@@ -1400,6 +1427,9 @@ namespace Cozmo {
       _havePreviousRobotState    = false;
       
       //_headCamInfo = HAL::GetHeadCamInfo();
+      if(_headCamInfo == nullptr) {
+        delete _headCamInfo;
+      }
       _headCamInfo = new CameraInfo(camCalib);
       if(_headCamInfo == nullptr) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
@@ -1415,9 +1445,10 @@ namespace Cozmo {
       _exposureTime = 0.2f; // TODO: pick a reasonable start value
       _frameNumber = 0;
       
-      _detectionParameters.Initialize();
-      _trackerParameters.Initialize();
-      _faceDetectionParameters.Initialize();
+      // Just make all the vision parameters' resolutions match capture resolution:
+      _detectionParameters.Initialize(_captureResolution);
+      _trackerParameters.Initialize(_captureResolution);
+      _faceDetectionParameters.Initialize(_captureResolution);
       
       Simulator::Initialize();
       

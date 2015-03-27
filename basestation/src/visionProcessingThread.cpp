@@ -38,6 +38,20 @@ namespace Cozmo {
     
   } // VisionSystem()
 
+  void VisionProcessingThread::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
+  {
+    // Updating camera calibration invalidates the current vision system
+    // (assuming it is a different calibration!)
+    if(_visionSystem == nullptr) {
+      delete _visionSystem;
+      _visionSystem = nullptr;
+    }
+    
+    _camCalib = camCalib;
+    
+    _isCamCalibSet = true;
+  }
+  
   void VisionProcessingThread::Start()
   {
     if(!_isCamCalibSet) {
