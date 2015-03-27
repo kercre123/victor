@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public class CozmoVision2 : CozmoVision
 {
 	[SerializeField] protected GameObject selectionButtonPrefab;
+	[SerializeField] protected Color selected;
+	[SerializeField] protected Color select;
 
 	protected SelectionButton2[] selectionButtons;
 
@@ -21,9 +23,20 @@ public class CozmoVision2 : CozmoVision
 
 	protected void Update()
 	{
-		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
+		{
 			DisableButtons();
 			return;
+		}
+
+		robot = RobotEngineManager.instance.current;
+
+		for( int i = 0; i < robot.selectedObjects.Count; ++i )
+		{
+			if( robot.observedObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
+			{
+				robot.selectedObjects.RemoveAt( i-- );
+			}
 		}
 
 		Dings();
@@ -34,22 +47,31 @@ public class CozmoVision2 : CozmoVision
 
 		for( int i = 0; i < maxObservedObjects; ++i )
 		{
-			if( observedObjectsCount > i && robot.selectedObjects.Count == 0 && !robot.isBusy )
+			if( observedObjectsCount > i && !robot.isBusy )
 			{
 				ObservedObject observedObject = robot.observedObjects[i];
-
-				float boxX = (observedObject.VizRect.x / 320f) * w;
-				float boxY = (observedObject.VizRect.y / 240f) * h;
-				float boxW = (observedObject.VizRect.width / 320f) * w;
-				float boxH = (observedObject.VizRect.height / 240f) * h;
+				
+				float boxX = ( observedObject.VizRect.x / 320f ) * w;
+				float boxY = ( observedObject.VizRect.y / 240f ) * h;
+				float boxW = ( observedObject.VizRect.width / 320f ) * w;
+				float boxH = ( observedObject.VizRect.height / 240f ) * h;
 
 				selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 				selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 
-				selectionButtons[i].text.text = "Select " + observedObject.ID;
-				selectionButtons[i].observedObject = observedObject;
+				if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+				{
+					selectionButtons[i].image.color = selected;
+					selectionButtons[i].text.text = string.Empty;
+				}
+				else
+				{
+					selectionButtons[i].image.color = select;
+					selectionButtons[i].text.text = "Select " + observedObject.ID;
+					selectionButtons[i].observedObject = observedObject;
 
-				selectionButtons[i].image.gameObject.SetActive( true );
+					selectionButtons[i].image.gameObject.SetActive( true );
+				}
 			}
 			else
 			{
@@ -60,7 +82,7 @@ public class CozmoVision2 : CozmoVision
 
 	protected override void OnDisable() {
 		base.OnDisable();
-		foreach(SelectionButton2 butt in selectionButtons) butt.gameObject.SetActive(false);
+		foreach(SelectionButton2 butt in selectionButtons) { if(butt != null) { butt.gameObject.SetActive(false); } }
 	}
 
 }
