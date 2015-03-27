@@ -15,7 +15,10 @@
 using namespace CLAD;
 
 namespace Anki {
+
 namespace Cozmo {
+
+// MESSAGE U2G_Ping
 struct U2G_Ping
 {
 	uint32_t counter;
@@ -49,10 +52,7 @@ struct U2G_Ping
 	bool operator!=(const U2G_Ping& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ConnectToRobot
 struct U2G_ConnectToRobot
 {
 	uint8_t robotID;
@@ -86,10 +86,7 @@ struct U2G_ConnectToRobot
 	bool operator!=(const U2G_ConnectToRobot& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ConnectToUiDevice
 struct U2G_ConnectToUiDevice
 {
 	uint8_t deviceID;
@@ -123,10 +120,7 @@ struct U2G_ConnectToUiDevice
 	bool operator!=(const U2G_ConnectToUiDevice& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_DisconnectFromUiDevice
 struct U2G_DisconnectFromUiDevice
 {
 	uint8_t deviceID;
@@ -160,10 +154,7 @@ struct U2G_DisconnectFromUiDevice
 	bool operator!=(const U2G_DisconnectFromUiDevice& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ForceAddRobot
 struct U2G_ForceAddRobot
 {
 	std::array<uint8_t, 16> ipAddress;
@@ -203,10 +194,7 @@ struct U2G_ForceAddRobot
 	bool operator!=(const U2G_ForceAddRobot& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StartEngine
 struct U2G_StartEngine
 {
 	uint8_t asHost;
@@ -243,10 +231,7 @@ struct U2G_StartEngine
 	bool operator!=(const U2G_StartEngine& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_DriveWheels
 struct U2G_DriveWheels
 {
 	float lwheel_speed_mmps;
@@ -283,10 +268,7 @@ struct U2G_DriveWheels
 	bool operator!=(const U2G_DriveWheels& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_TurnInPlace
 struct U2G_TurnInPlace
 {
 	float angle_rad;
@@ -323,10 +305,7 @@ struct U2G_TurnInPlace
 	bool operator!=(const U2G_TurnInPlace& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_MoveHead
 struct U2G_MoveHead
 {
 	float speed_rad_per_sec;
@@ -360,10 +339,7 @@ struct U2G_MoveHead
 	bool operator!=(const U2G_MoveHead& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_MoveLift
 struct U2G_MoveLift
 {
 	float speed_rad_per_sec;
@@ -397,10 +373,7 @@ struct U2G_MoveLift
 	bool operator!=(const U2G_MoveLift& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetLiftHeight
 struct U2G_SetLiftHeight
 {
 	float height_mm;
@@ -440,10 +413,7 @@ struct U2G_SetLiftHeight
 	bool operator!=(const U2G_SetLiftHeight& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetHeadAngle
 struct U2G_SetHeadAngle
 {
 	float angle_rad;
@@ -483,10 +453,7 @@ struct U2G_SetHeadAngle
 	bool operator!=(const U2G_SetHeadAngle& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_TrackHeadToObject
 struct U2G_TrackHeadToObject
 {
 	uint32_t objectID;
@@ -523,10 +490,7 @@ struct U2G_TrackHeadToObject
 	bool operator!=(const U2G_TrackHeadToObject& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StopAllMotors
 struct U2G_StopAllMotors
 {
 	
@@ -554,10 +518,7 @@ struct U2G_StopAllMotors
 	bool operator!=(const U2G_StopAllMotors& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ImageRequest
 struct U2G_ImageRequest
 {
 	uint8_t robotID;
@@ -594,10 +555,7 @@ struct U2G_ImageRequest
 	bool operator!=(const U2G_ImageRequest& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetRobotImageSendMode
 struct U2G_SetRobotImageSendMode
 {
 	uint8_t mode;
@@ -634,10 +592,7 @@ struct U2G_SetRobotImageSendMode
 	bool operator!=(const U2G_SetRobotImageSendMode& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SaveImages
 struct U2G_SaveImages
 {
 	uint8_t mode;
@@ -671,10 +626,7 @@ struct U2G_SaveImages
 	bool operator!=(const U2G_SaveImages& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SaveRobotState
 struct U2G_SaveRobotState
 {
 	uint8_t mode;
@@ -708,10 +660,7 @@ struct U2G_SaveRobotState
 	bool operator!=(const U2G_SaveRobotState& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_EnableDisplay
 struct U2G_EnableDisplay
 {
 	uint8_t enable;
@@ -745,10 +694,7 @@ struct U2G_EnableDisplay
 	bool operator!=(const U2G_EnableDisplay& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetHeadlights
 struct U2G_SetHeadlights
 {
 	uint8_t intensity;
@@ -782,10 +728,7 @@ struct U2G_SetHeadlights
 	bool operator!=(const U2G_SetHeadlights& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_GotoPose
 struct U2G_GotoPose
 {
 	float x_mm;
@@ -831,10 +774,7 @@ struct U2G_GotoPose
 	bool operator!=(const U2G_GotoPose& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_PlaceObjectOnGround
 struct U2G_PlaceObjectOnGround
 {
 	float x_mm;
@@ -880,10 +820,7 @@ struct U2G_PlaceObjectOnGround
 	bool operator!=(const U2G_PlaceObjectOnGround& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_PlaceObjectOnGroundHere
 struct U2G_PlaceObjectOnGroundHere
 {
 	
@@ -911,10 +848,7 @@ struct U2G_PlaceObjectOnGroundHere
 	bool operator!=(const U2G_PlaceObjectOnGroundHere& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ExecuteTestPlan
 struct U2G_ExecuteTestPlan
 {
 	
@@ -942,10 +876,7 @@ struct U2G_ExecuteTestPlan
 	bool operator!=(const U2G_ExecuteTestPlan& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SelectNextObject
 struct U2G_SelectNextObject
 {
 	
@@ -973,10 +904,7 @@ struct U2G_SelectNextObject
 	bool operator!=(const U2G_SelectNextObject& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_PickAndPlaceObject
 struct U2G_PickAndPlaceObject
 {
 	int32_t objectID;
@@ -1016,10 +944,7 @@ struct U2G_PickAndPlaceObject
 	bool operator!=(const U2G_PickAndPlaceObject& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_TraverseObject
 struct U2G_TraverseObject
 {
 	uint8_t usePreDockPose;
@@ -1056,10 +981,7 @@ struct U2G_TraverseObject
 	bool operator!=(const U2G_TraverseObject& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetRobotCarryingObject
 struct U2G_SetRobotCarryingObject
 {
 	int32_t objectID;
@@ -1096,10 +1018,7 @@ struct U2G_SetRobotCarryingObject
 	bool operator!=(const U2G_SetRobotCarryingObject& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ClearAllBlocks
 struct U2G_ClearAllBlocks
 {
 	
@@ -1127,10 +1046,7 @@ struct U2G_ClearAllBlocks
 	bool operator!=(const U2G_ClearAllBlocks& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_VisionWhileMoving
 struct U2G_VisionWhileMoving
 {
 	uint8_t enable;
@@ -1164,10 +1080,7 @@ struct U2G_VisionWhileMoving
 	bool operator!=(const U2G_VisionWhileMoving& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ExecuteBehavior
 struct U2G_ExecuteBehavior
 {
 	uint8_t behaviorMode;
@@ -1201,10 +1114,7 @@ struct U2G_ExecuteBehavior
 	bool operator!=(const U2G_ExecuteBehavior& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetBehaviorState
 struct U2G_SetBehaviorState
 {
 	uint8_t behaviorState;
@@ -1238,10 +1148,7 @@ struct U2G_SetBehaviorState
 	bool operator!=(const U2G_SetBehaviorState& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_AbortPath
 struct U2G_AbortPath
 {
 	
@@ -1269,10 +1176,7 @@ struct U2G_AbortPath
 	bool operator!=(const U2G_AbortPath& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_AbortAll
 struct U2G_AbortAll
 {
 	
@@ -1300,10 +1204,7 @@ struct U2G_AbortAll
 	bool operator!=(const U2G_AbortAll& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_DrawPoseMarker
 struct U2G_DrawPoseMarker
 {
 	float x_mm;
@@ -1346,10 +1247,7 @@ struct U2G_DrawPoseMarker
 	bool operator!=(const U2G_DrawPoseMarker& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ErasePoseMarker
 struct U2G_ErasePoseMarker
 {
 	
@@ -1377,10 +1275,7 @@ struct U2G_ErasePoseMarker
 	bool operator!=(const U2G_ErasePoseMarker& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetHeadControllerGains
 struct U2G_SetHeadControllerGains
 {
 	float kp;
@@ -1420,10 +1315,7 @@ struct U2G_SetHeadControllerGains
 	bool operator!=(const U2G_SetHeadControllerGains& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetLiftControllerGains
 struct U2G_SetLiftControllerGains
 {
 	float kp;
@@ -1463,10 +1355,7 @@ struct U2G_SetLiftControllerGains
 	bool operator!=(const U2G_SetLiftControllerGains& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SelectNextSoundScheme
 struct U2G_SelectNextSoundScheme
 {
 	
@@ -1494,10 +1383,7 @@ struct U2G_SelectNextSoundScheme
 	bool operator!=(const U2G_SelectNextSoundScheme& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StartTestMode
 struct U2G_StartTestMode
 {
 	int32_t p1;
@@ -1540,10 +1426,7 @@ struct U2G_StartTestMode
 	bool operator!=(const U2G_StartTestMode& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_IMURequest
 struct U2G_IMURequest
 {
 	uint32_t length_ms;
@@ -1577,10 +1460,7 @@ struct U2G_IMURequest
 	bool operator!=(const U2G_IMURequest& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_PlayAnimation
 struct U2G_PlayAnimation
 {
 	uint32_t numLoops;
@@ -1617,10 +1497,7 @@ struct U2G_PlayAnimation
 	bool operator!=(const U2G_PlayAnimation& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_ReadAnimationFile
 struct U2G_ReadAnimationFile
 {
 	
@@ -1648,10 +1525,7 @@ struct U2G_ReadAnimationFile
 	bool operator!=(const U2G_ReadAnimationFile& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StartFaceTracking
 struct U2G_StartFaceTracking
 {
 	uint8_t timeout_sec;
@@ -1685,10 +1559,7 @@ struct U2G_StartFaceTracking
 	bool operator!=(const U2G_StartFaceTracking& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StopFaceTracking
 struct U2G_StopFaceTracking
 {
 	
@@ -1716,10 +1587,7 @@ struct U2G_StopFaceTracking
 	bool operator!=(const U2G_StopFaceTracking& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StartLookingForMarkers
 struct U2G_StartLookingForMarkers
 {
 	
@@ -1747,10 +1615,7 @@ struct U2G_StartLookingForMarkers
 	bool operator!=(const U2G_StartLookingForMarkers& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_StopLookingForMarkers
 struct U2G_StopLookingForMarkers
 {
 	
@@ -1778,10 +1643,7 @@ struct U2G_StopLookingForMarkers
 	bool operator!=(const U2G_StopLookingForMarkers& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetVisionSystemParams
 struct U2G_SetVisionSystemParams
 {
 	int32_t autoexposureOn;
@@ -1836,10 +1698,7 @@ struct U2G_SetVisionSystemParams
 	bool operator!=(const U2G_SetVisionSystemParams& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// MESSAGE U2G_SetFaceDetectParams
 struct U2G_SetFaceDetectParams
 {
 	float scaleFactor;
@@ -1888,10 +1747,7 @@ struct U2G_SetFaceDetectParams
 	bool operator!=(const U2G_SetFaceDetectParams& other) const;
 };
 
-} // namespace Anki
-} // namespace Cozmo
-namespace Anki {
-namespace Cozmo {
+// UNION U2G_Message
 class U2G_Message
 {
 public:
@@ -2369,12 +2225,17 @@ private:
 	};
 };
 
-} // namespace Anki
 } // namespace Cozmo
+
+} // namespace Anki
+
 template<>
 struct std::hash<Anki::Cozmo::U2G_Message::Type>
 {
 	size_t operator()(Anki::Cozmo::U2G_Message::Type t) const
-	{ return static_cast<std::underlying_type<Anki::Cozmo::U2G_Message::Type>::type>(t); }
+	{
+		return static_cast<std::underlying_type<Anki::Cozmo::U2G_Message::Type>::type>(t);
+	}
 };
+
 #endif // __UIMESSAGEDEFINITIONSU2G_H__
