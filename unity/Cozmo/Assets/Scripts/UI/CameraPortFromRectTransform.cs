@@ -14,6 +14,10 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 	bool initialized = false;
 	//int activeFrames = 0;
 
+	void OnEnable() {
+		initialized = false;
+	}
+
 	void Update() {
 		if(initialized) return;
 		if(rectTransform == null) return;
@@ -71,7 +75,7 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 
 		cam.rect = rect; 
 
-		//Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
+		Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
 
 	}
 }
