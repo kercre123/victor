@@ -859,8 +859,8 @@ namespace Anki
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
             // origin as its pose
-            PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
-                                    "Instantiating first mat piece in the world.\n");
+            PRINT_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
+                       "Instantiating first mat piece in the world.\n");
             
             existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
             assert(existingMatPiece != nullptr);
@@ -892,16 +892,16 @@ namespace Anki
               AddNewObject(existingMatPieces, existingMatPiece);
               existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
-              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                                      "Robot %d localizing to new %s mat with ID=%d.\n",
-                                      _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                                      existingMatPiece->GetID().GetValue());
+              PRINT_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
+                         "Robot %d localizing to new %s mat with ID=%d.\n",
+                         _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                         existingMatPiece->GetID().GetValue());
               
             } else {
               if(existingObjects.size() > 1) {
-                PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
-                                        "Robot %d found multiple existing mats matching the one it "
-                                        "will localize to - using first.\n", _robot->GetID());
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
+                              "Robot %d found multiple existing mats matching the one it "
+                              "will localize to - using first.\n", _robot->GetID());
               }
               
               // We are localizing to an existing mat piece: do not attempt to
@@ -954,12 +954,12 @@ namespace Anki
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               
-              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose",
-                                      "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
-                                      newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
-                                      newMatPiece->GetPose().GetTranslation().x(),
-                                      newMatPiece->GetPose().GetTranslation().y(),
-                                      newMatPiece->GetPose().GetTranslation().z());
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                               "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
+                               newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
+                               newMatPiece->GetPose().GetTranslation().x(),
+                               newMatPiece->GetPose().GetTranslation().y(),
+                               newMatPiece->GetPose().GetTranslation().z());
               
               // Add observed mat markers to the occlusion map of the camera that saw
               // them, so we can use them to delete objects that should have been
