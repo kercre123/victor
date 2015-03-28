@@ -498,7 +498,7 @@ public class RobotEngineManager : MonoBehaviour {
 					texture = null;
 				}
 				
-				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
+				texture = new Texture2D( width, height, TextureFormat.RGB24, false );
 			}
 
 			texture.LoadImage( colorArray );

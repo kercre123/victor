@@ -349,5 +349,5 @@ union U2G_Message {
     U2G_SetFaceDetectParams SetFaceDetectParams
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

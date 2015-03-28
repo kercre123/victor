@@ -144,6 +144,7 @@ public class CozmoVision : MonoBehaviour
 	protected RectTransform imageRectTrans;
 	protected Canvas canvas;
 	protected CanvasScaler canvasScaler;
+	protected float screenScaleFactor = 1f;
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
@@ -255,10 +256,10 @@ public class CozmoVision : MonoBehaviour
 		float refW = Screen.width;
 		float refH = Screen.height;
 		
-		//float screenScaleFactor = 1f;
+		screenScaleFactor = 1f;
 		
 		if(canvasScaler != null) {
-			//screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
+			screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
 			refW = canvasScaler.referenceResolution.x;
 			refH = canvasScaler.referenceResolution.y;
 		}
