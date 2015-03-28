@@ -5,6 +5,7 @@ using System.Collections;
 
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
+	[SerializeField] Image clickableImage;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
@@ -34,6 +35,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		rTrans = transform as RectTransform;
 		sliderTrans = slider.transform as RectTransform;
 		sliderTrigger = slider.gameObject.GetComponent<EventTrigger>();
+		clickableImage = GetComponent<Image>();
 
 		screenScaleFactor = 1f;
 
@@ -43,6 +45,11 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		if(scaler != null) {
 			screenScaleFactor = scaler.referenceResolution.y / Screen.height;
 		}
+
+		if(Screen.dpi > 0f) {
+			float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
+			clickableImage.enabled = screenHeightInches > 3f;
+		}
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
@@ -50,6 +57,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		Vector2 pointerPos = eventData.position * screenScaleFactor;
 		sliderTrans.anchoredPosition = pointerPos - Center;
 		sliderTrans.gameObject.SetActive(true);
+
 		slider.OnPointerDown(eventData);
 		if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
 	}
