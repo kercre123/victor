@@ -73,6 +73,17 @@ namespace Vision {
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
+    // Resize in place by scaleFactor
+    void Resize(f32 scaleFactor);
+    
+    // Resize in place to a specific size
+    void Resize(s32 desiredRows, s32 desiredCols);
+    
+    // Resize into the new image (which is already the desired size)
+    void Resize(Image& resizedImage) const;
+    
+    using Array2d<u8>::GetDataPointer;
+    using Array2d<u8>::IsEmpty;
   }; // class Image
   
   
