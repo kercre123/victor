@@ -152,6 +152,8 @@ public class CozmoVision4 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		ShowObservedObjects();
+
 		if(!interactPressed) {
 
 			if(interactLastFrame) { // && robot.selectedObject > -1
