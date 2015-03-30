@@ -445,9 +445,9 @@ namespace Anki {
             headCamInfo->nrows,
             headCamInfo->ncols,
 #           ifdef SIMULATOR
-            0
+            0 // This is NOT a real robot
 #           else
-            1
+            1 // This is a real robot
 #           endif
           };
           
