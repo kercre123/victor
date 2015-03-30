@@ -2176,14 +2176,14 @@ namespace Cozmo {
           }
           
           MessageTrackerQuad m;
-          m.topLeft_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
-          m.topLeft_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
-          m.topRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
-          m.topRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
+          m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
+          m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
+          m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
+          m.topRight_y    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
           m.bottomRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].x * scale);
           m.bottomRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].y * scale);
-          m.bottomLeft_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
-          m.bottomLeft_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
+          m.bottomLeft_x  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
+          m.bottomLeft_y  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
           
           //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
           _trackerMailbox.putMessage(m);

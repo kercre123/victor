@@ -443,6 +443,12 @@ namespace Anki
 
         Parameters6DoF params6DoF;
 
+        // "Base" Image size (i.e. size of the image the initial marker was detected
+        // in, which could be different from the tracking resolution)
+        // TODO: Probably don't need to support differing detection/tracking resolutions anymore
+        u16 _baseImageWidth;
+        u16 _baseImageHeight;
+        
         //Result SetHomographyFrom6DofParams(Array<f32> &H);
 
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;
