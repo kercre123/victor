@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Anki.Cozmo;
 
@@ -36,6 +37,21 @@ public class RobotEngineManager : MonoBehaviour {
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
 	private const int UILocalPort = 5106;
+
+	private object sync = new object();
+	private List<object> safeLogs = new List<object>();
+
+#if UNITY_EDITOR
+	private bool imageSave = false;
+#else
+	private bool imageSave = true;
+#endif
+	private const int imageFrameSkip = 0;
+	private int imageFrameCount = 0;
+
+	private string imageBasePath;
+	private AsyncCallback EndSave_callback;
+
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -44,19 +60,19 @@ public class RobotEngineManager : MonoBehaviour {
 	private void Start()
 	{
 		if (engineHostInitialized) {
-			Debug.LogError("Error initializing cozmo host: Host already started.");
+			Debug.LogError("Error initializing cozmo host: Host already started.", this);
 			return;
 		}
 		
 		if (configuration == null) {
-			Debug.LogError("Error initializing cozmo host: No configuration.");
+			Debug.LogError("Error initializing cozmo host: No configuration.", this);
 			return;
 		}
 		
 		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_create (configuration.text);
 		
 		if (result != CozmoResult.OK) {
-			Debug.LogError("cozmo_engine_create error: " + result.ToString());
+			Debug.LogError("cozmo_engine_create error: " + result.ToString(), this);
 		} else {
 			engineHostInitialized = true;
 		}
@@ -69,7 +85,7 @@ public class RobotEngineManager : MonoBehaviour {
 			
 			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
 			if (result != CozmoResult.OK) {
-				Debug.LogError("cozmo_engine_destroy error: " + result.ToString());
+				Debug.LogError("cozmo_engine_destroy error: " + result.ToString(), this);
 			}
 		}
 	}
@@ -88,17 +104,32 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 			
 			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
-			Debug.LogError (logBuilder.ToString ());
+			Debug.LogError (logBuilder.ToString (), this);
 		}
 		
 		if (engineHostInitialized) {
 			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
 			if (result != CozmoResult.OK) {
-				Debug.LogError ("cozmo_engine_update error: " + result.ToString ());
+				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
 		}
 	}
 #endif
+	private void Awake()
+	{
+		EndSave_callback = EndSave;
+		if (imageSave) {
+			imageBasePath = Path.Combine (Application.persistentDataPath, DateTime.Now.ToString ("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
+			try {
+				Debug.Log ("Saving robot screenshots to \"" + imageBasePath + "\"", this);
+				Directory.CreateDirectory (imageBasePath);
+			} catch (Exception e) {
+				imageSave = false;
+				Debug.LogException (e, this);
+			}
+		}
+	}
+
 	public void AddRobot( byte robotID )
 	{
 		robots.Add( robotID, new Robot( robotID ) );
@@ -145,9 +176,24 @@ public class RobotEngineManager : MonoBehaviour {
 
 		float robotStateTimeout = 3.0f;
 		if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
-			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.");
+			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
 			Disconnect ();
 			Disconnected (DisconnectionReason.RobotConnectionTimedOut);
+		}
+
+		// logging from async IO thread
+		lock (sync) {
+			if (safeLogs.Count > 0) {
+				for (int i = 0; i < safeLogs.Count; ++i) {
+					object log = safeLogs[i];
+					if (log is Exception) {
+						Debug.LogException((Exception)log, this);
+					}
+					else {
+						Debug.LogError(log, this);
+					}
+				}
+			}
 		}
 	}
 	
@@ -167,7 +213,7 @@ public class RobotEngineManager : MonoBehaviour {
 			float limit = Time.realtimeSinceStartup + 2.0f;
 			while (channel.HasPendingOperations) {
 				if (limit < Time.realtimeSinceStartup) {
-					Debug.LogWarning("Not waiting for disconnect to finish sending.");
+					Debug.LogWarning("Not waiting for disconnect to finish sending.", this);
 					break;
 				}
 				System.Threading.Thread.Sleep (500);
@@ -250,7 +296,7 @@ public class RobotEngineManager : MonoBehaviour {
 			ReceivedSpecificMessage(message.RobotDeletedObject);
 			break;
 		default:
-			Debug.LogWarning( message.GetTag() + " is not supported" );
+			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
 		}
 	}
@@ -286,7 +332,7 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
 	{
-		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.00") + " seconds.");
+		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.00") + " seconds.", this);
 		Disconnect ();
 		Disconnected (DisconnectionReason.RobotDisconnected);
 	}
@@ -401,7 +447,7 @@ public class RobotEngineManager : MonoBehaviour {
 				GrayRaw( message );
 				break;
 			default:
-				Debug.LogWarning( (ImageEncoding_t)message.imageEncoding + " is not supported" );
+				Debug.LogWarning( (ImageEncoding_t)message.imageEncoding + " is not supported", this );
 				break;
 		}
 	}
@@ -508,6 +554,49 @@ public class RobotEngineManager : MonoBehaviour {
 				RobotImage( texture );
 				
 				current.observedObjects.Clear();
+			}
+
+			SaveJpeg(colorArray, currentImageIndex);
+		}
+	}
+
+	public void SaveJpeg(byte[] buffer, int length)
+	{
+		imageFrameCount++;
+		if (!imageSave) {
+			return;
+		}
+//		if (imageFrameSkip != 0) {
+//			if (imageFrameCount % imageFrameSkip != 0) {
+//				return;
+//			}
+//		}
+		string filename = string.Format("rv-{0}.jpg", imageFrameCount);
+		string filepath = Path.Combine (imageBasePath, filename);
+		SaveAsync(filepath, buffer, 0, length);
+	}
+
+
+	public void SaveAsync(string filepath, byte[] buffer, int start, int length)
+	{
+		FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write, FileShare.None, 0x1000, true);
+		try {
+			stream.BeginWrite(buffer, start, length, EndSave_callback, stream);
+		}
+		catch (Exception e) {
+			Debug.LogException(e, this);
+		}
+	}
+
+	private void EndSave(IAsyncResult result)
+	{
+		lock (sync) {
+			try {
+				FileStream stream = (FileStream)result.AsyncState;
+				stream.EndWrite(result);
+			}
+			catch (Exception e) {
+				safeLogs.Add(e);
 			}
 		}
 	}
