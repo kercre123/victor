@@ -55,7 +55,7 @@
 // the end pose angle of the path is the commanded one.
 const f32 TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD = DEG_TO_RAD_F32(2.f);
 
-const f32 TERMINAL_POINT_TURN_SPEED = 1.5f;
+const f32 TERMINAL_POINT_TURN_SPEED = PI_F;
 const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
 const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
 
