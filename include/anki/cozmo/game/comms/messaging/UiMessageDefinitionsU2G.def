@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-using namespace CLAD;
-
 namespace Anki {
 
 namespace Cozmo {
@@ -36,15 +34,15 @@ struct U2G_Ping
 	{}
 
 	explicit U2G_Ping(const uint8_t* buff, size_t len);
-	explicit U2G_Ping(const SafeMessageBuffer& buffer);
+	explicit U2G_Ping(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -70,15 +68,15 @@ struct U2G_ConnectToRobot
 	{}
 
 	explicit U2G_ConnectToRobot(const uint8_t* buff, size_t len);
-	explicit U2G_ConnectToRobot(const SafeMessageBuffer& buffer);
+	explicit U2G_ConnectToRobot(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -104,15 +102,15 @@ struct U2G_ConnectToUiDevice
 	{}
 
 	explicit U2G_ConnectToUiDevice(const uint8_t* buff, size_t len);
-	explicit U2G_ConnectToUiDevice(const SafeMessageBuffer& buffer);
+	explicit U2G_ConnectToUiDevice(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -138,15 +136,15 @@ struct U2G_DisconnectFromUiDevice
 	{}
 
 	explicit U2G_DisconnectFromUiDevice(const uint8_t* buff, size_t len);
-	explicit U2G_DisconnectFromUiDevice(const SafeMessageBuffer& buffer);
+	explicit U2G_DisconnectFromUiDevice(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -178,15 +176,15 @@ struct U2G_ForceAddRobot
 	{}
 
 	explicit U2G_ForceAddRobot(const uint8_t* buff, size_t len);
-	explicit U2G_ForceAddRobot(const SafeMessageBuffer& buffer);
+	explicit U2G_ForceAddRobot(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -215,15 +213,15 @@ struct U2G_StartEngine
 	{}
 
 	explicit U2G_StartEngine(const uint8_t* buff, size_t len);
-	explicit U2G_StartEngine(const SafeMessageBuffer& buffer);
+	explicit U2G_StartEngine(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -252,15 +250,15 @@ struct U2G_DriveWheels
 	{}
 
 	explicit U2G_DriveWheels(const uint8_t* buff, size_t len);
-	explicit U2G_DriveWheels(const SafeMessageBuffer& buffer);
+	explicit U2G_DriveWheels(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -289,15 +287,15 @@ struct U2G_TurnInPlace
 	{}
 
 	explicit U2G_TurnInPlace(const uint8_t* buff, size_t len);
-	explicit U2G_TurnInPlace(const SafeMessageBuffer& buffer);
+	explicit U2G_TurnInPlace(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -323,15 +321,15 @@ struct U2G_MoveHead
 	{}
 
 	explicit U2G_MoveHead(const uint8_t* buff, size_t len);
-	explicit U2G_MoveHead(const SafeMessageBuffer& buffer);
+	explicit U2G_MoveHead(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -357,15 +355,15 @@ struct U2G_MoveLift
 	{}
 
 	explicit U2G_MoveLift(const uint8_t* buff, size_t len);
-	explicit U2G_MoveLift(const SafeMessageBuffer& buffer);
+	explicit U2G_MoveLift(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -397,15 +395,15 @@ struct U2G_SetLiftHeight
 	{}
 
 	explicit U2G_SetLiftHeight(const uint8_t* buff, size_t len);
-	explicit U2G_SetLiftHeight(const SafeMessageBuffer& buffer);
+	explicit U2G_SetLiftHeight(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -437,15 +435,15 @@ struct U2G_SetHeadAngle
 	{}
 
 	explicit U2G_SetHeadAngle(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadAngle(const SafeMessageBuffer& buffer);
+	explicit U2G_SetHeadAngle(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -474,15 +472,15 @@ struct U2G_TrackHeadToObject
 	{}
 
 	explicit U2G_TrackHeadToObject(const uint8_t* buff, size_t len);
-	explicit U2G_TrackHeadToObject(const SafeMessageBuffer& buffer);
+	explicit U2G_TrackHeadToObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -502,15 +500,15 @@ struct U2G_StopAllMotors
 	U2G_StopAllMotors& operator=(const U2G_StopAllMotors& other) = default;
 	U2G_StopAllMotors& operator=(U2G_StopAllMotors&& other) noexcept = default;
 		explicit U2G_StopAllMotors(const uint8_t* buff, size_t len);
-	explicit U2G_StopAllMotors(const SafeMessageBuffer& buffer);
+	explicit U2G_StopAllMotors(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -539,15 +537,15 @@ struct U2G_ImageRequest
 	{}
 
 	explicit U2G_ImageRequest(const uint8_t* buff, size_t len);
-	explicit U2G_ImageRequest(const SafeMessageBuffer& buffer);
+	explicit U2G_ImageRequest(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -576,15 +574,15 @@ struct U2G_SetRobotImageSendMode
 	{}
 
 	explicit U2G_SetRobotImageSendMode(const uint8_t* buff, size_t len);
-	explicit U2G_SetRobotImageSendMode(const SafeMessageBuffer& buffer);
+	explicit U2G_SetRobotImageSendMode(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -610,15 +608,15 @@ struct U2G_SaveImages
 	{}
 
 	explicit U2G_SaveImages(const uint8_t* buff, size_t len);
-	explicit U2G_SaveImages(const SafeMessageBuffer& buffer);
+	explicit U2G_SaveImages(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -644,15 +642,15 @@ struct U2G_SaveRobotState
 	{}
 
 	explicit U2G_SaveRobotState(const uint8_t* buff, size_t len);
-	explicit U2G_SaveRobotState(const SafeMessageBuffer& buffer);
+	explicit U2G_SaveRobotState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -678,15 +676,15 @@ struct U2G_EnableDisplay
 	{}
 
 	explicit U2G_EnableDisplay(const uint8_t* buff, size_t len);
-	explicit U2G_EnableDisplay(const SafeMessageBuffer& buffer);
+	explicit U2G_EnableDisplay(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -712,15 +710,15 @@ struct U2G_SetHeadlights
 	{}
 
 	explicit U2G_SetHeadlights(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadlights(const SafeMessageBuffer& buffer);
+	explicit U2G_SetHeadlights(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -758,15 +756,15 @@ struct U2G_GotoPose
 	{}
 
 	explicit U2G_GotoPose(const uint8_t* buff, size_t len);
-	explicit U2G_GotoPose(const SafeMessageBuffer& buffer);
+	explicit U2G_GotoPose(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -804,15 +802,15 @@ struct U2G_PlaceObjectOnGround
 	{}
 
 	explicit U2G_PlaceObjectOnGround(const uint8_t* buff, size_t len);
-	explicit U2G_PlaceObjectOnGround(const SafeMessageBuffer& buffer);
+	explicit U2G_PlaceObjectOnGround(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -832,15 +830,15 @@ struct U2G_PlaceObjectOnGroundHere
 	U2G_PlaceObjectOnGroundHere& operator=(const U2G_PlaceObjectOnGroundHere& other) = default;
 	U2G_PlaceObjectOnGroundHere& operator=(U2G_PlaceObjectOnGroundHere&& other) noexcept = default;
 		explicit U2G_PlaceObjectOnGroundHere(const uint8_t* buff, size_t len);
-	explicit U2G_PlaceObjectOnGroundHere(const SafeMessageBuffer& buffer);
+	explicit U2G_PlaceObjectOnGroundHere(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -860,15 +858,15 @@ struct U2G_ExecuteTestPlan
 	U2G_ExecuteTestPlan& operator=(const U2G_ExecuteTestPlan& other) = default;
 	U2G_ExecuteTestPlan& operator=(U2G_ExecuteTestPlan&& other) noexcept = default;
 		explicit U2G_ExecuteTestPlan(const uint8_t* buff, size_t len);
-	explicit U2G_ExecuteTestPlan(const SafeMessageBuffer& buffer);
+	explicit U2G_ExecuteTestPlan(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -888,15 +886,15 @@ struct U2G_SelectNextObject
 	U2G_SelectNextObject& operator=(const U2G_SelectNextObject& other) = default;
 	U2G_SelectNextObject& operator=(U2G_SelectNextObject&& other) noexcept = default;
 		explicit U2G_SelectNextObject(const uint8_t* buff, size_t len);
-	explicit U2G_SelectNextObject(const SafeMessageBuffer& buffer);
+	explicit U2G_SelectNextObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -928,15 +926,15 @@ struct U2G_PickAndPlaceObject
 	{}
 
 	explicit U2G_PickAndPlaceObject(const uint8_t* buff, size_t len);
-	explicit U2G_PickAndPlaceObject(const SafeMessageBuffer& buffer);
+	explicit U2G_PickAndPlaceObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -965,15 +963,15 @@ struct U2G_TraverseObject
 	{}
 
 	explicit U2G_TraverseObject(const uint8_t* buff, size_t len);
-	explicit U2G_TraverseObject(const SafeMessageBuffer& buffer);
+	explicit U2G_TraverseObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1002,15 +1000,15 @@ struct U2G_SetRobotCarryingObject
 	{}
 
 	explicit U2G_SetRobotCarryingObject(const uint8_t* buff, size_t len);
-	explicit U2G_SetRobotCarryingObject(const SafeMessageBuffer& buffer);
+	explicit U2G_SetRobotCarryingObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1030,15 +1028,15 @@ struct U2G_ClearAllBlocks
 	U2G_ClearAllBlocks& operator=(const U2G_ClearAllBlocks& other) = default;
 	U2G_ClearAllBlocks& operator=(U2G_ClearAllBlocks&& other) noexcept = default;
 		explicit U2G_ClearAllBlocks(const uint8_t* buff, size_t len);
-	explicit U2G_ClearAllBlocks(const SafeMessageBuffer& buffer);
+	explicit U2G_ClearAllBlocks(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1064,15 +1062,15 @@ struct U2G_VisionWhileMoving
 	{}
 
 	explicit U2G_VisionWhileMoving(const uint8_t* buff, size_t len);
-	explicit U2G_VisionWhileMoving(const SafeMessageBuffer& buffer);
+	explicit U2G_VisionWhileMoving(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1098,15 +1096,15 @@ struct U2G_ExecuteBehavior
 	{}
 
 	explicit U2G_ExecuteBehavior(const uint8_t* buff, size_t len);
-	explicit U2G_ExecuteBehavior(const SafeMessageBuffer& buffer);
+	explicit U2G_ExecuteBehavior(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1132,15 +1130,15 @@ struct U2G_SetBehaviorState
 	{}
 
 	explicit U2G_SetBehaviorState(const uint8_t* buff, size_t len);
-	explicit U2G_SetBehaviorState(const SafeMessageBuffer& buffer);
+	explicit U2G_SetBehaviorState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1160,15 +1158,15 @@ struct U2G_AbortPath
 	U2G_AbortPath& operator=(const U2G_AbortPath& other) = default;
 	U2G_AbortPath& operator=(U2G_AbortPath&& other) noexcept = default;
 		explicit U2G_AbortPath(const uint8_t* buff, size_t len);
-	explicit U2G_AbortPath(const SafeMessageBuffer& buffer);
+	explicit U2G_AbortPath(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1188,15 +1186,15 @@ struct U2G_AbortAll
 	U2G_AbortAll& operator=(const U2G_AbortAll& other) = default;
 	U2G_AbortAll& operator=(U2G_AbortAll&& other) noexcept = default;
 		explicit U2G_AbortAll(const uint8_t* buff, size_t len);
-	explicit U2G_AbortAll(const SafeMessageBuffer& buffer);
+	explicit U2G_AbortAll(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1231,15 +1229,15 @@ struct U2G_DrawPoseMarker
 	{}
 
 	explicit U2G_DrawPoseMarker(const uint8_t* buff, size_t len);
-	explicit U2G_DrawPoseMarker(const SafeMessageBuffer& buffer);
+	explicit U2G_DrawPoseMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1259,15 +1257,15 @@ struct U2G_ErasePoseMarker
 	U2G_ErasePoseMarker& operator=(const U2G_ErasePoseMarker& other) = default;
 	U2G_ErasePoseMarker& operator=(U2G_ErasePoseMarker&& other) noexcept = default;
 		explicit U2G_ErasePoseMarker(const uint8_t* buff, size_t len);
-	explicit U2G_ErasePoseMarker(const SafeMessageBuffer& buffer);
+	explicit U2G_ErasePoseMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1299,15 +1297,15 @@ struct U2G_SetHeadControllerGains
 	{}
 
 	explicit U2G_SetHeadControllerGains(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadControllerGains(const SafeMessageBuffer& buffer);
+	explicit U2G_SetHeadControllerGains(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1339,15 +1337,15 @@ struct U2G_SetLiftControllerGains
 	{}
 
 	explicit U2G_SetLiftControllerGains(const uint8_t* buff, size_t len);
-	explicit U2G_SetLiftControllerGains(const SafeMessageBuffer& buffer);
+	explicit U2G_SetLiftControllerGains(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1367,15 +1365,15 @@ struct U2G_SelectNextSoundScheme
 	U2G_SelectNextSoundScheme& operator=(const U2G_SelectNextSoundScheme& other) = default;
 	U2G_SelectNextSoundScheme& operator=(U2G_SelectNextSoundScheme&& other) noexcept = default;
 		explicit U2G_SelectNextSoundScheme(const uint8_t* buff, size_t len);
-	explicit U2G_SelectNextSoundScheme(const SafeMessageBuffer& buffer);
+	explicit U2G_SelectNextSoundScheme(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1410,15 +1408,15 @@ struct U2G_StartTestMode
 	{}
 
 	explicit U2G_StartTestMode(const uint8_t* buff, size_t len);
-	explicit U2G_StartTestMode(const SafeMessageBuffer& buffer);
+	explicit U2G_StartTestMode(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1444,15 +1442,15 @@ struct U2G_IMURequest
 	{}
 
 	explicit U2G_IMURequest(const uint8_t* buff, size_t len);
-	explicit U2G_IMURequest(const SafeMessageBuffer& buffer);
+	explicit U2G_IMURequest(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1481,15 +1479,15 @@ struct U2G_PlayAnimation
 	{}
 
 	explicit U2G_PlayAnimation(const uint8_t* buff, size_t len);
-	explicit U2G_PlayAnimation(const SafeMessageBuffer& buffer);
+	explicit U2G_PlayAnimation(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1509,15 +1507,15 @@ struct U2G_ReadAnimationFile
 	U2G_ReadAnimationFile& operator=(const U2G_ReadAnimationFile& other) = default;
 	U2G_ReadAnimationFile& operator=(U2G_ReadAnimationFile&& other) noexcept = default;
 		explicit U2G_ReadAnimationFile(const uint8_t* buff, size_t len);
-	explicit U2G_ReadAnimationFile(const SafeMessageBuffer& buffer);
+	explicit U2G_ReadAnimationFile(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1543,15 +1541,15 @@ struct U2G_StartFaceTracking
 	{}
 
 	explicit U2G_StartFaceTracking(const uint8_t* buff, size_t len);
-	explicit U2G_StartFaceTracking(const SafeMessageBuffer& buffer);
+	explicit U2G_StartFaceTracking(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1571,15 +1569,15 @@ struct U2G_StopFaceTracking
 	U2G_StopFaceTracking& operator=(const U2G_StopFaceTracking& other) = default;
 	U2G_StopFaceTracking& operator=(U2G_StopFaceTracking&& other) noexcept = default;
 		explicit U2G_StopFaceTracking(const uint8_t* buff, size_t len);
-	explicit U2G_StopFaceTracking(const SafeMessageBuffer& buffer);
+	explicit U2G_StopFaceTracking(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1599,15 +1597,15 @@ struct U2G_StartLookingForMarkers
 	U2G_StartLookingForMarkers& operator=(const U2G_StartLookingForMarkers& other) = default;
 	U2G_StartLookingForMarkers& operator=(U2G_StartLookingForMarkers&& other) noexcept = default;
 		explicit U2G_StartLookingForMarkers(const uint8_t* buff, size_t len);
-	explicit U2G_StartLookingForMarkers(const SafeMessageBuffer& buffer);
+	explicit U2G_StartLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1627,15 +1625,15 @@ struct U2G_StopLookingForMarkers
 	U2G_StopLookingForMarkers& operator=(const U2G_StopLookingForMarkers& other) = default;
 	U2G_StopLookingForMarkers& operator=(U2G_StopLookingForMarkers&& other) noexcept = default;
 		explicit U2G_StopLookingForMarkers(const uint8_t* buff, size_t len);
-	explicit U2G_StopLookingForMarkers(const SafeMessageBuffer& buffer);
+	explicit U2G_StopLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1682,15 +1680,15 @@ struct U2G_SetVisionSystemParams
 	{}
 
 	explicit U2G_SetVisionSystemParams(const uint8_t* buff, size_t len);
-	explicit U2G_SetVisionSystemParams(const SafeMessageBuffer& buffer);
+	explicit U2G_SetVisionSystemParams(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1731,15 +1729,15 @@ struct U2G_SetFaceDetectParams
 	{}
 
 	explicit U2G_SetFaceDetectParams(const uint8_t* buff, size_t len);
-	explicit U2G_SetFaceDetectParams(const SafeMessageBuffer& buffer);
+	explicit U2G_SetFaceDetectParams(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -1753,7 +1751,7 @@ class U2G_Message
 public:
 	/**** Constructors ****/
 	U2G_Message() :_type(Type::INVALID) { }
-	explicit U2G_Message(const SafeMessageBuffer& buff);
+	explicit U2G_Message(const CLAD::SafeMessageBuffer& buff);
 	explicit U2G_Message(const uint8_t* buffer, size_t length);
 
 	~U2G_Message() { ClearCurrent(); }
@@ -2162,10 +2160,10 @@ public:
 
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	size_t Size() const;
 private:

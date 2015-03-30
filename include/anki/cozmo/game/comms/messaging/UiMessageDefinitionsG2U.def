@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-using namespace CLAD;
-
 namespace Anki {
 
 namespace Cozmo {
@@ -36,15 +34,15 @@ struct G2U_Ping
 	{}
 
 	explicit G2U_Ping(const uint8_t* buff, size_t len);
-	explicit G2U_Ping(const SafeMessageBuffer& buffer);
+	explicit G2U_Ping(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -70,15 +68,15 @@ struct G2U_RobotAvailable
 	{}
 
 	explicit G2U_RobotAvailable(const uint8_t* buff, size_t len);
-	explicit G2U_RobotAvailable(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotAvailable(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -104,15 +102,15 @@ struct G2U_UiDeviceAvailable
 	{}
 
 	explicit G2U_UiDeviceAvailable(const uint8_t* buff, size_t len);
-	explicit G2U_UiDeviceAvailable(const SafeMessageBuffer& buffer);
+	explicit G2U_UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -141,15 +139,15 @@ struct G2U_RobotConnected
 	{}
 
 	explicit G2U_RobotConnected(const uint8_t* buff, size_t len);
-	explicit G2U_RobotConnected(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotConnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -178,15 +176,15 @@ struct G2U_RobotDisconnected
 	{}
 
 	explicit G2U_RobotDisconnected(const uint8_t* buff, size_t len);
-	explicit G2U_RobotDisconnected(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotDisconnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -215,15 +213,15 @@ struct G2U_UiDeviceConnected
 	{}
 
 	explicit G2U_UiDeviceConnected(const uint8_t* buff, size_t len);
-	explicit G2U_UiDeviceConnected(const SafeMessageBuffer& buffer);
+	explicit G2U_UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -294,15 +292,15 @@ struct G2U_RobotState
 	{}
 
 	explicit G2U_RobotState(const uint8_t* buff, size_t len);
-	explicit G2U_RobotState(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -352,15 +350,15 @@ struct G2U_ImageChunk
 	{}
 
 	explicit G2U_ImageChunk(const uint8_t* buff, size_t len);
-	explicit G2U_ImageChunk(const SafeMessageBuffer& buffer);
+	explicit G2U_ImageChunk(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -431,15 +429,15 @@ struct G2U_RobotObservedObject
 	{}
 
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len);
-	explicit G2U_RobotObservedObject(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotObservedObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -465,15 +463,15 @@ struct G2U_RobotObservedNothing
 	{}
 
 	explicit G2U_RobotObservedNothing(const uint8_t* buff, size_t len);
-	explicit G2U_RobotObservedNothing(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -502,15 +500,15 @@ struct G2U_RobotDeletedObject
 	{}
 
 	explicit G2U_RobotDeletedObject(const uint8_t* buff, size_t len);
-	explicit G2U_RobotDeletedObject(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -560,15 +558,15 @@ struct G2U_DeviceDetectedVisionMarker
 	{}
 
 	explicit G2U_DeviceDetectedVisionMarker(const uint8_t* buff, size_t len);
-	explicit G2U_DeviceDetectedVisionMarker(const SafeMessageBuffer& buffer);
+	explicit G2U_DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -597,15 +595,15 @@ struct G2U_RobotCompletedAction
 	{}
 
 	explicit G2U_RobotCompletedAction(const uint8_t* buff, size_t len);
-	explicit G2U_RobotCompletedAction(const SafeMessageBuffer& buffer);
+	explicit G2U_RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -637,15 +635,15 @@ struct G2U_PlaySound
 	{}
 
 	explicit G2U_PlaySound(const uint8_t* buff, size_t len);
-	explicit G2U_PlaySound(const SafeMessageBuffer& buffer);
+	explicit G2U_PlaySound(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -665,15 +663,15 @@ struct G2U_StopSound
 	G2U_StopSound& operator=(const G2U_StopSound& other) = default;
 	G2U_StopSound& operator=(G2U_StopSound&& other) noexcept = default;
 		explicit G2U_StopSound(const uint8_t* buff, size_t len);
-	explicit G2U_StopSound(const SafeMessageBuffer& buffer);
+	explicit G2U_StopSound(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	/**** Unpack ****/
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Size() const;
 
@@ -687,7 +685,7 @@ class G2U_Message
 public:
 	/**** Constructors ****/
 	G2U_Message() :_type(Type::INVALID) { }
-	explicit G2U_Message(const SafeMessageBuffer& buff);
+	explicit G2U_Message(const CLAD::SafeMessageBuffer& buff);
 	explicit G2U_Message(const uint8_t* buffer, size_t length);
 
 	~G2U_Message() { ClearCurrent(); }
@@ -824,10 +822,10 @@ public:
 
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
-	size_t Unpack(const SafeMessageBuffer& buffer);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
 
 	size_t Pack(uint8_t* buff, size_t len) const;
-	size_t Pack(SafeMessageBuffer& buffer) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
 
 	size_t Size() const;
 private:

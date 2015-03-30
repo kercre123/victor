@@ -12,22 +12,22 @@ namespace Cozmo {
 
 G2U_Ping::G2U_Ping(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_Ping::G2U_Ping(const SafeMessageBuffer& buffer)
+G2U_Ping::G2U_Ping(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_Ping::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_Ping::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_Ping::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->counter);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -36,11 +36,11 @@ size_t G2U_Ping::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_Ping::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_Ping::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_Ping::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->counter);
 	return buffer.GetBytesRead();
@@ -72,22 +72,22 @@ bool G2U_Ping::operator!=(const G2U_Ping& other) const
 
 G2U_RobotAvailable::G2U_RobotAvailable(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotAvailable::G2U_RobotAvailable(const SafeMessageBuffer& buffer)
+G2U_RobotAvailable::G2U_RobotAvailable(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotAvailable::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotAvailable::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -96,11 +96,11 @@ size_t G2U_RobotAvailable::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotAvailable::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotAvailable::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
@@ -132,22 +132,22 @@ bool G2U_RobotAvailable::operator!=(const G2U_RobotAvailable& other) const
 
 G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const SafeMessageBuffer& buffer)
+G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_UiDeviceAvailable::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_UiDeviceAvailable::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_UiDeviceAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->deviceID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -156,11 +156,11 @@ size_t G2U_UiDeviceAvailable::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_UiDeviceAvailable::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_UiDeviceAvailable::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_UiDeviceAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->deviceID);
 	return buffer.GetBytesRead();
@@ -192,22 +192,22 @@ bool G2U_UiDeviceAvailable::operator!=(const G2U_UiDeviceAvailable& other) const
 
 G2U_RobotConnected::G2U_RobotConnected(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotConnected::G2U_RobotConnected(const SafeMessageBuffer& buffer)
+G2U_RobotConnected::G2U_RobotConnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotConnected::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotConnected::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->successful);
@@ -217,11 +217,11 @@ size_t G2U_RobotConnected::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotConnected::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotConnected::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->successful);
@@ -257,22 +257,22 @@ bool G2U_RobotConnected::operator!=(const G2U_RobotConnected& other) const
 
 G2U_RobotDisconnected::G2U_RobotDisconnected(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotDisconnected::G2U_RobotDisconnected(const SafeMessageBuffer& buffer)
+G2U_RobotDisconnected::G2U_RobotDisconnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotDisconnected::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotDisconnected::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotDisconnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->timeSinceLastMsg_sec);
@@ -282,11 +282,11 @@ size_t G2U_RobotDisconnected::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotDisconnected::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotDisconnected::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotDisconnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->timeSinceLastMsg_sec);
@@ -322,22 +322,22 @@ bool G2U_RobotDisconnected::operator!=(const G2U_RobotDisconnected& other) const
 
 G2U_UiDeviceConnected::G2U_UiDeviceConnected(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_UiDeviceConnected::G2U_UiDeviceConnected(const SafeMessageBuffer& buffer)
+G2U_UiDeviceConnected::G2U_UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_UiDeviceConnected::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_UiDeviceConnected::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_UiDeviceConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->deviceID);
 	buffer.Write(this->successful);
@@ -347,11 +347,11 @@ size_t G2U_UiDeviceConnected::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_UiDeviceConnected::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_UiDeviceConnected::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_UiDeviceConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->deviceID);
 	buffer.Read(this->successful);
@@ -387,22 +387,22 @@ bool G2U_UiDeviceConnected::operator!=(const G2U_UiDeviceConnected& other) const
 
 G2U_RobotState::G2U_RobotState(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotState::G2U_RobotState(const SafeMessageBuffer& buffer)
+G2U_RobotState::G2U_RobotState(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotState::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotState::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->pose_x);
 	buffer.Write(this->pose_y);
@@ -426,11 +426,11 @@ size_t G2U_RobotState::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotState::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotState::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->pose_x);
 	buffer.Read(this->pose_y);
@@ -522,22 +522,22 @@ bool G2U_RobotState::operator!=(const G2U_RobotState& other) const
 
 G2U_ImageChunk::G2U_ImageChunk(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_ImageChunk::G2U_ImageChunk(const SafeMessageBuffer& buffer)
+G2U_ImageChunk::G2U_ImageChunk(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_ImageChunk::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_ImageChunk::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_ImageChunk::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->imageId);
 	buffer.Write(this->frameTimeStamp);
@@ -554,11 +554,11 @@ size_t G2U_ImageChunk::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_ImageChunk::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_ImageChunk::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_ImageChunk::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->imageId);
 	buffer.Read(this->frameTimeStamp);
@@ -622,22 +622,22 @@ bool G2U_ImageChunk::operator!=(const G2U_ImageChunk& other) const
 
 G2U_RobotObservedObject::G2U_RobotObservedObject(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotObservedObject::G2U_RobotObservedObject(const SafeMessageBuffer& buffer)
+G2U_RobotObservedObject::G2U_RobotObservedObject(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotObservedObject::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotObservedObject::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->objectFamily);
@@ -661,11 +661,11 @@ size_t G2U_RobotObservedObject::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotObservedObject::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotObservedObject::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->objectFamily);
@@ -757,22 +757,22 @@ bool G2U_RobotObservedObject::operator!=(const G2U_RobotObservedObject& other) c
 
 G2U_RobotObservedNothing::G2U_RobotObservedNothing(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotObservedNothing::G2U_RobotObservedNothing(const SafeMessageBuffer& buffer)
+G2U_RobotObservedNothing::G2U_RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotObservedNothing::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotObservedNothing::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotObservedNothing::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -781,11 +781,11 @@ size_t G2U_RobotObservedNothing::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotObservedNothing::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotObservedNothing::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotObservedNothing::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
@@ -817,22 +817,22 @@ bool G2U_RobotObservedNothing::operator!=(const G2U_RobotObservedNothing& other)
 
 G2U_RobotDeletedObject::G2U_RobotDeletedObject(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotDeletedObject::G2U_RobotDeletedObject(const SafeMessageBuffer& buffer)
+G2U_RobotDeletedObject::G2U_RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotDeletedObject::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotDeletedObject::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotDeletedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->objectID);
@@ -842,11 +842,11 @@ size_t G2U_RobotDeletedObject::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotDeletedObject::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotDeletedObject::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotDeletedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->objectID);
@@ -882,22 +882,22 @@ bool G2U_RobotDeletedObject::operator!=(const G2U_RobotDeletedObject& other) con
 
 G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const SafeMessageBuffer& buffer)
+G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_DeviceDetectedVisionMarker::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_DeviceDetectedVisionMarker::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->markerType);
 	buffer.Write(this->x_upperLeft);
@@ -914,11 +914,11 @@ size_t G2U_DeviceDetectedVisionMarker::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_DeviceDetectedVisionMarker::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_DeviceDetectedVisionMarker::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->markerType);
 	buffer.Read(this->x_upperLeft);
@@ -982,22 +982,22 @@ bool G2U_DeviceDetectedVisionMarker::operator!=(const G2U_DeviceDetectedVisionMa
 
 G2U_RobotCompletedAction::G2U_RobotCompletedAction(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotCompletedAction::G2U_RobotCompletedAction(const SafeMessageBuffer& buffer)
+G2U_RobotCompletedAction::G2U_RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_RobotCompletedAction::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotCompletedAction::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->success);
@@ -1007,11 +1007,11 @@ size_t G2U_RobotCompletedAction::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_RobotCompletedAction::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotCompletedAction::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->success);
@@ -1047,22 +1047,22 @@ bool G2U_RobotCompletedAction::operator!=(const G2U_RobotCompletedAction& other)
 
 G2U_PlaySound::G2U_PlaySound(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_PlaySound::G2U_PlaySound(const SafeMessageBuffer& buffer)
+G2U_PlaySound::G2U_PlaySound(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_PlaySound::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_PlaySound::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_PlaySound::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.WritePString<uint8_t>(this->soundFilename);
 	buffer.Write(this->numLoops);
@@ -1073,11 +1073,11 @@ size_t G2U_PlaySound::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_PlaySound::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_PlaySound::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_PlaySound::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.ReadPString<uint8_t>(this->soundFilename);
 	buffer.Read(this->numLoops);
@@ -1118,22 +1118,22 @@ bool G2U_PlaySound::operator!=(const G2U_PlaySound& other) const
 
 G2U_StopSound::G2U_StopSound(const uint8_t* buff, size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_StopSound::G2U_StopSound(const SafeMessageBuffer& buffer)
+G2U_StopSound::G2U_StopSound(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
 size_t G2U_StopSound::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_StopSound::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_StopSound::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
@@ -1141,11 +1141,11 @@ size_t G2U_StopSound::Pack(SafeMessageBuffer& buffer) const
 
 size_t G2U_StopSound::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_StopSound::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_StopSound::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	return buffer.GetBytesRead();
 }
@@ -1169,14 +1169,14 @@ bool G2U_StopSound::operator!=(const G2U_StopSound& other) const
 
 // UNION G2U_Message
 
-G2U_Message::G2U_Message(const SafeMessageBuffer& buff) :_type(Type::INVALID)
+G2U_Message::G2U_Message(const CLAD::SafeMessageBuffer& buff) :_type(Type::INVALID)
 {
 	Unpack(buff);
 }
 
 G2U_Message::G2U_Message(const uint8_t* buffer, size_t length) :_type(Type::INVALID)
 {
-	SafeMessageBuffer buff(const_cast<uint8_t*>(buffer), length);
+	CLAD::SafeMessageBuffer buff(const_cast<uint8_t*>(buffer), length);
 	Unpack(buff);
 }
 
@@ -1617,11 +1617,11 @@ void G2U_Message::Set_StopSound(Anki::Cozmo::G2U_StopSound&& new_StopSound)
 
 size_t G2U_Message::Unpack(const uint8_t* buff, const size_t len)
 {
-	const SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_Message::Unpack(const SafeMessageBuffer& buffer)
+size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	Type newType {Type::INVALID};
 	const Type oldType {GetType()};
@@ -1759,11 +1759,11 @@ size_t G2U_Message::Unpack(const SafeMessageBuffer& buffer)
 
 size_t G2U_Message::Pack(uint8_t* buff, size_t len) const
 {
-	SafeMessageBuffer buffer(buff, len, false);
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_Message::Pack(SafeMessageBuffer& buffer) const
+size_t G2U_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(_type);
 	switch(GetType()) {
