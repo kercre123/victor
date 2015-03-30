@@ -15,14 +15,15 @@ public class GoldRushController : GameController {
 	List<ObservedObject> goldCubes = new List<ObservedObject>();
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
-	ScreenMessage timeMessage;
+	int lastCarriedObjectId = -1;
+	ScreenMessage dropMessage;
 
 	Robot robot;
 	//int lastHeldID;
 
 	void Awake()
 	{
-		timeMessage = GetComponentInChildren<ScreenMessage> ();
+		dropMessage = GetComponentInChildren<ScreenMessage> ();
 	}
 
 	protected override void Enter_PLAYING() 
@@ -52,8 +53,9 @@ public class GoldRushController : GameController {
 	{
 		base.Update_PLAYING();
 
-		if(robot.carryingObjectID != 0) 
+		if(robot.carryingObjectID != -1) 
 		{
+			lastCarriedObjectId = robot.carryingObjectID;
 			Vector2 buriedLocation;
 			if(buriedLocations.TryGetValue(robot.carryingObjectID, out buriedLocation)) 
 			{
@@ -65,6 +67,7 @@ public class GoldRushController : GameController {
 						//show 'found' light pattern
 						gameObject.audio.PlayOneShot(playerScoreSound);
 						foundItems.Add(robot.carryingObjectID);
+						dropMessage.ShowMessage("Drop the extractor to mine the gold!", Color.black);
 						Debug.Log("found!");
 					}
 					else if(distance <= detectRadius) 
@@ -74,8 +77,23 @@ public class GoldRushController : GameController {
 						float dist_percent = 1 - ((detectRadius-findRadius)-(distance-findRadius))/(detectRadius-findRadius);
 						float current_rate = Mathf.Lerp(detectRangeDelayClose, detectRangeDelayFar, dist_percent);
 						UpdateLocatorSound(current_rate);
+						dropMessage.KillMessage();
 					}
 				}
+				else if( foundItems.Contains(robot.carryingObjectID) && distance > findRadius )
+				{
+					// remove it from our found list if we exit the find radius without dropping it
+					foundItems.Remove(robot.carryingObjectID);
+					dropMessage.KillMessage();
+				}
+			}
+			else if( lastCarriedObjectId != -1 && foundItems.Contains(lastCarriedObjectId) )
+			{
+				// item has been dropped, so score it
+				foundItems.Remove(lastCarriedObjectId);
+				lastCarriedObjectId = -1;
+				dropMessage.KillMessage();
+
 			}
 		}
 		//else if lead cube dropped within findRadius, Transmute(lastHeldID)
