@@ -511,7 +511,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(unobserved.family != ObjectFamily::MATS) {
+        } else if(unobserved.family != ObjectFamily::MATS && unobserved.object->GetID() != _robot->GetCarryingObject()) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
