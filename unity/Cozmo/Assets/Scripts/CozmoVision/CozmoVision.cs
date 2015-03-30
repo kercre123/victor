@@ -249,7 +249,7 @@ public class CozmoVision : MonoBehaviour
 	}
 
 	protected virtual void ResizeToScreen() {
-		float dpi = Screen.dpi;//361; //
+		float dpi = Screen.dpi;//
 		
 		if(dpi == 0f) return;
 		
@@ -277,13 +277,13 @@ public class CozmoVision : MonoBehaviour
 
 			if(anchorToCenterOnSideBar != null) {
 				Vector3 anchor = anchorToCenterOnSideBar.anchoredPosition;
-				anchor.x = 0f;
+				anchor.x = size.x * 0.5f - sideBarWidth * 0.5f;
 				anchorToCenterOnSideBar.anchoredPosition = anchor;
 			}
 		}
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
-		if(screenHeightInches < 3f && anchorToScaleOnSmallScreens != null) {
+		if(screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
 			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
@@ -291,7 +291,6 @@ public class CozmoVision : MonoBehaviour
 			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
 			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
 			anchor.y = 0f;
-			anchor.x = 0f;
 			anchorToScaleOnSmallScreens.anchoredPosition = anchor;
 		}
 		

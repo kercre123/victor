@@ -14,6 +14,8 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 	CanvasScaler scaler;
 	float screenScaleFactor = 1f;
 
+	bool dynamic = true;
+
 	Vector2 Center {
 		get {
 			
@@ -48,29 +50,47 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 		if(Screen.dpi > 0f) {
 			float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
-			clickableImage.enabled = screenHeightInches > 3f;
+			//clickableImage.enabled = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
+			dynamic = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
 		}
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
+		if(dynamic) {
+			Vector2 pointerPos = eventData.position * screenScaleFactor;
+			sliderTrans.anchoredPosition = pointerPos - Center;
+			sliderTrans.gameObject.SetActive(true);
 
-		Vector2 pointerPos = eventData.position * screenScaleFactor;
-		sliderTrans.anchoredPosition = pointerPos - Center;
-		sliderTrans.gameObject.SetActive(true);
-
-		slider.OnPointerDown(eventData);
-		if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
+			slider.OnPointerDown(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
+		}
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+			slider.OnPointerDown(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
+		}
 	}
 
 	public void OnPointerUp(PointerEventData eventData) {
-		slider.OnPointerUp(eventData);
-		if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
 
-		sliderTrans.gameObject.SetActive(false);
+		if(dynamic) {
+			slider.OnPointerUp(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
+			sliderTrans.gameObject.SetActive(false);
+		}
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+			slider.OnPointerUp(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
+		}
 	}
 
 	public void OnDrag(PointerEventData eventData) {
-		slider.OnDrag(eventData);
-		if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
+		if(dynamic) {
+			slider.OnDrag(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
+		}
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+			slider.OnDrag(eventData);
+			if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
+		}
 	}
 }
