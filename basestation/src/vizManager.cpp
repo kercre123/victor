@@ -552,7 +552,6 @@ namespace Anki {
       v.x_dist = x_dist;
       v.y_dist = y_dist;
       v.angle = angle;
-      v.textLabelID = TextLabelType::ERROR_SIGNAL;
       
       SendMessage( GET_MESSAGE_ID(VizDockingErrorSignal), &v );
     }

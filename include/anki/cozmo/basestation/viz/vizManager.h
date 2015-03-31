@@ -36,14 +36,9 @@ namespace Anki {
       
       typedef enum : u8 {
         ACTION,
-        POSE,
-        SPEEDS,
-        PROX_SENSORS,
-        BATTERY,
         LOCALIZED_TO,
         VISION_MODE,
-        BEHAVIOR_STATE,
-        ERROR_SIGNAL,
+        BEHAVIOR_STATE
       } TextLabelType;
       
       using Handle_t = u32;

@@ -45,6 +45,18 @@ namespace Anki {
     };
     
     namespace {
+      
+      typedef enum {
+        TEXT_LABEL_POSE,
+        TEXT_LABEL_SPEEDS,
+        TEXT_LABEL_PROX_SENSORS,
+        TEXT_LABEL_BATTERY,
+        TEXT_LABEL_VID_RATE,
+        TEXT_LABEL_DOCK_ERROR_SIGNAL,
+        NUM_TEXT_LABELS
+      } VizTextLabelType;
+
+      
       // For displaying misc debug data
       webots::Display* disp;
       
@@ -220,7 +232,8 @@ namespace Anki {
     
     void ProcessVizSetLabelMessage(const VizSetLabel& msg)
     {
-      DrawText(msg.labelID, msg.colorID, (char*)msg.text);
+      u32 labelID = NUM_TEXT_LABELS + msg.labelID;
+      DrawText(labelID, msg.colorID, (char*)msg.text);
     }
     
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg)
@@ -239,7 +252,7 @@ namespace Anki {
       // Print values
       char text[111];
       sprintf(text, "ErrSig x: %.1f, y: %.1f, ang: %.2f\n", msg.x_dist, msg.y_dist, msg.angle);
-      DrawText(msg.textLabelID, text);
+      DrawText(TEXT_LABEL_DOCK_ERROR_SIGNAL, text);
       
       
       // Clear the space
@@ -345,17 +358,16 @@ namespace Anki {
     void ProcessVizRobotStateMessage(const VizRobotState& msg)
     {
       char txt[128];
-      u32 lineNum = 0;
       
       sprintf(txt, "Pose: head=%3d deg, lift=%3d mm",
               (int)RAD_TO_DEG_F32(msg.headAngle),
               (int)msg.liftHeight);
-      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      DrawText(TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "Speed L: %4d  R: %4d mm/s",
               (int)msg.lwheel_speed_mmps,
               (int)msg.rwheel_speed_mmps);
-      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      DrawText(TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "prox: (%2u, %2u, %2u) %d%d%d",
               msg.proxLeft,
@@ -364,15 +376,16 @@ namespace Anki {
               msg.status & IS_PROX_SIDE_BLOCKED,
               msg.status & IS_PROX_FORWARD_BLOCKED,
               msg.status & IS_PROX_SIDE_BLOCKED);
-      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      DrawText(TEXT_LABEL_PROX_SENSORS, Anki::NamedColors::GREEN, txt);
 
       sprintf(txt, "Batt: %2.1f V",
               (f32)msg.battVolt10x/10);
-      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      DrawText(TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
       sprintf(txt, "Video: %d HZ",
               msg.videoFramerateHZ);
-      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
+      
       
     }
     
