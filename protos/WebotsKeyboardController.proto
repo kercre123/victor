@@ -15,7 +15,7 @@ PROTO WebotsKeyboardController [
   field SFFloat liftMaxErrorSum 10
 
   # Vision system params
-  field SFInt32 camera_horizontalResolution 80
+  field SFString streamResolution "QVGA"
   field SFInt32 camera_autoexposureOn 1
   field SFFloat camera_exposureTime 0.2
   field SFInt32 camera_integerCountsIncrement 3
@@ -24,7 +24,6 @@ PROTO WebotsKeyboardController [
   field SFInt32 camera_highValue 250  
   field SFFloat camera_percentileToMakeHigh 0.97
   field SFInt32 camera_limitFramerate 1
-
 
   # Face detect params
   field SFFloat fd_scaleFactor 1.1
@@ -44,8 +43,6 @@ PROTO WebotsKeyboardController [
   field SFInt32  forcedRobotID 1
   field SFBool   forcedRobotIsSimulated FALSE  
   
-  # CozmoCam
-  field SFString streamResolution "QVGA"
 ]
 {
 Supervisor {

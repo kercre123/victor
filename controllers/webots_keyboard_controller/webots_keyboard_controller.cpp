@@ -183,7 +183,7 @@ namespace Anki {
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
-      void SendSetRobotImageSendMode(u8 mode, u8 resolution);
+      void SendSetRobotImageSendMode(u8 mode);
       void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
@@ -285,7 +285,11 @@ namespace Anki {
         SendMessage(message);
       }
       
-      
+      void HandleRobotConnected(G2U_RobotConnected const &msg)
+      {
+        // Once robot connects, set resolution
+        SendSetRobotImageSendMode(ISM_STREAM);
+      }
       
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
@@ -361,6 +365,9 @@ namespace Anki {
         // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
+            case G2U_Message::Type::RobotConnected:
+              HandleRobotConnected(message.Get_RobotConnected());
+              break;
             case G2U_Message::Type::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
@@ -715,34 +722,8 @@ namespace Anki {
                   printf("Requesting single robot image.\n");
                 }
                 
-                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
-                
-                if (root_) {
-                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
-                  switch(camera_horizontalResolution)
-                  {
-                    case 640:
-                      localStreamRes = Vision::CAMERA_RES_VGA;
-                      break;
-                    case 320:
-                      localStreamRes = Vision::CAMERA_RES_QVGA;
-                      break;
-                    case 160:
-                      localStreamRes = Vision::CAMERA_RES_QQVGA;
-                      break;
-                    case 80:
-                      localStreamRes = Vision::CAMERA_RES_QQQVGA;
-                      break;
-                    case 40:
-                      localStreamRes = Vision::CAMERA_RES_QQQQVGA;
-                      break;
-                    default:
-                      printf("Unsupported camera_horizontalResolution = %d\n", camera_horizontalResolution);
-                  }
-                }
-                
-                SendSetRobotImageSendMode(mode, localStreamRes);
-                //}
+                SendSetRobotImageSendMode(mode);
+
                 break;
               }
                 
@@ -1594,8 +1575,24 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSetRobotImageSendMode(u8 mode, u8 resolution)
+      void SendSetRobotImageSendMode(u8 mode)
       {
+        // Determine resolution from "streamResolution" setting in the keyboard controller
+        // node
+        Vision::CameraResolution resolution = IMG_STREAM_RES;
+        
+        if (root_) {
+          const std::string resString = root_->getField("streamResolution")->getSFString();
+          printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
+          if(resString == "VGA") {
+            resolution = Vision::CAMERA_RES_VGA;
+          } else if(resString == "QVGA") {
+            resolution = Vision::CAMERA_RES_QVGA;
+          } else {
+            printf("Unsupported streamResolution = %s\n", resString.c_str());
+          }
+        }
+        
         U2G_SetRobotImageSendMode m;
         m.mode = mode;
         m.resolution = resolution;
