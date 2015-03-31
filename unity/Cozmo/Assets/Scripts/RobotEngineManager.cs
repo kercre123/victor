@@ -587,7 +587,7 @@ public class RobotEngineManager : MonoBehaviour {
 //				return;
 //			}
 //		}
-		string filename = string.Format("rv-{0}.jpg", imageFrameCount);
+		string filename = string.Format("frame-{0}_time-{1}.jpg", imageFrameCount, Time.time);
 		string filepath = Path.Combine (imageBasePath, filename);
 		SaveAsync(filepath, buffer, 0, length);
 	}
