@@ -2196,7 +2196,12 @@ namespace Cozmo {
       else {
         _numTrackFailures += 1;
         
-        if(_numTrackFailures == MAX_TRACKING_FAILURES) {
+        if(_numTrackFailures == MAX_TRACKING_FAILURES)
+        {          
+          PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
+                           "failures (%d). Switching back to looking for markers.\n",
+                           MAX_TRACKING_FAILURES);
+          
           // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
           SetMarkerToTrack(_markerToTrack.type,
                            _markerToTrack.width_mm,
