@@ -1598,6 +1598,8 @@ MonoBehaviour:
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  swishSound: {fileID: 8300000, guid: 01f3fbedf270a46fcaae3812ecdd225c, type: 3}
+  reverseSwishSound: {fileID: 8300000, guid: 70d82480979b544b89472e5069cdbc6e, type: 3}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}
@@ -1696,6 +1698,8 @@ MonoBehaviour:
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  swishSound: {fileID: 8300000, guid: 01f3fbedf270a46fcaae3812ecdd225c, type: 3}
+  reverseSwishSound: {fileID: 8300000, guid: 70d82480979b544b89472e5069cdbc6e, type: 3}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}
@@ -1907,7 +1911,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slider: {fileID: 11498418}
-  clickableImage: {fileID: 0}
 --- !u!114 &11415132
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2984,12 +2987,14 @@ MonoBehaviour:
   text: {fileID: 11498364}
   actionButtons: []
   maxObservedObjects: 1
-  newObjectObservedSound: {fileID: 8300000, guid: 6e74fe46dc2024ac6b5244ce2b2e0b4c,
+  newObjectObservedSound: {fileID: 8300000, guid: b2cfaf6142daf45c1b4b1521cfcda202,
     type: 3}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  swishSound: {fileID: 8300000, guid: 01f3fbedf270a46fcaae3812ecdd225c, type: 3}
+  reverseSwishSound: {fileID: 8300000, guid: 70d82480979b544b89472e5069cdbc6e, type: 3}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}

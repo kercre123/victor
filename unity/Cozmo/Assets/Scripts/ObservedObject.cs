@@ -9,10 +9,24 @@ public class ObservedObject
 	public uint Family { get; private set; }
 	public uint ObjectType { get; private set; }
 	public int ID { get; private set; }
-	public bool MarkersVisible { get; private set; }
+
+	bool _markersVisible = false;
+	public bool MarkersVisible { 
+		get {
+			return _markersVisible && (Time.time - TimeLastSeen) < 0.5f;
+
+		}
+		private set {
+			_markersVisible = value;
+		}
+	}
+
 	public Rect VizRect { get; private set; }
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
+	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
+	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
+
 	public Vector3 Size { get; private set; }
 	public float TimeLastSeen { get; private set; }
 
