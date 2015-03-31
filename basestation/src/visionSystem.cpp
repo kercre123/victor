@@ -211,35 +211,13 @@ namespace Cozmo {
   // a PC than they do on embedded hardware. Basically, this is used by
   // Update() below to wait until a frame is ready before proceeding.
   namespace Simulator {
-#ifdef SIMULATOR
-    static u32 frameReadyTime_;
-    
-    static Result Initialize() {
-      frameReadyTime_ = 0;
-      return RESULT_OK;
-    }
-    
-    // Returns true if we are past the last set time for simulated processing
-    static bool IsFrameReady() {
-      return (HAL::GetMicroCounter() >= frameReadyTime_);
-    }
-    
-    static void SetDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FIDUCIAL_DETECTION_PERIOD_US;
-    }
-    static void SetTrackingReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
-    }
-    static void SetFaceDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
-    }
-#else
+
     static Result Initialize() { return RESULT_OK; }
     static bool IsFrameReady() { return true; }
     static void SetDetectionReadyTime() { }
     static void SetTrackingReadyTime() { }
     static void SetFaceDetectionReadyTime() {}
-#endif
+
   } // namespace Simulator
   
   
