@@ -89,6 +89,17 @@ public class Robot
 		carryingObjectID = -1;
 	}
 
+	public void ClearObservedObjects()
+	{
+		for( int i = 0; i < observedObjects.Count; ++i )
+		{
+			if( observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time )
+			{
+				observedObjects.RemoveAt( i-- );
+			}
+		}
+	}
+
 	public void UpdateInfo( G2U_RobotState message )
 	{
 		headAngle_rad = message.headAngle_rad;
@@ -190,8 +201,7 @@ public class Robot
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
-		
-		//current.observedObjects.Clear();
+
 		lastObjectHeadTracked = null;
 	}
 	

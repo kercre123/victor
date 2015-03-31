@@ -152,6 +152,8 @@ public class CozmoVision4 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		ShowObservedObjects();
+
 		if(!interactPressed) {
 
 			if(interactLastFrame) { // && robot.selectedObject > -1
@@ -205,6 +207,8 @@ public class CozmoVision4 : CozmoVision
 		}
 
 		interactLastFrame = true;
+
+		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}
 
 	//Vector2 centerViz = new Vector2(160f, 120f);
@@ -222,7 +226,7 @@ public class CozmoVision4 : CozmoVision
 			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
 
 			float angleFromCoz = Vector2.Angle(forward, atTarget);
-			if(angleFromCoz > 90f) return;
+			if(angleFromCoz > 90f) continue;
 
 			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
@@ -247,26 +251,28 @@ public class CozmoVision4 : CozmoVision
 
 		if(best != null) {
 			robot.selectedObjects.Add(best);
-		}
 
-		//find any other objects in a 'stack' with our selected
-		for(int i=0; i<robot.knownObjects.Count; i++) {
-			if(best == robot.knownObjects[i]) continue;
-			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
+			//find any other objects in a 'stack' with our selected
+			for(int i=0; i<robot.knownObjects.Count; i++) {
+				if(best == robot.knownObjects[i])
+					continue;
+				if(robot.carryingObjectID == robot.knownObjects[i].ID)
+					continue;
 
-			float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
-			if(dist > best.Size.x * 0.5f) {
-				//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
-				continue;
+				float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+				if(dist > best.Size.x * 0.5f) {
+					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
+					continue;
+				}
+
+				robot.selectedObjects.Add(robot.knownObjects[i]);
 			}
 
-			robot.selectedObjects.Add(robot.knownObjects[i]);
+			//sort selected from ground up
+			robot.selectedObjects.Sort(( obj1, obj2 ) => {
+				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
+			});
 		}
-
-		//sort selected from ground up
-		robot.selectedObjects.Sort( ( obj1, obj2 ) => {
-			return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
-		} );
 
 		//Debug.Log("AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}

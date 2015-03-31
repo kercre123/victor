@@ -5,20 +5,13 @@ using System.Collections.Generic;
 
 public class CozmoVision2 : CozmoVision
 {
-	[SerializeField] protected GameObject selectionButtonPrefab;
-	[SerializeField] protected Color selected;
-	[SerializeField] protected Color select;
-
 	protected SelectionButton2[] selectionButtons;
 
-	protected override void Awake() {
+	protected override void Awake()
+	{
 		base.Awake();
 
-		GameObject obj = (GameObject)GameObject.Instantiate(selectionButtonPrefab);
-		selectionButtons = obj.GetComponentsInChildren<SelectionButton2>(true);
-
-		foreach(SelectionButton2 butt in selectionButtons) butt.gameObject.SetActive(false);
-		DisableButtons();
+		selectionButtons = observedObjectCanvas.GetComponentsInChildren<SelectionButton2>( true );
 	}
 
 	protected void Update()
@@ -41,10 +34,14 @@ public class CozmoVision2 : CozmoVision
 
 		Dings();
 		SetActionButtons();
+		ShowObservedObjects();
+	}
 
+	protected override void ShowObservedObjects()
+	{
 		float w = imageRectTrans.sizeDelta.x;
 		float h = imageRectTrans.sizeDelta.y;
-
+		
 		for( int i = 0; i < maxObservedObjects; ++i )
 		{
 			if( observedObjectsCount > i && !robot.isBusy )
@@ -55,10 +52,10 @@ public class CozmoVision2 : CozmoVision
 				float boxY = ( observedObject.VizRect.y / 240f ) * h;
 				float boxW = ( observedObject.VizRect.width / 320f ) * w;
 				float boxH = ( observedObject.VizRect.height / 240f ) * h;
-
+				
 				selectionButtons[i].image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 				selectionButtons[i].image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
-
+				
 				if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 				{
 					selectionButtons[i].image.color = selected;
@@ -69,7 +66,7 @@ public class CozmoVision2 : CozmoVision
 					selectionButtons[i].image.color = select;
 					selectionButtons[i].text.text = "Select " + observedObject.ID;
 					selectionButtons[i].observedObject = observedObject;
-
+					
 					selectionButtons[i].image.gameObject.SetActive( true );
 				}
 			}
@@ -79,10 +76,4 @@ public class CozmoVision2 : CozmoVision
 			}
 		}
 	}
-
-	protected override void OnDisable() {
-		base.OnDisable();
-		foreach(SelectionButton2 butt in selectionButtons) { if(butt != null) { butt.gameObject.SetActive(false); } }
-	}
-
 }

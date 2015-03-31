@@ -41,11 +41,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private object sync = new object();
 	private List<object> safeLogs = new List<object>();
 
-#if UNITY_EDITOR
-	private bool imageSave = false;
-#else
-	private bool imageSave = true;
-#endif
+	public bool imageSave = false;
+
 	private const int imageFrameSkip = 0;
 	private int imageFrameCount = 0;
 
@@ -350,7 +347,7 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			//Debug.Log( "no box found" );
 
-			current.observedObjects.Clear();
+			current.ClearObservedObjects();
 			current.lastObjectHeadTracked = null;
 		}
 	}
@@ -371,6 +368,13 @@ public class RobotEngineManager : MonoBehaviour {
 		if( deleted != null )
 		{
 			current.selectedObjects.Remove( deleted );
+		}
+
+		deleted = current.observedObjects.Find( x=> x.ID == message.objectID );
+		
+		if( deleted != null )
+		{
+			current.observedObjects.Remove( deleted );
 		}
 	}
 
@@ -503,7 +507,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 		}
 	}
@@ -553,7 +557,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 
 			SaveJpeg(colorArray, currentImageIndex);

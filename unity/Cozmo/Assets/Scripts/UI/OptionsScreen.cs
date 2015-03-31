@@ -10,6 +10,8 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] ComboBox combo_vision;
 	[SerializeField] Toggle toggle_debug;
 	[SerializeField] Toggle toggle_vision;
+	[SerializeField] Toggle toggle_visionRecording;
+
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
@@ -40,6 +42,10 @@ public class OptionsScreen : MonoBehaviour {
 		if(toggle_vision != null) {
 			toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled", 0) == 1;
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
+		if(toggle_visionRecording != null) {
+			toggle_visionRecording.isOn = PlayerPrefs.GetInt("VisionRecording", 0) == 1;
 		}
 
 		if(combo_controls != null) {
@@ -73,6 +79,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_vision != null) {
 			toggle_vision.onValueChanged.AddListener(ToggleDisableVision);
+		}
+
+		if(toggle_visionRecording != null) {
+			toggle_visionRecording.onValueChanged.AddListener(ToggleVisionRecording);
 		}
 	}
 
@@ -122,12 +132,18 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("VisionDisabled", val ? 1 : 0);
 	}
 
+	public void ToggleVisionRecording (bool val) {
+		PlayerPrefs.SetInt("VisionRecording", val ? 1 : 0);
+	}
+
 	public void ResetToDefaultSettings () {
 
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
 		PlayerPrefs.DeleteKey("ControlSchemeIndex");
 		PlayerPrefs.DeleteKey("VisionSchemeIndex");
+		PlayerPrefs.DeleteKey("VisionDisabled");
+		PlayerPrefs.DeleteKey("VisionRecording");
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 
 		RemoveListeners();
