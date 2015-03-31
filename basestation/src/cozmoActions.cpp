@@ -1019,7 +1019,7 @@ namespace Anki {
       }
     }
     
-    IActionRunner::ActionResult TraverseObjectAction::Update(Robot& robot)
+    IActionRunner::ActionResult TraverseObjectAction::UpdateInternal(Robot& robot)
     {
       // Select the chosen action based on the object's type, if we haven't
       // already
