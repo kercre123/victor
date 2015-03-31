@@ -72,13 +72,14 @@ namespace Anki {
       Pose3d ComputeObjectPose(const std::vector<Point2f> &imgPoints,
                                const std::vector<Point3f> &objPoints) const;
       
-      // Use three points of a quadrilateral and the P3P algorithm  to compute
+      // Use three points of a quadrilateral and the P3P algorithm to compute
       // possible camera poses, then use the fourth point to choose the valid
       // pose. Do this four times (once using each corner as the validation
       // point) and choose the best.  
       template<typename WORKING_PRECISION=double> // TODO: Make default float?
-      Pose3d ComputeObjectPose(const Quad2f &imgPoints,
-                               const Quad3f &objPoints) const;
+      Result ComputeObjectPose(const Quad2f &imgPoints,
+                               const Quad3f &objPoints,
+                               Pose3d       &objPose) const;
       
       
       // Compute the projected image locations of 3D point(s). The points

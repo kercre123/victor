@@ -87,6 +87,14 @@ namespace Anki {
     } DriveTestFlags;
     
     typedef enum {
+      LiftTF_TEST_HEIGHTS = 0x01
+    } LiftTestFlags;
+
+    typedef enum {
+      HTF_TEST_ANGLES = 0x01
+    } HeadTestFlags;
+    
+    typedef enum {
       ITF_DO_TURNS = 0x01
     } IMUTestFlags;
     
@@ -205,10 +213,17 @@ namespace Anki {
 
     
     typedef enum {
-      VIZ_SAVE_OFF = 0,
-      VIZ_SAVE_ONE_SHOT,
-      VIZ_SAVE_CONTINUOUS
-    } VizSaveMode_t;
+      SAVE_OFF = 0,
+      SAVE_ONE_SHOT,
+      SAVE_CONTINUOUS
+    } SaveMode_t;
+    
+    typedef enum {
+      CARRY_NONE = 0,
+      CARRY_1_BLOCK,
+      CARRY_2_BLOCK,
+      NUM_CARRY_STATES
+    } CarryState_t;
     
   }
 }

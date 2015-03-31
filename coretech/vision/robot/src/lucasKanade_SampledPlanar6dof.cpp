@@ -308,12 +308,17 @@ namespace Anki
         }
 #else
 
-        P3P::computePose(templateQuad,
-          template3d[0], template3d[1], template3d[2], template3d[3],
-          this->focalLength_x, this->focalLength_y,
-          this->camCenter_x,   this->camCenter_y,
-          R, this->params6DoF.translation);
+        Result lastResult = P3P::computePose(templateQuad,
+                                             template3d[0], template3d[1],
+                                             template3d[2], template3d[3],
+                                             this->focalLength_x, this->focalLength_y,
+                                             this->camCenter_x,   this->camCenter_y,
+                                             R, this->params6DoF.translation);
+        
+        // NOTE: isValid will still be false in this case.
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK, "LKTracker_SampledPlanar6dof", "Failed to compute initial pose constructing tracker.\n");
 
+        
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
 
         /*
@@ -377,8 +382,6 @@ namespace Anki
 
         // TODO: Pass this in as a parameter/argument
         const s32 verifyGridSize = 16;
-
-        Result lastResult;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 

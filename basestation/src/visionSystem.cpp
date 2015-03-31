@@ -211,35 +211,13 @@ namespace Cozmo {
   // a PC than they do on embedded hardware. Basically, this is used by
   // Update() below to wait until a frame is ready before proceeding.
   namespace Simulator {
-#ifdef SIMULATOR
-    static u32 frameReadyTime_;
-    
-    static Result Initialize() {
-      frameReadyTime_ = 0;
-      return RESULT_OK;
-    }
-    
-    // Returns true if we are past the last set time for simulated processing
-    static bool IsFrameReady() {
-      return (HAL::GetMicroCounter() >= frameReadyTime_);
-    }
-    
-    static void SetDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FIDUCIAL_DETECTION_PERIOD_US;
-    }
-    static void SetTrackingReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
-    }
-    static void SetFaceDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
-    }
-#else
+
     static Result Initialize() { return RESULT_OK; }
     static bool IsFrameReady() { return true; }
     static void SetDetectionReadyTime() { }
     static void SetTrackingReadyTime() { }
     static void SetFaceDetectionReadyTime() {}
-#endif
+
   } // namespace Simulator
   
   
@@ -705,6 +683,7 @@ namespace Cozmo {
 #endif
     
     if(!tracker.IsValid()) {
+      PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.\n");
       return RESULT_FAIL;
     }
     
@@ -2195,7 +2174,12 @@ namespace Cozmo {
       else {
         _numTrackFailures += 1;
         
-        if(_numTrackFailures == MAX_TRACKING_FAILURES) {
+        if(_numTrackFailures == MAX_TRACKING_FAILURES)
+        {          
+          PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
+                           "failures (%d). Switching back to looking for markers.\n",
+                           MAX_TRACKING_FAILURES);
+          
           // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
           SetMarkerToTrack(_markerToTrack.type,
                            _markerToTrack.width_mm,

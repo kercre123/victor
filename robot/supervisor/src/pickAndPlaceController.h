@@ -59,6 +59,8 @@ namespace Anki {
       bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
+      void SetCarryState(CarryState_t state);
+      CarryState_t GetCarryState();
       
       // Picks up the specified block, or places the block in hand on top of the specified block
       // depending on the specified action.

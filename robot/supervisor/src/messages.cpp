@@ -445,9 +445,9 @@ namespace Anki {
             headCamInfo->nrows,
             headCamInfo->ncols,
 #           ifdef SIMULATOR
-            0
+            0 // This is NOT a real robot
 #           else
-            1
+            1 // This is a real robot
 #           endif
           };
           
@@ -841,6 +841,10 @@ namespace Anki {
         }
       }
 
+      void ProcessSetCarryStateMessage(const SetCarryState& msg)
+      {
+        PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
+      }
 
       // --------- Block control messages ----------
 
