@@ -61,6 +61,7 @@ namespace Anki {
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
+    , _usingManualPathSpeed(false)
     , _camera(robotID)
     , _visionWhileMovingEnabled(true)
     , _poseOrigins(1)
@@ -1031,6 +1032,14 @@ namespace Anki {
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
     {
+      // Check if robot is still pickAndPlacing.
+      // If so, and not in assisted RC mode, then ignore drive wheel commands.
+      // TODO: Timeout?
+      if (IsPickingOrPlacing() && !IsUsingManualPathSpeed()) {
+        PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
+        return RESULT_FAIL;
+      }
+      
       return SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
     }
     
@@ -1047,6 +1056,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      _usingManualPathSpeed = useManualSpeed;
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
@@ -1363,6 +1373,7 @@ namespace Anki {
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
           _pdo->SetPath(path);
+          _usingManualPathSpeed = useManualSpeed;
           lastResult = SendExecutePath(path, useManualSpeed);
         }
         
@@ -1590,6 +1601,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      _usingManualPathSpeed = useManualSpeed;
+      
       return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
     
