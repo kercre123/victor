@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -45,7 +45,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(toggle_visionRecording != null) {
-			toggle_visionRecording.isOn = PlayerPrefs.GetInt("VisionRecording", 0) == 1;
+			toggle_visionRecording.isOn = RobotEngineManager.instance != null ? RobotEngineManager.instance.AllowImageSaving : false;
 		}
 
 		if(combo_controls != null) {
@@ -133,7 +133,7 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	public void ToggleVisionRecording (bool val) {
-		PlayerPrefs.SetInt("VisionRecording", val ? 1 : 0);
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.ToggleVisionRecording(val);
 	}
 
 	public void ResetToDefaultSettings () {
@@ -143,7 +143,6 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("ControlSchemeIndex");
 		PlayerPrefs.DeleteKey("VisionSchemeIndex");
 		PlayerPrefs.DeleteKey("VisionDisabled");
-		PlayerPrefs.DeleteKey("VisionRecording");
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 
 		RemoveListeners();
