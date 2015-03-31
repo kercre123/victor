@@ -101,6 +101,20 @@ namespace Anki {
         
         // Open-loop lift speeds (unloaded)
         //
+        // *** Cozmo 3 (treaded) ***
+        // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
+        // 0.2     0.0              0.0
+        // 0.3     0.7              0.7
+        // 0.4     1.0              1.1
+        // 0.5     1.6              1.6
+        // 0.6     2.0              2.0
+        // 0.7     2.5              2.6
+        // 0.8     3.0              3.1
+        // 0.9     3.2              3.4
+        // 1.0     3.7              3.9
+        //
+        //
+        // *** Cozmo 2 ***
         // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
         // 0.2     0.3              0.5
         // 0.3     0.7              0.9

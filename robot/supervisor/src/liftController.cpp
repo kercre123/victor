@@ -69,9 +69,10 @@ namespace Anki {
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-        const f32 SPEED_TO_POWER_OL_GAIN = 0.2399;
-        const f32 BASE_POWER_UP = 0.1309;
-        const f32 BASE_POWER_DOWN = -0.0829;
+        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.2274f;
+        const f32 BASE_POWER_UP = 0.1468f;
+        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.2148f;
+        const f32 BASE_POWER_DOWN = 0.1561f;
         
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -505,6 +506,24 @@ namespace Anki {
         return inPosition_;
       }
       
+      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_sum)
+      {
+        // Open loop value to drive at desired speed
+        f32 power = 0;
+        if (desired_speed_rad_per_sec > 0) {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP;
+        } else {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_DOWN + BASE_POWER_DOWN;
+        }
+ 
+        // Compute corrective value
+        f32 power_corr = (Kp_ * error) + (Ki_ * error_sum);
+        power += power_corr;
+        
+        return power;
+      }
+      
+      
       Result Update()
       {
 #if (!defined(SIMULATOR) && (RECALIBRATE_AT_LIMITS == 0))
@@ -537,17 +556,8 @@ namespace Anki {
             // Compute position error
             angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
             
-
-            
-            // Open loop value to drive at desired speed
-            power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
-            
-            // Compute corrective value
-            f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
-            
-            // Add base power in the direction of the general desired direction
-            //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-            power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            // Compute power required for desired speed
+            power_ = ComputeLiftPower(currDesiredRadVel_, angleError_, angleErrorSum_);
             
             // Update angle error sum
             angleErrorSum_ += angleError_;
