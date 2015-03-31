@@ -212,7 +212,7 @@ public class CozmoVision : MonoBehaviour
 			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 			{
 				box.image.color = selected;
-				box.text.text = observedObject.ID + " " + observedObject.Family;
+				box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
 			}
 			else
 			{
