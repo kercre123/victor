@@ -2,10 +2,8 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class SelectionButton2 : SelectionButton
+public class ObservedObjectButton : ObservedObjectBox
 {
-	[System.NonSerialized] public ObservedObject observedObject;
-
 	public void Selection()
 	{
 		RobotEngineManager.instance.current.selectedObjects.Clear();
