@@ -78,7 +78,7 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
                 if st is None:
                     sys.stdout.write("Received unexpected packet of %d bytes\n" % len(msg))
                 else:
-                    sys.stdout.write("Msg %08d RTT %f\n" % (msgData[0], rt-st))
+                    sys.stdout.write("Msg %08d RTT %fms\n" % (msgData[0], (rt-st)*1000.0))
                     del self.seqSendTimes[msgData[0]]
 
     def step(self):
