@@ -222,6 +222,27 @@ ADD_MESSAGE_MEMBER(u16, bottomLeft_x)
 ADD_MESSAGE_MEMBER(u16, bottomLeft_y)
 END_MESSAGE_DEFINITION(VizTrackerQuad)
 
+START_MESSAGE_DEFINITION(VizRobotState, 1)
+// Copied from RobotState message
+ADD_MESSAGE_MEMBER(u32, pose_frame_id)
+ADD_MESSAGE_MEMBER(f32, pose_x)
+ADD_MESSAGE_MEMBER(f32, pose_y)
+ADD_MESSAGE_MEMBER(f32, pose_z)
+ADD_MESSAGE_MEMBER(f32, pose_angle)
+ADD_MESSAGE_MEMBER(f32, pose_pitch_angle)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, headAngle)
+ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(u16, lastPathID)
+ADD_MESSAGE_MEMBER(u8, proxLeft)
+ADD_MESSAGE_MEMBER(u8, proxForward)
+ADD_MESSAGE_MEMBER(u8, proxRight)
+ADD_MESSAGE_MEMBER(u8, battVolt10x)
+ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
+ADD_MESSAGE_MEMBER(u8, videoFramerateHZ)
+END_MESSAGE_DEFINITION(VizRobotState)
+
 
 #ifdef COZMO_BASESTATION_IS_DEFINED
 #define COZMO_BASESTATION

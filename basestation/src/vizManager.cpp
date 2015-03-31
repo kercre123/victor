@@ -558,11 +558,30 @@ namespace Anki {
     }
     
 
-    void VizManager::SendRobotState(MessageRobotState msg)
+    void VizManager::SendRobotState(const MessageRobotState &msg,
+                                    const u8 &videoFramefateHz)
     {
+      VizRobotState m;
+      m.pose_frame_id = msg.pose_frame_id;
+      m.pose_x = msg.pose_x;
+      m.pose_y = msg.pose_y;
+      m.pose_z = msg.pose_z;
+      m.pose_angle = msg.pose_angle;
+      m.pose_pitch_angle = msg.pose_pitch_angle;
+      m.lwheel_speed_mmps = msg.lwheel_speed_mmps;
+      m.rwheel_speed_mmps = msg.rwheel_speed_mmps;
+      m.headAngle = msg.headAngle;
+      m.liftHeight = msg.liftHeight;
+      m.lastPathID = msg.lastPathID;
+      m.proxLeft = msg.proxLeft;
+      m.proxForward = msg.proxForward;
+      m.proxRight = msg.proxRight;
+      m.battVolt10x = msg.battVolt10x;
+      m.status = msg.status;
       
-      // TODO: Display state stuff somewhere...
+      m.videoFramerateHZ = videoFramefateHz;
       
+      SendMessage( GET_MESSAGE_ID(VizRobotState), &m);
     } // SendRobotState()
     
     void VizManager::SendGreyImage(const RobotID_t robotID,
