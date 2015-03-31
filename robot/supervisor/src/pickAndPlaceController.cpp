@@ -16,9 +16,6 @@
 
 #define DEBUG_PAP_CONTROLLER 0
 
-// Whether or not to use "snapshots" for pick and place verification
-#define USE_SNAPSHOT_VERIFICATION 0
-
 // If you enable this, make sure image streaming is off
 // and you enable the print-to-file code in the ImageChunk message handler
 // on the basestation.
@@ -77,53 +74,6 @@ namespace Anki {
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
         
-        
-#if USE_SNAPSHOT_VERIFICATION
-        // "Snapshots" for visual verification of a successful block pick up
-        // We'll need two mini-images (or snapshots), along with an associated
-        // memory buffer, to hold low-res views from the camera before and after
-        // trying to pickup (or place) a block.  The ready flag is so the state
-        // machine can wait for the vision system to actually produce the
-        // snapshot, since it's running on a separate (slower) "thread".
-        bool isSnapshotReady_ = false;
-        Embedded::Array<u8> pickupSnapshotBefore_;
-        Embedded::Array<u8> pickupSnapshotAfter_;
-        const s32 SNAPSHOT_SIZE = 16; // the snapshots will be a 2D array SNAPSHOT_SIZE x SNAPSHOT_SIZE in size
-                                      // NOTE: Make sure this matches CAMERA_RES_VERIFICATION_SNAPSHOT
-        const s32 SNAPSHOT_SUBSAMPLE = 8; // this is the spacing between samples taken from the original image resolution
-        const s32 SNAPSHOT_ROI_SIZE = SNAPSHOT_SUBSAMPLE*SNAPSHOT_SIZE; // thus, this is the size of the ROI in the original image
-        const Embedded::Rectangle<s32> snapShotRoiLow_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
-        const Embedded::Rectangle<s32> snapShotRoiHigh_((320-SNAPSHOT_ROI_SIZE)/2, (320+SNAPSHOT_ROI_SIZE)/2, (240-SNAPSHOT_ROI_SIZE)/2, (240+SNAPSHOT_ROI_SIZE)/2);
-        const s32 SNAPSHOT_BUFFER_SIZE = 2*SNAPSHOT_SIZE*SNAPSHOT_SIZE + 64; // 2X (16x16) arrays + overhead
-        u8 snapshotBuffer_[SNAPSHOT_BUFFER_SIZE];
-        Embedded::MemoryStack snapshotMemory_;
-        const s32 SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD = 100; //SNAPSHOT_SIZE*SNAPSHOT_SIZE*64*64; // average grayscale difference of 64
-        const s32 SNAPSHOT_COMPARE_THRESHOLD = SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_PER_PIXEL_COMPARE_THRESHOLD*SNAPSHOT_SIZE*SNAPSHOT_SIZE;
-        
-        // WARNING: ResetBuffers should be used with caution
-        Result ResetBuffers()
-        {
-          snapshotMemory_ = Embedded::MemoryStack(snapshotBuffer_, SNAPSHOT_BUFFER_SIZE);
-          AnkiConditionalErrorAndReturnValue(snapshotMemory_.IsValid(),
-                                             RESULT_FAIL_MEMORY,
-                                             "PAP::ResetBuffers()", "Failed to initialize snapshotMemory!\n")
-          
-          pickupSnapshotBefore_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
-          AnkiConditionalErrorAndReturnValue(pickupSnapshotBefore_.IsValid(),
-                                             RESULT_FAIL_MEMORY,
-                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotBefore_!\n")
-          
-          pickupSnapshotAfter_ = Embedded::Array<u8>(SNAPSHOT_SIZE, SNAPSHOT_SIZE, snapshotMemory_);
-          AnkiConditionalErrorAndReturnValue(pickupSnapshotAfter_.IsValid(),
-                                             RESULT_FAIL_MEMORY,
-                                             "PAP::ResetBuffers()", "Failed to allocate pickupSnapshotAfter_!\n")
-          
-          return RESULT_OK;
-          
-        } // ResetBuffers()
-        
-#endif // USE_SNAPSHOT_VERIFICATION
-        
       } // "private" namespace
       
       
@@ -133,26 +83,7 @@ namespace Anki {
 
       Result Init() {
         Reset();
-#if USE_SNAPSHOT_VERIFICATION
-        AnkiConditionalErrorAndReturnValue(snapShotRoiLow_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
-                                           snapShotRoiLow_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
-                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
-                                           "Snapshot ROI Low not the expected size (%dx%d vs. %dx%d).",
-                                           snapShotRoiLow_.get_width(), snapShotRoiLow_.get_height(),
-                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
-        
-        AnkiConditionalErrorAndReturnValue(snapShotRoiHigh_.get_width()  == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE &&
-                                           snapShotRoiHigh_.get_height() == SNAPSHOT_SIZE*SNAPSHOT_SUBSAMPLE,
-                                           RESULT_FAIL_INVALID_SIZE, "PAP::Init()",
-                                           "Snapshot ROI High not the expected size (%dx%d vs. %dx%d).",
-                                           snapShotRoiHigh_.get_width(), snapShotRoiHigh_.get_height(),
-                                           SNAPSHOT_SIZE, SNAPSHOT_SIZE);
-        
-        return ResetBuffers();
-#else 
         return RESULT_OK;
-#endif // USE_SNAPSHOT_VERIFICATION
-
       }
 
       
@@ -189,133 +120,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-#if USE_SNAPSHOT_VERIFICATION
-      // Since auto exposure settings may not have stabilized by this point,
-      // just do a software normalize by raising the brightest pixel to 255.
-      // The most typical failure case seems to be that the before image
-      // is darker than than the after since the robot casts a shadow on the
-      // block when it first reaches it.
-      static void NormalizeSnapshots(void)
-      {
-        const s32 nrows = pickupSnapshotBefore_.get_size(0);
-        const s32 ncols = pickupSnapshotBefore_.get_size(1);
-        
-        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
-                   pickupSnapshotAfter_.get_size(1) == ncols);
-        
-        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
-        // Send snapshots (for debug)
-        Messages::ImageChunk b[4];
-        Messages::ImageChunk a[4];
-        for(u8 i=0;i<4; ++i) {
-          b[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
-          b[i].imageId = 100;
-          b[i].chunkId = i;
-          b[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
-          
-          a[i].resolution = Vision::CAMERA_RES_VERIFICATION_SNAPSHOT;
-          a[i].imageId = 101;
-          a[i].chunkId = i;
-          a[i].chunkSize = MIN(80, (nrows * ncols) - (80*i));
-        }
-        u8 byteCnt = 0;
-        #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
-        
-        u8 maxValBefore = 0;
-        u8 maxValAfter = 0;
-        for(s32 i=0; i<nrows; ++i)
-        {
-          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
-          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
-
-          for(s32 j=0; j<ncols; ++j)
-          {
-            if (pBefore[j] > maxValBefore) {
-              maxValBefore = pBefore[j];
-            }
-            
-            if (pAfter[j] > maxValAfter) {
-              maxValAfter = pAfter[j];
-            }
-            
-            #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
-            b[byteCnt / 80].data[byteCnt % 80] = pBefore[j];
-            a[byteCnt / 80].data[byteCnt % 80] = pAfter[j];
-            byteCnt++;
-            #endif // SEND_PICKUP_VERIFICATION_SNAPSHOTS
-            
-          }
-        }
-
-        #if(SEND_PICKUP_VERIFICATION_SNAPSHOTS)
-        for(u8 i=0; i<4; ++i) {
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &b[i]);
-        }
-        for(u8 i=0; i<4; ++i) {
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &a[i]);
-        }
-        #endif //SEND_PICKUP_VERIFICATION_SNAPSHOTS
-
-        
-        if (maxValBefore == 0) {
-          PRINT("WARNING: NormalizeSnapShots Before image is blank!\n");
-          return;
-        }
-        if (maxValAfter == 0) {
-          PRINT("WARNING: NormalizeSnapShots After image is blank!\n");
-          return;
-        }
-        
-        f32 normScaleBefore = 255.f / maxValBefore;
-        f32 normScaleAfter = 255.f / maxValAfter;
-        
-        PRINT("normScaleBefore: %f, normScaleAfter: %f\n", normScaleBefore, normScaleAfter);
-        
-        for(s32 i=0; i<nrows; ++i)
-        {
-          u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
-          u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
-          
-          for(s32 j=0; j<ncols; ++j)
-          {
-            pBefore[j] = static_cast<u8>(pBefore[j] * normScaleBefore);
-            pAfter[j] = static_cast<u8>(pAfter[j] * normScaleAfter);
-          }
-        }
-      }
-      
-      // Return sum-squared-difference between the before and after snapshots
-      static s32 CompareSnapshots(void)
-      {
-        const s32 nrows = pickupSnapshotBefore_.get_size(0);
-        const s32 ncols = pickupSnapshotBefore_.get_size(1);
-        
-        AnkiAssert(pickupSnapshotAfter_.get_size(0) == nrows &&
-                   pickupSnapshotAfter_.get_size(1) == ncols);
-        
-        NormalizeSnapshots();
-        
-        s32 ssd = 0;
-        for(s32 i=0; i<nrows; ++i)
-        {
-          const u8 * restrict pBefore = pickupSnapshotBefore_.Pointer(i,0);
-          const u8 * restrict pAfter  = pickupSnapshotAfter_.Pointer(i,0);
-          
-          for(s32 j=0; j<ncols; ++j)
-          {
-            const s32 diff = static_cast<s32>(pAfter[j]) - static_cast<s32>(pBefore[j]);
-            ssd += diff*diff;
-          }
-        }
-        
-        //pickupSnapshotBefore_.Show("Snapshot Before", false);
-        //pickupSnapshotAfter_.Show("Snapshot After", true);
-        
-        return ssd;
-        
-      } // CompareSnapshots()
-      
-#endif // USE_SNAPSHOT_VERIFICATION
       
       Result Update()
       {
@@ -490,30 +294,8 @@ namespace Anki {
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
-#if USE_SNAPSHOT_VERIFICATION
-                // Take a snapshot before we try to pick up. We will compare a
-                // post-pick up snapshot to this one to verify whether we
-                // actually picked up the block
-                if(isSnapshotReady_) {
-                  LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                  isSnapshotReady_ = false;
-                  mode_ = MOVING_LIFT_POSTDOCK;
-                } else {
-                  const Embedded::Rectangle<s32>* roi = &snapShotRoiLow_;
-                  if(action_ == DA_PICKUP_HIGH) {
-                    roi = &snapShotRoiHigh_;
-                  }
-                  Result lastResult = VisionSystem::TakeSnapshot(*roi, SNAPSHOT_SUBSAMPLE, pickupSnapshotBefore_, isSnapshotReady_);
-                  if(lastResult != RESULT_OK) {
-                    PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in SET_LIFT_POSTDOCK:DA_PICKUP_LOW/HIGH!\n");
-                    mode_ = IDLE;
-                    return lastResult;
-                  }
-                }
-#else
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 mode_ = MOVING_LIFT_POSTDOCK;
-#endif // USE_SNAPSHOT_VERIFICATION
                 break;
               }
                 
@@ -533,82 +315,7 @@ namespace Anki {
             
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
-#if USE_SNAPSHOT_VERIFICATION
-              switch(action_) {
-                case DA_PICKUP_LOW:
-                  // Wait for visual verification
-                  // TODO: add timeout?
-                  if(isSnapshotReady_) {
-                    mode_ = IDLE;
-                    lastActionSucceeded_ = true;
-                    
-                    // Snapshots should differ if we actually lifted the block
-                    const s32 SSD = CompareSnapshots();
-                    PRINT("PickAndPlaceController: snapshot difference SSD = %d\n", SSD);
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
-                      isCarryingBlock_ = true;
-                    } else {
-                      isCarryingBlock_ = false;
-                    }
-                    isSnapshotReady_ = false;
-                    SendBlockPickUpMessage(isCarryingBlock_);
-                  } else {
-                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiLow_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
-                    if(lastResult != RESULT_OK) {
-                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_LOW!\n");
-                      mode_ = IDLE;
-                      return lastResult;
-                    }
-                  }
-                  
-                  break;
-                  
-                case DA_PICKUP_HIGH:
-                  if(isSnapshotReady_) {
-                    // Snapshots should differ if we actually lifted the block
-                    const s32 SSD = CompareSnapshots();
-                    if(SSD > SNAPSHOT_COMPARE_THRESHOLD) {
-                      isCarryingBlock_ = true;
-                    } else {
-                      isCarryingBlock_ = false;
-                    }
-                    isSnapshotReady_ = false;
-                    SendBlockPickUpMessage(isCarryingBlock_);
-                    
-                    // For now we backout even if the pickup failed, but maybe
-                    // we wanna do something different
-                    SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-                    transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-                    mode_ = BACKOUT;
-                  } else {
-                    Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiHigh_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
-                    if(lastResult != RESULT_OK) {
-                      PRINT("ERROR: PickAndPlaceController: TakeSnapshot() failed in MOVING_LIFT_POSTDOCK:DA_PICKUP_HIGH!\n");
-                      mode_ = IDLE;
-                      return lastResult;
-                    }
-                    
-                  }
-                  break;
-                  
-                case DA_PLACE_LOW:
-                case DA_PLACE_HIGH:
-                  // TODO: Add visual verfication of placement here?
-                  isCarryingBlock_ = false;
-                  SendBlockPlacedMessage(true);
-                  SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-                  transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-                  mode_ = BACKOUT;
-#if(DEBUG_PAP_CONTROLLER)
-                  PRINT("PAP: BACKING OUT\n");
-#endif
-                  break;
-                  
-                default:
-                  PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
-              }
-#else 
-              // If not using snapshots, just backup after picking or placing,
+              // Backup after picking or placing,
               // and move the head to a position to admire our work
               
               // Set head angle
@@ -655,7 +362,7 @@ namespace Anki {
               transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
               mode_ = BACKOUT;
               
-#endif // USE_SNAPSHOT_VERIFICATION
+
             } // if (LiftController::IsInPosition())
             break;
             
