@@ -103,7 +103,8 @@ namespace Anki {
       IS_PICKED_UP            = 0x08,
       IS_PROX_FORWARD_BLOCKED = 0x10,
       IS_PROX_SIDE_BLOCKED    = 0x20,
-      IS_ANIMATING            = 0x40
+      IS_ANIMATING            = 0x40,
+      IS_PERFORMING_ACTION    = 0x80
     } RobotStatusFlag;
 
 
