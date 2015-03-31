@@ -63,19 +63,19 @@ struct ov2686_info {
 };
 
 static const struct OVRegSettings ov2686_7p5fps[1] = {
-  {0x3086, 0x07, 0xff}
-};
-
-static const struct OVRegSettings ov2686_15fps[1] = {
   {0x3086, 0x03, 0xff}
 };
 
-static const struct OVRegSettings ov2686_30fps[1] = {
+static const struct OVRegSettings ov2686_15fps[1] = {
   {0x3086, 0x01, 0xff}
 };
 
-static const struct OVRegSettings ov2686_60fps[1] = {
+static const struct OVRegSettings ov2686_30fps[1] = {
   {0x3086, 0x00, 0xff}
+};
+
+static const struct OVRegSettings ov2686_60fps[1] = {
+  {0x3086, 0x00, 0xff} // Won't work now that we're using full res
 };
 
 static const struct OVRegSettings OV2686_START = { 0x0100, 0x01, 0x01 };
