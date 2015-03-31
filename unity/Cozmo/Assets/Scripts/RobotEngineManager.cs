@@ -347,7 +347,7 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			//Debug.Log( "no box found" );
 
-			current.observedObjects.Clear();
+			current.ClearObservedObjects();
 			current.lastObjectHeadTracked = null;
 		}
 	}
@@ -368,6 +368,13 @@ public class RobotEngineManager : MonoBehaviour {
 		if( deleted != null )
 		{
 			current.selectedObjects.Remove( deleted );
+		}
+
+		deleted = current.observedObjects.Find( x=> x.ID == message.objectID );
+		
+		if( deleted != null )
+		{
+			current.observedObjects.Remove( deleted );
 		}
 	}
 
@@ -500,7 +507,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 		}
 	}
@@ -550,7 +557,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 
 			SaveJpeg(colorArray, currentImageIndex);

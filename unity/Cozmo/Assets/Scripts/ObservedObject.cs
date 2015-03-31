@@ -13,6 +13,9 @@ public class ObservedObject
 	public Vector3 WorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
 	public Vector3 Size { get; private set; }
+	public float TimeLastSeen { get; private set; }
+
+	public const float RemoveDelay = 0.15f;
 
 	public float Distance
 	{ 
@@ -34,5 +37,6 @@ public class ObservedObject
 		WorldPosition = new Vector3(message.world_x, message.world_y, message.world_z);
 		Rotation = new Quaternion(message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0);
 		Size = new Vector3( 44f, 44f, 44f );
+		TimeLastSeen = Time.time;
 	}
 }
