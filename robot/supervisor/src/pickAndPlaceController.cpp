@@ -31,8 +31,13 @@ namespace Anki {
         // Constants
         
         // TODO: Need to be able to specify wheel motion by distance
-        const u32 BACKOUT_TIME = 1500000;
-        const f32 BACKOUT_SPEED_MMPS = -40;
+        //const u32 BACKOUT_TIME = 1500000;
+        //
+
+        // The distance from the last-observed position of the target that we'd
+        // like to be after backing out
+        const f32 BACKOUT_DISTANCE_MM = 60.f;
+        const f32 BACKOUT_SPEED_MMPS = 40;
         
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;
@@ -90,6 +95,7 @@ namespace Anki {
       void Reset()
       {
         mode_ = IDLE;
+        relMarkerX_ = -1.f;
         DockingController::ResetDocker();
       }
 
@@ -119,7 +125,32 @@ namespace Anki {
         }
         return RESULT_FAIL;
       }
+      
+      static void StartBackingOut()
+      {
+        static const f32 MIN_BACKOUT_DIST = 10.f;
+        
+        DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+        
+        f32 backoutDist_mm = MIN_BACKOUT_DIST;
+        if(relMarkerX_ > 0.f && relMarkerX_ <= BACKOUT_DISTANCE_MM) {
+          backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - relMarkerX_);
+        }
+        
+        const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
+        PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
+              relMarkerX_, backoutDist_mm, backoutTime_sec);
+        
+        transitionTime_ = HAL::GetMicroCounter() + (backoutTime_sec*1e6);
+        
+        SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
+        
+        // Now that we've used relMarkerX_, mark it as used
+        relMarkerX_ = -1.f;
+        
+        mode_ = BACKOUT;
+      }
       
       Result Update()
       {
@@ -233,9 +264,10 @@ namespace Anki {
 
               //DockingController::TrackCamWithLift(false);
               
-              if (DockingController::DidLastDockSucceed()) {
-                
+              if (DockingController::DidLastDockSucceed())
+              {
                 // Docking is complete
+                DockingController::ResetDocker();
                 
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
@@ -260,6 +292,7 @@ namespace Anki {
                   #endif
                   mode_ = SET_LIFT_POSTDOCK;
                 }
+                lastActionSucceeded_ = true;
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -267,7 +300,14 @@ namespace Anki {
                 PRINT("WARN (PickAndPlaceController): Could not track block's marker\n");
                 #endif
                 // TODO: Send BTLE message notifying failure
-                mode_ = IDLE;
+                
+                PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
+                VisionSystem::StopTracking();
+                
+                // Switch to BACKOUT mode:
+                lastActionSucceeded_ = false;
+                StartBackingOut();
+                //mode_ = IDLE;
               }
             }
             else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
@@ -360,9 +400,8 @@ namespace Anki {
                   PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
               } // switch(action_)
               
-              SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-              transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-              mode_ = BACKOUT;
+              // Switch to BACKOUT
+              StartBackingOut();
               
 
             } // if (LiftController::IsInPosition())
@@ -383,8 +422,13 @@ namespace Anki {
                     //isCarryingBlock_ = true;
                     break;
                   case DA_PLACE_HIGH:
-                    LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                    mode_ = LOWER_LIFT;
+                    if(lastActionSucceeded_) {
+                      LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                      mode_ = LOWER_LIFT;
+                    } else {
+                      mode_ = IDLE;
+                      lastActionSucceeded_ = true;
+                    }
                     #if(DEBUG_PAP_CONTROLLER)
                     PRINT("PAP: LOWERING LIFT\n");
                     #endif
@@ -539,6 +583,8 @@ namespace Anki {
         
         useManualSpeed_ = useManualSpeed;
         
+        relMarkerX_ = -1.f;
+        
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
@@ -565,6 +611,8 @@ namespace Anki {
         dockOffsetAng_ = rel_angle;
         
         useManualSpeed_ = useManualSpeed;
+        
+        relMarkerX_ = -1.f;
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;

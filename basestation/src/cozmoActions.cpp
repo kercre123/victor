@@ -612,6 +612,9 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         if(currentTime >= _waitToVerifyTime) {
+          PRINT_NAMED_INFO("IDockAction.CheckIfDone",
+                           "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
+          
           actionResult = Verify(robot);
           
           // Go back to looking for markers (and stop tracking) when we finish,
@@ -1019,7 +1022,7 @@ namespace Anki {
       }
     }
     
-    IActionRunner::ActionResult TraverseObjectAction::Update(Robot& robot)
+    IActionRunner::ActionResult TraverseObjectAction::UpdateInternal(Robot& robot)
     {
       // Select the chosen action based on the object's type, if we haven't
       // already

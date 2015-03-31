@@ -323,7 +323,7 @@ namespace Anki {
     protected:
       
       // Update will just call the chosenAction's implementation
-      virtual ActionResult Update(Robot& robot) override;
+      virtual ActionResult UpdateInternal(Robot& robot) override;
       virtual void Reset() override;
       
       ObjectID       _objectID;
