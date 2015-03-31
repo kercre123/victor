@@ -562,11 +562,18 @@ namespace Anki {
                   //p1 = DTF_ENABLE_DIRECT_HAL_TEST | DTF_ENABLE_CYCLE_SPEEDS_TEST;
                   //p2 = 5;
                   //p3 = 20;
-                  p1 = root_->getField("dt_flags")->getSFInt32();
+                  p1 = root_->getField("driveTest_flags")->getSFInt32();
                   p2 = 5;
-                  p3 = root_->getField("dt_wheel_power")->getSFInt32();
+                  p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
-                  
+                case TM_LIFT:
+                  p1 = root_->getField("liftTest_flags")->getSFInt32();
+                  p2 = 200;
+                  break;
+                case TM_HEAD:
+                  p1 = root_->getField("headTest_flags")->getSFInt32();
+                  p2 = 25;
+                  break;
                 case TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
