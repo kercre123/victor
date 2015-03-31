@@ -615,10 +615,12 @@ namespace Anki {
         
         // Reset trackingOnly vars
         trackingOnly_ = false;
+        /* Don't reset these so we can query them after docking fails 
+         (e.g. to compute backout distance)
         lastMarkerDistX_ = 0.f;
         lastMarkerDistY_ = 0.f;
         lastMarkerAng_ = 0.f;
-        
+        */
         // Command VisionSystem to stop processing images
         VisionSystem::StopTracking();
 

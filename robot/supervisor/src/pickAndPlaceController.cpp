@@ -34,8 +34,13 @@ namespace Anki {
         // Constants
         
         // TODO: Need to be able to specify wheel motion by distance
-        const u32 BACKOUT_TIME = 1500000;
-        const f32 BACKOUT_SPEED_MMPS = -40;
+        //const u32 BACKOUT_TIME = 1500000;
+        //
+
+        // The distance from the last-observed position of the target that we'd
+        // like to be after backing out
+        const f32 BACKOUT_DISTANCE_MM = 60.f;
+        const f32 BACKOUT_SPEED_MMPS = 40;
         
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;
@@ -76,7 +81,6 @@ namespace Anki {
         
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
-        
         
 #if USE_SNAPSHOT_VERIFICATION
         // "Snapshots" for visual verification of a successful block pick up
@@ -317,6 +321,29 @@ namespace Anki {
       
 #endif // USE_SNAPSHOT_VERIFICATION
       
+      static void StartBackingOut()
+      {
+        static const f32 MIN_BACKOUT_DIST = 10.f;
+        
+        DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+        
+        f32 backoutDist_mm = MIN_BACKOUT_DIST;
+        if(relMarkerX_ <= BACKOUT_DISTANCE_MM) {
+          backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - relMarkerX_);
+        }
+        
+        const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
+
+        PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
+              relMarkerX_, backoutDist_mm, backoutTime_sec);
+        
+        transitionTime_ = HAL::GetMicroCounter() + (backoutTime_sec*1e6);
+        
+        SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
+        
+        mode_ = BACKOUT;
+      }
+      
       Result Update()
       {
         Result retVal = RESULT_OK;
@@ -429,9 +456,10 @@ namespace Anki {
 
               //DockingController::TrackCamWithLift(false);
               
-              if (DockingController::DidLastDockSucceed()) {
-                
+              if (DockingController::DidLastDockSucceed())
+              {
                 // Docking is complete
+                DockingController::ResetDocker();
                 
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
@@ -463,7 +491,13 @@ namespace Anki {
                 PRINT("WARN (PickAndPlaceController): Could not track block's marker\n");
                 #endif
                 // TODO: Send BTLE message notifying failure
-                mode_ = IDLE;
+                
+                PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
+                VisionSystem::StopTracking();
+                
+                // Switch to BACKOUT mode:
+                StartBackingOut();
+                //mode_ = IDLE;
               }
             }
             else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
@@ -577,9 +611,7 @@ namespace Anki {
                     
                     // For now we backout even if the pickup failed, but maybe
                     // we wanna do something different
-                    SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-                    transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-                    mode_ = BACKOUT;
+                    StartBackingOut();
                   } else {
                     Result lastResult = VisionSystem::TakeSnapshot(snapShotRoiHigh_, SNAPSHOT_SUBSAMPLE, pickupSnapshotAfter_, isSnapshotReady_);
                     if(lastResult != RESULT_OK) {
@@ -596,9 +628,7 @@ namespace Anki {
                   // TODO: Add visual verfication of placement here?
                   isCarryingBlock_ = false;
                   SendBlockPlacedMessage(true);
-                  SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-                  transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-                  mode_ = BACKOUT;
+                  StartBackingOut();
 #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: BACKING OUT\n");
 #endif
@@ -651,16 +681,23 @@ namespace Anki {
                   PRINT("ERROR: Reached default switch statement in MOVING_LIFT_POSTDOCK case.\n");
               } // switch(action_)
               
-              SteeringController::ExecuteDirectDrive(BACKOUT_SPEED_MMPS, BACKOUT_SPEED_MMPS);
-              transitionTime_ = HAL::GetMicroCounter() + BACKOUT_TIME;
-              mode_ = BACKOUT;
+              // Switch to BACKOUT
+              StartBackingOut();
               
 #endif // USE_SNAPSHOT_VERIFICATION
             } // if (LiftController::IsInPosition())
             break;
             
           case BACKOUT:
-            if (HAL::GetMicroCounter() > transitionTime_)
+            /*
+            if(DockingController::IsBusy()) {
+              // If the docking controller was not reset before switching to
+              // backout phase, and we reacquire track, try re-docking
+              PRINT("PAP: Reacquired tracking target while backing out. Retrying.\n");
+              mode_ = MOVING_LIFT_PREDOCK;
+            }
+             
+            else */if (HAL::GetMicroCounter() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
               
