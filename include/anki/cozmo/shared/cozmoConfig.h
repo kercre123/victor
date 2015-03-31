@@ -350,7 +350,7 @@ namespace Anki {
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
     // Default distance from marker for predock pose
-    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 60.f;
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 100.f;
 
     // Max speed the robot can travel when in assisted RC mode
     const f32 MAX_ASSISTED_RC_SPEED = 50.f;
