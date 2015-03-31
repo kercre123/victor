@@ -41,7 +41,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private object sync = new object();
 	private List<object> safeLogs = new List<object>();
 
-	public bool imageSave = false;
+	public bool AllowImageSaving { get; private set; }
+	private bool imageDirectoryCreated = false;
 
 	private const int imageFrameSkip = 0;
 	private int imageFrameCount = 0;
@@ -115,13 +116,24 @@ public class RobotEngineManager : MonoBehaviour {
 	private void Awake()
 	{
 		EndSave_callback = EndSave;
-		if (imageSave) {
+	}
+
+	public void ToggleVisionRecording(bool on) {
+		AllowImageSaving = on;
+
+		if(on && !imageDirectoryCreated) {
+
 			imageBasePath = Path.Combine (Application.persistentDataPath, DateTime.Now.ToString ("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
 			try {
+
 				Debug.Log ("Saving robot screenshots to \"" + imageBasePath + "\"", this);
 				Directory.CreateDirectory (imageBasePath);
+
+				imageDirectoryCreated = true;
+
 			} catch (Exception e) {
-				imageSave = false;
+
+				AllowImageSaving = false;
 				Debug.LogException (e, this);
 			}
 		}
@@ -567,7 +579,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public void SaveJpeg(byte[] buffer, int length)
 	{
 		imageFrameCount++;
-		if (!imageSave) {
+		if (!AllowImageSaving || !imageDirectoryCreated) {
 			return;
 		}
 //		if (imageFrameSkip != 0) {
@@ -575,7 +587,7 @@ public class RobotEngineManager : MonoBehaviour {
 //				return;
 //			}
 //		}
-		string filename = string.Format("rv-{0}.jpg", imageFrameCount);
+		string filename = string.Format("frame-{0}_time-{1}.jpg", imageFrameCount, Time.time);
 		string filepath = Path.Combine (imageBasePath, filename);
 		SaveAsync(filepath, buffer, 0, length);
 	}

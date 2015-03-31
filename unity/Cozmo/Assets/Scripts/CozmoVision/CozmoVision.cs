@@ -197,37 +197,41 @@ public class CozmoVision : MonoBehaviour
 		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
 
+	protected virtual void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
+	{
+		float boxX = ( observedObject.VizRect.x / 320f ) * imageRectTrans.sizeDelta.x;
+		float boxY = ( observedObject.VizRect.y / 240f ) * imageRectTrans.sizeDelta.y;
+		float boxW = ( observedObject.VizRect.width / 320f ) * imageRectTrans.sizeDelta.x;
+		float boxH = ( observedObject.VizRect.height / 240f ) * imageRectTrans.sizeDelta.y;
+		
+		box.image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
+		box.image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
+
+		//if( observedObject.MarkersVisible )
+		{
+			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+			{
+				box.image.color = selected;
+				box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
+			}
+			else
+			{
+				box.image.color = select;
+				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
+				box.observedObject = observedObject;
+			}
+
+			box.image.gameObject.SetActive( true );
+		}
+	}
+
 	protected virtual void ShowObservedObjects()
 	{
-		float w = imageRectTrans.sizeDelta.x;
-		float h = imageRectTrans.sizeDelta.y;
-		
 		for( int i = 0; i < observedObjectBoxes.Length; ++i )
 		{
 			if( robot.observedObjects.Count > i )
 			{
-				ObservedObject observedObject = robot.observedObjects[i];
-				
-				float boxX = ( observedObject.VizRect.x / 320f ) * w;
-				float boxY = ( observedObject.VizRect.y / 240f ) * h;
-				float boxW = ( observedObject.VizRect.width / 320f ) * w;
-				float boxH = ( observedObject.VizRect.height / 240f ) * h;
-				
-				observedObjectBoxes[i].image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
-				observedObjectBoxes[i].image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
-				
-				if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
-				{
-					observedObjectBoxes[i].image.color = selected;
-					observedObjectBoxes[i].text.text = string.Empty;
-				}
-				else
-				{
-					observedObjectBoxes[i].image.color = select;
-					observedObjectBoxes[i].text.text = "Select " + observedObject.ID;
-					
-					observedObjectBoxes[i].image.gameObject.SetActive( true );
-				}
+				ObservedObjectSeen( observedObjectBoxes[i], robot.observedObjects[i] );
 			}
 			else
 			{
