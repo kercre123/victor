@@ -439,6 +439,9 @@ namespace Cozmo {
                 } else {
                   msg.carryingObjectID = -1;
                 }
+                if(!robot->GetActionList().IsEmpty()) {
+                  msg.status |= IS_PERFORMING_ACTION;
+                }
                 
                 // TODO: Add proximity sensor data to state message
                 
