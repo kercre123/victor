@@ -342,6 +342,40 @@ namespace Anki {
       camDisp->drawLine(msg.bottomLeft_x, msg.bottomLeft_y, msg.topLeft_x, msg.topLeft_y);
     }
     
+    void ProcessVizRobotStateMessage(const VizRobotState& msg)
+    {
+      char txt[128];
+      u32 lineNum = 0;
+      
+      sprintf(txt, "Pose: head=%3d deg, lift=%3d mm",
+              (int)RAD_TO_DEG_F32(msg.headAngle),
+              (int)msg.liftHeight);
+      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "Speed L: %4d  R: %4d mm/s",
+              (int)msg.lwheel_speed_mmps,
+              (int)msg.rwheel_speed_mmps);
+      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "prox: (%2u, %2u, %2u) %d%d%d",
+              msg.proxLeft,
+              msg.proxForward,
+              msg.proxRight,
+              msg.status & IS_PROX_SIDE_BLOCKED,
+              msg.status & IS_PROX_FORWARD_BLOCKED,
+              msg.status & IS_PROX_SIDE_BLOCKED);
+      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+
+      sprintf(txt, "Batt: %2.1f V",
+              (f32)msg.battVolt10x/10);
+      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+
+      sprintf(txt, "Video: %d HZ",
+              msg.videoFramerateHZ);
+      DrawText(lineNum++ , Anki::NamedColors::GREEN, txt);
+      
+    }
+    
     
     // Stubs
     // These messages are handled by cozmo_physics.
@@ -400,6 +434,7 @@ int main(int argc, char **argv)
         case VizTrackerQuad_ID:
         case VizVisionMarker_ID:
         case VizCameraQuad_ID:
+        case VizRobotState_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin
