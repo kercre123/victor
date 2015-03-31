@@ -705,6 +705,7 @@ namespace Cozmo {
 #endif
     
     if(!tracker.IsValid()) {
+      PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.\n");
       return RESULT_FAIL;
     }
     
