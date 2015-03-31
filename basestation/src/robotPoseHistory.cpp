@@ -50,7 +50,7 @@ namespace Anki {
     {
       frame_ = frameID;
       
-      pose_.SetRotation(pose_angle, Z_AXIS_3D);
+      pose_.SetRotation(pose_angle, Z_AXIS_3D());
       pose_.SetTranslation(Vec3f(pose_x, pose_y, pose_z));
       pose_.SetParent(pose_origin);
       

@@ -271,7 +271,7 @@ namespace Anki {
             // as possible pose for the planner to consider. Just drop it to the
             // z=0 height and keep only the heading angle (rotaiton around Z)
             if(NEAR(possiblePose.GetTranslation().z(), _robot.GetPose().GetTranslation().z() + ROBOT_BOUNDING_Z*.5f, 25.f)) {
-              possiblePose.SetRotation(possiblePose.GetRotationAngle<'Z'>(), Z_AXIS_3D);
+              possiblePose.SetRotation(possiblePose.GetRotationAngle<'Z'>(), Z_AXIS_3D());
               possiblePose.SetTranslation({{possiblePose.GetTranslation().x(), possiblePose.GetTranslation().y(), 0.f}});
 
             }
@@ -428,7 +428,7 @@ namespace Anki {
       // _current_ pose
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
       
-      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D,
+      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D(),
                          robot.GetPose().GetTranslation(),
                          robot.GetPose().GetParent());
       

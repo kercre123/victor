@@ -60,36 +60,36 @@ namespace Anki {
       
       // Front Face
       AddMarker(Vision::MARKER_PLATFORMNORTH, // Vision::MARKER_INVERTED_E,
-                Pose3d(M_PI_2, Z_AXIS_3D, {length*.5f, 0.f, -.5f*height}),
+                Pose3d(M_PI_2, Z_AXIS_3D(), {length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Back Face
       AddMarker(Vision::MARKER_PLATFORMSOUTH, //Vision::MARKER_INVERTED_RAMPBACK,
-                Pose3d(-M_PI_2, Z_AXIS_3D, {-length*.5f, 0.f, -.5f*height}),
+                Pose3d(-M_PI_2, Z_AXIS_3D(), {-length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Right Face
       AddMarker(Vision::MARKER_PLATFORMEAST, //Vision::MARKER_INVERTED_RAMPRIGHT,
-                Pose3d(M_PI, Z_AXIS_3D, {0, width*.5f, -.5f*height}),
+                Pose3d(M_PI, Z_AXIS_3D(), {0, width*.5f, -.5f*height}),
                 markerSize_sides);
       
       // Left Face
       AddMarker(Vision::MARKER_PLATFORMWEST, //Vision::MARKER_INVERTED_RAMPLEFT,
-                Pose3d(0.f, Z_AXIS_3D, {0, -width*.5f, -.5f*height}),
+                Pose3d(0.f, Z_AXIS_3D(), {0, -width*.5f, -.5f*height}),
                 markerSize_sides);
       
       // Top Faces:
       AddMarker(Vision::MARKER_INVERTED_A, //TODO: Vision::MARKER_ANKILOGOWITHBITS001,
-                Pose3d(-M_PI_2, X_AXIS_3D, {-length*.25f, -width*.25f, 0.f}),
+                Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(Vision::MARKER_INVERTED_B, //TODO: Vision::MARKER_ANKILOGOWITHBITS010,
-                Pose3d(-M_PI_2, X_AXIS_3D, {-length*.25f,  width*.25f, 0.f}),
+                Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(Vision::MARKER_INVERTED_C, //TODO: Vision::MARKER_ANKILOGOWITHBITS020,
-                Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f, -width*.25f, 0.f}),
+                Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
       AddMarker(Vision::MARKER_INVERTED_D, //TODO: Vision::MARKER_ANKILOGOWITHBITS030,
-                Pose3d(-M_PI_2, X_AXIS_3D, { length*.25f,  width*.25f, 0.f}),
+                Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
       
     } // Platform(type) Constructor
