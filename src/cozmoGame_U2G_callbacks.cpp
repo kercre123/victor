@@ -289,14 +289,24 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SaveImages(U2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages((VizSaveMode_t)msg.mode);
-    printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      printf("Saving image mode %d\n", msg.mode);
+      robot->SetSaveImageMode((SaveMode_t)msg.mode);
+    }
   }
   
   void CozmoGameImpl::Process_SaveRobotState(U2G_SaveRobotState const& msg)
   {
-    VizManager::getInstance()->SaveRobotState((VizSaveMode_t)msg.mode);
-    printf("Saving robot state: %d\n", VizManager::getInstance()->GetSaveRobotStateMode());
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+    printf("Saving robot state: %d\n", msg.mode);
+      robot->SetSaveStateMode((SaveMode_t)msg.mode);
+    }
   }
   
   void CozmoGameImpl::Process_EnableDisplay(U2G_EnableDisplay const& msg)

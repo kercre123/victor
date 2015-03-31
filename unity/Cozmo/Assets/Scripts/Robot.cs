@@ -191,15 +191,15 @@ public class Robot
 		}
 	}
 	
-	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
+	public void PickAndPlaceObject( int index = 0, bool useManualSpeed = false )
 	{
-		Debug.Log( "Pick And Place Object index(" + index + ") usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
-		
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
-		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
+		message.usePreDockPose = System.Convert.ToByte( ( !selectedObjects[index].MarkersVisible ) );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
-		
+
+		Debug.Log( "Pick And Place Object " + message.objectID + " usePreDockPose " + message.usePreDockPose + " useManualSpeed " + message.useManualSpeed );
+
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
 
 		lastObjectHeadTracked = null;

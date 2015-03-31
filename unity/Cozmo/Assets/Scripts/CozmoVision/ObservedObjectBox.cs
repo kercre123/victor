@@ -6,4 +6,6 @@ public class ObservedObjectBox : MonoBehaviour
 {
 	public Image image;
 	public Text text;
+
+	[System.NonSerialized] public ObservedObject observedObject;
 }

@@ -5,7 +5,6 @@ using System.Collections;
 
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
-	[SerializeField] Image clickableImage;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
@@ -37,7 +36,6 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		rTrans = transform as RectTransform;
 		sliderTrans = slider.transform as RectTransform;
 		sliderTrigger = slider.gameObject.GetComponent<EventTrigger>();
-		clickableImage = GetComponent<Image>();
 
 		screenScaleFactor = 1f;
 
@@ -50,7 +48,6 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 		if(Screen.dpi > 0f) {
 			float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
-			//clickableImage.enabled = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
 			dynamic = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
 		}
 	}
