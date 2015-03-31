@@ -144,6 +144,11 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        HAL::IMU_DataStructure imuData;
+        HAL::IMUReadData(imuData);
+        robotState_.rawGyroZ = imuData.rate_z;
+        robotState_.rawAccelY = imuData.acc_y;
+        
         ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
 
         robotState_.lastPathID = PathFollower::GetLastPathID();

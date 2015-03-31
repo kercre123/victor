@@ -204,6 +204,21 @@ namespace Anki {
         jsonFile << json.toStyledString();
         jsonFile.close();
         
+        
+#if(1)
+        // Compose line for IMU output file.
+        // Used for determining delay constant in image timestamp.
+        char stateMsgLine[512];
+        memset(stateMsgLine,0,512);
+        sprintf(stateMsgLine, "%d, %f, %f\n", msg.timestamp, msg.rawGyroZ, msg.rawAccelY);
+        
+        FILE *stateFile;
+        stateFile = fopen("cozmoIMUState.csv", "a");
+        fputs(stateMsgLine, stateFile);
+        fclose(stateFile);
+#endif
+        
+        
         // Turn off save mode if we were in one-shot mode
         if (_stateSaveMode == SAVE_ONE_SHOT) {
           _stateSaveMode = SAVE_OFF;
