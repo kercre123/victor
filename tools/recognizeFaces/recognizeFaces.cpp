@@ -17,9 +17,13 @@ static const char * luxandLicense = "d1mT6FU+dbiXs+gfPa3iFp2KcWHh/FsIN5khjZ3Ukfv
 
 static HTracker tracker = 0;
 
+// TODO: set to 1 for testing on phone, etc
+const int maxThreads = 4;
+
 static Result InitializeTracker()
 {
   if(initialized) {
+    //printf("Already Initialized\n");
     return RESULT_OK;
   }
   
@@ -31,7 +35,7 @@ static Result InitializeTracker()
     return RESULT_FAIL;
   }
   
-  if(FSDKE_OK != FSDK_SetNumThreads(1)) {
+  if(FSDKE_OK != FSDK_SetNumThreads(maxThreads)) {
     return RESULT_FAIL;
   }
   
@@ -39,7 +43,7 @@ static Result InitializeTracker()
     return RESULT_FAIL;
   }
   
-  FSDK_SetFaceDetectionParameters(false, false, 320);
+  //FSDK_SetFaceDetectionParameters(false, false, 640);
   
   initialized = true;
   
@@ -94,16 +98,56 @@ namespace Anki
     return RESULT_OK;
   } // SaveDatabase()
 
-  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth)
+  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth, const int faceDetectionThreshold)
   {
     Result lastResult;
     if((lastResult = InitializeTracker()) != RESULT_OK) {
       return RESULT_FAIL;
     }
     
-  	FSDK_SetFaceDetectionParameters(handleArbitraryRotations, false, internalResizeWidth);
+  	//FSDK_SetFaceDetectionParameters(handleArbitraryRotations, false, internalResizeWidth);
     
-    return RESULT_OK;
+    Result result = RESULT_OK;
+    
+    char parameterBuffer[1024];
+    
+    snprintf(parameterBuffer, 1024, "%d", handleArbitraryRotations);
+    if(FSDK_SetTrackerParameter(tracker, "HandleArbitraryRotations,", parameterBuffer) != FSDKE_OK) {
+      printf("set/TrackerPameter fail 1\n");
+      result = RESULT_FAIL;
+    }
+    
+    snprintf(parameterBuffer, 1024, "%d", internalResizeWidth);
+    if(FSDK_SetTrackerParameter(tracker, "InternalResizeWidth", parameterBuffer) != FSDKE_OK){
+      printf("set/TrackerPameter fail 2\n");
+      result = RESULT_FAIL;
+    }
+    
+    snprintf(parameterBuffer, 1024, "%d", faceDetectionThreshold);
+    if(FSDK_SetTrackerParameter(tracker, "FaceDetectionThreshold", parameterBuffer) != FSDKE_OK) {
+      printf("set/TrackerPameter fail 3\n");
+      result = RESULT_FAIL;
+    }
+    
+    //int errorPosition = -1;
+    //const int setResult = FSDK_SetTrackerMultipleParameters(tracker, "HandleArbitraryRotations=true; DetermineFaceRotationAngle=false; InternalResizeWidth=960; FaceDetectionThreshold=1;", &errorPosition);
+    //printf("setResult:%d ErrorPosition: %d ", setResult, errorPosition);
+    
+    FSDK_GetTrackerParameter(tracker, "HandleArbitraryRotations", &parameterBuffer[0], 1024);
+    printf("HandleArbitraryRotations:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "DetermineFaceRotationAngle", &parameterBuffer[0], 1024);
+    printf("DetermineFaceRotationAngle:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "InternalResizeWidth", &parameterBuffer[0], 1024);
+    printf("InternalResizeWidth:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "FaceDetectionThreshold", &parameterBuffer[0], 1024);
+    printf("FaceDetectionThreshold:%s ", parameterBuffer);
+    
+    printf("set/TrackerPameter suceeded\n");
+    
+    return result;
   } // SetRecognitionParameters()
 
   Result RecognizeFaces(const cv::Mat_<u8> &image, std::vector<Face> &faces, const char * knownName)
@@ -117,6 +161,22 @@ namespace Anki
     }
     
     HImage imageHandle = OpencvToFsdk(image);
+    
+    /*
+    char parameterBuffer[1024];
+    
+    FSDK_GetTrackerParameter(tracker, "HandleArbitraryRotations", &parameterBuffer[0], 1024);
+    printf("HandleArbitraryRotations:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "DetermineFaceRotationAngle", &parameterBuffer[0], 1024);
+    printf("DetermineFaceRotationAngle:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "InternalResizeWidth", &parameterBuffer[0], 1024);
+    printf("InternalResizeWidth:%s ", parameterBuffer);
+    
+    FSDK_GetTrackerParameter(tracker, "FaceDetectionThreshold", &parameterBuffer[0], 1024);
+    printf("FaceDetectionThreshold:%s ", parameterBuffer);
+    */
     
     long long IDs[256]; // detected faces
     long long faceCount = 0;
