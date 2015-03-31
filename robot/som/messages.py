@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "3e246afb27b2e31897a8be87f9f60d1964dcb7ad" # Hash for the revision these python definitions are based on
+__version__ = "4e93a639cc42e26905f92183866a53884080b7b6" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -116,7 +116,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 72
+    ID = 73
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -168,7 +168,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 61
+    ID = 62
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -235,7 +235,7 @@ class RobotState(MessageBase):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
 
 class PrintText(MessageBase):
-    ID = 71
+    ID = 72
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
@@ -360,7 +360,7 @@ class StartTestMode(MessageBase):
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
-    ID = 59
+    ID = 60
     FORMAT = []
 
     def _getMembers(self):
@@ -376,7 +376,7 @@ class FlashBlockIDs(MessageBase):
 class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
-    ID = 60
+    ID = 61
     FORMAT = [("%dI" % NUM_LIGHTS), # color
               "u8",  # blockID
              ]

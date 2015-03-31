@@ -264,9 +264,12 @@ namespace Anki {
       Result StopFaceTracking();
       Result StartLookingForMarkers();
       Result StopLookingForMarkers();
+
+      // Set how to save incoming robot state messages
+      void SetSaveStateMode(const SaveMode_t mode);
       
-      // Save the next image passed into ProcessImage() to file
-      void SaveNextImage();
+      // Set how to save incoming robot images to file
+      void SetSaveImageMode(const SaveMode_t mode);
       
       // =========== Actions Commands =============
       
@@ -552,8 +555,11 @@ namespace Anki {
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
       
-      // Flag for saving next processed image to file
-      bool _saveNextImageToFile;
+      // Save mode for robot state
+      SaveMode_t _stateSaveMode;
+      
+      // Save mode for robot images
+      SaveMode_t _imageSaveMode;
       
       ///////// Modifiers ////////
       
@@ -653,6 +659,8 @@ namespace Anki {
       
       Result SendAbortDocking();
       Result SendAbortAnimation();
+      
+      Result SendSetCarryState(CarryState_t state);
 
       
       // =========  Block messages  ============

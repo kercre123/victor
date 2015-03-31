@@ -262,12 +262,8 @@ namespace Cozmo {
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
     f32 _exposureTime;
     
-#ifdef SIMULATOR
-    // Simulator doesn't need vignetting correction on by default
     VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
-#else
-    VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
-#endif
+
     // For OV7725 (cozmo 2.0)
     //static const f32 _vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for _vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
     
@@ -342,12 +338,7 @@ namespace Cozmo {
     Embedded::Rectangle<s32>        _snapshotROI;
     s32                             _snapshotSubsample;
     Embedded::Array<u8>*            _snapshot;
-    
-    /* Only using static members of SimulatorParameters now
-     #ifdef SIMULATOR
-     static SimulatorParameters             simulatorParameters_;
-     #endif
-     */
+
 
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
