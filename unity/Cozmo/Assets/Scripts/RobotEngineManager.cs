@@ -41,11 +41,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private object sync = new object();
 	private List<object> safeLogs = new List<object>();
 
-#if UNITY_EDITOR
-	private bool imageSave = false;
-#else
-	private bool imageSave = true;
-#endif
+	public bool imageSave = false;
+
 	private const int imageFrameSkip = 0;
 	private int imageFrameCount = 0;
 
