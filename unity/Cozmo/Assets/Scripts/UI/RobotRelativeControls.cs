@@ -388,6 +388,8 @@ public class RobotRelativeControls : MonoBehaviour {
 			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
 		}
 
+		if(!wakeGyro) wakeGyro = Application.isEditor;
+
 		lastAttitude = attitude;
 
 		if(wakeGyro) {

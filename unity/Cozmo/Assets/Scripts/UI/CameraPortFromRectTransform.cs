@@ -14,6 +14,10 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 	bool initialized = false;
 	//int activeFrames = 0;
 
+	void OnEnable() {
+		initialized = false;
+	}
+
 	void Update() {
 		if(initialized) return;
 		if(rectTransform == null) return;

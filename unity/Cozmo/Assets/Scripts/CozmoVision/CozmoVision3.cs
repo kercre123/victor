@@ -22,6 +22,8 @@ public class CozmoVision3 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		ShowObservedObjects();
+
 		if( !robot.isBusy )
 		{
 			robot.selectedObjects.Clear();

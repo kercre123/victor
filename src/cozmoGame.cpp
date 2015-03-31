@@ -486,6 +486,10 @@ namespace Cozmo {
     // TODO: fill in the timestamp?
     const bool gotImage = GetCurrentRobotImage(robotID, img, 0);
     
+    // TODO: Send full resolution images
+    // For now, just resize to QVGA for sending to UI
+    img.Resize(240, 320);
+    
     if(gotImage) {
       
       static u32 imgID = 0;
@@ -497,6 +501,8 @@ namespace Cozmo {
       const u32 numTotalBytes = nrows*ncols;
 
       G2U_ImageChunk m;
+      const int G2U_IMAGE_CHUNK_SIZE = m.data.size();
+      
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
       m.nrows = nrows;

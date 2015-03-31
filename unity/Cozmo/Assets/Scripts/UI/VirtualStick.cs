@@ -8,6 +8,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
 #region INSPECTOR FIELDS
 	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
+	[SerializeField] bool hideEvenIfNotDynamic = false; //recenter the stick from touchdown position
 	[SerializeField] bool staticOnSmallScreens = true;
 	[SerializeField] bool snapWidthToSideBar = true;
 	[SerializeField] float sideBarSnapScaler = 1f;
@@ -180,8 +181,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		ResizeToScreen();
 		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
-		bg.gameObject.SetActive(!dynamic);
-		stick.gameObject.SetActive(!dynamic);
+		bg.gameObject.SetActive(!dynamic && !hideEvenIfNotDynamic);
+		stick.gameObject.SetActive(!dynamic && !hideEvenIfNotDynamic);
 
 		SwipeIndex = 0;
 	}
@@ -347,7 +348,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		lastScreenHeight = Screen.height;
 		orientation = Screen.orientation;
 
-		if(staticOnSmallScreens && Application.isPlaying && screenHeightInches < 3f) {
+		if(staticOnSmallScreens && Application.isPlaying && screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT) {
 			dynamic = false;
 			//Vector2 anchor = bg.pivot;
 			//Vector2 anchor = new Vector2(0.5f,0.5f);
@@ -384,18 +385,19 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 //					break;
 //			}
 
-			//bg.anchorMin = anchor;
-			//bg.anchorMax = anchor;
-			//bg.pivot = anchor;
-			//smallScreenAnchorPos.x = Mathf.Max(sideBarWidth * 0.5f, bg.sizeDelta.x * 0.75f);
-			bg.anchoredPosition = smallScreenAnchorPos;
-			Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
-
 			if(snapWidthToSideBar) {
 				Vector2 size = rTrans.sizeDelta;
 				size.x = sideBarWidth * sideBarSnapScaler;
 				rTrans.sizeDelta = size;
+				smallScreenAnchorPos.x = sideBarWidth * 0.5f - size.x * 0.5f;
 			}
+
+			//bg.anchorMin = anchor;
+			//bg.anchorMax = anchor;
+			//bg.pivot = anchor;
+
+			bg.anchoredPosition = smallScreenAnchorPos;
+			Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
 		}
 
 		//Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");
@@ -778,8 +780,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		IsPressed = false;
 		PressedTime = 0f;
 		SwipeRequest = SwipedDirection.sqrMagnitude > 0f;
-		bg.gameObject.SetActive(!dynamic || SwipeRequest);
-		stick.gameObject.SetActive(!dynamic || SwipeRequest);
+		bg.gameObject.SetActive((!dynamic && !hideEvenIfNotDynamic) || SwipeRequest);
+		stick.gameObject.SetActive((!dynamic && !hideEvenIfNotDynamic) || SwipeRequest);
 		//Debug.Log ("Joystick OnPointerUp StickCenterOnScreen(" + StickCenterOnScreen + ") stick.anchoredPosition("+stick.anchoredPosition+")");
 		
 		UpModeEngaged = false;

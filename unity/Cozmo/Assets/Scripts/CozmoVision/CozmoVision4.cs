@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -112,9 +113,8 @@ public class ActionSlider
 public class CozmoVision4 : CozmoVision
 {
 	[SerializeField] ActionSlider actionSlider = null;
-	[SerializeField] bool snapWidthToSideBar = true;
-	[SerializeField] float sideBarSnapScaler = 1f;
-	[SerializeField] RectTransform sliderAnchor;
+	[SerializeField] RectTransform targetLockReticle = null;
+
 
 	float targetLockTimer = 0f;
 	bool interactLastFrame = false;
@@ -136,14 +136,7 @@ public class CozmoVision4 : CozmoVision
 		actionSlider.ClaimOwnership(this);
 		actionSlider.slider.value = 0f;
 		actionSlider.SetMode(ActionButtonMode.TARGET, false);
-	}
-
-	protected override void OnEnable()
-	{
-		base.OnEnable();
-
-		ResizeToScreen();
-
+		if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 	}
 
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
@@ -159,6 +152,8 @@ public class CozmoVision4 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		ShowObservedObjects();
+
 		if(!interactPressed) {
 
 			if(interactLastFrame) { // && robot.selectedObject > -1
@@ -170,6 +165,8 @@ public class CozmoVision4 : CozmoVision
 
 			actionSlider.SetMode(ActionButtonMode.TARGET, false);
 			robot.selectedObjects.Clear();
+
+			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 			return;
 		}
 
@@ -190,59 +187,29 @@ public class CozmoVision4 : CozmoVision
 			}
 		}
 
+		if(targetLockReticle != null) {
+			targetLockReticle.gameObject.SetActive(robot.selectedObjects.Count > 0);
+
+			if(robot.selectedObjects.Count > 0) {
+
+				float w = imageRectTrans.sizeDelta.x;
+				float h = imageRectTrans.sizeDelta.y;
+				ObservedObject lockedObject = robot.selectedObjects[0];
+
+				float lockX = (lockedObject.VizRect.center.x / 320f) * w;
+				float lockY = (lockedObject.VizRect.center.y / 240f) * h;
+				float lockW = (lockedObject.VizRect.width / 320f) * w;
+				float lockH = (lockedObject.VizRect.height / 240f) * h;
+				
+				targetLockReticle.sizeDelta = new Vector2( lockW, lockH );
+				targetLockReticle.anchoredPosition = new Vector2( lockX, -lockY );
+			}
+		}
+
 		interactLastFrame = true;
+
+		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}
-
-	
-	void ResizeToScreen() {
-		float dpi = Screen.dpi;
-
-		if(dpi == 0f) return;
-		
-		float refW = Screen.width;
-		float refH = Screen.height;
-		
-		//float screenScaleFactor = 1f;
-		
-		if(canvasScaler != null) {
-			//screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
-			refW = canvasScaler.referenceResolution.x;
-			refH = canvasScaler.referenceResolution.y;
-		}
-
-		float refAspect = refW / refH;
-		float actualAspect = (float)Screen.width / (float)Screen.height;
-
-		float totalRefWidth = (refW / refAspect) * actualAspect;
-		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
-
-		RectTransform sliderTransform = actionSlider.slider.gameObject.GetComponent<RectTransform>();
-
-		if( sideBarWidth > 50f && snapWidthToSideBar) {
-			Vector2 size = sliderAnchor.sizeDelta;
-			size.x = sideBarWidth * sideBarSnapScaler;
-			sliderAnchor.sizeDelta = size;
-
-			Vector3 anchor = sliderTransform.anchoredPosition;
-			anchor.x = 0f;
-			sliderTransform.anchoredPosition = anchor;
-		}
-
-		float screenHeightInches = (float)Screen.height / (float)dpi;
-		if(screenHeightInches < 3f) {
-
-			Vector2 size = sliderTransform.sizeDelta;
-			float newScale = (refH * 0.5f) / size.y;
-
-			sliderTransform.localScale = Vector3.one * newScale;
-			Vector3 anchor = sliderTransform.anchoredPosition;
-			anchor.y = 0f;
-			anchor.x = 0f; //-sideBarWidth * 0.5f;
-			sliderTransform.anchoredPosition = anchor;
-		}
-
-	}
-
 
 	//Vector2 centerViz = new Vector2(160f, 120f);
 
@@ -259,7 +226,7 @@ public class CozmoVision4 : CozmoVision
 			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
 
 			float angleFromCoz = Vector2.Angle(forward, atTarget);
-			//if(angleFromCoz > 90f) return;
+			if(angleFromCoz > 90f) continue;
 
 			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
@@ -284,31 +251,33 @@ public class CozmoVision4 : CozmoVision
 
 		if(best != null) {
 			robot.selectedObjects.Add(best);
-		}
 
-		//find any other objects in a 'stack' with our selected
-		for(int i=0; i<robot.knownObjects.Count; i++) {
-			if(best == robot.knownObjects[i]) continue;
-			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
+			//find any other objects in a 'stack' with our selected
+			for(int i=0; i<robot.knownObjects.Count; i++) {
+				if(best == robot.knownObjects[i])
+					continue;
+				if(robot.carryingObjectID == robot.knownObjects[i].ID)
+					continue;
 
-			float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
-			if(dist > best.Size.x * 0.5f) {
-				//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
-				continue;
+				float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+				if(dist > best.Size.x * 0.5f) {
+					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
+					continue;
+				}
+
+				robot.selectedObjects.Add(robot.knownObjects[i]);
 			}
 
-			robot.selectedObjects.Add(robot.knownObjects[i]);
+			//sort selected from ground up
+			robot.selectedObjects.Sort(( obj1, obj2 ) => {
+				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
+			});
 		}
-
-		//sort selected from ground up
-		robot.selectedObjects.Sort( ( obj1, obj2 ) => {
-			return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
-		} );
 
 		//Debug.Log("AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}
+	bool interactPressed=false;
 
-	bool interactPressed = false;
 	public void ToggleInteract(bool val)
 	{
 		interactPressed = val;
@@ -317,6 +286,8 @@ public class CozmoVision4 : CozmoVision
 		if(!val) {
 			actionSlider.slider.value = 0f;
 		}
+
+		//Debug.Log("ToggleInteract("+val+")");
 	}
 
 	List<ActionButtonMode> modes = new List<ActionButtonMode>();

@@ -18,7 +18,6 @@ public enum ActionButtonMode {
 	NUM_MODES
 }
 
-
 [System.Serializable]
 public class ActionButton
 {
@@ -37,7 +36,7 @@ public class ActionButton
 	{
 		RobotEngineManager.instance.current.PickAndPlaceObject( index );
 	}
-	
+
 	public void Cancel()
 	{
 		Debug.Log( "Cancel" );
@@ -68,14 +67,17 @@ public class ActionButton
 			case ActionButtonMode.PICK_UP:
 				text.text = "Pick Up";
 				button.onClick.AddListener(PickAndPlaceObject);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.DROP:
 				text.text = "Drop";
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.STACK:
 				text.text = "Stack";
 				button.onClick.AddListener(PickAndPlaceObject);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.ROLL:
 				text.text = "Roll";
@@ -84,6 +86,7 @@ public class ActionButton
 			case ActionButtonMode.ALIGN:
 				text.text = "Align";
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
+				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.CHANGE:
 				text.text = "Change";
@@ -92,6 +95,7 @@ public class ActionButton
 			case ActionButtonMode.CANCEL:
 				text.text = "Cancel";
 				button.onClick.AddListener(Cancel);
+				button.onClick.AddListener(vision.CancelButtonClick);
 				break;
 		}
 		
@@ -123,8 +127,18 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
+	[SerializeField] protected AudioClip actionButtonSound;
+	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	[SerializeField] protected RectTransform anchorToSnapToSideBar;
+	[SerializeField] protected float snapToSideBarScale = 1f;
+	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
+	[SerializeField] protected RectTransform anchorToScaleOnSmallScreens;
+	[SerializeField] protected float scaleOnSmallScreensFactor = 0.5f;
+	[SerializeField] protected GameObject observedObjectCanvasPrefab;
+	[SerializeField] protected Color selected;
+	[SerializeField] protected Color select;
 
 	public UnityAction[] actions;
 
@@ -132,9 +146,12 @@ public class CozmoVision : MonoBehaviour
 	protected RectTransform imageRectTrans;
 	protected Canvas canvas;
 	protected CanvasScaler canvasScaler;
+	protected float screenScaleFactor = 1f;
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+	protected ObservedObjectBox[] observedObjectBoxes;
+	protected GameObject observedObjectCanvas;
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
@@ -172,7 +189,51 @@ public class CozmoVision : MonoBehaviour
 		canvas = GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
+		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
+		observedObjectBoxes = observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true);
+
+		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
+
 		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
+	}
+
+	protected virtual void ShowObservedObjects()
+	{
+		float w = imageRectTrans.sizeDelta.x;
+		float h = imageRectTrans.sizeDelta.y;
+		
+		for( int i = 0; i < observedObjectBoxes.Length; ++i )
+		{
+			if( robot.observedObjects.Count > i )
+			{
+				ObservedObject observedObject = robot.observedObjects[i];
+				
+				float boxX = ( observedObject.VizRect.x / 320f ) * w;
+				float boxY = ( observedObject.VizRect.y / 240f ) * h;
+				float boxW = ( observedObject.VizRect.width / 320f ) * w;
+				float boxH = ( observedObject.VizRect.height / 240f ) * h;
+				
+				observedObjectBoxes[i].image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
+				observedObjectBoxes[i].image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
+				
+				if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+				{
+					observedObjectBoxes[i].image.color = selected;
+					observedObjectBoxes[i].text.text = string.Empty;
+				}
+				else
+				{
+					observedObjectBoxes[i].image.color = select;
+					observedObjectBoxes[i].text.text = "Select " + observedObject.ID;
+					
+					observedObjectBoxes[i].image.gameObject.SetActive( true );
+				}
+			}
+			else
+			{
+				observedObjectBoxes[i].image.gameObject.SetActive( false );
+			}
+		}
 	}
 
 	protected void DisableButtons() {
@@ -211,22 +272,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	public void ForceDropBox()
-	{
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.SetRobotCarryingObject();
-		}
-	}
-
-	public void ForceClearAll()
-	{
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.ClearAllBlocks();
-		}
-	}
-
 	private void RequestImage()
 	{
 		if( !imageRequested && RobotEngineManager.instance != null )
@@ -249,6 +294,54 @@ public class CozmoVision : MonoBehaviour
 		RequestImage();
 		ResizeToScreen();
 		VisionEnabled();
+	}
+
+	protected virtual void ResizeToScreen() {
+		float dpi = Screen.dpi;//
+		
+		if(dpi == 0f) return;
+		
+		float refW = Screen.width;
+		float refH = Screen.height;
+		
+		screenScaleFactor = 1f;
+		
+		if(canvasScaler != null) {
+			screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
+			refW = canvasScaler.referenceResolution.x;
+			refH = canvasScaler.referenceResolution.y;
+		}
+		
+		float refAspect = refW / refH;
+		float actualAspect = (float)Screen.width / (float)Screen.height;
+		
+		float totalRefWidth = (refW / refAspect) * actualAspect;
+		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
+
+		if( sideBarWidth > 50f && anchorToSnapToSideBar != null) {
+			Vector2 size = anchorToSnapToSideBar.sizeDelta;
+			size.x = sideBarWidth * snapToSideBarScale;
+			anchorToSnapToSideBar.sizeDelta = size;
+
+			if(anchorToCenterOnSideBar != null) {
+				Vector3 anchor = anchorToCenterOnSideBar.anchoredPosition;
+				anchor.x = size.x * 0.5f - sideBarWidth * 0.5f;
+				anchorToCenterOnSideBar.anchoredPosition = anchor;
+			}
+		}
+		
+		float screenHeightInches = (float)Screen.height / (float)dpi;
+		if(screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT && anchorToScaleOnSmallScreens != null) {
+			
+			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
+			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
+			
+			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
+			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
+			anchor.y = 0f;
+			anchorToScaleOnSmallScreens.anchoredPosition = anchor;
+		}
+		
 	}
 
 	private void VisionEnabled()
@@ -305,6 +398,16 @@ public class CozmoVision : MonoBehaviour
 		}*/
 	}
 
+	public void ActionButtonClick()
+	{
+		audio.PlayOneShot( actionButtonSound );
+	}
+
+	public void CancelButtonClick()
+	{
+		audio.PlayOneShot( cancelButtonSound );
+	}
+
 	protected virtual void LateUpdate()
 	{
 		if( robot != null )
@@ -320,30 +423,15 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	private void OnDisable()
+	protected void OnDisable()
 	{
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 		}
-	}
 
-	private void ResizeToScreen()
-	{
-		if( rTrans == null )
-		{
-			return;
-		}
-
-//		RectTransform parentT = rTrans.parent as RectTransform;
-//		Vector3[] corners = new Vector3[4];
-//		parentT.GetWorldCorners(corners);
-//
-//		float w = corners[0] - corners[2];
-//
-//		float scale = ( w * 0.5f ) / 320f;
-//		rTrans.localScale = Vector3.one * scale;
+		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
 	}
 
 }
