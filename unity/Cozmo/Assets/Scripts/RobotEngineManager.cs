@@ -41,7 +41,8 @@ public class RobotEngineManager : MonoBehaviour {
 	private object sync = new object();
 	private List<object> safeLogs = new List<object>();
 
-	public bool imageSave = false;
+	public bool AllowImageSaving { get; private set; }
+	private bool imageDirectoryCreated = false;
 
 	private const int imageFrameSkip = 0;
 	private int imageFrameCount = 0;
@@ -115,13 +116,24 @@ public class RobotEngineManager : MonoBehaviour {
 	private void Awake()
 	{
 		EndSave_callback = EndSave;
-		if (imageSave) {
+	}
+
+	public void ToggleVisionRecording(bool on) {
+		AllowImageSaving = on;
+
+		if(on && !imageDirectoryCreated) {
+
 			imageBasePath = Path.Combine (Application.persistentDataPath, DateTime.Now.ToString ("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
 			try {
+
 				Debug.Log ("Saving robot screenshots to \"" + imageBasePath + "\"", this);
 				Directory.CreateDirectory (imageBasePath);
+
+				imageDirectoryCreated = true;
+
 			} catch (Exception e) {
-				imageSave = false;
+
+				AllowImageSaving = false;
 				Debug.LogException (e, this);
 			}
 		}
@@ -347,7 +359,7 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			//Debug.Log( "no box found" );
 
-			current.observedObjects.Clear();
+			current.ClearObservedObjects();
 			current.lastObjectHeadTracked = null;
 		}
 	}
@@ -368,6 +380,13 @@ public class RobotEngineManager : MonoBehaviour {
 		if( deleted != null )
 		{
 			current.selectedObjects.Remove( deleted );
+		}
+
+		deleted = current.observedObjects.Find( x=> x.ID == message.objectID );
+		
+		if( deleted != null )
+		{
+			current.observedObjects.Remove( deleted );
 		}
 	}
 
@@ -500,7 +519,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 		}
 	}
@@ -550,7 +569,7 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				RobotImage( texture );
 				
-				current.observedObjects.Clear();
+				current.ClearObservedObjects();
 			}
 
 			SaveJpeg(colorArray, currentImageIndex);
@@ -560,7 +579,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public void SaveJpeg(byte[] buffer, int length)
 	{
 		imageFrameCount++;
-		if (!imageSave) {
+		if (!AllowImageSaving || !imageDirectoryCreated) {
 			return;
 		}
 //		if (imageFrameSkip != 0) {
