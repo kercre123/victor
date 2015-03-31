@@ -211,7 +211,7 @@ namespace Anki {
   
   RotationVector3d::RotationVector3d(void)
   : _angle(0.f)
-  , _axis(X_AXIS_3D)
+  , _axis(X_AXIS_3D())
   {
     
   }
@@ -233,7 +233,7 @@ namespace Anki {
     if(_angle == Radians(0)) {
       // If the specified vector was all zero, then the axis is ambiguous,
       // so default to the X axis
-      _axis = X_AXIS_3D;
+      _axis = X_AXIS_3D();
     }
   }
   

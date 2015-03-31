@@ -31,7 +31,7 @@ namespace Anki {
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
   : _translation(t)
   , _angle(theta)
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -39,7 +39,7 @@ namespace Anki {
   Pose2d::Pose2d(const Radians &theta, const float x, const float y)
   : _translation(x,y)
   , _angle(theta)
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -47,7 +47,7 @@ namespace Anki {
   Pose2d::Pose2d(const Pose3d& pose3d)
   : _translation(pose3d.GetTranslation().x(), pose3d.GetTranslation().y())
   , _angle(pose3d.GetRotationAngle<'Z'>())
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -101,14 +101,14 @@ namespace Anki {
   
   /*
   template<>
-  std::list<Pose3d> PoseBase<Pose3d>::Origins = {{Pose3d(0, Z_AXIS_3D, {{0,0,0}}, nullptr, "WorldOrigin3D")}};
+  std::list<Pose3d> PoseBase<Pose3d>::Origins = {{Pose3d(0, Z_AXIS_3D(), {{0,0,0}}, nullptr, "WorldOrigin3D")}};
   
   template<>
   const Pose3d* PoseBase<Pose3d>::_sWorld = &PoseBase<Pose3d>::Origins.front();
   */
   
   Pose3d::Pose3d()
-  : Pose3d(0, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+  : Pose3d(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}})
   {
     
   } // Constructor: Pose3d()  

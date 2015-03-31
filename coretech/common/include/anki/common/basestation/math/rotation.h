@@ -252,7 +252,7 @@ namespace Anki {
   inline const Vec3f& RotationVector3d::GetAxis(void) const {
     if (_angle == 0) {
       // A zero degree rotation means the axis of rotation will be a null vector
-      static const Vec3f AXIS_FOR_ZERO_ANGLE(Z_AXIS_3D);
+      static const Vec3f AXIS_FOR_ZERO_ANGLE(Z_AXIS_3D());
       return AXIS_FOR_ZERO_ANGLE;
     }
     return _axis;
