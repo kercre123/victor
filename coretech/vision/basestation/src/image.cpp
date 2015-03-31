@@ -19,6 +19,9 @@
 #include "opencv2/highgui/highgui.hpp"
 #endif
 
+// Uncomment this to test cropping the 4:3 image to 16:9 format by simply
+// adding block bars to the top and bottom 12.5% of the image
+//#define TEST_16_9_ASPECT_RATIO
 
 namespace Anki {
 namespace Vision {
@@ -110,6 +113,32 @@ namespace Vision {
     return labelCount-2;
     
   } // GetConnectedComponents()
+  
+  
+  void Image::Resize(f32 scaleFactor)
+  {
+    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
+  }
+  
+  void Image::Resize(s32 desiredRows, s32 desiredCols)
+  {
+    if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
+      const cv::Size desiredSize(desiredCols, desiredRows);
+      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  void Image::Resize(Image& resizedImage) const
+  {
+    if(resizedImage.IsEmpty()) {
+      printf("Image::Resize - Output image should already be the desired size.\n");
+    } else {
+      const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
+      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  
   
 #if 0
 #pragma mark --- ImageRGBA ---
@@ -257,6 +286,13 @@ namespace Vision {
       if(_img.rows != _imgHeight || _img.cols != _imgWidth) {
         printf("***ERROR - ImageDeChunker.AppendChunk: expected %dx%d image after decoding, got %dx%d.\n", _imgWidth, _imgHeight, _img.cols, _img.rows);
       }
+      
+#     ifdef TEST_16_9_ASPECT_RATIO
+      // TEST 16:9 format by blacking out 25% of the rows (12.5% at top and bottom)
+      _img(cv::Range(0,_img.rows*.125),cv::Range::all()).setTo(0);
+      _img(cv::Range(0.875*_img.rows,_img.rows),cv::Range::all()).setTo(0);
+#     endif
+      
     } // if(isLastChunk)
     
     return isLastChunk;

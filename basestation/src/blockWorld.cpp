@@ -31,6 +31,13 @@
 // The sensor value that must be met/exceeded in order to have detected an obstacle
 #define PROX_OBSTACLE_DETECT_THRESH   5
 
+#define DEBUG_ROBOT_POSE_UPDATES 0
+#if DEBUG_ROBOT_POSE_UPDATES
+#  define PRINT_LOCALIZATION_INFO PRINT_INFO
+#else
+#  define PRINT_LOCALIZATION_INFO(...)
+#endif
+
 namespace Anki
 {
   namespace NamedColors {
@@ -504,7 +511,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else {
+        } else if(unobserved.family != ObjectFamily::MATS && unobserved.object->GetID() != _robot->GetCarryingObject()) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -738,9 +745,10 @@ namespace Anki
         
         if(onMat != nullptr)
         {
-          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
-                           "Robot %d is on a %s mat and will localize to it.\n",
-                           _robot->GetID(), onMat->GetType().GetName().c_str());
+          
+          PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
+                                  "Robot %d is on a %s mat and will localize to it.\n",
+                                  _robot->GetID(), onMat->GetType().GetName().c_str());
           
           // If robot is "on" one of the mats it is currently seeing, localize
           // the robot to that mat
@@ -771,9 +779,9 @@ namespace Anki
               // The robot is localized to a mat it is not seeing (and is not "on"
               // any of the mats it _is_ seeing.  Just update the poses of the
               // mats it is seeing, but don't localize to any of them.
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
-                               "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
-                               _robot->GetID(), matsSeen.size());
+              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
+                                      "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
+                                      _robot->GetID(), matsSeen.size());
             }
             else {
               if(overlappingMatsSeen.size() > 1) {
@@ -783,9 +791,9 @@ namespace Anki
                                     "Will use first.\n", _robot->GetID(), overlappingMatsSeen.size());
               }
               
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                               "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
-                               _robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
+              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
+                                      "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
+                                      _robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
               
               // The robot is localized to one of the mats it is seeing, even
               // though it is not _on_ that mat.  Remain localized to that mat
@@ -829,9 +837,9 @@ namespace Anki
               } // for each observed marker
             } // for each mat seen
             
-            PRINT_NAMED_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
-                             "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.\n",
-                             _robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
+            PRINT_LOCALIZATION_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
+                                    "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.\n",
+                                    _robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
             
             matToLocalizeTo = closestMat;
             
@@ -851,8 +859,8 @@ namespace Anki
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
             // origin as its pose
-            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
-                             "Instantiating first mat piece in the world.\n");
+            PRINT_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
+                       "Instantiating first mat piece in the world.\n");
             
             existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
             assert(existingMatPiece != nullptr);
@@ -884,16 +892,16 @@ namespace Anki
               AddNewObject(existingMatPieces, existingMatPiece);
               existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                               "Robot %d localizing to new %s mat with ID=%d.\n",
-                               _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                               existingMatPiece->GetID().GetValue());
+              PRINT_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
+                         "Robot %d localizing to new %s mat with ID=%d.\n",
+                         _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                         existingMatPiece->GetID().GetValue());
               
             } else {
               if(existingObjects.size() > 1) {
-                PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
-                                 "Robot %d found multiple existing mats matching the one it "
-                                 "will localize to - using first.\n", _robot->GetID());
+                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
+                              "Robot %d found multiple existing mats matching the one it "
+                              "will localize to - using first.\n", _robot->GetID());
               }
               
               // We are localizing to an existing mat piece: do not attempt to
@@ -902,10 +910,10 @@ namespace Anki
               existingMatPiece = dynamic_cast<MatPiece*>(existingObjects.front());
               CORETECH_ASSERT(existingMatPiece != nullptr);
               
-              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
-                               "Robot %d localizing to existing %s mat with ID=%d.\n",
-                               _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                               existingMatPiece->GetID().GetValue());
+              PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
+                                      "Robot %d localizing to existing %s mat with ID=%d.\n",
+                                      _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
+                                      existingMatPiece->GetID().GetValue());
             }
           } // if/else (existingMatPieces.empty())
           
@@ -946,11 +954,12 @@ namespace Anki
               newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               
-              fprintf(stdout, "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
-                      newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
-                      newMatPiece->GetPose().GetTranslation().x(),
-                      newMatPiece->GetPose().GetTranslation().y(),
-                      newMatPiece->GetPose().GetTranslation().z());
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                               "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
+                               newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
+                               newMatPiece->GetPose().GetTranslation().x(),
+                               newMatPiece->GetPose().GetTranslation().y(),
+                               newMatPiece->GetPose().GetTranslation().z());
               
               // Add observed mat markers to the occlusion map of the camera that saw
               // them, so we can use them to delete objects that should have been
@@ -960,7 +969,8 @@ namespace Anki
             }
             else {
               if(overlappingObjects.size() > 1) {
-                fprintf(stdout, "More than one overlapping mat found -- will use first.\n");
+                PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose",
+                                        "More than one overlapping mat found -- will use first.\n");
                 // TODO: do something smarter here?
               }
               
@@ -1039,8 +1049,8 @@ namespace Anki
       } // IF any mat piece was seen
 
       if(wasPoseUpdated) {
-        PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s\n",
-                         _robot->GetPose().GetNamedPathToOrigin(true).c_str());
+        PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s\n",
+                                _robot->GetPose().GetNamedPathToOrigin(true).c_str());
       }
       
       return wasPoseUpdated;

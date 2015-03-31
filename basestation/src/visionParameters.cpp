@@ -35,9 +35,9 @@ namespace Anki {
       
       }
         
-      void DetectFiducialMarkersParameters::Initialize()
+      void DetectFiducialMarkersParameters::Initialize(Vision::CameraResolution resolution)
       {
-        detectionResolution = Vision::CAMERA_RES_QVGA;
+        detectionResolution = resolution;
         detectionWidth  = Vision::CameraResInfo[detectionResolution].width;
         detectionHeight = Vision::CameraResInfo[detectionResolution].height;
 
@@ -112,7 +112,7 @@ namespace Anki {
         
       }
       
-      void TrackerParameters::Initialize()
+      void TrackerParameters::Initialize(Vision::CameraResolution resolution)
       {
         // This is size of the box filter used to locally normalize the image
         // as a fraction of the size of the current tracking quad.
@@ -158,8 +158,8 @@ namespace Anki {
         // LK tracker parameter initialization
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        trackingResolution   = Vision::CAMERA_RES_QVGA; // 320x240
-        numPyramidLevels     = 3;
+        trackingResolution   = resolution;
+        numPyramidLevels     = 3; // TODO: Compute from resolution to get down to a given size?
 #else
         //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
         trackingResolution   = Vision::CAMERA_RES_QQVGA; // 160x120
@@ -214,9 +214,9 @@ namespace Anki {
         
       } // FaceDetectionParameters()
       
-      void FaceDetectionParameters::Initialize()
+      void FaceDetectionParameters::Initialize(Vision::CameraResolution resolution)
       {
-        detectionResolution = Vision::CAMERA_RES_QVGA;
+        detectionResolution = resolution;
         
         faceDetectionHeight = Vision::CameraResInfo[detectionResolution].height;
         faceDetectionWidth  = Vision::CameraResInfo[detectionResolution].width;
