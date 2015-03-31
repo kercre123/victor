@@ -340,11 +340,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledProjective::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
 
-        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledProjective::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == baseImageWidth,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledProjective::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);
@@ -382,7 +382,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -512,7 +512,7 @@ namespace Anki
           this->transformation.Update(b, initialImageScaleF32, scratch, Transformations::TRANSFORM_TRANSLATION);
 
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, baseImageWidth, baseImageHeight, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
             verify_converged = true;
@@ -544,7 +544,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -702,7 +702,7 @@ namespace Anki
           //this->transformation.get_homography().Print("new transformation");
 
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, baseImageWidth, baseImageHeight, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
             verify_converged = true;
@@ -734,7 +734,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -891,7 +891,7 @@ namespace Anki
 
           // Check if we're done with iterations
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, baseImageWidth, baseImageHeight, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
             verify_converged = true;
@@ -919,7 +919,7 @@ namespace Anki
 
         const s32 whichScale = 0;
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
