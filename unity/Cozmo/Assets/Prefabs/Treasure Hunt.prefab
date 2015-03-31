@@ -169,6 +169,7 @@ GameObject:
   - 224: {fileID: 22425386}
   - 222: {fileID: 22225386}
   - 114: {fileID: 11425396}
+  - 114: {fileID: 11425398}
   m_Layer: 5
   m_Name: TextHint
   m_TagString: Untagged
@@ -836,6 +837,17 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: PLAYING
+--- !u!114 &11425398
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 125386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 542d0e02fb28744bfa345f5ec0a0b65f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11425400
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -847,7 +859,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc2713d2ffa174d559eb0157e5be06ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxPlayTime: 180
+  maxPlayTime: 0
   scoreToWin: 0
   numPlayers: 1
   textScore: {fileID: 11425404}
@@ -855,7 +867,7 @@ MonoBehaviour:
   textState: {fileID: 11419340}
   textTime: {fileID: 11425414}
   autoPlay: 0
-  playButton: {fileID: 11425380}
+  playButton: {fileID: 0}
   buildInstructions: {fileID: 0}
   resultsPanel: {fileID: 11425374}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
@@ -1364,14 +1376,14 @@ RectTransform:
   m_GameObject: {fileID: 125386}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.00001287, y: 1.00001287, z: 1.00001287}
   m_Children: []
   m_Father: {fileID: 22428006}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 345.500092}
+  m_SizeDelta: {x: 156, y: -43}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22425388
 RectTransform:
@@ -1552,7 +1564,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1000, y: 100}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:
