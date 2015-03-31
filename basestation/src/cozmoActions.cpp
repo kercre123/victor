@@ -612,6 +612,9 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         if(currentTime >= _waitToVerifyTime) {
+          PRINT_NAMED_INFO("IDockAction.CheckIfDone",
+                           "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
+          
           actionResult = Verify(robot);
           
           // Go back to looking for markers (and stop tracking) when we finish,
