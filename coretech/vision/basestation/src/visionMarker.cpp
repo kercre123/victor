@@ -226,10 +226,11 @@ namespace Anki {
     } // KnownMarker::IsVisibleFrom()
     
     
-    Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
+    Result KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker,
+                                             Pose3d& pose) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d);
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d, pose);
     }
     
     

@@ -557,13 +557,20 @@ namespace Anki {
           
           for(auto blockMarker : blockMarkers) {
             
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     blockMarker->Get3dCorners(canonicalPose));
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            Pose3d markerPose;
+            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose),
+                                                                     markerPose);
+            if(poseResult != RESULT_OK) {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                  "Could not estimate pose of block marker. Not visualizing.\n");
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+                VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+              } else {
+                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                    "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+              }
             }
           }
         }
@@ -575,13 +582,20 @@ namespace Anki {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
           for(auto matMarker : matMarkers) {
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     matMarker->Get3dCorners(canonicalPose));
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+            Pose3d markerPose;
+            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     matMarker->Get3dCorners(canonicalPose),
+                                                                     markerPose);
+            if(poseResult != RESULT_OK) {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                  "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+              } else {
+                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                    "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+              }
             }
           }
         }

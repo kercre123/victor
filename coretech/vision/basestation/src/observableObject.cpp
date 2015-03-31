@@ -148,12 +148,17 @@ namespace Anki {
           // Note that the known marker's pose, and thus its 3d corners, are
           // defined in the coordinate frame of parent object, so computing its
           // pose here _is_ the pose of the parent object.
-          Pose3d markerPoseWrtCamera( matchingMarker->EstimateObservedPose(*obsMarker) );
-          
-          // Store the pose in the camera's coordinate frame, along with the pair
-          // of markers that generated it
-          possiblePoses.emplace_back(markerPoseWrtCamera,
-                                     MarkerMatch(obsMarker, matchingMarker));
+          Pose3d markerPoseWrtCamera;
+          Result result = matchingMarker->EstimateObservedPose(*obsMarker, markerPoseWrtCamera);
+          if(result == RESULT_OK) {
+            // Store the pose in the camera's coordinate frame, along with the pair
+            // of markers that generated it
+            possiblePoses.emplace_back(markerPoseWrtCamera,
+                                       MarkerMatch(obsMarker, matchingMarker));
+          } else {
+            PRINT_NAMED_ERROR("ObservableObject.ComputePossiblePoses",
+                              "Failed to estimate pose of observed marker.\n");
+          }
         }
       }
       

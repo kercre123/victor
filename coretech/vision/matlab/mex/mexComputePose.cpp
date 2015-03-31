@@ -79,7 +79,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Vision::Camera camera;
   camera.SetCalibration(calib);
-  Pose3d pose = camera.ComputeObjectPose<double>(imgQuad, worldQuad);
+  Pose3d pose;
+  Result result = camera.ComputeObjectPose<double>(imgQuad, worldQuad, pose);
+  if(result != RESULT_OK) {
+    mexErrMsgTxt("Failed to compute object pose.\n");
+  }
 
   plhs[0] = mxCreateDoubleMatrix(3, 3, mxREAL);
   double* R = mxGetPr(plhs[0]);
