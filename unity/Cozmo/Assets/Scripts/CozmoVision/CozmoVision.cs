@@ -206,18 +206,21 @@ public class CozmoVision : MonoBehaviour
 		
 		box.image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
-		
-		if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+
+		//if( observedObject.MarkersVisible )
 		{
-			box.image.color = selected;
-			box.text.text = observedObject.ID + " " + observedObject.Family;
-		}
-		else
-		{
-			box.image.color = select;
-			box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
-			box.observedObject = observedObject;
-			
+			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+			{
+				box.image.color = selected;
+				box.text.text = observedObject.ID + " " + observedObject.Family;
+			}
+			else
+			{
+				box.image.color = select;
+				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
+				box.observedObject = observedObject;
+			}
+
 			box.image.gameObject.SetActive( true );
 		}
 	}
