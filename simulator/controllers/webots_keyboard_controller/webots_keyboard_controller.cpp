@@ -184,7 +184,7 @@ namespace Anki {
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode);
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState=false);
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -562,11 +562,18 @@ namespace Anki {
                   //p1 = DTF_ENABLE_DIRECT_HAL_TEST | DTF_ENABLE_CYCLE_SPEEDS_TEST;
                   //p2 = 5;
                   //p3 = 20;
-                  p1 = root_->getField("dt_flags")->getSFInt32();
+                  p1 = root_->getField("driveTest_flags")->getSFInt32();
                   p2 = 5;
-                  p3 = root_->getField("dt_wheel_power")->getSFInt32();
+                  p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
-                  
+                case TM_LIFT:
+                  p1 = root_->getField("liftTest_flags")->getSFInt32();
+                  p2 = 25;
+                  break;
+                case TM_HEAD:
+                  p1 = root_->getField("headTest_flags")->getSFInt32();
+                  p2 = 25;
+                  break;
                 case TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
@@ -758,17 +765,17 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                VizSaveMode_t mode = VIZ_SAVE_ONE_SHOT;
+                SaveMode_t mode = SAVE_ONE_SHOT;
                 
                 const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = VIZ_SAVE_OFF;
+                    mode = SAVE_OFF;
                     printf("Saving robot image/state stream OFF.\n");
                   } else {
-                    mode = VIZ_SAVE_CONTINUOUS;
+                    mode = SAVE_CONTINUOUS;
                     printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
@@ -1601,7 +1608,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState)
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState)
       {
         U2G_SaveImages m;
         m.mode = mode;
