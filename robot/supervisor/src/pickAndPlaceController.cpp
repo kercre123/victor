@@ -95,6 +95,7 @@ namespace Anki {
       void Reset()
       {
         mode_ = IDLE;
+        relMarkerX_ = -1.f;
         DockingController::ResetDocker();
       }
 
@@ -132,7 +133,7 @@ namespace Anki {
         DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
         
         f32 backoutDist_mm = MIN_BACKOUT_DIST;
-        if(relMarkerX_ <= BACKOUT_DISTANCE_MM) {
+        if(relMarkerX_ > 0.f && relMarkerX_ <= BACKOUT_DISTANCE_MM) {
           backoutDist_mm = MAX(MIN_BACKOUT_DIST, BACKOUT_DISTANCE_MM - relMarkerX_);
         }
         
@@ -144,6 +145,9 @@ namespace Anki {
         transitionTime_ = HAL::GetMicroCounter() + (backoutTime_sec*1e6);
         
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
+        
+        // Now that we've used relMarkerX_, mark it as used
+        relMarkerX_ = -1.f;
         
         mode_ = BACKOUT;
       }
@@ -288,6 +292,7 @@ namespace Anki {
                   #endif
                   mode_ = SET_LIFT_POSTDOCK;
                 }
+                lastActionSucceeded_ = true;
               } else {
                 // Block is not being tracked.
                 // Probably not visible.
@@ -300,6 +305,7 @@ namespace Anki {
                 VisionSystem::StopTracking();
                 
                 // Switch to BACKOUT mode:
+                lastActionSucceeded_ = false;
                 StartBackingOut();
                 //mode_ = IDLE;
               }
@@ -402,15 +408,7 @@ namespace Anki {
             break;
             
           case BACKOUT:
-            /*
-            if(DockingController::IsBusy()) {
-              // If the docking controller was not reset before switching to
-              // backout phase, and we reacquire track, try re-docking
-              PRINT("PAP: Reacquired tracking target while backing out. Retrying.\n");
-              mode_ = MOVING_LIFT_PREDOCK;
-            }
-             
-            else */if (HAL::GetMicroCounter() > transitionTime_)
+            if (HAL::GetMicroCounter() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
               
@@ -424,8 +422,13 @@ namespace Anki {
                     //isCarryingBlock_ = true;
                     break;
                   case DA_PLACE_HIGH:
-                    LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                    mode_ = LOWER_LIFT;
+                    if(lastActionSucceeded_) {
+                      LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                      mode_ = LOWER_LIFT;
+                    } else {
+                      mode_ = IDLE;
+                      lastActionSucceeded_ = true;
+                    }
                     #if(DEBUG_PAP_CONTROLLER)
                     PRINT("PAP: LOWERING LIFT\n");
                     #endif
