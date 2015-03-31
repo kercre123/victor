@@ -31,7 +31,7 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
         self.interval = interval if interval is not None else 1.0
         if bandwidth is not None:
             if interval is None:
-                self.interval = bandwidth / self.size
+                self.interval = self.size / float(bandwidth)
             elif size is None:
                 self.size = int(bandwidth / self.interval)
             sys.stdout.write("From bandwidth, will send %d every %f seconds\n" % (self.size, self.interval))
@@ -51,7 +51,7 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
             packFmt = "Q"
         self.packer = struct.Struct(packFmt)
         self.seqSendTimes = {}
-        self.socket = socket.socket(socket.AF_INET, socket=SOCK_DGRAM)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.setblocking(False)
 
     def send(self):
@@ -63,7 +63,7 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
     def recv(self):
         "Accept any messages from the remote host"
         try:
-            msg = socket.recv(self.MAX_SIZE)
+            msg = self.socket.recv(self.MAX_SIZE)
         except socket.error:
             return None
         else:
@@ -81,4 +81,16 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
                     sys.stdout.write("Msg %08d RTT %f\n" % (msgData[0], rt-st))
                     del self.seqSendTimes[msgData[0]]
 
-    
+    def step(self):
+        t = time.time()
+        self.send()
+        while time.time() - t < self.interval:
+            self.recv()
+
+    def run(self):
+        if self.count is None:
+            while True:
+                self.step()
+        else:
+            while self.seqno < self.count:
+                self.step()
