@@ -39,7 +39,7 @@ class HTTPSubServer(BaseSubServer):
                 time.sleep(1)
                 return
             else:
-                self.log("Successfully started HTTP server")
+                self.log("Successfully started HTTP server\n")
                 self.acceptSock = acceptSock
         try:
             newCliSock, newCliAddr = self.acceptSock.accept()
