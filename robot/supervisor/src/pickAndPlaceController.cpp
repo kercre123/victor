@@ -583,6 +583,8 @@ namespace Anki {
         
         useManualSpeed_ = useManualSpeed;
         
+        relMarkerX_ = -1.f;
+        
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
@@ -609,6 +611,8 @@ namespace Anki {
         dockOffsetAng_ = rel_angle;
         
         useManualSpeed_ = useManualSpeed;
+        
+        relMarkerX_ = -1.f;
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
