@@ -1,0 +1,150 @@
+#VRML_SIM V8.0.3 utf8
+WorldInfo {
+  info [
+    "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Date: 02 Aug 2013"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+  contactProperties [
+    DEF FLOOR_FRONTWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF RAMP_FRONTWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "highfriction"
+      coulombFriction [
+        500
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_FRONTWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_REARWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_REARWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_REARWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "nofriction"
+      coulombFriction [
+        5
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_BLOCK ContactProperties {
+      material1 "cmat_floor"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF BLOCK_BLOCK ContactProperties {
+      material1 "cmat_block"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_BLOCK ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_ramp"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_floor"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.285767 0.287772 0.91407 4.61571
+  position -0.97993 0.0169182 1.30949
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.75
+  direction 1 -0.5 -2
+}
+DirectionalLight {
+  ambientIntensity 1
+  direction 1 -1 -1
+}
+CozmoMat {
+}
+Ramp {
+  hidden linearVelocity_0 -719.24 -1072.82 591.391
+  hidden angularVelocity_0 -269.892 7949.93 6060.19
+  translation 3339.79 -17196.9 13498.5
+  rotation -0.603625 -0.762686 0.232264 0.863603
+}
+DEF FireBlock Block1x1 {
+  name "Fire_01"
+  translation -0.2 -0.2 0.0219969
+  rotation 1 0 0 0
+  blockColor 0.85 0.5 0.5
+  markerImg "symbols/fire.png"
+}
+DEF AngryFaceBlock Block1x1 {
+  name "AngryFace_01"
+  translation 0.2 0.2 0.0219969
+  blockColor 0.5 0.5 0.85
+  markerImg "symbols/angryFace.png"
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  rotation 0 -1 0 0
+  name "CozmoBot_1"
+  usbChannel 10
+}
+CozmoVizDisplay {
+}
