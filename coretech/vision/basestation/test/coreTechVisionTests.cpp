@@ -124,7 +124,9 @@ GTEST_TEST(PoseEstimation, FromQuads)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Pose3d poseEst = camera.ComputeObjectPose(proj, marker3d);
+  Pose3d poseEst;
+  Result result = camera.ComputeObjectPose(proj, marker3d, poseEst);
+  EXPECT_EQ(result, RESULT_OK);
   
   // Check if the estimated pose matches the true pose
   Vec3f Tdiff;
