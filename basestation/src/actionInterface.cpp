@@ -32,11 +32,13 @@ namespace Anki {
     {
       ActionResult result = UpdateInternal(robot);
       
-      // Notify any listeners about this action's completion.
-      // Note that I do this here so that compound actions only emit one signal,
-      // not a signal for each constituent action.
-      // TODO: Populate the signal with any action-specific info?
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+      if(result != RUNNING) {
+        // Notify any listeners about this action's completion.
+        // Note that I do this here so that compound actions only emit one signal,
+        // not a signal for each constituent action.
+        // TODO: Populate the signal with any action-specific info?
+        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+      }
       
       return result;
     }
