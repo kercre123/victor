@@ -871,7 +871,7 @@ GameObject:
   - 222: {fileID: 22298410}
   - 114: {fileID: 11498392}
   m_Layer: 5
-  m_Name: Image Button
+  m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1614,6 +1614,10 @@ MonoBehaviour:
   anchorToCenterOnSideBar: {fileID: 0}
   anchorToScaleOnSmallScreens: {fileID: 22453726}
   scaleOnSmallScreensFactor: .5
+  observedObjectCanvasPrefab: {fileID: 147200, guid: 9d239f06edf7e46919bcd9ef9e5b498c,
+    type: 2}
+  selected: {r: 0, g: 1, b: 0, a: 1}
+  select: {r: 1, g: .478431374, b: 0, a: 1}
   maxDistance: 200
 --- !u!114 &11409596
 MonoBehaviour:
@@ -1708,7 +1712,7 @@ MonoBehaviour:
   anchorToCenterOnSideBar: {fileID: 22453724}
   anchorToScaleOnSmallScreens: {fileID: 22453724}
   scaleOnSmallScreensFactor: .75
-  selectionButtonPrefab: {fileID: 147200, guid: 2da8dac0b478c4b3d8b9ed8996ed3a8e,
+  observedObjectCanvasPrefab: {fileID: 147200, guid: 2da8dac0b478c4b3d8b9ed8996ed3a8e,
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
@@ -3002,6 +3006,10 @@ MonoBehaviour:
   anchorToCenterOnSideBar: {fileID: 22498424}
   anchorToScaleOnSmallScreens: {fileID: 22498424}
   scaleOnSmallScreensFactor: .5
+  observedObjectCanvasPrefab: {fileID: 147200, guid: 9d239f06edf7e46919bcd9ef9e5b498c,
+    type: 2}
+  selected: {r: 0, g: 1, b: 0, a: 1}
+  select: {r: 1, g: .478431374, b: 0, a: 1}
   actionSlider:
     slider: {fileID: 11498418}
     image: {fileID: 11401204}
