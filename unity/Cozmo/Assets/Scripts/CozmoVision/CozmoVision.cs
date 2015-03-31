@@ -129,6 +129,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
+	[SerializeField] protected AudioClip swishSound;
+	[SerializeField] protected AudioClip reverseSwishSound;
 	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
@@ -402,14 +404,74 @@ public class CozmoVision : MonoBehaviour
 		}*/
 	}
 
+	protected void StopLoopingTargetSound()
+	{
+
+		audio.loop = false;
+		audio.Stop();
+		audio.volume = 1f;
+
+		wasLooping = false;
+	}
+
+	float loopTimer = 0f;
+	float fromVol = 0f;
+	float maxVol = 0.5f;
+	bool wasLooping = false;
+	protected void RefreshLoopingTargetSound( bool on )
+	{
+		loopTimer += Time.deltaTime;
+
+		if(wasLooping != on) {
+			loopTimer = 0f;
+		}
+
+		if(on) {
+			audio.loop = true;
+			audio.clip = newObjectObservedSound;
+
+			if(!wasLooping) {
+				fromVol = 0f;//loopTimer < 1f ? audio.volume : 0f;
+				audio.Play();
+			}
+
+			audio.volume = Mathf.Lerp(fromVol, maxVol, loopTimer);
+		}
+		else if(loopTimer > 1f) {
+			if(wasLooping) {
+				audio.loop = false;
+				audio.Stop();
+			}
+		}
+		else {
+			if(wasLooping) fromVol = audio.volume;
+			audio.volume = Mathf.Lerp(fromVol, 0f, loopTimer);
+		}
+
+		wasLooping = on;
+	}
+
 	public void ActionButtonClick()
 	{
+		if(audio.loop) StopLoopingTargetSound();
+
 		audio.PlayOneShot( actionButtonSound );
 	}
 
 	public void CancelButtonClick()
 	{
+		if(audio.loop) StopLoopingTargetSound();
 		audio.PlayOneShot( cancelButtonSound );
+	}
+
+	public void SwishSound()
+	{
+		audio.PlayOneShot( swishSound );
+	}
+
+	public void ReverseSwishSound()
+	{
+		audio.PlayOneShot( reverseSwishSound );
 	}
 
 	protected virtual void LateUpdate()
@@ -427,7 +489,7 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	protected void OnDisable()
+	protected virtual void OnDisable()
 	{
 		if( RobotEngineManager.instance != null )
 		{
