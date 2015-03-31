@@ -817,6 +817,10 @@ namespace Anki {
         }
       }
 
+      void ProcessSetCarryStateMessage(const SetCarryState& msg)
+      {
+        PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
+      }
 
       // --------- Block control messages ----------
 

@@ -65,7 +65,7 @@ namespace Anki {
         Embedded::Point2f markerCenter_;
         f32 pixelSearchRadius_;
         
-        bool isCarryingBlock_ = false;
+        CarryState_t carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
         
         // When to transition to the next state. Only some states use this.
@@ -345,6 +345,7 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                 {
                   SendBlockPickUpMessage(true);
+                  carryState_ = CARRY_1_BLOCK;
                   break;
                 } // PICKUP
 
@@ -352,6 +353,7 @@ namespace Anki {
                 case DA_PLACE_HIGH:
                 {
                   SendBlockPlacedMessage(true);
+                  carryState_ = CARRY_NONE;
                   break;
                 } // PLACE
                 default:
@@ -402,7 +404,7 @@ namespace Anki {
 #endif
               mode_ = IDLE;
               lastActionSucceeded_ = true;
-              isCarryingBlock_ = false;
+              carryState_ = CARRY_NONE;
             }
             break;
             
@@ -494,9 +496,18 @@ namespace Anki {
 
       bool IsCarryingBlock()
       {
-        return isCarryingBlock_;
+        return carryState_ != CARRY_NONE;
+      }
+
+      void SetCarryState(CarryState_t state)
+      {
+        carryState_ = state;
       }
       
+      CarryState_t GetCarryState()
+      {
+        return carryState_;
+      }
       
       void DockToBlock(const Vision::MarkerType markerType,
                        const Vision::MarkerType markerType2,
@@ -558,7 +569,7 @@ namespace Anki {
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
-      
+
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo

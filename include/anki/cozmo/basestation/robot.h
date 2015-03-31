@@ -659,6 +659,8 @@ namespace Anki {
       
       Result SendAbortDocking();
       Result SendAbortAnimation();
+      
+      Result SendSetCarryState(CarryState_t state);
 
       
       // =========  Block messages  ============

@@ -210,6 +210,13 @@ namespace Anki {
       SAVE_CONTINUOUS
     } SaveMode_t;
     
+    typedef enum {
+      CARRY_NONE,
+      CARRY_1_BLOCK,
+      CARRY_2_BLOCK,
+      NUM_CARRY_STATES
+    } CarryState_t;
+    
   }
 }
 

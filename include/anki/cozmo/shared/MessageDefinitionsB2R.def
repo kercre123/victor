@@ -543,6 +543,10 @@ ADD_MESSAGE_MEMBER(u8, wifiState)
 ADD_MESSAGE_MEMBER(u8, bluetoothState)
 END_MESSAGE_DEFINITION(ClientConnectionStatus)
 
+START_MESSAGE_DEFINITION(SetCarryState, 1)
+ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
+END_MESSAGE_DEFINITION(SetCarryState)
+
 
 ///////// Block messages ////////
 

@@ -2462,6 +2462,12 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
  
+    Result Robot::SendSetCarryState(CarryState_t state)
+    {
+      MessageSetCarryState m;
+      m.state = state;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
       
     Result Robot::SendFlashBlockIDs()
     {
