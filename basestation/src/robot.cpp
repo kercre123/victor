@@ -44,8 +44,6 @@
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 
-#define DISPLAY_PROX_OVERLAY 1
-
 namespace Anki {
   namespace Cozmo {
     
@@ -85,6 +83,8 @@ namespace Anki {
     , _carryingMarker(nullptr)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
+    , _imgFramePeriod(0)
+    , _lastImgTimeStamp(0)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -182,7 +182,7 @@ namespace Anki {
       }
 
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(msg);
+      VizManager::getInstance()->SendRobotState(msg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
       
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
@@ -203,6 +203,21 @@ namespace Anki {
         fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
         jsonFile << json.toStyledString();
         jsonFile.close();
+        
+        
+#if(1)
+        // Compose line for IMU output file.
+        // Used for determining delay constant in image timestamp.
+        char stateMsgLine[512];
+        memset(stateMsgLine,0,512);
+        sprintf(stateMsgLine, "%d, %f, %f\n", msg.timestamp, msg.rawGyroZ, msg.rawAccelY);
+        
+        FILE *stateFile;
+        stateFile = fopen("cozmoIMUState.csv", "a");
+        fputs(stateMsgLine, stateFile);
+        fclose(stateFile);
+#endif
+        
         
         // Turn off save mode if we were in one-shot mode
         if (_stateSaveMode == SAVE_ONE_SHOT) {
@@ -232,45 +247,6 @@ namespace Anki {
       SetProxSensorData(PROX_LEFT, msg.proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
       SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
       SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
-
-      if(DISPLAY_PROX_OVERLAY) {
-        // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
-        //        msg.proxLeft, msg.proxForward, msg.proxRight,
-        //        msg.status & IS_PROX_SIDE_BLOCKED,
-        //        msg.status & IS_PROX_FORWARD_BLOCKED,
-        //        msg.status & IS_PROX_SIDE_BLOCKED);
-
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::POSE,
-                                           Anki::NamedColors::GREEN,
-                                           //"Pose: x=%4d y=%4d theta=%3d, h=%3d deg, lift=%3d mm",
-                                           //(int)msg.pose_x,
-                                           //(int)msg.pose_y,
-                                           //(int)RAD_TO_DEG_F32(msg.pose_angle),
-                                           "Pose: head=%3d deg, lift=%3d mm",
-                                           (int)RAD_TO_DEG_F32(msg.headAngle),
-                                           (int)msg.liftHeight);
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::SPEEDS,
-                                           Anki::NamedColors::GREEN,
-                                           "speed L: %4d  R: %4d mm/s",
-                                           (int)msg.lwheel_speed_mmps,
-                                           (int)msg.rwheel_speed_mmps);
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
-                                           Anki::NamedColors::GREEN,
-                                           "prox: (%2u, %2u, %2u) %d%d%d",
-                                           GetProxSensorVal(PROX_LEFT),
-                                           GetProxSensorVal(PROX_FORWARD),
-                                           GetProxSensorVal(PROX_RIGHT),
-                                           IsProxSensorBlocked(PROX_LEFT),
-                                           IsProxSensorBlocked(PROX_FORWARD),
-                                           IsProxSensorBlocked(PROX_RIGHT));
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::BATTERY,
-                                           Anki::NamedColors::GREEN,
-                                           "Batt: %2.1f V",
-                                           (f32)msg.battVolt10x/10);
-      }
       
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
@@ -848,6 +824,11 @@ namespace Anki {
 #     endif
     }
     
+    u32 Robot::GetAverageImagePeriodMS()
+    {
+      return _imgFramePeriod;
+    }
+      
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {
       if(head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
@@ -2021,6 +2002,14 @@ namespace Anki {
           _imageSaveMode = SAVE_OFF;
         }
       }
+      
+      // Compute framerate
+      if (_lastImgTimeStamp > 0) {
+        const f32 imgFramerateAvgCoeff = 0.25f;
+        _imgFramePeriod = _imgFramePeriod * (1.f-imgFramerateAvgCoeff) + (image.GetTimestamp() - _lastImgTimeStamp) * imgFramerateAvgCoeff;
+      }
+      _lastImgTimeStamp = image.GetTimestamp();
+      
       
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision

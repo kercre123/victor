@@ -120,6 +120,9 @@ namespace Anki {
       // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
+      // Returns the average period of incoming robot images
+      u32 GetAverageImagePeriodMS();
+      
       // Specify whether this robot is a physical robot or not.
       // Currently, adjusts headCamPose by slop factor if it's physical.
       void SetPhysicalRobot(bool isPhysical);
@@ -560,6 +563,10 @@ namespace Anki {
       
       // Save mode for robot images
       SaveMode_t _imageSaveMode;
+      
+      // Maintains an average period of incoming robot images
+      u32 _imgFramePeriod;
+      TimeStamp_t _lastImgTimeStamp;
       
       ///////// Modifiers ////////
       
