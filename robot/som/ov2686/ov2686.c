@@ -23,8 +23,8 @@ static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H
 
 /*** Camera format definitions */
 
-#define OV2686_WIDTH 1600
-#define OV2686_HEIGHT 1200
+#define OV2686_WIDTH 800
+#define OV2686_HEIGHT 600
 
 static struct v4l2_mbus_framefmt FORMATS[] = {
   {
@@ -63,19 +63,19 @@ struct ov2686_info {
 };
 
 static const struct OVRegSettings ov2686_7p5fps[1] = {
-  {0x3086, 0x03, 0xff}
+  {0x3086, 0x07, 0xff}
 };
 
 static const struct OVRegSettings ov2686_15fps[1] = {
-  {0x3086, 0x01, 0xff}
+  {0x3086, 0x03, 0xff}
 };
 
 static const struct OVRegSettings ov2686_30fps[1] = {
-  {0x3086, 0x00, 0xff}
+  {0x3086, 0x01, 0xff}
 };
 
 static const struct OVRegSettings ov2686_60fps[1] = {
-  {0x3086, 0x00, 0xff} // Won't work now that we're using full res
+  {0x3086, 0x00, 0xff}
 };
 
 static const struct OVRegSettings OV2686_START = { 0x0100, 0x01, 0x01 };
