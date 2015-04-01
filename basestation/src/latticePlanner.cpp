@@ -427,9 +427,19 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     Radians desiredGoalAngle = impl_->targetPose_orig_.GetRotationAngle<'Z'>();
     
     if (numSegments > 0) {
-        // TODO: Should we expect to see empty paths here? Ask Brad.
+      // TODO: Should we expect to see empty paths here? Ask Brad.
     
-      const PathSegment& lastSeg = path.GetSegmentConstRef(numSegments-1);
+      // Get last non-point turn segment of path
+      PathSegment& lastSeg = path[numSegments-1];
+      if(lastSeg.GetType() == Planning::PST_POINT_TURN) {
+        path.PopBack(1);
+        --numSegments;
+        lastSeg = path[numSegments-1];
+        
+        // There shouldn't be more than one point turn at the end of a path
+        assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
+      }
+      
       f32 end_x, end_y, end_angle;
       lastSeg.GetEndPose(end_x, end_y, end_angle);
       Radians plannedGoalAngle(end_angle);
@@ -440,19 +450,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         f32 turnDir = angDiff > 0 ? 1.f : -1.f;
         f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
         
-        switch(lastSeg.GetType()) {
-          case Planning::PST_LINE:
-          case Planning::PST_ARC:
-          {
-            break;
-          }
-          case Planning::PST_POINT_TURN:
-          {
-            rotSpeed = abs(lastSeg.GetTargetSpeed()) * turnDir;
-            path.PopBack(1);
-            break;
-          }
-        }
+        PRINT_INFO("LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.\n", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
         
         path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                              rotSpeed,
