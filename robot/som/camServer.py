@@ -45,20 +45,21 @@ class CameraSubServer(BaseSubServer):
     def FPS2INTERVAL(cls, fps):
         return (fps*1000, 1000000)
 
-    SENSOR_RESOLUTION = messages.CAMERA_RES_UXGA
+    SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
-    SENSOR_FPS     = 15
+    SENSOR_FPS     = 30
 
-    ISP_MIN_RESOLUTION = messages.CAMERA_RES_QSVGA
+    ISP_MIN_RESOLUTION = messages.CAMERA_RES_VGA
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG_COLOR
+    ENCODER_FPS           = 15
     ENCODER_QUALITY       = 50
 
     ENCODER_LATEANCY = 2.0 # ms, determiend imperically
 
-    FOV_CROP = isfile('FOV_CROP')
+    FOV_CROP = False #isfile('FOV_CROP')
 
     def __init__(self, server, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
@@ -134,7 +135,8 @@ class CameraSubServer(BaseSubServer):
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 self.log("Starting the encoder\n")
-                encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
+                encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
+                               'videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.ENCODER_FPS, '!']
                 if self.ispRes != self.resolution:
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
                     v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
