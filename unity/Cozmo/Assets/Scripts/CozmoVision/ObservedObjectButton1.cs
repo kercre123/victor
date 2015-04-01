@@ -16,10 +16,10 @@ public class ObservedObjectButton1 : ObservedObjectButton
 	protected Vector3[] corners;
 	public Vector3 position
 	{
-		get // top left corner
+		get
 		{
-			/*Vector3 center = Vector3.zero;
-			center.z = image.transform.position.z;*/
+			Vector3 center = Vector3.zero;
+			center.z = image.transform.position.z;
 			
 			if( corners == null )
 			{
@@ -27,17 +27,14 @@ public class ObservedObjectButton1 : ObservedObjectButton
 			}
 			
 			image.rectTransform.GetWorldCorners( corners );
-			
-			if( corners.Length == 0 )
+
+			if( corners.Length > 3 )
 			{
-				return Vector3.zero;
+				center = corners[0];
+				center.y = ( corners[0].y + corners[1].y ) * 0.5f;
 			}
 			
-			/*center = ( corners[0] + corners[2] ) * 0.5f;
-			
-			return center;*/
-
-			return corners[1];
+			return center;
 		}
 	}
 
