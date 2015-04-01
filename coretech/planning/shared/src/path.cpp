@@ -39,7 +39,8 @@ namespace Anki
       def_.line.endPt_y = y_end;
       
       // Compute end angle
-      def_.line.endAngle = ATAN2_ACC(y_end - y_start, x_end - x_start);
+      // If going backwards, flip it 180
+      def_.line.endAngle = Radians( ATAN2_ACC(y_end - y_start, x_end - x_start) + (targetSpeed < 0 ? PI_F : 0) ).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
@@ -62,7 +63,9 @@ namespace Anki
       } else {
         radiusAngle -= PIDIV2_F;
       }
-      def_.arc.endAngle = Radians(radiusAngle).ToFloat();
+      
+      // If going backwards, flip it 180
+      def_.arc.endAngle = Radians(radiusAngle + (targetSpeed < 0 ? PI_F : 0)).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
