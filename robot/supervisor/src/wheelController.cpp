@@ -22,9 +22,13 @@ namespace Anki {
     // private members
     namespace {
       
+      // Controller gains
+      const float DEFAULT_WHEEL_KP = 0.0005f;
+      const float DEFAULT_WHEEL_KI = 0.00005f;
+      
       // Cap error_sum so that integral component of outl does not exceed some percent of MOTOR_MAX_POWER.
       // e.g. 25% of 1.0 = 0.25  =>   0.25 = wKi * MAX_ERROR_SUM.
-      const f32 MAX_ERROR_SUM = 5000.f;
+      f32 MAX_ERROR_SUM = 5000.f;
       
       // Speed filtering rate
       const f32 ENCODER_FILTERING_COEFF = 0.9f;
@@ -32,7 +36,6 @@ namespace Anki {
       // Gains for wheel controller
       f32 Kp_ = DEFAULT_WHEEL_KP;
       f32 Ki_ = DEFAULT_WHEEL_KI;
-      f32 Kd_ = DEFAULT_WHEEL_KD;
       
       //Returns/Sets the desired speed of the wheels (in mm/sec)
       f32 desiredWheelSpeedL_ = 0;
@@ -69,10 +72,11 @@ namespace Anki {
     void ResetIntegralGainSums(void);
     
     //sets the wheel PID controller constants
-    void SetGains(float kp, float ki, float kd) {
+    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError) {
+      PRINT("New wheelController gains: kp=%f, ki=%f, maxErrorSum=%f\n", kp, ki, maxIntegralError);
       Kp_ = kp;
       Ki_ = ki;
-      Kd_ = kd;
+      MAX_ERROR_SUM = maxIntegralError;
     }
     
     void Enable()
