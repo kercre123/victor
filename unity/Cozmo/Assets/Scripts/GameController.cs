@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -19,7 +19,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
-	[SerializeField] protected CozmoBuildInstructions buildInstructions = null;
+	[SerializeField] protected BuildInstructionsController buildInstructionsController = null;
+	[SerializeField] protected int buildInstructionsLayoutIndex = 0;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
 
@@ -47,7 +48,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		if(buildInstructionsController != null) buildInstructionsController.SetLayout(buildInstructionsLayoutIndex);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
