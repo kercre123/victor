@@ -32,11 +32,11 @@ class TimestampExtrapolator(object):
         self.toc = toc
         self.lock.release()
 
-    def get(self):
+    def get(self, blocking=True):
         "Retrive the estimated MCU time"
-        self.lock.acquire()
+        haveLock = self.lock.acquire(blocking)
         ret = self.mcuTS + int((time.time()-self.toc)*self.tps)
-        self.lock.release()
+        if haveLock: self.lock.release()
         return ret
 
 class Logger(threading.Thread):

@@ -25,10 +25,46 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+
 namespace Anki {
   
   namespace Cozmo {
+    
+    // TODO: Define this as a constant parameter elsewhere
+    const Radians DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE(DEG_TO_RAD(7.5));
  
+    // Helper function for computing the distance-to-preActionPose threshold,
+    // given how far robot is from actionObject
+    f32 ComputePreActionPoseDistThreshold(const Robot& robot,
+                                          const ActionableObject* actionObject,
+                                          const Radians& preActionPoseAngleTolerance)
+    {
+      assert(actionObject != nullptr);
+      
+      if(preActionPoseAngleTolerance > 0.f) {
+        // Compute distance threshold to preaction pose based on distance to the
+        // object: the further away, the more slop we're allowed.
+        Pose3d objectWrtRobot;
+        if(false == actionObject->GetPose().GetWithRespectTo(robot.GetPose(), objectWrtRobot)) {
+          PRINT_NAMED_ERROR("IDockAction.Init.ObjectPoseOriginProblem",
+                            "Could not get object %d's pose w.r.t. robot.\n",
+                            actionObject->GetID().GetValue());
+          return -1.f;
+        }
+        
+        const f32 objectDistance = objectWrtRobot.GetTranslation().Length();
+        const f32 preActionPoseDistThresh = objectDistance * std::sin(preActionPoseAngleTolerance.ToFloat());
+        
+        PRINT_NAMED_INFO("IDockAction.Init.DistThresh",
+                         "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm\n",
+                         objectDistance, preActionPoseDistThresh);
+        
+        return preActionPoseDistThresh;
+      } else {
+        return -1.f;
+      }
+    }
+    
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(const bool useManualSpeed) //, const Pose3d& pose)
@@ -223,6 +259,7 @@ namespace Anki {
     : DriveToPoseAction(useManualSpeed)
     , _objectID(objectID)
     , _actionType(actionType)
+    , _alreadyAtGoal(false)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -252,10 +289,20 @@ namespace Anki {
       } else {
         size_t selectedIndex = 0;
         
-        // Make a vector of just poses (not preaction poses) for call to
+        // Check to see if we already close enough to a pre-action pose that we can
+        // just skip path planning. In case multiple pre-action poses are close
+        // enough, keep the closest one.
+        // Also make a vector of just poses (not preaction poses) for call to
         // Robot::ExecutePathToPose() below
-        // TODO: Prettier way to handle this?
+        // TODO: Prettier way to handling making the separate vector of Pose3ds?
         std::vector<Pose3d> possiblePoses;
+        const PreActionPose* closestPreActionPose = nullptr;
+        f32 closestPoseDist = std::numeric_limits<f32>::max();
+        Radians closestPoseAngle = M_PI;
+        
+        const Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, object,
+                                                                              DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+
         for(auto & preActionPose : possiblePreActionPoses)
         {
           Pose3d possiblePose;
@@ -264,18 +311,27 @@ namespace Anki {
                                 "Could not get pre-action pose w.r.t. robot origin.\n");
             
           } else {
-
             possiblePoses.emplace_back(possiblePose);
-            /*
-            // If this pose is at a dockable height relative to the robot, queue it
-            // as possible pose for the planner to consider. Just drop it to the
-            // z=0 height and keep only the heading angle (rotaiton around Z)
-            if(NEAR(possiblePose.GetTranslation().z(), _robot.GetPose().GetTranslation().z() + ROBOT_BOUNDING_Z*.5f, 25.f)) {
-              possiblePose.SetRotation(possiblePose.GetRotationAngle<'Z'>(), Z_AXIS_3D());
-              possiblePose.SetTranslation({{possiblePose.GetTranslation().x(), possiblePose.GetTranslation().y(), 0.f}});
-
+            
+            if(preActionPoseDistThresh > 0.f) {
+              // Keep track of closest possible pose, in case we are already close
+              // enough to it to not bother planning a path at all.
+              Vec3f Tdiff;
+              Radians angleDiff;
+              if(possiblePose.IsSameAs(robot.GetPose(), preActionPoseDistThresh,
+                                       DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE, Tdiff, angleDiff))
+              {
+                const f32 currentDist = Tdiff.Length();
+                if(currentDist < closestPoseDist &&
+                   std::abs(angleDiff.ToFloat()) < std::abs(closestPoseAngle.ToFloat()))
+                {
+                  closestPoseDist = currentDist;
+                  closestPoseAngle = angleDiff;
+                  closestPreActionPose = &preActionPose;
+                }
+              }
             }
-             */
+            
           }
         }
         
@@ -283,6 +339,14 @@ namespace Anki {
           PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
                             "No pre-action poses survived as possible docking poses.\n");
           result = FAILURE_ABORT;
+        }
+        else if (closestPreActionPose != nullptr) {
+          PRINT_NAMED_INFO("DriveToObjectAction.InitHelper",
+                           "Robot's current pose is close enough to a pre-action pose. "
+                           "Just using current pose as the goal.\n");
+          _alreadyAtGoal = true;
+          _finalHeadAngle = closestPreActionPose->GetHeadAngle();
+          result = SUCCESS;
         }
         else {
           Planning::Path p;
@@ -336,7 +400,11 @@ namespace Anki {
     
     IAction::ActionResult DriveToObjectAction::CheckIfDone(Robot& robot)
     {
-      ActionResult result = DriveToPoseAction::CheckIfDone(robot);
+      ActionResult result = SUCCESS;
+      
+      if(!_alreadyAtGoal) {
+        result = DriveToPoseAction::CheckIfDone(robot);
+      }
       
       if(result == SUCCESS) {
         // Just before returning success when normal DriveToPose action finishes,
@@ -477,14 +545,10 @@ namespace Anki {
     
 #pragma mark ---- IDockAction ----
     
-    // TODO: Define this as a constant parameter elsewhere
-    //#define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
-    #define DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE_DEG 7.5
-    
     IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
-    , _preActionPoseAngleTolerance(DEG_TO_RAD(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE_DEG))
+    , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
     {
@@ -561,25 +625,8 @@ namespace Anki {
       
       const f32 closestDist = sqrtf(closestDistSq);
       
-      f32 preActionPoseDistThresh = -1.f;
-      if(_preActionPoseAngleTolerance > 0.f) {
-        // Compute distance threshold to preaction pose based on distance to the
-        // object: the further away, the more slop we're allowed.
-        Pose3d objectWrtRobot;
-        if(false == dockObject->GetPose().GetWithRespectTo(robot.GetPose(), objectWrtRobot)) {
-          PRINT_NAMED_ERROR("IDockAction.Init.ObjectPoseOriginProblem",
-                            "Could not get object %d's pose w.r.t. robot.\n",
-                            _dockObjectID.GetValue());
-          return FAILURE_ABORT;
-        }
-        
-        const f32 objectDistance = objectWrtRobot.GetTranslation().Length();
-        preActionPoseDistThresh = objectDistance * std::sin(_preActionPoseAngleTolerance.ToFloat());
-        
-        PRINT_NAMED_INFO("IDockAction.Init.DistThresh",
-                         "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm\n",
-                         objectDistance, preActionPoseDistThresh);
-      }
+      f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, dockObject,
+                                                                      _preActionPoseAngleTolerance);
       
       if(preActionPoseDistThresh > 0.f && closestDist > preActionPoseDistThresh) {
         PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",

@@ -340,12 +340,11 @@ namespace Anki {
     T_diff = P_other.GetTranslation() - this->GetTranslation();
     
     if(T_diff.GetAbs() < distThreshold) {
-     
-      Rotation3d Rdiff(this->GetRotation());
-      Rdiff.Invert();
-      Rdiff *= P_other.GetRotation();
+      angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
-      angleDiff = Rdiff.GetAngle();
+      PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
+                 angleDiff.ToFloat(), angleDiff.getDegrees()); //,
+//                 Rdiff.GetAxis().x(), Rdiff.GetAxis().y(), Rdiff.GetAxis().z());
       if(angleDiff < angleThreshold) {
         isSame = true;
       }
@@ -430,18 +429,17 @@ namespace Anki {
     if(Tdiff.GetAbs() < distThreshold)
     {
       // Next check to see if the rotational difference is small
-      Rotation3d Rdiff(this->GetRotation());
-      Rdiff.Invert(); // Invert
-      Rdiff *= P_other.GetRotation();
-      
-      angleDiff = Rdiff.GetAngle();
+      angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
       if(angleDiff < angleThreshold) {
         // Rotation is same, without even considering the ambiguities
         isSame = true;
       } else {
         // Need to consider ambiguities...
-        
+        Rotation3d Rdiff(this->GetRotation());
+        Rdiff.Invert(); // Invert
+        Rdiff *= P_other.GetRotation();
+
         // TODO: Does this directly with quaternions instead of converting to RotationMatrix
         RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
         
@@ -495,10 +493,19 @@ namespace Anki {
   
   float ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
+    // Make sure the two poses share a common parent:
+    Pose3d pose2mod(pose2);
+    if(pose1.GetParent() != pose2.GetParent()) {
+      if(pose1.GetParent() == nullptr || false == pose2.GetWithRespectTo(*pose1.GetParent(), pose2mod)) {
+        PRINT_NAMED_ERROR("ComputeDistanceBetween", "Could not get pose2 w.r.t. pose1's parent.\n");
+        return -1.f;
+      }
+    }
+    
     // Compute distance between the two poses' translation vectors
     // TODO: take rotation into account?
     Vec3f distVec(pose1.GetTranslation());
-    distVec -= pose2.GetTranslation();
+    distVec -= pose2mod.GetTranslation();
     const float dist = distVec.Length();
     return dist;
   }
