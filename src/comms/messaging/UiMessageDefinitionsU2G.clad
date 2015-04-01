@@ -215,6 +215,16 @@ message U2G_DrawPoseMarker {
 message U2G_ErasePoseMarker {
 }
 
+// SetWheelControllerGains
+message U2G_SetWheelControllerGains {
+  float_32 kpLeft,
+  float_32 kiLeft,
+  float_32 maxIntegralErrorLeft,
+  float_32 kpRight,
+  float_32 kiRight,
+  float_32 maxIntegralErrorRight
+}
+
 // SetHeadControllerGains
 message U2G_SetHeadControllerGains {
     float_32 kp,
@@ -334,6 +344,7 @@ union U2G_Message {
     U2G_AbortAll AbortAll,
     U2G_DrawPoseMarker DrawPoseMarker,
     U2G_ErasePoseMarker ErasePoseMarker,
+    U2G_SetWheelControllerGains SetWheelControllerGains,
     U2G_SetHeadControllerGains SetHeadControllerGains,
     U2G_SetLiftControllerGains SetLiftControllerGains,
     U2G_SelectNextSoundScheme SelectNextSoundScheme,

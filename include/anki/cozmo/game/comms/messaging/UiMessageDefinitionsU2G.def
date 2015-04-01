@@ -1273,6 +1273,55 @@ struct U2G_ErasePoseMarker
 	bool operator!=(const U2G_ErasePoseMarker& other) const;
 };
 
+// MESSAGE U2G_SetWheelControllerGains
+struct U2G_SetWheelControllerGains
+{
+	float kpLeft;
+	float kiLeft;
+	float maxIntegralErrorLeft;
+	float kpRight;
+	float kiRight;
+	float maxIntegralErrorRight;
+	
+	/**** Constructors ****/
+	U2G_SetWheelControllerGains() = default;
+	U2G_SetWheelControllerGains(const U2G_SetWheelControllerGains& other) = default;
+	U2G_SetWheelControllerGains(U2G_SetWheelControllerGains& other) = default;
+	U2G_SetWheelControllerGains(U2G_SetWheelControllerGains&& other) noexcept = default;
+	U2G_SetWheelControllerGains& operator=(const U2G_SetWheelControllerGains& other) = default;
+	U2G_SetWheelControllerGains& operator=(U2G_SetWheelControllerGains&& other) noexcept = default;
+	
+	explicit U2G_SetWheelControllerGains(float kpLeft
+		,float kiLeft
+		,float maxIntegralErrorLeft
+		,float kpRight
+		,float kiRight
+		,float maxIntegralErrorRight)
+	:kpLeft(kpLeft)
+	,kiLeft(kiLeft)
+	,maxIntegralErrorLeft(maxIntegralErrorLeft)
+	,kpRight(kpRight)
+	,kiRight(kiRight)
+	,maxIntegralErrorRight(maxIntegralErrorRight)
+	{}
+
+	explicit U2G_SetWheelControllerGains(const uint8_t* buff, size_t len);
+	explicit U2G_SetWheelControllerGains(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_SetWheelControllerGains& other) const;
+	bool operator!=(const U2G_SetWheelControllerGains& other) const;
+};
+
 // MESSAGE U2G_SetHeadControllerGains
 struct U2G_SetHeadControllerGains
 {
@@ -1792,19 +1841,20 @@ public:
 		AbortAll,	// 33
 		DrawPoseMarker,	// 34
 		ErasePoseMarker,	// 35
-		SetHeadControllerGains,	// 36
-		SetLiftControllerGains,	// 37
-		SelectNextSoundScheme,	// 38
-		StartTestMode,	// 39
-		IMURequest,	// 40
-		PlayAnimation,	// 41
-		ReadAnimationFile,	// 42
-		StartFaceTracking,	// 43
-		StopFaceTracking,	// 44
-		StartLookingForMarkers,	// 45
-		StopLookingForMarkers,	// 46
-		SetVisionSystemParams,	// 47
-		SetFaceDetectParams,	// 48
+		SetWheelControllerGains,	// 36
+		SetHeadControllerGains,	// 37
+		SetLiftControllerGains,	// 38
+		SelectNextSoundScheme,	// 39
+		StartTestMode,	// 40
+		IMURequest,	// 41
+		PlayAnimation,	// 42
+		ReadAnimationFile,	// 43
+		StartFaceTracking,	// 44
+		StopFaceTracking,	// 45
+		StartLookingForMarkers,	// 46
+		StopLookingForMarkers,	// 47
+		SetVisionSystemParams,	// 48
+		SetFaceDetectParams,	// 49
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -1881,6 +1931,8 @@ public:
 			return "DrawPoseMarker";
 		case Type::ErasePoseMarker:
 			return "ErasePoseMarker";
+		case Type::SetWheelControllerGains:
+			return "SetWheelControllerGains";
 		case Type::SetHeadControllerGains:
 			return "SetHeadControllerGains";
 		case Type::SetLiftControllerGains:
@@ -2093,6 +2145,11 @@ public:
 	void Set_ErasePoseMarker(const Anki::Cozmo::U2G_ErasePoseMarker& new_ErasePoseMarker);
 	void Set_ErasePoseMarker(Anki::Cozmo::U2G_ErasePoseMarker&& new_ErasePoseMarker);
 
+	/** SetWheelControllerGains **/
+	const Anki::Cozmo::U2G_SetWheelControllerGains& Get_SetWheelControllerGains() const;
+	void Set_SetWheelControllerGains(const Anki::Cozmo::U2G_SetWheelControllerGains& new_SetWheelControllerGains);
+	void Set_SetWheelControllerGains(Anki::Cozmo::U2G_SetWheelControllerGains&& new_SetWheelControllerGains);
+
 	/** SetHeadControllerGains **/
 	const Anki::Cozmo::U2G_SetHeadControllerGains& Get_SetHeadControllerGains() const;
 	void Set_SetHeadControllerGains(const Anki::Cozmo::U2G_SetHeadControllerGains& new_SetHeadControllerGains);
@@ -2207,6 +2264,7 @@ private:
 		Anki::Cozmo::U2G_AbortAll _AbortAll;
 		Anki::Cozmo::U2G_DrawPoseMarker _DrawPoseMarker;
 		Anki::Cozmo::U2G_ErasePoseMarker _ErasePoseMarker;
+		Anki::Cozmo::U2G_SetWheelControllerGains _SetWheelControllerGains;
 		Anki::Cozmo::U2G_SetHeadControllerGains _SetHeadControllerGains;
 		Anki::Cozmo::U2G_SetLiftControllerGains _SetLiftControllerGains;
 		Anki::Cozmo::U2G_SelectNextSoundScheme _SelectNextSoundScheme;
