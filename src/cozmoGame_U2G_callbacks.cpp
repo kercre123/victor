@@ -435,7 +435,7 @@ namespace Cozmo {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
+        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
         robot->GetActionList().AddAction(action, numRetries);
       }
     }
