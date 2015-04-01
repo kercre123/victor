@@ -72,6 +72,7 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
+        u8  useShortestDir;
       } turn;
     } PathSegmentDef;
     
@@ -99,7 +100,8 @@ namespace Anki
       
       // Defines the path segment as a point turn
       void DefinePointTurn(f32 x, f32 y, f32 targetAngle,
-                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           bool useShortestDir);
       
       // Sets the speed parameters of the current segment
       void SetSpeedProfile(f32 targetSpeed, f32 accel, f32 decel);
@@ -176,7 +178,8 @@ namespace Anki
                      f32 targetSpeed, f32 accel, f32 decel);
       
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
-                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           bool useShortestDir);
 
       bool AppendSegment(const PathSegment& segment);
        
