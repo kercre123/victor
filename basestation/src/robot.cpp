@@ -108,7 +108,11 @@ namespace Anki {
         const std::string subPath = "cozmo_mprim.json";
         const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
         std::ifstream jsonFile(jsonFilename);
-        reader.parse(jsonFile, mprims);
+        if(false == reader.parse(jsonFile, mprims)) {
+          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
+                            "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
+                            jsonFilename.c_str());
+        }
         jsonFile.close();
       }
       
