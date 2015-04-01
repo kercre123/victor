@@ -334,7 +334,7 @@ namespace Cozmo {
     if(robot != nullptr) {
       // TODO: Add ability to indicate z too!
       // TODO: Better way to specify the target pose's parent
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
       robot->GetActionList().AddAction(new DriveToPoseAction(targetPose, msg.useManualSpeed));
     }
@@ -350,7 +350,7 @@ namespace Cozmo {
       // Create an action to drive to specied pose and then put down the carried
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
       robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed));
     }
   }
@@ -515,7 +515,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr && robot->IsCarryingObject()) {
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
       Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
       VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
     }
