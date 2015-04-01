@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
@@ -330,10 +330,10 @@ public class CozmoVision4 : CozmoVision {
 		}
 
 		if(currentMode != lastMode && currentMode != ActionButtonMode.TARGET) {
-			SwishSound();
+			SlideInSound();
 		}
 		else if(currentMode != lastMode) {
-			ReverseSwishSound();
+			SlideOutSound();
 		}
 
 		actionSlider.SetMode(currentMode, interactPressed, modes, index);

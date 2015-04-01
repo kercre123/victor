@@ -23,6 +23,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected int buildInstructionsLayoutIndex = 0;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
+	[SerializeField] protected AudioClip playingLoopSound;
+	[SerializeField] protected AudioClip gameOverSound;
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -206,6 +208,8 @@ public class GameController : MonoBehaviour {
 	protected virtual void Exit_PLAYING() {
 		Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
+
+		if(gameOverSound != null && audio != null) audio.PlayOneShot(gameOverSound);
 	}
 
 	protected virtual void Enter_RESULTS() {

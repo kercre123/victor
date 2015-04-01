@@ -2987,14 +2987,14 @@ MonoBehaviour:
   text: {fileID: 11498364}
   actionButtons: []
   maxObservedObjects: 1
-  newObjectObservedSound: {fileID: 8300000, guid: 212c5a246965d4204bb91c4bf592ca36,
+  newObjectObservedSound: {fileID: 8300000, guid: 7ba55faf18300472aa15d40edd598c9a,
     type: 3}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
-  swishSound: {fileID: 8300000, guid: 01f3fbedf270a46fcaae3812ecdd225c, type: 3}
-  reverseSwishSound: {fileID: 8300000, guid: 70d82480979b544b89472e5069cdbc6e, type: 3}
+  swishSound: {fileID: 8300000, guid: 56872f4de5dba4c4b97de279c2fe42b2, type: 3}
+  reverseSwishSound: {fileID: 8300000, guid: 6e4998fcb7db8471b9eaf5d0825dd60a, type: 3}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}

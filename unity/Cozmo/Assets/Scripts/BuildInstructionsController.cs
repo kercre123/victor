@@ -8,6 +8,11 @@ public class BuildInstructionsController : MonoBehaviour {
 	[SerializeField] BuildInstructions[] layouts;
 	[SerializeField] Text title;
 	[SerializeField] Text instructions;
+	[SerializeField] Text note;
+	[SerializeField] Button buttonPrevLayout;
+	[SerializeField] Button buttonNextLayout;
+	[SerializeField] Button buttonPrevStep;
+	[SerializeField] Button buttonNextStep;
 
 	int currentLayout = 0;
 	int currentPage = 0;
@@ -30,7 +35,7 @@ public class BuildInstructionsController : MonoBehaviour {
 
 		BuildInstructions layout = layouts[currentLayout];
 
-		title.text = "Build Instructions: " + layout.title;
+		title.text = layout.title;
 
 		for(int i=0; i<layout.steps.Length; i++) {
 			if(currentPage == 0) {
@@ -47,17 +52,34 @@ public class BuildInstructionsController : MonoBehaviour {
 			}
 		}
 
+
+
 		if(instructions != null) {
 			if(currentPage <= 0) {
-				instructions.text = "Press 'Next' to start building this game's layout!";
+				instructions.text = "Press >> to start building this game's layout!";
 			}
 			else if(currentPage >= layouts[currentLayout].steps.Length+1) {
-				instructions.text = "Press 'Play' to validate the build and start playing!";
+				instructions.text = "Press >> to validate the build and start playing!";
 			}
 			else {
-				instructions.text = "Step " + currentPage + ": Place a " + layouts[currentLayout].steps[currentPage-1].cube.GetPropTypeName() + " " + layouts[currentLayout].steps[currentPage-1].cube.GetPropFamilyName() + "." ;
+				BuildInstructionStep step = layout.steps[currentPage-1];
+				instructions.text = "Step " + currentPage + ": Place a " + step.cube.GetPropTypeName() + " " + step.cube.GetPropFamilyName() + "." ;
+
+				if(!string.IsNullOrEmpty(step.explicitInstruction)) {
+					note.text = "note: " + step.explicitInstruction;
+				}
+				else {
+					note.text = "";
+				}
 			}
+
 		}
+
+		if(buttonPrevLayout != null) buttonPrevLayout.interactable = currentLayout > 0;
+		if(buttonNextLayout != null) buttonNextLayout.interactable = currentLayout < layouts.Length-1;
+		if(buttonPrevStep != null) buttonPrevStep.interactable = currentPage > 0;
+		if(buttonNextStep != null) buttonNextStep.interactable = true;//currentPage <= layouts[currentLayout].steps.Length+1;
+
 	}
 
 	public void SetLayout(int index) {
