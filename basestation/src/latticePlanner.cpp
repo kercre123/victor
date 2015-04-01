@@ -437,7 +437,8 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         lastSeg = path[numSegments-1];
         
         // There shouldn't be more than one point turn at the end of a path
-        assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
+        // NOTE: Actually, there could be because of the way the pathFollower works
+        //assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
       }
       
       f32 end_x, end_y, end_angle;
