@@ -4,10 +4,17 @@ using System.Collections;
 
 public class ObservedObjectButton : ObservedObjectBox
 {
-	public void Selection()
+	[SerializeField] protected AudioClip select;
+
+	public virtual void Selection()
 	{
-		RobotEngineManager.instance.current.selectedObjects.Clear();
-		RobotEngineManager.instance.current.selectedObjects.Add(observedObject);
-		RobotEngineManager.instance.current.TrackHeadToObject(observedObject);
+		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		{
+			RobotEngineManager.instance.current.selectedObjects.Clear();
+			RobotEngineManager.instance.current.selectedObjects.Add(observedObject);
+			RobotEngineManager.instance.current.TrackHeadToObject(observedObject);
+		}
+
+		if( audio != null ) audio.PlayOneShot( select );
 	}
 }
