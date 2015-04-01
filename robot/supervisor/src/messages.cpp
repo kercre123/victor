@@ -294,7 +294,7 @@ namespace Anki {
 
       void ProcessAppendPathSegmentPointTurnMessage(const AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
-                                                  msg.targetSpeed, msg.accel, msg.decel);
+                                                  msg.targetSpeed, msg.accel, msg.decel, msg.useShortestDir);
       }
 
       void ProcessTrimPathMessage(const TrimPath& msg) {
@@ -825,7 +825,7 @@ namespace Anki {
 
         const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
         SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
-                                             turnVelocity, 5, -5);
+                                             turnVelocity, 5, -5, true);
 
 
       }

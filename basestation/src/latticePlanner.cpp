@@ -455,8 +455,8 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                              rotSpeed,
                              TERMINAL_POINT_TURN_ACCEL,
-                             TERMINAL_POINT_TURN_DECEL);
-        
+                             TERMINAL_POINT_TURN_DECEL,
+                             true);
       }
     }
     

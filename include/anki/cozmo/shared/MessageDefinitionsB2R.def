@@ -126,6 +126,7 @@ ADD_MESSAGE_MEMBER(f32, x_center_mm)
 ADD_MESSAGE_MEMBER(f32, y_center_mm)
 ADD_MESSAGE_MEMBER(f32, targetRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS  // targetSpeed indicates rotational speed in rad/s
+ADD_MESSAGE_MEMBER(u8, useShortestDir)
 END_MESSAGE_DEFINITION(AppendPathSegmentPointTurn)
 
 // TrimPath

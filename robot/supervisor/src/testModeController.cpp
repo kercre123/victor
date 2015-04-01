@@ -819,11 +819,11 @@ namespace Anki {
             if (IT_turnLeft) {
               // Turn left 180 degrees
               PRINT("Turning to 180\n");
-              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
             } else {
               // Turn right 180 degrees
               PRINT("Turning to 0\n");
-              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
             }
             IT_turnLeft = !IT_turnLeft;
           }
