@@ -2247,6 +2247,91 @@ bool U2G_ErasePoseMarker::operator!=(const U2G_ErasePoseMarker& other) const
 }
 
 
+// MESSAGE U2G_SetWheelControllerGains
+
+U2G_SetWheelControllerGains::U2G_SetWheelControllerGains(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+U2G_SetWheelControllerGains::U2G_SetWheelControllerGains(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t U2G_SetWheelControllerGains::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t U2G_SetWheelControllerGains::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->kpLeft);
+	buffer.Write(this->kiLeft);
+	buffer.Write(this->maxIntegralErrorLeft);
+	buffer.Write(this->kpRight);
+	buffer.Write(this->kiRight);
+	buffer.Write(this->maxIntegralErrorRight);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t U2G_SetWheelControllerGains::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t U2G_SetWheelControllerGains::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->kpLeft);
+	buffer.Read(this->kiLeft);
+	buffer.Read(this->maxIntegralErrorLeft);
+	buffer.Read(this->kpRight);
+	buffer.Read(this->kiRight);
+	buffer.Read(this->maxIntegralErrorRight);
+	return buffer.GetBytesRead();
+}
+
+size_t U2G_SetWheelControllerGains::Size() const
+{
+	size_t result = 0;
+	//kpLeft
+	result += 4; // = float_32
+	//kiLeft
+	result += 4; // = float_32
+	//maxIntegralErrorLeft
+	result += 4; // = float_32
+	//kpRight
+	result += 4; // = float_32
+	//kiRight
+	result += 4; // = float_32
+	//maxIntegralErrorRight
+	result += 4; // = float_32
+	return result;
+}
+
+bool U2G_SetWheelControllerGains::operator==(const U2G_SetWheelControllerGains& other) const
+{
+	if (kpLeft != other.kpLeft
+	|| kiLeft != other.kiLeft
+	|| maxIntegralErrorLeft != other.maxIntegralErrorLeft
+	|| kpRight != other.kpRight
+	|| kiRight != other.kiRight
+	|| maxIntegralErrorRight != other.maxIntegralErrorRight) {
+		return false;
+	}
+	return true;
+}
+
+bool U2G_SetWheelControllerGains::operator!=(const U2G_SetWheelControllerGains& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE U2G_SetHeadControllerGains
 
 U2G_SetHeadControllerGains::U2G_SetHeadControllerGains(const uint8_t* buff, size_t len)
@@ -4150,6 +4235,35 @@ void U2G_Message::Set_ErasePoseMarker(Anki::Cozmo::U2G_ErasePoseMarker&& new_Era
 }
 
 
+const Anki::Cozmo::U2G_SetWheelControllerGains& U2G_Message::Get_SetWheelControllerGains() const
+{
+	assert(_type == Type::SetWheelControllerGains);
+	return _SetWheelControllerGains;
+}
+void U2G_Message::Set_SetWheelControllerGains(const Anki::Cozmo::U2G_SetWheelControllerGains& new_SetWheelControllerGains)
+{
+	if(this->_type == Type::SetWheelControllerGains) {
+		_SetWheelControllerGains = new_SetWheelControllerGains;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetWheelControllerGains) Anki::Cozmo::U2G_SetWheelControllerGains{new_SetWheelControllerGains};
+		_type = Type::SetWheelControllerGains;
+	}
+}
+void U2G_Message::Set_SetWheelControllerGains(Anki::Cozmo::U2G_SetWheelControllerGains&& new_SetWheelControllerGains)
+{
+	if(this->_type == Type::SetWheelControllerGains) {
+		_SetWheelControllerGains = std::move(new_SetWheelControllerGains);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetWheelControllerGains) Anki::Cozmo::U2G_SetWheelControllerGains{std::move(new_SetWheelControllerGains)};
+		_type = Type::SetWheelControllerGains;
+	}
+}
+
+
 const Anki::Cozmo::U2G_SetHeadControllerGains& U2G_Message::Get_SetHeadControllerGains() const
 {
 	assert(_type == Type::SetHeadControllerGains);
@@ -4830,6 +4944,14 @@ size_t U2G_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_ErasePoseMarker.Unpack(buffer);
 		}
 		break;
+	case Type::SetWheelControllerGains:
+		if (newType != oldType) {
+			new(&(this->_SetWheelControllerGains)) Anki::Cozmo::U2G_SetWheelControllerGains(buffer);
+		}
+		else {
+			this->_SetWheelControllerGains.Unpack(buffer);
+		}
+		break;
 	case Type::SetHeadControllerGains:
 		if (newType != oldType) {
 			new(&(this->_SetHeadControllerGains)) Anki::Cozmo::U2G_SetHeadControllerGains(buffer);
@@ -5059,6 +5181,9 @@ size_t U2G_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Type::ErasePoseMarker:
 		this->_ErasePoseMarker.Pack(buffer);
 		break;
+	case Type::SetWheelControllerGains:
+		this->_SetWheelControllerGains.Pack(buffer);
+		break;
 	case Type::SetHeadControllerGains:
 		this->_SetHeadControllerGains.Pack(buffer);
 		break;
@@ -5217,6 +5342,9 @@ size_t U2G_Message::Size() const
 	case Type::ErasePoseMarker:
 		result += _ErasePoseMarker.Size();
 		break;
+	case Type::SetWheelControllerGains:
+		result += _SetWheelControllerGains.Size();
+		break;
 	case Type::SetHeadControllerGains:
 		result += _SetHeadControllerGains.Size();
 		break;
@@ -5373,6 +5501,9 @@ void U2G_Message::ClearCurrent()
 		break;
 	case Type::ErasePoseMarker:
 		_ErasePoseMarker.~U2G_ErasePoseMarker();
+		break;
+	case Type::SetWheelControllerGains:
+		_SetWheelControllerGains.~U2G_SetWheelControllerGains();
 		break;
 	case Type::SetHeadControllerGains:
 		_SetHeadControllerGains.~U2G_SetHeadControllerGains();

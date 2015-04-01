@@ -525,6 +525,19 @@ namespace Cozmo {
   {
     VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
   }
+
+  void CozmoGameImpl::Process_SetWheelControllerGains(U2G_SetWheelControllerGains const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      robot->SetWheelControllerGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
+                                     msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
+    }
+  }
+
   
   void CozmoGameImpl::Process_SetHeadControllerGains(U2G_SetHeadControllerGains const& msg)
   {

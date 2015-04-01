@@ -201,6 +201,8 @@ namespace Anki {
       void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
+      void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
+                                    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendSelectNextSoundScheme();
@@ -905,6 +907,16 @@ namespace Anki {
               case (s32)'K':
               {
                 if (root_) {
+                  // Wheel gains
+                  f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
+                  f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
+                  f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
+                  f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
+                  f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
+                  f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
+                  printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                  SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                  
                   // Head and lift gains
                   f32 kp = root_->getField("headKp")->getSFFloat();
                   f32 ki = root_->getField("headKi")->getSFFloat();
@@ -1772,6 +1784,22 @@ namespace Anki {
         message.Set_ErasePoseMarker(m);
         SendMessage(message);
       }
+
+      void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
+                                    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
+      {
+        U2G_SetWheelControllerGains m;
+        m.kpLeft = kpLeft;
+        m.kiLeft = kiLeft;
+        m.maxIntegralErrorLeft = maxErrorSumLeft;
+        m.kpRight = kpRight;
+        m.kiRight = kiRight;
+        m.maxIntegralErrorRight = maxErrorSumRight;
+        U2G_Message message;
+        message.Set_SetWheelControllerGains(m);
+        SendMessage(message);
+      }
+
       
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
       {
