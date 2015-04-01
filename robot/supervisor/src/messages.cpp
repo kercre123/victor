@@ -480,6 +480,11 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
       }
 
+      void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
+        WheelController::SetGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
+                                  msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
+      }
+      
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
         HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
       }

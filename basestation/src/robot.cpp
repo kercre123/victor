@@ -2165,7 +2165,21 @@ namespace Anki {
     {
       return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
     }
-    
+
+    Result Robot::SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
+                                          const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight)
+    {
+      MessageSetWheelControllerGains m;
+      m.kpLeft = kpLeft;
+      m.kiLeft = kiLeft;
+      m.maxIntegralErrorLeft = maxIntegralErrorLeft;
+      m.kpRight = kpRight;
+      m.kiRight = kiRight;
+      m.maxIntegralErrorRight = maxIntegralErrorRight;
+      
+      return _msgHandler->SendMessage(_ID, m);
+    }
+      
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;

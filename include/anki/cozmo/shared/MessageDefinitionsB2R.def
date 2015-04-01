@@ -223,6 +223,19 @@ ADD_MESSAGE_MEMBER(u32, eye_left_color)
 ADD_MESSAGE_MEMBER(u32, eye_right_color)
 END_MESSAGE_DEFINITION(SetDefaultLights)
 
+// SetWheelControllerGains
+START_MESSAGE_DEFINITION(SetWheelControllerGains, 1)
+//ADD_MESSAGE_MEMBER(f32, kp)
+//ADD_MESSAGE_MEMBER(f32, ki)
+//ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+ADD_MESSAGE_MEMBER(f32, kpLeft)
+ADD_MESSAGE_MEMBER(f32, kiLeft)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorLeft)
+ADD_MESSAGE_MEMBER(f32, kpRight)
+ADD_MESSAGE_MEMBER(f32, kiRight)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorRight)
+END_MESSAGE_DEFINITION(SetWheelControllerGains)
+
 // SetHeadControllerGains
 START_MESSAGE_DEFINITION(SetHeadControllerGains, 1)
 ADD_MESSAGE_MEMBER(f32, kp)
