@@ -39,6 +39,24 @@ public class CozmoVision1 : CozmoVision
 		observedObjectBoxes = temp;
 	}
 
+	protected override void VisionEnabled()
+	{
+		Color color;
+		float alpha = 1f;
+		
+		color = image.color;
+		color.a = alpha;
+		image.color = color;
+		
+		color = select;
+		color.a = alpha;
+		select = color;
+		
+		color = selected;
+		color.a = alpha;
+		selected = color;
+	}
+
 	protected void Update()
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
@@ -99,15 +117,20 @@ public class CozmoVision1 : CozmoVision
 			{
 				distancePairs[i].button.box = distancePairs[i].box;
 				distancePairs[i].box.button = distancePairs[i].button;
+
 				distancePairs[i].button.observedObject = distancePairs[i].box.observedObject;
+
 				distancePairs[i].button.gameObject.SetActive( true );
+
 				distancePairs[i].button.text.text = distancePairs[i].box.text.text;
-				//distancePairs[i].button.image.rectTransform.rect.center, distancePairs[i].box.image.rectTransform.rect.center );
+				distancePairs[i].button.text.color = distancePairs[i].box.text.color;
+				distancePairs[i].button.image.color = distancePairs[i].box.image.color;
+
 				distancePairs[i].button.line.points2.Clear();
-				//Debug.Log( distancePairs[i].button.image.rectTransform.rect.center + " " + distancePairs[i].box.image.rectTransform.rect.center );
-				distancePairs[i].button.line.points2.Add( distancePairs[i].button.position );
-				distancePairs[i].button.line.points2.Add( distancePairs[i].box.position );
-				distancePairs[i].button.line.SetColor( select );
+				Vector3 buttonPosition = distancePairs[i].button.position;
+				distancePairs[i].button.line.points2.Add( buttonPosition );
+				distancePairs[i].button.line.points2.Add( distancePairs[i].box.Position( buttonPosition ) );
+				distancePairs[i].button.line.SetColor( distancePairs[i].button.box.image.color );
 				distancePairs[i].button.line.Draw();
 			}
 		}

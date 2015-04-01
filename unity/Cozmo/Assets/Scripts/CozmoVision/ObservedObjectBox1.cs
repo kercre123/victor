@@ -6,31 +6,35 @@ public class ObservedObjectBox1 : ObservedObjectButton
 {
 	[System.NonSerialized] public ObservedObjectButton1 button;
 
+	protected float distance;
+	protected float d;
+	protected Vector3 position;
 	protected Vector3[] corners;
-	public Vector3 position
-	{
-		get // bottom right corner
-		{
-			/*Vector3 center = Vector3.zero;
-			center.z = image.transform.position.z;*/
-			
-			if( corners == null )
-			{
-				corners = new Vector3[4];
-			}
-			
-			image.rectTransform.GetWorldCorners( corners );
-			
-			if( corners.Length == 0 )
-			{
-				return Vector3.zero;
-			}
-			
-			/*center = ( corners[0] + corners[2] ) * 0.5f;
-			
-			return center;*/
 
-			return corners[3];
+	public Vector3 Position( Vector3 buttonPosition )
+	{
+		if( corners == null )
+		{
+			corners = new Vector3[4];
 		}
+		
+		image.rectTransform.GetWorldCorners( corners );
+
+		distance = float.MaxValue;
+		position = Vector3.zero;
+		position.z = image.transform.position.z;
+
+		for( int i = 0; i < corners.Length; ++i )
+		{
+			float d = Vector2.Distance( corners[i], buttonPosition );
+
+			if( d < distance )
+			{
+				position = corners[i];
+				distance = d;
+			}
+		}
+
+		return position;
 	}
 }
