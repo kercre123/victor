@@ -30,8 +30,7 @@ public class CozmoVision2 : CozmoVision
 
 	protected override void ShowObservedObjects()
 	{
-		if(robot == null) return;
-		if(robot.observedObjects == null) return;
+		if(robot == null || robot.observedObjects == null) return;
 
 		for( int i = 0; i < maxObservedObjects; ++i )
 		{
