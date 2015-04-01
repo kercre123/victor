@@ -478,21 +478,22 @@ namespace Anki {
 #pragma mark ---- IDockAction ----
     
     // TODO: Define this as a constant parameter elsewhere
-    #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
+    //#define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
+    #define DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE_DEG 7.5
     
     IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
-    , _maxPreActionPoseDistance(MAX_DISTANCE_TO_PREDOCK_POSE)
+    , _preActionPoseAngleTolerance(DEG_TO_RAD(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE_DEG))
     , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
     {
       
     }
     
-    void IDockAction::SetMaxPreActionPoseDistance(f32 maxDistance)
+    void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
     {
-      _maxPreActionPoseDistance = maxDistance;
+      _preActionPoseAngleTolerance = angleTolerance;
     }
     
     IAction::ActionResult IDockAction::Init(Robot& robot)
@@ -515,6 +516,15 @@ namespace Anki {
         return FAILURE_ABORT;
       }
       
+      // Make sure we can are "currently" still seeing the object
+      if(dockObject->GetLastObservedTime() < (robot.GetLastMsgTimestamp()-500)) {
+        // We haven't seen the object in the last half second
+        PRINT_NAMED_ERROR("IDockAction.Init.NotSeeingObject",
+                          "Last obeserved object %d too long ago. Should currently be seeing it!\n",
+                          _dockObjectID.GetValue());
+        return FAILURE_ABORT;
+      }
+           
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
@@ -551,7 +561,27 @@ namespace Anki {
       
       const f32 closestDist = sqrtf(closestDistSq);
       
-      if(_maxPreActionPoseDistance > 0.f && closestDist > _maxPreActionPoseDistance) {
+      f32 preActionPoseDistThresh = -1.f;
+      if(_preActionPoseAngleTolerance > 0.f) {
+        // Compute distance threshold to preaction pose based on distance to the
+        // object: the further away, the more slop we're allowed.
+        Pose3d objectWrtRobot;
+        if(false == dockObject->GetPose().GetWithRespectTo(robot.GetPose(), objectWrtRobot)) {
+          PRINT_NAMED_ERROR("IDockAction.Init.ObjectPoseOriginProblem",
+                            "Could not get object %d's pose w.r.t. robot.\n",
+                            _dockObjectID.GetValue());
+          return FAILURE_ABORT;
+        }
+        
+        const f32 objectDistance = objectWrtRobot.GetTranslation().Length();
+        preActionPoseDistThresh = objectDistance * std::sin(_preActionPoseAngleTolerance.ToFloat());
+        
+        PRINT_NAMED_INFO("IDockAction.Init.DistThresh",
+                         "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm\n",
+                         objectDistance, preActionPoseDistThresh);
+      }
+      
+      if(preActionPoseDistThresh > 0.f && closestDist > preActionPoseDistThresh) {
         PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm).", closestDist);
         return FAILURE_RETRY;
