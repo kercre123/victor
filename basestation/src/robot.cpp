@@ -105,29 +105,15 @@ namespace Anki {
       // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
       {
-        // TODO: Get rid of this once we have motion primitives Json being included in app bundle
-#       include "../../resources/basestation/config/cozmo_mprim.h"
-        if(false == reader.parse(motionPrimitives, mprims)) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
-                            "Failed to parse hard-coded Json motion primitives. "
-                            "Planner likely won't work.\n");
-        } else {
-          PRINT_NAMED_INFO("Robot.MotionPrimitivesRead",
-                           "Successfully parsed hard-coded motion primitives.");
-        }
-        
-        /*
         const std::string subPath = "cozmo_mprim.json";
         const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
         std::ifstream jsonFile(jsonFilename);
-        
-         if(false == reader.parse(jsonFile, mprims)) {
+        if(false == reader.parse(jsonFile, mprims)) {
           PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
                             "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
                             jsonFilename.c_str());
         }
         jsonFile.close();
-         */
       }
       
       ReadAnimationFile();
