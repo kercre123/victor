@@ -129,8 +129,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-	[SerializeField] protected AudioClip swishSound;
-	[SerializeField] protected AudioClip reverseSwishSound;
+	[SerializeField] protected AudioClip slideInSound;
+	[SerializeField] protected AudioClip slideOutSound;
 	[SerializeField] protected float soundDelay = 2f;
 	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
@@ -469,14 +469,14 @@ public class CozmoVision : MonoBehaviour
 		audio.PlayOneShot( cancelButtonSound, 1f );
 	}
 
-	public void SwishSound()
+	public void SlideInSound()
 	{
-		audio.PlayOneShot( swishSound, 1f );
+		audio.PlayOneShot( slideInSound, 1f );
 	}
 
-	public void ReverseSwishSound()
+	public void SlideOutSound()
 	{
-		audio.PlayOneShot( reverseSwishSound, 1f );
+		audio.PlayOneShot( slideOutSound, 1f );
 	}
 
 	protected virtual void LateUpdate()
