@@ -61,7 +61,7 @@ class HTTPSubServer(BaseSubServer):
 <body>\r
   <h1>%s</h1>\r
   <p><strong>Change Cozmo ID:</strong> %s</p>
-  <p><strong>Set FOV:</strong> <a href="/fov_crop_on">Crop</a> / <a href="/fov_crop_off">Wide</a></p>
+  <!-- <p><strong>Set FOV:</strong> <a href="/fov_crop_on">Crop</a> / <a href="/fov_crop_off">Wide</a></p> -->
   <h2>Log</h2>
   <pre>\r
 %s\r
