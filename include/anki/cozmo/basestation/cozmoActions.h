@@ -88,6 +88,7 @@ namespace Anki {
       
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
+      bool                       _alreadyAtGoal;
       Radians                    _finalHeadAngle;
       
     }; // DriveToObjectAction
