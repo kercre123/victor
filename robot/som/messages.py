@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "4e93a639cc42e26905f92183866a53884080b7b6" # Hash for the revision these python definitions are based on
+__version__ = "83fcd6d31a7fd9c14fbf46d79368a8b6e84c0282" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -182,12 +182,15 @@ class RobotState(MessageBase):
         "f32", # Head angle
         "f32", # Lift Angle
         "f32", # Lift Height
+        "f32", # Raw Gyro Z
+        "f32", # Raw accel Y
         "u16", # last path ID
         "u8",  # Prox left
         "u8",  # Prox forward
         "u8",  # Prox right
         "s8",  # Current path segment, -1 if not traversing a path
         "u8",  # Num free segment slots
+        "u8",  # Battery voltage x10
         "u8",  # Status, see RobotStatusFlag
     ]
 
@@ -209,12 +212,15 @@ class RobotState(MessageBase):
         self.headAngle = 0.0
         self.liftAngle = 0.0
         self.liftHeight = 0.0
+        self.rawGyroZ = 0.0
+        self.rawAccelY = 0.0
         self.lastPathID = 0
         self.proxLeft = 255
         self.proxForward = 255
         self.proxRight = 255
         self.currPathSegment = -1
         self.numFreeSegmentSlots = 0
+        self.battVolt10x = 0
         self.status = 0
         if buffer:
             self.deserialize(buffer)
@@ -222,14 +228,14 @@ class RobotState(MessageBase):
     def _getMembers(self):
         return self.timestamp, self.poseFrameId, self.pose.x, self.pose.y, self.pose.z, self.pose.angle, \
                self.pose.pitch, self.leftWheelSpeed, self.rightWheelSpeed, self.headAngle, self.liftAngle, \
-               self.liftHeight, self.lastPathID, self.proxLeft, self.proxForward, self.proxRight, self.curPathSegment, \
-               self.numFreeSegmentSlots, self.status
+               self.liftHeight, self.rawGyroZ, self.rawAccelY, self.lastPathID, self.proxLeft, self.proxForward, \
+               self.proxRight, self.curPathSegment, self.numFreeSegmentSlots, self.battVolt10x, self.status
 
     def _setMembers(self, *members):
         self.timestamp, self.poseFrameId, self.pose.x, self.pose.y, self.pose.z, self.pose.angle, \
         self.pose.pitch, self.leftWheelSpeed, self.rightWheelSpeed, self.headAngle, self.liftAngle, \
-        self.liftHeight, self.lastPathID, self.proxLeft, self.proxForward, self.proxRight, self.curPathSegment, \
-        self.numFreeSegmentSlots, self.status = members
+        self.liftHeight, self.rawGyroZ, self.rawAccelY, self.lastPathID, self.proxLeft, self.proxForward, \
+        self.proxRight, self.curPathSegment, self.numFreeSegmentSlots, self.battVolt10x, self.status = members
 
     def __repr__(self):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
