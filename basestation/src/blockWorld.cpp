@@ -1113,7 +1113,7 @@ namespace Anki
           // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
           f32 x,y,z;
           m->GetSize(x,y,z);
-          Pose3d raiseObject(0, Z_AXIS_3D, Vec3f(0,0,0.5f*z));
+          Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*z));
           proxTransform = proxTransform * raiseObject;
           
           proxTransform.SetParent(_robot->GetPose().GetParent());
