@@ -116,7 +116,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 73
+    ID = 74
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -168,7 +168,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 62
+    ID = 63
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -241,7 +241,7 @@ class RobotState(MessageBase):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
 
 class PrintText(MessageBase):
-    ID = 72
+    ID = 73
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
@@ -274,7 +274,7 @@ class PrintText(MessageBase):
 
 class PingMessage(MessageBase):
     "Just a ping with no payload"
-    ID = 56
+    ID = 57
     FORMAT = []
 
     def _getMembers(self):
@@ -315,7 +315,7 @@ class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""
 
-    ID = 58
+    ID = 59
     FORMAT = ["u8", # wifi state
               "u8", # bluetooth state
               ]
@@ -366,7 +366,7 @@ class StartTestMode(MessageBase):
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
-    ID = 60
+    ID = 61
     FORMAT = []
 
     def _getMembers(self):
@@ -382,7 +382,7 @@ class FlashBlockIDs(MessageBase):
 class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
-    ID = 61
+    ID = 62
     FORMAT = [("%dI" % NUM_LIGHTS), # color
               "u8",  # blockID
              ]
