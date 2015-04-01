@@ -2987,7 +2987,7 @@ MonoBehaviour:
   text: {fileID: 11498364}
   actionButtons: []
   maxObservedObjects: 1
-  newObjectObservedSound: {fileID: 8300000, guid: b2cfaf6142daf45c1b4b1521cfcda202,
+  newObjectObservedSound: {fileID: 8300000, guid: 212c5a246965d4204bb91c4bf592ca36,
     type: 3}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}

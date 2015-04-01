@@ -229,6 +229,9 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void ShowObservedObjects()
 	{
+		if(robot == null) return;
+		if(robot.observedObjects == null) return;
+
 		for( int i = 0; i < observedObjectBoxes.Length; ++i )
 		{
 			if( robot.observedObjects.Count > i )
@@ -276,6 +279,8 @@ public class CozmoVision : MonoBehaviour
 		{
 			text.gameObject.SetActive( false );
 		}
+
+		ShowObservedObjects();
 	}
 
 	private void RequestImage()
@@ -388,7 +393,7 @@ public class CozmoVision : MonoBehaviour
 		{
 			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
 			{
-				audio.PlayOneShot( newObjectObservedSound );
+				audio.PlayOneShot( newObjectObservedSound, 1f );
 				
 				dingTimes[0] = Time.time;
 			}
@@ -455,23 +460,23 @@ public class CozmoVision : MonoBehaviour
 	{
 		if(audio.loop) StopLoopingTargetSound();
 
-		audio.PlayOneShot( actionButtonSound );
+		audio.PlayOneShot( actionButtonSound, 1f );
 	}
 
 	public void CancelButtonClick()
 	{
 		if(audio.loop) StopLoopingTargetSound();
-		audio.PlayOneShot( cancelButtonSound );
+		audio.PlayOneShot( cancelButtonSound, 1f );
 	}
 
 	public void SwishSound()
 	{
-		audio.PlayOneShot( swishSound );
+		audio.PlayOneShot( swishSound, 1f );
 	}
 
 	public void ReverseSwishSound()
 	{
-		audio.PlayOneShot( reverseSwishSound );
+		audio.PlayOneShot( reverseSwishSound, 1f );
 	}
 
 	protected virtual void LateUpdate()
