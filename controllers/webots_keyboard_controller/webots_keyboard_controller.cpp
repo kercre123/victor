@@ -1486,7 +1486,7 @@ namespace Anki {
             f32 angle = atan2f(-northVec[1], northVec[0]);
             
             poseMarkerPose_.SetTranslation(transVec);
-            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D());
             
             // Update pose marker if different from last time
             if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
