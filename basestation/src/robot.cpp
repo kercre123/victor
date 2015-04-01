@@ -61,17 +61,18 @@ namespace Anki {
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
+    , _usingManualPathSpeed(false)
     , _camera(robotID)
     , _visionWhileMovingEnabled(true)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
-    , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
+    , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
-    , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
-    , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
+    , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
+    , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _currentLiftAngle(0)
     , _onRamp(false)
@@ -160,7 +161,7 @@ namespace Anki {
       _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
       _worldOrigin = &_poseOrigins.back();
       
-      _pose.SetRotation(0, Z_AXIS_3D);
+      _pose.SetRotation(0, Z_AXIS_3D());
       _pose.SetTranslation({{0.f, 0.f, 0.f}});
       _pose.SetParent(_worldOrigin);
       
@@ -323,8 +324,8 @@ namespace Anki {
                                      _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
                                      _rampStartHeight + heightAdjust);
         
-        const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
-        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D);
+        const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
+        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
         
         newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
         //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
@@ -356,7 +357,7 @@ namespace Anki {
         }
         
         // Need to put the odometry update in terms of the current robot origin
-        newPose = Pose3d(msg.pose_angle, Z_AXIS_3D, {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
+        newPose = Pose3d(msg.pose_angle, Z_AXIS_3D(), {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
         
       } // if/else on ramp
       
@@ -405,8 +406,8 @@ namespace Anki {
         if (isPhysical) {
           // "Recalibrate" camera pose within head for physical robot
           // TODO: Do this properly!
-          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D));
-          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D));
+          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
+          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
           _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
           PRINT_INFO("Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, x_trans_corr=%fmm\n", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_TRANS_X_CORR);
         } else {
@@ -477,7 +478,7 @@ namespace Anki {
       Pose3d camPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
       // Precompute with robot body to neck pose
@@ -873,7 +874,7 @@ namespace Anki {
       Pose3d newHeadPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
+      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D());
       newHeadPose.RotateBy(Rvec);
       newHeadPose.SetName("Camera");
       
@@ -885,11 +886,11 @@ namespace Anki {
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
       // Reset to canonical position
-      liftPose.SetRotation(atAngle, Y_AXIS_3D);
+      liftPose.SetRotation(atAngle, Y_AXIS_3D());
       liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
       
       // Rotate to the given angle
-      RotationVector3d Rvec(-atAngle, Y_AXIS_3D);
+      RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
       liftPose.RotateBy(Rvec);
     }
     
@@ -1031,6 +1032,14 @@ namespace Anki {
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
     {
+      // Check if robot is still pickAndPlacing.
+      // If so, and not in assisted RC mode, then ignore drive wheel commands.
+      // TODO: Timeout?
+      if (IsPickingOrPlacing() && !IsUsingManualPathSpeed()) {
+        PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
+        return RESULT_FAIL;
+      }
+      
       return SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
     }
     
@@ -1047,6 +1056,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      _usingManualPathSpeed = useManualSpeed;
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
@@ -1191,7 +1201,7 @@ namespace Anki {
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
@@ -1206,7 +1216,7 @@ namespace Anki {
           robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
           robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
         }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
         
       } // if robot is on ramp
       
@@ -1256,7 +1266,7 @@ namespace Anki {
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
@@ -1271,7 +1281,7 @@ namespace Anki {
           robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
           robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
         }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
         
       } // if robot is on ramp
       */
@@ -1363,6 +1373,7 @@ namespace Anki {
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
           _pdo->SetPath(path);
+          _usingManualPathSpeed = useManualSpeed;
           lastResult = SendExecutePath(path, useManualSpeed);
         }
         
@@ -1590,6 +1601,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      _usingManualPathSpeed = useManualSpeed;
+      
       return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
     
@@ -2101,9 +2114,9 @@ namespace Anki {
       return RESULT_OK;
     }
       
-    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
-                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
-                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };
+    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
+                                                  Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
+                                                  Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
     
     const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
@@ -2284,7 +2297,7 @@ namespace Anki {
       // Now make the robot's world origin point to the new origin
       _worldOrigin = newOrigin;
       
-      newOrigin->SetRotation(0, Z_AXIS_3D);
+      newOrigin->SetRotation(0, Z_AXIS_3D());
       newOrigin->SetTranslation({{0,0,0}});
       
       // Now make the robot's origin point to the new origin

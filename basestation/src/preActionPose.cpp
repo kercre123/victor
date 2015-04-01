@@ -48,7 +48,7 @@ namespace Anki {
                                  const Vision::KnownMarker* marker,
                                  const f32 distance,
                                  const Radians& headAngle)
-    : PreActionPose(type, marker, Y_AXIS_3D * -distance, headAngle)
+    : PreActionPose(type, marker, Y_AXIS_3D() * -distance, headAngle)
     {
       
     } // PreActionPose Constructor
@@ -60,7 +60,7 @@ namespace Anki {
                                  const Radians& headAngle)
     : _type(type)
     , _marker(marker)
-    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, offset, &marker->GetPose()) // init w.r.t. marker
+    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, &marker->GetPose()) // init w.r.t. marker
     , _headAngle(headAngle)
     {
       // Now make pose w.r.t. marker parent

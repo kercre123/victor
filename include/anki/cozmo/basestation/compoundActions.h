@@ -47,14 +47,14 @@ namespace Anki {
       
       CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override final;
-      
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
       
     private:
       virtual void Reset() override;
+      
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
@@ -72,10 +72,10 @@ namespace Anki {
       
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override final;
-      
     protected:
       CompoundActionParallel();
+      
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
       
     }; // class CompoundActionParallel
     

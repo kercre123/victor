@@ -25,10 +25,10 @@ TEST(RobotPoseHistory, AddGetPose)
   PoseFrameID_t frameID = 0;
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0, Z_AXIS_3D, Vec3f(0,0,0) );
-  const Pose3d p2(0.1, Z_AXIS_3D, Vec3f(1,1,2) );
-  const Pose3d p3(-0.5, Z_AXIS_3D, Vec3f(-2,-2,-3) );
-  const Pose3d p1p2avg(0.05, Z_AXIS_3D, Vec3f(0.5, 0.5, 1) );
+  const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0) );
+  const Pose3d p2(0.1, Z_AXIS_3D(), Vec3f(1,1,2) );
+  const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3) );
+  const Pose3d p1p2avg(0.05, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) );
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;
@@ -142,10 +142,10 @@ TEST(RobotPoseHistory, GroundTruthPose)
   PoseFrameID_t frameID = 0;
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0.25*PI_F, Z_AXIS_3D, Vec3f(1,0,0) );
-  const Pose3d p2(PIDIV2_F, Z_AXIS_3D, Vec3f(1,2,0) );
-  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D, Vec3f(1 - sqrtf(2),2,0) );
-  const Pose3d p1_by_p2Top3(0, Z_AXIS_3D, Vec3f(0, 1, 0) );
+  const Pose3d p1(0.25*PI_F, Z_AXIS_3D(), Vec3f(1,0,0) );
+  const Pose3d p2(PIDIV2_F, Z_AXIS_3D(), Vec3f(1,2,0) );
+  const Pose3d p3(PIDIV2_F - 0.25*PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0) );
+  const Pose3d p1_by_p2Top3(0, Z_AXIS_3D(), Vec3f(0, 1, 0) );
   const f32 h1 = 0;
   const f32 h2 = 0.2;
   const f32 h3 = -0.3;

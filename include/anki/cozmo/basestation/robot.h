@@ -191,7 +191,7 @@ namespace Anki {
       u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
       u16  GetLastSentPathID()  const {return _lastSentPathID;}
 
-      
+      bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
       
       //
       // Object Docking / Carrying
@@ -460,6 +460,7 @@ namespace Anki {
       u8               _numFreeSegmentSlots;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
+      bool             _usingManualPathSpeed;
       PathDolerOuter*  _pdo;
       
       // This functions sets _selectedPathPlanner to the appropriate

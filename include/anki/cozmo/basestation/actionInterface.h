@@ -55,7 +55,7 @@ namespace Anki {
       IActionRunner();
       virtual ~IActionRunner() { }
       
-      virtual ActionResult Update(Robot& robot) = 0;
+      ActionResult Update(Robot& robot);
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -71,6 +71,8 @@ namespace Anki {
       const std::string& GetStatus() const { return _statusMsg; }
       
     protected:
+      
+      virtual ActionResult UpdateInternal(Robot& robot) = 0;
       
       bool RetriesRemain();
       
@@ -110,13 +112,6 @@ namespace Anki {
       IAction();
       virtual ~IAction() { }
       
-      // This Update() is what gets called from the outside.  It in turn
-      // handles timing delays and runs (protected) Init() and CheckIfDone()
-      // methods. Those are the virtual methods that specific classes should
-      // implement to get desired action behaviors. Note that this method
-      // is final and cannot be overridden by specific individual actions.
-      virtual ActionResult Update(Robot& robot) override final;
-      
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
@@ -126,6 +121,13 @@ namespace Anki {
       
     protected:
       
+      // This UpdateInternal() is what gets called by IActionRunner's Update().  It in turn
+      // handles timing delays and runs (protected) Init() and CheckIfDone()
+      // methods. Those are the virtual methods that specific classes should
+      // implement to get desired action behaviors. Note that this method
+      // is final and cannot be overridden by specific individual actions.
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
+
       // Derived Actions should implement these.
       virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;

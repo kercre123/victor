@@ -217,8 +217,6 @@ namespace Anki
         MemoryStack &onchipScratch,
         MemoryStack offchipScratch)
         : LucasKanadeTracker_Generic(Transformations::TRANSFORM_PROJECTIVE, templateImage, templateQuadIn, scaleTemplateRegionPercent, numPyramidLevels, transformType, onchipScratch)
-        , _baseImageWidth(templateImage.get_size(1))
-        , _baseImageHeight(templateImage.get_size(0))
       {
         // Allocate all the
 
@@ -1360,11 +1358,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        const s32 initialImageScaleS32 = _baseImageWidth / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
 
-        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == _baseImageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth");
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == baseImageWidth,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance_distance, verify_converged, scratch);
@@ -1432,7 +1430,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = _baseImageWidth / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1666,7 +1664,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = _baseImageWidth / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1981,7 +1979,7 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 initialImageScaleS32 = _baseImageWidth / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 

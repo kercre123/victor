@@ -141,7 +141,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
-                               Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}},
+                               Pose3d{thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}},
                                robotPadding ) );
 
       for(auto boundingQuad : boundingBoxes) {
