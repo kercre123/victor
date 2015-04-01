@@ -112,6 +112,10 @@ namespace Anki {
           PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
                             "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
                             jsonFilename.c_str());
+        } else {
+          PRINT_NAMED_INFO("Robot.MotionPrimitivesLoaded",
+                            "Loaded Json motion primitives from file %s.\n",
+                            jsonFilename.c_str());
         }
         jsonFile.close();
       }
