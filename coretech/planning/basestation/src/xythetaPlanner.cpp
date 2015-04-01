@@ -8,6 +8,9 @@
 namespace Anki {
 namespace Planning {
 
+#define MAX_HEUR_EXPANSIONS 10000
+  
+  
 xythetaPlanner::xythetaPlanner(const xythetaEnvironment& env)
 {
   _impl = new xythetaPlannerImpl(env);
@@ -287,6 +290,13 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
     }
 
     heurExpansions++;
+    
+    
+    // Check for too many expansions
+    if (heurExpansions > MAX_HEUR_EXPANSIONS) {
+      printf("ERROR: ExpandStatesForHeur() exceeded max allowed expansions of %d\n", MAX_HEUR_EXPANSIONS);
+      return FLT_MAX;
+    }
   }
 
   printf("WARNING: somehow ran out of open list entries during ExpandStatesForHeur after %u exps!\n",
