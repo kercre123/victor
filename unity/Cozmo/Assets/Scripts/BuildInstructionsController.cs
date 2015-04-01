@@ -13,6 +13,10 @@ public class BuildInstructionsController : MonoBehaviour {
 	[SerializeField] Button buttonNextLayout;
 	[SerializeField] Button buttonPrevStep;
 	[SerializeField] Button buttonNextStep;
+	[SerializeField] Button buttonStartBuild;
+	[SerializeField] Button buttonValidateBuild;
+
+	public bool Validated { get; private set; }
 
 	int currentLayout = 0;
 	int currentPage = 0;
@@ -20,10 +24,12 @@ public class BuildInstructionsController : MonoBehaviour {
 		currentLayout = 0;
 		currentPage = 0;
 
+		Validated = false;
+
 		for(int i=0; i<layouts.Length; i++) {
 			layouts[i].Initialize();
 		}
-
+		note.text = "";
 		RefreshPage();
 	}
 
@@ -78,13 +84,17 @@ public class BuildInstructionsController : MonoBehaviour {
 		if(buttonPrevLayout != null) buttonPrevLayout.interactable = currentLayout > 0;
 		if(buttonNextLayout != null) buttonNextLayout.interactable = currentLayout < layouts.Length-1;
 		if(buttonPrevStep != null) buttonPrevStep.interactable = currentPage > 0;
-		if(buttonNextStep != null) buttonNextStep.interactable = true;//currentPage <= layouts[currentLayout].steps.Length+1;
+		if(buttonNextStep != null) buttonNextStep.interactable =  currentPage <= layout.steps.Length;
+
+		if(buttonStartBuild != null) buttonStartBuild.gameObject.SetActive(currentPage == 0);
+		if(buttonValidateBuild != null) buttonValidateBuild.gameObject.SetActive(currentPage == layout.steps.Length+1);
 
 	}
 
 	public void SetLayout(int index) {
 		currentLayout = Mathf.Clamp(index, 0, layouts.Length-1);
 		currentPage = 0;
+		Validated = false;
 		RefreshPage();
 	}
 
@@ -92,6 +102,7 @@ public class BuildInstructionsController : MonoBehaviour {
 		currentLayout++;
 		if(currentLayout >= layouts.Length) currentLayout = 0;
 		currentPage = 0;
+		Validated = false;
 		RefreshPage();
 	}
 	
@@ -99,6 +110,7 @@ public class BuildInstructionsController : MonoBehaviour {
 		currentLayout--;
 		if(currentLayout < 0) currentLayout = layouts.Length - 1;
 		currentPage = 0;
+		Validated = false;
 		RefreshPage();
 	}
 
@@ -113,7 +125,6 @@ public class BuildInstructionsController : MonoBehaviour {
 	}
 
 	public void ValidateBuild() {
-
-		
+		Validated = true;
 	}
 }
