@@ -225,7 +225,7 @@ class CameraSubServer(BaseSubServer):
                     if self.sendMode == messages.ISM_SINGLE_SHOT:
                         self.sendMode = messages.ISM_OFF
                     if nFramesBuffered > 1:
-                        self.log("Dropped %d frames, chunk count=%d\n" % (nFramesBuffered - 1, msg.imageChunkCount))
+                        self.log("Dropped %d frames, chunk count=%d, %f\n" % (nFramesBuffered - 1, msg.imageChunkCount, time.time()))
                 self.sendModeLock.release()
             elif e.errno == socket.EBADF and self._continue == False:
                 return
