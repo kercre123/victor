@@ -294,7 +294,7 @@ namespace Anki {
 
       void ProcessAppendPathSegmentPointTurnMessage(const AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
-                                                  msg.targetSpeed, msg.accel, msg.decel);
+                                                  msg.targetSpeed, msg.accel, msg.decel, msg.useShortestDir);
       }
 
       void ProcessTrimPathMessage(const TrimPath& msg) {
@@ -480,6 +480,11 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
       }
 
+      void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
+        WheelController::SetGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
+                                  msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
+      }
+      
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
         HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
       }
@@ -820,7 +825,7 @@ namespace Anki {
 
         const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
         SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
-                                             turnVelocity, 5, -5);
+                                             turnVelocity, 5, -5, true);
 
 
       }

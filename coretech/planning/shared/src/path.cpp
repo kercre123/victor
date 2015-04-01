@@ -39,7 +39,8 @@ namespace Anki
       def_.line.endPt_y = y_end;
       
       // Compute end angle
-      def_.line.endAngle = ATAN2_ACC(y_end - y_start, x_end - x_start);
+      // If going backwards, flip it 180
+      def_.line.endAngle = Radians( ATAN2_ACC(y_end - y_start, x_end - x_start) + (targetSpeed < 0 ? PI_F : 0) ).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
@@ -62,18 +63,22 @@ namespace Anki
       } else {
         radiusAngle -= PIDIV2_F;
       }
-      def_.arc.endAngle = Radians(radiusAngle).ToFloat();
+      
+      // If going backwards, flip it 180
+      def_.arc.endAngle = Radians(radiusAngle + (targetSpeed < 0 ? PI_F : 0)).ToFloat();
       
       SetSpeedProfile(targetSpeed, accel, decel);
     }
     
     void PathSegment::DefinePointTurn(f32 x, f32 y, f32 targetAngle,
-                                      f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
+                                      f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                      bool useShortestDir)
     {
       type_ = PST_POINT_TURN;
       def_.turn.x = x;
       def_.turn.y = y;
       def_.turn.targetAngle = targetAngle;
+      def_.turn.useShortestDir = useShortestDir;
       
       SetSpeedProfile(targetRotSpeed, rotAccel, rotDecel);
     }
@@ -1127,7 +1132,8 @@ namespace Anki
     
     
     bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
-                               f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
+                               f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                               bool useShortestDir)
     {
       assert(capacity_ == MAX_NUM_PATH_SEGMENTS);
 
@@ -1137,7 +1143,8 @@ namespace Anki
       }
       
       path_[numPathSegments_].DefinePointTurn(x,y,targetAngle,
-                                              targetRotSpeed, rotAccel, rotDecel);
+                                              targetRotSpeed, rotAccel, rotDecel,
+                                              useShortestDir);
 
       numPathSegments_++;
       

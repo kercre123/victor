@@ -80,7 +80,8 @@ namespace Anki {
     // angularAccel: Angular acceleration in rad/s^2
     // angularDecel: Angular decelration in rad/s^2
     // (Sets user commanded speed to 0 if it is not already.)
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
+    // useShortestDir: If true, ignores the sign of maxAngularVel and takes the shortest path to targetAngle.
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir);
     
     // Same as above except that it doesn't stop turning.
     //void ExecutePointTurn(float maxAngularVel, float angularAccel, float angularDecel);

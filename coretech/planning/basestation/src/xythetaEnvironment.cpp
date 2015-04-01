@@ -882,7 +882,8 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
                                   env.GetTheta_c(endStateOffset.theta),
                                   rotSpeed,
                                   LATTICE_PLANNER_ROT_ACCEL,
-                                  LATTICE_PLANNER_ROT_DECEL);
+                                  LATTICE_PLANNER_ROT_DECEL,
+                                  true);
   }
 
   assert(env.GetNumActions() > id);
