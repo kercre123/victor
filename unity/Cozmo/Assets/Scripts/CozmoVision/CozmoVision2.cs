@@ -28,10 +28,27 @@ public class CozmoVision2 : CozmoVision
 		ShowObservedObjects();
 	}
 
+	protected override void VisionEnabled()
+	{
+		Color color;
+		float alpha = 1f;
+		
+		color = image.color;
+		color.a = alpha;
+		image.color = color;
+		
+		color = select;
+		color.a = alpha;
+		select = color;
+		
+		color = selected;
+		color.a = alpha;
+		selected = color;
+	}
+
 	protected override void ShowObservedObjects()
 	{
-		if(robot == null) return;
-		if(robot.observedObjects == null) return;
+		if(robot == null || robot.observedObjects == null) return;
 
 		for( int i = 0; i < maxObservedObjects; ++i )
 		{

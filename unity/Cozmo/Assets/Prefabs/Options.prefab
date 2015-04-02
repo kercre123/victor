@@ -1081,6 +1081,7 @@ MonoBehaviour:
   - ObjectSelect
   - TwoButton
   - InteractionSlider
+  - ObjectSelectButtons
 --- !u!114 &11427674
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1492,7 +1493,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1.20000005
-  m_Text: Cozmo Vision Mode
+  m_Text: 
 --- !u!114 &11474592
 MonoBehaviour:
   m_ObjectHideFlags: 1

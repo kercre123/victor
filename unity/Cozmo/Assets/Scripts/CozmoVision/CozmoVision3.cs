@@ -55,10 +55,7 @@ public class CozmoVision3 : CozmoVision
 				}
 			}
 
-			robot.observedObjects.Sort( ( obj1, obj2 ) =>
-			{
-				return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z );   
-			} );
+			robot.observedObjects.Sort( ( obj1, obj2 ) => { return obj1.WorldPosition.z.CompareTo( obj2.WorldPosition.z ); } );
 
 			if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 			{

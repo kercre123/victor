@@ -214,11 +214,13 @@ public class CozmoVision : MonoBehaviour
 			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 			{
 				box.image.color = selected;
+				box.text.color = selected;
 				box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
 			}
 			else
 			{
 				box.image.color = select;
+				box.text.color = select;
 				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
 				box.observedObject = observedObject;
 			}
@@ -355,16 +357,24 @@ public class CozmoVision : MonoBehaviour
 		
 	}
 
-	private void VisionEnabled()
+	protected virtual void VisionEnabled()
 	{
-		if( PlayerPrefs.GetInt( "VisionDisabled" ) > 0 )
-		{
-			image.color = new Color( 0f, 0f, 0f, 0f );
-		}
-		else
-		{
-			image.color = new Color( 1f, 1f, 1f, 1f );
-		}
+		Color color;
+		float alpha = 0f;
+
+		if( PlayerPrefs.GetInt( "VisionDisabled" ) == 0 ) alpha = 1f;
+
+		color = image.color;
+		color.a = alpha;
+		image.color = color;
+
+		color = select;
+		color.a = alpha;
+		select = color;
+
+		color = selected;
+		color.a = alpha;
+		selected = color;
 	}
 
 	protected virtual void Dings()

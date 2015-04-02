@@ -2231,6 +2231,100 @@ public class U2G_ErasePoseMarker
 
 }
 
+public class U2G_SetWheelControllerGains
+{
+	private float _kpLeft; // float_32
+	private float _kiLeft; // float_32
+	private float _maxIntegralErrorLeft; // float_32
+	private float _kpRight; // float_32
+	private float _kiRight; // float_32
+	private float _maxIntegralErrorRight; // float_32
+
+	public float kpLeft { get { return _kpLeft; } set { _kpLeft = value; } }
+
+	public float kiLeft { get { return _kiLeft; } set { _kiLeft = value; } }
+
+	public float maxIntegralErrorLeft { get { return _maxIntegralErrorLeft; } set { _maxIntegralErrorLeft = value; } }
+
+	public float kpRight { get { return _kpRight; } set { _kpRight = value; } }
+
+	public float kiRight { get { return _kiRight; } set { _kiRight = value; } }
+
+	public float maxIntegralErrorRight { get { return _maxIntegralErrorRight; } set { _maxIntegralErrorRight = value; } }
+
+
+	/**** Constructors ****/
+
+	public U2G_SetWheelControllerGains()
+	{
+	}
+
+	public U2G_SetWheelControllerGains(float kpLeft,
+		float kiLeft,
+		float maxIntegralErrorLeft,
+		float kpRight,
+		float kiRight,
+		float maxIntegralErrorRight)
+	{
+		this.kpLeft = kpLeft;
+		this.kiLeft = kiLeft;
+		this.maxIntegralErrorLeft = maxIntegralErrorLeft;
+		this.kpRight = kpRight;
+		this.kiRight = kiRight;
+		this.maxIntegralErrorRight = maxIntegralErrorRight;
+	}
+
+	public U2G_SetWheelControllerGains(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public U2G_SetWheelControllerGains(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_kpLeft = reader.ReadSingle();
+		_kiLeft = reader.ReadSingle();
+		_maxIntegralErrorLeft = reader.ReadSingle();
+		_kpRight = reader.ReadSingle();
+		_kiRight = reader.ReadSingle();
+		_maxIntegralErrorRight = reader.ReadSingle();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((float)_kpLeft);
+		writer.Write((float)_kiLeft);
+		writer.Write((float)_maxIntegralErrorLeft);
+		writer.Write((float)_kpRight);
+		writer.Write((float)_kiRight);
+		writer.Write((float)_maxIntegralErrorRight);
+	}
+
+	public int Size 
+	{
+		get {
+			return 24;
+		}
+	}
+
+}
+
 public class U2G_SetHeadControllerGains
 {
 	private float _kp; // float_32
@@ -3119,19 +3213,20 @@ public class U2G_Message {
 		AbortAll,	//33
 		DrawPoseMarker,	//34
 		ErasePoseMarker,	//35
-		SetHeadControllerGains,	//36
-		SetLiftControllerGains,	//37
-		SelectNextSoundScheme,	//38
-		StartTestMode,	//39
-		IMURequest,	//40
-		PlayAnimation,	//41
-		ReadAnimationFile,	//42
-		StartFaceTracking,	//43
-		StopFaceTracking,	//44
-		StartLookingForMarkers,	//45
-		StopLookingForMarkers,	//46
-		SetVisionSystemParams,	//47
-		SetFaceDetectParams,	//48
+		SetWheelControllerGains,	//36
+		SetHeadControllerGains,	//37
+		SetLiftControllerGains,	//38
+		SelectNextSoundScheme,	//39
+		StartTestMode,	//40
+		IMURequest,	//41
+		PlayAnimation,	//42
+		ReadAnimationFile,	//43
+		StartFaceTracking,	//44
+		StopFaceTracking,	//45
+		StartLookingForMarkers,	//46
+		StopLookingForMarkers,	//47
+		SetVisionSystemParams,	//48
+		SetFaceDetectParams,	//49
 		INVALID
 	};
 
@@ -3753,6 +3848,23 @@ public class U2G_Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G_SetWheelControllerGains SetWheelControllerGains
+	{
+		get {
+			if (_tag != Tag.SetWheelControllerGains) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetWheelControllerGains\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G_SetWheelControllerGains)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetWheelControllerGains : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G_SetHeadControllerGains SetHeadControllerGains
 	{
 		get {
@@ -4088,6 +4200,9 @@ public class U2G_Message {
 		case Tag.ErasePoseMarker:
 			_state = new Anki.Cozmo.U2G_ErasePoseMarker(reader);
 			break;
+		case Tag.SetWheelControllerGains:
+			_state = new Anki.Cozmo.U2G_SetWheelControllerGains(reader);
+			break;
 		case Tag.SetHeadControllerGains:
 			_state = new Anki.Cozmo.U2G_SetHeadControllerGains(reader);
 			break;
@@ -4247,6 +4362,9 @@ public class U2G_Message {
 		case Tag.ErasePoseMarker:
 			ErasePoseMarker.Pack(writer);
 			break;
+		case Tag.SetWheelControllerGains:
+			SetWheelControllerGains.Pack(writer);
+			break;
 		case Tag.SetHeadControllerGains:
 			SetHeadControllerGains.Pack(writer);
 			break;
@@ -4404,6 +4522,9 @@ public class U2G_Message {
 				break;
 			case Tag.ErasePoseMarker:
 				result += ErasePoseMarker.Size;
+				break;
+			case Tag.SetWheelControllerGains:
+				result += SetWheelControllerGains.Size;
 				break;
 			case Tag.SetHeadControllerGains:
 				result += SetHeadControllerGains.Size;
