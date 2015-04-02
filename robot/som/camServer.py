@@ -54,7 +54,6 @@ class CameraSubServer(BaseSubServer):
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG_COLOR
-    ENCODER_FPS           = 10
     ENCODER_QUALITY       = 50
 
     ENCODER_LATEANCY = 2.0 # frames, determiend imperically
@@ -91,6 +90,7 @@ class CameraSubServer(BaseSubServer):
         self.resolution = messages.CAMERA_RES_NONE
         self.ispRes     = messages.CAMERA_RES_NONE
         self.encoding   = self.ENCODER_CODING
+        self.encoderFPS = 15
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -124,6 +124,10 @@ class CameraSubServer(BaseSubServer):
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SRGGB12 %dx%d%s], "OMAP3 ISP CCDC":2 [SRGGB10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
                                 tuple([self.camDev] + self.SENSOR_RES_TPL + [self.camInt] + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[self.ispRes])]) == 0:
                 self.resolution = resolutionEnum
+                if self.resolution > messages.CAMERA_RES_VGA:
+                    self.encoderFPS = 15
+                else:
+                    self.encoderFPS = 10
                 self.startEncoder()
                 return True
             else:
@@ -137,7 +141,7 @@ class CameraSubServer(BaseSubServer):
             if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
-                               'videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.ENCODER_FPS, '!']
+                               'videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.encoderFPS, '!']
                 if self.ispRes != self.resolution:
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
                     v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
