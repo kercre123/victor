@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 using Anki.Cozmo;
 
@@ -19,6 +20,7 @@ public class BuildInstructions : MonoBehaviour {
 
 	[SerializeField] public string title;
 	[SerializeField] public BuildInstructionStep[] steps;
+	[SerializeField] public string gameTypeFilter = null;
 
 	public void Initialize () {
 

@@ -20,7 +20,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
 	[SerializeField] protected BuildInstructionsController buildInstructionsController = null;
-	[SerializeField] protected int buildInstructionsLayoutIndex = 0;
+	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] protected AudioClip playingLoopSound;
@@ -50,7 +50,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildInstructionsController != null) buildInstructionsController.SetLayout(buildInstructionsLayoutIndex);
+		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(buildInstructionsLayoutFilter);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
