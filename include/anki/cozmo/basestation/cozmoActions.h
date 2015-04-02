@@ -51,12 +51,14 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
 
       Result SetGoal(const Pose3d& pose);
+      Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
+      
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
-      f32      _goalDistanceThreshold;
+      Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
       bool     _startedTraversingPath;
