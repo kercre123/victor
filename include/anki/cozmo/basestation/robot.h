@@ -159,6 +159,10 @@ namespace Anki {
       f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
       
+      // Return pose of robot's drive center based on what it's currently carrying
+      void GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      
+      
       //
       // Path Following
       //

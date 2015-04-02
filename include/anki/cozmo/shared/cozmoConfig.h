@@ -9,16 +9,22 @@
 namespace Anki {
   namespace Cozmo {
 
-// Whether or not to use the offset drive center pose
-// For treaded robot only! Both engine and robot code need to be sync'd on this.
-#define USE_DRIVE_CENTER_POSE 0
-    
+   
 #ifndef SIMULATOR
     
     // Uncomment if using Cozmo v3 robot with treads
     #define COZMO_TREADS
-    
+
+    // Whether or not to use the offset drive center pose
+    // For treaded robot only! Both engine and robot code need to be sync'd on this.
+    #define USE_DRIVE_CENTER_POSE 1
+
+#else
+    // DO NOT CHANGE
+    // until the Webots model has been updated with treads
+    #define USE_DRIVE_CENTER_POSE 0
 #endif
+    //#define COZMO_TREADS // HACK
     
     /***************************************************************************
      *
