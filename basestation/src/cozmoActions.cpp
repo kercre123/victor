@@ -849,7 +849,7 @@ namespace Anki {
             // TODO: is it safe to always have useAbsRotation=true here?
             if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
                                                                carryObject->GetRotationAmbiguities(),
-                                                               carryObject->GetSameDistanceTolerance()*0.7,
+                                                               carryObject->GetSameDistanceTolerance(),
                                                                carryObject->GetSameAngleTolerance(), true,
                                                                Tdiff, angleDiff))
             {
