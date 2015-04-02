@@ -36,7 +36,8 @@ IE_YUYV  = 3
 IE_BAYER = 4
 IE_JPEG_GRAY  = 5
 IE_JPEG_COLOR = 6
-IE_WEBP  = 7
+IE_JPEG_CHW = 7
+IE_WEBP  = 8
 
 CAMERA_RES_QUXGA = 0
 CAMERA_RES_QXGA = 1
@@ -239,6 +240,10 @@ class RobotState(MessageBase):
 
     def __repr__(self):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
+
+    @classmethod
+    def unpackTimestamp(cls, buffer):
+        return struct.unpack('I', buffer[1:5])(0)
 
 class PrintText(MessageBase):
     ID = 73
