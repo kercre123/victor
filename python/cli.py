@@ -36,10 +36,15 @@ class Pinger(threading.Thread, socket.socket):
             except socket.timeout:
                 continue
             else:
+                t = time.time()
                 #print(msg)
                 if PrintText.isa(msg):
                     printMsg = PrintText(buffer=msg)
                     sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
+                if ImageChunk.isa(msg):
+                    ic = ImageChunk(buffer=msg)
+                    sys.stdout.write("\rimgChunk %d[%02d] @ %fms: COZMO>>>" % (ic.imageId, ic.chunkId, t*1000.0))
+
 
     def stop(self):
         "Stop the thread running"

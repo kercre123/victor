@@ -54,10 +54,10 @@ class CameraSubServer(BaseSubServer):
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG_COLOR
-    ENCODER_FPS           = 15
+    ENCODER_FPS           = 10
     ENCODER_QUALITY       = 50
 
-    ENCODER_LATEANCY = 2.0 # ms, determiend imperically
+    ENCODER_LATEANCY = 2.0 # frames, determiend imperically
 
     FOV_CROP = False #isfile('FOV_CROP')
 
@@ -90,6 +90,7 @@ class CameraSubServer(BaseSubServer):
 
         self.resolution = messages.CAMERA_RES_NONE
         self.ispRes     = messages.CAMERA_RES_NONE
+        self.encoding   = self.ENCODER_CODING
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -141,6 +142,11 @@ class CameraSubServer(BaseSubServer):
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
                     v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
                     encoderCall.extend(['videocrop', 'left=%d' % h, 'top=%d' % v, 'right=%d' % h, 'bottom=%d' % v, '!'])
+                    self.encoding = self.ENCODER_CODING
+                else:
+                    h = self.RESOLUTION_TUPLES[self.ispRes][0]/4
+                    encoderCall.extend(['videocrop', 'left=%d' % h, 'right=%d' % h, '!'])
+                    self.encoding = messages.IE_JPEG_CHW
                 encoderCall.extend(['TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', \
                                     'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
                                     'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
@@ -214,7 +220,7 @@ class CameraSubServer(BaseSubServer):
                     msg = messages.ImageChunk()
                     msg.imageId = self.imageNumber
                     msg.imageTimestamp = self.server.timestamp.get() - int((self.ENCODER_LATEANCY/self.SENSOR_FPS)*1000)
-                    msg.imageEncoding = self.ENCODER_CODING
+                    msg.imageEncoding = self.encoding
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     msg.resolution = self.resolution
                     chunkNumber = 0
@@ -223,7 +229,7 @@ class CameraSubServer(BaseSubServer):
                         msg.chunkId = chunkNumber
                         chunkNumber += 1
                         self.clientSend(msg.serialize())
-                        time.sleep(0.001) # Allow a little time for the UDP socket to process
+                        self.threadYield() # Allow a little time for the UDP socket to process
                     if self.sendMode == messages.ISM_SINGLE_SHOT:
                         self.sendMode = messages.ISM_OFF
                     if nFramesBuffered > 1:
