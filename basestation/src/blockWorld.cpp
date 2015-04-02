@@ -538,9 +538,25 @@ namespace Anki
                                     unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
           
           // Check any of the markers should be visible.
-          // For now just ignore the left and right 22.5% of the image blocked by the lift
+          // For now just ignore the left and right 22.5% of the image blocked by the lift,
+          // *iff* we are using VGA images, which have a wide enough FOV to be occluded
+          // by the lift. (I.e., assume QVGA is a cropped, narrower FOV)
           // TODO: Actually project a lift into the image and figure out what it will occlude
-          const u16 xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+          u16 xBorderPad = 0;
+          switch(camera.GetCalibration().GetNcols())
+          {
+            case 640:
+              xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+              break;
+            case 320:
+              // Nothing to do, leave at zero
+              break;
+            default:
+              // Not expecting other resolutions
+              PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects",
+                                  "Unexpeted camera calibration ncols=%d.\n",
+                                  camera.GetCalibration().GetNcols());
+          }
           const bool markersShouldBeVisible = unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad);
           
           if(seenRecently && closeEnough && !markersShouldBeVisible)
