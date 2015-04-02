@@ -9,6 +9,10 @@
 namespace Anki {
   namespace Cozmo {
 
+// Whether or not to use the offset drive center pose
+// For treaded robot only! Both engine and robot code need to be sync'd on this.
+#define USE_DRIVE_CENTER_POSE 0
+    
 #ifndef SIMULATOR
     
     // Uncomment if using Cozmo v3 robot with treads
@@ -29,6 +33,14 @@ namespace Anki {
     const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
     const f32 WHEEL_BASE_MM      = 30.f;
 
+    
+    // The x-offset from robot origin that the robot's drive center is
+    // located for the treaded robot when not carrying a block.
+    // (If you were to model the treaded robot as a two-wheel robot,
+    // the drive center is the location between the two wheels)
+#if(USE_DRIVE_CENTER_POSE)
+    const f32 DRIVE_CENTER_OFFSET = -25.f;
+#endif
 
     // The height of the lift at various configurations
     // Actual limit in proto is closer to 20.4mm, but there is a weird

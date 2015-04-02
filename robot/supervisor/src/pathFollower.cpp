@@ -229,11 +229,6 @@ namespace Anki
           // Set whether or not path is traversed according to speed in path parameters
           manualSpeedControl_ = manualSpeedControl;
           
-          // Get current robot pose
-          f32 x, y;
-          Radians angle;
-          Localization::GetCurrentMatPose(x, y, angle);
-          
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
 
@@ -308,7 +303,7 @@ namespace Anki
         // Get current robot pose
         f32 x, y, lookaheadX, lookaheadY;
         Radians angle;
-        Localization::GetCurrentMatPose(x, y, angle);
+        Localization::GetDriveCenterPose(x, y, angle);
         
         lookaheadX = x;
         lookaheadY = y;
@@ -419,7 +414,7 @@ namespace Anki
         // Test code to visualize Dubins path online
         f32 start_x,start_y;
         Radians start_theta;
-        Localization::GetCurrentMatPose(start_x,start_y,start_theta);
+        Localization::GetDriveCenterPose(start_x,start_y,start_theta);
         path_.Clear();
         
         const f32 end_x = 0;
@@ -553,7 +548,7 @@ namespace Anki
         // Compute profile
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
         
         if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
@@ -623,7 +618,7 @@ namespace Anki
         // Compute profile
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currAngSpeed = -SpeedController::GetCurrentMeasuredVehicleSpeed() / radius_mm;
         
         if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, acc_start_frac * duration_sec,
@@ -697,7 +692,7 @@ namespace Anki
         
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         
         
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,

@@ -413,7 +413,7 @@ namespace Anki {
           mode_ = APPROACH_FOR_DOCK;
 
           // Set approach start pose
-          Localization::GetCurrentMatPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
+          Localization::GetDriveCenterPose(approachStartPose_.x(), approachStartPose_.y(), approachStartPose_.angle);
           
 #if(RESET_LOC_ON_BLOCK_UPDATE)
           // If there is no localization (as is currently the case on the robot)
