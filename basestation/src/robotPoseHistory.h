@@ -127,6 +127,16 @@ namespace Anki {
                           TimeStamp_t& t, RobotPoseStamp& p,
                           bool withInterpolation = false) const;
       
+      // Get raw odometry poses (and their times) immediately before and after
+      // the pose nearest to the requested time. Returns failure if either cannot
+      // be found (e.g. when the requested time corresponds to the first or last
+      // pose in  history).
+      Result GetRawPoseBeforeAndAfter(const TimeStamp_t t,
+                                      TimeStamp_t&    t_before,
+                                      RobotPoseStamp& p_before,
+                                      TimeStamp_t&    t_after,
+                                      RobotPoseStamp& p_after);
+      
       // Returns OK and points p to a vision-based pose at the specified time if such a pose exists.
       // Note: The pose that p points to may be invalidated by subsequent calls to
       //       the history like Clear() or Add...(). Use carefully!

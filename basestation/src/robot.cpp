@@ -63,7 +63,7 @@ namespace Anki {
     , _lastRecvdPathID(0)
     , _usingManualPathSpeed(false)
     , _camera(robotID)
-    , _visionWhileMovingEnabled(true)
+    , _visionWhileMovingEnabled(false)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -428,20 +428,89 @@ namespace Anki {
       
     }
     
+    f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+    {
+      const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
+      const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
+      const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
+      
+      return poseAngSpeed;
+    }
+
+    f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+    {
+      const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
+      return headAngSpeed;
+    }
+
+    
     Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
     {
       Result lastResult = RESULT_OK;
       
-      if(!_visionWhileMovingEnabled) {
-        // If we are not allowing use of markers while moving, check to see if
-        // we are moving (but not picking and placing)
-        if(IsMoving() && !IsPickingOrPlacing()) {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-                              "Ignoring VisionMarker seen while moving.\n");
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                            "Time: %d, hist: %d to %d\n",
+                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
+                            _poseHistory->GetNewestTimeStamp());
+        return lastResult;
+      }
+      
+      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
+        
+        TimeStamp_t t_prev, t_next;
+        RobotPoseStamp p_prev, p_next;
+        
+        lastResult = _poseHistory->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                              "Could not get next/previous poses for t = %d, so "
+                              "cannot compute angular velocity. Ignoring marker.\n", t);
+          
+          // Don't return failure, but don't queue the marker either (since we
+          // couldn't check the angular velocity while seeing it
           return RESULT_OK;
         }
-      }
-    
+
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        
+        assert(t_prev < t);
+        assert(t_next > t);
+        const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+        const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+        const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+        const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+        
+        if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+           turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                              "Ignoring vision marker seen while turning with angular "
+                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          return RESULT_OK;
+        } else if(headSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                  headSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                              "Ignoring vision marker seen while head moving with angular "
+                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          return RESULT_OK;
+        }
+        
+      } // if(!_visionWhileMovingEnabled)
+   
       if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
@@ -467,19 +536,7 @@ namespace Anki {
       corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
       
       
-      // Get historical robot pose at specified timestamp to get
-      // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Time: %d, hist: %d to %d\n",
-                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
-                            _poseHistory->GetNewestTimeStamp());
-        return lastResult;
-      }
+     
       
       // Compute pose from robot body to camera
       // Start with canonical (untilted) headPose
