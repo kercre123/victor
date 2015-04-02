@@ -842,15 +842,19 @@ namespace Anki {
           
           const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
           
+          Vec3f Tdiff;
+          Radians angleDiff;
           Vision::ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
             if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
                                                                carryObject->GetRotationAmbiguities(),
-                                                               carryObject->GetSameDistanceTolerance(),
-                                                               carryObject->GetSameAngleTolerance(), true))
+                                                               carryObject->GetSameDistanceTolerance()*0.7,
+                                                               carryObject->GetSameAngleTolerance(), true,
+                                                               Tdiff, angleDiff))
             {
-              PRINT_INFO("Seeing object %d in original pose.\n", object.first.GetValue());
+              PRINT_INFO("Seeing object %d in original pose (Tdiff %f %f %f, angleDiff %f).\n", object.first.GetValue(),
+                         Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
               objectInOriginalPose = object.second;
               break;
             }
