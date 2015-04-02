@@ -24,6 +24,7 @@ namespace Anki {
     
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
+    , _emitCompletionSignal(true)
     {
       
     }
@@ -32,7 +33,7 @@ namespace Anki {
     {
       ActionResult result = UpdateInternal(robot);
       
-      if(result != RUNNING) {
+      if(result != RUNNING && _emitCompletionSignal==true) {
         // Notify any listeners about this action's completion.
         // Note that I do this here so that compound actions only emit one signal,
         // not a signal for each constituent action.
