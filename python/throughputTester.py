@@ -94,3 +94,4 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
         else:
             while self.seqno < self.count:
                 self.step()
+        sys.stdout.write("Dropped %d packets\n" % len(self.seqSendTimes))
