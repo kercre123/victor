@@ -75,7 +75,8 @@ namespace Anki {
       
       KnownMarker(const Code& type, const Pose3d& atPose, const f32 size_mm);
 
-      Pose3d EstimateObservedPose(const ObservedMarker& obsMarker) const;
+      Result EstimateObservedPose(const ObservedMarker& obsMarker,
+                                  Pose3d& pose) const;
       
       // Update this marker's pose and, in turn, its 3d corners' locations.
       //

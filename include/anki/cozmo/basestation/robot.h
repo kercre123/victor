@@ -120,6 +120,13 @@ namespace Anki {
       // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
+      // Returns the average period of incoming robot images
+      u32 GetAverageImagePeriodMS();
+      
+      // Specify whether this robot is a physical robot or not.
+      // Currently, adjusts headCamPose by slop factor if it's physical.
+      void SetPhysicalRobot(bool isPhysical);
+      
       //
       // Pose (of the robot or its parts)
       //
@@ -184,7 +191,7 @@ namespace Anki {
       u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
       u16  GetLastSentPathID()  const {return _lastSentPathID;}
 
-      
+      bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
       
       //
       // Object Docking / Carrying
@@ -260,9 +267,12 @@ namespace Anki {
       Result StopFaceTracking();
       Result StartLookingForMarkers();
       Result StopLookingForMarkers();
+
+      // Set how to save incoming robot state messages
+      void SetSaveStateMode(const SaveMode_t mode);
       
-      // Save the next image passed into ProcessImage() to file
-      void SaveNextImage();
+      // Set how to save incoming robot images to file
+      void SetSaveImageMode(const SaveMode_t mode);
       
       // =========== Actions Commands =============
       
@@ -353,6 +363,8 @@ namespace Anki {
       void SetBehaviorState(BehaviorManager::BehaviorState state);
       
       // For debugging robot parameters:
+      Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
+                                     const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendVisionSystemParams(VisionSystemParams_t p);
@@ -417,6 +429,7 @@ namespace Anki {
       
       // The robot's identifier
       RobotID_t         _ID;
+      bool              _isPhysical;
       
       // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
       double            _lastStateMsgTime_sec;
@@ -449,6 +462,7 @@ namespace Anki {
       u8               _numFreeSegmentSlots;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
+      bool             _usingManualPathSpeed;
       PathDolerOuter*  _pdo;
       
       // This functions sets _selectedPathPlanner to the appropriate
@@ -477,7 +491,7 @@ namespace Anki {
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
       const Pose3d     _neckPose;     // joint around which head rotates
-      const Pose3d     _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
+      Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
       const Pose3d     _liftBasePose; // around which the base rotates/lifts
       Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
@@ -547,8 +561,15 @@ namespace Anki {
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
       
-      // Flag for saving next processed image to file
-      bool _saveNextImageToFile;
+      // Save mode for robot state
+      SaveMode_t _stateSaveMode;
+      
+      // Save mode for robot images
+      SaveMode_t _imageSaveMode;
+      
+      // Maintains an average period of incoming robot images
+      u32 _imgFramePeriod;
+      TimeStamp_t _lastImgTimeStamp;
       
       ///////// Modifiers ////////
       
@@ -648,6 +669,8 @@ namespace Anki {
       
       Result SendAbortDocking();
       Result SendAbortAnimation();
+      
+      Result SendSetCarryState(CarryState_t state);
 
       
       // =========  Block messages  ============

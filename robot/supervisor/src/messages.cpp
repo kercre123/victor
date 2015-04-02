@@ -144,6 +144,11 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        HAL::IMU_DataStructure imuData;
+        HAL::IMUReadData(imuData);
+        robotState_.rawGyroZ = imuData.rate_z;
+        robotState_.rawAccelY = imuData.acc_y;
+        
         ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
 
         robotState_.lastPathID = PathFollower::GetLastPathID();
@@ -191,30 +196,6 @@ namespace Anki {
 
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
-
-        // Send back camera calibration
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
-        }
-        else {
-          Messages::CameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-
-
-          if(!HAL::RadioSendMessage(CameraCalibration_ID,
-                                    &headCalibMsg))
-          {
-            PRINT("Failed to send camera calibration message.\n");
-          }
-        }
 
       } // ProcessRobotInit()
 
@@ -313,7 +294,7 @@ namespace Anki {
 
       void ProcessAppendPathSegmentPointTurnMessage(const AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
-                                                  msg.targetSpeed, msg.accel, msg.decel);
+                                                  msg.targetSpeed, msg.accel, msg.decel, msg.useShortestDir);
       }
 
       void ProcessTrimPathMessage(const TrimPath& msg) {
@@ -423,10 +404,63 @@ namespace Anki {
         }
       }
 
-      void ProcessImageRequestMessage(const ImageRequest& msg) {
+      void ProcessImageRequestMessage(const ImageRequest& msg)
+      {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
         VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
-      }
+        
+        // Send back camera calibration for this resolution
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        
+        // TODO: Just store CameraResolution in calibration data instead of height/width?
+        
+        if(headCamInfo == NULL) {
+          PRINT("NULL HeadCamInfo retrieved from HAL.\n");
+        }
+        else {
+          HAL::CameraInfo headCamInfoScaled(*headCamInfo);
+          const s32 width  = Vision::CameraResInfo[msg.resolution].width;
+          const s32 height = Vision::CameraResInfo[msg.resolution].height;
+          const f32 xScale = static_cast<f32>(width/headCamInfo->ncols);
+          const f32 yScale = static_cast<f32>(height/headCamInfo->nrows);
+          
+          if(xScale != 1.f || yScale != 1.f)
+          {
+            PRINT("Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.\n",
+                  headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
+            
+            // Stored calibration info does not requested resolution, so scale it
+            // accordingly and adjust the pointer so we send this scaled info below.
+            headCamInfoScaled.focalLength_x *= xScale;
+            headCamInfoScaled.focalLength_y *= yScale;
+            headCamInfoScaled.center_x      *= xScale;
+            headCamInfoScaled.center_y      *= yScale;
+            headCamInfoScaled.nrows = height;
+            headCamInfoScaled.ncols = width;
+           
+            headCamInfo = &headCamInfoScaled;
+          }
+
+          Messages::CameraCalibration headCalibMsg = {
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols,
+#           ifdef SIMULATOR
+            0 // This is NOT a real robot
+#           else
+            1 // This is a real robot
+#           endif
+          };
+          
+          if(!HAL::RadioSendMessage(CameraCalibration_ID, &headCalibMsg)) {
+            PRINT("Failed to send camera calibration message.\n");
+          }
+        }
+      } // ProcessImageRequestMessage()
 
       void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
         HAL::SetHeadlights(msg.intensity > 0);
@@ -446,6 +480,11 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
       }
 
+      void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
+        WheelController::SetGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
+                                  msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
+      }
+      
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
         HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
       }
@@ -786,7 +825,7 @@ namespace Anki {
 
         const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
         SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
-                                             turnVelocity, 5, -5);
+                                             turnVelocity, 5, -5, true);
 
 
       }
@@ -812,6 +851,10 @@ namespace Anki {
         }
       }
 
+      void ProcessSetCarryStateMessage(const SetCarryState& msg)
+      {
+        PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
+      }
 
       // --------- Block control messages ----------
 

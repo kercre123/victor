@@ -29,6 +29,7 @@ namespace Anki {
                               "Refusing to add a null action pointer to group.\n");
         } else {
           _actions.emplace_back(false, action);
+          _actions.back().second->EmitSignalWhenComplete(false); // Don't signal individual completions
           _name += action->GetName();
           _name += "+";
         }
@@ -71,7 +72,7 @@ namespace Anki {
       _currentActionPair = _actions.begin();
     }
     
-    IAction::ActionResult CompoundActionSequential::Update(Robot& robot)
+    IAction::ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
     {
       SetStatus(GetName());
       
@@ -156,7 +157,7 @@ namespace Anki {
       
     }
     
-    IAction::ActionResult CompoundActionParallel::Update(Robot& robot)
+    IAction::ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the

@@ -48,6 +48,18 @@
 // how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
 #define PLAN_ERROR_FOR_REPLAN 20.0
 
+
+// The min absolute difference between the commanded end pose angle
+// and the end pose angle of the generated plan that is required
+// in order for a point turn to be appended to the path such that
+// the end pose angle of the path is the commanded one.
+const f32 TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD = DEG_TO_RAD_F32(2.f);
+
+const f32 TERMINAL_POINT_TURN_SPEED = PI_F;
+const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
+const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -72,6 +84,7 @@ public:
   xythetaEnvironment env_;
   xythetaPlanner planner_;
   xythetaPlan totalPlan_;
+  Pose3d targetPose_orig_;
 
   const LatticePlanner* _parent;
 };
@@ -128,7 +141,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
-                               Pose3d{thetaRads, Z_AXIS_3D, {0.0f, 0.0f, 0.0f}},
+                               Pose3d{thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}},
                                robotPadding ) );
 
       for(auto boundingQuad : boundingBoxes) {
@@ -193,6 +206,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     return PLAN_NEEDED_BUT_PLAN_FAILURE;
   }
    */
+  
+  // Save original target pose
+  impl_->targetPose_orig_ = targetPose;
   
   State_c target(targetPose.GetTranslation().x(),
                     targetPose.GetTranslation().y(),
@@ -403,6 +419,49 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         }
       }
     }
+    
+
+    // Do final check on how close the plan's goal angle is to the originally requested goal angle
+    // and either add a point turn at the end or modify the last point turn action.
+    u8 numSegments = path.GetNumSegments();
+    Radians desiredGoalAngle = impl_->targetPose_orig_.GetRotationAngle<'Z'>();
+    
+    if (numSegments > 0) {
+      // TODO: Should we expect to see empty paths here? Ask Brad.
+    
+      // Get last non-point turn segment of path
+      PathSegment& lastSeg = path[numSegments-1];
+      if(lastSeg.GetType() == Planning::PST_POINT_TURN) {
+        path.PopBack(1);
+        --numSegments;
+        lastSeg = path[numSegments-1];
+        
+        // There shouldn't be more than one point turn at the end of a path
+        // NOTE: Actually, there could be because of the way the pathFollower works
+        //assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
+      }
+      
+      f32 end_x, end_y, end_angle;
+      lastSeg.GetEndPose(end_x, end_y, end_angle);
+      Radians plannedGoalAngle(end_angle);
+      f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
+      
+      if (abs(angDiff) > TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD) {
+        
+        f32 turnDir = angDiff > 0 ? 1.f : -1.f;
+        f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
+        
+        PRINT_INFO("LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.\n", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
+        
+        path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
+                             rotSpeed,
+                             TERMINAL_POINT_TURN_ACCEL,
+                             TERMINAL_POINT_TURN_DECEL,
+                             true);
+      }
+    }
+    
+    
 
     return DID_PLAN;
   }

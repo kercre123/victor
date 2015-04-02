@@ -24,8 +24,24 @@ namespace Anki {
     
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
+    , _emitCompletionSignal(true)
     {
       
+    }
+    
+    IActionRunner::ActionResult IActionRunner::Update(Robot& robot)
+    {
+      ActionResult result = UpdateInternal(robot);
+      
+      if(result != RUNNING && _emitCompletionSignal==true) {
+        // Notify any listeners about this action's completion.
+        // Note that I do this here so that compound actions only emit one signal,
+        // not a signal for each constituent action.
+        // TODO: Populate the signal with any action-specific info?
+        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+      }
+      
+      return result;
     }
     
     bool IActionRunner::RetriesRemain()
@@ -72,7 +88,7 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    IAction::ActionResult IAction::Update(Robot& robot)
+    IAction::ActionResult IAction::UpdateInternal(Robot& robot)
     {
       ActionResult result = RUNNING;
       SetStatus(GetName());
@@ -145,10 +161,6 @@ namespace Anki {
 #       if USE_ACTION_CALLBACKS
         RunCallbacks(result);
 #       endif
-        
-        // Notify any listeners about this action's completion.
-        // TODO: Populate the signal with any action-specific info?
-        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
       }
       
       return result;

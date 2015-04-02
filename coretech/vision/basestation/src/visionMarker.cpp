@@ -170,7 +170,7 @@ namespace Anki {
       sideLine.MakeUnitLength();
       
       const Point3f faceNormal( CrossProduct(sideLine, topLine) );
-      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D()); // TODO: Optimize to just: faceNormal.z()?
       if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) { // TODO: Optimize to simple dotProd comparison
         return false;
       }
@@ -226,10 +226,11 @@ namespace Anki {
     } // KnownMarker::IsVisibleFrom()
     
     
-    Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
+    Result KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker,
+                                             Pose3d& pose) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d);
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d, pose);
     }
     
     

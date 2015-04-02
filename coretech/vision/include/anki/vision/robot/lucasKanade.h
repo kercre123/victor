@@ -26,10 +26,10 @@ namespace Anki
 
       // Updates the previous corners with the new transformation
       // and returns the minimum distance any corner moved
-      f32 UpdatePreviousCorners(
-        const Transformations::PlanarTransformation_f32 &transformation,
-        FixedLengthList<Quadrilateral<f32> > &previousCorners,
-        MemoryStack scratch);
+      f32 UpdatePreviousCorners(const Transformations::PlanarTransformation_f32 &transformation,
+                                const u16 baseImageWidth, const u16 baseImageHeight,
+                                FixedLengthList<Quadrilateral<f32> > &previousCorners,
+                                MemoryStack scratch);
 
       class LucasKanadeTracker_Slow
       {
@@ -66,6 +66,10 @@ namespace Anki
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
       protected:
+        
+        u16 baseImageWidth;
+        u16 baseImageHeight;
+        
         // A_full is the list of derivative matrices for each level of the pyramid
         FixedLengthList<Array<f32> > A_full;
         FixedLengthList<Array<u8> > templateImagePyramid;
@@ -134,6 +138,12 @@ namespace Anki
         Transformations::PlanarTransformation_f32 get_transformation() const;
 
       protected:
+        // "Base" Image size (i.e. size of the image the initial marker was detected
+        // in, which could be different from the tracking resolution)
+        // TODO: Probably don't need to support differing detection/tracking resolutions anymore
+        u16 baseImageWidth;
+        u16 baseImageHeight;
+        
         Transformations::TransformType maxSupportedTransformType;
 
         s32 numPyramidLevels;
@@ -442,7 +452,7 @@ namespace Anki
         f32 GetCurrentGain() const;
 
         Parameters6DoF params6DoF;
-
+        
         //Result SetHomographyFrom6DofParams(Array<f32> &H);
 
         FixedLengthList<FixedLengthList<TemplateSample> > templateSamplePyramid;

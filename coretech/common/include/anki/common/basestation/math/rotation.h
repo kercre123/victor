@@ -183,6 +183,8 @@ namespace Anki {
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
     
+    Radians GetAngleDiffFrom(const Rotation3d& otherRotation) const;
+    
     Rotation3d& Invert();
     Rotation3d  GetInverse() const;
     
@@ -250,6 +252,11 @@ namespace Anki {
   }
   
   inline const Vec3f& RotationVector3d::GetAxis(void) const {
+    if (_angle == 0) {
+      // A zero degree rotation means the axis of rotation will be a null vector
+      static const Vec3f AXIS_FOR_ZERO_ANGLE(Z_AXIS_3D());
+      return AXIS_FOR_ZERO_ANGLE;
+    }
     return _axis;
   }
   

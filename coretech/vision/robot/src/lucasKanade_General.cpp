@@ -27,13 +27,13 @@ namespace Anki
   {
     namespace TemplateTracker
     {
-      f32 UpdatePreviousCorners(
-        const Transformations::PlanarTransformation_f32 &transformation,
-        FixedLengthList<Quadrilateral<f32> > &previousCorners,
-        MemoryStack scratch)
+      f32 UpdatePreviousCorners(const Transformations::PlanarTransformation_f32 &transformation,
+                                const u16 baseImageWidth, const u16 baseImageHeight,
+                                FixedLengthList<Quadrilateral<f32> > &previousCorners,
+                                MemoryStack scratch)
       {
-        const f32 baseImageHalfWidth = static_cast<f32>(BASE_IMAGE_WIDTH) / 2.0f;
-        const f32 baseImageHalfHeight = static_cast<f32>(BASE_IMAGE_HEIGHT) / 2.0f;
+        const f32 baseImageHalfWidth = static_cast<f32>(baseImageWidth) / 2.0f;
+        const f32 baseImageHalfHeight = static_cast<f32>(baseImageHeight) / 2.0f;
 
         Quadrilateral<f32> in(
           Point<f32>(-baseImageHalfWidth,-baseImageHalfHeight),
@@ -69,16 +69,21 @@ namespace Anki
         : maxSupportedTransformType(maxSupportedTransformType), isValid(false)
       {
       }
-
-      LucasKanadeTracker_Generic::LucasKanadeTracker_Generic(
-        const Transformations::TransformType maxSupportedTransformType,
-        const Array<u8> &templateImage,
-        const Quadrilateral<f32> &templateQuad,
-        const f32 scaleTemplateRegionPercent,
-        const s32 numPyramidLevels,
-        const Transformations::TransformType transformType,
-        MemoryStack &memory)
-        : maxSupportedTransformType(maxSupportedTransformType), numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), isValid(false)
+      
+      LucasKanadeTracker_Generic::LucasKanadeTracker_Generic(const Transformations::TransformType maxSupportedTransformType,
+                                                             const Array<u8> &templateImage,
+                                                             const Quadrilateral<f32> &templateQuad,
+                                                             const f32 scaleTemplateRegionPercent,
+                                                             const s32 numPyramidLevels,
+                                                             const Transformations::TransformType transformType,
+                                                             MemoryStack &memory)
+      : baseImageWidth(templateImage.get_size(1))
+      , baseImageHeight(templateImage.get_size(0))
+      , maxSupportedTransformType(maxSupportedTransformType)
+      , numPyramidLevels(numPyramidLevels)
+      , templateImageHeight(templateImage.get_size(0))
+      , templateImageWidth(templateImage.get_size(1))
+      , isValid(false)
       {
         BeginBenchmark("LucasKanadeTracker_Generic");
 
@@ -91,15 +96,15 @@ namespace Anki
         AnkiConditionalErrorAndReturn(transformType <= maxSupportedTransformType,
           "LucasKanadeTracker_Generic::LucasKanadeTracker_Generic", "Transform type %d not supported", transformType);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImageScaleS32 = baseImageWidth / templateImage.get_size(1);
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
         initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
-        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
-          "LucasKanadeTracker_Generic::LucasKanadeTracker_Generic", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == baseImageWidth,
+          "LucasKanadeTracker_Generic::LucasKanadeTracker_Generic", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         templateRegion = templateQuad.ComputeBoundingRectangle<f32>().ComputeScaledRectangle<f32>(scaleTemplateRegionPercent);
-
+ 
         templateRegion.left /= initialImageScaleF32;
         templateRegion.right /= initialImageScaleF32;
         templateRegion.top /= initialImageScaleF32;

@@ -211,7 +211,7 @@ namespace Anki {
   
   RotationVector3d::RotationVector3d(void)
   : _angle(0.f)
-  , _axis(X_AXIS_3D)
+  , _axis(X_AXIS_3D())
   {
     
   }
@@ -233,7 +233,7 @@ namespace Anki {
     if(_angle == Radians(0)) {
       // If the specified vector was all zero, then the axis is ambiguous,
       // so default to the X axis
-      _axis = X_AXIS_3D;
+      _axis = X_AXIS_3D();
     }
   }
   
@@ -260,6 +260,8 @@ namespace Anki {
     const f32 halfAngle = angle.ToFloat() * 0.5f;
     const f32 q1 = std::cos(halfAngle);
     
+    assert(NEAR(axis.LengthSq(), 1.f, 1e-5));
+    
     const f32 sinHalfAngle = std::sin(halfAngle);
     const f32 q2 = sinHalfAngle * axis[0];
     const f32 q3 = sinHalfAngle * axis[1];
@@ -283,6 +285,21 @@ namespace Anki {
   const Radians Rotation3d::GetAngle() const
   {
     return 2.f*std::acos(_q[0]);
+  }
+  
+  Radians Rotation3d::GetAngleDiffFrom(const Rotation3d& otherRotation) const
+  {
+    const UnitQuaternion<float>& q_this = this->GetQuaternion();
+    const UnitQuaternion<float>& q_other = otherRotation.GetQuaternion();
+    
+    const f32 innerProd = std::min(1.f, std::max(-1.f, (q_this.w()*q_other.w() +
+                                                        q_this.x()*q_other.x() +
+                                                        q_this.y()*q_other.y() +
+                                                        q_this.z()*q_other.z())));
+    
+    Radians angleDiff(std::acos(2.f * innerProd*innerProd - 1.f));
+    
+    return angleDiff;
   }
   
   Radians Rotation3d::GetAngleAroundXaxis() const

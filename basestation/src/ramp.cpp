@@ -46,10 +46,10 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _preAscentPose(0, Z_AXIS_3D,
+    : _preAscentPose(0, Z_AXIS_3D(),
                      {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())
-    , _preDescentPose(M_PI, Z_AXIS_3D,
+    , _preDescentPose(M_PI, Z_AXIS_3D(),
                       {{SlopeLength + PlatformLength + PreDescentDistance, 0, Height}},
                       &GetPose())
     , _vizHandle(VizManager::INVALID_HANDLE)
@@ -58,10 +58,10 @@ namespace Anki {
       // TODO: Support multiple ramp types
       
       // Five markers:
-      Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D,
+      Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D(),
                        {{Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
                         0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)}});
-      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D, {{0,0,0}});
+      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D(), {{0,0,0}});
       _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::TopMarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
@@ -72,22 +72,22 @@ namespace Anki {
       
       const f32 SideMarkerHeight = 16.f;
       
-      const Pose3d backPose(M_PI_2, Z_AXIS_3D, {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
+      const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
       AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::SideMarkerSize);
       
       const Vec3f PreDockPoseOffset(0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
       
-      const Pose3d rightPose(0.f, Z_AXIS_3D, {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
+      const Pose3d rightPose(0.f, Z_AXIS_3D(), {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
       
-      const Pose3d leftPose(M_PI, Z_AXIS_3D, {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
+      const Pose3d leftPose(M_PI, Z_AXIS_3D(), {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
       _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
       
-      Pose3d topPose(-M_PI_2, Y_AXIS_3D,
+      Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
                      {{Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height}});
-      topPose *= Pose3d(M_PI_2, Z_AXIS_3D, {{0,0,0}});
+      topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {{0,0,0}});
       _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::TopMarkerSize);
       
       
@@ -124,7 +124,7 @@ namespace Anki {
     
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {
-      Pose3d pose(0, Z_AXIS_3D,
+      Pose3d pose(0, Z_AXIS_3D(),
                   {{Ramp::SlopeLength + wheelBase, 0, Ramp::Height}},
                   &GetPose());
       
@@ -136,7 +136,7 @@ namespace Anki {
     
     Pose3d Ramp::GetPostDescentPose(const float wheelBase) const
     {
-      Pose3d pose(M_PI, Z_AXIS_3D,
+      Pose3d pose(M_PI, Z_AXIS_3D(),
                   {{-wheelBase, 0, 0.f}},
                   &GetPose());
       
@@ -187,7 +187,7 @@ namespace Anki {
       
       if(withCode == Vision::Marker::ANY_CODE || withCode == _leftMarker->GetCode()) {
         const f32 distanceForThisFace = _leftMarker->GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose(-Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+        if(GetPreDockPose(-Y_AXIS_3D(), distanceForThisFace, preDockPose) == true) {
           preDockPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "LeftPreDockPose");
           poseMarkerPairs.emplace_back(preDockPose, *_leftMarker);
         }
@@ -195,7 +195,7 @@ namespace Anki {
       
       if(withCode == Vision::Marker::ANY_CODE || withCode == _rightMarker->GetCode()) {
         const f32 distanceForThisFace = _rightMarker->GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose( Y_AXIS_3D, distanceForThisFace, preDockPose) == true) {
+        if(GetPreDockPose( Y_AXIS_3D(), distanceForThisFace, preDockPose) == true) {
           preDockPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "RightPreDockPose");
           poseMarkerPairs.emplace_back(preDockPose, *_rightMarker);
         }

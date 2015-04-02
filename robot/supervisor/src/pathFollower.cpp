@@ -151,11 +151,13 @@ namespace Anki
       
       
       bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
-                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
+                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                       bool useShortestDir)
       {
         TrimPath();
         return path_.AppendPointTurn(matID, x, y, targetAngle,
-                                     targetRotSpeed, rotAccel, rotDecel);
+                                     targetRotSpeed, rotAccel, rotDecel,
+                                     useShortestDir);
       }
       
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
@@ -363,7 +365,8 @@ namespace Anki
           SteeringController::ExecutePointTurn(currSeg->targetAngle,
                                                path_[currPathSegment_].GetTargetSpeed(),
                                                path_[currPathSegment_].GetAccel(),
-                                               path_[currPathSegment_].GetDecel());
+                                               path_[currPathSegment_].GetDecel(),
+                                               currSeg->useShortestDir);
           pointTurnStarted_ = true;
 
         } else {
@@ -560,9 +563,9 @@ namespace Anki
           
           PRINT("PathFollower.DriveStraight.VPGRetry: Trying simple path with instantaneous accel");
 
-          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01 * duration_sec,
-                                              dist_mm, 0.01 * duration_sec,
-                                              10000, 10000,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, currSpeed, 0.01f * duration_sec,
+                                              dist_mm, 0.01f * duration_sec,
+                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT) ) {
           
             PRINT("PathFollower.DriveStraight.VPGFail");
@@ -630,9 +633,9 @@ namespace Anki
           
           PRINT("PathFollower.DriveArc.VPGRetry: Trying simple path with instantaneous accel");
           
-          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01 * duration_sec,
-                                              sweep_rad, 0.01 * duration_sec,
-                                              100, 100,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, 0.01f * duration_sec,
+                                              sweep_rad, 0.01f * duration_sec,
+                                              100.f, 100.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT) ) {
             
             PRINT("PathFollower.DriveArc.VPGFail");
@@ -699,12 +702,12 @@ namespace Anki
         
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
                                             sweep_rad, acc_end_frac * duration_sec,
-                                            10000, 10000,  // TODO: maxVel, maxAccel
+                                            10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                             duration_sec, CONTROL_DT)) {
           
-          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01 * duration_sec,
-                                              sweep_rad, 0.01 * duration_sec,
-                                              10000, 10000,  // TODO: maxVel, maxAccel
+          if (!vpg.StartProfile_fixedDuration(0, 0, 0.01f * duration_sec,
+                                              sweep_rad, 0.01f * duration_sec,
+                                              10000.f, 10000.f,  // TODO: maxVel, maxAccel
                                               duration_sec, CONTROL_DT)) {
 
             PRINT("WARN: DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version \n", sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
@@ -732,9 +735,9 @@ namespace Anki
         
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, false);
           
         StartPathTraversal();
         

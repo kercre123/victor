@@ -124,6 +124,15 @@ namespace Anki {
 
     //const f32 HEAD_CAM_POSITION[3]   = {8.8f, 0.f, -6.f}; // lens face relative to neck joint
     const f32 HEAD_CAM_POSITION[3]   = {4.8f, 0.f, -6.f}; // camera/PCB interface relative to neck joint
+    
+    
+    // Camera pose within head correction for physical robot
+    // TODO: The headCamPose is eventually to be calibrated
+    //       if it can't be manufactured to sufficient tolerance.
+    const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(1);
+    const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
+
 
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
@@ -164,38 +173,15 @@ namespace Anki {
     
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
-#ifdef SIMULATOR
-    // Note that we are hard-coding an empircally-computed/calibrated focal
-    // length, even for the simulated camera! So if we change the simulated FOV
-    // of the camera, we need to recalibrate this focal length. This is because,
-    // for completely unknown / not-understood reasons, computing the focal
-    // length from fov_hor directly does not give us an accurate value for
-    // the Webots camera.
-    const f32 HEAD_CAM_CALIB_FOV          = 1.22f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH = 231.f;
+#ifndef SIMULATOR
+    
+    // Calibration data for real robot(s):
+    // NOTE that simulated camera calibration is computed dynamically from the FOV.
 
-#else // Real robot:
-
-    // TODO: Get these from calibration somehow
+#   ifdef COZMO_TREADS
+    // From Calibration on Mar. 4, 2015, Cozmo Proto 3, #2,  Wide lens with QVGA crop
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-
-    /*
-    // From Calibration on June 3, 2014
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 333.6684040730803f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 335.2799828009748f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 153.5278504171585f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 125.0506182422117f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      -0.130117292078901f,
-      0.043087399840388f,
-      -0.000994462251660f,
-      -0.000805198826767f
-    };
-     */
-
-#ifdef COZMO_TREADS
-    // From Calibration on Mar. 4, 2015, Cozmo Proto 3, #2,  Wide lens with QVGA crop
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 374.98139f;
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 371.84817f;
     const f32 HEAD_CAM_CALIB_CENTER_X       = 155.83712f;
@@ -206,8 +192,10 @@ namespace Anki {
       -0.00074f,
       0.00046f
     };
-#else
+#   else
     // From Calibration on Feb. 25, 2015, Cozmo Proto 3, #2,  "Porthole" lens
+    const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 240;
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 231.79353f;
     const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 231.63924f;
     const f32 HEAD_CAM_CALIB_CENTER_X       = 157.97552f;
@@ -218,11 +206,9 @@ namespace Anki {
       -0.00063f,
       -0.00083f
     };
-#endif
+#   endif
 
-
-
-#endif // #ifdef SIMULATOR
+#endif // #ifndef SIMULATOR
 
 
     /***************************************************************************
@@ -357,14 +343,14 @@ namespace Anki {
     // A common distance threshold for pose equality comparison.
     // If two poses are this close to each other, they are considered to be equal
     // (at least in terms of translation).
-    const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 5.0f;
+    const f32 DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM = 10.f;
 
     // A common angle threshold for pose equality comparison
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
     // Default distance from marker for predock pose
-    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 60.f;
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 100.f;
 
     // Max speed the robot can travel when in assisted RC mode
     const f32 MAX_ASSISTED_RC_SPEED = 50.f;

@@ -68,7 +68,7 @@ void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
 {
   static_assert(N != 2, "Must use ImportQuad2D for 2d");
 
-  Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D ) );
+  Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D() ) );
 
   // For some reason, these need to be backwards for things to work...
 

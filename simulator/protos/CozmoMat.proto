@@ -2,6 +2,9 @@
 
 PROTO CozmoMat [
   field SFColor Color 1.0000 1.0000 1.0000
+  field SFBool showMarkers TRUE
+  field SFFloat xSize 1.0
+  field SFFloat ySize 1.0
 ]
 {
 Solid {
@@ -15,9 +18,12 @@ Solid {
          }
       }
       geometry Box {
-        size 1 1 0.005
+        size %{=fields.xSize}% %{=fields.ySize}% 0.005
       }
     }
+    
+%{ if fields.showMarkers then }%
+
     Solid {
 	    translation -0.2000 -0.2000 0.0025
 	    rotation 0 0 1 0.000000
@@ -258,47 +264,62 @@ Solid {
 		  }
 	    ]
     }
+    
+%{ end }% # hide markers or not
+
+    
 DEF WALL_1 Solid {
-  translation 0.51 0 0.025
+  translation %{=fields.xSize/2+.01}% 0 0.025
   children [
-    DEF WALL_SHAPE Shape {
+    DEF WALL_SHAPE_Y Shape {
       appearance Appearance {
         material Material {
           diffuseColor 0.12549 0.368627 0.729412
         }
       }
       geometry Box {
-        size 0.02 1 0.05
+        size 0.02 %{=fields.ySize}% 0.05
       }
     }
   ]
-  boundingObject USE WALL_SHAPE
+  boundingObject USE WALL_SHAPE_Y
 }
 
+
+
 DEF WALL_2 Solid {
-  translation -0.51 0 0.025
+  translation %{=-(fields.xSize/2+.01)}% 0 0.025
   children [
-    USE WALL_SHAPE
+    USE WALL_SHAPE_Y
   ]
-  boundingObject USE WALL_SHAPE
+  boundingObject USE WALL_SHAPE_Y
 }
 
 DEF WALL_3 Solid {
-  translation 0 -0.51 0.025
+  translation 0 %{=-(fields.ySize/2+.01)}% 0.025
   rotation 0 0 1 1.5708
   children [
-    USE WALL_SHAPE
+    DEF WALL_SHAPE_X Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.12549 0.368627 0.729412
+        }
+      }
+      geometry Box {
+        size 0.02 %{=fields.xSize}% 0.05
+      }
+    }
   ]
-  boundingObject USE WALL_SHAPE
+  boundingObject USE WALL_SHAPE_X
 }
 
 DEF WALL_4 Solid {
-  translation 0 0.51 0.025
+  translation 0 %{=fields.ySize/2+.01}% 0.025
   rotation 0 0 1 1.5708
   children [
-    USE WALL_SHAPE
+    USE WALL_SHAPE_X
   ]
-  boundingObject USE WALL_SHAPE
+  boundingObject USE WALL_SHAPE_X
 }
 
   ] # Solid children

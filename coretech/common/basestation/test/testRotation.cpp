@@ -132,9 +132,9 @@ GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
     for(auto sign : signs) {
       const Radians curAngle = DEG_TO_RAD(sign*angle);
       
-      RotationMatrix3d Rx(curAngle, X_AXIS_3D);
-      RotationMatrix3d Ry(curAngle, Y_AXIS_3D);
-      RotationMatrix3d Rz(curAngle, Z_AXIS_3D);
+      RotationMatrix3d Rx(curAngle, X_AXIS_3D());
+      RotationMatrix3d Ry(curAngle, Y_AXIS_3D());
+      RotationMatrix3d Rz(curAngle, Z_AXIS_3D());
       
       EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
       //EXPECT_NEAR(Rx.GetAngleAroundYaxis().ToFloat(), 0.f, TOLERANCE);
@@ -169,9 +169,9 @@ GTEST_TEST(TestRotation, ExtractAnglesFromRotation3d)
     for(auto sign : signs) {
       const Radians curAngle = DEG_TO_RAD(sign*angle);
       
-      Rotation3d Rx(curAngle, X_AXIS_3D);
-      Rotation3d Ry(curAngle, Y_AXIS_3D);
-      Rotation3d Rz(curAngle, Z_AXIS_3D);
+      Rotation3d Rx(curAngle, X_AXIS_3D());
+      Rotation3d Ry(curAngle, Y_AXIS_3D());
+      Rotation3d Rz(curAngle, Z_AXIS_3D());
       
       EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
       
@@ -206,9 +206,9 @@ GTEST_TEST(TestRotation, EulerAngles)
               const Radians curYangle = DEG_TO_RAD(Ysign*Yangle);
               const Radians curZangle = DEG_TO_RAD(Zsign*Zangle);
               
-              RotationMatrix3d Rx(curXangle, X_AXIS_3D);
-              RotationMatrix3d Ry(curYangle, Y_AXIS_3D);
-              RotationMatrix3d Rz(curZangle, Z_AXIS_3D);
+              RotationMatrix3d Rx(curXangle, X_AXIS_3D());
+              RotationMatrix3d Ry(curYangle, Y_AXIS_3D());
+              RotationMatrix3d Rz(curZangle, Z_AXIS_3D());
 
               EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curXangle).ToFloat(), 0.f, TOLERANCE);
               EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curYangle).ToFloat(), 0.f, TOLERANCE);
@@ -336,7 +336,7 @@ GTEST_TEST(TestPose, IsSameAs)
   // P3 is P1 with a slight perturbation
   Pose3d P2(P1);
   
-  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D, {1.f, 1.f, 1.f});
+  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D(), {1.f, 1.f, 1.f});
   P2.PreComposeWith(T_perturb);
   
   // IsSameAs should return true

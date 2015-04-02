@@ -306,12 +306,17 @@ namespace Anki
         }
 #else
 
-        P3P::computePose(templateQuad,
-          template3d[0], template3d[1], template3d[2], template3d[3],
-          this->focalLength_x, this->focalLength_y,
-          this->camCenter_x,   this->camCenter_y,
-          R, this->params6DoF.translation);
+        Result lastResult = P3P::computePose(templateQuad,
+                                             template3d[0], template3d[1],
+                                             template3d[2], template3d[3],
+                                             this->focalLength_x, this->focalLength_y,
+                                             this->camCenter_x,   this->camCenter_y,
+                                             R, this->params6DoF.translation);
+        
+        // NOTE: isValid will still be false in this case.
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK, "LKTracker_SampledPlanar6dof", "Failed to compute initial pose constructing tracker.\n");
 
+        
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
 
         /*
@@ -375,8 +380,6 @@ namespace Anki
 
         // TODO: Pass this in as a parameter/argument
         const s32 verifyGridSize = 16;
-
-        Result lastResult;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
@@ -1355,11 +1358,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
 
-        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == baseImageWidth,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance_distance, verify_converged, scratch);
@@ -1427,7 +1430,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1661,7 +1664,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1976,7 +1979,7 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 

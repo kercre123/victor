@@ -51,12 +51,14 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
 
       Result SetGoal(const Pose3d& pose);
+      Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
+      
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
-      f32      _goalDistanceThreshold;
+      Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
       bool     _startedTraversingPath;
@@ -88,6 +90,7 @@ namespace Anki {
       
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
+      bool                       _alreadyAtGoal;
       Radians                    _finalHeadAngle;
       
     }; // DriveToObjectAction
@@ -153,7 +156,7 @@ namespace Anki {
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
-      void SetMaxPreActionPoseDistance(f32 maxDistance);
+      void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
     protected:
       
@@ -180,7 +183,7 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
-      f32                         _maxPreActionPoseDistance;
+      Radians                     _preActionPoseAngleTolerance;
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
@@ -323,7 +326,7 @@ namespace Anki {
     protected:
       
       // Update will just call the chosenAction's implementation
-      virtual ActionResult Update(Robot& robot) override;
+      virtual ActionResult UpdateInternal(Robot& robot) override;
       virtual void Reset() override;
       
       ObjectID       _objectID;

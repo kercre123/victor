@@ -76,20 +76,20 @@ namespace Anki {
         return;
       }
             
-      Pose3d preCrossingPoseLeft(0, Z_AXIS_3D, {-GetSize().x()*.5f-30.f, 0.f, 0.f}, &GetPose());
-      Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D, {GetSize().x()*.5f+30.f, 0.f, 0.f}, &GetPose());
+      Pose3d preCrossingPoseLeft(0, Z_AXIS_3D(), {-GetSize().x()*.5f-30.f, 0.f, 0.f}, &GetPose());
+      Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D(), {GetSize().x()*.5f+30.f, 0.f, 0.f}, &GetPose());
       
-      //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D, {-_size.x()*.5f+markerSize, 0.f, _size.z()});
-      //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
-      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D, {-GetSize().x()*.5f+markerSize, 0.f, 0.f});
+      //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D(), {-_size.x()*.5f+markerSize, 0.f, _size.z()});
+      //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
+      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D(), {-GetSize().x()*.5f+markerSize, 0.f, 0.f});
       
-      //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D, { _size.x()*.5f-markerSize, 0.f, _size.z()});
-      //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
-      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D, { GetSize().x()*.5f-markerSize, 0.f, 0.f});
+      //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D(), { _size.x()*.5f-markerSize, 0.f, _size.z()});
+      //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
+      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D(), { GetSize().x()*.5f-markerSize, 0.f, 0.f});
       
       const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
       const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
-      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f}), markerSize);
+      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f}), markerSize);
       
       CORETECH_ASSERT(leftMarker != nullptr);
       CORETECH_ASSERT(rightMarker != nullptr);

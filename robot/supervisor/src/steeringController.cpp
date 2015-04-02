@@ -388,7 +388,7 @@ namespace Anki {
       
     }
     
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
       currSteerMode_ = SM_POINT_TURN;
       
@@ -405,15 +405,25 @@ namespace Anki {
       
       
       f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
-      
-      // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
-      // which determines the turning direction.
       f32 destAngle = targetRad_.ToFloat();
-      if (currAngle > destAngle && maxAngularVel_ > 0) {
-        destAngle += 2*PI_F;
-      } else if (currAngle < destAngle && maxAngularVel_ < 0) {
-        destAngle -= 2*PI_F;
+      
+      if (useShortestDir) {
+        // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
+        f32 angDiff = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
+        maxAngularVel_ = ABS(maxAngularVel) * (angDiff > 0 ? 1 : -1);
+        destAngle = currAngle + angDiff;
+      } else {
+        // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
+        // which determines the turning direction.
+        if (currAngle > destAngle && maxAngularVel_ > 0) {
+          destAngle += 2*PI_F;
+        } else if (currAngle < destAngle && maxAngularVel_ < 0) {
+          destAngle -= 2*PI_F;
+        }
       }
+      
+      //PRINT("PT: currAngle = %f, destAngle = %f, maxAngularVel = %f\n", currAngle, destAngle, maxAngularVel_);
+
       
       // Check that the maxAngularVel is greater than the terminal speed
       // If not, make it at least that big.
@@ -438,7 +448,8 @@ namespace Anki {
     void ManagePointTurn()
     {
       if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
-        RunLineFollowControllerNL(0,0);
+        f32 headingError = SpeedController::GetControllerCommandedVehicleSpeed() < 0 ? PI_F : 0;
+        RunLineFollowControllerNL(0,headingError);
         return;
       }
 

@@ -19,6 +19,9 @@
 #include "opencv2/highgui/highgui.hpp"
 #endif
 
+// Uncomment this to test cropping the 4:3 image to 16:9 format by simply
+// adding block bars to the top and bottom 12.5% of the image
+//#define TEST_16_9_ASPECT_RATIO
 
 namespace Anki {
 namespace Vision {
@@ -111,6 +114,32 @@ namespace Vision {
     
   } // GetConnectedComponents()
   
+  
+  void Image::Resize(f32 scaleFactor)
+  {
+    cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor, CV_INTER_LINEAR);
+  }
+  
+  void Image::Resize(s32 desiredRows, s32 desiredCols)
+  {
+    if(desiredRows != GetNumRows() || desiredCols != GetNumCols()) {
+      const cv::Size desiredSize(desiredCols, desiredRows);
+      cv::resize(this->get_CvMat_(), this->get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  void Image::Resize(Image& resizedImage) const
+  {
+    if(resizedImage.IsEmpty()) {
+      printf("Image::Resize - Output image should already be the desired size.\n");
+    } else {
+      const cv::Size desiredSize(resizedImage.GetNumCols(), resizedImage.GetNumRows());
+      cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0, CV_INTER_LINEAR);
+    }
+  }
+  
+  
+  
 #if 0
 #pragma mark --- ImageRGBA ---
 #endif
@@ -171,6 +200,7 @@ namespace Vision {
   , _imgWidth(0)
   , _imgHeight(0)
   , _expectedChunkId(0)
+  , _isImgValid(false)
   {
     
   }
@@ -185,8 +215,6 @@ namespace Vision {
       return false;
     }
     
-    bool isImgValid = false;
-    
     // If msgID has changed, then start over.
     if (newImageId != _imgID) {
       _imgID = newImageId;
@@ -194,7 +222,7 @@ namespace Vision {
       _imgWidth  = ncols;
       _imgHeight = nrows;
       _imgData.resize(_imgWidth*_imgHeight*3);
-      isImgValid = chunkId == 0;
+      _isImgValid = chunkId == 0;
       _expectedChunkId = 0;
     }
     
@@ -202,21 +230,20 @@ namespace Vision {
     if (chunkId != _expectedChunkId) {
       PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
                        "Expected chunk %d, got %d\n", _expectedChunkId, chunkId);
-      isImgValid = false;
-    } else {
-      isImgValid = true;
+      _isImgValid = false;
     }
+    
     _expectedChunkId = chunkId + 1;
     
     // We've received all data when the msg chunkSize is less than the max
     const bool isLastChunk =  chunkId == totalChunkCount-1;
     
-    if (!isImgValid) {
+    if (!_isImgValid) {
       if (isLastChunk) {
         PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
                          "Received last chunk of invalidated image\n");
       }
-      return RESULT_FAIL;
+      return false;
     }
     
     // Msgs are guaranteed to be received in order (with TCP) so just append data to array
@@ -259,6 +286,13 @@ namespace Vision {
       if(_img.rows != _imgHeight || _img.cols != _imgWidth) {
         printf("***ERROR - ImageDeChunker.AppendChunk: expected %dx%d image after decoding, got %dx%d.\n", _imgWidth, _imgHeight, _img.cols, _img.rows);
       }
+      
+#     ifdef TEST_16_9_ASPECT_RATIO
+      // TEST 16:9 format by blacking out 25% of the rows (12.5% at top and bottom)
+      _img(cv::Range(0,_img.rows*.125),cv::Range::all()).setTo(0);
+      _img(cv::Range(0.875*_img.rows,_img.rows),cv::Range::all()).setTo(0);
+#     endif
+      
     } // if(isLastChunk)
     
     return isLastChunk;

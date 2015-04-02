@@ -15,35 +15,6 @@ namespace Anki {
   namespace Cozmo {
   namespace WheelController {
     
-    // Controller gains for generating wheel power commands.
-    // Approximating power-speed model with piecewise function with 2 linear segments.
-    // One slope from a power of 0 to a transition power, the other from the transition power to 1.0.
-    //
-    // Piecewise trendline:
-    //    Two pieces: 1) from 0 power at 0 speed to TRANSITION_POWER at TRANSITION_SPEED (slope = LOW_OPEN_LOOP_GAIN)
-    //                2) from TRANSITION_POWER at TRANSITION_SPEED to 1.0 power  with slope of HIGH_OPEN_LOOP_GAIN
-    
-    // Point at which open loop speed-power trendlines meet
-    const f32 TRANSITION_SPEED = 25.0f;  // mm/s
-    const f32 TRANSITION_POWER = 0.30f;  // wheel motor power
-    
-    // Slope of power:speed in upper line.
-    // Obtained from plotting average open loop response of both wheels.
-    const f32 HIGH_OPEN_LOOP_GAIN = (1.0f - TRANSITION_POWER) / (MAX_WHEEL_SPEED_MMPS - TRANSITION_SPEED);
-    
-    // open loop power = speed * HIGH_OPEN_LOOP_GAIN + HIGH_OPEN_LOOP_OFFSET
-    const f32 HIGH_OPEN_LOOP_OFFSET = TRANSITION_POWER - (TRANSITION_SPEED * HIGH_OPEN_LOOP_GAIN);
-    
-    // Slope of power:speed in lower line
-    const f32 LOW_OPEN_LOOP_GAIN = TRANSITION_POWER / TRANSITION_SPEED;
-    
-    // Controller gains
-    const float DEFAULT_WHEEL_KP = 0.0005f;
-    const float DEFAULT_WHEEL_KI = 0.00005f;
-    const float DEFAULT_WHEEL_KD = 0.0f;
-    const float DEFAULT_WHEEL_LOW_KP = 0.005f;
-    const float DEFAULT_WHEEL_LOW_KI = 0.0001f;
-    
     const float WHEEL_SPEED_COMMAND_STOPPED_MM_S = 2.0;
     
     //If we drive slower than this, the vehicle is stopped
@@ -53,8 +24,9 @@ namespace Anki {
     const float WHEEL_DEAD_BAND_MM_S = 2; // TODO: float or int?
     
     
-    //Set the gains for the PID controllers (same gains for left and right wheel)
-    void SetGains(float kp, float ki, float kd);
+    //Set the gains for the PI controllers (same gains for left and right wheel)
+    void SetGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
+                  const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
 
     // Enable/Disable the wheel controller.
     // Mostly only useful for test mode or special simluation modes.

@@ -882,7 +882,8 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
                                   env.GetTheta_c(endStateOffset.theta),
                                   rotSpeed,
                                   LATTICE_PLANNER_ROT_ACCEL,
-                                  LATTICE_PLANNER_ROT_DECEL);
+                                  LATTICE_PLANNER_ROT_DECEL,
+                                  true);
   }
 
   assert(env.GetNumActions() > id);
@@ -924,7 +925,7 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
     PathSegment segment(seg);
     segment.OffsetStart(curr.x_mm, curr.y_mm);
 
-    float xx, yy;
+    float xx, yy, aa;
     segment.GetStartPoint(xx,yy);
     // printf("start: (%f, %f)\n", xx, yy);
 
@@ -986,7 +987,7 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
       added = true;
     }
 
-    segment.GetEndPoint(xx,yy);
+    segment.GetEndPose(xx,yy,aa);
     // printf("end: (%f, %f)\n", xx, yy);
   }
 

@@ -23,8 +23,8 @@ static const u16 OV2686_REG_CHIP_ID_H = 0x300C; static const u8 OV2686_CHIP_ID_H
 
 /*** Camera format definitions */
 
-#define OV2686_WIDTH 1600
-#define OV2686_HEIGHT 1200
+#define OV2686_WIDTH 800
+#define OV2686_HEIGHT 600
 
 static struct v4l2_mbus_framefmt FORMATS[] = {
   {
