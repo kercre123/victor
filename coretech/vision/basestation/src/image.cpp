@@ -277,7 +277,13 @@ namespace Vision {
           // Raw image bytes is the same as total received bytes.
           _img = cv::Mat(_imgHeight, _imgWidth, CV_8UC3, &(_imgData[0]));
           break;
-          
+        case IE_JPEG_CHW:
+        {
+          _img = cv::imdecode(_imgData, CV_LOAD_IMAGE_COLOR);
+          cvtColor(_img, _img, CV_BGR2RGB);
+          cv::copyMakeBorder(_img, _img, 0, 0, 160, 160, cv::BORDER_CONSTANT, 0);          
+          break;
+        }
         default:
           printf("***ERRROR - ProcessVizImageChunkMessage: Encoding %d not yet supported for decoding image chunks.\n", encoding);
           return false;
