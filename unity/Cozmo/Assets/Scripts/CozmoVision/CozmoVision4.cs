@@ -150,7 +150,6 @@ public class CozmoVision4 : CozmoVision {
 		if(!interactPressed) {
 
 			if(interactLastFrame) { // && robot.selectedObject > -1
-				TargetSearchStopSound();
 				DoReleaseAction();
 			}
 
@@ -165,8 +164,6 @@ public class CozmoVision4 : CozmoVision {
 			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 			return;
 		}
-
-		if(!interactLastFrame) TargetSearchStartSound();
 
 		//Dings();
 
@@ -217,7 +214,7 @@ public class CozmoVision4 : CozmoVision {
 	protected override void OnDisable() {
 		base.OnDisable();
 
-		if(audio.loop) StopLoopingTargetSound();
+		StopLoopingTargetSound();
 	}
 
 	//Vector2 centerViz = new Vector2(160f, 120f);
@@ -292,6 +289,10 @@ public class CozmoVision4 : CozmoVision {
 
 		if(!val) {
 			actionSlider.slider.value = 0f;
+			TargetSearchStopSound();
+		}
+		else {
+			TargetSearchStartSound();
 		}
 
 		//Debug.Log("ToggleInteract("+val+")");

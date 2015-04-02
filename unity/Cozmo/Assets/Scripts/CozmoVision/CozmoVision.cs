@@ -130,6 +130,7 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
 
+	[SerializeField] protected AudioSource loopAudioSource;
 	[SerializeField] protected AudioClip targetLockLoop;
 	[SerializeField] protected AudioClip targetSearchStart;
 	[SerializeField] protected AudioClip targetSearchStop;
@@ -416,6 +417,7 @@ public class CozmoVision : MonoBehaviour
 		{
 			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
 			{
+				audio.volume = 1f;
 				audio.PlayOneShot( newObjectObservedSound, 1f );
 				
 				dingTimes[0] = Time.time;
@@ -434,22 +436,22 @@ public class CozmoVision : MonoBehaviour
 
 	protected void StopLoopingTargetSound()
 	{
-
-		audio.loop = false;
-		audio.Stop();
-		audio.volume = 1f;
-
+		loopAudioSource.Stop();
 		wasLooping = false;
 	}
 
 	protected void TargetSearchStartSound()
 	{
+		audio.volume = 0.5f;
 		audio.PlayOneShot( targetSearchStart, 1f );
+		//Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
 	}
 
 	protected void TargetSearchStopSound()
 	{
+		audio.volume = 0.5f;
 		audio.PlayOneShot( targetSearchStop, 1f );
+		//Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
 	}
 
 	protected void RefreshLoopingTargetSound( bool on )
@@ -464,47 +466,49 @@ public class CozmoVision : MonoBehaviour
 
 			if(!wasLooping) {
 				fromVol = 0f;//loopTimer < 1f ? audio.volume : 0f;
-				audio.loop = true;
-				audio.clip = targetLockLoop;
-				audio.Play();
+				loopAudioSource.loop = true;
+				loopAudioSource.clip = targetLockLoop;
+				loopAudioSource.Play();
 			}
 
-			audio.volume = Mathf.Lerp(fromVol, maxVol, loopTimer);
+			loopAudioSource.volume = Mathf.Lerp(fromVol, maxVol, loopTimer);
 		}
 		else if(loopTimer > 1f) {
 			if(wasLooping) {
-				audio.loop = false;
-				audio.Stop();
+				loopAudioSource.loop = false;
+				loopAudioSource.Stop();
 			}
 		}
 		else {
-			if(wasLooping) fromVol = audio.volume;
-			audio.volume = Mathf.Lerp(fromVol, 0f, loopTimer);
+			if(wasLooping) fromVol = loopAudioSource.volume;
+			loopAudioSource.volume = Mathf.Lerp(fromVol, 0f, loopTimer);
 		}
 
+		//Debug.Log("RefreshLoopingTargetSound("+on+") audio.volume("+audio.volume+") loopTimer("+loopTimer+")");
 		wasLooping = on;
 	}
 
 	public void ActionButtonClick()
 	{
-		if(audio.loop) StopLoopingTargetSound();
-
+		audio.volume = 1f;
 		audio.PlayOneShot( actionButtonSound, 1f );
 	}
 
 	public void CancelButtonClick()
 	{
-		if(audio.loop) StopLoopingTargetSound();
+		audio.volume = 1f;
 		audio.PlayOneShot( cancelButtonSound, 1f );
 	}
 
 	public void SlideInSound()
 	{
+		audio.volume = 1f;
 		audio.PlayOneShot( slideInSound, 1f );
 	}
 
 	public void SlideOutSound()
 	{
+		audio.volume = 1f;
 		audio.PlayOneShot( slideOutSound, 1f );
 	}
 
