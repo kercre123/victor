@@ -29,6 +29,7 @@ namespace Anki {
                               "Refusing to add a null action pointer to group.\n");
         } else {
           _actions.emplace_back(false, action);
+          _actions.back().second->EmitSignalWhenComplete(false); // Don't signal individual completions
           _name += action->GetName();
           _name += "+";
         }

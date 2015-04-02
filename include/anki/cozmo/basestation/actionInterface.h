@@ -70,6 +70,12 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
+      // Default is to signal when complete, but use this to disable.
+      // (For example, compound actions use this to prevent constituent actions
+      //  from signaling individually, and instead only signally once for the
+      //  entire compound action)
+      void EmitSignalWhenComplete(bool enable) { _emitCompletionSignal = enable; }
+      
     protected:
       
       virtual ActionResult UpdateInternal(Robot& robot) = 0;
@@ -84,6 +90,7 @@ namespace Anki {
       
       std::string   _statusMsg;
       
+      bool _emitCompletionSignal;
       
 #     if USE_ACTION_CALLBACKS
     public:

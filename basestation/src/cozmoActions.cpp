@@ -99,6 +99,16 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result DriveToPoseAction::SetGoal(const Pose3d& pose,
+                                      const Point3f& distThreshold,
+                                      const Radians& angleThreshold)
+    {
+      _goalDistanceThreshold = distThreshold;
+      _goalAngleThreshold = angleThreshold;
+      
+      return SetGoal(pose);
+    }
+    
     const std::string& DriveToPoseAction::GetName() const
     {
       static const std::string name("DriveToPoseAction");
@@ -213,7 +223,9 @@ namespace Anki {
           Vec3f Tdiff;
           
           // HACK: Loosen z threshold bigtime:
-          const Point3f distanceThreshold(_goalDistanceThreshold, _goalDistanceThreshold, robot.GetHeight());
+          const Point3f distanceThreshold(_goalDistanceThreshold.x(),
+                                          _goalDistanceThreshold.y(),
+                                          robot.GetHeight());
           
           if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
           {
@@ -359,7 +371,9 @@ namespace Anki {
           else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
             result = FAILURE_ABORT;
           } else {
-            SetGoal(possiblePoses[selectedIndex]);
+            //SetGoal(possiblePoses[selectedIndex]);
+            SetGoal(possiblePoses[selectedIndex], preActionPoseDistThresh,
+                    DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
             
             // Record where we want the head to end up, but don't actually move it
             // there yet. We'll let the path follower use whatever head angle it
@@ -579,16 +593,7 @@ namespace Anki {
         
         return FAILURE_ABORT;
       }
-      
-      // Make sure we can are "currently" still seeing the object
-      if(dockObject->GetLastObservedTime() < (robot.GetLastMsgTimestamp()-500)) {
-        // We haven't seen the object in the last half second
-        PRINT_NAMED_ERROR("IDockAction.Init.NotSeeingObject",
-                          "Last obeserved object %d too long ago. Should currently be seeing it!\n",
-                          _dockObjectID.GetValue());
-        return FAILURE_ABORT;
-      }
-           
+                 
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
@@ -604,7 +609,8 @@ namespace Anki {
       const Point2f currentXY(robot.GetPose().GetTranslation().x(),
                               robot.GetPose().GetTranslation().y());
       
-      float closestDistSq = std::numeric_limits<float>::max();
+      //float closestDistSq = std::numeric_limits<float>::max();
+      Point2f closestPoint(std::numeric_limits<float>::max());
       size_t closestIndex = preActionPoses.size();
       
       for(size_t index=0; index < preActionPoses.size(); ++index) {
@@ -616,21 +622,24 @@ namespace Anki {
         
         const Point2f preActionXY(preActionPose.GetTranslation().x(),
                                   preActionPose.GetTranslation().y());
-        const float distSq = (currentXY - preActionXY).LengthSq();
-        if(distSq < closestDistSq) {
-          closestDistSq = distSq;
+        //const float distSq = (currentXY - preActionXY).LengthSq();
+        const Point2f dist = (currentXY - preActionXY).Abs();
+        if(dist < closestPoint) {
+          //closestDistSq = distSq;
+          closestPoint = dist;
           closestIndex  = index;
         }
       }
       
-      const f32 closestDist = sqrtf(closestDistSq);
+      //const f32 closestDist = sqrtf(closestDistSq);
       
       f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, dockObject,
                                                                       _preActionPoseAngleTolerance);
       
-      if(preActionPoseDistThresh > 0.f && closestDist > preActionPoseDistThresh) {
+      if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
         PRINT_NAMED_INFO("IDockAction.Init.TooFarFromGoal",
-                         "Robot is too far from pre-action pose (%.1fmm).", closestDist);
+                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                         closestPoint.x(), closestPoint.y());
         return FAILURE_RETRY;
       }
       else {
@@ -641,8 +650,8 @@ namespace Anki {
         }
         
         PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
-                         "Robot is within %.1fmm of the nearest pre-action pose, "
-                         "proceeding with docking.\n", closestDist);
+                         "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
+                         "proceeding with docking.\n", closestPoint.x(), closestPoint.y());
       
         // Set dock markers
         _dockMarker = preActionPoses[closestIndex].GetMarker();
