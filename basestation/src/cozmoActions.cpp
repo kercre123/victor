@@ -579,16 +579,7 @@ namespace Anki {
         
         return FAILURE_ABORT;
       }
-      
-      // Make sure we can are "currently" still seeing the object
-      if(dockObject->GetLastObservedTime() < (robot.GetLastMsgTimestamp()-500)) {
-        // We haven't seen the object in the last half second
-        PRINT_NAMED_ERROR("IDockAction.Init.NotSeeingObject",
-                          "Last obeserved object %d too long ago. Should currently be seeing it!\n",
-                          _dockObjectID.GetValue());
-        return FAILURE_ABORT;
-      }
-           
+                 
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
