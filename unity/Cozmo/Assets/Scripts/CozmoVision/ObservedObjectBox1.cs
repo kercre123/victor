@@ -20,21 +20,24 @@ public class ObservedObjectBox1 : ObservedObjectButton
 		
 		image.rectTransform.GetWorldCorners( corners );
 
-		distance = float.MaxValue;
-		position = Vector3.zero;
-		position.z = image.transform.position.z;
+		return (corners[2] + corners[3]) * 0.5f;
 
-		for( int i = 0; i < corners.Length; ++i )
-		{
-			float d = Vector2.Distance( corners[i], buttonPosition );
 
-			if( d < distance )
-			{
-				position = corners[i];
-				distance = d;
-			}
-		}
-
-		return position;
+//		distance = float.MaxValue;
+//		position = Vector3.zero;
+//		position.z = image.transform.position.z;
+//
+//		for( int i = 0; i < corners.Length; ++i )
+//		{
+//			float d = Vector2.Distance( corners[i], buttonPosition );
+//
+//			if( d < distance )
+//			{
+//				position = corners[i];
+//				distance = d;
+//			}
+//		}
+//
+//		return position;
 	}
 }

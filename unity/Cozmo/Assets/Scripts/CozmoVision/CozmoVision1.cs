@@ -69,70 +69,134 @@ public class CozmoVision1 : CozmoVision
 
 		Dings();
 		SetActionButtons();
-		
+
+		ShowObservedObjects();
+
 		distancePairs.Clear();
 		
-		for( int i = 0; i < maxObservedObjects; ++i )
-		{
-			if( observedObjectsCount > i && !robot.isBusy )
-			{
-				ObservedObjectBox1 box = observedObjectBoxes[i] as ObservedObjectBox1;
+//		for( int i = 0; i < maxObservedObjects; ++i )
+//		{
+//			if( observedObjectsCount > i && !robot.isBusy )
+//			{
+//				ObservedObjectBox1 box = observedObjectBoxes[i] as ObservedObjectBox1;
+//
+//				box.button = null;
+//				
+//				ObservedObjectSeen( box, robot.observedObjects[i] );
+//				
+//				if( robot.selectedObjects.Count == 0 )
+//				{
+//					for( int j = 0; j < observedObjectButtons.Length && j < observedObjectsCount; ++j )
+//					{
+//						DistancePair dp = new DistancePair();
+//						
+//						dp.box = box;
+//						dp.button = observedObjectButtons[j];
+//						dp.distance = Vector2.Distance( dp.box.image.transform.position, dp.button.transform.position );
+//						
+//						distancePairs.Add( dp );
+//					}
+//				}
+//			}
+//			else
+//			{
+//				observedObjectBoxes[i].image.gameObject.SetActive( false );
+//			}
+//		}
+//
+//		distancePairs.Sort( ( dp1, dp2 ) => { return dp1.distance.CompareTo( dp2.distance ); } );
 
-				box.button = null;
-				
-				ObservedObjectSeen( box, robot.observedObjects[i] );
-				
-				if( robot.selectedObjects.Count == 0 )
-				{
-					for( int j = 0; j < observedObjectButtons.Length && j < observedObjectsCount; ++j )
-					{
-						DistancePair dp = new DistancePair();
-						
-						dp.box = box;
-						dp.button = observedObjectButtons[j];
-						dp.distance = Vector3.Distance( dp.box.image.transform.position, dp.button.transform.position );
-						
-						distancePairs.Add( dp );
-					}
-				}
-			}
-			else
-			{
-				observedObjectBoxes[i].image.gameObject.SetActive( false );
-			}
-		}
+		List<ObservedObjectBox> unassignedObjectBoxes = new List<ObservedObjectBox>();
+		unassignedObjectBoxes.AddRange(observedObjectBoxes);
 
-		distancePairs.Sort( ( dp1, dp2 ) => { return dp1.distance.CompareTo( dp2.distance ); } );
-		
 		for( int i = 0; i < observedObjectButtons.Length; ++i )
 		{
-			observedObjectButtons[i].box = null;
-			observedObjectButtons[i].gameObject.SetActive( false );
-			observedObjectButtons[i].line.SetColor( new Color( 0f, 0f, 0f, 0f ) );
+			ObservedObjectButton1 button = observedObjectButtons[i];
+			button.gameObject.SetActive(i < robot.observedObjects.Count && robot.selectedObjects.Count == 0);
+
+			if(!button.gameObject.activeSelf) {
+				button.line.points2.Clear();
+				//button.line.SetColor( Color.clear );
+				button.line.Draw();
+				continue;
+			}
+
+			ObservedObjectBox1 box = null;
+			Vector2 buttonPosition = (Vector2)button.position;
+			float closest = float.MaxValue;
+
+			for(int j=0;j<unassignedObjectBoxes.Count && j<robot.observedObjects.Count;j++) {
+
+				ObservedObjectBox1 box1 = unassignedObjectBoxes[j] as ObservedObjectBox1;
+				Vector2 closestCorner = box1.Position( buttonPosition );
+				float dist = (buttonPosition - closestCorner).sqrMagnitude;
+				if(dist < closest) {
+					closest = dist;
+					box = box1;
+				}
+			}
+
+			if(box == null) {
+				Debug.LogError("box shouldn't be null here!");
+				continue;
+			}
+
+			unassignedObjectBoxes.Remove(box);
+
+			//Debug.Log("frame("+Time.frameCount+") box("+box.gameObject.name+") linked to button("+button.gameObject.name+")");
+
+			button.observedObject = box.observedObject;
+			button.box = box;
+			button.text.text = box.text.text;
+			button.text.color = box.text.color;
+			//button.image.color = box.image.color;
+			
+			button.line.points2.Clear();
+			button.line.points2.Add( buttonPosition );
+			button.line.points2.Add( box.Position( buttonPosition ) );
+			button.line.SetColor( box.image.color );
+			button.line.Draw();
 		}
 		
-		for( int i = 0; i < distancePairs.Count; ++i )
-		{
-			if( distancePairs[i].button.box == null && distancePairs[i].box.button == null )
-			{
-				distancePairs[i].button.box = distancePairs[i].box;
-				distancePairs[i].box.button = distancePairs[i].button;
+//		for( int i = 0; i < distancePairs.Count; ++i )
+//		{
+//			if( distancePairs[i].button.box == null && distancePairs[i].box.button == null )
+//			{
+//				distancePairs[i].button.box = distancePairs[i].box;
+//				distancePairs[i].box.button = distancePairs[i].button;
+//
+//				distancePairs[i].button.observedObject = distancePairs[i].box.observedObject;
+//
+//				distancePairs[i].button.gameObject.SetActive( true );
+//
+//				distancePairs[i].button.text.text = distancePairs[i].box.text.text;
+//				distancePairs[i].button.text.color = distancePairs[i].box.text.color;
+//				//distancePairs[i].button.image.color = distancePairs[i].box.image.color;
+//
+//				distancePairs[i].button.line.points2.Clear();
+//				Vector3 buttonPosition = distancePairs[i].button.position;
+//				distancePairs[i].button.line.points2.Add( buttonPosition );
+//				distancePairs[i].button.line.points2.Add( distancePairs[i].box.Position( buttonPosition ) );
+//				distancePairs[i].button.line.SetColor( distancePairs[i].button.box.image.color );
+//				distancePairs[i].button.line.Draw();
+//			}
+//		}
+	}
 
-				distancePairs[i].button.observedObject = distancePairs[i].box.observedObject;
+	protected override void OnDisable()
+	{
+		base.OnDisable();
 
-				distancePairs[i].button.gameObject.SetActive( true );
+		foreach(ObservedObjectButton1 button in observedObjectButtons) { 
+			if(button != null) {
+				if(button.image != null) button.image.gameObject.SetActive(false);
 
-				distancePairs[i].button.text.text = distancePairs[i].box.text.text;
-				distancePairs[i].button.text.color = distancePairs[i].box.text.color;
-				distancePairs[i].button.image.color = distancePairs[i].box.image.color;
-
-				distancePairs[i].button.line.points2.Clear();
-				Vector3 buttonPosition = distancePairs[i].button.position;
-				distancePairs[i].button.line.points2.Add( buttonPosition );
-				distancePairs[i].button.line.points2.Add( distancePairs[i].box.Position( buttonPosition ) );
-				distancePairs[i].button.line.SetColor( distancePairs[i].button.box.image.color );
-				distancePairs[i].button.line.Draw();
+				if(button.line != null) {
+					button.line.points2.Clear();
+					button.line.Draw();
+				}
 			}
 		}
 	}
+
 }

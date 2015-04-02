@@ -28,13 +28,15 @@ public class ObservedObjectButton1 : ObservedObjectButton
 			
 			image.rectTransform.GetWorldCorners( corners );
 
-			if( corners.Length > 3 )
-			{
-				center = corners[0];
-				center.y = ( corners[0].y + corners[1].y ) * 0.5f;
-			}
-			
-			return center;
+			return (corners[0] + corners[2]) * 0.5f;
+
+//			if( corners.Length > 3 )
+//			{
+//				center = corners[0];
+//				center.y = ( corners[0].y + corners[1].y ) * 0.5f;
+//			}
+//			
+//			return center;
 		}
 	}
 

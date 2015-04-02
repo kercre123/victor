@@ -129,6 +129,10 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
+
+	[SerializeField] protected AudioClip targetLockLoop;
+	[SerializeField] protected AudioClip targetSearchStart;
+	[SerializeField] protected AudioClip targetSearchStop;
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
 	[SerializeField] protected float soundDelay = 2f;
@@ -157,6 +161,11 @@ public class CozmoVision : MonoBehaviour
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
+
+	float loopTimer = 0f;
+	float fromVol = 0f;
+	float maxVol = 0.5f;
+	bool wasLooping = false;
 
 	protected int observedObjectsCount
 	{
@@ -192,6 +201,10 @@ public class CozmoVision : MonoBehaviour
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
 		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
+
+		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
+		canv.worldCamera = canvas.worldCamera;
+
 		observedObjectBoxes = observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true);
 
 		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
@@ -429,10 +442,16 @@ public class CozmoVision : MonoBehaviour
 		wasLooping = false;
 	}
 
-	float loopTimer = 0f;
-	float fromVol = 0f;
-	float maxVol = 0.5f;
-	bool wasLooping = false;
+	protected void TargetSearchStartSound()
+	{
+		audio.PlayOneShot( targetSearchStart, 1f );
+	}
+
+	protected void TargetSearchStopSound()
+	{
+		audio.PlayOneShot( targetSearchStop, 1f );
+	}
+
 	protected void RefreshLoopingTargetSound( bool on )
 	{
 		loopTimer += Time.deltaTime;
@@ -442,11 +461,11 @@ public class CozmoVision : MonoBehaviour
 		}
 
 		if(on) {
-			audio.loop = true;
-			audio.clip = newObjectObservedSound;
 
 			if(!wasLooping) {
 				fromVol = 0f;//loopTimer < 1f ? audio.volume : 0f;
+				audio.loop = true;
+				audio.clip = targetLockLoop;
 				audio.Play();
 			}
 
