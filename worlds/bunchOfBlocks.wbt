@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.0838635 0.566759 0.819604 3.38297
-  position -1.25695 1.97652 1.10611
+  orientation -0.136269 0.46186 0.876422 3.64768
+  position -0.796235 1.13976 1.07533
 }
 Background {
   skyColor [
@@ -118,84 +118,29 @@ CozmoMat {
   showMarkers FALSE
 }
 Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
   translation 0.0210391 0.217741 0.022
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
 }
 Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
   translation 0.0274715 0.221123 0.072
   rotation 0 0 1 2.87979
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
 }
 Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
   translation 0.0334384 -0.287731 0.022
   rotation 0 0 1 2.87979
   blockColor 0.828885 0.858824 0.17882
   markerImg "symbols/star5.png"
 }
 Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
   translation 0.0796732 -0.2981 0.022
   rotation 0 0 1 2.87979
   blockColor 0.828885 0.858824 0.17882
   markerImg "symbols/star5.png"
 }
 Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
   translation 0.025002 0.21571 0.122
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
