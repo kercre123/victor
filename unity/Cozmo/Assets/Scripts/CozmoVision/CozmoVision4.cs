@@ -150,6 +150,7 @@ public class CozmoVision4 : CozmoVision {
 		if(!interactPressed) {
 
 			if(interactLastFrame) { // && robot.selectedObject > -1
+				TargetSearchStopSound();
 				DoReleaseAction();
 			}
 
@@ -164,6 +165,8 @@ public class CozmoVision4 : CozmoVision {
 			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 			return;
 		}
+
+		if(!interactLastFrame) TargetSearchStartSound();
 
 		//Dings();
 
