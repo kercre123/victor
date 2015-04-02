@@ -8,8 +8,6 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] MeshRenderer meshCube;
 	
 	[SerializeField] Color[] typeColors = new Color[10];
-	[SerializeField] Material invalidatedLineMaterial;
-	[SerializeField] Material validatedLineMaterial;
 	[SerializeField] public int propType = 0;
 
 	int lastPropType = -1;
