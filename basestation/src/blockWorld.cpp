@@ -518,21 +518,24 @@ namespace Anki
           // let listeners know it's "visible" but not identifiable, so we can
           // still interact with it in the UI, for example.
           
-          // Did we see this currently-unobserved object in the last 10 seconds?
+          // Did we see this currently-unobserved object in the last N seconds?
           // This is to avoid using this feature (reporting unobserved objects
           // that project into the image as observed) too liberally, and instead
           // only for objects seen pretty recently, e.g. for the case that we
           // have driven in too close and can't see an object we were just approaching.
           // TODO: Expose / remove / fine-tune this setting
-          const bool seenRecently = _robot->GetLastMsgTimestamp() - unobserved.object->GetLastObservedTime() < 10000;
+          const s32 seenWithin_sec = -1; // Set to <0 to disable
+          const bool seenRecently = (seenWithin_sec < 0 ||
+                                     _robot->GetLastMsgTimestamp() - unobserved.object->GetLastObservedTime() < seenWithin_sec*1000);
           
-          // How far away is the object from our current position. Again, to be
+          // How far away is the object from our current position? Again, to be
           // conservative, we are only going to use this feature if the object is
           // pretty close to the robot.
           // TODO: Expose / remove / fine-tune this setting
-          const f32 distThreshold_mm = 150.f;
-          const bool closeEnough = (_robot->GetPose().GetTranslation() -
-                                    unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm;
+          const f32 distThreshold_mm = -1.f; // 150.f; // Set to <0 to disable
+          const bool closeEnough = (distThreshold_mm < 0.f ||
+                                    (_robot->GetPose().GetTranslation() -
+                                    unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
           
           // Check any of the markers should be visible.
           // For now just ignore the left and right 22.5% of the image blocked by the lift
