@@ -6,6 +6,7 @@ public class VectrosityCube : MonoBehaviour {
 
 	[SerializeField] Material lineMaterial;
 	[SerializeField] float width = 2f;
+	[SerializeField] bool debugEditing = false;
 
 	Vector3[] cubePoints = {
 		new Vector3(-0.5f, -0.5f, 0.5f),
@@ -37,6 +38,8 @@ public class VectrosityCube : MonoBehaviour {
 	VectorLine line = null;
 
 	void OnEnable() {
+		if(!debugEditing) return;
+
 		SetMaterial(lineMaterial);
 		if(line != null) line.SetWidth(width);
 		Show();

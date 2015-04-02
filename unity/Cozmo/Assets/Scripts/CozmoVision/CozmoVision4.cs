@@ -302,9 +302,6 @@ public class CozmoVision4 : CozmoVision {
 		modes.Clear();
 		modes.Add(ActionButtonMode.TARGET);
 
-		int index1 = 0;
-		int index2 = 0;
-
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			modes.Add(ActionButtonMode.DROP);
 			if(robot.selectedObjects.Count == 1) modes.Add(ActionButtonMode.STACK);
@@ -312,7 +309,6 @@ public class CozmoVision4 : CozmoVision {
 		else if(robot.selectedObjects.Count > 1) {
 			modes.Add(ActionButtonMode.PICK_UP);
 			modes.Add(ActionButtonMode.PICK_UP);
-			index2 = 1;
 			//Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
 		}
 		else if(robot.selectedObjects.Count == 1) {
@@ -321,15 +317,36 @@ public class CozmoVision4 : CozmoVision {
 		}
 
 		ActionButtonMode currentMode = modes[0];
-		int index = index1;
+
+		ObservedObject targeted = robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
 
 		if(actionSlider.slider.value < -0.5f && modes.Count > 1) {
 			currentMode = modes[1];
+
+			float minZ = float.MaxValue;
+			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
+				if(minZ < robot.selectedObjects[i].WorldPosition.z) continue;
+				minZ = robot.selectedObjects[i].WorldPosition.z;
+				targeted = robot.selectedObjects[i];
+			}
 		}
 		else if(actionSlider.slider.value > 0.5f && modes.Count > 2) {
 			currentMode = modes[2];
-			index = index2;
+
+			float maxZ = float.MinValue;
+			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
+				if(maxZ > robot.selectedObjects[i].WorldPosition.z) continue;
+				maxZ = robot.selectedObjects[i].WorldPosition.z;
+				targeted = robot.selectedObjects[i];
+			}
+
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
+		}
+
+		//if necessary switch our primary targetLock to the target of this action...
+		if(robot.selectedObjects.Count > 0 && targeted != null && targeted != robot.selectedObjects[0]) {
+			robot.selectedObjects.Remove(targeted);
+			robot.selectedObjects.Insert(0, targeted);
 		}
 
 		if(currentMode != lastMode && currentMode != ActionButtonMode.TARGET) {
@@ -339,7 +356,7 @@ public class CozmoVision4 : CozmoVision {
 			SlideOutSound();
 		}
 
-		actionSlider.SetMode(currentMode, interactPressed, modes, index);
+		actionSlider.SetMode(currentMode, interactPressed, modes, 0);
 	}
 
 	private void InitiateAssistedInteraction() {

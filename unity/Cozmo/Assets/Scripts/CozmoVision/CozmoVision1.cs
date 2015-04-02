@@ -143,7 +143,7 @@ public class CozmoVision1 : CozmoVision
 
 			unassignedObjectBoxes.Remove(box);
 
-			Debug.Log("frame("+Time.frameCount+") box("+box.gameObject.name+") linked to button("+button.gameObject.name+")");
+			//Debug.Log("frame("+Time.frameCount+") box("+box.gameObject.name+") linked to button("+button.gameObject.name+")");
 
 			button.observedObject = box.observedObject;
 			button.box = box;

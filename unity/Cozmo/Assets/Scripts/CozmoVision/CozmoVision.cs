@@ -201,6 +201,10 @@ public class CozmoVision : MonoBehaviour
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
 		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
+
+		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
+		canv.worldCamera = canvas.worldCamera;
+
 		observedObjectBoxes = observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true);
 
 		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
