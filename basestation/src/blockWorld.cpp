@@ -1226,8 +1226,10 @@ namespace Anki
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
-          // Note that this removes markers from the list that it uses
-          UpdateRobotPose(currentObsMarkers, atTimestamp);
+          if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+            // Note that this removes markers from the list that it uses
+            UpdateRobotPose(currentObsMarkers, atTimestamp);
+          }
         }
         
         // Reset the flag telling us objects changed here, before we update any objects:
@@ -1362,8 +1364,10 @@ namespace Anki
       } // for each object family
       
       if(numUnusedMarkers > 0) {
-        CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
-                      numUnusedMarkers);
+        if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+          CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
+                        numUnusedMarkers);
+        }
       }
      
       // Toss any remaining markers?

@@ -19,6 +19,9 @@ namespace Anki {
     // For treaded robot only! Both engine and robot code need to be sync'd on this.
     #define USE_DRIVE_CENTER_POSE 1
 
+    // Suppresses marker-based localization for physical robot
+    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
+    
 #else
     // DO NOT CHANGE
     // until the Webots model has been updated with treads
