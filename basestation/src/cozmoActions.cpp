@@ -882,7 +882,26 @@ namespace Anki {
           
         case DA_PLACE_LOW:
         case DA_PLACE_HIGH:
-          result = VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
+          if(robot.GetLastPickOrPlaceSucceeded()) {
+            // If the physical robot thinks it succeeded, do a verification of the placement:
+            result = VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
+            
+            if(result != SUCCESS) {
+              PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                "Robot thinks it placed the object, but verification of "
+                                "placement failed. Not sure where carry object %d is, so deleting it.\n",
+                                robot.GetCarryingObject().GetValue());
+              robot.GetBlockWorld().ClearObject(robot.GetCarryingObject());
+            }
+          } else {
+            // If the robot thinks it failed last pick-and-place, it is because it
+            // failed to dock/track, so we are probably still holding the block
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                              "Robot reported placement failure. Assuming docking failed "
+                              "and robot is still holding same block.\n");
+            result = FAILURE_RETRY;
+          }
+          
           break;
           
         default:

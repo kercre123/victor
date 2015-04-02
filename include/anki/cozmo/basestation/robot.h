@@ -241,6 +241,9 @@ namespace Anki {
       Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                        const Vision::KnownMarker* dockMarker);
       
+      void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; }
+      bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
+      
       // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
       // longer "attached" to the robot.
@@ -543,6 +546,7 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryingMarker;
+      bool                        _lastPickOrPlaceSucceeded;
       
       // Object to keep head tracked to this object whenever it is observed
       ObjectID                    _trackHeadToObjectID;
