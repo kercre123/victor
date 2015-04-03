@@ -1588,7 +1588,9 @@ public class VectorLine {
 	
 	private bool CheckPointCount () {
 		if (pointsCount < (m_isPoints? 1 : 2)) {
-			m_canvasRenderer.SetVertices (m_UIVertices, 0);
+			if (m_canvasRenderer != null) {
+				m_canvasRenderer.SetVertices (m_UIVertices, 0);
+			}
 			if (m_capType != EndCap.None) {
 				m_capRenderer.SetVertices (m_capVertices, 0);
 			}

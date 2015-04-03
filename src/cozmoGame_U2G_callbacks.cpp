@@ -254,7 +254,8 @@ namespace Cozmo {
       if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
         if(robot->IsCarryingObject()) {
           // Put the block down right here
-          robot->PlaceObjectOnGround();
+          U2G_PlaceObjectOnGroundHere m;
+          Process_PlaceObjectOnGroundHere(m);
           return;
         }
       }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class CozmoVision2 : CozmoVision
 {
-	protected void Update()
+	protected virtual void Update()
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
 		{
@@ -15,14 +15,7 @@ public class CozmoVision2 : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
-		for( int i = 0; i < robot.selectedObjects.Count; ++i )
-		{
-			if( robot.observedObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
-			{
-				robot.selectedObjects.RemoveAt( i-- );
-			}
-		}
-
+		UnselectNonObservedObjects();
 		Dings();
 		SetActionButtons();
 		ShowObservedObjects();
@@ -30,10 +23,9 @@ public class CozmoVision2 : CozmoVision
 
 	protected override void VisionEnabled()
 	{
-		Color color;
 		float alpha = 1f;
 		
-		color = image.color;
+		Color color = image.color;
 		color.a = alpha;
 		image.color = color;
 		
@@ -48,13 +40,13 @@ public class CozmoVision2 : CozmoVision
 
 	protected override void ShowObservedObjects()
 	{
-		if(robot == null || robot.observedObjects == null) return;
+		if( robot == null ) return;
 
-		for( int i = 0; i < maxObservedObjects; ++i )
+		for( int i = 0; i < observedObjectBoxes.Length; ++i )
 		{
-			if( observedObjectsCount > i && !robot.isBusy )
+			if( robot.markersVisibleObjects.Count > i && !robot.isBusy )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], robot.observedObjects[i] );
+				ObservedObjectSeen( observedObjectBoxes[i], robot.markersVisibleObjects[i] );
 			}
 			else
 			{

@@ -388,6 +388,13 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			current.observedObjects.Remove( deleted );
 		}
+
+		deleted = current.markersVisibleObjects.Find( x=> x.ID == message.objectID );
+		
+		if( deleted != null )
+		{
+			current.markersVisibleObjects.Remove( deleted );
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
