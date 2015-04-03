@@ -845,12 +845,17 @@ namespace Anki {
           Vision::ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
+            Vec3f Tdiff;
+            Radians angleDiff;
             if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
                                                                carryObject->GetRotationAmbiguities(),
-                                                               carryObject->GetSameDistanceTolerance(),
-                                                               carryObject->GetSameAngleTolerance(), true))
+                                                               carryObject->GetSameDistanceTolerance()*0.5f,
+                                                               carryObject->GetSameAngleTolerance(), true,
+                                                               Tdiff, angleDiff))
             {
-              PRINT_INFO("Seeing object %d in original pose.\n", object.first.GetValue());
+              PRINT_INFO("Seeing object %d in original pose. (Tdiff = (%.1f,%.1f,%.1f), AngleDiff=%.1fdeg\n",
+                         object.first.GetValue(),
+                         Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
               objectInOriginalPose = object.second;
               break;
             }
