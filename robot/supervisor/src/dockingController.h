@@ -61,7 +61,8 @@ namespace Anki {
                         const f32 markerWidth_mm,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool checkAngleX = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const u32 pointOfNoReturnDistMM = 0);
       
       // Same as above except the marker must be found within the image at the specified location.
       // If pixel_radius == u8_MAX, the location is ignored and this function becomes identical
@@ -71,7 +72,8 @@ namespace Anki {
                         const Embedded::Point2f &markerCenter, const u8 pixel_radius,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool checkAngleX = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const u32 pointOfNoReturnDistMM = 0);
 
       // Goes to a pose such that if the robot were to lower a block that it was carrying once it
       // were in that pose, the block face facing the robot would be aligned with the pose specified

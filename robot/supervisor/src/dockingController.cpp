@@ -68,6 +68,11 @@ namespace Anki {
         // Lateral tolerance at dock pose
         const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1;
         
+        // If non-zero, once we get within this distance of the marker
+        // it will continue to follow the last path and ignore timeouts.
+        // Only used for high docking.
+        u32 pointOfNoReturnDistMM_ = 0;
+        
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
 
@@ -140,6 +145,11 @@ namespace Anki {
       bool DidLastDockSucceed()
       {
         return success_;
+      }
+      
+      bool IsInPointOfNoReturnMode()
+      {
+        return pointOfNoReturnDistMM_ != 0;
       }
       
       void TrackCamWithLift(bool on)
@@ -221,6 +231,22 @@ namespace Anki {
             lastMarkerDistX_ = dockMsg.x_distErr;
             lastMarkerDistY_ = dockMsg.y_horErr;
             lastMarkerAng_ = dockMsg.angleErr;
+            
+            
+            // Check if we are beyond point of no return distance
+            if (IsInPointOfNoReturnMode() && (dockMsg.x_distErr < pointOfNoReturnDistMM_) && (mode_ == APPROACH_FOR_DOCK)) {
+              PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              
+              // Since we're ignoring docking error signals from hereon, just set the lift to final height.
+              // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
+              //       Generalize?
+              if (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK) {
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+              }
+              
+              break; // out of while
+            }
+            
             
 #if(DEBUG_DOCK_CONTROLLER)
             PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
@@ -318,7 +344,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if (!trackingOnly_) {
+          if ((!trackingOnly_) && (!IsInPointOfNoReturnMode())) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -337,7 +363,9 @@ namespace Anki {
           case IDLE:
             break;
           case LOOKING_FOR_BLOCK:
-            if (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US) {
+            
+            if ((!IsInPointOfNoReturnMode())
+              && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
               PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
@@ -347,7 +375,9 @@ namespace Anki {
           case APPROACH_FOR_DOCK:
           {
             // Stop if we haven't received error signal for a while
-            if (!markerlessDocking_ && HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) {
+            if (!markerlessDocking_
+                && (!IsInPointOfNoReturnMode())
+                && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
@@ -561,9 +591,10 @@ namespace Anki {
                         const f32 markerWidth_mm,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool checkAngleX,
-                        const bool useManualSpeed)
+                        const bool useManualSpeed,
+                        const u32 pointOfNoReturnDistMM)
       {
-        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX, useManualSpeed);
+        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX, useManualSpeed, pointOfNoReturnDistMM);
       }
 
       void StartDocking(const Vision::MarkerType& dockingMarker,
@@ -571,7 +602,8 @@ namespace Anki {
                         const Embedded::Point2f &markerCenter, const u8 pixel_radius,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool checkAngleX,
-                        const bool useManualSpeed)
+                        const bool useManualSpeed,
+                        const u32 pointOfNoReturnDistMM)
       {
         AnkiAssert(markerWidth_mm > 0.f);
         
@@ -585,6 +617,7 @@ namespace Anki {
         }
         
         useManualSpeed_ = useManualSpeed;
+        pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         
@@ -624,6 +657,7 @@ namespace Anki {
         // Command VisionSystem to stop processing images
         VisionSystem::StopTracking();
 
+        pointOfNoReturnDistMM_ = 0;
         markerlessDocking_ = false;
         success_ = false;
       }
