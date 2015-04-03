@@ -101,7 +101,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 		}
 
 		RefreshFade();
-		if(robot.selectedObjects.Count > 0) {
+		if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
 			FadeIn();
 		}
 		else {

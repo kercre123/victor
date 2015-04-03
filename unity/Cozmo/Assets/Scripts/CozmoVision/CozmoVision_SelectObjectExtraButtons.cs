@@ -94,13 +94,13 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			
 			button.observedObject = box.observedObject;
 			button.box = box;
-			button.text.text = box.text.text;
-			button.text.color = box.text.color;
+			button.SetText(box.text.text);
+			button.SetTextColor(box.text.color);
 			
 			button.line.points2.Clear();
 			button.line.points2.Add( buttonPosition );
 			button.line.points2.Add( boxPosition );
-			button.line.SetColor( box.image.color );
+			button.SetLineColor( box.color );
 			button.line.Draw();
 		}
 	}
@@ -113,7 +113,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 		{ 
 			if( observedObjectButtons[i] != null )
 			{
-				if( observedObjectButtons[i].image != null ) observedObjectButtons[i].image.gameObject.SetActive( false );
+				observedObjectButtons[i].gameObject.SetActive( false );
 				
 				if( observedObjectButtons[i].line != null )
 				{

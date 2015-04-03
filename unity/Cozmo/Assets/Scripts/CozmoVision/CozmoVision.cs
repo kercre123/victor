@@ -199,7 +199,7 @@ public class CozmoVision : MonoBehaviour
 		observedObjectBoxes.Clear();
 		observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
 		
-		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
+		foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
 		
 		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
@@ -210,7 +210,7 @@ public class CozmoVision : MonoBehaviour
 		float boxY = ( observedObject.VizRect.y / 240f ) * imageRectTrans.sizeDelta.y;
 		float boxW = ( observedObject.VizRect.width / 320f ) * imageRectTrans.sizeDelta.x;
 		float boxH = ( observedObject.VizRect.height / 240f ) * imageRectTrans.sizeDelta.y;
-		
+
 		/*if( boxX < 200f )
 		{
 			boxW -= 200f - boxX;
@@ -227,26 +227,24 @@ public class CozmoVision : MonoBehaviour
 			return;
 		}*/
 		
-		box.image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
-		box.image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
+		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
+		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 		
 		//if( observedObject.MarkersVisible )
 		{
 			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 			{
-				box.image.color = selected;
-				box.text.color = selected;
+				box.SetColor(selected);
 				box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
 			}
 			else
 			{
-				box.image.color = select;
-				box.text.color = select;
+				box.SetColor(select);
 				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
 				box.observedObject = observedObject;
 			}
 			
-			box.image.gameObject.SetActive( true );
+			box.gameObject.SetActive( true );
 		}
 	}
 	
@@ -275,7 +273,7 @@ public class CozmoVision : MonoBehaviour
 			}
 			else
 			{
-				observedObjectBoxes[i].image.gameObject.SetActive( false );
+				observedObjectBoxes[i].gameObject.SetActive( false );
 			}
 		}
 	}
@@ -637,7 +635,7 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 		}
 		
-		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
+		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null) { box.gameObject.SetActive(false); } }
 
 		StopLoopingTargetSound();
 	}

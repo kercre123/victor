@@ -18,15 +18,12 @@ public class ObservedObjectButton1 : ObservedObjectButton
 	{
 		get
 		{
-			Vector3 center = Vector3.zero;
-			center.z = image.transform.position.z;
-			
 			if( corners == null )
 			{
 				corners = new Vector3[4];
 			}
 			
-			image.rectTransform.GetWorldCorners( corners );
+			rectTransform.GetWorldCorners( corners );
 
 			return (corners[0] + corners[2]) * 0.5f;
 
@@ -40,12 +37,12 @@ public class ObservedObjectButton1 : ObservedObjectButton
 		}
 	}
 
-	protected void Awake()
+	protected override void Awake()
 	{
+		base.Awake();
+
 		line = new VectorLine( transform.name + "Line", new List<Vector2>(), lineMaterial, lineWidth );
-
 		line.SetColor( lineColor );
-
 		line.useViewportCoords = false;
 	}
 
@@ -54,5 +51,14 @@ public class ObservedObjectButton1 : ObservedObjectButton
 		base.Selection();
 		
 		box.audio.PlayOneShot( select );
+	}
+
+	public override void SetColor(Color color) {
+		base.SetColor(color);
+		SetLineColor(color);
+	}
+
+	public void SetLineColor(Color color) {
+		line.SetColor(color);
 	}
 }

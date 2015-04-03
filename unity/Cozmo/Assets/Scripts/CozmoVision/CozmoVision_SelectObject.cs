@@ -21,7 +21,7 @@ public class CozmoVision_SelectObject : CozmoVision
 		ShowObservedObjects();
 
 		RefreshFade();
-		if(robot.markersVisibleObjects.Count > 0) {
+		if(robot.markersVisibleObjects.Count > 0 && !robot.isBusy) {
 			FadeIn();
 		}
 		else {
@@ -29,22 +29,22 @@ public class CozmoVision_SelectObject : CozmoVision
 		}
 	}
 
-	protected override void VisionEnabled()
-	{
-		float alpha = 1f;
-		
-		Color color = image.color;
-		color.a = alpha;
-		image.color = color;
-		
-		color = select;
-		color.a = alpha;
-		select = color;
-		
-		color = selected;
-		color.a = alpha;
-		selected = color;
-	}
+//	protected override void VisionEnabled()
+//	{
+//		float alpha = 1f;
+//		
+//		Color color = image.color;
+//		color.a = alpha;
+//		image.color = color;
+//		
+//		color = select;
+//		color.a = alpha;
+//		select = color;
+//		
+//		color = selected;
+//		color.a = alpha;
+//		selected = color;
+//	}
 
 	protected override void ShowObservedObjects()
 	{
@@ -58,7 +58,7 @@ public class CozmoVision_SelectObject : CozmoVision
 			}
 			else
 			{
-				observedObjectBoxes[i].image.gameObject.SetActive( false );
+				observedObjectBoxes[i].gameObject.SetActive( false );
 			}
 		}
 	}

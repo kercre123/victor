@@ -18,7 +18,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
 				corners = new Vector3[4];
 			}
 			
-			image.rectTransform.GetWorldCorners( corners );
+			rectTransform.GetWorldCorners( corners );
 			
 			if( corners.Length > 3 )
 			{
