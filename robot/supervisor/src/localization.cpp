@@ -662,6 +662,15 @@ namespace Anki {
         angle = orientation_;
       }
       
+      void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose, Anki::Embedded::Pose2d &driveCenterPose)
+      {
+        f32 angle = robotOriginPose.angle.ToFloat();
+        
+        driveCenterPose.x() = robotOriginPose.GetX() + GetDriveCenterOffset() * cosf(angle);
+        driveCenterPose.y() = robotOriginPose.GetY() + GetDriveCenterOffset() * sinf(angle);
+        driveCenterPose.angle = robotOriginPose.angle;
+      }
+      
   
       Radians GetCurrentMatOrientation()
       {

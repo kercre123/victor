@@ -525,6 +525,10 @@ namespace Anki {
         dockPose_.x() = blockPose_.x() - dockOffsetDistX_ * cosf(blockPose_.angle.ToFloat());
         dockPose_.y() = blockPose_.y() - dockOffsetDistX_ * sinf(blockPose_.angle.ToFloat());
         dockPose_.angle = blockPose_.angle;
+
+        // Convert poses to drive center pose for pathFollower
+        Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
+        Localization::ConvertToDriveCenterPose(approachStartPose_, approachStartPose_);
         
         
         f32 path_length;
