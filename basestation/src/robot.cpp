@@ -82,6 +82,7 @@ namespace Anki {
     , _isAnimating(false)
     , _battVoltage(5)
     , _carryingMarker(nullptr)
+    , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
@@ -1759,6 +1760,59 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, msg);
     }
     
+    void Robot::SetCarryingObject(ObjectID carryObjectID)
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                          "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
+                          carryObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                            "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.\n",
+                            carryObjectID.GetValue());
+        } else {
+          if(carriedObject->IsBeingCarried() == true) {
+            PRINT_NAMED_WARNING("Robot.SetCarryingObject",
+                                "Robot %d is about to mark object %d as carried but that object "
+                                "already thinks it is being carried.\n", GetID(), carryObjectID.GetValue());
+            
+          }
+          carriedObject->SetBeingCarried(true);
+          _carryingObjectID = carryObjectID;
+        }
+      }
+    }
+    
+    void Robot::UnSetCarryingObject()
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                          _carryingObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                            "Carried object %d could not be cast as an ActionableObject.\n",
+                            _carryingObjectID.GetValue());
+        } else if(carriedObject->IsBeingCarried() == false) {
+          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
+                              "Robot %d thinks it is carrying object %d but that object "
+                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
+          
+        } else {
+          carriedObject->SetBeingCarried(false);
+        }
+      }
+      // Even if the above failed, still mark the robot's carry ID as unset
+      _carryingObjectID.UnSet();
+    }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
@@ -1787,9 +1841,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _carryingObjectID = objectID;
-      _carryingMarker   = objectMarker;
-
       // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
@@ -1807,8 +1858,10 @@ namespace Anki {
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
+      SetCarryingObject(objectID); // also marks the object as carried
+      _carryingMarker   = objectMarker;
+      
       object->SetPose(objectPoseWrtLiftPose);
-      object->SetBeingCarried(true);
       
       return RESULT_OK;
       
@@ -1841,8 +1894,6 @@ namespace Anki {
       }
       object->SetPose(placedPose);
       
-      object->SetBeingCarried(false);
-      
       PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
                        _ID, object->GetID().GetValue(),
@@ -1850,7 +1901,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      _carryingObjectID.UnSet();
+      UnSetCarryingObject(); // also sets carried object as not being carried anymore
       _carryingMarker = nullptr;
       
       return RESULT_OK;
