@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.273897 0.284221 0.918803 4.59101
-  position -1.29056 0.216497 1.81427
+  orientation -0.999941 0.00389233 0.0101768 5.55315
+  position 0.209984 -1.5118 1.58084
 }
 Background {
   skyColor [
@@ -119,10 +119,28 @@ PointLight {
   location 0 0.3 0
 }
 CozmoMat {
+  xSize 2
+  ySize 1.5
+}
+DEF Zone_Blue Solid {
+  translation 0.75 0 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 0.6 1
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
-  translation 0 -0.2 0.0219969
+  translation 0.3 0 0.0219969
   rotation 1 0 0 0
   blockColor 0 0 1
   markerImg "symbols/angryFace.png"
