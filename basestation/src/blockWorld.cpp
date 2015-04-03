@@ -363,6 +363,22 @@ namespace Anki
         const ObjectID obsID = observedObject->GetID();
         const ObjectType obsType = observedObject->GetType();
         
+        // Sanity check: this should not happen, but we're seeing situations where
+        // objects think they are being carried when the robot doesn't think it
+        // is carrying that object
+        // TODO: Eventually, we should be able to remove this check
+        ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
+        if(actionObject != nullptr) {
+          if(actionObject->IsBeingCarried() && _robot->GetCarryingObject() != obsID) {
+            PRINT_NAMED_WARNING("BlockWorld.CycleSelectedObject",
+                                "Object %d thinks it is being carried, but does not match "
+                                "robot %d's carried object ID (%d). Setting as uncarried.\n",
+                                obsID.GetValue(), _robot->GetID(),
+                                _robot->GetCarryingObject().GetValue());
+            actionObject->SetBeingCarried(false);
+          }
+        }
+        
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
