@@ -55,13 +55,13 @@ WorldInfo {
     DEF BLOCK_BLOCK ContactProperties {
       material1 "cmat_block"
       material2 "cmat_block"
-      coulombFriction 5000
+      coulombFriction 10
       bounce 0.001
     }
     DEF RAMP_BLOCK ContactProperties {
       material1 "cmat_ramp"
       material2 "cmat_block"
-      coulombFriction 5000
+      coulombFriction 10
       bounce 0.001
     }
     DEF RAMP_RAMP ContactProperties {
