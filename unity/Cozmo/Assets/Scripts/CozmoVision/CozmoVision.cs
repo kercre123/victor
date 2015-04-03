@@ -24,19 +24,19 @@ public class ActionButton
 	public Button button;
 	public Image image;
 	public Text text;
-
+	
 	private int index;
 	private CozmoVision vision;
 	
 	public void ClaimOwnership(CozmoVision vision) {
 		this.vision = vision;
 	}
-
+	
 	protected void PickAndPlaceObject()
 	{
 		RobotEngineManager.instance.current.PickAndPlaceObject( index );
 	}
-
+	
 	public void Cancel()
 	{
 		Debug.Log( "Cancel" );
@@ -47,7 +47,7 @@ public class ActionButton
 			RobotEngineManager.instance.current.SetHeadAngle();
 		}
 	}
-
+	
 	public void SetMode(ActionButtonMode mode, int i = 0) {
 		
 		if(mode == ActionButtonMode.DISABLED) {
@@ -101,9 +101,9 @@ public class ActionButton
 		
 		button.gameObject.SetActive(true);
 	}
-
+	
 	public static string GetModeName(ActionButtonMode mode) {
-
+		
 		switch(mode) {
 			case ActionButtonMode.TARGET: return "Search";
 			case ActionButtonMode.PICK_UP: return "Pick Up";
@@ -114,7 +114,7 @@ public class ActionButton
 			case ActionButtonMode.CHANGE: return "Change";
 			case ActionButtonMode.CANCEL: return "Cancel";
 		}
-
+		
 		return "None";
 	}
 }
@@ -124,12 +124,11 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
 	[SerializeField] protected ActionButton[] actionButtons;
-	[SerializeField] protected int maxObservedObjects;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-
+	
 	[SerializeField] protected AudioClip targetLockLoop;
 	[SerializeField] protected AudioClip targetSearchStart;
 	[SerializeField] protected AudioClip targetSearchStop;
@@ -145,9 +144,9 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
-
+	
 	public UnityAction[] actions;
-
+	
 	protected RectTransform rTrans;
 	protected RectTransform imageRectTrans;
 	protected Canvas canvas;
@@ -158,60 +157,60 @@ public class CozmoVision : MonoBehaviour
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	protected ObservedObjectBox[] observedObjectBoxes;
 	protected GameObject observedObjectCanvas;
-
+	
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
-
+	
 	float loopTimer = 0f;
 	float fromVol = 0f;
 	float maxVol = 0.5f;
 	bool wasLooping = false;
-
+	
 	protected int observedObjectsCount
 	{
 		get
 		{
-			if( RobotEngineManager.instance.current.observedObjects.Count < maxObservedObjects )
+			if( RobotEngineManager.instance.current.observedObjects.Count < observedObjectBoxes.Length )
 			{
 				return RobotEngineManager.instance.current.observedObjects.Count;
 			}
 			else
 			{
-				return maxObservedObjects;
+				return observedObjectBoxes.Length;
 			}
 		}
 	}
-
+	
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
 		for( int i = 0; i < dingTimes.Length; ++i )
 		{
 			dingTimes[i] = 0f;
 		}
-
+		
 		robot = null;
 		imageRequested = false;
 	}
-
+	
 	protected virtual void Awake()
 	{
 		rTrans = transform as RectTransform;
 		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
-
+		
 		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
 		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
 		canv.worldCamera = canvas.worldCamera;
 
 		observedObjectBoxes = observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true);
-
+		
 		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
-
+		
 		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
-
+	
 	protected virtual void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
 	{
 		float boxX = ( observedObject.VizRect.x / 320f ) * imageRectTrans.sizeDelta.x;
@@ -219,9 +218,25 @@ public class CozmoVision : MonoBehaviour
 		float boxW = ( observedObject.VizRect.width / 320f ) * imageRectTrans.sizeDelta.x;
 		float boxH = ( observedObject.VizRect.height / 240f ) * imageRectTrans.sizeDelta.y;
 		
+		/*if( boxX < 200f )
+		{
+			boxW -= 200f - boxX;
+			boxX = 200f;
+		}
+		else if( boxX + boxW > 1000f )
+		{
+			boxW -= boxX + boxW - 1000f;
+		}
+		
+		if( boxW <= 0f )
+		{
+			box.image.gameObject.SetActive( true );
+			return;
+		}*/
+		
 		box.image.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.image.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
-
+		
 		//if( observedObject.MarkersVisible )
 		{
 			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
@@ -237,16 +252,28 @@ public class CozmoVision : MonoBehaviour
 				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
 				box.observedObject = observedObject;
 			}
-
+			
 			box.image.gameObject.SetActive( true );
 		}
 	}
-
+	
+	protected void UnselectNonObservedObjects()
+	{
+		if( robot == null ) return;
+		
+		for( int i = 0; i < robot.selectedObjects.Count; ++i )
+		{
+			if( robot.observedObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
+			{
+				robot.selectedObjects.RemoveAt( i-- );
+			}
+		}
+	}
+	
 	protected virtual void ShowObservedObjects()
 	{
-		if(robot == null) return;
-		if(robot.observedObjects == null) return;
-
+		if( robot == null ) return;
+		
 		for( int i = 0; i < observedObjectBoxes.Length; ++i )
 		{
 			if( robot.observedObjects.Count > i )
@@ -259,17 +286,17 @@ public class CozmoVision : MonoBehaviour
 			}
 		}
 	}
-
+	
 	protected void DisableButtons() {
 		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
 	}
-
+	
 	protected virtual void SetActionButtons()
 	{
 		DisableButtons();
 		robot = RobotEngineManager.instance.current;
 		if(robot == null || robot.isBusy) return;
-
+		
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 			if(robot.selectedObjects.Count > 0) actionButtons[0].SetMode(ActionButtonMode.STACK);
 			actionButtons[1].SetMode(ActionButtonMode.DROP);
@@ -277,27 +304,27 @@ public class CozmoVision : MonoBehaviour
 		else {
 			if(robot.selectedObjects.Count > 0) actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
 		}
-
+		
 		if(robot.selectedObjects.Count > 0) actionButtons[2].SetMode(ActionButtonMode.CANCEL);
 	}
-
+	
 	private void RobotImage( Texture2D texture )
 	{
 		if( rect.height != texture.height || rect.width != texture.width )
 		{
 			rect = new Rect( 0, 0, texture.width, texture.height );
 		}
-
+		
 		image.sprite = Sprite.Create( texture, rect, pivot );
-
+		
 		if( text.gameObject.activeSelf )
 		{
 			text.gameObject.SetActive( false );
 		}
-
+		
 		ShowObservedObjects();
 	}
-
+	
 	private void RequestImage()
 	{
 		if( !imageRequested && RobotEngineManager.instance != null )
@@ -308,7 +335,7 @@ public class CozmoVision : MonoBehaviour
 			imageRequested = true;
 		}
 	}
-
+	
 	protected virtual void OnEnable()
 	{
 		if( RobotEngineManager.instance != null )
@@ -316,12 +343,12 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.RobotImage += RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient += Reset;
 		}
-
+		
 		RequestImage();
 		ResizeToScreen();
 		VisionEnabled();
 	}
-
+	
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
 		
@@ -343,12 +370,12 @@ public class CozmoVision : MonoBehaviour
 		
 		float totalRefWidth = (refW / refAspect) * actualAspect;
 		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
-
+		
 		if( sideBarWidth > 50f && anchorToSnapToSideBar != null) {
 			Vector2 size = anchorToSnapToSideBar.sizeDelta;
 			size.x = sideBarWidth * snapToSideBarScale;
 			anchorToSnapToSideBar.sizeDelta = size;
-
+			
 			if(anchorToCenterOnSideBar != null) {
 				Vector3 anchor = anchorToCenterOnSideBar.anchoredPosition;
 				anchor.x = size.x * 0.5f - sideBarWidth * 0.5f;
@@ -369,47 +396,43 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 	}
-
+	
 	protected virtual void VisionEnabled()
 	{
-		Color color;
 		float alpha = 0f;
-
+		
 		if( PlayerPrefs.GetInt( "VisionDisabled" ) == 0 ) alpha = 1f;
-
-		color = image.color;
+		
+		Color color = image.color;
 		color.a = alpha;
 		image.color = color;
-
+		
 		color = select;
 		color.a = alpha;
 		select = color;
-
+		
 		color = selected;
 		color.a = alpha;
 		selected = color;
 	}
-
+	
 	protected virtual void Dings()
 	{
-		if( robot != null )
+		if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 )
 		{
-			if( robot.isBusy || robot.selectedObjects.Count > 0 )
-			{
-				return;
-			}
-
-			if( robot.observedObjects.Count > 0/*lastObservedObjects.Count*/ )
-			{
-				Ding( true );
-			}
-			/*else if( robot.observedObjects.Count < lastObservedObjects.Count )
-			{
-				Ding( false );
-			}*/
+			return;
 		}
+			
+		if( robot.observedObjects.Count > 0/*lastObservedObjects.Count*/ )
+		{
+			Ding( true );
+		}
+		/*else if( robot.observedObjects.Count < lastObservedObjects.Count )
+		{
+			Ding( false );
+		}*/
 	}
-
+	
 	protected void Ding( bool found )
 	{
 		if( found )
@@ -431,44 +454,43 @@ public class CozmoVision : MonoBehaviour
 			}
 		}*/
 	}
-
+	
 	protected void StopLoopingTargetSound()
 	{
-
 		audio.loop = false;
 		audio.Stop();
 		audio.volume = 1f;
-
+		
 		wasLooping = false;
 	}
-
+	
 	protected void TargetSearchStartSound()
 	{
 		audio.PlayOneShot( targetSearchStart, 1f );
 	}
-
+	
 	protected void TargetSearchStopSound()
 	{
 		audio.PlayOneShot( targetSearchStop, 1f );
 	}
-
+	
 	protected void RefreshLoopingTargetSound( bool on )
 	{
 		loopTimer += Time.deltaTime;
-
+		
 		if(wasLooping != on) {
 			loopTimer = 0f;
 		}
-
+		
 		if(on) {
-
+			
 			if(!wasLooping) {
 				fromVol = 0f;//loopTimer < 1f ? audio.volume : 0f;
 				audio.loop = true;
 				audio.clip = targetLockLoop;
 				audio.Play();
 			}
-
+			
 			audio.volume = Mathf.Lerp(fromVol, maxVol, loopTimer);
 		}
 		else if(loopTimer > 1f) {
@@ -481,40 +503,40 @@ public class CozmoVision : MonoBehaviour
 			if(wasLooping) fromVol = audio.volume;
 			audio.volume = Mathf.Lerp(fromVol, 0f, loopTimer);
 		}
-
+		
 		wasLooping = on;
 	}
-
+	
 	public void ActionButtonClick()
 	{
 		if(audio.loop) StopLoopingTargetSound();
-
+		
 		audio.PlayOneShot( actionButtonSound, 1f );
 	}
-
+	
 	public void CancelButtonClick()
 	{
 		if(audio.loop) StopLoopingTargetSound();
 		audio.PlayOneShot( cancelButtonSound, 1f );
 	}
-
+	
 	public void SlideInSound()
 	{
 		audio.PlayOneShot( slideInSound, 1f );
 	}
-
+	
 	public void SlideOutSound()
 	{
 		audio.PlayOneShot( slideOutSound, 1f );
 	}
-
+	
 	protected virtual void LateUpdate()
 	{
 		if( robot != null )
 		{
 			robot.lastObservedObjects.Clear();
 			robot.lastSelectedObjects.Clear();
-
+			
 			if( !robot.isBusy )
 			{
 				robot.lastObservedObjects.AddRange( robot.observedObjects );
@@ -522,7 +544,7 @@ public class CozmoVision : MonoBehaviour
 			}
 		}
 	}
-
+	
 	protected virtual void OnDisable()
 	{
 		if( RobotEngineManager.instance != null )
@@ -530,8 +552,8 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.RobotImage -= RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 		}
-
+		
 		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
 	}
-
+	
 }
