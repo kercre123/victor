@@ -20,11 +20,13 @@ public class Robot
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
+	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
+	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
@@ -65,6 +67,8 @@ public class Robot
 		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		lastObservedObjects = new List<ObservedObject>();
+		markersVisibleObjects = new List<ObservedObject>();
+		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
@@ -82,6 +86,8 @@ public class Robot
 		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		lastObservedObjects.Clear();
+		markersVisibleObjects.Clear();
+		lastMarkersVisibleObjects.Clear();
 		knownObjects.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
@@ -96,6 +102,14 @@ public class Robot
 			if( observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time )
 			{
 				observedObjects.RemoveAt( i-- );
+			}
+		}
+
+		for( int i = 0; i < markersVisibleObjects.Count; ++i )
+		{
+			if( markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time )
+			{
+				markersVisibleObjects.RemoveAt( i-- );
 			}
 		}
 	}
@@ -139,6 +153,11 @@ public class Robot
 		if( observedObjects.Find( x => x.ID == message.objectID ) == null )
 		{
 			observedObjects.Add( knownObject );
+		}
+
+		if( knownObject.MarkersVisible && markersVisibleObjects.Find( x => x.ID == message.objectID ) == null )
+		{
+			markersVisibleObjects.Add( knownObject );
 		}
 	}
 

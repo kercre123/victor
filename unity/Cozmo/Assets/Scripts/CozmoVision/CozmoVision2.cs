@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class CozmoVision2 : CozmoVision
 {
-	protected void Update()
+	protected virtual void Update()
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
 		{
@@ -40,13 +40,13 @@ public class CozmoVision2 : CozmoVision
 
 	protected override void ShowObservedObjects()
 	{
-		if(robot == null || robot.observedObjects == null) return;
+		if( robot == null ) return;
 
 		for( int i = 0; i < observedObjectBoxes.Length; ++i )
 		{
-			if( robot.observedObjects.Count > i && !robot.isBusy )
+			if( robot.markersVisibleObjects.Count > i && !robot.isBusy )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], robot.observedObjects[i] );
+				ObservedObjectSeen( observedObjectBoxes[i], robot.markersVisibleObjects[i] );
 			}
 			else
 			{
