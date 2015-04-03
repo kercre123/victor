@@ -736,14 +736,6 @@ namespace Anki {
       _rampDirection = direction;
     }
 
-    inline void Robot::SetCarryingObject(ObjectID carryObjectID) {
-      _carryingObjectID = carryObjectID;
-    }
-    
-    inline void Robot::UnSetCarryingObject() {
-      _carryingObjectID.UnSet();
-    }
-
     inline Result Robot::SetDockObjectAsAttachedToLift(){
       return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
     }
