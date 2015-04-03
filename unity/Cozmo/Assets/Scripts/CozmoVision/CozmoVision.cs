@@ -166,21 +166,6 @@ public class CozmoVision : MonoBehaviour
 	float maxVol = 0.5f;
 	bool wasLooping = false;
 	
-	protected int observedObjectsCount
-	{
-		get
-		{
-			if( RobotEngineManager.instance.current.observedObjects.Count < observedObjectBoxes.Length )
-			{
-				return RobotEngineManager.instance.current.observedObjects.Count;
-			}
-			else
-			{
-				return observedObjectBoxes.Length;
-			}
-		}
-	}
-	
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
 		for( int i = 0; i < dingTimes.Length; ++i )
