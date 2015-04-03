@@ -47,7 +47,7 @@ class CameraSubServer(BaseSubServer):
 
     SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
-    SENSOR_FPS     = 30
+    SENSOR_FPS     = 15
 
     ISP_MIN_RESOLUTION = messages.CAMERA_RES_VGA
 
@@ -140,8 +140,8 @@ class CameraSubServer(BaseSubServer):
         if self.encoderProcess is None or self.encoderProcess.poll() is not None:
             if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 self.log("Starting the encoder\n")
-                encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!', \
-                               'videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.encoderFPS, '!']
+                encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
+                #encoderCall.extend(['videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.encoderFPS, '!'])
                 if self.ispRes != self.resolution:
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
                     v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
