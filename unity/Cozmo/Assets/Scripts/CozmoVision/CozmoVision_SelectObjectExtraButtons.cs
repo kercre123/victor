@@ -6,19 +6,19 @@ using System.Collections.Generic;
 public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 {	
 	protected ObservedObjectButton1[] observedObjectButtons;
-	protected List<ObservedObjectBox> unassignedObjectBoxes;
+	protected List<ObservedObjectBox> unassignedActiveObjectBoxes;
 	
 	protected override void Awake()
 	{
 		base.Awake();
 		
-		unassignedObjectBoxes = new List<ObservedObjectBox>();
+		unassignedActiveObjectBoxes = new List<ObservedObjectBox>();
 		
 		observedObjectButtons = observedObjectCanvas.GetComponentsInChildren<ObservedObjectButton1>(true);
 		
-		ObservedObjectBox[] temp = new ObservedObjectBox[observedObjectBoxes.Length - observedObjectButtons.Length];
+		ObservedObjectBox[] temp = new ObservedObjectBox[observedObjectBoxes.Count - observedObjectButtons.Length];
 		
-		for( int i = 0, j = 0; i < observedObjectBoxes.Length; ++i )
+		for( int i = 0, j = 0; i < observedObjectBoxes.Count; ++i )
 		{
 			ObservedObjectButton1 button = observedObjectBoxes[i] as ObservedObjectButton1;
 			
@@ -27,8 +27,9 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 				temp[j++] = observedObjectBoxes[i];
 			}
 		}
-		
-		observedObjectBoxes = temp;
+
+		observedObjectBoxes.Clear();
+		observedObjectBoxes.AddRange(temp);
 	}
 
 	protected override void Update()
@@ -47,8 +48,8 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 
 	protected void ConnectButtonsToBoxes()
 	{
-		unassignedObjectBoxes.Clear();
-		unassignedObjectBoxes.AddRange( observedObjectBoxes );
+		unassignedActiveObjectBoxes.Clear();
+		unassignedActiveObjectBoxes.AddRange( observedObjectBoxes.FindAll( x => x.gameObject.activeSelf ) );
 		
 		for( int i = 0; i < observedObjectButtons.Length; ++i )
 		{
@@ -67,9 +68,9 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			Vector2 boxPosition = Vector2.zero;
 			float closest = float.MaxValue;
 			
-			for( int j = 0; j < robot.markersVisibleObjects.Count; ++j )
+			for( int j = 0; j < unassignedActiveObjectBoxes.Count; ++j )
 			{
-				ObservedObjectBox1 box1 = unassignedObjectBoxes[j] as ObservedObjectBox1;
+				ObservedObjectBox1 box1 = unassignedActiveObjectBoxes[j] as ObservedObjectBox1;
 				Vector2 box1Position = box1.position;
 				float dist = ( buttonPosition - box1Position ).sqrMagnitude;
 				
@@ -87,7 +88,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 				continue;
 			}
 			
-			unassignedObjectBoxes.Remove( box );
+			unassignedActiveObjectBoxes.Remove( box );
 			
 			//Debug.Log("frame("+Time.frameCount+") box("+box.gameObject.name+") linked to button("+button.gameObject.name+")");
 			

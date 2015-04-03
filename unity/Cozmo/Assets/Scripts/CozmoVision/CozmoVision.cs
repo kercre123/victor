@@ -156,7 +156,7 @@ public class CozmoVision : MonoBehaviour
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
-	protected ObservedObjectBox[] observedObjectBoxes;
+	protected List<ObservedObjectBox> observedObjectBoxes = new List<ObservedObjectBox>();
 	protected GameObject observedObjectCanvas;
 	
 	private float[] dingTimes = new float[2] { 0f, 0f };
@@ -198,7 +198,8 @@ public class CozmoVision : MonoBehaviour
 		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
 		canv.worldCamera = canvas.worldCamera;
 
-		observedObjectBoxes = observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true);
+		observedObjectBoxes.Clear();
+		observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
 		
 		foreach(ObservedObjectBox box in observedObjectBoxes) box.image.gameObject.SetActive(false);
 		
@@ -268,7 +269,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		if( robot == null ) return;
 		
-		for( int i = 0; i < observedObjectBoxes.Length; ++i )
+		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
 			if( robot.observedObjects.Count > i )
 			{
@@ -415,6 +416,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected void RefreshFade()
 	{
+		if(!image.enabled) return;
 		if(!fadingIn && !fadingOut) return;
 
 		fadeTimer += Time.deltaTime;
@@ -447,6 +449,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected void FadeIn()
 	{
+		if(!image.enabled) return;
 		if(fadingIn) return;
 
 		fadeTimer = 0f;
@@ -468,6 +471,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected void FadeOut()
 	{
+		if(!image.enabled) return;
 		if(fadingOut) return;
 		
 		fadeTimer = 0f;

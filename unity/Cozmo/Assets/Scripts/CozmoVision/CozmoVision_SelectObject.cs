@@ -50,7 +50,7 @@ public class CozmoVision_SelectObject : CozmoVision
 	{
 		if( robot == null ) return;
 
-		for( int i = 0; i < observedObjectBoxes.Length; ++i )
+		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
 			if( robot.markersVisibleObjects.Count > i && !robot.isBusy )
 			{
