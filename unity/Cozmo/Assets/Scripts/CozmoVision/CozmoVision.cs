@@ -129,9 +129,9 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected AudioSource loopAudioSource;
-	[SerializeField] protected AudioClip targetLockLoop;
-	[SerializeField] protected AudioClip targetSearchStart;
-	[SerializeField] protected AudioClip targetSearchStop;
+	[SerializeField] protected AudioClip visionActiveLoop;
+	[SerializeField] protected AudioClip visionActivateSound;
+	[SerializeField] protected AudioClip visionDeactivateSound;
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
 	[SerializeField] protected AudioClip selectSound;
@@ -161,10 +161,8 @@ public class CozmoVision : MonoBehaviour
 	
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
-	private float loopTimer = 0f;
 	private float fromVol = 0f;
 	private float maxVol = 0.5f;
-	private bool wasLooping = false;
 	private bool fadingOut = false;
 	private bool fadingIn = false;
 	private float fadeTimer = 0f;
@@ -440,17 +438,21 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = alpha;
 		selected = color;
-		
+
+		RefreshLoopingTargetSound();
+
 		if(fadeTimer >= 1f) {
 			fadingIn = false;
 			fadingOut = false;
-		}		
+		}
+
 	}
 
 	protected void FadeIn()
 	{
 		if(!image.enabled) return;
 		if(fadingIn) return;
+		if(image.color.a >= 1f) return;
 
 		fadeTimer = 0f;
 
@@ -467,12 +469,15 @@ public class CozmoVision : MonoBehaviour
 
 		fadingIn = true;
 		fadingOut = false;
+
+		PlayVisionActivateSound();
 	}
 
 	protected void FadeOut()
 	{
 		if(!image.enabled) return;
 		if(fadingOut) return;
+		if(image.color.a <= 0f) return;
 		
 		fadeTimer = 0f;
 		
@@ -489,6 +494,58 @@ public class CozmoVision : MonoBehaviour
 		
 		fadingOut = true;
 		fadingIn = false;
+
+		PlayVisionDeactivateSound();
+	}
+
+	protected void StopLoopingTargetSound()
+	{
+		if(loopAudioSource != null) loopAudioSource.Stop();
+	}
+	
+	protected void PlayVisionActivateSound()
+	{
+		if(visionActivateSound != null) {
+			audio.volume = 0.2f;
+			audio.PlayOneShot(visionActivateSound, 0.1f);
+		}
+
+		if(loopAudioSource != null) {
+			fromVol = loopAudioSource.volume;
+			loopAudioSource.loop = true;
+			loopAudioSource.clip = visionActiveLoop;
+			loopAudioSource.Play();
+		}
+		//Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
+	}
+	
+	protected void PlayVisionDeactivateSound()
+	{
+		if(visionDeactivateSound != null) {
+			audio.volume = 0.2f;
+			audio.PlayOneShot(visionDeactivateSound, 0.1f);
+		}
+
+		if(loopAudioSource != null) fromVol = loopAudioSource.volume;
+
+		//Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
+	}
+	
+	protected void RefreshLoopingTargetSound()
+	{
+		if(loopAudioSource == null) return;
+
+		if(fadingIn) {
+			loopAudioSource.volume = Mathf.Lerp(fromVol, maxVol, fadeTimer / fadeDuration);
+		}
+		else if(fadingOut) {
+			loopAudioSource.volume = Mathf.Lerp(fromVol, 0f, fadeTimer / fadeDuration);
+		}
+
+		if(fadeTimer >= 1f && fadingOut) {
+			loopAudioSource.Stop();
+		}
+
 	}
 
 	protected virtual void Dings()
@@ -510,6 +567,8 @@ public class CozmoVision : MonoBehaviour
 	
 	protected void Ding( bool found )
 	{
+		if(newObjectObservedSound == null) return;
+
 		if( found )
 		{
 			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
@@ -530,61 +589,7 @@ public class CozmoVision : MonoBehaviour
 			}
 		}*/
 	}
-	
-	protected void StopLoopingTargetSound()
-	{
-		loopAudioSource.Stop();
-		wasLooping = false;
-	}
-	
-	protected void TargetSearchStartSound()
-	{
-		audio.volume = 0.1f;
-		audio.PlayOneShot( targetSearchStart, 0.1f );
-		//Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
-	}
-	
-	protected void TargetSearchStopSound()
-	{
-		audio.volume = 0.1f;
-		audio.PlayOneShot( targetSearchStop, 0.1f );
-		//Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
-	}
-	
-	protected void RefreshLoopingTargetSound( bool on )
-	{
-		loopTimer += Time.deltaTime;
-		
-		if(wasLooping != on) {
-			loopTimer = 0f;
-		}
-		
-		if(on) {
-			
-			if(!wasLooping) {
-				fromVol = 0f;//loopTimer < 1f ? audio.volume : 0f;
-				loopAudioSource.loop = true;
-				loopAudioSource.clip = targetLockLoop;
-				loopAudioSource.Play();
-			}
 
-			loopAudioSource.volume = Mathf.Lerp(fromVol, maxVol, loopTimer);
-		}
-		else if(loopTimer > 1f) {
-			if(wasLooping) {
-				loopAudioSource.loop = false;
-				loopAudioSource.Stop();
-			}
-		}
-		else {
-			if(wasLooping) fromVol = loopAudioSource.volume;
-			loopAudioSource.volume = Mathf.Lerp(fromVol, 0f, loopTimer);
-		}
-
-		//Debug.Log("RefreshLoopingTargetSound("+on+") audio.volume("+audio.volume+") loopTimer("+loopTimer+")");
-		wasLooping = on;
-	}
-	
 	public void ActionButtonClick()
 	{
 		audio.volume = 1f;
@@ -633,6 +638,8 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
+
+		StopLoopingTargetSound();
 	}
 
 	public void Selection(ObservedObject obj)

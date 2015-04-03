@@ -135,8 +135,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				DoReleaseAction();
 			}
 
-			RefreshLoopingTargetSound(false);
-
 			targetLockTimer = 0f;
 			interactLastFrame = false;
 
@@ -154,9 +152,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
 		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
-
-
-		RefreshLoopingTargetSound(robot.selectedObjects.Count > 0);
 
 		RefreshSliderMode();
 
@@ -192,12 +187,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		interactLastFrame = true;
 
 		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
-	}
-
-	protected override void OnDisable() {
-		base.OnDisable();
-
-		StopLoopingTargetSound();
 	}
 
 	//Vector2 centerViz = new Vector2(160f, 120f);
@@ -272,10 +261,10 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(!val) {
 			actionSlider.slider.value = 0f;
-			TargetSearchStopSound();
+			PlayVisionDeactivateSound();
 		}
 		else {
-			TargetSearchStartSound();
+			PlayVisionActivateSound();
 		}
 
 		//Debug.Log("ToggleInteract("+val+")");
