@@ -11,7 +11,7 @@ GameObject:
   - 114: {fileID: 11479098}
   - 82: {fileID: 8279102}
   m_Layer: 5
-  m_Name: CozmoVision2
+  m_Name: CozmoVision_SelectObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -992,7 +992,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 179070}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4626d6108f394f66b58133668014045, type: 3}
+  m_Script: {fileID: 11500000, guid: 25a0e157c13ce4b28873b10b8e57acaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11479082}
@@ -1007,18 +1007,19 @@ MonoBehaviour:
   - button: {fileID: 11479076}
     image: {fileID: 11479078}
     text: {fileID: 11479080}
-  maxObservedObjects: 6
   newObjectObservedSound: {fileID: 8300000, guid: 6e74fe46dc2024ac6b5244ce2b2e0b4c,
     type: 3}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  loopAudioSource: {fileID: 0}
   targetLockLoop: {fileID: 0}
   targetSearchStart: {fileID: 0}
   targetSearchStop: {fileID: 0}
   slideInSound: {fileID: 0}
   slideOutSound: {fileID: 0}
+  selectSound: {fileID: 0}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}

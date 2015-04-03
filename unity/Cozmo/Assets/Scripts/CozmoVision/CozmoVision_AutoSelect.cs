@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class CozmoVision3 : CozmoVision
+public class CozmoVision_AutoSelect : CozmoVision
 {
 	public struct ActionButtonState
 	{

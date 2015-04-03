@@ -56,7 +56,7 @@ public class ActionButton
 			return;
 		}
 		
-		image.sprite = vision.actionSprites[(int)mode];
+		image.sprite = vision.GetActionSprite(mode);
 		index = i;
 		
 		switch(mode) {
@@ -128,15 +128,15 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-
 	[SerializeField] protected AudioSource loopAudioSource;
 	[SerializeField] protected AudioClip targetLockLoop;
 	[SerializeField] protected AudioClip targetSearchStart;
 	[SerializeField] protected AudioClip targetSearchStop;
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
+	[SerializeField] protected AudioClip selectSound;
 	[SerializeField] protected float soundDelay = 2f;
-	[SerializeField] public Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
 	[SerializeField] protected float snapToSideBarScale = 1f;
 	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
@@ -161,12 +161,15 @@ public class CozmoVision : MonoBehaviour
 	
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
-	
-	float loopTimer = 0f;
-	float fromVol = 0f;
-	float maxVol = 0.5f;
-	bool wasLooping = false;
-	
+	private float loopTimer = 0f;
+	private float fromVol = 0f;
+	private float maxVol = 0.5f;
+	private bool wasLooping = false;
+
+	public Sprite GetActionSprite(ActionButtonMode mode) {
+		return actionSprites[(int)mode];
+	}
+
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
 		for( int i = 0; i < dingTimes.Length; ++i )
@@ -545,5 +548,17 @@ public class CozmoVision : MonoBehaviour
 		
 		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
 	}
-	
+
+	public void Selection(ObservedObject obj)
+	{
+		if( robot != null )
+		{
+			robot.selectedObjects.Clear();
+			RobotEngineManager.instance.current.selectedObjects.Add(obj);
+			RobotEngineManager.instance.current.TrackHeadToObject(obj);
+		}
+		
+		if( audio != null ) audio.PlayOneShot( selectSound );
+	}
+
 }

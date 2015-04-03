@@ -83,6 +83,10 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastAttitude = Quaternion.identity;
 		gyroSleepTimer = gyroSleepTime;
+
+		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
+		if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
+		if(headAngleStick != null) headAngleStick.gameObject.SetActive(true);
 	}
 
 	void Update() {
@@ -198,6 +202,10 @@ public class RobotRelativeControls : MonoBehaviour {
 //		if(recorder != null) {
 //			recorder.enabled = false;
 //		}
+
+		if(verticalStick != null) verticalStick.gameObject.SetActive(false);
+		if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
+		if(headAngleStick != null) headAngleStick.gameObject.SetActive(false);
 	}
 
 #endregion

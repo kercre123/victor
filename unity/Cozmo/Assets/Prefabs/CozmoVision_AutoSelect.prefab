@@ -11,12 +11,12 @@ GameObject:
   - 114: {fileID: 11444346}
   - 82: {fileID: 8244346}
   m_Layer: 5
-  m_Name: CozmoVision3
+  m_Name: CozmoVision_AutoSelect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &144348
 GameObject:
   m_ObjectHideFlags: 1
@@ -384,7 +384,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 144346}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d58c04c49d7f44676b7af89c12aa63ec, type: 3}
+  m_Script: {fileID: 11500000, guid: 97128b88c5466474f8a14a2f2cded56e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 11444384}
@@ -402,11 +402,13 @@ MonoBehaviour:
     type: 3}
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  loopAudioSource: {fileID: 0}
   targetLockLoop: {fileID: 0}
   targetSearchStart: {fileID: 0}
   targetSearchStop: {fileID: 0}
   slideInSound: {fileID: 0}
   slideOutSound: {fileID: 0}
+  selectSound: {fileID: 0}
   soundDelay: 2
   actionSprites:
   - {fileID: 0}
@@ -1037,7 +1039,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
-  m_AnchoredPosition: {x: 0, y: 80}
+  m_AnchoredPosition: {x: 0, y: -80}
   m_SizeDelta: {x: 250, y: 128}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22444354
@@ -1107,7 +1109,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
-  m_AnchoredPosition: {x: 0, y: -80}
+  m_AnchoredPosition: {x: 0, y: 80}
   m_SizeDelta: {x: 250, y: 128}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22444362

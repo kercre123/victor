@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class CozmoVision2 : CozmoVision
+public class CozmoVision_SelectObject : CozmoVision
 {
 	protected virtual void Update()
 	{

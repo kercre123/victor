@@ -87,6 +87,7 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
+		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(null);
 	}
 
 	GameState GetNextState() {

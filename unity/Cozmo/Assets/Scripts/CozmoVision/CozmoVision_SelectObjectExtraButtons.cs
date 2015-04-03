@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class CozmoVision1 : CozmoVision2
+public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 {	
 	protected ObservedObjectButton1[] observedObjectButtons;
 	protected List<ObservedObjectBox> unassignedObjectBoxes;

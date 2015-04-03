@@ -158,7 +158,7 @@ GameObject:
   - 114: {fileID: 11459872}
   - 114: {fileID: 11447200}
   m_Layer: 5
-  m_Name: CozmoVision1_SelectionButtons
+  m_Name: CozmoVision_SelectObjectExtraButtons_SelectionButtons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

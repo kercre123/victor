@@ -41,7 +41,7 @@ public class ActionSlider {
 
 		text.gameObject.SetActive(pressed);
 
-		image.sprite = vision.actionSprites[(int)mode];
+		image.sprite = vision.GetActionSprite(mode);
 		text.text = ActionButton.GetModeName(mode);
 
 		switch(mode) {
@@ -62,7 +62,7 @@ public class ActionSlider {
 		}
 
 		if(bottomAction != ActionButtonMode.TARGET) {
-			image_action1.sprite = vision.actionSprites[(int)bottomAction];
+			image_action1.sprite = vision.GetActionSprite(bottomAction);
 			text_action1.text = ActionButton.GetModeName(bottomAction);
 			image_action1.gameObject.SetActive(true);
 			text_action1.gameObject.SetActive(true);
@@ -73,7 +73,7 @@ public class ActionSlider {
 		}
 
 		if(topAction != ActionButtonMode.TARGET) {
-			image_action2.sprite = vision.actionSprites[(int)topAction];
+			image_action2.sprite = vision.GetActionSprite(topAction);
 			text_action2.text = ActionButton.GetModeName(topAction);
 			image_action2.gameObject.SetActive(true);
 			text_action2.gameObject.SetActive(true);
@@ -88,7 +88,7 @@ public class ActionSlider {
 
 }
 
-public class CozmoVision4 : CozmoVision {
+public class CozmoVision_TargetLockSlider : CozmoVision {
 	[SerializeField] ActionSlider actionSlider = null;
 	[SerializeField] RectTransform targetLockReticle = null;
 
