@@ -127,6 +127,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		robot = RobotEngineManager.instance.current;
 
 		ShowObservedObjects();
+		RefreshFade();
 
 		if(!interactPressed) {
 
@@ -143,8 +144,13 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			robot.selectedObjects.Clear();
 
 			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
+
+			FadeOut();
+
 			return;
 		}
+
+		FadeIn();
 
 		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
 		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();

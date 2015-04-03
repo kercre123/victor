@@ -165,6 +165,11 @@ public class CozmoVision : MonoBehaviour
 	private float fromVol = 0f;
 	private float maxVol = 0.5f;
 	private bool wasLooping = false;
+	private bool fadingOut = false;
+	private bool fadingIn = false;
+	private float fadeTimer = 0f;
+	private float fadeDuration = 1f;
+	private float fromAlpha = 0f;
 
 	public Sprite GetActionSprite(ActionButtonMode mode) {
 		return actionSprites[(int)mode];
@@ -388,10 +393,13 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void VisionEnabled()
 	{
+		fadingIn = false;
+		fadingOut = false;
+		image.enabled = PlayerPrefs.GetInt("VisionDisabled") == 0;
+
+		//start at no alpha
 		float alpha = 0f;
-		
-		if( PlayerPrefs.GetInt( "VisionDisabled" ) == 0 ) alpha = 1f;
-		
+
 		Color color = image.color;
 		color.a = alpha;
 		image.color = color;
@@ -404,7 +412,81 @@ public class CozmoVision : MonoBehaviour
 		color.a = alpha;
 		selected = color;
 	}
-	
+
+	protected void RefreshFade()
+	{
+		if(!fadingIn && !fadingOut) return;
+
+		fadeTimer += Time.deltaTime;
+
+		float alpha = 0f;
+		if(fadingIn) {
+			alpha = Mathf.Lerp(fromAlpha, 1f, fadeTimer / fadeDuration);
+		}
+		else {
+			alpha = Mathf.Lerp(fromAlpha, 0f, fadeTimer / fadeDuration);
+		}
+
+		Color color = image.color;
+		color.a = alpha;
+		image.color = color;
+		
+		color = select;
+		color.a = alpha;
+		select = color;
+		
+		color = selected;
+		color.a = alpha;
+		selected = color;
+		
+		if(fadeTimer >= 1f) {
+			fadingIn = false;
+			fadingOut = false;
+		}		
+	}
+
+	protected void FadeIn()
+	{
+		if(fadingIn) return;
+
+		fadeTimer = 0f;
+
+		Color color = image.color;
+		fromAlpha = color.a;
+		
+		color = select;
+		color.a = fromAlpha;
+		select = color;
+		
+		color = selected;
+		color.a = fromAlpha;
+		selected = color;
+
+		fadingIn = true;
+		fadingOut = false;
+	}
+
+	protected void FadeOut()
+	{
+		if(fadingOut) return;
+		
+		fadeTimer = 0f;
+		
+		Color color = image.color;
+		fromAlpha = color.a;
+		
+		color = select;
+		color.a = fromAlpha;
+		select = color;
+		
+		color = selected;
+		color.a = fromAlpha;
+		selected = color;
+		
+		fadingOut = true;
+		fadingIn = false;
+	}
+
 	protected virtual void Dings()
 	{
 		if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 )

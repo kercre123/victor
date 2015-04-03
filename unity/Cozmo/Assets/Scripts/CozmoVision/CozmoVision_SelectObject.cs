@@ -19,6 +19,14 @@ public class CozmoVision_SelectObject : CozmoVision
 		Dings();
 		SetActionButtons();
 		ShowObservedObjects();
+
+		RefreshFade();
+		if(robot.markersVisibleObjects.Count > 0) {
+			FadeIn();
+		}
+		else {
+			FadeOut();
+		}
 	}
 
 	protected override void VisionEnabled()

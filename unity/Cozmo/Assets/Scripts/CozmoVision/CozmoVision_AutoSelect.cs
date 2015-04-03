@@ -100,6 +100,14 @@ public class CozmoVision_AutoSelect : CozmoVision
 			}
 		}
 
+		RefreshFade();
+		if(robot.selectedObjects.Count > 0) {
+			FadeIn();
+		}
+		else {
+			FadeOut();
+		}
+
 		SetActionButtons();
 		Dings();
 	}
@@ -142,6 +150,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 				actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
 			}
 		}
+
 	}
 
 }
