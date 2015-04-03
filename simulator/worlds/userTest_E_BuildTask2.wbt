@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.999946 0.00389317 0.00960202 5.51314
-  position 0.176136 -1.6219 1.5623
+  orientation -0.999957 0.00389295 0.00837323 5.41315
+  position 0.19237 -1.60769 1.25807
 }
 Background {
   skyColor [
@@ -122,6 +122,22 @@ CozmoMat {
   xSize 2
   ySize 1.5
 }
+DEF Zone_Red Solid {
+  translation 0.75 0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0.6 0.5
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
+}
 DEF Zone_Blue Solid {
   translation 0.75 0 0
   children [
@@ -129,6 +145,22 @@ DEF Zone_Blue Solid {
       appearance Appearance {
         material Material {
           diffuseColor 0.5 0.6 1
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
+}
+DEF Zone_Green Solid {
+  translation 0.75 -0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 1 0.5
         }
       }
       geometry Box {
@@ -150,6 +182,33 @@ DEF Blue Block1x1 {
   rotation 1 0 0 0
   blockColor 0 0 1
   markerImg "symbols/angryFace.png"
+}
+DEF Green Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.109997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
+}
+DEF Red Block1x1 {
+  name "Fire_01"
+  translation 0.3 0 0.153997
+  rotation 1 0 0 0
+  markerImg "symbols/fire.png"
+}
+DEF Blue Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.197997
+  rotation 1 0 0 0
+  blockColor 0 0 1
+  markerImg "symbols/angryFace.png"
+}
+DEF Green Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.241997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
 }
 BlockWorldComms {
 }

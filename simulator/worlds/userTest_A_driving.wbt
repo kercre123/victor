@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.273897 0.284221 0.918803 4.59101
-  position -1.29056 0.216497 1.81427
+  orientation -0.999948 0.00389314 0.00946574 5.50315
+  position 0.36347 -1.93882 1.84116
 }
 Background {
   skyColor [
@@ -119,31 +119,31 @@ PointLight {
   location 0 0.3 0
 }
 CozmoMat {
+  xSize 3
+  ySize 1.5
 }
 DEF Red Block1x1 {
   name "Fire_01"
-  translation 0.35 -0.1 0.0219969
+  translation 1.3 -0.1 0.0219969
   rotation 1 0 0 0
-  blockColor 1 0 0
   markerImg "symbols/fire.png"
 }
 DEF Red Block1x1 {
   name "Fire_01"
-  translation 0.35 0.1 0.0219969
+  translation 1.3 0.1 0.0219969
   rotation 1 0 0 0
-  blockColor 1 0 0
   markerImg "symbols/fire.png"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
-  translation 0 -0.2 0.0219969
+  translation 0.8 -0.2 0.0219969
   rotation 1 0 0 0
   blockColor 0 0 1
   markerImg "symbols/angryFace.png"
 }
 DEF Green Block1x1 {
   name "AngryFace_01"
-  translation -0.2 0.2 0.0219969
+  translation 0.4 0.2 0.0219969
   rotation 1 0 0 0
   blockColor 0 1 0
   markerImg "symbols/spider.png"

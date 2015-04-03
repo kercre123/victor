@@ -442,15 +442,15 @@ public class CozmoVision : MonoBehaviour
 
 	protected void TargetSearchStartSound()
 	{
-		audio.volume = 0.5f;
-		audio.PlayOneShot( targetSearchStart, 1f );
+		audio.volume = 0.1f;
+		audio.PlayOneShot( targetSearchStart, 0.1f );
 		//Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
 	}
 
 	protected void TargetSearchStopSound()
 	{
-		audio.volume = 0.5f;
-		audio.PlayOneShot( targetSearchStop, 1f );
+		audio.volume = 0.1f;
+		audio.PlayOneShot( targetSearchStop, 0.1f );
 		//Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
 	}
 

@@ -14,7 +14,6 @@ public class ActionSlider {
 	public Image image_action2;
 	public Text text_action1;
 	public Text text_action2;
-	public int selectedIndex = 0;
 
 	CozmoVision vision;
 	bool pressed = false;
@@ -26,27 +25,17 @@ public class ActionSlider {
 		this.vision = vision;
 	}
 
-	public void SetMode(ActionButtonMode mode, bool down) {
-		SetMode(mode, down, null, selectedIndex);
-	}
-
-	public void SetMode(ActionButtonMode mode, bool down, List<ActionButtonMode> modes, int index=0) {
-
-
-		//if(Mode == mode && down == pressed) return;
-
+	public void SetMode(ActionButtonMode mode, bool down, ActionButtonMode topAction=ActionButtonMode.TARGET, ActionButtonMode bottomAction=ActionButtonMode.TARGET) {
 		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
 		
 		Mode = mode;
 		pressed = down;
-		selectedIndex = index;
 
 		if(mode == ActionButtonMode.DISABLED) {
 			slider.gameObject.SetActive(false);
 			//slider.onClick.RemoveAllListeners();
 			return;
 		}
-
 
 		highlight.SetActive(pressed);
 
@@ -72,33 +61,26 @@ public class ActionSlider {
 				break;
 		}
 
-		if(modes == null || modes.Count <= 1) {
+		if(bottomAction != ActionButtonMode.TARGET) {
+			image_action1.sprite = vision.actionSprites[(int)bottomAction];
+			text_action1.text = ActionButton.GetModeName(bottomAction);
+			image_action1.gameObject.SetActive(true);
+			text_action1.gameObject.SetActive(true);
+		}
+		else {
 			image_action1.gameObject.SetActive(false);
-			image_action2.gameObject.SetActive(false);
 			text_action1.gameObject.SetActive(false);
-			text_action2.gameObject.SetActive(false);
-
 		}
-		else if(modes.Count == 2) {
-			image_action1.gameObject.SetActive(true);
-			image_action2.gameObject.SetActive(false);
-			text_action1.gameObject.SetActive(true);
-			text_action2.gameObject.SetActive(false);
 
-			image_action1.sprite = vision.actionSprites[(int)modes[1]];
-			text_action1.text = ActionButton.GetModeName(modes[1]);
-		}
-		else if(modes.Count >= 3) {
-			image_action1.gameObject.SetActive(true);
+		if(topAction != ActionButtonMode.TARGET) {
+			image_action2.sprite = vision.actionSprites[(int)topAction];
+			text_action2.text = ActionButton.GetModeName(topAction);
 			image_action2.gameObject.SetActive(true);
-			text_action1.gameObject.SetActive(true);
 			text_action2.gameObject.SetActive(true);
-			
-			image_action1.sprite = vision.actionSprites[(int)modes[1]];
-			text_action1.text = ActionButton.GetModeName(modes[1]);
-
-			image_action2.sprite = vision.actionSprites[(int)modes[2]];
-			text_action2.text = ActionButton.GetModeName(modes[2]);
+		}
+		else {
+			image_action2.gameObject.SetActive(false);
+			text_action2.gameObject.SetActive(false);
 		}
 
 		slider.gameObject.SetActive(true);
@@ -114,7 +96,6 @@ public class CozmoVision4 : CozmoVision {
 	bool interactLastFrame = false;
 	bool interactPressed=false;
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
-	List<ActionButtonMode> modes = new List<ActionButtonMode>();
 
 	protected override void Reset( DisconnectionReason reason = DisconnectionReason.None ) {
 		base.Reset( reason );
@@ -164,10 +145,6 @@ public class CozmoVision4 : CozmoVision {
 			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 			return;
 		}
-
-		//Dings();
-
-
 
 		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
 		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
@@ -300,29 +277,28 @@ public class CozmoVision4 : CozmoVision {
 
 	private void RefreshSliderMode() {
 	
-		modes.Clear();
-		modes.Add(ActionButtonMode.TARGET);
+		ActionButtonMode currentMode = ActionButtonMode.TARGET;
+		ActionButtonMode topAction = ActionButtonMode.TARGET;
+		ActionButtonMode bottomAction = ActionButtonMode.TARGET;
 
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
-			modes.Add(ActionButtonMode.DROP);
-			if(robot.selectedObjects.Count == 1) modes.Add(ActionButtonMode.STACK);
+			bottomAction = ActionButtonMode.DROP;
+			if(robot.selectedObjects.Count == 1) topAction = ActionButtonMode.STACK;
 		}
 		else if(robot.selectedObjects.Count > 1) {
-			modes.Add(ActionButtonMode.PICK_UP);
-			modes.Add(ActionButtonMode.PICK_UP);
+			bottomAction = ActionButtonMode.PICK_UP;
+			topAction = ActionButtonMode.PICK_UP;
 			//Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
 		}
 		else if(robot.selectedObjects.Count == 1) {
-			//modes.Add(ActionButtonMode.ROLL);
-			modes.Add(ActionButtonMode.PICK_UP);
+			//bottomAction = ActionButtonMode.ROLL;
+			topAction = ActionButtonMode.PICK_UP;
 		}
-
-		ActionButtonMode currentMode = modes[0];
 
 		ObservedObject targeted = robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
 
-		if(actionSlider.slider.value < -0.5f && modes.Count > 1) {
-			currentMode = modes[1];
+		if(actionSlider.slider.value < -0.5f && bottomAction != ActionButtonMode.TARGET) {
+			currentMode = bottomAction;
 
 			float minZ = float.MaxValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -331,8 +307,8 @@ public class CozmoVision4 : CozmoVision {
 				targeted = robot.selectedObjects[i];
 			}
 		}
-		else if(actionSlider.slider.value > 0.5f && modes.Count > 2) {
-			currentMode = modes[2];
+		else if(actionSlider.slider.value > 0.5f && topAction != ActionButtonMode.TARGET) {
+			currentMode = topAction;
 
 			float maxZ = float.MinValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -357,7 +333,7 @@ public class CozmoVision4 : CozmoVision {
 			SlideOutSound();
 		}
 
-		actionSlider.SetMode(currentMode, interactPressed, modes, 0);
+		actionSlider.SetMode(currentMode, interactPressed, topAction, bottomAction);
 	}
 
 	private void InitiateAssistedInteraction() {
@@ -370,21 +346,21 @@ public class CozmoVision4 : CozmoVision {
 
 	private void DoReleaseAction() {
 
-		bool usePreDockPose = true;
-
-		//if marker is visable and we are roughly facing a side, let's not use the pre dock pose
-		if(robot.selectedObjects.Count > actionSlider.selectedIndex && robot.selectedObjects[actionSlider.selectedIndex].MarkersVisible) {
-			float angleDiff = Vector2.Angle(robot.Forward, robot.selectedObjects[actionSlider.selectedIndex].Forward);
-			float modulo90 = Mathf.Abs(angleDiff % 90f);
-			if(modulo90 > 45f) modulo90 = 90f - angleDiff;
-			if(modulo90 < 20f) usePreDockPose = false;
-
-			//Debug.Log("usePreDockPose("+usePreDockPose+") angleDiff("+angleDiff+") modulo90("+modulo90+")" );
-		}
+//		bool usePreDockPose = true;
+//
+//		//if marker is visable and we are roughly facing a side, let's not use the pre dock pose
+//		if(robot.selectedObjects.Count > actionSlider.selectedIndex && robot.selectedObjects[actionSlider.selectedIndex].MarkersVisible) {
+//			float angleDiff = Vector2.Angle(robot.Forward, robot.selectedObjects[actionSlider.selectedIndex].Forward);
+//			float modulo90 = Mathf.Abs(angleDiff % 90f);
+//			if(modulo90 > 45f) modulo90 = 90f - angleDiff;
+//			if(modulo90 < 20f) usePreDockPose = false;
+//
+//			//Debug.Log("usePreDockPose("+usePreDockPose+") angleDiff("+angleDiff+") modulo90("+modulo90+")" );
+//		}
 
 		switch(actionSlider.Mode) {
 			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex, usePreDockPose, false);
+				RobotEngineManager.instance.current.PickAndPlaceObject();//, usePreDockPose, false);
 				ActionButtonClick();
 				break;
 			case ActionButtonMode.DROP:
@@ -392,7 +368,7 @@ public class CozmoVision4 : CozmoVision {
 				ActionButtonClick();
 				break;
 			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex, usePreDockPose, false);
+				RobotEngineManager.instance.current.PickAndPlaceObject();//, usePreDockPose, false);
 				ActionButtonClick();
 				break;
 			case ActionButtonMode.ROLL:
