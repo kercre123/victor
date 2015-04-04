@@ -351,7 +351,7 @@ namespace Anki {
                 
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK - LIFT_PLACE_HIGH_SLOP);
                 mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }

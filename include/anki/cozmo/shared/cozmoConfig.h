@@ -66,35 +66,36 @@ namespace Anki {
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
     const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 27.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
+    const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
 #else
     // Not the actual heights achieved by the lift, but the heights that would be achieved if there was no backlash.
-    /*
-    // Robot #1
-    const f32 LIFT_HEIGHT_LOWDOCK  = 11.f;
-    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
-    const f32 LIFT_HEIGHT_CARRY    = 98.f;
-    */
-
-    // Robot #2 (w/ (lightly stripped) clutch arm)
-    /*
-    const f32 LIFT_HEIGHT_LOWDOCK  = 26.f;
-    const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
-    const f32 LIFT_HEIGHT_CARRY    = 90.5f;
-     */
 
     // Robot #1 (clutch-less arm)
+    /*
     const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 75.f;
     const f32 LIFT_HEIGHT_CARRY    = 95.f;
-
-    // Distance between the robot origin and the distance along the robot's x-axis
-    // to the lift when it is in the low docking position.
+    const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
+     
     const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.5f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+     */
+    
+    // Cozmo 3 #2, with treads and clutch-less arm
+    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 79.f;
+    const f32 LIFT_HEIGHT_CARRY    = 95.f;
+    const f32 LIFT_PLACE_HIGH_SLOP = 5.f;
+    
+    // Distance between the robot origin and the distance along the robot's x-axis
+    // to the lift when it is in the low docking position.
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 22.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 17.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
 
@@ -150,9 +151,15 @@ namespace Anki {
     // Camera pose within head correction for physical robot
     // TODO: The headCamPose is eventually to be calibrated
     //       if it can't be manufactured to sufficient tolerance.
+#ifdef COZMO_TREADS
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
     const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(1);
     const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
+#else
+    const f32 HEAD_CAM_YAW_CORR = 0.f;
+    const f32 HEAD_CAM_PITCH_CORR = 0.f;
+    const f32 HEAD_CAM_TRANS_X_CORR = 0.f;
+#endif
 
 
     const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin

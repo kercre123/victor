@@ -66,7 +66,7 @@ namespace Anki {
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Lateral tolerance at dock pose
-        const u16 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1;
+        const f32 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1.75f;
         
         // If non-zero, once we get within this distance of the marker
         // it will continue to follow the last path and ignore timeouts.
@@ -486,7 +486,7 @@ namespace Anki {
         
         if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
-          PRINT("DOCK POSE REACHED\n");
+          PRINT("DOCK POSE REACHED (dockOffsetDistX = %f)\n", dockOffsetDistX_);
 #endif
           return;
         }

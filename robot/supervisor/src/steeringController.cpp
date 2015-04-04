@@ -55,7 +55,7 @@ namespace Anki {
       bool startedPointTurn_;
       
       // If distance to target is less than this, point turn is considered to be complete.
-      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.05;
+      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.03;
 
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;

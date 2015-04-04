@@ -60,7 +60,7 @@ namespace Anki
         // or the last path that was followed if not currently path following
         u16 lastPathID_ = 0;
         
-        const f32 COAST_VELOCITY_MMPS = 15.f;
+        const f32 COAST_VELOCITY_MMPS = 25.f;
         const f32 COAST_VELOCITY_RADPS = 0.4f; // Same as POINT_TURN_TERMINAL_VEL_RAD_PER_S
         
         // If true, then the path is not traversed according to its speed parameters, but
@@ -471,7 +471,7 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PERIODIC_PRINT(DBG_PERIOD,"PATH ERROR: %f mm, %f deg\n", distToPath_mm_, RAD_TO_DEG(radToPath_));
+        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType());
 #endif
         
         // Go to next path segment if no longer in range of the current one
