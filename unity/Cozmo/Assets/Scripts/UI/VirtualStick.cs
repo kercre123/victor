@@ -14,6 +14,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] float sideBarSnapScaler = 1f;
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
+	[SerializeField] RectTransform hint = null;
 	[SerializeField] RectTransform deadZoneRect = null;
 	[SerializeField] RectTransform deadZoneVModeRect = null;
 	[SerializeField] RectTransform deadZoneHModeRect = null;
@@ -175,6 +176,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
 		bg.gameObject.SetActive(!dynamic && !hideEvenIfNotDynamic);
+		if(hint != null) hint.gameObject.SetActive(!bg.gameObject.activeSelf);
 		stick.gameObject.SetActive(!dynamic && !hideEvenIfNotDynamic);
 
 		SwipeIndex = 0;
@@ -675,6 +677,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		
 		bg.gameObject.SetActive(true);
 		stick.gameObject.SetActive(true);
+		if(hint != null) hint.gameObject.SetActive(!bg.gameObject.activeSelf);
 
 		oldSwipe = SwipedDirection;
 		if(SwipedDirection.sqrMagnitude == 0f) SwipeIndex = 0;
@@ -732,6 +735,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		PressedTime = 0f;
 		SwipeRequest = SwipedDirection.sqrMagnitude > 0f;
 		bg.gameObject.SetActive((!dynamic && !hideEvenIfNotDynamic) || SwipeRequest);
+		if(hint != null) hint.gameObject.SetActive(!bg.gameObject.activeSelf);
+
 		stick.gameObject.SetActive((!dynamic && !hideEvenIfNotDynamic) || SwipeRequest);
 		//Debug.Log ("Joystick OnPointerUp StickCenterOnScreen(" + StickCenterOnScreen + ") stick.anchoredPosition("+stick.anchoredPosition+")");
 		

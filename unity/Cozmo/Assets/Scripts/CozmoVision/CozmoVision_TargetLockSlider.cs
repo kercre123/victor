@@ -32,7 +32,7 @@ public class ActionSlider {
 		pressed = down;
 
 		if(mode == ActionButtonMode.DISABLED) {
-			slider.gameObject.SetActive(false);
+			//slider.gameObject.SetActive(false);
 			//slider.onClick.RemoveAllListeners();
 			return;
 		}
@@ -83,7 +83,7 @@ public class ActionSlider {
 			text_action2.gameObject.SetActive(false);
 		}
 
-		slider.gameObject.SetActive(true);
+		//slider.gameObject.SetActive(true);
 	}
 
 }
