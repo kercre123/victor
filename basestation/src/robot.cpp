@@ -1783,6 +1783,10 @@ namespace Anki {
           }
           carriedObject->SetBeingCarried(true);
           _carryingObjectID = carryObjectID;
+          
+          // Tell the robot it's carrying something
+          // TODO: Figure out how to tell it it's carrying something other than just one block
+          SendSetCarryState(CARRY_1_BLOCK);
         }
       }
     }
@@ -1808,6 +1812,9 @@ namespace Anki {
           
         } else {
           carriedObject->SetBeingCarried(false);
+          
+          // Tell the robot it's not carrying anything
+          SendSetCarryState(CARRY_NONE);
         }
       }
       // Even if the above failed, still mark the robot's carry ID as unset
