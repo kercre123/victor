@@ -13,12 +13,12 @@ namespace HeadController {
 
     namespace {
       
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(3.f);
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
 
       // Used when calling SetDesiredAngle with just an angle:
       const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
-      const f32 DEFAULT_DURATION_SEC     = 0.25f;
+      const f32 DEFAULT_DURATION_SEC     = 0.5f;
 
       // Head angle on startup
       //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
