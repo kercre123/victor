@@ -820,7 +820,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: .250980407}
+  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: 1}
   m_Sprite: {fileID: 21300000, guid: 5cce48ff8214d421da2a6f14c29ca667, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -1182,9 +1182,12 @@ MonoBehaviour:
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   loopAudioSource: {fileID: 8267958}
   visionActiveLoop: {fileID: 8300000, guid: 7ba55faf18300472aa15d40edd598c9a, type: 3}
+  maxLoopingVol: .5
   visionActivateSound: {fileID: 8300000, guid: ff25ac74aff004684bcb97e1515b9789, type: 3}
+  maxVisionStartVol: .200000003
   visionDeactivateSound: {fileID: 8300000, guid: 5c8da956c11e2481394753dd479e08e5,
     type: 3}
+  maxVisionStopVol: .349999994
   slideInSound: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   slideOutSound: {fileID: 8300000, guid: 70d82480979b544b89472e5069cdbc6e, type: 3}
   selectSound: {fileID: 0}
@@ -1218,6 +1221,7 @@ MonoBehaviour:
     text_action1: {fileID: 11407498}
     text_action2: {fileID: 11407482}
   targetLockReticle: {fileID: 22407504}
+  targetLockReticleScale: 1.10000002
 --- !u!114 &11407510
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1230,7 +1234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: .250980407}
+  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: 1}
   m_Sprite: {fileID: 21300000, guid: 5cce48ff8214d421da2a6f14c29ca667, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -1251,7 +1255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: .250980407}
+  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: 1}
   m_Sprite: {fileID: 21300000, guid: 5cce48ff8214d421da2a6f14c29ca667, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -1384,7 +1388,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: .250980407}
+  m_Color: {r: .666666687, g: .392156869, b: .862745106, a: 1}
   m_Sprite: {fileID: 21300000, guid: 5cce48ff8214d421da2a6f14c29ca667, type: 3}
   m_Type: 0
   m_PreserveAspect: 1

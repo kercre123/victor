@@ -91,6 +91,7 @@ public class ActionSlider {
 public class CozmoVision_TargetLockSlider : CozmoVision {
 	[SerializeField] ActionSlider actionSlider = null;
 	[SerializeField] RectTransform targetLockReticle = null;
+	[SerializeField] float targetLockReticleScale = 1.1f;
 
 	float targetLockTimer = 0f;
 	bool interactLastFrame = false;
@@ -179,7 +180,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float lockW = (lockedObject.VizRect.width / 320f) * w;
 				float lockH = (lockedObject.VizRect.height / 240f) * h;
 				
-				targetLockReticle.sizeDelta = new Vector2( lockW, lockH );
+				targetLockReticle.sizeDelta = new Vector2( lockW, lockH ) * targetLockReticleScale;
 				targetLockReticle.anchoredPosition = new Vector2( lockX, -lockY );
 			}
 		}
@@ -261,10 +262,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(!val) {
 			actionSlider.slider.value = 0f;
-			PlayVisionDeactivateSound();
-		}
-		else {
-			PlayVisionActivateSound();
 		}
 
 		//Debug.Log("ToggleInteract("+val+")");
