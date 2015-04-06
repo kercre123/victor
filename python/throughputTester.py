@@ -10,7 +10,7 @@ class TPT:
     MIN_SIZE = 8
     MAX_SIZE = 1400
 
-    def __init__(self, host, port, count=None, interval=None, size=None, bandwidth=None):
+    def __init__(self, host, port, count=None, interval=None, size=None, bandwidth=None, summerize=None):
         """Sets up the through put tester
 host:  The host name to connect to
 port:  The port on the remote host to connect to
@@ -24,6 +24,7 @@ interval:  The number of seconds between packets (default 1.0) and may be
 size:      Number of bytes per packet. Range %d to %d, default %d.
 bandwidth: Bandwidth to use in bytes per second, if used only interval or size
            may be specified, the other will be derrived.
+summerize  Optional method of summerizing data. None, rxbw, pkts
 """ % (self.MIN_SIZE, self.MAX_SIZE, self.MAX_SIZE)
         self.addr = (host, port)
         self.count = count
@@ -41,6 +42,7 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
         elif size < self.MIN_SIZE:
             sys.stdout.write("Clamping size to %d instead of %d\n" % (self.MIN_SIZE, self.size))
             self.size = self.MIN_SIZE
+        self.summerize = summerize
         # Internal member setup
         self.seqno = 0L
         if self.size > self.MIN_SIZE:
@@ -75,10 +77,11 @@ bandwidth: Bandwidth to use in bytes per second, if used only interval or size
                 return False
             else:
                 st = self.seqSendTimes.get(msgData[0])
-                if st is None:
+                if st is None and self.summerize is None:
                     sys.stdout.write("Received unexpected packet of %d bytes\n" % len(msg))
                 else:
-                    sys.stdout.write("Msg %08d RTT %fms\n" % (msgData[0], (rt-st)*1000.0))
+                    if self.summerize is None:
+                        sys.stdout.write("Msg %08d RTT %fms\n" % (msgData[0], (rt-st)*1000.0))
                     del self.seqSendTimes[msgData[0]]
 
     def step(self):
