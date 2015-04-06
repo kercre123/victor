@@ -275,10 +275,9 @@ public class CozmoVision : MonoBehaviour
 
 	protected void UnselectNonObservedObjects()
 	{
-		if( robot == null ) return;
-		if( pertinentObjects == null ) return;
+		if( robot == null || pertinentObjects == null ) return;
 
-		for( int i = 0; i < pertinentObjects.Count; ++i )
+		for( int i = 0; i < robot.selectedObjects.Count; ++i )
 		{
 			if( pertinentObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
 			{
@@ -289,8 +288,7 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void ShowObservedObjects()
 	{
-		if( robot == null ) return;
-		if( pertinentObjects == null ) return;
+		if( robot == null || pertinentObjects == null ) return;
 		
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
