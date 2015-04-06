@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class CozmoVision_SelectObject : CozmoVision
 {
+	[SerializeField] private RectTransform reticle;
+
 	protected virtual void Update()
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
@@ -21,10 +23,13 @@ public class CozmoVision_SelectObject : CozmoVision
 		ShowObservedObjects();
 
 		RefreshFade();
-		if(robot.markersVisibleObjects.Count > 0 && !robot.isBusy) {
+
+		if( observedObjectBoxes.Find( x => x.gameObject.activeSelf ) != null && !robot.isBusy )
+		{
 			FadeIn();
 		}
-		else {
+		else
+		{
 			FadeOut();
 		}
 	}
@@ -45,6 +50,18 @@ public class CozmoVision_SelectObject : CozmoVision
 //		color.a = alpha;
 //		selected = color;
 //	}
+
+	protected override void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
+	{
+		base.ObservedObjectSeen( box, observedObject );
+
+		ObservedObjectBox1 box1 = box as ObservedObjectBox1;
+
+		if( !box1.IsInside( reticle, image.canvas.worldCamera ) )
+		{
+			box1.gameObject.SetActive( false );
+		}
+	}
 
 	protected override void ShowObservedObjects()
 	{

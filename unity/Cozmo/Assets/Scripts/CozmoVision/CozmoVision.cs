@@ -228,26 +228,23 @@ public class CozmoVision : MonoBehaviour
 			box.image.gameObject.SetActive( true );
 			return;
 		}*/
-
+		
 		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 		
-		//if( observedObject.MarkersVisible )
+		if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 		{
-			if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
-			{
-				box.SetColor(selected);
-				box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
-			}
-			else
-			{
-				box.SetColor(select);
-				box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
-				box.observedObject = observedObject;
-			}
-			
-			box.gameObject.SetActive( true );
+			box.SetColor( selected );
+			box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
 		}
+		else
+		{
+			box.SetColor( select );
+			box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
+			box.observedObject = observedObject;
+		}
+		
+		box.gameObject.SetActive( true );
 	}
 	
 	protected void UnselectNonObservedObjects()
