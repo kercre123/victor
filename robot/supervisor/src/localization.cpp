@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "localization.h"
+#include "pickAndPlaceController.h"
 #include "anki/common/robot/geometry.h"
 #include "imuFilter.h"
 
@@ -50,6 +51,9 @@ namespace Anki {
         Radians orientation_(0.f);
         bool onRamp_ = false;
         bool onBridge_ = false;
+        
+        // Pose of the robot's drive center which is carry state dependent
+        f32 driveCenter_x_ = 0.f, driveCenter_y_ = 0.f;
        
 #if(USE_OVERLAY_DISPLAY)
         f32 xTrue_, yTrue_, angleTrue_;
@@ -361,6 +365,22 @@ namespace Anki {
         return onBridge_;
       }
       
+      f32 GetDriveCenterOffset()
+      {
+#if(USE_DRIVE_CENTER_POSE)
+        // Get offset of the drive center from robot origin depending on carry state
+        f32 drive_offset = DRIVE_CENTER_OFFSET;
+        if (PickAndPlaceController::IsCarryingBlock()) {
+          // If carrying a block the drive center goes forward, possibly to robot origin
+          drive_offset = 0;
+        }
+        
+        return drive_offset;
+#else
+        return 0.f;
+#endif
+      }
+      
       void Update()
       {
 
@@ -441,11 +461,16 @@ namespace Anki {
           PRINT("oldPose: %f %f %f\n", x_, y_, orientation_.ToFloat());
 #endif
           
+          f32 driveCenterOffset = GetDriveCenterOffset();
+          
           if (ABS(cRadius) >= BIG_RADIUS) {
 
             x_ += cDist * cosf(orientation_.ToFloat());
             y_ += cDist * sinf(orientation_.ToFloat());
 
+            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
+            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
+            
             /*
             f32 dx = cDist * cosf(orientation_.ToFloat());
             f32 dy = cDist * sinf(orientation_.ToFloat());
@@ -465,8 +490,49 @@ namespace Anki {
             */
           } else {
             
+           
+#if(USE_DRIVE_CENTER_POSE)
+            // Get ICR offset from robot origin depending on carry state
+            f32 driveCenterOffset = GetDriveCenterOffset();
             
-#if(1)
+            // Measure cTheta according to gyro
+            // Clip according to expected cTheta since there's no way it can be more than that
+            Radians newOrientation = IMUFilter::GetRotation() + gyroRotOffset_;
+            f32 cTheta_meas = (newOrientation - orientation_).ToFloat();
+            if (cTheta > 0) {
+              cTheta_meas = CLIP(cTheta_meas, 0, cTheta);
+            } else {
+              cTheta_meas = CLIP(cTheta_meas, cTheta, 0);
+            }
+            
+            // Assuming that the actual distance travelled is the expected distance
+            // travelled (based on encoders) scaled by the
+            // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
+            // We only bother doing this if rotation is not too small.
+            if (cTheta_meas > 0.001f) {
+              cDist *= cTheta_meas / cTheta;
+            }
+            
+            driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
+            driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
+            
+            driveCenter_x_ += cDist * cosf(orientation_.ToFloat());
+            driveCenter_y_ += cDist * sinf(orientation_.ToFloat());
+            
+            orientation_ += cTheta_meas;
+            
+            x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
+            y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
+            /*
+            // DEBUG PRINT
+            static u8 cnt= 0;
+            if (++cnt == 200) {
+              PRINT("LOC: cDist=%f, cTheta=%f, cTheta_meas=%f, icr=(%f,%f), xy=(%f,%f), orientation=%f\n", cDist, cTheta, cTheta_meas, driveCenter_x_, driveCenter_y_, x_, y_, orientation_.ToFloat());
+              cnt = 0;
+            }
+            */
+            
+#elif(1)
             // Compute distance traveled relative to previous position.
             // Drawing a straight line from the previous position to the new position forms a chord
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
@@ -481,11 +547,17 @@ namespace Anki {
             x_ += (cDist > 0 ? 1 : -1) * chord_length * cosf(orientation_.ToFloat() + alpha);
             y_ += (cDist > 0 ? 1 : -1) * chord_length * sinf(orientation_.ToFloat() + alpha);
             orientation_ += cTheta;
+            
+            driveCenter_x_ = x_;
+            driveCenter_y_ = y_;
 #else
             // Naive approximation, but seems to work nearly as well as non-naive with one less sin() call.
             x_ += cDist * cosf(orientation_.ToFloat());
             y_ += cDist * sinf(orientation_.ToFloat());
             orientation_ += cTheta;
+            
+            driveCenter_x_ = x_;
+            driveCenter_y_ = y_;
 #endif
           }
           
@@ -548,12 +620,32 @@ namespace Anki {
 #endif
       }
 
-      void SetCurrentMatPose(f32  x, f32  y, Radians  angle)
+      void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle)
       {
         x_ = x;
         y_ = y;
         orientation_ = angle;
         gyroRotOffset_ = angle.ToFloat() - IMUFilter::GetRotation();
+        
+        // Update drive center pose
+        f32 driveCenterOffset = GetDriveCenterOffset();
+        driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
+        driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
+        
+      } // SetCurrentMatPose()
+      
+      void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle)
+      {
+        driveCenter_x_ = x;
+        driveCenter_y_ = y;
+        orientation_ = angle;
+        gyroRotOffset_ = angle.ToFloat() - IMUFilter::GetRotation();
+        
+        // Update robot origin pose
+        f32 driveCenterOffset = GetDriveCenterOffset();
+        x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
+        y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
+        
       } // SetCurrentMatPose()
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle)
@@ -562,6 +654,22 @@ namespace Anki {
         y = y_;
         angle = orientation_;
       } // GetCurrentMatPose()
+
+      void GetDriveCenterPose(f32& x, f32& y, Radians& angle)
+      {
+        x = driveCenter_x_;
+        y = driveCenter_y_;
+        angle = orientation_;
+      }
+      
+      void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose, Anki::Embedded::Pose2d &driveCenterPose)
+      {
+        f32 angle = robotOriginPose.angle.ToFloat();
+        
+        driveCenterPose.x() = robotOriginPose.GetX() + GetDriveCenterOffset() * cosf(angle);
+        driveCenterPose.y() = robotOriginPose.GetY() + GetDriveCenterOffset() * sinf(angle);
+        driveCenterPose.angle = robotOriginPose.angle;
+      }
       
   
       Radians GetCurrentMatOrientation()

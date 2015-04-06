@@ -363,6 +363,22 @@ namespace Anki
         const ObjectID obsID = observedObject->GetID();
         const ObjectType obsType = observedObject->GetType();
         
+        // Sanity check: this should not happen, but we're seeing situations where
+        // objects think they are being carried when the robot doesn't think it
+        // is carrying that object
+        // TODO: Eventually, we should be able to remove this check
+        ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
+        if(actionObject != nullptr) {
+          if(actionObject->IsBeingCarried() && _robot->GetCarryingObject() != obsID) {
+            PRINT_NAMED_WARNING("BlockWorld.CycleSelectedObject",
+                                "Object %d thinks it is being carried, but does not match "
+                                "robot %d's carried object ID (%d). Setting as uncarried.\n",
+                                obsID.GetValue(), _robot->GetID(),
+                                _robot->GetCarryingObject().GetValue());
+            actionObject->SetBeingCarried(false);
+          }
+        }
+        
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
@@ -538,9 +554,25 @@ namespace Anki
                                     unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
           
           // Check any of the markers should be visible.
-          // For now just ignore the left and right 22.5% of the image blocked by the lift
+          // For now just ignore the left and right 22.5% of the image blocked by the lift,
+          // *iff* we are using VGA images, which have a wide enough FOV to be occluded
+          // by the lift. (I.e., assume QVGA is a cropped, narrower FOV)
           // TODO: Actually project a lift into the image and figure out what it will occlude
-          const u16 xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+          u16 xBorderPad = 0;
+          switch(camera.GetCalibration().GetNcols())
+          {
+            case 640:
+              xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+              break;
+            case 320:
+              // Nothing to do, leave at zero
+              break;
+            default:
+              // Not expecting other resolutions
+              PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects",
+                                  "Unexpeted camera calibration ncols=%d.\n",
+                                  camera.GetCalibration().GetNcols());
+          }
           const bool markersShouldBeVisible = unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad);
           
           if(seenRecently && closeEnough && !markersShouldBeVisible)
@@ -1226,8 +1258,10 @@ namespace Anki
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
-          // Note that this removes markers from the list that it uses
-          UpdateRobotPose(currentObsMarkers, atTimestamp);
+          if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+            // Note that this removes markers from the list that it uses
+            UpdateRobotPose(currentObsMarkers, atTimestamp);
+          }
         }
         
         // Reset the flag telling us objects changed here, before we update any objects:
@@ -1362,8 +1396,10 @@ namespace Anki
       } // for each object family
       
       if(numUnusedMarkers > 0) {
-        CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
-                      numUnusedMarkers);
+        if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+          CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
+                        numUnusedMarkers);
+        }
       }
      
       // Toss any remaining markers?

@@ -39,8 +39,16 @@ namespace Anki {
 #if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
-        const f32 LIMIT_APPROACH_POWER = 0.7;
+        const f32 LIMIT_APPROACH_POWER = 0.6;
 #endif
+
+        // This value should be the lowest speed the lift can be commanded to move
+        const f32 DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = 0.7;
+        
+        // This value should probably be a little more DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC
+        // to make sure that the joint is limiting
+        const f32 LIMIT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC + 0.2;
+        
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
@@ -49,7 +57,7 @@ namespace Anki {
         // Used when calling SetDesiredHeight with just a height:
         const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
-        const f32 DEFAULT_DURATION_SEC     = 0.25f;
+        const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
         f32 Kp_ = 20.f; // proportional control constant
         f32 Ki_ = 0.03f; // integral control constant
@@ -87,7 +95,7 @@ namespace Anki {
         bool inPosition_  = true;
         
         // Speed and acceleration params
-        f32 maxSpeedRad_ = 1.0f;
+        f32 maxSpeedRad_ = PI_F;
         f32 accelRad_ = 2.0f;
         f32 approachSpeedRad_ = 0.2f;
         
@@ -392,6 +400,7 @@ namespace Anki {
       
       void SetDesiredHeight(f32 height_mm)
       {
+        //PRINT("LiftHeight: %fmm, speed %f, accel %f\n", height_mm, maxSpeedRad_, accelRad_);
         SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
       }
 
@@ -463,9 +472,10 @@ namespace Anki {
         
 #if(RECALIBRATE_AT_LIMITS)
         // Adjust approach speed to be a little faster if desired height is at a limit.
-        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
+        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? LIMIT_ANGLE_APPROACH_SPEED_RAD_PER_SEC : DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC;
 #endif
 
+        /*
         bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
                                                    desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
                                                    MAX_LIFT_SPEED_RAD_PER_S,
@@ -476,12 +486,14 @@ namespace Anki {
         if (!res) {
           PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-          
+          */
           vpg_.StartProfile(startRadSpeed, startRad,
                             maxSpeedRad_, accelRad_,
                             approachSpeedRad_, desiredAngle_.ToFloat(),
                             CONTROL_DT);
+        /*
         }
+         */
         
 #if(DEBUG_HEAD_CONTROLLER)
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",

@@ -36,7 +36,7 @@ namespace Anki {
 
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
-        const f32 BACKOUT_DISTANCE_MM = 60.f;
+        const f32 BACKOUT_DISTANCE_MM = 75.f;
         const f32 BACKOUT_SPEED_MMPS = 40;
         
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
@@ -47,6 +47,10 @@ namespace Anki {
         
         const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(18);
+        
+        // Distance at which robot should start driving blind along last path
+        // during DA_PICKUP_HIGH.
+        const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 30;
 
         Mode mode_ = IDLE;
         
@@ -227,6 +231,10 @@ namespace Anki {
                 // _expect_ it to be large, since the markers are facing upward).
                 const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
                 
+                // For PICKUP_HIGH, set the distance to the marker beyond which
+                // we should ignore docking error signals since the lift occludes our view anyway.
+                u32 pointOfNoReturnDist = (action_ == DA_PICKUP_HIGH) ? HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM : 0;
+                
                 if (pixelSearchRadius_ < 0) {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
@@ -234,7 +242,8 @@ namespace Anki {
                                                   dockOffsetDistY_,
                                                   dockOffsetAng_,
                                                   checkAngleX,
-                                                  useManualSpeed_);
+                                                  useManualSpeed_,
+                                                  pointOfNoReturnDist);
                 } else {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
@@ -244,7 +253,8 @@ namespace Anki {
                                                   dockOffsetDistY_,
                                                   dockOffsetAng_,
                                                   checkAngleX,
-                                                  useManualSpeed_);
+                                                  useManualSpeed_,
+                                                  pointOfNoReturnDist);
                 }
               }
               mode_ = DOCKING;
@@ -304,6 +314,27 @@ namespace Anki {
                 PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
                 VisionSystem::StopTracking();
                 
+                // Send failed pickup or place message
+                switch(action_)
+                {
+                  case DA_PICKUP_LOW:
+                  case DA_PICKUP_HIGH:
+                  {
+                    SendBlockPickUpMessage(false);
+                    break;
+                  } // PICKUP
+                    
+                  case DA_PLACE_LOW:
+                  case DA_PLACE_HIGH:
+                  {
+                    SendBlockPlacedMessage(false);
+                    break;
+                  } // PLACE
+                  default:
+                    PRINT("ERROR: Reached default switch statement in DOCKING case.\n");
+                } // switch(action_)
+
+                
                 // Switch to BACKOUT mode:
                 lastActionSucceeded_ = false;
                 StartBackingOut();
@@ -341,7 +372,7 @@ namespace Anki {
                 
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK - LIFT_PLACE_HIGH_SLOP);
                 mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }
@@ -364,13 +395,13 @@ namespace Anki {
                 case DA_PICKUP_HIGH:
                 case DA_PLACE_HIGH:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(20));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(15));
                   break;
                 } // HIGH
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(-5));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(-20));
                   break;
                 } // LOW
                 default:

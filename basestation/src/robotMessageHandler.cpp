@@ -396,10 +396,11 @@ namespace Anki {
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-       lastResult = robot->SetDockObjectAsAttachedToLift();
+        lastResult = robot->SetDockObjectAsAttachedToLift();
+        robot->SetLastPickOrPlaceSucceeded(true);
       }
       else {
-        // TODO: what do we do on failure? Need to trigger reattempt?
+        robot->SetLastPickOrPlaceSucceeded(false);
       }
       
       robot->StopDocking();
@@ -417,9 +418,10 @@ namespace Anki {
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
         lastResult = robot->SetCarriedObjectAsUnattached();
+        robot->SetLastPickOrPlaceSucceeded(true);
       }
       else {
-        // TODO: what do we do on failure? Need to trigger reattempt?
+        robot->SetLastPickOrPlaceSucceeded(false);
       }
       
       robot->StopDocking();

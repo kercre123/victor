@@ -82,6 +82,7 @@ namespace Anki {
     , _isAnimating(false)
     , _battVoltage(5)
     , _carryingMarker(nullptr)
+    , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
@@ -979,8 +980,15 @@ namespace Anki {
       }
       
       SelectPlanner(targetPoseWrtOrigin);
-
+      
+#if(USE_DRIVE_CENTER_POSE)
+      // Compute drive center pose for start pose
+      Pose3d startDriveCenterPose;
+      GetDriveCenterPose(GetPose(), startDriveCenterPose);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetPoseWrtOrigin);
+#else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
+#endif
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -1010,7 +1018,20 @@ namespace Anki {
     {
       // Let the long path (lattice) planner do its thing and choose a target
       _selectedPathPlanner = _longPathPlanner;
+      
+#if(USE_DRIVE_CENTER_POSE)
+      // Compute drive center pose for start pose and goal poses
+      Pose3d startDriveCenterPose;
+      vector<Pose3d> targetDriveCenterPoses(poses.size());
+      GetDriveCenterPose(GetPose(), startDriveCenterPose);
+      
+      for (int i=0; i< poses.size(); ++i) {
+        GetDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
+      }
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPoses, selectedIndex);
+#else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
+#endif
       
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
       {
@@ -1021,7 +1042,16 @@ namespace Anki {
         // If SelectPlanner would rather use the short path planner, let it get a
         // plan and use that one instead.
         if(_selectedPathPlanner != _longPathPlanner) {
+
+#if(USE_DRIVE_CENTER_POSE)
+          // Compute drive center pose for start pose and goal pose
+          Pose3d startDriveCenterPose, targetDriveCenterPose;
+          GetDriveCenterPose(GetPose(), startDriveCenterPose);
+          GetDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
+          status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPose);
+#else
           status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
+#endif
         }
         
         if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
@@ -1730,6 +1760,66 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, msg);
     }
     
+    void Robot::SetCarryingObject(ObjectID carryObjectID)
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                          "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
+                          carryObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                            "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.\n",
+                            carryObjectID.GetValue());
+        } else {
+          if(carriedObject->IsBeingCarried() == true) {
+            PRINT_NAMED_WARNING("Robot.SetCarryingObject",
+                                "Robot %d is about to mark object %d as carried but that object "
+                                "already thinks it is being carried.\n", GetID(), carryObjectID.GetValue());
+            
+          }
+          carriedObject->SetBeingCarried(true);
+          _carryingObjectID = carryObjectID;
+          
+          // Tell the robot it's carrying something
+          // TODO: Figure out how to tell it it's carrying something other than just one block
+          SendSetCarryState(CARRY_1_BLOCK);
+        }
+      }
+    }
+    
+    void Robot::UnSetCarryingObject()
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                          _carryingObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                            "Carried object %d could not be cast as an ActionableObject.\n",
+                            _carryingObjectID.GetValue());
+        } else if(carriedObject->IsBeingCarried() == false) {
+          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
+                              "Robot %d thinks it is carrying object %d but that object "
+                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
+          
+        } else {
+          carriedObject->SetBeingCarried(false);
+          
+          // Tell the robot it's not carrying anything
+          SendSetCarryState(CARRY_NONE);
+        }
+      }
+      // Even if the above failed, still mark the robot's carry ID as unset
+      _carryingObjectID.UnSet();
+    }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
@@ -1758,9 +1848,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _carryingObjectID = objectID;
-      _carryingMarker   = objectMarker;
-
       // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
@@ -1778,8 +1865,10 @@ namespace Anki {
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
+      SetCarryingObject(objectID); // also marks the object as carried
+      _carryingMarker   = objectMarker;
+      
       object->SetPose(objectPoseWrtLiftPose);
-      object->SetBeingCarried(true);
       
       return RESULT_OK;
       
@@ -1812,8 +1901,6 @@ namespace Anki {
       }
       object->SetPose(placedPose);
       
-      object->SetBeingCarried(false);
-      
       PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
                        _ID, object->GetID().GetValue(),
@@ -1821,7 +1908,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      _carryingObjectID.UnSet();
+      UnSetCarryingObject(); // also sets carried object as not being carried anymore
       _carryingMarker = nullptr;
       
       return RESULT_OK;
@@ -2576,6 +2663,32 @@ namespace Anki {
       m.blockID = blockID;
       std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
       return _msgHandler->SendMessage(GetID(), m);
+    }
+      
+    void Robot::GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
+    {
+#if(USE_DRIVE_CENTER_POSE)
+      if (_isPhysical) {
+        // What is the current drive center pose based on carry state...
+        f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
+        if (IsCarryingObject()) {
+          driveCenterOffset = 0;
+        }
+        
+        driveCenterPose = robotPose;
+        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
+        Vec3f trans;
+        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
+        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
+        driveCenterPose.SetTranslation(trans);
+      } else {
+        // TODO: Simulated robot Webots proto needs to be updated with treads.
+        //       Til then assume no drive center offset.
+        driveCenterPose = robotPose;
+      }
+#else
+      driveCenterPose = robotPose;
+#endif
     }
     
   } // namespace Cozmo

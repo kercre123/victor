@@ -284,6 +284,7 @@ namespace Anki {
                 ABS(gyro_robot_frame_filt[1]) > 1.f ||
                 ABS(gyro_robot_frame_filt[2]) > 1.f) {
               if (++pdUnexpectedMotionCnt_ > 40) {
+                PRINT("PDWhileStationary: UnexpectedMontionCnt %d\n", pdUnexpectedMotionCnt_);
                 SetPickupDetect(true);
               }
             }

@@ -38,7 +38,11 @@ namespace Anki {
       f32 Ki_ = DEFAULT_WHEEL_KI;
       
       
+#ifdef COZMO_TREADS
+      f32 Kp_l_ = 0.002f;
+#else
       f32 Kp_l_ = DEFAULT_WHEEL_KP;
+#endif
       f32 Ki_l_ = DEFAULT_WHEEL_KI;
       
       f32 Kp_r_ = DEFAULT_WHEEL_KP;

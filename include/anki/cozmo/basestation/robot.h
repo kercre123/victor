@@ -126,6 +126,7 @@ namespace Anki {
       // Specify whether this robot is a physical robot or not.
       // Currently, adjusts headCamPose by slop factor if it's physical.
       void SetPhysicalRobot(bool isPhysical);
+      bool IsPhysical() {return _isPhysical;}
       
       //
       // Pose (of the robot or its parts)
@@ -158,6 +159,10 @@ namespace Anki {
       // Wheel speeds, mm/sec
       f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
+      
+      // Return pose of robot's drive center based on what it's currently carrying
+      void GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      
       
       //
       // Path Following
@@ -240,6 +245,9 @@ namespace Anki {
       // Same as above, but with specified object
       Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                        const Vision::KnownMarker* dockMarker);
+      
+      void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; }
+      bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
       
       // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
@@ -543,6 +551,7 @@ namespace Anki {
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryingMarker;
+      bool                        _lastPickOrPlaceSucceeded;
       
       // Object to keep head tracked to this object whenever it is observed
       ObjectID                    _trackHeadToObjectID;
@@ -730,14 +739,6 @@ namespace Anki {
     inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
       _rampID = rampID;
       _rampDirection = direction;
-    }
-
-    inline void Robot::SetCarryingObject(ObjectID carryObjectID) {
-      _carryingObjectID = carryObjectID;
-    }
-    
-    inline void Robot::UnSetCarryingObject() {
-      _carryingObjectID.UnSet();
     }
 
     inline Result Robot::SetDockObjectAsAttachedToLift(){
