@@ -1152,6 +1152,8 @@ namespace Anki {
       }
       
       _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
+      
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
@@ -1697,6 +1699,7 @@ namespace Anki {
       }
 
       _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
       
       return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
