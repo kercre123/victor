@@ -153,7 +153,7 @@ namespace Anki {
     //       if it can't be manufactured to sufficient tolerance.
 #ifdef COZMO_TREADS
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
-    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(1);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(3);
     const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
 #else
     const f32 HEAD_CAM_YAW_CORR = 0.f;
