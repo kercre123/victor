@@ -314,6 +314,27 @@ namespace Anki {
                 PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
                 VisionSystem::StopTracking();
                 
+                // Send failed pickup or place message
+                switch(action_)
+                {
+                  case DA_PICKUP_LOW:
+                  case DA_PICKUP_HIGH:
+                  {
+                    SendBlockPickUpMessage(false);
+                    break;
+                  } // PICKUP
+                    
+                  case DA_PLACE_LOW:
+                  case DA_PLACE_HIGH:
+                  {
+                    SendBlockPlacedMessage(false);
+                    break;
+                  } // PLACE
+                  default:
+                    PRINT("ERROR: Reached default switch statement in DOCKING case.\n");
+                } // switch(action_)
+
+                
                 // Switch to BACKOUT mode:
                 lastActionSucceeded_ = false;
                 StartBackingOut();
