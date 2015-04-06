@@ -8,7 +8,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
 	//protected float d;
 	//protected Vector3 position;
 	protected Vector3[] corners;
-
+	
 	public Vector3 position
 	{
 		get
@@ -29,7 +29,27 @@ public class ObservedObjectBox1 : ObservedObjectButton
 			return Vector3.zero;
 		}
 	}
+	
+	public bool IsInside( RectTransform reticle, Camera camera )
+	{
+		if( corners == null )
+		{
+			corners = new Vector3[4];
+		}
 
+		rectTransform.GetWorldCorners( corners );
+
+		for( int i = 0; i < corners.Length; ++i )
+		{
+			if( !RectTransformUtility.RectangleContainsScreenPoint( reticle, RectTransformUtility.WorldToScreenPoint( null, corners[i] ), camera ) )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
 	/*public Vector3 Position( Vector3 buttonPosition )
 	{
 		if( corners == null )
@@ -37,7 +57,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
 			corners = new Vector3[4];
 		}
 		
-		image.rectTransform.GetWorldCorners( corners );
+		rectTransform.GetWorldCorners( corners );
 
 		distance = float.MaxValue;
 		position = Vector3.zero;

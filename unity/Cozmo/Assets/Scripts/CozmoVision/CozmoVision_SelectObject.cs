@@ -5,6 +5,17 @@ using System.Collections.Generic;
 
 public class CozmoVision_SelectObject : CozmoVision
 {
+	[SerializeField] private RectTransform reticle;
+
+	private List<ObservedObject> observedObjects;
+
+	protected override void Awake()
+	{
+		base.Awake();
+
+		observedObjects = new List<ObservedObject>();
+	}
+
 	protected virtual void Update()
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
@@ -21,7 +32,7 @@ public class CozmoVision_SelectObject : CozmoVision
 		ShowObservedObjects();
 
 		RefreshFade();
-		if(robot.markersVisibleObjects.Count > 0 && !robot.isBusy) {
+		if(observedObjects.Count > 0 && !robot.isBusy) {
 			FadeIn();
 		}
 		else {
@@ -50,11 +61,24 @@ public class CozmoVision_SelectObject : CozmoVision
 	{
 		if( robot == null ) return;
 
+		observedObjects.Clear();
+		observedObjects.AddRange( robot.markersVisibleObjects );
+
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
-			if( robot.markersVisibleObjects.Count > i && !robot.isBusy )
+			if( observedObjects.Count > i && !robot.isBusy )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], robot.markersVisibleObjects[i] );
+				ObservedObjectBox1 box = observedObjectBoxes[i] as ObservedObjectBox1;
+
+				if( box.IsInside( reticle, image.canvas.worldCamera ) )
+				{
+					ObservedObjectSeen( observedObjectBoxes[i], observedObjects[i] );
+				}
+				else
+				{
+					observedObjectBoxes[i].gameObject.SetActive( false );
+					observedObjects.RemoveAt( i-- );
+				}
 			}
 			else
 			{
