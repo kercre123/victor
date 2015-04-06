@@ -460,7 +460,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void CheckSwapTargetLock(Vector2 direction) {
 		if(direction.sqrMagnitude == 0f) return; 
-		if(robot.knownObjects.Count <= 1) return;
+		if(CozmoVision.instance != null && CozmoVision.instance.pertinentObjects.Count <= 1) return;
 
 		ObservedObject oldLock = robot.selectedObjects[0];
 		Vector3 targetPos = oldLock.WorldPosition;
@@ -472,7 +472,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		///sift and sort
 		if(direction.x != 0) {
-			potential = robot.knownObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
+			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
 
 			if(potential == null || potential.Count == 0) return;
 
@@ -492,7 +492,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		}
 		else {
-			potential = robot.knownObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
+			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
 
 			if(potential == null || potential.Count == 0) return;
 

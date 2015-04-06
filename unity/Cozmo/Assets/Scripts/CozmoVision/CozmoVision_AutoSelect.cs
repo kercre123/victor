@@ -38,7 +38,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 		{
 			robot.selectedObjects.Clear();
 			observedObjects.Clear();
-			observedObjects.AddRange( robot.observedObjects );
+			observedObjects.AddRange( pertinentObjects );
 
 			/*observedObjects.Sort( ( obj1 ,obj2 ) => // sort by distance from robot
 			{

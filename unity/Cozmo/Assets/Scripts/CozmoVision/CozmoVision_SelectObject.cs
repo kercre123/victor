@@ -21,7 +21,8 @@ public class CozmoVision_SelectObject : CozmoVision
 		ShowObservedObjects();
 
 		RefreshFade();
-		if(robot.markersVisibleObjects.Count > 0 && !robot.isBusy) {
+
+		if(pertinentObjects != null && pertinentObjects.Count > 0 && !robot.isBusy) {
 			FadeIn();
 		}
 		else {
@@ -49,12 +50,13 @@ public class CozmoVision_SelectObject : CozmoVision
 	protected override void ShowObservedObjects()
 	{
 		if( robot == null ) return;
+		if( pertinentObjects == null ) return;
 
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
-			if( robot.markersVisibleObjects.Count > i && !robot.isBusy )
+			if( pertinentObjects.Count > i && !robot.isBusy )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], robot.markersVisibleObjects[i] );
+				ObservedObjectSeen( observedObjectBoxes[i], pertinentObjects[i] );
 			}
 			else
 			{

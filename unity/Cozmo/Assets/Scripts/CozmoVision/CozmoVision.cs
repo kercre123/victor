@@ -148,7 +148,30 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
-	
+
+
+	public enum ObservedObjectListType {
+		MARKERS_SEEN,
+		OBSERVED_RECENTLY,
+		KNOWN
+	}
+
+	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+
+	public List<ObservedObject> pertinentObjects {
+		get {
+
+			switch(observedObjectListType) {
+				case ObservedObjectListType.MARKERS_SEEN: return robot.markersVisibleObjects;
+				case ObservedObjectListType.OBSERVED_RECENTLY: return robot.observedObjects;
+				case ObservedObjectListType.KNOWN: return robot.knownObjects;
+			}
+
+			return null;
+		}
+	}
+
+
 	public UnityAction[] actions;
 	
 	protected RectTransform rTrans;
@@ -170,6 +193,10 @@ public class CozmoVision : MonoBehaviour
 	private float fadeTimer = 0f;
 	private float fadeDuration = 1f;
 	private float fromAlpha = 0f;
+
+
+	public static CozmoVision instance = null;
+
 
 	public Sprite GetActionSprite(ActionButtonMode mode) {
 		return actionSprites[(int)mode];
@@ -249,14 +276,15 @@ public class CozmoVision : MonoBehaviour
 			box.gameObject.SetActive( true );
 		}
 	}
-	
+
 	protected void UnselectNonObservedObjects()
 	{
 		if( robot == null ) return;
-		
-		for( int i = 0; i < robot.selectedObjects.Count; ++i )
+		if( pertinentObjects == null ) return;
+
+		for( int i = 0; i < pertinentObjects.Count; ++i )
 		{
-			if( robot.observedObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
+			if( pertinentObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
 			{
 				robot.selectedObjects.RemoveAt( i-- );
 			}
@@ -266,12 +294,13 @@ public class CozmoVision : MonoBehaviour
 	protected virtual void ShowObservedObjects()
 	{
 		if( robot == null ) return;
+		if( pertinentObjects == null ) return;
 		
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
-			if( robot.observedObjects.Count > i )
+			if( pertinentObjects.Count > i )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], robot.observedObjects[i] );
+				ObservedObjectSeen( observedObjectBoxes[i], pertinentObjects[i] );
 			}
 			else
 			{
@@ -331,6 +360,8 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void OnEnable()
 	{
+		instance = this;
+
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
@@ -557,7 +588,7 @@ public class CozmoVision : MonoBehaviour
 			return;
 		}
 			
-		if( robot.observedObjects.Count > 0/*lastObservedObjects.Count*/ )
+		if( pertinentObjects.Count > 0/*lastObservedObjects.Count*/ )
 		{
 			Ding( true );
 		}
@@ -642,6 +673,8 @@ public class CozmoVision : MonoBehaviour
 		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null) { box.gameObject.SetActive(false); } }
 
 		StopLoopingTargetSound();
+
+		if(instance == this) instance = null;
 	}
 
 	public void Selection(ObservedObject obj)

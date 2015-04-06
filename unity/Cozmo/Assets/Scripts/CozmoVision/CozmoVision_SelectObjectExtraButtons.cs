@@ -54,7 +54,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 		for( int i = 0; i < observedObjectButtons.Length; ++i )
 		{
 			ObservedObjectButton1 button = observedObjectButtons[i];
-			button.gameObject.SetActive( i < robot.markersVisibleObjects.Count && robot.selectedObjects.Count == 0 && !robot.isBusy );
+			button.gameObject.SetActive( pertinentObjects != null && i < pertinentObjects.Count && robot.selectedObjects.Count == 0 && !robot.isBusy );
 			
 			if( !button.gameObject.activeSelf )
 			{
