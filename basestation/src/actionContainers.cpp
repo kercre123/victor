@@ -94,6 +94,15 @@ namespace Anki {
       return currentSlot;
     }
     
+    bool ActionList::IsCurrAction(const std::string& actionName)
+    {
+      for(auto queueIter = _queues.begin(); queueIter != _queues.end();  ++queueIter)
+      {
+        if (queueIter->second.GetCurrentAction()->GetName() == actionName) {
+          return true;
+        }
+      }
+    }
     
 #pragma mark ---- ActionQueue ----
     

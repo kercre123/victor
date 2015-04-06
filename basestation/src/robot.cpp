@@ -1129,8 +1129,12 @@ namespace Anki {
     {
       // Check if robot is still pickAndPlacing.
       // If so, and not in assisted RC mode, then ignore drive wheel commands.
+      // Also check for compound action sequences which should not be interrupted
+      // in between actions.
       // TODO: Timeout?
-      if (IsPickingOrPlacing() && !IsUsingManualPathSpeed()) {
+      bool doingUninterruptibleAction = _actionList.IsCurrAction("[DriveToObjectAction+PickAndPlaceObjectAction+]");
+      
+      if ((IsPickingOrPlacing() && !IsUsingManualPathSpeed()) || doingUninterruptibleAction) {
         PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
         return RESULT_FAIL;
       }
