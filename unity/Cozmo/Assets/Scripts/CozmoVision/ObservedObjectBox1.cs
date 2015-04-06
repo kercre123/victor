@@ -4,9 +4,6 @@ using System.Collections;
 
 public class ObservedObjectBox1 : ObservedObjectButton
 {
-	//protected float distance;
-	//protected float d;
-	//protected Vector3 position;
 	protected Vector3[] corners;
 	
 	public Vector3 position
@@ -29,7 +26,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
 			return Vector3.zero;
 		}
 	}
-	
+
 	public bool IsInside( RectTransform reticle, Camera camera )
 	{
 		if( corners == null )
@@ -41,39 +38,8 @@ public class ObservedObjectBox1 : ObservedObjectButton
 
 		for( int i = 0; i < corners.Length; ++i )
 		{
-			if( !RectTransformUtility.RectangleContainsScreenPoint( reticle, RectTransformUtility.WorldToScreenPoint( null, corners[i] ), camera ) )
-			{
-				return false;
-			}
+			if( !RectTransformUtility.RectangleContainsScreenPoint( reticle, corners[i], camera ) ) return false;
 		}
-
 		return true;
 	}
-	
-	/*public Vector3 Position( Vector3 buttonPosition )
-	{
-		if( corners == null )
-		{
-			corners = new Vector3[4];
-		}
-		
-		rectTransform.GetWorldCorners( corners );
-
-		distance = float.MaxValue;
-		position = Vector3.zero;
-		position.z = image.transform.position.z;
-
-		for( int i = 0; i < corners.Length; ++i )
-		{
-			float d = Vector2.Distance( corners[i], buttonPosition );
-
-			if( d < distance )
-			{
-				position = corners[i];
-				distance = d;
-			}
-		}
-
-		return position;
-	}*/
 }
