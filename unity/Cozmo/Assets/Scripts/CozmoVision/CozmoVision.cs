@@ -171,7 +171,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-
 	public UnityAction[] actions;
 	
 	protected RectTransform rTrans;
@@ -650,11 +649,13 @@ public class CozmoVision : MonoBehaviour
 		{
 			robot.lastObservedObjects.Clear();
 			robot.lastSelectedObjects.Clear();
+			robot.lastMarkersVisibleObjects.Clear();
 			
 			if( !robot.isBusy )
 			{
 				robot.lastObservedObjects.AddRange( robot.observedObjects );
 				robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+				robot.lastMarkersVisibleObjects.AddRange( robot.markersVisibleObjects );
 			}
 		}
 	}
