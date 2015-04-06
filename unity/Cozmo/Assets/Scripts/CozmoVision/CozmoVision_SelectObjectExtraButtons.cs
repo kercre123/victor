@@ -14,47 +14,43 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 		
 		unassignedActiveObjectBoxes = new List<ObservedObjectBox>();
 		
-		observedObjectButtons = observedObjectCanvas.GetComponentsInChildren<ObservedObjectButton1>(true);
+		observedObjectButtons = observedObjectCanvas.GetComponentsInChildren<ObservedObjectButton1>( true );
 		
-		ObservedObjectBox[] temp = new ObservedObjectBox[observedObjectBoxes.Count - observedObjectButtons.Length];
-		
-		for( int i = 0, j = 0; i < observedObjectBoxes.Count; ++i )
+		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
 			ObservedObjectButton1 button = observedObjectBoxes[i] as ObservedObjectButton1;
 			
-			if( button == null )
+			if( button != null )
 			{
-				temp[j++] = observedObjectBoxes[i];
+				observedObjectBoxes.RemoveAt( i-- );
 			}
 		}
-
-		observedObjectBoxes.Clear();
-		observedObjectBoxes.AddRange(temp);
 	}
-
+	
 	protected override void Update()
 	{
 		base.Update();
-
+		
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
 		{
 			return;
 		}
-
+		
 		robot = RobotEngineManager.instance.current;
 		
 		ConnectButtonsToBoxes();
 	}
-
+	
 	protected void ConnectButtonsToBoxes()
 	{
 		unassignedActiveObjectBoxes.Clear();
 		unassignedActiveObjectBoxes.AddRange( observedObjectBoxes.FindAll( x => x.gameObject.activeSelf ) );
+		int count = unassignedActiveObjectBoxes.Count;
 		
 		for( int i = 0; i < observedObjectButtons.Length; ++i )
 		{
 			ObservedObjectButton1 button = observedObjectButtons[i];
-			button.gameObject.SetActive( pertinentObjects != null && i < pertinentObjects.Count && robot.selectedObjects.Count == 0 && !robot.isBusy );
+			button.gameObject.SetActive( i < count && robot.selectedObjects.Count == 0 && !robot.isBusy );
 			
 			if( !button.gameObject.activeSelf )
 			{
@@ -104,7 +100,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			button.line.Draw();
 		}
 	}
-
+	
 	protected override void OnDisable()
 	{
 		base.OnDisable();

@@ -746,6 +746,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
+  reticle: {fileID: 22487256}
 --- !u!114 &11450856
 MonoBehaviour:
   m_ObjectHideFlags: 1
