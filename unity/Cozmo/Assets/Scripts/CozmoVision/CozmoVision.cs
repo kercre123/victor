@@ -228,7 +228,7 @@ public class CozmoVision : MonoBehaviour
 			box.image.gameObject.SetActive( true );
 			return;
 		}*/
-		
+
 		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 		
