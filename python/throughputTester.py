@@ -44,7 +44,7 @@ summerize  Optional method of summerizing data. None, rxbw, pkts
             self.size = self.MIN_SIZE
         self.summerize = summerize
         # Internal member setup
-        self.seqno = 0L
+        self.seqno = 0
         if self.size > self.MIN_SIZE:
             self.randEls = self.size-self.MIN_SIZE
             packFmt = "Q%dB" % self.randEls
@@ -98,3 +98,19 @@ summerize  Optional method of summerizing data. None, rxbw, pkts
             while self.seqno < self.count:
                 self.step()
         sys.stdout.write("Dropped %d packets\n" % len(self.seqSendTimes))
+
+
+
+def simpleTest(host, port):
+    "A really simple test program"
+    s = socket.socket(type=socket.SOCK_DGRAM)
+    s.sendto(b"hello", (host, port))
+    movingAvg = 6.0
+    t1 = time.time()
+    while True:
+        d, a = s.recvfrom(1500)
+        t2 = time.time()
+        msDiff = (t2-t1)*1000
+        sys.stdout.write("\r%f ms, %f ms avg" % (msDiff, movingAvg))
+        movingAvg = msDiff*0.01 + 0.99*movingAvg
+        t1=t2
