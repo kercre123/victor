@@ -97,6 +97,8 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	bool interactLastFrame = false;
 	bool interactPressed=false;
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
+	
+	//Vector2 centerViz = new Vector2(160f, 120f);
 
 	protected override void Reset( DisconnectionReason reason = DisconnectionReason.None ) {
 		base.Reset( reason );
@@ -190,8 +192,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}
 
-	//Vector2 centerViz = new Vector2(160f, 120f);
-
 	private void AcquireTarget() {
 		ObservedObject nearest = null;
 		ObservedObject mostFacing = null;
@@ -200,9 +200,13 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		float bestAngleFromCoz = float.MaxValue;
 		Vector2 forward = robot.Forward;
 
-		for(int i=0; i<robot.knownObjects.Count; i++) {
-			if(robot.carryingObjectID == robot.knownObjects[i].ID) continue;
-			Vector2 atTarget = robot.knownObjects[i].WorldPosition - robot.WorldPosition;
+		//List<ObservedObject> pertinentObjects = robot.knownObjects;
+		List<ObservedObject> pertinentObjects = robot.observedObjects;
+
+
+		for(int i=0; i<pertinentObjects.Count; i++) {
+			if(robot.carryingObjectID == pertinentObjects[i].ID) continue;
+			Vector2 atTarget = pertinentObjects[i].WorldPosition - robot.WorldPosition;
 
 			float angleFromCoz = Vector2.Angle(forward, atTarget);
 			if(angleFromCoz > 90f) continue;
@@ -210,12 +214,12 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
 				bestDistFromCoz = distFromCoz;
-				nearest = robot.knownObjects[i];
+				nearest = pertinentObjects[i];
 			}
 
 			if(angleFromCoz < bestAngleFromCoz) {
 				bestAngleFromCoz = angleFromCoz;
-				mostFacing = robot.knownObjects[i];
+				mostFacing = pertinentObjects[i];
 			}
 		}
 
@@ -232,19 +236,19 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			robot.selectedObjects.Add(best);
 
 			//find any other objects in a 'stack' with our selected
-			for(int i=0; i<robot.knownObjects.Count; i++) {
-				if(best == robot.knownObjects[i])
+			for(int i=0; i<pertinentObjects.Count; i++) {
+				if(best == pertinentObjects[i])
 					continue;
-				if(robot.carryingObjectID == robot.knownObjects[i].ID)
+				if(robot.carryingObjectID == pertinentObjects[i].ID)
 					continue;
 
-				float dist = Vector2.Distance((Vector2)robot.knownObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+				float dist = Vector2.Distance((Vector2)pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
 				if(dist > best.Size.x * 0.5f) {
 					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
 					continue;
 				}
 
-				robot.selectedObjects.Add(robot.knownObjects[i]);
+				robot.selectedObjects.Add(pertinentObjects[i]);
 			}
 
 			//sort selected from ground up

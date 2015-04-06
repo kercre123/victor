@@ -47,6 +47,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	bool driveReverseOnlyMode = false;
 	bool turnInPlaceOnlyMode = false;
 	float maxAngle = 90f;
+	float targetLockTimer = 0f;
 	ObservedObject targetLock = null;
 	ObservedObject lastTargetLock = null;
 	float lastGyroX = 0;
@@ -118,7 +119,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		RefreshTargetLock();
 
+		targetLockTimer += Time.deltaTime;
+		if(lastTargetLock == null && targetLock != null) targetLockTimer = 0f;
+
 		bool newLock = lastTargetLock != targetLock;
+
 		lastTargetLock = targetLock;
 
 		if(newLock) {
@@ -135,7 +140,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(!swipeTurning) swipeTurnIndex = 0;
 
-		if(targetLock == null) {
+		if(targetLock == null || targetLockTimer < 1f) {
 			CheckHeadAngleStick();
 			CheckHorizontalStickTurning();
 			CheckGyroTurning();
