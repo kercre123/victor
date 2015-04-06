@@ -379,7 +379,7 @@ namespace Anki
         const s32 numSelectBins = 20;
 
         // TODO: Pass this in as a parameter/argument
-        const s32 verifyGridSize = 16;
+        const s32 verifyGridSize = 32;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
