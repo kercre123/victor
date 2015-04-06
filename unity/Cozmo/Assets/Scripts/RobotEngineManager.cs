@@ -397,7 +397,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
+	private void ReceivedSpecificMessage( G2U_RobotCompletedAction message )
 	{
 		bool success = message.success > 0;
 		
@@ -412,6 +412,8 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			SuccessOrFailure( success );
 		}
+
+		current.isBusy = false;
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
