@@ -401,7 +401,7 @@ namespace Anki {
       {
         PRINT("\n=== Starting PathFollowTest ===\n");
         pathStarted_ = false;
-        Localization::SetCurrentMatPose(0, 0, Radians(-PIDIV2_F));
+        Localization::SetDriveCenterPose(0, 0, Radians(-PIDIV2_F));
         return RESULT_OK;
       }
       
@@ -413,7 +413,7 @@ namespace Anki {
           // Create a path and follow it
           PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
-          Localization::SetCurrentMatPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
+          Localization::SetDriveCenterPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
           
           //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
           

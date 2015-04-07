@@ -46,7 +46,9 @@
 #define DEFAULT_OBSTACLE_PENALTY 0.1
 
 // how far (in mm) away from the path the robot needs to be before it gives up and plans a new path
-#define PLAN_ERROR_FOR_REPLAN 20.0
+// (TODO: Increased to 31 from 20 to accomodate treaded robot's lesser ability to maintain path because
+//        of hard-turning wheel. Bring it back down after we get better hardware.)
+#define PLAN_ERROR_FOR_REPLAN 31.0
 
 
 // The min absolute difference between the commanded end pose angle
@@ -55,7 +57,7 @@
 // the end pose angle of the path is the commanded one.
 const f32 TERMINAL_POINT_TURN_CORRECTION_THRESH_RAD = DEG_TO_RAD_F32(2.f);
 
-const f32 TERMINAL_POINT_TURN_SPEED = PI_F;
+const f32 TERMINAL_POINT_TURN_SPEED = 2; //rad/s
 const f32 TERMINAL_POINT_TURN_ACCEL = 100.f;
 const f32 TERMINAL_POINT_TURN_DECEL = 100.f;
 

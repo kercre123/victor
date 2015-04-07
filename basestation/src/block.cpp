@@ -30,11 +30,11 @@ namespace Anki {
     // angle: angle about z-axis (which runs vertically along marker)
     //     x: distance along marker horizontal
     //     y: distance along marker normal
-    const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 {0, 0, 0.8f * DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 {0, 0, 0.6f * DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 //{0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 //{-0.2f, -12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+    const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0, 0, 0.8f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0, 0, 0.6f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{-0.2f, -12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
     };
 
     
@@ -145,7 +145,7 @@ namespace Anki {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(20));  // Note: low head angle to still look at (and dock to) block below
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(15));
           }
 
         }

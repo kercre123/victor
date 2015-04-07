@@ -55,14 +55,19 @@ namespace Anki {
       bool startedPointTurn_;
       
       // If distance to target is less than this, point turn is considered to be complete.
-      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.05;
+      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.03;
 
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
       
       VelocityProfileGenerator vpg_;
       
+#ifdef COZMO_TREADS
+      // Treaded cozmo has sticky left wheel so we need to command a faster terminal speed
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.8f;
+#else
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
+#endif
       
     } // Private namespace
     
@@ -210,14 +215,23 @@ namespace Anki {
       
       //Get the current vehicle speed (based on encoder values etc.) in mm/sec
       s16 currspeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
-      //Get the desired vehicle speed (the one the user commanded to the car)
+      //Get the controller desired speed for the current tic. This speed should approach user desired speed.
       s16 desspeed = SpeedController::GetControllerCommandedVehicleSpeed();
+      //Get the user desired speed
+      s16 userDesiredSpeed = SpeedController::GetUserCommandedDesiredVehicleSpeed();
+
       
       // If moving backwards, modify distance and angular error such that proper curvature
       // is computed below.
-      if (currspeed < 0) {
+      if (desspeed < 0) {
         offsetError_mm *= -1;
-        headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+        if (userDesiredSpeed == 0) {
+          // If slowing to a stop, then assume zero error
+          offsetError_mm = 0;
+          headingError_rad = 0;
+        } else {
+          headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+        }
       }
       
       ///////////////////////////////////////////////////////////////////////////////

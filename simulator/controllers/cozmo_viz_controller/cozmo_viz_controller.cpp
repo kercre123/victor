@@ -52,6 +52,7 @@ namespace Anki {
         TEXT_LABEL_PROX_SENSORS,
         TEXT_LABEL_BATTERY,
         TEXT_LABEL_VID_RATE,
+        TEXT_LABEL_STATUS_FLAG,
         TEXT_LABEL_DOCK_ERROR_SIGNAL,
         NUM_TEXT_LABELS
       } VizTextLabelType;
@@ -369,7 +370,7 @@ namespace Anki {
               (int)msg.rwheel_speed_mmps);
       DrawText(TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
       
-      sprintf(txt, "prox: (%2u, %2u, %2u) %d%d%d",
+      sprintf(txt, "Prox: (%2u, %2u, %2u) %d%d%d",
               msg.proxLeft,
               msg.proxForward,
               msg.proxRight,
@@ -386,7 +387,10 @@ namespace Anki {
               msg.videoFramerateHZ);
       DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
       
-      
+      sprintf(txt, "Status: %5s %5s",
+              msg.status & IS_CARRYING_BLOCK ? "CARRY" : "",
+              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "");
+      DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
     }
     
     

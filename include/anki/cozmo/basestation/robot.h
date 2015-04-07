@@ -126,6 +126,7 @@ namespace Anki {
       // Specify whether this robot is a physical robot or not.
       // Currently, adjusts headCamPose by slop factor if it's physical.
       void SetPhysicalRobot(bool isPhysical);
+      bool IsPhysical() {return _isPhysical;}
       
       //
       // Pose (of the robot or its parts)
@@ -158,6 +159,10 @@ namespace Anki {
       // Wheel speeds, mm/sec
       f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
+      
+      // Return pose of robot's drive center based on what it's currently carrying
+      void GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      
       
       //
       // Path Following

@@ -91,6 +91,11 @@ namespace Anki {
       
       void       Print() const;
       
+      // Returns true if actionName is the name of one of the actions that are currently
+      // being executed.
+      bool       IsCurrAction(const std::string& actionName);
+
+      
     protected:
       
       SlotHandle _slotCounter;

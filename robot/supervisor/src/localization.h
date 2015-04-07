@@ -3,7 +3,7 @@
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/types.h"
-
+#include "anki/common/robot/geometry.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -14,11 +14,20 @@ namespace Anki {
       //Embedded::Pose2d GetCurrMatPose();
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
-      void SetCurrentMatPose(f32  x, f32  y, Radians  angle);
+      void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
 
       // Get orientation of robot on current mat
       Radians GetCurrentMatOrientation();
 
+      void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
+      void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
+      
+      f32 GetDriveCenterOffset();
+      
+      // Given a robotOriginPose, returns the pose of the drive center
+      void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose,
+                                    Anki::Embedded::Pose2d &driveCenterPose);
+      
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
       
