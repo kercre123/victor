@@ -131,7 +131,7 @@ namespace Anki {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-20));
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
           }
 
         }
