@@ -289,6 +289,17 @@ namespace Anki {
       // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
       ActionList& GetActionList() { return _actionList; }
       
+      // These are methods to lock/unlock subsystems of the robot to prevent
+      // MoveHead/MoveLift/DriveWheels/etc commands from having any effect.
+      
+      void LockHead(bool tf) { _headLocked = tf; }
+      void LockLift(bool tf) { _liftLocked = tf; }
+      void LockWheels(bool tf) { _wheelsLocked = tf; }
+      
+      bool IsHeadLocked() const { return _headLocked; }
+      bool IsLiftLocked() const { return _liftLocked; }
+      bool AreWheelsLockeD() const { return _wheelsLocked; }
+      
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
       
@@ -460,6 +471,9 @@ namespace Anki {
       
       //ActionQueue      _actionQueue;
       ActionList       _actionList;
+      bool             _wheelsLocked;
+      bool             _headLocked;
+      bool             _liftLocked;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
