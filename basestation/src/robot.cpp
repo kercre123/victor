@@ -1819,9 +1819,7 @@ namespace Anki {
       
       SetCarryingObject(objectID); // also marks the object as carried
       _carryingMarker   = objectMarker;
-      
-      object->SetPose(objectPoseWrtLiftPose);
-      
+
       // If we know there's an object on top of the object we are picking up,
       // mark it as being carried too
       // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
@@ -1849,6 +1847,9 @@ namespace Anki {
         }
       }
       
+      // Don't actually change the object's pose until we've checked for objects on top
+      object->SetPose(objectPoseWrtLiftPose);
+
       return RESULT_OK;
       
     } // AttachObjectToLift()

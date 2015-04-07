@@ -1495,30 +1495,34 @@ namespace Anki
       Point3f rotatedDistTol(objectOnBottom.GetPose().GetRotation() *
                              objectOnBottom.GetSameDistanceTolerance());
       rotatedDistTol.z() = zTolerance;
+      rotatedDistTol.Abs();
       
       // Find the point at the top middle of the object on bottom
       Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
-      topOfObjectOnBottom.z() += rotatedBtmSize.z();
+      topOfObjectOnBottom.z() += 0.5f*rotatedBtmSize.z();
       
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
-            // Find the point at bottom middle of the object we're checking to be on top
             Vision::ObservableObject* candidateObject = objectsByID.second;
-            Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-            Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-            bottomOfCandidateObject.z() -= rotatedTopSize.z();
             
-            // If the top of the bottom object and the bottom the candidate top object are
-            // close enough together, return this as the object on top
-            Point3f dist(topOfObjectOnBottom);
-            dist -= bottomOfCandidateObject;
-            dist.Abs();
-            
-            if(dist < rotatedDistTol) {
-              return candidateObject;
-            }
+            if(candidateObject->GetID() != objectOnBottom.GetID()) {
+              // Find the point at bottom middle of the object we're checking to be on top
+              Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+              Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+              bottomOfCandidateObject.z() -= 0.5f*rotatedTopSize.z();
+              
+              // If the top of the bottom object and the bottom the candidate top object are
+              // close enough together, return this as the object on top
+              Point3f dist(topOfObjectOnBottom);
+              dist -= bottomOfCandidateObject;
+              dist.Abs();
+              
+              if(dist < rotatedDistTol) {
+                return candidateObject;
+              }
+            } // IF not object on bottom (by ID)
           }
         }
       }
