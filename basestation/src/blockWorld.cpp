@@ -1146,9 +1146,7 @@ namespace Anki
           
           // Raise origin of object above ground.
           // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-          f32 x,y,z;
-          m->GetSize(x,y,z);
-          Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*z));
+          Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
           proxTransform = proxTransform * raiseObject;
           
           proxTransform.SetParent(_robot->GetPose().GetParent());
@@ -1322,7 +1320,7 @@ namespace Anki
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectIter->second);
               if(object == nullptr) {
                 PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingDockableObject",
-                                  "In robot/object collision check, can currently only handle DockableObjects.\n");
+                                  "In robot/object collision check, can currently only handle ActionableObjects.\n");
                 continue;
               }
               

@@ -69,9 +69,9 @@ namespace Anki {
       
       Pose3d facePose;
       
-      const float halfWidth  = 0.5f * this->GetWidth();   // y
-      const float halfHeight = 0.5f * this->GetHeight();  // z
-      const float halfDepth  = 0.5f * this->GetDepth();   // x
+      const float halfWidth  = 0.5f * GetSize().y();   // y
+      const float halfHeight = 0.5f * GetSize().z();  // z
+      const float halfDepth  = 0.5f * GetSize().x();   // x
       
       // SetSize() should have been called already
       CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
@@ -143,7 +143,7 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
             AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(20));  // Note: low head angle to still look at (and dock to) block below
           }

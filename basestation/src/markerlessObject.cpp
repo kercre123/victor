@@ -117,14 +117,6 @@ namespace Anki {
       }
     }
     
-    void MarkerlessObject::GetSize(f32& x, f32& y, f32& z)
-    {
-      x = _size.x();
-      y = _size.y();
-      z = _size.z();
-    }
-    
-    
   } // namespace Cozmo
   
 } // namespace Anki

@@ -54,6 +54,7 @@ namespace Anki {
       Ramp();
       
       virtual ObjectType GetType() const override { return Type::BASIC_RAMP; }
+      virtual const Point3f& GetSize() const override { return _size; }
       
       f32     GetHeight() const { return Height; }
       Radians GetAngle()  const { return Angle;  }
@@ -96,6 +97,8 @@ namespace Anki {
       virtual void    Visualize(const ColorRGBA& color) override;
       virtual void    EraseVisualization() override;
       
+
+      
       /*
       virtual void    GetPreDockPoses(const float distance_mm,
                                       std::vector<PoseMarkerPair_t>& poseMarkerPairs,
@@ -122,6 +125,8 @@ namespace Anki {
       constexpr static const f32 Angle = 0.31f; // of first part of ramp, using vertex 18
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
+      
+      Point3f _size;
       
       const Vision::KnownMarker* _leftMarker;
       const Vision::KnownMarker* _rightMarker;

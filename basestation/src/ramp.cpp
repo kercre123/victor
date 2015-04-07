@@ -46,7 +46,8 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _preAscentPose(0, Z_AXIS_3D(),
+    : _size(SlopeLength+PlatformLength, Width, Height)
+    , _preAscentPose(0, Z_AXIS_3D(),
                      {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())
     , _preDescentPose(M_PI, Z_AXIS_3D(),

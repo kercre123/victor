@@ -59,7 +59,7 @@ namespace Anki {
       
       
       // Markerless object functions
-      void GetSize(f32& x, f32& y, f32& z);
+      virtual const Point3f& GetSize() const override { return _size; }
       
     protected:
       
