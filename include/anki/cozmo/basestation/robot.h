@@ -545,6 +545,7 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
+      ObjectID                    _carryingObjectOnTopID; 
       const Vision::KnownMarker*  _carryingMarker;
       bool                        _lastPickOrPlaceSucceeded;
       

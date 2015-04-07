@@ -859,18 +859,6 @@ namespace Anki {
       
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
       VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-      
-      if(IsCarryingObject()) {
-        ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(GetCarryingObject()));
-        if(carryBlock == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist",
-                            "Robot %d is marked as carrying block %d but that block no longer exists.\n",
-                            GetID(), GetCarryingObject().GetValue());
-          UnSetCarryingObject();
-        } else {
-          carryBlock->Visualize();
-        }
-      }
 
       return RESULT_OK;
       
@@ -1834,6 +1822,33 @@ namespace Anki {
       
       object->SetPose(objectPoseWrtLiftPose);
       
+      // If we know there's an object on top of the object we are picking up,
+      // mark it as being carried too
+      // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
+
+      const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+      Vision::ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+      if(objectOnTop != nullptr) {
+        ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
+        if(actionObjectOnTop != nullptr) {
+          Pose3d onTopPoseWrtCarriedPose;
+          if(actionObjectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
+          {
+            PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
+                                "Found object on top of carried object, but could not get its "
+                                "pose w.r.t. the carried object.\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
+                             "Setting object %d on top of carried object as also being carried.\n",
+                             actionObjectOnTop->GetID().GetValue());
+            onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+            actionObjectOnTop->SetPose(onTopPoseWrtCarriedPose);
+            _carryingObjectOnTopID = actionObjectOnTop->GetID();
+            actionObjectOnTop->SetBeingCarried(true);
+          }
+        }
+      }
+      
       return RESULT_OK;
       
     } // AttachObjectToLift()
@@ -1874,6 +1889,30 @@ namespace Anki {
 
       UnSetCarryingObject(); // also sets carried object as not being carried anymore
       _carryingMarker = nullptr;
+      
+      if(_carryingObjectOnTopID.IsSet()) {
+        ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectOnTopID));
+        if(objectOnTop == nullptr)
+        {
+          // This really should not happen.  How can a object being carried get deleted?
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached",
+                            "Object on top of carrying object with ID=%d no longer exists.\n",
+                            _carryingObjectOnTopID.GetValue());
+          return RESULT_FAIL;
+        }
+        
+        Pose3d placedPoseOnTop;
+        if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
+          PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+                            "Could not get carrying object's pose relative to robot's origin.\n");
+          return RESULT_FAIL;
+          
+        }
+        objectOnTop->SetPose(placedPoseOnTop);
+        objectOnTop->SetBeingCarried(false);
+        PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
+                         objectOnTop->GetID().GetValue());
+      }
       
       return RESULT_OK;
       
