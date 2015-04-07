@@ -174,7 +174,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      if(robot->AreWheelsLockeD()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
+                         "Ignoring U2G_DriveWheels while wheels are locked.\n");
+      } else {
+        robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      }
     }
   }
   
@@ -194,7 +199,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->MoveHead(msg.speed_rad_per_sec);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveHead.HeadLocked",
+                         "Ignoring U2G_MoveHead while head is locked.\n");
+      } else {
+        robot->MoveHead(msg.speed_rad_per_sec);
+      }
     }
   }
   
@@ -205,7 +215,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->MoveLift(msg.speed_rad_per_sec);
+      if(robot->IsLiftLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveLift.LiftLocked",
+                         "Ignoring U2G_MoveLift while lift is locked.\n");
+      } else {
+        robot->MoveLift(msg.speed_rad_per_sec);
+      }
     }
   }
   
@@ -216,8 +231,13 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->DisableTrackHeadToObject();
-      robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
+                         "Ignoring U2G_SetHeadAngle while head is locked.\n");
+      } else {
+        robot->DisableTrackHeadToObject();
+        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+      }
     }
   }
   
@@ -226,7 +246,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      robot->EnableTrackHeadToObject(msg.objectID);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
+                         "Ignoring U2G_TrackHeadToObject while head is locked.\n");
+      } else {
+        robot->EnableTrackHeadToObject(msg.objectID);
+      }
     }
   }
   
@@ -250,17 +275,22 @@ namespace Cozmo {
     
     if(robot != nullptr) {
       
-      // Special case if commanding low dock height
-      if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
-        if(robot->IsCarryingObject()) {
-          // Put the block down right here
-          U2G_PlaceObjectOnGroundHere m;
-          Process_PlaceObjectOnGroundHere(m);
-          return;
+      if(robot->IsLiftLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetLiftHeight.LiftLocked",
+                         "Ignoring U2G_SetLiftHeight while lift is locked.\n");
+      } else {
+        // Special case if commanding low dock height
+        if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
+          if(robot->IsCarryingObject()) {
+            // Put the block down right here
+            U2G_PlaceObjectOnGroundHere m;
+            Process_PlaceObjectOnGroundHere(m);
+            return;
+          }
         }
+        
+        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
-      
-      robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
     }
   }
   
