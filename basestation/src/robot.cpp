@@ -1781,8 +1781,12 @@ namespace Anki {
           _carryingObjectID = carryObjectID;
           
           // Tell the robot it's carrying something
-          // TODO: Figure out how to tell it it's carrying something other than just one block
-          SendSetCarryState(CARRY_1_BLOCK);
+          // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
+          if(_carryingObjectOnTopID.IsSet()) {
+            SendSetCarryState(CARRY_2_BLOCK);
+          } else {
+            SendSetCarryState(CARRY_1_BLOCK);
+          }
         }
       }
     }
@@ -1861,8 +1865,6 @@ namespace Anki {
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
-      SetCarryingObject(objectID); // also marks the object as carried
-      _carryingMarker   = objectMarker;
 
       // If we know there's an object on top of the object we are picking up,
       // mark it as being carried too
@@ -1889,8 +1891,13 @@ namespace Anki {
             actionObjectOnTop->SetBeingCarried(true);
           }
         }
+      } else {
+        _carryingObjectOnTopID.UnSet();
       }
       
+      SetCarryingObject(objectID); // also marks the object as carried
+      _carryingMarker   = objectMarker;
+
       // Don't actually change the object's pose until we've checked for objects on top
       object->SetPose(objectPoseWrtLiftPose);
 
@@ -1955,6 +1962,7 @@ namespace Anki {
         }
         objectOnTop->SetPose(placedPoseOnTop);
         objectOnTop->SetBeingCarried(false);
+        _carryingObjectOnTopID.UnSet();
         PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
                          objectOnTop->GetID().GetValue());
       }
