@@ -120,9 +120,16 @@ namespace Anki {
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
       // comparing, e.g. for cubes or other blocks.
-      virtual bool IsSameAs(const ObservableObject&  otherObject,
-                            const Point3f&  distThreshold,
-                            const Radians&  angleThreshold) const;
+      bool IsSameAs(const ObservableObject&  otherObject,
+                    const Point3f&  distThreshold,
+                    const Radians&  angleThreshold) const;
+      
+      // Same as above, but returns translational and angular difference
+      bool IsSameAs(const ObservableObject& otherObject,
+                    const Point3f& distThreshold,
+                    const Radians& angleThreshold,
+                    Point3f& Tdiff,
+                    Radians& angleDiff) const;
       
       // Same as other IsSameAs() calls above, except the tolerance thresholds
       // given by the virtual members below are used (so that per-object-class
@@ -245,6 +252,16 @@ namespace Anki {
     inline Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                           const Point3f& distThreshold,
+                                           const Radians& angleThreshold) const
+    {
+      Point3f Tdiff;
+      Radians angleDiff;
+      return IsSameAs(otherObject, distThreshold, angleThreshold,
+                      Tdiff, angleDiff);
     }
     
     /*

@@ -79,10 +79,11 @@ namespace Anki {
       }
     } // ObservableObject::GetMarkersWithCode()
     
-    
-    bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
-                                    const Point3f&           distThreshold,
-                                    const Radians&           angleThreshold) const
+    bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                    const Point3f& distThreshold,
+                                    const Radians& angleThreshold,
+                                    Point3f& Tdiff,
+                                    Radians& angleDiff) const
     {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->GetType() == otherObject.GetType();
@@ -123,12 +124,14 @@ namespace Anki {
                           (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
           
           if(this->GetRotationAmbiguities().empty()) {
-            isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold);
+            isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold,
+                                    Tdiff, angleDiff);
           }
           else {
             isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
-                                                        this->GetRotationAmbiguities(),
-                                                        distThreshold, angleThreshold, true);
+                                                  this->GetRotationAmbiguities(),
+                                                  distThreshold, angleThreshold, true,
+                                                  Tdiff, angleDiff);
           } // if/else there are ambiguities
         } // if(isSame) [inner]
       } // if(isSame) [outer]
