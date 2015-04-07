@@ -1489,6 +1489,79 @@ namespace Anki
       }
     }
     
+    Vision::ObservableObject* BlockWorld::FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
+                                                            f32 zTolerance) const
+    {
+      Point3f rotatedDistTol(objectOnBottom.GetPose().GetRotation() *
+                             objectOnBottom.GetSameDistanceTolerance());
+      rotatedDistTol.z() = zTolerance;
+      
+      // Find the point at the top middle of the object on bottom
+      Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
+      Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
+      topOfObjectOnBottom.z() += rotatedBtmSize.z();
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          for(auto & objectsByID : objectsByType.second) {
+            // Find the point at bottom middle of the object we're checking to be on top
+            Vision::ObservableObject* candidateObject = objectsByID.second;
+            Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+            Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+            bottomOfCandidateObject.z() -= rotatedTopSize.z();
+            
+            // If the top of the bottom object and the bottom the candidate top object are
+            // close enough together, return this as the object on top
+            Point3f dist(topOfObjectOnBottom);
+            dist -= bottomOfCandidateObject;
+            dist.Abs();
+            
+            if(dist < rotatedDistTol) {
+              return candidateObject;
+            }
+          }
+        }
+      }
+      
+      return nullptr;
+    }
+    
+    Vision::ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                              const Vec3f&  distThreshold,
+                                                              const std::set<ObjectID>& ignoreIDs,
+                                                              const std::set<ObjectType>& ignoreTypes,
+                                                              const std::set<ObjectFamily>& ignoreFamilies) const
+    {
+      // TODO: Keep some kind of OctTree data structure to make these queries faster?
+      
+      Vec3f closestDist(std::numeric_limits<f32>::max());
+      Vision::ObservableObject* matchingObject = nullptr;
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        if(ignoreFamilies.find(objectsByFamily.first) == ignoreFamilies.end() ) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
+              for(auto & objectsByID : objectsByType.second) {
+                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
+                  Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
+                  dist.Abs();
+                  if(dist < closestDist) {
+                    closestDist = dist;
+                    matchingObject = objectsByID.second;
+                  }
+                } // ignoreIDs
+              }
+            } // ignoreTypes
+          }
+        } // ignoreFamiles
+      }
+      
+      if(matchingObject != nullptr && !(closestDist < distThreshold)) {
+        matchingObject = nullptr;
+      }
+      return matchingObject;
+    }
+    
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
