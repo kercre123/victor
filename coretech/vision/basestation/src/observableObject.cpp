@@ -164,10 +164,18 @@ namespace Anki {
       
     } // ComputePossiblePoses()
 
+    /*
+    Point3f ObservableObject::GetRotatedBoundingCube(const Pose3d &atPose)
+    {
+      // TODO: Rotate using quaternion
+      Point3f cubeSize(atPose.GetRotation() * GetCanonicalBoundingCube());
+      return cubeSize;
+    }
+     */
     
     void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
     {
-      this->GetCorners(_pose, corners);
+      GetCorners(_pose, corners);
     }
 
   
