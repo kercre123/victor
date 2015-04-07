@@ -31,6 +31,12 @@
 // The sensor value that must be met/exceeded in order to have detected an obstacle
 #define PROX_OBSTACLE_DETECT_THRESH   5
 
+// Make the (very restrictive) assumption that there is only every one of each
+// type of object in the world at a time (e.g. a single "AngryFace" block or a
+// single "Fire" block). So if we see one, always match it to the one we've already
+// seen, if it exists. (Only for physical robots)
+#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 1
+
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
 #  define PRINT_LOCALIZATION_INFO PRINT_INFO
@@ -285,7 +291,48 @@ namespace Anki
         f32 observationDistance;
         Vision::ObservableObject* observedObject = nullptr;
 
-        if(matchingObject == nullptr) { // overlappingObjects.empty()) {
+        if(matchingObject == nullptr) {
+          
+#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+          
+          ObjectsMapByID_t objectsWithType = GetExistingObjectsByType(objSeen->GetType());
+          if(!objectsWithType.empty() && _robot->IsPhysical()) {
+            // We already know about an object of this type. Assume the one we
+            // are seeing is that one. Just update it to be in the pose of the
+            // observed object. (Only for physical robots)
+            
+            // By definition, we can't have more than one object of this type
+            assert(objectsWithType.size() == 1);
+            
+            observedObject = objectsWithType.begin()->second;
+            
+            assert(observedObject->GetType() == objSeen->GetType());
+            
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
+                                "Did not match observed object to existing %s object "
+                                "by pose, but assuming there's only one that must match "
+                                "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE=1)\n",
+                                objSeen->GetType().GetName().c_str(),
+                                observedObject->GetID().GetValue());
+
+            observedObject->SetPose( objSeen->GetPose() );
+            
+            // Update lastObserved times of this object
+            observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+            observedObject->UpdateMarkerObservationTimes(*objSeen);
+            
+            // Project this existing object into the robot's camera, using its new pose
+            _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+            
+            // Now that we've merged in objSeen, we can delete it because we
+            // will no longer be using it.  Otherwise, we'd leak.
+            delete objSeen;
+            
+          } else {
+            // Otherwise, add a new object
+            
+#         endif // ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+            
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
           AddNewObject(objectsExisting, objSeen);
@@ -303,6 +350,10 @@ namespace Anki
           _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           observedObject = objSeen;
+            
+#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+          } // if/else if(!objectsWithType.empty())
+#         endif
           
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
@@ -311,26 +362,7 @@ namespace Anki
            robot->GetID());
            */
           
-        }
-        else {
-          /*
-          if(overlappingObjects.size() > 1) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleOverlappingObjects",
-                                "More than one overlapping object found -- will use first.\n");
-            // TODO: do something smarter here?
-          }
-           */
-          
-          /*
-          Pose3d newPoseWrtOldPoseParent;
-          if(objSeen->GetPose().GetWithRespectTo(*overlappingObjects[0]->GetPose().GetParent(), newPoseWrtOldPoseParent) == false) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.GetWrtFail",
-                                "Could not find new pose w.r.t. old pose's parent. Will not update object's pose.\n");
-          } else {
-            // TODO: better way of merging existing/observed object pose
-            overlappingObjects[0]->SetPose( newPoseWrtOldPoseParent );
-          }
-           */
+        } else {
           
           matchingObject->SetPose( objSeen->GetPose() );
           
