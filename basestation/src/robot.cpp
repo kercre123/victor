@@ -67,6 +67,7 @@ namespace Anki {
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
@@ -91,6 +92,7 @@ namespace Anki {
       _poseHistory = new RobotPoseHistory();
       
       _pose.SetName("Robot_" + std::to_string(_ID));
+      _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
@@ -173,6 +175,10 @@ namespace Anki {
       _pose.SetRotation(0, Z_AXIS_3D());
       _pose.SetTranslation({{0.f, 0.f, 0.f}});
       _pose.SetParent(_worldOrigin);
+      
+      _driveCenterPose.SetRotation(0, Z_AXIS_3D());
+      _driveCenterPose.SetTranslation({{0.f, 0.f, 0.f}});
+      _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
       ++_frameId;
@@ -917,6 +923,8 @@ namespace Anki {
       _pose = newPose;
       _pose.SetName(name);
       
+      ComputeDriveCenterPose(_pose, _driveCenterPose);
+      
     } // SetPose()
     
     void Robot::SetHeadAngle(const f32& angle)
@@ -972,9 +980,7 @@ namespace Anki {
       
 #if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose
-      Pose3d startDriveCenterPose;
-      GetDriveCenterPose(GetPose(), startDriveCenterPose);
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetPoseWrtOrigin);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
 #else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
 #endif
@@ -1010,14 +1016,11 @@ namespace Anki {
       
 #if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose and goal poses
-      Pose3d startDriveCenterPose;
       vector<Pose3d> targetDriveCenterPoses(poses.size());
-      GetDriveCenterPose(GetPose(), startDriveCenterPose);
-      
       for (int i=0; i< poses.size(); ++i) {
-        GetDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
+        ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPoses, selectedIndex);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPoses, selectedIndex);
 #else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
 #endif
@@ -1034,10 +1037,9 @@ namespace Anki {
 
 #if(USE_DRIVE_CENTER_POSE)
           // Compute drive center pose for start pose and goal pose
-          Pose3d startDriveCenterPose, targetDriveCenterPose;
-          GetDriveCenterPose(GetPose(), startDriveCenterPose);
-          GetDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
-          status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPose);
+          Pose3d targetDriveCenterPose;
+          ComputeDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
+          status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
 #else
           status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
 #endif
@@ -2721,7 +2723,7 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
       
-    void Robot::GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
+    void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
 #if(USE_DRIVE_CENTER_POSE)
       if (_isPhysical) {

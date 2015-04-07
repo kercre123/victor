@@ -173,7 +173,12 @@ namespace Anki {
           if(robot.GetBlockWorld().DidObjectsChange())
           {
             Planning::Path newPath;
+            
+#if(USE_DRIVE_CENTER_POSE)
+            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetDriveCenterPose(), _forceReplanOnNextWorldChange))
+#else
             switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+#endif
             {
               case IPathPlanner::DID_PLAN:
               {

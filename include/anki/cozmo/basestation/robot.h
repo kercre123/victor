@@ -161,7 +161,10 @@ namespace Anki {
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
       
       // Return pose of robot's drive center based on what it's currently carrying
-      void GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      const Pose3d& GetDriveCenterPose() const;
+      
+      // Computes pose of drive center for the given robot pose
+      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
       
       
       //
@@ -506,6 +509,7 @@ namespace Anki {
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
       Pose3d*          _worldOrigin;
       Pose3d           _pose;
+      Pose3d           _driveCenterPose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;       // ID of mat object robot is localized to
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
@@ -715,6 +719,8 @@ namespace Anki {
     inline const Pose3d& Robot::GetPose(void) const
     { return _pose; }
     
+    inline const Pose3d& Robot::GetDriveCenterPose(void) const
+    {return _driveCenterPose; }
     
     inline void Robot::EnableVisionWhileMoving(bool enable)
     { _visionWhileMovingEnabled = enable; }
