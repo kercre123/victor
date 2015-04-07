@@ -491,7 +491,7 @@ namespace Anki {
   
 #pragma mark --- Global Functions ---
   
-  Vec3f ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
     // Make sure the two poses share a common parent:
     Pose3d pose2mod(pose2);

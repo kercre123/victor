@@ -307,8 +307,11 @@ namespace Anki {
   }; // class Pose3d
   
   // Compute distance between the two poses' translation vectors
-  // TODO: take rotation into account?
-  Vec3f ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2);
+  inline f32 ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2) {
+    return ComputeVectorBetween(pose1, pose2).Length();
+  }
+  
   
   //
   // Inline accessors:
