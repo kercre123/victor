@@ -73,6 +73,9 @@ namespace Anki {
         // Only used for high docking.
         u32 pointOfNoReturnDistMM_ = 0;
         
+        // Whether or not the robot is currently past point of no return
+        bool pastPointOfNoReturn_ = false;
+        
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
 
@@ -145,11 +148,6 @@ namespace Anki {
       bool DidLastDockSucceed()
       {
         return success_;
-      }
-      
-      bool IsInPointOfNoReturnMode()
-      {
-        return pointOfNoReturnDistMM_ != 0;
       }
       
       void TrackCamWithLift(bool on)
@@ -234,8 +232,11 @@ namespace Anki {
             
             
             // Check if we are beyond point of no return distance
-            if (IsInPointOfNoReturnMode() && (dockMsg.x_distErr < pointOfNoReturnDistMM_) && (mode_ == APPROACH_FOR_DOCK)) {
+            if ((pointOfNoReturnDistMM_ != 0) &&
+                (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
+                (mode_ == APPROACH_FOR_DOCK)) {
               PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              pastPointOfNoReturn_ = true;
               
               // Since we're ignoring docking error signals from hereon, just set the lift to final height.
               // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
@@ -344,7 +345,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if ((!trackingOnly_) && (!IsInPointOfNoReturnMode())) {
+          if ((!trackingOnly_) && (!pastPointOfNoReturn_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -364,7 +365,7 @@ namespace Anki {
             break;
           case LOOKING_FOR_BLOCK:
             
-            if ((!IsInPointOfNoReturnMode())
+            if ((!pastPointOfNoReturn_)
               && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
@@ -376,7 +377,7 @@ namespace Anki {
           {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
-                && (!IsInPointOfNoReturnMode())
+                && (!pastPointOfNoReturn_)
                 && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -622,6 +623,7 @@ namespace Anki {
         
         useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
+        pastPointOfNoReturn_ = false;
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         
@@ -662,6 +664,7 @@ namespace Anki {
         VisionSystem::StopTracking();
 
         pointOfNoReturnDistMM_ = 0;
+        pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
         success_ = false;
       }
