@@ -32,6 +32,10 @@ namespace Anki {
     
     // TODO: Define this as a constant parameter elsewhere
     const Radians DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE(DEG_TO_RAD(7.5));
+    
+    // Right before docking, the dock object must have been visually verified
+    // no more than this many milliseconds ago or it will not even attempt to dock.
+    const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 250;
  
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -593,7 +597,16 @@ namespace Anki {
         
         return FAILURE_ABORT;
       }
-                 
+      
+      // Verify visually that the object is still there
+      if (robot.GetLastMsgTimestamp() - dockObject->GetLastObservedTime() > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS) {
+        PRINT_NAMED_WARNING("IDockAction.Init.ActionObjectNotSeenForAWhile",
+                            "Action object exists, but not visually verified since %d (Current time = %d)\n",
+                            dockObject->GetLastObservedTime(), robot.GetLastMsgTimestamp());
+        return FAILURE_ABORT;
+      }
+      
+      
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
