@@ -509,7 +509,7 @@ namespace Anki {
             // travelled (based on encoders) scaled by the
             // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
             // We only bother doing this if rotation is not too small.
-            if (cTheta_meas > 0.001f) {
+            if (ABS(cTheta_meas) > 0.001f) {
               cDist *= cTheta_meas / cTheta;
             }
             
@@ -519,7 +519,7 @@ namespace Anki {
             driveCenter_x_ += cDist * cosf(orientation_.ToFloat());
             driveCenter_y_ += cDist * sinf(orientation_.ToFloat());
             
-            orientation_ += cTheta_meas;
+            orientation_ = newOrientation;
             
             x_ = driveCenter_x_ - driveCenterOffset * cosf(orientation_.ToFloat());
             y_ = driveCenter_y_ - driveCenterOffset * sinf(orientation_.ToFloat());
