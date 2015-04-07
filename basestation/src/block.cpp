@@ -275,14 +275,6 @@ namespace Anki {
     } 
      */
     
-    Point3f Block::GetSameDistanceTolerance() const {
-      return _size; // TODO: too loose?
-    }
-    
-    Radians Block::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45.f); // TODO: too loose?
-    }
-    
     
     // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {

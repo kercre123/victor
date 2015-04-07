@@ -214,12 +214,7 @@ namespace Anki {
     Point3f Ramp::GetSameDistanceTolerance() const {
       return Point3f((SlopeLength + PlatformLength)*.5f, Width*.5f, Height*.5f);
     }
-    
-    Radians Ramp::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45);
-    }
-
-    
+        
     bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
                                     const Pose3d* reachableFromPose) const
     {

@@ -110,9 +110,6 @@ namespace Anki {
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
-      virtual Point3f GetSameDistanceTolerance() const override;
-      virtual Radians GetSameAngleTolerance() const override;
-      
       /*
       // Get possible poses to start docking/tracking procedure. These will be
       // a point a given distance away from each vertical face that has the

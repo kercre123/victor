@@ -153,6 +153,13 @@ namespace Anki
                                                     const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
                                                     const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>()) const;
       
+      // Finds a matching object (one with the same type) that is closest to the
+      // given object, within the specified distance and angle thresholds.
+      // Returns nullptr if none found.
+      Vision::ObservableObject* FindClosestMatchingObject(const Vision::ObservableObject& object,
+                                                          const Vec3f& distThreshold,
+                                                          const Radians& angleThreshold);
+      
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
@@ -227,8 +234,9 @@ namespace Anki
                                   const std::vector<Vision::ObservableObject*>& objectsSeen,
                                   std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
       
-      // Finds existing objects that intersect with objectSeen, with the exception
-      // of those that are of ignoreFamilies or ignoreTypes.
+      // Finds existing objects whose XY bounding boxes intersect with objectSeen's
+      // XY bounding box, with the exception of those that are of ignoreFamilies or
+      // ignoreTypes.
       void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
                                    const std::set<ObjectFamily>& ignoreFamilies,
                                    const std::set<ObjectType>& ignoreTypes,

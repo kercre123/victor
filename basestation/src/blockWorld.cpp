@@ -257,8 +257,11 @@ namespace Anki
         //const float minDimSeen = objSeen->GetMinDim();
         
         // Store pointers to any existing objects that overlap with this one
-        std::vector<Vision::ObservableObject*> overlappingObjects;
-        FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        //std::vector<Vision::ObservableObject*> overlappingObjects;
+        //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        Vision::ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
+                                                                             objSeen->GetSameDistanceTolerance(),
+                                                                             objSeen->GetSameAngleTolerance());
         
         // As of now the object will be w.r.t. the robot's origin.  If we
         // observed it to be on a mat, however, make it relative to that mat.
@@ -282,7 +285,7 @@ namespace Anki
         f32 observationDistance;
         Vision::ObservableObject* observedObject = nullptr;
 
-        if(overlappingObjects.empty()) {
+        if(matchingObject == nullptr) { // overlappingObjects.empty()) {
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
           AddNewObject(objectsExisting, objSeen);
@@ -310,11 +313,13 @@ namespace Anki
           
         }
         else {
+          /*
           if(overlappingObjects.size() > 1) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleOverlappingObjects",
                                 "More than one overlapping object found -- will use first.\n");
             // TODO: do something smarter here?
           }
+           */
           
           /*
           Pose3d newPoseWrtOldPoseParent;
@@ -327,13 +332,13 @@ namespace Anki
           }
            */
           
-          overlappingObjects[0]->SetPose( objSeen->GetPose() );
+          matchingObject->SetPose( objSeen->GetPose() );
           
           // Update lastObserved times of this object
-          overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
-          overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
+          matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+          matchingObject->UpdateMarkerObservationTimes(*objSeen);
           
-          observedObject = overlappingObjects[0];
+          observedObject = matchingObject;
           
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
@@ -346,7 +351,7 @@ namespace Anki
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          _robot->GetCamera().ProjectObject(*overlappingObjects[0], projectedCorners, observationDistance);
+          _robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -1568,6 +1573,40 @@ namespace Anki
         matchingObject = nullptr;
       }
       return matchingObject;
+    }
+    
+    Vision::ObservableObject* BlockWorld::FindClosestMatchingObject(const Vision::ObservableObject& object,
+                                                                    const Vec3f& distThreshold,
+                                                                    const Radians& angleThreshold)
+    {
+      Vision::ObservableObject* closestObject = nullptr;
+      Vec3f closestDist(distThreshold);
+      Radians closestAngle(angleThreshold);
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          for(auto & objectsByID : objectsByType.second) {
+            Vision::ObservableObject* candidateObject = objectsByID.second;
+            
+            if(candidateObject->GetID() != object.GetID())
+            {
+              // Check to see if this candidate matches (has same type and is in roughly
+              // the same pose as) the given object. If so, update the thresholds
+              // so that we only find matching objects even closer than this one
+              // from now on.
+              Vec3f Tdiff;
+              Radians angleDiff;
+              if(candidateObject->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
+                closestObject = candidateObject;
+                closestDist = Tdiff.GetAbs();
+                closestAngle = angleDiff.getAbsoluteVal();
+              }
+            } // IF not object on bottom (by ID)
+          }
+        }
+      }
+      
+      return closestObject;
     }
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)

@@ -86,12 +86,6 @@ namespace Anki {
       return _size*.5f;
     }
     
-    
-    Radians MarkerlessObject::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45); // TODO: too loose?
-    }
-
-    
     void MarkerlessObject::Visualize(const ColorRGBA& color)
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();

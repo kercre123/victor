@@ -106,7 +106,6 @@ namespace Anki {
       */
       //virtual f32     GetDefaultPreDockDistance() const override;
       virtual Point3f GetSameDistanceTolerance()  const override;
-      virtual Radians GetSameAngleTolerance()     const override;
       
     protected:
       
