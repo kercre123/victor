@@ -308,7 +308,7 @@ namespace Anki {
   
   // Compute distance between the two poses' translation vectors
   // TODO: take rotation into account?
-  float ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
+  Vec3f ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
   
   //
   // Inline accessors:
