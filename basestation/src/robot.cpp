@@ -480,6 +480,7 @@ namespace Anki {
         }
 
         const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 90.f;
         
         assert(t_prev < t);
         assert(t_next > t);
@@ -499,14 +500,14 @@ namespace Anki {
                               RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
                               ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
-        } else if(headSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                  headSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                  headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
         {
           PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
                               "Ignoring vision marker seen while head moving with angular "
                               "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
                               RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
         }
         
