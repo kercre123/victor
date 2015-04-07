@@ -44,7 +44,7 @@ namespace Anki {
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 30;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 35;
 
         //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         

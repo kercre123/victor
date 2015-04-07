@@ -93,8 +93,8 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 22.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 21.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 17.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
@@ -378,7 +378,7 @@ namespace Anki {
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
     // Default distance from marker for predock pose
-    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 100.f;
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
 
     // Max speed the robot can travel when in assisted RC mode
     const f32 MAX_ASSISTED_RC_SPEED = 50.f;
