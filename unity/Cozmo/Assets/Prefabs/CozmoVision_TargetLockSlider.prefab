@@ -289,7 +289,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &107508
 GameObject:
   m_ObjectHideFlags: 1
@@ -1211,6 +1211,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
+  observedObjectListType: 1
   actionSlider:
     slider: {fileID: 11407504}
     image: {fileID: 11471130}

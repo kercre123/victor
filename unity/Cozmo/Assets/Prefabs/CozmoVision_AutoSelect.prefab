@@ -462,9 +462,12 @@ MonoBehaviour:
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   loopAudioSource: {fileID: 8218428}
   visionActiveLoop: {fileID: 8300000, guid: 7ba55faf18300472aa15d40edd598c9a, type: 3}
+  maxLoopingVol: .5
   visionActivateSound: {fileID: 8300000, guid: ff25ac74aff004684bcb97e1515b9789, type: 3}
+  maxVisionStartVol: .100000001
   visionDeactivateSound: {fileID: 8300000, guid: 5c8da956c11e2481394753dd479e08e5,
     type: 3}
+  maxVisionStopVol: .200000003
   slideInSound: {fileID: 0}
   slideOutSound: {fileID: 0}
   selectSound: {fileID: 0}
@@ -488,6 +491,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
+  observedObjectListType: 1
   maxDistance: 200
 --- !u!114 &11444348
 MonoBehaviour:
@@ -940,7 +944,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0

@@ -122,6 +122,9 @@ public class RobotRelativeControls : MonoBehaviour {
 		targetLockTimer += Time.deltaTime;
 		if(lastTargetLock == null && targetLock != null) targetLockTimer = 0f;
 
+		//if we are unlocked this frame, let's reset our head angle back to sane value
+		if(lastTargetLock != null && targetLock == null) robot.SetHeadAngle();
+
 		bool newLock = lastTargetLock != targetLock;
 
 		lastTargetLock = targetLock;

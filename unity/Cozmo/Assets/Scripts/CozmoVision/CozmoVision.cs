@@ -151,23 +151,46 @@ public class CozmoVision : MonoBehaviour
 
 
 	public enum ObservedObjectListType {
-		MARKERS_SEEN,
 		OBSERVED_RECENTLY,
+		MARKERS_SEEN,
 		KNOWN
 	}
 
 	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
 
+	private List<ObservedObject> _pertinentObjects = new List<ObservedObject>(); 
+	private int pertinenceStamp = -1; 
 	public List<ObservedObject> pertinentObjects {
 		get {
 
+			if(pertinenceStamp == Time.frameCount) return _pertinentObjects;
+			pertinenceStamp = Time.frameCount;
+
+			float tooHigh = 2f * CozmoUtil.BLOCK_LENGTH_MM;
+
+			_pertinentObjects.Clear();
+
 			switch(observedObjectListType) {
-				case ObservedObjectListType.MARKERS_SEEN: return robot.markersVisibleObjects;
-				case ObservedObjectListType.OBSERVED_RECENTLY: return robot.observedObjects;
-				case ObservedObjectListType.KNOWN: return robot.knownObjects;
+				case ObservedObjectListType.MARKERS_SEEN: 
+					_pertinentObjects.AddRange(robot.markersVisibleObjects);
+					break;
+				case ObservedObjectListType.OBSERVED_RECENTLY: 
+					_pertinentObjects.AddRange(robot.observedObjects);
+					break;
+				case ObservedObjectListType.KNOWN: 
+					_pertinentObjects.AddRange(robot.knownObjects);
+					break;
 			}
 
-			return null;
+			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( (x.WorldPosition - robot.WorldPosition).z ) < tooHigh );
+
+			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
+				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)robot.WorldPosition).sqrMagnitude;
+				float d2 = ( (Vector2)obj2.WorldPosition - (Vector2)robot.WorldPosition).sqrMagnitude;
+				return d1.CompareTo(d2);   
+			} );
+
+			return _pertinentObjects;
 		}
 	}
 
@@ -212,7 +235,7 @@ public class CozmoVision : MonoBehaviour
 		robot = null;
 		imageRequested = false;
 	}
-	
+
 	protected virtual void Awake()
 	{
 		rTrans = transform as RectTransform;
@@ -286,6 +309,10 @@ public class CozmoVision : MonoBehaviour
 				robot.selectedObjects.RemoveAt( i-- );
 			}
 		}
+
+		if(robot.selectedObjects.Count == 0) {
+			robot.SetHeadAngle();
+		}
 	}
 	
 	protected virtual void ShowObservedObjects()
@@ -295,15 +322,14 @@ public class CozmoVision : MonoBehaviour
 		
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
-			if( pertinentObjects.Count > i )
-			{
+			if(pertinentObjects.Count > i) {
 				ObservedObjectSeen( observedObjectBoxes[i], pertinentObjects[i] );
 			}
-			else
-			{
+			else {
 				observedObjectBoxes[i].gameObject.SetActive( false );
 			}
 		}
+
 	}
 	
 	protected void DisableButtons() {
@@ -359,10 +385,18 @@ public class CozmoVision : MonoBehaviour
 	{
 		instance = this;
 
+		int objectPertinenceOverride = PlayerPrefs.GetInt("ObjectPertinence", -1);
+		if(objectPertinenceOverride >= 0) {
+			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
+			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
+		}
+
 		if( RobotEngineManager.instance != null )
 		{
 			RobotEngineManager.instance.RobotImage += RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient += Reset;
+
+			if(RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.selectedObjects.Clear();
 		}
 		
 		RequestImage();

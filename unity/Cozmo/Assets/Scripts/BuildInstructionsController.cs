@@ -38,6 +38,10 @@ public class BuildInstructionsController : MonoBehaviour {
 
 		Validated = false;
 
+		for(int i=0; i<layouts.Count; i++) {
+			layouts[i].gameObject.SetActive(false);
+		}
+
 		filteredLayouts = layouts.FindAll(x => string.IsNullOrEmpty(gameTypeFilter) || x.gameTypeFilter == gameTypeFilter);
 		currentLayout = Mathf.Clamp(currentLayout, 0, filteredLayouts.Count-1);
 

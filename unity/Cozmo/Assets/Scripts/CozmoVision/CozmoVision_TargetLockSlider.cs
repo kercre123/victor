@@ -200,10 +200,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		float bestAngleFromCoz = float.MaxValue;
 		Vector2 forward = robot.Forward;
 
-		//List<ObservedObject> pertinentObjects = robot.knownObjects;
-		List<ObservedObject> pertinentObjects = robot.observedObjects;
-
-
 		for(int i=0; i<pertinentObjects.Count; i++) {
 			if(robot.carryingObjectID == pertinentObjects[i].ID) continue;
 			Vector2 atTarget = pertinentObjects[i].WorldPosition - robot.WorldPosition;

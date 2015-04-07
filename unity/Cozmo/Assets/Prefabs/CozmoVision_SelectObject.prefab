@@ -1269,6 +1269,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
+  observedObjectListType: 1
   reticle: {fileID: 22465794}
 --- !u!114 &11479100
 MonoBehaviour:

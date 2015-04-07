@@ -11,13 +11,19 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_debug;
 	[SerializeField] Toggle toggle_vision;
 	[SerializeField] Toggle toggle_visionRecording;
+	[SerializeField] Toggle toggle_userTestMode;
 
+	[SerializeField] ComboBox pertinent_objects;
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 
 	public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
 	public string[] visionStyles = { "CozmoVision2", "CozmoVision3", "CozmoVision4" };
+	public string[] pertinentObjectTypes = { 
+		CozmoVision.ObservedObjectListType.OBSERVED_RECENTLY.ToString(),
+		CozmoVision.ObservedObjectListType.MARKERS_SEEN.ToString(),
+		CozmoVision.ObservedObjectListType.KNOWN.ToString() };
 
 	void OnEnable () {
 		Init();
@@ -44,6 +50,11 @@ public class OptionsScreen : MonoBehaviour {
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
 		}
 
+		if(toggle_userTestMode != null) {
+			toggle_userTestMode.isOn = PlayerPrefs.GetInt("UserTestMode", 0) == 1;
+			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
 		if(toggle_visionRecording != null) {
 			toggle_visionRecording.isOn = RobotEngineManager.instance != null ? RobotEngineManager.instance.AllowImageSaving : false;
 		}
@@ -60,6 +71,11 @@ public class OptionsScreen : MonoBehaviour {
 			combo_vision.SelectedIndex = PlayerPrefs.GetInt("VisionSchemeIndex", 0);
 		}
 
+		if(pertinent_objects != null) {
+			pertinent_objects.AddItems(pertinentObjectTypes);
+			pertinent_objects.OnSelectionChanged = ObjectPertinence;
+			pertinent_objects.SelectedIndex = PlayerPrefs.GetInt("ObjectPertinence", -1);
+		}
 
 	}
 
@@ -83,6 +99,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_visionRecording != null) {
 			toggle_visionRecording.onValueChanged.AddListener(ToggleVisionRecording);
+		}
+
+		if(toggle_userTestMode != null) {
+			toggle_userTestMode.onValueChanged.AddListener(ToggleUserTestMode);
 		}
 	}
 
@@ -116,6 +136,10 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("VisionSchemeIndex", index);
 	}
 
+	void ObjectPertinence(int index) {
+		PlayerPrefs.SetInt("ObjectPertinence", index);
+	}
+
 	public void MaxTurnSpeedChanged (float val) {
 		PlayerPrefs.SetFloat("MaxTurnFactor", Mathf.Clamp01(val));
 	}
@@ -130,6 +154,11 @@ public class OptionsScreen : MonoBehaviour {
 
 	public void ToggleDisableVision (bool val) {
 		PlayerPrefs.SetInt("VisionDisabled", val ? 1 : 0);
+	}
+
+	public void ToggleUserTestMode (bool val) {
+		PlayerPrefs.SetInt("UserTestMode", val ? 1 : 0);
+		Debug.Log("ToggleUserTestMode("+val+")");
 	}
 
 	public void ToggleVisionRecording (bool val) {
