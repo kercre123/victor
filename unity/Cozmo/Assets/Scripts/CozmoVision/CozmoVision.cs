@@ -194,7 +194,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-
 	public UnityAction[] actions;
 	
 	protected RectTransform rTrans;
@@ -299,10 +298,9 @@ public class CozmoVision : MonoBehaviour
 
 	protected void UnselectNonObservedObjects()
 	{
-		if( robot == null ) return;
-		if( pertinentObjects == null ) return;
+		if( robot == null || pertinentObjects == null ) return;
 
-		for( int i = 0; i < pertinentObjects.Count; ++i )
+		for( int i = 0; i < robot.selectedObjects.Count; ++i )
 		{
 			if( pertinentObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
 			{
@@ -317,8 +315,7 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void ShowObservedObjects()
 	{
-		if( robot == null ) return;
-		if( pertinentObjects == null ) return;
+		if( robot == null || pertinentObjects == null ) return;
 		
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
@@ -684,11 +681,13 @@ public class CozmoVision : MonoBehaviour
 		{
 			robot.lastObservedObjects.Clear();
 			robot.lastSelectedObjects.Clear();
+			robot.lastMarkersVisibleObjects.Clear();
 			
 			if( !robot.isBusy )
 			{
 				robot.lastObservedObjects.AddRange( robot.observedObjects );
 				robot.lastSelectedObjects.AddRange( robot.selectedObjects );
+				robot.lastMarkersVisibleObjects.AddRange( robot.markersVisibleObjects );
 			}
 		}
 	}
