@@ -42,6 +42,18 @@ namespace Anki {
         
         const f32 BIG_RADIUS = 5000;
         
+#if(USE_DRIVE_CENTER_POSE)
+        // Value ranging from 0 to 1.
+        // The lower the value the more the expected distance approaches
+        // the distance expected of a two-wheeled no-slip robot.
+        // The higher the value the more the expected distance approaches
+        // the distance of the wheel that moved the most.
+        // (i.e. Assumes the faster wheel drags the slower wheel along.
+        // How correct is this assumption? Who knows?)
+        // TODO: This value may change for different durometer treads
+        const f32 SLIP_FACTOR = 0.7f;
+#endif
+        
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
         
@@ -492,6 +504,22 @@ namespace Anki {
             
            
 #if(USE_DRIVE_CENTER_POSE)
+            // For treaded robot, assuming there is more slip of the slower tread than
+            // there is on the faster one, thus making the total distance travelled
+            // per tic closer to the maximum distance traversed by a wheel than
+            // their average distance.
+            // TODO: This is definitely not totally correct, but seems to be more
+            //       right than not doing it, at least from what I can see from
+            //       controlling it via the webots_keyboard_controller.
+            if (rDist * lDist >= 0) {
+              // rDist and lDist are the same sign or at least one of them is zero
+              f32 maxVal = MAX(ABS(lDist), ABS(rDist));
+              if (cDist < 0) {
+                maxVal *= -1;
+              }
+              cDist = cDist * (1.f-SLIP_FACTOR) + (maxVal * SLIP_FACTOR);
+            }
+            
             // Get ICR offset from robot origin depending on carry state
             f32 driveCenterOffset = GetDriveCenterOffset();
             
