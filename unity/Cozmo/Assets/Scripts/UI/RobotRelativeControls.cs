@@ -83,7 +83,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastDebugAxesX = 0f;
 
 		lastAttitude = Quaternion.identity;
-		gyroSleepTimer = gyroSleepTime;
+		gyroSleepTimer = -1f; //gyroSleepTime;
 
 		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
 		if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
@@ -393,7 +393,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //			gyroSleepTimer -= Time.deltaTime;
 //		}
 
-		//bool wakeGyro = verticalStick != null && verticalStick.IsPressed;//Input.touchCount > 0;
+		bool wakeGyro = Input.touchCount > 0;
 		//if(wakeGyro) {
 		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
 		//}
@@ -416,11 +416,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		//lastAttitude = attitude;
 
-		//if(wakeGyro) {
-		//	gyroSleepTimer = gyroSleepTime;
-		//}
+		if(wakeGyro) {
+			gyroSleepTimer = gyroSleepTime;
+		}
 
-		//if(gyroSleepTimer <= 0f) return;
+		if(gyroSleepTimer <= 0f) return;
 			
 		float h = gyroInputs.Horizontal;
 
