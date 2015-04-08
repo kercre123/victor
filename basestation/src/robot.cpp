@@ -58,6 +58,9 @@ namespace Anki {
     , _haveNewImage(false)
 #   endif
     , _behaviorMgr(this)
+    , _wheelsLocked(false)
+    , _headLocked(false)
+    , _liftLocked(false)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
