@@ -51,7 +51,7 @@ public class CozmoVision_SelectObject : CozmoVision
 //		selected = color;
 //	}
 
-	protected override void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
+	/*protected override void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
 	{
 		base.ObservedObjectSeen( box, observedObject );
 
@@ -61,7 +61,7 @@ public class CozmoVision_SelectObject : CozmoVision
 		{
 			box1.gameObject.SetActive( false );
 		}
-	}
+	}*/
 
 	protected override void ShowObservedObjects()
 	{

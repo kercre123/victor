@@ -48,17 +48,19 @@ public class ActionButton
 		}
 	}
 	
-	public void SetMode(ActionButtonMode mode, int i = 0) {
-		
+	public void SetMode( ActionButtonMode mode, int i = 0 )
+	{
+		button.onClick.RemoveAllListeners();
+
 		if(mode == ActionButtonMode.DISABLED) {
 			button.gameObject.SetActive(false);
-			button.onClick.RemoveAllListeners();
+			//button.onClick.RemoveAllListeners();
 			return;
 		}
 		
 		image.sprite = vision.GetActionSprite(mode);
 		index = i;
-		
+
 		switch(mode) {
 			case ActionButtonMode.TARGET:
 				text.text = "Target";
@@ -216,6 +218,7 @@ public class CozmoVision : MonoBehaviour
 	private float fadeDuration = 1f;
 	private float fromAlpha = 0f;
 
+	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	public static CozmoVision instance = null;
 
@@ -257,26 +260,10 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
 	{
-		float boxX = ( observedObject.VizRect.x / 320f ) * imageRectTrans.sizeDelta.x;
-		float boxY = ( observedObject.VizRect.y / 240f ) * imageRectTrans.sizeDelta.y;
-		float boxW = ( observedObject.VizRect.width / 320f ) * imageRectTrans.sizeDelta.x;
-		float boxH = ( observedObject.VizRect.height / 240f ) * imageRectTrans.sizeDelta.y;
-
-		/*if( boxX < 200f )
-		{
-			boxW -= 200f - boxX;
-			boxX = 200f;
-		}
-		else if( boxX + boxW > 1000f )
-		{
-			boxW -= boxX + boxW - 1000f;
-		}
-		
-		if( boxW <= 0f )
-		{
-			box.image.gameObject.SetActive( true );
-			return;
-		}*/
+		float boxX = ( observedObject.VizRect.x / NativeResolution.x ) * imageRectTrans.sizeDelta.x;
+		float boxY = ( observedObject.VizRect.y / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
+		float boxW = ( observedObject.VizRect.width / NativeResolution.x ) * imageRectTrans.sizeDelta.x;
+		float boxH = ( observedObject.VizRect.height / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
 		
 		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
