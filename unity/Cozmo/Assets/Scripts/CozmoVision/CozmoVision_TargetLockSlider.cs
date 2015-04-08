@@ -191,10 +191,10 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float h = imageRectTrans.sizeDelta.y;
 				ObservedObject lockedObject = robot.selectedObjects[0];
 
-				float lockX = (lockedObject.VizRect.center.x / 320f) * w;
-				float lockY = (lockedObject.VizRect.center.y / 240f) * h;
-				float lockW = (lockedObject.VizRect.width / 320f) * w;
-				float lockH = (lockedObject.VizRect.height / 240f) * h;
+				float lockX = (lockedObject.VizRect.center.x / NativeResolution.x) * w;
+				float lockY = (lockedObject.VizRect.center.y / NativeResolution.y) * h;
+				float lockW = (lockedObject.VizRect.width / NativeResolution.x) * w;
+				float lockH = (lockedObject.VizRect.height / NativeResolution.y) * h;
 				
 				targetLockReticle.sizeDelta = new Vector2( lockW, lockH ) * targetLockReticleScale;
 				targetLockReticle.anchoredPosition = new Vector2( lockX, -lockY );
