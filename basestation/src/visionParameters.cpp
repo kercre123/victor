@@ -159,7 +159,7 @@ namespace Anki {
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         trackingResolution   = resolution;
-        numPyramidLevels     = 3; // TODO: Compute from resolution to get down to a given size?
+        numPyramidLevels     = 4; // TODO: Compute from resolution to get down to a given size?
 #else
         //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
         trackingResolution   = Vision::CAMERA_RES_QQVGA; // 160x120

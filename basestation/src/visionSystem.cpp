@@ -550,7 +550,7 @@ namespace Cozmo {
       image.Set(imageNormalized);
       
       //Debug:
-      image.Show("NormalizedImage", true);
+      //image.Show("NormalizedImage", true);
       
     } // if(filterWidthFraction > 0)
     
