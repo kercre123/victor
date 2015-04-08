@@ -86,9 +86,14 @@ namespace Anki {
       // (or other pose) if desired.
       const Pose3d& GetPose() const; // w.r.t. marker's parent!
       
+      constexpr static const f32 ANGLE_TOLERANCE_FOR_HEIGHT_CHECK = DEG_TO_RAD(10);
+      f32 GetHeightTolerance() const { return _heightTolerance; }
+      
       static const ColorRGBA& GetVisualizeColor(ActionType type);
       
     protected:
+      
+      void SetHeightTolerance();
       
       ActionType   _type;
       
@@ -97,6 +102,8 @@ namespace Anki {
       Pose3d _poseWrtMarkerParent;
       
       Radians _headAngle;
+      
+      f32     _heightTolerance;
       
     }; // class PreActionPose
     

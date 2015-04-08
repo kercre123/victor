@@ -59,9 +59,11 @@ namespace Anki {
       bool isValid = true;
       
       if(reachableFromPose != nullptr) {
-        // Pose should be at ground height or it's not reachable
-        const f32 heightThresh = 15.f;
-        isValid = NEAR(checkPose.GetTranslation().z(), reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(), heightThresh);
+        // Pose should be at ground height or it's not reachable. Let the threshold
+        // vary with the distance from the pre-action pose to the object.
+        isValid = NEAR(checkPose.GetTranslation().z(),
+                       reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(),
+                       preActionPose.GetHeightTolerance());
       }
       
       if(isValid) {
