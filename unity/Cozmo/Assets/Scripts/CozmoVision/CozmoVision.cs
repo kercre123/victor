@@ -155,6 +155,7 @@ public class CozmoVision : MonoBehaviour
 
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
+	private static bool ding_enabled = true;
 
 	protected int observedObjectsCount
 	{
@@ -379,24 +380,27 @@ public class CozmoVision : MonoBehaviour
 
 	protected void Ding( bool found )
 	{
-		if( found )
+		if( ding_enabled )
 		{
-			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
+			if( found )
 			{
-				audio.PlayOneShot( newObjectObservedSound );
-				
-				dingTimes[0] = Time.time;
+				if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
+				{
+					audio.PlayOneShot( newObjectObservedSound );
+					
+					dingTimes[0] = Time.time;
+				}
 			}
+			/*else
+			{
+				if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
+				{
+					audio.PlayOneShot( objectObservedLostSound );
+					
+					dingTimes[1] = Time.time;
+				}
+			}*/
 		}
-		/*else
-		{
-			if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
-			{
-				audio.PlayOneShot( objectObservedLostSound );
-				
-				dingTimes[1] = Time.time;
-			}
-		}*/
 	}
 
 	public void ActionButtonClick()
@@ -433,6 +437,11 @@ public class CozmoVision : MonoBehaviour
 		}
 
 		foreach(ObservedObjectBox box in observedObjectBoxes) { if(box != null && box.image != null) { box.image.gameObject.SetActive(false); } }
+	}
+
+	public static void EnableDing(bool on = true)
+	{
+		ding_enabled = on;
 	}
 
 }
