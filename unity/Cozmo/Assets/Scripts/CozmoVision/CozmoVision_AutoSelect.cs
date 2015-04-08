@@ -47,17 +47,19 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 			observedObjects.Sort( ( obj1 ,obj2 ) => // sort by most center of view
 			{
-				return Vector2.Distance( obj1.VizRect.center, image.rectTransform.rect.center ).CompareTo( 
-					   Vector2.Distance( obj2.VizRect.center, image.rectTransform.rect.center ) );   
+				Vector2 center = NativeResolution * 0.5f;
+
+				return Vector2.Distance( obj1.VizRect.center, center ).CompareTo( Vector2.Distance( obj2.VizRect.center, center ) );   
 			} );
 
-			for( int i = 0; i < observedObjects.Count && observedObjects.Count > 1; ++i )
+			/*for( int i = 1; i < observedObjects.Count; ++i )
 			{
-				if( observedObjects[i].Distance > maxDistance ) // if multiple in view and too far away
+				float distance = observedObjects[i].Distance;
+				if( distance > observedObjects[0].Distance && distance > maxDistance ) // if multiple in view and too far away
 				{
 					observedObjects.RemoveAt( i-- );
 				}
-			}
+			}*/
 
 			for( int i = 1; i < observedObjects.Count; ++i ) // if not on top of selected block, remove
 			{
