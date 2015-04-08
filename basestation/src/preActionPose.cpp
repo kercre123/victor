@@ -48,7 +48,7 @@ namespace Anki {
     {
       const Point3f T = _poseWrtMarkerParent.GetTranslation().GetAbs();
       const f32 distance = std::max(T.x(), std::max(T.y(), T.z()));
-      _heightTolerance = distance * std::tan(ANGLE_TOLERANCE_FOR_HEIGHT_CHECK);
+      _heightTolerance = distance * std::tan(ANGLE_TOLERANCE);
     }
     
     PreActionPose::PreActionPose(ActionType type,

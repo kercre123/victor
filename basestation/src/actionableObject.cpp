@@ -69,7 +69,7 @@ namespace Anki {
       if(isValid) {
         // Allow any rotation around Z, but none around X/Y, in order to keep
         // vertically-oriented poses
-        const f32 vertAlignThresh = 1.f - std::cos(DEG_TO_RAD(30)); // TODO: tighten?
+        const f32 vertAlignThresh = 1.f - std::cos(PreActionPose::ANGLE_TOLERANCE); // TODO: tighten?
         isValid = NEAR(checkPose.GetRotationMatrix()(2,2), 1.f, vertAlignThresh);
       }
       
