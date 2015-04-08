@@ -280,6 +280,7 @@ public class CozmoVision : MonoBehaviour
 	private float fadeTimer = 0f;
 	private float fadeDuration = 1f;
 	private float fromAlpha = 0f;
+	private static bool dingEnabled = true;
 
 	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
@@ -680,25 +681,25 @@ public class CozmoVision : MonoBehaviour
 	{
 		if(newObjectObservedSound == null) return;
 
-		if( found )
-		{
-			if( !audio.isPlaying && dingTimes[0] + soundDelay < Time.time )
-			{
-				audio.volume = 1f;
-				audio.PlayOneShot( newObjectObservedSound, 1f );
+		if (dingEnabled) {
+			if (found) {
+				if (!audio.isPlaying && dingTimes [0] + soundDelay < Time.time) {
+					audio.volume = 1f;
+					audio.PlayOneShot (newObjectObservedSound, 1f);
 				
-				dingTimes[0] = Time.time;
+					dingTimes [0] = Time.time;
+				}
 			}
+			/*else
+			{
+				if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
+				{
+					audio.PlayOneShot( objectObservedLostSound );
+					
+					dingTimes[1] = Time.time;
+				}
+			}*/
 		}
-		/*else
-		{
-			if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
-			{
-				audio.PlayOneShot( objectObservedLostSound );
-				
-				dingTimes[1] = Time.time;
-			}
-		}*/
 	}
 
 	public void ActionButtonClick()
@@ -767,6 +768,11 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 		if( audio != null ) audio.PlayOneShot( selectSound );
+	}
+
+	public static void EnableDing(bool on = true)
+	{
+		dingEnabled = on;
 	}
 
 }
