@@ -171,6 +171,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		lastInputs = inputs;
+		lastGyro = gyroInputs != null ? gyroInputs.Horizontal : 0f;
 
 		if(!reverseLikeACar && !driveForwardOnlyMode && (inputs.y < 0f || driveReverseOnlyMode)) {
 			inputs.x = -inputs.x;
@@ -380,43 +381,56 @@ public class RobotRelativeControls : MonoBehaviour {
 		return Vector2.zero;
 	}
 
+	float lastGyro = 0f;
+	float turnInPlaceGyroThreshold = 0.75f;
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
-		
-		if(gyroSleepTimer > 0f) gyroSleepTimer -= Time.deltaTime;
 
-		bool wakeGyro = Input.touchCount > 0;
+//		if(gyroSleepTimer > 0f && gyroInputs.Horizontal != 0f) {
+//			gyroSleepTimer = gyroSleepTime;
+//		}
+//		else if(gyroSleepTimer > 0f) {
+//			gyroSleepTimer -= Time.deltaTime;
+//		}
+
+		//bool wakeGyro = verticalStick != null && verticalStick.IsPressed;//Input.touchCount > 0;
 		//if(wakeGyro) {
 		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
 		//}
 
-		if(!wakeGyro) {
-			wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
+		//if(!wakeGyro) {
+		//	wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
 			//if(wakeGyro) Debug.Log("wakeGyro: robot.status(" + robot.status.ToString() + ")");
-		}
+		//}
 		//wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
 
-		Quaternion attitude = Input.gyro.attitude;
+//		Quaternion attitude = Input.gyro.attitude;
+//
+//		if(!wakeGyro) {
+//			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
+//			wakeGyro = attitudeDelta > 0.5f;
+//			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
+//		}
 
-		if(!wakeGyro) {
-			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
-			wakeGyro = attitudeDelta > 0.5f;
-			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
-		}
+		//if(!wakeGyro) wakeGyro = Application.isEditor;
 
-		if(!wakeGyro) wakeGyro = Application.isEditor;
+		//lastAttitude = attitude;
 
-		lastAttitude = attitude;
+		//if(wakeGyro) {
+		//	gyroSleepTimer = gyroSleepTime;
+		//}
 
-		if(wakeGyro) {
-			gyroSleepTimer = gyroSleepTime;
-		}
-
-		if(gyroSleepTimer <= 0f) return;
+		//if(gyroSleepTimer <= 0f) return;
 			
 		float h = gyroInputs.Horizontal;
+
+		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
+			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
+		}
+
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
+
 		//if(gyroInputs.Horizontal != 0f) Debug.Log("gyroInputs.Horizontal("+gyroInputs.Horizontal+")");
 	}
 
