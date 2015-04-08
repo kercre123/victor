@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.3 utf8
+#VRML_SIM V8.0.5 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.247738 0.239693 0.938708 4.68217
-  position -1.74057 0.0366513 2.67316
+  orientation -0.136269 0.46186 0.876422 3.64768
+  position -0.796235 1.13976 1.07533
 }
 Background {
   skyColor [
@@ -115,22 +115,35 @@ DirectionalLight {
   direction 1 -0.5 -2
 }
 CozmoMat {
+  showMarkers FALSE
 }
-Platform {
-  translation 0.200146 0.221 0.0219602
+Block1x1 {
+  translation 0.0210391 0.217741 0.022
+  blockColor 0.296223 0.860273 0.323583
+  markerImg "symbols/squarePlusCorners.png"
 }
-Ramp {
-  translation -0.1415 -0.267 0
+Block1x1 {
+  translation 0.0274715 0.221123 0.072
+  rotation 0 0 1 2.87979
+  blockColor 0.296223 0.860273 0.323583
+  markerImg "symbols/squarePlusCorners.png"
 }
-Ramp {
-  translation -0.1415 0.267 0
+Block1x1 {
+  translation 0.0334384 -0.287731 0.022
+  rotation 0 0 1 2.87979
+  blockColor 0.828885 0.858824 0.17882
+  markerImg "symbols/star5.png"
 }
-Platform {
-  translation 0.200146 -0.221 0.0219602
+Block1x1 {
+  translation 0.0796732 -0.2981 0.022
+  rotation 0 0 1 2.87979
+  blockColor 0.828885 0.858824 0.17882
+  markerImg "symbols/star5.png"
 }
-Bridge {
-  translation 0.3 0 0.046
-  rotation 0 0 1 1.5708
+Block1x1 {
+  translation 0.025002 0.21571 0.122
+  blockColor 0.296223 0.860273 0.323583
+  markerImg "symbols/squarePlusCorners.png"
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
@@ -148,25 +161,23 @@ DEF AngryFaceBlock Block1x1 {
 }
 DEF AngryFaceBlockOnPlatform Block1x1 {
   name "AngryFace_01"
-  translation 0.283197 -0.249331 0.0659552
-  rotation 0 0 1 0.05
+  translation 0.283197 -0.249331 0.0259552
+  rotation 0 1 0 1.57
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
 }
-DEF DoubleBlock Block2x1 {
-  name "DoubleBlock"
-  translation -0.22 -0.1 0.022
-  rotation 0 0 1 0.23
-  blockColor 0.5 0.85 0.5
-  longSideMarker "symbols/bangBangBang.png"
-  shortSideMarker "symbols/inverted/bangBangBang.png"
+DEF ArrowBlock Block1x1 {
+  translation 0.281946 -0.247778 0.072
+  rotation 0 1 0 -1.57
+  markerImg "symbols/arrow.png"
 }
-Face {
-  translation -0.10613 -0.310172 0.17
+BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   usbChannel 10
+}
+WebotsKeyboardController {
 }
 CozmoVizDisplay {
 }
