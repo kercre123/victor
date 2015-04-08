@@ -63,39 +63,39 @@ public class ActionButton
 
 		switch(mode) {
 			case ActionButtonMode.TARGET:
-				text.text = "Target";
+				text.text = TARGET;
 				//button.onClick.AddListener(vision.Action);
 				break;
 			case ActionButtonMode.PICK_UP:
-				text.text = "Pick Up";
+				text.text = PICK_UP;
 				button.onClick.AddListener(PickAndPlaceObject);
 				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.DROP:
-				text.text = "Drop";
+				text.text = DROP;
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
 				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.STACK:
-				text.text = "Stack";
+				text.text = STACK;
 				button.onClick.AddListener(PickAndPlaceObject);
 				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.ROLL:
-				text.text = "Roll";
+				text.text = ROLL;
 				//button.onClick.AddListener(vision.Action);
 				break;
 			case ActionButtonMode.ALIGN:
-				text.text = "Align";
+				text.text = ALIGN;
 				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
 				button.onClick.AddListener(vision.ActionButtonClick);
 				break;
 			case ActionButtonMode.CHANGE:
-				text.text = "Change";
+				text.text = CHANGE;
 				//button.onClick.AddListener(vision.Action);
 				break;
 			case ActionButtonMode.CANCEL:
-				text.text = "Cancel";
+				text.text = CANCEL;
 				button.onClick.AddListener(Cancel);
 				button.onClick.AddListener(vision.CancelButtonClick);
 				break;
@@ -103,18 +103,82 @@ public class ActionButton
 		
 		button.gameObject.SetActive(true);
 	}
-	
+
+	private static string targetOverride = null;
+	public static string TARGET
+	{
+		get { if( targetOverride == null ) { return "Search"; } return targetOverride; }
+		
+		set { targetOverride = value; }
+	}
+
+	private static string pickUpOverride = null;
+	public static string PICK_UP
+	{
+		get { if( pickUpOverride == null ) { return "Pick Up"; } return pickUpOverride; }
+		
+		set { pickUpOverride = value; }
+	}
+
+	private static string dropOverride = null;
+	public static string DROP
+	{
+		get { if( dropOverride == null ) { return "Drop"; } return dropOverride; }
+		
+		set { dropOverride = value; }
+	}
+
+	private static string stackOverride = null;
+	public static string STACK
+	{
+		get { if( stackOverride == null ) { return "Stack"; } return stackOverride; }
+		
+		set { stackOverride = value; }
+	}
+
+	private static string rollOverride = null;
+	public static string ROLL
+	{
+		get { if( rollOverride == null ) { return "Roll"; } return rollOverride; }
+		
+		set { rollOverride = value; }
+	}
+
+	private static string alignOverride = null;
+	public static string ALIGN
+	{
+		get { if( alignOverride == null ) { return "Align"; } return alignOverride; }
+		
+		set { alignOverride = value; }
+	}
+
+	private static string changeOverride = null;
+	public static string CHANGE
+	{
+		get { if( changeOverride == null ) { return "Change"; } return changeOverride; }
+		
+		set { changeOverride = value; }
+	}
+
+	private static string cancelOverride = null;
+	public static string CANCEL
+	{
+		get { if( cancelOverride == null ) { return "Cancel"; } return cancelOverride; }
+		
+		set { cancelOverride = value; }
+	}
+
 	public static string GetModeName(ActionButtonMode mode) {
 		
 		switch(mode) {
-			case ActionButtonMode.TARGET: return "Search";
-			case ActionButtonMode.PICK_UP: return "Pick Up";
-			case ActionButtonMode.DROP: return "Drop";
-			case ActionButtonMode.STACK: return "Stack";
-			case ActionButtonMode.ROLL: return "Roll";
-			case ActionButtonMode.ALIGN: return "Align";
-			case ActionButtonMode.CHANGE: return "Change";
-			case ActionButtonMode.CANCEL: return "Cancel";
+			case ActionButtonMode.TARGET: return TARGET;
+			case ActionButtonMode.PICK_UP: return PICK_UP;
+			case ActionButtonMode.DROP: return DROP;
+			case ActionButtonMode.STACK: return STACK;
+			case ActionButtonMode.ROLL: return ROLL;
+			case ActionButtonMode.ALIGN: return ALIGN;
+			case ActionButtonMode.CHANGE: return CHANGE;
+			case ActionButtonMode.CANCEL: return CANCEL;
 		}
 		
 		return "None";
@@ -150,7 +214,6 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
-
 
 	public enum ObservedObjectListType {
 		OBSERVED_RECENTLY,
