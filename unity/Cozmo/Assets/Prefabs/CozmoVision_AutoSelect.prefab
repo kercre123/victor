@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &144348
 GameObject:
   m_ObjectHideFlags: 1
@@ -61,12 +61,12 @@ GameObject:
   - 114: {fileID: 11444352}
   - 114: {fileID: 11444350}
   m_Layer: 5
-  m_Name: Action Button 2
+  m_Name: Action Button 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &144354
 GameObject:
   m_ObjectHideFlags: 1
@@ -132,12 +132,12 @@ GameObject:
   - 114: {fileID: 11444366}
   - 114: {fileID: 11444364}
   m_Layer: 5
-  m_Name: Action Button 1
+  m_Name: Action Button 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &144362
 GameObject:
   m_ObjectHideFlags: 1
@@ -449,12 +449,12 @@ MonoBehaviour:
   image: {fileID: 11444384}
   text: {fileID: 11444370}
   actionButtons:
-  - button: {fileID: 11444364}
-    image: {fileID: 11444360}
-    text: {fileID: 11444372}
   - button: {fileID: 11444350}
     image: {fileID: 11444368}
     text: {fileID: 11444374}
+  - button: {fileID: 11444364}
+    image: {fileID: 11444360}
+    text: {fileID: 11444372}
   newObjectObservedSound: {fileID: 0}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}
@@ -1077,8 +1077,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22444360}
   - {fileID: 22444352}
+  - {fileID: 22444360}
   m_Father: {fileID: 22444370}
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: .5}
@@ -1099,7 +1099,7 @@ RectTransform:
   - {fileID: 22444368}
   - {fileID: 22444362}
   m_Father: {fileID: 22444350}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: 0, y: -80}
@@ -1169,7 +1169,7 @@ RectTransform:
   - {fileID: 22444366}
   - {fileID: 22444356}
   m_Father: {fileID: 22444350}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: 0, y: 80}
