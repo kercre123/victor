@@ -144,7 +144,24 @@ class CozmoCLI(socket.socket):
             self.sendto(ImageRequest(imageSendMode=cmd, resolution=res).serialize(), self.robot)
             return True
 
-
+    def DriveWheels(self, *args):
+        "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
+        if len(args) != 2:
+            sys.stderr.write("drive command requires two motor speeds as floats\n")
+            return False
+        else:
+            try:
+                lws = float(args[0])
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[0])
+                return False
+            try:
+                rws = float(args[1])
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[1])
+                return False
+            self.sendto(DriveWheelsMessage(lws, rws).serialize(), self.robot)
+            return True
 
     functions = {
         "help": helpFtn,
@@ -152,6 +169,7 @@ class CozmoCLI(socket.socket):
         "FlashBlockIDs": FlashBlockIDs,
         "SetBlockLights": SetBlockLights,
         "ImageRequest": ImageRequest,
+        "drive": DriveWheels,
     }
 
 
