@@ -242,7 +242,8 @@ namespace Anki {
               // Since we're ignoring docking error signals from hereon, just set the lift to final height.
               // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
               //       Generalize?
-              if (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK) {
+              if ((dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) && (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK)) {
+                PRINT("PointOfNoReturn: Lift to high dock\n");
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
               }
               
