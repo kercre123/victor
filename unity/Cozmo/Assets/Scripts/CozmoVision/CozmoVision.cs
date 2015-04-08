@@ -391,11 +391,11 @@ public class CozmoVision : MonoBehaviour
 		if(robot == null || robot.isBusy) return;
 		
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
-			if(robot.selectedObjects.Count > 0) actionButtons[0].SetMode(ActionButtonMode.STACK);
-			actionButtons[1].SetMode(ActionButtonMode.DROP);
+			if(robot.selectedObjects.Count > 0) actionButtons[1].SetMode(ActionButtonMode.STACK);
+			actionButtons[0].SetMode(ActionButtonMode.DROP);
 		}
 		else {
-			if(robot.selectedObjects.Count > 0) actionButtons[0].SetMode(ActionButtonMode.PICK_UP);
+			if(robot.selectedObjects.Count > 0) actionButtons[1].SetMode(ActionButtonMode.PICK_UP);
 		}
 		
 		if(robot.selectedObjects.Count > 0) actionButtons[2].SetMode(ActionButtonMode.CANCEL);

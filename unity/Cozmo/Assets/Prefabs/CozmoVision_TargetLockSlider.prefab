@@ -257,7 +257,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &107504
 GameObject:
   m_ObjectHideFlags: 1
@@ -289,7 +289,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &107508
 GameObject:
   m_ObjectHideFlags: 1
@@ -873,9 +873,9 @@ MonoBehaviour:
     m_Alignment: 5
     m_RichText: 0
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Action1
+  m_Text: Pick Up Top
 --- !u!114 &11407484
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1040,9 +1040,9 @@ MonoBehaviour:
     m_Alignment: 5
     m_RichText: 0
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Action2
+  m_Text: Pick Up Bottom
 --- !u!114 &11407500
 MonoBehaviour:
   m_ObjectHideFlags: 1

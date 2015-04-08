@@ -52,7 +52,10 @@ public class Robot
 	{
 		get
 		{
-			return localBusyTimer > 0f || Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
+			return localBusyTimer > 0f 
+				|| Status( StatusFlag.IS_PICKING_OR_PLACING ) 
+				|| Status( StatusFlag.IS_PICKED_UP ) 
+				|| Status( StatusFlag.IS_PERFORMING_ACTION );
 		}
 	}
 
