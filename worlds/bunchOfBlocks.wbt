@@ -162,12 +162,13 @@ DEF AngryFaceBlock Block1x1 {
 DEF AngryFaceBlockOnPlatform Block1x1 {
   name "AngryFace_01"
   translation 0.283197 -0.249331 0.0259552
-  rotation 0 0 1 0.05
+  rotation 0 1 0 1.57
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
 }
 DEF ArrowBlock Block1x1 {
   translation 0.281946 -0.247778 0.072
+  rotation 0 1 0 -1.57
   markerImg "symbols/arrow.png"
 }
 BlockWorldComms {
