@@ -65,9 +65,9 @@ namespace Anki {
 
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 27.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 23.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 15.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
     const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
 #else
@@ -93,9 +93,9 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 21.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 18.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 17.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 18.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
 

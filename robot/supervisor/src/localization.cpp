@@ -275,6 +275,90 @@ namespace Anki {
       }
       
       
+      Result GetHistPoseAtIndex(u16 idx, Anki::Embedded::Pose2d& p) {
+        if (idx >= POSE_HISTORY_SIZE) {
+          return RESULT_FAIL;
+        }
+        
+        p.x() = hist_[idx].x;
+        p.y() = hist_[idx].y;
+        p.angle = hist_[idx].angle;
+        
+        return RESULT_OK;
+      }
+      
+      Result GetHistPoseAtTime(TimeStamp_t t, Anki::Embedded::Pose2d& p)
+      {
+        // Check that there are actually poses in history
+        if (hSize_ <= 0) {
+          PRINT("WARN: Localization.GetHistPoseAtTime - No history!\n");
+          return RESULT_FAIL;
+        }
+        
+        // If the very first historical pose is newer than time t
+        // then the time requested is too old.
+        // Return the oldest historical pose just because it's better than nothing
+        if (hist_[hStart_].t > t) {
+          PRINT("WARN: Localization.GetHistPoseAtTime - History starts at time %d, pose requested at time %d. Returning oldest pose.\n", hist_[hStart_].t, t);
+          GetHistPoseAtIndex(hStart_, p);
+          return RESULT_FAIL;
+        }
+        
+        // If the last historical pose is older than time t
+        // the time requested is too new.
+        // Return the newest histrical pose just because it's better than nothing
+        if (hist_[hEnd_].t < t) {
+          PRINT("WARN: Localization.GetHistPoseAtTime - History ends at time %d, pose requested at time %d. Returning newest pose.\n", hist_[hEnd_].t, t);
+          GetHistPoseAtIndex(hEnd_, p);
+          return RESULT_FAIL;
+        }
+        
+        
+        // Search through history for closest pose in time
+        TimeStamp_t prevHistTime = 0;
+        TimeStamp_t histTime = 0;
+        u16 prevIdx = 0;
+        
+        for (u16 i = hStart_; i != hEnd_; ) {
+        
+          histTime = hist_[i].t;
+          
+          // See if there's an exact time match.
+          // If so, return it.
+          if (histTime == t) {
+            GetHistPoseAtIndex(i, p);
+            return RESULT_OK;
+          }
+          
+          // Find the first historical pose that is newer than t
+          if (histTime > t) {
+            
+            // Found first pose at time after t
+            // Check if previous pose is closer to t than this one.
+            // Return the closest one.
+            if ((histTime - t) > (t - prevHistTime)) {
+              GetHistPoseAtIndex(prevIdx, p);
+            } else {
+              GetHistPoseAtIndex(i, p);
+            }
+            return RESULT_OK;
+          }
+          
+          prevHistTime = histTime;
+          prevIdx = i;
+          
+          // Set i to next index
+          if (i == POSE_HISTORY_SIZE-1) {
+            i = 0;
+          } else {
+            ++i;
+          }
+        }
+        
+        return RESULT_FAIL;
+        
+      }
+      
       
       /// ========= Localization ==========
 

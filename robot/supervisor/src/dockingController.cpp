@@ -272,7 +272,7 @@ namespace Anki {
               }
               
               // Set relative block pose to start/continue docking
-              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr, dockMsg.timestamp);
 
               if(!dockMsg.isApproximate) // will be -1 if not computed
               {
@@ -420,7 +420,7 @@ namespace Anki {
       } // Update()
       
       
-      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t)
       {
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
@@ -485,7 +485,6 @@ namespace Anki {
         //               /
         //              +ve y-axis
         
-        
         if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
           PRINT("DOCK POSE REACHED (dockOffsetDistX = %f)\n", dockOffsetDistX_);
@@ -493,16 +492,28 @@ namespace Anki {
           return;
         }
         
+
+        // This error signal is with respect to the pose the robot was at at time dockMsg.timestamp
+        // Find the pose the robot was at at that time and transform it to be with respect to the
+        // robot's current pose
+        Anki::Embedded::Pose2d histPose;
+        Localization::GetHistPoseAtTime(t, histPose);
+
+#if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
         Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);
+        PRINT("HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n",
+              histPose.x(), histPose.y(), histPose.angle.getDegrees(), t,
+              currPose.x(), currPose.y(), currPose.angle.getDegrees(), HAL::GetTimeStamp());
+#endif
         
-        // Compute absolute block pose
+        // Compute absolute block pose using error relative to pose at the time image was taken.
         f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
         f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
-        blockPose_.x() = currPose.x() + distToBlock * cosf(rel_angle_to_block + currPose.angle.ToFloat());
-        blockPose_.y() = currPose.y() + distToBlock * sinf(rel_angle_to_block + currPose.angle.ToFloat());
-        blockPose_.angle = currPose.angle + rel_rad;
-        
+        blockPose_.x() = histPose.x() + distToBlock * cosf(rel_angle_to_block + histPose.angle.ToFloat());
+        blockPose_.y() = histPose.y() + distToBlock * sinf(rel_angle_to_block + histPose.angle.ToFloat());
+        blockPose_.angle = histPose.angle + rel_rad;
+
         
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Rotate block so that it is parallel with approach start pose
