@@ -96,7 +96,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			button.line.points2.Clear();
 			button.line.points2.Add( buttonPosition );
 			button.line.points2.Add( boxPosition );
-			button.SetLineColor( box.color );
+			button.line.SetColor( box.color );
 			button.line.Draw();
 		}
 	}

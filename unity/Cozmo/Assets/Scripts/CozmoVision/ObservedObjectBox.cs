@@ -41,9 +41,9 @@ public class ObservedObjectBox : MonoBehaviour
 
 	public Color color { get; private set; }
 
-	private bool initialized = false;
+	protected bool initialized { get; private set; }
 
-	void Initialize() {
+	protected virtual void Initialize() {
 		if(initialized) return;
 		initialized = true;
 
@@ -59,7 +59,7 @@ public class ObservedObjectBox : MonoBehaviour
 		//Debug.Log(gameObject.name + " ObservedObjectBox Awake rectTransform("+rectTransform+") text("+text+")");
 	}
 
-	protected virtual void Awake() {
+	protected void Awake() {
 		Initialize();
 	}
 
