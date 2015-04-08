@@ -491,7 +491,7 @@ namespace Anki {
   
 #pragma mark --- Global Functions ---
   
-  float ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
     // Make sure the two poses share a common parent:
     Pose3d pose2mod(pose2);
@@ -506,8 +506,7 @@ namespace Anki {
     // TODO: take rotation into account?
     Vec3f distVec(pose1.GetTranslation());
     distVec -= pose2mod.GetTranslation();
-    const float dist = distVec.Length();
-    return dist;
+    return distVec;
   }
 
   

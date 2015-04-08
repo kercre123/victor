@@ -161,7 +161,10 @@ namespace Anki {
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
       
       // Return pose of robot's drive center based on what it's currently carrying
-      void GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      const Pose3d& GetDriveCenterPose() const;
+      
+      // Computes pose of drive center for the given robot pose
+      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
       
       
       //
@@ -202,8 +205,9 @@ namespace Anki {
       // Object Docking / Carrying
       //
 
-      const ObjectID&             GetDockObject()     const {return _dockObjectID;}
-      const ObjectID&             GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID&  GetDockObject()          const {return _dockObjectID;}
+      const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
+      const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
       const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
       bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -288,6 +292,17 @@ namespace Anki {
       // to do, either "now" or in queues.
       // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
       ActionList& GetActionList() { return _actionList; }
+      
+      // These are methods to lock/unlock subsystems of the robot to prevent
+      // MoveHead/MoveLift/DriveWheels/etc commands from having any effect.
+      
+      void LockHead(bool tf) { _headLocked = tf; }
+      void LockLift(bool tf) { _liftLocked = tf; }
+      void LockWheels(bool tf) { _wheelsLocked = tf; }
+      
+      bool IsHeadLocked() const { return _headLocked; }
+      bool IsLiftLocked() const { return _liftLocked; }
+      bool AreWheelsLockeD() const { return _wheelsLocked; }
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
@@ -460,6 +475,9 @@ namespace Anki {
       
       //ActionQueue      _actionQueue;
       ActionList       _actionList;
+      bool             _wheelsLocked;
+      bool             _headLocked;
+      bool             _liftLocked;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
@@ -492,6 +510,7 @@ namespace Anki {
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
       Pose3d*          _worldOrigin;
       Pose3d           _pose;
+      Pose3d           _driveCenterPose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;       // ID of mat object robot is localized to
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
@@ -550,6 +569,7 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
+      ObjectID                    _carryingObjectOnTopID; 
       const Vision::KnownMarker*  _carryingMarker;
       bool                        _lastPickOrPlaceSucceeded;
       
@@ -700,6 +720,8 @@ namespace Anki {
     inline const Pose3d& Robot::GetPose(void) const
     { return _pose; }
     
+    inline const Pose3d& Robot::GetDriveCenterPose(void) const
+    {return _driveCenterPose; }
     
     inline void Robot::EnableVisionWhileMoving(bool enable)
     { _visionWhileMovingEnabled = enable; }

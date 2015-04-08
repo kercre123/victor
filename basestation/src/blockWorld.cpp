@@ -31,6 +31,12 @@
 // The sensor value that must be met/exceeded in order to have detected an obstacle
 #define PROX_OBSTACLE_DETECT_THRESH   5
 
+// Make the (very restrictive) assumption that there is only every one of each
+// type of object in the world at a time (e.g. a single "AngryFace" block or a
+// single "Fire" block). So if we see one, always match it to the one we've already
+// seen, if it exists. (Only for physical robots)
+#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 1
+
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
 #  define PRINT_LOCALIZATION_INFO PRINT_INFO
@@ -257,8 +263,11 @@ namespace Anki
         //const float minDimSeen = objSeen->GetMinDim();
         
         // Store pointers to any existing objects that overlap with this one
-        std::vector<Vision::ObservableObject*> overlappingObjects;
-        FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        //std::vector<Vision::ObservableObject*> overlappingObjects;
+        //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        Vision::ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
+                                                                             objSeen->GetSameDistanceTolerance(),
+                                                                             objSeen->GetSameAngleTolerance());
         
         // As of now the object will be w.r.t. the robot's origin.  If we
         // observed it to be on a mat, however, make it relative to that mat.
@@ -282,7 +291,55 @@ namespace Anki
         f32 observationDistance;
         Vision::ObservableObject* observedObject = nullptr;
 
-        if(overlappingObjects.empty()) {
+        if(matchingObject == nullptr) {
+          
+#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+          
+          ObjectsMapByID_t objectsWithType = GetExistingObjectsByType(objSeen->GetType());
+          if(!objectsWithType.empty() && _robot->IsPhysical()) {
+            // We already know about an object of this type. Assume the one we
+            // are seeing is that one. Just update it to be in the pose of the
+            // observed object. (Only for physical robots)
+            
+            // By definition, we can't have more than one object of this type
+            assert(objectsWithType.size() == 1);
+            
+            observedObject = objectsWithType.begin()->second;
+            
+            assert(observedObject->GetType() == objSeen->GetType());
+            
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
+                                "Did not match observed object to existing %s object "
+                                "by pose, but assuming there's only one that must match "
+                                "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE=1)\n",
+                                objSeen->GetType().GetName().c_str(),
+                                observedObject->GetID().GetValue());
+
+            observedObject->SetPose( objSeen->GetPose() );
+            
+            // Update lastObserved times of this object
+            observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+            observedObject->UpdateMarkerObservationTimes(*objSeen);
+            
+            // Project this existing object into the robot's camera, using its new pose
+            _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+            
+            // If the object is being carried, uncarry it
+            if (_robot->GetCarryingObject() == observedObject->GetID()) {
+              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
+                               "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
+              _robot->UnSetCarryingObject();
+            }
+            
+            // Now that we've merged in objSeen, we can delete it because we
+            // will no longer be using it.  Otherwise, we'd leak.
+            delete objSeen;
+            
+          } else {
+            // Otherwise, add a new object
+            
+#         endif // ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+            
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
           AddNewObject(objectsExisting, objSeen);
@@ -300,6 +357,10 @@ namespace Anki
           _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           observedObject = objSeen;
+            
+#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+          } // if/else if(!objectsWithType.empty())
+#         endif
           
           /*
            PRINT_NAMED_INFO("BlockWorld.AddToOcclusionMaps.AddingObjectOccluder",
@@ -308,32 +369,15 @@ namespace Anki
            robot->GetID());
            */
           
-        }
-        else {
-          if(overlappingObjects.size() > 1) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleOverlappingObjects",
-                                "More than one overlapping object found -- will use first.\n");
-            // TODO: do something smarter here?
-          }
+        } else {
           
-          /*
-          Pose3d newPoseWrtOldPoseParent;
-          if(objSeen->GetPose().GetWithRespectTo(*overlappingObjects[0]->GetPose().GetParent(), newPoseWrtOldPoseParent) == false) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.GetWrtFail",
-                                "Could not find new pose w.r.t. old pose's parent. Will not update object's pose.\n");
-          } else {
-            // TODO: better way of merging existing/observed object pose
-            overlappingObjects[0]->SetPose( newPoseWrtOldPoseParent );
-          }
-           */
-          
-          overlappingObjects[0]->SetPose( objSeen->GetPose() );
+          matchingObject->SetPose( objSeen->GetPose() );
           
           // Update lastObserved times of this object
-          overlappingObjects[0]->SetLastObservedTime(objSeen->GetLastObservedTime());
-          overlappingObjects[0]->UpdateMarkerObservationTimes(*objSeen);
+          matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+          matchingObject->UpdateMarkerObservationTimes(*objSeen);
           
-          observedObject = overlappingObjects[0];
+          observedObject = matchingObject;
           
           /* This is pretty verbose... 
           fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
@@ -346,7 +390,7 @@ namespace Anki
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          _robot->GetCamera().ProjectObject(*overlappingObjects[0], projectedCorners, observationDistance);
+          _robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
@@ -404,7 +448,9 @@ namespace Anki
                                                              obsObjTrans.z(),
                                                              q.w(), q.x(), q.y(), q.z());
         
-        if(_robot->GetTrackHeadToObject().IsSet() && obsID == _robot->GetTrackHeadToObject())
+        if(_robot->GetTrackHeadToObject().IsSet() &&
+           obsID == _robot->GetTrackHeadToObject() &&
+           !_robot->IsHeadLocked())
         {
           UpdateTrackHeadToObject(observedObject);
         }
@@ -1146,9 +1192,7 @@ namespace Anki
           
           // Raise origin of object above ground.
           // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-          f32 x,y,z;
-          m->GetSize(x,y,z);
-          Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*z));
+          Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
           proxTransform = proxTransform * raiseObject;
           
           proxTransform.SetParent(_robot->GetPose().GetParent());
@@ -1324,7 +1368,7 @@ namespace Anki
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectIter->second);
               if(object == nullptr) {
                 PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingDockableObject",
-                                  "In robot/object collision check, can currently only handle DockableObjects.\n");
+                                  "In robot/object collision check, can currently only handle ActionableObjects.\n");
                 continue;
               }
               
@@ -1493,6 +1537,117 @@ namespace Anki
         // Flag that we removed an object
         _didObjectsChange = true;
       }
+    }
+    
+    Vision::ObservableObject* BlockWorld::FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
+                                                            f32 zTolerance) const
+    {
+      Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.z() = zTolerance;
+      sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
+      sameDistTol.Abs();
+      
+      // Find the point at the top middle of the object on bottom
+      Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
+      Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
+      topOfObjectOnBottom.z() += 0.5f*rotatedBtmSize.z();
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          for(auto & objectsByID : objectsByType.second) {
+            Vision::ObservableObject* candidateObject = objectsByID.second;
+            
+            if(candidateObject->GetID() != objectOnBottom.GetID()) {
+              // Find the point at bottom middle of the object we're checking to be on top
+              Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+              Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+              bottomOfCandidateObject.z() -= 0.5f*rotatedTopSize.z();
+              
+              // If the top of the bottom object and the bottom the candidate top object are
+              // close enough together, return this as the object on top
+              Point3f dist(topOfObjectOnBottom);
+              dist -= bottomOfCandidateObject;
+              dist.Abs();
+              
+              if(dist < sameDistTol) {
+                return candidateObject;
+              }
+            } // IF not object on bottom (by ID)
+          }
+        }
+      }
+      
+      return nullptr;
+    }
+    
+    Vision::ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                              const Vec3f&  distThreshold,
+                                                              const std::set<ObjectID>& ignoreIDs,
+                                                              const std::set<ObjectType>& ignoreTypes,
+                                                              const std::set<ObjectFamily>& ignoreFamilies) const
+    {
+      // TODO: Keep some kind of OctTree data structure to make these queries faster?
+      
+      Vec3f closestDist(std::numeric_limits<f32>::max());
+      Vision::ObservableObject* matchingObject = nullptr;
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        if(ignoreFamilies.find(objectsByFamily.first) == ignoreFamilies.end() ) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
+              for(auto & objectsByID : objectsByType.second) {
+                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
+                  Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
+                  dist.Abs();
+                  if(dist < closestDist) {
+                    closestDist = dist;
+                    matchingObject = objectsByID.second;
+                  }
+                } // ignoreIDs
+              }
+            } // ignoreTypes
+          }
+        } // ignoreFamiles
+      }
+      
+      if(matchingObject != nullptr && !(closestDist < distThreshold)) {
+        matchingObject = nullptr;
+      }
+      return matchingObject;
+    }
+    
+    Vision::ObservableObject* BlockWorld::FindClosestMatchingObject(const Vision::ObservableObject& object,
+                                                                    const Vec3f& distThreshold,
+                                                                    const Radians& angleThreshold)
+    {
+      Vision::ObservableObject* closestObject = nullptr;
+      Vec3f closestDist(distThreshold);
+      Radians closestAngle(angleThreshold);
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          for(auto & objectsByID : objectsByType.second) {
+            Vision::ObservableObject* candidateObject = objectsByID.second;
+            
+            if(candidateObject->GetID() != object.GetID())
+            {
+              // Check to see if this candidate matches (has same type and is in roughly
+              // the same pose as) the given object. If so, update the thresholds
+              // so that we only find matching objects even closer than this one
+              // from now on.
+              Vec3f Tdiff;
+              Radians angleDiff;
+              if(candidateObject->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
+                closestObject = candidateObject;
+                closestDist = Tdiff.GetAbs();
+                closestAngle = angleDiff.getAbsoluteVal();
+              }
+            } // IF not object on bottom (by ID)
+          }
+        }
+      }
+      
+      return closestObject;
     }
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)

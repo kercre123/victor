@@ -69,9 +69,9 @@ namespace Anki {
       
       Pose3d facePose;
       
-      const float halfWidth  = 0.5f * this->GetWidth();   // y
-      const float halfHeight = 0.5f * this->GetHeight();  // z
-      const float halfDepth  = 0.5f * this->GetDepth();   // x
+      const float halfWidth  = 0.5f * GetSize().y();   // y
+      const float halfHeight = 0.5f * GetSize().z();  // z
+      const float halfDepth  = 0.5f * GetSize().x();   // x
       
       // SetSize() should have been called already
       CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
@@ -131,7 +131,7 @@ namespace Anki {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-20));
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
           }
 
         }
@@ -143,7 +143,7 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
             AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(15));
           }
@@ -274,14 +274,6 @@ namespace Anki {
       return Block::PreDockDistance;
     } 
      */
-    
-    Point3f Block::GetSameDistanceTolerance() const {
-      return _size; // TODO: too loose?
-    }
-    
-    Radians Block::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45.f); // TODO: too loose?
-    }
     
     
     // These should match the order in which faces are defined! (See Block constructor)

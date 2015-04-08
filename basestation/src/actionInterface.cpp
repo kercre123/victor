@@ -24,21 +24,39 @@ namespace Anki {
     
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
-    , _emitCompletionSignal(true)
+    , _isPartOfCompoundAction(false)
+    , _isRunning(false)
     {
       
     }
     
     IActionRunner::ActionResult IActionRunner::Update(Robot& robot)
     {
+      if(!_isRunning && !_isPartOfCompoundAction) {
+        // When the ActionRunner first starts, lock any specified subsystems
+        robot.LockHead( ShouldLockHead() );
+        robot.LockLift( ShouldLockLift() );
+        robot.LockWheels( ShouldLockWheels() );
+        
+        _isRunning = true;
+      }
+      
       ActionResult result = UpdateInternal(robot);
       
-      if(result != RUNNING && _emitCompletionSignal==true) {
-        // Notify any listeners about this action's completion.
-        // Note that I do this here so that compound actions only emit one signal,
-        // not a signal for each constituent action.
-        // TODO: Populate the signal with any action-specific info?
-        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+      if(result != RUNNING) {
+        if(!_isPartOfCompoundAction) {
+          // Notify any listeners about this action's completion.
+          // Note that I do this here so that compound actions only emit one signal,
+          // not a signal for each constituent action.
+          // TODO: Populate the signal with any action-specific info?
+          CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+          
+          // Action is done, always completely unlock the robot
+          robot.LockHead(false);
+          robot.LockLift(false);
+          robot.LockWheels(false);
+        }
+        _isRunning = false;
       }
       
       return result;

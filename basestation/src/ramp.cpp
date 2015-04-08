@@ -46,7 +46,8 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _preAscentPose(0, Z_AXIS_3D(),
+    : _size(SlopeLength+PlatformLength, Width, Height)
+    , _preAscentPose(0, Z_AXIS_3D(),
                      {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())
     , _preDescentPose(M_PI, Z_AXIS_3D(),
@@ -211,14 +212,12 @@ namespace Anki {
     
     // TODO: Make these dependent on ramp type/size?
     Point3f Ramp::GetSameDistanceTolerance() const {
-      return Point3f((SlopeLength + PlatformLength)*.5f, Width*.5f, Height*.5f);
+      Point3f distTol((SlopeLength + PlatformLength)*.5f, Width*.5f, Height*.5f);
+      distTol = GetPose().GetRotation() * distTol;
+      distTol.Abs();
+      return distTol;
     }
-    
-    Radians Ramp::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45);
-    }
-
-    
+        
     bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
                                     const Pose3d* reachableFromPose) const
     {

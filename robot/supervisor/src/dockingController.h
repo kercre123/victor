@@ -41,8 +41,11 @@ namespace Anki {
       // Tells the docker what the relative position of the block is.
       // rel_x: Distance to center of block along robot's x-axis
       // rel_y: Distance to center of block along robot's y-axis
-      // rel_rad: Angle of block normal relative to robot's x-axis. 
-      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
+      // rel_rad: Angle of block normal relative to robot's x-axis.
+      // t: Timestamp of the pose to which these relative errors should be applied
+      //    in order to compute the absolute pose of the target at the current time.
+      //    If t == 0 or HAL::GetTimeStamp(), it will use the robot's current pose.
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t = 0);
       
       // Resets state machine and configures VisionSystem to track
       // appropriate block

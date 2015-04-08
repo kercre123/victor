@@ -70,11 +70,16 @@ namespace Anki {
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
-      // Default is to signal when complete, but use this to disable.
-      // (For example, compound actions use this to prevent constituent actions
-      //  from signaling individually, and instead only signally once for the
-      //  entire compound action)
-      void EmitSignalWhenComplete(bool enable) { _emitCompletionSignal = enable; }
+      // Override these to have the action allow the robot to move certain
+      // subsystems while the action executes. I.e., by default actions
+      // will lockout all control of the robot.
+      virtual bool ShouldLockHead() const   { return true; }
+      virtual bool ShouldLockLift() const   { return true; }
+      virtual bool ShouldLockWheels() const { return true; }
+      
+      // Used (e.g. in initialization of CompoundActions to specify that a
+      // consituent action is part of a compound action)
+      void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
       
     protected:
       
@@ -86,13 +91,14 @@ namespace Anki {
       void SetStatus(const std::string& msg);
       
     private:
-      u8 _numRetriesRemaining;
+      u8            _numRetriesRemaining;
       
       std::string   _statusMsg;
       
-      bool _emitCompletionSignal;
+      bool          _isPartOfCompoundAction;
+      bool          _isRunning;
       
-#     if USE_ACTION_CALLBACKS
+#   if USE_ACTION_CALLBACKS
     public:
       using ActionCompletionCallback = std::function<void(ActionResult)>;
       void  AddCompletionCallback(ActionCompletionCallback callback);
@@ -102,7 +108,7 @@ namespace Anki {
       
     private:
       std::list<ActionCompletionCallback> _completionCallbacks;
-#     endif
+#   endif
       
     }; // class IActionRunner
     

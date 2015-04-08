@@ -51,19 +51,19 @@ extern GlobalDataToBody g_dataToBody;
   
   const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
   
-  // Updated for 3.0
+  // Updated for 3.2
   // N1+N2 are 0 when off, 1 when on
   // P is 0 for P2+N1, P 1 is 1 for P1+N2
-  const u8 LEFT_P_PIN = 23;
-  const u8 LEFT_N1_PIN = 22;   // M1/incorrectly Left on schematic
-  const u8 LEFT_N2_PIN = 21;
+  const u8 LEFT_P_PIN = 17;
+  const u8 LEFT_N1_PIN = 16;   // M1/Left on schematic
+  const u8 LEFT_N2_PIN = 15;
   
-  const u8 RIGHT_P_PIN = 17;
-  const u8 RIGHT_N1_PIN = 16;  // M3/incorrectly Right on schematic
-  const u8 RIGHT_N2_PIN = 15;
+  const u8 RIGHT_P_PIN = 23;
+  const u8 RIGHT_N1_PIN = 22;  // M2/Right on schematic
+  const u8 RIGHT_N2_PIN = 21;
     
   const u8 HEAD_P_PIN = 7; 
-  const u8 HEAD_N1_PIN = 13;   // M2/Head on schematic
+  const u8 HEAD_N1_PIN = 13;   // M3/Head on schematic
   const u8 HEAD_N2_PIN = 14;
   
   const u8 LIFT_P_PIN = 0;
@@ -72,17 +72,17 @@ extern GlobalDataToBody g_dataToBody;
 
   const u8 ENCODER_NONE = 0xFF;
   const u8 ENCODER_LEFT_PIN = 20;    // M1/Left on schematic
-  const u8 ENCODER_RIGHT_PIN = 24;   // M3/Right on schematic
+  const u8 ENCODER_RIGHT_PIN = 24;   // M2/Right on schematic
   const u8 ENCODER_LIFTA_PIN = 4;    // M4/Lift on schematic
   const u8 ENCODER_LIFTB_PIN = 28;
-  const u8 ENCODER_HEADA_PIN = 11;   // M2/Head on schematic
+  const u8 ENCODER_HEADA_PIN = 11;   // M3/Head on schematic
   const u8 ENCODER_HEADB_PIN = 10;
   
-  // Encoder scaling reworked for Cozmo 3
+  // Encoder scaling reworked for Cozmo 3.2
   
-  // Given a gear ratio of 340.2:1 and 88mm wheel circumference and 2 ticks * 2 teeth
-  // for 4 encoder ticks per revolution, we compute the meters per tick as:
-  const Fixed METERS_PER_TICK = TO_FIXED((0.25 * 0.088) / 340.2);
+	// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
+  // for 8 encoder ticks per revolution, we compute the meters per tick as:
+  const Fixed METERS_PER_TICK = TO_FIXED((0.125 * 0.030 * 3.14159265359) / 161.5);
   
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:

@@ -29,7 +29,7 @@ namespace Anki {
                               "Refusing to add a null action pointer to group.\n");
         } else {
           _actions.emplace_back(false, action);
-          _actions.back().second->EmitSignalWhenComplete(false); // Don't signal individual completions
+          _actions.back().second->SetIsPartOfCompoundAction(true); 
           _name += action->GetName();
           _name += "+";
         }
@@ -52,6 +52,39 @@ namespace Anki {
         actionPair.first = false;
         actionPair.second->Reset();
       }
+    }
+    
+    bool ICompoundAction::ShouldLockHead() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockHead()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    bool ICompoundAction::ShouldLockLift() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockLift()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    bool ICompoundAction::ShouldLockWheels() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockWheels()) {
+          return true;
+        }
+      }
+      return false;
     }
 
 #pragma mark ---- CompoundActionSequential ----

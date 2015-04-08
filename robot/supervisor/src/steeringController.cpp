@@ -54,6 +54,11 @@ namespace Anki {
       f32 currAngularVel_;
       bool startedPointTurn_;
       
+      Radians prevAngle_;
+      f32 angularDistExpected_;
+      f32 angularDistTraversed_;
+      const f32 ANGULAR_TRAVERSAL_DISTANCE_MARGIN = 0.1;
+      
       // If distance to target is less than this, point turn is considered to be complete.
       const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.03;
 
@@ -417,15 +422,25 @@ namespace Anki {
       angularDecel_ = angularDecel;
       startedPointTurn_ = false;
       
-      
       f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
       f32 destAngle = targetRad_.ToFloat();
+      angularDistExpected_ = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
+
+      prevAngle_ = Localization::GetCurrentMatOrientation();
+      angularDistTraversed_ = 0;
+      
+      if (ABS(angularDistExpected_) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+        currSteerMode_ = SM_PATH_FOLLOW;
+#if(DEBUG_STEERING_CONTROLLER)
+        PRINT("POINT TURN: Already at destination\n");
+#endif
+        return;
+      }
       
       if (useShortestDir) {
         // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
-        f32 angDiff = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
-        maxAngularVel_ = ABS(maxAngularVel) * (angDiff > 0 ? 1 : -1);
-        destAngle = currAngle + angDiff;
+        maxAngularVel_ = ABS(maxAngularVel) * (angularDistExpected_ > 0 ? 1 : -1);
+        destAngle = currAngle + angularDistExpected_;
       } else {
         // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
         // which determines the turning direction.
@@ -483,13 +498,28 @@ namespace Anki {
       
       
       // Check for stop condition
-      if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+      f32 absAngularDistToTarget = ABS(angularDistToTarget);
+      if (absAngularDistToTarget < POINT_TURN_TARGET_DIST_STOP_RAD) {
         currSteerMode_ = SM_PATH_FOLLOW;
         currAngularVel_ = 0;
 #if(DEBUG_STEERING_CONTROLLER)
         PRINT("POINT TURN: Stopping\n");
 #endif
       }
+      
+      
+      // Check if the angular dist to target is growing
+      angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
+      prevAngle_ = currAngle;
+      if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
+        currSteerMode_ = SM_PATH_FOLLOW;
+        currAngularVel_ = 0;
+#if(DEBUG_STEERING_CONTROLLER)
+        PRINT("POINT TURN: Stopping because turned more than expected\n");
+#endif
+      }
+
+      
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currAngularVel_ / PI = arcVel / (PI * R)

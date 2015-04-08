@@ -43,7 +43,7 @@ namespace Anki {
 #endif
 
         // This value should be the lowest speed the lift can be commanded to move
-        const f32 DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = 0.7;
+        const f32 DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = 0.8;
         
         // This value should probably be a little more DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC
         // to make sure that the joint is limiting

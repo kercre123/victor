@@ -48,7 +48,7 @@ namespace Anki {
     // (If you were to model the treaded robot as a two-wheel robot,
     // the drive center is the location between the two wheels)
 #if(USE_DRIVE_CENTER_POSE)
-    const f32 DRIVE_CENTER_OFFSET = -25.f;
+    const f32 DRIVE_CENTER_OFFSET = -22.f;
 #endif
 
     // The height of the lift at various configurations
@@ -65,9 +65,9 @@ namespace Anki {
 
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 27.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 16.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 23.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 15.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
     const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
 #else
@@ -93,9 +93,9 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 22.f;
-    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 19.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 17.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 17.f;
+    const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
 
@@ -153,7 +153,7 @@ namespace Anki {
     //       if it can't be manufactured to sufficient tolerance.
 #ifdef COZMO_TREADS
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
-    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(1);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(3);
     const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
 #else
     const f32 HEAD_CAM_YAW_CORR = 0.f;
@@ -378,7 +378,7 @@ namespace Anki {
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
 
     // Default distance from marker for predock pose
-    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 100.f;
+    const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
 
     // Max speed the robot can travel when in assisted RC mode
     const f32 MAX_ASSISTED_RC_SPEED = 50.f;

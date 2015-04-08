@@ -44,7 +44,7 @@ namespace Anki {
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 30;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 35;
 
         //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
@@ -72,6 +72,9 @@ namespace Anki {
         // it will continue to follow the last path and ignore timeouts.
         // Only used for high docking.
         u32 pointOfNoReturnDistMM_ = 0;
+        
+        // Whether or not the robot is currently past point of no return
+        bool pastPointOfNoReturn_ = false;
         
         // Code of the VisionMarker we are trying to dock to
         Vision::MarkerType dockMarker_;
@@ -145,11 +148,6 @@ namespace Anki {
       bool DidLastDockSucceed()
       {
         return success_;
-      }
-      
-      bool IsInPointOfNoReturnMode()
-      {
-        return pointOfNoReturnDistMM_ != 0;
       }
       
       void TrackCamWithLift(bool on)
@@ -234,13 +232,18 @@ namespace Anki {
             
             
             // Check if we are beyond point of no return distance
-            if (IsInPointOfNoReturnMode() && (dockMsg.x_distErr < pointOfNoReturnDistMM_) && (mode_ == APPROACH_FOR_DOCK)) {
+            if (pastPointOfNoReturn_ ||
+                ((pointOfNoReturnDistMM_ != 0) &&
+                (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
+                (mode_ == APPROACH_FOR_DOCK))) {
               PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              pastPointOfNoReturn_ = true;
               
               // Since we're ignoring docking error signals from hereon, just set the lift to final height.
               // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
               //       Generalize?
-              if (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK) {
+              if ((dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) && (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK)) {
+                PRINT("PointOfNoReturn: Lift to high dock\n");
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
               }
               
@@ -270,7 +273,7 @@ namespace Anki {
               }
               
               // Set relative block pose to start/continue docking
-              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr);
+              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr, dockMsg.timestamp);
 
               if(!dockMsg.isApproximate) // will be -1 if not computed
               {
@@ -344,7 +347,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if ((!trackingOnly_) && (!IsInPointOfNoReturnMode())) {
+          if ((!trackingOnly_) && (!pastPointOfNoReturn_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -364,7 +367,7 @@ namespace Anki {
             break;
           case LOOKING_FOR_BLOCK:
             
-            if ((!IsInPointOfNoReturnMode())
+            if ((!pastPointOfNoReturn_)
               && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
@@ -376,7 +379,7 @@ namespace Anki {
           {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
-                && (!IsInPointOfNoReturnMode())
+                && (!pastPointOfNoReturn_)
                 && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -418,7 +421,7 @@ namespace Anki {
       } // Update()
       
       
-      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad)
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t)
       {
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
@@ -483,7 +486,6 @@ namespace Anki {
         //               /
         //              +ve y-axis
         
-        
         if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
           PRINT("DOCK POSE REACHED (dockOffsetDistX = %f)\n", dockOffsetDistX_);
@@ -491,16 +493,32 @@ namespace Anki {
           return;
         }
         
+
+        // This error signal is with respect to the pose the robot was at at time dockMsg.timestamp
+        // Find the pose the robot was at at that time and transform it to be with respect to the
+        // robot's current pose
+        Anki::Embedded::Pose2d histPose;
+        if ((t == 0) || (t == HAL::GetTimeStamp())) {
+          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle);
+        }  else {
+          Localization::GetHistPoseAtTime(t, histPose);
+        }
+        
+#if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
         Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);
+        PRINT("HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n",
+              histPose.x(), histPose.y(), histPose.angle.getDegrees(), t,
+              currPose.x(), currPose.y(), currPose.angle.getDegrees(), HAL::GetTimeStamp());
+#endif
         
-        // Compute absolute block pose
+        // Compute absolute block pose using error relative to pose at the time image was taken.
         f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
         f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
-        blockPose_.x() = currPose.x() + distToBlock * cosf(rel_angle_to_block + currPose.angle.ToFloat());
-        blockPose_.y() = currPose.y() + distToBlock * sinf(rel_angle_to_block + currPose.angle.ToFloat());
-        blockPose_.angle = currPose.angle + rel_rad;
-        
+        blockPose_.x() = histPose.x() + distToBlock * cosf(rel_angle_to_block + histPose.angle.ToFloat());
+        blockPose_.y() = histPose.y() + distToBlock * sinf(rel_angle_to_block + histPose.angle.ToFloat());
+        blockPose_.angle = histPose.angle + rel_rad;
+
         
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Rotate block so that it is parallel with approach start pose
@@ -622,6 +640,7 @@ namespace Anki {
         
         useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
+        pastPointOfNoReturn_ = false;
         lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
         mode_ = LOOKING_FOR_BLOCK;
         
@@ -662,6 +681,7 @@ namespace Anki {
         VisionSystem::StopTracking();
 
         pointOfNoReturnDistMM_ = 0;
+        pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
         success_ = false;
       }

@@ -32,6 +32,10 @@ namespace Anki {
     
     // TODO: Define this as a constant parameter elsewhere
     const Radians DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE(DEG_TO_RAD(7.5));
+    
+    // Right before docking, the dock object must have been visually verified
+    // no more than this many milliseconds ago or it will not even attempt to dock.
+    const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 1000;
  
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -117,12 +121,6 @@ namespace Anki {
     
     IAction::ActionResult DriveToPoseAction::Init(Robot& robot)
     {
-      // Wait for robot to be idle before trying to drive to a new pose, to
-      // allow previously-added docking/moving actions to finish
-      if(robot.IsMoving()) {
-        return RUNNING;
-      }
-      
       ActionResult result = SUCCESS;
       
       _startedTraversingPath = false;
@@ -169,7 +167,12 @@ namespace Anki {
           if(robot.GetBlockWorld().DidObjectsChange())
           {
             Planning::Path newPath;
+            
+#if(USE_DRIVE_CENTER_POSE)
+            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetDriveCenterPose(), _forceReplanOnNextWorldChange))
+#else
             switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
+#endif
             {
               case IPathPlanner::DID_PLAN:
               {
@@ -577,13 +580,7 @@ namespace Anki {
     IAction::ActionResult IDockAction::Init(Robot& robot)
     {
       _waitToVerifyTime = -1.f;
-      
-      // Wait for robot to be done moving before trying to dock with a new object, to
-      // allow previously-added docking/moving actions to finish
-      if(robot.IsMoving()) {
-        return RUNNING;
-      }
-      
+    
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       if(dockObject == nullptr) {
@@ -593,7 +590,16 @@ namespace Anki {
         
         return FAILURE_ABORT;
       }
-                 
+      /*
+      // Verify visually that the object is still there
+      if (robot.GetLastMsgTimestamp() - dockObject->GetLastObservedTime() > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS) {
+        PRINT_NAMED_WARNING("IDockAction.Init.ActionObjectNotSeenForAWhile",
+                            "Action object exists, but not visually verified since %d (Current time = %d)\n",
+                            dockObject->GetLastObservedTime(), robot.GetLastMsgTimestamp());
+        return FAILURE_ABORT;
+      }
+      */
+      
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
@@ -662,7 +668,10 @@ namespace Anki {
                          _dockMarker->GetCode(),
                          Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
         
-        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK) {
+        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK)
+        {
+          //NOTE: Any completion (success or failure) after this point should tell
+          // the robot to stop tracking and go back to looking for markers!
           _wasPickingOrPlacing = false;
           return SUCCESS;
         } else {
@@ -702,20 +711,14 @@ namespace Anki {
                            "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
           
           actionResult = Verify(robot);
-          
-          // Go back to looking for markers (and stop tracking) when we finish,
-          // whether or not we succeeded?
-          robot.StartLookingForMarkers();
-          robot.StopDocking();
-          
-          /*
-          // If docking fails, go back to looking for markers?
-          if(actionResult != SUCCESS) {
-            robot.StartLookingForMarkers();
-            robot.StopDocking();
-          }
-           */
         }
+      }
+      
+      if(actionResult != RUNNING) {
+        // Go back to looking for markers (and stop tracking) when we finish,
+        // whether or not we succeeded
+        robot.StartLookingForMarkers();
+        robot.StopDocking();
       }
       
       return actionResult;
@@ -941,30 +944,29 @@ namespace Anki {
     {
       ActionResult result = RUNNING;
       
-      // Wait for robot to stop moving before proceeding with pre-conditions
-      if (robot.IsMoving() == false)
-      {
-        // Robot must be carrying something to put something down!
-        if(robot.IsCarryingObject() == false) {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
-                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
-          result = FAILURE_ABORT;
-        } else {
-          
-          _carryingObjectID  = robot.GetCarryingObject();
-          _carryObjectMarker = robot.GetCarryingMarker();
+      // Robot must be carrying something to put something down!
+      if(robot.IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                          "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
+        result = FAILURE_ABORT;
+      } else {
         
-          if(robot.PlaceObjectOnGround() == RESULT_OK)
-          {
-            result = SUCCESS;
-          } else {
-            PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
-                              "Robot's SendPlaceObjectOnGround method reported failure.\n");
-            result = FAILURE_ABORT;
-          }
-          
-        } // if/else IsCarryingObject()
-      } // if robot IsMoving()
+        _carryingObjectID  = robot.GetCarryingObject();
+        _carryObjectMarker = robot.GetCarryingMarker();
+        
+        if(robot.PlaceObjectOnGround() == RESULT_OK)
+        {
+          result = SUCCESS;
+        } else {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                            "Robot's SendPlaceObjectOnGround method reported failure.\n");
+          result = FAILURE_ABORT;
+        }
+        
+      } // if/else IsCarryingObject()
+      
+      // If we were moving, stop moving.
+      robot.StopAllMotors();
       
       return result;
       

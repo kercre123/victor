@@ -58,6 +58,9 @@ namespace Anki {
     , _haveNewImage(false)
 #   endif
     , _behaviorMgr(this)
+    , _wheelsLocked(false)
+    , _headLocked(false)
+    , _liftLocked(false)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
@@ -67,6 +70,7 @@ namespace Anki {
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
@@ -91,6 +95,7 @@ namespace Anki {
       _poseHistory = new RobotPoseHistory();
       
       _pose.SetName("Robot_" + std::to_string(_ID));
+      _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
@@ -173,6 +178,10 @@ namespace Anki {
       _pose.SetRotation(0, Z_AXIS_3D());
       _pose.SetTranslation({{0.f, 0.f, 0.f}});
       _pose.SetParent(_worldOrigin);
+      
+      _driveCenterPose.SetRotation(0, Z_AXIS_3D());
+      _driveCenterPose.SetTranslation({{0.f, 0.f, 0.f}});
+      _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
       ++_frameId;
@@ -480,6 +489,7 @@ namespace Anki {
         }
 
         const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 90.f;
         
         assert(t_prev < t);
         assert(t_next > t);
@@ -499,14 +509,14 @@ namespace Anki {
                               RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
                               ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
-        } else if(headSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                  headSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                  headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
         {
           PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
                               "Ignoring vision marker seen while head moving with angular "
                               "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
                               RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
         }
         
@@ -859,18 +869,6 @@ namespace Anki {
       
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
       VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-      
-      if(IsCarryingObject()) {
-        ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(GetCarryingObject()));
-        if(carryBlock == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist",
-                            "Robot %d is marked as carrying block %d but that block no longer exists.\n",
-                            GetID(), GetCarryingObject().GetValue());
-          UnSetCarryingObject();
-        } else {
-          carryBlock->Visualize();
-        }
-      }
 
       return RESULT_OK;
       
@@ -928,6 +926,8 @@ namespace Anki {
       _pose = newPose;
       _pose.SetName(name);
       
+      ComputeDriveCenterPose(_pose, _driveCenterPose);
+      
     } // SetPose()
     
     void Robot::SetHeadAngle(const f32& angle)
@@ -983,9 +983,7 @@ namespace Anki {
       
 #if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose
-      Pose3d startDriveCenterPose;
-      GetDriveCenterPose(GetPose(), startDriveCenterPose);
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetPoseWrtOrigin);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
 #else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
 #endif
@@ -1021,14 +1019,11 @@ namespace Anki {
       
 #if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose and goal poses
-      Pose3d startDriveCenterPose;
       vector<Pose3d> targetDriveCenterPoses(poses.size());
-      GetDriveCenterPose(GetPose(), startDriveCenterPose);
-      
       for (int i=0; i< poses.size(); ++i) {
-        GetDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
+        ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPoses, selectedIndex);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPoses, selectedIndex);
 #else
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
 #endif
@@ -1045,10 +1040,9 @@ namespace Anki {
 
 #if(USE_DRIVE_CENTER_POSE)
           // Compute drive center pose for start pose and goal pose
-          Pose3d startDriveCenterPose, targetDriveCenterPose;
-          GetDriveCenterPose(GetPose(), startDriveCenterPose);
-          GetDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
-          status = _selectedPathPlanner->GetPlan(path, startDriveCenterPose, targetDriveCenterPose);
+          Pose3d targetDriveCenterPose;
+          ComputeDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
+          status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
 #else
           status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
 #endif
@@ -1129,8 +1123,12 @@ namespace Anki {
     {
       // Check if robot is still pickAndPlacing.
       // If so, and not in assisted RC mode, then ignore drive wheel commands.
+      // Also check for compound action sequences which should not be interrupted
+      // in between actions.
       // TODO: Timeout?
-      if (IsPickingOrPlacing() && !IsUsingManualPathSpeed()) {
+      bool doingUninterruptibleAction = _actionList.IsCurrAction("[DriveToObjectAction+PickAndPlaceObjectAction+]");
+      
+      if ((IsPickingOrPlacing() && !IsUsingManualPathSpeed()) || doingUninterruptibleAction) {
         PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
         return RESULT_FAIL;
       }
@@ -1152,6 +1150,8 @@ namespace Anki {
       }
       
       _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
+      
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
@@ -1697,6 +1697,7 @@ namespace Anki {
       }
 
       _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
       
       return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
@@ -1754,10 +1755,14 @@ namespace Anki {
                                  dockAction == DA_RAMP_DESCEND ||
                                  dockAction == DA_CROSS_BRIDGE);
       
-      // Tell the VisionSystem to start tracking this marker:
-      _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+    
+      if(sendResult == RESULT_OK) {
+        // Tell the VisionSystem to start tracking this marker:
+        _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      }
       
-      return _msgHandler->SendMessage(_ID, msg);
+      return sendResult;
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
@@ -1785,8 +1790,12 @@ namespace Anki {
           _carryingObjectID = carryObjectID;
           
           // Tell the robot it's carrying something
-          // TODO: Figure out how to tell it it's carrying something other than just one block
-          SendSetCarryState(CARRY_1_BLOCK);
+          // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
+          if(_carryingObjectOnTopID.IsSet()) {
+            SendSetCarryState(CARRY_2_BLOCK);
+          } else {
+            SendSetCarryState(CARRY_1_BLOCK);
+          }
         }
       }
     }
@@ -1865,11 +1874,42 @@ namespace Anki {
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
+
+      // If we know there's an object on top of the object we are picking up,
+      // mark it as being carried too
+      // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
+
+      const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+      Vision::ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+      if(objectOnTop != nullptr) {
+        ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
+        if(actionObjectOnTop != nullptr) {
+          Pose3d onTopPoseWrtCarriedPose;
+          if(actionObjectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
+          {
+            PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
+                                "Found object on top of carried object, but could not get its "
+                                "pose w.r.t. the carried object.\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
+                             "Setting object %d on top of carried object as also being carried.\n",
+                             actionObjectOnTop->GetID().GetValue());
+            onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+            actionObjectOnTop->SetPose(onTopPoseWrtCarriedPose);
+            _carryingObjectOnTopID = actionObjectOnTop->GetID();
+            actionObjectOnTop->SetBeingCarried(true);
+          }
+        }
+      } else {
+        _carryingObjectOnTopID.UnSet();
+      }
+      
       SetCarryingObject(objectID); // also marks the object as carried
       _carryingMarker   = objectMarker;
-      
+
+      // Don't actually change the object's pose until we've checked for objects on top
       object->SetPose(objectPoseWrtLiftPose);
-      
+
       return RESULT_OK;
       
     } // AttachObjectToLift()
@@ -1910,6 +1950,31 @@ namespace Anki {
 
       UnSetCarryingObject(); // also sets carried object as not being carried anymore
       _carryingMarker = nullptr;
+      
+      if(_carryingObjectOnTopID.IsSet()) {
+        ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectOnTopID));
+        if(objectOnTop == nullptr)
+        {
+          // This really should not happen.  How can a object being carried get deleted?
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached",
+                            "Object on top of carrying object with ID=%d no longer exists.\n",
+                            _carryingObjectOnTopID.GetValue());
+          return RESULT_FAIL;
+        }
+        
+        Pose3d placedPoseOnTop;
+        if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
+          PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+                            "Could not get carrying object's pose relative to robot's origin.\n");
+          return RESULT_FAIL;
+          
+        }
+        objectOnTop->SetPose(placedPoseOnTop);
+        objectOnTop->SetBeingCarried(false);
+        _carryingObjectOnTopID.UnSet();
+        PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
+                         objectOnTop->GetID().GetValue());
+      }
       
       return RESULT_OK;
       
@@ -2665,7 +2730,7 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
       
-    void Robot::GetDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
+    void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
 #if(USE_DRIVE_CENTER_POSE)
       if (_isPhysical) {
