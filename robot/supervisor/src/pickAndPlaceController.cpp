@@ -48,9 +48,13 @@ namespace Anki {
         const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
         const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(18);
         
-        // Distance at which robot should start driving blind along last path
-        // during DA_PICKUP_HIGH.
+        // Distance at which robot should start driving blind
+        // along last generated docking path during DA_PICKUP_HIGH.
         const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 30;
+        
+        // Distance at which robot should start driving blind
+        // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
+        const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 20;
 
         Mode mode_ = IDLE;
         
@@ -231,10 +235,20 @@ namespace Anki {
                 // _expect_ it to be large, since the markers are facing upward).
                 const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
                 
-                // For PICKUP_HIGH, set the distance to the marker beyond which
+                // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.
-                u32 pointOfNoReturnDist = (action_ == DA_PICKUP_HIGH) ? HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM : 0;
-                
+                u32 pointOfNoReturnDist = 0;
+                switch(action_) {
+                  case DA_PICKUP_HIGH:
+                    pointOfNoReturnDist = HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM;
+                    break;
+                  case DA_PICKUP_LOW:
+                  case DA_PLACE_HIGH:
+                    pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
+                  default:
+                    break;
+                }
+
                 if (pixelSearchRadius_ < 0) {
                   DockingController::StartDocking(dockToMarker_,
                                                   markerWidth_,
