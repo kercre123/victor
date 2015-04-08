@@ -324,6 +324,13 @@ namespace Anki
             // Project this existing object into the robot's camera, using its new pose
             _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
             
+            // If the object is being carried, uncarry it
+            if (_robot->GetCarryingObject() == observedObject->GetID()) {
+              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
+                               "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
+              _robot->UnSetCarryingObject();
+            }
+            
             // Now that we've merged in objSeen, we can delete it because we
             // will no longer be using it.  Otherwise, we'd leak.
             delete objSeen;
