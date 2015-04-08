@@ -450,11 +450,11 @@ MonoBehaviour:
   text: {fileID: 11444370}
   actionButtons:
   - button: {fileID: 11444350}
-    image: {fileID: 11444360}
-    text: {fileID: 11444372}
-  - button: {fileID: 11444364}
     image: {fileID: 11444368}
     text: {fileID: 11444374}
+  - button: {fileID: 11444364}
+    image: {fileID: 11444360}
+    text: {fileID: 11444372}
   newObjectObservedSound: {fileID: 0}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}

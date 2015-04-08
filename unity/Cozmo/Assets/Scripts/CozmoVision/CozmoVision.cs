@@ -22,8 +22,8 @@ public enum ActionButtonMode {
 public class ActionButton
 {
 	public Button button;
-	public Image image { get; private set; }
-	public Text text { get; private set; }
+	public Image image;
+	public Text text;
 	
 	private int index;
 	private CozmoVision vision;
@@ -51,9 +51,6 @@ public class ActionButton
 	public void SetMode( ActionButtonMode mode, int i = 0 )
 	{
 		button.onClick.RemoveAllListeners();
-
-		if( image == null ) image = button.GetComponentsInChildren<Image>( true )[1];
-		if( text == null ) text = button.GetComponentsInChildren<Text>( true )[0];
 
 		if(mode == ActionButtonMode.DISABLED) {
 			button.gameObject.SetActive(false);
