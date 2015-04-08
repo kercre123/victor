@@ -83,7 +83,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastDebugAxesX = 0f;
 
 		lastAttitude = Quaternion.identity;
-		gyroSleepTimer = -1f; //gyroSleepTime;
+		gyroSleepTimer = gyroInputs != null ? -1f : gyroSleepTime;
 
 		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
 		if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
