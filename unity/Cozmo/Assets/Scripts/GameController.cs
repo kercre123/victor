@@ -139,7 +139,7 @@ public class GameController : MonoBehaviour {
 
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
-			textScore.text = "score: " + scores[0];
+			textScore.text = "score: " + scores[0].ToString();
 
 		}
 
@@ -147,14 +147,16 @@ public class GameController : MonoBehaviour {
 			textState.text = state.ToString();
 		}
 
-		if(textTime != null) {
-			if(maxPlayTime > 0f) {
-				textTime.text = Mathf.FloorToInt(maxPlayTime - stateTimer).ToString();
+		if (textTime != null && state == GameState.PLAYING) {
+			if (maxPlayTime > 0f) {
+				textTime.text = Mathf.FloorToInt (maxPlayTime - stateTimer).ToString ();
+			} else {
+				textTime.text = Mathf.FloorToInt (stateTimer).ToString ();
 			}
-			else {
-				textTime.text = Mathf.FloorToInt(stateTimer).ToString();
-			}
+		} else {
+			textTime.text = string.Empty;
 		}
+
 
 		
 		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
