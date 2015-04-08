@@ -163,6 +163,41 @@ class CozmoCLI(socket.socket):
             self.sendto(DriveWheelsMessage(lws, rws).serialize(), self.robot)
             return True
 
+    def StopAllMotors(self, *args):
+        "Full stop"
+        self.sendto(StopAllMotorsMessage().serialize(), self.robot)
+
+    def SetHeadAngle(self, *args):
+        "Commands the head angle. Args: <angle (radians)> [<max speed> [<acceleration>]]"
+        if len(args) == 0:
+            sys.stderr.write("Need at least an angle for SetHeadAngle")
+            return False
+        else:
+            try:
+                params = [float(a) for a in args]
+            except:
+                sys.stderr.write("Couldn't interpret arguments as floats: %s\n" % repr(args))
+                return False
+            else:
+                self.sendto(SetHeadAngleMessage(*params).serialize(), self.robot)
+                return True
+
+    def SetLiftHeight(self, *args):
+        "Commands the lift height. Args: <height (mm)> [<max speed> [<acceleration>]]"
+        if len(args) == 0:
+            sys.stderr.write("Need at least a height for SetLiftHeight")
+            return False
+        else:
+            try:
+                params = [float(a) for a in args]
+            except:
+                sys.stderr.write("Couldn't interpret arguments as floats: %s \n" % repr(args))
+                return False
+            else:
+                self.sendto(SetLiftHeightMessage(*params).serialize(), self.robot)
+                return True
+
+
     functions = {
         "help": helpFtn,
         "exit": exitFtn,
@@ -170,6 +205,9 @@ class CozmoCLI(socket.socket):
         "SetBlockLights": SetBlockLights,
         "ImageRequest": ImageRequest,
         "drive": DriveWheels,
+        "stop":  StopAllMotors,
+        "HeadAngle": SetHeadAngle,
+        "LiftHeight": SetLiftHeight,
     }
 
 
