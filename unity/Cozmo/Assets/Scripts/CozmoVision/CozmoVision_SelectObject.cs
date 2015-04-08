@@ -51,17 +51,17 @@ public class CozmoVision_SelectObject : CozmoVision
 //		selected = color;
 //	}
 
-	/*protected override void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
-	{
-		base.ObservedObjectSeen( box, observedObject );
-
-		ObservedObjectBox1 box1 = box as ObservedObjectBox1;
-
-		if( !box1.IsInside( reticle, image.canvas.worldCamera ) )
-		{
-			box1.gameObject.SetActive( false );
-		}
-	}*/
+//	protected override void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
+//	{
+//		base.ObservedObjectSeen( box, observedObject );
+//
+//		ObservedObjectBox1 box1 = box as ObservedObjectBox1;
+//
+//		if( !box1.IsInside( reticle, image.canvas.worldCamera ) )
+//		{
+//			box1.gameObject.SetActive( false );
+//		}
+//	}
 
 	protected override void ShowObservedObjects()
 	{
