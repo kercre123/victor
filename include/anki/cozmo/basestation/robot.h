@@ -205,8 +205,9 @@ namespace Anki {
       // Object Docking / Carrying
       //
 
-      const ObjectID&             GetDockObject()     const {return _dockObjectID;}
-      const ObjectID&             GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID&  GetDockObject()          const {return _dockObjectID;}
+      const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
+      const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
       const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
       bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }

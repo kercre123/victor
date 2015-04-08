@@ -441,7 +441,9 @@ namespace Anki
                                                              obsObjTrans.z(),
                                                              q.w(), q.x(), q.y(), q.z());
         
-        if(_robot->GetTrackHeadToObject().IsSet() && obsID == _robot->GetTrackHeadToObject())
+        if(_robot->GetTrackHeadToObject().IsSet() &&
+           obsID == _robot->GetTrackHeadToObject() &&
+           !_robot->IsHeadLocked())
         {
           UpdateTrackHeadToObject(observedObject);
         }
