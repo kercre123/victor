@@ -46,7 +46,7 @@ namespace Anki {
         const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
         
         const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
-        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(18);
+        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(17);
         
         // Distance at which robot should start driving blind
         // along last generated docking path during DA_PICKUP_HIGH.

@@ -48,7 +48,7 @@ namespace Anki {
     // (If you were to model the treaded robot as a two-wheel robot,
     // the drive center is the location between the two wheels)
 #if(USE_DRIVE_CENTER_POSE)
-    const f32 DRIVE_CENTER_OFFSET = -25.f;
+    const f32 DRIVE_CENTER_OFFSET = -22.f;
 #endif
 
     // The height of the lift at various configurations
@@ -93,9 +93,9 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 18.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 17.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;  // TODO: Technically, this should be the same as ORIGIN_TO_HIGH_LIFT_DIST_MM
 
 #endif
 
