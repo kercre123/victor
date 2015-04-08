@@ -242,7 +242,8 @@ namespace Anki {
           // DEBUG!!!
           // Track head to last object seen
           static u32 lastObjectID = u32_MAX;
-          if(msg.objectID != lastObjectID) {
+          if(msg.objectID != lastObjectID && msg.markersVisible)
+          {
             lastObjectID = msg.objectID;
             
             printf("Telling robot to track head to object %d\n", msg.objectID);
