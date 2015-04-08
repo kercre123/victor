@@ -602,7 +602,7 @@ namespace Anki {
         
         return FAILURE_ABORT;
       }
-      
+      /*
       // Verify visually that the object is still there
       if (robot.GetLastMsgTimestamp() - dockObject->GetLastObservedTime() > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS) {
         PRINT_NAMED_WARNING("IDockAction.Init.ActionObjectNotSeenForAWhile",
@@ -610,7 +610,7 @@ namespace Anki {
                             dockObject->GetLastObservedTime(), robot.GetLastMsgTimestamp());
         return FAILURE_ABORT;
       }
-      
+      */
       
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
