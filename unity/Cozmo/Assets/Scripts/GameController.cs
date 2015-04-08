@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -19,9 +19,12 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
-	[SerializeField] protected CozmoBuildInstructions buildInstructions = null;
+	[SerializeField] protected BuildInstructionsController buildInstructionsController = null;
+	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
+	[SerializeField] protected AudioClip playingLoopSound;
+	[SerializeField] protected AudioClip gameOverSound;
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -42,12 +45,12 @@ public class GameController : MonoBehaviour {
 		winnerIndex = -1;
 		errorMsgTimer = 0f;
 		firstFrame = true;
-		playRequested = autoPlay;
-		buildRequested = !autoPlay;
+		playRequested = false;
+		buildRequested = false;
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
+		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(buildInstructionsLayoutFilter);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -83,8 +86,8 @@ public class GameController : MonoBehaviour {
 	void OnDisable () {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
+		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(null);
 	}
 
 	GameState GetNextState() {
@@ -92,7 +95,7 @@ public class GameController : MonoBehaviour {
 		//consider switching states
 		switch(state) {
 			case GameState.BUILDING:
-				if(playRequested && IsGameReady()) return GameState.PLAYING; 
+				if((playRequested || autoPlay) && IsGameReady()) return GameState.PLAYING; 
 				break;
 			case GameState.PLAYING:
 				if(buildRequested) return GameState.BUILDING;
@@ -182,7 +185,6 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
-		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(true);
 	}
 	protected virtual void Update_BUILDING() {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
@@ -191,7 +193,6 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		//if(buildInstructions != null) buildInstructions.gameObject.SetActive(false);
 	}
 		
 	protected virtual void Enter_PLAYING() {
@@ -205,6 +206,8 @@ public class GameController : MonoBehaviour {
 	protected virtual void Exit_PLAYING() {
 		Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
+
+		if(gameOverSound != null && audio != null) audio.PlayOneShot(gameOverSound);
 	}
 
 	protected virtual void Enter_RESULTS() {
@@ -226,7 +229,7 @@ public class GameController : MonoBehaviour {
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
 
-		return true;
+		return buildInstructionsController.Validated;
 	}
 
 	protected virtual bool IsGameOver() {

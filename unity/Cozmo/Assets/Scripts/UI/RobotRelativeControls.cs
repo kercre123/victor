@@ -47,6 +47,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	bool driveReverseOnlyMode = false;
 	bool turnInPlaceOnlyMode = false;
 	float maxAngle = 90f;
+	float targetLockTimer = 0f;
 	ObservedObject targetLock = null;
 	ObservedObject lastTargetLock = null;
 	float lastGyroX = 0;
@@ -83,6 +84,10 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		lastAttitude = Quaternion.identity;
 		gyroSleepTimer = gyroSleepTime;
+
+		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
+		if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
+		if(headAngleStick != null) headAngleStick.gameObject.SetActive(true);
 	}
 
 	void Update() {
@@ -114,7 +119,14 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		RefreshTargetLock();
 
+		targetLockTimer += Time.deltaTime;
+		if(lastTargetLock == null && targetLock != null) targetLockTimer = 0f;
+
+		//if we are unlocked this frame, let's reset our head angle back to sane value
+		if(lastTargetLock != null && targetLock == null) robot.SetHeadAngle();
+
 		bool newLock = lastTargetLock != targetLock;
+
 		lastTargetLock = targetLock;
 
 		if(newLock) {
@@ -131,7 +143,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(!swipeTurning) swipeTurnIndex = 0;
 
-		if(targetLock == null) {
+		if(targetLock == null || targetLockTimer < 1f) {
 			CheckHeadAngleStick();
 			CheckHorizontalStickTurning();
 			CheckGyroTurning();
@@ -159,6 +171,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		lastInputs = inputs;
+		lastGyro = gyroInputs != null ? gyroInputs.Horizontal : 0f;
 
 		if(!reverseLikeACar && !driveForwardOnlyMode && (inputs.y < 0f || driveReverseOnlyMode)) {
 			inputs.x = -inputs.x;
@@ -198,6 +211,10 @@ public class RobotRelativeControls : MonoBehaviour {
 //		if(recorder != null) {
 //			recorder.enabled = false;
 //		}
+
+		if(verticalStick != null) verticalStick.gameObject.SetActive(false);
+		if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
+		if(headAngleStick != null) headAngleStick.gameObject.SetActive(false);
 	}
 
 #endregion
@@ -364,43 +381,56 @@ public class RobotRelativeControls : MonoBehaviour {
 		return Vector2.zero;
 	}
 
+	float lastGyro = 0f;
+	float turnInPlaceGyroThreshold = 0.75f;
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
-		
-		if(gyroSleepTimer > 0f) gyroSleepTimer -= Time.deltaTime;
 
-		bool wakeGyro = Input.touchCount > 0;
+//		if(gyroSleepTimer > 0f && gyroInputs.Horizontal != 0f) {
+//			gyroSleepTimer = gyroSleepTime;
+//		}
+//		else if(gyroSleepTimer > 0f) {
+//			gyroSleepTimer -= Time.deltaTime;
+//		}
+
+		//bool wakeGyro = verticalStick != null && verticalStick.IsPressed;//Input.touchCount > 0;
 		//if(wakeGyro) {
 		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
 		//}
 
-		if(!wakeGyro) {
-			wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
+		//if(!wakeGyro) {
+		//	wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
 			//if(wakeGyro) Debug.Log("wakeGyro: robot.status(" + robot.status.ToString() + ")");
-		}
+		//}
 		//wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
 
-		Quaternion attitude = Input.gyro.attitude;
+//		Quaternion attitude = Input.gyro.attitude;
+//
+//		if(!wakeGyro) {
+//			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
+//			wakeGyro = attitudeDelta > 0.5f;
+//			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
+//		}
 
-		if(!wakeGyro) {
-			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
-			wakeGyro = attitudeDelta > 0.5f;
-			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
-		}
+		//if(!wakeGyro) wakeGyro = Application.isEditor;
 
-		if(!wakeGyro) wakeGyro = Application.isEditor;
+		//lastAttitude = attitude;
 
-		lastAttitude = attitude;
+		//if(wakeGyro) {
+		//	gyroSleepTimer = gyroSleepTime;
+		//}
 
-		if(wakeGyro) {
-			gyroSleepTimer = gyroSleepTime;
-		}
-
-		if(gyroSleepTimer <= 0f) return;
+		//if(gyroSleepTimer <= 0f) return;
 			
 		float h = gyroInputs.Horizontal;
+
+		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
+			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
+		}
+
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
+
 		//if(gyroInputs.Horizontal != 0f) Debug.Log("gyroInputs.Horizontal("+gyroInputs.Horizontal+")");
 	}
 
@@ -447,7 +477,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void CheckSwapTargetLock(Vector2 direction) {
 		if(direction.sqrMagnitude == 0f) return; 
-		if(robot.knownObjects.Count <= 1) return;
+		if(CozmoVision.instance != null && CozmoVision.instance.pertinentObjects.Count <= 1) return;
 
 		ObservedObject oldLock = robot.selectedObjects[0];
 		Vector3 targetPos = oldLock.WorldPosition;
@@ -459,7 +489,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		///sift and sort
 		if(direction.x != 0) {
-			potential = robot.knownObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
+			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
 
 			if(potential == null || potential.Count == 0) return;
 
@@ -479,7 +509,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		}
 		else {
-			potential = robot.knownObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
+			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
 
 			if(potential == null || potential.Count == 0) return;
 

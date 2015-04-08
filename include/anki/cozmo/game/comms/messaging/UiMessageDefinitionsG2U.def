@@ -246,6 +246,7 @@ struct G2U_RobotState
 	float liftHeight_mm;
 	float batteryVoltage;
 	int32_t carryingObjectID;
+	int32_t carryingObjectOnTopID;
 	uint8_t status;
 	uint8_t robotID;
 	
@@ -271,6 +272,7 @@ struct G2U_RobotState
 		,float liftHeight_mm
 		,float batteryVoltage
 		,int32_t carryingObjectID
+		,int32_t carryingObjectOnTopID
 		,uint8_t status
 		,uint8_t robotID)
 	:pose_x(pose_x)
@@ -287,6 +289,7 @@ struct G2U_RobotState
 	,liftHeight_mm(liftHeight_mm)
 	,batteryVoltage(batteryVoltage)
 	,carryingObjectID(carryingObjectID)
+	,carryingObjectOnTopID(carryingObjectOnTopID)
 	,status(status)
 	,robotID(robotID)
 	{}

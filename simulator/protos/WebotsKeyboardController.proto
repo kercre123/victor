@@ -6,6 +6,13 @@ PROTO WebotsKeyboardController [
   field SFColor poseMarkerDiffuseColor 0.1 0.8 0.1
 
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
+  field SFFloat lWheelKp 0.0005
+  field SFFloat lWheelKi 0.00005
+  field SFFloat lWheelMaxErrorSum 5000
+  field SFFloat rWheelKp 0.0005
+  field SFFloat rWheelKi 0.00005
+  field SFFloat rWheelMaxErrorSum 5000
+
   field SFFloat headKp 2.0
   field SFFloat headKi 0.05
   field SFFloat headMaxErrorSum 2
@@ -34,9 +41,11 @@ PROTO WebotsKeyboardController [
   field SFInt32 fd_maxObjectWidth 320
 
   # Test mode params
-  field SFInt32 dt_flags 1
-  field SFInt32 dt_wheel_power 20
-  
+  field SFInt32 driveTest_flags 1
+  field SFInt32 driveTest_wheel_power 20
+  field SFInt32 liftTest_flags 0  
+  field SFInt32 headTest_flags 0
+
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
   field SFString forcedRobotIP "172.31.1.1"

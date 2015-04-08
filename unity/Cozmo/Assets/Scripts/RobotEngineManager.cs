@@ -388,9 +388,16 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			current.observedObjects.Remove( deleted );
 		}
+
+		deleted = current.markersVisibleObjects.Find( x=> x.ID == message.objectID );
+		
+		if( deleted != null )
+		{
+			current.markersVisibleObjects.Remove( deleted );
+		}
 	}
 
-	private void ReceivedSpecificMessage(G2U_RobotCompletedAction message)
+	private void ReceivedSpecificMessage( G2U_RobotCompletedAction message )
 	{
 		bool success = message.success > 0;
 		
@@ -405,6 +412,8 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			SuccessOrFailure( success );
 		}
+
+		current.isBusy = false;
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
@@ -587,7 +596,7 @@ public class RobotEngineManager : MonoBehaviour {
 //				return;
 //			}
 //		}
-		string filename = string.Format("rv-{0}.jpg", imageFrameCount);
+		string filename = string.Format("frame-{0}_time-{1}.jpg", imageFrameCount, Time.time);
 		string filepath = Path.Combine (imageBasePath, filename);
 		SaveAsync(filepath, buffer, 0, length);
 	}

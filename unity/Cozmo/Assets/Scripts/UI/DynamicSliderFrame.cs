@@ -5,6 +5,7 @@ using System.Collections;
 
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
+	[SerializeField] RectTransform hint;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
@@ -50,6 +51,9 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
 			dynamic = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
 		}
+
+		sliderTrans.gameObject.SetActive(!dynamic);
+		if(hint != null) hint.gameObject.SetActive(dynamic);
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
@@ -57,7 +61,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			Vector2 pointerPos = eventData.position * screenScaleFactor;
 			sliderTrans.anchoredPosition = pointerPos - Center;
 			sliderTrans.gameObject.SetActive(true);
-
+			if(hint != null) hint.gameObject.SetActive(false);
 			slider.OnPointerDown(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
 		}
@@ -73,6 +77,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			slider.OnPointerUp(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
 			sliderTrans.gameObject.SetActive(false);
+			if(hint != null) hint.gameObject.SetActive(true);
 		}
 		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
 			slider.OnPointerUp(eventData);

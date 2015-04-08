@@ -20,11 +20,13 @@ public class Robot
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
+	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
 	public List<ObservedObject> selectedObjects { get; private set; }
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
+	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
 
 	// er, should be 5?
@@ -44,11 +46,17 @@ public class Robot
 		IS_ANIMATING            = 0x40
 	};
 
+	private bool _isBusy = false;
 	public bool isBusy
 	{
 		get
 		{
-			return Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
+			return _isBusy || Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
+		}
+
+		set
+		{
+			_isBusy = value;
 		}
 	}
 
@@ -65,6 +73,8 @@ public class Robot
 		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		lastObservedObjects = new List<ObservedObject>();
+		markersVisibleObjects = new List<ObservedObject>();
+		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
@@ -82,6 +92,8 @@ public class Robot
 		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		lastObservedObjects.Clear();
+		markersVisibleObjects.Clear();
+		lastMarkersVisibleObjects.Clear();
 		knownObjects.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
@@ -96,6 +108,14 @@ public class Robot
 			if( observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time )
 			{
 				observedObjects.RemoveAt( i-- );
+			}
+		}
+
+		for( int i = 0; i < markersVisibleObjects.Count; ++i )
+		{
+			if( markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time )
+			{
+				markersVisibleObjects.RemoveAt( i-- );
 			}
 		}
 	}
@@ -140,6 +160,11 @@ public class Robot
 		{
 			observedObjects.Add( knownObject );
 		}
+
+		if( knownObject.MarkersVisible && markersVisibleObjects.Find( x => x.ID == message.objectID ) == null )
+		{
+			markersVisibleObjects.Add( knownObject );
+		}
 	}
 
 	public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
@@ -159,6 +184,8 @@ public class Robot
 		U2G_PlaceObjectOnGroundHere message = new U2G_PlaceObjectOnGroundHere ();
 		
 		RobotEngineManager.instance.channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
+
+		isBusy = true;
 	}
 
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
@@ -190,21 +217,25 @@ public class Robot
 			lastObjectHeadTracked = observedObject;
 		}
 	}
-	
-	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = false, bool useManualSpeed = false )
+
+	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		Debug.Log( "Pick And Place Object index(" + index + ") usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed );
-		
+		TrackHeadToObject( selectedObjects[index] );
+
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
+		Debug.Log( "Pick And Place Object " + message.objectID + " usePreDockPose " + message.usePreDockPose + " useManualSpeed " + message.useManualSpeed );
+		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
-
+		
 		lastObjectHeadTracked = null;
+
+		isBusy = true;
 	}
-	
+
 	public void SetLiftHeight( float height )
 	{
 		Debug.Log( "Set Lift Height " + height );
@@ -300,5 +331,7 @@ public class Robot
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ TraverseObject = message } );
+
+		isBusy = true;
 	}
 }

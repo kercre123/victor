@@ -52,7 +52,7 @@ foreach(SOURCE ${CLAD_SOURCES})
         
         add_custom_command(
             OUTPUT ${CPP_DECLARATIONS}
-            COMMAND python -u "cozmo_CPP_declarations_emitter.py" -o ${CPP_DECLARATIONS} ${SOURCE}
+            COMMAND python -u "cozmo_CPP_declarations_emitter.py" -o ${CPP_DECLARATIONS} ${RELATIVE_SOURCE}
             MAIN_DEPENDENCY ${SOURCE}
             DEPENDS ${CLAD_DEPENDENCIES}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -60,7 +60,7 @@ foreach(SOURCE ${CLAD_SOURCES})
         )
         add_custom_command(
             OUTPUT ${CPP_SWITCH}
-            COMMAND python -u "cozmo_CPP_switch_emitter.py" -o ${CPP_SWITCH} ${SOURCE}
+            COMMAND python -u "cozmo_CPP_switch_emitter.py" -o ${CPP_SWITCH} ${RELATIVE_SOURCE}
             MAIN_DEPENDENCY ${SOURCE}
             DEPENDS ${CLAD_DEPENDENCIES}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

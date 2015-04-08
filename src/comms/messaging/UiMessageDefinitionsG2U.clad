@@ -63,8 +63,9 @@ message G2U_RobotState {
     float_32 headAngle_rad,
     float_32 liftHeight_mm,
     float_32 batteryVoltage,
-    int_32   carryingObjectID,  // will be -1 if not carrying object
-    uint_8   status,            // See RobotStatusFlag in cozmoTypes.h
+    int_32   carryingObjectID,      // will be -1 if not carrying object
+    int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    uint_8   status,                // See RobotStatusFlag in cozmoTypes.h
     uint_8   robotID
 }
 

@@ -174,7 +174,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      if(robot->AreWheelsLockeD()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
+                         "Ignoring U2G_DriveWheels while wheels are locked.\n");
+      } else {
+        robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      }
     }
   }
   
@@ -194,7 +199,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->MoveHead(msg.speed_rad_per_sec);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveHead.HeadLocked",
+                         "Ignoring U2G_MoveHead while head is locked.\n");
+      } else {
+        robot->MoveHead(msg.speed_rad_per_sec);
+      }
     }
   }
   
@@ -205,7 +215,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->MoveLift(msg.speed_rad_per_sec);
+      if(robot->IsLiftLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveLift.LiftLocked",
+                         "Ignoring U2G_MoveLift while lift is locked.\n");
+      } else {
+        robot->MoveLift(msg.speed_rad_per_sec);
+      }
     }
   }
   
@@ -216,8 +231,13 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->DisableTrackHeadToObject();
-      robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
+                         "Ignoring U2G_SetHeadAngle while head is locked.\n");
+      } else {
+        robot->DisableTrackHeadToObject();
+        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+      }
     }
   }
   
@@ -226,7 +246,12 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      robot->EnableTrackHeadToObject(msg.objectID);
+      if(robot->IsHeadLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
+                         "Ignoring U2G_TrackHeadToObject while head is locked.\n");
+      } else {
+        robot->EnableTrackHeadToObject(msg.objectID);
+      }
     }
   }
   
@@ -250,16 +275,22 @@ namespace Cozmo {
     
     if(robot != nullptr) {
       
-      // Special case if commanding low dock height
-      if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
-        if(robot->IsCarryingObject()) {
-          // Put the block down right here
-          robot->PlaceObjectOnGround();
-          return;
+      if(robot->IsLiftLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetLiftHeight.LiftLocked",
+                         "Ignoring U2G_SetLiftHeight while lift is locked.\n");
+      } else {
+        // Special case if commanding low dock height
+        if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
+          if(robot->IsCarryingObject()) {
+            // Put the block down right here
+            U2G_PlaceObjectOnGroundHere m;
+            Process_PlaceObjectOnGroundHere(m);
+            return;
+          }
         }
+        
+        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
-      
-      robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
     }
   }
   
@@ -289,14 +320,24 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SaveImages(U2G_SaveImages const& msg)
   {
-    VizManager::getInstance()->SaveImages((VizSaveMode_t)msg.mode);
-    printf("Saving images: %d\n", VizManager::getInstance()->GetSaveImageMode());
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      printf("Saving image mode %d\n", msg.mode);
+      robot->SetSaveImageMode((SaveMode_t)msg.mode);
+    }
   }
   
   void CozmoGameImpl::Process_SaveRobotState(U2G_SaveRobotState const& msg)
   {
-    VizManager::getInstance()->SaveRobotState((VizSaveMode_t)msg.mode);
-    printf("Saving robot state: %d\n", VizManager::getInstance()->GetSaveRobotStateMode());
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+    printf("Saving robot state: %d\n", msg.mode);
+      robot->SetSaveStateMode((SaveMode_t)msg.mode);
+    }
   }
   
   void CozmoGameImpl::Process_EnableDisplay(U2G_EnableDisplay const& msg)
@@ -324,7 +365,7 @@ namespace Cozmo {
     if(robot != nullptr) {
       // TODO: Add ability to indicate z too!
       // TODO: Better way to specify the target pose's parent
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
       robot->GetActionList().AddAction(new DriveToPoseAction(targetPose, msg.useManualSpeed));
     }
@@ -340,7 +381,7 @@ namespace Cozmo {
       // Create an action to drive to specied pose and then put down the carried
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
       robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed));
     }
   }
@@ -425,7 +466,7 @@ namespace Cozmo {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetMaxPreActionPoseDistance(-1.f); // disable pre-action pose distance check
+        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
         robot->GetActionList().AddAction(action, numRetries);
       }
     }
@@ -505,7 +546,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr && robot->IsCarryingObject()) {
-      Pose3d targetPose(msg.rad, Z_AXIS_3D, Vec3f(msg.x_mm, msg.y_mm, 0));
+      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
       Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
       VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
     }
@@ -515,6 +556,19 @@ namespace Cozmo {
   {
     VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
   }
+
+  void CozmoGameImpl::Process_SetWheelControllerGains(U2G_SetWheelControllerGains const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      robot->SetWheelControllerGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
+                                     msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
+    }
+  }
+
   
   void CozmoGameImpl::Process_SetHeadControllerGains(U2G_SetHeadControllerGains const& msg)
   {

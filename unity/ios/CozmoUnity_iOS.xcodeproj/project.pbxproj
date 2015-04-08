@@ -680,8 +680,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "#set -e\n\n#pushd ${ANKI_BUILD_REPO_ROOT}\n\n#ANKI_BUILD_ROOT=${BUILT_PRODUCTS_DIR} ${ANKI_BUILD_REPO_ROOT}/tools/build-scripts/build_basestation_resource_bundle.sh\n\n#BUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n#BS_RESOURCE_PATH=\"${BUILT_APP_BUNDLE}/BasestationResources\"\n\n#mkdir -p ${BS_RESOURCE_PATH}\n#cp -pR \"${BUILT_PRODUCTS_DIR}/BasestationResources/BasestationResources.bundle/\" \"${BS_RESOURCE_PATH}/\"\n\n#popd\n";
-			showEnvVarsInLog = 0;
+			shellScript = "\"${SRCROOT}/../../lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${SRCROOT}/../../lib/anki/cozmo-engine/resources\" \"${SRCROOT}/../../lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {
 			isa = PBXShellScriptBuildPhase;
