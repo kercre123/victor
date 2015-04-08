@@ -220,6 +220,8 @@ public class Robot
 
 	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
+		TrackHeadToObject( selectedObjects[index] );
+
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );

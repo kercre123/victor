@@ -22,8 +22,8 @@ public enum ActionButtonMode {
 public class ActionButton
 {
 	public Button button;
-	public Image image;
-	public Text text;
+	public Image image { get; private set; }
+	public Text text { get; private set; }
 	
 	private int index;
 	private CozmoVision vision;
@@ -48,17 +48,22 @@ public class ActionButton
 		}
 	}
 	
-	public void SetMode(ActionButtonMode mode, int i = 0) {
-		
+	public void SetMode( ActionButtonMode mode, int i = 0 )
+	{
+		button.onClick.RemoveAllListeners();
+
+		if( image == null ) image = button.GetComponentsInChildren<Image>( true )[1];
+		if( text == null ) text = button.GetComponentsInChildren<Text>( true )[0];
+
 		if(mode == ActionButtonMode.DISABLED) {
 			button.gameObject.SetActive(false);
-			button.onClick.RemoveAllListeners();
+			//button.onClick.RemoveAllListeners();
 			return;
 		}
 		
 		image.sprite = vision.GetActionSprite(mode);
 		index = i;
-		
+
 		switch(mode) {
 			case ActionButtonMode.TARGET:
 				text.text = "Target";
@@ -262,22 +267,6 @@ public class CozmoVision : MonoBehaviour
 		float boxY = ( observedObject.VizRect.y / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
 		float boxW = ( observedObject.VizRect.width / NativeResolution.x ) * imageRectTrans.sizeDelta.x;
 		float boxH = ( observedObject.VizRect.height / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
-
-		/*if( boxX < 200f )
-		{
-			boxW -= 200f - boxX;
-			boxX = 200f;
-		}
-		else if( boxX + boxW > 1000f )
-		{
-			boxW -= boxX + boxW - 1000f;
-		}
-		
-		if( boxW <= 0f )
-		{
-			box.image.gameObject.SetActive( true );
-			return;
-		}*/
 		
 		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
