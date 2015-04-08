@@ -9,7 +9,7 @@
 
 // A 16.16 fixed bit number
 typedef s32 Fixed;
-#define TO_FIXED(x) ((x) * 65535)
+#define TO_FIXED(x) ((x) * 65535.0 + 0.5)
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
