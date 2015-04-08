@@ -668,7 +668,10 @@ namespace Anki {
                          _dockMarker->GetCode(),
                          Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
         
-        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK) {
+        if(robot.DockWithObject(_dockObjectID, _dockMarker, dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK)
+        {
+          //NOTE: Any completion (success or failure) after this point should tell
+          // the robot to stop tracking and go back to looking for markers!
           _wasPickingOrPlacing = false;
           return SUCCESS;
         } else {
@@ -708,20 +711,14 @@ namespace Anki {
                            "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
           
           actionResult = Verify(robot);
-          
-          // Go back to looking for markers (and stop tracking) when we finish,
-          // whether or not we succeeded?
-          robot.StartLookingForMarkers();
-          robot.StopDocking();
-          
-          /*
-          // If docking fails, go back to looking for markers?
-          if(actionResult != SUCCESS) {
-            robot.StartLookingForMarkers();
-            robot.StopDocking();
-          }
-           */
         }
+      }
+      
+      if(actionResult != RUNNING) {
+        // Go back to looking for markers (and stop tracking) when we finish,
+        // whether or not we succeeded
+        robot.StartLookingForMarkers();
+        robot.StopDocking();
       }
       
       return actionResult;
