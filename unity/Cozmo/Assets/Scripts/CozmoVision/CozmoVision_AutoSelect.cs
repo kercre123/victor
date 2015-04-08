@@ -128,31 +128,4 @@ public class CozmoVision_AutoSelect : CozmoVision
 			}*/
 		}
 	}
-
-	protected override void SetActionButtons()
-	{
-		DisableButtons();
-
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
-
-		robot = RobotEngineManager.instance.current;
-
-		if( robot.isBusy ) return;
-		
-		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
-		{
-			if( robot.selectedObjects.Count > 0 ) actionButtons[1].SetMode( ActionButtonMode.STACK );
-
-			actionButtons[0].SetMode( ActionButtonMode.DROP );
-		}
-		else
-		{
-			for( int i = 0; i < robot.selectedObjects.Count; ++i )
-			{
-				actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
-			}
-		}
-
-	}
-
 }

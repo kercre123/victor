@@ -384,21 +384,38 @@ public class CozmoVision : MonoBehaviour
 		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
 	}
 	
-	protected virtual void SetActionButtons()
+	protected void SetActionButtons()
 	{
 		DisableButtons();
+		
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
+		
 		robot = RobotEngineManager.instance.current;
-		if(robot == null || robot.isBusy) return;
+
+		if( robot.isBusy ) return;
 		
-		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
-			if(robot.selectedObjects.Count > 0) actionButtons[1].SetMode(ActionButtonMode.STACK);
-			actionButtons[0].SetMode(ActionButtonMode.DROP);
+		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
+		{
+			if( robot.selectedObjects.Count > 0 ) actionButtons[1].SetMode( ActionButtonMode.STACK );
+			
+			actionButtons[0].SetMode( ActionButtonMode.DROP );
 		}
-		else {
-			if(robot.selectedObjects.Count > 0) actionButtons[1].SetMode(ActionButtonMode.PICK_UP);
+		else
+		{
+			if( robot.selectedObjects.Count == 1 )
+			{
+				actionButtons[1].SetMode( ActionButtonMode.PICK_UP );
+			}
+			else
+			{
+				for( int i = 0; i < robot.selectedObjects.Count; ++i )
+				{
+					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
+				}
+			}
 		}
 		
-		if(robot.selectedObjects.Count > 0) actionButtons[2].SetMode(ActionButtonMode.CANCEL);
+		if( robot.selectedObjects.Count > 0 && actionButtons.Length > 2 ) actionButtons[2].SetMode( ActionButtonMode.CANCEL );
 	}
 	
 	private void RobotImage( Texture2D texture )
