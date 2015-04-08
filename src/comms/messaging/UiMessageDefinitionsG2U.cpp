@@ -418,6 +418,7 @@ size_t G2U_RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->liftHeight_mm);
 	buffer.Write(this->batteryVoltage);
 	buffer.Write(this->carryingObjectID);
+	buffer.Write(this->carryingObjectOnTopID);
 	buffer.Write(this->status);
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -446,6 +447,7 @@ size_t G2U_RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->liftHeight_mm);
 	buffer.Read(this->batteryVoltage);
 	buffer.Read(this->carryingObjectID);
+	buffer.Read(this->carryingObjectOnTopID);
 	buffer.Read(this->status);
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
@@ -482,6 +484,8 @@ size_t G2U_RobotState::Size() const
 	result += 4; // = float_32
 	//carryingObjectID
 	result += 4; // = int_32
+	//carryingObjectOnTopID
+	result += 4; // = int_32
 	//status
 	result += 1; // = uint_8
 	//robotID
@@ -505,6 +509,7 @@ bool G2U_RobotState::operator==(const G2U_RobotState& other) const
 	|| liftHeight_mm != other.liftHeight_mm
 	|| batteryVoltage != other.batteryVoltage
 	|| carryingObjectID != other.carryingObjectID
+	|| carryingObjectOnTopID != other.carryingObjectOnTopID
 	|| status != other.status
 	|| robotID != other.robotID) {
 		return false;

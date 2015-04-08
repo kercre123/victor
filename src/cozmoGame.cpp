@@ -436,6 +436,7 @@ namespace Cozmo {
                 if(robot->IsCarryingObject())   {
                   msg.status |= IS_CARRYING_BLOCK;
                   msg.carryingObjectID = robot->GetCarryingObject();
+                  msg.carryingObjectOnTopID = robot->GetCarryingObjectOnTop();
                 } else {
                   msg.carryingObjectID = -1;
                 }
