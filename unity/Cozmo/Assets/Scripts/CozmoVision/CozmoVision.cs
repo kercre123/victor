@@ -216,6 +216,7 @@ public class CozmoVision : MonoBehaviour
 	private float fadeDuration = 1f;
 	private float fromAlpha = 0f;
 
+	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	public static CozmoVision instance = null;
 
@@ -257,10 +258,10 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
 	{
-		float boxX = ( observedObject.VizRect.x / 320f ) * imageRectTrans.sizeDelta.x;
-		float boxY = ( observedObject.VizRect.y / 240f ) * imageRectTrans.sizeDelta.y;
-		float boxW = ( observedObject.VizRect.width / 320f ) * imageRectTrans.sizeDelta.x;
-		float boxH = ( observedObject.VizRect.height / 240f ) * imageRectTrans.sizeDelta.y;
+		float boxX = ( observedObject.VizRect.x / NativeResolution.x ) * imageRectTrans.sizeDelta.x;
+		float boxY = ( observedObject.VizRect.y / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
+		float boxW = ( observedObject.VizRect.width / NativeResolution.x ) * imageRectTrans.sizeDelta.x;
+		float boxH = ( observedObject.VizRect.height / NativeResolution.y ) * imageRectTrans.sizeDelta.y;
 
 		/*if( boxX < 200f )
 		{
