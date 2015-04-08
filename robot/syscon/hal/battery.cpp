@@ -12,8 +12,8 @@ namespace
   const u32 V_PRESCALE    = 3;
   const u32 V_SCALE       = 0x3ff; // 10 bit ADC
   const Fixed IBAT_SCALE  = TO_FIXED(0.91); // Cozmo 3 transducer scaling
-  const Fixed VUSB_SCALE  = TO_FIXED(3.128); // Cozmo 3 voltage divider
-  const Fixed VBAT_SCALE  = TO_FIXED(3.128); // Cozmo 3 voltage divider
+  const Fixed VUSB_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
+  const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
   
   const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
   const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
@@ -27,10 +27,7 @@ namespace
   const u8 ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput0;
   const u8 ANALOG_V_USB_SENSE = ADC_CONFIG_PSEL_AnalogInput1;
   
-  const u8 PIN_CHARGE_S1 = 9;
-  //const u8 PIN_CHARGE_S2 = 14;
-  const u8 PIN_CHARGE_HC = 29;
-  const u8 PIN_CHARGE_EN = 5;
+  const u8 PIN_VUSBs_EN = 5; // equivalent to old CHARGE_EN
   
   const u8 PIN_VDD_EN = 3;             // 3.0
   const u8 PIN_VBATs_EN = 12;
@@ -78,16 +75,9 @@ void BatteryInit()
   nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
   nrf_gpio_cfg_output(PIN_VDDs_EN);
   
-  // Configure the charger status pins as inputs
-  nrf_gpio_cfg_input(PIN_CHARGE_S1, NRF_GPIO_PIN_PULLUP);
-  //nrf_gpio_cfg_input(PIN_CHARGE_S2, NRF_GPIO_PIN_PULLUP);
-  
-  // Initially clear pins to enable high current charge
-  nrf_gpio_pin_clear(PIN_CHARGE_HC);
-  nrf_gpio_cfg_output(PIN_CHARGE_HC);
   // Initially set charge en to disable charging by default
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
-  nrf_gpio_cfg_output(PIN_CHARGE_EN);
+  nrf_gpio_pin_clear(PIN_VUSBs_EN);
+  nrf_gpio_cfg_output(PIN_VUSBs_EN);
 
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_I_SENSE, NRF_GPIO_PIN_NOPULL);
@@ -126,7 +116,7 @@ void BatteryInit()
   g_dataToHead.Vusb = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VUSB_SCALE);
   
   // Sample charger pin
-  g_dataToHead.chargeStat = nrf_gpio_pin_read(PIN_CHARGE_S1);
+  //g_dataToHead.chargeStat = XXX (we no longer have charge status as of v3.2)
   
   m_pinIndex = 0; // Set ADC phase index to 0
   startADCsample(ANALOG_I_SENSE); // Start conversion
@@ -198,11 +188,11 @@ void BatteryUpdate()
             // MUST disable VBATs (and thus head power) while charging, to protect battery
             nrf_gpio_pin_clear(PIN_VBATs_EN);   // Off
             nrf_gpio_pin_set(PIN_VDDs_EN);      // Off            
-            nrf_gpio_pin_clear(PIN_CHARGE_EN);  // Enable charging
+            nrf_gpio_pin_set(PIN_VUSBs_EN);  // Enable charging
             
           // If we are now off contacts, stop charging and reboot
           } else {
-            nrf_gpio_pin_set(PIN_CHARGE_EN);    // Disable charging
+            nrf_gpio_pin_clear(PIN_VUSBs_EN);    // Disable charging
             PowerOn();
           }
         }
@@ -217,7 +207,7 @@ void BatteryUpdate()
     }
   }
   
-  g_dataToHead.chargeStat = nrf_gpio_pin_read(PIN_CHARGE_S1);
+  //g_dataToHead.chargeStat = XXX (we no longer have charge status as of v3.2)
   // Act on charge S1 if need be
 }
 
