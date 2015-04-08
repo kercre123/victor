@@ -103,7 +103,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.999803 0.00889147 0.0177191 5.35302
-  position 0.161886 -1.48167 1.00745
+  position 0.157324 -1.73815 1.19875
 }
 Background {
   skyColor [
@@ -129,11 +129,22 @@ DEF Red Block1x1 {
   markerImg "symbols/fire.png"
 }
 DEF Blue Block1x1 {
+  hidden translation_1 -0.022 0 0
+  hidden rotation_1 0 1 0 -1.57079
+  hidden translation_2 0.022 0 0
+  hidden rotation_2 0 1 0 1.57079
+  hidden translation_3 0 0 -0.022
+  hidden rotation_3 0 1 0 3.14159
+  hidden translation_4 0 0 0.022
+  hidden translation_5 0 0.022 0
+  hidden rotation_5 1 0 0 -1.57079
+  hidden translation_6 0 -0.022 0
+  hidden rotation_6 1 0 0 1.57079
   name "AngryFace_01"
   translation 0.3 0 0.0659969
   rotation 1 0 0 0
   blockColor 0 0 1
-  markerImg "symbols/angryFace.png"
+  markerImg "symbols/kitty.png"
 }
 DEF Red Block1x1 {
   name "Fire_01"
@@ -142,11 +153,22 @@ DEF Red Block1x1 {
   markerImg "symbols/fire.png"
 }
 DEF Blue Block1x1 {
+  hidden translation_1 -0.022 0 0
+  hidden rotation_1 0 1 0 -1.57079
+  hidden translation_2 0.022 0 0
+  hidden rotation_2 0 1 0 1.57079
+  hidden translation_3 0 0 -0.022
+  hidden rotation_3 0 1 0 3.14159
+  hidden translation_4 0 0 0.022
+  hidden translation_5 0 0.022 0
+  hidden rotation_5 1 0 0 -1.57079
+  hidden translation_6 0 -0.022 0
+  hidden rotation_6 1 0 0 1.57079
   name "AngryFace_01"
   translation 0.3 0 0.153997
   rotation 1 0 0 0
   blockColor 0 0 1
-  markerImg "symbols/angryFace.png"
+  markerImg "symbols/kitty.png"
 }
 BlockWorldComms {
 }
