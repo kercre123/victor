@@ -231,6 +231,25 @@ namespace Anki
           
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
+          
+
+          // If the first part of the path is some tiny arc,
+          // skip it because it tends to report gross errors that
+          // make the steeringController jerky.
+          // This mainly occurs during docking.
+          // TODO: Do this check for EVERY path segment?
+          if ((currPathSegment_ == 0) &&
+              (path_[0].GetType() == Planning::PST_ARC) &&
+              (ABS(path_[0].GetDef().arc.sweepRad) < 0.05) &&
+              path_[0].GetDef().arc.radius <= 50) {
+            PRINT("Skipping short arc: sweep %f deg, radius %f mm\n",
+                  RAD_TO_DEG_F32( path_[0].GetDef().arc.sweepRad ),
+                  path_[0].GetDef().arc.radius);
+            currPathSegment_++;
+            realPathSegment_ = currPathSegment_;
+          }
+
+          
 
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
