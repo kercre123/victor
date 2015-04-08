@@ -497,8 +497,12 @@ namespace Anki {
         // Find the pose the robot was at at that time and transform it to be with respect to the
         // robot's current pose
         Anki::Embedded::Pose2d histPose;
-        Localization::GetHistPoseAtTime(t, histPose);
-
+        if ((t == 0) || (t == HAL::GetTimeStamp())) {
+          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle);
+        }  else {
+          Localization::GetHistPoseAtTime(t, histPose);
+        }
+        
 #if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
         Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);

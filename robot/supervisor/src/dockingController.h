@@ -44,7 +44,8 @@ namespace Anki {
       // rel_rad: Angle of block normal relative to robot's x-axis.
       // t: Timestamp of the pose to which these relative errors should be applied
       //    in order to compute the absolute pose of the target at the current time.
-      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t = HAL::GetTimeStamp());
+      //    If t == 0 or HAL::GetTimeStamp(), it will use the robot's current pose.
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t = 0);
       
       // Resets state machine and configures VisionSystem to track
       // appropriate block
