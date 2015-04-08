@@ -451,10 +451,12 @@ public class CozmoVision : MonoBehaviour
 		ResizeToScreen();
 		VisionEnabled();
 	}
-	
+
+	protected bool isSmallScreen = false;
+
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
-		
+		isSmallScreen = false;
 		if(dpi == 0f) return;
 		
 		float refW = Screen.width;
@@ -487,7 +489,8 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
-		if(screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT && anchorToScaleOnSmallScreens != null) {
+		isSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
+		if(isSmallScreen && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
 			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;

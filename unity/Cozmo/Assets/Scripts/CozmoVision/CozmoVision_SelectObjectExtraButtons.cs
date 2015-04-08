@@ -43,6 +43,8 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 	
 	protected void ConnectButtonsToBoxes()
 	{
+		if(isSmallScreen) return;
+
 		unassignedActiveObjectBoxes.Clear();
 		unassignedActiveObjectBoxes.AddRange( observedObjectBoxes.FindAll( x => x.gameObject.activeSelf ) );
 		int count = unassignedActiveObjectBoxes.Count;
