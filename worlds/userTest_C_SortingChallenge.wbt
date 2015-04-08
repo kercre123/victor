@@ -10,7 +10,7 @@ WorldInfo {
   gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
-contactProperties [
+  contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
       material1 "cmat_floor"
       material2 "highfriction"
@@ -177,11 +177,22 @@ DEF Red Block1x1 {
   markerImg "symbols/fire.png"
 }
 DEF Blue Block1x1 {
+  hidden translation_1 -0.022 0 0
+  hidden rotation_1 0 1 0 -1.57079
+  hidden translation_2 0.022 0 0
+  hidden rotation_2 0 1 0 1.57079
+  hidden translation_3 0 0 -0.022
+  hidden rotation_3 0 1 0 3.14159
+  hidden translation_4 0 0 0.022
+  hidden translation_5 0 0.022 0
+  hidden rotation_5 1 0 0 -1.57079
+  hidden translation_6 0 -0.022 0
+  hidden rotation_6 1 0 0 1.57079
   name "AngryFace_01"
   translation 0.3 0 0.0659969
   rotation 1 0 0 0
   blockColor 0 0 1
-  markerImg "symbols/angryFace.png"
+  markerImg "symbols/kitty.png"
 }
 DEF Green Block1x1 {
   name "AngryFace_01"
@@ -197,11 +208,22 @@ DEF Red Block1x1 {
   markerImg "symbols/fire.png"
 }
 DEF Blue Block1x1 {
+  hidden translation_1 -0.022 0 0
+  hidden rotation_1 0 1 0 -1.57079
+  hidden translation_2 0.022 0 0
+  hidden rotation_2 0 1 0 1.57079
+  hidden translation_3 0 0 -0.022
+  hidden rotation_3 0 1 0 3.14159
+  hidden translation_4 0 0 0.022
+  hidden translation_5 0 0.022 0
+  hidden rotation_5 1 0 0 -1.57079
+  hidden translation_6 0 -0.022 0
+  hidden rotation_6 1 0 0 1.57079
   name "AngryFace_01"
   translation 0.3 0 0.197997
   rotation 1 0 0 0
   blockColor 0 0 1
-  markerImg "symbols/angryFace.png"
+  markerImg "symbols/kitty.png"
 }
 DEF Green Block1x1 {
   name "AngryFace_01"
