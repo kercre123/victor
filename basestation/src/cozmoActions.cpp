@@ -121,12 +121,6 @@ namespace Anki {
     
     IAction::ActionResult DriveToPoseAction::Init(Robot& robot)
     {
-      // Wait for robot to be idle before trying to drive to a new pose, to
-      // allow previously-added docking/moving actions to finish
-      if(robot.IsMoving()) {
-        return RUNNING;
-      }
-      
       ActionResult result = SUCCESS;
       
       _startedTraversingPath = false;
@@ -586,13 +580,7 @@ namespace Anki {
     IAction::ActionResult IDockAction::Init(Robot& robot)
     {
       _waitToVerifyTime = -1.f;
-      
-      // Wait for robot to be done moving before trying to dock with a new object, to
-      // allow previously-added docking/moving actions to finish
-      if(robot.IsMoving()) {
-        return RUNNING;
-      }
-      
+    
       // Make sure the object we were docking with still exists in the world
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_dockObjectID));
       if(dockObject == nullptr) {
@@ -959,30 +947,29 @@ namespace Anki {
     {
       ActionResult result = RUNNING;
       
-      // Wait for robot to stop moving before proceeding with pre-conditions
-      if (robot.IsMoving() == false)
-      {
-        // Robot must be carrying something to put something down!
-        if(robot.IsCarryingObject() == false) {
-          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
-                            "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
-          result = FAILURE_ABORT;
-        } else {
-          
-          _carryingObjectID  = robot.GetCarryingObject();
-          _carryObjectMarker = robot.GetCarryingMarker();
+      // Robot must be carrying something to put something down!
+      if(robot.IsCarryingObject() == false) {
+        PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
+                          "Robot %d executing PlaceObjectOnGroundAction but not carrying object.\n", robot.GetID());
+        result = FAILURE_ABORT;
+      } else {
         
-          if(robot.PlaceObjectOnGround() == RESULT_OK)
-          {
-            result = SUCCESS;
-          } else {
-            PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
-                              "Robot's SendPlaceObjectOnGround method reported failure.\n");
-            result = FAILURE_ABORT;
-          }
-          
-        } // if/else IsCarryingObject()
-      } // if robot IsMoving()
+        _carryingObjectID  = robot.GetCarryingObject();
+        _carryObjectMarker = robot.GetCarryingMarker();
+        
+        if(robot.PlaceObjectOnGround() == RESULT_OK)
+        {
+          result = SUCCESS;
+        } else {
+          PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.SendPlaceObjectOnGroundFailed",
+                            "Robot's SendPlaceObjectOnGround method reported failure.\n");
+          result = FAILURE_ABORT;
+        }
+        
+      } // if/else IsCarryingObject()
+      
+      // If we were moving, stop moving.
+      robot.StopAllMotors();
       
       return result;
       
