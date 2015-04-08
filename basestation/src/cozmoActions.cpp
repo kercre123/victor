@@ -35,7 +35,7 @@ namespace Anki {
     
     // Right before docking, the dock object must have been visually verified
     // no more than this many milliseconds ago or it will not even attempt to dock.
-    const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 250;
+    const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 1000;
  
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
