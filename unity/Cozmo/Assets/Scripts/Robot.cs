@@ -43,20 +43,16 @@ public class Robot
 		IS_PICKED_UP            = 0x8,
 		IS_PROX_FORWARD_BLOCKED = 0x10,
 		IS_PROX_SIDE_BLOCKED    = 0x20,
-		IS_ANIMATING            = 0x40
+		IS_ANIMATING            = 0x40,
+		IS_PERFORMING_ACTION    = 0x80
 	};
 
-	private bool _isBusy = false;
+	internal float localBusyTimer = 0f;
 	public bool isBusy
 	{
 		get
 		{
-			return _isBusy || Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
-		}
-
-		set
-		{
-			_isBusy = value;
+			return localBusyTimer > 0f || Status( StatusFlag.IS_PICKING_OR_PLACING ) || Status( StatusFlag.IS_PICKED_UP ) || Status( StatusFlag.IS_ANIMATING );
 		}
 	}
 
@@ -185,7 +181,7 @@ public class Robot
 		
 		RobotEngineManager.instance.channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
 
-		isBusy = true;
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
@@ -233,7 +229,7 @@ public class Robot
 		
 		lastObjectHeadTracked = null;
 
-		isBusy = true;
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
 	public void SetLiftHeight( float height )
@@ -332,6 +328,6 @@ public class Robot
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ TraverseObject = message } );
 
-		isBusy = true;
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 }

@@ -13,6 +13,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public static RobotEngineManager instance = null;
 
 	public Dictionary<int, Robot> robots { get; private set; }
+	public List<Robot> robotList = new List<Robot>();
 	
 	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
 
@@ -141,7 +142,9 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void AddRobot( byte robotID )
 	{
-		robots.Add( robotID, new Robot( robotID ) );
+		Robot robot = new Robot(robotID);
+		robots.Add( robotID, robot );
+		robotList.Add(robot);
 	}
 	
 	private void OnEnable()
@@ -181,6 +184,11 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		if (channel != null) {
 			channel.Update ();
+		}
+
+		for(int i=0; i<robotList.Count; i++) {
+			if(robotList[i].localBusyTimer <= 0f) continue;
+			robotList[i].localBusyTimer -= Time.deltaTime;
 		}
 
 		float robotStateTimeout = 3.0f;
@@ -401,19 +409,18 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		bool success = message.success > 0;
 		
-		Debug.Log( "Action completed " + success );
+		Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();
 		current.lastObjectHeadTracked = null;
 		
 		current.SetHeadAngle();
 		
-		if( SuccessOrFailure != null )
-		{
-			SuccessOrFailure( success );
+		if(SuccessOrFailure != null) {
+			SuccessOrFailure(success);
 		}
 
-		current.isBusy = false;
+		current.localBusyTimer = 0f;
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)

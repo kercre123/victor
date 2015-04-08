@@ -8,6 +8,7 @@ public static class CozmoUtil {
 	public const float MAX_WHEEL_SPEED 		= 160f;
 	public const float MIN_WHEEL_SPEED 		= 10f;
 	public const float BLOCK_LENGTH_MM 		= 44f;
+	public const float LOCAL_BUSY_TIME 		= 1f;
 
 	public static void CalcWheelSpeedsForTwoAxisInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
 		

@@ -54,7 +54,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float lastHorStickX = 0;
 	float lastHeadStickY = 0;
 	float lastDebugAxesX = 0f;
-	Quaternion lastAttitude = Quaternion.identity;
+	//Quaternion lastAttitude = Quaternion.identity;
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -82,7 +82,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastHeadStickY = 0f;
 		lastDebugAxesX = 0f;
 
-		lastAttitude = Quaternion.identity;
+		//lastAttitude = Quaternion.identity;
 		gyroSleepTimer = gyroInputs != null ? -1f : gyroSleepTime;
 
 		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
@@ -382,7 +382,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	}
 
 	float lastGyro = 0f;
-	float turnInPlaceGyroThreshold = 0.75f;
+	float turnInPlaceGyroThreshold = 0.5f;
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
 
@@ -412,7 +412,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
 //		}
 
-		//if(!wakeGyro) wakeGyro = Application.isEditor;
+		if(!wakeGyro) wakeGyro = Application.isEditor;
 
 		//lastAttitude = attitude;
 

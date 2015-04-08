@@ -63,7 +63,14 @@ public class ActionSlider {
 
 		if(bottomAction != ActionButtonMode.TARGET) {
 			image_action1.sprite = vision.GetActionSprite(bottomAction);
-			text_action1.text = ActionButton.GetModeName(bottomAction);
+
+			if(bottomAction == ActionButtonMode.PICK_UP && topAction == ActionButtonMode.PICK_UP) {
+				text_action1.text = ActionButton.GetModeName(bottomAction) + " Bottom";
+			}
+			else {
+				text_action1.text = ActionButton.GetModeName(bottomAction);
+			}
+
 			image_action1.gameObject.SetActive(true);
 			text_action1.gameObject.SetActive(true);
 		}
@@ -74,7 +81,14 @@ public class ActionSlider {
 
 		if(topAction != ActionButtonMode.TARGET) {
 			image_action2.sprite = vision.GetActionSprite(topAction);
-			text_action2.text = ActionButton.GetModeName(topAction);
+
+			if(bottomAction == ActionButtonMode.PICK_UP && bottomAction == ActionButtonMode.PICK_UP) {
+				text_action2.text = ActionButton.GetModeName(topAction) + " Top";
+			}
+			else {
+				text_action2.text = ActionButton.GetModeName(topAction);
+			}
+
 			image_action2.gameObject.SetActive(true);
 			text_action2.gameObject.SetActive(true);
 		}
