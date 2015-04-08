@@ -1533,10 +1533,10 @@ namespace Anki
     Vision::ObservableObject* BlockWorld::FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
                                                             f32 zTolerance) const
     {
-      Point3f rotatedDistTol(objectOnBottom.GetPose().GetRotation() *
-                             objectOnBottom.GetSameDistanceTolerance());
-      rotatedDistTol.z() = zTolerance;
-      rotatedDistTol.Abs();
+      Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.z() = zTolerance;
+      sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
+      sameDistTol.Abs();
       
       // Find the point at the top middle of the object on bottom
       Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
@@ -1560,7 +1560,7 @@ namespace Anki
               dist -= bottomOfCandidateObject;
               dist.Abs();
               
-              if(dist < rotatedDistTol) {
+              if(dist < sameDistTol) {
                 return candidateObject;
               }
             } // IF not object on bottom (by ID)
