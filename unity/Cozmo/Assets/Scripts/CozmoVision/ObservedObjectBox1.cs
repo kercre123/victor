@@ -5,15 +5,21 @@ using System.Collections;
 public class ObservedObjectBox1 : ObservedObjectButton
 {
 	protected Vector3[] corners;
-	
-	public Vector3 position
+
+	protected override void Initialize()
+	{
+		if( initialized ) return;
+		
+		corners = new Vector3[4];
+		
+		base.Initialize();
+	}
+
+	public virtual Vector3 position
 	{
 		get
 		{
-			if( corners == null )
-			{
-				corners = new Vector3[4];
-			}
+			if( !initialized ) Initialize();
 			
 			rectTransform.GetWorldCorners( corners );
 			
@@ -29,10 +35,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
 
 	public bool IsInside( RectTransform reticle, Camera camera )
 	{
-		if( corners == null )
-		{
-			corners = new Vector3[4];
-		}
+		if( !initialized ) Initialize();
 
 		rectTransform.GetWorldCorners( corners );
 
