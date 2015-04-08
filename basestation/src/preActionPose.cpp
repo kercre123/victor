@@ -44,6 +44,13 @@ namespace Anki {
       }
     } // GetVisualizeColor()
     
+    void PreActionPose::SetHeightTolerance()
+    {
+      const Point3f T = _poseWrtMarkerParent.GetTranslation().GetAbs();
+      const f32 distance = std::max(T.x(), std::max(T.y(), T.z()));
+      _heightTolerance = distance * std::tan(ANGLE_TOLERANCE);
+    }
+    
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
                                  const f32 distance,
@@ -70,6 +77,8 @@ namespace Anki {
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
       
+      SetHeightTolerance();
+      
     } // PreActionPose Constructor
     
     
@@ -90,6 +99,9 @@ namespace Anki {
                           "Could not get the pre-action pose w.r.t. the marker's parent.\n");
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
+      
+      SetHeightTolerance();
+      
     } // PreActionPose Constructor
     
     
@@ -102,7 +114,10 @@ namespace Anki {
     {
       _poseWrtMarkerParent.SetParent(markerParentPose.GetParent());
       _poseWrtMarkerParent.SetName("PreActionPose");
+      
+      SetHeightTolerance();
     }
+    
     
   } // namespace Cozmo
 } // namespace Anki

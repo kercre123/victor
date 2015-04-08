@@ -1755,10 +1755,14 @@ namespace Anki {
                                  dockAction == DA_RAMP_DESCEND ||
                                  dockAction == DA_CROSS_BRIDGE);
       
-      // Tell the VisionSystem to start tracking this marker:
-      _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+    
+      if(sendResult == RESULT_OK) {
+        // Tell the VisionSystem to start tracking this marker:
+        _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      }
       
-      return _msgHandler->SendMessage(_ID, msg);
+      return sendResult;
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
