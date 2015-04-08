@@ -232,9 +232,10 @@ namespace Anki {
             
             
             // Check if we are beyond point of no return distance
-            if ((pointOfNoReturnDistMM_ != 0) &&
+            if (pastPointOfNoReturn_ ||
+                ((pointOfNoReturnDistMM_ != 0) &&
                 (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
-                (mode_ == APPROACH_FOR_DOCK)) {
+                (mode_ == APPROACH_FOR_DOCK))) {
               PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
               pastPointOfNoReturn_ = true;
               
