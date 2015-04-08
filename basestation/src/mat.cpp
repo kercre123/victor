@@ -53,7 +53,10 @@ namespace Anki {
     Point3f MatPiece::GetSameDistanceTolerance() const
     {
       // "Thin" mats: don't use half the thickness as the height tolerance (too strict)
-      return Point3f(_size.x()*.5f, _size.y()*.5f, std::max(25.f, _size.z()*.5f));
+      Point3f distTol(_size.x()*.5f, _size.y()*.5f, std::max(25.f, _size.z()*.5f));
+      distTol = GetPose().GetRotation() * distTol;
+      distTol.Abs();
+      return distTol;
     }
     
     
