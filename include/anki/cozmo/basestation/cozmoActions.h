@@ -205,7 +205,10 @@ namespace Anki {
       PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_PICK_AND_PLACE_OBJECT; }
+      
+      // Override to determine type (pick/place, low/high) dynamically depending
+      // on what we were doing.
+      virtual s32 GetType() const override;
       
     protected:
       
@@ -238,7 +241,9 @@ namespace Anki {
         
       }
       
-      virtual s32 GetType() const override { return ACTION_DRIVE_TO_PICK_AND_PLACE_OBJECT; }
+      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // determined dynamically
+      virtual s32 GetType() const override { return _actions.back().second->GetType(); }
     };
     
     
@@ -249,7 +254,7 @@ namespace Anki {
       PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_ON_GROUND; }
+      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_LOW; }
       
     protected:
       
@@ -277,7 +282,7 @@ namespace Anki {
         
       }
       
-      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_ON_GROUND_AT_POSE; }
+      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_LOW; }
     };
     
     class CrossBridgeAction : public IDockAction
