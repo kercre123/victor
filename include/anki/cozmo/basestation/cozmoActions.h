@@ -22,6 +22,8 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
+#include "anki/cozmo/shared/actionTypes.h"
+
 namespace Anki {
   
   namespace Vision {
@@ -33,7 +35,6 @@ namespace Anki {
 
     // Forward Declarations:
     class Robot;
-
     
     class DriveToPoseAction : public IAction
     {
@@ -44,6 +45,7 @@ namespace Anki {
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_DRIVE_TO_POSE; }
       
     protected:
 
@@ -80,6 +82,7 @@ namespace Anki {
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_DRIVE_TO_OBJECT; }
       
     protected:
       
@@ -102,6 +105,7 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT; }
       
     protected:
       
@@ -120,6 +124,7 @@ namespace Anki {
       TurnInPlaceAction(const Radians& angle);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_TURN_IN_PLACE; }
       
     protected:
       
@@ -136,6 +141,7 @@ namespace Anki {
       MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
       
       virtual const std::string& GetName() const override { return _name; }
+      virtual s32 GetType() const override { return ACTION_MOVE_HEAD_TO_ANGLE; }
       
     protected:
       
@@ -199,6 +205,7 @@ namespace Anki {
       PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_PICK_AND_PLACE_OBJECT; }
       
     protected:
       
@@ -230,6 +237,8 @@ namespace Anki {
       {
         
       }
+      
+      virtual s32 GetType() const override { return ACTION_DRIVE_TO_PICK_AND_PLACE_OBJECT; }
     };
     
     
@@ -240,6 +249,7 @@ namespace Anki {
       PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_ON_GROUND; }
       
     protected:
       
@@ -266,6 +276,8 @@ namespace Anki {
       {
         
       }
+      
+      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_ON_GROUND_AT_POSE; }
     };
     
     class CrossBridgeAction : public IDockAction
@@ -274,6 +286,7 @@ namespace Anki {
       CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_CROSS_BRIDGE; }
       
     protected:
       
@@ -297,6 +310,7 @@ namespace Anki {
       AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_ASCEND_OR_DESCEND_RAMP; }
       
     protected:
       
@@ -322,6 +336,7 @@ namespace Anki {
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_TRAVERSE_OBJECT; }
       
     protected:
       
@@ -347,6 +362,9 @@ namespace Anki {
       {
         
       }
+      
+      virtual s32 GetType() const override { return ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT; }
+      
     };
     
     
@@ -356,6 +374,7 @@ namespace Anki {
       PlayAnimationAction(const std::string& animName);
       
       virtual const std::string& GetName() const override { return _name; }
+      virtual s32 GetType() const override { return ACTION_PLAY_ANIMATION; }
       
     protected:
       
@@ -375,6 +394,7 @@ namespace Anki {
       PlaySoundAction(const std::string& soundName);
       
       virtual const std::string& GetName() const override { return _name; }
+      virtual s32 GetType() const override { return ACTION_PLAY_SOUND; }
       
     protected:
       
@@ -394,6 +414,7 @@ namespace Anki {
       WaitAction(f32 waitTimeInSeconds);
       
       virtual const std::string& GetName() const override { return _name; }
+      virtual s32 GetType() const override { return ACTION_WAIT; }
       
     protected:
       

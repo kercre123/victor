@@ -59,5 +59,6 @@ DEF_SIGNAL(RobotObservedFace,
 // TODO: add a an actionType member?
 DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
+           int32_t actionType,
            uint8_t success)
 
