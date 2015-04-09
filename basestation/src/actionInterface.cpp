@@ -49,7 +49,9 @@ namespace Anki {
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
-          CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
+          CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(),
+                                                                GetType(),
+                                                                result == SUCCESS);
           
           // Action is done, always completely unlock the robot
           robot.LockHead(false);

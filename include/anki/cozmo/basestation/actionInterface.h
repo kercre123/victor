@@ -65,6 +65,11 @@ namespace Anki {
       // debugging. Otherwise, defaults to "UnnamedAction".
       virtual const std::string& GetName() const;
       
+      // Override this in derived classes to return a (probably unique) integer
+      // representing this action's type. This will be reported in any
+      // completion signal that is emitted.
+      virtual s32 GetType() const = 0;
+        
       virtual void Reset() = 0;
       
       // Get last status message
