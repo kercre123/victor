@@ -29,7 +29,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage;
-	public event Action<bool> SuccessOrFailure;
+	public event Action<bool,int> SuccessOrFailure;
 
 	public ChannelBase channel { get; private set; }
 	private float lastRobotStateMessage = 0;
@@ -408,7 +408,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage( G2U_RobotCompletedAction message )
 	{
 		bool success = message.success > 0;
-		
+		int action_type = message.actionType;
 		Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();
@@ -417,7 +417,7 @@ public class RobotEngineManager : MonoBehaviour {
 		current.SetHeadAngle();
 		
 		if(SuccessOrFailure != null) {
-			SuccessOrFailure(success);
+			SuccessOrFailure(success, action_type);
 		}
 
 		current.localBusyTimer = 0f;

@@ -31,6 +31,7 @@ public class GoldRushController : GameController {
 	int goldCarryingObjectId = -1;
 	int baseObjectId = -1;
 	ScreenMessage hintMessage;
+	private bool audioLocatorEnabled = true;
 
 	enum PlayState
 	{
@@ -195,13 +196,6 @@ public class GoldRushController : GameController {
 		return false;
 	}
 
-	void Transmute(int id) 
-	{
-		//if bad id or not lead cube, return
-		//set cube back to gold
-		scores[0]++;
-	}
-
 	void UpdateTimerEvents (float timer)
 	{
 		if (timerEventIndex < timerEventTimes.Length) 
@@ -217,17 +211,25 @@ public class GoldRushController : GameController {
 		}
 	}
 
+	void EnableAudioLocator(bool on)
+	{
+		audioLocatorEnabled = on;
+	}
+
 	void UpdateLocatorSound(float current_rate) 
 	{
-		float timeSinceLast = Time.realtimeSinceStartup - lastPlayTime;
-		audio.loop = false;
-
-		if (timeSinceLast >= current_rate) 
+		if( audioLocatorEnabled )
 		{
-			audio.Stop();
-			gameObject.audio.Play();
+			float timeSinceLast = Time.realtimeSinceStartup - lastPlayTime;
+			audio.loop = false;
 
-			lastPlayTime = Time.realtimeSinceStartup;
+			if (timeSinceLast >= current_rate) 
+			{
+				audio.Stop();
+				gameObject.audio.Play();
+
+				lastPlayTime = Time.realtimeSinceStartup;
+			}
 		}
 	}
 
@@ -303,9 +305,12 @@ public class GoldRushController : GameController {
 					if(distance <= findRadius) 
 					{
 						//show 'found' light pattern
-						audio.Stop();
-						audio.loop = true;
-						gameObject.audio.PlayOneShot(foundBeep);
+						if( audioLocatorEnabled )
+						{
+							audio.Stop();
+							audio.loop = true;
+							gameObject.audio.PlayOneShot(foundBeep);
+						}
 						foundItems.Add(robot.carryingObjectID);
 						extractButton.gameObject.SetActive (true);
 						Debug.Log("found!");
