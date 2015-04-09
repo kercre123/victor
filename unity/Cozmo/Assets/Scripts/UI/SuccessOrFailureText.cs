@@ -26,7 +26,7 @@ public class SuccessOrFailureText : ScreenMessage
 		}
 	}
 
-	private void SuccessOrFailure( bool s )
+	private void SuccessOrFailure( bool s, int action_type )
 	{
 		if( s )
 		{
