@@ -118,8 +118,9 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageChunkAvailableSignal().ScopedSubscribe(cbRobotImageChunkAvailable));
     
-    auto cbRobotCompletedAction = [this](RobotID_t robotID, uint8_t success) {
-      this->HandleRobotCompletedAction(robotID, success);
+    auto cbRobotCompletedAction = [this](RobotID_t robotID, int32_t actionType,
+                                         uint8_t success) {
+      this->HandleRobotCompletedAction(robotID, actionType, success);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
@@ -379,11 +380,12 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, uint8_t success)
+  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, int32_t actionType, uint8_t success)
   {
     G2U_RobotCompletedAction msg;
   
     msg.robotID = robotID;
+    msg.actionType = actionType;
     msg.success = success;
     
     G2U_Message message;

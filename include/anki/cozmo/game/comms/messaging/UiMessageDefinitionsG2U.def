@@ -581,6 +581,7 @@ struct G2U_DeviceDetectedVisionMarker
 struct G2U_RobotCompletedAction
 {
 	uint32_t robotID;
+	int32_t actionType;
 	uint8_t success;
 	
 	/**** Constructors ****/
@@ -592,8 +593,10 @@ struct G2U_RobotCompletedAction
 	G2U_RobotCompletedAction& operator=(G2U_RobotCompletedAction&& other) noexcept = default;
 	
 	explicit G2U_RobotCompletedAction(uint32_t robotID
+		,int32_t actionType
 		,uint8_t success)
 	:robotID(robotID)
+	,actionType(actionType)
 	,success(success)
 	{}
 
