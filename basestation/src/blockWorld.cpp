@@ -1550,7 +1550,7 @@ namespace Anki
       // Find the point at the top middle of the object on bottom
       Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
-      topOfObjectOnBottom.z() += 0.5f*rotatedBtmSize.z();
+      topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
       
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
