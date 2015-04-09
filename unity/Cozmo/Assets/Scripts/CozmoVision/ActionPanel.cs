@@ -48,7 +48,7 @@ public class ActionButton
 		}
 	}
 	
-	public void SetMode( ActionButtonMode mode, int i = 0 )
+	public void SetMode( ActionButtonMode mode, int i = 0, string append = null  )
 	{
 		button.onClick.RemoveAllListeners();
 
@@ -100,9 +100,11 @@ public class ActionButton
 				button.onClick.AddListener(panel.CancelButtonClick);
 				break;
 		}
-		
+
+		if( append != null ) text.text += append;
 		button.gameObject.SetActive(true);
 	}
+
 
 	private static string targetOverride = null;
 	public static string TARGET
