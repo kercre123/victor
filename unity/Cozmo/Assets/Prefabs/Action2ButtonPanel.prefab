@@ -232,12 +232,12 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 3
+    m_Alignment: 4
     m_RichText: 0
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Action
+  m_Text: Pick Up Bottom
 --- !u!114 &11463376
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -258,12 +258,12 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 3
+    m_Alignment: 4
     m_RichText: 0
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Action
+  m_Text: Pick Up Top
 --- !u!114 &11463378
 MonoBehaviour:
   m_ObjectHideFlags: 1

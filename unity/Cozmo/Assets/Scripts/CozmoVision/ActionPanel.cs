@@ -251,9 +251,9 @@ public class ActionPanel : MonoBehaviour
 			}
 			else
 			{
-				for( int i = 0; i < robot.selectedObjects.Count; ++i )
+				for( int i = 0; i < robot.selectedObjects.Count && i < 2; ++i )
 				{
-					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
+					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? " Bottom" : " Top" );
 				}
 			}
 		}

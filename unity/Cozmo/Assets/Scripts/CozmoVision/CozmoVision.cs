@@ -98,7 +98,7 @@ public class CozmoVision : MonoBehaviour
 	private static bool dingEnabled = true;
 	
 	protected bool isSmallScreen = false;
-	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
+	protected static readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	public static CozmoVision instance = null;
 
