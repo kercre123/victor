@@ -220,7 +220,6 @@ GameObject:
   m_Component:
   - 224: {fileID: 22425388}
   - 114: {fileID: 11425400}
-  - 114: {fileID: 11425402}
   - 82: {fileID: 8225370}
   m_Layer: 5
   m_Name: Treasure Hunt
@@ -1065,10 +1064,14 @@ MonoBehaviour:
   textTime: {fileID: 11425414}
   autoPlay: 0
   playButton: {fileID: 11413714}
-  buildInstructions: {fileID: 0}
+  buildInstructionsController: {fileID: 0}
+  buildInstructionsLayoutFilter: TreasureHunt
   resultsPanel: {fileID: 11425374}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
-  foundBeep: {fileID: 0}
+  playingLoopSound: {fileID: 0}
+  gameOverSound: {fileID: 0}
+  foundBeep: {fileID: 8300000, guid: b9f433ee03eb049c095862f7e0d093b1, type: 3}
+  collectedSound: {fileID: 8300000, guid: 56c69feea6a654597bb3cb73eeb184fa, type: 3}
   timerAudio: {fileID: 8279644}
   timerSounds:
   - {fileID: 8300000, guid: 05ccc0f247dfb4295b76ca35df0ac5ea, type: 3}
@@ -1092,19 +1095,6 @@ MonoBehaviour:
   detectRadius: 300
   extractionTime: 1.5
   resultsScore: {fileID: 11425412}
---- !u!114 &11425402
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 125388}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 082a07cbd26174c13b9f9bd0765d61ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  children:
-  - {fileID: 0}
 --- !u!114 &11425404
 MonoBehaviour:
   m_ObjectHideFlags: 1
