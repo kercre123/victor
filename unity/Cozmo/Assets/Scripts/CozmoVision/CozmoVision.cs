@@ -181,6 +181,8 @@ public class CozmoVision : MonoBehaviour
 	
 	protected virtual void ShowObservedObjects()
 	{
+		if(!image.enabled) return;
+
 		if( robot == null || pertinentObjects == null ) return;
 		
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
@@ -321,12 +323,15 @@ public class CozmoVision : MonoBehaviour
 
 	protected void RefreshFade()
 	{
-		if(!image.enabled) return;
+
 		if(!fadingIn && !fadingOut) return;
 
 		fadeTimer += Time.deltaTime;
 
 		float factor = fadeTimer / fadeDuration;
+
+		RefreshLoopingTargetSound(factor);
+		
 		float alpha = 0f;
 		if(fadingIn) {
 			alpha = Mathf.Lerp(fromAlpha, 1f, factor);
@@ -347,13 +352,10 @@ public class CozmoVision : MonoBehaviour
 		color.a = alpha;
 		selected = color;
 
-		RefreshLoopingTargetSound(factor);
-
-		if(fadeTimer >= 1f) {
+		if(factor >= 1f) {
 			fadingIn = false;
 			fadingOut = false;
 		}
-
 	}
 
 	protected void FadeIn()
@@ -366,8 +368,6 @@ public class CozmoVision : MonoBehaviour
 		fadingOut = false;
 
 		PlayVisionActivateSound();
-
-		if(!image.enabled) return;
 
 		Color color = image.color;
 		fromAlpha = color.a;
@@ -383,7 +383,6 @@ public class CozmoVision : MonoBehaviour
 
 	protected void FadeOut()
 	{
-
 		if(fadingOut) return;
 		if(image.color.a <= 0f) return;
 		
@@ -392,8 +391,6 @@ public class CozmoVision : MonoBehaviour
 		fadingIn = false;
 		
 		PlayVisionDeactivateSound();
-
-		if(!image.enabled) return;
 
 		Color color = image.color;
 		fromAlpha = color.a;

@@ -148,6 +148,14 @@ public class RobotRelativeControls : MonoBehaviour {
 			CheckHorizontalStickTurning();
 			CheckGyroTurning();
 			CheckDebugHorizontalAxesTurning();
+
+			if(verticalStick != null && verticalStick.Vertical != 0f) {
+				if(headAngleStick == null || !headAngleStick.IsPressed) {
+					if(robot.selectedObjects.Count == 0 && !robot.isBusy && Mathf.Abs(robot.headAngle_rad) > 0.05f ) {
+						robot.SetHeadAngle();
+					}
+				}
+			}
 		}
 		else {
 			gyroSleepTimer = gyroSleepTime;
