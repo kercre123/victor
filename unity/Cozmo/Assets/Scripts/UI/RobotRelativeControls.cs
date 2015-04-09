@@ -528,8 +528,9 @@ public class RobotRelativeControls : MonoBehaviour {
 			} );
 		}
 
-		robot.selectedObjects.Clear();
-		robot.selectedObjects.Add(potential[0]);
+		//robot.selectedObjects.Clear();
+		robot.selectedObjects.Remove(potential[0]);
+		robot.selectedObjects.Insert(0, potential[0]);
 		targetLock = potential[0];
 		Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock.ID+") newLock("+targetLock.ID+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
 	}

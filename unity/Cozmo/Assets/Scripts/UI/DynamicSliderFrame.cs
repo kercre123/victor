@@ -26,10 +26,8 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 			if(corners == null || corners.Length == 0) return center;
 			center = (corners[0] + corners[2]) * 0.5f;
-			
-			center = canvas.worldCamera.WorldToScreenPoint(center);
-			
-			return center * screenScaleFactor;
+
+			return RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, center) * screenScaleFactor;
 		}
 	}
 

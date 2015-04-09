@@ -5,195 +5,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public enum ActionButtonMode {
-	DISABLED,
-	TARGET,
-	PICK_UP,
-	DROP,
-	STACK,
-	ROLL,
-	ALIGN,
-	CHANGE,
-	CANCEL,
-	NUM_MODES
-}
-
-[System.Serializable]
-public class ActionButton
-{
-	public Button button;
-	public Image image;
-	public Text text;
-	
-	private int index;
-	private CozmoVision vision;
-	
-	public void ClaimOwnership(CozmoVision vision) {
-		this.vision = vision;
-	}
-	
-	protected void PickAndPlaceObject()
-	{
-		RobotEngineManager.instance.current.PickAndPlaceObject( index );
-	}
-	
-	public void Cancel()
-	{
-		Debug.Log( "Cancel" );
-		
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.selectedObjects.Clear();
-			RobotEngineManager.instance.current.SetHeadAngle();
-		}
-	}
-	
-	public void SetMode( ActionButtonMode mode, int i = 0 )
-	{
-		button.onClick.RemoveAllListeners();
-
-		if(mode == ActionButtonMode.DISABLED) {
-			button.gameObject.SetActive(false);
-			//button.onClick.RemoveAllListeners();
-			return;
-		}
-		
-		image.sprite = vision.GetActionSprite(mode);
-		index = i;
-
-		switch(mode) {
-			case ActionButtonMode.TARGET:
-				text.text = TARGET;
-				//button.onClick.AddListener(vision.Action);
-				break;
-			case ActionButtonMode.PICK_UP:
-				text.text = PICK_UP;
-				button.onClick.AddListener(PickAndPlaceObject);
-				button.onClick.AddListener(vision.ActionButtonClick);
-				break;
-			case ActionButtonMode.DROP:
-				text.text = DROP;
-				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
-				button.onClick.AddListener(vision.ActionButtonClick);
-				break;
-			case ActionButtonMode.STACK:
-				text.text = STACK;
-				button.onClick.AddListener(PickAndPlaceObject);
-				button.onClick.AddListener(vision.ActionButtonClick);
-				break;
-			case ActionButtonMode.ROLL:
-				text.text = ROLL;
-				//button.onClick.AddListener(vision.Action);
-				break;
-			case ActionButtonMode.ALIGN:
-				text.text = ALIGN;
-				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
-				button.onClick.AddListener(vision.ActionButtonClick);
-				break;
-			case ActionButtonMode.CHANGE:
-				text.text = CHANGE;
-				//button.onClick.AddListener(vision.Action);
-				break;
-			case ActionButtonMode.CANCEL:
-				text.text = CANCEL;
-				button.onClick.AddListener(Cancel);
-				button.onClick.AddListener(vision.CancelButtonClick);
-				break;
-		}
-		
-		button.gameObject.SetActive(true);
-	}
-
-	private static string targetOverride = null;
-	public static string TARGET
-	{
-		get { if( targetOverride == null ) { return "Search"; } return targetOverride; }
-		
-		set { targetOverride = value; }
-	}
-
-	private static string pickUpOverride = null;
-	public static string PICK_UP
-	{
-		get { if( pickUpOverride == null ) { return "Pick Up"; } return pickUpOverride; }
-		
-		set { pickUpOverride = value; }
-	}
-
-	private static string dropOverride = null;
-	public static string DROP
-	{
-		get { if( dropOverride == null ) { return "Drop"; } return dropOverride; }
-		
-		set { dropOverride = value; }
-	}
-
-	private static string stackOverride = null;
-	public static string STACK
-	{
-		get { if( stackOverride == null ) { return "Stack"; } return stackOverride; }
-		
-		set { stackOverride = value; }
-	}
-
-	private static string rollOverride = null;
-	public static string ROLL
-	{
-		get { if( rollOverride == null ) { return "Roll"; } return rollOverride; }
-		
-		set { rollOverride = value; }
-	}
-
-	private static string alignOverride = null;
-	public static string ALIGN
-	{
-		get { if( alignOverride == null ) { return "Align"; } return alignOverride; }
-		
-		set { alignOverride = value; }
-	}
-
-	private static string changeOverride = null;
-	public static string CHANGE
-	{
-		get { if( changeOverride == null ) { return "Change"; } return changeOverride; }
-		
-		set { changeOverride = value; }
-	}
-
-	private static string cancelOverride = null;
-	public static string CANCEL
-	{
-		get { if( cancelOverride == null ) { return "Cancel"; } return cancelOverride; }
-		
-		set { cancelOverride = value; }
-	}
-
-	public static string GetModeName(ActionButtonMode mode) {
-		
-		switch(mode) {
-			case ActionButtonMode.TARGET: return TARGET;
-			case ActionButtonMode.PICK_UP: return PICK_UP;
-			case ActionButtonMode.DROP: return DROP;
-			case ActionButtonMode.STACK: return STACK;
-			case ActionButtonMode.ROLL: return ROLL;
-			case ActionButtonMode.ALIGN: return ALIGN;
-			case ActionButtonMode.CHANGE: return CHANGE;
-			case ActionButtonMode.CANCEL: return CANCEL;
-		}
-		
-		return "None";
-	}
-}
-
 public class CozmoVision : MonoBehaviour
 {
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
-	[SerializeField] protected ActionButton[] actionButtons;
+	[SerializeField] protected GameObject actionPanelPrefab;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
-	[SerializeField] protected AudioClip actionButtonSound;
-	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected AudioSource loopAudioSource;
 	[SerializeField] protected AudioClip visionActiveLoop;
 	[SerializeField] protected float maxLoopingVol = 0.5f;
@@ -201,11 +19,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected float maxVisionStartVol = 0.1f;
 	[SerializeField] protected AudioClip visionDeactivateSound;
 	[SerializeField] protected float maxVisionStopVol = 0.2f;
-	[SerializeField] protected AudioClip slideInSound;
-	[SerializeField] protected AudioClip slideOutSound;
 	[SerializeField] protected AudioClip selectSound;
 	[SerializeField] protected float soundDelay = 2f;
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
 	[SerializeField] protected float snapToSideBarScale = 1f;
 	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
@@ -222,6 +37,8 @@ public class CozmoVision : MonoBehaviour
 	}
 
 	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+
+	protected ActionPanel actionPanel;
 
 	private List<ObservedObject> _pertinentObjects = new List<ObservedObject>(); 
 	private int pertinenceStamp = -1; 
@@ -259,8 +76,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	public UnityAction[] actions;
-	
 	protected RectTransform rTrans;
 	protected RectTransform imageRectTrans;
 	protected Canvas canvas;
@@ -281,15 +96,11 @@ public class CozmoVision : MonoBehaviour
 	private float fadeDuration = 1f;
 	private float fromAlpha = 0f;
 	private static bool dingEnabled = true;
-
+	
+	protected bool isSmallScreen = false;
 	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	public static CozmoVision instance = null;
-
-
-	public Sprite GetActionSprite(ActionButtonMode mode) {
-		return actionSprites[(int)mode];
-	}
 
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
@@ -318,8 +129,12 @@ public class CozmoVision : MonoBehaviour
 		observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
 		
 		foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
-		
-		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
+
+		if(actionPanelPrefab != null) {
+			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
+			actionPanel = (ActionPanel)actionPanelObject.GetComponentInChildren(typeof(ActionPanel));
+			actionPanel.gameObject.SetActive(false);
+		}
 	}
 	
 	protected virtual void ObservedObjectSeen( ObservedObjectBox box, ObservedObject observedObject )
@@ -379,45 +194,7 @@ public class CozmoVision : MonoBehaviour
 		}
 
 	}
-	
-	protected void DisableButtons() {
-		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
-	}
-	
-	protected void SetActionButtons()
-	{
-		DisableButtons();
-		
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
-		
-		robot = RobotEngineManager.instance.current;
 
-		if( robot.isBusy ) return;
-		
-		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
-		{
-			if( robot.selectedObjects.Count > 0 ) actionButtons[1].SetMode( ActionButtonMode.STACK );
-			
-			actionButtons[0].SetMode( ActionButtonMode.DROP );
-		}
-		else
-		{
-			if( robot.selectedObjects.Count == 1 )
-			{
-				actionButtons[1].SetMode( ActionButtonMode.PICK_UP );
-			}
-			else
-			{
-				for( int i = 0; i < robot.selectedObjects.Count; ++i )
-				{
-					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
-				}
-			}
-		}
-		
-		if( robot.selectedObjects.Count > 0 && actionButtons.Length > 2 ) actionButtons[2].SetMode( ActionButtonMode.CANCEL );
-	}
-	
 	private void RobotImage( Texture2D texture )
 	{
 		if( rect.height != texture.height || rect.width != texture.width )
@@ -467,9 +244,9 @@ public class CozmoVision : MonoBehaviour
 		RequestImage();
 		ResizeToScreen();
 		VisionEnabled();
-	}
 
-	protected bool isSmallScreen = false;
+		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+	}
 
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
@@ -722,30 +499,6 @@ public class CozmoVision : MonoBehaviour
 		}
 	}
 
-	public void ActionButtonClick()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( actionButtonSound, 1f );
-	}
-	
-	public void CancelButtonClick()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( cancelButtonSound, 1f );
-	}
-	
-	public void SlideInSound()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( slideInSound, 1f );
-	}
-	
-	public void SlideOutSound()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( slideOutSound, 1f );
-	}
-	
 	protected virtual void LateUpdate()
 	{
 		if( robot != null )
@@ -776,6 +529,8 @@ public class CozmoVision : MonoBehaviour
 		StopLoopingTargetSound();
 
 		if(instance == this) instance = null;
+
+		if(actionPanel != null) actionPanel.gameObject.SetActive(false);
 	}
 
 	public void Selection(ObservedObject obj)

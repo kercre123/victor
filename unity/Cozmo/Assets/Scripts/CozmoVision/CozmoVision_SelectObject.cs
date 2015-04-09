@@ -11,7 +11,7 @@ public class CozmoVision_SelectObject : CozmoVision
 	{
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
 		{
-			DisableButtons();
+			actionPanel.DisableButtons();
 			return;
 		}
 
@@ -19,7 +19,7 @@ public class CozmoVision_SelectObject : CozmoVision
 
 		UnselectNonObservedObjects();
 		Dings();
-		SetActionButtons();
+		actionPanel.SetActionButtons();
 		ShowObservedObjects();
 
 		RefreshFade();
