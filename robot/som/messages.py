@@ -316,6 +316,126 @@ class DriveWheelsMessage(MessageBase):
     def __repr__(self):
         return "DriveWheelsMessage(%f, %f)" % self._getMembers()
 
+class MoveLiftMessage(MessageBase):
+    ID = 3
+    FORMAT = ["f32", # speed_rad_per_sec
+             ]
+
+    def __init__(self, buffer=None, speed=0.0):
+        "Create move lift message"
+        MessageBase.__init__(self)
+        self.speed = speed
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.speed,
+
+    def _setMembers(self, speed):
+        self.speed = speed
+
+    def __repr__(self):
+        return "MoveLiftMessage(%f)" % self.speed
+
+class MoveHeadMessage(MessageBase):
+    ID = 4
+    FORMAT = ["f32", # speed_rad_per_sec
+             ]
+
+    def __init__(self, buffer=None, speed=0.0):
+        "Create move lift message"
+        MessageBase.__init__(self)
+        self.speed = speed
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.speed,
+
+    def _setMembers(self, speed):
+        self.speed = speed
+
+    def __repr__(self):
+        return "MoveHeadMessage(%f)" % self.speed
+
+class SetLiftHeightMessage(MessageBase):
+    ID = 5
+    FORMAT = ["f32", # height mm,
+              "f32", # max speed rad/sec
+              "f32", # accel rad/sec^2
+             ]
+
+    def __init__(self, *rest):
+        MessageBase.__init__(self)
+        self.height = 0.0
+        self.max_speed = 1.0
+        self.accel = 1.0
+        if len(rest) > 0:
+            if type(rest[0]) in (float, int):
+                self.height = rest[0]
+            else:
+                self.deserialize(rest[0])
+                return
+        if len(rest) > 1:
+            self.max_speed = rest[1]
+        if len(rest) > 2:
+            self.accel = rest[2]
+
+    def _getMembers(self):
+        return self.height, self.max_speed, self.accel
+
+    def _setMembers(self, *members):
+        self.height, self.max_speed, self.accel = members
+
+    def __repr__(self):
+        return "SetLiftHeightMessage(height=%f, max_speed=%f, accel=%f)" % self._getMembers()
+
+class SetHeadAngleMessage(MessageBase):
+    ID = 6
+    FORMAT = ["f32", # angle radians,
+              "f32", # max speed rad/sec
+              "f32", # accel rad/sec^2
+             ]
+
+    def __init__(self, *rest):
+        MessageBase.__init__(self)
+        self.angle = 0.0
+        self.max_speed = 1.0
+        self.accel = 1.0
+        if len(rest) > 0:
+            if type(rest[0]) in (float, int):
+                self.angle = rest[0]
+            else:
+                self.deserialize(rest[0])
+                return
+        if len(rest) > 1:
+            self.max_speed = rest[1]
+        if len(rest) > 2:
+            self.accel = rest[2]
+
+    def _getMembers(self):
+        return self.angle, self.max_speed, self.accel
+
+    def _setMembers(self, *members):
+        self.angle, self.max_speed, self.accel = members
+
+    def __repr__(self):
+        return "SetHeadAngleMessage(angle=%f, max_speed=%f, accel=%f)" % self._getMembers()
+
+class StopAllMotorsMessage(MessageBase):
+    ID = 7
+    FORMAT = []
+
+    def _getMembers(self):
+        return tuple()
+
+    def _setMembers(self, *members):
+        pass
+
+    def __repr__(self):
+        return "StopAllMotorsMessage"
+
+
 class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""
