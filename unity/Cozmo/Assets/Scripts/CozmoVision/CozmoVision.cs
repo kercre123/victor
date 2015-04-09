@@ -523,7 +523,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		fadingIn = false;
 		fadingOut = false;
-		image.enabled = PlayerPrefs.GetInt("VisionDisabled") == 0;
+		image.enabled = !OptionsScreen.GetToggleDisableVision();
 
 		//start at no alpha
 		float alpha = 0f;
@@ -543,7 +543,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected void RefreshFade()
 	{
-		//if(!image.enabled) return;
+		if(!image.enabled) return;
 		if(!fadingIn && !fadingOut) return;
 
 		fadeTimer += Time.deltaTime;
@@ -589,7 +589,7 @@ public class CozmoVision : MonoBehaviour
 
 		PlayVisionActivateSound();
 
-		//if(!image.enabled) return;
+		if(!image.enabled) return;
 
 		Color color = image.color;
 		fromAlpha = color.a;
@@ -615,7 +615,7 @@ public class CozmoVision : MonoBehaviour
 		
 		PlayVisionDeactivateSound();
 
-		//if(!image.enabled) return;
+		if(!image.enabled) return;
 
 		Color color = image.color;
 		fromAlpha = color.a;

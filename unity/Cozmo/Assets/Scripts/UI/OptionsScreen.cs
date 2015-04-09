@@ -134,7 +134,7 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("ControlSchemeIndex", index);
 	}
 
-	int GetVisionSelected(int defaultValue = 0) {
+	static int GetVisionSelected(int defaultValue = 0) {
 		return PlayerPrefs.GetInt("VisionSchemeIndex", defaultValue);
 	}
 
@@ -161,6 +161,10 @@ public class OptionsScreen : MonoBehaviour {
 
 	void ToggleDisableVision (bool val) {
 		PlayerPrefs.SetInt("VisionDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
+	}
+
+	public static bool GetToggleDisableVision (bool defaultValue = false) {
+		return PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
 	}
 
 	void ToggleUserTestMode (bool val) {
