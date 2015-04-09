@@ -873,6 +873,108 @@ namespace Anki {
       return RESULT_OK;
       
     } // Update()
+      
+      
+      enum TrackHeadToObjectMode {
+        HEAD_TRACK_OFF,
+        HEAD_TRACK_VISIBLE_ONLY,
+        HEAD_TRACK_ALLOW_HEAD_TILT,
+        HEAD_TRACK_ALLOW_PAN_AND_TILT
+      };
+      
+      void Robot::UpdateTrackHeadToObject(uint8_t robotID,
+                                          uint32_t objectFamily,
+                                          uint32_t objectType,
+                                          uint32_t objectID,
+                                          uint8_t  markersVisible,
+                                          float img_x_upperLeft,  float img_y_upperLeft,
+                                          float img_width,  float img_height,
+                                          float world_x, float world_y, float world_z,  // Absolute translation vector
+                                          float q0, float q1, float q2, float q3)
+      {
+        TrackHeadToObjectMode _headTrackMode;
+        
+        if(objectID == _trackHeadToObjectID)
+        {
+          bool proceed = false;
+          switch(_headTrackMode)
+          {
+            case HEAD_TRACK_VISIBLE_ONLY:
+              proceed = static_cast<bool>(markersVisible);
+              break;
+              
+            case HEAD_TRACK_ALLOW_HEAD_TILT:
+              if(markersVisible) {
+                proceed = true;
+              } else {
+                // TODO: See if we can project into the camera's FOV just by tilting the head
+                GetCamera().Project3dPoint(<#const Point3f &objPoint#>, <#Point2f &imgPoint#>)
+              }
+              break;
+              
+            case HEAD_TRACK_ALLOW_PAN_AND_TILT:
+              proceed = true;
+              break;
+              
+            default:
+              proceed = false;
+          }
+          
+          if(proceed)
+          {
+          // Find the observed marker closest to the robot and use that as the one we
+          // track to
+          std::vector<const Vision::KnownMarker*> observedMarkers;
+          observedObject->GetObservedMarkers(observedMarkers, observedObject->GetLastObservedTime());
+          
+          if(observedMarkers.empty()) {
+            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                              "No markers on observed object %d marked as observed since time %d, "
+                              "expecting at least one.\n",
+                              observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
+          } else {
+            const Vec3f& robotTrans = GetPose().GetTranslation();
+            
+            const Vision::KnownMarker* closestMarker = nullptr;
+            f32 minDistSq = std::numeric_limits<f32>::max();
+            f32 zDist = 0.f;
+            
+            for(auto marker : observedMarkers) {
+              Pose3d markerPose;
+              if(false == marker->GetPose().GetWithRespectTo(*GetWorldOrigin(), markerPose)) {
+                PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                                  "Could not get pose of observed marker w.r.t. world for head tracking.\n");
+              } else {
+                
+                const f32 xDist = markerPose.GetTranslation().x() - robotTrans.x();
+                const f32 yDist = markerPose.GetTranslation().y() - robotTrans.y();
+                
+                const f32 currentDistSq = xDist*xDist + yDist*yDist;
+                if(currentDistSq < minDistSq) {
+                  closestMarker = marker;
+                  minDistSq = currentDistSq;
+                  
+                  // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
+                  // NOTE: This isn't perfectly accurate since it doesn't take into account the
+                  // the head angle and is simply using the neck joint (which should also
+                  // probably be queried from the robot instead of using the constant here)
+                  zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
+                }
+              }
+            } // For all markers
+            
+            if(closestMarker == nullptr) {
+              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects", "No closest marker found!\n");
+            } else {
+              const f32 headAngle = atanf(zDist/(sqrtf(minDistSq + 1e-6f)));
+              MoveHeadToAngle(headAngle, 5.f, 2.f);
+            }
+          } // if/else observedMarkers.empty()
+          
+        } // if(objectID == _trackHeadToObjectID)
+        
+      } // UpdateTrackHeadToObject()
+      
     
     bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
     {

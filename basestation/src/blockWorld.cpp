@@ -461,7 +461,10 @@ namespace Anki
       
     } // AddAndUpdateObjects()
     
-    void BlockWorld::UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject)
+    void BlockWorld::UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject,
+                                             bool mustBeCurrentlyVisible,
+                                             bool allowHeadTilt,
+                                             bool allowTurning)
     {
       assert(observedObject != nullptr);
       
