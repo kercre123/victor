@@ -1094,9 +1094,12 @@ public class G2U_DeviceDetectedVisionMarker
 public class G2U_RobotCompletedAction
 {
 	private uint _robotID; // uint_32
+	private int _actionType; // int_32
 	private byte _success; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public int actionType { get { return _actionType; } set { _actionType = value; } }
 
 	public byte success { get { return _success; } set { _success = value; } }
 
@@ -1108,9 +1111,11 @@ public class G2U_RobotCompletedAction
 	}
 
 	public G2U_RobotCompletedAction(uint robotID,
+		int actionType,
 		byte success)
 	{
 		this.robotID = robotID;
+		this.actionType = actionType;
 		this.success = success;
 	}
 
@@ -1133,6 +1138,7 @@ public class G2U_RobotCompletedAction
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_robotID = reader.ReadUInt32();
+		_actionType = reader.ReadInt32();
 		_success = reader.ReadByte();
 	}
 
@@ -1145,13 +1151,14 @@ public class G2U_RobotCompletedAction
 	public void Pack(System.IO.BinaryWriter writer)
 	{
 		writer.Write((uint)_robotID);
+		writer.Write((int)_actionType);
 		writer.Write((byte)_success);
 	}
 
 	public int Size 
 	{
 		get {
-			return 5;
+			return 9;
 		}
 	}
 

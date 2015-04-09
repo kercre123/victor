@@ -154,7 +154,8 @@ message G2U_DeviceDetectedVisionMarker {
 // TODO: Add action type, more informative result codes...
 message G2U_RobotCompletedAction {
     uint_32 robotID,
-    uint_8 success    
+    int_32  actionType, // see enum in actionTypes.h
+    uint_8  success
 }
 
 
