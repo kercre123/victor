@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class GoldRushController : GameController {
 
 	[SerializeField] protected AudioClip foundBeep;
+	[SerializeField] protected AudioClip collectedSound;
 	[SerializeField] protected AudioSource timerAudio;
 	[SerializeField] protected AudioClip[] timerSounds;
 	[SerializeField] protected int[] timerEventTimes = {60,30,10,9,8,7,6,5,4,3,2,1};
@@ -25,8 +26,10 @@ public class GoldRushController : GameController {
 	//List<ObservedObject> goldCubes = new List<ObservedObject>();
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
+	bool attemptingStack = false;
 	int lastCarriedObjectId = -1;
 	int goldCarryingObjectId = -1;
+	int baseObjectId = -1;
 	ScreenMessage hintMessage;
 
 	enum PlayState
@@ -83,7 +86,6 @@ public class GoldRushController : GameController {
 		scores [0] = 0;
 
 
-		robot = RobotEngineManager.instance.current;
 
 	}
 
@@ -93,6 +95,7 @@ public class GoldRushController : GameController {
 		resultsScore.text = "Score: " + scores [0];
 		CozmoVision.EnableDing(); // just in case we were in searching mode
 		extractButton.gameObject.SetActive (false);
+		ActionButton.DROP = null;
 		audio.Stop ();
 	}
 
@@ -130,13 +133,52 @@ public class GoldRushController : GameController {
 			break;
 		}
 		//else if lead cube dropped within findRadius, Transmute(lastHeldID)
-
 		//lastHeldID = robot.carryingObjectID;
+	}
+
+	protected override void Enter_BUILDING ()
+	{
+		base.Enter_BUILDING ();
+		lastCarriedObjectId = -1;
+		goldCarryingObjectId = -1;
+		playButton.gameObject.SetActive (false);
+		attemptingStack = false;
+
+		robot = RobotEngineManager.instance.current;
+	}
+
+	protected override void Exit_BUILDING ()
+	{
+		base.Exit_BUILDING ();
+	}
+
+	protected override void Update_BUILDING ()
+	{
+		base.Update_BUILDING ();
+		// looking to see if we've created our stack
+		if (robot != null 
+		    && !attemptingStack
+		    && robot.Status (Robot.StatusFlag.IS_PICKING_OR_PLACING) 
+		    && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK) ) 
+		{
+			Debug.Log("Attempting stack...");
+			attemptingStack = true;
+		}
+		else if ( robot != null 
+		         && attemptingStack
+		         && (!robot.Status (Robot.StatusFlag.IS_PICKING_OR_PLACING) 
+		         || !robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) ) 
+		{
+			Debug.Log("Not attempting stack...");
+			attemptingStack = false;
+		}
 	}
 
 	protected override bool IsGameReady() 
 	{
-		if(!base.IsGameReady()) return false;
+		//if(!base.IsGameReady()) return false;
+		if(RobotEngineManager.instance == null) return false;
+		if(RobotEngineManager.instance.current == null) return false;
 		
 		//game specific start conditions...
 		//are sufficient gold cubes in play?
@@ -213,6 +255,7 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessageForDuration("Get that gold back to the base!", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
+			ActionButton.DROP = "COLLECT";
 			hintMessage.ShowMessage("Drop off the gold to collect points!", Color.black);
 			break;
 		default:
@@ -236,6 +279,7 @@ public class GoldRushController : GameController {
 			hintMessage.KillMessage();
 			break;
 		case PlayState.RETURNING:
+			ActionButton.DROP = null;
 			break;
 		case PlayState.RETURNED:
 			hintMessage.KillMessage();
@@ -259,9 +303,9 @@ public class GoldRushController : GameController {
 					if(distance <= findRadius) 
 					{
 						//show 'found' light pattern
-						gameObject.audio.PlayOneShot(playerScoreSound);
+						audio.Stop();
 						audio.loop = true;
-						audio.Play();
+						gameObject.audio.PlayOneShot(foundBeep);
 						foundItems.Add(robot.carryingObjectID);
 						extractButton.gameObject.SetActive (true);
 						Debug.Log("found!");
@@ -331,6 +375,8 @@ public class GoldRushController : GameController {
 		{
 			// award points
 			scores[0]+= 10;
+			audio.Stop();
+			audio.PlayOneShot(collectedSound);
 			EnterPlayState(PlayState.IDLE);
 		}
 
