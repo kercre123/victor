@@ -48,7 +48,7 @@ public class ActionButton
 		}
 	}
 	
-	public void SetMode( ActionButtonMode mode, int i = 0 )
+	public void SetMode( ActionButtonMode mode, int i = 0, string append = null )
 	{
 		button.onClick.RemoveAllListeners();
 
@@ -100,6 +100,8 @@ public class ActionButton
 				button.onClick.AddListener(vision.CancelButtonClick);
 				break;
 		}
+
+		if( append != null ) text.text += append;
 		
 		button.gameObject.SetActive(true);
 	}
@@ -282,7 +284,7 @@ public class CozmoVision : MonoBehaviour
 	private float fromAlpha = 0f;
 	private static bool dingEnabled = true;
 
-	protected readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
+	protected static readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	public static CozmoVision instance = null;
 
@@ -408,9 +410,9 @@ public class CozmoVision : MonoBehaviour
 			}
 			else
 			{
-				for( int i = 0; i < robot.selectedObjects.Count; ++i )
+				for( int i = 0; i < robot.selectedObjects.Count && i < 2; ++i )
 				{
-					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i );
+					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? " Bottom" : " Top" );
 				}
 			}
 		}
