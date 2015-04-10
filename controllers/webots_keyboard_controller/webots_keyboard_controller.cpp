@@ -963,7 +963,19 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                SendIMURequest(2000);
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  U2G_FaceObject msg;
+                  msg.robotID = 1;
+                  msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
+                  msg.turnAngleTol = DEG_TO_RAD(5);
+                  msg.maxTurnAngle = DEG_TO_RAD(90);
+                  
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_FaceObject(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendIMURequest(2000);
+                }
                 break;
               }
 
