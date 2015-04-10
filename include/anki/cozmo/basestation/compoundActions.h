@@ -25,6 +25,8 @@ namespace Anki {
     public:
       ICompoundAction(std::initializer_list<IActionRunner*> actions);
       
+      void AddAction(IActionRunner* action);
+      
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
@@ -36,6 +38,8 @@ namespace Anki {
       virtual bool ShouldLockHead() const override;
       virtual bool ShouldLockLift() const override;
       virtual bool ShouldLockWheels() const override;
+      
+      virtual s32 GetType() const override { return -2; }
       
     protected:
       
@@ -80,7 +84,6 @@ namespace Anki {
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
     protected:
-      CompoundActionParallel();
       
       virtual ActionResult UpdateInternal(Robot& robot) override final;
       
