@@ -45,20 +45,20 @@ class CameraSubServer(BaseSubServer):
     def FPS2INTERVAL(cls, fps):
         return (fps*1000, 1000000)
 
-    SENSOR_RESOLUTION = messages.CAMERA_RES_UXGA
+    SENSOR_RESOLUTION = messages.CAMERA_RES_SVGA
     SENSOR_RES_TPL = RESOLUTION_TUPLES[SENSOR_RESOLUTION]
     SENSOR_FPS     = 15
 
-    ISP_MIN_RESOLUTION = messages.CAMERA_RES_QSVGA
+    ISP_MIN_RESOLUTION = messages.CAMERA_RES_VGA
 
     ENCODER_SOCK_HOSTNAME = '127.0.0.1'
     ENCODER_SOCK_PORT     = 6000
     ENCODER_CODING        = messages.IE_JPEG_COLOR
     ENCODER_QUALITY       = 50
 
-    ENCODER_LATEANCY = 2.0 # ms, determiend imperically
+    ENCODER_LATEANCY = 2.0 # frames, determiend imperically
 
-    FOV_CROP = isfile('FOV_CROP')
+    FOV_CROP = False #isfile('FOV_CROP')
 
     def __init__(self, server, verbose=False, test_framerate=False):
         "Initalize server for specified camera on given port"
@@ -89,6 +89,8 @@ class CameraSubServer(BaseSubServer):
 
         self.resolution = messages.CAMERA_RES_NONE
         self.ispRes     = messages.CAMERA_RES_NONE
+        self.encoding   = self.ENCODER_CODING
+        self.encoderFPS = 15
 
         # Setup video data chunking state
         self.imageNumber    = 0
@@ -122,6 +124,10 @@ class CameraSubServer(BaseSubServer):
             if subprocess.call(['media-ctl', '-v', '-f', '"%s":0 [SRGGB12 %dx%d%s], "OMAP3 ISP CCDC":2 [SRGGB10 %dx%d], "OMAP3 ISP preview":1 [UYVY %dx%d], "OMAP3 ISP resizer":1 [UYVY %dx%d]' % \
                                 tuple([self.camDev] + self.SENSOR_RES_TPL + [self.camInt] + (self.SENSOR_RES_TPL * 2) + self.RESOLUTION_TUPLES[self.ispRes])]) == 0:
                 self.resolution = resolutionEnum
+                if self.resolution > messages.CAMERA_RES_VGA:
+                    self.encoderFPS = 15
+                else:
+                    self.encoderFPS = 10
                 self.startEncoder()
                 return True
             else:
@@ -135,10 +141,16 @@ class CameraSubServer(BaseSubServer):
             if self.ENCODER_CODING == messages.IE_JPEG_COLOR:
                 self.log("Starting the encoder\n")
                 encoderCall = ['nice', '-n', '-10', 'gst-launch', 'v4l2src', 'device=/dev/video6', '!']
+                #encoderCall.extend(['videorate', 'silent=true', 'skip-to-first=true', '!', 'video/x-raw-yuv,framerate=%d/1' % self.encoderFPS, '!'])
                 if self.ispRes != self.resolution:
                     h = (self.RESOLUTION_TUPLES[self.ispRes][0]-self.RESOLUTION_TUPLES[self.resolution][0])/2
                     v = (self.RESOLUTION_TUPLES[self.ispRes][1]-self.RESOLUTION_TUPLES[self.resolution][1])/2
                     encoderCall.extend(['videocrop', 'left=%d' % h, 'top=%d' % v, 'right=%d' % h, 'bottom=%d' % v, '!'])
+                    self.encoding = self.ENCODER_CODING
+                else:
+                    h = self.RESOLUTION_TUPLES[self.ispRes][0]/4
+                    encoderCall.extend(['videocrop', 'left=%d' % h, 'right=%d' % h, '!'])
+                    self.encoding = messages.IE_JPEG_CHW
                 encoderCall.extend(['TIImgenc1', 'engineName=codecServer', 'iColorSpace=UYVY', 'oColorSpace=YUV420P', \
                                     'qValue=%d' % self.ENCODER_QUALITY, 'numOutputBufs=2', '!', \
                                     'udpsink', 'host=%s' % self.ENCODER_SOCK_HOSTNAME, 'port=%d' % self.ENCODER_SOCK_PORT])
@@ -212,7 +224,7 @@ class CameraSubServer(BaseSubServer):
                     msg = messages.ImageChunk()
                     msg.imageId = self.imageNumber
                     msg.imageTimestamp = self.server.timestamp.get() - int((self.ENCODER_LATEANCY/self.SENSOR_FPS)*1000)
-                    msg.imageEncoding = self.ENCODER_CODING
+                    msg.imageEncoding = self.encoding
                     msg.imageChunkCount = int(math.ceil(float(len(frame)) / messages.ImageChunk.IMAGE_CHUNK_SIZE))
                     msg.resolution = self.resolution
                     chunkNumber = 0
@@ -221,11 +233,11 @@ class CameraSubServer(BaseSubServer):
                         msg.chunkId = chunkNumber
                         chunkNumber += 1
                         self.clientSend(msg.serialize())
-                        time.sleep(0.001) # Allow a little time for the UDP socket to process
+                        self.threadYield() # Allow a little time for the UDP socket to process
                     if self.sendMode == messages.ISM_SINGLE_SHOT:
                         self.sendMode = messages.ISM_OFF
                     if nFramesBuffered > 1:
-                        self.log("Dropped %d frames, chunk count=%d\n" % (nFramesBuffered - 1, msg.imageChunkCount))
+                        self.log("Dropped %d frames, chunk count=%d, %f\n" % (nFramesBuffered - 1, msg.imageChunkCount, time.time()))
                 self.sendModeLock.release()
             elif e.errno == socket.EBADF and self._continue == False:
                 return

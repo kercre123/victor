@@ -145,6 +145,28 @@ namespace Anki
                                     const std::set<ObjectType>& ignoreTypes = {{}},
                                     const std::set<ObjectID>& ignoreIDs = {{}}) const;
 
+      // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
+      // of the given pose. Returns nullptr if no objects match. Returns closest
+      // if multiple matches are found.
+      Vision::ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                                    const Vec3f&  distThreshold,
+                                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
+                                                    const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
+                                                    const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>()) const;
+      
+      // Finds a matching object (one with the same type) that is closest to the
+      // given object, within the specified distance and angle thresholds.
+      // Returns nullptr if none found.
+      Vision::ObservableObject* FindClosestMatchingObject(const Vision::ObservableObject& object,
+                                                          const Vec3f& distThreshold,
+                                                          const Radians& angleThreshold);
+      
+      // Find an object on top of the given object, using a given height tolerance
+      // between the top of the given object on bottom and the bottom of existing
+      // candidate objects on top. Returns nullptr if no object is found.
+      Vision::ObservableObject* FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
+                                                  f32 zTolerance) const;
+      
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
       // and the object the robot is localized to are not considered obstacles.
@@ -213,8 +235,9 @@ namespace Anki
                                   const std::vector<Vision::ObservableObject*>& objectsSeen,
                                   std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
       
-      // Finds existing objects that intersect with objectSeen, with the exception
-      // of those that are of ignoreFamilies or ignoreTypes.
+      // Finds existing objects whose XY bounding boxes intersect with objectSeen's
+      // XY bounding box, with the exception of those that are of ignoreFamilies or
+      // ignoreTypes.
       void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
                                    const std::set<ObjectFamily>& ignoreFamilies,
                                    const std::set<ObjectType>& ignoreTypes,

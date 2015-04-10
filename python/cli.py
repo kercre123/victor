@@ -36,10 +36,15 @@ class Pinger(threading.Thread, socket.socket):
             except socket.timeout:
                 continue
             else:
+                t = time.time()
                 #print(msg)
                 if PrintText.isa(msg):
                     printMsg = PrintText(buffer=msg)
                     sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
+                if ImageChunk.isa(msg):
+                    ic = ImageChunk(buffer=msg)
+                    sys.stdout.write("\rimgChunk %d[%02d] @ %fms: COZMO>>>" % (ic.imageId, ic.chunkId, t*1000.0))
+
 
     def stop(self):
         "Stop the thread running"
@@ -139,6 +144,58 @@ class CozmoCLI(socket.socket):
             self.sendto(ImageRequest(imageSendMode=cmd, resolution=res).serialize(), self.robot)
             return True
 
+    def DriveWheels(self, *args):
+        "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
+        if len(args) != 2:
+            sys.stderr.write("drive command requires two motor speeds as floats\n")
+            return False
+        else:
+            try:
+                lws = float(args[0])
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[0])
+                return False
+            try:
+                rws = float(args[1])
+            except:
+                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[1])
+                return False
+            self.sendto(DriveWheelsMessage(lws, rws).serialize(), self.robot)
+            return True
+
+    def StopAllMotors(self, *args):
+        "Full stop"
+        self.sendto(StopAllMotorsMessage().serialize(), self.robot)
+
+    def SetHeadAngle(self, *args):
+        "Commands the head angle. Args: <angle (radians)> [<max speed> [<acceleration>]]"
+        if len(args) == 0:
+            sys.stderr.write("Need at least an angle for SetHeadAngle")
+            return False
+        else:
+            try:
+                params = [float(a) for a in args]
+            except:
+                sys.stderr.write("Couldn't interpret arguments as floats: %s\n" % repr(args))
+                return False
+            else:
+                self.sendto(SetHeadAngleMessage(*params).serialize(), self.robot)
+                return True
+
+    def SetLiftHeight(self, *args):
+        "Commands the lift height. Args: <height (mm)> [<max speed> [<acceleration>]]"
+        if len(args) == 0:
+            sys.stderr.write("Need at least a height for SetLiftHeight")
+            return False
+        else:
+            try:
+                params = [float(a) for a in args]
+            except:
+                sys.stderr.write("Couldn't interpret arguments as floats: %s \n" % repr(args))
+                return False
+            else:
+                self.sendto(SetLiftHeightMessage(*params).serialize(), self.robot)
+                return True
 
 
     functions = {
@@ -147,6 +204,10 @@ class CozmoCLI(socket.socket):
         "FlashBlockIDs": FlashBlockIDs,
         "SetBlockLights": SetBlockLights,
         "ImageRequest": ImageRequest,
+        "drive": DriveWheels,
+        "stop":  StopAllMotors,
+        "HeadAngle": SetHeadAngle,
+        "LiftHeight": SetLiftHeight,
     }
 
 

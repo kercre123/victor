@@ -122,9 +122,13 @@ namespace Anki {
       // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
       
+      // Returns the average period of incoming robot images
+      u32 GetAverageImagePeriodMS();
+      
       // Specify whether this robot is a physical robot or not.
       // Currently, adjusts headCamPose by slop factor if it's physical.
       void SetPhysicalRobot(bool isPhysical);
+      bool IsPhysical() {return _isPhysical;}
       
       //
       // Pose (of the robot or its parts)
@@ -158,6 +162,13 @@ namespace Anki {
       f32 GetLeftWheelSpeed() const { return _leftWheelSpeed_mmps; }
       f32 GetRigthWheelSpeed() const { return _rightWheelSpeed_mmps; }
       
+      // Return pose of robot's drive center based on what it's currently carrying
+      const Pose3d& GetDriveCenterPose() const;
+      
+      // Computes pose of drive center for the given robot pose
+      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      
+      
       //
       // Path Following
       //
@@ -190,14 +201,15 @@ namespace Anki {
       u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
       u16  GetLastSentPathID()  const {return _lastSentPathID;}
 
-      
+      bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
       
       //
       // Object Docking / Carrying
       //
 
-      const ObjectID&             GetDockObject()     const {return _dockObjectID;}
-      const ObjectID&             GetCarryingObject() const {return _carryingObjectID;}
+      const ObjectID&  GetDockObject()          const {return _dockObjectID;}
+      const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
+      const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
       const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
       bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -240,6 +252,9 @@ namespace Anki {
       Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                        const Vision::KnownMarker* dockMarker);
       
+      void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; }
+      bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
+      
       // Places the object that the robot was carrying in its current position
       // w.r.t. the world, and removes it from the lift pose chain so it is no
       // longer "attached" to the robot.
@@ -266,9 +281,12 @@ namespace Anki {
       Result StopFaceTracking();
       Result StartLookingForMarkers();
       Result StopLookingForMarkers();
+
+      // Set how to save incoming robot state messages
+      void SetSaveStateMode(const SaveMode_t mode);
       
-      // Save the next image passed into ProcessImage() to file
-      void SaveNextImage();
+      // Set how to save incoming robot images to file
+      void SetSaveImageMode(const SaveMode_t mode);
       
       // =========== Actions Commands =============
       
@@ -276,6 +294,17 @@ namespace Anki {
       // to do, either "now" or in queues.
       // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
       ActionList& GetActionList() { return _actionList; }
+      
+      // These are methods to lock/unlock subsystems of the robot to prevent
+      // MoveHead/MoveLift/DriveWheels/etc commands from having any effect.
+      
+      void LockHead(bool tf) { _headLocked = tf; }
+      void LockLift(bool tf) { _liftLocked = tf; }
+      void LockWheels(bool tf) { _wheelsLocked = tf; }
+      
+      bool IsHeadLocked() const { return _headLocked; }
+      bool IsLiftLocked() const { return _liftLocked; }
+      bool AreWheelsLockeD() const { return _wheelsLocked; }
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
@@ -359,6 +388,8 @@ namespace Anki {
       void SetBehaviorState(BehaviorManager::BehaviorState state);
       
       // For debugging robot parameters:
+      Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
+                                     const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
       Result SendVisionSystemParams(VisionSystemParams_t p);
@@ -460,6 +491,9 @@ namespace Anki {
       
       //ActionQueue      _actionQueue;
       ActionList       _actionList;
+      bool             _wheelsLocked;
+      bool             _headLocked;
+      bool             _liftLocked;
       
       // Path Following. There are two planners, only one of which can
       // be selected at a time
@@ -470,6 +504,7 @@ namespace Anki {
       u8               _numFreeSegmentSlots;
       u16              _lastSentPathID;
       u16              _lastRecvdPathID;
+      bool             _usingManualPathSpeed;
       PathDolerOuter*  _pdo;
       
       // This functions sets _selectedPathPlanner to the appropriate
@@ -491,6 +526,7 @@ namespace Anki {
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
       Pose3d*          _worldOrigin;
       Pose3d           _pose;
+      Pose3d           _driveCenterPose;
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;       // ID of mat object robot is localized to
       bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
@@ -549,7 +585,9 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       const Vision::KnownMarker*  _dockMarker;
       ObjectID                    _carryingObjectID;
+      ObjectID                    _carryingObjectOnTopID; 
       const Vision::KnownMarker*  _carryingMarker;
+      bool                        _lastPickOrPlaceSucceeded;
       
       // Object to keep head tracked to this object whenever it is observed
       ObjectID                    _trackHeadToObjectID;
@@ -568,8 +606,15 @@ namespace Anki {
       // vision marker that triggers them
       std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
       
-      // Flag for saving next processed image to file
-      bool _saveNextImageToFile;
+      // Save mode for robot state
+      SaveMode_t _stateSaveMode;
+      
+      // Save mode for robot images
+      SaveMode_t _imageSaveMode;
+      
+      // Maintains an average period of incoming robot images
+      u32 _imgFramePeriod;
+      TimeStamp_t _lastImgTimeStamp;
       
       ///////// Modifiers ////////
       
@@ -669,6 +714,8 @@ namespace Anki {
       
       Result SendAbortDocking();
       Result SendAbortAnimation();
+      
+      Result SendSetCarryState(CarryState_t state);
 
       
       // =========  Active Object messages  ============
@@ -690,6 +737,8 @@ namespace Anki {
     inline const Pose3d& Robot::GetPose(void) const
     { return _pose; }
     
+    inline const Pose3d& Robot::GetDriveCenterPose(void) const
+    {return _driveCenterPose; }
     
     inline void Robot::EnableVisionWhileMoving(bool enable)
     { _visionWhileMovingEnabled = enable; }
@@ -729,14 +778,6 @@ namespace Anki {
     inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
       _rampID = rampID;
       _rampDirection = direction;
-    }
-
-    inline void Robot::SetCarryingObject(ObjectID carryObjectID) {
-      _carryingObjectID = carryObjectID;
-    }
-    
-    inline void Robot::UnSetCarryingObject() {
-      _carryingObjectID.UnSet();
     }
 
     inline Result Robot::SetDockObjectAsAttachedToLift(){

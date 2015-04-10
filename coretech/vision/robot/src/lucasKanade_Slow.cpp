@@ -35,7 +35,7 @@ namespace Anki
       }
 
       LucasKanadeTracker_Slow::LucasKanadeTracker_Slow(const Array<u8> &templateImage, const Quadrilateral<f32> &templateQuad, const f32 scaleTemplateRegionPercent, const s32 numPyramidLevels, const Transformations::TransformType transformType, const f32 ridgeWeight, MemoryStack &memory)
-        : numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
+        : baseImageWidth(templateImage.get_size(1)), baseImageHeight(templateImage.get_size(0)), numPyramidLevels(numPyramidLevels), templateImageHeight(templateImage.get_size(0)), templateImageWidth(templateImage.get_size(1)), ridgeWeight(ridgeWeight), isValid(false), isInitialized(false)
       {
         BeginBenchmark("LucasKanadeTracker_Slow");
 
@@ -51,12 +51,12 @@ namespace Anki
         AnkiConditionalErrorAndReturn(ridgeWeight >= 0.0f,
           "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "ridgeWeight must be greater or equal to zero");
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1);
+        const s32 initialImageScaleS32 = baseImageWidth / templateImage.get_size(1);
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
-        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == BASE_IMAGE_WIDTH,
-          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+        AnkiConditionalErrorAndReturn(((1<<initialImagePowerS32)*templateImage.get_size(1)) == baseImageWidth,
+          "LucasKanadeTracker_Slow::LucasKanadeTracker_Slow", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         templateRegion = templateQuad.ComputeBoundingRectangle<f32>().ComputeScaledRectangle<f32>(scaleTemplateRegionPercent);
 
@@ -138,7 +138,7 @@ namespace Anki
         this->isInitialized = true;
         this->isValid = false;
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / templateImage.get_size(1) ;
+        const s32 initialImageScaleS32 = baseImageWidth / templateImage.get_size(1) ;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
 
         const s32 numTransformationParameters = transformation.get_transformType() >> 8;
@@ -425,7 +425,7 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(convergenceTolerance > 0.0f,
           RESULT_FAIL_INVALID_PARAMETER, "LucasKanadeTracker_Slow::IterativelyRefineTrack", "convergenceTolerance must be greater than zero");
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImage.get_size(1) ;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImage.get_size(1) ;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32); // TODO: check that this is integer
 
         const s32 numPointsY = templateCoordinates[whichScale].get_yGridVector().get_size();
@@ -639,7 +639,7 @@ namespace Anki
           BeginBenchmark("IterativelyRefineTrack.checkForCompletion");
 
           // Check if we're done with iterations
-          const f32 minChange = UpdatePreviousCorners(transformation, previousCorners, scratch);
+          const f32 minChange = UpdatePreviousCorners(transformation, baseImageWidth, baseImageHeight, previousCorners, scratch);
 
           if(minChange < convergenceTolerance) {
             verify_converged = true;

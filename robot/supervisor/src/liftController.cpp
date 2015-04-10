@@ -39,8 +39,16 @@ namespace Anki {
 #if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
-        const f32 LIMIT_APPROACH_POWER = 0.7;
+        const f32 LIMIT_APPROACH_POWER = 0.6;
 #endif
+
+        // This value should be the lowest speed the lift can be commanded to move
+        const f32 DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = 0.8;
+        
+        // This value should probably be a little more DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC
+        // to make sure that the joint is limiting
+        const f32 LIMIT_ANGLE_APPROACH_SPEED_RAD_PER_SEC = DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC + 0.2;
+        
         
         const f32 MAX_LIFT_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
         
@@ -49,7 +57,7 @@ namespace Anki {
         // Used when calling SetDesiredHeight with just a height:
         const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
-        const f32 DEFAULT_DURATION_SEC     = 0.25f;
+        const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
         f32 Kp_ = 20.f; // proportional control constant
         f32 Ki_ = 0.03f; // integral control constant
@@ -69,9 +77,10 @@ namespace Anki {
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-        const f32 SPEED_TO_POWER_OL_GAIN = 0.2399;
-        const f32 BASE_POWER_UP = 0.1309;
-        const f32 BASE_POWER_DOWN = -0.0829;
+        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.2274f;
+        const f32 BASE_POWER_UP = 0.1468f;
+        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.2148f;
+        const f32 BASE_POWER_DOWN = 0.1561f;
         
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -86,7 +95,7 @@ namespace Anki {
         bool inPosition_  = true;
         
         // Speed and acceleration params
-        f32 maxSpeedRad_ = 1.0f;
+        f32 maxSpeedRad_ = PI_F;
         f32 accelRad_ = 2.0f;
         f32 approachSpeedRad_ = 0.2f;
         
@@ -391,6 +400,7 @@ namespace Anki {
       
       void SetDesiredHeight(f32 height_mm)
       {
+        //PRINT("LiftHeight: %fmm, speed %f, accel %f\n", height_mm, maxSpeedRad_, accelRad_);
         SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
       }
 
@@ -462,9 +472,10 @@ namespace Anki {
         
 #if(RECALIBRATE_AT_LIMITS)
         // Adjust approach speed to be a little faster if desired height is at a limit.
-        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? 0.5 : 0.2;
+        approachSpeedRad_ = (desiredHeight_ == LIFT_HEIGHT_LOWDOCK || desiredHeight_ == LIFT_HEIGHT_CARRY) ? LIMIT_ANGLE_APPROACH_SPEED_RAD_PER_SEC : DEFAULT_ANGLE_APPROACH_SPEED_RAD_PER_SEC;
 #endif
 
+        /*
         bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
                                                    desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
                                                    MAX_LIFT_SPEED_RAD_PER_S,
@@ -475,12 +486,14 @@ namespace Anki {
         if (!res) {
           PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-          
+          */
           vpg_.StartProfile(startRadSpeed, startRad,
                             maxSpeedRad_, accelRad_,
                             approachSpeedRad_, desiredAngle_.ToFloat(),
                             CONTROL_DT);
+        /*
         }
+         */
         
 #if(DEBUG_HEAD_CONTROLLER)
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
@@ -504,6 +517,24 @@ namespace Anki {
       bool IsInPosition(void) {
         return inPosition_;
       }
+      
+      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_sum)
+      {
+        // Open loop value to drive at desired speed
+        f32 power = 0;
+        if (desired_speed_rad_per_sec > 0) {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP;
+        } else {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_DOWN + BASE_POWER_DOWN;
+        }
+ 
+        // Compute corrective value
+        f32 power_corr = (Kp_ * error) + (Ki_ * error_sum);
+        power += power_corr;
+        
+        return power;
+      }
+      
       
       Result Update()
       {
@@ -537,17 +568,8 @@ namespace Anki {
             // Compute position error
             angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
             
-
-            
-            // Open loop value to drive at desired speed
-            power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
-            
-            // Compute corrective value
-            f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
-            
-            // Add base power in the direction of the general desired direction
-            //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-            power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+            // Compute power required for desired speed
+            power_ = ComputeLiftPower(currDesiredRadVel_, angleError_, angleErrorSum_);
             
             // Update angle error sum
             angleErrorSum_ += angleError_;

@@ -3,7 +3,7 @@
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/types.h"
-
+#include "anki/common/robot/geometry.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -14,11 +14,20 @@ namespace Anki {
       //Embedded::Pose2d GetCurrMatPose();
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
-      void SetCurrentMatPose(f32  x, f32  y, Radians  angle);
+      void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
 
       // Get orientation of robot on current mat
       Radians GetCurrentMatOrientation();
 
+      void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
+      void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
+      
+      f32 GetDriveCenterOffset();
+      
+      // Given a robotOriginPose, returns the pose of the drive center
+      void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose,
+                                    Anki::Embedded::Pose2d &driveCenterPose);
+      
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();
       
@@ -34,6 +43,12 @@ namespace Anki {
       // Also updates the current pose frame ID.
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
 
+      // Retrieves the closest historical pose at time t.
+      // Returns OK if t is between the oldest and newest timestamps in history.
+      // Otherwise returns FAIL, but p will still be set to the closest pose
+      // in history at time t. It just may not be very close at all...
+      Result GetHistPoseAtTime(TimeStamp_t t, Anki::Embedded::Pose2d& p);
+      
       // Sets whether robot is on a ramp or not (the actual sloped portion),
       // and notifies the basestation when there is a change in ramp state.
       Result SetOnRamp(bool onRamp);

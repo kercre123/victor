@@ -41,8 +41,11 @@ namespace Anki {
       // Tells the docker what the relative position of the block is.
       // rel_x: Distance to center of block along robot's x-axis
       // rel_y: Distance to center of block along robot's y-axis
-      // rel_rad: Angle of block normal relative to robot's x-axis. 
-      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad);
+      // rel_rad: Angle of block normal relative to robot's x-axis.
+      // t: Timestamp of the pose to which these relative errors should be applied
+      //    in order to compute the absolute pose of the target at the current time.
+      //    If t == 0 or HAL::GetTimeStamp(), it will use the robot's current pose.
+      void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t = 0);
       
       // Resets state machine and configures VisionSystem to track
       // appropriate block
@@ -61,7 +64,8 @@ namespace Anki {
                         const f32 markerWidth_mm,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool checkAngleX = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const u32 pointOfNoReturnDistMM = 0);
       
       // Same as above except the marker must be found within the image at the specified location.
       // If pixel_radius == u8_MAX, the location is ignored and this function becomes identical
@@ -71,7 +75,8 @@ namespace Anki {
                         const Embedded::Point2f &markerCenter, const u8 pixel_radius,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool checkAngleX = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const u32 pointOfNoReturnDistMM = 0);
 
       // Goes to a pose such that if the robot were to lower a block that it was carrying once it
       // were in that pose, the block face facing the robot would be aligned with the pose specified

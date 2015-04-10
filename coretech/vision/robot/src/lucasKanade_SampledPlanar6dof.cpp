@@ -38,6 +38,8 @@ non-disclosure agreement with Anki, inc.
 
 #define SAMPLE_TOP_HALF_ONLY 0
 
+#define USE_BLURRING 0
+
 #if USE_OPENCV_ITERATIVE_POSE_INIT
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -306,12 +308,17 @@ namespace Anki
         }
 #else
 
-        P3P::computePose(templateQuad,
-          template3d[0], template3d[1], template3d[2], template3d[3],
-          this->focalLength_x, this->focalLength_y,
-          this->camCenter_x,   this->camCenter_y,
-          R, this->params6DoF.translation);
+        Result lastResult = P3P::computePose(templateQuad,
+                                             template3d[0], template3d[1],
+                                             template3d[2], template3d[3],
+                                             this->focalLength_x, this->focalLength_y,
+                                             this->camCenter_x,   this->camCenter_y,
+                                             R, this->params6DoF.translation);
+        
+        // NOTE: isValid will still be false in this case.
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK, "LKTracker_SampledPlanar6dof", "Failed to compute initial pose constructing tracker.\n");
 
+        
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
 
         /*
@@ -374,9 +381,7 @@ namespace Anki
         const s32 numSelectBins = 20;
 
         // TODO: Pass this in as a parameter/argument
-        const s32 verifyGridSize = 16;
-
-        Result lastResult;
+        const s32 verifyGridSize = 32;
 
         BeginBenchmark("LucasKanadeTracker_SampledPlanar6dof");
 
@@ -465,14 +470,66 @@ namespace Anki
 
               Array<u8> templateImageAtScale(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
-                "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Out of memory allocating templateImageAtScale.\n");
+                                            "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
+                                            "Out of memory allocating templateImageAtScale.\n");
 
+#             if USE_BLURRING
+              Array<u8> templateImageBoxFiltered(templateImage.get_size(0), templateImage.get_size(1), offchipScratch);
+              assert(templateImageBoxFiltered.IsValid());
+              
+              /*
+              s32 boxSize = scale/2;
+              if(boxSize %2 == 0) {
+                ++boxSize;
+              }
+              if(boxSize > 2) {
+              ImageProcessing::BoxFilter<u8, s32, u8>(templateImage, boxSize, boxSize, templateImageBoxFiltered, offchipScratch);
+              } else {
+                templateImageBoxFiltered = templateImage;
+              }
+               */
+              cv::Mat_<u8> cvTemplateImage(templateImage.get_size(0), templateImage.get_size(1),
+                                           const_cast<u8*>(static_cast<const u8*>(templateImage.get_buffer())));
+              cv::GaussianBlur(cvTemplateImage, cvTemplateImage, cv::Size(0,0), static_cast<double>(scale)/3.f);
+              
+              templateImageBoxFiltered.Set(cvTemplateImage);
+              
+              if(0){
+                FILE *fp;
+                char filename[64];
+                snprintf(filename, 64, "templateImageBoxFiltered_%d.dat", iScale);
+                fp = fopen(filename, "wb");
+                fwrite(templateImageBoxFiltered.get_buffer(), templateImageBoxFiltered.get_numElements(), sizeof(u8), fp);
+                fclose(fp);
+              }
+              
+              if((lastResult = Interp2_Projective<u8,u8>(templateImageBoxFiltered, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
+                AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
+                return;
+              }
+              
+              if(0){
+                cv::Mat_<u8> temp(templateImageAtScale.get_size(0), templateImageAtScale.get_size(1));
+                for(s32 i=0; i<temp.rows; ++i) {
+                  memcpy(temp[i], templateImageAtScale.Pointer(i,0), temp.cols*sizeof(u8));
+                }
+
+                FILE *fp;
+                char filename[64];
+                snprintf(filename, 64, "templateImageAtScale_%dx%d.dat", templateImageAtScale.get_size(0), templateImageAtScale.get_size(1));
+                fp = fopen(filename, "wb");
+                fwrite(temp.data, temp.rows*temp.cols, sizeof(u8), fp);
+                fclose(fp);
+              }
+#             else // NOT USE_BLURRING
+              
               if((lastResult = Interp2_Projective<u8,u8>(templateImage, templateCoordinates, transformation.get_homography(), this->transformation.get_centerOffset(initialImageScaleF32), templateImageAtScale, INTERPOLATE_LINEAR)) != RESULT_OK) {
                 AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "Interp2_Projective failed with code 0x%x", lastResult);
                 return;
               }
-
+              
+#             endif // USE_BLURRING
+              
               if(numFiducialSamplesAtScale > 0) {
                 ConstArraySliceExpression<u8> temp = templateImageAtScale(0,-1,0,-1);
                 templateDarkValue   = Matrix::Min(temp);
@@ -1292,13 +1349,29 @@ namespace Anki
 
         Transformations::PlanarTransformation_f32 previousTransformation(this->transformation.get_transformType(), scratch);
 
-        for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--) {
+#       if USE_BLURRING
+        Array<u8> nextImageBlurred(nextImage.get_size(0), nextImage.get_size(1), scratch);
+        assert(nextImage.IsValid());
+        cv::Mat_<u8> cvNextImage(nextImage.get_size(0), nextImage.get_size(1),
+                                 static_cast<u8*>(nextImageBlurred.get_buffer()));
+#       endif // USE_BLURRING
+        
+        for(s32 iScale=numPyramidLevels-1; iScale>=0; iScale--)
+        {
+#         if USE_BLURRING
+          nextImageBlurred.Set(nextImage);
+          cv::GaussianBlur(cvNextImage, cvNextImage, cv::Size(0,0), static_cast<double>(1<<iScale)/3.f);
+#         define __NEXT_IMAGE__ nextImageBlurred
+#         else
+#         define __NEXT_IMAGE__ nextImage
+#         endif
+          
           verify_converged = false;
 
           previousTransformation.Set(this->transformation);
 
           BeginBenchmark("UpdateTrack.refineTranslation");
-          if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
+          if((lastResult = IterativelyRefineTrack(__NEXT_IMAGE__, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, Transformations::TRANSFORM_TRANSLATION, verify_converged, scratch)) != RESULT_OK)
             return lastResult;
           EndBenchmark("UpdateTrack.refineTranslation");
 
@@ -1307,7 +1380,7 @@ namespace Anki
 
             if(this->transformation.get_transformType() != Transformations::TRANSFORM_TRANSLATION) {
               BeginBenchmark("UpdateTrack.refineOther");
-              if((lastResult = IterativelyRefineTrack(nextImage, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
+              if((lastResult = IterativelyRefineTrack(__NEXT_IMAGE__, maxIterations, iScale, convergenceTolerance_angle, convergenceTolerance_distance, this->transformation.get_transformType(), verify_converged, scratch)) != RESULT_OK)
                 return lastResult;
               EndBenchmark("UpdateTrack.refineOther");
 
@@ -1327,8 +1400,10 @@ namespace Anki
         //DEBUG!!!
         //verify_converged = true;
 
-        lastResult = this->VerifyTrack_Projective(nextImage, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
-
+        lastResult = this->VerifyTrack_Projective(__NEXT_IMAGE__, verify_maxPixelDifference, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratch);
+        
+#       undef __NEXT_IMAGE__
+        
         return lastResult;
       }
 
@@ -1355,11 +1430,11 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(nextImageHeight == templateImageHeight && nextImageWidth == templateImageWidth,
           RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "nextImage must be the same size as the template");
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
 
-        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == BASE_IMAGE_WIDTH,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than BASE_IMAGE_WIDTH");
+        AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == baseImageWidth,
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance_distance, verify_converged, scratch);
@@ -1427,7 +1502,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1661,7 +1736,7 @@ namespace Anki
 
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const f32 oneOverTwoFiftyFive = 1.0f / 255.0f;
@@ -1976,7 +2051,7 @@ namespace Anki
         const s32 nextImageHeight = nextImage.get_size(0);
         const s32 nextImageWidth = nextImage.get_size(1);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = baseImageWidth / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
         const Point<f32> centerOffsetScaled = this->transformation.get_centerOffset(initialImageScaleF32);
 

@@ -87,7 +87,7 @@ namespace Anki {
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
                                              std::vector<Quad3f>& regions) const { regions.clear(); }
 
-      const Point3f& GetSize() const { return _size; }
+      virtual const Point3f& GetSize() const override { return _size; }
       
     private:
       Point3f _size;

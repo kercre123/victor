@@ -87,6 +87,14 @@ namespace Anki {
     } DriveTestFlags;
     
     typedef enum {
+      LiftTF_TEST_HEIGHTS = 0x01
+    } LiftTestFlags;
+
+    typedef enum {
+      HTF_TEST_ANGLES = 0x01
+    } HeadTestFlags;
+    
+    typedef enum {
       ITF_DO_TURNS = 0x01
     } IMUTestFlags;
     
@@ -97,13 +105,14 @@ namespace Anki {
 
     // Bit flags for RobotState message
     typedef enum {
-      IS_MOVING               = 0x1,  // Head, lift, or wheels
-      IS_CARRYING_BLOCK       = 0x2,
-      IS_PICKING_OR_PLACING   = 0x4,
-      IS_PICKED_UP            = 0x8,
+      IS_MOVING               = 0x01,  // Head, lift, or wheels
+      IS_CARRYING_BLOCK       = 0x02,
+      IS_PICKING_OR_PLACING   = 0x04,
+      IS_PICKED_UP            = 0x08,
       IS_PROX_FORWARD_BLOCKED = 0x10,
       IS_PROX_SIDE_BLOCKED    = 0x20,
-      IS_ANIMATING            = 0x40
+      IS_ANIMATING            = 0x40,
+      IS_PERFORMING_ACTION    = 0x80
     } RobotStatusFlag;
 
 
@@ -205,10 +214,17 @@ namespace Anki {
 
     
     typedef enum {
-      VIZ_SAVE_OFF = 0,
-      VIZ_SAVE_ONE_SHOT,
-      VIZ_SAVE_CONTINUOUS
-    } VizSaveMode_t;
+      SAVE_OFF = 0,
+      SAVE_ONE_SHOT,
+      SAVE_CONTINUOUS
+    } SaveMode_t;
+    
+    typedef enum {
+      CARRY_NONE = 0,
+      CARRY_1_BLOCK,
+      CARRY_2_BLOCK,
+      NUM_CARRY_STATES
+    } CarryState_t;
     
   }
 }

@@ -126,6 +126,7 @@ ADD_MESSAGE_MEMBER(f32, x_center_mm)
 ADD_MESSAGE_MEMBER(f32, y_center_mm)
 ADD_MESSAGE_MEMBER(f32, targetRad)
 ADD_COMMON_PATH_SEGMENT_MEMBERS  // targetSpeed indicates rotational speed in rad/s
+ADD_MESSAGE_MEMBER(u8, useShortestDir)
 END_MESSAGE_DEFINITION(AppendPathSegmentPointTurn)
 
 // TrimPath
@@ -222,6 +223,19 @@ START_MESSAGE_DEFINITION(SetDefaultLights, 1)
 ADD_MESSAGE_MEMBER(u32, eye_left_color)
 ADD_MESSAGE_MEMBER(u32, eye_right_color)
 END_MESSAGE_DEFINITION(SetDefaultLights)
+
+// SetWheelControllerGains
+START_MESSAGE_DEFINITION(SetWheelControllerGains, 1)
+//ADD_MESSAGE_MEMBER(f32, kp)
+//ADD_MESSAGE_MEMBER(f32, ki)
+//ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+ADD_MESSAGE_MEMBER(f32, kpLeft)
+ADD_MESSAGE_MEMBER(f32, kiLeft)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorLeft)
+ADD_MESSAGE_MEMBER(f32, kpRight)
+ADD_MESSAGE_MEMBER(f32, kiRight)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorRight)
+END_MESSAGE_DEFINITION(SetWheelControllerGains)
 
 // SetHeadControllerGains
 START_MESSAGE_DEFINITION(SetHeadControllerGains, 1)
@@ -542,6 +556,10 @@ START_MESSAGE_DEFINITION(ClientConnectionStatus, 1)
 ADD_MESSAGE_MEMBER(u8, wifiState)
 ADD_MESSAGE_MEMBER(u8, bluetoothState)
 END_MESSAGE_DEFINITION(ClientConnectionStatus)
+
+START_MESSAGE_DEFINITION(SetCarryState, 1)
+ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
+END_MESSAGE_DEFINITION(SetCarryState)
 
 
 ///////// Block messages ////////

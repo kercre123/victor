@@ -60,7 +60,7 @@ namespace Anki
         // or the last path that was followed if not currently path following
         u16 lastPathID_ = 0;
         
-        const f32 COAST_VELOCITY_MMPS = 15.f;
+        const f32 COAST_VELOCITY_MMPS = 25.f;
         const f32 COAST_VELOCITY_RADPS = 0.4f; // Same as POINT_TURN_TERMINAL_VEL_RAD_PER_S
         
         // If true, then the path is not traversed according to its speed parameters, but
@@ -151,11 +151,13 @@ namespace Anki
       
       
       bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
-                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel)
+                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                       bool useShortestDir)
       {
         TrimPath();
         return path_.AppendPointTurn(matID, x, y, targetAngle,
-                                     targetRotSpeed, rotAccel, rotDecel);
+                                     targetRotSpeed, rotAccel, rotDecel,
+                                     useShortestDir);
       }
       
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,
@@ -227,13 +229,27 @@ namespace Anki
           // Set whether or not path is traversed according to speed in path parameters
           manualSpeedControl_ = manualSpeedControl;
           
-          // Get current robot pose
-          f32 x, y;
-          Radians angle;
-          Localization::GetCurrentMatPose(x, y, angle);
-          
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
+          
+
+          // If the first part of the path is some tiny arc,
+          // skip it because it tends to report gross errors that
+          // make the steeringController jerky.
+          // This mainly occurs during docking.
+          // TODO: Do this check for EVERY path segment?
+          if ((currPathSegment_ == 0) &&
+              (path_[0].GetType() == Planning::PST_ARC) &&
+              (ABS(path_[0].GetDef().arc.sweepRad) < 0.05) &&
+              path_[0].GetDef().arc.radius <= 50) {
+            PRINT("Skipping short arc: sweep %f deg, radius %f mm\n",
+                  RAD_TO_DEG_F32( path_[0].GetDef().arc.sweepRad ),
+                  path_[0].GetDef().arc.radius);
+            currPathSegment_++;
+            realPathSegment_ = currPathSegment_;
+          }
+
+          
 
           // Set speed
           // (Except for point turns whose speeds are handled at the steering controller level)
@@ -306,7 +322,7 @@ namespace Anki
         // Get current robot pose
         f32 x, y, lookaheadX, lookaheadY;
         Radians angle;
-        Localization::GetCurrentMatPose(x, y, angle);
+        Localization::GetDriveCenterPose(x, y, angle);
         
         lookaheadX = x;
         lookaheadY = y;
@@ -363,7 +379,8 @@ namespace Anki
           SteeringController::ExecutePointTurn(currSeg->targetAngle,
                                                path_[currPathSegment_].GetTargetSpeed(),
                                                path_[currPathSegment_].GetAccel(),
-                                               path_[currPathSegment_].GetDecel());
+                                               path_[currPathSegment_].GetDecel(),
+                                               currSeg->useShortestDir);
           pointTurnStarted_ = true;
 
         } else {
@@ -416,7 +433,7 @@ namespace Anki
         // Test code to visualize Dubins path online
         f32 start_x,start_y;
         Radians start_theta;
-        Localization::GetCurrentMatPose(start_x,start_y,start_theta);
+        Localization::GetDriveCenterPose(start_x,start_y,start_theta);
         path_.Clear();
         
         const f32 end_x = 0;
@@ -473,7 +490,7 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PERIODIC_PRINT(DBG_PERIOD,"PATH ERROR: %f mm, %f deg\n", distToPath_mm_, RAD_TO_DEG(radToPath_));
+        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType());
 #endif
         
         // Go to next path segment if no longer in range of the current one
@@ -550,7 +567,7 @@ namespace Anki
         // Compute profile
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
         
         if (!vpg.StartProfile_fixedDuration(0, currSpeed, acc_start_frac * duration_sec,
@@ -620,7 +637,7 @@ namespace Anki
         // Compute profile
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         f32 currAngSpeed = -SpeedController::GetCurrentMeasuredVehicleSpeed() / radius_mm;
         
         if (!vpg.StartProfile_fixedDuration(0, currAngSpeed, acc_start_frac * duration_sec,
@@ -694,7 +711,7 @@ namespace Anki
         
         f32 curr_x, curr_y;
         Radians curr_angle;
-        Localization::GetCurrentMatPose(curr_x, curr_y, curr_angle);
+        Localization::GetDriveCenterPose(curr_x, curr_y, curr_angle);
         
         
         if (!vpg.StartProfile_fixedDuration(0, 0, acc_start_frac * duration_sec,
@@ -732,9 +749,9 @@ namespace Anki
         
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, false);
           
         StartPathTraversal();
         

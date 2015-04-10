@@ -85,22 +85,13 @@ namespace Anki {
       
       virtual ~Block();
       
-      //static unsigned int get_numBlocks();
-      
       // Accessors:
-      const Point3f&     GetSize()   const;
-      float              GetWidth()  const;  // X dimension
-      float              GetHeight() const;  // Z dimension
-      float              GetDepth()  const;  // Y dimension
-      const std::string& GetName()   const {return _name;}
+      virtual const Point3f& GetSize() const override;
       
-      //virtual float GetMinDim() const;
-      //using Vision::ObservableObjectBase<Block>::GetMinDim;
-
-      void SetSize(const float width, const float height, const float depth);
-      //void SetColor(const unsigned char red, const unsigned char green, const unsigned char blue);
+      // TODO: Promote this to ObservableObject
+      const std::string& GetName()  const {return _name;}
+      
       void SetName(const std::string name);
-      
       
       void AddFace(const FaceName whichFace,
                    const Vision::MarkerType& code,
@@ -120,9 +111,6 @@ namespace Anki {
       */
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      
-      virtual Point3f GetSameDistanceTolerance() const override;
-      virtual Radians GetSameAngleTolerance() const override;
       
       /*
       // Get possible poses to start docking/tracking procedure. These will be
@@ -395,6 +383,7 @@ namespace Anki {
     inline Point3f const& Block::GetSize() const
     { return _size; }
     
+    /*
     inline float Block::GetWidth() const
     { return _size.y(); }
     
@@ -403,6 +392,7 @@ namespace Anki {
     
     inline float Block::GetDepth() const
     { return _size.x(); }
+    */
     
     /*
     inline float Block::GetMinDim() const
@@ -411,12 +401,14 @@ namespace Anki {
     }
      */
     
+    /*
     inline void Block::SetSize(const float width,
                                const float height,
                                const float depth)
     {
       _size = {width, height, depth};
     }
+    */
     
     /*
     inline void Block::SetColor(const unsigned char red,

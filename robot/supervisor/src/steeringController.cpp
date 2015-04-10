@@ -54,15 +54,25 @@ namespace Anki {
       f32 currAngularVel_;
       bool startedPointTurn_;
       
+      Radians prevAngle_;
+      f32 angularDistExpected_;
+      f32 angularDistTraversed_;
+      const f32 ANGULAR_TRAVERSAL_DISTANCE_MARGIN = 0.1;
+      
       // If distance to target is less than this, point turn is considered to be complete.
-      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.05;
+      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.03;
 
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
       
       VelocityProfileGenerator vpg_;
       
+#ifdef COZMO_TREADS
+      // Treaded cozmo has sticky left wheel so we need to command a faster terminal speed
+      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.8f;
+#else
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
+#endif
       
     } // Private namespace
     
@@ -210,14 +220,23 @@ namespace Anki {
       
       //Get the current vehicle speed (based on encoder values etc.) in mm/sec
       s16 currspeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
-      //Get the desired vehicle speed (the one the user commanded to the car)
+      //Get the controller desired speed for the current tic. This speed should approach user desired speed.
       s16 desspeed = SpeedController::GetControllerCommandedVehicleSpeed();
+      //Get the user desired speed
+      s16 userDesiredSpeed = SpeedController::GetUserCommandedDesiredVehicleSpeed();
+
       
       // If moving backwards, modify distance and angular error such that proper curvature
       // is computed below.
-      if (currspeed < 0) {
+      if (desspeed < 0) {
         offsetError_mm *= -1;
-        headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+        if (userDesiredSpeed == 0) {
+          // If slowing to a stop, then assume zero error
+          offsetError_mm = 0;
+          headingError_rad = 0;
+        } else {
+          headingError_rad = -Radians(headingError_rad + PI_F).ToFloat();
+        }
       }
       
       ///////////////////////////////////////////////////////////////////////////////
@@ -388,7 +407,7 @@ namespace Anki {
       
     }
     
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel)
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
       currSteerMode_ = SM_POINT_TURN;
       
@@ -403,17 +422,37 @@ namespace Anki {
       angularDecel_ = angularDecel;
       startedPointTurn_ = false;
       
-      
       f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
-      
-      // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
-      // which determines the turning direction.
       f32 destAngle = targetRad_.ToFloat();
-      if (currAngle > destAngle && maxAngularVel_ > 0) {
-        destAngle += 2*PI_F;
-      } else if (currAngle < destAngle && maxAngularVel_ < 0) {
-        destAngle -= 2*PI_F;
+      angularDistExpected_ = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
+
+      prevAngle_ = Localization::GetCurrentMatOrientation();
+      angularDistTraversed_ = 0;
+      
+      if (ABS(angularDistExpected_) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+        currSteerMode_ = SM_PATH_FOLLOW;
+#if(DEBUG_STEERING_CONTROLLER)
+        PRINT("POINT TURN: Already at destination\n");
+#endif
+        return;
       }
+      
+      if (useShortestDir) {
+        // Update destAngle and maxAngularVel_ so that the shortest turn is executed to reach the goal
+        maxAngularVel_ = ABS(maxAngularVel) * (angularDistExpected_ > 0 ? 1 : -1);
+        destAngle = currAngle + angularDistExpected_;
+      } else {
+        // Compute target angle that is on the appropriate side of currAngle given the maxAngularVel
+        // which determines the turning direction.
+        if (currAngle > destAngle && maxAngularVel_ > 0) {
+          destAngle += 2*PI_F;
+        } else if (currAngle < destAngle && maxAngularVel_ < 0) {
+          destAngle -= 2*PI_F;
+        }
+      }
+      
+      //PRINT("PT: currAngle = %f, destAngle = %f, maxAngularVel = %f\n", currAngle, destAngle, maxAngularVel_);
+
       
       // Check that the maxAngularVel is greater than the terminal speed
       // If not, make it at least that big.
@@ -459,13 +498,28 @@ namespace Anki {
       
       
       // Check for stop condition
-      if (ABS(angularDistToTarget) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+      f32 absAngularDistToTarget = ABS(angularDistToTarget);
+      if (absAngularDistToTarget < POINT_TURN_TARGET_DIST_STOP_RAD) {
         currSteerMode_ = SM_PATH_FOLLOW;
         currAngularVel_ = 0;
 #if(DEBUG_STEERING_CONTROLLER)
         PRINT("POINT TURN: Stopping\n");
 #endif
       }
+      
+      
+      // Check if the angular dist to target is growing
+      angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
+      prevAngle_ = currAngle;
+      if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
+        currSteerMode_ = SM_PATH_FOLLOW;
+        currAngularVel_ = 0;
+#if(DEBUG_STEERING_CONTROLLER)
+        PRINT("POINT TURN: Stopping because turned more than expected\n");
+#endif
+      }
+
+      
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currAngularVel_ / PI = arcVel / (PI * R)

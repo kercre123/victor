@@ -127,17 +127,41 @@ namespace Anki {
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
       // comparing, e.g. for cubes or other blocks.
-      virtual bool IsSameAs(const ObservableObject&  otherObject,
-                            const Point3f&  distThreshold,
-                            const Radians&  angleThreshold) const;
+      bool IsSameAs(const ObservableObject&  otherObject,
+                    const Point3f&  distThreshold,
+                    const Radians&  angleThreshold) const;
+      
+      // Same as above, but returns translational and angular difference
+      bool IsSameAs(const ObservableObject& otherObject,
+                    const Point3f& distThreshold,
+                    const Radians& angleThreshold,
+                    Point3f& Tdiff,
+                    Radians& angleDiff) const;
       
       // Same as other IsSameAs() calls above, except the tolerance thresholds
       // given by the virtual members below are used (so that per-object-class
       // thresholds can be defined)
       bool IsSameAs(const ObservableObject& otherObject) const;
       
-      virtual Point3f GetSameDistanceTolerance() const = 0;
-      virtual Radians GetSameAngleTolerance() const = 0;
+      // Return the dimensions of the object's bounding cube in its canonical pose
+      virtual const Point3f& GetSize() const = 0;
+      
+      /*
+      // Return the bounding cube dimensions in the specified pose (i.e., apply the
+      // rotation of the given pose to the canonical cube). If no pose is supplied,
+      // the object's current pose is used.
+      virtual Point3f GetRotatedBoundingCube(const Pose3d& atPose) const = 0;
+      Point3f GetRotatedBoundingCube() const { return GetRotatedBoundingCube(GetPose()); }
+      */
+      
+      // Return the same-distance tolerance to use in the X/Y/Z dimensions.
+      // The default implementation simply uses the canonical bounding cube,
+      // rotated to the object's current pose.
+      constexpr static f32 DEFAULT_SAME_DIST_TOL_FRACTION = 1.f; // fraction of GetSize() to use
+      virtual Point3f GetSameDistanceTolerance() const;
+      
+      // Return the same angle tolerance for matching. Default is 45 degrees.
+      virtual Radians GetSameAngleTolerance() const { return DEG_TO_RAD(45); }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const;
       
@@ -239,6 +263,21 @@ namespace Anki {
     inline Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
+    }
+    
+    inline Point3f ObservableObject::GetSameDistanceTolerance() const {
+      Point3f distTol(GetPose().GetRotation() * (GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION));
+      return distTol.GetAbs();
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                           const Point3f& distThreshold,
+                                           const Radians& angleThreshold) const
+    {
+      Point3f Tdiff;
+      Radians angleDiff;
+      return IsSameAs(otherObject, distThreshold, angleThreshold,
+                      Tdiff, angleDiff);
     }
     
     /*

@@ -558,7 +558,9 @@ namespace Anki {
             } // if(possibleT[i_solution].z > 0)
           } // for each solution
 
-          AnkiAssert(bestSolution >= 0);
+          AnkiConditionalErrorAndReturnValue(bestSolution>=0, RESULT_FAIL,
+                                             "P3P::computePossiblePoses()",
+                                             "No valid solutions found (all were behind camera?).\n");
 
           //CoreTechPrint("Best solution when validating with corner %d was %d with error %f\n",
           //       i_validate, bestSolution, minErrorInner);

@@ -121,10 +121,7 @@ namespace Cozmo {
     return _wasLastImageProcessed;
   }
   
-  inline void VisionProcessingThread::SetCameraCalibration(const Vision::CameraCalibration& camCalib) {
-    _camCalib = camCalib;
-    _isCamCalibSet = true;
-  }
+
 
 } // namespace Cozmo
 } // namespace Anki

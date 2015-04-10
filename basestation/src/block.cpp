@@ -30,10 +30,12 @@ namespace Anki {
     // angle: angle about z-axis (which runs vertically along marker)
     //     x: distance along marker horizontal
     //     y: distance along marker normal
-    const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 {0, 0, 0.75f * DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 {0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                                 {-0.2f, -12, DEFAULT_PREDOCK_POSE_DISTANCE_MM} };
+    const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0, 0, 0.8f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0, 0, 0.6f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+                                                 //,{-0.2f, -12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+    };
 
     
     const Block::Type Block::Type::INVALID("INVALID");
@@ -67,9 +69,9 @@ namespace Anki {
       
       Pose3d facePose;
       
-      const float halfWidth  = 0.5f * this->GetWidth();   // y
-      const float halfHeight = 0.5f * this->GetHeight();  // z
-      const float halfDepth  = 0.5f * this->GetDepth();   // x
+      const float halfWidth  = 0.5f * GetSize().y();   // y
+      const float halfHeight = 0.5f * GetSize().z();  // z
+      const float halfDepth  = 0.5f * GetSize().x();   // x
       
       // SetSize() should have been called already
       CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
@@ -79,33 +81,33 @@ namespace Anki {
       switch(whichFace)
       {
         case FRONT_FACE:
-          facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &GetPose());
-          //facePose = Pose3d(0,       Z_AXIS_3D, {{-halfDepth, 0.f, 0.f}},  &pose_);
+          facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {{-halfDepth, 0.f, 0.f}},  &GetPose());
+          //facePose = Pose3d(0,       Z_AXIS_3D(), {{-halfDepth, 0.f, 0.f}},  &pose_);
           break;
           
         case LEFT_FACE:
-          facePose = Pose3d(M_PI, Z_AXIS_3D, {{0.f, halfWidth, 0.f}},  &GetPose());
-          //facePose = Pose3d(-M_PI_2, Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},  &pose_);
+          facePose = Pose3d(M_PI, Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},  &GetPose());
+          //facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},  &pose_);
           break;
           
         case BACK_FACE:
-          facePose = Pose3d(M_PI_2,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &GetPose());
-          //facePose = Pose3d(0,    Z_AXIS_3D, {{halfDepth, 0.f, 0.f}},   &pose_);
+          facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &GetPose());
+          //facePose = Pose3d(0,    Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &pose_);
           break;
           
         case RIGHT_FACE:
-          facePose = Pose3d(0,  Z_AXIS_3D, {{0.f, -halfWidth, 0.f}},   &GetPose());
-          //facePose = Pose3d(M_PI_2,  Z_AXIS_3D, {{0.f, halfWidth, 0.f}},   &pose_);
+          facePose = Pose3d(0,  Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},   &GetPose());
+          //facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},   &pose_);
           break;
           
         case TOP_FACE:
-          facePose = Pose3d(-M_PI_2,  X_AXIS_3D, {{0.f, 0.f, halfHeight}},  &GetPose());
-          //facePose = Pose3d(M_PI_2,  Y_AXIS_3D, {{0.f, 0.f, halfHeight}},  &pose_);
+          facePose = Pose3d(-M_PI_2,  X_AXIS_3D(), {{0.f, 0.f, halfHeight}},  &GetPose());
+          //facePose = Pose3d(M_PI_2,  Y_AXIS_3D(), {{0.f, 0.f, halfHeight}},  &pose_);
           break;
           
         case BOTTOM_FACE:
-          facePose = Pose3d(M_PI_2, X_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &GetPose());
-          //facePose = Pose3d(-M_PI_2, Y_AXIS_3D, {{0.f, 0.f, -halfHeight}}, &pose_);
+          facePose = Pose3d(M_PI_2, X_AXIS_3D(), {{0.f, 0.f, -halfHeight}}, &GetPose());
+          //facePose = Pose3d(-M_PI_2, Y_AXIS_3D(), {{0.f, 0.f, -halfHeight}}, &pose_);
           break;
           
         default:
@@ -118,7 +120,7 @@ namespace Anki {
       
       // The four rotation vectors for the pre-action poses created below
       const std::array<RotationVector3d,4> preActionPoseRotations = {{
-        {0.f, Y_AXIS_3D},  {M_PI_2, Y_AXIS_3D},  {-M_PI_2, Y_AXIS_3D},  {M_PI, Y_AXIS_3D}
+        {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()}
       }};
       
       // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
@@ -127,7 +129,7 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D,  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
+            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
             AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
           }
@@ -141,9 +143,9 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D,  {{v.GetX() , -v.GetY(), -(halfHeight+this->GetHeight())}}, &marker->GetPose());
+            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));  // Note: low head angle to still look at (and dock to) block below
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(15));
           }
 
         }
@@ -155,7 +157,7 @@ namespace Anki {
       {
         const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM;
         for(auto const& Rvec : preActionPoseRotations) {
-          Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D,  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
+          Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
           prePlacementPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose, DEG_TO_RAD(-15));
         }
@@ -273,23 +275,15 @@ namespace Anki {
     } 
      */
     
-    Point3f Block::GetSameDistanceTolerance() const {
-      return _size*1.5f; // TODO: too loose?
-    }
-    
-    Radians Block::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45.f); // TODO: too loose?
-    }
-    
     
     // These should match the order in which faces are defined! (See Block constructor)
     const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
-      {-X_AXIS_3D,
-        Y_AXIS_3D,
-        X_AXIS_3D,
-       -Y_AXIS_3D,
-        Z_AXIS_3D,
-       -Z_AXIS_3D}
+      {-X_AXIS_3D(),
+        Y_AXIS_3D(),
+        X_AXIS_3D(),
+       -Y_AXIS_3D(),
+        Z_AXIS_3D(),
+       -Z_AXIS_3D()}
     };
     
     /*
@@ -603,7 +597,7 @@ namespace Anki {
       for(auto marker = _markers.begin(); marker != _markers.end(); ++marker) {
         //const Vision::KnownMarker& marker = _markers[whichFace];
         Pose3d poseWrtOrigin = marker->GetPose().GetWithRespectToOrigin();
-        const f32 currentDotProd = DotProduct(marker->ComputeNormal(poseWrtOrigin), Z_AXIS_3D);
+        const f32 currentDotProd = DotProduct(marker->ComputeNormal(poseWrtOrigin), Z_AXIS_3D());
         if(currentDotProd > maxDotProd) {
           //topFace = whichFace;
           topMarker = marker;

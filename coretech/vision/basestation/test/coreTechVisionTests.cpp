@@ -81,9 +81,9 @@ GTEST_TEST(PoseEstimation, FromQuads)
   
   // Set up the true pose
   Pose3d poseTrue;
-  poseTrue.RotateBy(RotationVector3d(Xangle, X_AXIS_3D));
-  poseTrue.RotateBy(RotationVector3d(Yangle, Y_AXIS_3D));
-  poseTrue.RotateBy(RotationVector3d(Zangle, Z_AXIS_3D));
+  poseTrue.RotateBy(RotationVector3d(Xangle, X_AXIS_3D()));
+  poseTrue.RotateBy(RotationVector3d(Yangle, Y_AXIS_3D()));
+  poseTrue.RotateBy(RotationVector3d(Zangle, Z_AXIS_3D()));
   poseTrue.SetTranslation(translation);
   
   // Create the 3D marker and put it in the specified pose relative to the camera
@@ -124,7 +124,9 @@ GTEST_TEST(PoseEstimation, FromQuads)
   }
 
   // Compute the pose of the marker w.r.t. camera from the noisy projection
-  Pose3d poseEst = camera.ComputeObjectPose(proj, marker3d);
+  Pose3d poseEst;
+  Result result = camera.ComputeObjectPose(proj, marker3d, poseEst);
+  EXPECT_EQ(result, RESULT_OK);
   
   // Check if the estimated pose matches the true pose
   Vec3f Tdiff;
@@ -159,7 +161,7 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   
   Pose3d poseOrigin;
   
-  const Pose3d camPose(0.f, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, &poseOrigin);
+  const Pose3d camPose(0.f, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, &poseOrigin);
   
   const Vision::CameraCalibration calib(240, 320,
                                   300.f, 300.f,
@@ -173,7 +175,7 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   camera.SetCalibration(calib);
   
   // Note that object pose is in camera coordinates
-  const Pose3d obj1Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 100.f}}, &poseOrigin);
+  const Pose3d obj1Pose(M_PI_2, X_AXIS_3D(), {{0.f, 0.f, 100.f}}, &poseOrigin);
   Vision::KnownMarker object1(0, obj1Pose, 15.f);
 
   camera.AddOccluder(object1);
@@ -193,7 +195,7 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, RequireObjectBehind) );
   
   // Add another object behind first, again in camera coordinates
-  const Pose3d obj2Pose(M_PI_2, X_AXIS_3D, {{0.f, 0.f, 150.f}}, &poseOrigin);
+  const Pose3d obj2Pose(M_PI_2, X_AXIS_3D(), {{0.f, 0.f, 150.f}}, &poseOrigin);
   Vision::KnownMarker object2(0, obj2Pose, 20.f);
   
   camera.AddOccluder(object2);
@@ -217,21 +219,21 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   
   // Move object1 around and make sure it is NOT visible when...
   // ...it is not facing the camera
-  object1.SetPose(Pose3d(M_PI_4, X_AXIS_3D, {{0.f, 0.f, 100.f}}, &poseOrigin));
+  object1.SetPose(Pose3d(M_PI_4, X_AXIS_3D(), {{0.f, 0.f, 100.f}}, &poseOrigin));
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
-  object1.SetPose(Pose3d(0, X_AXIS_3D, {{0.f, 0.f, 100.f}}, &poseOrigin));
+  object1.SetPose(Pose3d(0, X_AXIS_3D(), {{0.f, 0.f, 100.f}}, &poseOrigin));
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
   
   // ...it is too far away (and thus too small in the image)
-  object1.SetPose(Pose3d(3*M_PI_2, X_AXIS_3D, {{0.f, 0.f, 1000.f}}, &poseOrigin));
+  object1.SetPose(Pose3d(3*M_PI_2, X_AXIS_3D(), {{0.f, 0.f, 1000.f}}, &poseOrigin));
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
   
   // ...it is not within the field of view
-  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D, {{100.f, 0.f, 100.f}}, &poseOrigin));
+  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D(), {{100.f, 0.f, 100.f}}, &poseOrigin));
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
   
   // ...it is behind the camera
-  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D, {{100.f, 0.f, -100.f}}, &poseOrigin));
+  object1.SetPose(Pose3d(M_PI_2, X_AXIS_3D(), {{100.f, 0.f, -100.f}}, &poseOrigin));
   EXPECT_FALSE( object1.IsVisibleFrom(camera, DEG_TO_RAD(5), 5.f, DoNotRequireObjectBehind) );
 
 } // GTEST_TEST(Camera, VisibilityAndOcclusion)

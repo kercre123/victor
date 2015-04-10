@@ -45,6 +45,19 @@ namespace Anki {
     };
     
     namespace {
+      
+      typedef enum {
+        TEXT_LABEL_POSE,
+        TEXT_LABEL_SPEEDS,
+        TEXT_LABEL_PROX_SENSORS,
+        TEXT_LABEL_BATTERY,
+        TEXT_LABEL_VID_RATE,
+        TEXT_LABEL_STATUS_FLAG,
+        TEXT_LABEL_DOCK_ERROR_SIGNAL,
+        NUM_TEXT_LABELS
+      } VizTextLabelType;
+
+      
       // For displaying misc debug data
       webots::Display* disp;
       
@@ -220,7 +233,8 @@ namespace Anki {
     
     void ProcessVizSetLabelMessage(const VizSetLabel& msg)
     {
-      DrawText(msg.labelID, msg.colorID, (char*)msg.text);
+      u32 labelID = NUM_TEXT_LABELS + msg.labelID;
+      DrawText(labelID, msg.colorID, (char*)msg.text);
     }
     
     void ProcessVizDockingErrorSignalMessage(const VizDockingErrorSignal& msg)
@@ -239,7 +253,7 @@ namespace Anki {
       // Print values
       char text[111];
       sprintf(text, "ErrSig x: %.1f, y: %.1f, ang: %.2f\n", msg.x_dist, msg.y_dist, msg.angle);
-      DrawText(msg.textLabelID, text);
+      DrawText(TEXT_LABEL_DOCK_ERROR_SIGNAL, text);
       
       
       // Clear the space
@@ -342,6 +356,43 @@ namespace Anki {
       camDisp->drawLine(msg.bottomLeft_x, msg.bottomLeft_y, msg.topLeft_x, msg.topLeft_y);
     }
     
+    void ProcessVizRobotStateMessage(const VizRobotState& msg)
+    {
+      char txt[128];
+      
+      sprintf(txt, "Pose: head=%3d deg, lift=%3d mm",
+              (int)RAD_TO_DEG_F32(msg.headAngle),
+              (int)msg.liftHeight);
+      DrawText(TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "Speed L: %4d  R: %4d mm/s",
+              (int)msg.lwheel_speed_mmps,
+              (int)msg.rwheel_speed_mmps);
+      DrawText(TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "Prox: (%2u, %2u, %2u) %d%d%d",
+              msg.proxLeft,
+              msg.proxForward,
+              msg.proxRight,
+              msg.status & IS_PROX_SIDE_BLOCKED,
+              msg.status & IS_PROX_FORWARD_BLOCKED,
+              msg.status & IS_PROX_SIDE_BLOCKED);
+      DrawText(TEXT_LABEL_PROX_SENSORS, Anki::NamedColors::GREEN, txt);
+
+      sprintf(txt, "Batt: %2.1f V",
+              (f32)msg.battVolt10x/10);
+      DrawText(TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
+
+      sprintf(txt, "Video: %d HZ",
+              msg.videoFramerateHZ);
+      DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "Status: %5s %5s",
+              msg.status & IS_CARRYING_BLOCK ? "CARRY" : "",
+              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "");
+      DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
+    }
+    
     
     // Stubs
     // These messages are handled by cozmo_physics.
@@ -400,6 +451,7 @@ int main(int argc, char **argv)
         case VizTrackerQuad_ID:
         case VizVisionMarker_ID:
         case VizCameraQuad_ID:
+        case VizRobotState_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;
         // All other messages are forwarded to cozmo_physics plugin

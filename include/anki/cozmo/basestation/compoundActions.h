@@ -30,6 +30,13 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       
+      // If any of the consituent actions lock a system, the compound action
+      // will also lock it -- *for the entire duration of the compound action*
+      // TODO: Maybe we only want this behavior for parallel actions and for sequential actions we want to lock/unlock as each constituent runs. Add that as needed...
+      virtual bool ShouldLockHead() const override;
+      virtual bool ShouldLockLift() const override;
+      virtual bool ShouldLockWheels() const override;
+      
     protected:
       
       // Call the constituent actions' Reset() methods and mark them each not done.
@@ -47,14 +54,14 @@ namespace Anki {
       
       CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override final;
-      
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
       
     private:
       virtual void Reset() override;
+      
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
       
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
@@ -72,10 +79,10 @@ namespace Anki {
       
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
-      virtual ActionResult Update(Robot& robot) override final;
-      
     protected:
       CompoundActionParallel();
+      
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
       
     }; // class CompoundActionParallel
     

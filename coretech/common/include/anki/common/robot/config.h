@@ -192,10 +192,6 @@ extern "C" {
 #define ANKI_VISION_IMAGE_WIDTH_SHIFT 4
 #define ANKI_VISION_IMAGE_WIDTH_MULTIPLE (1<<ANKI_VISION_IMAGE_WIDTH_SHIFT)
 
-// All scales will be relative to this base image width
-#define BASE_IMAGE_WIDTH 320
-#define BASE_IMAGE_HEIGHT 240
-
 // Which errors will be checked and reported?
 #define ANKI_DEBUG_MINIMAL 0 // Only check and output issues with explicit unit tests
 #define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests

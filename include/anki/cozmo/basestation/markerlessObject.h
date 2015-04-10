@@ -54,12 +54,10 @@ namespace Anki {
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
       
-      virtual Point3f GetSameDistanceTolerance() const override;
-      virtual Radians GetSameAngleTolerance() const override;
-      
+      virtual Point3f GetSameDistanceTolerance() const override;      
       
       // Markerless object functions
-      void GetSize(f32& x, f32& y, f32& z);
+      virtual const Point3f& GetSize() const override { return _size; }
       
     protected:
       

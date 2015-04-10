@@ -31,7 +31,7 @@ namespace Anki {
   Pose2d::Pose2d(const Radians &theta, const Point2f &t)
   : _translation(t)
   , _angle(theta)
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -39,7 +39,7 @@ namespace Anki {
   Pose2d::Pose2d(const Radians &theta, const float x, const float y)
   : _translation(x,y)
   , _angle(theta)
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -47,7 +47,7 @@ namespace Anki {
   Pose2d::Pose2d(const Pose3d& pose3d)
   : _translation(pose3d.GetTranslation().x(), pose3d.GetTranslation().y())
   , _angle(pose3d.GetRotationAngle<'Z'>())
-  , _planeNormal(Z_AXIS_3D)
+  , _planeNormal(Z_AXIS_3D())
   {
     
   }
@@ -101,14 +101,14 @@ namespace Anki {
   
   /*
   template<>
-  std::list<Pose3d> PoseBase<Pose3d>::Origins = {{Pose3d(0, Z_AXIS_3D, {{0,0,0}}, nullptr, "WorldOrigin3D")}};
+  std::list<Pose3d> PoseBase<Pose3d>::Origins = {{Pose3d(0, Z_AXIS_3D(), {{0,0,0}}, nullptr, "WorldOrigin3D")}};
   
   template<>
   const Pose3d* PoseBase<Pose3d>::_sWorld = &PoseBase<Pose3d>::Origins.front();
   */
   
   Pose3d::Pose3d()
-  : Pose3d(0, Z_AXIS_3D, {{0.f, 0.f, 0.f}})
+  : Pose3d(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}})
   {
     
   } // Constructor: Pose3d()  
@@ -340,7 +340,6 @@ namespace Anki {
     T_diff = P_other.GetTranslation() - this->GetTranslation();
     
     if(T_diff.GetAbs() < distThreshold) {
-      
       angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
       PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
@@ -430,18 +429,17 @@ namespace Anki {
     if(Tdiff.GetAbs() < distThreshold)
     {
       // Next check to see if the rotational difference is small
-      Rotation3d Rdiff(this->GetRotation());
-      Rdiff.Invert(); // Invert
-      Rdiff *= P_other.GetRotation();
-      
-      angleDiff = Rdiff.GetAngle();
+      angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
       if(angleDiff < angleThreshold) {
         // Rotation is same, without even considering the ambiguities
         isSame = true;
       } else {
         // Need to consider ambiguities...
-        
+        Rotation3d Rdiff(this->GetRotation());
+        Rdiff.Invert(); // Invert
+        Rdiff *= P_other.GetRotation();
+
         // TODO: Does this directly with quaternions instead of converting to RotationMatrix
         RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
         
@@ -493,14 +491,22 @@ namespace Anki {
   
 #pragma mark --- Global Functions ---
   
-  float ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
+  Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
+    // Make sure the two poses share a common parent:
+    Pose3d pose2mod(pose2);
+    if(pose1.GetParent() != pose2.GetParent()) {
+      if(pose1.GetParent() == nullptr || false == pose2.GetWithRespectTo(*pose1.GetParent(), pose2mod)) {
+        PRINT_NAMED_ERROR("ComputeDistanceBetween", "Could not get pose2 w.r.t. pose1's parent.\n");
+        return -1.f;
+      }
+    }
+    
     // Compute distance between the two poses' translation vectors
     // TODO: take rotation into account?
     Vec3f distVec(pose1.GetTranslation());
-    distVec -= pose2.GetTranslation();
-    const float dist = distVec.Length();
-    return dist;
+    distVec -= pose2mod.GetTranslation();
+    return distVec;
   }
 
   

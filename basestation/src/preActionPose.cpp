@@ -44,11 +44,18 @@ namespace Anki {
       }
     } // GetVisualizeColor()
     
+    void PreActionPose::SetHeightTolerance()
+    {
+      const Point3f T = _poseWrtMarkerParent.GetTranslation().GetAbs();
+      const f32 distance = std::max(T.x(), std::max(T.y(), T.z()));
+      _heightTolerance = distance * std::tan(ANGLE_TOLERANCE);
+    }
+    
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
                                  const f32 distance,
                                  const Radians& headAngle)
-    : PreActionPose(type, marker, Y_AXIS_3D * -distance, headAngle)
+    : PreActionPose(type, marker, Y_AXIS_3D() * -distance, headAngle)
     {
       
     } // PreActionPose Constructor
@@ -60,7 +67,7 @@ namespace Anki {
                                  const Radians& headAngle)
     : _type(type)
     , _marker(marker)
-    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D, offset, &marker->GetPose()) // init w.r.t. marker
+    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, &marker->GetPose()) // init w.r.t. marker
     , _headAngle(headAngle)
     {
       // Now make pose w.r.t. marker parent
@@ -69,6 +76,8 @@ namespace Anki {
                           "Could not get the pre-action pose w.r.t. the marker's parent.\n");
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
+      
+      SetHeightTolerance();
       
     } // PreActionPose Constructor
     
@@ -90,6 +99,9 @@ namespace Anki {
                           "Could not get the pre-action pose w.r.t. the marker's parent.\n");
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
+      
+      SetHeightTolerance();
+      
     } // PreActionPose Constructor
     
     
@@ -102,7 +114,10 @@ namespace Anki {
     {
       _poseWrtMarkerParent.SetParent(markerParentPose.GetParent());
       _poseWrtMarkerParent.SetName("PreActionPose");
+      
+      SetHeightTolerance();
     }
+    
     
   } // namespace Cozmo
 } // namespace Anki

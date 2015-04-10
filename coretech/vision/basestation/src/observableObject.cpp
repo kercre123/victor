@@ -83,10 +83,11 @@ namespace Anki {
       }
     } // ObservableObject::GetMarkersWithCode()
     
-    
-    bool ObservableObject::IsSameAs(const ObservableObject&  otherObject,
-                                    const Point3f&           distThreshold,
-                                    const Radians&           angleThreshold) const
+    bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                    const Point3f& distThreshold,
+                                    const Radians& angleThreshold,
+                                    Point3f& Tdiff,
+                                    Radians& angleDiff) const
     {
       // The two objects can't be the same if they aren't the same type!
       bool isSame = this->GetType() == otherObject.GetType();
@@ -133,12 +134,14 @@ namespace Anki {
           isSame = Tdiff < distThreshold;
 #         else
           if(this->GetRotationAmbiguities().empty()) {
-            isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold);
+            isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold,
+                                    Tdiff, angleDiff);
           }
           else {
             isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
-                                                        this->GetRotationAmbiguities(),
-                                                        distThreshold, angleThreshold, true);
+                                                  this->GetRotationAmbiguities(),
+                                                  distThreshold, angleThreshold, true,
+                                                  Tdiff, angleDiff);
           } // if/else there are ambiguities
 #         endif // IGNORE_ROTATION_FOR_IS_SAME_AS
           
@@ -160,21 +163,34 @@ namespace Anki {
           // Note that the known marker's pose, and thus its 3d corners, are
           // defined in the coordinate frame of parent object, so computing its
           // pose here _is_ the pose of the parent object.
-          Pose3d markerPoseWrtCamera( matchingMarker->EstimateObservedPose(*obsMarker) );
-          
-          // Store the pose in the camera's coordinate frame, along with the pair
-          // of markers that generated it
-          possiblePoses.emplace_back(markerPoseWrtCamera,
-                                     MarkerMatch(obsMarker, matchingMarker));
+          Pose3d markerPoseWrtCamera;
+          Result result = matchingMarker->EstimateObservedPose(*obsMarker, markerPoseWrtCamera);
+          if(result == RESULT_OK) {
+            // Store the pose in the camera's coordinate frame, along with the pair
+            // of markers that generated it
+            possiblePoses.emplace_back(markerPoseWrtCamera,
+                                       MarkerMatch(obsMarker, matchingMarker));
+          } else {
+            PRINT_NAMED_ERROR("ObservableObject.ComputePossiblePoses",
+                              "Failed to estimate pose of observed marker.\n");
+          }
         }
       }
       
     } // ComputePossiblePoses()
 
+    /*
+    Point3f ObservableObject::GetRotatedBoundingCube(const Pose3d &atPose)
+    {
+      // TODO: Rotate using quaternion
+      Point3f cubeSize(atPose.GetRotation() * GetCanonicalBoundingCube());
+      return cubeSize;
+    }
+     */
     
     void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
     {
-      this->GetCorners(_pose, corners);
+      GetCorners(_pose, corners);
     }
 
   
