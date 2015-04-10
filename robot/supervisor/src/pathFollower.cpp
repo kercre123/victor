@@ -70,6 +70,9 @@ namespace Anki
         f32 manualPathAccel_ = 100;
         f32 manualPathDecel_ = 100;
         
+        // Max speed the robot can travel when in assisted RC mode
+        const f32 MAX_ASSISTED_RC_SPEED = 50.f;
+        
       } // Private Members
       
       
@@ -301,7 +304,7 @@ namespace Anki
       
       void SetManualPathSpeed(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)
       {
-        manualPathSpeed_ = speed_mmps;
+        manualPathSpeed_ = CLIP(speed_mmps, -MAX_ASSISTED_RC_SPEED, MAX_ASSISTED_RC_SPEED);
         manualPathAccel_ = accel_mmps2;
         manualPathDecel_ = decel_mmps2;
       }

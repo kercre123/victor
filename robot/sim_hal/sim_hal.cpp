@@ -141,11 +141,7 @@ namespace Anki {
         f32 x2 = x*x;
         f32 x3 = x*x2;
         if (x >= 0.15) {
-#ifdef COZMO_TREADS
-          speed_mm_per_s = 255.75 * x3 - 670.89 * x2 + 617.54 * x - 34.812;
-#else
           speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
-#endif
           if (power < 0) {
             speed_mm_per_s *= -1;
           }
