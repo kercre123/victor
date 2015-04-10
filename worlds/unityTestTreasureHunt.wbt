@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.259448 0.445967 0.856621 4.06626
-  position -1.36073 0.602278 0.942589
+  orientation 0.207815 -0.429869 -0.87865 2.33823
+  position -0.696258 0.786346 0.769501
 }
 Background {
   skyColor [
@@ -121,74 +121,74 @@ DirectionalLight {
 CozmoMat {
 }
 Ramp {
-  hidden linearVelocity_0 -4152.27 -6361.25 -1986.27
-  hidden angularVelocity_0 -8079.47 1887.72 -5582
-  translation 1.03092e+07 6.02294e+06 195550
-  rotation 0.0185277 -0.879968 -0.474672 -1.79942
+  hidden linearVelocity_0 10423.7 -231.763 3236.97
+  hidden angularVelocity_0 3023.48 9429.99 1390.66
+  translation 1.8104e+07 4.61628e+06 3.31906e+06
+  rotation -0.340233 0.0503423 -0.938993 -2.56498
 }
 DEF FireBlock Block1x1 {
   name "Fire_01"
-  translation -0.0496914 0.0158036 0.0219969
-  rotation 2.52495e-08 1.83671e-06 -1 3.1141
+  translation -0.00955296 0.0111884 0.0659943
+  rotation -5.21171e-06 -1.80862e-06 -1 -3.11126
   blockColor 0.85 0.5 0.5
   markerImg "symbols/fire.png"
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
-  translation 0.333689 0.199702 0.0219976
-  rotation 0.0133245 0.999822 0.0133282 -1.57097
+  translation -0.0120261 0.00945493 0.0219956
+  rotation -0.0082292 0.999932 -0.00823015 -1.57086
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_1 313.937
-  hidden position_0_2 280.664
-  hidden position_0_3 0.00318172
-  hidden position_0_4 -0.00560561
-  hidden position_0_6 0.00714159
-  hidden linearVelocity_0 3.45206e-14 -1.49348e-11 -1.08228e-17
-  hidden angularVelocity_0 -9.29966e-15 9.67616e-15 -1.50979e-10
-  hidden translation_5 -2.45945e-12 3.01877e-14 -8.21841e-09
-  hidden rotation_5 2.52893e-17 1 -1.19369e-15 0.051452
-  hidden linearVelocity_5 1.30415e-14 -1.41608e-11 -3.20954e-16
-  hidden angularVelocity_5 -9.48646e-15 9.68058e-15 -1.50979e-10
-  hidden translation_22 3.05755e-11 0.02385 1.02793e-07
-  hidden rotation_22 -8.18515e-09 1 1.22754e-09 -0.297129
-  hidden linearVelocity_22 -3.64228e-12 -1.22992e-11 -3.47901e-17
-  hidden angularVelocity_22 4.18265e-16 -1.0299e-13 -1.50979e-10
-  hidden translation_23 3.09353e-11 -0.02385 1.02791e-07
-  hidden rotation_23 6.58393e-10 1 -1.22529e-09 -2.15486
-  hidden linearVelocity_23 3.55745e-12 -1.20965e-11 -6.36289e-17
-  hidden angularVelocity_23 -2.2833e-14 1.00017e-13 -1.50979e-10
-  hidden translation_24 -1.29896e-14 0.02385 -4.34079e-11
-  hidden rotation_24 -3.25416e-10 1 -4.37905e-13 0.00317954
-  hidden linearVelocity_24 -3.51398e-12 -1.68265e-11 7.6614e-18
-  hidden angularVelocity_24 -1.02638e-14 3.45033e-16 -1.50979e-10
-  hidden translation_25 -1.29896e-14 -0.02385 -4.34079e-11
-  hidden rotation_25 -1.84577e-10 1 5.84096e-13 -0.00560779
-  hidden linearVelocity_25 3.68487e-12 -1.66238e-11 -2.60488e-16
-  hidden angularVelocity_25 -5.20602e-15 3.34105e-16 -1.50979e-10
-  hidden translation_26 1.46952e-11 3.13291e-15 -1.4346e-09
-  hidden rotation_26 -3.51864e-15 1 -1.06502e-14 -0.00714094
-  hidden position_26_0 0.00714166
-  hidden linearVelocity_26 5.20301e-12 -1.33626e-11 -9.13091e-11
-  hidden angularVelocity_26 8.20196e-11 -2.91475e-09 -1.5099e-10
-  hidden translation_27 8.44844e-12 1.14492e-15 -8.9734e-10
-  hidden rotation_27 1.08326e-15 1 -1.67921e-15 0.00714098
-  hidden linearVelocity_27 3.3479e-11 -7.78457e-12 -1.82791e-10
-  hidden angularVelocity_27 -1.16771e-14 8.96032e-14 -1.50979e-10
-  hidden translation_29 -1.52041e-11 3.12597e-15 -2.66138e-10
-  hidden rotation_29 -3.51676e-15 1 -1.02738e-14 -0.00714091
-  hidden position_29_0 0.00714162
-  hidden linearVelocity_29 5.2031e-12 -1.33623e-11 -9.1309e-11
-  hidden angularVelocity_29 8.20193e-11 -2.91475e-09 -1.5099e-10
-  translation 0.0628236 0.0189174 -8.17115e-06
-  rotation -0.000149656 -2.6846e-07 -1 3.11346
+  hidden position_0_1 324.985
+  hidden position_0_2 291.437
+  hidden position_0_3 0.00303098
+  hidden position_0_4 -0.0055211
+  hidden position_0_6 0.00787534
+  hidden linearVelocity_0 -4.10309e-14 -1.49357e-11 -1.83987e-16
+  hidden angularVelocity_0 2.41775e-14 6.41399e-15 -1.50993e-10
+  hidden translation_5 7.03548e-10 6.50677e-14 -1.64064e-08
+  hidden rotation_5 -1.86622e-17 1 -1.73403e-16 -0.0348594
+  hidden linearVelocity_5 -1.87694e-14 -1.41627e-11 -2.58088e-16
+  hidden angularVelocity_5 2.44943e-14 6.02986e-15 -1.50993e-10
+  hidden translation_22 -1.02625e-07 0.02385 1.08094e-07
+  hidden rotation_22 -2.22817e-09 1 3.34104e-10 -1.81656
+  hidden linearVelocity_22 -3.55724e-12 -1.20898e-11 -5.22583e-17
+  hidden angularVelocity_22 -2.057e-14 -5.05106e-13 -1.50993e-10
+  hidden translation_23 -1.00234e-07 -0.02385 8.01505e-08
+  hidden rotation_23 7.87072e-10 1 -1.46491e-09 2.33507
+  hidden linearVelocity_23 3.64066e-12 -1.2306e-11 4.62015e-17
+  hidden angularVelocity_23 2.27157e-14 -2.91893e-13 -1.50994e-10
+  hidden translation_24 -1.95954e-14 0.02385 -8.68157e-11
+  hidden rotation_24 -6.83321e-10 1 -8.76e-13 0.00302885
+  hidden linearVelocity_24 -3.69316e-12 -1.66178e-11 -7.20171e-16
+  hidden angularVelocity_24 -6.59231e-14 -3.43143e-12 -1.50993e-10
+  hidden translation_25 -2.98095e-14 -0.02385 -8.68157e-11
+  hidden rotation_25 -3.7479e-10 1 1.1641e-12 -0.00552322
+  hidden linearVelocity_25 3.50598e-12 -1.68342e-11 2.45165e-16
+  hidden angularVelocity_25 8.55635e-14 1.90608e-12 -1.50993e-10
+  hidden translation_26 3.04408e-11 6.73593e-15 -2.86915e-09
+  hidden rotation_26 -6.84734e-15 1 -3.66246e-14 -0.00787343
+  hidden position_26_0 0.00787549
+  hidden linearVelocity_26 5.14402e-12 -1.36648e-11 -9.13213e-11
+  hidden angularVelocity_26 -8.73298e-11 -2.91486e-09 -1.51005e-10
+  hidden translation_27 1.55826e-11 2.47198e-15 -1.79466e-09
+  hidden rotation_27 2.42895e-15 1 -1.60792e-15 0.00787351
+  hidden linearVelocity_27 3.36335e-11 -9.73358e-12 -1.82832e-10
+  hidden angularVelocity_27 2.27809e-14 -4.14254e-14 -1.50993e-10
+  hidden translation_29 -3.02141e-11 6.72899e-15 -5.32323e-10
+  hidden rotation_29 -6.74412e-15 1 -3.55376e-14 -0.00787336
+  hidden position_29_0 0.00787542
+  hidden linearVelocity_29 5.14427e-12 -1.36639e-11 -9.13215e-11
+  hidden angularVelocity_29 -8.73298e-11 -2.91486e-09 -1.51005e-10
+  translation 0.14713 0.00407502 -8.21699e-06
+  rotation -0.000149849 4.36747e-06 -1 -3.11163
   name "CozmoBot_1"
-  headAngle -0.0514552
-  liftAngle 0.00714163
+  headAngle 0.0348577
+  liftAngle 0.00787542
   usbChannel 10
 }
 CozmoVizDisplay {
