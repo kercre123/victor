@@ -172,6 +172,10 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
+      // Reduce delays from their defaults
+      virtual f32 GetStartDelayInSeconds()       const override { return 0.0f; }
+      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 0.05f; }
+      
       CompoundActionParallel _compoundAction;
       
       ObjectID   _objectID;

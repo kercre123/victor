@@ -556,14 +556,14 @@ namespace Anki {
       if(_maxTurnAngle > 0)
       {
         // Compute the required angle to face the object
-        const Radians currentRobotHeading = robot.GetPose().GetRotationAngle<'Z'>();
-
-        const Radians headingToObject = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
-                                                   objectPoseWrtRobot.GetTranslation().x());
-        const Radians turnAngle = headingToObject - currentRobotHeading;
+        const Radians turnAngle = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
+                                             objectPoseWrtRobot.GetTranslation().x());
         
-        if(turnAngle < _maxTurnAngle) {
-          if(turnAngle > _turnAngleTol) {
+        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
+                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
+        
+        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
+          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
             _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
           } else {
             PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
@@ -588,39 +588,46 @@ namespace Anki {
       const Radians headAngle = std::atan2(heightDiff, distanceXY);
       _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
       
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
       return SUCCESS;
     }
     
     IAction::ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
     {
-      // Once we stop moving, we're done
-      if(robot.IsMoving()) {
-        return RUNNING;
-      } else {
-        // Verify that we can see the object we were interested in
-        Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
-        if(object == nullptr) {
-          PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
-                            "Object with ID=%d no longer exists in the world.\n",
-                            _objectID.GetValue());
-          return FAILURE_ABORT;
-        }
-
-        const TimeStamp_t lastObserved = object->GetLastObservedTime();
-        if (robot.GetLastMsgTimestamp() - lastObserved > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
-        {
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
-                              "Object still exists, but not seen since %d (Current time = %d)\n",
-                              lastObserved, robot.GetLastMsgTimestamp());
-          return FAILURE_ABORT;
-        }
-
-        return SUCCESS;
+      // Tick the compound action until it completes
+      ActionResult compoundResult = _compoundAction.Update(robot);
+      
+      if(compoundResult != SUCCESS) {
+        return compoundResult;
       }
       
-    }
-    
-    
+      // If we get here, _compoundAction completed returned SUCCESS. So we can
+      // can continue with our additional checks:
+      
+      // Verify that we can see the object we were interested in
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                          "Object with ID=%d no longer exists in the world.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      const TimeStamp_t lastObserved = object->GetLastObservedTime();
+      if (robot.GetLastMsgTimestamp() - lastObserved > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
+      {
+        PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                            "Object still exists, but not seen since %d (Current time = %d)\n",
+                            lastObserved, robot.GetLastMsgTimestamp());
+        return FAILURE_ABORT;
+      }
+      
+      return SUCCESS;
+    } // CheckIfDone()
+
+
     const std::string& FaceObjectAction::GetName() const
     {
       static const std::string name("FaceObjectAction");
