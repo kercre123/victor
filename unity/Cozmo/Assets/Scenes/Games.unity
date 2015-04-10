@@ -2589,7 +2589,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &166635986
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5523,7 +5523,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &377856509
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6477,6 +6477,10 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22450872, guid: cdff87676c77342beba4c2d09913f4ed, type: 2}
       propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 150872, guid: cdff87676c77342beba4c2d09913f4ed, type: 2}
+      propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -20598,7 +20602,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1528133269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24348,6 +24352,10 @@ Prefab:
     - target: {fileID: 22444346, guid: 93551b838282948afb225bb24e6c2bfd, type: 2}
       propertyPath: m_Pivot.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 144346, guid: 93551b838282948afb225bb24e6c2bfd, type: 2}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 93551b838282948afb225bb24e6c2bfd, type: 2}
