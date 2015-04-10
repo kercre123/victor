@@ -134,7 +134,7 @@ namespace Anki {
         Planning::Path p;
         
         // TODO: Make it possible to set the speed/accel somewhere?
-        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
           result = FAILURE_ABORT;
         }
@@ -371,7 +371,7 @@ namespace Anki {
           else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
             result = FAILURE_ABORT;
           }
-          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 6.f) != RESULT_OK) {
             result = FAILURE_ABORT;
           } else {
             //SetGoal(possiblePoses[selectedIndex]);
@@ -521,6 +521,129 @@ namespace Anki {
       
       // Now that goal is set, call the base class init to send the path, etc.
       return DriveToPoseAction::Init(robot);
+    }
+    
+    
+#pragma mark ---- FaceObjectAction ----
+    
+    FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol,
+                                       Radians maxTurnAngle, bool headTrackWhenDone)
+    : _compoundAction{}
+    , _objectID(objectID)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    , _headTrackWhenDone(headTrackWhenDone)
+    {
+
+    }
+    
+    IAction::ActionResult FaceObjectAction::Init(Robot &robot)
+    {
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
+                          "Object with ID=%d no longer exists in the world.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      Pose3d objectPoseWrtRobot;
+      if(false == object->GetPose().GetWithRespectTo(robot.GetPose(), objectPoseWrtRobot)) {
+        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectPoseOriginProblem",
+                          "Could not get pose of object %d w.r.t. robot pose.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      if(_maxTurnAngle > 0)
+      {
+        // Compute the required angle to face the object
+        const Radians turnAngle = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
+                                             objectPoseWrtRobot.GetTranslation().x());
+        
+        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
+                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
+        
+        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
+          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
+          } else {
+            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
+                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
+                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
+          }
+        } else {
+          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
+                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
+                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
+          return FAILURE_ABORT;
+        }
+      } // if(_maxTurnAngle > 0)
+    
+      // Compute the required head angle to face the object
+      // NOTE: It would be more accurate to take head tilt into account, but I'm
+      //  just using neck joint height as an approximation for the camera's
+      //  current height, since its actual height changes slightly as the head
+      //  rotates around the neck.
+      const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
+      const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      return SUCCESS;
+    }
+    
+    IAction::ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
+    {
+      // Tick the compound action until it completes
+      ActionResult compoundResult = _compoundAction.Update(robot);
+      
+      if(compoundResult != SUCCESS) {
+        return compoundResult;
+      }
+      
+      // If we get here, _compoundAction completed returned SUCCESS. So we can
+      // can continue with our additional checks:
+      
+      // Verify that we can see the object we were interested in
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                          "Object with ID=%d no longer exists in the world.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      const TimeStamp_t lastObserved = object->GetLastObservedTime();
+      if (robot.GetLastMsgTimestamp() - lastObserved > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
+      {
+        PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                            "Object still exists, but not seen since %d (Current time = %d)\n",
+                            lastObserved, robot.GetLastMsgTimestamp());
+        return FAILURE_ABORT;
+      }
+      
+      if(_headTrackWhenDone) {
+        if(robot.EnableTrackHeadToObject(_objectID) == RESULT_OK) {
+          return SUCCESS;
+        } else {
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",
+                              "Failed to enable head tracking when done.\n");
+          return FAILURE_PROCEED;
+        }
+      }
+      
+      return SUCCESS;
+    } // CheckIfDone()
+
+
+    const std::string& FaceObjectAction::GetName() const
+    {
+      static const std::string name("FaceObjectAction");
+      return name;
     }
     
     
@@ -755,9 +878,9 @@ namespace Anki {
           return ACTION_PLACE_OBJECT_LOW;
           
         default:
-          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.GetType",
-                            "Unexpected dock action %d in determining action type.\n",
-                            _dockAction);
+          PRINT_NAMED_WARNING("PickAndPlaceObjectAction.GetType",
+                              "Unexpected dock action %d in determining action type.\n",
+                              _dockAction);
           return ACTION_UNKNOWN;
       }
     }

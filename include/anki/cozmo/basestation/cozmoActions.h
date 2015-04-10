@@ -154,6 +154,40 @@ namespace Anki {
     };  // class MoveHeadToAngleAction
     
     
+    // Tilt head and rotate body to face the specified object. Use angles
+    // specified at construction to control the body rotation.
+    class FaceObjectAction : public IAction
+    {
+    public:
+      // If facing the object requires less than turnAngleTol turn, then no
+      // turn is performed. If a turn greater than maxTurnAngle is required,
+      // the action fails. For angles in between, the robot will first turn
+      // to face the object, then tilt its head. To disallow turning, set
+      // maxTurnAngle to zero.
+      FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool headTrackWhenDone = false);
+      
+      virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_FACE_OBJECT; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      // Reduce delays from their defaults
+      virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
+      
+      CompoundActionParallel _compoundAction;
+      
+      ObjectID   _objectID;
+      Radians    _turnAngleTol;
+      Radians    _maxTurnAngle;
+      bool       _headTrackWhenDone;
+      
+    }; // FaceObjectAction
+    
+    
     // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
     {
