@@ -117,7 +117,6 @@ namespace Anki {
      **************************************************************************/
     
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
-
     
     // Calibration data for real robot(s):
     // NOTE that simulated camera calibration is computed dynamically from the FOV.
@@ -128,13 +127,6 @@ namespace Anki {
      *                          Timing (non-comms)
      *
      **************************************************************************/
-
-    // Cozmo control loop is 200Hz.
-    const s32 TIME_STEP = 5;
-
-    const f32 CONTROL_DT = TIME_STEP*0.001f;
-
-    const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
     // Simulated camera's frame rate, specified by its period in milliseconds
     const s32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!

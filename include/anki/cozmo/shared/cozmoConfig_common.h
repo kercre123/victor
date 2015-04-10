@@ -19,6 +19,19 @@ namespace Anki {
     // TODO: This needs to be sync'd with whatever is in BlockDefinitions.h
     const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
     
+    /***************************************************************************
+     *
+     *                          Timing (non-comms)
+     *
+     **************************************************************************/
+    
+    // Cozmo control loop is 200Hz.
+    const s32 TIME_STEP = 5;
+    
+    const f32 CONTROL_DT = TIME_STEP*0.001f;
+    
+    const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
+
     
     /***************************************************************************
      *

@@ -76,9 +76,6 @@ namespace Anki {
     // The distance along the x axis from the wrist joint to the front of the lifter plate
     const f32 LIFT_FRONT_WRT_WRIST_JOINT = 3.5f;
 
-    // The height of the "fingers"
-    const f32 LIFT_FINGER_HEIGHT = 3.8f;
-
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
     const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 40.f);
@@ -134,21 +131,6 @@ namespace Anki {
       -0.00074f,
       0.00046f
     };
-
-
-    /***************************************************************************
-     *
-     *                          Timing (non-comms)
-     *
-     **************************************************************************/
-
-    // Cozmo control loop is 200Hz.
-    const s32 TIME_STEP = 5;
-
-
-    const f32 CONTROL_DT = TIME_STEP*0.001f;
-
-    const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
 
     /***************************************************************************
