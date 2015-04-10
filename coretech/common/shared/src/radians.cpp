@@ -202,7 +202,7 @@ namespace Anki {
   }
 
   // Returns a radians object that's the absolute value of this one
-  Radians Radians::getAbsoluteVal()
+  Radians Radians::getAbsoluteVal() const
   {
     return Radians(ABS(radians_));
   }
