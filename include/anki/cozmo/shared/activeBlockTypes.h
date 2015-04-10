@@ -56,6 +56,8 @@ namespace Anki {
       u32 color; // Stored as RGBA, where A(lpha) is ignored
       u32 onPeriod_ms;
       u32 offPeriod_ms;
+      u32 transitionOnPeriod_ms;
+      u32 transitionOffPeriod_ms;
       TimeStamp_t nextSwitchTime; // for changing state when flashing
       bool        isOn;
     } LEDParams;
