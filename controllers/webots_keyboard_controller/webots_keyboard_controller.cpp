@@ -9,6 +9,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
