@@ -305,7 +305,7 @@ public class CozmoVision : MonoBehaviour
 		fadingIn = false;
 		fadingOut = false;
 		image.enabled = !OptionsScreen.GetToggleDisableVision();
-		fade = false/*!OptionsScreen.GetToggleDisableVisionFade()*/;
+		fade = !OptionsScreen.GetToggleDisableVisionFade();
 
 		//start at no alpha
 		float alpha = 0f;
