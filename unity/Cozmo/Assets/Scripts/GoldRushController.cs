@@ -26,9 +26,9 @@ public class GoldRushController : GameController {
 	//List<ObservedObject> goldCubes = new List<ObservedObject>();
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
-	bool attemptingStack = false;
 	int lastCarriedObjectId = -1;
-	int goldCarryingObjectId = -1;
+	int goldExtractingObjectId = -1;
+	int goldCollectingObjectId = -1;
 	int baseObjectId = -1;
 	ScreenMessage hintMessage;
 	private bool audioLocatorEnabled = true;
@@ -47,6 +47,16 @@ public class GoldRushController : GameController {
 	private PlayState playState = PlayState.IDLE;
 	float playStateTimer = 0;
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
+
+	enum BuildState
+	{
+		WAITING_TO_PICKUP_BLOCK,
+		WAITING_FOR_STACK,
+		WAITING_FOR_PLAY,
+		NUMSTATES
+	};
+
+	private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
 	Robot robot;
 	//int lastHeldID;
@@ -141,15 +151,20 @@ public class GoldRushController : GameController {
 	{
 		base.Enter_BUILDING ();
 		lastCarriedObjectId = -1;
-		goldCarryingObjectId = -1;
+		goldExtractingObjectId = -1;
 		playButton.gameObject.SetActive (false);
-		attemptingStack = false;
+		buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
 		robot = RobotEngineManager.instance.current;
+		RobotEngineManager.instance.SuccessOrFailure += CheckForStackSuccess;
+
+		hintMessage.ShowMessage("Pick up the extractor to begin", Color.black);
 	}
 
 	protected override void Exit_BUILDING ()
 	{
+		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
+		hintMessage.KillMessage ();
 		base.Exit_BUILDING ();
 	}
 
@@ -157,21 +172,43 @@ public class GoldRushController : GameController {
 	{
 		base.Update_BUILDING ();
 		// looking to see if we've created our stack
-		if (robot != null 
-		    && !attemptingStack
-		    && robot.Status (Robot.StatusFlag.IS_PICKING_OR_PLACING) 
-		    && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK) ) 
+	}
+
+	void CheckForStackSuccess(bool success, int action_type)
+	{
+		Debug.Log ("action type is: " + action_type);
+		if( success ) // hardcoded until we get enums over from the engine
 		{
-			Debug.Log("Attempting stack...");
-			attemptingStack = true;
-		}
-		else if ( robot != null 
-		         && attemptingStack
-		         && (!robot.Status (Robot.StatusFlag.IS_PICKING_OR_PLACING) 
-		         || !robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) ) 
-		{
-			Debug.Log("Not attempting stack...");
-			attemptingStack = false;
+			switch(buildState)
+			{
+			case BuildState.WAITING_TO_PICKUP_BLOCK:
+				if( action_type == 5 || action_type == 6 )
+				{
+					// picked up our fire block (will need to verify that it's an active block later)
+					buildState = BuildState.WAITING_FOR_STACK;
+					goldExtractingObjectId = robot.carryingObjectID;
+					hintMessage.ShowMessage("Now place the extractor on the collector", Color.black);
+				}
+				break;
+			case BuildState.WAITING_FOR_STACK:
+				if( action_type == 8 )
+				{
+					// picked up our fire block (will need to verify that it's an active block later)
+					buildState = BuildState.WAITING_FOR_PLAY;
+					hintMessage.ShowMessage("Now pick up the block to begin play", Color.black);
+				}
+				break;
+			case BuildState.WAITING_FOR_PLAY:
+				if( action_type == 6 )
+				{
+					// picked up our fire block (will need to verify that it's an active block later)
+					PlayRequested();
+					hintMessage.KillMessage();
+				}
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -180,9 +217,6 @@ public class GoldRushController : GameController {
 		//if(!base.IsGameReady()) return false;
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
-		
-		//game specific start conditions...
-		//are sufficient gold cubes in play?
 
 		return true;
 	}
@@ -394,7 +428,7 @@ public class GoldRushController : GameController {
 		audio.loop = false;
 		audio.Stop();
 		foundItems.Remove(lastCarriedObjectId);
-		goldCarryingObjectId = lastCarriedObjectId;
+		//goldExtractingObjectId = lastCarriedObjectId;
 		lastCarriedObjectId = -1;
 		hintMessage.KillMessage();
 		EnterPlayState(PlayState.EXTRACTING);

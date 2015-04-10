@@ -147,36 +147,36 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), index);
 	}
 
-	void MaxTurnSpeedChanged (float val) {
+	void MaxTurnSpeedChanged(float val) {
 		PlayerPrefs.SetFloat("MaxTurnFactor", Mathf.Clamp01(val));
 	}
 	
-	void ToggleReverseLikeACar (bool val) {
+	void ToggleReverseLikeACar(bool val) {
 		PlayerPrefs.SetInt("ReverseLikeACar", val ? 1 : 0);
 	}
 
-	void ToggleShowDebugInfo (bool val) {
+	void ToggleShowDebugInfo(bool val) {
 		PlayerPrefs.SetInt("ShowDebugInfo", val ? 1 : 0);
 	}
 
-	void ToggleDisableVision (bool val) {
+	void ToggleDisableVision(bool val) {
 		PlayerPrefs.SetInt("VisionDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
 	}
 
-	public static bool GetToggleDisableVision (bool defaultValue = false) {
+	public static bool GetToggleDisableVision(bool defaultValue = false) {
 		return PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
 	}
 
-	void ToggleUserTestMode (bool val) {
+	void ToggleUserTestMode(bool val) {
 		PlayerPrefs.SetInt("UserTestMode", val ? 1 : 0);
 		//Debug.Log("ToggleUserTestMode("+val+")");
 	}
 
-	void ToggleVisionRecording (bool val) {
+	void ToggleVisionRecording(bool val) {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.ToggleVisionRecording(val);
 	}
 
-	public void ResetToDefaultSettings () {
+	public void ResetToDefaultSettings() {
 
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
@@ -186,6 +186,14 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 		PlayerPrefs.DeleteKey("ToggleUserTestMode");
 		PlayerPrefs.DeleteKey("ObjectPertinence");
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());
+		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("VisionDisabled" + i.ToString());
+		}
 
 		RemoveListeners();
 		Init();
