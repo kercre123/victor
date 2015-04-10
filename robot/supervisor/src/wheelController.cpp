@@ -123,9 +123,17 @@ namespace Anki {
 #     else
 #ifdef COZMO_ROBOT_V31
         f32 out_ol = 8.4E-7 * x3 - 0.000166336 * x2 + 0.01343098 * x;    // Treaded robot with wonky left wheel
-#       else
-        f32 out_ol = 5.12E-7 * x3 - 0.000107221 * x2 + 0.008739278 * x;  // TODO: Add COZMO_ROBOT_V32 params
-#       endif
+#elif defined(COZMO_ROBOT_V32)
+      // Piecewise linear
+      f32 out_ol = 0;
+      if (x > 11) {
+        out_ol = 0.003810469 * x + 0.244934245;
+      } else {
+        out_ol = 0.3 * x / 11;
+      }
+#else
+#error WheelController: Robot platform not defined!
+#endif
 #     endif
       
       if (desired_speed_mmps < 0) {
@@ -150,9 +158,17 @@ namespace Anki {
 #     else
 #ifdef COZMO_ROBOT_V31
         f32 out_ol = 4.824E-7 * x3 - 8.98123E-5 * x2 + 0.007008705 * x;   // Treaded robot with wonky left wheel
-#       else
-        f32 out_ol = 3.97E-7 * x3 - 0.000084032 * x2 + 0.008001138 * x;   // TODO: Add COZMO_ROBOT_V32 params
-#       endif
+#elif defined(COZMO_ROBOT_V32)
+      // Piecewise linear
+      f32 out_ol = 0;
+      if (x > 7) {
+        out_ol = 0.00379558458 * x + 0.25229054692;
+      } else {
+        out_ol = 0.3 * x / 7;
+      }
+#else
+#error WheelController: Robot platform not defined!
+#endif
 #     endif
       
       if (desired_speed_mmps < 0) {

@@ -81,6 +81,19 @@ namespace Anki {
         // 0.9    170    173
         // 1.0    174    177
         
+        // *** COZMO 3.2 (with clamping on, i.e. MAX_WHEEL_SPEED == 0.75) ***
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 0.2      0      0
+        // 0.25     0      0
+        // 0.3     11      7
+        // 0.35    26     25
+        // 0.4     41     39
+        // 0.5     70     70
+        // 0.6     95     95
+        // 0.7    122    121
+        // 0.8    148    145
+        // 0.9    172    170
+        // 1.0    193    192
         
         // Percent power to step up when
         // DTF_ENABLE_CYCLE_SPEEDS_TEST is enabled
