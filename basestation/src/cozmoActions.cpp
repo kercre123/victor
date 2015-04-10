@@ -734,6 +734,30 @@ namespace Anki {
       return name;
     }
     
+    s32 PickAndPlaceObjectAction::GetType() const
+    {
+      switch(_dockAction)
+      {
+        case DA_PICKUP_HIGH:
+          return ACTION_PICKUP_OBJECT_HIGH;
+          
+        case DA_PICKUP_LOW:
+          return ACTION_PICKUP_OBJECT_LOW;
+          
+        case DA_PLACE_HIGH:
+          return ACTION_PLACE_OBJECT_HIGH;
+          
+        case DA_PLACE_LOW:
+          return ACTION_PLACE_OBJECT_LOW;
+          
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.GetType",
+                            "Unexpected dock action %d in determining action type.\n",
+                            _dockAction);
+          return ACTION_UNKNOWN;
+      }
+    }
+    
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can
