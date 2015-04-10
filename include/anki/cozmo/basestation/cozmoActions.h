@@ -204,6 +204,7 @@ namespace Anki {
       // derived classes
       virtual ActionResult Init(Robot& robot) override final;
       virtual ActionResult CheckIfDone(Robot& robot) override final;
+      virtual void Cleanup(Robot& robot) override final;
       
       // Most docking actions don't use a second dock marker, but in case they
       // do, they can override this method to choose one from the available

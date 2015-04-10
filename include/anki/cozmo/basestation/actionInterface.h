@@ -150,6 +150,12 @@ namespace Anki {
       virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
+      // Derived classes can implement any required cleanup by overriding this
+      // method. It is called when UpdateInternal() is about to anything other than
+      // RUNNING. Note that it cannot change the ActionResult (so if UpdateInternal
+      // is about to failure or success, nothing that Cleanup does can change that.)
+      virtual void Cleanup(Robot& robot) { }
+      
       //
       // Timing delays:
       //  (e.g. for allowing for communications to physical robot to have an effect)
