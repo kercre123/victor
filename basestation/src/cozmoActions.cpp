@@ -134,7 +134,7 @@ namespace Anki {
         Planning::Path p;
         
         // TODO: Make it possible to set the speed/accel somewhere?
-        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
           result = FAILURE_ABORT;
         }
@@ -371,7 +371,7 @@ namespace Anki {
           else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
             result = FAILURE_ABORT;
           }
-          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 1.f, 3.f) != RESULT_OK) {
+          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 6.f) != RESULT_OK) {
             result = FAILURE_ABORT;
           } else {
             //SetGoal(possiblePoses[selectedIndex]);
