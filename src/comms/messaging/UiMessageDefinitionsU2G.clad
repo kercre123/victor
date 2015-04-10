@@ -51,6 +51,19 @@ message U2G_TurnInPlace {
     uint_8 robotID
 }
 
+// FaceObject - Turns and tilts head to look at object in last known position
+//   If facing the object requires less than a turnAngleTol turn, then no
+//   turn is performed. If a turn greater than maxTurnAngle is required,
+//   the action fails. For angles in between, the robot will first turn
+//   to face the object, then tilt its head. To completely disallow turning,
+//   set maxTurnAngle to zero. (All angles in radians and forced to be positive.)
+message U2G_FaceObject {
+    uint_32  objectID,
+    float_32 turnAngleTol,
+    float_32 maxTurnAngle,
+    uint_8   robotID
+}
+
 // MoveHead
 message U2G_MoveHead {
     float_32 speed_rad_per_sec
@@ -316,6 +329,7 @@ union U2G_Message {
     U2G_StartEngine StartEngine,
     U2G_DriveWheels DriveWheels,
     U2G_TurnInPlace TurnInPlace,
+    U2G_FaceObject FaceObject,
     U2G_MoveHead MoveHead,
     U2G_MoveLift MoveLift,
     U2G_SetLiftHeight SetLiftHeight,

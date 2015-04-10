@@ -553,6 +553,86 @@ public class U2G_TurnInPlace
 
 }
 
+public class U2G_FaceObject
+{
+	private uint _objectID; // uint_32
+	private float _turnAngleTol; // float_32
+	private float _maxTurnAngle; // float_32
+	private byte _robotID; // uint_8
+
+	public uint objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public float turnAngleTol { get { return _turnAngleTol; } set { _turnAngleTol = value; } }
+
+	public float maxTurnAngle { get { return _maxTurnAngle; } set { _maxTurnAngle = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public U2G_FaceObject()
+	{
+	}
+
+	public U2G_FaceObject(uint objectID,
+		float turnAngleTol,
+		float maxTurnAngle,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		this.turnAngleTol = turnAngleTol;
+		this.maxTurnAngle = maxTurnAngle;
+		this.robotID = robotID;
+	}
+
+	public U2G_FaceObject(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public U2G_FaceObject(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadUInt32();
+		_turnAngleTol = reader.ReadSingle();
+		_maxTurnAngle = reader.ReadSingle();
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_objectID);
+		writer.Write((float)_turnAngleTol);
+		writer.Write((float)_maxTurnAngle);
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 13;
+		}
+	}
+
+}
+
 public class U2G_MoveHead
 {
 	private float _speed_rad_per_sec; // float_32
@@ -3185,48 +3265,49 @@ public class U2G_Message {
 		StartEngine,	//5
 		DriveWheels,	//6
 		TurnInPlace,	//7
-		MoveHead,	//8
-		MoveLift,	//9
-		SetLiftHeight,	//10
-		SetHeadAngle,	//11
-		TrackHeadToObject,	//12
-		StopAllMotors,	//13
-		ImageRequest,	//14
-		SetRobotImageSendMode,	//15
-		SaveImages,	//16
-		SaveRobotState,	//17
-		EnableDisplay,	//18
-		SetHeadlights,	//19
-		GotoPose,	//20
-		PlaceObjectOnGround,	//21
-		PlaceObjectOnGroundHere,	//22
-		ExecuteTestPlan,	//23
-		SelectNextObject,	//24
-		PickAndPlaceObject,	//25
-		TraverseObject,	//26
-		SetRobotCarryingObject,	//27
-		ClearAllBlocks,	//28
-		VisionWhileMoving,	//29
-		ExecuteBehavior,	//30
-		SetBehaviorState,	//31
-		AbortPath,	//32
-		AbortAll,	//33
-		DrawPoseMarker,	//34
-		ErasePoseMarker,	//35
-		SetWheelControllerGains,	//36
-		SetHeadControllerGains,	//37
-		SetLiftControllerGains,	//38
-		SelectNextSoundScheme,	//39
-		StartTestMode,	//40
-		IMURequest,	//41
-		PlayAnimation,	//42
-		ReadAnimationFile,	//43
-		StartFaceTracking,	//44
-		StopFaceTracking,	//45
-		StartLookingForMarkers,	//46
-		StopLookingForMarkers,	//47
-		SetVisionSystemParams,	//48
-		SetFaceDetectParams,	//49
+		FaceObject,	//8
+		MoveHead,	//9
+		MoveLift,	//10
+		SetLiftHeight,	//11
+		SetHeadAngle,	//12
+		TrackHeadToObject,	//13
+		StopAllMotors,	//14
+		ImageRequest,	//15
+		SetRobotImageSendMode,	//16
+		SaveImages,	//17
+		SaveRobotState,	//18
+		EnableDisplay,	//19
+		SetHeadlights,	//20
+		GotoPose,	//21
+		PlaceObjectOnGround,	//22
+		PlaceObjectOnGroundHere,	//23
+		ExecuteTestPlan,	//24
+		SelectNextObject,	//25
+		PickAndPlaceObject,	//26
+		TraverseObject,	//27
+		SetRobotCarryingObject,	//28
+		ClearAllBlocks,	//29
+		VisionWhileMoving,	//30
+		ExecuteBehavior,	//31
+		SetBehaviorState,	//32
+		AbortPath,	//33
+		AbortAll,	//34
+		DrawPoseMarker,	//35
+		ErasePoseMarker,	//36
+		SetWheelControllerGains,	//37
+		SetHeadControllerGains,	//38
+		SetLiftControllerGains,	//39
+		SelectNextSoundScheme,	//40
+		StartTestMode,	//41
+		IMURequest,	//42
+		PlayAnimation,	//43
+		ReadAnimationFile,	//44
+		StartFaceTracking,	//45
+		StopFaceTracking,	//46
+		StartLookingForMarkers,	//47
+		StopLookingForMarkers,	//48
+		SetVisionSystemParams,	//49
+		SetFaceDetectParams,	//50
 		INVALID
 	};
 
@@ -3368,6 +3449,23 @@ public class U2G_Message {
 		
 		set {
 			_tag = (value != null) ? Tag.TurnInPlace : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G_FaceObject FaceObject
+	{
+		get {
+			if (_tag != Tag.FaceObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"FaceObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G_FaceObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.FaceObject : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -4116,6 +4214,9 @@ public class U2G_Message {
 		case Tag.TurnInPlace:
 			_state = new Anki.Cozmo.U2G_TurnInPlace(reader);
 			break;
+		case Tag.FaceObject:
+			_state = new Anki.Cozmo.U2G_FaceObject(reader);
+			break;
 		case Tag.MoveHead:
 			_state = new Anki.Cozmo.U2G_MoveHead(reader);
 			break;
@@ -4278,6 +4379,9 @@ public class U2G_Message {
 		case Tag.TurnInPlace:
 			TurnInPlace.Pack(writer);
 			break;
+		case Tag.FaceObject:
+			FaceObject.Pack(writer);
+			break;
 		case Tag.MoveHead:
 			MoveHead.Pack(writer);
 			break;
@@ -4438,6 +4542,9 @@ public class U2G_Message {
 				break;
 			case Tag.TurnInPlace:
 				result += TurnInPlace.Size;
+				break;
+			case Tag.FaceObject:
+				result += FaceObject.Size;
 				break;
 			case Tag.MoveHead:
 				result += MoveHead.Size;

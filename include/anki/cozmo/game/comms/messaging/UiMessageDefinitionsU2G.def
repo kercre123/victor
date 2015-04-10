@@ -303,6 +303,49 @@ struct U2G_TurnInPlace
 	bool operator!=(const U2G_TurnInPlace& other) const;
 };
 
+// MESSAGE U2G_FaceObject
+struct U2G_FaceObject
+{
+	uint32_t objectID;
+	float turnAngleTol;
+	float maxTurnAngle;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	U2G_FaceObject() = default;
+	U2G_FaceObject(const U2G_FaceObject& other) = default;
+	U2G_FaceObject(U2G_FaceObject& other) = default;
+	U2G_FaceObject(U2G_FaceObject&& other) noexcept = default;
+	U2G_FaceObject& operator=(const U2G_FaceObject& other) = default;
+	U2G_FaceObject& operator=(U2G_FaceObject&& other) noexcept = default;
+	
+	explicit U2G_FaceObject(uint32_t objectID
+		,float turnAngleTol
+		,float maxTurnAngle
+		,uint8_t robotID)
+	:objectID(objectID)
+	,turnAngleTol(turnAngleTol)
+	,maxTurnAngle(maxTurnAngle)
+	,robotID(robotID)
+	{}
+
+	explicit U2G_FaceObject(const uint8_t* buff, size_t len);
+	explicit U2G_FaceObject(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_FaceObject& other) const;
+	bool operator!=(const U2G_FaceObject& other) const;
+};
+
 // MESSAGE U2G_MoveHead
 struct U2G_MoveHead
 {
@@ -1813,48 +1856,49 @@ public:
 		StartEngine,	// 5
 		DriveWheels,	// 6
 		TurnInPlace,	// 7
-		MoveHead,	// 8
-		MoveLift,	// 9
-		SetLiftHeight,	// 10
-		SetHeadAngle,	// 11
-		TrackHeadToObject,	// 12
-		StopAllMotors,	// 13
-		ImageRequest,	// 14
-		SetRobotImageSendMode,	// 15
-		SaveImages,	// 16
-		SaveRobotState,	// 17
-		EnableDisplay,	// 18
-		SetHeadlights,	// 19
-		GotoPose,	// 20
-		PlaceObjectOnGround,	// 21
-		PlaceObjectOnGroundHere,	// 22
-		ExecuteTestPlan,	// 23
-		SelectNextObject,	// 24
-		PickAndPlaceObject,	// 25
-		TraverseObject,	// 26
-		SetRobotCarryingObject,	// 27
-		ClearAllBlocks,	// 28
-		VisionWhileMoving,	// 29
-		ExecuteBehavior,	// 30
-		SetBehaviorState,	// 31
-		AbortPath,	// 32
-		AbortAll,	// 33
-		DrawPoseMarker,	// 34
-		ErasePoseMarker,	// 35
-		SetWheelControllerGains,	// 36
-		SetHeadControllerGains,	// 37
-		SetLiftControllerGains,	// 38
-		SelectNextSoundScheme,	// 39
-		StartTestMode,	// 40
-		IMURequest,	// 41
-		PlayAnimation,	// 42
-		ReadAnimationFile,	// 43
-		StartFaceTracking,	// 44
-		StopFaceTracking,	// 45
-		StartLookingForMarkers,	// 46
-		StopLookingForMarkers,	// 47
-		SetVisionSystemParams,	// 48
-		SetFaceDetectParams,	// 49
+		FaceObject,	// 8
+		MoveHead,	// 9
+		MoveLift,	// 10
+		SetLiftHeight,	// 11
+		SetHeadAngle,	// 12
+		TrackHeadToObject,	// 13
+		StopAllMotors,	// 14
+		ImageRequest,	// 15
+		SetRobotImageSendMode,	// 16
+		SaveImages,	// 17
+		SaveRobotState,	// 18
+		EnableDisplay,	// 19
+		SetHeadlights,	// 20
+		GotoPose,	// 21
+		PlaceObjectOnGround,	// 22
+		PlaceObjectOnGroundHere,	// 23
+		ExecuteTestPlan,	// 24
+		SelectNextObject,	// 25
+		PickAndPlaceObject,	// 26
+		TraverseObject,	// 27
+		SetRobotCarryingObject,	// 28
+		ClearAllBlocks,	// 29
+		VisionWhileMoving,	// 30
+		ExecuteBehavior,	// 31
+		SetBehaviorState,	// 32
+		AbortPath,	// 33
+		AbortAll,	// 34
+		DrawPoseMarker,	// 35
+		ErasePoseMarker,	// 36
+		SetWheelControllerGains,	// 37
+		SetHeadControllerGains,	// 38
+		SetLiftControllerGains,	// 39
+		SelectNextSoundScheme,	// 40
+		StartTestMode,	// 41
+		IMURequest,	// 42
+		PlayAnimation,	// 43
+		ReadAnimationFile,	// 44
+		StartFaceTracking,	// 45
+		StopFaceTracking,	// 46
+		StartLookingForMarkers,	// 47
+		StopLookingForMarkers,	// 48
+		SetVisionSystemParams,	// 49
+		SetFaceDetectParams,	// 50
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -1875,6 +1919,8 @@ public:
 			return "DriveWheels";
 		case Type::TurnInPlace:
 			return "TurnInPlace";
+		case Type::FaceObject:
+			return "FaceObject";
 		case Type::MoveHead:
 			return "MoveHead";
 		case Type::MoveLift:
@@ -2004,6 +2050,11 @@ public:
 	const Anki::Cozmo::U2G_TurnInPlace& Get_TurnInPlace() const;
 	void Set_TurnInPlace(const Anki::Cozmo::U2G_TurnInPlace& new_TurnInPlace);
 	void Set_TurnInPlace(Anki::Cozmo::U2G_TurnInPlace&& new_TurnInPlace);
+
+	/** FaceObject **/
+	const Anki::Cozmo::U2G_FaceObject& Get_FaceObject() const;
+	void Set_FaceObject(const Anki::Cozmo::U2G_FaceObject& new_FaceObject);
+	void Set_FaceObject(Anki::Cozmo::U2G_FaceObject&& new_FaceObject);
 
 	/** MoveHead **/
 	const Anki::Cozmo::U2G_MoveHead& Get_MoveHead() const;
@@ -2236,6 +2287,7 @@ private:
 		Anki::Cozmo::U2G_StartEngine _StartEngine;
 		Anki::Cozmo::U2G_DriveWheels _DriveWheels;
 		Anki::Cozmo::U2G_TurnInPlace _TurnInPlace;
+		Anki::Cozmo::U2G_FaceObject _FaceObject;
 		Anki::Cozmo::U2G_MoveHead _MoveHead;
 		Anki::Cozmo::U2G_MoveLift _MoveLift;
 		Anki::Cozmo::U2G_SetLiftHeight _SetLiftHeight;

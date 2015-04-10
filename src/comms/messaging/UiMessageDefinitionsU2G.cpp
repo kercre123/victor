@@ -513,6 +513,81 @@ bool U2G_TurnInPlace::operator!=(const U2G_TurnInPlace& other) const
 }
 
 
+// MESSAGE U2G_FaceObject
+
+U2G_FaceObject::U2G_FaceObject(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+U2G_FaceObject::U2G_FaceObject(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t U2G_FaceObject::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t U2G_FaceObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->turnAngleTol);
+	buffer.Write(this->maxTurnAngle);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t U2G_FaceObject::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t U2G_FaceObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->turnAngleTol);
+	buffer.Read(this->maxTurnAngle);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t U2G_FaceObject::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//turnAngleTol
+	result += 4; // = float_32
+	//maxTurnAngle
+	result += 4; // = float_32
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool U2G_FaceObject::operator==(const U2G_FaceObject& other) const
+{
+	if (objectID != other.objectID
+	|| turnAngleTol != other.turnAngleTol
+	|| maxTurnAngle != other.maxTurnAngle
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool U2G_FaceObject::operator!=(const U2G_FaceObject& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE U2G_MoveHead
 
 U2G_MoveHead::U2G_MoveHead(const uint8_t* buff, size_t len)
@@ -3423,6 +3498,35 @@ void U2G_Message::Set_TurnInPlace(Anki::Cozmo::U2G_TurnInPlace&& new_TurnInPlace
 }
 
 
+const Anki::Cozmo::U2G_FaceObject& U2G_Message::Get_FaceObject() const
+{
+	assert(_type == Type::FaceObject);
+	return _FaceObject;
+}
+void U2G_Message::Set_FaceObject(const Anki::Cozmo::U2G_FaceObject& new_FaceObject)
+{
+	if(this->_type == Type::FaceObject) {
+		_FaceObject = new_FaceObject;
+	}
+	else {
+		ClearCurrent();
+		new(&_FaceObject) Anki::Cozmo::U2G_FaceObject{new_FaceObject};
+		_type = Type::FaceObject;
+	}
+}
+void U2G_Message::Set_FaceObject(Anki::Cozmo::U2G_FaceObject&& new_FaceObject)
+{
+	if(this->_type == Type::FaceObject) {
+		_FaceObject = std::move(new_FaceObject);
+	}
+	else {
+		ClearCurrent();
+		new(&_FaceObject) Anki::Cozmo::U2G_FaceObject{std::move(new_FaceObject)};
+		_type = Type::FaceObject;
+	}
+}
+
+
 const Anki::Cozmo::U2G_MoveHead& U2G_Message::Get_MoveHead() const
 {
 	assert(_type == Type::MoveHead);
@@ -4720,6 +4824,14 @@ size_t U2G_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_TurnInPlace.Unpack(buffer);
 		}
 		break;
+	case Type::FaceObject:
+		if (newType != oldType) {
+			new(&(this->_FaceObject)) Anki::Cozmo::U2G_FaceObject(buffer);
+		}
+		else {
+			this->_FaceObject.Unpack(buffer);
+		}
+		break;
 	case Type::MoveHead:
 		if (newType != oldType) {
 			new(&(this->_MoveHead)) Anki::Cozmo::U2G_MoveHead(buffer);
@@ -5097,6 +5209,9 @@ size_t U2G_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Type::TurnInPlace:
 		this->_TurnInPlace.Pack(buffer);
 		break;
+	case Type::FaceObject:
+		this->_FaceObject.Pack(buffer);
+		break;
 	case Type::MoveHead:
 		this->_MoveHead.Pack(buffer);
 		break;
@@ -5258,6 +5373,9 @@ size_t U2G_Message::Size() const
 	case Type::TurnInPlace:
 		result += _TurnInPlace.Size();
 		break;
+	case Type::FaceObject:
+		result += _FaceObject.Size();
+		break;
 	case Type::MoveHead:
 		result += _MoveHead.Size();
 		break;
@@ -5417,6 +5535,9 @@ void U2G_Message::ClearCurrent()
 		break;
 	case Type::TurnInPlace:
 		_TurnInPlace.~U2G_TurnInPlace();
+		break;
+	case Type::FaceObject:
+		_FaceObject.~U2G_FaceObject();
 		break;
 	case Type::MoveHead:
 		_MoveHead.~U2G_MoveHead();

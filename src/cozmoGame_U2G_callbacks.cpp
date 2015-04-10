@@ -256,6 +256,21 @@ namespace Cozmo {
   }
   
   
+  void CozmoGameImpl::Process_FaceObject(U2G_FaceObject const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      ObjectID objectID;
+      if(msg.objectID == u32_MAX) {
+        objectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        objectID = msg.objectID;
+      }
+      robot->GetActionList().AddAction(new FaceObjectAction(objectID, msg.turnAngleTol, msg.maxTurnAngle));
+    }
+  }
+  
   void CozmoGameImpl::Process_StopAllMotors(U2G_StopAllMotors const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?

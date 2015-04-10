@@ -30,6 +30,9 @@ case Anki::Cozmo::U2G_Message::Type::DriveWheels:
 case Anki::Cozmo::U2G_Message::Type::TurnInPlace:
 	Process_TurnInPlace(msg.Get_TurnInPlace());
 	break;
+case Anki::Cozmo::U2G_Message::Type::FaceObject:
+	Process_FaceObject(msg.Get_FaceObject());
+	break;
 case Anki::Cozmo::U2G_Message::Type::MoveHead:
 	Process_MoveHead(msg.Get_MoveHead());
 	break;
