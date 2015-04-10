@@ -526,11 +526,13 @@ namespace Anki {
     
 #pragma mark ---- FaceObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle)
+    FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol,
+                                       Radians maxTurnAngle, bool headTrackWhenDone)
     : _compoundAction{}
     , _objectID(objectID)
     , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    , _headTrackWhenDone(headTrackWhenDone)
     {
 
     }
@@ -622,6 +624,16 @@ namespace Anki {
                             "Object still exists, but not seen since %d (Current time = %d)\n",
                             lastObserved, robot.GetLastMsgTimestamp());
         return FAILURE_ABORT;
+      }
+      
+      if(_headTrackWhenDone) {
+        if(robot.EnableTrackHeadToObject(_objectID) == RESULT_OK) {
+          return SUCCESS;
+        } else {
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",
+                              "Failed to enable head tracking when done.\n");
+          return FAILURE_PROCEED;
+        }
       }
       
       return SUCCESS;
