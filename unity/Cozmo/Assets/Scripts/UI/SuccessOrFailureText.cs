@@ -2,12 +2,11 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class SuccessOrFailureText : MonoBehaviour
+public class SuccessOrFailureText : ScreenMessage
 {
 	[SerializeField] private AudioClip success;
 	[SerializeField] private AudioClip failure;
-	[SerializeField] private Text text;
-	[SerializeField] private float timeOnScreen = 5f;
+	[SerializeField] protected float timeOnScreen = 5f;
 
 	private void OnEnable()
 	{
@@ -27,33 +26,19 @@ public class SuccessOrFailureText : MonoBehaviour
 		}
 	}
 
-	private void SuccessOrFailure( bool s )
+	private void SuccessOrFailure( bool s, int action_type )
 	{
 		if( s )
 		{
-			audio.PlayOneShot( success );
-			text.text = "SUCCESS";
-			text.color = Color.green;
+			if(success != null) audio.PlayOneShot( success );
+			ShowMessageForDuration( "SUCCESS", timeOnScreen, Color.green);
 		}
 		else
 		{
-			audio.PlayOneShot( failure );
-			text.text = "FAILURE";
-			text.color = Color.red;
+			if(failure != null) audio.PlayOneShot( failure );
+			ShowMessageForDuration( "FAILURE", timeOnScreen, Color.red);
 		}
 		
-		StartCoroutine( TurnOffText() );
-	}
-
-	protected IEnumerator TurnOffText()
-	{
-		float time = Time.time + timeOnScreen;
-		
-		while( time > Time.time )
-		{
-			yield return null;
-		}
-		
-		text.text = string.Empty;
+		StartCoroutine( TurnOffText(timeOnScreen) );
 	}
 }

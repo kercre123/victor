@@ -1,0 +1,221 @@
+#VRML_SIM V8.0.3 utf8
+WorldInfo {
+  info [
+    "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Date: 02 Aug 2013"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+  contactProperties [
+    DEF FLOOR_FRONTWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF RAMP_FRONTWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "highfriction"
+      coulombFriction [
+        500
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_FRONTWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_REARWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_REARWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_REARWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "nofriction"
+      coulombFriction [
+        5
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_BLOCK ContactProperties {
+      material1 "cmat_floor"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF BLOCK_BLOCK ContactProperties {
+      material1 "cmat_block"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_BLOCK ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_ramp"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_floor"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.999957 0.00389295 0.00837323 5.41315
+  position 0.19237 -1.60769 1.25807
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.75
+  direction 1 -0.5 -2
+}
+PointLight {
+  ambientIntensity 1
+  location 0 0.3 0
+}
+CozmoMat {
+  xSize 2
+  ySize 1.5
+}
+DEF Zone_Red Solid {
+  translation 0.75 0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0.6 0.5
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
+}
+DEF Zone_Blue Solid {
+  translation 0.75 0 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 0.6 1
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
+}
+DEF Zone_Green Solid {
+  translation 0.75 -0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 1 0.5
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
+}
+DEF Red Block1x1 {
+  name "Fire_01"
+  translation 0.3 0 0.0219969
+  rotation 1 0 0 0
+  markerImg "symbols/fire.png"
+}
+DEF Blue Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.0659969
+  rotation 1 0 0 0
+  blockColor 0 0 1
+  markerImg "symbols/kitty.png"
+}
+DEF Green Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.109997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
+}
+DEF Red Block1x1 {
+  name "Fire_01"
+  translation 0.3 0 0.153997
+  rotation 1 0 0 0
+  markerImg "symbols/fire.png"
+}
+DEF Blue Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.197997
+  rotation 1 0 0 0
+  blockColor 0 0 1
+  markerImg "symbols/kitty.png"
+}
+DEF Green Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.241997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  rotation 0 -1 0 0
+  name "CozmoBot_1"
+  usbChannel 10
+}
+CozmoVizDisplay {
+}

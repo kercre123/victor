@@ -206,8 +206,8 @@ namespace Anki {
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
-      void SendSetRobotImageSendMode(u8 mode, u8 resolution);
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState=false);
+      void SendSetRobotImageSendMode(u8 mode);
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
@@ -224,6 +224,8 @@ namespace Anki {
       void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
       void SendErasePoseMarker();
+      void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
+                                    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
       void SendSelectNextSoundScheme();
@@ -277,7 +279,8 @@ namespace Anki {
           // DEBUG!!!
           // Track head to last object seen
           static u32 lastObjectID = u32_MAX;
-          if(msg.objectID != lastObjectID) {
+          if(msg.objectID != lastObjectID && msg.markersVisible)
+          {
             lastObjectID = msg.objectID;
             
             printf("Telling robot to track head to object %d\n", msg.objectID);
@@ -327,7 +330,11 @@ namespace Anki {
         SendMessage(message);
       }
       
-      
+      void HandleRobotConnected(G2U_RobotConnected const &msg)
+      {
+        // Once robot connects, set resolution
+        SendSetRobotImageSendMode(ISM_STREAM);
+      }
       
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
@@ -403,6 +410,9 @@ namespace Anki {
         // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
           switch (message.GetType()) {
+            case G2U_Message::Type::RobotConnected:
+              HandleRobotConnected(message.Get_RobotConnected());
+              break;
             case G2U_Message::Type::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
@@ -600,11 +610,18 @@ namespace Anki {
                   //p1 = DTF_ENABLE_DIRECT_HAL_TEST | DTF_ENABLE_CYCLE_SPEEDS_TEST;
                   //p2 = 5;
                   //p3 = 20;
-                  p1 = root_->getField("dt_flags")->getSFInt32();
+                  p1 = root_->getField("driveTest_flags")->getSFInt32();
                   p2 = 5;
-                  p3 = root_->getField("dt_wheel_power")->getSFInt32();
+                  p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
-                  
+                case TM_LIFT:
+                  p1 = root_->getField("liftTest_flags")->getSFInt32();
+                  p2 = 25;
+                  break;
+                case TM_HEAD:
+                  p1 = root_->getField("headTest_flags")->getSFInt32();
+                  p2 = 25;
+                  break;
                 case TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
@@ -760,34 +777,8 @@ namespace Anki {
                   printf("Requesting single robot image.\n");
                 }
                 
-                Vision::CameraResolution localStreamRes = IMG_STREAM_RES;
-                
-                if (root_) {
-                  const s32 camera_horizontalResolution = root_->getField("camera_horizontalResolution")->getSFInt32();
-                  switch(camera_horizontalResolution)
-                  {
-                    case 640:
-                      localStreamRes = Vision::CAMERA_RES_VGA;
-                      break;
-                    case 320:
-                      localStreamRes = Vision::CAMERA_RES_QVGA;
-                      break;
-                    case 160:
-                      localStreamRes = Vision::CAMERA_RES_QQVGA;
-                      break;
-                    case 80:
-                      localStreamRes = Vision::CAMERA_RES_QQQVGA;
-                      break;
-                    case 40:
-                      localStreamRes = Vision::CAMERA_RES_QQQQVGA;
-                      break;
-                    default:
-                      printf("Unsupported camera_horizontalResolution = %d\n", camera_horizontalResolution);
-                  }
-                }
-                
-                SendSetRobotImageSendMode(mode, localStreamRes);
-                //}
+                SendSetRobotImageSendMode(mode);
+
                 break;
               }
                 
@@ -822,17 +813,17 @@ namespace Anki {
               case (s32)'E':
               {
                 // Toggle saving of images to pgm
-                VizSaveMode_t mode = VIZ_SAVE_ONE_SHOT;
+                SaveMode_t mode = SAVE_ONE_SHOT;
                 
                 const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = VIZ_SAVE_OFF;
+                    mode = SAVE_OFF;
                     printf("Saving robot image/state stream OFF.\n");
                   } else {
-                    mode = VIZ_SAVE_CONTINUOUS;
+                    mode = SAVE_CONTINUOUS;
                     printf("Saving robot image %sstream ON.\n", alsoSaveState ? "and state " : "");
                   }
                   streamOn = !streamOn;
@@ -962,6 +953,16 @@ namespace Anki {
               case (s32)'K':
               {
                 if (root_) {
+                  // Wheel gains
+                  f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
+                  f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
+                  f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
+                  f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
+                  f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
+                  f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
+                  printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                  SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                  
                   // Head and lift gains
                   f32 kp = root_->getField("headKp")->getSFFloat();
                   f32 ki = root_->getField("headKi")->getSFFloat();
@@ -1061,7 +1062,20 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                SendIMURequest(2000);
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  U2G_FaceObject msg;
+                  msg.robotID = 1;
+                  msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
+                  msg.turnAngleTol = DEG_TO_RAD(5);
+                  msg.maxTurnAngle = DEG_TO_RAD(90);
+                  msg.headTrackWhenDone = 0;
+                  
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_FaceObject(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendIMURequest(2000);
+                }
                 break;
               }
 
@@ -1585,7 +1599,7 @@ namespace Anki {
             f32 angle = atan2f(-northVec[1], northVec[0]);
             
             poseMarkerPose_.SetTranslation(transVec);
-            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D);
+            poseMarkerPose_.SetRotation(angle, Z_AXIS_3D());
             
             // Update pose marker if different from last time
             if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
@@ -1701,8 +1715,24 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSetRobotImageSendMode(u8 mode, u8 resolution)
+      void SendSetRobotImageSendMode(u8 mode)
       {
+        // Determine resolution from "streamResolution" setting in the keyboard controller
+        // node
+        Vision::CameraResolution resolution = IMG_STREAM_RES;
+        
+        if (root_) {
+          const std::string resString = root_->getField("streamResolution")->getSFString();
+          printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
+          if(resString == "VGA") {
+            resolution = Vision::CAMERA_RES_VGA;
+          } else if(resString == "QVGA") {
+            resolution = Vision::CAMERA_RES_QVGA;
+          } else {
+            printf("Unsupported streamResolution = %s\n", resString.c_str());
+          }
+        }
+        
         U2G_SetRobotImageSendMode m;
         m.mode = mode;
         m.resolution = resolution;
@@ -1711,7 +1741,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSaveImages(VizSaveMode_t mode, bool alsoSaveState)
+      void SendSaveImages(SaveMode_t mode, bool alsoSaveState)
       {
         U2G_SaveImages m;
         m.mode = mode;
@@ -1875,6 +1905,22 @@ namespace Anki {
         message.Set_ErasePoseMarker(m);
         SendMessage(message);
       }
+
+      void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
+                                    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
+      {
+        U2G_SetWheelControllerGains m;
+        m.kpLeft = kpLeft;
+        m.kiLeft = kiLeft;
+        m.maxIntegralErrorLeft = maxErrorSumLeft;
+        m.kpRight = kpRight;
+        m.kiRight = kiRight;
+        m.maxIntegralErrorRight = maxErrorSumRight;
+        U2G_Message message;
+        message.Set_SetWheelControllerGains(m);
+        SendMessage(message);
+      }
+
       
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
       {

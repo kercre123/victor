@@ -120,66 +120,15 @@ namespace Cozmo {
                                                 float x_lowerLeft,  float y_lowerLeft,
                                                 float x_upperRight, float y_upperRight,
                                                 float x_lowerRight, float y_lowerRight);
-    void HandleRobotCompletedAction(uint8_t robotID, uint8_t success);
+    void HandleRobotCompletedAction(uint8_t robotID, int32_t actionType, uint8_t success);
     //
     // U2G Message Handling
     //
     //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
     
     void RegisterCallbacksU2G();
-#define REGISTER_CALLBACK(__MSG_TYPE__) void ProcessMessage(const U2G_##__MSG_TYPE__& msg);
-    REGISTER_CALLBACK(Ping)
-    REGISTER_CALLBACK(ConnectToRobot)
-    REGISTER_CALLBACK(ConnectToUiDevice)
-    REGISTER_CALLBACK(DisconnectFromUiDevice)
-    REGISTER_CALLBACK(ForceAddRobot)
-    REGISTER_CALLBACK(StartEngine)
-    REGISTER_CALLBACK(DriveWheels)
-    REGISTER_CALLBACK(TurnInPlace)
-    REGISTER_CALLBACK(MoveHead)
-    REGISTER_CALLBACK(MoveLift)
-    REGISTER_CALLBACK(SetLiftHeight)
-    REGISTER_CALLBACK(SetHeadAngle)
-    REGISTER_CALLBACK(TrackHeadToObject)
-    REGISTER_CALLBACK(StopAllMotors)
-    REGISTER_CALLBACK(ImageRequest)
-    REGISTER_CALLBACK(SetRobotImageSendMode)
-    REGISTER_CALLBACK(SaveImages)
-    REGISTER_CALLBACK(SaveRobotState)
-    REGISTER_CALLBACK(EnableDisplay)
-    REGISTER_CALLBACK(SetHeadlights)
-    REGISTER_CALLBACK(GotoPose)
-    REGISTER_CALLBACK(PlaceObjectOnGround)
-    REGISTER_CALLBACK(PlaceObjectOnGroundHere)
-    REGISTER_CALLBACK(ExecuteTestPlan)
-    REGISTER_CALLBACK(SelectNextObject)
-    REGISTER_CALLBACK(PickAndPlaceObject)
-    REGISTER_CALLBACK(TraverseObject)
-    REGISTER_CALLBACK(SetRobotCarryingObject)
-    REGISTER_CALLBACK(ClearAllBlocks)
-    REGISTER_CALLBACK(VisionWhileMoving)
-    REGISTER_CALLBACK(ExecuteBehavior)
-    REGISTER_CALLBACK(SetBehaviorState)
-    REGISTER_CALLBACK(AbortPath)
-    REGISTER_CALLBACK(AbortAll)
-    REGISTER_CALLBACK(DrawPoseMarker)
-    REGISTER_CALLBACK(ErasePoseMarker)
-    REGISTER_CALLBACK(SetHeadControllerGains)
-    REGISTER_CALLBACK(SetLiftControllerGains)
-    REGISTER_CALLBACK(SelectNextSoundScheme)
-    REGISTER_CALLBACK(StartTestMode)
-    REGISTER_CALLBACK(IMURequest)
-    REGISTER_CALLBACK(PlayAnimation)
-    REGISTER_CALLBACK(ReadAnimationFile)
-    REGISTER_CALLBACK(StartFaceTracking)
-    REGISTER_CALLBACK(StopFaceTracking)
-    REGISTER_CALLBACK(StartLookingForMarkers)
-    REGISTER_CALLBACK(StopLookingForMarkers)
-    REGISTER_CALLBACK(SetVisionSystemParams)
-    REGISTER_CALLBACK(SetFaceDetectParams)
-    REGISTER_CALLBACK(SetActiveObjectLEDs)
-    REGISTER_CALLBACK(SetAllActiveObjectLEDs)
-#undef REGISTER_CALLBACK
+    void ProcessBadType_U2G_Message(U2G_Message::Type type);
+#include "comms/messaging/UiMessageDefinitionsU2G_declarations.def"
     
     //
     // Member Variables
