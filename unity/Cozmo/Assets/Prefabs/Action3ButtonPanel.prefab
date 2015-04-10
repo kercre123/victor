@@ -304,7 +304,7 @@ MonoBehaviour:
   snapToSideBarScale: 1
   anchorToCenterOnSideBar: {fileID: 22461266}
   anchorToScaleOnSmallScreens: {fileID: 22461266}
-  scaleOnSmallScreensFactor: .5
+  scaleOnSmallScreensFactor: .699999988
 --- !u!114 &11461248
 MonoBehaviour:
   m_ObjectHideFlags: 1
