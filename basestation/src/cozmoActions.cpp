@@ -524,6 +524,110 @@ namespace Anki {
     }
     
     
+#pragma mark ---- FaceObjectAction ----
+    
+    FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle)
+    : _compoundAction{}
+    , _objectID(objectID)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    {
+
+    }
+    
+    IAction::ActionResult FaceObjectAction::Init(Robot &robot)
+    {
+      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
+                          "Object with ID=%d no longer exists in the world.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      Pose3d objectPoseWrtRobot;
+      if(false == object->GetPose().GetWithRespectTo(robot.GetPose(), objectPoseWrtRobot)) {
+        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectPoseOriginProblem",
+                          "Could not get pose of object %d w.r.t. robot pose.\n",
+                          _objectID.GetValue());
+        return FAILURE_ABORT;
+      }
+      
+      if(_maxTurnAngle > 0)
+      {
+        // Compute the required angle to face the object
+        const Radians currentRobotHeading = robot.GetPose().GetRotationAngle<'Z'>();
+
+        const Radians headingToObject = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
+                                                   objectPoseWrtRobot.GetTranslation().x());
+        const Radians turnAngle = headingToObject - currentRobotHeading;
+        
+        if(turnAngle < _maxTurnAngle) {
+          if(turnAngle > _turnAngleTol) {
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
+          } else {
+            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
+                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
+                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
+          }
+        } else {
+          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
+                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
+                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
+          return FAILURE_ABORT;
+        }
+      } // if(_maxTurnAngle > 0)
+    
+      // Compute the required head angle to face the object
+      // NOTE: It would be more accurate to take head tilt into account, but I'm
+      //  just using neck joint height as an approximation for the camera's
+      //  current height, since its actual height changes slightly as the head
+      //  rotates around the neck.
+      const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
+      const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+      return SUCCESS;
+    }
+    
+    IAction::ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
+    {
+      // Once we stop moving, we're done
+      if(robot.IsMoving()) {
+        return RUNNING;
+      } else {
+        // Verify that we can see the object we were interested in
+        Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                            "Object with ID=%d no longer exists in the world.\n",
+                            _objectID.GetValue());
+          return FAILURE_ABORT;
+        }
+
+        const TimeStamp_t lastObserved = object->GetLastObservedTime();
+        if (robot.GetLastMsgTimestamp() - lastObserved > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
+        {
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
+                              "Object still exists, but not seen since %d (Current time = %d)\n",
+                              lastObserved, robot.GetLastMsgTimestamp());
+          return FAILURE_ABORT;
+        }
+
+        return SUCCESS;
+      }
+      
+    }
+    
+    
+    const std::string& FaceObjectAction::GetName() const
+    {
+      static const std::string name("FaceObjectAction");
+      return name;
+    }
+    
+    
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
