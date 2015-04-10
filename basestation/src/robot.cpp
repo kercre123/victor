@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -981,12 +982,8 @@ namespace Anki {
       
       SelectPlanner(targetPoseWrtOrigin);
       
-#if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
-#else
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
-#endif
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -1017,16 +1014,12 @@ namespace Anki {
       // Let the long path (lattice) planner do its thing and choose a target
       _selectedPathPlanner = _longPathPlanner;
       
-#if(USE_DRIVE_CENTER_POSE)
       // Compute drive center pose for start pose and goal poses
       vector<Pose3d> targetDriveCenterPoses(poses.size());
       for (int i=0; i< poses.size(); ++i) {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
       IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPoses, selectedIndex);
-#else
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
-#endif
       
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
       {
@@ -1038,14 +1031,10 @@ namespace Anki {
         // plan and use that one instead.
         if(_selectedPathPlanner != _longPathPlanner) {
 
-#if(USE_DRIVE_CENTER_POSE)
           // Compute drive center pose for start pose and goal pose
           Pose3d targetDriveCenterPose;
           ComputeDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
           status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
-#else
-          status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
-#endif
         }
         
         if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
@@ -2732,7 +2721,6 @@ namespace Anki {
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
-#if(USE_DRIVE_CENTER_POSE)
       if (_isPhysical) {
         // What is the current drive center pose based on carry state...
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
@@ -2751,9 +2739,6 @@ namespace Anki {
         //       Til then assume no drive center offset.
         driveCenterPose = robotPose;
       }
-#else
-      driveCenterPose = robotPose;
-#endif
     }
     
   } // namespace Cozmo
