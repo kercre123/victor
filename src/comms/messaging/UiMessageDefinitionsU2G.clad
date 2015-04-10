@@ -57,11 +57,14 @@ message U2G_TurnInPlace {
 //   the action fails. For angles in between, the robot will first turn
 //   to face the object, then tilt its head. To completely disallow turning,
 //   set maxTurnAngle to zero. (All angles in radians and forced to be positive.)
+//   Set headTrackWhenDone to non-zero to enable head tracking to the specified
+//   object once the robot has successfully faced it.
 message U2G_FaceObject {
     uint_32  objectID,
     float_32 turnAngleTol,
     float_32 maxTurnAngle,
-    uint_8   robotID
+    uint_8   robotID,
+    uint_8   headTrackWhenDone
 }
 
 // MoveHead

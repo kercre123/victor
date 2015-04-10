@@ -538,6 +538,7 @@ size_t U2G_FaceObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->turnAngleTol);
 	buffer.Write(this->maxTurnAngle);
 	buffer.Write(this->robotID);
+	buffer.Write(this->headTrackWhenDone);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
@@ -554,6 +555,7 @@ size_t U2G_FaceObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->turnAngleTol);
 	buffer.Read(this->maxTurnAngle);
 	buffer.Read(this->robotID);
+	buffer.Read(this->headTrackWhenDone);
 	return buffer.GetBytesRead();
 }
 
@@ -568,6 +570,8 @@ size_t U2G_FaceObject::Size() const
 	result += 4; // = float_32
 	//robotID
 	result += 1; // = uint_8
+	//headTrackWhenDone
+	result += 1; // = uint_8
 	return result;
 }
 
@@ -576,7 +580,8 @@ bool U2G_FaceObject::operator==(const U2G_FaceObject& other) const
 	if (objectID != other.objectID
 	|| turnAngleTol != other.turnAngleTol
 	|| maxTurnAngle != other.maxTurnAngle
-	|| robotID != other.robotID) {
+	|| robotID != other.robotID
+	|| headTrackWhenDone != other.headTrackWhenDone) {
 		return false;
 	}
 	return true;

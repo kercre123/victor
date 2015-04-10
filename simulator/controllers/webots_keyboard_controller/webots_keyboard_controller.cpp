@@ -969,6 +969,7 @@ namespace Anki {
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
                   msg.turnAngleTol = DEG_TO_RAD(5);
                   msg.maxTurnAngle = DEG_TO_RAD(90);
+                  msg.headTrackWhenDone = 0;
                   
                   U2G_Message msgWrapper;
                   msgWrapper.Set_FaceObject(msg);

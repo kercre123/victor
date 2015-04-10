@@ -559,6 +559,7 @@ public class U2G_FaceObject
 	private float _turnAngleTol; // float_32
 	private float _maxTurnAngle; // float_32
 	private byte _robotID; // uint_8
+	private byte _headTrackWhenDone; // uint_8
 
 	public uint objectID { get { return _objectID; } set { _objectID = value; } }
 
@@ -567,6 +568,8 @@ public class U2G_FaceObject
 	public float maxTurnAngle { get { return _maxTurnAngle; } set { _maxTurnAngle = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public byte headTrackWhenDone { get { return _headTrackWhenDone; } set { _headTrackWhenDone = value; } }
 
 
 	/**** Constructors ****/
@@ -578,12 +581,14 @@ public class U2G_FaceObject
 	public U2G_FaceObject(uint objectID,
 		float turnAngleTol,
 		float maxTurnAngle,
-		byte robotID)
+		byte robotID,
+		byte headTrackWhenDone)
 	{
 		this.objectID = objectID;
 		this.turnAngleTol = turnAngleTol;
 		this.maxTurnAngle = maxTurnAngle;
 		this.robotID = robotID;
+		this.headTrackWhenDone = headTrackWhenDone;
 	}
 
 	public U2G_FaceObject(System.IO.Stream stream)
@@ -608,6 +613,7 @@ public class U2G_FaceObject
 		_turnAngleTol = reader.ReadSingle();
 		_maxTurnAngle = reader.ReadSingle();
 		_robotID = reader.ReadByte();
+		_headTrackWhenDone = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -622,12 +628,13 @@ public class U2G_FaceObject
 		writer.Write((float)_turnAngleTol);
 		writer.Write((float)_maxTurnAngle);
 		writer.Write((byte)_robotID);
+		writer.Write((byte)_headTrackWhenDone);
 	}
 
 	public int Size 
 	{
 		get {
-			return 13;
+			return 14;
 		}
 	}
 

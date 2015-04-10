@@ -310,6 +310,7 @@ struct U2G_FaceObject
 	float turnAngleTol;
 	float maxTurnAngle;
 	uint8_t robotID;
+	uint8_t headTrackWhenDone;
 	
 	/**** Constructors ****/
 	U2G_FaceObject() = default;
@@ -322,11 +323,13 @@ struct U2G_FaceObject
 	explicit U2G_FaceObject(uint32_t objectID
 		,float turnAngleTol
 		,float maxTurnAngle
-		,uint8_t robotID)
+		,uint8_t robotID
+		,uint8_t headTrackWhenDone)
 	:objectID(objectID)
 	,turnAngleTol(turnAngleTol)
 	,maxTurnAngle(maxTurnAngle)
 	,robotID(robotID)
+	,headTrackWhenDone(headTrackWhenDone)
 	{}
 
 	explicit U2G_FaceObject(const uint8_t* buff, size_t len);
