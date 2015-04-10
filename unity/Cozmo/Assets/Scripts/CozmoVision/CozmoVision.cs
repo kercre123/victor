@@ -90,6 +90,7 @@ public class CozmoVision : MonoBehaviour
 	private float[] dingTimes = new float[2] { 0f, 0f };
 	private static bool imageRequested = false;
 	private float fromVol = 0f;
+	private bool fade = true;
 	private bool fadingOut = false;
 	private bool fadingIn = false;
 	private float fadeTimer = 0f;
@@ -304,6 +305,7 @@ public class CozmoVision : MonoBehaviour
 		fadingIn = false;
 		fadingOut = false;
 		image.enabled = !OptionsScreen.GetToggleDisableVision();
+		fade = false/*!OptionsScreen.GetToggleDisableVisionFade()*/;
 
 		//start at no alpha
 		float alpha = 0f;
@@ -323,7 +325,6 @@ public class CozmoVision : MonoBehaviour
 
 	protected void RefreshFade()
 	{
-
 		if(!fadingIn && !fadingOut) return;
 
 		fadeTimer += Time.deltaTime;
@@ -331,7 +332,7 @@ public class CozmoVision : MonoBehaviour
 		float factor = fadeTimer / fadeDuration;
 
 		RefreshLoopingTargetSound(factor);
-		
+
 		float alpha = 0f;
 		if(fadingIn) {
 			alpha = Mathf.Lerp(fromAlpha, 1f, factor);
@@ -340,17 +341,19 @@ public class CozmoVision : MonoBehaviour
 			alpha = Mathf.Lerp(fromAlpha, 0f, factor);
 		}
 
-		Color color = image.color;
-		color.a = alpha;
-		image.color = color;
-		
-		color = select;
-		color.a = alpha;
-		select = color;
-		
-		color = selected;
-		color.a = alpha;
-		selected = color;
+		if(fade || fadingIn) {
+			Color color = image.color;
+			color.a = alpha;
+			image.color = color;
+			
+			color = select;
+			color.a = alpha;
+			select = color;
+			
+			color = selected;
+			color.a = alpha;
+			selected = color;
+		}
 
 		if(factor >= 1f) {
 			fadingIn = false;
@@ -360,14 +363,13 @@ public class CozmoVision : MonoBehaviour
 
 	protected void FadeIn()
 	{
-		if(fadingIn) return;
-		if(image.color.a >= 1f) return;
+		PlayVisionActivateSound();
+
+		if(fadingIn || image.color.a >= 1f) return;
 
 		fadeTimer = 0f;
 		fadingIn = true;
 		fadingOut = false;
-
-		PlayVisionActivateSound();
 
 		Color color = image.color;
 		fromAlpha = color.a;
@@ -383,14 +385,13 @@ public class CozmoVision : MonoBehaviour
 
 	protected void FadeOut()
 	{
-		if(fadingOut) return;
-		if(image.color.a <= 0f) return;
-		
+		PlayVisionDeactivateSound();
+
+		if(fadingOut || image.color.a < 1f || !fade) return;
+
 		fadeTimer = 0f;
 		fadingOut = true;
 		fadingIn = false;
-		
-		PlayVisionDeactivateSound();
 
 		Color color = image.color;
 		fromAlpha = color.a;
@@ -409,31 +410,30 @@ public class CozmoVision : MonoBehaviour
 		if(loopAudioSource != null) loopAudioSource.Stop();
 	}
 	
-	protected void PlayVisionActivateSound()
+	private void PlayVisionActivateSound()
 	{
-		if(visionActivateSound != null) {
-			audio.volume = maxVisionStartVol;
-			audio.PlayOneShot(visionActivateSound, maxVisionStartVol);
-		}
+		if(loopAudioSource == null || visionActivateSound == null || loopAudioSource.clip == visionActiveLoop) return;
 
-		if(loopAudioSource != null) {
-			fromVol = loopAudioSource.volume;
-			loopAudioSource.loop = true;
-			loopAudioSource.clip = visionActiveLoop;
-			loopAudioSource.Play();
-		}
+		audio.volume = maxVisionStartVol;
+		audio.PlayOneShot(visionActivateSound, maxVisionStartVol);
+
+		fromVol = loopAudioSource.volume;
+		loopAudioSource.loop = true;
+		loopAudioSource.clip = visionActiveLoop;
+		loopAudioSource.Play();
 		// Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
 	}
 	
-	protected void PlayVisionDeactivateSound()
+	private void PlayVisionDeactivateSound()
 	{
-		if(visionDeactivateSound != null) {
-			audio.volume = maxVisionStopVol;
-			audio.PlayOneShot(visionDeactivateSound, maxVisionStopVol);
-		}
+		if(visionDeactivateSound == null || loopAudioSource == null || loopAudioSource.clip != visionActiveLoop) return;
 
-		if(loopAudioSource != null) fromVol = loopAudioSource.volume;
+		audio.volume = maxVisionStopVol;
+		audio.PlayOneShot(visionDeactivateSound, maxVisionStopVol);
 
+		loopAudioSource.clip = null;
+
+		fromVol = loopAudioSource.volume;
 		// Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
 	}
 	

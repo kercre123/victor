@@ -10,6 +10,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] ComboBox combo_vision;
 	[SerializeField] Toggle toggle_debug;
 	[SerializeField] Toggle toggle_vision;
+	[SerializeField] Toggle toggle_visionFade;
 	[SerializeField] Toggle toggle_visionRecording;
 	[SerializeField] Toggle toggle_userTestMode;
 
@@ -47,6 +48,11 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_vision != null) {
 			toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), 0) == 1;
+			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
+		if(toggle_visionFade != null) {
+			toggle_visionFade.isOn = PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), 0) == 1;
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
 		}
 
@@ -99,6 +105,10 @@ public class OptionsScreen : MonoBehaviour {
 			toggle_vision.onValueChanged.AddListener(ToggleDisableVision);
 		}
 
+		if(toggle_visionFade != null) {
+			toggle_visionFade.onValueChanged.AddListener(ToggleDisableVisionFade);
+		}
+
 		if(toggle_visionRecording != null) {
 			toggle_visionRecording.onValueChanged.AddListener(ToggleVisionRecording);
 		}
@@ -127,6 +137,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_vision != null) {
 			toggle_vision.onValueChanged.RemoveListener(ToggleDisableVision);
+		}
+
+		if(toggle_visionFade != null) {
+			toggle_visionFade.onValueChanged.RemoveListener(ToggleDisableVisionFade);
 		}
 	}
 	
@@ -163,8 +177,16 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("VisionDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
 	}
 
+	void ToggleDisableVisionFade(bool val) {
+		PlayerPrefs.SetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
+	}
+
 	public static bool GetToggleDisableVision(bool defaultValue = false) {
 		return PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
+	}
+
+	public static bool GetToggleDisableVisionFade(bool defaultValue = false) {
+		return PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
 	}
 
 	void ToggleUserTestMode(bool val) {
@@ -193,6 +215,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("VisionDisabled" + i.ToString());
+		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("VisionFadeDisabled" + i.ToString());
 		}
 
 		RemoveListeners();
