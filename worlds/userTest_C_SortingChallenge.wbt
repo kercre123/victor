@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.247738 0.239693 0.938708 4.68217
-  position -1.74057 0.0366513 2.67316
+  orientation -0.999957 0.00389295 0.00837323 5.41315
+  position 0.19237 -1.60769 1.25807
 }
 Background {
   skyColor [
@@ -114,57 +114,106 @@ DirectionalLight {
   ambientIntensity 0.75
   direction 1 -0.5 -2
 }
+PointLight {
+  ambientIntensity 1
+  location 0 0.3 0
+}
 CozmoMat {
+  xSize 2
+  ySize 1.5
 }
-Platform {
-  translation 0.200146 0.221 0.0219602
+DEF Zone_Red Solid {
+  translation 0.75 0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0.6 0.5
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
 }
-Ramp {
-  translation -0.1415 -0.267 0
+DEF Zone_Blue Solid {
+  translation 0.75 0 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 0.6 1
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
 }
-Ramp {
-  translation -0.1415 0.267 0
+DEF Zone_Green Solid {
+  translation 0.75 -0.2 0
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.5 1 0.5
+        }
+      }
+      geometry Box {
+        size 0.1 0.1 0.0001
+      }
+    }
+  ]
+  name "DesignatedLocation Blue"
 }
-Platform {
-  translation 0.200146 -0.221 0.0219602
-}
-Bridge {
-  translation 0.3 0 0.046
-  rotation 0 0 1 1.5708
-}
-DEF FireBlock Block1x1 {
+DEF Red Block1x1 {
   name "Fire_01"
-  translation 0.15 0.02 0.0219929
-  rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
-  blockColor 0.85 0.5 0.5
+  translation 0.3 0 0.0219969
+  rotation 1 0 0 0
   markerImg "symbols/fire.png"
 }
-DEF AngryFaceBlock Block1x1 {
+DEF Blue Block1x1 {
   name "AngryFace_01"
-  translation 0.22 -8.81876e-08 0.0219929
-  rotation 0 0 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
+  translation 0.3 0 0.0659969
+  rotation 1 0 0 0
+  blockColor 0 0 1
+  markerImg "symbols/kitty.png"
 }
-DEF AngryFaceBlockOnPlatform Block1x1 {
+DEF Green Block1x1 {
   name "AngryFace_01"
-  translation 0.283197 -0.249331 0.0659552
-  rotation 0 0 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
+  translation 0.3 0 0.109997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
 }
-DEF DoubleBlock Block2x1 {
-  name "DoubleBlock"
-  translation -0.22 -0.1 0.022
-  rotation 0 0 1 0.23
-  blockColor 0.5 0.85 0.5
-  longSideMarker "symbols/bangBangBang.png"
-  shortSideMarker "symbols/inverted/bangBangBang.png"
+DEF Red Block1x1 {
+  name "Fire_01"
+  translation 0.3 0 0.153997
+  rotation 1 0 0 0
+  markerImg "symbols/fire.png"
 }
-Face {
-  translation -0.10613 -0.310172 0.17
+DEF Blue Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.197997
+  rotation 1 0 0 0
+  blockColor 0 0 1
+  markerImg "symbols/kitty.png"
+}
+DEF Green Block1x1 {
+  name "AngryFace_01"
+  translation 0.3 0 0.241997
+  rotation 1 0 0 0
+  blockColor 0 1 0
+  markerImg "symbols/spider.png"
+}
+BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
+  rotation 0 -1 0 0
   name "CozmoBot_1"
   usbChannel 10
 }

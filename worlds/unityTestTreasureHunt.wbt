@@ -1,0 +1,195 @@
+#VRML_SIM V8.0.5 utf8
+WorldInfo {
+  info [
+    "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Date: 02 Aug 2013"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+  contactProperties [
+    DEF FLOOR_FRONTWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF RAMP_FRONTWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "highfriction"
+      coulombFriction [
+        500
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_FRONTWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_REARWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_REARWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_REARWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "nofriction"
+      coulombFriction [
+        5
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_BLOCK ContactProperties {
+      material1 "cmat_floor"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF BLOCK_BLOCK ContactProperties {
+      material1 "cmat_block"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_BLOCK ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_ramp"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_floor"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.259448 0.445967 0.856621 4.06626
+  position -1.36073 0.602278 0.942589
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.75
+  direction 1 -0.5 -2
+}
+DirectionalLight {
+  ambientIntensity 1
+  direction 1 -1 -1
+}
+CozmoMat {
+}
+Ramp {
+  hidden linearVelocity_0 -4152.27 -6361.25 -1986.27
+  hidden angularVelocity_0 -8079.47 1887.72 -5582
+  translation 1.03092e+07 6.02294e+06 195550
+  rotation 0.0185277 -0.879968 -0.474672 -1.79942
+}
+DEF FireBlock Block1x1 {
+  name "Fire_01"
+  translation -0.0496914 0.0158036 0.0219969
+  rotation 2.52495e-08 1.83671e-06 -1 3.1141
+  blockColor 0.85 0.5 0.5
+  markerImg "symbols/fire.png"
+}
+DEF AngryFaceBlock Block1x1 {
+  name "AngryFace_01"
+  translation 0.333689 0.199702 0.0219976
+  rotation 0.0133245 0.999822 0.0133282 -1.57097
+  blockColor 0.5 0.5 0.85
+  markerImg "symbols/angryFace.png"
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  hidden position_0_1 313.937
+  hidden position_0_2 280.664
+  hidden position_0_3 0.00318172
+  hidden position_0_4 -0.00560561
+  hidden position_0_6 0.00714159
+  hidden linearVelocity_0 3.45206e-14 -1.49348e-11 -1.08228e-17
+  hidden angularVelocity_0 -9.29966e-15 9.67616e-15 -1.50979e-10
+  hidden translation_5 -2.45945e-12 3.01877e-14 -8.21841e-09
+  hidden rotation_5 2.52893e-17 1 -1.19369e-15 0.051452
+  hidden linearVelocity_5 1.30415e-14 -1.41608e-11 -3.20954e-16
+  hidden angularVelocity_5 -9.48646e-15 9.68058e-15 -1.50979e-10
+  hidden translation_22 3.05755e-11 0.02385 1.02793e-07
+  hidden rotation_22 -8.18515e-09 1 1.22754e-09 -0.297129
+  hidden linearVelocity_22 -3.64228e-12 -1.22992e-11 -3.47901e-17
+  hidden angularVelocity_22 4.18265e-16 -1.0299e-13 -1.50979e-10
+  hidden translation_23 3.09353e-11 -0.02385 1.02791e-07
+  hidden rotation_23 6.58393e-10 1 -1.22529e-09 -2.15486
+  hidden linearVelocity_23 3.55745e-12 -1.20965e-11 -6.36289e-17
+  hidden angularVelocity_23 -2.2833e-14 1.00017e-13 -1.50979e-10
+  hidden translation_24 -1.29896e-14 0.02385 -4.34079e-11
+  hidden rotation_24 -3.25416e-10 1 -4.37905e-13 0.00317954
+  hidden linearVelocity_24 -3.51398e-12 -1.68265e-11 7.6614e-18
+  hidden angularVelocity_24 -1.02638e-14 3.45033e-16 -1.50979e-10
+  hidden translation_25 -1.29896e-14 -0.02385 -4.34079e-11
+  hidden rotation_25 -1.84577e-10 1 5.84096e-13 -0.00560779
+  hidden linearVelocity_25 3.68487e-12 -1.66238e-11 -2.60488e-16
+  hidden angularVelocity_25 -5.20602e-15 3.34105e-16 -1.50979e-10
+  hidden translation_26 1.46952e-11 3.13291e-15 -1.4346e-09
+  hidden rotation_26 -3.51864e-15 1 -1.06502e-14 -0.00714094
+  hidden position_26_0 0.00714166
+  hidden linearVelocity_26 5.20301e-12 -1.33626e-11 -9.13091e-11
+  hidden angularVelocity_26 8.20196e-11 -2.91475e-09 -1.5099e-10
+  hidden translation_27 8.44844e-12 1.14492e-15 -8.9734e-10
+  hidden rotation_27 1.08326e-15 1 -1.67921e-15 0.00714098
+  hidden linearVelocity_27 3.3479e-11 -7.78457e-12 -1.82791e-10
+  hidden angularVelocity_27 -1.16771e-14 8.96032e-14 -1.50979e-10
+  hidden translation_29 -1.52041e-11 3.12597e-15 -2.66138e-10
+  hidden rotation_29 -3.51676e-15 1 -1.02738e-14 -0.00714091
+  hidden position_29_0 0.00714162
+  hidden linearVelocity_29 5.2031e-12 -1.33623e-11 -9.1309e-11
+  hidden angularVelocity_29 8.20193e-11 -2.91475e-09 -1.5099e-10
+  translation 0.0628236 0.0189174 -8.17115e-06
+  rotation -0.000149656 -2.6846e-07 -1 3.11346
+  name "CozmoBot_1"
+  headAngle -0.0514552
+  liftAngle 0.00714163
+  usbChannel 10
+}
+CozmoVizDisplay {
+}
