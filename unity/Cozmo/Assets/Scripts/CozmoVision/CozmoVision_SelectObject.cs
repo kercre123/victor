@@ -65,9 +65,6 @@ public class CozmoVision_SelectObject : CozmoVision
 
 	protected override void ShowObservedObjects()
 	{
-
-		if(!image.enabled) return;
-
 		if( robot == null || pertinentObjects == null ) return;
 
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
