@@ -866,9 +866,9 @@ namespace Anki {
           return ACTION_PLACE_OBJECT_LOW;
           
         default:
-          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.GetType",
-                            "Unexpected dock action %d in determining action type.\n",
-                            _dockAction);
+          PRINT_NAMED_WARNING("PickAndPlaceObjectAction.GetType",
+                              "Unexpected dock action %d in determining action type.\n",
+                              _dockAction);
           return ACTION_UNKNOWN;
       }
     }
