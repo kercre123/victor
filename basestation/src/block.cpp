@@ -570,8 +570,23 @@ namespace Anki {
     void ActiveCube::Identify()
     {
       // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
-      _activeID = 1;
-    }
+      switch(_markers.front().GetCode())
+      {
+        case Vision::MARKER_1:
+          _activeID = 1;
+          break;
+          
+        case Vision::MARKER_INVERTED_1:
+          _activeID = 2;
+          break;
+          
+        default:
+          _activeID = -1;
+          PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
+                            "ActiveID not defined for block with front marker = %d\n",
+                            _markers.front().GetCode());
+      }
+    } // Identify()
     
     std::map<s32,bool>& ActiveCube::GetAvailableIDs()
     {
