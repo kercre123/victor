@@ -447,12 +447,15 @@ namespace Anki {
       Result SetObjectLights(const ObjectID& objectID,
                              const std::array<u32,NUM_BLOCK_LEDS>& color,
                              const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
-                             const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms);
+                             const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms);
       
       // Set all LEDs of the specified block to the same color/flashrate
       Result SetObjectLights(const ObjectID& objectID,
                              const WhichLEDs whichLEDs,
                              const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                              const bool turnOffUnspecifiedLEDs,
                              const bool makeRelative, const Point2f& relativeToPoint);
       

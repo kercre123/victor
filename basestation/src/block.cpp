@@ -487,6 +487,7 @@ namespace Anki {
   
     void ActiveCube::SetLEDs(const WhichLEDs whichLEDs, const ColorRGBA& color,
                              const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                              const bool turnOffUnspecifiedLEDs)
     {
       static const u8 FIRST_BIT = 0x01;
@@ -498,10 +499,14 @@ namespace Anki {
           _ledState[iLED].color        = color;
           _ledState[iLED].onPeriod_ms  = onPeriod_ms;
           _ledState[iLED].offPeriod_ms = offPeriod_ms;
+          _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
+          _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
         } else if(turnOffUnspecifiedLEDs) {
           _ledState[iLED].color        = 0;
-          _ledState[iLED].onPeriod_ms  = onPeriod_ms;
-          _ledState[iLED].offPeriod_ms = offPeriod_ms;
+          _ledState[iLED].onPeriod_ms  = 0;
+          _ledState[iLED].offPeriod_ms = 1000;
+          _ledState[iLED].transitionOnPeriod_ms = 0;
+          _ledState[iLED].transitionOffPeriod_ms = 0;
         }
         shiftedLEDs = shiftedLEDs >> 1;
       }
@@ -509,12 +514,16 @@ namespace Anki {
     
     void ActiveCube::SetLEDs(const std::array<u32,NUM_LEDS>& colors,
                              const std::array<u32,NUM_LEDS>& onPeriods_ms,
-                             const std::array<u32,NUM_LEDS>& offPeriods_ms)
+                             const std::array<u32,NUM_LEDS>& offPeriods_ms,
+                             const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
+                             const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms)
     {
       for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
         _ledState[iLED].color        = colors[iLED];
         _ledState[iLED].onPeriod_ms  = onPeriods_ms[iLED];
         _ledState[iLED].offPeriod_ms = offPeriods_ms[iLED];
+        _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
+        _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
       }
     }
     
@@ -735,8 +744,10 @@ namespace Anki {
       
       for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
         m.color[iLED] = _ledState[iLED].color;
-        m.onPeriod_ms[iLED] = _ledState[iLED].onPeriod_ms;
+        m.onPeriod_ms[iLED]  = _ledState[iLED].onPeriod_ms;
         m.offPeriod_ms[iLED] = _ledState[iLED].offPeriod_ms;
+        m.transitionOnPeriod_ms[iLED]  = _ledState[iLED].transitionOnPeriod_ms;
+        m.transitionOffPeriod_ms[iLED] = _ledState[iLED].transitionOffPeriod_ms;
       }
     }
     

@@ -51,15 +51,22 @@ namespace Anki {
       BACK_FACE  = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | BTM_UPPER_LEFT  | BTM_UPPER_RIGHT
     };
     
+    enum class LEDState : u8 {
+      LED_OFF = 0,
+      LED_ON,
+      LED_TURNING_ON,
+      LED_TURNING_OFF
+    };
+    
     // TODO: This will expand as we want the lights to do fancier things
     typedef struct {
       u32 color; // Stored as RGBA, where A(lpha) is ignored
-      u32 onPeriod_ms;
-      u32 offPeriod_ms;
-      u32 transitionOnPeriod_ms;
-      u32 transitionOffPeriod_ms;
+      u32 onPeriod_ms;            // time spent in "on" state
+      u32 offPeriod_ms;           // time spent in "off" state
+      u32 transitionOnPeriod_ms;  // time spent linearly transitioning from "off" to "on"
+      u32 transitionOffPeriod_ms; // time spent linearly transitioning from "on" to "off"
       TimeStamp_t nextSwitchTime; // for changing state when flashing
-      bool        isOn;
+      LEDState state;
     } LEDParams;
 
     

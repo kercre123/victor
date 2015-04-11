@@ -292,6 +292,7 @@ namespace Anki {
       // NOTE: Alpha is ignored.
       void SetLEDs(const WhichLEDs whichLEDs, const ColorRGBA& color,
                    const u32 onPeriod_ms, const u32 offPeriod_ms,
+                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                    const bool turnOffUnspecifiedLEDs);
       
       // Specify individual colors and flash frequencies for all the LEDS of the block
@@ -299,7 +300,9 @@ namespace Anki {
       // NOTE: Alpha is ignored
       void SetLEDs(const std::array<u32,NUM_LEDS>& colors,
                    const std::array<u32,NUM_LEDS>& onPeriods_ms,
-                   const std::array<u32,NUM_LEDS>& offPeriods_ms);
+                   const std::array<u32,NUM_LEDS>& offPeriods_ms,
+                   const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
+                   const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms);
       
       // Make whatever state has been set on the block relative to a given (x,y)
       // location, such that the pattern is rotated so that whatever is currently
@@ -356,6 +359,8 @@ namespace Anki {
         ColorRGBA color;
         u32       onPeriod_ms;
         u32       offPeriod_ms;
+        u32       transitionOnPeriod_ms;
+        u32       transitionOffPeriod_ms;
       };
      
       // Keep track of flash rate and color of each LED

@@ -930,13 +930,16 @@ namespace Anki {
     }
     
     Result HAL::SetBlockLight(const u8 blockID, const u32* color,
-                              const u32* onPeriod_ms, const u32* offPeriod_ms)
+                              const u32* onPeriod_ms, const u32* offPeriod_ms,
+                              const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
     {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
         m.color[i] = color[i];
         m.onPeriod_ms[i] = onPeriod_ms[i];
         m.offPeriod_ms[i] = offPeriod_ms[i];
+        m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);
+        m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == nullptr ? 0 : transitionOffPeriod_ms[i]);
       }
       
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);

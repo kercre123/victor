@@ -99,8 +99,10 @@ namespace Anki {
           ledParams_[i].color = msg.color[i];
           ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
           ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
+          ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+          ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
           
-          ledParams_[i].isOn = true;
+          ledParams_[i].state = LEDState::LED_ON;
           ledParams_[i].nextSwitchTime = 0; // force immediate upate
         }
       }
@@ -271,28 +273,83 @@ namespace Anki {
         const UpAxis currentUpAxis = GetCurrentUpAxis();
         SetLED_helper(ledIndexLUT[currentUpAxis][ledIndex], color);
       }
+
+      // Alpha blending (w/ black) without using floating point:
+      //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+      inline u32 AlphaBlend(const u32 color, const u8 alpha)
+      {
+        u32 result;
+        
+        const u8* fg = (const u8*)(&color);
+        u8* result_u8 = (u8*)(&result);
+
+        const u32 alpha_u32 = alpha + 1;
+        
+        result_u8[3] = (unsigned char)((alpha_u32 * fg[3]) >> 8);
+        result_u8[2] = (unsigned char)((alpha_u32 * fg[2]) >> 8);
+        result_u8[1] = (unsigned char)((alpha_u32 * fg[1]) >> 8);
+        result_u8[0] = 0xff;
+        
+        return result;
+      }
+      
       
       void ApplyLEDParams(TimeStamp_t currentTime)
       {
         const UpAxis currentUpAxis = GetCurrentUpAxis();
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           if(currentTime > ledParams_[i].nextSwitchTime) {
-            if(ledParams_[i].isOn) {
-              // Time to turn off
-              SetLED_helper(ledIndexLUT[currentUpAxis][i], 0);
-              ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
-              ledParams_[i].isOn = false;
-            } else {
-              // Time to turn on
-              SetLED_helper(ledIndexLUT[currentUpAxis][i], ledParams_[i].color);
-              ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
-              ledParams_[i].isOn = true;
+            u32 newColor = 0;
+            
+            switch(ledParams_[i].state)
+            {
+              case LEDState::LED_ON:
+                // Time to start turning off
+                newColor = ledParams_[i].color;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOffPeriod_ms;
+                ledParams_[i].state = LEDState::LED_TURNING_OFF;
+                break;
+                
+              case LEDState::LED_OFF:
+                // Time to start turning on
+                newColor = 0;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOnPeriod_ms;
+                ledParams_[i].state = LEDState::LED_TURNING_ON;
+                break;
+                
+              case LEDState::LED_TURNING_ON:
+                // Time to be fully on:
+                newColor = ledParams_[i].color;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
+                ledParams_[i].state = LEDState::LED_ON;
+                break;
+                
+              case LEDState::LED_TURNING_OFF:
+                // Time to be fully off
+                newColor = 0;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
+                ledParams_[i].state = LEDState::LED_OFF;
+                break;
+                
+              default:
+                // Should never get here
+                assert(0);
             }
-          }
+            
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], newColor);
+            
+          } else if(ledParams_[i].state == LEDState::LED_TURNING_OFF) {
+            // Compute alpha b/w 0 and 255 w/ no floating point:
+            const u8 alpha = ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOffPeriod_ms;
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+          } else if(ledParams_[i].state == LEDState::LED_TURNING_ON) {
+            // Compute alpha b/w 0 and 255 w/ no floating point:
+            const u8 alpha = 255 - ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOnPeriod_ms;
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+          } // if(currentTime > nextSwitchTime)
+          
         } // for each LED
       } // ApplyLEDParams()
-      
-
       
       void SetAllLEDs(u32 color) {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {

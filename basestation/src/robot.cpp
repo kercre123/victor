@@ -2664,7 +2664,9 @@ namespace Anki {
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichLEDs whichLEDs,
-                                  const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                                  const u32 color,
+                                  const u32 onPeriod_ms, const u32 offPeriod_ms,
+                                  const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                                   const bool turnOffUnspecifiedLEDs,
                                   const bool makeRelative, const Point2f& relativeToPoint)
     {
@@ -2673,7 +2675,9 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
-        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms, turnOffUnspecifiedLEDs);
+        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms,
+                            transitionOnPeriod_ms, transitionOffPeriod_ms,
+                            turnOffUnspecifiedLEDs);
         if(makeRelative) {
           activeCube->MakeStateRelativeToXY(relativeToPoint);
         }
