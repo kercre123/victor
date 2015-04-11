@@ -72,10 +72,12 @@ namespace Anki
     
     InitializeTracker();
 
-    int loadResult;
-  	if (FSDKE_OK != (loadResult = FSDK_LoadTrackerMemoryFromFile(&tracker, filename))) {
-      printf("Could not load file %s. Initializing an empty tracker.\n", filename);
-      return RESULT_FAIL;
+    if(filename) {
+      int loadResult;
+      if (FSDKE_OK != (loadResult = FSDK_LoadTrackerMemoryFromFile(&tracker, filename))) {
+        printf("Could not load file %s. Initializing an empty tracker.\n", filename);
+        return RESULT_FAIL;
+      }
     }
 
     initialized = true;

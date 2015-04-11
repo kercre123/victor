@@ -112,11 +112,11 @@ int main(int argc, const char *argv[])
     }
     
     // Resize the entire image
-    cv::resize(lastImageRaw, lastImage, imageSize, 0, 0, cv::INTER_LINEAR);
+    //cv::resize(lastImageRaw, lastImage, imageSize, 0, 0, cv::INTER_LINEAR);
     
     // Grab the center, then resize
-    //cv::Mat lastImageClipped = lastImageRaw(cv::Range(450,690), cv::Range(800,1120)).clone();
-    //cv::resize(lastImageClipped, lastImage, imageSize, 0, 0, cv::INTER_LINEAR);
+    cv::Mat lastImageClipped = lastImageRaw(cv::Range(0, lastImageRaw.rows/2), cv::Range(lastImageRaw.cols/4, (3*lastImageRaw.cols)/4)).clone();
+    cv::resize(lastImageClipped, lastImage, imageSize, 0, 0, cv::INTER_LINEAR);
     
     //printf("%d,%d\n", lastImage.cols, lastImage.rows);
     
