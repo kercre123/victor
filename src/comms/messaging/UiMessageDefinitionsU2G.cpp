@@ -3283,6 +3283,8 @@ size_t U2G_SetActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->color);
 	buffer.Write(this->onPeriod_ms);
 	buffer.Write(this->offPeriod_ms);
+	buffer.Write(this->transitionOnPeriod_ms);
+	buffer.Write(this->transitionOffPeriod_ms);
 	buffer.Write(this->relativeToX);
 	buffer.Write(this->relativeToY);
 	buffer.Write(this->whichLEDs);
@@ -3305,6 +3307,8 @@ size_t U2G_SetActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->color);
 	buffer.Read(this->onPeriod_ms);
 	buffer.Read(this->offPeriod_ms);
+	buffer.Read(this->transitionOnPeriod_ms);
+	buffer.Read(this->transitionOffPeriod_ms);
 	buffer.Read(this->relativeToX);
 	buffer.Read(this->relativeToY);
 	buffer.Read(this->whichLEDs);
@@ -3324,6 +3328,10 @@ size_t U2G_SetActiveObjectLEDs::Size() const
 	//onPeriod_ms
 	result += 4; // = uint_32
 	//offPeriod_ms
+	result += 4; // = uint_32
+	//transitionOnPeriod_ms
+	result += 4; // = uint_32
+	//transitionOffPeriod_ms
 	result += 4; // = uint_32
 	//relativeToX
 	result += 4; // = float_32
@@ -3346,6 +3354,8 @@ bool U2G_SetActiveObjectLEDs::operator==(const U2G_SetActiveObjectLEDs& other) c
 	|| color != other.color
 	|| onPeriod_ms != other.onPeriod_ms
 	|| offPeriod_ms != other.offPeriod_ms
+	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
+	|| transitionOffPeriod_ms != other.transitionOffPeriod_ms
 	|| relativeToX != other.relativeToX
 	|| relativeToY != other.relativeToY
 	|| whichLEDs != other.whichLEDs
@@ -3388,6 +3398,8 @@ size_t U2G_SetAllActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.WriteFArray<uint32_t, 8>(this->color);
 	buffer.WriteFArray<uint32_t, 8>(this->onPeriod_ms);
 	buffer.WriteFArray<uint32_t, 8>(this->offPeriod_ms);
+	buffer.WriteFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
+	buffer.WriteFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
 	buffer.Write(this->relativeToX);
 	buffer.Write(this->relativeToY);
 	buffer.Write(this->makeRelative);
@@ -3408,6 +3420,8 @@ size_t U2G_SetAllActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.ReadFArray<uint32_t, 8>(this->color);
 	buffer.ReadFArray<uint32_t, 8>(this->onPeriod_ms);
 	buffer.ReadFArray<uint32_t, 8>(this->offPeriod_ms);
+	buffer.ReadFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
+	buffer.ReadFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
 	buffer.Read(this->relativeToX);
 	buffer.Read(this->relativeToY);
 	buffer.Read(this->makeRelative);
@@ -3426,6 +3440,10 @@ size_t U2G_SetAllActiveObjectLEDs::Size() const
 	result += 4 * 8; // = uint_32 * 8
 	//offPeriod_ms
 	result += 4 * 8; // = uint_32 * 8
+	//transitionOnPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
+	//transitionOffPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
 	//relativeToX
 	result += 4; // = float_32
 	//relativeToY
@@ -3443,6 +3461,8 @@ bool U2G_SetAllActiveObjectLEDs::operator==(const U2G_SetAllActiveObjectLEDs& ot
 	|| color != other.color
 	|| onPeriod_ms != other.onPeriod_ms
 	|| offPeriod_ms != other.offPeriod_ms
+	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
+	|| transitionOffPeriod_ms != other.transitionOffPeriod_ms
 	|| relativeToX != other.relativeToX
 	|| relativeToY != other.relativeToY
 	|| makeRelative != other.makeRelative

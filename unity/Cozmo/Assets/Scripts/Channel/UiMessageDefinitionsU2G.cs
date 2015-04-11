@@ -3268,6 +3268,8 @@ public class U2G_SetActiveObjectLEDs
 	private uint _color; // uint_32
 	private uint _onPeriod_ms; // uint_32
 	private uint _offPeriod_ms; // uint_32
+	private uint _transitionOnPeriod_ms; // uint_32
+	private uint _transitionOffPeriod_ms; // uint_32
 	private float _relativeToX; // float_32
 	private float _relativeToY; // float_32
 	private byte _whichLEDs; // uint_8
@@ -3282,6 +3284,10 @@ public class U2G_SetActiveObjectLEDs
 	public uint onPeriod_ms { get { return _onPeriod_ms; } set { _onPeriod_ms = value; } }
 
 	public uint offPeriod_ms { get { return _offPeriod_ms; } set { _offPeriod_ms = value; } }
+
+	public uint transitionOnPeriod_ms { get { return _transitionOnPeriod_ms; } set { _transitionOnPeriod_ms = value; } }
+
+	public uint transitionOffPeriod_ms { get { return _transitionOffPeriod_ms; } set { _transitionOffPeriod_ms = value; } }
 
 	public float relativeToX { get { return _relativeToX; } set { _relativeToX = value; } }
 
@@ -3306,6 +3312,8 @@ public class U2G_SetActiveObjectLEDs
 		uint color,
 		uint onPeriod_ms,
 		uint offPeriod_ms,
+		uint transitionOnPeriod_ms,
+		uint transitionOffPeriod_ms,
 		float relativeToX,
 		float relativeToY,
 		byte whichLEDs,
@@ -3317,6 +3325,8 @@ public class U2G_SetActiveObjectLEDs
 		this.color = color;
 		this.onPeriod_ms = onPeriod_ms;
 		this.offPeriod_ms = offPeriod_ms;
+		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		this.transitionOffPeriod_ms = transitionOffPeriod_ms;
 		this.relativeToX = relativeToX;
 		this.relativeToY = relativeToY;
 		this.whichLEDs = whichLEDs;
@@ -3347,6 +3357,8 @@ public class U2G_SetActiveObjectLEDs
 		_color = reader.ReadUInt32();
 		_onPeriod_ms = reader.ReadUInt32();
 		_offPeriod_ms = reader.ReadUInt32();
+		_transitionOnPeriod_ms = reader.ReadUInt32();
+		_transitionOffPeriod_ms = reader.ReadUInt32();
 		_relativeToX = reader.ReadSingle();
 		_relativeToY = reader.ReadSingle();
 		_whichLEDs = reader.ReadByte();
@@ -3367,6 +3379,8 @@ public class U2G_SetActiveObjectLEDs
 		writer.Write((uint)_color);
 		writer.Write((uint)_onPeriod_ms);
 		writer.Write((uint)_offPeriod_ms);
+		writer.Write((uint)_transitionOnPeriod_ms);
+		writer.Write((uint)_transitionOffPeriod_ms);
 		writer.Write((float)_relativeToX);
 		writer.Write((float)_relativeToY);
 		writer.Write((byte)_whichLEDs);
@@ -3378,7 +3392,7 @@ public class U2G_SetActiveObjectLEDs
 	public int Size 
 	{
 		get {
-			return 28;
+			return 36;
 		}
 	}
 
@@ -3390,6 +3404,8 @@ public class U2G_SetAllActiveObjectLEDs
 	private uint[] _color; // uint_32[8]
 	private uint[] _onPeriod_ms; // uint_32[8]
 	private uint[] _offPeriod_ms; // uint_32[8]
+	private uint[] _transitionOnPeriod_ms; // uint_32[8]
+	private uint[] _transitionOffPeriod_ms; // uint_32[8]
 	private float _relativeToX; // float_32
 	private float _relativeToY; // float_32
 	private byte _makeRelative; // uint_8
@@ -3445,6 +3461,38 @@ public class U2G_SetAllActiveObjectLEDs
 		}
 	}
 
+	public uint[] transitionOnPeriod_ms
+	{
+		get {
+			return _transitionOnPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_transitionOnPeriod_ms = value;
+		}
+	}
+
+	public uint[] transitionOffPeriod_ms
+	{
+		get {
+			return _transitionOffPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_transitionOffPeriod_ms = value;
+		}
+	}
+
 	public float relativeToX { get { return _relativeToX; } set { _relativeToX = value; } }
 
 	public float relativeToY { get { return _relativeToY; } set { _relativeToY = value; } }
@@ -3461,12 +3509,16 @@ public class U2G_SetAllActiveObjectLEDs
 		this.color = new uint[8];
 		this.onPeriod_ms = new uint[8];
 		this.offPeriod_ms = new uint[8];
+		this.transitionOnPeriod_ms = new uint[8];
+		this.transitionOffPeriod_ms = new uint[8];
 	}
 
 	public U2G_SetAllActiveObjectLEDs(uint objectID,
 		uint[] color,
 		uint[] onPeriod_ms,
 		uint[] offPeriod_ms,
+		uint[] transitionOnPeriod_ms,
+		uint[] transitionOffPeriod_ms,
 		float relativeToX,
 		float relativeToY,
 		byte makeRelative,
@@ -3476,6 +3528,8 @@ public class U2G_SetAllActiveObjectLEDs
 		this.color = color;
 		this.onPeriod_ms = onPeriod_ms;
 		this.offPeriod_ms = offPeriod_ms;
+		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		this.transitionOffPeriod_ms = transitionOffPeriod_ms;
 		this.relativeToX = relativeToX;
 		this.relativeToY = relativeToY;
 		this.makeRelative = makeRelative;
@@ -3513,6 +3567,14 @@ public class U2G_SetAllActiveObjectLEDs
 		for (int i = 0; i < 8; ++i) {
 			_offPeriod_ms[i] = reader.ReadUInt32();
 		}
+		_transitionOnPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_transitionOnPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_transitionOffPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_transitionOffPeriod_ms[i] = reader.ReadUInt32();
+		}
 		_relativeToX = reader.ReadSingle();
 		_relativeToY = reader.ReadSingle();
 		_makeRelative = reader.ReadByte();
@@ -3537,6 +3599,12 @@ public class U2G_SetAllActiveObjectLEDs
 		for (int i = 0; i < 8; ++i) {
 			writer.Write((uint)_offPeriod_ms[i]);
 		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_transitionOnPeriod_ms[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_transitionOffPeriod_ms[i]);
+		}
 		writer.Write((float)_relativeToX);
 		writer.Write((float)_relativeToY);
 		writer.Write((byte)_makeRelative);
@@ -3546,7 +3614,7 @@ public class U2G_SetAllActiveObjectLEDs
 	public int Size 
 	{
 		get {
-			return 110;
+			return 174;
 		}
 	}
 

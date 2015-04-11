@@ -1019,6 +1019,8 @@ namespace Anki {
                   msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
+                  msg.transitionOnPeriod_ms = 500;
+                  msg.transitionOffPeriod_ms = 100;
                   msg.turnOffUnspecifiedLEDs = 1;
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                     printf("Updating active block corner\n");

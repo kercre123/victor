@@ -1847,6 +1847,8 @@ struct U2G_SetActiveObjectLEDs
 	uint32_t color;
 	uint32_t onPeriod_ms;
 	uint32_t offPeriod_ms;
+	uint32_t transitionOnPeriod_ms;
+	uint32_t transitionOffPeriod_ms;
 	float relativeToX;
 	float relativeToY;
 	uint8_t whichLEDs;
@@ -1866,6 +1868,8 @@ struct U2G_SetActiveObjectLEDs
 		,uint32_t color
 		,uint32_t onPeriod_ms
 		,uint32_t offPeriod_ms
+		,uint32_t transitionOnPeriod_ms
+		,uint32_t transitionOffPeriod_ms
 		,float relativeToX
 		,float relativeToY
 		,uint8_t whichLEDs
@@ -1876,6 +1880,8 @@ struct U2G_SetActiveObjectLEDs
 	,color(color)
 	,onPeriod_ms(onPeriod_ms)
 	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
 	,relativeToX(relativeToX)
 	,relativeToY(relativeToY)
 	,whichLEDs(whichLEDs)
@@ -1908,6 +1914,8 @@ struct U2G_SetAllActiveObjectLEDs
 	std::array<uint32_t, 8> color;
 	std::array<uint32_t, 8> onPeriod_ms;
 	std::array<uint32_t, 8> offPeriod_ms;
+	std::array<uint32_t, 8> transitionOnPeriod_ms;
+	std::array<uint32_t, 8> transitionOffPeriod_ms;
 	float relativeToX;
 	float relativeToY;
 	uint8_t makeRelative;
@@ -1925,6 +1933,8 @@ struct U2G_SetAllActiveObjectLEDs
 		,const std::array<uint32_t, 8>& color
 		,const std::array<uint32_t, 8>& onPeriod_ms
 		,const std::array<uint32_t, 8>& offPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOnPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOffPeriod_ms
 		,float relativeToX
 		,float relativeToY
 		,uint8_t makeRelative
@@ -1933,6 +1943,8 @@ struct U2G_SetAllActiveObjectLEDs
 	,color(color)
 	,onPeriod_ms(onPeriod_ms)
 	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
 	,relativeToX(relativeToX)
 	,relativeToY(relativeToY)
 	,makeRelative(makeRelative)
