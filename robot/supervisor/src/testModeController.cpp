@@ -81,15 +81,36 @@ namespace Anki {
         // 0.9    170    173
         // 1.0    174    177
         
+        // *** COZMO 3.2 (with clamping on, i.e. MAX_WHEEL_SPEED == 0.75) ***
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 0.2      0      0
+        // 0.25     0      0
+        // 0.3     11      7
+        // 0.35    26     25
+        // 0.4     41     39
+        // 0.5     70     70
+        // 0.6     95     95
+        // 0.7    122    121
+        // 0.8    148    145
+        // 0.9    172    170
+        // 1.0    193    192
         
-        f32 wheelPower_ = 0;
-        f32 wheelPowerStep_ = 0.05;
-        const f32 DEFAULT_WHEEL_POWER_STEP = 0.05;
+        // Percent power to step up when
+        // DTF_ENABLE_CYCLE_SPEEDS_TEST is enabled
+        const u32 DEFAULT_WHEEL_POWER_STEP = 5;
+        
+        // Default wheel speed
         const f32 WHEEL_SPEED_CMD_MMPS = 60;
         
-        f32 wheelSpeed_mmps_ = WHEEL_SPEED_CMD_MMPS;
+        // Percent by which to approach command wheelTargetPower.
+        // Make low to prevent motor slamming
+        const u32 WHEEL_POWER_PERCENT_ACCEL = 1;
         
-        bool firstSpeedCommanded_ = false;
+        s32 wheelPower_;
+        u32 wheelPowerStep_;
+        s32 wheelTargetPower_;
+        f32 wheelSpeed_mmps_;
+        s8 wheelTargetDir_;
         
         ////// End of DriveTest ////////
         
@@ -530,25 +551,23 @@ namespace Anki {
         enableDirectHALTest_ = flags & DTF_ENABLE_DIRECT_HAL_TEST;
         enableCycleSpeedsTest_ = flags & DTF_ENABLE_CYCLE_SPEEDS_TEST;
         enableToggleDir_ = flags & DTF_ENABLE_TOGGLE_DIR;
-        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent * 0.01f : DEFAULT_WHEEL_POWER_STEP;
+        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent : DEFAULT_WHEEL_POWER_STEP;
         wheelSpeed_mmps_ = wheelSpeedOrPower != 0 ? wheelSpeedOrPower : WHEEL_SPEED_CMD_MMPS;
-        wheelPower_ = enableCycleSpeedsTest_ ? 0 : wheelSpeedOrPower * 0.01f;
+        wheelPower_ = 0;
+        wheelTargetPower_ = enableCycleSpeedsTest_ ? 0 : wheelSpeedOrPower;
+        wheelTargetDir_ = 1;
         
         // If CycleSpeedsTest is on, then enableToggleDir is on by default
         if (enableCycleSpeedsTest_) {
           enableToggleDir_ = true;
         }
         
-        
-        firstSpeedCommanded_ = false;
         ticCnt_ = 0;
         return RESULT_OK;
       }
       
       Result DriveTestUpdate()
       {
-        static bool fwd = true;
-
         // Change direction (or at least print speed
         if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
 
@@ -557,61 +576,69 @@ namespace Anki {
           
           f32 lSpeed_filt, rSpeed_filt;
           WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
-
-
-          if (firstSpeedCommanded_){
-            if (enableDirectHALTest_) {
-              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            } else {
-              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            }
-            ticCnt_ = 0;
-            return RESULT_OK;
+          
+          
+          // Toggle wheel direction
+          if (enableToggleDir_) {
+            wheelTargetPower_ *= -1;
+            wheelSpeed_mmps_ *= -1;
           }
           
-          if (fwd) {
-            if (enableDirectHALTest_) {
-              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, wheelPower_);
-              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, wheelPower_);
-              WheelController::Disable();
-            } else {
-              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              SteeringController::ExecuteDirectDrive(wheelSpeed_mmps_,wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
-            }
-          } else {
-            if (enableDirectHALTest_) {
-              PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -wheelPower_);
-              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -wheelPower_);
-              WheelController::Disable();
-            } else {
-              PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              SteeringController::ExecuteDirectDrive(-wheelSpeed_mmps_,-wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
-            }
-            
-          }
-          ticCnt_ = 0;
-          
-          if (enableCycleSpeedsTest_ || enableToggleDir_) {
-            fwd = !fwd;
-          }
-          if (!enableToggleDir_) {
-            firstSpeedCommanded_ = true;
-          }
-
-
           // Cycle through different power levels
           if (enableCycleSpeedsTest_) {
-            if (!fwd) {
-              wheelPower_ += wheelPowerStep_;
-              if (wheelPower_ >=1.01f) {
-                wheelPower_ = 0;
+            if (wheelTargetPower_ >= 0) {
+              wheelTargetPower_ += wheelPowerStep_;
+              if (wheelTargetPower_ > 100) {
+                wheelTargetPower_ = 0;
               }
             }
           }
 
-       }
+          wheelTargetDir_ = wheelPower_ <= wheelTargetPower_ ? 1 : -1;
+          
+          if (enableDirectHALTest_) {
+            PRINT("Going %s %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)\n",
+                  wheelTargetDir_ > 0 ? "forward" : "reverse",
+                  wheelTargetPower_*0.01f,
+                  lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+          } else {
+            PRINT("Going %s %.3f mm/s (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)\n",
+                  wheelTargetDir_ > 0 ? "forward" : "reverse",
+                  wheelSpeed_mmps_,
+                  lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+          }
+          
+          ticCnt_ = 0;
+        }
+        
+
+        // Accelerate to desired power/speed.
+        // Doing this to avoid slamming motors as this causes huge power spikes.
+        if (enableDirectHALTest_) {
+          WheelController::Disable();
+          if (wheelTargetDir_ > 0 && wheelPower_ < wheelTargetPower_) {
+            wheelPower_ += WHEEL_POWER_PERCENT_ACCEL;
+            if (wheelPower_ > wheelTargetPower_) {
+              wheelPower_ = wheelTargetPower_;
+            }
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            //PRINT("WheelPower = %f (increasing)\n", 0.01f*wheelPower_);
+          } else if (wheelTargetDir_ < 0 && wheelPower_ > wheelTargetPower_) {
+            wheelPower_ -= WHEEL_POWER_PERCENT_ACCEL;
+            if (wheelPower_ < wheelTargetPower_) {
+              wheelPower_ = wheelTargetPower_;
+            }
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            //PRINT("WheelPower = %f (decreasing)\n", 0.01f*wheelPower_);
+          }
+        } else {
+          SteeringController::ExecuteDirectDrive(wheelSpeed_mmps_,
+                                                 wheelSpeed_mmps_,
+                                                 accel_mmps2,accel_mmps2);
+        }
+        
 
        return RESULT_OK;
       }

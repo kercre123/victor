@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 namespace Anki {
   
@@ -168,11 +168,7 @@ namespace Anki {
           {
             Planning::Path newPath;
             
-#if(USE_DRIVE_CENTER_POSE)
             switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetDriveCenterPose(), _forceReplanOnNextWorldChange))
-#else
-            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetPose(), _forceReplanOnNextWorldChange))
-#endif
             {
               case IPathPlanner::DID_PLAN:
               {
@@ -836,16 +832,17 @@ namespace Anki {
         }
       }
       
-      if(actionResult != RUNNING) {
-        // Go back to looking for markers (and stop tracking) when we finish,
-        // whether or not we succeeded
-        robot.StartLookingForMarkers();
-        robot.StopDocking();
-      }
-      
       return actionResult;
     } // CheckIfDone()
    
+    
+    void IDockAction::Cleanup(Robot& robot)
+    {
+      // Make sure we back to looking for markers (and stop tracking) whenever
+      // and however this action finishes
+      robot.StartLookingForMarkers();
+      robot.StopDocking();
+    }
     
 #pragma mark ---- PickAndPlaceObjectAction ----
     

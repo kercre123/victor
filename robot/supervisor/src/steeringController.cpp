@@ -67,7 +67,7 @@ namespace Anki {
       
       VelocityProfileGenerator vpg_;
       
-#ifdef COZMO_TREADS
+#ifdef COZMO_ROBOT_V31
       // Treaded cozmo has sticky left wheel so we need to command a faster terminal speed
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.8f;
 #else
