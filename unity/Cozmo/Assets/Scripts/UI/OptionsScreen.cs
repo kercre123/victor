@@ -22,9 +22,9 @@ public class OptionsScreen : MonoBehaviour {
 	public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
 	public string[] visionStyles = { "CozmoVision2", "CozmoVision3", "CozmoVision4" };
 	public string[] pertinentObjectTypes = { 
-		CozmoVision.ObservedObjectListType.OBSERVED_RECENTLY.ToString(),
-		CozmoVision.ObservedObjectListType.MARKERS_SEEN.ToString(),
-		CozmoVision.ObservedObjectListType.KNOWN.ToString() };
+		Robot.ObservedObjectListType.OBSERVED_RECENTLY.ToString(),
+		Robot.ObservedObjectListType.MARKERS_SEEN.ToString(),
+		Robot.ObservedObjectListType.KNOWN.ToString() };
 
 	void OnEnable () {
 		Init();
@@ -88,7 +88,6 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	void AddListeners() {
-		
 		if(slider_turnSpeed != null) {
 			slider_turnSpeed.onValueChanged.AddListener(MaxTurnSpeedChanged);
 		}
@@ -199,7 +198,6 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	public void ResetToDefaultSettings() {
-
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
 		PlayerPrefs.DeleteKey("ControlSchemeIndex");

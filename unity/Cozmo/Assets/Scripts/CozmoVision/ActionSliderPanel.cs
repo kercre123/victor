@@ -12,24 +12,26 @@ public class ActionSlider {
 	public Image image;
 	public Text text;
 	public GameObject highlight;
-	public Image image_bottomAction;
-	public Text text_bottomAction;
-	public Image image_topAction;
-	public Text text_topAction;
+
+	/*public Image image_bottomAction { get { return ActionPanel.instance.actionButtons[0].image; } }
+	public Text text_bottomAction { get { return ActionPanel.instance.actionButtons[0].text; } }
+	public Image image_topAction { get { return ActionPanel.instance.actionButtons[1].image; } }
+	public Text text_topAction { get { return ActionPanel.instance.actionButtons[1].text; } }*/
 	
-	ActionSliderPanel vision;
+	//ActionSliderPanel vision;
 	public bool Pressed { get; private set; }
 
-	public ActionButtonMode Mode { get; private set; }
+	public ActionButtonMode actionButtonMode { get; private set; }
+	public ActionButton actionButton { get; private set; }
 	
-	public void ClaimOwnership(ActionSliderPanel vision) {
+	/*public void ClaimOwnership(ActionSliderPanel vision) {
 		this.vision = vision;
-	}
-	
-	public void SetMode(ActionButtonMode mode, bool down, ActionButtonMode topAction=ActionButtonMode.TARGET, ActionButtonMode bottomAction=ActionButtonMode.TARGET) {
+	}*/
+
+	public void SetMode(ActionButtonMode mode, bool down, ActionButton button = null) {
 		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
-		
-		Mode = mode;
+		actionButton = button;
+		actionButtonMode = mode;
 		Pressed = down;
 		
 		if(mode == ActionButtonMode.DISABLED) {
@@ -37,12 +39,12 @@ public class ActionSlider {
 			//slider.onClick.RemoveAllListeners();
 			return;
 		}
-		
+
 		highlight.SetActive(Pressed);
 		
 		text.gameObject.SetActive(Pressed);
 		
-		image.sprite = vision.GetActionSprite(mode);
+		image.sprite = ActionButton.GetModeSprite(mode);
 		text.text = ActionButton.GetModeName(mode);
 		
 		switch(mode) {
@@ -61,57 +63,20 @@ public class ActionSlider {
 				}
 				break;
 		}
-		
-		if(bottomAction != ActionButtonMode.TARGET) {
-			image_bottomAction.sprite = vision.GetActionSprite(bottomAction);
-			
-			if(bottomAction == ActionButtonMode.PICK_UP && topAction == ActionButtonMode.PICK_UP) {
-				text_bottomAction.text = ActionButton.GetModeName(bottomAction) + " Bottom";
-			}
-			else {
-				text_bottomAction.text = ActionButton.GetModeName(bottomAction);
-			}
-			
-			image_bottomAction.gameObject.SetActive(true);
-			text_bottomAction.gameObject.SetActive(true);
-		}
-		else {
-			image_bottomAction.gameObject.SetActive(false);
-			text_bottomAction.gameObject.SetActive(false);
-		}
-		
-		if(topAction != ActionButtonMode.TARGET) {
-			image_topAction.sprite = vision.GetActionSprite(topAction);
-			
-			if(bottomAction == ActionButtonMode.PICK_UP && bottomAction == ActionButtonMode.PICK_UP) {
-				text_topAction.text = ActionButton.GetModeName(topAction) + " Top";
-			}
-			else {
-				text_topAction.text = ActionButton.GetModeName(topAction);
-			}
-			
-			image_topAction.gameObject.SetActive(true);
-			text_topAction.gameObject.SetActive(true);
-		}
-		else {
-			image_topAction.gameObject.SetActive(false);
-			text_topAction.gameObject.SetActive(false);
-		}
-		
-		//slider.gameObject.SetActive(true);
 	}
 	
 }
 
 public class ActionSliderPanel : ActionPanel
 {
-
 	[SerializeField] public ActionSlider actionSlider = null;
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
 
 	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
+	public ActionButton bottomAction { get { return ActionPanel.instance.actionButtons[0]; } }
+	public ActionButton topAction { get { return ActionPanel.instance.actionButtons[1]; } }
 
 	bool interactLastFrame = false;
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
@@ -119,13 +84,13 @@ public class ActionSliderPanel : ActionPanel
 	protected override void Awake() {
 		base.Awake();
 		
-		actionSlider.ClaimOwnership(this);
+		//actionSlider.ClaimOwnership(this);
 		actionSlider.slider.value = 0f;
 		actionSlider.SetMode(ActionButtonMode.TARGET, false);
 	}
 	
 	protected void Update() {
-		lastMode = actionSlider.Mode;
+		lastMode = actionSlider.actionButtonMode;
 
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
 			return;
@@ -153,7 +118,7 @@ public class ActionSliderPanel : ActionPanel
 		//if we have a new target, let's see if our current slider mode wants to initiate an interaction
 		if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
 			
-			if(lastMode != actionSlider.Mode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
+			if(lastMode != actionSlider.actionButtonMode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
 			   robot.selectedObjects[0] != robot.lastSelectedObjects[0] ) {
 				
 				InitiateAssistedInteraction();
@@ -166,7 +131,7 @@ public class ActionSliderPanel : ActionPanel
 	}
 
 	public void ToggleInteract(bool val) {
-		actionSlider.SetMode(actionSlider.Mode, val);
+		actionSlider.SetMode(actionSlider.actionButtonMode, val, actionSlider.actionButton);
 		
 		if(!val) {
 			actionSlider.slider.value = 0f;
@@ -176,29 +141,16 @@ public class ActionSliderPanel : ActionPanel
 	}
 	
 	private void RefreshSliderMode() {
-		
+		gameActions.SetActionButtons();
+
+		ActionButton currentButton = null;
 		ActionButtonMode currentMode = ActionButtonMode.TARGET;
-		ActionButtonMode topAction = ActionButtonMode.TARGET;
-		ActionButtonMode bottomAction = ActionButtonMode.TARGET;
-		
-		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
-			bottomAction = ActionButtonMode.DROP;
-			if(robot.selectedObjects.Count == 1) topAction = ActionButtonMode.STACK;
-		}
-		else if(robot.selectedObjects.Count > 1) {
-			bottomAction = ActionButtonMode.PICK_UP;
-			topAction = ActionButtonMode.PICK_UP;
-			//Debug.Log("RefreshSliderMode double pick up, set index2("+index2+")");
-		}
-		else if(robot.selectedObjects.Count == 1) {
-			//bottomAction = ActionButtonMode.ROLL;
-			topAction = ActionButtonMode.PICK_UP;
-		}
 		
 		ObservedObject targeted = robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
-		
-		if(actionSlider.slider.value < -0.5f && bottomAction != ActionButtonMode.TARGET) {
-			currentMode = bottomAction;
+
+		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButtonMode.DISABLED) {
+			currentButton = bottomAction;
+			currentMode = bottomAction.mode;
 			
 			float minZ = float.MaxValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -207,8 +159,9 @@ public class ActionSliderPanel : ActionPanel
 				targeted = robot.selectedObjects[i];
 			}
 		}
-		else if(actionSlider.slider.value > 0.5f && topAction != ActionButtonMode.TARGET) {
-			currentMode = topAction;
+		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButtonMode.DISABLED) {
+			currentButton = topAction;
+			currentMode = topAction.mode;
 			
 			float maxZ = float.MinValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -232,12 +185,12 @@ public class ActionSliderPanel : ActionPanel
 		else if(currentMode != lastMode) {
 			SlideOutSound();
 		}
-		//Debug.Log("RefreshSliderMode currentMode("+currentMode+")");
-		actionSlider.SetMode(currentMode, actionSlider.Pressed, topAction, bottomAction);
+		//Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
+		actionSlider.SetMode(currentMode, actionSlider.Pressed, currentButton);
 	}
 	
 	private void InitiateAssistedInteraction() {
-		switch(actionSlider.Mode) {
+		switch(actionSlider.actionButtonMode) {
 			case ActionButtonMode.TARGET:
 				//do auto-targeting here!
 				break;
@@ -245,45 +198,7 @@ public class ActionSliderPanel : ActionPanel
 	}
 	
 	private void DoReleaseAction() {
-		if(robot == null) return;
-		//Debug.Log("frame("+Time.frameCount+") DoReleaseAction targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
-
-		//if(robot.selectedObjects.Count == 0) return;
-		//		bool usePreDockPose = true;
-		//
-		//		//if marker is visable and we are roughly facing a side, let's not use the pre dock pose
-		//		if(robot.selectedObjects.Count > actionSlider.selectedIndex && robot.selectedObjects[actionSlider.selectedIndex].MarkersVisible) {
-		//			float angleDiff = Vector2.Angle(robot.Forward, robot.selectedObjects[actionSlider.selectedIndex].Forward);
-		//			float modulo90 = Mathf.Abs(angleDiff % 90f);
-		//			if(modulo90 > 45f) modulo90 = 90f - angleDiff;
-		//			if(modulo90 < 20f) usePreDockPose = false;
-		//
-		//			//Debug.Log("usePreDockPose("+usePreDockPose+") angleDiff("+angleDiff+") modulo90("+modulo90+")" );
-		//		}
-		
-		switch(actionSlider.Mode) {
-			case ActionButtonMode.PICK_UP:
-				RobotEngineManager.instance.current.PickAndPlaceObject();//, usePreDockPose, false);
-				ActionButtonClick();
-				break;
-			case ActionButtonMode.DROP:
-				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
-				ActionButtonClick();
-				break;
-			case ActionButtonMode.STACK:
-				RobotEngineManager.instance.current.PickAndPlaceObject();//, usePreDockPose, false);
-				ActionButtonClick();
-				break;
-			case ActionButtonMode.ROLL:
-				//RobotEngineManager.instance.current.PickAndPlaceObject(actionSlider.selectedIndex);
-				break;
-			case ActionButtonMode.ALIGN:
-				RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
-				break;
-			case ActionButtonMode.CHANGE:
-				RobotEngineManager.instance.current.PickAndPlaceObject();
-				break;
-		}
+		if(actionSlider.actionButton != null) actionSlider.actionButton.button.onClick.Invoke();
 	}
 
 	public void SlideInSound()

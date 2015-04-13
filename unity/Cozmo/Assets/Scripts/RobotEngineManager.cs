@@ -368,7 +368,7 @@ public class RobotEngineManager : MonoBehaviour {
 			//Debug.Log( "no box found" );
 
 			current.ClearObservedObjects();
-			current.lastObjectHeadTracked = null;
+			//current.lastObjectHeadTracked = null;
 		}
 	}
 

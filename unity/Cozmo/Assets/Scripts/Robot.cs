@@ -29,6 +29,53 @@ public class Robot
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
 
+	public enum ObservedObjectListType {
+		OBSERVED_RECENTLY,
+		MARKERS_SEEN,
+		KNOWN
+	}
+	
+	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+	
+	protected ActionPanel actionPanel;
+	
+	private List<ObservedObject> _pertinentObjects = new List<ObservedObject>(); 
+	private int pertinenceStamp = -1; 
+	public List<ObservedObject> pertinentObjects
+	{
+		get
+		{
+			if(pertinenceStamp == Time.frameCount) return _pertinentObjects;
+			pertinenceStamp = Time.frameCount;
+			
+			float tooHigh = 2f * CozmoUtil.BLOCK_LENGTH_MM;
+			
+			_pertinentObjects.Clear();
+			
+			switch(observedObjectListType) {
+			case ObservedObjectListType.MARKERS_SEEN: 
+				_pertinentObjects.AddRange(markersVisibleObjects);
+				break;
+			case ObservedObjectListType.OBSERVED_RECENTLY: 
+				_pertinentObjects.AddRange(observedObjects);
+				break;
+			case ObservedObjectListType.KNOWN: 
+				_pertinentObjects.AddRange(knownObjects);
+				break;
+			}
+			
+			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( (x.WorldPosition - WorldPosition).z ) < tooHigh );
+			
+			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
+				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+				float d2 = ( (Vector2)obj2.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+				return d1.CompareTo(d2);   
+			} );
+			
+			return _pertinentObjects;
+		}
+	}
+
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
 	private const float defaultHeadAngle = 0f;
@@ -75,6 +122,14 @@ public class Robot
 		markersVisibleObjects = new List<ObservedObject>();
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
+
+		int objectPertinenceOverride = PlayerPrefs.GetInt( "ObjectPertinence", -1 );
+
+		if( objectPertinenceOverride >= 0 )
+		{
+			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
+			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
+		}
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
