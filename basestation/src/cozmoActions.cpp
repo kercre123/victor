@@ -492,7 +492,8 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : _turnAngle(angle)
+    : DriveToPoseAction(true)
+    , _turnAngle(angle)
     {
       
     }

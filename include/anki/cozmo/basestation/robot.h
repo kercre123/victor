@@ -302,7 +302,7 @@ namespace Anki {
       
       bool IsHeadLocked() const { return _headLocked; }
       bool IsLiftLocked() const { return _liftLocked; }
-      bool AreWheelsLockeD() const { return _wheelsLocked; }
+      bool AreWheelsLocked() const { return _wheelsLocked; }
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
