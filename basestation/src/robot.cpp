@@ -15,12 +15,16 @@
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/fileManagement.h"
+
 
 #include "anki/vision/CameraSettings.h"
 
@@ -41,13 +45,12 @@
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 
-#define DISPLAY_PROX_OVERLAY 1
-
 namespace Anki {
   namespace Cozmo {
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
     : _ID(robotID)
+    , _isPhysical(false)
     , _lastStateMsgTime_sec(-1.f)
     , _newStateMsgAvailable(false)
     , _msgHandler(msgHandler)
@@ -56,20 +59,25 @@ namespace Anki {
     , _haveNewImage(false)
 #   endif
     , _behaviorMgr(this)
+    , _wheelsLocked(false)
+    , _headLocked(false)
+    , _liftLocked(false)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
+    , _usingManualPathSpeed(false)
     , _camera(robotID)
-    , _visionWhileMovingEnabled(true)
+    , _visionWhileMovingEnabled(false)
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D, {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
+    , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
-    , _neckPose(0.f,Y_AXIS_3D, {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
+    , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
-    , _liftBasePose(0.f, Y_AXIS_3D, {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
-    , _liftPose(0.f, Y_AXIS_3D, {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
+    , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
+    , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _currentLiftAngle(0)
     , _onRamp(false)
@@ -79,11 +87,16 @@ namespace Anki {
     , _isAnimating(false)
     , _battVoltage(5)
     , _carryingMarker(nullptr)
-    , _saveNextImageToFile(false)
+    , _lastPickOrPlaceSucceeded(false)
+    , _stateSaveMode(SAVE_OFF)
+    , _imageSaveMode(SAVE_OFF)
+    , _imgFramePeriod(0)
+    , _lastImgTimeStamp(0)
     {
       _poseHistory = new RobotPoseHistory();
       
       _pose.SetName("Robot_" + std::to_string(_ID));
+      _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
@@ -102,7 +115,15 @@ namespace Anki {
         const std::string subPath = "cozmo_mprim.json";
         const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
         std::ifstream jsonFile(jsonFilename);
-        reader.parse(jsonFile, mprims);
+        if(false == reader.parse(jsonFile, mprims)) {
+          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
+                            "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
+                            jsonFilename.c_str());
+        } else {
+          PRINT_NAMED_INFO("Robot.MotionPrimitivesLoaded",
+                            "Loaded Json motion primitives from file %s.\n",
+                            jsonFilename.c_str());
+        }
         jsonFile.close();
       }
       
@@ -155,9 +176,13 @@ namespace Anki {
       _poseOrigins.back().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(_poseOrigins.size() - 1));
       _worldOrigin = &_poseOrigins.back();
       
-      _pose.SetRotation(0, Z_AXIS_3D);
+      _pose.SetRotation(0, Z_AXIS_3D());
       _pose.SetTranslation({{0.f, 0.f, 0.f}});
       _pose.SetParent(_worldOrigin);
+      
+      _driveCenterPose.SetRotation(0, Z_AXIS_3D());
+      _driveCenterPose.SetTranslation({{0.f, 0.f, 0.f}});
+      _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
       ++_frameId;
@@ -176,8 +201,51 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      // Send state to visualizer for saving/displaying
-      VizManager::getInstance()->SendRobotState(msg);
+      // Send state to visualizer for displaying
+      VizManager::getInstance()->SendRobotState(msg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
+      
+      // Save state to file
+      if(_stateSaveMode != SAVE_OFF)
+      {
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.CreateDirFailed","\n");
+          }
+        }
+        
+        // Write state message to JSON file
+        std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
+        
+        Json::Value json = msg.CreateJson();
+        std::ofstream jsonFile(msgFilename, std::ofstream::out);
+        
+        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
+        jsonFile << json.toStyledString();
+        jsonFile.close();
+        
+        
+#if(1)
+        // Compose line for IMU output file.
+        // Used for determining delay constant in image timestamp.
+        char stateMsgLine[512];
+        memset(stateMsgLine,0,512);
+        sprintf(stateMsgLine, "%d, %f, %f\n", msg.timestamp, msg.rawGyroZ, msg.rawAccelY);
+        
+        FILE *stateFile;
+        stateFile = fopen("cozmoIMUState.csv", "a");
+        fputs(stateMsgLine, stateFile);
+        fclose(stateFile);
+#endif
+        
+        
+        // Turn off save mode if we were in one-shot mode
+        if (_stateSaveMode == SAVE_ONE_SHOT) {
+          _stateSaveMode = SAVE_OFF;
+        }
+      }
+
+      
       
       // Keep up with the time we received the last state message (which is
       // effectively the robot's "ping", so we know we're still connected to
@@ -199,45 +267,6 @@ namespace Anki {
       SetProxSensorData(PROX_LEFT, msg.proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
       SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
       SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
-
-      if(DISPLAY_PROX_OVERLAY) {
-        // printf("displaying: prox L,F,R (%2u, %2u, %2u), blocked: (%d,%d,%d)\n",
-        //        msg.proxLeft, msg.proxForward, msg.proxRight,
-        //        msg.status & IS_PROX_SIDE_BLOCKED,
-        //        msg.status & IS_PROX_FORWARD_BLOCKED,
-        //        msg.status & IS_PROX_SIDE_BLOCKED);
-
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::POSE,
-                                           Anki::NamedColors::GREEN,
-                                           //"Pose: x=%4d y=%4d theta=%3d, h=%3d deg, lift=%3d mm",
-                                           //(int)msg.pose_x,
-                                           //(int)msg.pose_y,
-                                           //(int)RAD_TO_DEG_F32(msg.pose_angle),
-                                           "Pose: head=%3d deg, lift=%3d mm",
-                                           (int)RAD_TO_DEG_F32(msg.headAngle),
-                                           (int)msg.liftHeight);
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::SPEEDS,
-                                           Anki::NamedColors::GREEN,
-                                           "speed L: %4d  R: %4d mm/s",
-                                           (int)msg.lwheel_speed_mmps,
-                                           (int)msg.rwheel_speed_mmps);
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::PROX_SENSORS,
-                                           Anki::NamedColors::GREEN,
-                                           "prox: (%2u, %2u, %2u) %d%d%d",
-                                           GetProxSensorVal(PROX_LEFT),
-                                           GetProxSensorVal(PROX_FORWARD),
-                                           GetProxSensorVal(PROX_RIGHT),
-                                           IsProxSensorBlocked(PROX_LEFT),
-                                           IsProxSensorBlocked(PROX_FORWARD),
-                                           IsProxSensorBlocked(PROX_RIGHT));
-        
-        VizManager::getInstance()->SetText(VizManager::TextLabelType::BATTERY,
-                                           Anki::NamedColors::GREEN,
-                                           "Batt: %2.1f V",
-                                           (f32)msg.battVolt10x/10);
-      }
       
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
@@ -314,8 +343,8 @@ namespace Anki {
                                      _rampStartPosition.y() + distanceTraveled*sin(headingAngle.ToFloat()),
                                      _rampStartHeight + heightAdjust);
         
-        const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D);
-        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D);
+        const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
+        const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
         
         newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
         //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
@@ -347,7 +376,7 @@ namespace Anki {
         }
         
         // Need to put the odometry update in terms of the current robot origin
-        newPose = Pose3d(msg.pose_angle, Z_AXIS_3D, {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
+        newPose = Pose3d(msg.pose_angle, Z_AXIS_3D(), {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
         
       } // if/else on ramp
       
@@ -390,20 +419,110 @@ namespace Anki {
       return _newStateMsgAvailable;
     }
     
+    void Robot::SetPhysicalRobot(bool isPhysical)
+    {
+      if (_isPhysical != isPhysical) {
+        if (isPhysical) {
+          // "Recalibrate" camera pose within head for physical robot
+          // TODO: Do this properly!
+          _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_YAW_CORR, Z_AXIS_3D()));
+          _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
+          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
+          PRINT_INFO("Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, x_trans_corr=%fmm\n", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_TRANS_X_CORR);
+        } else {
+          _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
+          _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
+          PRINT_INFO("Slop factor removed from head cam pose for simulated robot\n");
+        }
+        _isPhysical = isPhysical;
+      }
+      
+    }
+    
+    f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+    {
+      const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
+      const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
+      const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
+      
+      return poseAngSpeed;
+    }
+
+    f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
+    {
+      const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
+      return headAngSpeed;
+    }
+
+    
     Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
     {
       Result lastResult = RESULT_OK;
       
-      if(!_visionWhileMovingEnabled) {
-        // If we are not allowing use of markers while moving, check to see if
-        // we are moving (but not picking and placing)
-        if(IsMoving() && !IsPickingOrPlacing()) {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-                              "Ignoring VisionMarker seen while moving.\n");
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                            "Time: %d, hist: %d to %d\n",
+                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
+                            _poseHistory->GetNewestTimeStamp());
+        return lastResult;
+      }
+      
+      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
+        
+        TimeStamp_t t_prev, t_next;
+        RobotPoseStamp p_prev, p_next;
+        
+        lastResult = _poseHistory->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
+                              "Could not get next/previous poses for t = %d, so "
+                              "cannot compute angular velocity. Ignoring marker.\n", t);
+          
+          // Don't return failure, but don't queue the marker either (since we
+          // couldn't check the angular velocity while seeing it
           return RESULT_OK;
         }
-      }
-    
+
+        const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
+        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 90.f;
+        
+        assert(t_prev < t);
+        assert(t_next > t);
+        const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+        const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+        const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+        const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+        const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+        
+        if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+           turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                              "Ignoring vision marker seen while turning with angular "
+                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          return RESULT_OK;
+        } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                  headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+        {
+          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+                              "Ignoring vision marker seen while head moving with angular "
+                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          return RESULT_OK;
+        }
+        
+      } // if(!_visionWhileMovingEnabled)
+   
       if(!GetCamera().IsCalibrated()) {
         PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
                             "Received VisionMarker message from robot before "
@@ -429,26 +548,14 @@ namespace Anki {
       corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
       
       
-      // Get historical robot pose at specified timestamp to get
-      // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Time: %d, hist: %d to %d\n",
-                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
-                            _poseHistory->GetNewestTimeStamp());
-        return lastResult;
-      }
+     
       
       // Compute pose from robot body to camera
       // Start with canonical (untilted) headPose
       Pose3d camPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D);
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
       // Precompute with robot body to neck pose
@@ -504,13 +611,20 @@ namespace Anki {
           
           for(auto blockMarker : blockMarkers) {
             
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     blockMarker->Get3dCorners(canonicalPose));
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+            Pose3d markerPose;
+            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     blockMarker->Get3dCorners(canonicalPose),
+                                                                     markerPose);
+            if(poseResult != RESULT_OK) {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                  "Could not estimate pose of block marker. Not visualizing.\n");
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+                VizManager::getInstance()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+              } else {
+                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                    "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+              }
             }
           }
         }
@@ -522,13 +636,20 @@ namespace Anki {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
           for(auto matMarker : matMarkers) {
-            Pose3d markerPose = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                     matMarker->Get3dCorners(canonicalPose));
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+            Pose3d markerPose;
+            Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                     matMarker->Get3dCorners(canonicalPose),
+                                                                     markerPose);
+            if(poseResult != RESULT_OK) {
+              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
+                                  "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+              if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+              } else {
+                PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
+                                    "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+              }
             }
           }
         }
@@ -612,7 +733,7 @@ namespace Anki {
 #endif
         
         // Signal the availability of an image
-        CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
+        //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -749,18 +870,6 @@ namespace Anki {
       
       static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
       VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-      
-      if(IsCarryingObject()) {
-        ActionableObject* carryBlock = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(GetCarryingObject()));
-        if(carryBlock == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorldController.CarryBlockDoesNotExist",
-                            "Robot %d is marked as carrying block %d but that block no longer exists.\n",
-                            GetID(), GetCarryingObject().GetValue());
-          UnSetCarryingObject();
-        } else {
-          carryBlock->Visualize();
-        }
-      }
 
       return RESULT_OK;
       
@@ -781,6 +890,11 @@ namespace Anki {
 #     endif
     }
     
+    u32 Robot::GetAverageImagePeriodMS()
+    {
+      return _imgFramePeriod;
+    }
+      
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
     {
       if(head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
@@ -813,6 +927,8 @@ namespace Anki {
       _pose = newPose;
       _pose.SetName(name);
       
+      ComputeDriveCenterPose(_pose, _driveCenterPose);
+      
     } // SetPose()
     
     void Robot::SetHeadAngle(const f32& angle)
@@ -825,7 +941,7 @@ namespace Anki {
       Pose3d newHeadPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D);
+      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D());
       newHeadPose.RotateBy(Rvec);
       newHeadPose.SetName("Camera");
       
@@ -837,11 +953,11 @@ namespace Anki {
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
       // Reset to canonical position
-      liftPose.SetRotation(atAngle, Y_AXIS_3D);
+      liftPose.SetRotation(atAngle, Y_AXIS_3D());
       liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
       
       // Rotate to the given angle
-      RotationVector3d Rvec(-atAngle, Y_AXIS_3D);
+      RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
       liftPose.RotateBy(Rvec);
     }
     
@@ -865,8 +981,9 @@ namespace Anki {
       }
       
       SelectPlanner(targetPoseWrtOrigin);
-
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), targetPoseWrtOrigin);
+      
+      // Compute drive center pose for start pose
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -896,7 +1013,13 @@ namespace Anki {
     {
       // Let the long path (lattice) planner do its thing and choose a target
       _selectedPathPlanner = _longPathPlanner;
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetPose(), poses, selectedIndex);
+      
+      // Compute drive center pose for start pose and goal poses
+      vector<Pose3d> targetDriveCenterPoses(poses.size());
+      for (int i=0; i< poses.size(); ++i) {
+        ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
+      }
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPoses, selectedIndex);
       
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
       {
@@ -907,7 +1030,11 @@ namespace Anki {
         // If SelectPlanner would rather use the short path planner, let it get a
         // plan and use that one instead.
         if(_selectedPathPlanner != _longPathPlanner) {
-          status = _selectedPathPlanner->GetPlan(path, GetPose(), poses[selectedIndex]);
+
+          // Compute drive center pose for start pose and goal pose
+          Pose3d targetDriveCenterPose;
+          ComputeDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
+          status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
         }
         
         if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
@@ -983,6 +1110,18 @@ namespace Anki {
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
     {
+      // Check if robot is still pickAndPlacing.
+      // If so, and not in assisted RC mode, then ignore drive wheel commands.
+      // Also check for compound action sequences which should not be interrupted
+      // in between actions.
+      // TODO: Timeout?
+      bool doingUninterruptibleAction = _actionList.IsCurrAction("[DriveToObjectAction+PickAndPlaceObjectAction+]");
+      
+      if ((IsPickingOrPlacing() && !IsUsingManualPathSpeed()) || doingUninterruptibleAction) {
+        PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
+        return RESULT_FAIL;
+      }
+      
       return SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
     }
     
@@ -998,6 +1137,9 @@ namespace Anki {
                           "Robot told to place object on ground, but is not carrying an object.\n");
         return RESULT_FAIL;
       }
+      
+      _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
       
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
@@ -1143,7 +1285,7 @@ namespace Anki {
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
@@ -1158,7 +1300,7 @@ namespace Anki {
           robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
           robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
         }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
         
       } // if robot is on ramp
       
@@ -1208,7 +1350,7 @@ namespace Anki {
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D);
+        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
         const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
         if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
           PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
@@ -1223,7 +1365,7 @@ namespace Anki {
           robotPoseWrtMat_trans.z() = existingMatPiece->GetDrivingSurfaceHeight();
           robotPoseWrtMat.SetTranslation(robotPoseWrtMat_trans);
         }
-        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D );
+        robotPoseWrtMat.SetRotation( robotPoseWrtMat.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
         
       } // if robot is on ramp
       */
@@ -1315,6 +1457,7 @@ namespace Anki {
         if(lastResult == RESULT_OK) {
           ++_lastSentPathID;
           _pdo->SetPath(path);
+          _usingManualPathSpeed = useManualSpeed;
           lastResult = SendExecutePath(path, useManualSpeed);
         }
         
@@ -1542,6 +1685,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      _usingManualPathSpeed = useManualSpeed;
+      _lastPickOrPlaceSucceeded = false;
+      
       return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
     }
     
@@ -1598,12 +1744,80 @@ namespace Anki {
                                  dockAction == DA_RAMP_DESCEND ||
                                  dockAction == DA_CROSS_BRIDGE);
       
-      // Tell the VisionSystem to start tracking this marker:
-      _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+    
+      if(sendResult == RESULT_OK) {
+        // Tell the VisionSystem to start tracking this marker:
+        _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      }
       
-      return _msgHandler->SendMessage(_ID, msg);
+      return sendResult;
     }
     
+    void Robot::SetCarryingObject(ObjectID carryObjectID)
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                          "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
+                          carryObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+                            "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.\n",
+                            carryObjectID.GetValue());
+        } else {
+          if(carriedObject->IsBeingCarried() == true) {
+            PRINT_NAMED_WARNING("Robot.SetCarryingObject",
+                                "Robot %d is about to mark object %d as carried but that object "
+                                "already thinks it is being carried.\n", GetID(), carryObjectID.GetValue());
+            
+          }
+          carriedObject->SetBeingCarried(true);
+          _carryingObjectID = carryObjectID;
+          
+          // Tell the robot it's carrying something
+          // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
+          if(_carryingObjectOnTopID.IsSet()) {
+            SendSetCarryState(CARRY_2_BLOCK);
+          } else {
+            SendSetCarryState(CARRY_1_BLOCK);
+          }
+        }
+      }
+    }
+    
+    void Robot::UnSetCarryingObject()
+    {
+      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                          _carryingObjectID.GetValue(), GetID());
+      } else {
+        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+        if(carriedObject == nullptr) {
+          // This really should not happen
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
+                            "Carried object %d could not be cast as an ActionableObject.\n",
+                            _carryingObjectID.GetValue());
+        } else if(carriedObject->IsBeingCarried() == false) {
+          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
+                              "Robot %d thinks it is carrying object %d but that object "
+                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
+          
+        } else {
+          carriedObject->SetBeingCarried(false);
+          
+          // Tell the robot it's not carrying anything
+          SendSetCarryState(CARRY_NONE);
+        }
+      }
+      // Even if the above failed, still mark the robot's carry ID as unset
+      _carryingObjectID.UnSet();
+    }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
     {
@@ -1632,9 +1846,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      _carryingObjectID = objectID;
-      _carryingMarker   = objectMarker;
-
       // Base the object's pose relative to the lift on how far away the dock
       // marker is from the center of the block
       // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
@@ -1652,9 +1863,42 @@ namespace Anki {
       // the lift and move with the robot
       objectPoseWrtLiftPose.SetParent(&_liftPose);
       
-      object->SetPose(objectPoseWrtLiftPose);
-      object->SetBeingCarried(true);
+
+      // If we know there's an object on top of the object we are picking up,
+      // mark it as being carried too
+      // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
+
+      const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+      Vision::ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+      if(objectOnTop != nullptr) {
+        ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
+        if(actionObjectOnTop != nullptr) {
+          Pose3d onTopPoseWrtCarriedPose;
+          if(actionObjectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
+          {
+            PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
+                                "Found object on top of carried object, but could not get its "
+                                "pose w.r.t. the carried object.\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
+                             "Setting object %d on top of carried object as also being carried.\n",
+                             actionObjectOnTop->GetID().GetValue());
+            onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+            actionObjectOnTop->SetPose(onTopPoseWrtCarriedPose);
+            _carryingObjectOnTopID = actionObjectOnTop->GetID();
+            actionObjectOnTop->SetBeingCarried(true);
+          }
+        }
+      } else {
+        _carryingObjectOnTopID.UnSet();
+      }
       
+      SetCarryingObject(objectID); // also marks the object as carried
+      _carryingMarker   = objectMarker;
+
+      // Don't actually change the object's pose until we've checked for objects on top
+      object->SetPose(objectPoseWrtLiftPose);
+
       return RESULT_OK;
       
     } // AttachObjectToLift()
@@ -1686,8 +1930,6 @@ namespace Anki {
       }
       object->SetPose(placedPose);
       
-      object->SetBeingCarried(false);
-      
       PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
                        _ID, object->GetID().GetValue(),
@@ -1695,8 +1937,33 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      _carryingObjectID.UnSet();
+      UnSetCarryingObject(); // also sets carried object as not being carried anymore
       _carryingMarker = nullptr;
+      
+      if(_carryingObjectOnTopID.IsSet()) {
+        ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectOnTopID));
+        if(objectOnTop == nullptr)
+        {
+          // This really should not happen.  How can a object being carried get deleted?
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached",
+                            "Object on top of carrying object with ID=%d no longer exists.\n",
+                            _carryingObjectOnTopID.GetValue());
+          return RESULT_FAIL;
+        }
+        
+        Pose3d placedPoseOnTop;
+        if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
+          PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+                            "Could not get carrying object's pose relative to robot's origin.\n");
+          return RESULT_FAIL;
+          
+        }
+        objectOnTop->SetPose(placedPoseOnTop);
+        objectOnTop->SetBeingCarried(false);
+        _carryingObjectOnTopID.UnSet();
+        PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
+                         objectOnTop->GetID().GetValue());
+      }
       
       return RESULT_OK;
       
@@ -1854,7 +2121,7 @@ namespace Anki {
       m.xPosition = pose.GetTranslation().x();
       m.yPosition = pose.GetTranslation().y();
       
-      m.headingAngle = pose.GetRotationMatrix().GetAngleAroundZaxis().ToFloat();
+      m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
       
       return _msgHandler->SendMessage(_ID, m);
     }
@@ -1917,28 +2184,51 @@ namespace Anki {
       m.intensity = intensity;
       return _msgHandler->SendMessage(_ID, m);
     }
-      
-    void Robot::SaveNextImage()
+
+    void Robot::SetSaveStateMode(const SaveMode_t mode)
     {
-      _saveNextImageToFile = true;
+      _stateSaveMode = mode;
+    }
+
+      
+    void Robot::SetSaveImageMode(const SaveMode_t mode)
+    {
+      _imageSaveMode = mode;
     }
     
     Result Robot::ProcessImage(const Vision::Image& image)
     {
       Result lastResult = RESULT_OK;
       
-      if (_saveNextImageToFile) {
+      if (_imageSaveMode != SAVE_OFF) {
+        
+        // Make sure image capture folder exists
+        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
+            PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","\n");
+          }
+        }
+        
         // Write image to file (recompressing as jpeg again!)
-        static u32 imgCnt = 0;
-        char imgFilename[32];
+        char imgFilename[256];
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "cozmoImg_%d.jpg", imgCnt++);
-        imwrite(imgFilename, image.get_CvMat_());
+        sprintf(imgFilename, "%s/cozmo%d_img_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp());
+        imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
-        _saveNextImageToFile = false;
+        if (_imageSaveMode == SAVE_ONE_SHOT) {
+          _imageSaveMode = SAVE_OFF;
+        }
       }
+      
+      // Compute framerate
+      if (_lastImgTimeStamp > 0) {
+        const f32 imgFramerateAvgCoeff = 0.25f;
+        _imgFramePeriod = _imgFramePeriod * (1.f-imgFramerateAvgCoeff) + (image.GetTimestamp() - _lastImgTimeStamp) * imgFramerateAvgCoeff;
+      }
+      _lastImgTimeStamp = image.GetTimestamp();
+      
       
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision
@@ -2030,9 +2320,9 @@ namespace Anki {
       return RESULT_OK;
     }
       
-    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D, Vec3f(50, 25, 0)),
-                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, 0, 0)),
-                                                  Pose3d(0, Z_AXIS_3D, Vec3f(50, -25, 0)) };
+    const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
+                                                  Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
+                                                  Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
     
     const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
                                                {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
@@ -2046,7 +2336,7 @@ namespace Anki {
     
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
-      const RotationMatrix2d R(atPose.GetRotationMatrix().GetAngleAroundZaxis());
+      const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
       
       Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
@@ -2081,7 +2371,21 @@ namespace Anki {
     {
       return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
     }
-    
+
+    Result Robot::SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
+                                          const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight)
+    {
+      MessageSetWheelControllerGains m;
+      m.kpLeft = kpLeft;
+      m.kiLeft = kiLeft;
+      m.maxIntegralErrorLeft = maxIntegralErrorLeft;
+      m.kpRight = kpRight;
+      m.kiRight = kiRight;
+      m.maxIntegralErrorRight = maxIntegralErrorRight;
+      
+      return _msgHandler->SendMessage(_ID, m);
+    }
+      
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;
@@ -2213,7 +2517,7 @@ namespace Anki {
       // Now make the robot's world origin point to the new origin
       _worldOrigin = newOrigin;
       
-      newOrigin->SetRotation(0, Z_AXIS_3D);
+      newOrigin->SetRotation(0, Z_AXIS_3D());
       newOrigin->SetTranslation({{0,0,0}});
       
       // Now make the robot's origin point to the new origin
@@ -2394,6 +2698,12 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
  
+    Result Robot::SendSetCarryState(CarryState_t state)
+    {
+      MessageSetCarryState m;
+      m.state = state;
+      return _msgHandler->SendMessage(GetID(), m);
+    }
       
     Result Robot::SendFlashBlockIDs()
     {
@@ -2407,6 +2717,28 @@ namespace Anki {
       m.blockID = blockID;
       std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
       return _msgHandler->SendMessage(GetID(), m);
+    }
+      
+    void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
+    {
+      if (_isPhysical) {
+        // What is the current drive center pose based on carry state...
+        f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
+        if (IsCarryingObject()) {
+          driveCenterOffset = 0;
+        }
+        
+        driveCenterPose = robotPose;
+        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
+        Vec3f trans;
+        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
+        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
+        driveCenterPose.SetTranslation(trans);
+      } else {
+        // TODO: Simulated robot Webots proto needs to be updated with treads.
+        //       Til then assume no drive center offset.
+        driveCenterPose = robotPose;
+      }
     }
     
   } // namespace Cozmo

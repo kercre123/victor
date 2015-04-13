@@ -18,6 +18,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -25,6 +26,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 // The angle wrt the mat at which the user is expected to be.
 // For happy head-nodding demo purposes.
@@ -429,7 +431,7 @@ namespace Anki {
           // Wait for robot to be IDLE
           if(_robot->IsIdle()) {
             Pose3d startPose(JUNE_DEMO_START_THETA,
-                             Z_AXIS_3D,
+                             Z_AXIS_3D(),
                              {{JUNE_DEMO_START_X, JUNE_DEMO_START_Y, 0.f}});
             CoreTechPrint("Driving to demo start location\n");
             _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(startPose));
@@ -507,7 +509,7 @@ namespace Anki {
                 
                 const Vision::KnownMarker* topMarker = nullptr;
                 for(auto marker : diceMarkers) {
-                  //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D);
+                  //const f32 dotprod = DotProduct(marker->ComputeNormal(), Z_AXIS_3D());
                   Pose3d markerWrtRobotOrigin;
                   if(marker->GetPose().GetWithRespectTo(_robot->GetPose().FindOrigin(), markerWrtRobotOrigin) == false) {
                     PRINT_NAMED_ERROR("BehaviorManager.Update_June2014DiceDemo.MarkerOriginNotRobotOrigin",
@@ -642,7 +644,7 @@ namespace Anki {
                     Radians angle = atan2(position.y(), position.x()) + PI_F;
                     position += diceBlock->GetPose().GetTranslation();
                     
-                    _goalPose = Pose3d(angle, Z_AXIS_3D, {{position.x(), position.y(), 0.f}});
+                    _goalPose = Pose3d(angle, Z_AXIS_3D(), {{position.x(), position.y(), 0.f}});
                     
                     _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(_goalPose));
 
@@ -675,7 +677,7 @@ namespace Anki {
                       _originalPose = _robot->GetPose();
 
                       Pose3d userFacingPose = _robot->GetPose();
-                      userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+                      userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D());
                       _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
                       CoreTechPrint("idle: facing user\n");
 
@@ -827,7 +829,7 @@ namespace Anki {
                 // we last stopped exploring.
                 targetAngle = atan2(robotPose.GetTranslation().y(), robotPose.GetTranslation().x()) + PI_F;
               }
-              Pose3d targetPose(targetAngle, Z_AXIS_3D, Vec3f(0,0,0));
+              Pose3d targetPose(targetAngle, Z_AXIS_3D(), Vec3f(0,0,0));
               
               if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
                 PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
@@ -971,7 +973,7 @@ namespace Anki {
           {
             // Compute pose that makes robot face user
             Pose3d userFacingPose = _robot->GetPose();
-            userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D);
+            userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D());
             _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);

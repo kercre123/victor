@@ -203,6 +203,10 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
+      PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
+                       "Recived new %dx%d camera calibration from robot.\n",
+                       msg.ncols, msg.nrows);
+      
       // Convert calibration message into a calibration object to pass to
       // the robot
       Vision::CameraCalibration calib(msg.nrows,
@@ -213,7 +217,31 @@ namespace Anki {
                                       msg.center_y,
                                       msg.skew);
       
+#if 1 // DEV HACK!
+      if(msg.isPhysicalRobot)
+      {
+        if(msg.ncols == 640) {
+          // Wide-angle VGA Calibration:
+          const Vision::CameraCalibration calib_hardCoded(480, 640,
+                                                          367.55184f,   369.05860f,
+                                                          312.22557f,   240.41850f,
+                                                          0);
+          calib = calib_hardCoded;
+        }
+        else if(msg.ncols == 320) {
+          // Cropped QVGA Calibration:
+          const Vision::CameraCalibration calib_hardCoded(240, 320,
+                                                          374.98139f, 371.84817f,
+                                                          155.83712f, 117.87848f,
+                                                          0);
+          calib = calib_hardCoded;
+        }
+        PRINT_NAMED_WARNING("RobotMessageHandler.ProcessMessage", "Using hard-coded %dx%d camera calibration data on basestation.\n", msg.ncols, msg.nrows);
+      }
+#endif
+      
       robot->SetCameraCalibration(calib);
+      robot->SetPhysicalRobot(msg.isPhysicalRobot);
       
       return RESULT_OK;
     }
@@ -299,7 +327,7 @@ namespace Anki {
                                                             msg.imageChunkCount,
                                                             msg.chunkId, msg.data);
 
-      //CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
       
       if(isImageReady)
@@ -363,15 +391,20 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPickedUp const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s picking up block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s picking up block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
 
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
-       lastResult = robot->SetDockObjectAsAttachedToLift();
+        lastResult = robot->SetDockObjectAsAttachedToLift();
+        robot->SetLastPickOrPlaceSucceeded(true);
       }
       else {
-        // TODO: what do we do on failure? Need to trigger reattempt?
+        robot->SetLastPickOrPlaceSucceeded(false);
       }
+      
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
       
       return lastResult;
     }
@@ -379,15 +412,20 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockPlaced const& msg)
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
-      PRINT_INFO("Robot %d reported it %s placing block.\n", robot->GetID(), successStr);
+      PRINT_INFO("Robot %d reported it %s placing block. "
+                 "Stopping docking and turning on Look-for-Markers mode.\n", robot->GetID(), successStr);
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
         lastResult = robot->SetCarriedObjectAsUnattached();
+        robot->SetLastPickOrPlaceSucceeded(true);
       }
       else {
-        // TODO: what do we do on failure? Need to trigger reattempt?
+        robot->SetLastPickOrPlaceSucceeded(false);
       }
+      
+      robot->StopDocking();
+      robot->StartLookingForMarkers();
       
       return lastResult;
     }

@@ -79,7 +79,7 @@ public:
   float ToFloat() const { return radians_;};
 
   // Returns a radians object that's the absolute value of this one
-  Radians getAbsoluteVal();
+  Radians getAbsoluteVal() const;
 
   // Returns the object's radians value in degrees
   float getDegrees() const;

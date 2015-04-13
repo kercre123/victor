@@ -5,5 +5,5 @@ MarkerLibrary = [];
 
 CamCapArgs = parseVarargin(varargin{:});
 
-CameraCapture('processFcn', @(a,b,c)detectAndDisplay(a,b,c,MarkerLibrary), ...
+CameraCapture('processFcn', @(a,b,c)detectAndDisplay(a,b,c,'markerLibrary', MarkerLibrary), ...
     'doContinuousProcessing', true, CamCapArgs{:});

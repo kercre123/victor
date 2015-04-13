@@ -132,9 +132,9 @@ GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
     for(auto sign : signs) {
       const Radians curAngle = DEG_TO_RAD(sign*angle);
       
-      RotationMatrix3d Rx(curAngle, X_AXIS_3D);
-      RotationMatrix3d Ry(curAngle, Y_AXIS_3D);
-      RotationMatrix3d Rz(curAngle, Z_AXIS_3D);
+      RotationMatrix3d Rx(curAngle, X_AXIS_3D());
+      RotationMatrix3d Ry(curAngle, Y_AXIS_3D());
+      RotationMatrix3d Rz(curAngle, Z_AXIS_3D());
       
       EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
       //EXPECT_NEAR(Rx.GetAngleAroundYaxis().ToFloat(), 0.f, TOLERANCE);
@@ -152,6 +152,37 @@ GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
   }
   
 } // TestRotation:ExtractAnglesFromMatrix
+
+
+GTEST_TEST(TestRotation, ExtractAnglesFromRotation3d)
+{
+  std::vector<f32> testAngles = {
+    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
+    291.f, 333.f, 352.f, 360.f, 378.f
+  };
+  
+  const f32 signs[2] = {-1.f, 1.f};
+  
+  const f32 TOLERANCE = 1e-6f;
+  
+  for(auto angle : testAngles) {
+    for(auto sign : signs) {
+      const Radians curAngle = DEG_TO_RAD(sign*angle);
+      
+      Rotation3d Rx(curAngle, X_AXIS_3D());
+      Rotation3d Ry(curAngle, Y_AXIS_3D());
+      Rotation3d Rz(curAngle, Z_AXIS_3D());
+      
+      EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+      EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curAngle).ToFloat(), 0.f, TOLERANCE);
+      
+    }
+  }
+  
+} // TestRotation:ExtractAnglesFromRotation3d
 
 /*
 GTEST_TEST(TestRotation, EulerAngles)
@@ -175,9 +206,9 @@ GTEST_TEST(TestRotation, EulerAngles)
               const Radians curYangle = DEG_TO_RAD(Ysign*Yangle);
               const Radians curZangle = DEG_TO_RAD(Zsign*Zangle);
               
-              RotationMatrix3d Rx(curXangle, X_AXIS_3D);
-              RotationMatrix3d Ry(curYangle, Y_AXIS_3D);
-              RotationMatrix3d Rz(curZangle, Z_AXIS_3D);
+              RotationMatrix3d Rx(curXangle, X_AXIS_3D());
+              RotationMatrix3d Ry(curYangle, Y_AXIS_3D());
+              RotationMatrix3d Rz(curZangle, Z_AXIS_3D());
 
               EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curXangle).ToFloat(), 0.f, TOLERANCE);
               EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curYangle).ToFloat(), 0.f, TOLERANCE);
@@ -305,7 +336,7 @@ GTEST_TEST(TestPose, IsSameAs)
   // P3 is P1 with a slight perturbation
   Pose3d P2(P1);
   
-  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D, {1.f, 1.f, 1.f});
+  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D(), {1.f, 1.f, 1.f});
   P2.PreComposeWith(T_perturb);
   
   // IsSameAs should return true

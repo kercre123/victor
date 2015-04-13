@@ -155,12 +155,19 @@ namespace Cozmo {
   
   void VisionSystem::EnableModeHelper(Mode mode)
   {
-    // For now only allow one thing to be enabled at a time:
-    // TODO: Allow multiple modes to run simultaneously (remove this line)
-    _mode = IDLE;
-    
-    
-    _mode |= mode;
+    const bool modeAlreadyEnabled = _mode & mode;
+    if(!modeAlreadyEnabled) {
+      PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
+                       "Switching from vision mode %s to mode %s.\n",
+                       VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str(),
+                       VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str());
+      
+      // For now only allow one thing to be enabled at a time:
+      // TODO: Allow multiple modes to run simultaneously (remove this line)
+      _mode = IDLE;
+      
+      _mode |= mode;
+    }
   }
   
   void VisionSystem::DisableModeHelper(Mode mode)
@@ -204,35 +211,13 @@ namespace Cozmo {
   // a PC than they do on embedded hardware. Basically, this is used by
   // Update() below to wait until a frame is ready before proceeding.
   namespace Simulator {
-#ifdef SIMULATOR
-    static u32 frameReadyTime_;
-    
-    static Result Initialize() {
-      frameReadyTime_ = 0;
-      return RESULT_OK;
-    }
-    
-    // Returns true if we are past the last set time for simulated processing
-    static bool IsFrameReady() {
-      return (HAL::GetMicroCounter() >= frameReadyTime_);
-    }
-    
-    static void SetDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FIDUCIAL_DETECTION_PERIOD_US;
-    }
-    static void SetTrackingReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::TRACK_BLOCK_PERIOD_US;
-    }
-    static void SetFaceDetectionReadyTime() {
-      frameReadyTime_ = HAL::GetMicroCounter() + SimulatorParameters::FACE_DETECTION_PERIOD_US;
-    }
-#else
+
     static Result Initialize() { return RESULT_OK; }
     static bool IsFrameReady() { return true; }
     static void SetDetectionReadyTime() { }
     static void SetTrackingReadyTime() { }
     static void SetFaceDetectionReadyTime() {}
-#endif
+
   } // namespace Simulator
   
   
@@ -565,7 +550,7 @@ namespace Cozmo {
       image.Set(imageNormalized);
       
       //Debug:
-      image.Show("NormalizedImage", true);
+      //image.Show("NormalizedImage", true);
       
     } // if(filterWidthFraction > 0)
     
@@ -698,6 +683,7 @@ namespace Cozmo {
 #endif
     
     if(!tracker.IsValid()) {
+      PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.\n");
       return RESULT_FAIL;
     }
     
@@ -1333,7 +1319,11 @@ namespace Cozmo {
     return _faceDetectionParameters;
   }
   
-  const std::string& VisionSystem::GetCurrentModeName() const
+  const std::string& VisionSystem::GetCurrentModeName() const {
+    return VisionSystem::GetModeName(static_cast<Mode>(_mode));
+  }
+  
+  const std::string& VisionSystem::GetModeName(Mode mode)
   {
     static const std::map<Mode, std::string> LUT = {
       {IDLE,                  "IDLE"}
@@ -1346,13 +1336,13 @@ namespace Cozmo {
     
     static const std::string UNKNOWN("UNKNOWN_VISION_MODE");
     
-    auto result = LUT.find(static_cast<Mode>(_mode));
+    auto result = LUT.find(static_cast<Mode>(mode));
     if(result == LUT.end()) {
       return UNKNOWN;
     } else {
       return result->second;
     }
-  } // GetCurrentModeName()
+  } // GetModeName()
   
   VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
   : focalLength_x(camCalib.GetFocalLength_x())
@@ -1372,8 +1362,35 @@ namespace Cozmo {
   {
     Result result = RESULT_OK;
     
-    if(!_isInitialized) {
-      _captureResolution = Vision::CAMERA_RES_QVGA;
+    bool gotNewCalibration = true;
+    if(_isInitialized) {
+      gotNewCalibration = (camCalib.GetFocalLength_x() != _headCamInfo->focalLength_x ||
+                           camCalib.GetFocalLength_y() != _headCamInfo->focalLength_y ||
+                           camCalib.GetCenter_x()      != _headCamInfo->center_x      ||
+                           camCalib.GetCenter_y()      != _headCamInfo->center_y      ||
+                           camCalib.GetSkew()          != _headCamInfo->skew          ||
+                           camCalib.GetNrows()         != _headCamInfo->nrows         ||
+                           camCalib.GetNcols()         != _headCamInfo->ncols);
+    }
+    
+    if(gotNewCalibration) {
+      bool calibSizeValid = false;
+      switch(camCalib.GetNcols())
+      {
+        case 640:
+          calibSizeValid = camCalib.GetNrows() == 480;
+          _captureResolution = Vision::CAMERA_RES_VGA;
+          break;
+          
+        case 320:
+          calibSizeValid = camCalib.GetNrows() == 240;
+          _captureResolution = Vision::CAMERA_RES_QVGA;
+          break;
+      }
+      AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
+                                         "VisionSystem.InvalidCalibrationResolution",
+                                         "Unexpected calibration resolution (%dx%d)\n",
+                                         camCalib.GetNcols(), camCalib.GetNrows());
       
       // WARNING: the order of these initializations matter!
       
@@ -1389,6 +1406,9 @@ namespace Cozmo {
       _havePreviousRobotState    = false;
       
       //_headCamInfo = HAL::GetHeadCamInfo();
+      if(_headCamInfo == nullptr) {
+        delete _headCamInfo;
+      }
       _headCamInfo = new CameraInfo(camCalib);
       if(_headCamInfo == nullptr) {
         PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
@@ -1404,9 +1424,10 @@ namespace Cozmo {
       _exposureTime = 0.2f; // TODO: pick a reasonable start value
       _frameNumber = 0;
       
-      _detectionParameters.Initialize();
-      _trackerParameters.Initialize();
-      _faceDetectionParameters.Initialize();
+      // Just make all the vision parameters' resolutions match capture resolution:
+      _detectionParameters.Initialize(_captureResolution);
+      _trackerParameters.Initialize(_captureResolution);
+      _faceDetectionParameters.Initialize(_captureResolution);
       
       Simulator::Initialize();
       
@@ -1796,6 +1817,9 @@ namespace Cozmo {
     
     UpdateRobotState(robotState);
     
+    // prevent us from trying to update a tracker we just initialized in the same
+    // frame
+    bool trackerJustInitialzed = false;
     
     // If SetMarkerToTrack() was called by main() during previous Update(),
     // actually swap in the new marker now.
@@ -1984,6 +2008,8 @@ namespace Cozmo {
             return lastResult;
           }
           
+          trackerJustInitialzed = true;
+          
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
           EnableModeHelper(TRACKING);
@@ -2003,115 +2029,118 @@ namespace Cozmo {
       //
       // Capture image for tracking
       //
-      
-      MemoryStack _offchipScratchlocal(_memory._offchipScratch);
-      MemoryStack _onchipScratchlocal(_memory._onchipScratch);
-      
-      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
-      
-      Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               _onchipScratchlocal, Flags::Buffer(false,false,false));
-      
-      GetImageHelper(inputImage, grayscaleImage);
-      //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
-      //HAL::CameraGetFrame(),
-      //  _captureResolution, false);
-      
-      if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-        PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
-        return lastResult;
-      }
-      
-      BeginBenchmark("VisionSystem_CameraImagingPipeline");
-      
-      if(_vignettingCorrection == VignettingCorrection_Software) {
-        BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-        
-        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
-        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
-        
-        for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = _vignettingCorrectionParameters[i];
-        
-        CorrectVignetting(grayscaleImage, polynomialParameters);
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(_vignettingCorrection == VignettingCorrection_Software)
-      
-      // TODO: allow tracking to work with exposure changes
-      /*if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
-       BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-       
-       ComputeBestCameraParameters(
-       grayscaleImage,
-       Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-       _autoExposure_integerCountsIncrement,
-       _autoExposure_highValue,
-       _autoExposure_percentileToMakeHigh,
-       _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
-       _autoExposure_tooHighPercentMultiplier,
-       _exposureTime,
-       VisionMemory::_ccmScratch);
-       
-       EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-       }*/
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline");
-      
-      // TODO: Re-enable setting camera parameters from basestation vision
-      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
-      
-      // TODO: Re-enable sending of images from basestation vision
-      //DownsampleAndSendImage(grayscaleImage);
-      
-      // Normalize the image
-      // NOTE: This will change grayscaleImage!
-      if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
-        // Faster: normalize using mean of quad
-        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
-      } else {
-        // Slower: normalize using local averages
-        // NOTE: This is currently off-chip for memory reasons, so it's slow!
-        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
-                                              _trackerParameters.normalizationFilterWidthFraction,
-                                              _memory._offchipScratch);
-      }
-      
-      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                         "VisionSystem::Update::BrightnessNormalizeImage",
-                                         "BrightnessNormalizeImage failed.\n");
-      
-      //
-      // Tracker Prediction
-      //
-      // Adjust the tracker transformation by approximately how much we
-      // think we've moved since the last tracking call.
-      //
-      
-      if((lastResult =TrackerPredictionUpdate(grayscaleImage, _onchipScratchlocal)) != RESULT_OK) {
-        PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
-        return lastResult;
-      }
-      
-      //
-      // Update the tracker transformation using this image
-      //
-      
-      // Set by TrackTemplate() call
       bool converged = false;
-      
-      if((lastResult = TrackTemplate(grayscaleImage,
-                                     _trackingQuad,
-                                     _trackerParameters,
-                                     _tracker,
-                                     converged,
-                                     _memory._ccmScratch,
-                                     _onchipScratchlocal,
-                                     _offchipScratchlocal)) != RESULT_OK) {
-        PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
-        return lastResult;
-      }
+      if(!trackerJustInitialzed)
+      {
+        MemoryStack _offchipScratchlocal(_memory._offchipScratch);
+        MemoryStack _onchipScratchlocal(_memory._onchipScratch);
+        
+        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
+        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+        
+        Array<u8> grayscaleImage(captureHeight, captureWidth,
+                                 _onchipScratchlocal, Flags::Buffer(false,false,false));
+        
+        GetImageHelper(inputImage, grayscaleImage);
+        //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
+        //HAL::CameraGetFrame(),
+        //  _captureResolution, false);
+        
+        if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
+          PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+          return lastResult;
+        }
+        
+        BeginBenchmark("VisionSystem_CameraImagingPipeline");
+        
+        if(_vignettingCorrection == VignettingCorrection_Software) {
+          BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+          
+          MemoryStack _onchipScratchlocal = _memory._onchipScratch;
+          FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
+          
+          for(s32 i=0; i<5; i++)
+            polynomialParameters[i] = _vignettingCorrectionParameters[i];
+          
+          CorrectVignetting(grayscaleImage, polynomialParameters);
+          
+          EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+        } // if(_vignettingCorrection == VignettingCorrection_Software)
+        
+        // TODO: allow tracking to work with exposure changes
+        /*if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
+         BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+         
+         ComputeBestCameraParameters(
+         grayscaleImage,
+         Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+         _autoExposure_integerCountsIncrement,
+         _autoExposure_highValue,
+         _autoExposure_percentileToMakeHigh,
+         _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
+         _autoExposure_tooHighPercentMultiplier,
+         _exposureTime,
+         VisionMemory::_ccmScratch);
+         
+         EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+         }*/
+        
+        EndBenchmark("VisionSystem_CameraImagingPipeline");
+        
+        // TODO: Re-enable setting camera parameters from basestation vision
+        //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
+        
+        // TODO: Re-enable sending of images from basestation vision
+        //DownsampleAndSendImage(grayscaleImage);
+        
+        // Normalize the image
+        // NOTE: This will change grayscaleImage!
+        if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
+          // Faster: normalize using mean of quad
+          lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
+        } else {
+          // Slower: normalize using local averages
+          // NOTE: This is currently off-chip for memory reasons, so it's slow!
+          lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
+                                                _trackerParameters.normalizationFilterWidthFraction,
+                                                _memory._offchipScratch);
+        }
+        
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "VisionSystem::Update::BrightnessNormalizeImage",
+                                           "BrightnessNormalizeImage failed.\n");
+        
+        //
+        // Tracker Prediction
+        //
+        // Adjust the tracker transformation by approximately how much we
+        // think we've moved since the last tracking call.
+        //
+        
+        if((lastResult =TrackerPredictionUpdate(grayscaleImage, _onchipScratchlocal)) != RESULT_OK) {
+          PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
+          return lastResult;
+        }
+        
+        //
+        // Update the tracker transformation using this image
+        //
+        
+        // Set by TrackTemplate() call
+        if((lastResult = TrackTemplate(grayscaleImage,
+                                       _trackingQuad,
+                                       _trackerParameters,
+                                       _tracker,
+                                       converged,
+                                       _memory._ccmScratch,
+                                       _onchipScratchlocal,
+                                       _offchipScratchlocal)) != RESULT_OK) {
+          PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
+          return lastResult;
+        }
+      } else {
+        converged = true;
+      } // if(!trackerJustInitialzed)
       
       //
       // Create docking error signal from tracker
@@ -2134,14 +2163,14 @@ namespace Cozmo {
           }
           
           MessageTrackerQuad m;
-          m.topLeft_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
-          m.topLeft_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
-          m.topRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
-          m.topRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
+          m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
+          m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
+          m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
+          m.topRight_y    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
           m.bottomRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].x * scale);
           m.bottomRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].y * scale);
-          m.bottomLeft_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
-          m.bottomLeft_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
+          m.bottomLeft_x  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
+          m.bottomLeft_y  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
           
           //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
           _trackerMailbox.putMessage(m);
@@ -2149,11 +2178,18 @@ namespace Cozmo {
         
         // Reset the failure counter
         _numTrackFailures = 0;
+        
+        _dockingMailbox.putMessage(dockErrMsg);
       }
       else {
         _numTrackFailures += 1;
         
-        if(_numTrackFailures == MAX_TRACKING_FAILURES) {
+        if(_numTrackFailures == MAX_TRACKING_FAILURES)
+        {          
+          PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
+                           "failures (%d). Switching back to looking for markers.\n",
+                           MAX_TRACKING_FAILURES);
+          
           // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
           SetMarkerToTrack(_markerToTrack.type,
                            _markerToTrack.width_mm,
@@ -2164,7 +2200,7 @@ namespace Cozmo {
       }
       
       //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
-      _dockingMailbox.putMessage(dockErrMsg);
+      
       
     } // if(_mode & TRACKING)
     

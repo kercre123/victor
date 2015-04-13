@@ -24,8 +24,47 @@ namespace Anki {
     
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
+    , _isPartOfCompoundAction(false)
+    , _isRunning(false)
     {
       
+    }
+    
+    // NOTE: THere should be no way for Update() to fail independently of its
+    // call to UpdateInternal(). Otherwise, there's a possibility for an
+    // IAction's Cleanup() method not be called on failure.
+    IActionRunner::ActionResult IActionRunner::Update(Robot& robot)
+    {
+      if(!_isRunning && !_isPartOfCompoundAction) {
+        // When the ActionRunner first starts, lock any specified subsystems
+        robot.LockHead( ShouldLockHead() );
+        robot.LockLift( ShouldLockLift() );
+        robot.LockWheels( ShouldLockWheels() );
+        
+        _isRunning = true;
+      }
+      
+      ActionResult result = UpdateInternal(robot);
+      
+      if(result != RUNNING) {
+        if(!_isPartOfCompoundAction) {
+          // Notify any listeners about this action's completion.
+          // Note that I do this here so that compound actions only emit one signal,
+          // not a signal for each constituent action.
+          // TODO: Populate the signal with any action-specific info?
+          CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(),
+                                                                GetType(),
+                                                                result == SUCCESS);
+          
+          // Action is done, always completely unlock the robot
+          robot.LockHead(false);
+          robot.LockLift(false);
+          robot.LockWheels(false);
+        }
+        _isRunning = false;
+      }
+      
+      return result;
     }
     
     bool IActionRunner::RetriesRemain()
@@ -72,7 +111,7 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    IAction::ActionResult IAction::Update(Robot& robot)
+    IAction::ActionResult IAction::UpdateInternal(Robot& robot)
     {
       ActionResult result = RUNNING;
       SetStatus(GetName());
@@ -142,17 +181,16 @@ namespace Anki {
       }
       
       if(result != RUNNING) {
+        // Success or fail, this action is done, so perform any cleanup required.
+        Cleanup(robot);
+        
 #       if USE_ACTION_CALLBACKS
         RunCallbacks(result);
 #       endif
-        
-        // Notify any listeners about this action's completion.
-        // TODO: Populate the signal with any action-specific info?
-        CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), result == SUCCESS);
       }
       
       return result;
-    } // Update()
+    } // UpdateInternal()
     
   } // namespace Cozmo
 } // namespace Anki

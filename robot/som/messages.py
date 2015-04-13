@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "3e246afb27b2e31897a8be87f9f60d1964dcb7ad" # Hash for the revision these python definitions are based on
+__version__ = "83fcd6d31a7fd9c14fbf46d79368a8b6e84c0282" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -36,7 +36,8 @@ IE_YUYV  = 3
 IE_BAYER = 4
 IE_JPEG_GRAY  = 5
 IE_JPEG_COLOR = 6
-IE_WEBP  = 7
+IE_JPEG_CHW = 7
+IE_WEBP  = 8
 
 CAMERA_RES_QUXGA = 0
 CAMERA_RES_QXGA = 1
@@ -116,7 +117,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 72
+    ID = 74
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -168,7 +169,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 61
+    ID = 63
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -182,12 +183,15 @@ class RobotState(MessageBase):
         "f32", # Head angle
         "f32", # Lift Angle
         "f32", # Lift Height
+        "f32", # Raw Gyro Z
+        "f32", # Raw accel Y
         "u16", # last path ID
         "u8",  # Prox left
         "u8",  # Prox forward
         "u8",  # Prox right
         "s8",  # Current path segment, -1 if not traversing a path
         "u8",  # Num free segment slots
+        "u8",  # Battery voltage x10
         "u8",  # Status, see RobotStatusFlag
     ]
 
@@ -209,12 +213,15 @@ class RobotState(MessageBase):
         self.headAngle = 0.0
         self.liftAngle = 0.0
         self.liftHeight = 0.0
+        self.rawGyroZ = 0.0
+        self.rawAccelY = 0.0
         self.lastPathID = 0
         self.proxLeft = 255
         self.proxForward = 255
         self.proxRight = 255
         self.currPathSegment = -1
         self.numFreeSegmentSlots = 0
+        self.battVolt10x = 0
         self.status = 0
         if buffer:
             self.deserialize(buffer)
@@ -222,20 +229,24 @@ class RobotState(MessageBase):
     def _getMembers(self):
         return self.timestamp, self.poseFrameId, self.pose.x, self.pose.y, self.pose.z, self.pose.angle, \
                self.pose.pitch, self.leftWheelSpeed, self.rightWheelSpeed, self.headAngle, self.liftAngle, \
-               self.liftHeight, self.lastPathID, self.proxLeft, self.proxForward, self.proxRight, self.curPathSegment, \
-               self.numFreeSegmentSlots, self.status
+               self.liftHeight, self.rawGyroZ, self.rawAccelY, self.lastPathID, self.proxLeft, self.proxForward, \
+               self.proxRight, self.curPathSegment, self.numFreeSegmentSlots, self.battVolt10x, self.status
 
     def _setMembers(self, *members):
         self.timestamp, self.poseFrameId, self.pose.x, self.pose.y, self.pose.z, self.pose.angle, \
         self.pose.pitch, self.leftWheelSpeed, self.rightWheelSpeed, self.headAngle, self.liftAngle, \
-        self.liftHeight, self.lastPathID, self.proxLeft, self.proxForward, self.proxRight, self.curPathSegment, \
-        self.numFreeSegmentSlots, self.status = members
+        self.liftHeight, self.rawGyroZ, self.rawAccelY, self.lastPathID, self.proxLeft, self.proxForward, \
+        self.proxRight, self.curPathSegment, self.numFreeSegmentSlots, self.battVolt10x, self.status = members
 
     def __repr__(self):
         return "RobotState(timestamp=%d, ..., status=%d)" % (self.timestamp, self.status)
 
+    @classmethod
+    def unpackTimestamp(cls, buffer):
+        return struct.unpack('I', buffer[1:5])(0)
+
 class PrintText(MessageBase):
-    ID = 71
+    ID = 73
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
@@ -268,7 +279,7 @@ class PrintText(MessageBase):
 
 class PingMessage(MessageBase):
     "Just a ping with no payload"
-    ID = 56
+    ID = 57
     FORMAT = []
 
     def _getMembers(self):
@@ -305,11 +316,131 @@ class DriveWheelsMessage(MessageBase):
     def __repr__(self):
         return "DriveWheelsMessage(%f, %f)" % self._getMembers()
 
+class MoveLiftMessage(MessageBase):
+    ID = 3
+    FORMAT = ["f32", # speed_rad_per_sec
+             ]
+
+    def __init__(self, buffer=None, speed=0.0):
+        "Create move lift message"
+        MessageBase.__init__(self)
+        self.speed = speed
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.speed,
+
+    def _setMembers(self, speed):
+        self.speed = speed
+
+    def __repr__(self):
+        return "MoveLiftMessage(%f)" % self.speed
+
+class MoveHeadMessage(MessageBase):
+    ID = 4
+    FORMAT = ["f32", # speed_rad_per_sec
+             ]
+
+    def __init__(self, buffer=None, speed=0.0):
+        "Create move lift message"
+        MessageBase.__init__(self)
+        self.speed = speed
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def _getMembers(self):
+        return self.speed,
+
+    def _setMembers(self, speed):
+        self.speed = speed
+
+    def __repr__(self):
+        return "MoveHeadMessage(%f)" % self.speed
+
+class SetLiftHeightMessage(MessageBase):
+    ID = 5
+    FORMAT = ["f32", # height mm,
+              "f32", # max speed rad/sec
+              "f32", # accel rad/sec^2
+             ]
+
+    def __init__(self, *rest):
+        MessageBase.__init__(self)
+        self.height = 0.0
+        self.max_speed = 1.0
+        self.accel = 1.0
+        if len(rest) > 0:
+            if type(rest[0]) in (float, int):
+                self.height = rest[0]
+            else:
+                self.deserialize(rest[0])
+                return
+        if len(rest) > 1:
+            self.max_speed = rest[1]
+        if len(rest) > 2:
+            self.accel = rest[2]
+
+    def _getMembers(self):
+        return self.height, self.max_speed, self.accel
+
+    def _setMembers(self, *members):
+        self.height, self.max_speed, self.accel = members
+
+    def __repr__(self):
+        return "SetLiftHeightMessage(height=%f, max_speed=%f, accel=%f)" % self._getMembers()
+
+class SetHeadAngleMessage(MessageBase):
+    ID = 6
+    FORMAT = ["f32", # angle radians,
+              "f32", # max speed rad/sec
+              "f32", # accel rad/sec^2
+             ]
+
+    def __init__(self, *rest):
+        MessageBase.__init__(self)
+        self.angle = 0.0
+        self.max_speed = 1.0
+        self.accel = 1.0
+        if len(rest) > 0:
+            if type(rest[0]) in (float, int):
+                self.angle = rest[0]
+            else:
+                self.deserialize(rest[0])
+                return
+        if len(rest) > 1:
+            self.max_speed = rest[1]
+        if len(rest) > 2:
+            self.accel = rest[2]
+
+    def _getMembers(self):
+        return self.angle, self.max_speed, self.accel
+
+    def _setMembers(self, *members):
+        self.angle, self.max_speed, self.accel = members
+
+    def __repr__(self):
+        return "SetHeadAngleMessage(angle=%f, max_speed=%f, accel=%f)" % self._getMembers()
+
+class StopAllMotorsMessage(MessageBase):
+    ID = 7
+    FORMAT = []
+
+    def _getMembers(self):
+        return tuple()
+
+    def _setMembers(self, *members):
+        pass
+
+    def __repr__(self):
+        return "StopAllMotorsMessage"
+
+
 class ClientConnectionStatus(MessageBase):
     """Struct for SoM Radio state information.
     This message is not intendent to be used beyond the SoM prototype."""
 
-    ID = 58
+    ID = 59
     FORMAT = ["u8", # wifi state
               "u8", # bluetooth state
               ]
@@ -360,7 +491,7 @@ class StartTestMode(MessageBase):
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
-    ID = 59
+    ID = 61
     FORMAT = []
 
     def _getMembers(self):
@@ -376,7 +507,7 @@ class FlashBlockIDs(MessageBase):
 class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
-    ID = 60
+    ID = 62
     FORMAT = [("%dI" % NUM_LIGHTS), # color
               "u8",  # blockID
              ]

@@ -61,9 +61,10 @@ namespace Anki {
       IE_BAYER,
       IE_JPEG_GRAY,
       IE_JPEG_COLOR,
+      IE_JPEG_CHW, // Color half width
       IE_WEBP
     } ImageEncoding_t;
-    
+
   } // namespace Vision
 } // namespace Anki
 

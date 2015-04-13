@@ -99,7 +99,7 @@ namespace Anki {
         
         // Methods
         DetectFiducialMarkersParameters();
-        void Initialize();
+        void Initialize(Vision::CameraResolution resolution);
         
       }; // struct DetectFiducialMarkersParameters
       
@@ -163,7 +163,7 @@ namespace Anki {
 #endif
         
         TrackerParameters();
-        void Initialize();
+        void Initialize(Vision::CameraResolution resolution);
         
       }; // struct TrackerParameters
       
@@ -214,7 +214,7 @@ namespace Anki {
         static const u32 MAX_FACE_DETECTIONS = 16;
         
         FaceDetectionParameters();
-        void Initialize();
+        void Initialize(Vision::CameraResolution resolution);
         
       }; // struct FaceDetectionParameters
       

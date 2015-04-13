@@ -39,6 +39,7 @@ DEF_SIGNAL(RobotObservedObject,
            uint32_t objectFamily,
            uint32_t objectType,
            uint32_t objectID,
+           uint8_t  markersVisible,
            float img_x_upperLeft,  float img_y_upperLeft,
            float img_width,  float img_height,
            float world_x, float world_y, float world_z,  // Absolute translation vector
@@ -58,5 +59,6 @@ DEF_SIGNAL(RobotObservedFace,
 // TODO: add a an actionType member?
 DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
+           int32_t actionType,
            uint8_t success)
 

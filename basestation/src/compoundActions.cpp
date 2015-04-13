@@ -21,19 +21,15 @@ namespace Anki {
 #pragma mark ---- ICompoundAction ----
     
     ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
-    : _name("[")
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
           PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
                               "Refusing to add a null action pointer to group.\n");
         } else {
-          _actions.emplace_back(false, action);
-          _name += action->GetName();
-          _name += "+";
+          AddAction(action);
         }
       }
-      _name += "]";
     }
     
     ICompoundAction::~ICompoundAction()
@@ -51,6 +47,56 @@ namespace Anki {
         actionPair.first = false;
         actionPair.second->Reset();
       }
+    }
+    
+    void ICompoundAction::AddAction(IActionRunner* action)
+    {
+      if(_actions.empty()) {
+        _name = "["; // initialize with opening bracket for first action
+      } else {
+        _name.pop_back(); // remove last char ']'
+        _name += "+";
+      }
+      
+      _actions.emplace_back(false, action);
+      _actions.back().second->SetIsPartOfCompoundAction(true);
+      if(_actions.size()==1) {
+        _name += action->GetName();
+        _name += "]";
+      }
+    }
+    
+    bool ICompoundAction::ShouldLockHead() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockHead()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    bool ICompoundAction::ShouldLockLift() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockLift()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    bool ICompoundAction::ShouldLockWheels() const
+    {
+      auto actionIter = _actions.begin();
+      while(actionIter != _actions.end()) {
+        if(actionIter->second->ShouldLockWheels()) {
+          return true;
+        }
+      }
+      return false;
     }
 
 #pragma mark ---- CompoundActionSequential ----
@@ -71,7 +117,7 @@ namespace Anki {
       _currentActionPair = _actions.begin();
     }
     
-    IAction::ActionResult CompoundActionSequential::Update(Robot& robot)
+    IAction::ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
     {
       SetStatus(GetName());
       
@@ -156,7 +202,7 @@ namespace Anki {
       
     }
     
-    IAction::ActionResult CompoundActionParallel::Update(Robot& robot)
+    IAction::ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the

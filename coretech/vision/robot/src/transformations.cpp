@@ -770,7 +770,7 @@ namespace Anki
         const s32 whichScale = 0;
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = templateImage.get_size(1) / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const Point<f32> centerOffsetScaled = this->get_centerOffset(initialImageScaleF32);
@@ -913,7 +913,7 @@ namespace Anki
         const s32 whichScale = 0;
         const f32 scale = static_cast<f32>(1 << whichScale);
 
-        const s32 initialImageScaleS32 = BASE_IMAGE_WIDTH / nextImageWidth;
+        const s32 initialImageScaleS32 = templateImage.get_size(1) / nextImageWidth;
         const f32 initialImageScaleF32 = static_cast<f32>(initialImageScaleS32);
 
         const Point<f32> centerOffsetScaled = this->get_centerOffset(initialImageScaleF32);

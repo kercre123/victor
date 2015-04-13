@@ -72,13 +72,14 @@ namespace Anki {
       Pose3d ComputeObjectPose(const std::vector<Point2f> &imgPoints,
                                const std::vector<Point3f> &objPoints) const;
       
-      // Use three points of a quadrilateral and the P3P algorithm  to compute
+      // Use three points of a quadrilateral and the P3P algorithm to compute
       // possible camera poses, then use the fourth point to choose the valid
       // pose. Do this four times (once using each corner as the validation
       // point) and choose the best.  
       template<typename WORKING_PRECISION=double> // TODO: Make default float?
-      Pose3d ComputeObjectPose(const Quad2f &imgPoints,
-                               const Quad3f &objPoints) const;
+      Result ComputeObjectPose(const Quad2f &imgPoints,
+                               const Quad3f &objPoints,
+                               Pose3d       &objPose) const;
       
       
       // Compute the projected image locations of 3D point(s). The points
@@ -124,7 +125,10 @@ namespace Anki {
       // Returns true when the point (computed by one of the projection functions
       // above) is BOTH in front of the camera AND within image dimensions.
       // Occlusion by registered occluders is not considered.
-      bool IsWithinFieldOfView(const Point2f& projectedPoint) const;
+      // Inset padding, in pixels, can also be specified.
+      bool IsWithinFieldOfView(const Point2f& projectedPoint,
+                               const u16 xBorderPad = 0,
+                               const u16 yBorderPad = 0) const;
       //bool IsVisible(const Quad2f& projectedQuad) const; // TODO: Implement
 
       // Returns true when a point in image, seen at the specified distance,

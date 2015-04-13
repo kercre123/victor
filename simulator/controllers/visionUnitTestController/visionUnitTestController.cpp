@@ -57,14 +57,8 @@ Anki::Vision::CameraCalibration GetCameraCalibration(const webots::Camera* camer
   //f32 aspect = width/height;
   
   // See sim_hal::FillCameraInfo() for more info
-  //
-  //f32 fov_hor = camera->getFov();
-  //f32 fov_ver = fov_hor / aspect;
-  //
-  //f32 fx = width / (2.f * std::tan(0.5f*fov_hor));
-  //f32 fy = height / (2.f * std::tan(0.5f*fov_ver));
-  //
-  const f32 f = Cozmo::HEAD_CAM_CALIB_FOCAL_LENGTH;
+  const f32 fov_hor = camera->getFov();
+  const f32 f = width / (2.f * std::tan(0.5f*fov_hor));
   
   const f32 center_x = 0.5f*width;
   const f32 center_y = 0.5f*height;

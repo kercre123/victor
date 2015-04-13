@@ -81,15 +81,36 @@ namespace Anki {
         // 0.9    170    173
         // 1.0    174    177
         
+        // *** COZMO 3.2 (with clamping on, i.e. MAX_WHEEL_SPEED == 0.75) ***
+        // Power   LSpeed  RSpeed (approx,In-air speeds)
+        // 0.2      0      0
+        // 0.25     0      0
+        // 0.3     11      7
+        // 0.35    26     25
+        // 0.4     41     39
+        // 0.5     70     70
+        // 0.6     95     95
+        // 0.7    122    121
+        // 0.8    148    145
+        // 0.9    172    170
+        // 1.0    193    192
         
-        f32 wheelPower_ = 0;
-        f32 wheelPowerStep_ = 0.05;
-        const f32 DEFAULT_WHEEL_POWER_STEP = 0.05;
+        // Percent power to step up when
+        // DTF_ENABLE_CYCLE_SPEEDS_TEST is enabled
+        const u32 DEFAULT_WHEEL_POWER_STEP = 5;
+        
+        // Default wheel speed
         const f32 WHEEL_SPEED_CMD_MMPS = 60;
         
-        f32 wheelSpeed_mmps_ = WHEEL_SPEED_CMD_MMPS;
+        // Percent by which to approach command wheelTargetPower.
+        // Make low to prevent motor slamming
+        const u32 WHEEL_POWER_PERCENT_ACCEL = 1;
         
-        bool firstSpeedCommanded_ = false;
+        s32 wheelPower_;
+        u32 wheelPowerStep_;
+        s32 wheelTargetPower_;
+        f32 wheelSpeed_mmps_;
+        s8 wheelTargetDir_;
         
         ////// End of DriveTest ////////
         
@@ -101,6 +122,20 @@ namespace Anki {
         
         // Open-loop lift speeds (unloaded)
         //
+        // *** Cozmo 3 (treaded) ***
+        // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
+        // 0.2     0.0              0.0
+        // 0.3     0.7              0.7
+        // 0.4     1.0              1.1
+        // 0.5     1.6              1.6
+        // 0.6     2.0              2.0
+        // 0.7     2.5              2.6
+        // 0.8     3.0              3.1
+        // 0.9     3.2              3.4
+        // 1.0     3.7              3.9
+        //
+        //
+        // *** Cozmo 2 ***
         // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
         // 0.2     0.3              0.5
         // 0.3     0.7              0.9
@@ -116,6 +151,7 @@ namespace Anki {
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
+        bool liftDoHeightTest_ = false;
         //// End of LiftTest  //////
         
         
@@ -128,6 +164,7 @@ namespace Anki {
         const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
+        bool headDoAngleTest_ = false;
         //// End of HeadTest //////
         
         
@@ -229,6 +266,10 @@ namespace Anki {
         
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
+        
+        // The number of cycles in between printouts
+        // in those tests that print something out.
+        u32 printCyclePeriod_;
         
         // Current test mode
         TestMode testMode_ = TM_NONE;
@@ -381,7 +422,7 @@ namespace Anki {
       {
         PRINT("\n=== Starting PathFollowTest ===\n");
         pathStarted_ = false;
-        Localization::SetCurrentMatPose(0, 0, Radians(-PIDIV2_F));
+        Localization::SetDriveCenterPose(0, 0, Radians(-PIDIV2_F));
         return RESULT_OK;
       }
       
@@ -393,7 +434,7 @@ namespace Anki {
           // Create a path and follow it
           PathFollower::ClearPath();
 #if(PATH_FOLLOW_ALIGNED_START)
-          Localization::SetCurrentMatPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
+          Localization::SetDriveCenterPose(0, 0, PIDIV2_F * (PATH_FOLLOW_BACKWARDS ? 1 : -1));
           
           //PathFollower::AppendPathSegment_PointTurn(0, 0, 0, -PIDIV2_F, -1.5f, 2.f, 2.f);
           
@@ -510,25 +551,23 @@ namespace Anki {
         enableDirectHALTest_ = flags & DTF_ENABLE_DIRECT_HAL_TEST;
         enableCycleSpeedsTest_ = flags & DTF_ENABLE_CYCLE_SPEEDS_TEST;
         enableToggleDir_ = flags & DTF_ENABLE_TOGGLE_DIR;
-        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent * 0.01f : DEFAULT_WHEEL_POWER_STEP;
+        wheelPowerStep_ = powerStepPercent != 0 ? powerStepPercent : DEFAULT_WHEEL_POWER_STEP;
         wheelSpeed_mmps_ = wheelSpeedOrPower != 0 ? wheelSpeedOrPower : WHEEL_SPEED_CMD_MMPS;
-        wheelPower_ = enableCycleSpeedsTest_ ? 0 : wheelSpeedOrPower * 0.01f;
+        wheelPower_ = 0;
+        wheelTargetPower_ = enableCycleSpeedsTest_ ? 0 : wheelSpeedOrPower;
+        wheelTargetDir_ = 1;
         
         // If CycleSpeedsTest is on, then enableToggleDir is on by default
         if (enableCycleSpeedsTest_) {
           enableToggleDir_ = true;
         }
         
-        
-        firstSpeedCommanded_ = false;
         ticCnt_ = 0;
         return RESULT_OK;
       }
       
       Result DriveTestUpdate()
       {
-        static bool fwd = true;
-
         // Change direction (or at least print speed
         if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
 
@@ -537,76 +576,86 @@ namespace Anki {
           
           f32 lSpeed_filt, rSpeed_filt;
           WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
-
-
-          if (firstSpeedCommanded_){
-            if (enableDirectHALTest_) {
-              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            } else {
-              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-            }
-            ticCnt_ = 0;
-            return RESULT_OK;
+          
+          
+          // Toggle wheel direction
+          if (enableToggleDir_) {
+            wheelTargetPower_ *= -1;
+            wheelSpeed_mmps_ *= -1;
           }
           
-          if (fwd) {
-            if (enableDirectHALTest_) {
-              PRINT("Going forward %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, wheelPower_);
-              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, wheelPower_);
-              WheelController::Disable();
-            } else {
-              PRINT("Going forward %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              SteeringController::ExecuteDirectDrive(wheelSpeed_mmps_,wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
-            }
-          } else {
-            if (enableDirectHALTest_) {
-              PRINT("Going reverse %f power (currSpeed %f %f, filtSpeed %f %f)\n", wheelPower_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, -wheelPower_);
-              HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, -wheelPower_);
-              WheelController::Disable();
-            } else {
-              PRINT("Going reverse %f mm/s (currSpeed %f %f, filtSpeed %f %f)\n", wheelSpeed_mmps_, lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
-              SteeringController::ExecuteDirectDrive(-wheelSpeed_mmps_,-wheelSpeed_mmps_,accel_mmps2,accel_mmps2);
-            }
-            
-          }
-          ticCnt_ = 0;
-          
-          if (enableCycleSpeedsTest_ || enableToggleDir_) {
-            fwd = !fwd;
-          }
-          if (!enableToggleDir_) {
-            firstSpeedCommanded_ = true;
-          }
-
-
           // Cycle through different power levels
           if (enableCycleSpeedsTest_) {
-            if (!fwd) {
-              wheelPower_ += wheelPowerStep_;
-              if (wheelPower_ >=1.01f) {
-                wheelPower_ = 0;
+            if (wheelTargetPower_ >= 0) {
+              wheelTargetPower_ += wheelPowerStep_;
+              if (wheelTargetPower_ > 100) {
+                wheelTargetPower_ = 0;
               }
             }
           }
 
-       }
+          wheelTargetDir_ = wheelPower_ <= wheelTargetPower_ ? 1 : -1;
+          
+          if (enableDirectHALTest_) {
+            PRINT("Going %s %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)\n",
+                  wheelTargetDir_ > 0 ? "forward" : "reverse",
+                  wheelTargetPower_*0.01f,
+                  lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+          } else {
+            PRINT("Going %s %.3f mm/s (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)\n",
+                  wheelTargetDir_ > 0 ? "forward" : "reverse",
+                  wheelSpeed_mmps_,
+                  lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
+          }
+          
+          ticCnt_ = 0;
+        }
+        
+
+        // Accelerate to desired power/speed.
+        // Doing this to avoid slamming motors as this causes huge power spikes.
+        if (enableDirectHALTest_) {
+          WheelController::Disable();
+          if (wheelTargetDir_ > 0 && wheelPower_ < wheelTargetPower_) {
+            wheelPower_ += WHEEL_POWER_PERCENT_ACCEL;
+            if (wheelPower_ > wheelTargetPower_) {
+              wheelPower_ = wheelTargetPower_;
+            }
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            //PRINT("WheelPower = %f (increasing)\n", 0.01f*wheelPower_);
+          } else if (wheelTargetDir_ < 0 && wheelPower_ > wheelTargetPower_) {
+            wheelPower_ -= WHEEL_POWER_PERCENT_ACCEL;
+            if (wheelPower_ < wheelTargetPower_) {
+              wheelPower_ = wheelTargetPower_;
+            }
+            HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, 0.01f*wheelPower_);
+            HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, 0.01f*wheelPower_);
+            //PRINT("WheelPower = %f (decreasing)\n", 0.01f*wheelPower_);
+          }
+        } else {
+          SteeringController::ExecuteDirectDrive(wheelSpeed_mmps_,
+                                                 wheelSpeed_mmps_,
+                                                 accel_mmps2,accel_mmps2);
+        }
+        
 
        return RESULT_OK;
       }
       
       
-      Result LiftTestInit()
+      Result LiftTestInit(s32 flags, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting LiftTest =====\n");
+        PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
+        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 40 : printPeriod_ms / TIME_STEP;
         liftPower_ = LIFT_POWER_CMD;
-#if(!LIFT_HEIGHT_TEST)
-        LiftController::Disable();
-#endif
+        liftDoHeightTest_ = flags & LiftTF_TEST_HEIGHTS;
+        if (!liftDoHeightTest_) {
+          LiftController::Disable();
+        }
         return RESULT_OK;
       }
       
@@ -619,43 +668,42 @@ namespace Anki {
         if (ticCnt_++ >= 3000 / TIME_STEP) {
           
 
-#if(LIFT_HEIGHT_TEST)
-          up = !up;
-          if (up) {
-            PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
-            LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
-          } else {
-            PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
-            LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
-          }
+          if (liftDoHeightTest_) {
+            up = !up;
+            if (up) {
+              PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
+              LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
+            } else {
+              PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
+              LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
+            }
           
-#else
-          up = !up;
-          if (up) {
-            PRINT("Lift UP %f power\n", liftPower_);
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
           } else {
-            PRINT("Lift DOWN %f power\n", -liftPower_);
-            HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
-          }
-          
+            up = !up;
+            if (up) {
+              PRINT("Lift UP %f power\n", liftPower_);
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
+            } else {
+              PRINT("Lift DOWN %f power\n", -liftPower_);
+              HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+            }
+            
 
-          // Cycle through different power levels
-          if (!up) {
-            liftPower_ += 0.1;
-            if (liftPower_ >=1.01f) {
-              liftPower_ = LIFT_POWER_CMD;
+            // Cycle through different power levels
+            if (!up) {
+              liftPower_ += 0.1;
+              if (liftPower_ >=1.01f) {
+                liftPower_ = LIFT_POWER_CMD;
+              }
             }
           }
-
-#endif
           
           ticCnt_ = 0;
         }
         
 
         // Print speed
-        if (ticCnt2_++ >= 40) {
+        if (ticCnt2_++ >= printCyclePeriod_) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
@@ -672,6 +720,7 @@ namespace Anki {
       {
         PRINT("\n==== Starting LiftToggleTest =====\n");
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
+        printCyclePeriod_ = 200 / TIME_STEP;
         return RESULT_OK;
       }
       
@@ -701,7 +750,7 @@ namespace Anki {
 
 
         // Print height and speed
-        if (ticCnt2_++ >= 200 / TIME_STEP) {
+        if (ticCnt2_++ >= printCyclePeriod_) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
           f32 lPos = LiftController::GetHeightMM();
           
@@ -715,15 +764,17 @@ namespace Anki {
       }
       
       
-      Result HeadTestInit()
+      Result HeadTestInit(s32 flags, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting HeadTest =====\n");
+        PRINT("\n==== Starting HeadTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
         ticCnt_ = 0;
         ticCnt2_ = 0;
         headPower_ = HEAD_POWER_CMD;
-#if(!HEAD_POSITION_TEST)
-        HeadController::Disable();
-#endif
+        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 5 : printPeriod_ms / TIME_STEP;
+        headDoAngleTest_ = flags & HTF_TEST_ANGLES;
+        if (!headDoAngleTest_) {
+          HeadController::Disable();
+        }
         return RESULT_OK;
       }
       
@@ -735,41 +786,39 @@ namespace Anki {
         // Change direction
         if (ticCnt_++ >= 3000 / TIME_STEP) {
           
-          
-#if(HEAD_POSITION_TEST)
-          up = !up;
-          if (up) {
-            PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
-            HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
+          if (headDoAngleTest_) {
+            up = !up;
+            if (up) {
+              PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
+              HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
+            } else {
+              PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
+              HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
+            }
           } else {
-            PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
-            HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
-          }
-#else
-          up = !up;
-          if (up) {
-            PRINT("Head UP %f power\n", headPower_);
-            HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
-          } else {
-            PRINT("Head DOWN %f power\n", -headPower_);
-            HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
-          }
-          
-          // Cycle through different power levels
-          if (!up) {
-            headPower_ += 0.1;
-            if (headPower_ >=1.01f) {
-              headPower_ = HEAD_POWER_CMD;
+            up = !up;
+            if (up) {
+              PRINT("Head UP %f power\n", headPower_);
+              HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
+            } else {
+              PRINT("Head DOWN %f power\n", -headPower_);
+              HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
+            }
+            
+            // Cycle through different power levels
+            if (!up) {
+              headPower_ += 0.1;
+              if (headPower_ >=1.01f) {
+                headPower_ = HEAD_POWER_CMD;
+              }
             }
           }
-
-#endif
           
           ticCnt_ = 0;
         }
         
         // Print speed
-        if (ticCnt2_++ >= 5) {
+        if (ticCnt2_++ >= printCyclePeriod_) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
           f32 hPos = HeadController::GetAngleRad();
           
@@ -797,11 +846,11 @@ namespace Anki {
             if (IT_turnLeft) {
               // Turn left 180 degrees
               PRINT("Turning to 180\n");
-              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
             } else {
               // Turn right 180 degrees
               PRINT("Turning to 0\n");
-              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL);
+              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
             }
             IT_turnLeft = !IT_turnLeft;
           }
@@ -1073,7 +1122,7 @@ namespace Anki {
             updateFunc = DriveTestUpdate;
             break;
           case TM_LIFT:
-            ret = LiftTestInit();
+            ret = LiftTestInit(p1,p2);
             updateFunc = LiftTestUpdate;
             break;
           case TM_LIFT_TOGGLE:
@@ -1081,7 +1130,7 @@ namespace Anki {
             updateFunc = LiftToggleTestUpdate;
             break;
           case TM_HEAD:
-            ret = HeadTestInit();
+            ret = HeadTestInit(p1,p2);
             updateFunc = HeadTestUpdate;
             break;
           case TM_IMU:

@@ -36,14 +36,9 @@ namespace Anki {
       
       typedef enum : u8 {
         ACTION,
-        POSE,
-        SPEEDS,
-        PROX_SENSORS,
-        BATTERY,
         LOCALIZED_TO,
         VISION_MODE,
-        BEHAVIOR_STATE,
-        ERROR_SIGNAL,
+        BEHAVIOR_STATE
       } TextLabelType;
       
       using Handle_t = u32;
@@ -263,13 +258,6 @@ namespace Anki {
       */
       //void ClearAllColors();
 
-      // ==== Saving Images / RobotState ====
-      
-      void SaveImages(VizSaveMode_t mode);
-      VizSaveMode_t GetSaveImageMode() const;
-      
-      void SaveRobotState(VizSaveMode_t mode);
-      VizSaveMode_t GetSaveRobotStateMode() const;
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
@@ -296,7 +284,8 @@ namespace Anki {
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
-      void SendRobotState(MessageRobotState msg);
+      void SendRobotState(const MessageRobotState &msg,
+                          const u8 &videoFramefateHz);
       
     protected:
       
@@ -316,9 +305,6 @@ namespace Anki {
       std::map<RobotID_t, u8> _imgID;
       
       bool               _sendImages;
-      VizSaveMode_t      _saveImageMode;
-    
-      VizSaveMode_t      _saveRobotStateMode;
       
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
@@ -334,22 +320,6 @@ namespace Anki {
       }
       
       return _singletonInstance;
-    }
-    
-    inline void VizManager::SaveImages(VizSaveMode_t mode) {
-      _saveImageMode = mode;
-    }
-    
-    inline VizSaveMode_t VizManager::GetSaveImageMode() const {
-      return _saveImageMode;
-    }
-    
-    inline void VizManager::SaveRobotState(VizSaveMode_t mode) {
-      _saveRobotStateMode = mode;
-    }
-    
-    inline VizSaveMode_t VizManager::GetSaveRobotStateMode() const {
-      return _saveRobotStateMode;
     }
     
     template<typename T>

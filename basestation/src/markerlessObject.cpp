@@ -86,12 +86,6 @@ namespace Anki {
       return _size*.5f;
     }
     
-    
-    Radians MarkerlessObject::GetSameAngleTolerance() const {
-      return DEG_TO_RAD(45); // TODO: too loose?
-    }
-
-    
     void MarkerlessObject::Visualize(const ColorRGBA& color)
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
@@ -116,14 +110,6 @@ namespace Anki {
         corner = atPose * corner;
       }
     }
-    
-    void MarkerlessObject::GetSize(f32& x, f32& y, f32& z)
-    {
-      x = _size.x();
-      y = _size.y();
-      z = _size.z();
-    }
-    
     
   } // namespace Cozmo
   

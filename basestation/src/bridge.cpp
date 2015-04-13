@@ -75,21 +75,25 @@ namespace Anki {
         PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.\n");
         return;
       }
-            
-      Pose3d preCrossingPoseLeft(0, Z_AXIS_3D, {-GetSize().x()*.5f-30.f, 0.f, 0.f}, &GetPose());
-      Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D, {GetSize().x()*.5f+30.f, 0.f, 0.f}, &GetPose());
       
-      //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D, {-_size.x()*.5f+markerSize, 0.f, _size.z()});
-      //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
-      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D, {-GetSize().x()*.5f+markerSize, 0.f, 0.f});
+      // Don't blindly call virtual GetSize() in the constructor because it may
+      // not be the one we want. Explicitly ask for MatPiece's GetSize() implementation
+      const Point3f& bridgeSize = MatPiece::GetSize();
       
-      //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D, { _size.x()*.5f-markerSize, 0.f, _size.z()});
-      //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f});
-      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D, { GetSize().x()*.5f-markerSize, 0.f, 0.f});
+      Pose3d preCrossingPoseLeft(0, Z_AXIS_3D(), {-bridgeSize.x()*.5f-30.f, 0.f, 0.f}, &GetPose());
+      Pose3d preCrossingPoseRight(M_PI, Z_AXIS_3D(), {bridgeSize.x()*.5f+30.f, 0.f, 0.f}, &GetPose());
+      
+      //Pose3d leftMarkerPose(-M_PI_2, Z_AXIS_3D(), {-_size.x()*.5f+markerSize, 0.f, _size.z()});
+      //leftMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
+      Pose3d leftMarkerPose(-M_PI_2, X_AXIS_3D(), {-bridgeSize.x()*.5f+markerSize, 0.f, 0.f});
+      
+      //Pose3d rightMarkerPose(M_PI_2, Z_AXIS_3D(), { _size.x()*.5f-markerSize, 0.f, _size.z()});
+      //rightMarkerPose *= Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f});
+      Pose3d rightMarkerPose(-M_PI_2, X_AXIS_3D(), { bridgeSize.x()*.5f-markerSize, 0.f, 0.f});
       
       const Vision::KnownMarker* leftMarker  = &AddMarker(leftMarkerType,  leftMarkerPose,  markerSize);
       const Vision::KnownMarker* rightMarker = &AddMarker(rightMarkerType, rightMarkerPose, markerSize);
-      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D, {0.f, 0.f, 0.f}), markerSize);
+      AddMarker(middleMarkerType, Pose3d(-M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f}), markerSize);
       
       CORETECH_ASSERT(leftMarker != nullptr);
       CORETECH_ASSERT(rightMarker != nullptr);

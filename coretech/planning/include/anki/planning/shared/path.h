@@ -54,6 +54,7 @@ namespace Anki
         f32 startPt_y;
         f32 endPt_x;
         f32 endPt_y;
+        f32 endAngle;
       } line;
       
       // Arc
@@ -63,6 +64,7 @@ namespace Anki
         f32 radius;
         f32 startRad;
         f32 sweepRad;  // +ve means CCW
+        f32 endAngle;
       } arc;
       
       // Point turn
@@ -70,6 +72,7 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
+        u8  useShortestDir;
       } turn;
     } PathSegmentDef;
     
@@ -97,7 +100,8 @@ namespace Anki
       
       // Defines the path segment as a point turn
       void DefinePointTurn(f32 x, f32 y, f32 targetAngle,
-                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           bool useShortestDir);
       
       // Sets the speed parameters of the current segment
       void SetSpeedProfile(f32 targetSpeed, f32 accel, f32 decel);
@@ -109,7 +113,7 @@ namespace Anki
       f32 GetLength() const;
       
       void GetStartPoint(f32 &x, f32 &y) const;
-      void GetEndPoint(f32 &x, f32 &y) const;
+      void GetEndPose(f32 &x, f32 &y, f32 &angle) const;
       
       void Print() const;
 
@@ -174,7 +178,8 @@ namespace Anki
                      f32 targetSpeed, f32 accel, f32 decel);
       
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
-                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel);
+                           f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           bool useShortestDir);
 
       bool AppendSegment(const PathSegment& segment);
        

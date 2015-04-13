@@ -55,7 +55,7 @@ namespace Anki {
       IActionRunner();
       virtual ~IActionRunner() { }
       
-      virtual ActionResult Update(Robot& robot) = 0;
+      ActionResult Update(Robot& robot);
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -65,12 +65,30 @@ namespace Anki {
       // debugging. Otherwise, defaults to "UnnamedAction".
       virtual const std::string& GetName() const;
       
+      // Override this in derived classes to return a (probably unique) integer
+      // representing this action's type. This will be reported in any
+      // completion signal that is emitted.
+      virtual s32 GetType() const = 0;
+        
       virtual void Reset() = 0;
       
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
+      // Override these to have the action allow the robot to move certain
+      // subsystems while the action executes. I.e., by default actions
+      // will lockout all control of the robot.
+      virtual bool ShouldLockHead() const   { return true; }
+      virtual bool ShouldLockLift() const   { return true; }
+      virtual bool ShouldLockWheels() const { return true; }
+      
+      // Used (e.g. in initialization of CompoundActions to specify that a
+      // consituent action is part of a compound action)
+      void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
+      
     protected:
+      
+      virtual ActionResult UpdateInternal(Robot& robot) = 0;
       
       bool RetriesRemain();
       
@@ -78,12 +96,14 @@ namespace Anki {
       void SetStatus(const std::string& msg);
       
     private:
-      u8 _numRetriesRemaining;
+      u8            _numRetriesRemaining;
       
       std::string   _statusMsg;
       
+      bool          _isPartOfCompoundAction;
+      bool          _isRunning;
       
-#     if USE_ACTION_CALLBACKS
+#   if USE_ACTION_CALLBACKS
     public:
       using ActionCompletionCallback = std::function<void(ActionResult)>;
       void  AddCompletionCallback(ActionCompletionCallback callback);
@@ -93,7 +113,7 @@ namespace Anki {
       
     private:
       std::list<ActionCompletionCallback> _completionCallbacks;
-#     endif
+#   endif
       
     }; // class IActionRunner
     
@@ -110,13 +130,6 @@ namespace Anki {
       IAction();
       virtual ~IAction() { }
       
-      // This Update() is what gets called from the outside.  It in turn
-      // handles timing delays and runs (protected) Init() and CheckIfDone()
-      // methods. Those are the virtual methods that specific classes should
-      // implement to get desired action behaviors. Note that this method
-      // is final and cannot be overridden by specific individual actions.
-      virtual ActionResult Update(Robot& robot) override final;
-      
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
@@ -126,20 +139,33 @@ namespace Anki {
       
     protected:
       
+      // This UpdateInternal() is what gets called by IActionRunner's Update().  It in turn
+      // handles timing delays and runs (protected) Init() and CheckIfDone()
+      // methods. Those are the virtual methods that specific classes should
+      // implement to get desired action behaviors. Note that this method
+      // is final and cannot be overridden by specific individual actions.
+      virtual ActionResult UpdateInternal(Robot& robot) override final;
+
       // Derived Actions should implement these.
       virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
+      
+      // Derived classes can implement any required cleanup by overriding this
+      // method. It is called when UpdateInternal() is about to anything other than
+      // RUNNING. Note that it cannot change the ActionResult (so if UpdateInternal
+      // is about to failure or success, nothing that Cleanup does can change that.)
+      virtual void Cleanup(Robot& robot) { }
       
       //
       // Timing delays:
       //  (e.g. for allowing for communications to physical robot to have an effect)
       //
       
-      // Before checking preconditions. Optional: default is 0.5s delay
-      virtual f32 GetStartDelayInSeconds()       const { return 0.5f; }
+      // Before checking preconditions. Optional: default is 0.05s delay
+      virtual f32 GetStartDelayInSeconds()       const { return 0.05f; }
       
-      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.5s delay
-      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.5f; }
+      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.05s delay
+      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.05f; }
       
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }

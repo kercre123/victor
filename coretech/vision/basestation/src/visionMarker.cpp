@@ -134,9 +134,11 @@ namespace Anki {
     
     
     bool KnownMarker::IsVisibleFrom(const Camera& camera,
-                                    const f32 maxAngleRad,
-                                    const f32 minImageSize,
-                                    const bool requireSomethingBehind) const
+                                    const f32     maxAngleRad,
+                                    const f32     minImageSize,
+                                    const bool    requireSomethingBehind,
+                                    const u16     xBorderPad,
+                                    const u16     yBorderPad) const
     {
       using namespace Quad;
       
@@ -168,7 +170,7 @@ namespace Anki {
       sideLine.MakeUnitLength();
       
       const Point3f faceNormal( CrossProduct(sideLine, topLine) );
-      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D); // TODO: Optimize to just: faceNormal.z()?
+      const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D()); // TODO: Optimize to just: faceNormal.z()?
       if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) { // TODO: Optimize to simple dotProd comparison
         return false;
       }
@@ -186,10 +188,10 @@ namespace Anki {
       
       // Make sure the projected corners are within the camera's field of view
       // TODO: add some border padding?
-      if(not camera.IsWithinFieldOfView(imgCorners[TopLeft])    ||
-         not camera.IsWithinFieldOfView(imgCorners[TopRight])   ||
-         not camera.IsWithinFieldOfView(imgCorners[BottomLeft]) ||
-         not camera.IsWithinFieldOfView(imgCorners[BottomRight]))
+      if(not camera.IsWithinFieldOfView(imgCorners[TopLeft], xBorderPad, yBorderPad)    ||
+         not camera.IsWithinFieldOfView(imgCorners[TopRight], xBorderPad, yBorderPad)   ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomLeft], xBorderPad, yBorderPad) ||
+         not camera.IsWithinFieldOfView(imgCorners[BottomRight], xBorderPad, yBorderPad))
       {
         return false;
       }
@@ -224,10 +226,11 @@ namespace Anki {
     } // KnownMarker::IsVisibleFrom()
     
     
-    Pose3d KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker) const
+    Result KnownMarker::EstimateObservedPose(const ObservedMarker& obsMarker,
+                                             Pose3d& pose) const
     {
       const Camera& camera = obsMarker.GetSeenBy();
-      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d);
+      return camera.ComputeObjectPose(obsMarker.GetImageCorners(), _corners3d, pose);
     }
     
     

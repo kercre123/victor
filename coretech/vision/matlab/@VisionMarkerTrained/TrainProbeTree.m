@@ -58,7 +58,7 @@ end
 assert(isstruct(trainingState), 'Expecting trainingState struct.');
 try
     probeValues   = trainingState.probeValues;
-    if ~strcmp(probeSampleMethod, 'none') && ~isempty(maxInfoGainFraction)
+    if ~strcmp(probeSampleMethod, 'none') || ~isempty(maxInfoGainFraction)
       gradMagValues = trainingState.gradMagValues;
     end
     fnames        = trainingState.fnames;

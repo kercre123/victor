@@ -75,7 +75,8 @@ namespace Anki {
       
       KnownMarker(const Code& type, const Pose3d& atPose, const f32 size_mm);
 
-      Pose3d EstimateObservedPose(const ObservedMarker& obsMarker) const;
+      Result EstimateObservedPose(const ObservedMarker& obsMarker,
+                                  Pose3d& pose) const;
       
       // Update this marker's pose and, in turn, its 3d corners' locations.
       //
@@ -93,9 +94,11 @@ namespace Anki {
       // facing it) and have a diaonal image size at least the given image size
       // tolerance.
       bool IsVisibleFrom(const Camera& camera,
-                         const f32 maxAngleRad,
-                         const f32 minImageSize,
-                         const bool requireSomethingBehind) const;
+                         const f32     maxAngleRad,
+                         const f32     minImageSize,
+                         const bool    requireSomethingBehind,
+                         const u16     xBorderPad = 0,
+                         const u16     yBorderPad = 0) const;
       
       // Accessors
       Quad3f const& Get3dCorners() const; // at current pose

@@ -50,7 +50,7 @@ namespace Anki {
     {
       frame_ = frameID;
       
-      pose_.SetRotation(pose_angle, Z_AXIS_3D);
+      pose_.SetRotation(pose_angle, Z_AXIS_3D());
       pose_.SetTranslation(Vec3f(pose_x, pose_y, pose_z));
       pose_.SetParent(pose_origin);
       
@@ -116,7 +116,7 @@ namespace Anki {
                             p.GetPose().GetTranslation().x(),
                             p.GetPose().GetTranslation().y(),
                             p.GetPose().GetTranslation().z(),
-                            p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                            p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                             p.GetHeadAngle(),
                             p.GetLiftAngle());
     }
@@ -177,7 +177,7 @@ namespace Anki {
                                p.GetPose().GetTranslation().x(),
                                p.GetPose().GetTranslation().y(),
                                p.GetPose().GetTranslation().z(),
-                               p.GetPose().GetRotationMatrix().GetAngleAroundZaxis().ToFloat(),
+                               p.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                p.GetHeadAngle(),
                                p.GetLiftAngle());
     }
@@ -234,7 +234,39 @@ namespace Anki {
     }
 
     
-    
+    Result RobotPoseHistory::GetRawPoseBeforeAndAfter(const TimeStamp_t t,
+                                                      TimeStamp_t&    t_before,
+                                                      RobotPoseStamp& p_before,
+                                                      TimeStamp_t&    t_after,
+                                                      RobotPoseStamp& p_after)
+    {
+      // Get the iterator for time t
+      const_PoseMapIter_t it = poses_.lower_bound(t);
+      
+      if (it == poses_.begin() || it == poses_.end() || t < poses_.begin()->first) {
+        return RESULT_FAIL;
+      }
+
+      // Get iterator to pose just before t
+      const_PoseMapIter_t prev_it = it;
+      --prev_it;
+      
+      t_before = prev_it->first;
+      p_before = prev_it->second;
+      
+      // Get iterator to pose just after t
+      const_PoseMapIter_t next_it = it;
+      ++next_it;
+      
+      if (next_it == poses_.end()) {
+        return RESULT_FAIL;
+      }
+      
+      t_after = next_it->first;
+      p_after = next_it->second;
+      
+      return RESULT_OK;
+    }
     
     // Sets p to the pose nearest the given timestamp t.
     // Interpolates pose if withInterpolation == true.

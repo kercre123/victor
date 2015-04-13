@@ -134,8 +134,9 @@ namespace Anki {
     } // ComputeObjectPose(from std::vectors)
     
     template<typename WORKING_PRECISION>
-    Pose3d Camera::ComputeObjectPose(const Quad2f& imgQuad,
-                                     const Quad3f& worldQuad) const
+    Result Camera::ComputeObjectPose(const Quad2f& imgQuad,
+                                     const Quad3f& worldQuad,
+                                     Pose3d&       pose) const
     {
       if(this->IsCalibrated() == false) {
         CORETECH_THROW("Camera::ComputeObjectPose() called before calibration set.");
@@ -156,12 +157,10 @@ namespace Anki {
       cvObjPoints.emplace_back(worldQuad[Quad::TopRight].get_CvPoint3_());
       cvObjPoints.emplace_back(worldQuad[Quad::BottomRight].get_CvPoint3_());
       
-      return ComputeObjectPoseHelper(cvImagePoints, cvObjPoints);
+      pose = ComputeObjectPoseHelper(cvImagePoints, cvObjPoints);
+      return RESULT_OK;
 
 #else
-      
-      Pose3d pose;
-      
       
       // Turn the three image points into unit vectors corresponding to rays
       // in the direction of the image points
@@ -216,13 +215,16 @@ namespace Anki {
         //       i_validate, cornerList[1], cornerList[2], cornerList[3]);
         
         std::array<Pose3d,4> possiblePoses;
-        P3P::computePossiblePoses(worldPoints[cornerList[1]],
-                                  worldPoints[cornerList[2]],
-                                  worldPoints[cornerList[3]],
-                                  imgRays[cornerList[1]],
-                                  imgRays[cornerList[2]],
-                                  imgRays[cornerList[3]],
-                                  possiblePoses);
+        Result lastResult = P3P::computePossiblePoses(worldPoints[cornerList[1]],
+                                                      worldPoints[cornerList[2]],
+                                                      worldPoints[cornerList[3]],
+                                                      imgRays[cornerList[1]],
+                                                      imgRays[cornerList[2]],
+                                                      imgRays[cornerList[3]],
+                                                      possiblePoses);
+        if(lastResult != RESULT_OK) {
+          return lastResult;
+        }
         
         // Find the pose with the least reprojection error for the 4th
         // validation corner (which was not used in estimating the pose)
@@ -267,7 +269,7 @@ namespace Anki {
       // Make sure to make the returned pose w.r.t. the camera!
       pose.SetParent(&_pose);
       
-      return pose;
+      return RESULT_OK;
       
 #endif // #if USE_ITERATIVE_QUAD_POSE_ESTIMATION
       
@@ -275,22 +277,27 @@ namespace Anki {
  
     
     // Explicit instantiation for single and double precision
-    template Pose3d Camera::ComputeObjectPose<float>(const Quad2f& imgQuad,
-                                                     const Quad3f& worldQuad) const;
+    template Result Camera::ComputeObjectPose<float>(const Quad2f& imgQuad,
+                                                     const Quad3f& worldQuad,
+                                                     Pose3d& pose) const;
 
-    template Pose3d Camera::ComputeObjectPose<double>(const Quad2f& imgQuad,
-                                                      const Quad3f& worldQuad) const;
+    template Result Camera::ComputeObjectPose<double>(const Quad2f& imgQuad,
+                                                      const Quad3f& worldQuad,
+                                                      Pose3d& pose) const;
 
     
-    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint) const
+    bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint,
+                                     const u16 xBorderPad,
+                                     const u16 yBorderPad) const
     {
       CORETECH_THROW_IF(this->IsCalibrated() == false);
       
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&
-              projectedPoint.x() >= 0.f && projectedPoint.y() >= 0.f &&
-              projectedPoint.x() < _calibration->GetNcols() &&
-              projectedPoint.y() < _calibration->GetNrows());
+              projectedPoint.x() >= (0.f + static_cast<f32>(xBorderPad)) &&
+              projectedPoint.y() >= (0.f + static_cast<f32>(yBorderPad)) &&
+              projectedPoint.x() <  static_cast<f32>(_calibration->GetNcols() - xBorderPad) &&
+              projectedPoint.y() <  static_cast<f32>(_calibration->GetNrows() - yBorderPad));
       
     } // Camera::IsVisible()
 

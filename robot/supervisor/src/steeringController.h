@@ -47,7 +47,7 @@ namespace Anki {
     //The gains for the steering controller
     //Heading tracking gain K1, Crosstrack approach rate K2
     const float DEFAULT_STEERING_K1 = 0.1f;
-    const float DEFAULT_STEERING_K2 = 10.f; //5.0f; //2.0f
+    const float DEFAULT_STEERING_K2 = 12.f; //5.0f; //2.0f
 
     // Set maximum rotation speed
     void SetRotationSpeedLimit(f32 rad_per_s);
@@ -80,7 +80,8 @@ namespace Anki {
     // angularAccel: Angular acceleration in rad/s^2
     // angularDecel: Angular decelration in rad/s^2
     // (Sets user commanded speed to 0 if it is not already.)
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel);
+    // useShortestDir: If true, ignores the sign of maxAngularVel and takes the shortest path to targetAngle.
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir);
     
     // Same as above except that it doesn't stop turning.
     //void ExecutePointTurn(float maxAngularVel, float angularAccel, float angularDecel);

@@ -14,6 +14,7 @@
 
 #include "pathPlanner.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 // amount of radians to be off from the desired angle in order to
@@ -124,7 +125,8 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
                          startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
                          deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                          FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
-                         FACE_AND_APPROACH_PLANNER_ROT_DECEL);
+                         FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                         true);
   }
 
   if(doStraight) {
@@ -141,7 +143,8 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
                          _targetVec.x(), _targetVec.y(), _finalTargetAngle,
                          deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                          FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
-                         FACE_AND_APPROACH_PLANNER_ROT_DECEL);
+                         FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                         true);
   }
 
   return DID_PLAN;  

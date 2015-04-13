@@ -141,11 +141,7 @@ namespace Anki {
         f32 x2 = x*x;
         f32 x3 = x*x2;
         if (x >= 0.15) {
-#ifdef COZMO_TREADS
-          speed_mm_per_s = 255.75 * x3 - 670.89 * x2 + 617.54 * x - 34.812;
-#else
           speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
-#endif
           if (power < 0) {
             speed_mm_per_s *= -1;
           }
@@ -697,16 +693,9 @@ namespace Anki {
       //f32 aspect = width/height;
       
       const f32 fov_hor = camera->getFov();
-      
-      // Make sure the fov reported by webots matches the one used to empircally
-      // calibrate the Webots camera.
-      //AnkiAssert(NEAR(fov_hor, HEAD_CAM_CALIB_FOV, 0.001f));
-      
-      // Ideally, we would compute the focal length from the FOV dynamically,
-      // but that isn't working for some reason, so just use the value
-      // hard-coded in the config file.
+
+      // Compute focal length from simulated camera's reported FOV:
       const f32 f = width / (2.f * std::tan(0.5f*fov_hor));
-      //const f32 f = HEAD_CAM_CALIB_FOCAL_LENGTH;
       
       // There should only be ONE focal length, because simulated pixels are
       // square, so no need to compute/define a separate fy
@@ -804,9 +793,7 @@ namespace Anki {
       
       AnkiConditionalErrorAndReturn(image != NULL, "SimHAL.CameraGetFrame.NullImagePointer",
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
-      
-#     if USE_COLOR_IMAGES
-      
+
       s32 pixel = 0;
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
@@ -821,58 +808,6 @@ namespace Anki {
       cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
       cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
 #     endif
-
-#     else // !USE_COLOR_IMAGES
-      // Set the increment / windowsize for downsampling
-      s32 inc = 1;
-      s32 pixel = 0;
-      
-      // TODO: add averaging once we support it in hardware
-      const bool supportAveraging = false;
-      
-      if(supportAveraging) {
-        AnkiAssert(false);
-        // Need a way to get downsampling increment (LUT for resolution based on res?)
-        //AnkiAssert(headCamInfo_.nrows >= HAL::CameraModeInfo[res].height);
-        //inc = headCamInfo_.nrows / HAL::CameraModeInfo[res].height;
-      }
-      
-      if(inc == 1)
-      {
-        // No averaging
-        for (s32 y=0; y < headCamInfo_.nrows; y++) {
-          for (s32 x=0; x < headCamInfo_.ncols; x++) {
-            frame[pixel++] = webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x, y);
-          }
-        }
-      } else {
-        // Average [inc x inc] windows
-        for (s32 y = 0; y < headCamInfo_.nrows; y += inc)
-        {
-          for (s32 x = 0; x < headCamInfo_.ncols; x += inc)
-          {
-            s32 sum = 0;
-            for (s32 y1 = y; y1 < y + inc; y1++)
-            {
-              for (s32 x1 = x; x1 < x + inc; x1++)
-              {
-                //int index = x1 + y1 * headCamInfo_.ncols;
-                //sum += frame[index];
-                sum += webots::Camera::imageGetGrey(image, headCamInfo_.ncols, x1, y1);
-              }
-            }
-            frame[pixel++] = (sum / (inc * inc));
-          }
-        }
-      } // if averaging or not
-      
-#     if BLUR_CAPTURED_IMAGES
-      // Add some blur to simulated images
-      cv::Mat_<u8> cvImg(headCamInfo_.nrows, headCamInfo_.ncols, frame);
-      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#     endif
-
-#     endif // USE_COLOR_IMAGES
       
     } // CameraGetFrame()
   
