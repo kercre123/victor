@@ -174,7 +174,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      if(robot->AreWheelsLockeD()) {
+      if(robot->AreWheelsLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
                          "Ignoring U2G_DriveWheels while wheels are locked.\n");
       } else {
