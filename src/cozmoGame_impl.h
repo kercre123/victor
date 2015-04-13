@@ -107,7 +107,8 @@ namespace Cozmo {
                                          float world_x,
                                          float world_y,
                                          float world_z,
-                                         float q0, float q1, float q2, float q3);
+                                         float q0, float q1, float q2, float q3, 
+                                         bool isActive);
     void HandleRobotObservedNothingSignal(uint8_t robotID);
     void HandleRobotDeletedObjectSignal(uint8_t robotID, uint32_t objectID);
     void HandleConnectToRobotSignal(RobotID_t robotID);

@@ -9,6 +9,8 @@ public class CozmoVision_SelectObject : CozmoVision
 
 	protected virtual void Update()
 	{
+		if( actionPanel == null || actionPanel.gameActions == null ) return;
+
 		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
 		{
 			actionPanel.DisableButtons();
@@ -19,7 +21,7 @@ public class CozmoVision_SelectObject : CozmoVision
 
 		UnselectNonObservedObjects();
 		Dings();
-		actionPanel.SetActionButtons();
+		actionPanel.gameActions.SetActionButtons();
 		ShowObservedObjects();
 
 		RefreshFade();
@@ -65,13 +67,13 @@ public class CozmoVision_SelectObject : CozmoVision
 
 	protected override void ShowObservedObjects()
 	{
-		if( robot == null || pertinentObjects == null ) return;
+		if( robot == null || robot.pertinentObjects == null ) return;
 
 		for( int i = 0; i < observedObjectBoxes.Count; ++i )
 		{
-			if( pertinentObjects.Count > i && !robot.isBusy )
+			if( robot.pertinentObjects.Count > i && !robot.isBusy )
 			{
-				ObservedObjectSeen( observedObjectBoxes[i], pertinentObjects[i] );
+				ObservedObjectSeen( observedObjectBoxes[i], robot.pertinentObjects[i] );
 			}
 			else
 			{

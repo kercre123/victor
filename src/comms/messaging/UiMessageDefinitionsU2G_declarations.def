@@ -53,3 +53,5 @@ void Process_StartLookingForMarkers(const Anki::Cozmo::U2G_StartLookingForMarker
 void Process_StopLookingForMarkers(const Anki::Cozmo::U2G_StopLookingForMarkers& msg);
 void Process_SetVisionSystemParams(const Anki::Cozmo::U2G_SetVisionSystemParams& msg);
 void Process_SetFaceDetectParams(const Anki::Cozmo::U2G_SetFaceDetectParams& msg);
+void Process_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& msg);
+void Process_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& msg);

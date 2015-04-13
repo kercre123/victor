@@ -3258,6 +3258,226 @@ bool U2G_SetFaceDetectParams::operator!=(const U2G_SetFaceDetectParams& other) c
 }
 
 
+// MESSAGE U2G_SetActiveObjectLEDs
+
+U2G_SetActiveObjectLEDs::U2G_SetActiveObjectLEDs(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+U2G_SetActiveObjectLEDs::U2G_SetActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t U2G_SetActiveObjectLEDs::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t U2G_SetActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->color);
+	buffer.Write(this->onPeriod_ms);
+	buffer.Write(this->offPeriod_ms);
+	buffer.Write(this->transitionOnPeriod_ms);
+	buffer.Write(this->transitionOffPeriod_ms);
+	buffer.Write(this->relativeToX);
+	buffer.Write(this->relativeToY);
+	buffer.Write(this->whichLEDs);
+	buffer.Write(this->makeRelative);
+	buffer.Write(this->turnOffUnspecifiedLEDs);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t U2G_SetActiveObjectLEDs::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t U2G_SetActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->color);
+	buffer.Read(this->onPeriod_ms);
+	buffer.Read(this->offPeriod_ms);
+	buffer.Read(this->transitionOnPeriod_ms);
+	buffer.Read(this->transitionOffPeriod_ms);
+	buffer.Read(this->relativeToX);
+	buffer.Read(this->relativeToY);
+	buffer.Read(this->whichLEDs);
+	buffer.Read(this->makeRelative);
+	buffer.Read(this->turnOffUnspecifiedLEDs);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t U2G_SetActiveObjectLEDs::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//color
+	result += 4; // = uint_32
+	//onPeriod_ms
+	result += 4; // = uint_32
+	//offPeriod_ms
+	result += 4; // = uint_32
+	//transitionOnPeriod_ms
+	result += 4; // = uint_32
+	//transitionOffPeriod_ms
+	result += 4; // = uint_32
+	//relativeToX
+	result += 4; // = float_32
+	//relativeToY
+	result += 4; // = float_32
+	//whichLEDs
+	result += 1; // = uint_8
+	//makeRelative
+	result += 1; // = uint_8
+	//turnOffUnspecifiedLEDs
+	result += 1; // = uint_8
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool U2G_SetActiveObjectLEDs::operator==(const U2G_SetActiveObjectLEDs& other) const
+{
+	if (objectID != other.objectID
+	|| color != other.color
+	|| onPeriod_ms != other.onPeriod_ms
+	|| offPeriod_ms != other.offPeriod_ms
+	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
+	|| transitionOffPeriod_ms != other.transitionOffPeriod_ms
+	|| relativeToX != other.relativeToX
+	|| relativeToY != other.relativeToY
+	|| whichLEDs != other.whichLEDs
+	|| makeRelative != other.makeRelative
+	|| turnOffUnspecifiedLEDs != other.turnOffUnspecifiedLEDs
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool U2G_SetActiveObjectLEDs::operator!=(const U2G_SetActiveObjectLEDs& other) const
+{
+	return !(operator==(other));
+}
+
+
+// MESSAGE U2G_SetAllActiveObjectLEDs
+
+U2G_SetAllActiveObjectLEDs::U2G_SetAllActiveObjectLEDs(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+U2G_SetAllActiveObjectLEDs::U2G_SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t U2G_SetAllActiveObjectLEDs::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t U2G_SetAllActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.WriteFArray<uint32_t, 8>(this->color);
+	buffer.WriteFArray<uint32_t, 8>(this->onPeriod_ms);
+	buffer.WriteFArray<uint32_t, 8>(this->offPeriod_ms);
+	buffer.WriteFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
+	buffer.WriteFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
+	buffer.Write(this->relativeToX);
+	buffer.Write(this->relativeToY);
+	buffer.Write(this->makeRelative);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t U2G_SetAllActiveObjectLEDs::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t U2G_SetAllActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.ReadFArray<uint32_t, 8>(this->color);
+	buffer.ReadFArray<uint32_t, 8>(this->onPeriod_ms);
+	buffer.ReadFArray<uint32_t, 8>(this->offPeriod_ms);
+	buffer.ReadFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
+	buffer.ReadFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
+	buffer.Read(this->relativeToX);
+	buffer.Read(this->relativeToY);
+	buffer.Read(this->makeRelative);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t U2G_SetAllActiveObjectLEDs::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//color
+	result += 4 * 8; // = uint_32 * 8
+	//onPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
+	//offPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
+	//transitionOnPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
+	//transitionOffPeriod_ms
+	result += 4 * 8; // = uint_32 * 8
+	//relativeToX
+	result += 4; // = float_32
+	//relativeToY
+	result += 4; // = float_32
+	//makeRelative
+	result += 1; // = uint_8
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool U2G_SetAllActiveObjectLEDs::operator==(const U2G_SetAllActiveObjectLEDs& other) const
+{
+	if (objectID != other.objectID
+	|| color != other.color
+	|| onPeriod_ms != other.onPeriod_ms
+	|| offPeriod_ms != other.offPeriod_ms
+	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
+	|| transitionOffPeriod_ms != other.transitionOffPeriod_ms
+	|| relativeToX != other.relativeToX
+	|| relativeToY != other.relativeToY
+	|| makeRelative != other.makeRelative
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool U2G_SetAllActiveObjectLEDs::operator!=(const U2G_SetAllActiveObjectLEDs& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION U2G_Message
 
 U2G_Message::U2G_Message(const CLAD::SafeMessageBuffer& buff) :_type(Type::INVALID)
@@ -4750,6 +4970,64 @@ void U2G_Message::Set_SetFaceDetectParams(Anki::Cozmo::U2G_SetFaceDetectParams&&
 }
 
 
+const Anki::Cozmo::U2G_SetActiveObjectLEDs& U2G_Message::Get_SetActiveObjectLEDs() const
+{
+	assert(_type == Type::SetActiveObjectLEDs);
+	return _SetActiveObjectLEDs;
+}
+void U2G_Message::Set_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& new_SetActiveObjectLEDs)
+{
+	if(this->_type == Type::SetActiveObjectLEDs) {
+		_SetActiveObjectLEDs = new_SetActiveObjectLEDs;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetActiveObjectLEDs) Anki::Cozmo::U2G_SetActiveObjectLEDs{new_SetActiveObjectLEDs};
+		_type = Type::SetActiveObjectLEDs;
+	}
+}
+void U2G_Message::Set_SetActiveObjectLEDs(Anki::Cozmo::U2G_SetActiveObjectLEDs&& new_SetActiveObjectLEDs)
+{
+	if(this->_type == Type::SetActiveObjectLEDs) {
+		_SetActiveObjectLEDs = std::move(new_SetActiveObjectLEDs);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetActiveObjectLEDs) Anki::Cozmo::U2G_SetActiveObjectLEDs{std::move(new_SetActiveObjectLEDs)};
+		_type = Type::SetActiveObjectLEDs;
+	}
+}
+
+
+const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& U2G_Message::Get_SetAllActiveObjectLEDs() const
+{
+	assert(_type == Type::SetAllActiveObjectLEDs);
+	return _SetAllActiveObjectLEDs;
+}
+void U2G_Message::Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs)
+{
+	if(this->_type == Type::SetAllActiveObjectLEDs) {
+		_SetAllActiveObjectLEDs = new_SetAllActiveObjectLEDs;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetAllActiveObjectLEDs) Anki::Cozmo::U2G_SetAllActiveObjectLEDs{new_SetAllActiveObjectLEDs};
+		_type = Type::SetAllActiveObjectLEDs;
+	}
+}
+void U2G_Message::Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G_SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs)
+{
+	if(this->_type == Type::SetAllActiveObjectLEDs) {
+		_SetAllActiveObjectLEDs = std::move(new_SetAllActiveObjectLEDs);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetAllActiveObjectLEDs) Anki::Cozmo::U2G_SetAllActiveObjectLEDs{std::move(new_SetAllActiveObjectLEDs)};
+		_type = Type::SetAllActiveObjectLEDs;
+	}
+}
+
+
 size_t U2G_Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -5173,6 +5451,22 @@ size_t U2G_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetFaceDetectParams.Unpack(buffer);
 		}
 		break;
+	case Type::SetActiveObjectLEDs:
+		if (newType != oldType) {
+			new(&(this->_SetActiveObjectLEDs)) Anki::Cozmo::U2G_SetActiveObjectLEDs(buffer);
+		}
+		else {
+			this->_SetActiveObjectLEDs.Unpack(buffer);
+		}
+		break;
+	case Type::SetAllActiveObjectLEDs:
+		if (newType != oldType) {
+			new(&(this->_SetAllActiveObjectLEDs)) Anki::Cozmo::U2G_SetAllActiveObjectLEDs(buffer);
+		}
+		else {
+			this->_SetAllActiveObjectLEDs.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -5343,6 +5637,12 @@ size_t U2G_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Type::SetFaceDetectParams:
 		this->_SetFaceDetectParams.Pack(buffer);
 		break;
+	case Type::SetActiveObjectLEDs:
+		this->_SetActiveObjectLEDs.Pack(buffer);
+		break;
+	case Type::SetAllActiveObjectLEDs:
+		this->_SetAllActiveObjectLEDs.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -5507,6 +5807,12 @@ size_t U2G_Message::Size() const
 	case Type::SetFaceDetectParams:
 		result += _SetFaceDetectParams.Size();
 		break;
+	case Type::SetActiveObjectLEDs:
+		result += _SetActiveObjectLEDs.Size();
+		break;
+	case Type::SetAllActiveObjectLEDs:
+		result += _SetAllActiveObjectLEDs.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -5669,6 +5975,12 @@ void U2G_Message::ClearCurrent()
 		break;
 	case Type::SetFaceDetectParams:
 		_SetFaceDetectParams.~U2G_SetFaceDetectParams();
+		break;
+	case Type::SetActiveObjectLEDs:
+		_SetActiveObjectLEDs.~U2G_SetActiveObjectLEDs();
+		break;
+	case Type::SetAllActiveObjectLEDs:
+		_SetAllActiveObjectLEDs.~U2G_SetAllActiveObjectLEDs();
 		break;
 	default:
 		break;

@@ -1840,6 +1840,134 @@ struct U2G_SetFaceDetectParams
 	bool operator!=(const U2G_SetFaceDetectParams& other) const;
 };
 
+// MESSAGE U2G_SetActiveObjectLEDs
+struct U2G_SetActiveObjectLEDs
+{
+	uint32_t objectID;
+	uint32_t color;
+	uint32_t onPeriod_ms;
+	uint32_t offPeriod_ms;
+	uint32_t transitionOnPeriod_ms;
+	uint32_t transitionOffPeriod_ms;
+	float relativeToX;
+	float relativeToY;
+	uint8_t whichLEDs;
+	uint8_t makeRelative;
+	uint8_t turnOffUnspecifiedLEDs;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	U2G_SetActiveObjectLEDs() = default;
+	U2G_SetActiveObjectLEDs(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	U2G_SetActiveObjectLEDs& operator=(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs& operator=(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	
+	explicit U2G_SetActiveObjectLEDs(uint32_t objectID
+		,uint32_t color
+		,uint32_t onPeriod_ms
+		,uint32_t offPeriod_ms
+		,uint32_t transitionOnPeriod_ms
+		,uint32_t transitionOffPeriod_ms
+		,float relativeToX
+		,float relativeToY
+		,uint8_t whichLEDs
+		,uint8_t makeRelative
+		,uint8_t turnOffUnspecifiedLEDs
+		,uint8_t robotID)
+	:objectID(objectID)
+	,color(color)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
+	,relativeToX(relativeToX)
+	,relativeToY(relativeToY)
+	,whichLEDs(whichLEDs)
+	,makeRelative(makeRelative)
+	,turnOffUnspecifiedLEDs(turnOffUnspecifiedLEDs)
+	,robotID(robotID)
+	{}
+
+	explicit U2G_SetActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit U2G_SetActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_SetActiveObjectLEDs& other) const;
+	bool operator!=(const U2G_SetActiveObjectLEDs& other) const;
+};
+
+// MESSAGE U2G_SetAllActiveObjectLEDs
+struct U2G_SetAllActiveObjectLEDs
+{
+	uint32_t objectID;
+	std::array<uint32_t, 8> color;
+	std::array<uint32_t, 8> onPeriod_ms;
+	std::array<uint32_t, 8> offPeriod_ms;
+	std::array<uint32_t, 8> transitionOnPeriod_ms;
+	std::array<uint32_t, 8> transitionOffPeriod_ms;
+	float relativeToX;
+	float relativeToY;
+	uint8_t makeRelative;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	U2G_SetAllActiveObjectLEDs() = default;
+	U2G_SetAllActiveObjectLEDs(const U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
+	U2G_SetAllActiveObjectLEDs& operator=(const U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs& operator=(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
+	
+	explicit U2G_SetAllActiveObjectLEDs(uint32_t objectID
+		,const std::array<uint32_t, 8>& color
+		,const std::array<uint32_t, 8>& onPeriod_ms
+		,const std::array<uint32_t, 8>& offPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOnPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOffPeriod_ms
+		,float relativeToX
+		,float relativeToY
+		,uint8_t makeRelative
+		,uint8_t robotID)
+	:objectID(objectID)
+	,color(color)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
+	,relativeToX(relativeToX)
+	,relativeToY(relativeToY)
+	,makeRelative(makeRelative)
+	,robotID(robotID)
+	{}
+
+	explicit U2G_SetAllActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit U2G_SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_SetAllActiveObjectLEDs& other) const;
+	bool operator!=(const U2G_SetAllActiveObjectLEDs& other) const;
+};
+
 // UNION U2G_Message
 class U2G_Message
 {
@@ -1902,6 +2030,8 @@ public:
 		StopLookingForMarkers,	// 48
 		SetVisionSystemParams,	// 49
 		SetFaceDetectParams,	// 50
+		SetActiveObjectLEDs,	// 51
+		SetAllActiveObjectLEDs,	// 52
 		INVALID
 	};
 	static const char* GetTypeName(Type type) {
@@ -2008,6 +2138,10 @@ public:
 			return "SetVisionSystemParams";
 		case Type::SetFaceDetectParams:
 			return "SetFaceDetectParams";
+		case Type::SetActiveObjectLEDs:
+			return "SetActiveObjectLEDs";
+		case Type::SetAllActiveObjectLEDs:
+			return "SetAllActiveObjectLEDs";
 		default:
 			return "INVALID";
 		}
@@ -2269,6 +2403,16 @@ public:
 	void Set_SetFaceDetectParams(const Anki::Cozmo::U2G_SetFaceDetectParams& new_SetFaceDetectParams);
 	void Set_SetFaceDetectParams(Anki::Cozmo::U2G_SetFaceDetectParams&& new_SetFaceDetectParams);
 
+	/** SetActiveObjectLEDs **/
+	const Anki::Cozmo::U2G_SetActiveObjectLEDs& Get_SetActiveObjectLEDs() const;
+	void Set_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& new_SetActiveObjectLEDs);
+	void Set_SetActiveObjectLEDs(Anki::Cozmo::U2G_SetActiveObjectLEDs&& new_SetActiveObjectLEDs);
+
+	/** SetAllActiveObjectLEDs **/
+	const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& Get_SetAllActiveObjectLEDs() const;
+	void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
+	void Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G_SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2333,6 +2477,8 @@ private:
 		Anki::Cozmo::U2G_StopLookingForMarkers _StopLookingForMarkers;
 		Anki::Cozmo::U2G_SetVisionSystemParams _SetVisionSystemParams;
 		Anki::Cozmo::U2G_SetFaceDetectParams _SetFaceDetectParams;
+		Anki::Cozmo::U2G_SetActiveObjectLEDs _SetActiveObjectLEDs;
+		Anki::Cozmo::U2G_SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
 	};
 };
 

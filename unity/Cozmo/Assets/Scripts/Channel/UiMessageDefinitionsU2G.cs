@@ -3262,6 +3262,364 @@ public class U2G_SetFaceDetectParams
 
 }
 
+public class U2G_SetActiveObjectLEDs
+{
+	private uint _objectID; // uint_32
+	private uint _color; // uint_32
+	private uint _onPeriod_ms; // uint_32
+	private uint _offPeriod_ms; // uint_32
+	private uint _transitionOnPeriod_ms; // uint_32
+	private uint _transitionOffPeriod_ms; // uint_32
+	private float _relativeToX; // float_32
+	private float _relativeToY; // float_32
+	private byte _whichLEDs; // uint_8
+	private byte _makeRelative; // uint_8
+	private byte _turnOffUnspecifiedLEDs; // uint_8
+	private byte _robotID; // uint_8
+
+	public uint objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public uint color { get { return _color; } set { _color = value; } }
+
+	public uint onPeriod_ms { get { return _onPeriod_ms; } set { _onPeriod_ms = value; } }
+
+	public uint offPeriod_ms { get { return _offPeriod_ms; } set { _offPeriod_ms = value; } }
+
+	public uint transitionOnPeriod_ms { get { return _transitionOnPeriod_ms; } set { _transitionOnPeriod_ms = value; } }
+
+	public uint transitionOffPeriod_ms { get { return _transitionOffPeriod_ms; } set { _transitionOffPeriod_ms = value; } }
+
+	public float relativeToX { get { return _relativeToX; } set { _relativeToX = value; } }
+
+	public float relativeToY { get { return _relativeToY; } set { _relativeToY = value; } }
+
+	public byte whichLEDs { get { return _whichLEDs; } set { _whichLEDs = value; } }
+
+	public byte makeRelative { get { return _makeRelative; } set { _makeRelative = value; } }
+
+	public byte turnOffUnspecifiedLEDs { get { return _turnOffUnspecifiedLEDs; } set { _turnOffUnspecifiedLEDs = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public U2G_SetActiveObjectLEDs()
+	{
+	}
+
+	public U2G_SetActiveObjectLEDs(uint objectID,
+		uint color,
+		uint onPeriod_ms,
+		uint offPeriod_ms,
+		uint transitionOnPeriod_ms,
+		uint transitionOffPeriod_ms,
+		float relativeToX,
+		float relativeToY,
+		byte whichLEDs,
+		byte makeRelative,
+		byte turnOffUnspecifiedLEDs,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		this.color = color;
+		this.onPeriod_ms = onPeriod_ms;
+		this.offPeriod_ms = offPeriod_ms;
+		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		this.transitionOffPeriod_ms = transitionOffPeriod_ms;
+		this.relativeToX = relativeToX;
+		this.relativeToY = relativeToY;
+		this.whichLEDs = whichLEDs;
+		this.makeRelative = makeRelative;
+		this.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
+		this.robotID = robotID;
+	}
+
+	public U2G_SetActiveObjectLEDs(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public U2G_SetActiveObjectLEDs(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadUInt32();
+		_color = reader.ReadUInt32();
+		_onPeriod_ms = reader.ReadUInt32();
+		_offPeriod_ms = reader.ReadUInt32();
+		_transitionOnPeriod_ms = reader.ReadUInt32();
+		_transitionOffPeriod_ms = reader.ReadUInt32();
+		_relativeToX = reader.ReadSingle();
+		_relativeToY = reader.ReadSingle();
+		_whichLEDs = reader.ReadByte();
+		_makeRelative = reader.ReadByte();
+		_turnOffUnspecifiedLEDs = reader.ReadByte();
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_objectID);
+		writer.Write((uint)_color);
+		writer.Write((uint)_onPeriod_ms);
+		writer.Write((uint)_offPeriod_ms);
+		writer.Write((uint)_transitionOnPeriod_ms);
+		writer.Write((uint)_transitionOffPeriod_ms);
+		writer.Write((float)_relativeToX);
+		writer.Write((float)_relativeToY);
+		writer.Write((byte)_whichLEDs);
+		writer.Write((byte)_makeRelative);
+		writer.Write((byte)_turnOffUnspecifiedLEDs);
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 36;
+		}
+	}
+
+}
+
+public class U2G_SetAllActiveObjectLEDs
+{
+	private uint _objectID; // uint_32
+	private uint[] _color; // uint_32[8]
+	private uint[] _onPeriod_ms; // uint_32[8]
+	private uint[] _offPeriod_ms; // uint_32[8]
+	private uint[] _transitionOnPeriod_ms; // uint_32[8]
+	private uint[] _transitionOffPeriod_ms; // uint_32[8]
+	private float _relativeToX; // float_32
+	private float _relativeToY; // float_32
+	private byte _makeRelative; // uint_8
+	private byte _robotID; // uint_8
+
+	public uint objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public uint[] color
+	{
+		get {
+			return _color;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("color fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("color fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_color = value;
+		}
+	}
+
+	public uint[] onPeriod_ms
+	{
+		get {
+			return _onPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_onPeriod_ms = value;
+		}
+	}
+
+	public uint[] offPeriod_ms
+	{
+		get {
+			return _offPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_offPeriod_ms = value;
+		}
+	}
+
+	public uint[] transitionOnPeriod_ms
+	{
+		get {
+			return _transitionOnPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_transitionOnPeriod_ms = value;
+		}
+	}
+
+	public uint[] transitionOffPeriod_ms
+	{
+		get {
+			return _transitionOffPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_transitionOffPeriod_ms = value;
+		}
+	}
+
+	public float relativeToX { get { return _relativeToX; } set { _relativeToX = value; } }
+
+	public float relativeToY { get { return _relativeToY; } set { _relativeToY = value; } }
+
+	public byte makeRelative { get { return _makeRelative; } set { _makeRelative = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public U2G_SetAllActiveObjectLEDs()
+	{
+		this.color = new uint[8];
+		this.onPeriod_ms = new uint[8];
+		this.offPeriod_ms = new uint[8];
+		this.transitionOnPeriod_ms = new uint[8];
+		this.transitionOffPeriod_ms = new uint[8];
+	}
+
+	public U2G_SetAllActiveObjectLEDs(uint objectID,
+		uint[] color,
+		uint[] onPeriod_ms,
+		uint[] offPeriod_ms,
+		uint[] transitionOnPeriod_ms,
+		uint[] transitionOffPeriod_ms,
+		float relativeToX,
+		float relativeToY,
+		byte makeRelative,
+		byte robotID)
+	{
+		this.objectID = objectID;
+		this.color = color;
+		this.onPeriod_ms = onPeriod_ms;
+		this.offPeriod_ms = offPeriod_ms;
+		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		this.transitionOffPeriod_ms = transitionOffPeriod_ms;
+		this.relativeToX = relativeToX;
+		this.relativeToY = relativeToY;
+		this.makeRelative = makeRelative;
+		this.robotID = robotID;
+	}
+
+	public U2G_SetAllActiveObjectLEDs(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public U2G_SetAllActiveObjectLEDs(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadUInt32();
+		_color = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_color[i] = reader.ReadUInt32();
+		}
+		_onPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_onPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_offPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_offPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_transitionOnPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_transitionOnPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_transitionOffPeriod_ms = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_transitionOffPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_relativeToX = reader.ReadSingle();
+		_relativeToY = reader.ReadSingle();
+		_makeRelative = reader.ReadByte();
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_objectID);
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_color[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_onPeriod_ms[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_offPeriod_ms[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_transitionOnPeriod_ms[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_transitionOffPeriod_ms[i]);
+		}
+		writer.Write((float)_relativeToX);
+		writer.Write((float)_relativeToY);
+		writer.Write((byte)_makeRelative);
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 174;
+		}
+	}
+
+}
+
 public class U2G_Message {
 	public enum Tag {
 		Ping,	//0
@@ -3315,6 +3673,8 @@ public class U2G_Message {
 		StopLookingForMarkers,	//48
 		SetVisionSystemParams,	//49
 		SetFaceDetectParams,	//50
+		SetActiveObjectLEDs,	//51
+		SetAllActiveObjectLEDs,	//52
 		INVALID
 	};
 
@@ -4191,6 +4551,40 @@ public class U2G_Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G_SetActiveObjectLEDs SetActiveObjectLEDs
+	{
+		get {
+			if (_tag != Tag.SetActiveObjectLEDs) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetActiveObjectLEDs\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G_SetActiveObjectLEDs)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetActiveObjectLEDs : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G_SetAllActiveObjectLEDs SetAllActiveObjectLEDs
+	{
+		get {
+			if (_tag != Tag.SetAllActiveObjectLEDs) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetAllActiveObjectLEDs\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G_SetAllActiveObjectLEDs)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetAllActiveObjectLEDs : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -4349,6 +4743,12 @@ public class U2G_Message {
 			break;
 		case Tag.SetFaceDetectParams:
 			_state = new Anki.Cozmo.U2G_SetFaceDetectParams(reader);
+			break;
+		case Tag.SetActiveObjectLEDs:
+			_state = new Anki.Cozmo.U2G_SetActiveObjectLEDs(reader);
+			break;
+		case Tag.SetAllActiveObjectLEDs:
+			_state = new Anki.Cozmo.U2G_SetAllActiveObjectLEDs(reader);
 			break;
 		default:
 			break;
@@ -4515,6 +4915,12 @@ public class U2G_Message {
 		case Tag.SetFaceDetectParams:
 			SetFaceDetectParams.Pack(writer);
 			break;
+		case Tag.SetActiveObjectLEDs:
+			SetActiveObjectLEDs.Pack(writer);
+			break;
+		case Tag.SetAllActiveObjectLEDs:
+			SetAllActiveObjectLEDs.Pack(writer);
+			break;
 		default:
 			break;
 		}
@@ -4678,6 +5084,12 @@ public class U2G_Message {
 				break;
 			case Tag.SetFaceDetectParams:
 				result += SetFaceDetectParams.Size;
+				break;
+			case Tag.SetActiveObjectLEDs:
+				result += SetActiveObjectLEDs.Size;
+				break;
+			case Tag.SetAllActiveObjectLEDs:
+				result += SetAllActiveObjectLEDs.Size;
 				break;
 			default:
 				return 0;

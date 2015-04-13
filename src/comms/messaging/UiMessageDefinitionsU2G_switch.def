@@ -159,4 +159,10 @@ case Anki::Cozmo::U2G_Message::Type::SetVisionSystemParams:
 case Anki::Cozmo::U2G_Message::Type::SetFaceDetectParams:
 	Process_SetFaceDetectParams(msg.Get_SetFaceDetectParams());
 	break;
+case Anki::Cozmo::U2G_Message::Type::SetActiveObjectLEDs:
+	Process_SetActiveObjectLEDs(msg.Get_SetActiveObjectLEDs());
+	break;
+case Anki::Cozmo::U2G_Message::Type::SetAllActiveObjectLEDs:
+	Process_SetAllActiveObjectLEDs(msg.Get_SetAllActiveObjectLEDs());
+	break;
 }

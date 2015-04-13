@@ -705,6 +705,7 @@ public class G2U_RobotObservedObject
 	private float _quaternion2; // float_32
 	private float _quaternion3; // float_32
 	private byte _markersVisible; // uint_8
+	private byte _isActive; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
@@ -738,6 +739,8 @@ public class G2U_RobotObservedObject
 
 	public byte markersVisible { get { return _markersVisible; } set { _markersVisible = value; } }
 
+	public byte isActive { get { return _isActive; } set { _isActive = value; } }
+
 
 	/**** Constructors ****/
 
@@ -760,7 +763,8 @@ public class G2U_RobotObservedObject
 		float quaternion1,
 		float quaternion2,
 		float quaternion3,
-		byte markersVisible)
+		byte markersVisible,
+		byte isActive)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
@@ -778,6 +782,7 @@ public class G2U_RobotObservedObject
 		this.quaternion2 = quaternion2;
 		this.quaternion3 = quaternion3;
 		this.markersVisible = markersVisible;
+		this.isActive = isActive;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -814,6 +819,7 @@ public class G2U_RobotObservedObject
 		_quaternion2 = reader.ReadSingle();
 		_quaternion3 = reader.ReadSingle();
 		_markersVisible = reader.ReadByte();
+		_isActive = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -840,12 +846,13 @@ public class G2U_RobotObservedObject
 		writer.Write((float)_quaternion2);
 		writer.Write((float)_quaternion3);
 		writer.Write((byte)_markersVisible);
+		writer.Write((byte)_isActive);
 	}
 
 	public int Size 
 	{
 		get {
-			return 61;
+			return 62;
 		}
 	}
 

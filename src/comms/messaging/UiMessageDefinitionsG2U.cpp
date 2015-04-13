@@ -660,6 +660,7 @@ size_t G2U_RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->quaternion2);
 	buffer.Write(this->quaternion3);
 	buffer.Write(this->markersVisible);
+	buffer.Write(this->isActive);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
@@ -688,6 +689,7 @@ size_t G2U_RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->quaternion2);
 	buffer.Read(this->quaternion3);
 	buffer.Read(this->markersVisible);
+	buffer.Read(this->isActive);
 	return buffer.GetBytesRead();
 }
 
@@ -726,6 +728,8 @@ size_t G2U_RobotObservedObject::Size() const
 	result += 4; // = float_32
 	//markersVisible
 	result += 1; // = uint_8
+	//isActive
+	result += 1; // = uint_8
 	return result;
 }
 
@@ -746,7 +750,8 @@ bool G2U_RobotObservedObject::operator==(const G2U_RobotObservedObject& other) c
 	|| quaternion1 != other.quaternion1
 	|| quaternion2 != other.quaternion2
 	|| quaternion3 != other.quaternion3
-	|| markersVisible != other.markersVisible) {
+	|| markersVisible != other.markersVisible
+	|| isActive != other.isActive) {
 		return false;
 	}
 	return true;

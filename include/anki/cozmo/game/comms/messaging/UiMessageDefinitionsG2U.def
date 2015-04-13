@@ -388,6 +388,7 @@ struct G2U_RobotObservedObject
 	float quaternion2;
 	float quaternion3;
 	uint8_t markersVisible;
+	uint8_t isActive;
 	
 	/**** Constructors ****/
 	G2U_RobotObservedObject() = default;
@@ -412,7 +413,8 @@ struct G2U_RobotObservedObject
 		,float quaternion1
 		,float quaternion2
 		,float quaternion3
-		,uint8_t markersVisible)
+		,uint8_t markersVisible
+		,uint8_t isActive)
 	:robotID(robotID)
 	,objectFamily(objectFamily)
 	,objectType(objectType)
@@ -429,6 +431,7 @@ struct G2U_RobotObservedObject
 	,quaternion2(quaternion2)
 	,quaternion3(quaternion3)
 	,markersVisible(markersVisible)
+	,isActive(isActive)
 	{}
 
 	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len);
