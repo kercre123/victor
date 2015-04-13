@@ -106,7 +106,7 @@ public class GoldRushController : GameController {
 		resultsScore.text = "Score: " + scores [0];
 		CozmoVision.EnableDing(); // just in case we were in searching mode
 		extractButton.gameObject.SetActive (false);
-		ActionButton.DROP = null;
+		//ActionButton.DROP = null;
 		audio.Stop ();
 	}
 
@@ -291,7 +291,7 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessageForDuration("Get that gold back to the base!", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
-			ActionButton.DROP = "COLLECT";
+			//ActionButton.DROP = "COLLECT";
 			hintMessage.ShowMessage("Drop off the gold to collect points!", Color.black);
 			break;
 		default:
@@ -315,7 +315,7 @@ public class GoldRushController : GameController {
 			hintMessage.KillMessage();
 			break;
 		case PlayState.RETURNING:
-			ActionButton.DROP = null;
+			//ActionButton.DROP = null;
 			break;
 		case PlayState.RETURNED:
 			hintMessage.KillMessage();

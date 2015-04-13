@@ -88,9 +88,9 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		float bestAngleFromCoz = float.MaxValue;
 		Vector2 forward = robot.Forward;
 
-		for(int i=0; i<pertinentObjects.Count; i++) {
-			if(robot.carryingObjectID == pertinentObjects[i].ID) continue;
-			Vector2 atTarget = pertinentObjects[i].WorldPosition - robot.WorldPosition;
+		for(int i=0; i<robot.pertinentObjects.Count; i++) {
+			if(robot.carryingObjectID == robot.pertinentObjects[i].ID) continue;
+			Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
 
 			float angleFromCoz = Vector2.Angle(forward, atTarget);
 			if(angleFromCoz > 90f) continue;
@@ -98,12 +98,12 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			float distFromCoz = atTarget.sqrMagnitude;
 			if(distFromCoz < bestDistFromCoz) {
 				bestDistFromCoz = distFromCoz;
-				nearest = pertinentObjects[i];
+				nearest = robot.pertinentObjects[i];
 			}
 
 			if(angleFromCoz < bestAngleFromCoz) {
 				bestAngleFromCoz = angleFromCoz;
-				mostFacing = pertinentObjects[i];
+				mostFacing = robot.pertinentObjects[i];
 			}
 		}
 
@@ -120,19 +120,19 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			robot.selectedObjects.Add(best);
 
 			//find any other objects in a 'stack' with our selected
-			for(int i=0; i<pertinentObjects.Count; i++) {
-				if(best == pertinentObjects[i])
+			for(int i=0; i<robot.pertinentObjects.Count; i++) {
+				if(best == robot.pertinentObjects[i])
 					continue;
-				if(robot.carryingObjectID == pertinentObjects[i].ID)
+				if(robot.carryingObjectID == robot.pertinentObjects[i].ID)
 					continue;
 
-				float dist = Vector2.Distance((Vector2)pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+				float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
 				if(dist > best.Size.x * 0.5f) {
 					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
 					continue;
 				}
 
-				robot.selectedObjects.Add(pertinentObjects[i]);
+				robot.selectedObjects.Add(robot.pertinentObjects[i]);
 			}
 
 			//sort selected from ground up
