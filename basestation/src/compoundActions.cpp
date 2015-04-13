@@ -95,6 +95,7 @@ namespace Anki {
         if(actionIter->second->ShouldLockWheels()) {
           return true;
         }
+        ++actionIter;
       }
       return false;
     }

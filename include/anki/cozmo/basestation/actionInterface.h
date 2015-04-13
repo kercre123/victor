@@ -82,8 +82,8 @@ namespace Anki {
       virtual bool ShouldLockLift() const   { return true; }
       virtual bool ShouldLockWheels() const { return true; }
       
-      // Used (e.g. in initialization of CompoundActions to specify that a
-      // consituent action is part of a compound action)
+      // Used (e.g. in initialization of CompoundActions) to specify that a
+      // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
       
     protected:

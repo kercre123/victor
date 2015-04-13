@@ -57,6 +57,9 @@ namespace Anki {
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
+      
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
@@ -178,6 +181,9 @@ namespace Anki {
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
+      // Override to allow wheel control while facing the object
+      virtual bool ShouldLockWheels() const override { return false; }
+      
       CompoundActionParallel _compoundAction;
       
       ObjectID   _objectID;
@@ -221,6 +227,9 @@ namespace Anki {
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
+      
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
@@ -260,7 +269,6 @@ namespace Anki {
       // carrying, for verification.
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
-      
     }; // class DockWithObjectAction
 
     
