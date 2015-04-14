@@ -104,7 +104,7 @@ namespace Anki {
         
         // Percent by which to approach command wheelTargetPower.
         // Make low to prevent motor slamming
-        const u32 WHEEL_POWER_PERCENT_ACCEL = 1;
+        const u32 WHEEL_POWER_PERCENT_ACCEL = 1000;
         
         s32 wheelPower_;
         u32 wheelPowerStep_;
