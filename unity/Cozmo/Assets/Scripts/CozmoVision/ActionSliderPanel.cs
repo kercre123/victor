@@ -116,14 +116,14 @@ public class ActionSliderPanel : ActionPanel
 		RefreshSliderMode();
 		
 		//if we have a new target, let's see if our current slider mode wants to initiate an interaction
-		if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
+		/*if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
 			
 			if(lastMode != actionSlider.actionButtonMode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
 			   robot.selectedObjects[0] != robot.lastSelectedObjects[0] ) {
 				
 				InitiateAssistedInteraction();
 			}
-		}
+		}*/
 			
 		interactLastFrame = true;
 		
@@ -146,38 +146,46 @@ public class ActionSliderPanel : ActionPanel
 		ActionButton currentButton = null;
 		ActionButtonMode currentMode = ActionButtonMode.TARGET;
 		
-		ObservedObject targeted = robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
+		//ObservedObject targeted = robot.targetLockedObject;//robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
 
 		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = bottomAction;
 			currentMode = bottomAction.mode;
-			
+
+			if(robot.selectedObjects.Count > 0) {
+				robot.targetLockedObject = robot.selectedObjects[0];
+			}
+
 			float minZ = float.MaxValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
 				if(minZ < robot.selectedObjects[i].WorldPosition.z) continue;
 				minZ = robot.selectedObjects[i].WorldPosition.z;
-				targeted = robot.selectedObjects[i];
+				//targeted = robot.selectedObjects[i];
 			}
 		}
 		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = topAction;
 			currentMode = topAction.mode;
+
+			if(robot.selectedObjects.Count > 1) {
+				robot.targetLockedObject = robot.selectedObjects[1];
+			}
 			
 			float maxZ = float.MinValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
 				if(maxZ > robot.selectedObjects[i].WorldPosition.z) continue;
 				maxZ = robot.selectedObjects[i].WorldPosition.z;
-				targeted = robot.selectedObjects[i];
+				//targeted = robot.selectedObjects[i];
 			}
 			
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 		
 		//if necessary switch our primary targetLock to the target of this action...
-		if(robot.selectedObjects.Count > 0 && targeted != null && targeted != robot.selectedObjects[0]) {
+		/*if(robot.selectedObjects.Count > 0 && targeted != null && targeted != robot.selectedObjects[0]) {
 			robot.selectedObjects.Remove(targeted);
 			robot.selectedObjects.Insert(0, targeted);
-		}
+		}*/
 		
 		if(currentMode != lastMode && currentMode != ActionButtonMode.TARGET) {
 			SlideInSound();
@@ -189,13 +197,13 @@ public class ActionSliderPanel : ActionPanel
 		actionSlider.SetMode(currentMode, actionSlider.Pressed, currentButton);
 	}
 	
-	private void InitiateAssistedInteraction() {
+	/*private void InitiateAssistedInteraction() {
 		switch(actionSlider.actionButtonMode) {
 			case ActionButtonMode.TARGET:
 				//do auto-targeting here!
 				break;
 		}
-	}
+	}*/
 	
 	private void DoReleaseAction() {
 		if(actionSlider.actionButton != null) actionSlider.actionButton.button.onClick.Invoke();

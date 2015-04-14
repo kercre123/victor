@@ -28,6 +28,8 @@ public class Robot
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject lastObjectHeadTracked;
+	public ObservedObject targetLockedObject;
+	public ObservedObject lastTargetLockedObject;
 
 	public enum ObservedObjectListType {
 		OBSERVED_RECENTLY,
