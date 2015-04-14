@@ -214,7 +214,13 @@ END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)
 START_MESSAGE_DEFINITION(StopSoundOnBaseStation, 1)
 END_MESSAGE_DEFINITION(StopSoundOnBaseStation)
 
-
+// GoalPose
+START_MESSAGE_DEFINITION(GoalPose, 1)
+ADD_MESSAGE_MEMBER(f32, pose_x)
+ADD_MESSAGE_MEMBER(f32, pose_y)
+ADD_MESSAGE_MEMBER(f32, pose_z)
+ADD_MESSAGE_MEMBER(f32, pose_angle)
+END_MESSAGE_DEFINITION(GoalPose)
 
 // ----- Block messages ------
 

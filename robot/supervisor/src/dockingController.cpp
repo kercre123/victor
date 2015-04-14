@@ -150,6 +150,20 @@ namespace Anki {
         return success_;
       }
       
+      Result SendGoalPoseMessage(const Anki::Embedded::Pose2d &p)
+      {
+        Messages::GoalPose msg;
+        msg.pose_x = p.GetX();
+        msg.pose_y = p.GetY();
+        msg.pose_z = 10;
+        msg.pose_angle = p.GetAngle().ToFloat();
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::GoalPose), &msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+
+      
       void TrackCamWithLift(bool on)
       {
         trackCamWithLift_ = on;
@@ -543,6 +557,9 @@ namespace Anki {
         dockPose_.x() = blockPose_.x() - dockOffsetDistX_ * cosf(blockPose_.angle.ToFloat());
         dockPose_.y() = blockPose_.y() - dockOffsetDistX_ * sinf(blockPose_.angle.ToFloat());
         dockPose_.angle = blockPose_.angle;
+        
+        // Send goal pose up to engine for viz
+        SendGoalPoseMessage(dockPose_);
 
         // Convert poses to drive center pose for pathFollower
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
