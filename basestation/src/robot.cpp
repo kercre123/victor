@@ -982,8 +982,12 @@ namespace Anki {
       
       SelectPlanner(targetPoseWrtOrigin);
       
+      // Compute drive center pose of given target robot pose
+      Pose3d targetDriveCenterPose;
+      ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
+      
       // Compute drive center pose for start pose
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
