@@ -65,8 +65,8 @@ public class ActionSliderPanel : ActionPanel
 
 	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	public ActionButton bottomAction { get { return ActionPanel.instance.actionButtons[0]; } }
-	public ActionButton topAction { get { return ActionPanel.instance.actionButtons[1]; } }
+	public ActionButton bottomAction { get { return actionButtons[0]; } }
+	public ActionButton topAction { get { return actionButtons[1]; } }
 
 	bool interactLastFrame = false;
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
