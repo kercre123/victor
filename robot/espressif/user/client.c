@@ -7,7 +7,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 #ifdef DEBUG_PRINT
 #include "driver/uart.h"
@@ -34,8 +34,14 @@ static void udpServerSentCB(void * arg)
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with clientQueuePacket
   if (queuedPacket != NULL)
   {
+    UDPPacket* next = queuedPacket->next;
+    queuedPacket->next = NULL;
     queuedPacket->state = PKT_BUF_AVAILABLE;
-    queuedPacket = queuedPacket->next;
+    queuedPacket = next;
+  }
+  else
+  {
+    user_print("\tno queued packet!\r\n");
   }
   os_intr_unlock();
 }
@@ -94,27 +100,37 @@ sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
 }
 
 
-UDPPacket* ICACHE_FLASH_ATTR clientGetBuffer()
+UDPPacket* clientGetBuffer()
 {
+  UDPPacket* ret = NULL;
   user_print("clientGetBuffer\r\n");
 
-  if (client == NULL)
+  if (client != NULL)
   {
-    return NULL;
+    os_intr_lock();
+    if (rtxbs[nextReserve].state == PKT_BUF_AVAILABLE)
+    {
+      rtxbs[nextReserve].state = PKT_BUF_RESERVED;
+      ret = &(rtxbs[nextReserve]);
+      nextReserve = (nextReserve + 1) % NUM_RTX_BUFS;
+    }
+    os_intr_unlock();
   }
-  else if (rtxbs[nextReserve].state == PKT_BUF_AVAILABLE)
+#ifdef DEBUG_PRINT
+  if (ret == NULL)
   {
-    rtxbs[nextReserve].state = PKT_BUF_RESERVED;
-    return &(rtxbs[nextReserve++]);
+    char txt[200];
+    os_sprintf(txt, "\tfailed to reserve packet. nr=%d, [0]%x, [1]%x, [2]%x, [3]%x, qp=%x\r\n", nextReserve, rtxbs[0].state, rtxbs[1].state, rtxbs[2].state, rtxbs[3].state, queuedPacket);
+    user_print(txt);
   }
-  else
-  {
-    return NULL;
-  }
+#endif
+
+  return ret;
 }
 
-void ICACHE_FLASH_ATTR clientQueuePacket(UDPPacket* pkt)
+void clientQueuePacket(UDPPacket* pkt)
 {
+  uint8 i;
   user_print("clientQueuePacket\r\n");
 
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with udpServerSentCB
@@ -130,17 +146,18 @@ void ICACHE_FLASH_ATTR clientQueuePacket(UDPPacket* pkt)
     {
       UDPPacket* n = queuedPacket;
       while (n->next != NULL) n = n->next;
-      n->next = queuedPacket;
+      n->next = pkt;
     }
   }
   else
   {
+    user_print("\tFailed to queue packet\r\n");
     pkt->state = PKT_BUF_AVAILABLE; // Relese the packet that failed to send
   }
   os_intr_unlock();
 }
 
-void ICACHE_FLASH_ATTR clientFreePacket(UDPPacket* pkt)
+void clientFreePacket(UDPPacket* pkt)
 {
   user_print("clientFreePacker\r\n");
   pkt->state = PKT_BUF_AVAILABLE;

@@ -12,8 +12,13 @@
 
 void ICACHE_FLASH_ATTR client_receiveCB(uint8* data, uint16 len)
 {
-  static const char txt[] = "client connected\r\n";
-  uart0_tx_buffer(txt, os_strlen(txt));
+  uart_tx_one_char(0xbe);
+  uart_tx_one_char(0xef);
+  uart_tx_one_char((len & 0xff));
+  uart_tx_one_char(((len >> 8) & 0xff));
+  uart_tx_one_char(0x00); // Length byte 3
+  uart_tx_one_char(0x00); // Length byte 4
+  uart0_tx_buffer(data, len);
 }
 
 inline void uart0_recvCB()
