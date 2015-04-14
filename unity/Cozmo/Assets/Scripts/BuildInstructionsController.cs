@@ -328,37 +328,37 @@ public class BuildInstructionsController : MonoBehaviour {
 //		iObjectSeen = false;
 	}
 
-	private void SuccessOrFailure(bool success, int action_type) {
+	private void SuccessOrFailure(bool success, ActionCompleted action_type) {
 		if(success) {
 			switch(action_type) {
-				case -1://	ACTION_UNKNOWN = -1,
+			case ActionCompleted.UNKNOWN://	ACTION_UNKNOWN = -1,
 					break;
-				case 0://	ACTION_DRIVE_TO_POSE,
+			case ActionCompleted.DRIVE_TO_POSE:
 					break;
-				case 1://	ACTION_DRIVE_TO_OBJECT,
+			case ActionCompleted.DRIVE_TO_OBJECT:
 					break;
-				case 2://	ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT,
+			case ActionCompleted.DRIVE_TO_PLACE_CARRIED_OBJECT:
 					break;
-				case 3://	ACTION_TURN_IN_PLACE,
+			case ActionCompleted.TURN_IN_PLACE:
 					break;
-				case 4://	ACTION_MOVE_HEAD_TO_ANGLE,
+			case ActionCompleted.MOVE_HEAD_TO_ANGLE:
 					break;
-				case 5://ACTION_PICKUP_OBJECT_LOW
-				case 6://ACTION_PICKUP_OBJECT_HIGH
+			case ActionCompleted.PICKUP_OBJECT_LOW:
+			case ActionCompleted.PICKUP_OBJECT_HIGH:
 					iObjectPlaced = true;
 					break;
-				case 7://	ACTION_PLACE_OBJECT_LOW,
-				case 8://	ACTION_PLACE_OBJECT_HIGH,
+			case ActionCompleted.PLACE_OBJECT_LOW:
+			case ActionCompleted.PLACE_OBJECT_HIGH:
 					iObjectPlaced = true;
 					break;
-				case 9://	ACTION_CROSS_BRIDGE,
-				case 10://	ACTION_ASCEND_OR_DESCEND_RAMP,
-				case 11://	ACTION_TRAVERSE_OBJECT,
-				case 12://	ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT,
-				case 13://	ACTION_FACE_OBJECT,
-				case 14://	ACTION_PLAY_ANIMATION,
-				case 15://	ACTION_PLAY_SOUND,
-				case 16://	ACTION_WAIT
+			case ActionCompleted.CROSS_BRIDGE:
+			case ActionCompleted.ASCEND_OR_DESCEND_RAMP:
+			case ActionCompleted.TRAVERSE_OBJECT:
+			case ActionCompleted.DRIVE_TO_AND_TRAVERSE_OBJECT:
+			case ActionCompleted.FACE_OBJECT:
+			case ActionCompleted.PLAY_ANIMATION:
+			case ActionCompleted.PLAY_SOUND:
+			case ActionCompleted.WAIT:
 					break;
 			}
 		}

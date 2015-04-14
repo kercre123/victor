@@ -8,10 +8,32 @@ using System.IO;
 using System.Text;
 using Anki.Cozmo;
 
+public enum ActionCompleted
+{
+	UNKNOWN = -1,
+	DRIVE_TO_POSE = 0,
+	DRIVE_TO_OBJECT,
+	DRIVE_TO_PLACE_CARRIED_OBJECT,
+	TURN_IN_PLACE,
+	MOVE_HEAD_TO_ANGLE,
+	PICKUP_OBJECT_LOW,
+	PICKUP_OBJECT_HIGH,
+	PLACE_OBJECT_LOW,
+	PLACE_OBJECT_HIGH,
+	CROSS_BRIDGE,
+	ASCEND_OR_DESCEND_RAMP,
+	TRAVERSE_OBJECT,
+	DRIVE_TO_AND_TRAVERSE_OBJECT,
+	FACE_OBJECT,
+	PLAY_ANIMATION,
+	PLAY_SOUND,
+	WAIT
+}
+
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
-
+	
 	public Dictionary<int, Robot> robots { get; private set; }
 	public List<Robot> robotList = new List<Robot>();
 	
@@ -29,7 +51,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage;
-	public event Action<bool,int> SuccessOrFailure;
+	public event Action<bool,ActionCompleted> SuccessOrFailure;
 
 	public ChannelBase channel { get; private set; }
 	private float lastRobotStateMessage = 0;
@@ -408,7 +430,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void ReceivedSpecificMessage( G2U_RobotCompletedAction message )
 	{
 		bool success = message.success > 0;
-		int action_type = message.actionType;
+		ActionCompleted action_type = (ActionCompleted)message.actionType;
 		Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();

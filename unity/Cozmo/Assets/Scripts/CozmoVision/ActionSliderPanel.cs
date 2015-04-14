@@ -60,7 +60,6 @@ public class ActionSlider {
 				break;
 		}
 	}
-	
 }
 
 public class ActionSliderPanel : ActionPanel
@@ -94,7 +93,6 @@ public class ActionSliderPanel : ActionPanel
 		
 		robot = RobotEngineManager.instance.current;
 
-		
 		if(!actionSlider.Pressed) {
 			
 			if(interactLastFrame) {
