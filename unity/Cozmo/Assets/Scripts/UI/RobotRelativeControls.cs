@@ -123,7 +123,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(lastTargetLock == null && targetLock != null && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
 
 		//if we are unlocked this frame, let's reset our head angle back to sane value
-		if(lastTargetLock != null && targetLock == null) robot.SetHeadAngle();
+		if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();
 
 		bool newLock = lastTargetLock != targetLock;
 
