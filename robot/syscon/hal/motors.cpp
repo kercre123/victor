@@ -82,8 +82,8 @@ extern GlobalDataToBody g_dataToBody;
   
 	// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
   // for 8 encoder ticks per revolution, we compute the meters per tick as:
-  const Fixed METERS_PER_TICK = TO_FIXED((0.125 * 0.030 * 3.14159265359) / 161.5);
-  
+  const Fixed METERS_PER_TICK = TO_FIXED((0.125 * 0.0292 * 3.14159265359) / 173.43); // 4 (should be 4.333)
+	
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
   const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 729.0);
@@ -451,6 +451,12 @@ void MotorsPrintEncodersRaw()
   UARTPutChar('H');
   UARTPutDec(m_motors[3].position);
   UARTPutChar('\n');
+}
+
+// Get position of motor
+s32 MotorGetPosition(u8 motorID)
+{
+	return m_motors[motorID].position;
 }
 
 // Encoder code must be optimized for speed - this macro is faster than Nordic's

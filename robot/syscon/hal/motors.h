@@ -20,4 +20,5 @@ void MotorsPrintEncodersRaw();
 // Print the motor encoder value in binary
 void MotorPrintEncoder(u8 motorID);
 
+s32 MotorGetPosition(u8 motorID);
 #endif
