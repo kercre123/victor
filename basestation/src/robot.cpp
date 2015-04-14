@@ -31,8 +31,6 @@
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/shared/activeBlockTypes.h"
-
 #include "robotMessageHandler.h"
 #include "robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -662,7 +660,8 @@ namespace Anki {
 
     
     // Flashes a pattern on an active block
-    void Robot::ActiveBlockLightTest(const u8 blockID) {
+    void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
+      /*
       static int p=0;
       static int currFrame = 0;
       const u32 onColor = 0x00ff00;
@@ -687,6 +686,7 @@ namespace Anki {
         
         p = 0;
       }
+       */
     }
     
     
@@ -1110,18 +1110,6 @@ namespace Anki {
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
     {
-      // Check if robot is still pickAndPlacing.
-      // If so, and not in assisted RC mode, then ignore drive wheel commands.
-      // Also check for compound action sequences which should not be interrupted
-      // in between actions.
-      // TODO: Timeout?
-      bool doingUninterruptibleAction = _actionList.IsCurrAction("[DriveToObjectAction+PickAndPlaceObjectAction+]");
-      
-      if ((IsPickingOrPlacing() && !IsUsingManualPathSpeed()) || doingUninterruptibleAction) {
-        PRINT_NAMED_INFO("Robot.DriveWheels.IgnoringCuzPickAndPlacing", "\n");
-        return RESULT_FAIL;
-      }
-      
       return SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
     }
     
@@ -2632,9 +2620,60 @@ namespace Anki {
     }
     
       
-    Result Robot::SetBlockLights(const u8 blockID, const u32* color)
+    ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
-      return SendSetBlockLights(blockID, color);
+      Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d does not appear to be an active object.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      if(!object->IsIdentified()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d is active but has not been identified.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
+      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d could not be cast to an ActiveCube.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
+      
+      return activeCube;
+    }
+      
+    Result Robot::SetObjectLights(const ObjectID& objectID,
+                                  const WhichLEDs whichLEDs,
+                                  const u32 color,
+                                  const u32 onPeriod_ms, const u32 offPeriod_ms,
+                                  const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
+                                  const bool turnOffUnspecifiedLEDs,
+                                  const bool makeRelative, const Point2f& relativeToPoint)
+    {
+      ActiveCube* activeCube = GetActiveObject(objectID);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      } else {
+        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms,
+                            transitionOnPeriod_ms, transitionOffPeriod_ms,
+                            turnOffUnspecifiedLEDs);
+        if(makeRelative) {
+          activeCube->MakeStateRelativeToXY(relativeToPoint);
+        }
+        
+        MessageSetBlockLights m;
+        activeCube->FillMessage(m);
+        return _msgHandler->SendMessage(GetID(), m);
+      }
     }
       
       
@@ -2705,19 +2744,75 @@ namespace Anki {
       return _msgHandler->SendMessage(GetID(), m);
     }
       
-    Result Robot::SendFlashBlockIDs()
+    Result Robot::SendFlashObjectIDs()
     {
       MessageFlashBlockIDs m;
       return _msgHandler->SendMessage(GetID(), m);
     }
-      
-    Result Robot::SendSetBlockLights(const u8 blockID, const u32* color)
+     
+      /*
+    Result Robot::SendSetBlockLights(const u8 blockID,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& color,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                                     const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms)
     {
       MessageSetBlockLights m;
       m.blockID = blockID;
-      std::memcpy(m.color.data(), color, NUM_BLOCK_LEDS*sizeof(u32));
+      m.color = color;
+      m.onPeriod_ms = onPeriod_ms;
+      m.offPeriod_ms = offPeriod_ms;
+
       return _msgHandler->SendMessage(GetID(), m);
     }
+       */
+      
+    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 color,
+                                      const u32 onPeriod_ms, const u32 offPeriod_ms)
+    {
+      PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Deprecated.\n");
+      return RESULT_FAIL;
+      /*
+      // Need to determing the blockID (meaning its internal "active" ID) from the
+      // objectID known to the robot / UI
+      Vision::ObservableObject* object = _blockWorld.GetObjectByIDandFamily(objectID, BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      if(!object->IsActive()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d does not appear to be an active object.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      if(!object->IsIdentified()) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d is active but has not been identified.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
+      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+                          "Object %d could not be cast to an ActiveCube.\n", objectID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      activeCube->SetLEDs(ActiveCube::WhichLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      
+      return SendSetObjectLights(activeCube);
+      */
+    } // SendSetObjectLights()
+      
+    Result Robot::SendSetObjectLights(const ActiveCube* activeCube)
+    {
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Null active object pointer provided.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      }
+      
+      MessageSetBlockLights m;
+      activeCube->FillMessage(m);
+      return _msgHandler->SendMessage(GetID(), m);
+    }
+      
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {

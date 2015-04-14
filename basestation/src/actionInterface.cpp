@@ -30,6 +30,9 @@ namespace Anki {
       
     }
     
+    // NOTE: THere should be no way for Update() to fail independently of its
+    // call to UpdateInternal(). Otherwise, there's a possibility for an
+    // IAction's Cleanup() method not be called on failure.
     IActionRunner::ActionResult IActionRunner::Update(Robot& robot)
     {
       if(!_isRunning && !_isPartOfCompoundAction) {
@@ -178,13 +181,16 @@ namespace Anki {
       }
       
       if(result != RUNNING) {
+        // Success or fail, this action is done, so perform any cleanup required.
+        Cleanup(robot);
+        
 #       if USE_ACTION_CALLBACKS
         RunCallbacks(result);
 #       endif
       }
       
       return result;
-    } // Update()
+    } // UpdateInternal()
     
   } // namespace Cozmo
 } // namespace Anki

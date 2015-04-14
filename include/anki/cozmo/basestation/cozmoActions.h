@@ -57,6 +57,9 @@ namespace Anki {
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
+      
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
@@ -95,6 +98,7 @@ namespace Anki {
       PreActionPose::ActionType  _actionType;
       bool                       _alreadyAtGoal;
       Radians                    _finalHeadAngle;
+      bool                       _headAngleSent;
       
     }; // DriveToObjectAction
     
@@ -154,6 +158,43 @@ namespace Anki {
     };  // class MoveHeadToAngleAction
     
     
+    // Tilt head and rotate body to face the specified object. Use angles
+    // specified at construction to control the body rotation.
+    class FaceObjectAction : public IAction
+    {
+    public:
+      // If facing the object requires less than turnAngleTol turn, then no
+      // turn is performed. If a turn greater than maxTurnAngle is required,
+      // the action fails. For angles in between, the robot will first turn
+      // to face the object, then tilt its head. To disallow turning, set
+      // maxTurnAngle to zero.
+      FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool headTrackWhenDone = false);
+      
+      virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_FACE_OBJECT; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      // Reduce delays from their defaults
+      virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
+      
+      // Override to allow wheel control while facing the object
+      virtual bool ShouldLockWheels() const override { return false; }
+      
+      CompoundActionParallel _compoundAction;
+      
+      ObjectID   _objectID;
+      Radians    _turnAngleTol;
+      Radians    _maxTurnAngle;
+      bool       _headTrackWhenDone;
+      
+    }; // FaceObjectAction
+    
+    
     // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
     {
@@ -170,6 +211,7 @@ namespace Anki {
       // derived classes
       virtual ActionResult Init(Robot& robot) override final;
       virtual ActionResult CheckIfDone(Robot& robot) override final;
+      virtual void Cleanup(Robot& robot) override final;
       
       // Most docking actions don't use a second dock marker, but in case they
       // do, they can override this method to choose one from the available
@@ -185,6 +227,9 @@ namespace Anki {
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
+      
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
@@ -225,7 +270,6 @@ namespace Anki {
       // carrying, for verification.
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
-      
     }; // class DockWithObjectAction
 
     

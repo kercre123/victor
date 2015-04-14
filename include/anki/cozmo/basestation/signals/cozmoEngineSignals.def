@@ -43,7 +43,8 @@ DEF_SIGNAL(RobotObservedObject,
            float img_x_upperLeft,  float img_y_upperLeft,
            float img_width,  float img_height,
            float world_x, float world_y, float world_z,  // Absolute translation vector
-           float q0, float q1, float q2, float q3)       // Absolute rotation, as a quaternion
+           float q0, float q1, float q2, float q3,       // Absolute rotation, as a quaternion
+           bool isActive)
 
 DEF_SIGNAL(RobotObservedNothing, uint8_t robotID)
 

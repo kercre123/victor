@@ -16,7 +16,20 @@ add_executable(run_recognizeFaces
   run_recognizeFaces.cpp 
 )
 
+add_executable(run_recognizeFacesOffline
+  recognizeFaces.h
+  run_recognizeFacesOffline.cpp 
+)
+
 target_link_libraries(run_recognizeFaces
+  ${ALL_EMBEDDED_LIBRARIES}
+  CoreTech_Common_Robot 
+  CoreTech_Vision_Robot
+  libRecognizeFaces
+  ${LUXAND_DIRECTORY}/bin/osx_x86_64/libfsdk.dylib
+)
+
+target_link_libraries(run_recognizeFacesOffline
   ${ALL_EMBEDDED_LIBRARIES}
   CoreTech_Common_Robot 
   CoreTech_Vision_Robot
@@ -29,6 +42,10 @@ set_target_properties(libRecognizeFaces PROPERTIES
 )
 
 set_target_properties(run_recognizeFaces PROPERTIES
+  FOLDER "Tools"
+)
+
+set_target_properties(run_recognizeFacesOffline PROPERTIES
   FOLDER "Tools"
 )
 

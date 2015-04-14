@@ -82,8 +82,8 @@ namespace Anki {
       virtual bool ShouldLockLift() const   { return true; }
       virtual bool ShouldLockWheels() const { return true; }
       
-      // Used (e.g. in initialization of CompoundActions to specify that a
-      // consituent action is part of a compound action)
+      // Used (e.g. in initialization of CompoundActions) to specify that a
+      // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
       
     protected:
@@ -150,16 +150,22 @@ namespace Anki {
       virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
+      // Derived classes can implement any required cleanup by overriding this
+      // method. It is called when UpdateInternal() is about to anything other than
+      // RUNNING. Note that it cannot change the ActionResult (so if UpdateInternal
+      // is about to failure or success, nothing that Cleanup does can change that.)
+      virtual void Cleanup(Robot& robot) { }
+      
       //
       // Timing delays:
       //  (e.g. for allowing for communications to physical robot to have an effect)
       //
       
-      // Before checking preconditions. Optional: default is 0.5s delay
-      virtual f32 GetStartDelayInSeconds()       const { return 0.5f; }
+      // Before checking preconditions. Optional: default is 0.05s delay
+      virtual f32 GetStartDelayInSeconds()       const { return 0.05f; }
       
-      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.5s delay
-      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.5f; }
+      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.05s delay
+      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.05f; }
       
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }

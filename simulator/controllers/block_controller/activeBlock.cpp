@@ -38,38 +38,39 @@ namespace Anki {
         webots::LED* led_[NUM_BLOCK_LEDS];
         LEDParams ledParams_[NUM_BLOCK_LEDS];
         
-        // Top-Front face pairs
         typedef enum {
-          ZX = 0,
-          Xz,
-          zx,
-          xZ,
-          Yx,
-          yX,
-          NUM_TOP_FRONT_FACE_PAIRS
-        } TopFrontFacePair;
+          UNKNOWN = -1,
+          Xneg = 0,
+          Xpos,
+          Yneg,
+          Ypos,
+          Zneg,
+          Zpos,
+          NUM_UP_AXES
+        } UpAxis;
         
-        const u8 ledPositionToIdx_[NUM_TOP_FRONT_FACE_PAIRS][NUM_BLOCK_LEDS] =
+        // Lookup table for which four LEDs are on top, given the current up axis
+        // (in the order upper left, upper right, lower left, lower right)
+        const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
-          // ZX
-          { 6, 7, 5, 4, 2, 3, 1, 0 },
+          // Xneg (Front Face on top)
+          {2, 3, 6, 7, 0, 1, 4, 5},
           
-          // Xz
-          { 2, 3, 6, 7, 1, 0, 5, 4},
+          // Xpos (Back Face on top)
+          {4, 5, 0, 1, 6, 7, 2, 3},
           
-          // zx
-          { 1, 0, 2, 3, 5, 4, 6, 7},
+          // Yneg (Right on top)
+          {1, 3, 0, 2, 5, 7, 4, 6},
           
-          // xZ
-          { 5, 4, 1, 0, 6, 7, 2, 3},
+          // Ypos (Left Face on top)
+          {2, 0, 3, 1, 6, 4, 7, 5},
           
-          // Yx
-          { 2, 6, 1, 5, 3, 7, 0, 4},
+          // Zneg (Bottom Face on top) -- NOTE: Flipped 180deg around X axis!!
+          {3, 2, 1, 0, 7, 6, 5, 4},
           
-          // yX
-          { 7, 3, 4, 0, 6, 2, 5, 1}
+          // Zpos (Top Face on top)
+          {0, 1, 2, 3, 4, 5, 6, 7}
         };
-        
         
         // Flash ID params
         double flashIDStartTime_ = 0;
@@ -96,6 +97,13 @@ namespace Anki {
       {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           ledParams_[i].color = msg.color[i];
+          ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
+          ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
+          ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+          ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
+          
+          ledParams_[i].state = LEDState::LED_ON;
+          ledParams_[i].nextSwitchTime = 0; // force immediate upate
         }
       }
       
@@ -107,22 +115,13 @@ namespace Anki {
       s32 GetBlockID() {
         webots::Node* selfNode = block_controller.getSelf();
         
-        // Get world root node
-        webots::Node* root = block_controller.getRoot();
-        
-        // Look for the index of selfNode within the root's children
-        webots::Field* rootChildren = root->getField("children");
-        int numRootChildren = rootChildren->getCount();
-        
-        for (s32 n = 0 ; n<numRootChildren; ++n) {
-          webots::Node* nd = rootChildren->getMFNode(n);
-          
-          if (nd == selfNode) {
-            return n;
-          }
+        webots::Field* activeIdField = selfNode->getField("activeID");
+        if(activeIdField) {
+          return activeIdField->getSFInt32();
+        } else {
+          printf("Missing activeID field in active block.\n");
+          return -1;
         }
-        
-        return -1;
       }
 
       
@@ -174,6 +173,51 @@ namespace Anki {
         }
       }
       
+      
+      UpAxis GetCurrentUpAxis()
+      {
+#       define X 0
+#       define Y 1
+#       define Z 2
+        const double* accelVals = accel_->getValues();
+
+        // Determine the axis with the largest absolute acceleration
+        UpAxis retVal = UNKNOWN;
+        double maxAbsAccel = -1;
+
+        s32 whichAxis = -1;
+        for(s32 i=0; i<3; ++i) {
+          const double absAccel = abs(accelVals[i]);
+          if(absAccel > maxAbsAccel) {
+            whichAxis = i;
+            maxAbsAccel = absAccel;
+          }
+        }
+        
+        // Return the corresponding signed axis
+        switch(whichAxis)
+        {
+          case X:
+            retVal = (accelVals[X] < 0 ? Xneg : Xpos);
+            break;
+          case Y:
+            retVal = (accelVals[Y] < 0 ? Yneg : Ypos);
+            break;
+          case Z:
+            retVal = (accelVals[Z] < 0 ? Zneg : Zpos);
+            break;
+          default:
+            printf("Unexpected whichAxis = %d\n", whichAxis);
+        }
+        
+        return retVal;
+        
+#       undef X
+#       undef Y
+#       undef Z
+      } // GetCurrentUpAxis()
+      
+      /*
       TopFrontFacePair GetOrientation() {
         const double* vals = accel_->getValues();
         const double x = vals[0];
@@ -203,20 +247,113 @@ namespace Anki {
         
         return fp;
       }
+       */
       
-      void ApplyLEDParams() {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          led_[ ledPositionToIdx_[GetOrientation()][i] ]->set(ledParams_[i].color);
+      // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
+      // to make it suitable for webots LED 24bit RGB color
+      inline void SetLED_helper(u32 index, u32 rgbaColor) {
+        led_[index]->set(rgbaColor>>8);
+      }
+      
+      void SetLED(WhichLEDs whichLEDs, u32 color)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
+        static const u8 FIRST_BIT = 0x01;
+        u8 shiftedLEDs = static_cast<u8>(whichLEDs);
+        for(u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
+          if(shiftedLEDs & FIRST_BIT) {
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], color);
+          }
+          shiftedLEDs = shiftedLEDs >> 1;
         }
       }
       
-      void SetLED(BlockLEDPosition p, u32 color) {
-        led_[ ledPositionToIdx_[GetOrientation()][p] ]->set(color);
+      inline void SetLED(u32 ledIndex, u32 color)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
+        SetLED_helper(ledIndexLUT[currentUpAxis][ledIndex], color);
       }
+
+      // Alpha blending (w/ black) without using floating point:
+      //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+      inline u32 AlphaBlend(const u32 color, const u8 alpha)
+      {
+        u32 result;
+        
+        const u8* fg = (const u8*)(&color);
+        u8* result_u8 = (u8*)(&result);
+
+        const u32 alpha_u32 = alpha + 1;
+        
+        result_u8[3] = (unsigned char)((alpha_u32 * fg[3]) >> 8);
+        result_u8[2] = (unsigned char)((alpha_u32 * fg[2]) >> 8);
+        result_u8[1] = (unsigned char)((alpha_u32 * fg[1]) >> 8);
+        result_u8[0] = 0xff;
+        
+        return result;
+      }
+      
+      
+      void ApplyLEDParams(TimeStamp_t currentTime)
+      {
+        const UpAxis currentUpAxis = GetCurrentUpAxis();
+        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
+          if(currentTime > ledParams_[i].nextSwitchTime) {
+            u32 newColor = 0;
+            
+            switch(ledParams_[i].state)
+            {
+              case LEDState::LED_ON:
+                // Time to start turning off
+                newColor = ledParams_[i].color;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOffPeriod_ms;
+                ledParams_[i].state = LEDState::LED_TURNING_OFF;
+                break;
+                
+              case LEDState::LED_OFF:
+                // Time to start turning on
+                newColor = 0;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOnPeriod_ms;
+                ledParams_[i].state = LEDState::LED_TURNING_ON;
+                break;
+                
+              case LEDState::LED_TURNING_ON:
+                // Time to be fully on:
+                newColor = ledParams_[i].color;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
+                ledParams_[i].state = LEDState::LED_ON;
+                break;
+                
+              case LEDState::LED_TURNING_OFF:
+                // Time to be fully off
+                newColor = 0;
+                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
+                ledParams_[i].state = LEDState::LED_OFF;
+                break;
+                
+              default:
+                // Should never get here
+                assert(0);
+            }
+            
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], newColor);
+            
+          } else if(ledParams_[i].state == LEDState::LED_TURNING_OFF) {
+            // Compute alpha b/w 0 and 255 w/ no floating point:
+            const u8 alpha = ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOffPeriod_ms;
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+          } else if(ledParams_[i].state == LEDState::LED_TURNING_ON) {
+            // Compute alpha b/w 0 and 255 w/ no floating point:
+            const u8 alpha = 255 - ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOnPeriod_ms;
+            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+          } // if(currentTime > nextSwitchTime)
+          
+        } // for each LED
+      } // ApplyLEDParams()
       
       void SetAllLEDs(u32 color) {
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          led_[i]->set(color);
+          SetLED_helper(i, color);
         }
       }
       
@@ -227,23 +364,23 @@ namespace Anki {
 #if(0)
           // Test: Blink all LEDs in order
           static u32 p=0;
-          static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
+          //static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
+          static WhichLEDs prevIdx = WhichLEDs::TOP_UPPER_LEFT, idx = WhichLEDs::TOP_UPPER_LEFT;
           if (p++ == 100) {
             SetLED(prevIdx, 0);
-            if (idx == TopFrontLeft) {
-              // TopFrontLeft is green
-              SetLED(idx, 0x00ff00);
+            if (idx == WhichLEDs::TOP_UPPER_LEFT) {
+              // Top upper left is green
+              SetLED(idx, 0x00ff0000);
             } else {
               // All other LEDs are red
-              SetLED(idx, 0xff0000);
+              SetLED(idx, 0xff000000);
             }
             prevIdx = idx;
 
             // Increment LED position index
-            if (idx == BottomBackRight) {
-              idx = TopFrontLeft;
-            } else {
-              idx = (BlockLEDPosition)(idx + 1);
+            idx = static_cast<WhichLEDs>(static_cast<u8>(idx)<<1);
+            if(idx == WhichLEDs::NONE) {
+              idx = WhichLEDs::TOP_UPPER_LEFT;
             }
             p = 0;
           }
@@ -265,7 +402,7 @@ namespace Anki {
           switch(state_) {
             case NORMAL:
               // Apply ledParams
-              ApplyLEDParams();
+              ApplyLEDParams(static_cast<TimeStamp_t>(currTime*1000));
               break;
             case FLASHING_ID:
               if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {

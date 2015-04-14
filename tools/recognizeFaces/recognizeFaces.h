@@ -24,7 +24,9 @@ namespace Anki
   // FALSE: default fast detection -15..15 degrees.
   //
   // internalResizeWidth – controls the detection speed by setting the size of the image the detection functions will work with. Choose higher value to increase detection quality, or lower value to improve the performance.
-  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth);
+  //
+  // faceDetectionThreshold should be between 1 and 5. 1 is very sensitive and has lots of false positives. 5 detects only face.
+  Result SetRecognitionParameters(const bool handleArbitraryRotations, const int internalResizeWidth, const int faceDetectionThreshold);
   
   // Find and recognize all faces in "image"
   // If knownName is not NULL, the largest detected face will be assigned name "knownName"
