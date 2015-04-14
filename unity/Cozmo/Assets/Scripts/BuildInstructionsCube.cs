@@ -8,9 +8,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] MeshRenderer meshCube;
 	
 	[SerializeField] Color[] typeColors = new Color[10];
-	[SerializeField] public int propType = 0;
+	[SerializeField] public int objectType = 0;
+	[SerializeField] public int objectFamily = 0;
 
-	int lastPropType = -1;
+	int lastPropType = 0;
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
@@ -23,7 +24,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	bool initialized = false;
 
 	public void Initialize() {
-		lastPropType = -1;
+		lastPropType = 0;
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
@@ -40,7 +41,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	bool Dirty() {
-		if(lastPropType != propType) return true;
+		if(lastPropType != objectType) return true;
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
@@ -50,7 +51,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	void Refresh() {
 
-		int colorIndex = Mathf.Clamp(propType, 0, 9);
+		int colorIndex = Mathf.Clamp((int)objectType, 0, 9);
 		vCube.SetColor(typeColors[colorIndex]);
 
 		if(Highlighted) {
@@ -67,7 +68,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			meshMaterial.color = color;
 		}
 
-		lastPropType = propType;
+		lastPropType = objectType;
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
@@ -75,7 +76,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	public string GetPropTypeName() {
 
-		switch(propType) {
+		switch(objectType) {
 			case 0: return "Basic";
 			case 1: return "Bomb";
 			case 2: return "Green";

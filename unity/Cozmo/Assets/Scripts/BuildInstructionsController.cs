@@ -41,11 +41,9 @@ public class BuildInstructionsController : MonoBehaviour {
 	Robot robot = null;
 
 	//framewise inputs
-	bool iObjectPickedUp = false;
+//	bool iObjectPickedUp = false;
 	bool iObjectPlaced = false;
-	bool iObjectSeen = false;
-
-	uint currentObjectType = 0;
+//	bool iObjectSeen = false;
 
 	BuildInstructions currentLayout {
 		get {
@@ -239,10 +237,10 @@ public class BuildInstructionsController : MonoBehaviour {
 					for(int i=0;i<robot.knownObjects.Count;i++) {
 						if(robot.knownObjects[i].ID != robot.carryingObjectID) continue;
 
-						if(robot.knownObjects[i].ObjectType == currentStep.cube.propType) {
+						if(robot.knownObjects[i].ObjectType == currentStep.cube.objectType) {
 							screenMessage.ShowMessageForDuration("Cozmo has picked up the correct type of block!", 5f, Color.green);
 							//if(currentStep.cube.propType == activeblock) return BuildStepPhase.CHANGING;
-							currentObjectType = robot.knownObjects[i].ObjectType;
+							//currentObjectType = robot.knownObjects[i].ObjectType;
 							return BuildStepPhase.PLACING;
 						}
 						else {
@@ -325,9 +323,9 @@ public class BuildInstructionsController : MonoBehaviour {
 	}
 
 	private void ResetFramewiseInputs() {
-		iObjectPickedUp = false;
+//		iObjectPickedUp = false;
 		iObjectPlaced = false;
-		iObjectSeen = false;
+//		iObjectSeen = false;
 	}
 
 	private void SuccessOrFailure(bool success, int action_type) {

@@ -10,7 +10,6 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] List<GameLayout> layouts;
 	[SerializeField] Text title;
 	[SerializeField] Text instructions;
-	[SerializeField] Text note;
 	[SerializeField] Button buttonPrevLayout;
 	[SerializeField] Button buttonNextLayout;
 	[SerializeField] Button buttonStartBuild;
@@ -28,7 +27,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool dirty = false;
 	Robot robot = null;
 
-	uint currentObjectType = 0;
+	//uint currentObjectType = 0;
 
 	GameLayout currentLayout {
 		get {
@@ -59,7 +58,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		currentLayoutIndex = Mathf.Clamp(currentLayoutIndex, 0, filteredLayouts.Count-1);
 		//Debug.Log("OnEnable filterType("+(gameTypeFilter != null ? gameTypeFilter : "null")+" filteredLayouts("+filteredLayouts.Count+")");
 
-		note.text = "";
 		RefreshLayout();
 
 		if(RobotEngineManager.instance != null) {
