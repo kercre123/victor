@@ -52,9 +52,9 @@ class UDPClient(socket.socket):
 class Tester:
     "A class to administer testing"
 
-    SER_XMIT_LEN = 1500
+    SER_XMIT_LEN = 1500 # Disable serial chunking
 
-    def __init__(self, serial_device="/dev/ttyUSB0", udp_host="172.31.1.1", udp_port=6661, payload_length=1450):
+    def __init__(self, serial_device="/dev/ttyUSB0", udp_host="172.31.1.1", udp_port=5551, payload_length=1450):
         "Sets up the test"
         self.uart   = UARTRadioConn(serial_device)
         self.client = UDPClient(udp_host, udp_port)

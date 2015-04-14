@@ -3,14 +3,14 @@ FW_FILE_1:=0x00000.bin
 FW_FILE_2:=0x40000.bin
 
 TARGET_OUT:=image.elf
-OBJS:=user/user_main.o driver/uart.o
+OBJS:=user/user_main.o user/client.o driver/uart.o
 
-SRCS:=user/user_main.c driver/uart.c
+SRCS:=user/user_main.c user/client.c driver/uart.c
 
 GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106
-ESPTOOL_PY:=../esptool/esptool.py
+ESPTOOL_PY:=../../../esptool/esptool.py
 FW_TOOL:=/home/dc/esp8266/other/esptool/esptool
-SDK:=/home/dc/esp8266/esp_iot_sdk_v1.0.1_b1
+SDK:=/home/dc/esp8266/esp_iot_sdk_v1.0.1_b2
 PORT:=com11
 BAUD:=230400
 

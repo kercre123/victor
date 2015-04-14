@@ -70,7 +70,7 @@ uart_config(uint8 uart_no)
  * Returns      : OK
 *******************************************************************************/
 LOCAL STATUS ICACHE_FLASH_ATTR
-uart1_tx_one_char(uint8 TxChar)
+uart1_tx_one_char(const uint8 TxChar)
 {
     while (true)
 	{
@@ -119,7 +119,7 @@ uart0_rx_intr_handler(void *para)
  * Returns      :
 *******************************************************************************/
 void ICACHE_FLASH_ATTR
-uart0_tx_buffer(uint8 *buf, uint16 len)
+uart0_tx_buffer(const uint8 *buf, uint16 len)
 {
     uint16 i;
 
