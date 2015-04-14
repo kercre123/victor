@@ -444,6 +444,8 @@ namespace Cozmo {
                   msg.status |= IS_PERFORMING_ACTION;
                 }
                 
+                msg.headTrackingObjectID = robot->GetTrackHeadToObject();
+                
                 // TODO: Add proximity sensor data to state message
                 
                 msg.batteryVoltage = robot->GetBatteryVoltage();
