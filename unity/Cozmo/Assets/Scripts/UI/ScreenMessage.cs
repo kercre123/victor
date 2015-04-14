@@ -23,7 +23,9 @@ public class ScreenMessage : MonoBehaviour {
 
 		//text.text = G2U_Message;
 		ShowMessage (message, color);
-		coroutine = StartCoroutine(TurnOffText(time_in_seconds));
+
+		coroutine = TurnOffText(time_in_seconds);
+		StartCoroutine(coroutine);
 	}
 
 	public void ShowMessage(string message, Color color)

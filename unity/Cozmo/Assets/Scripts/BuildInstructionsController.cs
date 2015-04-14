@@ -42,8 +42,9 @@ public class BuildInstructionsController : MonoBehaviour {
 
 	//framewise inputs
 	bool iObjectPlaced = false;
+	bool iObjectSeen = false;
 
-	int currentObjectType = 0;
+	uint currentObjectType = 0;
 
 	BuildInstructions currentLayout {
 		get {
@@ -246,6 +247,7 @@ public class BuildInstructionsController : MonoBehaviour {
 						else {
 							screenMessage.ShowMessageForDuration("Cozmo is holding the wrong type of block!", 5f, Color.red);
 						}
+						break;
 					}
 				}
 
@@ -270,25 +272,32 @@ public class BuildInstructionsController : MonoBehaviour {
 				}
 				break;
 			case BuildStepPhase.PLACED:
+				//screenMessage.ShowMessageForDuration("Cozmo has placed the block correctly!", 5f, Color.green);
 				break;
 		}
 
+		return currentPhase;
 	}
 
 	private void EnterPhase() {
 		switch(currentPhase) {
 			case BuildStepPhase.REQUESTING:
+				if(buttonNextStep != null) buttonNextStep.interactable = false;
 				break;
 			case BuildStepPhase.CHANGING:
 				break;
 			case BuildStepPhase.PLACING:
 				break;
 			case BuildStepPhase.PLACED:
+				if(buttonNextStep != null) buttonNextStep.interactable = true;
 				break;
 		}
 	}
 
 	private void UpdatePhase() {
+
+
+
 		switch(currentPhase) {
 			case BuildStepPhase.REQUESTING:
 				break;
