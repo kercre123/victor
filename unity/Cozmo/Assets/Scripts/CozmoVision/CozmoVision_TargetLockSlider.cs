@@ -81,44 +81,50 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	}
 
 	private void AcquireTarget() {
-		ObservedObject nearest = null;
-		ObservedObject mostFacing = null;
-
-		float bestDistFromCoz = float.MaxValue;
-		float bestAngleFromCoz = float.MaxValue;
-		Vector2 forward = robot.Forward;
-
-		for(int i=0; i<robot.pertinentObjects.Count; i++) {
-			if(robot.carryingObjectID == robot.pertinentObjects[i].ID) continue;
-			Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
-
-			float angleFromCoz = Vector2.Angle(forward, atTarget);
-			if(angleFromCoz > 90f) continue;
-
-			float distFromCoz = atTarget.sqrMagnitude;
-			if(distFromCoz < bestDistFromCoz) {
-				bestDistFromCoz = distFromCoz;
-				nearest = robot.pertinentObjects[i];
-			}
-
-			if(angleFromCoz < bestAngleFromCoz) {
-				bestAngleFromCoz = angleFromCoz;
-				mostFacing = robot.pertinentObjects[i];
-			}
+		if(robot.selectedObjects.Find(x => x.ID == robot.carryingObjectID) != null || robot.targetLockedObject == null) {
+			robot.selectedObjects.Clear();
 		}
 
-		ObservedObject best = mostFacing;
-		if(nearest != null && nearest != best) {
-			//Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
-			//float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
-			//if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
+		ObservedObject best = robot.targetLockedObject;
+
+		if(robot.selectedObjects.Count == 0) {
+			ObservedObject nearest = null;
+			ObservedObject mostFacing = null;
+
+			float bestDistFromCoz = float.MaxValue;
+			float bestAngleFromCoz = float.MaxValue;
+			Vector2 forward = robot.Forward;
+
+			for(int i=0; i<robot.pertinentObjects.Count; i++) {
+				if(robot.carryingObjectID == robot.pertinentObjects[i].ID) continue;
+				Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
+
+				float angleFromCoz = Vector2.Angle(forward, atTarget);
+				if(angleFromCoz > 90f) continue;
+
+				float distFromCoz = atTarget.sqrMagnitude;
+				if(distFromCoz < bestDistFromCoz) {
+					bestDistFromCoz = distFromCoz;
+					nearest = robot.pertinentObjects[i];
+				}
+
+				if(angleFromCoz < bestAngleFromCoz) {
+					bestAngleFromCoz = angleFromCoz;
+					mostFacing = robot.pertinentObjects[i];
+				}
+			}
+
+			best = mostFacing;
+			/*if(nearest != null && nearest != best) {
+				Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
+				float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
+				if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
+			}*/
+
+			if(best != null) robot.selectedObjects.Add(best);
 		}
 
-		robot.selectedObjects.Clear();
-
-		if(best != null) {
-			robot.selectedObjects.Add(best);
-
+		if(robot.selectedObjects.Count > 0) {
 			//find any other objects in a 'stack' with our selected
 			for(int i=0; i<robot.pertinentObjects.Count; i++) {
 				if(best == robot.pertinentObjects[i])
@@ -139,6 +145,8 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			robot.selectedObjects.Sort(( obj1, obj2 ) => {
 				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
 			});
+
+			robot.targetLockedObject = robot.selectedObjects[0];
 		}
 
 		Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");

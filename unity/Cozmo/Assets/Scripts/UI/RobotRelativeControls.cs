@@ -298,7 +298,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(!targetLockSelectedObject) return null;
 		if(robot.selectedObjects.Count == 0) return null;
 
-		targetLock = robot.selectedObjects[0];
+		targetLock = robot.targetLockedObject;
 		if(targetLock == null) return null;
 
 		Vector2 robotForward = robot.Forward;
@@ -488,7 +488,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null && RobotEngineManager.instance.current.pertinentObjects.Count <= 1) return;
 
 		List<ObservedObject> pertinentObjects = RobotEngineManager.instance.current.pertinentObjects;
-		ObservedObject oldLock = robot.selectedObjects[0];
+		ObservedObject oldLock = robot.targetLockedObject;
 		Vector3 targetPos = oldLock.WorldPosition;
 		Vector3 atTarget = (targetPos - robot.WorldPosition).normalized;
 		Vector3 flatAtTarget = ((Vector2)atTarget).normalized;
