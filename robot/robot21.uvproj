@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO2</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO2,COZMO_ROBOT_V32</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_oldhal;.\arm_oldhal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -472,6 +472,16 @@
               <FileName>sharp.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_oldhal\hal\sharp.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -749,11 +759,6 @@
               <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionSystem.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -792,6 +797,11 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>offboardVisionSystem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1651,6 +1661,16 @@
               <FileType>8</FileType>
               <FilePath>.\arm_oldhal\hal\sharp.cpp</FilePath>
             </File>
+            <File>
+              <FileName>blocks.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>battery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1984,11 +2004,6 @@
               <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionSystem.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -2027,6 +2042,11 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>offboardVisionSystem.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
           </Files>
         </Group>
