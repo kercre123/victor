@@ -398,6 +398,7 @@ public class G2U_RobotState
 	private float _batteryVoltage; // float_32
 	private int _carryingObjectID; // int_32
 	private int _carryingObjectOnTopID; // int_32
+	private int _headTrackingObjectID; // int_32
 	private byte _status; // uint_8
 	private byte _robotID; // uint_8
 
@@ -431,6 +432,8 @@ public class G2U_RobotState
 
 	public int carryingObjectOnTopID { get { return _carryingObjectOnTopID; } set { _carryingObjectOnTopID = value; } }
 
+	public int headTrackingObjectID { get { return _headTrackingObjectID; } set { _headTrackingObjectID = value; } }
+
 	public byte status { get { return _status; } set { _status = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
@@ -457,6 +460,7 @@ public class G2U_RobotState
 		float batteryVoltage,
 		int carryingObjectID,
 		int carryingObjectOnTopID,
+		int headTrackingObjectID,
 		byte status,
 		byte robotID)
 	{
@@ -475,6 +479,7 @@ public class G2U_RobotState
 		this.batteryVoltage = batteryVoltage;
 		this.carryingObjectID = carryingObjectID;
 		this.carryingObjectOnTopID = carryingObjectOnTopID;
+		this.headTrackingObjectID = headTrackingObjectID;
 		this.status = status;
 		this.robotID = robotID;
 	}
@@ -512,6 +517,7 @@ public class G2U_RobotState
 		_batteryVoltage = reader.ReadSingle();
 		_carryingObjectID = reader.ReadInt32();
 		_carryingObjectOnTopID = reader.ReadInt32();
+		_headTrackingObjectID = reader.ReadInt32();
 		_status = reader.ReadByte();
 		_robotID = reader.ReadByte();
 	}
@@ -539,6 +545,7 @@ public class G2U_RobotState
 		writer.Write((float)_batteryVoltage);
 		writer.Write((int)_carryingObjectID);
 		writer.Write((int)_carryingObjectOnTopID);
+		writer.Write((int)_headTrackingObjectID);
 		writer.Write((byte)_status);
 		writer.Write((byte)_robotID);
 	}
@@ -546,7 +553,7 @@ public class G2U_RobotState
 	public int Size 
 	{
 		get {
-			return 62;
+			return 66;
 		}
 	}
 

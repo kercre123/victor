@@ -54,7 +54,7 @@ public class CozmoVision : MonoBehaviour
 	private float fromAlpha = 0f;
 	private static bool dingEnabled = true;
 	
-	protected bool isSmallScreen = false;
+	public bool IsSmallScreen { get; protected set; }
 	protected static readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
@@ -201,7 +201,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
-		isSmallScreen = false;
+		IsSmallScreen = false;
 		if(dpi == 0f) return;
 		
 		float refW = Screen.width;
@@ -234,8 +234,8 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
-		isSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		if(isSmallScreen && anchorToScaleOnSmallScreens != null) {
+		IsSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
+		if(IsSmallScreen && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
 			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;

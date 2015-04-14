@@ -247,7 +247,8 @@ public class Robot
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
 		//Debug.Log( "Set Head Angle " + angle_rad );
-		
+		if(isBusy) return;
+
 		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
 		message.angle_rad = angle_rad;
 		message.accel_rad_per_sec2 = 2f;

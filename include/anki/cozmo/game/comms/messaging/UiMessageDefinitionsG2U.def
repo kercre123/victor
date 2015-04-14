@@ -247,6 +247,7 @@ struct G2U_RobotState
 	float batteryVoltage;
 	int32_t carryingObjectID;
 	int32_t carryingObjectOnTopID;
+	int32_t headTrackingObjectID;
 	uint8_t status;
 	uint8_t robotID;
 	
@@ -273,6 +274,7 @@ struct G2U_RobotState
 		,float batteryVoltage
 		,int32_t carryingObjectID
 		,int32_t carryingObjectOnTopID
+		,int32_t headTrackingObjectID
 		,uint8_t status
 		,uint8_t robotID)
 	:pose_x(pose_x)
@@ -290,6 +292,7 @@ struct G2U_RobotState
 	,batteryVoltage(batteryVoltage)
 	,carryingObjectID(carryingObjectID)
 	,carryingObjectOnTopID(carryingObjectOnTopID)
+	,headTrackingObjectID(headTrackingObjectID)
 	,status(status)
 	,robotID(robotID)
 	{}

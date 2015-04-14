@@ -148,7 +148,7 @@ public class ActionPanel : MonoBehaviour
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	protected int selectedObjectIndex;
 
-	protected bool isSmallScreen = false;
+	public bool IsSmallScreen { get; protected set; }
 
 	public static ActionPanel instance = null;
 
@@ -181,7 +181,7 @@ public class ActionPanel : MonoBehaviour
 
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
-		isSmallScreen = false;
+		IsSmallScreen = false;
 		if(dpi == 0f) return;
 		
 		float refW = Screen.width;
@@ -214,8 +214,8 @@ public class ActionPanel : MonoBehaviour
 		}
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
-		isSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		if(isSmallScreen && anchorToScaleOnSmallScreens != null) {
+		IsSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
+		if(IsSmallScreen && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
 			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
