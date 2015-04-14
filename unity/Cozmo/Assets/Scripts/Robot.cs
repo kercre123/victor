@@ -102,9 +102,9 @@ public class Robot
 		get
 		{
 			return localBusyTimer > 0f 
-				|| Status( StatusFlag.IS_PICKING_OR_PLACING ) 
-				|| Status( StatusFlag.IS_PICKED_UP ) 
-				|| Status( StatusFlag.IS_PERFORMING_ACTION );
+				|| Status( StatusFlag.IS_PERFORMING_ACTION )
+				|| Status( StatusFlag.IS_ANIMATING ) 
+				|| Status( StatusFlag.IS_PICKED_UP );
 		}
 	}
 
@@ -258,25 +258,48 @@ public class Robot
 		lastObjectHeadTracked = null;
 	}
 	
-	public void TrackHeadToObject( ObservedObject observedObject )
+	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
 		if( lastObjectHeadTracked == null || lastObjectHeadTracked.ID != observedObject.ID )
 		{
-			Debug.Log( "Track Head To Object " + observedObject.ID );
-			
-			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
-			message.objectID = (uint)observedObject.ID;
-			message.robotID = ID;
-			
-			RobotEngineManager.instance.channel.Send( new U2G_Message { TrackHeadToObject = message } );
+			if( faceObject )
+			{
+				FaceObject( observedObject );
+			}
+			else
+			{
+				U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
+				message.objectID = (uint)observedObject.ID;
+				message.robotID = ID;
+
+				Debug.Log( "Track Head To Object " + message.objectID );
+				
+				RobotEngineManager.instance.channel.Send( new U2G_Message { TrackHeadToObject = message } );
+			}
 			
 			lastObjectHeadTracked = observedObject;
 		}
 	}
 
-	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = true, bool useManualSpeed = false )
+	private void FaceObject( ObservedObject observedObject )
 	{
-		TrackHeadToObject( selectedObjects[index] );
+		if( lastObjectHeadTracked == null || lastObjectHeadTracked.ID != observedObject.ID )
+		{
+			U2G_FaceObject message = new U2G_FaceObject();
+			message.objectID = (uint)observedObject.ID;
+			message.robotID = ID;
+
+			Debug.Log( "Face Object " + message.objectID );
+			
+			RobotEngineManager.instance.channel.Send( new U2G_Message { FaceObject = message } );
+			
+			lastObjectHeadTracked = observedObject;
+		}
+	}
+
+	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
+	{
+		FaceObject( selectedObjects[index] );
 
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
