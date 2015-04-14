@@ -544,6 +544,8 @@ namespace Anki {
                   ObjectType blockToLookFor;
                   switch(static_cast<Vision::MarkerType>(topMarker->GetCode()))
                   {
+                      /* 
+                       BREAKING THIS TO USE NUMBERS ON ACTIVE BLOCKS
                     case Vision::MARKER_DICE1:
                     {
                       blockToLookFor = Block::Type::NUMBER1;
@@ -574,6 +576,7 @@ namespace Anki {
                       blockToLookFor = Block::Type::NUMBER6;
                       break;
                     }
+                      */
                       
                     default:
                       PRINT_NAMED_ERROR("BehaviorManager.UnknownDiceMarker",

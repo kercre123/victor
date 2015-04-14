@@ -6,51 +6,67 @@
 namespace Anki {
   namespace Cozmo {
 
-    // Letters represents the labels for the faces. X corresponds to the face that accelerometer x-axis
-    // points to and x corresponds to the opposite face.
-    // The numbers represent the indices of the 8 LED channels.
+    // Specify LEDs, relative to block's top face (as determined by accelerometer)
+    // Looking down at top face (and through to bottom face), LEDs are
+    // numbered as follows, with each value corresponding to a bit in a u8:
+    // Note that the face labels are done such that they match the way Blocks'
+    // faces are defined (imagine the robot is looking along the x axis, facing
+    // the "Front" of the block, then it makes sense...)
     //
+    //         (Left)                             Y
+    //        0 ----- 4         2 ----- 6        ^
+    //        |       |         |       |        |
+    // (Front)|  TOP  |(Back)   |  BTM  |        |
+    //        |       |         |       |        +----> X
+    //        1 ----- 5         3 ----- 7
+    //         (Right)
     //
-    //            4 ---------- 5
-    //              |        |
-    //              |   Z    |
-    //            7 |        | 6
-    //     ----------------------------
-    //     |        |        |        |
-    //     |   y    |   X    |    Y   |
-    //     |        |        |        |
-    //     ----------------------------
-    //            3 |        | 2
-    //              |   z    |
-    //              |        |
-    //            0 ---------- 1
-    //              |        |
-    //              |   x    |
-    //              |        |
-    //              ----------
-    //
+    const s32 NUM_BLOCK_LEDS = 8;
+    enum class WhichLEDs : u8 {
+      NONE        = 0x00,
+      ALL         = 0xFF,
+      
+      // Individual LEDs (indicated by a single bit set):
+      TOP_UPPER_LEFT  = 0x01,
+      TOP_UPPER_RIGHT = 0x10,
+      TOP_LOWER_LEFT  = 0x02,
+      TOP_LOWER_RIGHT = 0x20,
+      BTM_UPPER_LEFT  = 0x04,
+      BTM_UPPER_RIGHT = 0x40,
+      BTM_LOWER_LEFT  = 0x08,
+      BTM_LOWER_RIGHT = 0x80,
+      
+      // Top/Bottom Pairs:
+      TOP_BTM_UPPER_LEFT  = TOP_UPPER_LEFT  | BTM_UPPER_LEFT,
+      TOP_BTM_UPPER_RIGHT = TOP_UPPER_RIGHT | BTM_UPPER_RIGHT,
+      TOP_BTM_LOWER_LEFT  = TOP_LOWER_LEFT  | BTM_LOWER_LEFT,
+      TOP_BTM_LOWER_RIGHT = TOP_LOWER_RIGHT | BTM_LOWER_RIGHT,
+      
+      // Faces of 4 LEDs:
+      TOP_FACE   = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | TOP_LOWER_LEFT  | TOP_LOWER_RIGHT,
+      BTM_FACE   = BTM_UPPER_LEFT  | BTM_UPPER_RIGHT | BTM_LOWER_LEFT  | BTM_LOWER_RIGHT,
+      LEFT_FACE  = TOP_UPPER_LEFT  | TOP_LOWER_LEFT  | BTM_UPPER_LEFT  | BTM_LOWER_LEFT,
+      RIGHT_FACE = TOP_UPPER_RIGHT | TOP_LOWER_RIGHT | BTM_UPPER_RIGHT | BTM_LOWER_RIGHT,
+      FRONT_FACE = TOP_LOWER_LEFT  | TOP_LOWER_RIGHT | BTM_LOWER_LEFT  | BTM_LOWER_RIGHT,
+      BACK_FACE  = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | BTM_UPPER_LEFT  | BTM_UPPER_RIGHT
+    };
     
-    
-    // Positions of LEDs relative to a given top-front face pair.
-    // Described as if you are inside the block with the top face above you
-    // and the front face in front of you.
-    // If you know which face is the front face, you can specify the LED you
-    // want according to these labels.
-    typedef enum {
-      TopFrontLeft = 0,
-      TopFrontRight,
-      TopBackLeft,
-      TopBackRight,
-      BottomFrontLeft,
-      BottomFrontRight,
-      BottomBackLeft,
-      BottomBackRight,
-      NUM_BLOCK_LEDS
-    } BlockLEDPosition;
+    enum class LEDState : u8 {
+      LED_OFF = 0,
+      LED_ON,
+      LED_TURNING_ON,
+      LED_TURNING_OFF
+    };
     
     // TODO: This will expand as we want the lights to do fancier things
     typedef struct {
-      u32 color;
+      u32 color; // Stored as RGBA, where A(lpha) is ignored
+      u32 onPeriod_ms;            // time spent in "on" state
+      u32 offPeriod_ms;           // time spent in "off" state
+      u32 transitionOnPeriod_ms;  // time spent linearly transitioning from "off" to "on"
+      u32 transitionOffPeriod_ms; // time spent linearly transitioning from "on" to "off"
+      TimeStamp_t nextSwitchTime; // for changing state when flashing
+      LEDState state;
     } LEDParams;
 
     

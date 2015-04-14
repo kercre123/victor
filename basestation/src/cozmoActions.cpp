@@ -271,6 +271,7 @@ namespace Anki {
     , _objectID(objectID)
     , _actionType(actionType)
     , _alreadyAtGoal(false)
+    , _headAngleSent(false)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -417,15 +418,33 @@ namespace Anki {
       
       if(!_alreadyAtGoal) {
         result = DriveToPoseAction::CheckIfDone(robot);
+
       }
       
       if(result == SUCCESS) {
-        // Just before returning success when normal DriveToPose action finishes,
-        // Set the head angle to the one selected by the pre-action pose.
-        // (We don't do this earlier because it may not be a good head angle
-        // for path following -- e.g., for the prox sensors to be usable.)
-        if(robot.MoveHeadToAngle(_finalHeadAngle.ToFloat(), 1.f, 3.f) != RESULT_OK) {
-          result = FAILURE_ABORT;
+        
+        // Don't keep doing the tehe DriveToPoseAction::CheckIfDone call above
+        // while we wait for the commanded head angle we're about to set below
+        _alreadyAtGoal = true;
+        
+        if(_headAngleSent) {
+          // If we sent the head angle, wait for the head to stop moving before
+          // declaring success.
+          if(robot.IsMoving()) {
+            result = RUNNING;
+          } else {
+            result = SUCCESS;
+          }
+        } else {
+          // Just before returning success when normal DriveToPose action finishes,
+          // Set the head angle to the one selected by the pre-action pose.
+          // (We don't do this earlier because it may not be a good head angle
+          // for path following -- e.g., for the prox sensors to be usable.)
+          if(robot.MoveHeadToAngle(_finalHeadAngle.ToFloat(), 2.f, 6.f) != RESULT_OK) {
+            result = FAILURE_ABORT;
+          }
+          _headAngleSent = true;
+          result = RUNNING;
         }
       }
       
@@ -492,7 +511,8 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : _turnAngle(angle)
+    : DriveToPoseAction(true)
+    , _turnAngle(angle)
     {
       
     }
@@ -842,6 +862,9 @@ namespace Anki {
       // and however this action finishes
       robot.StartLookingForMarkers();
       robot.StopDocking();
+      
+      // Also return the robot's head to level
+      robot.MoveHeadToAngle(0, 2.f, 6.f);
     }
     
 #pragma mark ---- PickAndPlaceObjectAction ----
