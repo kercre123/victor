@@ -41,6 +41,7 @@ public class BuildInstructionsController : MonoBehaviour {
 	Robot robot = null;
 
 	//framewise inputs
+	bool iObjectPickedUp = false;
 	bool iObjectPlaced = false;
 	bool iObjectSeen = false;
 
@@ -324,39 +325,60 @@ public class BuildInstructionsController : MonoBehaviour {
 	}
 
 	private void ResetFramewiseInputs() {
+		iObjectPickedUp = false;
 		iObjectPlaced = false;
-
+		iObjectSeen = false;
 	}
-
-//	ACTION_UNKNOWN = -1,
-//	ACTION_DRIVE_TO_POSE,
-//	ACTION_DRIVE_TO_OBJECT,
-//	ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT,
-//	ACTION_TURN_IN_PLACE,
-//	ACTION_MOVE_HEAD_TO_ANGLE,
-//	ACTION_PICKUP_OBJECT_LOW,
-//	ACTION_PICKUP_OBJECT_HIGH,
-//	ACTION_PLACE_OBJECT_LOW,
-//	ACTION_PLACE_OBJECT_HIGH,
-//	ACTION_CROSS_BRIDGE,
-//	ACTION_ASCEND_OR_DESCEND_RAMP,
-//	ACTION_TRAVERSE_OBJECT,
-//	ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT,
-//	ACTION_FACE_OBJECT,
-//	ACTION_PLAY_ANIMATION,
-//	ACTION_PLAY_SOUND,
-//	ACTION_WAIT
-
-
 
 	private void SuccessOrFailure(bool success, int action_type) {
 		if(success) {
 			switch(action_type) {
-				case 5:
-				case 6:
+				case -1://	ACTION_UNKNOWN = -1,
+					break;
+				case 0://	ACTION_DRIVE_TO_POSE,
+					break;
+				case 1://	ACTION_DRIVE_TO_OBJECT,
+					break;
+				case 2://	ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT,
+					break;
+				case 3://	ACTION_TURN_IN_PLACE,
+					break;
+				case 4://	ACTION_MOVE_HEAD_TO_ANGLE,
+					break;
+				case 5://ACTION_PICKUP_OBJECT_LOW
+				case 6://ACTION_PICKUP_OBJECT_HIGH
 					iObjectPlaced = true;
+					break;
+				case 7://	ACTION_PLACE_OBJECT_LOW,
+				case 8://	ACTION_PLACE_OBJECT_HIGH,
+					iObjectPlaced = true;
+					break;
+				case 9://	ACTION_CROSS_BRIDGE,
+				case 10://	ACTION_ASCEND_OR_DESCEND_RAMP,
+				case 11://	ACTION_TRAVERSE_OBJECT,
+				case 12://	ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT,
+				case 13://	ACTION_FACE_OBJECT,
+				case 14://	ACTION_PLAY_ANIMATION,
+				case 15://	ACTION_PLAY_SOUND,
+				case 16://	ACTION_WAIT
 					break;
 			}
 		}
+		else {
+			screenMessage.ShowMessageForDuration("Cozmo ran into difficulty, let's try that again.", 5f, Color.yellow);
+		}
 	}
+
+	private bool CozmoKnowsAboutObjectOfType(int objType) {
+
+		for(int i=0; i<robot.knownObjects.Count; i++) {
+
+
+
+		}
+
+
+		return false;
+	}
+
 }
