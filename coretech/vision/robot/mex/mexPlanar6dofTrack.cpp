@@ -26,34 +26,34 @@ static char onchipBuffer[ONCHIP_BUFFER_SIZE];
 static char ccmBuffer[CCM_BUFFER_SIZE];
 
 // Image
-Array<u8> templateImage;
+Array<u8> grayscaleImage;
 
 // Tracker
 TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker;
 
-void NormalizeImage(Array<u8>& templateImage, const Quadrilateral<f32>& currentQuad, const f32 filterWidthFraction, MemoryStack scratch)
+void NormalizeImage(Array<u8>& grayscaleImage, const Quadrilateral<f32>& currentQuad, const f32 filterWidthFraction, MemoryStack scratch)
 {
   // TODO: Add the ability to only normalize within the vicinity of the quad
   // Note that this requires templateQuad to be sorted!
   const s32 filterWidth = static_cast<s32>(filterWidthFraction*((currentQuad[3] - currentQuad[0]).Length()));
   AnkiAssert(filterWidth > 0.f);
 
-  Array<u8> templateImageNormalized(templateImage.get_size(0), templateImage.get_size(1), scratch);
+  Array<u8> grayscaleImageNormalized(grayscaleImage.get_size(0), grayscaleImage.get_size(1), scratch);
 
-  mxAssert(templateImageNormalized.IsValid(),
-    "Out of memory allocating templateImageNormalized.\n");
+  mxAssert(grayscaleImageNormalized.IsValid(),
+    "Out of memory allocating grayscaleImageNormalized.\n");
 
-  Anki::Result lastResult = ImageProcessing::BoxFilterNormalize(templateImage, filterWidth, static_cast<u8>(128),
-    templateImageNormalized, scratch);
+  Anki::Result lastResult = ImageProcessing::BoxFilterNormalize(grayscaleImage, filterWidth, static_cast<u8>(128),
+    grayscaleImageNormalized, scratch);
 
   mxAssert(lastResult == Anki::RESULT_OK, "BoxFilterNormalize failed.");
 
   {
-    templateImage.Show("templateImage", false);
-    templateImageNormalized.Show("templateImageNormalized", false);
+    grayscaleImage.Show("grayscaleImage", false);
+    grayscaleImageNormalized.Show("grayscaleImageNormalized", false);
   }
 
-  templateImage.Set(templateImageNormalized);
+  grayscaleImage.Set(grayscaleImageNormalized);
 } // NormalizeImage()
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -90,8 +90,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
              ncols < std::numeric_limits<s32>::max(),
              "Image too large for conversion to Array.");
     
-    templateImage = Array<u8>(static_cast<s32>(nrows), static_cast<s32>(ncols), onchipMemory);
-    mxArrayToArray(prhs[argIndex], templateImage);
+    grayscaleImage = Array<u8>(static_cast<s32>(nrows), static_cast<s32>(ncols), onchipMemory);
+    mxArrayToArray(prhs[argIndex], grayscaleImage);
     ++argIndex;
 
     // Get Initial Quad
@@ -106,7 +106,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       Point2f(quadX[3], quadY[3]));
     ++argIndex;
 
-    NormalizeImage(templateImage, templateQuad, filterWidthFraction, offchipMemory);
+    NormalizeImage(grayscaleImage, templateQuad, filterWidthFraction, offchipMemory);
 
     // Get Calibration Data
     f32 focalLength_x = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
@@ -125,7 +125,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const f32 fiducialSquareWidthFraction = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
 
     tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(
-      templateImage,
+      grayscaleImage,
       templateQuad,
       scaleTemplateRegionPercent,
       numPyramidLevels,
@@ -191,7 +191,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "Image should be UINT8.");
     mxAssert(mxGetNumberOfDimensions(prhs[0]) == 2,
       "Image must be grayscale.");
-    mxArrayToArray(prhs[argIndex], templateImage);
+    mxArrayToArray(prhs[argIndex], grayscaleImage);
     ++argIndex;
 
     const f32 maxIterations        = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
@@ -204,10 +204,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     s32 verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels;
 
     Quadrilateral<f32> currentQuad = tracker.get_transformation().get_transformedCorners(onchipMemory);
-    NormalizeImage(templateImage, currentQuad, filterWidthFraction, offchipMemory);
+    NormalizeImage(grayscaleImage, currentQuad, filterWidthFraction, offchipMemory);
 
     // Update tracker
-    const Anki::Result trackerResult = tracker.UpdateTrack(templateImage,
+    const Anki::Result trackerResult = tracker.UpdateTrack(grayscaleImage,
       maxIterations,
       convergenceTol_angle,
       convergenceTol_dist,
