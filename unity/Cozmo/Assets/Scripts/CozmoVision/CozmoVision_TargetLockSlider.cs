@@ -56,8 +56,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		FadeIn();
 
-		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
-		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
+		if(!robot.isBusy) AcquireTarget();
 
 		if(targetLockReticle != null) {
 			targetLockReticle.gameObject.SetActive(robot.selectedObjects.Count > 0);
@@ -81,14 +80,19 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	}
 
 	private void AcquireTarget() {
-		if(robot.selectedObjects.Find(x => x.ID == robot.carryingObjectID) != null || robot.targetLockedObject == null) {
+		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find(x => x.ID == robot.carryingObjectID) != null;
+		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
+								robot.selectedObjects.Find(x => x.ID == robot.targetLockedObject.ID) != null;
+
+		if(targetingPropInHand || !alreadyHasTarget) {
 			robot.selectedObjects.Clear();
+			robot.targetLockedObject = null;
 		}
 
 		ObservedObject best = robot.targetLockedObject;
 
 		if(robot.selectedObjects.Count == 0) {
-			ObservedObject nearest = null;
+			//ObservedObject nearest = null;
 			ObservedObject mostFacing = null;
 
 			float bestDistFromCoz = float.MaxValue;
@@ -105,7 +109,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float distFromCoz = atTarget.sqrMagnitude;
 				if(distFromCoz < bestDistFromCoz) {
 					bestDistFromCoz = distFromCoz;
-					nearest = robot.pertinentObjects[i];
+					//nearest = robot.pertinentObjects[i];
 				}
 
 				if(angleFromCoz < bestAngleFromCoz) {
@@ -120,9 +124,11 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
 				if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
 			}*/
-
-			if(best != null) robot.selectedObjects.Add(best);
 		}
+
+		robot.selectedObjects.Clear();
+
+		if(best != null) robot.selectedObjects.Add(best);
 
 		if(robot.selectedObjects.Count > 0) {
 			//find any other objects in a 'stack' with our selected
@@ -146,10 +152,10 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
 			});
 
-			robot.targetLockedObject = robot.selectedObjects[0];
+			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
 		}
 
-		Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
+		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}
 
 }

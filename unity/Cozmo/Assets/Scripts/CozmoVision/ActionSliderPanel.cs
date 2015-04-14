@@ -12,21 +12,11 @@ public class ActionSlider {
 	public Image image;
 	public Text text;
 	public GameObject highlight;
-
-	/*public Image image_bottomAction { get { return ActionPanel.instance.actionButtons[0].image; } }
-	public Text text_bottomAction { get { return ActionPanel.instance.actionButtons[0].text; } }
-	public Image image_topAction { get { return ActionPanel.instance.actionButtons[1].image; } }
-	public Text text_topAction { get { return ActionPanel.instance.actionButtons[1].text; } }*/
 	
-	//ActionSliderPanel vision;
 	public bool Pressed { get; private set; }
 
 	public ActionButtonMode actionButtonMode { get; private set; }
 	public ActionButton actionButton { get; private set; }
-	
-	/*public void ClaimOwnership(ActionSliderPanel vision) {
-		this.vision = vision;
-	}*/
 
 	public void SetMode(ActionButtonMode mode, bool down, ActionButton button = null) {
 		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
@@ -75,8 +65,8 @@ public class ActionSliderPanel : ActionPanel
 
 	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	public ActionButton bottomAction { get { return ActionPanel.instance.actionButtons[0]; } }
-	public ActionButton topAction { get { return ActionPanel.instance.actionButtons[1]; } }
+	public ActionButton bottomAction { get { return actionButtons[0]; } }
+	public ActionButton topAction { get { return actionButtons[1]; } }
 
 	bool interactLastFrame = false;
 	ActionButtonMode lastMode = ActionButtonMode.DISABLED;

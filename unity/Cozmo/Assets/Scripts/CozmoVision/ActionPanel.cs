@@ -132,10 +132,7 @@ public class ActionButton
 public class ActionPanel : MonoBehaviour
 {
 	public ActionButton[] actionButtons;
-
-	//[SerializeField] protected AudioClip actionButtonSound;
-	//[SerializeField] protected AudioClip cancelButtonSound;
-	//[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
 	[SerializeField] protected float snapToSideBarScale = 1f;
 	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
