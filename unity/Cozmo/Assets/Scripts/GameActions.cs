@@ -24,9 +24,22 @@ public class GameActions : MonoBehaviour
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
+	protected virtual IEnumerator SetActionPanelReference()
+	{
+		while( ActionPanel.instance == null )
+		{
+			yield return null;
+		}
+
+		if( ActionPanel.instance.gameActions != this )
+		{
+			ActionPanel.instance.gameActions = this;
+		}
+	}
+
 	protected virtual void OnEnable()
 	{
-		if( ActionPanel.instance != null ) ActionPanel.instance.gameActions = this;
+		StartCoroutine( SetActionPanelReference() );
 	}
 
 	public virtual void OnDisable()

@@ -59,13 +59,13 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		if(!robot.isBusy) AcquireTarget();
 
 		if(targetLockReticle != null) {
-			targetLockReticle.gameObject.SetActive(robot.selectedObjects.Count > 0);
+			targetLockReticle.gameObject.SetActive(robot.targetLockedObject != null);
 
-			if(robot.selectedObjects.Count > 0) {
+			if(robot.targetLockedObject != null) {
 
 				float w = imageRectTrans.sizeDelta.x;
 				float h = imageRectTrans.sizeDelta.y;
-				ObservedObject lockedObject = robot.selectedObjects[0];
+				ObservedObject lockedObject = robot.targetLockedObject;
 
 				float lockX = (lockedObject.VizRect.center.x / NativeResolution.x) * w;
 				float lockY = (lockedObject.VizRect.center.y / NativeResolution.y) * h;

@@ -33,19 +33,25 @@ public class ActionSlider {
 		highlight.SetActive(Pressed);
 		
 		text.gameObject.SetActive(Pressed);
-		
-		image.sprite = ActionButton.GetModeSprite(mode);
-		text.text = ActionButton.GetModeName(mode);
+
+		if(actionButton == null) {
+			text.text = ActionButton.GetModeName(mode);
+			image.sprite = ActionButton.GetModeSprite(mode);
+		}
+		else {
+			text.text = actionButton.text.text;
+			image.sprite = actionButton.image.sprite;
+		}
 		
 		switch(mode) {
 			case ActionButtonMode.TARGET:
 				if(Pressed) {
 					if(		RobotEngineManager.instance != null
 					   && 	RobotEngineManager.instance.current != null
-					   &&	RobotEngineManager.instance.current.selectedObjects.Count > 0) {
+				   	   &&	RobotEngineManager.instance.current.targetLockedObject != null) {
 						
 						//dmd2do get prop family name from observedobject
-						text.text = "Cube " + RobotEngineManager.instance.current.selectedObjects[0].ID;
+						text.text = "Cube " + RobotEngineManager.instance.current.targetLockedObject.ID;
 					}
 					else {
 						text.text = "Target";
