@@ -411,37 +411,8 @@ namespace Anki {
       
       if(!_alreadyAtGoal) {
         result = DriveToPoseAction::CheckIfDone(robot);
+      }
 
-      }
-      
-      /*
-      if(result == SUCCESS) {
-        
-        // Don't keep doing the tehe DriveToPoseAction::CheckIfDone call above
-        // while we wait for the commanded head angle we're about to set below
-        _alreadyAtGoal = true;
-        
-        if(_headAngleSent) {
-          // If we sent the head angle, wait for the head to stop moving before
-          // declaring success.
-          if(robot.IsMoving()) {
-            result = RUNNING;
-          } else {
-            result = SUCCESS;
-          }
-        } else {
-          // Just before returning success when normal DriveToPose action finishes,
-          // Set the head angle to the one selected by the pre-action pose.
-          // (We don't do this earlier because it may not be a good head angle
-          // for path following -- e.g., for the prox sensors to be usable.)
-          if(robot.MoveHeadToAngle(_finalHeadAngle.ToFloat(), 2.f, 6.f) != RESULT_OK) {
-            result = FAILURE_ABORT;
-          }
-          _headAngleSent = true;
-          result = RUNNING;
-        }
-      }
-      */
       return result;
     }
     
@@ -552,8 +523,8 @@ namespace Anki {
     , _whichCode(whichCode)
     , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
-    , _headTrackWhenDone(headTrackWhenDone)
     , _waitToVerifyTime(-1.f)
+    , _headTrackWhenDone(headTrackWhenDone)
     {
 
     }
@@ -669,7 +640,7 @@ namespace Anki {
 
       const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if(_waitToVerifyTime < 0.f) {
-        _waitToVerifyTime = currentTime + 0.25f;
+        _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
       }
 
       if(currentTime < _waitToVerifyTime) {

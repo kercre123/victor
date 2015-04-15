@@ -166,6 +166,7 @@ namespace Anki {
       // the action fails. For angles in between, the robot will first turn
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
+      
       FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
                        bool headTrackWhenDone = false);
       
@@ -183,6 +184,11 @@ namespace Anki {
       
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
+      
+      // Amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
       
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
