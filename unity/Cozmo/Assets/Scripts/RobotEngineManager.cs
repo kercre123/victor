@@ -30,6 +30,7 @@ public enum ActionCompleted
 	WAIT
 }
 
+
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
@@ -46,7 +47,7 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField]
 	[HideInInspector]
 	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
-	
+
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;

@@ -205,7 +205,7 @@ public class Robot
 
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
-		Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
+		//Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
 
 		if( knownObject == null )
 		{

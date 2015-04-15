@@ -105,12 +105,12 @@ public class CozmoVision : MonoBehaviour
 		if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
 		{
 			box.SetColor( selected );
-			box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family;
+			box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
 		}
 		else
 		{
 			box.SetColor( select );
-			box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family;
+			box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
 			box.observedObject = observedObject;
 		}
 		
