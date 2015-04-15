@@ -9,9 +9,9 @@ public class CozmoVision_SelectObject : CozmoVision
 
 	protected virtual void Update()
 	{
-		if( actionPanel == null || actionPanel.gameActions == null ) return;
+		if( actionPanel == null ) return;
 
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || actionPanel.gameActions == null )
 		{
 			actionPanel.DisableButtons();
 			return;

@@ -33,19 +33,25 @@ public class ActionSlider {
 		highlight.SetActive(Pressed);
 		
 		text.gameObject.SetActive(Pressed);
-		
-		image.sprite = ActionButton.GetModeSprite(mode);
-		text.text = ActionButton.GetModeName(mode);
+
+		if(actionButton == null) {
+			text.text = ActionButton.GetModeName(mode);
+			image.sprite = ActionButton.GetModeSprite(mode);
+		}
+		else {
+			text.text = actionButton.text.text;
+			image.sprite = actionButton.image.sprite;
+		}
 		
 		switch(mode) {
 			case ActionButtonMode.TARGET:
 				if(Pressed) {
 					if(		RobotEngineManager.instance != null
 					   && 	RobotEngineManager.instance.current != null
-					   &&	RobotEngineManager.instance.current.selectedObjects.Count > 0) {
+				   	   &&	RobotEngineManager.instance.current.targetLockedObject != null) {
 						
 						//dmd2do get prop family name from observedobject
-						text.text = "Cube " + RobotEngineManager.instance.current.selectedObjects[0].ID;
+						text.text = "Cube " + RobotEngineManager.instance.current.targetLockedObject.ID;
 					}
 					else {
 						text.text = "Target";
@@ -54,7 +60,6 @@ public class ActionSlider {
 				break;
 		}
 	}
-	
 }
 
 public class ActionSliderPanel : ActionPanel
@@ -88,7 +93,6 @@ public class ActionSliderPanel : ActionPanel
 		
 		robot = RobotEngineManager.instance.current;
 
-		
 		if(!actionSlider.Pressed) {
 			
 			if(interactLastFrame) {
@@ -135,47 +139,31 @@ public class ActionSliderPanel : ActionPanel
 
 		ActionButton currentButton = null;
 		ActionButtonMode currentMode = ActionButtonMode.TARGET;
-		
-		//ObservedObject targeted = robot.targetLockedObject;//robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null;
 
 		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = bottomAction;
 			currentMode = bottomAction.mode;
 
-			if(robot.selectedObjects.Count > 0) {
-				robot.targetLockedObject = robot.selectedObjects[0];
-			}
-
 			float minZ = float.MaxValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
 				if(minZ < robot.selectedObjects[i].WorldPosition.z) continue;
 				minZ = robot.selectedObjects[i].WorldPosition.z;
-				//targeted = robot.selectedObjects[i];
+				robot.targetLockedObject = robot.selectedObjects[i];
 			}
 		}
 		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = topAction;
 			currentMode = topAction.mode;
-
-			if(robot.selectedObjects.Count > 1) {
-				robot.targetLockedObject = robot.selectedObjects[1];
-			}
 			
 			float maxZ = float.MinValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
 				if(maxZ > robot.selectedObjects[i].WorldPosition.z) continue;
 				maxZ = robot.selectedObjects[i].WorldPosition.z;
-				//targeted = robot.selectedObjects[i];
+				robot.targetLockedObject = robot.selectedObjects[i];
 			}
 			
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
-		
-		//if necessary switch our primary targetLock to the target of this action...
-		/*if(robot.selectedObjects.Count > 0 && targeted != null && targeted != robot.selectedObjects[0]) {
-			robot.selectedObjects.Remove(targeted);
-			robot.selectedObjects.Insert(0, targeted);
-		}*/
 		
 		if(currentMode != lastMode && currentMode != ActionButtonMode.TARGET) {
 			SlideInSound();

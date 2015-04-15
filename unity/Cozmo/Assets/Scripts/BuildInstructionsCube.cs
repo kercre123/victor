@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using Vectrosity;
 
@@ -7,13 +8,20 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] VectrosityCube vCube;
 	[SerializeField] MeshRenderer meshCube;
 	
-	[SerializeField] Color[] typeColors = new Color[10];
-	[SerializeField] public int propType = 0;
+	[SerializeField] public int objectType = 0;
+	[SerializeField] public int objectFamily = 0;
+	[SerializeField] public ActiveBlockType activeBlockType = ActiveBlockType.Off;
+	[SerializeField] public Color baseColor = Color.blue;
 
-	int lastPropType = -1;
+	[SerializeField] SpriteRenderer[] symbols;
+	[SerializeField] MeshRenderer[] activeCorners;
+
+	int lastPropType = 0;
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
+	ActiveBlockType lastActiveBlockType = ActiveBlockType.Off;
+	Color lastBaseColor = Color.blue;
 
 	public bool Validated = false;
 	public bool Highlighted = false;
@@ -23,10 +31,12 @@ public class BuildInstructionsCube : MonoBehaviour {
 	bool initialized = false;
 
 	public void Initialize() {
-		lastPropType = -1;
+		lastPropType = 0;
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
+		lastActiveBlockType = activeBlockType;
+		lastBaseColor = baseColor;
 
 		meshMaterial = meshCube.material;
 		vCube.CreateWireFrame();
@@ -40,18 +50,20 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	bool Dirty() {
-		if(lastPropType != propType) return true;
+		if(lastPropType != objectType) return true;
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
+		if(lastActiveBlockType != activeBlockType) return true;
+		if(lastBaseColor != baseColor) return true;
 
 		return false;
 	}
 
 	void Refresh() {
 
-		int colorIndex = Mathf.Clamp(propType, 0, 9);
-		vCube.SetColor(typeColors[colorIndex]);
+		int colorIndex = Mathf.Clamp((int)objectType, 0, 9);
+		vCube.SetColor(baseColor);
 
 		if(Highlighted) {
 			vCube.Show();
@@ -62,20 +74,54 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 		meshCube.enabled = !Hidden;
 		if(!Hidden) {
-			Color color = typeColors[colorIndex];
+			Color color = baseColor;
 			color.a = Validated ? 1f : 0.25f;
 			meshMaterial.color = color;
+
+			if(symbols != null) {
+				if(objectType == 0) {
+					for(int i=0;i<symbols.Length;i++) {
+						Sprite sprite = null;
+						if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetDigitSprite(i+1);
+						symbols[i].sprite = sprite;
+					}
+				}
+				else {
+					Sprite sprite = null;
+					if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetSpriteForObjectType(objectType);
+					for(int i=0;i<symbols.Length;i++) {
+						symbols[i].sprite = sprite;
+					}
+				}
+			}
+			if(activeCorners != null) {
+				if(objectType == 0) {
+					Color activeColor = Color.white;
+					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockType(activeBlockType);
+					for(int i=0;i<activeCorners.Length;i++) {
+						activeCorners[i].material.color = activeColor;
+						activeCorners[i].gameObject.SetActive(true);
+					}
+				}
+				else {
+					for(int i=0;i<activeCorners.Length;i++) {
+						activeCorners[i].gameObject.SetActive(false);
+					}
+				}
+			}
 		}
 
-		lastPropType = propType;
+		lastPropType = objectType;
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
+		lastActiveBlockType = activeBlockType;
+		lastBaseColor = baseColor;
 	}
 
 	public string GetPropTypeName() {
 
-		switch(propType) {
+		switch(objectType) {
 			case 0: return "Basic";
 			case 1: return "Bomb";
 			case 2: return "Green";

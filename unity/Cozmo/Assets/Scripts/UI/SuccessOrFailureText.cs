@@ -26,17 +26,17 @@ public class SuccessOrFailureText : ScreenMessage
 		}
 	}
 
-	private void SuccessOrFailure( bool s, int action_type )
+	private void SuccessOrFailure( bool s, ActionCompleted action_type )
 	{
 		if( s )
 		{
 			if(success != null) audio.PlayOneShot( success );
-			ShowMessageForDuration( "SUCCESS", timeOnScreen, Color.green);
+			ShowMessageForDuration( action_type + " SUCCEEDED", timeOnScreen, Color.green);
 		}
 		else
 		{
 			if(failure != null) audio.PlayOneShot( failure );
-			ShowMessageForDuration( "FAILURE", timeOnScreen, Color.red);
+			ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
 		}
 		
 		StartCoroutine( TurnOffText(timeOnScreen) );
