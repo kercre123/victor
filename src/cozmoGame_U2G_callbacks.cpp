@@ -267,8 +267,9 @@ namespace Cozmo {
       } else {
         objectID = msg.objectID;
       }
-      robot->GetActionList().AddAction(new FaceObjectAction(objectID, msg.turnAngleTol,
-                                                            msg.maxTurnAngle,
+      robot->GetActionList().AddAction(new FaceObjectAction(objectID,
+                                                            Radians(msg.turnAngleTol),
+                                                            Radians(msg.maxTurnAngle),
                                                             msg.headTrackWhenDone));
     }
   }
