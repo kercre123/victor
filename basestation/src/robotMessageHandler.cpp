@@ -573,5 +573,25 @@ namespace Anki {
       return RESULT_OK;
     }
     
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectMoved const& msg)
+    {
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      for(auto objectsByID : activeBlocksByType) {
+        for(auto objectWithID : objectsByID.second) {
+          Vision::ObservableObject* object = objectWithID.second;
+          assert(object->IsActive());
+          if(object->GetActiveID() == msg.objectID) {
+            // TODO: Mark object as de-localized
+            printf("Received message that Object %d (Active ID %d) moved.\n",
+                   objectWithID.first.GetValue(), msg.objectID);
+            return RESULT_OK;
+          }
+        }
+      }
+      
+      printf("Could not find match for active object ID %d\n", msg.objectID);
+      return RESULT_FAIL;
+    }
   } // namespace Cozmo
 } // namespace Anki

@@ -26,12 +26,16 @@ namespace Anki {
       namespace {
       
         webots::Receiver* receiver_;
+        webots::Emitter*  emitter_;
+        
         webots::Accelerometer* accel_;
         
         typedef enum {
           NORMAL = 0,
           FLASHING_ID
         } BlockState;
+        
+        s32 blockID_ = -1;
         
         BlockState state_ = NORMAL;
         
@@ -48,6 +52,8 @@ namespace Anki {
           Zpos,
           NUM_UP_AXES
         } UpAxis;
+        
+        UpAxis currentUpAxis_;
         
         // Lookup table for which four LEDs are on top, given the current up axis
         // (in the order upper left, upper right, lower left, lower right)
@@ -130,12 +136,12 @@ namespace Anki {
         state_ = NORMAL;
         
         // Get this block's ID
-        s32 blockID = GetBlockID();
-        if (blockID < 0) {
+        blockID_ = GetBlockID();
+        if (blockID_ < 0) {
           printf("Failed to find blockID\n");
           return RESULT_FAIL;
         }
-        printf("Starting ActiveBlock %d\n", blockID);
+        printf("Starting ActiveBlock %d\n", blockID_);
         
         // Get all LED handles
         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
@@ -149,7 +155,12 @@ namespace Anki {
         receiver_ = block_controller.getReceiver("receiver");
         assert(receiver_ != nullptr);
         receiver_->enable(TIMESTEP);
-        receiver_->setChannel(blockID);
+        receiver_->setChannel(blockID_);
+        
+        // Get radio emitter
+        emitter_ = block_controller.getEmitter("emitter");
+        assert(emitter_ != nullptr);
+        emitter_->setChannel(blockID_);
         
         // Get accelerometer
         accel_ = block_controller.getAccelerometer("accel");
@@ -174,7 +185,7 @@ namespace Anki {
       }
       
       
-      UpAxis GetCurrentUpAxis()
+      UpAxis GetCurrentUpAxis(bool& isMoving)
       {
 #       define X 0
 #       define Y 1
@@ -184,27 +195,44 @@ namespace Anki {
         // Determine the axis with the largest absolute acceleration
         UpAxis retVal = UNKNOWN;
         double maxAbsAccel = -1;
+        double absAccel[3];
 
         s32 whichAxis = -1;
         for(s32 i=0; i<3; ++i) {
-          const double absAccel = abs(accelVals[i]);
-          if(absAccel > maxAbsAccel) {
+          absAccel[i] = abs(accelVals[i]);
+          if(absAccel[i] > maxAbsAccel) {
             whichAxis = i;
-            maxAbsAccel = absAccel;
+            maxAbsAccel = absAccel[i];
           }
         }
+
+        static const f32 movementAccelThresh = 1.f;
+//        printf("Block %d acceleration: (%.3f, %.3f, %.3f)\n", blockID_,
+//               accelVals[X], accelVals[Y], accelVals[Z]);
         
         // Return the corresponding signed axis
         switch(whichAxis)
         {
           case X:
             retVal = (accelVals[X] < 0 ? Xneg : Xpos);
+            isMoving = (absAccel[X] > 9.81f + movementAccelThresh ||
+                        absAccel[X] < 9.81f - movementAccelThresh ||
+                        absAccel[Y] > movementAccelThresh ||
+                        absAccel[Z] > movementAccelThresh);
             break;
           case Y:
             retVal = (accelVals[Y] < 0 ? Yneg : Ypos);
+            isMoving = (absAccel[Y] > 9.81f + movementAccelThresh ||
+                        absAccel[Y] < 9.81f - movementAccelThresh ||
+                        absAccel[X] > movementAccelThresh ||
+                        absAccel[Z] > movementAccelThresh);
             break;
           case Z:
             retVal = (accelVals[Z] < 0 ? Zneg : Zpos);
+            isMoving = (absAccel[Z] > 9.81f + movementAccelThresh ||
+                        absAccel[Z] < 9.81f - movementAccelThresh ||
+                        absAccel[Y] > movementAccelThresh ||
+                        absAccel[X] > movementAccelThresh);
             break;
           default:
             printf("Unexpected whichAxis = %d\n", whichAxis);
@@ -257,12 +285,11 @@ namespace Anki {
       
       void SetLED(WhichLEDs whichLEDs, u32 color)
       {
-        const UpAxis currentUpAxis = GetCurrentUpAxis();
         static const u8 FIRST_BIT = 0x01;
         u8 shiftedLEDs = static_cast<u8>(whichLEDs);
         for(u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
           if(shiftedLEDs & FIRST_BIT) {
-            SetLED_helper(ledIndexLUT[currentUpAxis][i], color);
+            SetLED_helper(ledIndexLUT[currentUpAxis_][i], color);
           }
           shiftedLEDs = shiftedLEDs >> 1;
         }
@@ -270,8 +297,7 @@ namespace Anki {
       
       inline void SetLED(u32 ledIndex, u32 color)
       {
-        const UpAxis currentUpAxis = GetCurrentUpAxis();
-        SetLED_helper(ledIndexLUT[currentUpAxis][ledIndex], color);
+        SetLED_helper(ledIndexLUT[currentUpAxis_][ledIndex], color);
       }
 
       // Alpha blending (w/ black) without using floating point:
@@ -296,7 +322,6 @@ namespace Anki {
       
       void ApplyLEDParams(TimeStamp_t currentTime)
       {
-        const UpAxis currentUpAxis = GetCurrentUpAxis();
         for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
           if(currentTime > ledParams_[i].nextSwitchTime) {
             u32 newColor = 0;
@@ -336,16 +361,16 @@ namespace Anki {
                 assert(0);
             }
             
-            SetLED_helper(ledIndexLUT[currentUpAxis][i], newColor);
+            SetLED_helper(ledIndexLUT[currentUpAxis_][i], newColor);
             
           } else if(ledParams_[i].state == LEDState::LED_TURNING_OFF) {
             // Compute alpha b/w 0 and 255 w/ no floating point:
             const u8 alpha = ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOffPeriod_ms;
-            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+            SetLED_helper(ledIndexLUT[currentUpAxis_][i], AlphaBlend(ledParams_[i].color, alpha));
           } else if(ledParams_[i].state == LEDState::LED_TURNING_ON) {
             // Compute alpha b/w 0 and 255 w/ no floating point:
             const u8 alpha = 255 - ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOnPeriod_ms;
-            SetLED_helper(ledIndexLUT[currentUpAxis][i], AlphaBlend(ledParams_[i].color, alpha));
+            SetLED_helper(ledIndexLUT[currentUpAxis_][i], AlphaBlend(ledParams_[i].color, alpha));
           } // if(currentTime > nextSwitchTime)
           
         } // for each LED
@@ -397,6 +422,22 @@ namespace Anki {
           }
           
           double currTime = block_controller.getTime();
+          
+          bool isMoving = false;
+          currentUpAxis_ = GetCurrentUpAxis(isMoving);
+          
+          if(isMoving) {
+            printf("Block %d appears to have moved.\n", blockID_);
+            
+            BlockMessages::BlockMoved msg;
+            msg.blockID = blockID_;
+            const double* accelVals = accel_->getValues();
+            msg.xAccel = accelVals[0];
+            msg.yAccel = accelVals[1];
+            msg.zAccel = accelVals[2];
+            
+            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
+          }
           
           // Run FSM
           switch(state_) {
