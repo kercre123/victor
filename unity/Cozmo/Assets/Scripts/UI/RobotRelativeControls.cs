@@ -14,8 +14,6 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] float gyroSleepTime = 3f;
 	[SerializeField] Text text_x = null;
 	[SerializeField] Text text_y = null;
-	[SerializeField] Text text_leftWheelSpeed = null;
-	[SerializeField] Text text_rightWheelSpeed = null;
 	[SerializeField] float swipeTurnAngle = 0f;
 	[SerializeField] bool doubleTapTurnAround = true;
 	[SerializeField] float headAngleChangeRate = 1f;
@@ -558,9 +556,6 @@ public class RobotRelativeControls : MonoBehaviour {
 	void RefreshDebugText() {
 		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
 		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
-		
-		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
-		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
 	}
 #endregion
 

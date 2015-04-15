@@ -13,8 +13,15 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 
+	//if this cube is stacked on another, we store a reference to simplify build validation
+	[SerializeField] public BuildInstructionsCube cubeBelow = null;
+
 	[SerializeField] SpriteRenderer[] symbols;
+	[SerializeField] SpriteRenderer[] symbolFrames;
 	[SerializeField] MeshRenderer[] activeCorners;
+
+	[SerializeField] public float invalidAlpha = 0.25f;
+
 
 	int lastPropType = 0;
 	bool lastValidated = false;
@@ -26,9 +33,16 @@ public class BuildInstructionsCube : MonoBehaviour {
 	public bool Validated = false;
 	public bool Highlighted = false;
 	public bool Hidden = false;
+	public int AssignedObjectID = 0;
+	public float Size = 1f;
 
 	Material meshMaterial = null;
 	bool initialized = false;
+
+	void Awake() {
+		BoxCollider box = GetComponent<BoxCollider>();
+		Size = box.size.x;
+	}
 
 	public void Initialize() {
 		lastPropType = 0;
@@ -73,8 +87,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 		meshCube.enabled = !Hidden;
 		if(!Hidden) {
+			float alpha = Validated ? 1f : invalidAlpha;
+
 			Color color = baseColor;
-			color.a = Validated ? 1f : 0.25f;
+			color.a = alpha; //Highlighted ? 0f : 1f;
 			meshMaterial.color = color;
 
 			if(symbols != null) {
@@ -83,6 +99,9 @@ public class BuildInstructionsCube : MonoBehaviour {
 						Sprite sprite = null;
 						if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetDigitSprite(i+1);
 						symbols[i].sprite = sprite;
+						color = symbols[i].color;
+						color.a = alpha;
+						symbols[i].color = color;
 					}
 				}
 				else {
@@ -90,14 +109,27 @@ public class BuildInstructionsCube : MonoBehaviour {
 					if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetSpriteForObjectType(objectType);
 					for(int i=0;i<symbols.Length;i++) {
 						symbols[i].sprite = sprite;
+						color = symbols[i].color;
+						color.a = alpha;
+						symbols[i].color = color;
 					}
 				}
 			}
+
+			if(symbolFrames != null) {
+				for(int i=0;i<symbolFrames.Length;i++) {
+					color = symbolFrames[i].color;
+					color.a = alpha;
+					symbolFrames[i].color = color;
+				}
+			}
+
 			if(activeCorners != null) {
 				if(objectType == 0) {
 					Color activeColor = Color.white;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockType(activeBlockType);
 					for(int i=0;i<activeCorners.Length;i++) {
+						activeColor.a = alpha;
 						activeCorners[i].material.color = activeColor;
 						activeCorners[i].gameObject.SetActive(true);
 					}

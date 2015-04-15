@@ -15,6 +15,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] Button buttonStartBuild;
 	[SerializeField] Button buttonValidateBuild;
 	[SerializeField] ScreenMessage screenMessage = null;
+	[SerializeField] float coplanarFudge = 0.2f;
+	[SerializeField] float distanceFudge = 0.5f;
 
 	public bool Validated { get; private set; }
 
@@ -73,7 +75,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		robot = RobotEngineManager.instance.current;
 
-		if(dirty) RefreshLayout();
+		//if(dirty) 
+			RefreshLayout();
 		dirty = false;
 	}
 
@@ -91,31 +94,29 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		title.text = layout.title;
 
-		for(int i=0; i<layout.blocks.Length; i++) {
-			if(currentPageIndex == 0) {
-				layout.blocks[i].Hidden = false;
-				layout.blocks[i].Highlighted = false;
-				layout.blocks[i].Validated = true;
-			}
-			else {
-				bool stepValidated = false;
-				//layout.cube[i].Hidden = i >= (currentPageIndex-1);
-				layout.blocks[i].Highlighted = !stepValidated;
+		bool completed = false;
+		int validCount = 0;
 
-				//dmd2do make cozmo confirm this cubes existance and position
-				layout.blocks[i].Validated = stepValidated;
-			}
+		if(currentPageIndex == 0) {
+			ShowAllBlocks();
+		}
+		else {
+			validCount = ValidateBlocks();
+			completed = validCount == layout.blocks.Count;
 		}
 
 		if(instructions != null) {
 			if(currentPageIndex <= 0) {
 				instructions.text = "Press to start building this game's layout!";
 			}
-			else if(currentPageIndex >= layout.blocks.Length+1) {
-				instructions.text = "Press to validate the build and start playing!";
+			else if(completed) {
+				instructions.text = "Layout completed, Tap here to start playing!";
+			}
+			else if(validCount == 0) {
+				instructions.text = "Place blocks to set up this game!" ;
 			}
 			else {
-				instructions.text = "Build this layout!" ;
+				instructions.text = "Cozmo's build progress: " + validCount + " / " + layout.blocks.Count;
 			}
 		}
 
@@ -171,7 +172,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		Validated = true;
 	}
 
-	private void SuccessOrFailure(bool success, ActionCompleted action_type) {
+	void SuccessOrFailure(bool success, ActionCompleted action_type) {
 		if(success) {
 			dirty = true; //for now let's just refresh whenever an action finishes
 			switch(action_type) {
@@ -209,16 +210,125 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
-	private bool CozmoKnowsAboutObjectOfType(int objType) {
+	void ShowAllBlocks() {
+		GameLayout layout = currentLayout;
+		if(layout == null) return;
 
-		for(int i=0; i<robot.knownObjects.Count; i++) {
+		for(int i=0; i<layout.blocks.Count; i++) {
+			layout.blocks[i].Hidden = false;
+			layout.blocks[i].Highlighted = false;
+			layout.blocks[i].Validated = true;
+			layout.blocks[i].AssignedObjectID = -1;
+		}
+	}
+
+	int ValidateBlocks() {
+		GameLayout layout = currentLayout;
+		if(layout == null) return 0;
+
+		List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
+
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
+
+			block.Hidden = false;
+			block.Highlighted = true;
+			block.Validated = false;
+			block.AssignedObjectID = -1;
+
+			//Debug.Log("attempting to validate block of type("+block.objectType+")");
+
+			//cannot validate a block before the one it is stacked upon
+			if(block.cubeBelow != null && !block.cubeBelow.Validated) continue;
+
+			//search through known objects for one that can be assigned
+			for(int knownObjectIndex=0; knownObjectIndex<robot.knownObjects.Count && validated.Count < layout.blocks.Count; knownObjectIndex++) {
+
+				ObservedObject newObject = robot.knownObjects[knownObjectIndex];
+
+				//skip objects of the wrong type
+				if(block.objectType != (int)newObject.ObjectType) continue;
+
+				//skip objects already assigned to a layout block
+				if(layout.blocks.Find( x => x.AssignedObjectID == newObject.ID) != null) continue;
+
+				if(validated.Count == 0) {
+					validated.Add(block);
+					block.AssignedObjectID = newObject.ID;
+					block.Validated = true;
+					block.Highlighted = false;
+				}
+				//if this ideal block needs to get stacked on one we already know about...
+				else if(block.cubeBelow != null) {
+
+					ObservedObject objectToStackUpon = robot.knownObjects.Find( x => x.ID == block.cubeBelow.AssignedObjectID);
+
+					Vector3 real = (newObject.WorldPosition - objectToStackUpon.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+					float dist = ((Vector2)real).magnitude;
+					bool valid = dist < distanceFudge && Mathf.Abs(1f - real.z) < coplanarFudge;
+
+					if(valid) {
+						validated.Add(block);
+						block.AssignedObjectID = newObject.ID;
+						block.Validated = true;
+						block.Highlighted = false;
+					}
+					else {
+						Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
+					}
+				}
+				//if we have some blocks validated so far, then we'll do distance checks to each
+				// and also confirm relative angles?
+				else {
 
 
+					bool valid = true;
+
+					for(int validatedIndex=0;validatedIndex < validated.Count;validatedIndex++) {
+						//let's just compared distances from unstacked blocks
+						if(validated[validatedIndex].cubeBelow != null) continue;
+
+						Vector3 idealOffset = (block.transform.position - validated[validatedIndex].transform.position) / block.Size;
+						float up = idealOffset.y;
+						float forward = idealOffset.z;
+						idealOffset.y = forward;
+						idealOffset.z = up;
+						
+						ObservedObject priorObject = robot.knownObjects.Find( x => x.ID == validated[validatedIndex].AssignedObjectID);
+						Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+						
+						//are we basically on the same plane and roughly the correct distance away?
+						if(Mathf.Abs(realOffset.z) > coplanarFudge){
+							valid = false;
+							Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
+							break;
+						}
+
+						float idealDistance = ((Vector2)idealOffset).magnitude;
+						float realDistance = ((Vector2)realOffset).magnitude;
+
+						float distanceError = Mathf.Abs(realDistance - idealDistance);
+						if( distanceError > distanceFudge ) {
+							valid = false;
+							Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
+							break;
+						}
+
+					}
+
+					if(valid) {
+						validated.Add(block);
+						block.AssignedObjectID = newObject.ID;
+						block.Validated = true;
+						block.Highlighted = false;
+					}
+				}
+
+			}
 
 		}
 
-
-		return false;
+		return validated.Count;
 	}
 
 }

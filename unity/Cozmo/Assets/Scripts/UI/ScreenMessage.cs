@@ -8,13 +8,9 @@ public class ScreenMessage : MonoBehaviour {
 
 	IEnumerator coroutine = null;
 
-	// Use this for initialization
-	void Start () {
-		text.gameObject.SetActive (true);
-	}
-	
-	// Update is called once per frame
-	void Update () {
+	void Awake () {
+		text.text = null;
+		text.gameObject.SetActive(true);
 	}
 
 	public void ShowMessageForDuration(string message, float time_in_seconds, Color color)
