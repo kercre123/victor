@@ -97,8 +97,6 @@ namespace Anki {
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       bool                       _alreadyAtGoal;
-      Radians                    _finalHeadAngle;
-      bool                       _headAngleSent;
       
     }; // DriveToObjectAction
     
@@ -158,8 +156,8 @@ namespace Anki {
     };  // class MoveHeadToAngleAction
     
     
-    // Tilt head and rotate body to face the specified object. Use angles
-    // specified at construction to control the body rotation.
+    // Tilt head and rotate body to face the specified (marker on an) object.
+    // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public IAction
     {
     public:
@@ -169,6 +167,10 @@ namespace Anki {
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
       FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool headTrackWhenDone = false);
+      
+      FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
+                       Radians turnAngleTol, Radians maxTurnAngle,
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
@@ -187,12 +189,33 @@ namespace Anki {
       
       CompoundActionParallel _compoundAction;
       
-      ObjectID   _objectID;
-      Radians    _turnAngleTol;
-      Radians    _maxTurnAngle;
-      bool       _headTrackWhenDone;
+      ObjectID             _objectID;
+      Vision::Marker::Code _whichCode;
+      Radians              _turnAngleTol;
+      Radians              _maxTurnAngle;
+      f32                  _waitToVerifyTime;
+      bool                 _headTrackWhenDone;
       
     }; // FaceObjectAction
+    
+    
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public FaceObjectAction
+    {
+    public:
+      VisuallyVerifyObjectAction(ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_VISUALLY_VERIFY_OBJECT; }
+      
+    protected:
+      
+      virtual bool ShouldLockWheels() const override { return true; }
+      
+    }; // class VisuallyVerifyObjectAction
     
     
     // Interface for actions that involve "docking" with an object
@@ -200,6 +223,8 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID, const bool useManualSpeed);
+      
+      virtual ~IDockAction();
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
@@ -234,11 +259,12 @@ namespace Anki {
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
+      const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
-
+      VisuallyVerifyObjectAction* _visuallyVerifyAction;
     }; // class IDockAction
 
     
@@ -273,13 +299,15 @@ namespace Anki {
     }; // class DockWithObjectAction
 
     
-    // Common compound action
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then picking/placing it.
     class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
     {
     public:
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed)})
       {
         

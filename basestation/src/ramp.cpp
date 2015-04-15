@@ -70,7 +70,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
       }
       _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose, DEG_TO_RAD(-10));
+      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose);
       
       const f32 SideMarkerHeight = 16.f;
       
@@ -81,11 +81,11 @@ namespace Anki {
       
       const Pose3d rightPose(0.f, Z_AXIS_3D(), {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
       _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
+      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset);
       
       const Pose3d leftPose(M_PI, Z_AXIS_3D(), {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
       _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, DEG_TO_RAD(-15));
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset);
       
       Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
                      {{Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height}});
@@ -97,7 +97,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
       }
       _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose, MIN_HEAD_ANGLE);
+      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose);
       
     } // Ramp() Constructor
     
