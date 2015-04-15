@@ -88,6 +88,8 @@ public class CozmoVision : MonoBehaviour
 		if(actionPanelPrefab != null) {
 			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
 			actionPanel = actionPanelObject.GetComponentInChildren<ActionPanel>();
+			Canvas actionCanvas = actionPanelObject.GetComponent<Canvas>();
+			actionCanvas.sortingOrder = 10;
 			actionPanel.gameObject.SetActive(false);
 		}
 	}
