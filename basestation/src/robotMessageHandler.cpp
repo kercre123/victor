@@ -560,10 +560,15 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageGoalPose const& msg)
     {
-      // Anki::Pose3d p(msg.pose_angle, Z_AXIS_3D(),
-      //                Vec3f(msg.pose_x, msg.pose_y, msg.pose_z));
-      // PRINT_INFO("Goal pose: x=%f y=%f %f deg\n", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle));
-      // VizManager::getInstance()->DrawPreDockPose(100, p);
+      Anki::Pose3d p(msg.pose_angle, Z_AXIS_3D(),
+                     Vec3f(msg.pose_x, msg.pose_y, msg.pose_z));
+      //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)\n", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
+      if (msg.followingMarkerNormal) {
+        VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::RED);
+      } else {
+        VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::GREEN);
+      }
+
       return RESULT_OK;
     }
 

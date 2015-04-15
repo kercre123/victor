@@ -220,6 +220,7 @@ ADD_MESSAGE_MEMBER(f32, pose_x)
 ADD_MESSAGE_MEMBER(f32, pose_y)
 ADD_MESSAGE_MEMBER(f32, pose_z)
 ADD_MESSAGE_MEMBER(f32, pose_angle)
+ADD_MESSAGE_MEMBER(u8, followingMarkerNormal)
 END_MESSAGE_DEFINITION(GoalPose)
 
 // ----- Block messages ------

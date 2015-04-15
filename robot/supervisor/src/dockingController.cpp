@@ -155,8 +155,9 @@ namespace Anki {
         Messages::GoalPose msg;
         msg.pose_x = p.GetX();
         msg.pose_y = p.GetY();
-        msg.pose_z = 10;
+        msg.pose_z = 0;
         msg.pose_angle = p.GetAngle().ToFloat();
+        msg.followingMarkerNormal = followingBlockNormalPath_;
         if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::GoalPose), &msg)) {
           return RESULT_OK;
         }
