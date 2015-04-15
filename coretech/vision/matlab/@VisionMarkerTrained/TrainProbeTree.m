@@ -13,7 +13,7 @@ redBlackSampleFraction = 0.75;
 maxDepth = inf;
 addInversions = true;
 saveTree = true;
-baggingSampleFraction = [];
+baggingSampleFraction = []; % set to 0 to automatically sample sqrt(N) points
 probeSampleMethod = 'gradMag'; % 'gradMag', 'alternative', 'none'
 probeSampleFraction = 1;
 maxInfoGainFraction = [];
@@ -33,6 +33,7 @@ parseVarargin(varargin{:});
 
 if baggingIterations > 1
   probeTree = cell(1, baggingIterations);
+  
   for iBag = 1:baggingIterations
     fprintf('\n\n\n=== Training Bag %d of %d ===\n\n', iBag, baggingIterations);
     probeTree{iBag} = VisionMarkerTrained.TrainProbeTree(varargin{:}, 'baggingIterations', 1, 'saveTree', false, 'testTree', false);
@@ -82,9 +83,15 @@ if isempty(weights)
 end
 
 if ~isempty(baggingSampleFraction)
+  
+  N = size(probeValues,2);
+  
+    if baggingSampleFraction == 0 %#ok<BDSCI>
+      baggingSampleFraction = round(sqrt(N));
+    end
+    
     t_bagSample = tic;
     fprintf('Sampling %.1f%% of training examples with replacement...', baggingSampleFraction*100);
-    N = size(probeValues,2);
     
     sampleIndex = randi(N, 1, ceil(baggingSampleFraction*N));
     
@@ -99,8 +106,13 @@ end
 
 if probeSampleFraction < 1
     t_probeSample = tic;
+    numProbes = size(probeValues,1);
+    if probeSampleFraction == 0
+      probeSampleFraction = sqrt(numProbes)/numProbes;
+    end
+    
     fprintf('Sampling %.1f%% of probes...', probeSampleFraction*100);
-    sampleMask = rand(size(probeValues,1),1) < probeSampleFraction;
+    sampleMask = rand(numProbes,1) < probeSampleFraction;
     probeValues   = probeValues(sampleMask,:);
     gradMagValues = gradMagValues(sampleMask,:);
     xgrid = xgrid(sampleMask,:);
