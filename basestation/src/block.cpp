@@ -553,6 +553,11 @@ namespace Anki {
     }
      */
     
+    bool ActiveCube::CanBeUsedForLocalization() const
+    {
+      return IsLocalized();
+    }
+    
     void ActiveCube::Identify()
     {
       // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value

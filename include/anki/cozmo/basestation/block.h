@@ -285,6 +285,10 @@ namespace Anki {
         return new ActiveCube(this->_type);
       }
       
+      // This overrides ObservableObject::SetPose to mark this object as localized
+      // anytime its pose is set
+      void SetPose(const Pose3d& newPose);
+      
       // Set the same color and flashing frequency of one or more LEDs on the block
       // If turnOffUnspecifiedLEDs is true, any LEDs that were not indicated by
       // whichLEDs will be turned off. Otherwise, they will be left in their current
@@ -316,6 +320,8 @@ namespace Anki {
       virtual bool IsIdentified() const override { return _activeID >= 0; }
       
       virtual bool IsActive() const override { return true; }
+      
+      virtual bool CanBeUsedForLocalization() const override;
       
       virtual s32 GetActiveID() const override { return _activeID; }
       

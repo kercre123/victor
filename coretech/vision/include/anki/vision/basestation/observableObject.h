@@ -85,6 +85,15 @@ namespace Anki {
       virtual bool IsIdentified() const { return false; }
       virtual void Identify() { /* no-op */ }
       
+      // Override for objects that can be used for localization (e.g., mats
+      // or active blocks that have not moved since last localization)
+      virtual bool CanBeUsedForLocalization() const { return false; }
+      
+      // Mark this object as delocalized (and thus not usable by a robot for
+      // localization).
+      bool IsLocalized() const { return _isLocalized; } 
+      void Delocalize() { _isLocalized = false; }
+      
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
       // object from which it was computed.
@@ -200,6 +209,9 @@ namespace Anki {
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
       
+      // Pose has been set
+      bool   _isLocalized;
+      
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
       //ObservableObject(const ObservableObject& other);
@@ -229,6 +241,7 @@ namespace Anki {
   
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
       _pose = newPose;
+      _isLocalized = true;
       
       std::string poseName(GetType().GetName());
       if(poseName.empty()) {

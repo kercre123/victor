@@ -582,9 +582,9 @@ namespace Anki {
           Vision::ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
-            // TODO: Mark object as de-localized
             printf("Received message that Object %d (Active ID %d) moved.\n",
                    objectWithID.first.GetValue(), msg.objectID);
+            object->Delocalize();
             return RESULT_OK;
           }
         }
