@@ -1067,12 +1067,6 @@ namespace Anki {
     // Sends message to move head at specified speed
     Result Robot::MoveHead(const f32 speed_rad_per_sec)
     {
-      if(_trackHeadToObjectID.IsSet()) {
-        PRINT_NAMED_INFO("Robot.MoveHead.DisableHeadTracking",
-                         "Disabling head tracking to object %d.\n",
-                         _trackHeadToObjectID.GetValue());
-        DisableTrackHeadToObject();
-      }
       return SendMoveHead(speed_rad_per_sec);
     }
     
@@ -1089,12 +1083,6 @@ namespace Anki {
                                   const f32 max_speed_rad_per_sec,
                                   const f32 accel_rad_per_sec2)
     {
-      if(_trackHeadToObjectID.IsSet()) {
-        PRINT_NAMED_INFO("Robot.MoveHeadToAngle.DisableHeadTracking",
-                         "Disabling head tracking to object %d.\n",
-                         _trackHeadToObjectID.GetValue());
-        DisableTrackHeadToObject();
-      }
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
     }
       
