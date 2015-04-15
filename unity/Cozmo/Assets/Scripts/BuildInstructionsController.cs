@@ -351,6 +351,9 @@ public class BuildInstructionsController : MonoBehaviour {
 			case ActionCompleted.PLACE_OBJECT_HIGH:
 					iObjectPlaced = true;
 					break;
+			case ActionCompleted.PICK_AND_PLACE_INCOMPLETE:
+					iObjectPlaced = false;
+					break;
 			case ActionCompleted.CROSS_BRIDGE:
 			case ActionCompleted.ASCEND_OR_DESCEND_RAMP:
 			case ActionCompleted.TRAVERSE_OBJECT:
