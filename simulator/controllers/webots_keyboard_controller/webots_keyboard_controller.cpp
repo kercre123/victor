@@ -789,12 +789,12 @@ namespace Anki {
                 // TODO: How to choose which robot
                 const RobotID_t robotID = 1;
                 
-                // I - Request a single image from the game for a specified robot
+                // U - Request a single image from the game for a specified robot
                 ImageSendMode_t mode = ISM_SINGLE_SHOT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT+I - Toggle image streaming from the game
-                  static bool streamOn = false;
+                  static bool streamOn = true;
                   if (streamOn) {
                     mode = ISM_OFF;
                     printf("Turning game image streaming OFF.\n");
@@ -1573,6 +1573,9 @@ namespace Anki {
               if(didForceAdd) {
                 PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
               }
+              
+              // Turn on image streaming to game/UI by default:
+              SendImageRequest(ISM_STREAM, 1);
               
               uiState_ = UI_RUNNING;
             }
