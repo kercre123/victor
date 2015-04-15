@@ -49,6 +49,8 @@ namespace Anki {
       
       typedef enum {
         TEXT_LABEL_POSE,
+        TEXT_LABEL_HEAD_LIFT,
+        TEXT_LABEL_IMU,
         TEXT_LABEL_SPEEDS,
         TEXT_LABEL_PROX_SENSORS,
         TEXT_LABEL_BATTERY,
@@ -361,10 +363,21 @@ namespace Anki {
     {
       char txt[128];
       
-      sprintf(txt, "Pose: head=%3d deg, lift=%3d mm",
-              (int)RAD_TO_DEG_F32(msg.headAngle),
-              (int)msg.liftHeight);
+      sprintf(txt, "Pose: %6.1f, %6.1f, ang: %4.1f",
+              msg.pose_x,
+              msg.pose_y,
+              RAD_TO_DEG_F32(msg.pose_angle));
       DrawText(TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "Head: %5.1f deg, Lift: %4.1f mm",
+              RAD_TO_DEG_F32(msg.headAngle),
+              msg.liftHeight);
+      DrawText(TEXT_LABEL_HEAD_LIFT, Anki::NamedColors::GREEN, txt);
+
+      sprintf(txt, "Pitch: %4.1f deg (IMUHead: %4.1f deg)",
+              RAD_TO_DEG_F32(msg.pose_pitch_angle),
+              RAD_TO_DEG_F32(msg.pose_pitch_angle + msg.headAngle));
+      DrawText(TEXT_LABEL_IMU, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "Speed L: %4d  R: %4d mm/s",
               (int)msg.lwheel_speed_mmps,
