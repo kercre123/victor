@@ -626,6 +626,9 @@ namespace Anki {
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);
       
+      // Can't track head to an object and face it
+      robot.DisableTrackHeadToObject();
+      
       return SUCCESS;
     }
     
@@ -888,9 +891,10 @@ namespace Anki {
         
         // Set up a visual verification action to make sure we can still see the correct
         // marker of the selected object before proceeding
+        // NOTE: This also disables tracking head to object if there was any
         _visuallyVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID,
                                                                _dockMarker->GetCode());
-        
+
         return SUCCESS;
       }
       
