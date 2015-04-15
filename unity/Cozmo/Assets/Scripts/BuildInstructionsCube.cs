@@ -62,7 +62,6 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	void Refresh() {
 
-		int colorIndex = Mathf.Clamp((int)objectType, 0, 9);
 		vCube.SetColor(baseColor);
 
 		if(Highlighted) {
