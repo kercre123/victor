@@ -561,6 +561,12 @@ namespace Anki {
         Vision::KnownMarker* closestMarker = nullptr;
         if(markers.size() == 1) {
           closestMarker = markers.front();
+          if(false == closestMarker->GetPose().GetWithRespectTo(robot.GetPose(), objectPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+                              "Could not get pose of marker with code %d of object %d "
+                              "w.r.t. robot pose.\n", _whichCode, _objectID.GetValue() );
+            return FAILURE_ABORT;
+          }
         } else {
           f32 closestDist = std::numeric_limits<f32>::max();
           Pose3d markerPoseWrtRobot;
@@ -759,7 +765,17 @@ namespace Anki {
     , _angleTolerance(tolerance)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
     {
-
+      if(_headAngle < MIN_HEAD_ANGLE) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+                            "Requested head angle (%.1fdeg) less than min head angle (%.1fdeg). Clipping.\n",
+                            _headAngle.getDegrees(), RAD_TO_DEG(MIN_HEAD_ANGLE));
+        _headAngle = MIN_HEAD_ANGLE;
+      } else if(_headAngle > MAX_HEAD_ANGLE) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+                            "Requested head angle (%.1fdeg) more than max head angle (%.1fdeg). Clipping.\n",
+                            _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
+        _headAngle = MAX_HEAD_ANGLE;
+      }
     }
     
     IActionRunner::ActionResult MoveHeadToAngleAction::Init(Robot &robot)
