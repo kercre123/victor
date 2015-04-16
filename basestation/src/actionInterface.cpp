@@ -47,6 +47,10 @@ namespace Anki {
       ActionResult result = UpdateInternal(robot);
       
       if(result != RUNNING) {
+        PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
+                         "%s completed %s.\n", GetName().c_str(),
+                         (result==SUCCESS ? "successfully" : "but failed"));
+        
         if(!_isPartOfCompoundAction) {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,
