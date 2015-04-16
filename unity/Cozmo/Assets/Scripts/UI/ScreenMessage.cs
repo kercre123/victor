@@ -21,7 +21,7 @@ public class ScreenMessage : MonoBehaviour {
 	{
 		if(coroutine != null) StopCoroutine(coroutine);
 
-		//text.text = G2U_Message;
+		//text.text = G2U.Message;
 		ShowMessage (message, color);
 
 		coroutine = TurnOffText(time_in_seconds);
@@ -30,12 +30,22 @@ public class ScreenMessage : MonoBehaviour {
 
 	public void ShowMessage(string message, Color color)
 	{
+		if (text == null) 
+		{
+			Debug.LogError("text is null for some reason");
+			return;
+		}
 		text.text = message;
 		text.color = color;
 	}
 
 	public void KillMessage()
 	{
+		if (text == null) 
+		{
+			Debug.LogError("text is null for some reason");
+			return;
+		}
 		text.text = string.Empty;
 	}
 

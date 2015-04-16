@@ -221,6 +221,7 @@ GameObject:
   - 224: {fileID: 22425388}
   - 114: {fileID: 11425400}
   - 82: {fileID: 8225370}
+  - 114: {fileID: 11499864}
   m_Layer: 5
   m_Name: Treasure Hunt
   m_TagString: Untagged
@@ -1064,7 +1065,7 @@ MonoBehaviour:
   textTime: {fileID: 11425414}
   autoPlay: 0
   playButton: {fileID: 11413714}
-  buildInstructionsController: {fileID: 0}
+  gameLayoutTracker: {fileID: 0}
   buildInstructionsLayoutFilter: TreasureHunt
   resultsPanel: {fileID: 11425374}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
@@ -1090,10 +1091,13 @@ MonoBehaviour:
   extractButton: {fileID: 11425380}
   detectRangeDelayFar: 2
   detectRangeDelayClose: .200000003
+  light_messaging_delay: .5
   hideRadius: 300
   findRadius: 50
+  returnRadius: 75
   detectRadius: 300
   extractionTime: 1.5
+  rewardTime: 1.5
   resultsScore: {fileID: 11425412}
 --- !u!114 &11425404
 MonoBehaviour:
@@ -1305,6 +1309,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   text: {fileID: 11425396}
+--- !u!114 &11499864
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 125388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3dcb1bc07973f4eb0a48fc842f364f80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  actionSprites:
+  - {fileID: 0}
+  - {fileID: 21300000, guid: ea50afe86c2ce4fa6b5f6a6d37ed2357, type: 3}
+  - {fileID: 21300000, guid: f6bb6613e54364e69bfe73022cc2bdcb, type: 3}
+  - {fileID: 21300000, guid: 5b3223eb54c8048f49a536fc3fb44062, type: 3}
+  - {fileID: 21300000, guid: 21ea921b9bd0e49e8a631369baa6bc2d, type: 3}
+  - {fileID: 21300000, guid: 02a354d7910dd40c7b9d0626c0ce57cd, type: 3}
+  - {fileID: 21300000, guid: cbf723abe54a1427d8de99c336b0f258, type: 3}
+  - {fileID: 21300000, guid: 741a44f60c05e48ccaee3bfe0dd581b3, type: 3}
+  - {fileID: 21300000, guid: ca5a5e7a5bc224ed781d3ba32a7fbf3d, type: 3}
 --- !u!222 &22213714
 CanvasRenderer:
   m_ObjectHideFlags: 1

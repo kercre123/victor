@@ -72,7 +72,7 @@ namespace Cozmo {
     
     void ProcessDeviceImage(const Vision::Image& image);
     
-    const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    const std::vector<Cozmo::G2U::DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
     void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
     
@@ -131,14 +131,14 @@ namespace Cozmo {
     //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
     
     void RegisterCallbacksU2G();
-    void ProcessBadType_U2G_Message(U2G_Message::Type type);
+    void ProcessBadTag_Message(U2G::Message::Tag tag);
 #include "comms/messaging/UiMessageDefinitionsU2G_declarations.def"
     
     //
     // Member Variables
     //
     
-    Cozmo::G2U_Ping                  _pingToUI;
+    Cozmo::G2U::Ping                  _pingToUI;
     f32                              _lastPingTimeFromUI_sec;
     u32                              _lastPingCounterFromUI;
     
@@ -159,7 +159,7 @@ namespace Cozmo {
     
     std::map<RobotID_t, ImageSendMode_t> _imageSendMode;
     
-    std::vector<Cozmo::G2U_DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
+    std::vector<Cozmo::G2U::DeviceDetectedVisionMarker> _visionMarkersDetectedByDevice;
     
     std::vector<Signal::SmartHandle> _signalHandles;
 

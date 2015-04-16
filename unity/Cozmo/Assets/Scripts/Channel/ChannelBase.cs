@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
 
 /// <summary>
 /// The type of protocol to communicate over.
@@ -58,7 +60,7 @@ public abstract class ChannelBase {
 	/// <summary>
 	/// Occurs when a valid message is received from the client.
 	/// </summary>
-	public event Action<G2U_Message> MessageReceived;
+	public event Action<G2U.Message> MessageReceived;
 
 	/// <summary>
 	/// True when there is any network traffic (eg disconnection messages, asynchronous sends cleaning up).
@@ -79,7 +81,7 @@ public abstract class ChannelBase {
 		}
 	}
 
-	protected void RaiseMessageReceived(G2U_Message message)
+	protected void RaiseMessageReceived(G2U.Message message)
 	{
 		if (MessageReceived != null) {
 			MessageReceived(message);
@@ -107,7 +109,7 @@ public abstract class ChannelBase {
 	/// </summary>
 	/// <param name="message">The message to send, which is serialized immediately.</param>
 	/// <remarks>Only call this from the main Unity thread.</remarks>
-	public abstract void Send(U2G_Message message);
+	public abstract void Send(U2G.Message message);
 
 	/// <summary>
 	/// Updates the connection, allowing it to send events on the main Unity thread.

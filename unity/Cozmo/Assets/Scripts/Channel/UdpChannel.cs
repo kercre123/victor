@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
 
 // LostPolygon replacement doesn't seem to work on device
 // eventually we should replace this file with reliable C++ UDP anyway though
@@ -76,8 +78,8 @@ public class UdpChannel : ChannelBase {
 
 	// fixed messages
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg ();
-	private readonly U2G_Message pingMessage = new U2G_Message {Ping = new U2G_Ping()};
-	private readonly U2G_Message disconnectionMessage = new U2G_Message { DisconnectFromUiDevice = new U2G_DisconnectFromUiDevice() };
+	private readonly U2G.Message pingMessage = new U2G.Message {Ping = new U2G.Ping()};
+	private readonly U2G.Message disconnectionMessage = new U2G.Message { DisconnectFromUiDevice = new U2G.DisconnectFromUiDevice() };
 
 	// sockets
 	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -110,7 +112,7 @@ public class UdpChannel : ChannelBase {
 	// various queues
 	private readonly List<object> queuedLogs = new List<object>(MaxQueuedLogs);
 	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-	private readonly Queue<G2U_Message> receivedMessages = new Queue<G2U_Message> (MaxQueuedReceives);
+	private readonly Queue<G2U.Message> receivedMessages = new Queue<G2U.Message> (MaxQueuedReceives);
 
 	// lists of pooled objects
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
@@ -243,9 +245,9 @@ public class UdpChannel : ChannelBase {
 	}
 
 	// synchronous
-	public override void Send(U2G_Message message)
+	public override void Send(U2G.Message message)
 	{
-		if (message.GetTag() == U2G_Message.Tag.INVALID) {
+		if (message.GetTag() == U2G.Message.Tag.INVALID) {
 			throw new ArgumentException("Message id is not valid.", "message");
 		}
 
@@ -365,7 +367,7 @@ public class UdpChannel : ChannelBase {
 	private void ProcessMessages()
 	{
 		while (receivedMessages.Count > 0) {
-			G2U_Message message = receivedMessages.Dequeue();
+			G2U.Message message = receivedMessages.Dequeue();
 			try {
 				// can trigger Disconnect, InternalUpdate
 				RaiseMessageReceived(message);
@@ -489,7 +491,7 @@ public class UdpChannel : ChannelBase {
 	}
 
 	// synchronous
-	private void SendInternal(U2G_Message message)
+	private void SendInternal(U2G.Message message)
 	{
 		bool success = false;
 		SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
@@ -656,9 +658,9 @@ public class UdpChannel : ChannelBase {
 
 						lastReceiveTime = lastUpdateTime;
 
-						G2U_Message message;
+						G2U.Message message;
 						try {
-							message = new G2U_Message();
+							message = new G2U.Message();
 							try {
 								message.Unpack(state.stream);
 							}
