@@ -80,9 +80,10 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	}
 
 	private void AcquireTarget() {
-		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find(x => x.ID == robot.carryingObject) != null;
+		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.carryingObject != null && 
+								   robot.selectedObjects.Find(x => x.ID == robot.carryingObject) != null;
 		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
-								robot.selectedObjects.Find(x => x.ID == robot.targetLockedObject.ID) != null;
+								robot.selectedObjects.Find(x => x.ID == robot.targetLockedObject) != null;
 
 		if(targetingPropInHand || !alreadyHasTarget) {
 			robot.selectedObjects.Clear();

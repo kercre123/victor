@@ -85,6 +85,8 @@ public class ObservedObject
 		message.relativeToX = RobotEngineManager.instance.current.WorldPosition.x;
 		message.relativeToY = RobotEngineManager.instance.current.WorldPosition.y;
 
+		Debug.Log( "SendLightMessage: color" + message.color + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
 }
