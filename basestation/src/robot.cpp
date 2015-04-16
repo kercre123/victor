@@ -212,6 +212,24 @@ namespace Anki {
           }
         }
         
+#if(0)
+        // Compose line for entire state msg in hex
+        char stateMsgLine[256];
+        memset(stateMsgLine,0,256);
+        
+        u8 msgBytes[256];
+        msg.GetBytes(msgBytes);
+        for (int i=0; i< msg.GetSize(); i++){
+          sprintf(&stateMsgLine[2*i], "%02x", (unsigned char)msgBytes[i]);
+        }
+        sprintf(&stateMsgLine[msg.GetSize() *2],"\n");
+        FILE *stateFile;
+        stateFile = fopen("RobotState.txt", "a");
+        fputs(stateMsgLine, stateFile);
+        fclose(stateFile);
+#endif
+
+        
         // Write state message to JSON file
         std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
         
@@ -1997,6 +2015,13 @@ namespace Anki {
         m.imageSendMode = ISM_STREAM;
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
+        
+        // Reset pose on connect
+        PRINT_INFO("Setting pose to (0,0,0)\n");
+        Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
+        return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
+      } else {
+        PRINT_NAMED_WARNING("Robot.SendSyncTime.FailedToSend","");
       }
       
       return result;
