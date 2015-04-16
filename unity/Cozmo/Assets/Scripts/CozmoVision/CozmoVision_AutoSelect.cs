@@ -24,7 +24,9 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 	protected void Update()
 	{
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
+		if( actionPanel == null ) return;
+
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || actionPanel.gameActions == null )
 		{
 			actionPanel.DisableButtons();
 			return;

@@ -40,7 +40,7 @@ def parse_arguments():
         type=str.lower,
         nargs='?',
         default='generate',
-        choices=['generate', 'build', 'install', 'run', 'uninstall', 'clean', 'delete'],
+        choices=['generate', 'build', 'install', 'run', 'uninstall', 'clean', 'delete', 'wipeall!'],
         help=textwrap.dedent('''\
             generate (default) -- generate or regenerate projects
             build -- generate, then build the generated projects
@@ -49,6 +49,7 @@ def parse_arguments():
             uninstall -- uninstall the app from device
             clean -- issue the clean command to projects
             delete -- delete all generated projects
+            wipeall! -- delete, then wipe all ignored files in the entire repo
             '''))
     parser.add_argument(
         '-m',
@@ -138,6 +139,12 @@ def parse_arguments():
         action='store_const',
         const='debug',
         help='shortcut for --config Debug')
+    group.add_argument(
+        '-v',
+        '--verbose',
+        dest='verbose',
+        action='store_true',
+        help='echo all commands to the console')
     
     
     options = parser.parse_args()
@@ -167,6 +174,10 @@ def parse_arguments():
 class PlatformConfiguration(object):
     
     def __init__(self, platform, options):
+        if options.verbose:
+            print('')
+            print('Initializing paths...')
+        
         self.platform = platform
         self.options = options
         
@@ -216,6 +227,9 @@ class PlatformConfiguration(object):
             self.scheme = 'BUILD_WORKSPACE'
     
     def run(self):
+        if self.options.verbose:
+            print('')
+            print('Running {0} for configuration {1}...'.format(self.options.command, self.platform))
         if self.options.command in ('generate', 'build', 'install', 'run'):
             self.generate()
         if self.options.command in ('build', 'clean', 'install', 'run'):
@@ -228,6 +242,9 @@ class PlatformConfiguration(object):
             self.delete()
     
     def generate(self):
+        if self.options.verbose:
+            print('')
+            print('Generating files for platform {0}...'.format(self.platform))
         
         rel_cmake_project = os.path.relpath(self.cmake_project_path, self.workspace_dir)
         
@@ -273,6 +290,9 @@ class PlatformConfiguration(object):
             
     
     def build(self):
+        if self.options.verbose:
+            print('')
+            print('Building project for platform {0}...'.format(self.platform))
         
         if not os.path.exists(self.workspace_path):
             sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
@@ -291,6 +311,10 @@ class PlatformConfiguration(object):
                 simulator=self.options.simulator)
     
     def execute(self):
+        if self.options.verbose:
+            print('')
+            print('Installing/executing built binaries for platform {0}...'.format(self.platform))
+        
         if self.platform == 'ios':
             if self.options.command == 'install':
                 ankibuild.ios_deploy.install(self.ios_app_path)
@@ -304,12 +328,20 @@ class PlatformConfiguration(object):
             print('{0}: nothing to do on platform {1}'.format(self.options.command, self.platform))
     
     def uninstall(self):
+        if self.options.verbose:
+            print('')
+            print('Uninstalling platform {0}...'.format(self.platform))
+        
         if self.platform == 'ios':
             ankibuild.ios_deploy.install(self.ios_app_path)
         else:
             print('{0}: nothing to do on platform {1}'.format(self.options.command, self.platform))
     
     def delete(self):
+        if self.options.verbose:
+            print('')
+            print('Deleting generated files for platform {0}...'.format(self.platform))
+        
         # reverse generation
         ankibuild.util.File.rm_rf(self.workspace_path)
         ankibuild.util.File.rm_rf(self.derived_data_path)
@@ -320,9 +352,21 @@ class PlatformConfiguration(object):
             ankibuild.util.File.rm(self.unity_build_symlink)
         ankibuild.util.File.rm_rf(self.cmake_project_path)
 
+def dialog(prompt):
+    result = None
+    while not result:
+        result = raw_input(prompt).strip().lower()
+    return result in ('y', 'yes')
 
 if __name__ == '__main__':
     options = parse_arguments()
+    ankibuild.util.ECHO_ALL = options.verbose
+    
+    if options.command == 'wipeall!':
+        if not dialog('Are you sure you want to wipe all ignored files from the entire repository?\n' +
+                'This will return the repository to a just-checked-out state.\n' +
+                'You will need to do a full reimport in Unity and rebuild everything from scratch. (Y/N)'):
+            sys.exit('Operation cancelled.')
     
     if len(options.platforms) != 1:
         platforms_text = 'platforms {{{0}}}'
@@ -337,9 +381,22 @@ if __name__ == '__main__':
         config.run()
     
     # delete root build dirs if empty (or just dirs inside)
-    if options.command == 'delete':
+    if options.command in ('delete', 'wipeall!'):
+        if options.verbose:
+            print('')
+            print('Deleting generated folders (if empty)...')
         ankibuild.util.File.rmdir(options.build_dir)
         ankibuild.util.File.rmdir(options.output_dir)
+    
+    if options.command == 'wipeall!':
+        if options.verbose:
+            print('')
+            print('Wiping all ignored files from the entire repository...')
+        old_dir = ankibuild.util.File.pwd()
+        ankibuild.util.File.cd(REPO_ROOT)
+        ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
+        ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
+        ankibuild.util.File.cd(old_dir)
     
     print('DONE command {0} on {1}'.format(options.command, platforms_text))
     

@@ -30,10 +30,10 @@ namespace Cozmo {
   /*
    *  Helper macro for generating a callback lambda that captures "this" and 
    *  calls the corresponding ProcessMessage method. For example, for a 
-   *  U2G_FooBar, use REGISTER_CALLBACK(FooBar) and the following code
+   *  U2G::FooBar, use REGISTER_CALLBACK(FooBar) and the following code
    *  is generated:
    *
-   *    auto cbFooBar = [this](const U2G_FooBar& msg) {
+   *    auto cbFooBar = [this](const U2G::FooBar& msg) {
    *      this->ProcessMessage(msg);
    *    };
    *    _uiMsgHandler.RegisterCallbackForU2G_FooBar(cbFooBar);
@@ -43,7 +43,7 @@ namespace Cozmo {
    */
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
-    _uiMsgHandler.RegisterCallbackForMessage([this](const U2G_Message& msg) {
+    _uiMsgHandler.RegisterCallbackForMessage([this](const U2G::Message& msg) {
 #include "comms/messaging/UiMessageDefinitionsU2G_switch.def"
     });
   } // RegisterCallbacksU2G()
@@ -76,14 +76,14 @@ namespace Cozmo {
     return robot;
   }
   
-  void CozmoGameImpl::ProcessBadType_U2G_Message(U2G_Message::Type type)
+  void CozmoGameImpl::ProcessBadTag_Message(U2G::Message::Tag tag)
   {
-    PRINT_NAMED_WARNING("CozmoGameImpl.ProcessBadType",
+    PRINT_NAMED_WARNING("CozmoGameImpl.ProcessBadTag",
                         "Got unknown message with id %d.\n",
-                        type);
+                        tag);
   }
   
-  void CozmoGameImpl::Process_Ping(U2G_Ping const& msg)
+  void CozmoGameImpl::Process_Ping(U2G::Ping const& msg)
   {
     
     _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -102,7 +102,7 @@ namespace Cozmo {
     
   }
   
-  void CozmoGameImpl::Process_ConnectToRobot(U2G_ConnectToRobot const& msg)
+  void CozmoGameImpl::Process_ConnectToRobot(U2G::ConnectToRobot const& msg)
   {
     // Tell the game to connect to a robot, using a signal
     // CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
@@ -115,7 +115,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ConnectToUiDevice(U2G_ConnectToUiDevice const& msg)
+  void CozmoGameImpl::Process_ConnectToUiDevice(U2G::ConnectToUiDevice const& msg)
   {
     // Tell the game to connect to a UI device, using a signal?
     // CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
@@ -128,7 +128,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_DisconnectFromUiDevice(U2G_DisconnectFromUiDevice const& msg)
+  void CozmoGameImpl::Process_DisconnectFromUiDevice(U2G::DisconnectFromUiDevice const& msg)
   {
     // Do this with a signal?
     _uiComms.DisconnectDeviceByID(msg.deviceID);
@@ -141,7 +141,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ForceAddRobot(U2G_ForceAddRobot const& msg)
+  void CozmoGameImpl::Process_ForceAddRobot(U2G::ForceAddRobot const& msg)
   {
     char ip[16];
     assert(msg.ipAddress.size() <= 16);
@@ -149,7 +149,7 @@ namespace Cozmo {
     ForceAddRobot(msg.robotID, ip, msg.isSimulated);
   }
   
-  void CozmoGameImpl::Process_StartEngine(U2G_StartEngine const& msg)
+  void CozmoGameImpl::Process_StartEngine(U2G::StartEngine const& msg)
   {
     // Populate the Json configuration from the message members:
     Json::Value config;
@@ -167,7 +167,7 @@ namespace Cozmo {
     
   }
   
-  void CozmoGameImpl::Process_DriveWheels(U2G_DriveWheels const& msg)
+  void CozmoGameImpl::Process_DriveWheels(U2G::DriveWheels const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -176,14 +176,14 @@ namespace Cozmo {
     if(robot != nullptr) {
       if(robot->AreWheelsLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
-                         "Ignoring U2G_DriveWheels while wheels are locked.\n");
+                         "Ignoring U2G::DriveWheels while wheels are locked.\n");
       } else {
         robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
     }
   }
   
-  void CozmoGameImpl::Process_TurnInPlace(U2G_TurnInPlace const& msg)
+  void CozmoGameImpl::Process_TurnInPlace(U2G::TurnInPlace const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -192,7 +192,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_MoveHead(U2G_MoveHead const& msg)
+  void CozmoGameImpl::Process_MoveHead(U2G::MoveHead const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -201,14 +201,14 @@ namespace Cozmo {
     if(robot != nullptr) {
       if(robot->IsHeadLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveHead.HeadLocked",
-                         "Ignoring U2G_MoveHead while head is locked.\n");
+                         "Ignoring U2G::MoveHead while head is locked.\n");
       } else {
         robot->MoveHead(msg.speed_rad_per_sec);
       }
     }
   }
   
-  void CozmoGameImpl::Process_MoveLift(U2G_MoveLift const& msg)
+  void CozmoGameImpl::Process_MoveLift(U2G::MoveLift const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -217,14 +217,14 @@ namespace Cozmo {
     if(robot != nullptr) {
       if(robot->IsLiftLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveLift.LiftLocked",
-                         "Ignoring U2G_MoveLift while lift is locked.\n");
+                         "Ignoring U2G::MoveLift while lift is locked.\n");
       } else {
         robot->MoveLift(msg.speed_rad_per_sec);
       }
     }
   }
   
-  void CozmoGameImpl::Process_SetHeadAngle(U2G_SetHeadAngle const& msg)
+  void CozmoGameImpl::Process_SetHeadAngle(U2G::SetHeadAngle const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -233,7 +233,7 @@ namespace Cozmo {
     if(robot != nullptr) {
       if(robot->IsHeadLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
-                         "Ignoring U2G_SetHeadAngle while head is locked.\n");
+                         "Ignoring U2G::SetHeadAngle while head is locked.\n");
       } else {
         robot->DisableTrackHeadToObject();
         robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
@@ -241,14 +241,14 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_TrackHeadToObject(U2G_TrackHeadToObject const& msg)
+  void CozmoGameImpl::Process_TrackHeadToObject(U2G::TrackHeadToObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
       if(robot->IsHeadLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
-                         "Ignoring U2G_TrackHeadToObject while head is locked.\n");
+                         "Ignoring U2G::TrackHeadToObject while head is locked.\n");
       } else {
         robot->EnableTrackHeadToObject(msg.objectID);
       }
@@ -256,7 +256,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::Process_FaceObject(U2G_FaceObject const& msg)
+  void CozmoGameImpl::Process_FaceObject(U2G::FaceObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -267,13 +267,14 @@ namespace Cozmo {
       } else {
         objectID = msg.objectID;
       }
-      robot->GetActionList().AddAction(new FaceObjectAction(objectID, msg.turnAngleTol,
-                                                            msg.maxTurnAngle,
+      robot->GetActionList().AddAction(new FaceObjectAction(objectID,
+                                                            Radians(msg.turnAngleTol),
+                                                            Radians(msg.maxTurnAngle),
                                                             msg.headTrackWhenDone));
     }
   }
   
-  void CozmoGameImpl::Process_StopAllMotors(U2G_StopAllMotors const& msg)
+  void CozmoGameImpl::Process_StopAllMotors(U2G::StopAllMotors const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -284,7 +285,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetLiftHeight(U2G_SetLiftHeight const& msg)
+  void CozmoGameImpl::Process_SetLiftHeight(U2G::SetLiftHeight const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -294,13 +295,13 @@ namespace Cozmo {
       
       if(robot->IsLiftLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_SetLiftHeight.LiftLocked",
-                         "Ignoring U2G_SetLiftHeight while lift is locked.\n");
+                         "Ignoring U2G::SetLiftHeight while lift is locked.\n");
       } else {
         // Special case if commanding low dock height
         if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
           if(robot->IsCarryingObject()) {
             // Put the block down right here
-            U2G_PlaceObjectOnGroundHere m;
+            U2G::PlaceObjectOnGroundHere m;
             Process_PlaceObjectOnGroundHere(m);
             return;
           }
@@ -311,7 +312,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetRobotImageSendMode(U2G_SetRobotImageSendMode const& msg)
+  void CozmoGameImpl::Process_SetRobotImageSendMode(U2G::SetRobotImageSendMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -330,12 +331,12 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ImageRequest(U2G_ImageRequest const& msg)
+  void CozmoGameImpl::Process_ImageRequest(U2G::ImageRequest const& msg)
   {
     SetImageSendMode(msg.robotID, static_cast<ImageSendMode_t>(msg.mode));
   }
   
-  void CozmoGameImpl::Process_SaveImages(U2G_SaveImages const& msg)
+  void CozmoGameImpl::Process_SaveImages(U2G::SaveImages const& msg)
   {
     const RobotID_t robotID = 1;
     Robot* robot = GetRobotByID(robotID);
@@ -346,7 +347,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SaveRobotState(U2G_SaveRobotState const& msg)
+  void CozmoGameImpl::Process_SaveRobotState(U2G::SaveRobotState const& msg)
   {
     const RobotID_t robotID = 1;
     Robot* robot = GetRobotByID(robotID);
@@ -357,12 +358,12 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_EnableDisplay(U2G_EnableDisplay const& msg)
+  void CozmoGameImpl::Process_EnableDisplay(U2G::EnableDisplay const& msg)
   {
     VizManager::getInstance()->ShowObjects(msg.enable);
   }
   
-  void CozmoGameImpl::Process_SetHeadlights(U2G_SetHeadlights const& msg)
+  void CozmoGameImpl::Process_SetHeadlights(U2G::SetHeadlights const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -373,7 +374,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_GotoPose(U2G_GotoPose const& msg)
+  void CozmoGameImpl::Process_GotoPose(U2G::GotoPose const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -388,7 +389,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_PlaceObjectOnGround(U2G_PlaceObjectOnGround const& msg)
+  void CozmoGameImpl::Process_PlaceObjectOnGround(U2G::PlaceObjectOnGround const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -403,7 +404,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_PlaceObjectOnGroundHere(U2G_PlaceObjectOnGroundHere const& msg)
+  void CozmoGameImpl::Process_PlaceObjectOnGroundHere(U2G::PlaceObjectOnGroundHere const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -414,7 +415,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ExecuteTestPlan(U2G_ExecuteTestPlan const& msg)
+  void CozmoGameImpl::Process_ExecuteTestPlan(U2G::ExecuteTestPlan const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -425,7 +426,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetRobotCarryingObject(U2G_SetRobotCarryingObject const& msg)
+  void CozmoGameImpl::Process_SetRobotCarryingObject(U2G::SetRobotCarryingObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     if(robot != nullptr) {
@@ -439,7 +440,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ClearAllBlocks(U2G_ClearAllBlocks const& msg)
+  void CozmoGameImpl::Process_ClearAllBlocks(U2G::ClearAllBlocks const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -452,7 +453,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SelectNextObject(U2G_SelectNextObject const& msg)
+  void CozmoGameImpl::Process_SelectNextObject(U2G::SelectNextObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -463,7 +464,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_PickAndPlaceObject(U2G_PickAndPlaceObject const& msg)
+  void CozmoGameImpl::Process_PickAndPlaceObject(U2G::PickAndPlaceObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -489,7 +490,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_TraverseObject(U2G_TraverseObject const& msg)
+  void CozmoGameImpl::Process_TraverseObject(U2G::TraverseObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -512,7 +513,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::Process_ExecuteBehavior(U2G_ExecuteBehavior const& msg)
+  void CozmoGameImpl::Process_ExecuteBehavior(U2G::ExecuteBehavior const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -523,7 +524,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetBehaviorState(U2G_SetBehaviorState const& msg)
+  void CozmoGameImpl::Process_SetBehaviorState(U2G::SetBehaviorState const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -534,7 +535,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_AbortPath(U2G_AbortPath const& msg)
+  void CozmoGameImpl::Process_AbortPath(U2G::AbortPath const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -545,7 +546,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_AbortAll(U2G_AbortAll const& msg)
+  void CozmoGameImpl::Process_AbortAll(U2G::AbortAll const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -556,7 +557,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_DrawPoseMarker(U2G_DrawPoseMarker const& msg)
+  void CozmoGameImpl::Process_DrawPoseMarker(U2G::DrawPoseMarker const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -569,12 +570,12 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ErasePoseMarker(U2G_ErasePoseMarker const& msg)
+  void CozmoGameImpl::Process_ErasePoseMarker(U2G::ErasePoseMarker const& msg)
   {
     VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
   }
 
-  void CozmoGameImpl::Process_SetWheelControllerGains(U2G_SetWheelControllerGains const& msg)
+  void CozmoGameImpl::Process_SetWheelControllerGains(U2G::SetWheelControllerGains const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -587,7 +588,7 @@ namespace Cozmo {
   }
 
   
-  void CozmoGameImpl::Process_SetHeadControllerGains(U2G_SetHeadControllerGains const& msg)
+  void CozmoGameImpl::Process_SetHeadControllerGains(U2G::SetHeadControllerGains const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -598,7 +599,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetLiftControllerGains(U2G_SetLiftControllerGains const& msg)
+  void CozmoGameImpl::Process_SetLiftControllerGains(U2G::SetLiftControllerGains const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -609,7 +610,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SelectNextSoundScheme(U2G_SelectNextSoundScheme const& msg)
+  void CozmoGameImpl::Process_SelectNextSoundScheme(U2G::SelectNextSoundScheme const& msg)
   {
     SoundSchemeID_t nextSoundScheme = (SoundSchemeID_t)(SoundManager::getInstance()->GetScheme() + 1);
     if (nextSoundScheme == NUM_SOUND_SCHEMES) {
@@ -619,7 +620,7 @@ namespace Cozmo {
     SoundManager::getInstance()->SetScheme(nextSoundScheme);
   }
   
-  void CozmoGameImpl::Process_StartTestMode(U2G_StartTestMode const& msg)
+  void CozmoGameImpl::Process_StartTestMode(U2G::StartTestMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -630,7 +631,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_IMURequest(U2G_IMURequest const& msg)
+  void CozmoGameImpl::Process_IMURequest(U2G::IMURequest const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -641,7 +642,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_PlayAnimation(U2G_PlayAnimation const& msg)
+  void CozmoGameImpl::Process_PlayAnimation(U2G::PlayAnimation const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -652,7 +653,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_ReadAnimationFile(U2G_ReadAnimationFile const& msg)
+  void CozmoGameImpl::Process_ReadAnimationFile(U2G::ReadAnimationFile const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -663,7 +664,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_StartFaceTracking(U2G_StartFaceTracking const& msg)
+  void CozmoGameImpl::Process_StartFaceTracking(U2G::StartFaceTracking const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -674,7 +675,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_StopFaceTracking(U2G_StopFaceTracking const& msg)
+  void CozmoGameImpl::Process_StopFaceTracking(U2G::StopFaceTracking const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -685,7 +686,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetVisionSystemParams(U2G_SetVisionSystemParams const& msg)
+  void CozmoGameImpl::Process_SetVisionSystemParams(U2G::SetVisionSystemParams const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -707,7 +708,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetFaceDetectParams(U2G_SetFaceDetectParams const& msg)
+  void CozmoGameImpl::Process_SetFaceDetectParams(U2G::SetFaceDetectParams const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -726,7 +727,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_StartLookingForMarkers(U2G_StartLookingForMarkers const& msg)
+  void CozmoGameImpl::Process_StartLookingForMarkers(U2G::StartLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -737,7 +738,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_StopLookingForMarkers(U2G_StopLookingForMarkers const& msg)
+  void CozmoGameImpl::Process_StopLookingForMarkers(U2G::StopLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
@@ -749,7 +750,7 @@ namespace Cozmo {
   }
   
   
-  void CozmoGameImpl::Process_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs const& msg)
+  void CozmoGameImpl::Process_SetActiveObjectLEDs(U2G::SetActiveObjectLEDs const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -780,7 +781,7 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs const& msg)
+  void CozmoGameImpl::Process_SetAllActiveObjectLEDs(U2G::SetAllActiveObjectLEDs const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -800,7 +801,7 @@ namespace Cozmo {
     }
   }
 
-  void CozmoGameImpl::Process_VisionWhileMoving(U2G_VisionWhileMoving const& msg)
+  void CozmoGameImpl::Process_VisionWhileMoving(U2G::VisionWhileMoving const& msg)
   {
     if(_isHost) {
       CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);

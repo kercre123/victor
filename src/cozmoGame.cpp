@@ -201,7 +201,7 @@ namespace Cozmo {
     _cozmoEngine->ProcessDeviceImage(image);
   }
 
-  const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
+  const std::vector<Cozmo::G2U::DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
   {
     return _visionMarkersDetectedByDevice;
   }
@@ -271,7 +271,7 @@ namespace Cozmo {
       
       if(_uiComms.GetNumConnectedDevices() > 0) {
         // Ping the UI to let them know we're still here
-        G2U_Message message;
+        G2U::Message message;
         message.Set_Ping(_pingToUI);
         _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
         ++_pingToUI.counter;
@@ -407,7 +407,7 @@ namespace Cozmo {
               lastResult = RESULT_FAIL;
             } else {
               if(robot->HasReceivedRobotState()) {
-                G2U_RobotState msg;
+                G2U::RobotState msg;
                 
                 msg.robotID = robotID;
                 
@@ -444,11 +444,13 @@ namespace Cozmo {
                   msg.status |= IS_PERFORMING_ACTION;
                 }
                 
+                msg.headTrackingObjectID = robot->GetTrackHeadToObject();
+                
                 // TODO: Add proximity sensor data to state message
                 
                 msg.batteryVoltage = robot->GetBatteryVoltage();
                 
-                G2U_Message message;
+                G2U::Message message;
                 message.Set_RobotState(msg);
                 _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
               }
@@ -504,7 +506,7 @@ namespace Cozmo {
       
       const u32 numTotalBytes = nrows*ncols;
 
-      G2U_ImageChunk m;
+      G2U::ImageChunk m;
       const int G2U_IMAGE_CHUNK_SIZE = m.data.size();
       
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
@@ -522,7 +524,7 @@ namespace Cozmo {
       
       //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
       
-      G2U_Message message;
+      G2U::Message message;
       
       for(s32 i=0; i<nrows; ++i) {
         
@@ -605,7 +607,7 @@ namespace Cozmo {
     return _impl->GetRunState();
   }
   
-  const std::vector<Cozmo::G2U_DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
+  const std::vector<Cozmo::G2U::DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
   {
     return _impl->GetVisionMarkersDetectedByDevice();
   }

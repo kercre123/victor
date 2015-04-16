@@ -6,6 +6,8 @@ public class ScreenMessage : MonoBehaviour {
 
 	[SerializeField] protected Text text;
 
+	IEnumerator coroutine = null;
+
 	// Use this for initialization
 	void Start () {
 		text.gameObject.SetActive (true);
@@ -17,19 +19,33 @@ public class ScreenMessage : MonoBehaviour {
 
 	public void ShowMessageForDuration(string message, float time_in_seconds, Color color)
 	{
-		//text.text = G2U_Message;
+		if(coroutine != null) StopCoroutine(coroutine);
+
+		//text.text = G2U.Message;
 		ShowMessage (message, color);
-		StartCoroutine(TurnOffText(time_in_seconds));
+
+		coroutine = TurnOffText(time_in_seconds);
+		StartCoroutine(coroutine);
 	}
 
 	public void ShowMessage(string message, Color color)
 	{
+		if (text == null) 
+		{
+			Debug.LogError("text is null for some reason");
+			return;
+		}
 		text.text = message;
 		text.color = color;
 	}
 
 	public void KillMessage()
 	{
+		if (text == null) 
+		{
+			Debug.LogError("text is null for some reason");
+			return;
+		}
 		text.text = string.Empty;
 	}
 

@@ -46,7 +46,7 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const UserDeviceID_t devID, const G2U_Message& msg) = 0;
+      virtual Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) = 0;
       
     }; // IMessageHandler
     
@@ -65,9 +65,9 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U_Message& msg);
+      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg);
       
-      inline void RegisterCallbackForMessage(const std::function<void(const U2G_Message&)>& messageCallback)
+      inline void RegisterCallbackForMessage(const std::function<void(const U2G::Message&)>& messageCallback)
       {
         this->messageCallback = messageCallback;
       }
@@ -78,7 +78,7 @@ namespace Anki {
       
       bool isInitialized_;
       
-      std::function<void(const U2G_Message&)> messageCallback;
+      std::function<void(const U2G::Message&)> messageCallback;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
@@ -105,7 +105,7 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U_Message& msg) {
+      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) {
         return RESULT_OK;
       }
       

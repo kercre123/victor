@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
 
 public class Robot
 {
@@ -20,6 +22,7 @@ public class Robot
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
+	public int headTrackingObjectID { get; private set; }
 	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
@@ -27,9 +30,9 @@ public class Robot
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-	public ObservedObject lastObjectHeadTracked;
 	public ObservedObject targetLockedObject;
-	public ObservedObject lastTargetLockedObject;
+
+	private int lastHeadTrackingObjectID = -1;
 
 	public enum ObservedObjectListType {
 		OBSERVED_RECENTLY,
@@ -66,7 +69,7 @@ public class Robot
 				break;
 			}
 			
-			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( (x.WorldPosition - WorldPosition).z ) < tooHigh );
+			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( x.WorldPosition.z - WorldPosition.z ) < tooHigh );
 			
 			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
 				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
@@ -102,9 +105,9 @@ public class Robot
 		get
 		{
 			return localBusyTimer > 0f 
-				|| Status( StatusFlag.IS_PICKING_OR_PLACING ) 
-				|| Status( StatusFlag.IS_PICKED_UP ) 
-				|| Status( StatusFlag.IS_PERFORMING_ACTION );
+				|| Status( StatusFlag.IS_PERFORMING_ACTION )
+				|| Status( StatusFlag.IS_ANIMATING ) 
+				|| Status( StatusFlag.IS_PICKED_UP );
 		}
 	}
 
@@ -118,7 +121,6 @@ public class Robot
 		ID = robotID;
 		selectedObjects = new List<ObservedObject>();
 		lastSelectedObjects = new List<ObservedObject>();
-		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		lastObservedObjects = new List<ObservedObject>();
 		markersVisibleObjects = new List<ObservedObject>();
@@ -145,7 +147,6 @@ public class Robot
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
-		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		lastObservedObjects.Clear();
 		markersVisibleObjects.Clear();
@@ -155,6 +156,8 @@ public class Robot
 		WorldPosition = Vector3.zero;
 		Rotation = Quaternion.identity;
 		carryingObjectID = -1;
+		headTrackingObjectID = -1;
+		lastHeadTrackingObjectID = -1;
 	}
 
 	public void ClearObservedObjects()
@@ -176,7 +179,7 @@ public class Robot
 		}
 	}
 
-	public void UpdateInfo( G2U_RobotState message )
+	public void UpdateInfo( G2U.RobotState message )
 	{
 		headAngle_rad = message.headAngle_rad;
 		poseAngle_rad = message.poseAngle_rad;
@@ -187,11 +190,14 @@ public class Robot
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
+		headTrackingObjectID = message.headTrackingObjectID;
+
+		if( headTrackingObjectID == lastHeadTrackingObjectID ) lastHeadTrackingObjectID = -1;
 
 		Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
 	}
 
-	public void UpdateObservedObjectInfo( G2U_RobotObservedObject message )
+	public void UpdateObservedObjectInfo( G2U.RobotObservedObject message )
 	{
 		if( message.objectFamily == 0 )
 		{
@@ -201,7 +207,7 @@ public class Robot
 
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
-		//Debug.Log( "found " + message.objectID );
+		//Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
 
 		if( knownObject == null )
 		{
@@ -226,68 +232,83 @@ public class Robot
 	public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
 	{
 		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
-		U2G_DriveWheels message = new U2G_DriveWheels ();
+		U2G.DriveWheels message = new U2G.DriveWheels ();
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{DriveWheels=message});
+		RobotEngineManager.instance.channel.Send (new U2G.Message{DriveWheels=message});
 	}
 
 	public void PlaceObjectOnGroundHere()
 	{
 		Debug.Log( "Place Object On Ground Here" );
 		
-		U2G_PlaceObjectOnGroundHere message = new U2G_PlaceObjectOnGroundHere ();
+		U2G.PlaceObjectOnGroundHere message = new U2G.PlaceObjectOnGroundHere ();
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{PlaceObjectOnGroundHere=message});
+		RobotEngineManager.instance.channel.Send (new U2G.Message{PlaceObjectOnGroundHere=message});
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
+		if( isBusy ) return;
+
 		//Debug.Log( "Set Head Angle " + angle_rad );
-		
-		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
+
+		U2G.SetHeadAngle message = new U2G.SetHeadAngle();
 		message.angle_rad = angle_rad;
 		message.accel_rad_per_sec2 = 2f;
 		message.max_speed_rad_per_sec = 5f;
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message { SetHeadAngle = message } );
-		
-		lastObjectHeadTracked = null;
+		RobotEngineManager.instance.channel.Send( new U2G.Message { SetHeadAngle = message } );
 	}
 	
-	public void TrackHeadToObject( ObservedObject observedObject )
+	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
-		if( lastObjectHeadTracked == null || lastObjectHeadTracked.ID != observedObject.ID )
+		if( isBusy || lastHeadTrackingObjectID == observedObject.ID || headTrackingObjectID == observedObject.ID ) return;
+
+		lastHeadTrackingObjectID = observedObject.ID;
+
+		if( faceObject )
 		{
-			Debug.Log( "Track Head To Object " + observedObject.ID );
-			
-			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
+			FaceObject( observedObject );
+		}
+		else
+		{
+			U2G.TrackHeadToObject message = new U2G.TrackHeadToObject();
 			message.objectID = (uint)observedObject.ID;
 			message.robotID = ID;
+
+			Debug.Log( "Track Head To Object " + message.objectID );
 			
-			RobotEngineManager.instance.channel.Send( new U2G_Message { TrackHeadToObject = message } );
-			
-			lastObjectHeadTracked = observedObject;
+			RobotEngineManager.instance.channel.Send( new U2G.Message { TrackHeadToObject = message } );
 		}
 	}
 
-	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = true, bool useManualSpeed = false )
+	private void FaceObject( ObservedObject observedObject )
 	{
-		TrackHeadToObject( selectedObjects[index] );
+		U2G.FaceObject message = new U2G.FaceObject();
+		message.objectID = (uint)observedObject.ID;
+		message.robotID = ID;
 
-		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
+		Debug.Log( "Face Object " + message.objectID );
+		
+		RobotEngineManager.instance.channel.Send( new U2G.Message { FaceObject = message } );
+	}
+
+	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
+	{
+		FaceObject( selectedObjects[index] );
+
+		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
 		Debug.Log( "Pick And Place Object " + message.objectID + " usePreDockPose " + message.usePreDockPose + " useManualSpeed " + message.useManualSpeed );
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
-		
-		lastObjectHeadTracked = null;
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ PickAndPlaceObject = message } );
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
@@ -296,25 +317,24 @@ public class Robot
 	{
 		Debug.Log( "Set Lift Height " + height );
 		
-		U2G_SetLiftHeight message = new U2G_SetLiftHeight();
+		U2G.SetLiftHeight message = new U2G.SetLiftHeight();
 		message.accel_rad_per_sec2 = 5f;
 		message.max_speed_rad_per_sec = 10f;
 		message.height_mm = height;
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetLiftHeight = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetLiftHeight = message } );
 	}
 	
 	public void SetRobotCarryingObject( int objectID = -1 )
 	{
 		Debug.Log( "Set Robot Carrying Object" );
 		
-		U2G_SetRobotCarryingObject message = new U2G_SetRobotCarryingObject();
+		U2G.SetRobotCarryingObject message = new U2G.SetRobotCarryingObject();
 		
 		message.robotID = ID;
 		message.objectID = objectID;
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
-		lastObjectHeadTracked = null;
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetRobotCarryingObject = message } );
 		selectedObjects.Clear();
 		
 		SetLiftHeight( 0f );
@@ -325,9 +345,9 @@ public class Robot
 	{
 		Debug.Log( "Clear All Blocks" );
 		
-		U2G_ClearAllBlocks message = new U2G_ClearAllBlocks();
+		U2G.ClearAllBlocks message = new U2G.ClearAllBlocks();
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ ClearAllBlocks = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ ClearAllBlocks = message } );
 		Reset();
 		
 		SetLiftHeight( 0f );
@@ -338,55 +358,55 @@ public class Robot
 	{
 		Debug.Log( "Vision While Moving " + enable );
 		
-		U2G_VisionWhileMoving message = new U2G_VisionWhileMoving();
+		U2G.VisionWhileMoving message = new U2G.VisionWhileMoving();
 		message.enable = System.Convert.ToByte( enable );
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ VisionWhileMoving = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ VisionWhileMoving = message } );
 	}
 	
 	public void RequestImage( RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode )
 	{
-		U2G_SetRobotImageSendMode message = new U2G_SetRobotImageSendMode ();
+		U2G.SetRobotImageSendMode message = new U2G.SetRobotImageSendMode ();
 		message.resolution = (byte)resolution;
 		message.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send (new U2G_Message{SetRobotImageSendMode = message});
+		RobotEngineManager.instance.channel.Send (new U2G.Message{SetRobotImageSendMode = message});
 		
-		U2G_ImageRequest message2 = new U2G_ImageRequest();
+		U2G.ImageRequest message2 = new U2G.ImageRequest();
 		message2.robotID = ID;
 		message2.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ ImageRequest = message2 } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ ImageRequest = message2 } );
 		
 		Debug.Log( "image request message sent with " + mode + " at " + resolution );
 	}
 	
 	public void StopAllMotors()
 	{
-		U2G_StopAllMotors message = new U2G_StopAllMotors ();
+		U2G.StopAllMotors message = new U2G.StopAllMotors ();
 		
-		RobotEngineManager.instance.channel.Send(new U2G_Message{ StopAllMotors = message } );
+		RobotEngineManager.instance.channel.Send(new U2G.Message{ StopAllMotors = message } );
 	}
 	
 	public void TurnInPlace( float angle_rad )
 	{
-		U2G_TurnInPlace message = new U2G_TurnInPlace ();
+		U2G.TurnInPlace message = new U2G.TurnInPlace ();
 		message.robotID = ID;
 		message.angle_rad = angle_rad;
 		
 		Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ TurnInPlace = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ TurnInPlace = message } );
 	}
 
 	public void TraverseObject( int objectID, bool usePreDockPose = false, bool useManualSpeed = false )
 	{
 		Debug.Log( "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose );
 		
-		U2G_TraverseObject message = new U2G_TraverseObject();
+		U2G.TraverseObject message = new U2G.TraverseObject();
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ TraverseObject = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ TraverseObject = message } );
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}

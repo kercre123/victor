@@ -139,7 +139,7 @@ DEF Red Block1x1 {
   name "Fire_01"
   translation 0.3 0 0.109997
   rotation 1 0 0 0
-  markerImg "symbols/bangBangBang.png"
+  markerImg "symbols/arrow.png"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
