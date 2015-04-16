@@ -198,7 +198,7 @@ public class GoldRushController : GameController {
 				{
 					// picked up our detector block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
-					goldExtractingObject = robot.knownObjects.Find( x=> x.ID == robot.carryingObjectID );
+					goldExtractingObject = robot.carryingObject;
 					//UpdateDetectorLights (1);
 					hintMessage.ShowMessage("Now place the extractor on the collector", Color.black);
 				}
@@ -292,7 +292,7 @@ public class GoldRushController : GameController {
 			foundItems.Clear();
 			buriedLocations.Clear();
 			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
-			buriedLocations[robot.carryingObjectID] = (Vector2)robot.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * findRadius;
+			buriedLocations[robot.carryingObject] = (Vector2)robot.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * findRadius;
 			CozmoVision.EnableDing(false);
 			break;
 		case PlayState.EXTRACTING:
@@ -356,7 +356,7 @@ public class GoldRushController : GameController {
 	void UpdateCanExtract()
 	{
 		Vector2 buriedLocation;
-		if (buriedLocations.TryGetValue (robot.carryingObjectID, out buriedLocation)) {
+		if (buriedLocations.TryGetValue (robot.carryingObject, out buriedLocation)) {
 			float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
 			if( distance > findRadius )
 			{
@@ -367,14 +367,14 @@ public class GoldRushController : GameController {
 
 	void UpdateSearching()
 	{
-		if(robot.carryingObjectID != -1) 
+		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK) && robot.carryingObject != null) 
 		{
-			lastCarriedObjectId = robot.carryingObjectID;
+			lastCarriedObjectId = robot.carryingObject;
 			Vector2 buriedLocation;
-			if(buriedLocations.TryGetValue(robot.carryingObjectID, out buriedLocation)) 
+			if(buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) 
 			{
 				float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
-				if( !foundItems.Contains(robot.carryingObjectID) ) 
+				if( !foundItems.Contains(robot.carryingObject) ) 
 				{
 					if(distance <= findRadius) 
 					{
@@ -386,7 +386,7 @@ public class GoldRushController : GameController {
 							gameObject.audio.PlayOneShot(foundBeep);
 							EnterPlayState(PlayState.CAN_EXTRACT);
 						}
-						foundItems.Add(robot.carryingObjectID);
+						foundItems.Add(robot.carryingObject);
 						Debug.Log("found!");
 					}
 					else if(distance <= detectRadius) 
@@ -405,10 +405,10 @@ public class GoldRushController : GameController {
 					EnterPlayState(PlayState.CAN_EXTRACT);
 					UpdateDetectorLights (1);
 				}
-				else if( foundItems.Contains(robot.carryingObjectID) && distance > findRadius )
+				else if( foundItems.Contains(robot.carryingObject) && distance > findRadius )
 				{
 					// remove it from our found list if we exit the find radius without dropping it
-					foundItems.Remove(robot.carryingObjectID);
+					foundItems.Remove(robot.carryingObject);
 					hintMessage.KillMessage();
 				}
 			}
@@ -420,7 +420,7 @@ public class GoldRushController : GameController {
 
 	void UpdateIdle()
 	{
-		if (robot.carryingObjectID != -1) 
+		if (robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) 
 		{
 			EnterPlayState(PlayState.SEARCHING);
 		}
@@ -433,7 +433,7 @@ public class GoldRushController : GameController {
 
 	void UpdateReadyToReturn()
 	{
-		if (robot.carryingObjectID != -1) 
+		if (robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) 
 		{
 			EnterPlayState(PlayState.RETURNING);
 		}
