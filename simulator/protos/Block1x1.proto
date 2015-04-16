@@ -191,6 +191,12 @@ Supervisor {
       name   "receiver"    
       type   "radio"
     }
+    
+    # Radio send channel for messages to Robot
+    Emitter {
+      name   "emitter"
+      type   "radio"
+    }
  
     # Accelerometer
     Accelerometer {

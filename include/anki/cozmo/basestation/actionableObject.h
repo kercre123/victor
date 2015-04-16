@@ -84,18 +84,15 @@ namespace Anki {
       // Wrappers for each of the PreActionPose constructors:
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const f32 distance,
-                            const Radians& headAngle);
+                            const f32 distance);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker *marker,
-                            const Vec3f& offset,
-                            const Radians& headAngle);
+                            const Vec3f& offset);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const Pose3d& poseWrtMarker,
-                            const Radians& headAngle);
+                            const Pose3d& poseWrtMarker);
  
       // Only "valid" poses are returned by GetCurrenPreActionPoses
       // By default, allows any rotation around Z, but none around X/Y, meaning

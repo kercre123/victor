@@ -124,7 +124,7 @@ namespace Anki {
         {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()}
       }};
       
-      // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
+      // Add a pre-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
       {
         for(auto const& Rvec : preActionPoseRotations) {
@@ -132,21 +132,7 @@ namespace Anki {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
-          }
-
-        }
-      }
-      
-      // Add a pre-HIGH-dock pose to each face, at fixed distance normal to the face,
-      // and one for each orientation of the block
-      {
-        for(auto const& Rvec : preActionPoseRotations) {
-          
-          for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
-            preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(15));
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
           }
 
         }
@@ -160,7 +146,7 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
           prePlacementPose.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose, DEG_TO_RAD(-15));
+          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose);
         }
       }
       

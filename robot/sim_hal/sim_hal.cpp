@@ -105,8 +105,9 @@ namespace Anki {
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
       
-      // Emitter for block communication
+      // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
+      webots::Receiver *blockCommsReceiver_;
       
       // Block ID flashing parameters
       s32 flashBlockIdx_ = -1;
@@ -358,7 +359,10 @@ namespace Anki {
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
-      
+      blockCommsReceiver_ = webotRobot_.getReceiver("blockCommsReceiver");
+      blockCommsReceiver_->setChannel(-1); // Listen to all blocks
+      blockCommsReceiver_->enable(TIME_STEP);
+
       // Reset index of block that is currently flashing ID
       flashBlockIdx_ = -1;
       
@@ -683,6 +687,24 @@ namespace Anki {
               flashStartTime_ = HAL::GetTimeStamp();
             }
           }
+        }
+        
+        // TODO: Make block comms receiver checking into a HAL function at some point
+        //   and call it from the main execution loop
+        while(blockCommsReceiver_->getQueueLength() > 0) {
+          int dataSize = blockCommsReceiver_->getDataSize();
+          
+          if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
+            // Pass along block-moved messages to basestation
+            u8* data = (u8*)blockCommsReceiver_->getData();
+            BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
+            Messages::ActiveObjectMoved msgOut;
+            msgOut.objectID = msgIn->blockID;
+            HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
+          } else {
+            printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
+          }
+          blockCommsReceiver_->nextPacket();
         }
         
         return RESULT_OK;

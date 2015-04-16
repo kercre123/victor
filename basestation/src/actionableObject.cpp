@@ -31,23 +31,22 @@ namespace Anki {
     
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
-                                            const f32 distance, const Radians& headAngle)
+                                            const f32 distance)
     {
-      _preActionPoses.emplace_back(type, marker, distance, headAngle);
+      _preActionPoses.emplace_back(type, marker, distance);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
-                                            const Vec3f& offset, const Radians& headAngle)
+                                            const Vec3f& offset)
     {
-      _preActionPoses.emplace_back(type, marker, offset, headAngle);
+      _preActionPoses.emplace_back(type, marker, offset);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
                                             const Vision::KnownMarker* marker,
-                                            const Pose3d& poseWrtMarker,
-                                            const Radians& headAngle)
+                                            const Pose3d& poseWrtMarker)
     {
-      _preActionPoses.emplace_back(type, marker, poseWrtMarker, headAngle);
+      _preActionPoses.emplace_back(type, marker, poseWrtMarker);
     }
     
     
@@ -58,6 +57,9 @@ namespace Anki {
       
       bool isValid = true;
       
+      // Overloaded validity checks may use reachableFromPose, but for now, we're
+      // going to disable the default check based on height
+      /* TODO: Consider re-enabling default reachability check
       if(reachableFromPose != nullptr) {
         // Pose should be at ground height or it's not reachable. Let the threshold
         // vary with the distance from the pre-action pose to the object.
@@ -65,6 +67,7 @@ namespace Anki {
                        reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(),
                        preActionPose.GetHeightTolerance());
       }
+       */
       
       if(isValid) {
         // Allow any rotation around Z, but none around X/Y, in order to keep

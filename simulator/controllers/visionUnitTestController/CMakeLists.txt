@@ -81,7 +81,7 @@ endif()
 set_target_properties(
   visionUnitTestController PROPERTIES
   COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT}/bin/maci64/"
   FOLDER "Unit Tests"
   #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
   #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
