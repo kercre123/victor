@@ -48,6 +48,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	public void Initialize() {
+		if(initialized) return;
 
 		BoxCollider box = GetComponent<BoxCollider>();
 		Size = box.size.x;
