@@ -12,7 +12,6 @@ def _modify_path():
     currentpath = os.path.dirname(inspect.getfile(inspect.currentframe()))
     searchpath = os.path.join(currentpath, '..', '..', 'lib', 'anki', 'cozmo-engine', 'tools', 'message-buffers')
     searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
-    print(searchpath)
     if searchpath not in sys.path:
         sys.path.insert(0, searchpath)
 _modify_path()
