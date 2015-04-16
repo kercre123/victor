@@ -89,7 +89,6 @@ add_library(Cozmo_Basestation
   ${SOURCE_FILES} 
   ${PRIVATE_HEADER_FILES}
   ${PUBLIC_HEADER_FILES}
-  ${COZMO_HEADER_FILES}
 )
 
 if(NOT ANKI_IOS_BUILD)
