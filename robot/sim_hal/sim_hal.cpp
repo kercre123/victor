@@ -135,21 +135,8 @@ namespace Anki {
       // Approximate open-loop conversion of wheel power to angular wheel speed
       float WheelPowerToAngSpeed(float power)
       {
-        float speed_mm_per_s = 0;
-
-        // Approximate inverse of the open-loop wheel formula used in wheelController
-        power = CLIP(power, -1.0, 1.0);
-        f32 x = ABS(power);
-        f32 x2 = x*x;
-        f32 x3 = x*x2;
-        if (x >= 0.15) {
-          speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
-          if (power < 0) {
-            speed_mm_per_s *= -1;
-          }
-        } else {
-          speed_mm_per_s = 0;
-        }
+        // Inverse of speed-power formula in WheelController
+        float speed_mm_per_s = power / 0.005f;
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
