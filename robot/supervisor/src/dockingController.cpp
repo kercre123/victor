@@ -562,9 +562,8 @@ namespace Anki {
         // Send goal pose up to engine for viz
         SendGoalPoseMessage(dockPose_);
 
-        // Convert poses to drive center pose for pathFollower
+        // Convert goal pose to drive center pose for pathFollower
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
-        Localization::ConvertToDriveCenterPose(approachStartPose_, approachStartPose_);
         
         
         f32 path_length;
