@@ -39,7 +39,7 @@ public class ScreenMessage : MonoBehaviour {
 	{
 		if (text == null) 
 		{
-			Debug.LogError("text is null for some reason");
+			//Debug.LogError("text is null for some reason");
 			return;
 		}
 		text.text = string.Empty;

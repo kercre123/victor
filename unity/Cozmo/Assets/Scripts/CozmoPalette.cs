@@ -24,6 +24,7 @@ public class ObjectkSymbolInfo {
 	public Sprite sprite = null;
 }
 
+[ExecuteInEditMode]
 public class CozmoPalette : MonoBehaviour {
 
 	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlockType.NumTypes];

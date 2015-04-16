@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using Vectrosity;
 
+[ExecuteInEditMode]
 public class BuildInstructionsCube : MonoBehaviour {
 
 	[SerializeField] VectrosityCube vCube;
@@ -21,7 +22,8 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] MeshRenderer[] activeCorners;
 
 	[SerializeField] public float invalidAlpha = 0.25f;
-
+	[SerializeField] Material originalBlockMaterial = null;
+	[SerializeField] Material originalCornerMaterial = null;
 
 	int lastPropType = 0;
 	bool lastValidated = false;
@@ -36,15 +38,28 @@ public class BuildInstructionsCube : MonoBehaviour {
 	public int AssignedObjectID = 0;
 	public float Size = 1f;
 
-	Material meshMaterial = null;
+	Material clonedBlockMaterial = null;
+	Material clonedCornerMaterial = null;
+
 	bool initialized = false;
 
-	void Awake() {
-		BoxCollider box = GetComponent<BoxCollider>();
-		Size = box.size.x;
+	void OnEnable() {
+		if(!Application.isPlaying) Initialize();
 	}
 
 	public void Initialize() {
+
+		BoxCollider box = GetComponent<BoxCollider>();
+		Size = box.size.x;
+		
+		if(clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name) {
+			clonedBlockMaterial = new Material(originalBlockMaterial);
+		}
+		
+		if(clonedCornerMaterial == null || clonedBlockMaterial.name != originalCornerMaterial.name) {
+			clonedCornerMaterial = new Material(originalCornerMaterial);
+		}
+
 		lastPropType = 0;
 		lastValidated = false;
 		lastHighlighted = false;
@@ -52,8 +67,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastActiveBlockType = activeBlockType;
 		lastBaseColor = baseColor;
 
-		meshMaterial = meshCube.material;
-		vCube.CreateWireFrame();
+		meshCube.material = clonedBlockMaterial;
+		foreach(MeshRenderer rend in activeCorners) rend.material = clonedCornerMaterial;
+
+		if(Application.isPlaying) vCube.CreateWireFrame();
 		initialized = true;
 		Refresh();
 	}
@@ -76,25 +93,25 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	void Refresh() {
 
-		vCube.SetColor(baseColor);
+		if(Application.isPlaying) vCube.SetColor(baseColor);
 
 		if(Highlighted) {
-			vCube.Show();
+			if(Application.isPlaying) vCube.Show();
 		}
 		else {
-			vCube.Hide();
+			if(Application.isPlaying) vCube.Hide();
 		}
 
 		meshCube.enabled = !Hidden;
 		if(!Hidden) {
-			float alpha = Validated ? 1f : invalidAlpha;
+			float alpha = (Validated || !Application.isPlaying) ? 1f : invalidAlpha;
 
 			Color color = baseColor;
 			color.a = alpha; //Highlighted ? 0f : 1f;
-			meshMaterial.color = color;
+			clonedBlockMaterial.color = color;
 
 			if(symbols != null) {
-				if(objectType == 0) {
+				if(objectFamily == 3) {
 					for(int i=0;i<symbols.Length;i++) {
 						Sprite sprite = null;
 						if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetDigitSprite(i+1);
@@ -125,12 +142,12 @@ public class BuildInstructionsCube : MonoBehaviour {
 			}
 
 			if(activeCorners != null) {
-				if(objectType == 0) {
+				if(objectFamily == 3) {
 					Color activeColor = Color.white;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockType(activeBlockType);
 					for(int i=0;i<activeCorners.Length;i++) {
 						activeColor.a = alpha;
-						activeCorners[i].material.color = activeColor;
+						clonedCornerMaterial.color = activeColor;
 						activeCorners[i].gameObject.SetActive(true);
 					}
 				}

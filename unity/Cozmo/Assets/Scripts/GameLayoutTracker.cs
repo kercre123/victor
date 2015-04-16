@@ -7,6 +7,7 @@ using Anki.Cozmo;
 
 public class GameLayoutTracker : MonoBehaviour {
 
+	[SerializeField] GameObject ghostPrefab = null;
 	[SerializeField] List<GameLayout> layouts;
 	[SerializeField] Text title;
 	[SerializeField] Text instructions;
@@ -24,14 +25,16 @@ public class GameLayoutTracker : MonoBehaviour {
 	string gameTypeFilter = null;
 
 	int currentLayoutIndex = 0;
-	int currentPageIndex = 0;
+	bool showPreview = true;
 
 	bool dirty = false;
 	Robot robot = null;
 
-	public static GameLayoutTracker instance = null;
+	bool blocksInitialized = false;
 
-	//uint currentObjectType = 0;
+	BuildInstructionsCube ghostBlock;
+
+	public static GameLayoutTracker instance = null;
 
 	GameLayout currentLayout {
 		get {
@@ -42,18 +45,19 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
-	void Awake() {
-		for(int i=0; i<layouts.Count; i++) {
-			layouts[i].Initialize();
-		}
-	}
-
 	void OnEnable () {
+
+		if(!blocksInitialized) {
+			for(int i=0; i<layouts.Count; i++) {
+				layouts[i].Initialize();
+			}
+			blocksInitialized = true;
+		}
 
 		instance = this;
 
 		currentLayoutIndex = 0;
-		currentPageIndex = 0;
+		showPreview = true;
 
 		Validated = false;
 
@@ -72,6 +76,21 @@ public class GameLayoutTracker : MonoBehaviour {
 			robot = RobotEngineManager.instance.current;
 		}
 
+		//if this build is underway, let's skip the preview page
+		int validCount = ValidateBlocks();
+		if(validCount > 0) showPreview = false;
+
+		if(ghostBlock == null) {
+			GameObject ghost = (GameObject)GameObject.Instantiate(ghostPrefab);
+			ghostBlock = ghost.GetComponent<BuildInstructionsCube>();
+		}
+
+		if(ghostBlock != null) {
+			ghostBlock.Initialize();
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = true;
+			ghostBlock.gameObject.SetActive(false);
+		}
 	}
 
 	void Update () {
@@ -104,7 +123,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		bool completed = false;
 		int validCount = 0;
 
-		if(currentPageIndex == 0) {
+		if(showPreview) {
 			ShowAllBlocks();
 		}
 		else {
@@ -113,7 +132,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(instructions != null) {
-			if(currentPageIndex <= 0) {
+			if(showPreview) {
 				instructions.text = "Press to start building this game's layout!";
 			}
 			else if(completed) {
@@ -130,9 +149,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(buttonPrevLayout != null) buttonPrevLayout.interactable = currentLayoutIndex > 0;
 		if(buttonNextLayout != null) buttonNextLayout.interactable = currentLayoutIndex < filteredLayouts.Count-1;
 
-		if(buttonStartBuild != null) buttonStartBuild.gameObject.SetActive(currentPageIndex == 0);
-		if(buttonValidateBuild != null) buttonValidateBuild.gameObject.SetActive(currentPageIndex == 2);
+		if(buttonStartBuild != null) buttonStartBuild.gameObject.SetActive(showPreview);
+		if(buttonValidateBuild != null) buttonValidateBuild.gameObject.SetActive(completed);
 
+
+		Validated = completed;
 	}
 
 	public void SetLayoutForGame(string filterType) {
@@ -143,7 +164,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		//Debug.Log("SetLayoutForGame filterType("+filterType.ToString()+" filteredLayouts("+filteredLayouts.Count+")");
 
 		currentLayoutIndex = 0;
-		currentPageIndex = 0;
+		showPreview = true;
 		Validated = false;
 
 		RefreshLayout();
@@ -152,7 +173,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void NextLayout() {
 		currentLayoutIndex++;
 		if(currentLayoutIndex >= filteredLayouts.Count) currentLayoutIndex = 0;
-		currentPageIndex = 0;
+		showPreview = true;
 		Validated = false;
 		RefreshLayout();
 	}
@@ -160,18 +181,17 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void PreviousLayout() {
 		currentLayoutIndex--;
 		if(currentLayoutIndex < 0) currentLayoutIndex = filteredLayouts.Count - 1;
-		currentPageIndex = 0;
+		showPreview = true;
 		Validated = false;
 		RefreshLayout();
 	}
 
 	public void StartBuildingLayout() {
-		currentPageIndex = 1;
+		showPreview = false;
 		RefreshLayout();
 	}
 	
 	public void ValidateLayoutAndStartGame() {
-		currentPageIndex = 2;
 		RefreshLayout();
 	}
 
@@ -230,11 +250,14 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	int ValidateBlocks() {
+		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+
 		GameLayout layout = currentLayout;
 		if(layout == null) return 0;
 
 		List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 
+		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
 
@@ -246,6 +269,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			//Debug.Log("attempting to validate block of type("+block.objectType+")");
 
 			//cannot validate a block before the one it is stacked upon
+			//note: this requires that our ideal blocks be listed in order
+			//		which is necessary to get the highlight lines to draw correctly anyhow
 			if(block.cubeBelow != null && !block.cubeBelow.Validated) continue;
 
 			//search through known objects for one that can be assigned
@@ -255,6 +280,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				//skip objects of the wrong type
 				if(block.objectType != (int)newObject.ObjectType) continue;
+				if(block.objectFamily != (int)newObject.Family) continue;
 
 				//skip objects already assigned to a layout block
 				if(layout.blocks.Find( x => x.AssignedObjectID == newObject.ID) != null) continue;
@@ -281,6 +307,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						block.Highlighted = false;
 					}
 					else {
+						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
 						Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 					}
 				}
@@ -307,6 +334,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						//are we basically on the same plane and roughly the correct distance away?
 						if(Mathf.Abs(realOffset.z) > coplanarFudge){
 							valid = false;
+							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
 							break;
 						}
@@ -317,6 +345,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						float distanceError = Mathf.Abs(realDistance - idealDistance);
 						if( distanceError > distanceFudge ) {
 							valid = false;
+							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							break;
 						}
@@ -336,6 +365,35 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		return validated.Count;
+	}
+
+	//place our ghost block in the layout window at the position of the currently failing
+	void PlaceGhostForObservedObject(ObservedObject failingObject, BuildInstructionsCube failingLayoutBlock, ObservedObject validObject, BuildInstructionsCube validLayoutBlock) {
+		if(ghostBlock == null) return;
+		//just use the ghost for the first fail detected
+		if(ghostBlock.gameObject.activeSelf) return;
+
+		Vector3 objectOffset = (failingObject.WorldPosition - validObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+		//convert to unity space
+		objectOffset = new Vector3(objectOffset.x, objectOffset.z, objectOffset.y) * validLayoutBlock.Size;
+
+		//if we failed a distance check, let's place the ghost along the relevant line
+		if(failingLayoutBlock.cubeBelow == null) {
+			Vector3 flatOffset = objectOffset;
+			flatOffset.y = 0;
+			float flatMag = flatOffset.magnitude;
+			flatOffset = failingLayoutBlock.transform.position - validLayoutBlock.transform.position;
+			flatOffset.y = 0;
+			flatOffset = flatOffset.normalized * flatMag;
+			objectOffset.x = flatOffset.x;
+			objectOffset.z = flatOffset.z;
+		}
+
+		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
+		ghostBlock.baseColor = failingLayoutBlock.baseColor;
+		ghostBlock.Highlighted = true;
+		ghostBlock.gameObject.SetActive(true);
+		Debug.Log("ghostBlock placed!");
 	}
 
 }
