@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.5 utf8
+#VRML_SIM V8.0.3 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -119,17 +119,12 @@ DirectionalLight {
   direction 1 -1 -1
 }
 CozmoMat {
-}
-Ramp {
-  hidden linearVelocity_0 5623.95 959.599 -7189.14
-  hidden angularVelocity_0 -7799.01 6109.13 -1361.56
-  translation 4.06975e+07 6.02622e+06 2.57175e+06
-  rotation -0.230973 -0.747938 0.622287 -2.4485
+  xSize 2
+  ySize 2
 }
 DEF ActiveBlock Block1x1 {
   name "ActiveBlock"
-  translation -0.00144433 0.0497388 0.0659947
-  rotation 1.09104e-05 -1.47422e-05 1 -1.57306
+  translation 0.3 0 0.0659947
   blockColor 0.5 0.85 0.5
   active TRUE
   markerImg_front "letters/1.png"
@@ -141,7 +136,7 @@ DEF ActiveBlock Block1x1 {
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
-  translation -0.00410752 0.0497862 0.0219957
+  translation 0.3 0 0.0219957
   rotation 0.302681 0.572133 -0.762265 1.25592e-05
   blockColor 0.5 0.5 0.85
   markerImg "symbols/angryFace.png"
@@ -149,52 +144,8 @@ DEF AngryFaceBlock Block1x1 {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_1 453.585
-  hidden position_0_2 424.866
-  hidden position_0_3 176698
-  hidden position_0_4 -96246.7
-  hidden position_0_6 0.0079398
-  hidden linearVelocity_0 -9.89685e-15 -1.37238e-11 1.77061e-14
-  hidden angularVelocity_0 1.05166e-12 -8.04255e-13 -3.85502e-13
-  hidden translation_5 -8.46987e-10 2.95853e-14 -4.92732e-08
-  hidden rotation_5 1.13935e-16 1 7.60003e-15 0.0304524
-  hidden linearVelocity_5 -3.7285e-14 -1.37569e-11 1.2745e-14
-  hidden angularVelocity_5 1.05133e-12 -8.03925e-13 -3.96046e-13
-  hidden translation_22 1.28187e-07 0.02385 2.04898e-08
-  hidden rotation_22 1.91657e-09 1 -2.18954e-09 1.12123
-  hidden linearVelocity_22 -1.52105e-14 -1.37301e-11 1.71957e-14
-  hidden angularVelocity_22 9.14358e-13 -8.09232e-13 -3.85082e-13
-  hidden translation_23 9.26166e-08 -0.02385 1.34408e-07
-  hidden rotation_23 -5.40136e-10 1 -1.99039e-09 -2.46499
-  hidden linearVelocity_23 -1.51329e-14 -1.37118e-11 -2.03776e-14
-  hidden angularVelocity_23 1.06019e-12 -7.90777e-13 -3.84863e-13
-  hidden translation_24 1.7229e-10 0.02385 2.10125e-10
-  hidden rotation_24 1.5591e-12 1 1.0764e-12 -1.39427
-  hidden linearVelocity_24 -8.94263e-11 -3.29443e-08 -1.05741e-08
-  hidden angularVelocity_24 117.61 -0.319457 0.000272692
-  hidden translation_25 -1.5362e-10 -0.02385 -1.62724e-10
-  hidden rotation_25 4.18085e-12 1 3.96677e-13 0.643155
-  hidden linearVelocity_25 -1.70586e-11 -6.30275e-09 -1.18696e-08
-  hidden angularVelocity_25 -70.1072 0.190427 -0.000162551
-  hidden translation_26 8.85632e-11 3.01213e-15 -8.60736e-09
-  hidden rotation_26 -2.73095e-15 1 1.03456e-14 -0.00794013
-  hidden position_26_0 0.00794027
-  hidden linearVelocity_26 -2.01655e-14 -8.61188e-12 -9.13147e-11
-  hidden angularVelocity_26 2.91724e-09 -8.72534e-12 -3.7986e-13
-  hidden translation_27 4.63879e-11 1.21366e-15 -5.38386e-09
-  hidden rotation_27 1.41322e-15 1 5.7839e-14 0.00794037
-  hidden linearVelocity_27 6.42296e-14 1.97639e-11 -1.82862e-10
-  hidden angularVelocity_27 1.02089e-12 -8.04347e-13 -3.84999e-13
-  hidden translation_29 -9.11468e-11 3.06352e-15 -1.59706e-09
-  hidden rotation_29 -2.40331e-15 1 -1.94626e-16 -0.0079399
-  hidden position_29_0 0.00794005
-  hidden linearVelocity_29 -1.0522e-14 -8.60171e-12 -9.1315e-11
-  hidden angularVelocity_29 2.91725e-09 -8.72527e-12 -3.80303e-13
-  translation 0.00159068 0.190609 -7.51519e-06
-  rotation -0.00014711 -0.000149024 -1 1.57351
+  rotation 0 0 -1 0
   name "CozmoBot_1"
-  headAngle -0.030439
-  liftAngle 0.00794004
   usbChannel 10
 }
 CozmoVizDisplay {
