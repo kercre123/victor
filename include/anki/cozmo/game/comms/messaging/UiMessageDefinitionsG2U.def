@@ -588,6 +588,8 @@ struct G2U_RobotCompletedAction
 {
 	uint32_t robotID;
 	int32_t actionType;
+	std::array<int32_t, 5> objectIDs;
+	uint8_t numObjects;
 	uint8_t success;
 	
 	/**** Constructors ****/
@@ -600,9 +602,13 @@ struct G2U_RobotCompletedAction
 	
 	explicit G2U_RobotCompletedAction(uint32_t robotID
 		,int32_t actionType
+		,const std::array<int32_t, 5>& objectIDs
+		,uint8_t numObjects
 		,uint8_t success)
 	:robotID(robotID)
 	,actionType(actionType)
+	,objectIDs(objectIDs)
+	,numObjects(numObjects)
 	,success(success)
 	{}
 

@@ -1016,6 +1016,8 @@ size_t G2U_RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->actionType);
+	buffer.WriteFArray<int32_t, 5>(this->objectIDs);
+	buffer.Write(this->numObjects);
 	buffer.Write(this->success);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
@@ -1031,6 +1033,8 @@ size_t G2U_RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->actionType);
+	buffer.ReadFArray<int32_t, 5>(this->objectIDs);
+	buffer.Read(this->numObjects);
 	buffer.Read(this->success);
 	return buffer.GetBytesRead();
 }
@@ -1042,6 +1046,10 @@ size_t G2U_RobotCompletedAction::Size() const
 	result += 4; // = uint_32
 	//actionType
 	result += 4; // = int_32
+	//objectIDs
+	result += 4 * 5; // = int_32 * 5
+	//numObjects
+	result += 1; // = uint_8
 	//success
 	result += 1; // = uint_8
 	return result;
@@ -1051,6 +1059,8 @@ bool G2U_RobotCompletedAction::operator==(const G2U_RobotCompletedAction& other)
 {
 	if (robotID != other.robotID
 	|| actionType != other.actionType
+	|| objectIDs != other.objectIDs
+	|| numObjects != other.numObjects
 	|| success != other.success) {
 		return false;
 	}
