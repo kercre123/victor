@@ -115,6 +115,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	void RefreshLayout () {
 
 		for(int i=0; i<filteredLayouts.Count; i++) {
+			if(filteredLayouts[i] == null) continue;
 			filteredLayouts[i].gameObject.SetActive(currentLayoutIndex == i);
 		}
 
