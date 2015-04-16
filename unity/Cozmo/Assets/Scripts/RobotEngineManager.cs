@@ -445,6 +445,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 		current.localBusyTimer = 0f;
+
+		if(!success) {
+			if(current.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
+				current.SetLiftHeight(1f);
+			}
+			else {
+				current.SetLiftHeight(0f);
+			}
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
