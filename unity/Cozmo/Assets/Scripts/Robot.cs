@@ -21,8 +21,6 @@ public class Robot
 
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
-	public int carryingObjectID { get; private set; }
-	public int headTrackingObjectID { get; private set; }
 	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
@@ -31,6 +29,37 @@ public class Robot
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject targetLockedObject;
+
+	private int carryingObjectID;
+	private int headTrackingObjectID;
+
+	private ObservedObject _carryingObject = null;
+	public ObservedObject carryingObject
+	{
+		get
+		{
+			if( _carryingObject == null || _carryingObject.ID != carryingObjectID )
+			{
+				_carryingObject = knownObjects.Find( x => x.ID == carryingObjectID );
+			}
+
+			return _carryingObject;
+		}
+	}
+
+	private ObservedObject _headTrackingObject = null;
+	public ObservedObject headTrackingObject
+	{
+		get
+		{
+			if( _headTrackingObject == null || _headTrackingObject.ID != headTrackingObjectID )
+			{
+				_headTrackingObject = knownObjects.Find( x => x.ID == headTrackingObjectID );
+			}
+			
+			return _headTrackingObject;
+		}
+	}
 
 	private int lastHeadTrackingObjectID = -1;
 
@@ -236,23 +265,23 @@ public class Robot
 		message.lwheel_speed_mmps = leftWheelSpeedMmps;
 		message.rwheel_speed_mmps = rightWheelSpeedMmps;
 		
-		RobotEngineManager.instance.channel.Send (new U2G.Message{DriveWheels=message});
+		RobotEngineManager.instance.channel.Send( new U2G.Message { DriveWheels = message } );
 	}
 
 	public void PlaceObjectOnGroundHere()
 	{
 		Debug.Log( "Place Object On Ground Here" );
 		
-		U2G.PlaceObjectOnGroundHere message = new U2G.PlaceObjectOnGroundHere ();
+		U2G.PlaceObjectOnGroundHere message = new U2G.PlaceObjectOnGroundHere();
 		
-		RobotEngineManager.instance.channel.Send (new U2G.Message{PlaceObjectOnGroundHere=message});
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ PlaceObjectOnGroundHere = message } );
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
-		if( isBusy ) return;
+		//if( isBusy ) return;
 
 		//Debug.Log( "Set Head Angle " + angle_rad );
 
@@ -266,7 +295,7 @@ public class Robot
 	
 	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
-		if( isBusy || lastHeadTrackingObjectID == observedObject.ID || headTrackingObjectID == observedObject.ID ) return;
+		if( /*isBusy ||*/ lastHeadTrackingObjectID == observedObject.ID || headTrackingObjectID == observedObject.ID ) return;
 
 		lastHeadTrackingObjectID = observedObject.ID;
 
@@ -347,7 +376,7 @@ public class Robot
 		
 		U2G.ClearAllBlocks message = new U2G.ClearAllBlocks();
 		
-		RobotEngineManager.instance.channel.Send( new U2G.Message{ ClearAllBlocks = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message { ClearAllBlocks = message } );
 		Reset();
 		
 		SetLiftHeight( 0f );
@@ -361,7 +390,7 @@ public class Robot
 		U2G.VisionWhileMoving message = new U2G.VisionWhileMoving();
 		message.enable = System.Convert.ToByte( enable );
 		
-		RobotEngineManager.instance.channel.Send( new U2G.Message{ VisionWhileMoving = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message { VisionWhileMoving = message } );
 	}
 	
 	public void RequestImage( RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode )
@@ -370,13 +399,13 @@ public class Robot
 		message.resolution = (byte)resolution;
 		message.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send (new U2G.Message{SetRobotImageSendMode = message});
+		RobotEngineManager.instance.channel.Send( new U2G.Message {SetRobotImageSendMode = message});
 		
 		U2G.ImageRequest message2 = new U2G.ImageRequest();
 		message2.robotID = ID;
 		message2.mode = (byte)mode;
 		
-		RobotEngineManager.instance.channel.Send( new U2G.Message{ ImageRequest = message2 } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message { ImageRequest = message2 } );
 		
 		Debug.Log( "image request message sent with " + mode + " at " + resolution );
 	}
@@ -385,7 +414,7 @@ public class Robot
 	{
 		U2G.StopAllMotors message = new U2G.StopAllMotors ();
 		
-		RobotEngineManager.instance.channel.Send(new U2G.Message{ StopAllMotors = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ StopAllMotors = message } );
 	}
 	
 	public void TurnInPlace( float angle_rad )

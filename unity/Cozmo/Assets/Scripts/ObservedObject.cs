@@ -24,6 +24,8 @@ public class ObservedObject
 	public float TimeLastSeen { get; private set; }
 	public float TimeCreated { get; private set; }
 
+	public uint Color { get; private set; }
+
 	public const float RemoveDelay = 0.15f;
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
@@ -33,6 +35,18 @@ public class ObservedObject
 		TimeCreated = Time.time;
 	}
 
+	public static implicit operator int( ObservedObject observedObject )
+	{
+		if( observedObject == null ) return -1;
+
+		return observedObject.ID;
+	}
+
+	public static implicit operator string( ObservedObject observedObject )
+	{
+		return ((int)observedObject).ToString();
+	}
+	
 	public void UpdateInfo( G2U.RobotObservedObject message )
 	{
 		RobotID = message.robotID;
@@ -64,6 +78,7 @@ public class ObservedObject
 		message.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
 		
 		message.color = color;
+		Color = color;
 		
 		message.whichLEDs = whichLEDs;
 		message.makeRelative = makeRelative;
