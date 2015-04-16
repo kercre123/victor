@@ -46,4 +46,28 @@ public class ObservedObject
 
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
+
+	public void SendLightMessage( float light_intensity, uint color = 0, byte whichLEDs = 0xFF, 
+	                             uint onPeriod_ms = uint.MaxValue, uint offPeriod_ms = 0,
+	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
+	                             byte turnOffUnspecifiedLEDs = 1 )
+	{
+		U2G_SetActiveObjectLEDs message = new U2G_SetActiveObjectLEDs ();
+		message.objectID = (uint)ID;
+		message.robotID = RobotEngineManager.instance.current.ID;
+		message.onPeriod_ms = onPeriod_ms;
+		message.offPeriod_ms = offPeriod_ms;
+		message.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		message.transitionOffPeriod_ms = transitionOffPeriod_ms;
+		message.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
+		
+		message.color = color;
+		
+		message.whichLEDs = whichLEDs;
+		message.makeRelative = 1;
+		message.relativeToX = RobotEngineManager.instance.current.WorldPosition.x;
+		message.relativeToY = RobotEngineManager.instance.current.WorldPosition.y;
+
+		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetActiveObjectLEDs = message } );
+	}
 }
