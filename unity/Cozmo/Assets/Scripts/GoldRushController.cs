@@ -2,8 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Anki.Cozmo;
+using System;
 
 public class GoldRushController : GameController {
+	public static GoldRushController instance = null;
 
 	[SerializeField] protected AudioClip foundBeep;
 	[SerializeField] protected AudioClip collectedSound;
@@ -13,13 +16,17 @@ public class GoldRushController : GameController {
 	[SerializeField] protected Button extractButton = null;
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
+	public float light_messaging_delay = .5f;
+	private float last_light_message_time = -1;
 	private float lastPlayTime = 0;
 	private int timerEventIndex = 0;
 
 	[SerializeField] float hideRadius;	//radius around cube's initial position in which its gold will be buried
 	[SerializeField] float findRadius;	//dropping cube within find radius will trigger transmutation/score
+	[SerializeField] float returnRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float detectRadius; //pulsing will accelerate from detect to find ranges
-	[SerializeField] float extractionTime = 1.5f; //pulsing will accelerate from detect to find ranges
+	[SerializeField] float extractionTime = 1.5f; //time it takes to extract
+	[SerializeField] float rewardTime = 1.5f; //time it takes to reward
 
 	[SerializeField] Text resultsScore; //for the results screen
 
@@ -27,8 +34,8 @@ public class GoldRushController : GameController {
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
 	int lastCarriedObjectId = -1;
-	int goldExtractingObjectId = -1;
-	int goldCollectingObjectId = -1;
+	[System.NonSerialized] public ObservedObject goldExtractingObject = null;
+	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
 	int baseObjectId = -1;
 	ScreenMessage hintMessage;
 	private bool audioLocatorEnabled = true;
@@ -37,16 +44,21 @@ public class GoldRushController : GameController {
 	{
 		IDLE,
 		SEARCHING,
+		CAN_EXTRACT,
 		EXTRACTING,
 		READY_TO_RETURN,
 		RETURNING,
 		RETURNED,
+		DEPOSITING,
 		NUMSTATES
 	};
 
 	private PlayState playState = PlayState.IDLE;
 	float playStateTimer = 0;
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
+
+	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
+	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
 
 	enum BuildState
 	{
@@ -65,6 +77,7 @@ public class GoldRushController : GameController {
 	{
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
 		extractButton.gameObject.SetActive (false);
+		instance = this;
 	}
 
 	protected override void RefreshHUD ()
@@ -95,9 +108,6 @@ public class GoldRushController : GameController {
 		totalActiveTime = 0;
 		timerEventIndex = 0;
 		scores [0] = 0;
-
-
-
 	}
 
 	protected override void Exit_PLAYING()
@@ -105,8 +115,10 @@ public class GoldRushController : GameController {
 		base.Exit_PLAYING();
 		resultsScore.text = "Score: " + scores [0];
 		CozmoVision.EnableDing(); // just in case we were in searching mode
-		extractButton.gameObject.SetActive (false);
 		//ActionButton.DROP = null;
+		//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
+		playState = PlayState.IDLE;
+		UpdateDetectorLights (0);
 		audio.Stop ();
 	}
 
@@ -117,8 +129,6 @@ public class GoldRushController : GameController {
 		playStateTimer += Time.deltaTime;
 
 		UpdateTimerEvents (totalActiveTime);
-
-		extractButton.gameObject.SetActive (false);
 
 		switch(playState)
 		{
@@ -151,12 +161,14 @@ public class GoldRushController : GameController {
 	{
 		base.Enter_BUILDING ();
 		lastCarriedObjectId = -1;
-		goldExtractingObjectId = -1;
+		goldExtractingObject = null;
 		playButton.gameObject.SetActive (false);
 		buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
 		robot = RobotEngineManager.instance.current;
 		RobotEngineManager.instance.SuccessOrFailure += CheckForStackSuccess;
+
+		goldCollectingObject = null;
 
 		hintMessage.ShowMessage("Pick up the extractor to begin", Color.black);
 	}
@@ -184,16 +196,17 @@ public class GoldRushController : GameController {
 			case BuildState.WAITING_TO_PICKUP_BLOCK:
 				if( (int)action_type == 5 || (int)action_type == 6 )
 				{
-					// picked up our fire block (will need to verify that it's an active block later)
+					// picked up our detector block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
-					goldExtractingObjectId = robot.carryingObjectID;
+					goldExtractingObject = robot.knownObjects.Find( x=> x.ID == robot.carryingObjectID );
+					//UpdateDetectorLights (1);
 					hintMessage.ShowMessage("Now place the extractor on the collector", Color.black);
 				}
 				break;
 			case BuildState.WAITING_FOR_STACK:
 				if( (int)action_type == 8 )
 				{
-					// picked up our fire block (will need to verify that it's an active block later)
+					// stacked our detector block
 					buildState = BuildState.WAITING_FOR_PLAY;
 					hintMessage.ShowMessage("Now pick up the block to begin play", Color.black);
 				}
@@ -201,7 +214,7 @@ public class GoldRushController : GameController {
 			case BuildState.WAITING_FOR_PLAY:
 				if( (int)action_type == 6 )
 				{
-					// picked up our fire block (will need to verify that it's an active block later)
+					// start the game
 					PlayRequested();
 					hintMessage.KillMessage();
 				}
@@ -278,7 +291,8 @@ public class GoldRushController : GameController {
 		case PlayState.SEARCHING:
 			foundItems.Clear();
 			buriedLocations.Clear();
-			buriedLocations[robot.carryingObjectID] = (Vector2)robot.WorldPosition + Random.insideUnitCircle * hideRadius;
+			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
+			buriedLocations[robot.carryingObjectID] = (Vector2)robot.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * findRadius;
 			CozmoVision.EnableDing(false);
 			break;
 		case PlayState.EXTRACTING:
@@ -292,7 +306,8 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.RETURNED:
 			//ActionButton.DROP = "COLLECT";
-			hintMessage.ShowMessage("Drop off the gold to collect points!", Color.black);
+			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
+			hintMessage.ShowMessage("Deposit the gold to collect points!", Color.black);
 			break;
 		default:
 			break;
@@ -306,6 +321,7 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
+			if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage(0);
 			CozmoVision.EnableDing();
 			break;
 		case PlayState.EXTRACTING:
@@ -318,10 +334,34 @@ public class GoldRushController : GameController {
 			//ActionButton.DROP = null;
 			break;
 		case PlayState.RETURNED:
+			//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 			hintMessage.KillMessage();
 			break;
 		default:
 			break;
+		}
+	}
+
+	void CheckForGoldDropOff(bool success, int action_type)
+	{
+		if( success )
+		{
+			if( action_type == 8 )
+			{
+				StartCoroutine(AwardPoints());
+			}
+		}
+	}
+
+	void UpdateCanExtract()
+	{
+		Vector2 buriedLocation;
+		if (buriedLocations.TryGetValue (robot.carryingObjectID, out buriedLocation)) {
+			float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
+			if( distance > findRadius )
+			{
+				EnterPlayState(PlayState.SEARCHING);
+			}
 		}
 	}
 
@@ -344,9 +384,9 @@ public class GoldRushController : GameController {
 							audio.Stop();
 							audio.loop = true;
 							gameObject.audio.PlayOneShot(foundBeep);
+							EnterPlayState(PlayState.CAN_EXTRACT);
 						}
 						foundItems.Add(robot.carryingObjectID);
-						extractButton.gameObject.SetActive (true);
 						Debug.Log("found!");
 					}
 					else if(distance <= detectRadius) 
@@ -356,12 +396,14 @@ public class GoldRushController : GameController {
 						float dist_percent = 1 - ((detectRadius-findRadius)-(distance-findRadius))/(detectRadius-findRadius);
 						float current_rate = Mathf.Lerp(detectRangeDelayClose, detectRangeDelayFar, dist_percent);
 						UpdateLocatorSound(current_rate);
+						UpdateDetectorLights(1-dist_percent);
 						hintMessage.KillMessage();
 					}
 				}
 				else if(distance <= findRadius)
 				{
-					extractButton.gameObject.SetActive (true);
+					EnterPlayState(PlayState.CAN_EXTRACT);
+					UpdateDetectorLights (1);
 				}
 				else if( foundItems.Contains(robot.carryingObjectID) && distance > findRadius )
 				{
@@ -399,26 +441,25 @@ public class GoldRushController : GameController {
 
 	void UpdateReturning()
 	{
-		float distance = (Vector2.zero - (Vector2)robot.WorldPosition).magnitude;
-		if (distance < findRadius) 
+		Vector2 home_base_pos = Vector2.zero;
+		if (goldCollectingObject != null && robot.knownObjects.Find(x => x.ID == goldCollectingObject.ID) != null )
+		{
+			home_base_pos = robot.knownObjects.Find(x => x.ID == goldCollectingObject.ID).WorldPosition;
+			Debug.Log("home_base_pos: "+home_base_pos.ToString());
+		}
+		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
+		Debug.Log ("distance: " + distance);
+		if (distance < returnRadius) 
 		{
 			EnterPlayState(PlayState.RETURNED);
 		}
+
 
 		totalActiveTime += Time.deltaTime;
 	}
 
 	void UpdateReturned()
 	{
-		if (robot.carryingObjectID == -1) 
-		{
-			// award points
-			scores[0]+= 10;
-			audio.Stop();
-			audio.PlayOneShot(collectedSound);
-			EnterPlayState(PlayState.IDLE);
-		}
-
 		// todo: add code to make sure the player doen't leave the box before dropping it off
 	}
 
@@ -434,9 +475,77 @@ public class GoldRushController : GameController {
 		EnterPlayState(PlayState.EXTRACTING);
 	}
 
+	public void BeginDepositing()
+	{
+		EnterPlayState (PlayState.DEPOSITING);
+		StartCoroutine(AwardPoints());
+	}
+
+#region IEnumerator
 	IEnumerator StartExtracting()
 	{
 		yield return new WaitForSeconds(extractionTime);
 		EnterPlayState (PlayState.RETURNING);
 	}
+
+	IEnumerator AwardPoints()
+	{
+		// will end up doing active block light stuff here
+		uint color = 0xFFFF00FF;
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0x33);
+		yield return new WaitForSeconds(rewardTime/2.0f);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0xCC);
+		yield return new WaitForSeconds(rewardTime/2.0f);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (0);
+		// award points
+		scores[0]+= 10;
+		audio.Stop();
+		audio.PlayOneShot(collectedSound);
+		yield return new WaitForSeconds (.9f);
+		EnterPlayState(PlayState.IDLE);
+	}
+#endregion
+
+	#region Active Block IFC
+	void UpdateDetectorLights(float light_intensity)
+	{
+		float time_now = Time.realtimeSinceStartup;
+
+		if (time_now - last_light_message_time > light_messaging_delay) 
+		{
+			Debug.Log("light_intensity: "+ light_intensity);
+			last_light_message_time = time_now;
+			float r = 255 * light_intensity;
+			float g = 255 * light_intensity;
+			
+			uint color = ((uint)r << 24 | (uint)g << 16 ) | 0x00FF;
+			if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage(light_intensity, color, 0x33);
+		}
+	}
+
+	/*void SendLightMessage(float light_intensity, uint color = 0, byte which_lcds = 0xFF)
+	{
+		U2G_SetActiveObjectLEDs msg = new U2G_SetActiveObjectLEDs ();
+		msg.objectID = (uint)goldExtractingObjectId;
+		msg.robotID = 1;
+		msg.onPeriod_ms = 100000000;
+		msg.offPeriod_ms = 0;
+		msg.transitionOnPeriod_ms = 0;
+		msg.transitionOffPeriod_ms = 0;
+		msg.turnOffUnspecifiedLEDs = 1;
+		//Color32 color = new Color32 (0, 1, 1, 1);
+		 
+		msg.color = color;
+		
+		msg.whichLEDs = which_lcds;
+		msg.makeRelative = 1;
+		msg.relativeToX = robot.WorldPosition.x;
+		msg.relativeToY = robot.WorldPosition.y;
+		
+		
+		U2G_Message msgWrapper = new U2G_Message{SetActiveObjectLEDs = msg};
+		//msgWrapper.U2G_SetActiveObjectLEDs(msg);
+		RobotEngineManager.instance.channel.Send (msgWrapper);
+	}*/
+	#endregion
 }
