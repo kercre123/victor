@@ -156,7 +156,12 @@ namespace Anki {
         frameId_ = frameID;
         
         u16 i;
-        if (GetHistIdx(t, i) == RESULT_FAIL) {
+        if (t == 0) {
+          // If t==0, this is considered to be a command to just update the current pose
+          PRINT("Setting pose to %f %f %f\n", x, y, angle);
+          SetCurrentMatPose(x, y, angle);
+          return RESULT_OK;
+        } else if (GetHistIdx(t, i) == RESULT_FAIL) {
           PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
