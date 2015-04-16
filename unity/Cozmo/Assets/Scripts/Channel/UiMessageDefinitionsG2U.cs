@@ -1865,11 +1865,31 @@ public class RobotCompletedAction
 {
 	private uint _robotID; // uint_32
 	private int _actionType; // int_32
+	private int[] _objectIDs; // int_32[5]
+	private byte _numObjects; // uint_8
 	private byte _success; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
 	public int actionType { get { return _actionType; } set { _actionType = value; } }
+
+	public int[] objectIDs
+	{
+		get {
+			return _objectIDs;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("objectIDs fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("objectIDs fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_objectIDs = value;
+		}
+	}
+
+	public byte numObjects { get { return _numObjects; } set { _numObjects = value; } }
 
 	public byte success { get { return _success; } set { _success = value; } }
 
@@ -1878,14 +1898,19 @@ public class RobotCompletedAction
 
 	public RobotCompletedAction()
 	{
+		this.objectIDs = new int[5];
 	}
 
 	public RobotCompletedAction(uint robotID,
 		int actionType,
+		int[] objectIDs,
+		byte numObjects,
 		byte success)
 	{
 		this.robotID = robotID;
 		this.actionType = actionType;
+		this.objectIDs = objectIDs;
+		this.numObjects = numObjects;
 		this.success = success;
 	}
 
@@ -1909,6 +1934,11 @@ public class RobotCompletedAction
 	{
 		_robotID = reader.ReadUInt32();
 		_actionType = reader.ReadInt32();
+		_objectIDs = new int[5];
+		for (int i = 0; i < 5; ++i) {
+			_objectIDs[i] = reader.ReadInt32();
+		}
+		_numObjects = reader.ReadByte();
 		_success = reader.ReadByte();
 	}
 
@@ -1922,13 +1952,17 @@ public class RobotCompletedAction
 	{
 		writer.Write((uint)_robotID);
 		writer.Write((int)_actionType);
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((int)_objectIDs[i]);
+		}
+		writer.Write((byte)_numObjects);
 		writer.Write((byte)_success);
 	}
 
 	public int Size 
 	{
 		get {
-			return 9;
+			return 30;
 		}
 	}
 
@@ -1976,6 +2010,8 @@ public class RobotCompletedAction
 
 		return this._robotID.Equals(p._robotID)
 			&& this._actionType.Equals(p._actionType)
+			&& ArrayEquals<int>(this._objectIDs,p._objectIDs)
+			&& this._numObjects.Equals(p._numObjects)
 			&& this._success.Equals(p._success);
 	}
 
@@ -1986,6 +2022,8 @@ public class RobotCompletedAction
 			int hash = 17;
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._objectIDs.GetHashCode();
+			hash = hash * 23 + this._numObjects.GetHashCode();
 			hash = hash * 23 + this._success.GetHashCode();
 			return hash;
 		}

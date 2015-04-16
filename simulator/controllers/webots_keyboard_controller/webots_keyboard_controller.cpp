@@ -27,6 +27,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -59,10 +60,6 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 DRIVE_VELOCITY_TURBO = 150.f; // mm/s -- while holding ALT
-        const f32 DRIVE_VELOCITY_FAST  = 60.f; // mm/s
-        const f32 DRIVE_VELOCITY_SLOW  = 20.f; // mm/s -- while holding SHIFT
-        
         const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
@@ -277,7 +274,7 @@ namespace Anki {
             currentlyObservedObject.area   = area;
           //}
           
-          /*
+          
           // DEBUG!!!
           // Track head to last object seen
           static u32 lastObjectID = u32_MAX;
@@ -294,7 +291,7 @@ namespace Anki {
             message.Set_TrackHeadToObject(m);
             SendMessage(message);
           }
-           */
+           
         }
       }
       
@@ -336,6 +333,37 @@ namespace Anki {
       {
         // Once robot connects, set resolution
         SendSetRobotImageSendMode(ISM_STREAM);
+      }
+      
+      void HandleRobotCompletedAction(const G2U::RobotCompletedAction& msg)
+      {
+        switch(msg.actionType)
+        {
+          case ACTION_PICKUP_OBJECT_HIGH:
+          case ACTION_PICKUP_OBJECT_LOW:
+            printf("Robot %d %s picking up stack of %d objects with IDs: ",
+                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+            for(int i=0; i<msg.numObjects; ++i) {
+              printf("%d ", msg.objectIDs[i]);
+            }
+            printf("\n");
+            break;
+            
+          case ACTION_PLACE_OBJECT_HIGH:
+          case ACTION_PLACE_OBJECT_LOW:
+            printf("Robot %d %s placing stack of %d objects with IDs: ",
+                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+            for(int i=0; i<msg.numObjects; ++i) {
+              printf("%d ", msg.objectIDs[i]);
+            }
+            printf("\n");
+            break;
+
+          default:
+            printf("Robot %d completed action with type=%d and %s.\n",
+                   msg.robotID, msg.actionType, (msg.success ? "SUCCEEDED" : "FAILED"));
+        }
+        
       }
       
       // For processing image chunks arriving from robot.
@@ -433,6 +461,9 @@ namespace Anki {
             case G2U::Message::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
+            case G2U::Message::Tag::RobotCompletedAction:
+              HandleRobotCompletedAction(message.Get_RobotCompletedAction());
+              break;
             default:
               // ignore
               break;
@@ -524,7 +555,9 @@ namespace Anki {
         f32 commandedLiftSpeed = 0.f;
         f32 commandedHeadSpeed = 0.f;
         
-        f32 wheelSpeed = DRIVE_VELOCITY_FAST;
+        f32 wheelSpeed = root_->getField("driveSpeedNormal")->getSFFloat();
+        
+        f32 steeringCurvature = root_->getField("steeringCurvature")->getSFFloat();
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
@@ -580,11 +613,11 @@ namespace Anki {
           f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
           f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
           if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-            wheelSpeed = DRIVE_VELOCITY_SLOW;
+            wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
             liftSpeed *= 0.4;
             headSpeed *= 0.5;
           } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-            wheelSpeed = DRIVE_VELOCITY_TURBO;
+            wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
           
@@ -1198,11 +1231,11 @@ namespace Anki {
           
           // Set wheel speeds based on drive commands
           if (throttleDir > 0) {
-            leftSpeed = wheelSpeed + steeringDir * wheelSpeed;
-            rightSpeed = wheelSpeed - steeringDir * wheelSpeed;
+            leftSpeed = wheelSpeed + steeringDir * wheelSpeed * steeringCurvature;
+            rightSpeed = wheelSpeed - steeringDir * wheelSpeed * steeringCurvature;
           } else if (throttleDir < 0) {
-            leftSpeed = -wheelSpeed - steeringDir * wheelSpeed;
-            rightSpeed = -wheelSpeed + steeringDir * wheelSpeed;
+            leftSpeed = -wheelSpeed - steeringDir * wheelSpeed * steeringCurvature;
+            rightSpeed = -wheelSpeed + steeringDir * wheelSpeed * steeringCurvature;
           } else {
             leftSpeed = steeringDir * wheelSpeed;
             rightSpeed = -steeringDir * wheelSpeed;
