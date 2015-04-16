@@ -27,6 +27,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -277,7 +278,7 @@ namespace Anki {
             currentlyObservedObject.area   = area;
           //}
           
-          /*
+          
           // DEBUG!!!
           // Track head to last object seen
           static u32 lastObjectID = u32_MAX;
@@ -294,7 +295,7 @@ namespace Anki {
             message.Set_TrackHeadToObject(m);
             SendMessage(message);
           }
-           */
+           
         }
       }
       
@@ -336,6 +337,37 @@ namespace Anki {
       {
         // Once robot connects, set resolution
         SendSetRobotImageSendMode(ISM_STREAM);
+      }
+      
+      void HandleRobotCompletedAction(const G2U_RobotCompletedAction& msg)
+      {
+        switch(msg.actionType)
+        {
+          case ACTION_PICKUP_OBJECT_HIGH:
+          case ACTION_PICKUP_OBJECT_LOW:
+            printf("Robot %d %s picking up stack of %d objects with IDs: ",
+                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+            for(int i=0; i<msg.numObjects; ++i) {
+              printf("%d ", msg.objectIDs[i]);
+            }
+            printf("\n");
+            break;
+            
+          case ACTION_PLACE_OBJECT_HIGH:
+          case ACTION_PLACE_OBJECT_LOW:
+            printf("Robot %d %s placing stack of %d objects with IDs: ",
+                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+            for(int i=0; i<msg.numObjects; ++i) {
+              printf("%d ", msg.objectIDs[i]);
+            }
+            printf("\n");
+            break;
+
+          default:
+            printf("Robot %d completed action with type=%d and %s.\n",
+                   msg.robotID, msg.actionType, (msg.success ? "SUCCEEDED" : "FAILED"));
+        }
+        
       }
       
       // For processing image chunks arriving from robot.
@@ -432,6 +464,9 @@ namespace Anki {
               break;
             case G2U_Message::Type::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
+              break;
+            case G2U_Message::Type::RobotCompletedAction:
+              HandleRobotCompletedAction(message.Get_RobotCompletedAction());
               break;
             default:
               // ignore
