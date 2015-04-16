@@ -3,17 +3,17 @@ using System.Collections;
 
 public class GoldRushGameActions : GameActions {
 
-	public override string TARGET { get { return "Search"; } }
-	public override string PICK_UP { get { return "Pick Up"; } }
+	//public override string TARGET { get { return "Search"; } }
+	//public override string PICK_UP { get { return "Pick Up"; } }
 	public override string DROP { get { if (GoldRushController.instance.inExtractRange) return "Extract"; else return "Deposit"; } }
-	public override string STACK { get { return "Stack"; } }
-	public override string ROLL { get { return "Roll"; } }
-	public override string ALIGN { get { return "Align"; } }
-	public override string CHANGE { get { return "Change"; } }
-	public override string CANCEL { get { return "Cancel"; } }
+	//public override string STACK { get { return "Stack"; } }
+	//public override string ROLL { get { return "Roll"; } }
+	//public override string ALIGN { get { return "Align"; } }
+	//public override string CHANGE { get { return "Change"; } }
+	//public override string CANCEL { get { return "Cancel"; } }
 	
-	protected override string TOP { get { return " TOP"; } }
-	protected override string BOTTOM { get { return " BOTTOM"; } }
+	//protected override string TOP { get { return " TOP"; } }
+	//protected override string BOTTOM { get { return " BOTTOM"; } }
 	// Use this for initialization
 
 	/*

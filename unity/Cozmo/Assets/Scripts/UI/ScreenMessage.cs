@@ -17,7 +17,7 @@ public class ScreenMessage : MonoBehaviour {
 	{
 		if(coroutine != null) StopCoroutine(coroutine);
 
-		//text.text = G2U_Message;
+		//text.text = G2U.Message;
 		ShowMessage (message, color);
 
 		coroutine = TurnOffText(time_in_seconds);

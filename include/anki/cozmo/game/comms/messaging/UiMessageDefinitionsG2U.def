@@ -18,25 +18,27 @@ namespace Anki {
 
 namespace Cozmo {
 
-// MESSAGE G2U_Ping
-struct G2U_Ping
+namespace G2U {
+
+// MESSAGE Ping
+struct Ping
 {
 	uint32_t counter;
 	
 	/**** Constructors ****/
-	G2U_Ping() = default;
-	G2U_Ping(const G2U_Ping& other) = default;
-	G2U_Ping(G2U_Ping& other) = default;
-	G2U_Ping(G2U_Ping&& other) noexcept = default;
-	G2U_Ping& operator=(const G2U_Ping& other) = default;
-	G2U_Ping& operator=(G2U_Ping&& other) noexcept = default;
+	Ping() = default;
+	Ping(const Ping& other) = default;
+	Ping(Ping& other) = default;
+	Ping(Ping&& other) noexcept = default;
+	Ping& operator=(const Ping& other) = default;
+	Ping& operator=(Ping&& other) noexcept = default;
 	
-	explicit G2U_Ping(uint32_t counter)
+	explicit Ping(uint32_t counter)
 	:counter(counter)
 	{}
 
-	explicit G2U_Ping(const uint8_t* buff, size_t len);
-	explicit G2U_Ping(const CLAD::SafeMessageBuffer& buffer);
+	explicit Ping(const uint8_t* buff, size_t len);
+	explicit Ping(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -48,29 +50,29 @@ struct G2U_Ping
 
 	size_t Size() const;
 
-	bool operator==(const G2U_Ping& other) const;
-	bool operator!=(const G2U_Ping& other) const;
+	bool operator==(const Ping& other) const;
+	bool operator!=(const Ping& other) const;
 };
 
-// MESSAGE G2U_RobotAvailable
-struct G2U_RobotAvailable
+// MESSAGE RobotAvailable
+struct RobotAvailable
 {
 	uint32_t robotID;
 	
 	/**** Constructors ****/
-	G2U_RobotAvailable() = default;
-	G2U_RobotAvailable(const G2U_RobotAvailable& other) = default;
-	G2U_RobotAvailable(G2U_RobotAvailable& other) = default;
-	G2U_RobotAvailable(G2U_RobotAvailable&& other) noexcept = default;
-	G2U_RobotAvailable& operator=(const G2U_RobotAvailable& other) = default;
-	G2U_RobotAvailable& operator=(G2U_RobotAvailable&& other) noexcept = default;
+	RobotAvailable() = default;
+	RobotAvailable(const RobotAvailable& other) = default;
+	RobotAvailable(RobotAvailable& other) = default;
+	RobotAvailable(RobotAvailable&& other) noexcept = default;
+	RobotAvailable& operator=(const RobotAvailable& other) = default;
+	RobotAvailable& operator=(RobotAvailable&& other) noexcept = default;
 	
-	explicit G2U_RobotAvailable(uint32_t robotID)
+	explicit RobotAvailable(uint32_t robotID)
 	:robotID(robotID)
 	{}
 
-	explicit G2U_RobotAvailable(const uint8_t* buff, size_t len);
-	explicit G2U_RobotAvailable(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotAvailable(const uint8_t* buff, size_t len);
+	explicit RobotAvailable(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -82,29 +84,29 @@ struct G2U_RobotAvailable
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotAvailable& other) const;
-	bool operator!=(const G2U_RobotAvailable& other) const;
+	bool operator==(const RobotAvailable& other) const;
+	bool operator!=(const RobotAvailable& other) const;
 };
 
-// MESSAGE G2U_UiDeviceAvailable
-struct G2U_UiDeviceAvailable
+// MESSAGE UiDeviceAvailable
+struct UiDeviceAvailable
 {
 	uint32_t deviceID;
 	
 	/**** Constructors ****/
-	G2U_UiDeviceAvailable() = default;
-	G2U_UiDeviceAvailable(const G2U_UiDeviceAvailable& other) = default;
-	G2U_UiDeviceAvailable(G2U_UiDeviceAvailable& other) = default;
-	G2U_UiDeviceAvailable(G2U_UiDeviceAvailable&& other) noexcept = default;
-	G2U_UiDeviceAvailable& operator=(const G2U_UiDeviceAvailable& other) = default;
-	G2U_UiDeviceAvailable& operator=(G2U_UiDeviceAvailable&& other) noexcept = default;
+	UiDeviceAvailable() = default;
+	UiDeviceAvailable(const UiDeviceAvailable& other) = default;
+	UiDeviceAvailable(UiDeviceAvailable& other) = default;
+	UiDeviceAvailable(UiDeviceAvailable&& other) noexcept = default;
+	UiDeviceAvailable& operator=(const UiDeviceAvailable& other) = default;
+	UiDeviceAvailable& operator=(UiDeviceAvailable&& other) noexcept = default;
 	
-	explicit G2U_UiDeviceAvailable(uint32_t deviceID)
+	explicit UiDeviceAvailable(uint32_t deviceID)
 	:deviceID(deviceID)
 	{}
 
-	explicit G2U_UiDeviceAvailable(const uint8_t* buff, size_t len);
-	explicit G2U_UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer);
+	explicit UiDeviceAvailable(const uint8_t* buff, size_t len);
+	explicit UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -116,32 +118,32 @@ struct G2U_UiDeviceAvailable
 
 	size_t Size() const;
 
-	bool operator==(const G2U_UiDeviceAvailable& other) const;
-	bool operator!=(const G2U_UiDeviceAvailable& other) const;
+	bool operator==(const UiDeviceAvailable& other) const;
+	bool operator!=(const UiDeviceAvailable& other) const;
 };
 
-// MESSAGE G2U_RobotConnected
-struct G2U_RobotConnected
+// MESSAGE RobotConnected
+struct RobotConnected
 {
 	uint32_t robotID;
 	uint8_t successful;
 	
 	/**** Constructors ****/
-	G2U_RobotConnected() = default;
-	G2U_RobotConnected(const G2U_RobotConnected& other) = default;
-	G2U_RobotConnected(G2U_RobotConnected& other) = default;
-	G2U_RobotConnected(G2U_RobotConnected&& other) noexcept = default;
-	G2U_RobotConnected& operator=(const G2U_RobotConnected& other) = default;
-	G2U_RobotConnected& operator=(G2U_RobotConnected&& other) noexcept = default;
+	RobotConnected() = default;
+	RobotConnected(const RobotConnected& other) = default;
+	RobotConnected(RobotConnected& other) = default;
+	RobotConnected(RobotConnected&& other) noexcept = default;
+	RobotConnected& operator=(const RobotConnected& other) = default;
+	RobotConnected& operator=(RobotConnected&& other) noexcept = default;
 	
-	explicit G2U_RobotConnected(uint32_t robotID
+	explicit RobotConnected(uint32_t robotID
 		,uint8_t successful)
 	:robotID(robotID)
 	,successful(successful)
 	{}
 
-	explicit G2U_RobotConnected(const uint8_t* buff, size_t len);
-	explicit G2U_RobotConnected(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotConnected(const uint8_t* buff, size_t len);
+	explicit RobotConnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -153,32 +155,32 @@ struct G2U_RobotConnected
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotConnected& other) const;
-	bool operator!=(const G2U_RobotConnected& other) const;
+	bool operator==(const RobotConnected& other) const;
+	bool operator!=(const RobotConnected& other) const;
 };
 
-// MESSAGE G2U_RobotDisconnected
-struct G2U_RobotDisconnected
+// MESSAGE RobotDisconnected
+struct RobotDisconnected
 {
 	uint32_t robotID;
 	float timeSinceLastMsg_sec;
 	
 	/**** Constructors ****/
-	G2U_RobotDisconnected() = default;
-	G2U_RobotDisconnected(const G2U_RobotDisconnected& other) = default;
-	G2U_RobotDisconnected(G2U_RobotDisconnected& other) = default;
-	G2U_RobotDisconnected(G2U_RobotDisconnected&& other) noexcept = default;
-	G2U_RobotDisconnected& operator=(const G2U_RobotDisconnected& other) = default;
-	G2U_RobotDisconnected& operator=(G2U_RobotDisconnected&& other) noexcept = default;
+	RobotDisconnected() = default;
+	RobotDisconnected(const RobotDisconnected& other) = default;
+	RobotDisconnected(RobotDisconnected& other) = default;
+	RobotDisconnected(RobotDisconnected&& other) noexcept = default;
+	RobotDisconnected& operator=(const RobotDisconnected& other) = default;
+	RobotDisconnected& operator=(RobotDisconnected&& other) noexcept = default;
 	
-	explicit G2U_RobotDisconnected(uint32_t robotID
+	explicit RobotDisconnected(uint32_t robotID
 		,float timeSinceLastMsg_sec)
 	:robotID(robotID)
 	,timeSinceLastMsg_sec(timeSinceLastMsg_sec)
 	{}
 
-	explicit G2U_RobotDisconnected(const uint8_t* buff, size_t len);
-	explicit G2U_RobotDisconnected(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotDisconnected(const uint8_t* buff, size_t len);
+	explicit RobotDisconnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -190,32 +192,32 @@ struct G2U_RobotDisconnected
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotDisconnected& other) const;
-	bool operator!=(const G2U_RobotDisconnected& other) const;
+	bool operator==(const RobotDisconnected& other) const;
+	bool operator!=(const RobotDisconnected& other) const;
 };
 
-// MESSAGE G2U_UiDeviceConnected
-struct G2U_UiDeviceConnected
+// MESSAGE UiDeviceConnected
+struct UiDeviceConnected
 {
 	uint32_t deviceID;
 	uint8_t successful;
 	
 	/**** Constructors ****/
-	G2U_UiDeviceConnected() = default;
-	G2U_UiDeviceConnected(const G2U_UiDeviceConnected& other) = default;
-	G2U_UiDeviceConnected(G2U_UiDeviceConnected& other) = default;
-	G2U_UiDeviceConnected(G2U_UiDeviceConnected&& other) noexcept = default;
-	G2U_UiDeviceConnected& operator=(const G2U_UiDeviceConnected& other) = default;
-	G2U_UiDeviceConnected& operator=(G2U_UiDeviceConnected&& other) noexcept = default;
+	UiDeviceConnected() = default;
+	UiDeviceConnected(const UiDeviceConnected& other) = default;
+	UiDeviceConnected(UiDeviceConnected& other) = default;
+	UiDeviceConnected(UiDeviceConnected&& other) noexcept = default;
+	UiDeviceConnected& operator=(const UiDeviceConnected& other) = default;
+	UiDeviceConnected& operator=(UiDeviceConnected&& other) noexcept = default;
 	
-	explicit G2U_UiDeviceConnected(uint32_t deviceID
+	explicit UiDeviceConnected(uint32_t deviceID
 		,uint8_t successful)
 	:deviceID(deviceID)
 	,successful(successful)
 	{}
 
-	explicit G2U_UiDeviceConnected(const uint8_t* buff, size_t len);
-	explicit G2U_UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer);
+	explicit UiDeviceConnected(const uint8_t* buff, size_t len);
+	explicit UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -227,12 +229,12 @@ struct G2U_UiDeviceConnected
 
 	size_t Size() const;
 
-	bool operator==(const G2U_UiDeviceConnected& other) const;
-	bool operator!=(const G2U_UiDeviceConnected& other) const;
+	bool operator==(const UiDeviceConnected& other) const;
+	bool operator!=(const UiDeviceConnected& other) const;
 };
 
-// MESSAGE G2U_RobotState
-struct G2U_RobotState
+// MESSAGE RobotState
+struct RobotState
 {
 	float pose_x;
 	float pose_y;
@@ -254,14 +256,14 @@ struct G2U_RobotState
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	G2U_RobotState() = default;
-	G2U_RobotState(const G2U_RobotState& other) = default;
-	G2U_RobotState(G2U_RobotState& other) = default;
-	G2U_RobotState(G2U_RobotState&& other) noexcept = default;
-	G2U_RobotState& operator=(const G2U_RobotState& other) = default;
-	G2U_RobotState& operator=(G2U_RobotState&& other) noexcept = default;
+	RobotState() = default;
+	RobotState(const RobotState& other) = default;
+	RobotState(RobotState& other) = default;
+	RobotState(RobotState&& other) noexcept = default;
+	RobotState& operator=(const RobotState& other) = default;
+	RobotState& operator=(RobotState&& other) noexcept = default;
 	
-	explicit G2U_RobotState(float pose_x
+	explicit RobotState(float pose_x
 		,float pose_y
 		,float pose_z
 		,float poseAngle_rad
@@ -299,8 +301,8 @@ struct G2U_RobotState
 	,robotID(robotID)
 	{}
 
-	explicit G2U_RobotState(const uint8_t* buff, size_t len);
-	explicit G2U_RobotState(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotState(const uint8_t* buff, size_t len);
+	explicit RobotState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -312,12 +314,12 @@ struct G2U_RobotState
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotState& other) const;
-	bool operator!=(const G2U_RobotState& other) const;
+	bool operator==(const RobotState& other) const;
+	bool operator!=(const RobotState& other) const;
 };
 
-// MESSAGE G2U_ImageChunk
-struct G2U_ImageChunk
+// MESSAGE ImageChunk
+struct ImageChunk
 {
 	uint32_t imageId;
 	uint32_t frameTimeStamp;
@@ -330,14 +332,14 @@ struct G2U_ImageChunk
 	std::array<uint8_t, 1400> data;
 	
 	/**** Constructors ****/
-	G2U_ImageChunk() = default;
-	G2U_ImageChunk(const G2U_ImageChunk& other) = default;
-	G2U_ImageChunk(G2U_ImageChunk& other) = default;
-	G2U_ImageChunk(G2U_ImageChunk&& other) noexcept = default;
-	G2U_ImageChunk& operator=(const G2U_ImageChunk& other) = default;
-	G2U_ImageChunk& operator=(G2U_ImageChunk&& other) noexcept = default;
+	ImageChunk() = default;
+	ImageChunk(const ImageChunk& other) = default;
+	ImageChunk(ImageChunk& other) = default;
+	ImageChunk(ImageChunk&& other) noexcept = default;
+	ImageChunk& operator=(const ImageChunk& other) = default;
+	ImageChunk& operator=(ImageChunk&& other) noexcept = default;
 	
-	explicit G2U_ImageChunk(uint32_t imageId
+	explicit ImageChunk(uint32_t imageId
 		,uint32_t frameTimeStamp
 		,uint16_t nrows
 		,uint16_t ncols
@@ -357,8 +359,8 @@ struct G2U_ImageChunk
 	,data(data)
 	{}
 
-	explicit G2U_ImageChunk(const uint8_t* buff, size_t len);
-	explicit G2U_ImageChunk(const CLAD::SafeMessageBuffer& buffer);
+	explicit ImageChunk(const uint8_t* buff, size_t len);
+	explicit ImageChunk(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -370,12 +372,12 @@ struct G2U_ImageChunk
 
 	size_t Size() const;
 
-	bool operator==(const G2U_ImageChunk& other) const;
-	bool operator!=(const G2U_ImageChunk& other) const;
+	bool operator==(const ImageChunk& other) const;
+	bool operator!=(const ImageChunk& other) const;
 };
 
-// MESSAGE G2U_RobotObservedObject
-struct G2U_RobotObservedObject
+// MESSAGE RobotObservedObject
+struct RobotObservedObject
 {
 	uint32_t robotID;
 	uint32_t objectFamily;
@@ -396,14 +398,14 @@ struct G2U_RobotObservedObject
 	uint8_t isActive;
 	
 	/**** Constructors ****/
-	G2U_RobotObservedObject() = default;
-	G2U_RobotObservedObject(const G2U_RobotObservedObject& other) = default;
-	G2U_RobotObservedObject(G2U_RobotObservedObject& other) = default;
-	G2U_RobotObservedObject(G2U_RobotObservedObject&& other) noexcept = default;
-	G2U_RobotObservedObject& operator=(const G2U_RobotObservedObject& other) = default;
-	G2U_RobotObservedObject& operator=(G2U_RobotObservedObject&& other) noexcept = default;
+	RobotObservedObject() = default;
+	RobotObservedObject(const RobotObservedObject& other) = default;
+	RobotObservedObject(RobotObservedObject& other) = default;
+	RobotObservedObject(RobotObservedObject&& other) noexcept = default;
+	RobotObservedObject& operator=(const RobotObservedObject& other) = default;
+	RobotObservedObject& operator=(RobotObservedObject&& other) noexcept = default;
 	
-	explicit G2U_RobotObservedObject(uint32_t robotID
+	explicit RobotObservedObject(uint32_t robotID
 		,uint32_t objectFamily
 		,uint32_t objectType
 		,int32_t objectID
@@ -439,8 +441,8 @@ struct G2U_RobotObservedObject
 	,isActive(isActive)
 	{}
 
-	explicit G2U_RobotObservedObject(const uint8_t* buff, size_t len);
-	explicit G2U_RobotObservedObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotObservedObject(const uint8_t* buff, size_t len);
+	explicit RobotObservedObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -452,29 +454,29 @@ struct G2U_RobotObservedObject
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotObservedObject& other) const;
-	bool operator!=(const G2U_RobotObservedObject& other) const;
+	bool operator==(const RobotObservedObject& other) const;
+	bool operator!=(const RobotObservedObject& other) const;
 };
 
-// MESSAGE G2U_RobotObservedNothing
-struct G2U_RobotObservedNothing
+// MESSAGE RobotObservedNothing
+struct RobotObservedNothing
 {
 	uint32_t robotID;
 	
 	/**** Constructors ****/
-	G2U_RobotObservedNothing() = default;
-	G2U_RobotObservedNothing(const G2U_RobotObservedNothing& other) = default;
-	G2U_RobotObservedNothing(G2U_RobotObservedNothing& other) = default;
-	G2U_RobotObservedNothing(G2U_RobotObservedNothing&& other) noexcept = default;
-	G2U_RobotObservedNothing& operator=(const G2U_RobotObservedNothing& other) = default;
-	G2U_RobotObservedNothing& operator=(G2U_RobotObservedNothing&& other) noexcept = default;
+	RobotObservedNothing() = default;
+	RobotObservedNothing(const RobotObservedNothing& other) = default;
+	RobotObservedNothing(RobotObservedNothing& other) = default;
+	RobotObservedNothing(RobotObservedNothing&& other) noexcept = default;
+	RobotObservedNothing& operator=(const RobotObservedNothing& other) = default;
+	RobotObservedNothing& operator=(RobotObservedNothing&& other) noexcept = default;
 	
-	explicit G2U_RobotObservedNothing(uint32_t robotID)
+	explicit RobotObservedNothing(uint32_t robotID)
 	:robotID(robotID)
 	{}
 
-	explicit G2U_RobotObservedNothing(const uint8_t* buff, size_t len);
-	explicit G2U_RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotObservedNothing(const uint8_t* buff, size_t len);
+	explicit RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -486,32 +488,32 @@ struct G2U_RobotObservedNothing
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotObservedNothing& other) const;
-	bool operator!=(const G2U_RobotObservedNothing& other) const;
+	bool operator==(const RobotObservedNothing& other) const;
+	bool operator!=(const RobotObservedNothing& other) const;
 };
 
-// MESSAGE G2U_RobotDeletedObject
-struct G2U_RobotDeletedObject
+// MESSAGE RobotDeletedObject
+struct RobotDeletedObject
 {
 	uint32_t robotID;
 	uint32_t objectID;
 	
 	/**** Constructors ****/
-	G2U_RobotDeletedObject() = default;
-	G2U_RobotDeletedObject(const G2U_RobotDeletedObject& other) = default;
-	G2U_RobotDeletedObject(G2U_RobotDeletedObject& other) = default;
-	G2U_RobotDeletedObject(G2U_RobotDeletedObject&& other) noexcept = default;
-	G2U_RobotDeletedObject& operator=(const G2U_RobotDeletedObject& other) = default;
-	G2U_RobotDeletedObject& operator=(G2U_RobotDeletedObject&& other) noexcept = default;
+	RobotDeletedObject() = default;
+	RobotDeletedObject(const RobotDeletedObject& other) = default;
+	RobotDeletedObject(RobotDeletedObject& other) = default;
+	RobotDeletedObject(RobotDeletedObject&& other) noexcept = default;
+	RobotDeletedObject& operator=(const RobotDeletedObject& other) = default;
+	RobotDeletedObject& operator=(RobotDeletedObject&& other) noexcept = default;
 	
-	explicit G2U_RobotDeletedObject(uint32_t robotID
+	explicit RobotDeletedObject(uint32_t robotID
 		,uint32_t objectID)
 	:robotID(robotID)
 	,objectID(objectID)
 	{}
 
-	explicit G2U_RobotDeletedObject(const uint8_t* buff, size_t len);
-	explicit G2U_RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotDeletedObject(const uint8_t* buff, size_t len);
+	explicit RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -523,12 +525,12 @@ struct G2U_RobotDeletedObject
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotDeletedObject& other) const;
-	bool operator!=(const G2U_RobotDeletedObject& other) const;
+	bool operator==(const RobotDeletedObject& other) const;
+	bool operator!=(const RobotDeletedObject& other) const;
 };
 
-// MESSAGE G2U_DeviceDetectedVisionMarker
-struct G2U_DeviceDetectedVisionMarker
+// MESSAGE DeviceDetectedVisionMarker
+struct DeviceDetectedVisionMarker
 {
 	uint32_t markerType;
 	float x_upperLeft;
@@ -541,14 +543,14 @@ struct G2U_DeviceDetectedVisionMarker
 	float y_lowerRight;
 	
 	/**** Constructors ****/
-	G2U_DeviceDetectedVisionMarker() = default;
-	G2U_DeviceDetectedVisionMarker(const G2U_DeviceDetectedVisionMarker& other) = default;
-	G2U_DeviceDetectedVisionMarker(G2U_DeviceDetectedVisionMarker& other) = default;
-	G2U_DeviceDetectedVisionMarker(G2U_DeviceDetectedVisionMarker&& other) noexcept = default;
-	G2U_DeviceDetectedVisionMarker& operator=(const G2U_DeviceDetectedVisionMarker& other) = default;
-	G2U_DeviceDetectedVisionMarker& operator=(G2U_DeviceDetectedVisionMarker&& other) noexcept = default;
+	DeviceDetectedVisionMarker() = default;
+	DeviceDetectedVisionMarker(const DeviceDetectedVisionMarker& other) = default;
+	DeviceDetectedVisionMarker(DeviceDetectedVisionMarker& other) = default;
+	DeviceDetectedVisionMarker(DeviceDetectedVisionMarker&& other) noexcept = default;
+	DeviceDetectedVisionMarker& operator=(const DeviceDetectedVisionMarker& other) = default;
+	DeviceDetectedVisionMarker& operator=(DeviceDetectedVisionMarker&& other) noexcept = default;
 	
-	explicit G2U_DeviceDetectedVisionMarker(uint32_t markerType
+	explicit DeviceDetectedVisionMarker(uint32_t markerType
 		,float x_upperLeft
 		,float y_upperLeft
 		,float x_lowerLeft
@@ -568,8 +570,8 @@ struct G2U_DeviceDetectedVisionMarker
 	,y_lowerRight(y_lowerRight)
 	{}
 
-	explicit G2U_DeviceDetectedVisionMarker(const uint8_t* buff, size_t len);
-	explicit G2U_DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer);
+	explicit DeviceDetectedVisionMarker(const uint8_t* buff, size_t len);
+	explicit DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -581,35 +583,41 @@ struct G2U_DeviceDetectedVisionMarker
 
 	size_t Size() const;
 
-	bool operator==(const G2U_DeviceDetectedVisionMarker& other) const;
-	bool operator!=(const G2U_DeviceDetectedVisionMarker& other) const;
+	bool operator==(const DeviceDetectedVisionMarker& other) const;
+	bool operator!=(const DeviceDetectedVisionMarker& other) const;
 };
 
-// MESSAGE G2U_RobotCompletedAction
-struct G2U_RobotCompletedAction
+// MESSAGE RobotCompletedAction
+struct RobotCompletedAction
 {
 	uint32_t robotID;
 	int32_t actionType;
+	std::array<int32_t, 5> objectIDs;
+	uint8_t numObjects;
 	uint8_t success;
 	
 	/**** Constructors ****/
-	G2U_RobotCompletedAction() = default;
-	G2U_RobotCompletedAction(const G2U_RobotCompletedAction& other) = default;
-	G2U_RobotCompletedAction(G2U_RobotCompletedAction& other) = default;
-	G2U_RobotCompletedAction(G2U_RobotCompletedAction&& other) noexcept = default;
-	G2U_RobotCompletedAction& operator=(const G2U_RobotCompletedAction& other) = default;
-	G2U_RobotCompletedAction& operator=(G2U_RobotCompletedAction&& other) noexcept = default;
+	RobotCompletedAction() = default;
+	RobotCompletedAction(const RobotCompletedAction& other) = default;
+	RobotCompletedAction(RobotCompletedAction& other) = default;
+	RobotCompletedAction(RobotCompletedAction&& other) noexcept = default;
+	RobotCompletedAction& operator=(const RobotCompletedAction& other) = default;
+	RobotCompletedAction& operator=(RobotCompletedAction&& other) noexcept = default;
 	
-	explicit G2U_RobotCompletedAction(uint32_t robotID
+	explicit RobotCompletedAction(uint32_t robotID
 		,int32_t actionType
+		,const std::array<int32_t, 5>& objectIDs
+		,uint8_t numObjects
 		,uint8_t success)
 	:robotID(robotID)
 	,actionType(actionType)
+	,objectIDs(objectIDs)
+	,numObjects(numObjects)
 	,success(success)
 	{}
 
-	explicit G2U_RobotCompletedAction(const uint8_t* buff, size_t len);
-	explicit G2U_RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer);
+	explicit RobotCompletedAction(const uint8_t* buff, size_t len);
+	explicit RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -621,26 +629,26 @@ struct G2U_RobotCompletedAction
 
 	size_t Size() const;
 
-	bool operator==(const G2U_RobotCompletedAction& other) const;
-	bool operator!=(const G2U_RobotCompletedAction& other) const;
+	bool operator==(const RobotCompletedAction& other) const;
+	bool operator!=(const RobotCompletedAction& other) const;
 };
 
-// MESSAGE G2U_PlaySound
-struct G2U_PlaySound
+// MESSAGE PlaySound
+struct PlaySound
 {
 	std::string soundFilename;
 	uint8_t numLoops;
 	uint8_t volume;
 	
 	/**** Constructors ****/
-	G2U_PlaySound() = default;
-	G2U_PlaySound(const G2U_PlaySound& other) = default;
-	G2U_PlaySound(G2U_PlaySound& other) = default;
-	G2U_PlaySound(G2U_PlaySound&& other) noexcept = default;
-	G2U_PlaySound& operator=(const G2U_PlaySound& other) = default;
-	G2U_PlaySound& operator=(G2U_PlaySound&& other) noexcept = default;
+	PlaySound() = default;
+	PlaySound(const PlaySound& other) = default;
+	PlaySound(PlaySound& other) = default;
+	PlaySound(PlaySound&& other) noexcept = default;
+	PlaySound& operator=(const PlaySound& other) = default;
+	PlaySound& operator=(PlaySound&& other) noexcept = default;
 	
-	explicit G2U_PlaySound(const std::string& soundFilename
+	explicit PlaySound(const std::string& soundFilename
 		,uint8_t numLoops
 		,uint8_t volume)
 	:soundFilename(soundFilename)
@@ -648,8 +656,8 @@ struct G2U_PlaySound
 	,volume(volume)
 	{}
 
-	explicit G2U_PlaySound(const uint8_t* buff, size_t len);
-	explicit G2U_PlaySound(const CLAD::SafeMessageBuffer& buffer);
+	explicit PlaySound(const uint8_t* buff, size_t len);
+	explicit PlaySound(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -661,23 +669,23 @@ struct G2U_PlaySound
 
 	size_t Size() const;
 
-	bool operator==(const G2U_PlaySound& other) const;
-	bool operator!=(const G2U_PlaySound& other) const;
+	bool operator==(const PlaySound& other) const;
+	bool operator!=(const PlaySound& other) const;
 };
 
-// MESSAGE G2U_StopSound
-struct G2U_StopSound
+// MESSAGE StopSound
+struct StopSound
 {
 	
 	/**** Constructors ****/
-	G2U_StopSound() = default;
-	G2U_StopSound(const G2U_StopSound& other) = default;
-	G2U_StopSound(G2U_StopSound& other) = default;
-	G2U_StopSound(G2U_StopSound&& other) noexcept = default;
-	G2U_StopSound& operator=(const G2U_StopSound& other) = default;
-	G2U_StopSound& operator=(G2U_StopSound&& other) noexcept = default;
-		explicit G2U_StopSound(const uint8_t* buff, size_t len);
-	explicit G2U_StopSound(const CLAD::SafeMessageBuffer& buffer);
+	StopSound() = default;
+	StopSound(const StopSound& other) = default;
+	StopSound(StopSound& other) = default;
+	StopSound(StopSound&& other) noexcept = default;
+	StopSound& operator=(const StopSound& other) = default;
+	StopSound& operator=(StopSound&& other) noexcept = default;
+		explicit StopSound(const uint8_t* buff, size_t len);
+	explicit StopSound(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -689,97 +697,97 @@ struct G2U_StopSound
 
 	size_t Size() const;
 
-	bool operator==(const G2U_StopSound& other) const;
-	bool operator!=(const G2U_StopSound& other) const;
+	bool operator==(const StopSound& other) const;
+	bool operator!=(const StopSound& other) const;
 };
 
-// UNION G2U_Message
-class G2U_Message
+// UNION Message
+class Message
 {
 public:
-	using Tag = G2U_MessageTag;
+	using Tag = MessageTag;
 	/**** Constructors ****/
-	G2U_Message() :_tag(Tag::INVALID) { }
-	explicit G2U_Message(const CLAD::SafeMessageBuffer& buff);
-	explicit G2U_Message(const uint8_t* buffer, size_t length);
+	Message() :_tag(Tag::INVALID) { }
+	explicit Message(const CLAD::SafeMessageBuffer& buff);
+	explicit Message(const uint8_t* buffer, size_t length);
 
-	~G2U_Message() { ClearCurrent(); }
+	~Message() { ClearCurrent(); }
 	Tag GetTag() const { return _tag; }
 
 	/** Ping **/
-	const Anki::Cozmo::G2U_Ping& Get_Ping() const;
-	void Set_Ping(const Anki::Cozmo::G2U_Ping& new_Ping);
-	void Set_Ping(Anki::Cozmo::G2U_Ping&& new_Ping);
+	const Anki::Cozmo::G2U::Ping& Get_Ping() const;
+	void Set_Ping(const Anki::Cozmo::G2U::Ping& new_Ping);
+	void Set_Ping(Anki::Cozmo::G2U::Ping&& new_Ping);
 
 	/** RobotAvailable **/
-	const Anki::Cozmo::G2U_RobotAvailable& Get_RobotAvailable() const;
-	void Set_RobotAvailable(const Anki::Cozmo::G2U_RobotAvailable& new_RobotAvailable);
-	void Set_RobotAvailable(Anki::Cozmo::G2U_RobotAvailable&& new_RobotAvailable);
+	const Anki::Cozmo::G2U::RobotAvailable& Get_RobotAvailable() const;
+	void Set_RobotAvailable(const Anki::Cozmo::G2U::RobotAvailable& new_RobotAvailable);
+	void Set_RobotAvailable(Anki::Cozmo::G2U::RobotAvailable&& new_RobotAvailable);
 
 	/** UiDeviceAvailable **/
-	const Anki::Cozmo::G2U_UiDeviceAvailable& Get_UiDeviceAvailable() const;
-	void Set_UiDeviceAvailable(const Anki::Cozmo::G2U_UiDeviceAvailable& new_UiDeviceAvailable);
-	void Set_UiDeviceAvailable(Anki::Cozmo::G2U_UiDeviceAvailable&& new_UiDeviceAvailable);
+	const Anki::Cozmo::G2U::UiDeviceAvailable& Get_UiDeviceAvailable() const;
+	void Set_UiDeviceAvailable(const Anki::Cozmo::G2U::UiDeviceAvailable& new_UiDeviceAvailable);
+	void Set_UiDeviceAvailable(Anki::Cozmo::G2U::UiDeviceAvailable&& new_UiDeviceAvailable);
 
 	/** RobotConnected **/
-	const Anki::Cozmo::G2U_RobotConnected& Get_RobotConnected() const;
-	void Set_RobotConnected(const Anki::Cozmo::G2U_RobotConnected& new_RobotConnected);
-	void Set_RobotConnected(Anki::Cozmo::G2U_RobotConnected&& new_RobotConnected);
+	const Anki::Cozmo::G2U::RobotConnected& Get_RobotConnected() const;
+	void Set_RobotConnected(const Anki::Cozmo::G2U::RobotConnected& new_RobotConnected);
+	void Set_RobotConnected(Anki::Cozmo::G2U::RobotConnected&& new_RobotConnected);
 
 	/** RobotDisconnected **/
-	const Anki::Cozmo::G2U_RobotDisconnected& Get_RobotDisconnected() const;
-	void Set_RobotDisconnected(const Anki::Cozmo::G2U_RobotDisconnected& new_RobotDisconnected);
-	void Set_RobotDisconnected(Anki::Cozmo::G2U_RobotDisconnected&& new_RobotDisconnected);
+	const Anki::Cozmo::G2U::RobotDisconnected& Get_RobotDisconnected() const;
+	void Set_RobotDisconnected(const Anki::Cozmo::G2U::RobotDisconnected& new_RobotDisconnected);
+	void Set_RobotDisconnected(Anki::Cozmo::G2U::RobotDisconnected&& new_RobotDisconnected);
 
 	/** UiDeviceConnected **/
-	const Anki::Cozmo::G2U_UiDeviceConnected& Get_UiDeviceConnected() const;
-	void Set_UiDeviceConnected(const Anki::Cozmo::G2U_UiDeviceConnected& new_UiDeviceConnected);
-	void Set_UiDeviceConnected(Anki::Cozmo::G2U_UiDeviceConnected&& new_UiDeviceConnected);
+	const Anki::Cozmo::G2U::UiDeviceConnected& Get_UiDeviceConnected() const;
+	void Set_UiDeviceConnected(const Anki::Cozmo::G2U::UiDeviceConnected& new_UiDeviceConnected);
+	void Set_UiDeviceConnected(Anki::Cozmo::G2U::UiDeviceConnected&& new_UiDeviceConnected);
 
 	/** RobotState **/
-	const Anki::Cozmo::G2U_RobotState& Get_RobotState() const;
-	void Set_RobotState(const Anki::Cozmo::G2U_RobotState& new_RobotState);
-	void Set_RobotState(Anki::Cozmo::G2U_RobotState&& new_RobotState);
+	const Anki::Cozmo::G2U::RobotState& Get_RobotState() const;
+	void Set_RobotState(const Anki::Cozmo::G2U::RobotState& new_RobotState);
+	void Set_RobotState(Anki::Cozmo::G2U::RobotState&& new_RobotState);
 
 	/** ImageChunk **/
-	const Anki::Cozmo::G2U_ImageChunk& Get_ImageChunk() const;
-	void Set_ImageChunk(const Anki::Cozmo::G2U_ImageChunk& new_ImageChunk);
-	void Set_ImageChunk(Anki::Cozmo::G2U_ImageChunk&& new_ImageChunk);
+	const Anki::Cozmo::G2U::ImageChunk& Get_ImageChunk() const;
+	void Set_ImageChunk(const Anki::Cozmo::G2U::ImageChunk& new_ImageChunk);
+	void Set_ImageChunk(Anki::Cozmo::G2U::ImageChunk&& new_ImageChunk);
 
 	/** RobotObservedObject **/
-	const Anki::Cozmo::G2U_RobotObservedObject& Get_RobotObservedObject() const;
-	void Set_RobotObservedObject(const Anki::Cozmo::G2U_RobotObservedObject& new_RobotObservedObject);
-	void Set_RobotObservedObject(Anki::Cozmo::G2U_RobotObservedObject&& new_RobotObservedObject);
+	const Anki::Cozmo::G2U::RobotObservedObject& Get_RobotObservedObject() const;
+	void Set_RobotObservedObject(const Anki::Cozmo::G2U::RobotObservedObject& new_RobotObservedObject);
+	void Set_RobotObservedObject(Anki::Cozmo::G2U::RobotObservedObject&& new_RobotObservedObject);
 
 	/** RobotObservedNothing **/
-	const Anki::Cozmo::G2U_RobotObservedNothing& Get_RobotObservedNothing() const;
-	void Set_RobotObservedNothing(const Anki::Cozmo::G2U_RobotObservedNothing& new_RobotObservedNothing);
-	void Set_RobotObservedNothing(Anki::Cozmo::G2U_RobotObservedNothing&& new_RobotObservedNothing);
+	const Anki::Cozmo::G2U::RobotObservedNothing& Get_RobotObservedNothing() const;
+	void Set_RobotObservedNothing(const Anki::Cozmo::G2U::RobotObservedNothing& new_RobotObservedNothing);
+	void Set_RobotObservedNothing(Anki::Cozmo::G2U::RobotObservedNothing&& new_RobotObservedNothing);
 
 	/** RobotDeletedObject **/
-	const Anki::Cozmo::G2U_RobotDeletedObject& Get_RobotDeletedObject() const;
-	void Set_RobotDeletedObject(const Anki::Cozmo::G2U_RobotDeletedObject& new_RobotDeletedObject);
-	void Set_RobotDeletedObject(Anki::Cozmo::G2U_RobotDeletedObject&& new_RobotDeletedObject);
+	const Anki::Cozmo::G2U::RobotDeletedObject& Get_RobotDeletedObject() const;
+	void Set_RobotDeletedObject(const Anki::Cozmo::G2U::RobotDeletedObject& new_RobotDeletedObject);
+	void Set_RobotDeletedObject(Anki::Cozmo::G2U::RobotDeletedObject&& new_RobotDeletedObject);
 
 	/** DeviceDetectedVisionMarker **/
-	const Anki::Cozmo::G2U_DeviceDetectedVisionMarker& Get_DeviceDetectedVisionMarker() const;
-	void Set_DeviceDetectedVisionMarker(const Anki::Cozmo::G2U_DeviceDetectedVisionMarker& new_DeviceDetectedVisionMarker);
-	void Set_DeviceDetectedVisionMarker(Anki::Cozmo::G2U_DeviceDetectedVisionMarker&& new_DeviceDetectedVisionMarker);
+	const Anki::Cozmo::G2U::DeviceDetectedVisionMarker& Get_DeviceDetectedVisionMarker() const;
+	void Set_DeviceDetectedVisionMarker(const Anki::Cozmo::G2U::DeviceDetectedVisionMarker& new_DeviceDetectedVisionMarker);
+	void Set_DeviceDetectedVisionMarker(Anki::Cozmo::G2U::DeviceDetectedVisionMarker&& new_DeviceDetectedVisionMarker);
 
 	/** RobotCompletedAction **/
-	const Anki::Cozmo::G2U_RobotCompletedAction& Get_RobotCompletedAction() const;
-	void Set_RobotCompletedAction(const Anki::Cozmo::G2U_RobotCompletedAction& new_RobotCompletedAction);
-	void Set_RobotCompletedAction(Anki::Cozmo::G2U_RobotCompletedAction&& new_RobotCompletedAction);
+	const Anki::Cozmo::G2U::RobotCompletedAction& Get_RobotCompletedAction() const;
+	void Set_RobotCompletedAction(const Anki::Cozmo::G2U::RobotCompletedAction& new_RobotCompletedAction);
+	void Set_RobotCompletedAction(Anki::Cozmo::G2U::RobotCompletedAction&& new_RobotCompletedAction);
 
 	/** PlaySound **/
-	const Anki::Cozmo::G2U_PlaySound& Get_PlaySound() const;
-	void Set_PlaySound(const Anki::Cozmo::G2U_PlaySound& new_PlaySound);
-	void Set_PlaySound(Anki::Cozmo::G2U_PlaySound&& new_PlaySound);
+	const Anki::Cozmo::G2U::PlaySound& Get_PlaySound() const;
+	void Set_PlaySound(const Anki::Cozmo::G2U::PlaySound& new_PlaySound);
+	void Set_PlaySound(Anki::Cozmo::G2U::PlaySound&& new_PlaySound);
 
 	/** StopSound **/
-	const Anki::Cozmo::G2U_StopSound& Get_StopSound() const;
-	void Set_StopSound(const Anki::Cozmo::G2U_StopSound& new_StopSound);
-	void Set_StopSound(Anki::Cozmo::G2U_StopSound&& new_StopSound);
+	const Anki::Cozmo::G2U::StopSound& Get_StopSound() const;
+	void Set_StopSound(const Anki::Cozmo::G2U::StopSound& new_StopSound);
+	void Set_StopSound(Anki::Cozmo::G2U::StopSound&& new_StopSound);
 
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
@@ -794,23 +802,25 @@ private:
 	Tag _tag;
 
 	union {
-		Anki::Cozmo::G2U_Ping _Ping;
-		Anki::Cozmo::G2U_RobotAvailable _RobotAvailable;
-		Anki::Cozmo::G2U_UiDeviceAvailable _UiDeviceAvailable;
-		Anki::Cozmo::G2U_RobotConnected _RobotConnected;
-		Anki::Cozmo::G2U_RobotDisconnected _RobotDisconnected;
-		Anki::Cozmo::G2U_UiDeviceConnected _UiDeviceConnected;
-		Anki::Cozmo::G2U_RobotState _RobotState;
-		Anki::Cozmo::G2U_ImageChunk _ImageChunk;
-		Anki::Cozmo::G2U_RobotObservedObject _RobotObservedObject;
-		Anki::Cozmo::G2U_RobotObservedNothing _RobotObservedNothing;
-		Anki::Cozmo::G2U_RobotDeletedObject _RobotDeletedObject;
-		Anki::Cozmo::G2U_DeviceDetectedVisionMarker _DeviceDetectedVisionMarker;
-		Anki::Cozmo::G2U_RobotCompletedAction _RobotCompletedAction;
-		Anki::Cozmo::G2U_PlaySound _PlaySound;
-		Anki::Cozmo::G2U_StopSound _StopSound;
+		Anki::Cozmo::G2U::Ping _Ping;
+		Anki::Cozmo::G2U::RobotAvailable _RobotAvailable;
+		Anki::Cozmo::G2U::UiDeviceAvailable _UiDeviceAvailable;
+		Anki::Cozmo::G2U::RobotConnected _RobotConnected;
+		Anki::Cozmo::G2U::RobotDisconnected _RobotDisconnected;
+		Anki::Cozmo::G2U::UiDeviceConnected _UiDeviceConnected;
+		Anki::Cozmo::G2U::RobotState _RobotState;
+		Anki::Cozmo::G2U::ImageChunk _ImageChunk;
+		Anki::Cozmo::G2U::RobotObservedObject _RobotObservedObject;
+		Anki::Cozmo::G2U::RobotObservedNothing _RobotObservedNothing;
+		Anki::Cozmo::G2U::RobotDeletedObject _RobotDeletedObject;
+		Anki::Cozmo::G2U::DeviceDetectedVisionMarker _DeviceDetectedVisionMarker;
+		Anki::Cozmo::G2U::RobotCompletedAction _RobotCompletedAction;
+		Anki::Cozmo::G2U::PlaySound _PlaySound;
+		Anki::Cozmo::G2U::StopSound _StopSound;
 	};
 };
+
+} // namespace G2U
 
 } // namespace Cozmo
 

@@ -119,9 +119,17 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageChunkAvailableSignal().ScopedSubscribe(cbRobotImageChunkAvailable));
     
-    auto cbRobotCompletedAction = [this](RobotID_t robotID, int32_t actionType,
+    auto cbRobotCompletedAction = [this](RobotID_t robotID,
+                                         int32_t actionType,
+                                         int32_t objectID0,
+                                         int32_t objectID1,
+                                         int32_t objectID2,
+                                         int32_t objectID3,
+                                         int32_t objectID4,
+                                         uint8_t numObjects,
                                          uint8_t success) {
-      this->HandleRobotCompletedAction(robotID, actionType, success);
+      this->HandleRobotCompletedAction(robotID, actionType, objectID0, objectID1, objectID2,
+                                       objectID3, objectID4, numObjects, success);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
@@ -135,7 +143,7 @@ namespace Cozmo {
                                                              float x_lowerRight, float y_lowerRight)
   {
     // Notify the UI that the device camera saw a VisionMarker
-    G2U_DeviceDetectedVisionMarker msg;
+    G2U::DeviceDetectedVisionMarker msg;
     msg.markerType = markerType;
     msg.x_upperLeft = x_upperLeft;
     msg.y_upperLeft = y_upperLeft;
@@ -157,9 +165,9 @@ namespace Cozmo {
   void CozmoGameImpl::HandleRobotAvailableSignal(RobotID_t robotID) {
     
     // Notify UI that robot is availale and let it issue message to connect
-    G2U_RobotAvailable msg;
+    G2U::RobotAvailable msg;
     msg.robotID = robotID;
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotAvailable(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
@@ -167,38 +175,38 @@ namespace Cozmo {
   void CozmoGameImpl::HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID) {
     
     // Notify UI that a UI device is availale and let it issue message to connect
-    G2U_UiDeviceAvailable msg;
+    G2U::UiDeviceAvailable msg;
     msg.deviceID = deviceID;
-    G2U_Message message;
+    G2U::Message message;
     message.Set_UiDeviceAvailable(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotConnectedSignal(RobotID_t robotID, bool successful)
   {
-    G2U_RobotConnected msg;
+    G2U::RobotConnected msg;
     msg.robotID = robotID;
     msg.successful = successful;
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotConnected(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotDisconnectedSignal(RobotID_t robotID)
   {
-    G2U_RobotDisconnected msg;
+    G2U::RobotDisconnected msg;
     msg.robotID = robotID;
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotDisconnected(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful)
   {
-    G2U_UiDeviceConnected msg;
+    G2U::UiDeviceConnected msg;
     msg.deviceID = deviceID;
     msg.successful = successful;
-    G2U_Message message;
+    G2U::Message message;
     message.Set_UiDeviceConnected(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
@@ -207,13 +215,13 @@ namespace Cozmo {
   {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to play a sound:
-    G2U_PlaySound msg;
+    G2U::PlaySound msg;
     msg.numLoops = numLoops;
     msg.volume   = volume;
     const std::string& filename = SoundManager::getInstance()->GetSoundFile((SoundID_t)soundID);
     strncpy(&(msg.soundFilename[0]), filename.c_str(), msg.soundFilename.size());
     
-    G2U_Message message;
+    G2U::Message message;
     message.Set_PlaySound(msg);
     bool success = RESULT_OK == _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
     
@@ -236,8 +244,8 @@ namespace Cozmo {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to stop the sound
     // TODO: somehow use the robot ID?
-    G2U_StopSound msg;
-    G2U_Message message;
+    G2U::StopSound msg;
+    G2U::Message message;
     message.Set_StopSound(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
 #   else
@@ -261,7 +269,7 @@ namespace Cozmo {
                                                       bool isActive)
   {
     // Send a message out to UI that the robot saw an object
-    G2U_RobotObservedObject msg;
+    G2U::RobotObservedObject msg;
     msg.robotID       = robotID;
     msg.objectFamily  = objectFamily;
     msg.objectType    = objectType;
@@ -281,28 +289,28 @@ namespace Cozmo {
     msg.isActive      = static_cast<uint8_t>(isActive);
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotObservedObject(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotObservedNothingSignal(uint8_t robotID)
   {
-    G2U_RobotObservedNothing msg;
+    G2U::RobotObservedNothing msg;
     msg.robotID = robotID;
     
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotObservedNothing(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
   void CozmoGameImpl::HandleRobotDeletedObjectSignal(uint8_t robotID, uint32_t objectID)
   {
-    G2U_RobotDeletedObject msg;
+    G2U::RobotDeletedObject msg;
     msg.robotID = robotID;
     msg.objectID = objectID;
     
-    G2U_Message message;
+    G2U::Message message;
     message.Set_RobotDeletedObject(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
@@ -356,7 +364,7 @@ namespace Cozmo {
     } else if (ismIter->second != ISM_OFF) {
       
       const MessageImageChunk *robotImgChunk = reinterpret_cast<const MessageImageChunk*>(chunkMsg);
-      G2U_ImageChunk uiImgChunk;
+      G2U::ImageChunk uiImgChunk;
       uiImgChunk.imageId = robotImgChunk->imageId;
       uiImgChunk.frameTimeStamp = robotImgChunk->frameTimeStamp;
       uiImgChunk.nrows = Vision::CameraResInfo[robotImgChunk->resolution].height;
@@ -369,7 +377,7 @@ namespace Cozmo {
       std::copy(robotImgChunk->data.begin(), robotImgChunk->data.end(),
                 uiImgChunk.data.begin());
       
-      G2U_Message msgWrapper;
+      G2U::Message msgWrapper;
       msgWrapper.Set_ImageChunk(uiImgChunk);
       _uiMsgHandler.SendMessage(_hostUiDeviceID, msgWrapper);
       
@@ -383,15 +391,26 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, int32_t actionType, uint8_t success)
+  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, int32_t actionType,
+                                                 int32_t objectID0, int32_t objectID1,
+                                                 int32_t objectID2, int32_t objectID3,
+                                                 int32_t objectID4, uint8_t numObjects,
+                                                 uint8_t success)
   {
-    G2U_RobotCompletedAction msg;
+    G2U::RobotCompletedAction msg;
   
     msg.robotID = robotID;
     msg.actionType = actionType;
     msg.success = success;
     
-    G2U_Message message;
+    msg.objectIDs[0] = objectID0;
+    msg.objectIDs[1] = objectID1;
+    msg.objectIDs[2] = objectID2;
+    msg.objectIDs[3] = objectID3;
+    msg.objectIDs[4] = objectID4;
+    msg.numObjects = numObjects;
+    
+    G2U::Message message;
     message.Set_RobotCompletedAction(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }

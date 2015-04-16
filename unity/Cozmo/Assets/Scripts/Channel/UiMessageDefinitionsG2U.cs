@@ -6,7 +6,9 @@ namespace Anki {
 
 namespace Cozmo {
 
-public class G2U_Ping
+namespace G2U {
+
+public class Ping
 {
 	private uint _counter; // uint_32
 
@@ -15,21 +17,21 @@ public class G2U_Ping
 
 	/**** Constructors ****/
 
-	public G2U_Ping()
+	public Ping()
 	{
 	}
 
-	public G2U_Ping(uint counter)
+	public Ping(uint counter)
 	{
 		this.counter = counter;
 	}
 
-	public G2U_Ping(System.IO.Stream stream)
+	public Ping(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_Ping(System.IO.BinaryReader reader)
+	public Ping(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -89,7 +91,7 @@ public class G2U_Ping
 			return false;
 		}
 
-		G2U_Ping p = obj as G2U_Ping;
+		Ping p = obj as Ping;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -98,7 +100,7 @@ public class G2U_Ping
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_Ping p)
+	public bool Equals(Ping p)
 	{
 		if ((object) p == null)
 		{
@@ -119,7 +121,7 @@ public class G2U_Ping
 	}
 }
 
-public class G2U_RobotAvailable
+public class RobotAvailable
 {
 	private uint _robotID; // uint_32
 
@@ -128,21 +130,21 @@ public class G2U_RobotAvailable
 
 	/**** Constructors ****/
 
-	public G2U_RobotAvailable()
+	public RobotAvailable()
 	{
 	}
 
-	public G2U_RobotAvailable(uint robotID)
+	public RobotAvailable(uint robotID)
 	{
 		this.robotID = robotID;
 	}
 
-	public G2U_RobotAvailable(System.IO.Stream stream)
+	public RobotAvailable(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotAvailable(System.IO.BinaryReader reader)
+	public RobotAvailable(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -202,7 +204,7 @@ public class G2U_RobotAvailable
 			return false;
 		}
 
-		G2U_RobotAvailable p = obj as G2U_RobotAvailable;
+		RobotAvailable p = obj as RobotAvailable;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -211,7 +213,7 @@ public class G2U_RobotAvailable
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotAvailable p)
+	public bool Equals(RobotAvailable p)
 	{
 		if ((object) p == null)
 		{
@@ -232,7 +234,7 @@ public class G2U_RobotAvailable
 	}
 }
 
-public class G2U_UiDeviceAvailable
+public class UiDeviceAvailable
 {
 	private uint _deviceID; // uint_32
 
@@ -241,21 +243,21 @@ public class G2U_UiDeviceAvailable
 
 	/**** Constructors ****/
 
-	public G2U_UiDeviceAvailable()
+	public UiDeviceAvailable()
 	{
 	}
 
-	public G2U_UiDeviceAvailable(uint deviceID)
+	public UiDeviceAvailable(uint deviceID)
 	{
 		this.deviceID = deviceID;
 	}
 
-	public G2U_UiDeviceAvailable(System.IO.Stream stream)
+	public UiDeviceAvailable(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_UiDeviceAvailable(System.IO.BinaryReader reader)
+	public UiDeviceAvailable(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -315,7 +317,7 @@ public class G2U_UiDeviceAvailable
 			return false;
 		}
 
-		G2U_UiDeviceAvailable p = obj as G2U_UiDeviceAvailable;
+		UiDeviceAvailable p = obj as UiDeviceAvailable;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -324,7 +326,7 @@ public class G2U_UiDeviceAvailable
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_UiDeviceAvailable p)
+	public bool Equals(UiDeviceAvailable p)
 	{
 		if ((object) p == null)
 		{
@@ -345,7 +347,7 @@ public class G2U_UiDeviceAvailable
 	}
 }
 
-public class G2U_RobotConnected
+public class RobotConnected
 {
 	private uint _robotID; // uint_32
 	private byte _successful; // uint_8
@@ -357,23 +359,23 @@ public class G2U_RobotConnected
 
 	/**** Constructors ****/
 
-	public G2U_RobotConnected()
+	public RobotConnected()
 	{
 	}
 
-	public G2U_RobotConnected(uint robotID,
+	public RobotConnected(uint robotID,
 		byte successful)
 	{
 		this.robotID = robotID;
 		this.successful = successful;
 	}
 
-	public G2U_RobotConnected(System.IO.Stream stream)
+	public RobotConnected(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotConnected(System.IO.BinaryReader reader)
+	public RobotConnected(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -435,7 +437,7 @@ public class G2U_RobotConnected
 			return false;
 		}
 
-		G2U_RobotConnected p = obj as G2U_RobotConnected;
+		RobotConnected p = obj as RobotConnected;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -444,7 +446,7 @@ public class G2U_RobotConnected
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotConnected p)
+	public bool Equals(RobotConnected p)
 	{
 		if ((object) p == null)
 		{
@@ -467,7 +469,7 @@ public class G2U_RobotConnected
 	}
 }
 
-public class G2U_RobotDisconnected
+public class RobotDisconnected
 {
 	private uint _robotID; // uint_32
 	private float _timeSinceLastMsg_sec; // float_32
@@ -479,23 +481,23 @@ public class G2U_RobotDisconnected
 
 	/**** Constructors ****/
 
-	public G2U_RobotDisconnected()
+	public RobotDisconnected()
 	{
 	}
 
-	public G2U_RobotDisconnected(uint robotID,
+	public RobotDisconnected(uint robotID,
 		float timeSinceLastMsg_sec)
 	{
 		this.robotID = robotID;
 		this.timeSinceLastMsg_sec = timeSinceLastMsg_sec;
 	}
 
-	public G2U_RobotDisconnected(System.IO.Stream stream)
+	public RobotDisconnected(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotDisconnected(System.IO.BinaryReader reader)
+	public RobotDisconnected(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -557,7 +559,7 @@ public class G2U_RobotDisconnected
 			return false;
 		}
 
-		G2U_RobotDisconnected p = obj as G2U_RobotDisconnected;
+		RobotDisconnected p = obj as RobotDisconnected;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -566,7 +568,7 @@ public class G2U_RobotDisconnected
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotDisconnected p)
+	public bool Equals(RobotDisconnected p)
 	{
 		if ((object) p == null)
 		{
@@ -589,7 +591,7 @@ public class G2U_RobotDisconnected
 	}
 }
 
-public class G2U_UiDeviceConnected
+public class UiDeviceConnected
 {
 	private uint _deviceID; // uint_32
 	private byte _successful; // uint_8
@@ -601,23 +603,23 @@ public class G2U_UiDeviceConnected
 
 	/**** Constructors ****/
 
-	public G2U_UiDeviceConnected()
+	public UiDeviceConnected()
 	{
 	}
 
-	public G2U_UiDeviceConnected(uint deviceID,
+	public UiDeviceConnected(uint deviceID,
 		byte successful)
 	{
 		this.deviceID = deviceID;
 		this.successful = successful;
 	}
 
-	public G2U_UiDeviceConnected(System.IO.Stream stream)
+	public UiDeviceConnected(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_UiDeviceConnected(System.IO.BinaryReader reader)
+	public UiDeviceConnected(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -679,7 +681,7 @@ public class G2U_UiDeviceConnected
 			return false;
 		}
 
-		G2U_UiDeviceConnected p = obj as G2U_UiDeviceConnected;
+		UiDeviceConnected p = obj as UiDeviceConnected;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -688,7 +690,7 @@ public class G2U_UiDeviceConnected
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_UiDeviceConnected p)
+	public bool Equals(UiDeviceConnected p)
 	{
 		if ((object) p == null)
 		{
@@ -711,7 +713,7 @@ public class G2U_UiDeviceConnected
 	}
 }
 
-public class G2U_RobotState
+public class RobotState
 {
 	private float _pose_x; // float_32
 	private float _pose_y; // float_32
@@ -771,11 +773,11 @@ public class G2U_RobotState
 
 	/**** Constructors ****/
 
-	public G2U_RobotState()
+	public RobotState()
 	{
 	}
 
-	public G2U_RobotState(float pose_x,
+	public RobotState(float pose_x,
 		float pose_y,
 		float pose_z,
 		float poseAngle_rad,
@@ -814,12 +816,12 @@ public class G2U_RobotState
 		this.robotID = robotID;
 	}
 
-	public G2U_RobotState(System.IO.Stream stream)
+	public RobotState(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotState(System.IO.BinaryReader reader)
+	public RobotState(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -913,7 +915,7 @@ public class G2U_RobotState
 			return false;
 		}
 
-		G2U_RobotState p = obj as G2U_RobotState;
+		RobotState p = obj as RobotState;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -922,7 +924,7 @@ public class G2U_RobotState
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotState p)
+	public bool Equals(RobotState p)
 	{
 		if ((object) p == null)
 		{
@@ -977,7 +979,7 @@ public class G2U_RobotState
 	}
 }
 
-public class G2U_ImageChunk
+public class ImageChunk
 {
 	private uint _imageId; // uint_32
 	private uint _frameTimeStamp; // uint_32
@@ -1024,12 +1026,12 @@ public class G2U_ImageChunk
 
 	/**** Constructors ****/
 
-	public G2U_ImageChunk()
+	public ImageChunk()
 	{
 		this.data = new byte[1400];
 	}
 
-	public G2U_ImageChunk(uint imageId,
+	public ImageChunk(uint imageId,
 		uint frameTimeStamp,
 		ushort nrows,
 		ushort ncols,
@@ -1050,12 +1052,12 @@ public class G2U_ImageChunk
 		this.data = data;
 	}
 
-	public G2U_ImageChunk(System.IO.Stream stream)
+	public ImageChunk(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_ImageChunk(System.IO.BinaryReader reader)
+	public ImageChunk(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1136,7 +1138,7 @@ public class G2U_ImageChunk
 			return false;
 		}
 
-		G2U_ImageChunk p = obj as G2U_ImageChunk;
+		ImageChunk p = obj as ImageChunk;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1145,7 +1147,7 @@ public class G2U_ImageChunk
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_ImageChunk p)
+	public bool Equals(ImageChunk p)
 	{
 		if ((object) p == null)
 		{
@@ -1182,7 +1184,7 @@ public class G2U_ImageChunk
 	}
 }
 
-public class G2U_RobotObservedObject
+public class RobotObservedObject
 {
 	private uint _robotID; // uint_32
 	private uint _objectFamily; // uint_32
@@ -1239,11 +1241,11 @@ public class G2U_RobotObservedObject
 
 	/**** Constructors ****/
 
-	public G2U_RobotObservedObject()
+	public RobotObservedObject()
 	{
 	}
 
-	public G2U_RobotObservedObject(uint robotID,
+	public RobotObservedObject(uint robotID,
 		uint objectFamily,
 		uint objectType,
 		int objectID,
@@ -1280,12 +1282,12 @@ public class G2U_RobotObservedObject
 		this.isActive = isActive;
 	}
 
-	public G2U_RobotObservedObject(System.IO.Stream stream)
+	public RobotObservedObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotObservedObject(System.IO.BinaryReader reader)
+	public RobotObservedObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1377,7 +1379,7 @@ public class G2U_RobotObservedObject
 			return false;
 		}
 
-		G2U_RobotObservedObject p = obj as G2U_RobotObservedObject;
+		RobotObservedObject p = obj as RobotObservedObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1386,7 +1388,7 @@ public class G2U_RobotObservedObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotObservedObject p)
+	public bool Equals(RobotObservedObject p)
 	{
 		if ((object) p == null)
 		{
@@ -1439,7 +1441,7 @@ public class G2U_RobotObservedObject
 	}
 }
 
-public class G2U_RobotObservedNothing
+public class RobotObservedNothing
 {
 	private uint _robotID; // uint_32
 
@@ -1448,21 +1450,21 @@ public class G2U_RobotObservedNothing
 
 	/**** Constructors ****/
 
-	public G2U_RobotObservedNothing()
+	public RobotObservedNothing()
 	{
 	}
 
-	public G2U_RobotObservedNothing(uint robotID)
+	public RobotObservedNothing(uint robotID)
 	{
 		this.robotID = robotID;
 	}
 
-	public G2U_RobotObservedNothing(System.IO.Stream stream)
+	public RobotObservedNothing(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotObservedNothing(System.IO.BinaryReader reader)
+	public RobotObservedNothing(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1522,7 +1524,7 @@ public class G2U_RobotObservedNothing
 			return false;
 		}
 
-		G2U_RobotObservedNothing p = obj as G2U_RobotObservedNothing;
+		RobotObservedNothing p = obj as RobotObservedNothing;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1531,7 +1533,7 @@ public class G2U_RobotObservedNothing
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotObservedNothing p)
+	public bool Equals(RobotObservedNothing p)
 	{
 		if ((object) p == null)
 		{
@@ -1552,7 +1554,7 @@ public class G2U_RobotObservedNothing
 	}
 }
 
-public class G2U_RobotDeletedObject
+public class RobotDeletedObject
 {
 	private uint _robotID; // uint_32
 	private uint _objectID; // uint_32
@@ -1564,23 +1566,23 @@ public class G2U_RobotDeletedObject
 
 	/**** Constructors ****/
 
-	public G2U_RobotDeletedObject()
+	public RobotDeletedObject()
 	{
 	}
 
-	public G2U_RobotDeletedObject(uint robotID,
+	public RobotDeletedObject(uint robotID,
 		uint objectID)
 	{
 		this.robotID = robotID;
 		this.objectID = objectID;
 	}
 
-	public G2U_RobotDeletedObject(System.IO.Stream stream)
+	public RobotDeletedObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotDeletedObject(System.IO.BinaryReader reader)
+	public RobotDeletedObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1642,7 +1644,7 @@ public class G2U_RobotDeletedObject
 			return false;
 		}
 
-		G2U_RobotDeletedObject p = obj as G2U_RobotDeletedObject;
+		RobotDeletedObject p = obj as RobotDeletedObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1651,7 +1653,7 @@ public class G2U_RobotDeletedObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotDeletedObject p)
+	public bool Equals(RobotDeletedObject p)
 	{
 		if ((object) p == null)
 		{
@@ -1674,7 +1676,7 @@ public class G2U_RobotDeletedObject
 	}
 }
 
-public class G2U_DeviceDetectedVisionMarker
+public class DeviceDetectedVisionMarker
 {
 	private uint _markerType; // uint_32
 	private float _x_upperLeft; // float_32
@@ -1707,11 +1709,11 @@ public class G2U_DeviceDetectedVisionMarker
 
 	/**** Constructors ****/
 
-	public G2U_DeviceDetectedVisionMarker()
+	public DeviceDetectedVisionMarker()
 	{
 	}
 
-	public G2U_DeviceDetectedVisionMarker(uint markerType,
+	public DeviceDetectedVisionMarker(uint markerType,
 		float x_upperLeft,
 		float y_upperLeft,
 		float x_lowerLeft,
@@ -1732,12 +1734,12 @@ public class G2U_DeviceDetectedVisionMarker
 		this.y_lowerRight = y_lowerRight;
 	}
 
-	public G2U_DeviceDetectedVisionMarker(System.IO.Stream stream)
+	public DeviceDetectedVisionMarker(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_DeviceDetectedVisionMarker(System.IO.BinaryReader reader)
+	public DeviceDetectedVisionMarker(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1813,7 +1815,7 @@ public class G2U_DeviceDetectedVisionMarker
 			return false;
 		}
 
-		G2U_DeviceDetectedVisionMarker p = obj as G2U_DeviceDetectedVisionMarker;
+		DeviceDetectedVisionMarker p = obj as DeviceDetectedVisionMarker;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1822,7 +1824,7 @@ public class G2U_DeviceDetectedVisionMarker
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_DeviceDetectedVisionMarker p)
+	public bool Equals(DeviceDetectedVisionMarker p)
 	{
 		if ((object) p == null)
 		{
@@ -1859,40 +1861,65 @@ public class G2U_DeviceDetectedVisionMarker
 	}
 }
 
-public class G2U_RobotCompletedAction
+public class RobotCompletedAction
 {
 	private uint _robotID; // uint_32
 	private int _actionType; // int_32
+	private int[] _objectIDs; // int_32[5]
+	private byte _numObjects; // uint_8
 	private byte _success; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
 	public int actionType { get { return _actionType; } set { _actionType = value; } }
 
+	public int[] objectIDs
+	{
+		get {
+			return _objectIDs;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("objectIDs fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("objectIDs fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_objectIDs = value;
+		}
+	}
+
+	public byte numObjects { get { return _numObjects; } set { _numObjects = value; } }
+
 	public byte success { get { return _success; } set { _success = value; } }
 
 
 	/**** Constructors ****/
 
-	public G2U_RobotCompletedAction()
+	public RobotCompletedAction()
 	{
+		this.objectIDs = new int[5];
 	}
 
-	public G2U_RobotCompletedAction(uint robotID,
+	public RobotCompletedAction(uint robotID,
 		int actionType,
+		int[] objectIDs,
+		byte numObjects,
 		byte success)
 	{
 		this.robotID = robotID;
 		this.actionType = actionType;
+		this.objectIDs = objectIDs;
+		this.numObjects = numObjects;
 		this.success = success;
 	}
 
-	public G2U_RobotCompletedAction(System.IO.Stream stream)
+	public RobotCompletedAction(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_RobotCompletedAction(System.IO.BinaryReader reader)
+	public RobotCompletedAction(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1907,6 +1934,11 @@ public class G2U_RobotCompletedAction
 	{
 		_robotID = reader.ReadUInt32();
 		_actionType = reader.ReadInt32();
+		_objectIDs = new int[5];
+		for (int i = 0; i < 5; ++i) {
+			_objectIDs[i] = reader.ReadInt32();
+		}
+		_numObjects = reader.ReadByte();
 		_success = reader.ReadByte();
 	}
 
@@ -1920,13 +1952,17 @@ public class G2U_RobotCompletedAction
 	{
 		writer.Write((uint)_robotID);
 		writer.Write((int)_actionType);
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((int)_objectIDs[i]);
+		}
+		writer.Write((byte)_numObjects);
 		writer.Write((byte)_success);
 	}
 
 	public int Size 
 	{
 		get {
-			return 9;
+			return 30;
 		}
 	}
 
@@ -1956,7 +1992,7 @@ public class G2U_RobotCompletedAction
 			return false;
 		}
 
-		G2U_RobotCompletedAction p = obj as G2U_RobotCompletedAction;
+		RobotCompletedAction p = obj as RobotCompletedAction;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1965,7 +2001,7 @@ public class G2U_RobotCompletedAction
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_RobotCompletedAction p)
+	public bool Equals(RobotCompletedAction p)
 	{
 		if ((object) p == null)
 		{
@@ -1974,6 +2010,8 @@ public class G2U_RobotCompletedAction
 
 		return this._robotID.Equals(p._robotID)
 			&& this._actionType.Equals(p._actionType)
+			&& ArrayEquals<int>(this._objectIDs,p._objectIDs)
+			&& this._numObjects.Equals(p._numObjects)
 			&& this._success.Equals(p._success);
 	}
 
@@ -1984,13 +2022,15 @@ public class G2U_RobotCompletedAction
 			int hash = 17;
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._objectIDs.GetHashCode();
+			hash = hash * 23 + this._numObjects.GetHashCode();
 			hash = hash * 23 + this._success.GetHashCode();
 			return hash;
 		}
 	}
 }
 
-public class G2U_PlaySound
+public class PlaySound
 {
 	private string _soundFilename; // string[uint_8]
 	private byte _numLoops; // uint_8
@@ -2016,11 +2056,11 @@ public class G2U_PlaySound
 
 	/**** Constructors ****/
 
-	public G2U_PlaySound()
+	public PlaySound()
 	{
 	}
 
-	public G2U_PlaySound(string soundFilename,
+	public PlaySound(string soundFilename,
 		byte numLoops,
 		byte volume)
 	{
@@ -2029,12 +2069,12 @@ public class G2U_PlaySound
 		this.volume = volume;
 	}
 
-	public G2U_PlaySound(System.IO.Stream stream)
+	public PlaySound(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_PlaySound(System.IO.BinaryReader reader)
+	public PlaySound(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2111,7 +2151,7 @@ public class G2U_PlaySound
 			return false;
 		}
 
-		G2U_PlaySound p = obj as G2U_PlaySound;
+		PlaySound p = obj as PlaySound;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2120,7 +2160,7 @@ public class G2U_PlaySound
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_PlaySound p)
+	public bool Equals(PlaySound p)
 	{
 		if ((object) p == null)
 		{
@@ -2145,20 +2185,20 @@ public class G2U_PlaySound
 	}
 }
 
-public class G2U_StopSound
+public class StopSound
 {
 	/**** Constructors ****/
 
-	public G2U_StopSound()
+	public StopSound()
 	{
 	}
 
-	public G2U_StopSound(System.IO.Stream stream)
+	public StopSound(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public G2U_StopSound(System.IO.BinaryReader reader)
+	public StopSound(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2188,7 +2228,7 @@ public class G2U_StopSound
 
 }
 
-public class G2U_Message {
+public class Message {
 	public enum Tag {
 		Ping,	//0
 		RobotAvailable,	//1
@@ -2214,7 +2254,7 @@ public class G2U_Message {
 
 	private object _state = null;
 
-	public Anki.Cozmo.G2U_Ping Ping
+	public Anki.Cozmo.G2U.Ping Ping
 	{
 		get {
 			if (_tag != Tag.Ping) {
@@ -2222,7 +2262,7 @@ public class G2U_Message {
 					"Cannot access union member \"Ping\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_Ping)this._state;
+			return (Anki.Cozmo.G2U.Ping)this._state;
 		}
 		
 		set {
@@ -2231,7 +2271,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotAvailable RobotAvailable
+	public Anki.Cozmo.G2U.RobotAvailable RobotAvailable
 	{
 		get {
 			if (_tag != Tag.RobotAvailable) {
@@ -2239,7 +2279,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotAvailable\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotAvailable)this._state;
+			return (Anki.Cozmo.G2U.RobotAvailable)this._state;
 		}
 		
 		set {
@@ -2248,7 +2288,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_UiDeviceAvailable UiDeviceAvailable
+	public Anki.Cozmo.G2U.UiDeviceAvailable UiDeviceAvailable
 	{
 		get {
 			if (_tag != Tag.UiDeviceAvailable) {
@@ -2256,7 +2296,7 @@ public class G2U_Message {
 					"Cannot access union member \"UiDeviceAvailable\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_UiDeviceAvailable)this._state;
+			return (Anki.Cozmo.G2U.UiDeviceAvailable)this._state;
 		}
 		
 		set {
@@ -2265,7 +2305,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotConnected RobotConnected
+	public Anki.Cozmo.G2U.RobotConnected RobotConnected
 	{
 		get {
 			if (_tag != Tag.RobotConnected) {
@@ -2273,7 +2313,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotConnected\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotConnected)this._state;
+			return (Anki.Cozmo.G2U.RobotConnected)this._state;
 		}
 		
 		set {
@@ -2282,7 +2322,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotDisconnected RobotDisconnected
+	public Anki.Cozmo.G2U.RobotDisconnected RobotDisconnected
 	{
 		get {
 			if (_tag != Tag.RobotDisconnected) {
@@ -2290,7 +2330,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotDisconnected\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotDisconnected)this._state;
+			return (Anki.Cozmo.G2U.RobotDisconnected)this._state;
 		}
 		
 		set {
@@ -2299,7 +2339,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_UiDeviceConnected UiDeviceConnected
+	public Anki.Cozmo.G2U.UiDeviceConnected UiDeviceConnected
 	{
 		get {
 			if (_tag != Tag.UiDeviceConnected) {
@@ -2307,7 +2347,7 @@ public class G2U_Message {
 					"Cannot access union member \"UiDeviceConnected\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_UiDeviceConnected)this._state;
+			return (Anki.Cozmo.G2U.UiDeviceConnected)this._state;
 		}
 		
 		set {
@@ -2316,7 +2356,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotState RobotState
+	public Anki.Cozmo.G2U.RobotState RobotState
 	{
 		get {
 			if (_tag != Tag.RobotState) {
@@ -2324,7 +2364,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotState\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotState)this._state;
+			return (Anki.Cozmo.G2U.RobotState)this._state;
 		}
 		
 		set {
@@ -2333,7 +2373,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_ImageChunk ImageChunk
+	public Anki.Cozmo.G2U.ImageChunk ImageChunk
 	{
 		get {
 			if (_tag != Tag.ImageChunk) {
@@ -2341,7 +2381,7 @@ public class G2U_Message {
 					"Cannot access union member \"ImageChunk\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_ImageChunk)this._state;
+			return (Anki.Cozmo.G2U.ImageChunk)this._state;
 		}
 		
 		set {
@@ -2350,7 +2390,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotObservedObject RobotObservedObject
+	public Anki.Cozmo.G2U.RobotObservedObject RobotObservedObject
 	{
 		get {
 			if (_tag != Tag.RobotObservedObject) {
@@ -2358,7 +2398,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotObservedObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotObservedObject)this._state;
+			return (Anki.Cozmo.G2U.RobotObservedObject)this._state;
 		}
 		
 		set {
@@ -2367,7 +2407,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotObservedNothing RobotObservedNothing
+	public Anki.Cozmo.G2U.RobotObservedNothing RobotObservedNothing
 	{
 		get {
 			if (_tag != Tag.RobotObservedNothing) {
@@ -2375,7 +2415,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotObservedNothing\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotObservedNothing)this._state;
+			return (Anki.Cozmo.G2U.RobotObservedNothing)this._state;
 		}
 		
 		set {
@@ -2384,7 +2424,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotDeletedObject RobotDeletedObject
+	public Anki.Cozmo.G2U.RobotDeletedObject RobotDeletedObject
 	{
 		get {
 			if (_tag != Tag.RobotDeletedObject) {
@@ -2392,7 +2432,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotDeletedObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotDeletedObject)this._state;
+			return (Anki.Cozmo.G2U.RobotDeletedObject)this._state;
 		}
 		
 		set {
@@ -2401,7 +2441,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_DeviceDetectedVisionMarker DeviceDetectedVisionMarker
+	public Anki.Cozmo.G2U.DeviceDetectedVisionMarker DeviceDetectedVisionMarker
 	{
 		get {
 			if (_tag != Tag.DeviceDetectedVisionMarker) {
@@ -2409,7 +2449,7 @@ public class G2U_Message {
 					"Cannot access union member \"DeviceDetectedVisionMarker\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_DeviceDetectedVisionMarker)this._state;
+			return (Anki.Cozmo.G2U.DeviceDetectedVisionMarker)this._state;
 		}
 		
 		set {
@@ -2418,7 +2458,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_RobotCompletedAction RobotCompletedAction
+	public Anki.Cozmo.G2U.RobotCompletedAction RobotCompletedAction
 	{
 		get {
 			if (_tag != Tag.RobotCompletedAction) {
@@ -2426,7 +2466,7 @@ public class G2U_Message {
 					"Cannot access union member \"RobotCompletedAction\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_RobotCompletedAction)this._state;
+			return (Anki.Cozmo.G2U.RobotCompletedAction)this._state;
 		}
 		
 		set {
@@ -2435,7 +2475,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_PlaySound PlaySound
+	public Anki.Cozmo.G2U.PlaySound PlaySound
 	{
 		get {
 			if (_tag != Tag.PlaySound) {
@@ -2443,7 +2483,7 @@ public class G2U_Message {
 					"Cannot access union member \"PlaySound\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_PlaySound)this._state;
+			return (Anki.Cozmo.G2U.PlaySound)this._state;
 		}
 		
 		set {
@@ -2452,7 +2492,7 @@ public class G2U_Message {
 		}
 	}
 
-	public Anki.Cozmo.G2U_StopSound StopSound
+	public Anki.Cozmo.G2U.StopSound StopSound
 	{
 		get {
 			if (_tag != Tag.StopSound) {
@@ -2460,7 +2500,7 @@ public class G2U_Message {
 					"Cannot access union member \"StopSound\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.G2U_StopSound)this._state;
+			return (Anki.Cozmo.G2U.StopSound)this._state;
 		}
 		
 		set {
@@ -2476,49 +2516,49 @@ public class G2U_Message {
 		newTag = (Tag)reader.ReadByte();
 		switch(newTag) {
 		case Tag.Ping:
-			_state = new Anki.Cozmo.G2U_Ping(reader);
+			_state = new Anki.Cozmo.G2U.Ping(reader);
 			break;
 		case Tag.RobotAvailable:
-			_state = new Anki.Cozmo.G2U_RobotAvailable(reader);
+			_state = new Anki.Cozmo.G2U.RobotAvailable(reader);
 			break;
 		case Tag.UiDeviceAvailable:
-			_state = new Anki.Cozmo.G2U_UiDeviceAvailable(reader);
+			_state = new Anki.Cozmo.G2U.UiDeviceAvailable(reader);
 			break;
 		case Tag.RobotConnected:
-			_state = new Anki.Cozmo.G2U_RobotConnected(reader);
+			_state = new Anki.Cozmo.G2U.RobotConnected(reader);
 			break;
 		case Tag.RobotDisconnected:
-			_state = new Anki.Cozmo.G2U_RobotDisconnected(reader);
+			_state = new Anki.Cozmo.G2U.RobotDisconnected(reader);
 			break;
 		case Tag.UiDeviceConnected:
-			_state = new Anki.Cozmo.G2U_UiDeviceConnected(reader);
+			_state = new Anki.Cozmo.G2U.UiDeviceConnected(reader);
 			break;
 		case Tag.RobotState:
-			_state = new Anki.Cozmo.G2U_RobotState(reader);
+			_state = new Anki.Cozmo.G2U.RobotState(reader);
 			break;
 		case Tag.ImageChunk:
-			_state = new Anki.Cozmo.G2U_ImageChunk(reader);
+			_state = new Anki.Cozmo.G2U.ImageChunk(reader);
 			break;
 		case Tag.RobotObservedObject:
-			_state = new Anki.Cozmo.G2U_RobotObservedObject(reader);
+			_state = new Anki.Cozmo.G2U.RobotObservedObject(reader);
 			break;
 		case Tag.RobotObservedNothing:
-			_state = new Anki.Cozmo.G2U_RobotObservedNothing(reader);
+			_state = new Anki.Cozmo.G2U.RobotObservedNothing(reader);
 			break;
 		case Tag.RobotDeletedObject:
-			_state = new Anki.Cozmo.G2U_RobotDeletedObject(reader);
+			_state = new Anki.Cozmo.G2U.RobotDeletedObject(reader);
 			break;
 		case Tag.DeviceDetectedVisionMarker:
-			_state = new Anki.Cozmo.G2U_DeviceDetectedVisionMarker(reader);
+			_state = new Anki.Cozmo.G2U.DeviceDetectedVisionMarker(reader);
 			break;
 		case Tag.RobotCompletedAction:
-			_state = new Anki.Cozmo.G2U_RobotCompletedAction(reader);
+			_state = new Anki.Cozmo.G2U.RobotCompletedAction(reader);
 			break;
 		case Tag.PlaySound:
-			_state = new Anki.Cozmo.G2U_PlaySound(reader);
+			_state = new Anki.Cozmo.G2U.PlaySound(reader);
 			break;
 		case Tag.StopSound:
-			_state = new Anki.Cozmo.G2U_StopSound(reader);
+			_state = new Anki.Cozmo.G2U.StopSound(reader);
 			break;
 		default:
 			break;
@@ -2646,7 +2686,7 @@ public class G2U_Message {
 			return false;
 		}
 
-		G2U_Message p = obj as G2U_Message;
+		Message p = obj as Message;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2655,7 +2695,7 @@ public class G2U_Message {
 		return this.Equals(p);
 	}
 
-	public bool Equals(G2U_Message p)
+	public bool Equals(Message p)
 	{
 		if ((object) p == null)
 		{
@@ -2763,6 +2803,8 @@ public class G2U_Message {
 		}
 	}
 }
+
+} // namespace G2U
 
 } // namespace Cozmo
 

@@ -36,7 +36,7 @@ namespace Cozmo {
   }
   
   
-      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const U2G_Message& msg)
+      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const U2G::Message& msg)
       {
 //#if(RUN_UI_MESSAGE_TCP_SERVER)
         
@@ -61,11 +61,11 @@ namespace Cozmo {
       {
         Result retVal = RESULT_FAIL;
         
-        G2U_Message message;
+        G2U::Message message;
         if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
           PRINT_NAMED_ERROR("GameMessageHandler.MessageBufferWrongSize",
                             "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
-                            G2U_MessageTagToString(message.GetTag()),
+                            G2U::MessageTagToString(message.GetTag()),
                             message.Size(), // not all messages are fixed size, so indeterminate
                             packet.dataLen
                             );

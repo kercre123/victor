@@ -6,7 +6,9 @@ namespace Anki {
 
 namespace Cozmo {
 
-public class U2G_Ping
+namespace U2G {
+
+public class Ping
 {
 	private uint _counter; // uint_32
 
@@ -15,21 +17,21 @@ public class U2G_Ping
 
 	/**** Constructors ****/
 
-	public U2G_Ping()
+	public Ping()
 	{
 	}
 
-	public U2G_Ping(uint counter)
+	public Ping(uint counter)
 	{
 		this.counter = counter;
 	}
 
-	public U2G_Ping(System.IO.Stream stream)
+	public Ping(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_Ping(System.IO.BinaryReader reader)
+	public Ping(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -89,7 +91,7 @@ public class U2G_Ping
 			return false;
 		}
 
-		U2G_Ping p = obj as U2G_Ping;
+		Ping p = obj as Ping;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -98,7 +100,7 @@ public class U2G_Ping
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_Ping p)
+	public bool Equals(Ping p)
 	{
 		if ((object) p == null)
 		{
@@ -119,7 +121,7 @@ public class U2G_Ping
 	}
 }
 
-public class U2G_ConnectToRobot
+public class ConnectToRobot
 {
 	private byte _robotID; // uint_8
 
@@ -128,21 +130,21 @@ public class U2G_ConnectToRobot
 
 	/**** Constructors ****/
 
-	public U2G_ConnectToRobot()
+	public ConnectToRobot()
 	{
 	}
 
-	public U2G_ConnectToRobot(byte robotID)
+	public ConnectToRobot(byte robotID)
 	{
 		this.robotID = robotID;
 	}
 
-	public U2G_ConnectToRobot(System.IO.Stream stream)
+	public ConnectToRobot(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ConnectToRobot(System.IO.BinaryReader reader)
+	public ConnectToRobot(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -202,7 +204,7 @@ public class U2G_ConnectToRobot
 			return false;
 		}
 
-		U2G_ConnectToRobot p = obj as U2G_ConnectToRobot;
+		ConnectToRobot p = obj as ConnectToRobot;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -211,7 +213,7 @@ public class U2G_ConnectToRobot
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_ConnectToRobot p)
+	public bool Equals(ConnectToRobot p)
 	{
 		if ((object) p == null)
 		{
@@ -232,7 +234,7 @@ public class U2G_ConnectToRobot
 	}
 }
 
-public class U2G_ConnectToUiDevice
+public class ConnectToUiDevice
 {
 	private byte _deviceID; // uint_8
 
@@ -241,21 +243,21 @@ public class U2G_ConnectToUiDevice
 
 	/**** Constructors ****/
 
-	public U2G_ConnectToUiDevice()
+	public ConnectToUiDevice()
 	{
 	}
 
-	public U2G_ConnectToUiDevice(byte deviceID)
+	public ConnectToUiDevice(byte deviceID)
 	{
 		this.deviceID = deviceID;
 	}
 
-	public U2G_ConnectToUiDevice(System.IO.Stream stream)
+	public ConnectToUiDevice(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ConnectToUiDevice(System.IO.BinaryReader reader)
+	public ConnectToUiDevice(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -315,7 +317,7 @@ public class U2G_ConnectToUiDevice
 			return false;
 		}
 
-		U2G_ConnectToUiDevice p = obj as U2G_ConnectToUiDevice;
+		ConnectToUiDevice p = obj as ConnectToUiDevice;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -324,7 +326,7 @@ public class U2G_ConnectToUiDevice
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_ConnectToUiDevice p)
+	public bool Equals(ConnectToUiDevice p)
 	{
 		if ((object) p == null)
 		{
@@ -345,7 +347,7 @@ public class U2G_ConnectToUiDevice
 	}
 }
 
-public class U2G_DisconnectFromUiDevice
+public class DisconnectFromUiDevice
 {
 	private byte _deviceID; // uint_8
 
@@ -354,21 +356,21 @@ public class U2G_DisconnectFromUiDevice
 
 	/**** Constructors ****/
 
-	public U2G_DisconnectFromUiDevice()
+	public DisconnectFromUiDevice()
 	{
 	}
 
-	public U2G_DisconnectFromUiDevice(byte deviceID)
+	public DisconnectFromUiDevice(byte deviceID)
 	{
 		this.deviceID = deviceID;
 	}
 
-	public U2G_DisconnectFromUiDevice(System.IO.Stream stream)
+	public DisconnectFromUiDevice(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_DisconnectFromUiDevice(System.IO.BinaryReader reader)
+	public DisconnectFromUiDevice(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -428,7 +430,7 @@ public class U2G_DisconnectFromUiDevice
 			return false;
 		}
 
-		U2G_DisconnectFromUiDevice p = obj as U2G_DisconnectFromUiDevice;
+		DisconnectFromUiDevice p = obj as DisconnectFromUiDevice;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -437,7 +439,7 @@ public class U2G_DisconnectFromUiDevice
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_DisconnectFromUiDevice p)
+	public bool Equals(DisconnectFromUiDevice p)
 	{
 		if ((object) p == null)
 		{
@@ -458,7 +460,7 @@ public class U2G_DisconnectFromUiDevice
 	}
 }
 
-public class U2G_ForceAddRobot
+public class ForceAddRobot
 {
 	private byte[] _ipAddress; // uint_8[16]
 	private byte _robotID; // uint_8
@@ -487,12 +489,12 @@ public class U2G_ForceAddRobot
 
 	/**** Constructors ****/
 
-	public U2G_ForceAddRobot()
+	public ForceAddRobot()
 	{
 		this.ipAddress = new byte[16];
 	}
 
-	public U2G_ForceAddRobot(byte[] ipAddress,
+	public ForceAddRobot(byte[] ipAddress,
 		byte robotID,
 		byte isSimulated)
 	{
@@ -501,12 +503,12 @@ public class U2G_ForceAddRobot
 		this.isSimulated = isSimulated;
 	}
 
-	public U2G_ForceAddRobot(System.IO.Stream stream)
+	public ForceAddRobot(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ForceAddRobot(System.IO.BinaryReader reader)
+	public ForceAddRobot(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -575,7 +577,7 @@ public class U2G_ForceAddRobot
 			return false;
 		}
 
-		U2G_ForceAddRobot p = obj as U2G_ForceAddRobot;
+		ForceAddRobot p = obj as ForceAddRobot;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -584,7 +586,7 @@ public class U2G_ForceAddRobot
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_ForceAddRobot p)
+	public bool Equals(ForceAddRobot p)
 	{
 		if ((object) p == null)
 		{
@@ -609,7 +611,7 @@ public class U2G_ForceAddRobot
 	}
 }
 
-public class U2G_StartEngine
+public class StartEngine
 {
 	private byte _asHost; // uint_8
 	private byte[] _vizHostIP; // uint_8[16]
@@ -635,24 +637,24 @@ public class U2G_StartEngine
 
 	/**** Constructors ****/
 
-	public U2G_StartEngine()
+	public StartEngine()
 	{
 		this.vizHostIP = new byte[16];
 	}
 
-	public U2G_StartEngine(byte asHost,
+	public StartEngine(byte asHost,
 		byte[] vizHostIP)
 	{
 		this.asHost = asHost;
 		this.vizHostIP = vizHostIP;
 	}
 
-	public U2G_StartEngine(System.IO.Stream stream)
+	public StartEngine(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StartEngine(System.IO.BinaryReader reader)
+	public StartEngine(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -719,7 +721,7 @@ public class U2G_StartEngine
 			return false;
 		}
 
-		U2G_StartEngine p = obj as U2G_StartEngine;
+		StartEngine p = obj as StartEngine;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -728,7 +730,7 @@ public class U2G_StartEngine
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_StartEngine p)
+	public bool Equals(StartEngine p)
 	{
 		if ((object) p == null)
 		{
@@ -751,7 +753,7 @@ public class U2G_StartEngine
 	}
 }
 
-public class U2G_DriveWheels
+public class DriveWheels
 {
 	private float _lwheel_speed_mmps; // float_32
 	private float _rwheel_speed_mmps; // float_32
@@ -763,23 +765,23 @@ public class U2G_DriveWheels
 
 	/**** Constructors ****/
 
-	public U2G_DriveWheels()
+	public DriveWheels()
 	{
 	}
 
-	public U2G_DriveWheels(float lwheel_speed_mmps,
+	public DriveWheels(float lwheel_speed_mmps,
 		float rwheel_speed_mmps)
 	{
 		this.lwheel_speed_mmps = lwheel_speed_mmps;
 		this.rwheel_speed_mmps = rwheel_speed_mmps;
 	}
 
-	public U2G_DriveWheels(System.IO.Stream stream)
+	public DriveWheels(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_DriveWheels(System.IO.BinaryReader reader)
+	public DriveWheels(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -841,7 +843,7 @@ public class U2G_DriveWheels
 			return false;
 		}
 
-		U2G_DriveWheels p = obj as U2G_DriveWheels;
+		DriveWheels p = obj as DriveWheels;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -850,7 +852,7 @@ public class U2G_DriveWheels
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_DriveWheels p)
+	public bool Equals(DriveWheels p)
 	{
 		if ((object) p == null)
 		{
@@ -873,7 +875,7 @@ public class U2G_DriveWheels
 	}
 }
 
-public class U2G_TurnInPlace
+public class TurnInPlace
 {
 	private float _angle_rad; // float_32
 	private byte _robotID; // uint_8
@@ -885,23 +887,23 @@ public class U2G_TurnInPlace
 
 	/**** Constructors ****/
 
-	public U2G_TurnInPlace()
+	public TurnInPlace()
 	{
 	}
 
-	public U2G_TurnInPlace(float angle_rad,
+	public TurnInPlace(float angle_rad,
 		byte robotID)
 	{
 		this.angle_rad = angle_rad;
 		this.robotID = robotID;
 	}
 
-	public U2G_TurnInPlace(System.IO.Stream stream)
+	public TurnInPlace(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_TurnInPlace(System.IO.BinaryReader reader)
+	public TurnInPlace(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -963,7 +965,7 @@ public class U2G_TurnInPlace
 			return false;
 		}
 
-		U2G_TurnInPlace p = obj as U2G_TurnInPlace;
+		TurnInPlace p = obj as TurnInPlace;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -972,7 +974,7 @@ public class U2G_TurnInPlace
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_TurnInPlace p)
+	public bool Equals(TurnInPlace p)
 	{
 		if ((object) p == null)
 		{
@@ -995,7 +997,7 @@ public class U2G_TurnInPlace
 	}
 }
 
-public class U2G_FaceObject
+public class FaceObject
 {
 	private uint _objectID; // uint_32
 	private float _turnAngleTol; // float_32
@@ -1016,11 +1018,11 @@ public class U2G_FaceObject
 
 	/**** Constructors ****/
 
-	public U2G_FaceObject()
+	public FaceObject()
 	{
 	}
 
-	public U2G_FaceObject(uint objectID,
+	public FaceObject(uint objectID,
 		float turnAngleTol,
 		float maxTurnAngle,
 		byte robotID,
@@ -1033,12 +1035,12 @@ public class U2G_FaceObject
 		this.headTrackWhenDone = headTrackWhenDone;
 	}
 
-	public U2G_FaceObject(System.IO.Stream stream)
+	public FaceObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_FaceObject(System.IO.BinaryReader reader)
+	public FaceObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1106,7 +1108,7 @@ public class U2G_FaceObject
 			return false;
 		}
 
-		U2G_FaceObject p = obj as U2G_FaceObject;
+		FaceObject p = obj as FaceObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1115,7 +1117,7 @@ public class U2G_FaceObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_FaceObject p)
+	public bool Equals(FaceObject p)
 	{
 		if ((object) p == null)
 		{
@@ -1144,7 +1146,7 @@ public class U2G_FaceObject
 	}
 }
 
-public class U2G_MoveHead
+public class MoveHead
 {
 	private float _speed_rad_per_sec; // float_32
 
@@ -1153,21 +1155,21 @@ public class U2G_MoveHead
 
 	/**** Constructors ****/
 
-	public U2G_MoveHead()
+	public MoveHead()
 	{
 	}
 
-	public U2G_MoveHead(float speed_rad_per_sec)
+	public MoveHead(float speed_rad_per_sec)
 	{
 		this.speed_rad_per_sec = speed_rad_per_sec;
 	}
 
-	public U2G_MoveHead(System.IO.Stream stream)
+	public MoveHead(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_MoveHead(System.IO.BinaryReader reader)
+	public MoveHead(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1227,7 +1229,7 @@ public class U2G_MoveHead
 			return false;
 		}
 
-		U2G_MoveHead p = obj as U2G_MoveHead;
+		MoveHead p = obj as MoveHead;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1236,7 +1238,7 @@ public class U2G_MoveHead
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_MoveHead p)
+	public bool Equals(MoveHead p)
 	{
 		if ((object) p == null)
 		{
@@ -1257,7 +1259,7 @@ public class U2G_MoveHead
 	}
 }
 
-public class U2G_MoveLift
+public class MoveLift
 {
 	private float _speed_rad_per_sec; // float_32
 
@@ -1266,21 +1268,21 @@ public class U2G_MoveLift
 
 	/**** Constructors ****/
 
-	public U2G_MoveLift()
+	public MoveLift()
 	{
 	}
 
-	public U2G_MoveLift(float speed_rad_per_sec)
+	public MoveLift(float speed_rad_per_sec)
 	{
 		this.speed_rad_per_sec = speed_rad_per_sec;
 	}
 
-	public U2G_MoveLift(System.IO.Stream stream)
+	public MoveLift(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_MoveLift(System.IO.BinaryReader reader)
+	public MoveLift(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1340,7 +1342,7 @@ public class U2G_MoveLift
 			return false;
 		}
 
-		U2G_MoveLift p = obj as U2G_MoveLift;
+		MoveLift p = obj as MoveLift;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1349,7 +1351,7 @@ public class U2G_MoveLift
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_MoveLift p)
+	public bool Equals(MoveLift p)
 	{
 		if ((object) p == null)
 		{
@@ -1370,7 +1372,7 @@ public class U2G_MoveLift
 	}
 }
 
-public class U2G_SetLiftHeight
+public class SetLiftHeight
 {
 	private float _height_mm; // float_32
 	private float _max_speed_rad_per_sec; // float_32
@@ -1385,11 +1387,11 @@ public class U2G_SetLiftHeight
 
 	/**** Constructors ****/
 
-	public U2G_SetLiftHeight()
+	public SetLiftHeight()
 	{
 	}
 
-	public U2G_SetLiftHeight(float height_mm,
+	public SetLiftHeight(float height_mm,
 		float max_speed_rad_per_sec,
 		float accel_rad_per_sec2)
 	{
@@ -1398,12 +1400,12 @@ public class U2G_SetLiftHeight
 		this.accel_rad_per_sec2 = accel_rad_per_sec2;
 	}
 
-	public U2G_SetLiftHeight(System.IO.Stream stream)
+	public SetLiftHeight(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetLiftHeight(System.IO.BinaryReader reader)
+	public SetLiftHeight(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1467,7 +1469,7 @@ public class U2G_SetLiftHeight
 			return false;
 		}
 
-		U2G_SetLiftHeight p = obj as U2G_SetLiftHeight;
+		SetLiftHeight p = obj as SetLiftHeight;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1476,7 +1478,7 @@ public class U2G_SetLiftHeight
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetLiftHeight p)
+	public bool Equals(SetLiftHeight p)
 	{
 		if ((object) p == null)
 		{
@@ -1501,7 +1503,7 @@ public class U2G_SetLiftHeight
 	}
 }
 
-public class U2G_SetHeadAngle
+public class SetHeadAngle
 {
 	private float _angle_rad; // float_32
 	private float _max_speed_rad_per_sec; // float_32
@@ -1516,11 +1518,11 @@ public class U2G_SetHeadAngle
 
 	/**** Constructors ****/
 
-	public U2G_SetHeadAngle()
+	public SetHeadAngle()
 	{
 	}
 
-	public U2G_SetHeadAngle(float angle_rad,
+	public SetHeadAngle(float angle_rad,
 		float max_speed_rad_per_sec,
 		float accel_rad_per_sec2)
 	{
@@ -1529,12 +1531,12 @@ public class U2G_SetHeadAngle
 		this.accel_rad_per_sec2 = accel_rad_per_sec2;
 	}
 
-	public U2G_SetHeadAngle(System.IO.Stream stream)
+	public SetHeadAngle(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetHeadAngle(System.IO.BinaryReader reader)
+	public SetHeadAngle(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1598,7 +1600,7 @@ public class U2G_SetHeadAngle
 			return false;
 		}
 
-		U2G_SetHeadAngle p = obj as U2G_SetHeadAngle;
+		SetHeadAngle p = obj as SetHeadAngle;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1607,7 +1609,7 @@ public class U2G_SetHeadAngle
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetHeadAngle p)
+	public bool Equals(SetHeadAngle p)
 	{
 		if ((object) p == null)
 		{
@@ -1632,7 +1634,7 @@ public class U2G_SetHeadAngle
 	}
 }
 
-public class U2G_TrackHeadToObject
+public class TrackHeadToObject
 {
 	private uint _objectID; // uint_32
 	private byte _robotID; // uint_8
@@ -1644,23 +1646,23 @@ public class U2G_TrackHeadToObject
 
 	/**** Constructors ****/
 
-	public U2G_TrackHeadToObject()
+	public TrackHeadToObject()
 	{
 	}
 
-	public U2G_TrackHeadToObject(uint objectID,
+	public TrackHeadToObject(uint objectID,
 		byte robotID)
 	{
 		this.objectID = objectID;
 		this.robotID = robotID;
 	}
 
-	public U2G_TrackHeadToObject(System.IO.Stream stream)
+	public TrackHeadToObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_TrackHeadToObject(System.IO.BinaryReader reader)
+	public TrackHeadToObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1722,7 +1724,7 @@ public class U2G_TrackHeadToObject
 			return false;
 		}
 
-		U2G_TrackHeadToObject p = obj as U2G_TrackHeadToObject;
+		TrackHeadToObject p = obj as TrackHeadToObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1731,7 +1733,7 @@ public class U2G_TrackHeadToObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_TrackHeadToObject p)
+	public bool Equals(TrackHeadToObject p)
 	{
 		if ((object) p == null)
 		{
@@ -1754,20 +1756,20 @@ public class U2G_TrackHeadToObject
 	}
 }
 
-public class U2G_StopAllMotors
+public class StopAllMotors
 {
 	/**** Constructors ****/
 
-	public U2G_StopAllMotors()
+	public StopAllMotors()
 	{
 	}
 
-	public U2G_StopAllMotors(System.IO.Stream stream)
+	public StopAllMotors(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StopAllMotors(System.IO.BinaryReader reader)
+	public StopAllMotors(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1797,7 +1799,7 @@ public class U2G_StopAllMotors
 
 }
 
-public class U2G_ImageRequest
+public class ImageRequest
 {
 	private byte _robotID; // uint_8
 	private byte _mode; // uint_8
@@ -1809,23 +1811,23 @@ public class U2G_ImageRequest
 
 	/**** Constructors ****/
 
-	public U2G_ImageRequest()
+	public ImageRequest()
 	{
 	}
 
-	public U2G_ImageRequest(byte robotID,
+	public ImageRequest(byte robotID,
 		byte mode)
 	{
 		this.robotID = robotID;
 		this.mode = mode;
 	}
 
-	public U2G_ImageRequest(System.IO.Stream stream)
+	public ImageRequest(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ImageRequest(System.IO.BinaryReader reader)
+	public ImageRequest(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1887,7 +1889,7 @@ public class U2G_ImageRequest
 			return false;
 		}
 
-		U2G_ImageRequest p = obj as U2G_ImageRequest;
+		ImageRequest p = obj as ImageRequest;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -1896,7 +1898,7 @@ public class U2G_ImageRequest
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_ImageRequest p)
+	public bool Equals(ImageRequest p)
 	{
 		if ((object) p == null)
 		{
@@ -1919,7 +1921,7 @@ public class U2G_ImageRequest
 	}
 }
 
-public class U2G_SetRobotImageSendMode
+public class SetRobotImageSendMode
 {
 	private byte _mode; // uint_8
 	private byte _resolution; // uint_8
@@ -1931,23 +1933,23 @@ public class U2G_SetRobotImageSendMode
 
 	/**** Constructors ****/
 
-	public U2G_SetRobotImageSendMode()
+	public SetRobotImageSendMode()
 	{
 	}
 
-	public U2G_SetRobotImageSendMode(byte mode,
+	public SetRobotImageSendMode(byte mode,
 		byte resolution)
 	{
 		this.mode = mode;
 		this.resolution = resolution;
 	}
 
-	public U2G_SetRobotImageSendMode(System.IO.Stream stream)
+	public SetRobotImageSendMode(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetRobotImageSendMode(System.IO.BinaryReader reader)
+	public SetRobotImageSendMode(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2009,7 +2011,7 @@ public class U2G_SetRobotImageSendMode
 			return false;
 		}
 
-		U2G_SetRobotImageSendMode p = obj as U2G_SetRobotImageSendMode;
+		SetRobotImageSendMode p = obj as SetRobotImageSendMode;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2018,7 +2020,7 @@ public class U2G_SetRobotImageSendMode
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetRobotImageSendMode p)
+	public bool Equals(SetRobotImageSendMode p)
 	{
 		if ((object) p == null)
 		{
@@ -2041,7 +2043,7 @@ public class U2G_SetRobotImageSendMode
 	}
 }
 
-public class U2G_SaveImages
+public class SaveImages
 {
 	private byte _mode; // uint_8
 
@@ -2050,21 +2052,21 @@ public class U2G_SaveImages
 
 	/**** Constructors ****/
 
-	public U2G_SaveImages()
+	public SaveImages()
 	{
 	}
 
-	public U2G_SaveImages(byte mode)
+	public SaveImages(byte mode)
 	{
 		this.mode = mode;
 	}
 
-	public U2G_SaveImages(System.IO.Stream stream)
+	public SaveImages(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SaveImages(System.IO.BinaryReader reader)
+	public SaveImages(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2124,7 +2126,7 @@ public class U2G_SaveImages
 			return false;
 		}
 
-		U2G_SaveImages p = obj as U2G_SaveImages;
+		SaveImages p = obj as SaveImages;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2133,7 +2135,7 @@ public class U2G_SaveImages
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SaveImages p)
+	public bool Equals(SaveImages p)
 	{
 		if ((object) p == null)
 		{
@@ -2154,7 +2156,7 @@ public class U2G_SaveImages
 	}
 }
 
-public class U2G_SaveRobotState
+public class SaveRobotState
 {
 	private byte _mode; // uint_8
 
@@ -2163,21 +2165,21 @@ public class U2G_SaveRobotState
 
 	/**** Constructors ****/
 
-	public U2G_SaveRobotState()
+	public SaveRobotState()
 	{
 	}
 
-	public U2G_SaveRobotState(byte mode)
+	public SaveRobotState(byte mode)
 	{
 		this.mode = mode;
 	}
 
-	public U2G_SaveRobotState(System.IO.Stream stream)
+	public SaveRobotState(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SaveRobotState(System.IO.BinaryReader reader)
+	public SaveRobotState(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2237,7 +2239,7 @@ public class U2G_SaveRobotState
 			return false;
 		}
 
-		U2G_SaveRobotState p = obj as U2G_SaveRobotState;
+		SaveRobotState p = obj as SaveRobotState;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2246,7 +2248,7 @@ public class U2G_SaveRobotState
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SaveRobotState p)
+	public bool Equals(SaveRobotState p)
 	{
 		if ((object) p == null)
 		{
@@ -2267,7 +2269,7 @@ public class U2G_SaveRobotState
 	}
 }
 
-public class U2G_EnableDisplay
+public class EnableDisplay
 {
 	private byte _enable; // uint_8
 
@@ -2276,21 +2278,21 @@ public class U2G_EnableDisplay
 
 	/**** Constructors ****/
 
-	public U2G_EnableDisplay()
+	public EnableDisplay()
 	{
 	}
 
-	public U2G_EnableDisplay(byte enable)
+	public EnableDisplay(byte enable)
 	{
 		this.enable = enable;
 	}
 
-	public U2G_EnableDisplay(System.IO.Stream stream)
+	public EnableDisplay(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_EnableDisplay(System.IO.BinaryReader reader)
+	public EnableDisplay(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2350,7 +2352,7 @@ public class U2G_EnableDisplay
 			return false;
 		}
 
-		U2G_EnableDisplay p = obj as U2G_EnableDisplay;
+		EnableDisplay p = obj as EnableDisplay;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2359,7 +2361,7 @@ public class U2G_EnableDisplay
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_EnableDisplay p)
+	public bool Equals(EnableDisplay p)
 	{
 		if ((object) p == null)
 		{
@@ -2380,7 +2382,7 @@ public class U2G_EnableDisplay
 	}
 }
 
-public class U2G_SetHeadlights
+public class SetHeadlights
 {
 	private byte _intensity; // uint_8
 
@@ -2389,21 +2391,21 @@ public class U2G_SetHeadlights
 
 	/**** Constructors ****/
 
-	public U2G_SetHeadlights()
+	public SetHeadlights()
 	{
 	}
 
-	public U2G_SetHeadlights(byte intensity)
+	public SetHeadlights(byte intensity)
 	{
 		this.intensity = intensity;
 	}
 
-	public U2G_SetHeadlights(System.IO.Stream stream)
+	public SetHeadlights(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetHeadlights(System.IO.BinaryReader reader)
+	public SetHeadlights(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2463,7 +2465,7 @@ public class U2G_SetHeadlights
 			return false;
 		}
 
-		U2G_SetHeadlights p = obj as U2G_SetHeadlights;
+		SetHeadlights p = obj as SetHeadlights;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2472,7 +2474,7 @@ public class U2G_SetHeadlights
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetHeadlights p)
+	public bool Equals(SetHeadlights p)
 	{
 		if ((object) p == null)
 		{
@@ -2493,7 +2495,7 @@ public class U2G_SetHeadlights
 	}
 }
 
-public class U2G_GotoPose
+public class GotoPose
 {
 	private float _x_mm; // float_32
 	private float _y_mm; // float_32
@@ -2514,11 +2516,11 @@ public class U2G_GotoPose
 
 	/**** Constructors ****/
 
-	public U2G_GotoPose()
+	public GotoPose()
 	{
 	}
 
-	public U2G_GotoPose(float x_mm,
+	public GotoPose(float x_mm,
 		float y_mm,
 		float rad,
 		byte level,
@@ -2531,12 +2533,12 @@ public class U2G_GotoPose
 		this.useManualSpeed = useManualSpeed;
 	}
 
-	public U2G_GotoPose(System.IO.Stream stream)
+	public GotoPose(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_GotoPose(System.IO.BinaryReader reader)
+	public GotoPose(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2604,7 +2606,7 @@ public class U2G_GotoPose
 			return false;
 		}
 
-		U2G_GotoPose p = obj as U2G_GotoPose;
+		GotoPose p = obj as GotoPose;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2613,7 +2615,7 @@ public class U2G_GotoPose
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_GotoPose p)
+	public bool Equals(GotoPose p)
 	{
 		if ((object) p == null)
 		{
@@ -2642,7 +2644,7 @@ public class U2G_GotoPose
 	}
 }
 
-public class U2G_PlaceObjectOnGround
+public class PlaceObjectOnGround
 {
 	private float _x_mm; // float_32
 	private float _y_mm; // float_32
@@ -2663,11 +2665,11 @@ public class U2G_PlaceObjectOnGround
 
 	/**** Constructors ****/
 
-	public U2G_PlaceObjectOnGround()
+	public PlaceObjectOnGround()
 	{
 	}
 
-	public U2G_PlaceObjectOnGround(float x_mm,
+	public PlaceObjectOnGround(float x_mm,
 		float y_mm,
 		float rad,
 		byte level,
@@ -2680,12 +2682,12 @@ public class U2G_PlaceObjectOnGround
 		this.useManualSpeed = useManualSpeed;
 	}
 
-	public U2G_PlaceObjectOnGround(System.IO.Stream stream)
+	public PlaceObjectOnGround(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_PlaceObjectOnGround(System.IO.BinaryReader reader)
+	public PlaceObjectOnGround(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2753,7 +2755,7 @@ public class U2G_PlaceObjectOnGround
 			return false;
 		}
 
-		U2G_PlaceObjectOnGround p = obj as U2G_PlaceObjectOnGround;
+		PlaceObjectOnGround p = obj as PlaceObjectOnGround;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -2762,7 +2764,7 @@ public class U2G_PlaceObjectOnGround
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_PlaceObjectOnGround p)
+	public bool Equals(PlaceObjectOnGround p)
 	{
 		if ((object) p == null)
 		{
@@ -2791,20 +2793,20 @@ public class U2G_PlaceObjectOnGround
 	}
 }
 
-public class U2G_PlaceObjectOnGroundHere
+public class PlaceObjectOnGroundHere
 {
 	/**** Constructors ****/
 
-	public U2G_PlaceObjectOnGroundHere()
+	public PlaceObjectOnGroundHere()
 	{
 	}
 
-	public U2G_PlaceObjectOnGroundHere(System.IO.Stream stream)
+	public PlaceObjectOnGroundHere(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_PlaceObjectOnGroundHere(System.IO.BinaryReader reader)
+	public PlaceObjectOnGroundHere(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2834,20 +2836,20 @@ public class U2G_PlaceObjectOnGroundHere
 
 }
 
-public class U2G_ExecuteTestPlan
+public class ExecuteTestPlan
 {
 	/**** Constructors ****/
 
-	public U2G_ExecuteTestPlan()
+	public ExecuteTestPlan()
 	{
 	}
 
-	public U2G_ExecuteTestPlan(System.IO.Stream stream)
+	public ExecuteTestPlan(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ExecuteTestPlan(System.IO.BinaryReader reader)
+	public ExecuteTestPlan(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2877,20 +2879,20 @@ public class U2G_ExecuteTestPlan
 
 }
 
-public class U2G_SelectNextObject
+public class SelectNextObject
 {
 	/**** Constructors ****/
 
-	public U2G_SelectNextObject()
+	public SelectNextObject()
 	{
 	}
 
-	public U2G_SelectNextObject(System.IO.Stream stream)
+	public SelectNextObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SelectNextObject(System.IO.BinaryReader reader)
+	public SelectNextObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -2920,7 +2922,7 @@ public class U2G_SelectNextObject
 
 }
 
-public class U2G_PickAndPlaceObject
+public class PickAndPlaceObject
 {
 	private int _objectID; // int_32
 	private byte _usePreDockPose; // uint_8
@@ -2935,11 +2937,11 @@ public class U2G_PickAndPlaceObject
 
 	/**** Constructors ****/
 
-	public U2G_PickAndPlaceObject()
+	public PickAndPlaceObject()
 	{
 	}
 
-	public U2G_PickAndPlaceObject(int objectID,
+	public PickAndPlaceObject(int objectID,
 		byte usePreDockPose,
 		byte useManualSpeed)
 	{
@@ -2948,12 +2950,12 @@ public class U2G_PickAndPlaceObject
 		this.useManualSpeed = useManualSpeed;
 	}
 
-	public U2G_PickAndPlaceObject(System.IO.Stream stream)
+	public PickAndPlaceObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_PickAndPlaceObject(System.IO.BinaryReader reader)
+	public PickAndPlaceObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3017,7 +3019,7 @@ public class U2G_PickAndPlaceObject
 			return false;
 		}
 
-		U2G_PickAndPlaceObject p = obj as U2G_PickAndPlaceObject;
+		PickAndPlaceObject p = obj as PickAndPlaceObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3026,7 +3028,7 @@ public class U2G_PickAndPlaceObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_PickAndPlaceObject p)
+	public bool Equals(PickAndPlaceObject p)
 	{
 		if ((object) p == null)
 		{
@@ -3051,7 +3053,7 @@ public class U2G_PickAndPlaceObject
 	}
 }
 
-public class U2G_TraverseObject
+public class TraverseObject
 {
 	private byte _usePreDockPose; // uint_8
 	private byte _useManualSpeed; // uint_8
@@ -3063,23 +3065,23 @@ public class U2G_TraverseObject
 
 	/**** Constructors ****/
 
-	public U2G_TraverseObject()
+	public TraverseObject()
 	{
 	}
 
-	public U2G_TraverseObject(byte usePreDockPose,
+	public TraverseObject(byte usePreDockPose,
 		byte useManualSpeed)
 	{
 		this.usePreDockPose = usePreDockPose;
 		this.useManualSpeed = useManualSpeed;
 	}
 
-	public U2G_TraverseObject(System.IO.Stream stream)
+	public TraverseObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_TraverseObject(System.IO.BinaryReader reader)
+	public TraverseObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3141,7 +3143,7 @@ public class U2G_TraverseObject
 			return false;
 		}
 
-		U2G_TraverseObject p = obj as U2G_TraverseObject;
+		TraverseObject p = obj as TraverseObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3150,7 +3152,7 @@ public class U2G_TraverseObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_TraverseObject p)
+	public bool Equals(TraverseObject p)
 	{
 		if ((object) p == null)
 		{
@@ -3173,7 +3175,7 @@ public class U2G_TraverseObject
 	}
 }
 
-public class U2G_SetRobotCarryingObject
+public class SetRobotCarryingObject
 {
 	private int _objectID; // int_32
 	private byte _robotID; // uint_8
@@ -3185,23 +3187,23 @@ public class U2G_SetRobotCarryingObject
 
 	/**** Constructors ****/
 
-	public U2G_SetRobotCarryingObject()
+	public SetRobotCarryingObject()
 	{
 	}
 
-	public U2G_SetRobotCarryingObject(int objectID,
+	public SetRobotCarryingObject(int objectID,
 		byte robotID)
 	{
 		this.objectID = objectID;
 		this.robotID = robotID;
 	}
 
-	public U2G_SetRobotCarryingObject(System.IO.Stream stream)
+	public SetRobotCarryingObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetRobotCarryingObject(System.IO.BinaryReader reader)
+	public SetRobotCarryingObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3263,7 +3265,7 @@ public class U2G_SetRobotCarryingObject
 			return false;
 		}
 
-		U2G_SetRobotCarryingObject p = obj as U2G_SetRobotCarryingObject;
+		SetRobotCarryingObject p = obj as SetRobotCarryingObject;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3272,7 +3274,7 @@ public class U2G_SetRobotCarryingObject
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetRobotCarryingObject p)
+	public bool Equals(SetRobotCarryingObject p)
 	{
 		if ((object) p == null)
 		{
@@ -3295,20 +3297,20 @@ public class U2G_SetRobotCarryingObject
 	}
 }
 
-public class U2G_ClearAllBlocks
+public class ClearAllBlocks
 {
 	/**** Constructors ****/
 
-	public U2G_ClearAllBlocks()
+	public ClearAllBlocks()
 	{
 	}
 
-	public U2G_ClearAllBlocks(System.IO.Stream stream)
+	public ClearAllBlocks(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ClearAllBlocks(System.IO.BinaryReader reader)
+	public ClearAllBlocks(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3338,7 +3340,7 @@ public class U2G_ClearAllBlocks
 
 }
 
-public class U2G_VisionWhileMoving
+public class VisionWhileMoving
 {
 	private byte _enable; // uint_8
 
@@ -3347,21 +3349,21 @@ public class U2G_VisionWhileMoving
 
 	/**** Constructors ****/
 
-	public U2G_VisionWhileMoving()
+	public VisionWhileMoving()
 	{
 	}
 
-	public U2G_VisionWhileMoving(byte enable)
+	public VisionWhileMoving(byte enable)
 	{
 		this.enable = enable;
 	}
 
-	public U2G_VisionWhileMoving(System.IO.Stream stream)
+	public VisionWhileMoving(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_VisionWhileMoving(System.IO.BinaryReader reader)
+	public VisionWhileMoving(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3421,7 +3423,7 @@ public class U2G_VisionWhileMoving
 			return false;
 		}
 
-		U2G_VisionWhileMoving p = obj as U2G_VisionWhileMoving;
+		VisionWhileMoving p = obj as VisionWhileMoving;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3430,7 +3432,7 @@ public class U2G_VisionWhileMoving
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_VisionWhileMoving p)
+	public bool Equals(VisionWhileMoving p)
 	{
 		if ((object) p == null)
 		{
@@ -3451,7 +3453,7 @@ public class U2G_VisionWhileMoving
 	}
 }
 
-public class U2G_ExecuteBehavior
+public class ExecuteBehavior
 {
 	private byte _behaviorMode; // uint_8
 
@@ -3460,21 +3462,21 @@ public class U2G_ExecuteBehavior
 
 	/**** Constructors ****/
 
-	public U2G_ExecuteBehavior()
+	public ExecuteBehavior()
 	{
 	}
 
-	public U2G_ExecuteBehavior(byte behaviorMode)
+	public ExecuteBehavior(byte behaviorMode)
 	{
 		this.behaviorMode = behaviorMode;
 	}
 
-	public U2G_ExecuteBehavior(System.IO.Stream stream)
+	public ExecuteBehavior(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ExecuteBehavior(System.IO.BinaryReader reader)
+	public ExecuteBehavior(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3534,7 +3536,7 @@ public class U2G_ExecuteBehavior
 			return false;
 		}
 
-		U2G_ExecuteBehavior p = obj as U2G_ExecuteBehavior;
+		ExecuteBehavior p = obj as ExecuteBehavior;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3543,7 +3545,7 @@ public class U2G_ExecuteBehavior
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_ExecuteBehavior p)
+	public bool Equals(ExecuteBehavior p)
 	{
 		if ((object) p == null)
 		{
@@ -3564,7 +3566,7 @@ public class U2G_ExecuteBehavior
 	}
 }
 
-public class U2G_SetBehaviorState
+public class SetBehaviorState
 {
 	private byte _behaviorState; // uint_8
 
@@ -3573,21 +3575,21 @@ public class U2G_SetBehaviorState
 
 	/**** Constructors ****/
 
-	public U2G_SetBehaviorState()
+	public SetBehaviorState()
 	{
 	}
 
-	public U2G_SetBehaviorState(byte behaviorState)
+	public SetBehaviorState(byte behaviorState)
 	{
 		this.behaviorState = behaviorState;
 	}
 
-	public U2G_SetBehaviorState(System.IO.Stream stream)
+	public SetBehaviorState(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetBehaviorState(System.IO.BinaryReader reader)
+	public SetBehaviorState(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3647,7 +3649,7 @@ public class U2G_SetBehaviorState
 			return false;
 		}
 
-		U2G_SetBehaviorState p = obj as U2G_SetBehaviorState;
+		SetBehaviorState p = obj as SetBehaviorState;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3656,7 +3658,7 @@ public class U2G_SetBehaviorState
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetBehaviorState p)
+	public bool Equals(SetBehaviorState p)
 	{
 		if ((object) p == null)
 		{
@@ -3677,20 +3679,20 @@ public class U2G_SetBehaviorState
 	}
 }
 
-public class U2G_AbortPath
+public class AbortPath
 {
 	/**** Constructors ****/
 
-	public U2G_AbortPath()
+	public AbortPath()
 	{
 	}
 
-	public U2G_AbortPath(System.IO.Stream stream)
+	public AbortPath(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_AbortPath(System.IO.BinaryReader reader)
+	public AbortPath(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3720,20 +3722,20 @@ public class U2G_AbortPath
 
 }
 
-public class U2G_AbortAll
+public class AbortAll
 {
 	/**** Constructors ****/
 
-	public U2G_AbortAll()
+	public AbortAll()
 	{
 	}
 
-	public U2G_AbortAll(System.IO.Stream stream)
+	public AbortAll(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_AbortAll(System.IO.BinaryReader reader)
+	public AbortAll(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3763,7 +3765,7 @@ public class U2G_AbortAll
 
 }
 
-public class U2G_DrawPoseMarker
+public class DrawPoseMarker
 {
 	private float _x_mm; // float_32
 	private float _y_mm; // float_32
@@ -3781,11 +3783,11 @@ public class U2G_DrawPoseMarker
 
 	/**** Constructors ****/
 
-	public U2G_DrawPoseMarker()
+	public DrawPoseMarker()
 	{
 	}
 
-	public U2G_DrawPoseMarker(float x_mm,
+	public DrawPoseMarker(float x_mm,
 		float y_mm,
 		float rad,
 		byte level)
@@ -3796,12 +3798,12 @@ public class U2G_DrawPoseMarker
 		this.level = level;
 	}
 
-	public U2G_DrawPoseMarker(System.IO.Stream stream)
+	public DrawPoseMarker(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_DrawPoseMarker(System.IO.BinaryReader reader)
+	public DrawPoseMarker(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3867,7 +3869,7 @@ public class U2G_DrawPoseMarker
 			return false;
 		}
 
-		U2G_DrawPoseMarker p = obj as U2G_DrawPoseMarker;
+		DrawPoseMarker p = obj as DrawPoseMarker;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -3876,7 +3878,7 @@ public class U2G_DrawPoseMarker
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_DrawPoseMarker p)
+	public bool Equals(DrawPoseMarker p)
 	{
 		if ((object) p == null)
 		{
@@ -3903,20 +3905,20 @@ public class U2G_DrawPoseMarker
 	}
 }
 
-public class U2G_ErasePoseMarker
+public class ErasePoseMarker
 {
 	/**** Constructors ****/
 
-	public U2G_ErasePoseMarker()
+	public ErasePoseMarker()
 	{
 	}
 
-	public U2G_ErasePoseMarker(System.IO.Stream stream)
+	public ErasePoseMarker(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ErasePoseMarker(System.IO.BinaryReader reader)
+	public ErasePoseMarker(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -3946,7 +3948,7 @@ public class U2G_ErasePoseMarker
 
 }
 
-public class U2G_SetWheelControllerGains
+public class SetWheelControllerGains
 {
 	private float _kpLeft; // float_32
 	private float _kiLeft; // float_32
@@ -3970,11 +3972,11 @@ public class U2G_SetWheelControllerGains
 
 	/**** Constructors ****/
 
-	public U2G_SetWheelControllerGains()
+	public SetWheelControllerGains()
 	{
 	}
 
-	public U2G_SetWheelControllerGains(float kpLeft,
+	public SetWheelControllerGains(float kpLeft,
 		float kiLeft,
 		float maxIntegralErrorLeft,
 		float kpRight,
@@ -3989,12 +3991,12 @@ public class U2G_SetWheelControllerGains
 		this.maxIntegralErrorRight = maxIntegralErrorRight;
 	}
 
-	public U2G_SetWheelControllerGains(System.IO.Stream stream)
+	public SetWheelControllerGains(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetWheelControllerGains(System.IO.BinaryReader reader)
+	public SetWheelControllerGains(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4064,7 +4066,7 @@ public class U2G_SetWheelControllerGains
 			return false;
 		}
 
-		U2G_SetWheelControllerGains p = obj as U2G_SetWheelControllerGains;
+		SetWheelControllerGains p = obj as SetWheelControllerGains;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4073,7 +4075,7 @@ public class U2G_SetWheelControllerGains
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetWheelControllerGains p)
+	public bool Equals(SetWheelControllerGains p)
 	{
 		if ((object) p == null)
 		{
@@ -4104,7 +4106,7 @@ public class U2G_SetWheelControllerGains
 	}
 }
 
-public class U2G_SetHeadControllerGains
+public class SetHeadControllerGains
 {
 	private float _kp; // float_32
 	private float _ki; // float_32
@@ -4119,11 +4121,11 @@ public class U2G_SetHeadControllerGains
 
 	/**** Constructors ****/
 
-	public U2G_SetHeadControllerGains()
+	public SetHeadControllerGains()
 	{
 	}
 
-	public U2G_SetHeadControllerGains(float kp,
+	public SetHeadControllerGains(float kp,
 		float ki,
 		float maxIntegralError)
 	{
@@ -4132,12 +4134,12 @@ public class U2G_SetHeadControllerGains
 		this.maxIntegralError = maxIntegralError;
 	}
 
-	public U2G_SetHeadControllerGains(System.IO.Stream stream)
+	public SetHeadControllerGains(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetHeadControllerGains(System.IO.BinaryReader reader)
+	public SetHeadControllerGains(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4201,7 +4203,7 @@ public class U2G_SetHeadControllerGains
 			return false;
 		}
 
-		U2G_SetHeadControllerGains p = obj as U2G_SetHeadControllerGains;
+		SetHeadControllerGains p = obj as SetHeadControllerGains;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4210,7 +4212,7 @@ public class U2G_SetHeadControllerGains
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetHeadControllerGains p)
+	public bool Equals(SetHeadControllerGains p)
 	{
 		if ((object) p == null)
 		{
@@ -4235,7 +4237,7 @@ public class U2G_SetHeadControllerGains
 	}
 }
 
-public class U2G_SetLiftControllerGains
+public class SetLiftControllerGains
 {
 	private float _kp; // float_32
 	private float _ki; // float_32
@@ -4250,11 +4252,11 @@ public class U2G_SetLiftControllerGains
 
 	/**** Constructors ****/
 
-	public U2G_SetLiftControllerGains()
+	public SetLiftControllerGains()
 	{
 	}
 
-	public U2G_SetLiftControllerGains(float kp,
+	public SetLiftControllerGains(float kp,
 		float ki,
 		float maxIntegralError)
 	{
@@ -4263,12 +4265,12 @@ public class U2G_SetLiftControllerGains
 		this.maxIntegralError = maxIntegralError;
 	}
 
-	public U2G_SetLiftControllerGains(System.IO.Stream stream)
+	public SetLiftControllerGains(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetLiftControllerGains(System.IO.BinaryReader reader)
+	public SetLiftControllerGains(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4332,7 +4334,7 @@ public class U2G_SetLiftControllerGains
 			return false;
 		}
 
-		U2G_SetLiftControllerGains p = obj as U2G_SetLiftControllerGains;
+		SetLiftControllerGains p = obj as SetLiftControllerGains;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4341,7 +4343,7 @@ public class U2G_SetLiftControllerGains
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetLiftControllerGains p)
+	public bool Equals(SetLiftControllerGains p)
 	{
 		if ((object) p == null)
 		{
@@ -4366,20 +4368,20 @@ public class U2G_SetLiftControllerGains
 	}
 }
 
-public class U2G_SelectNextSoundScheme
+public class SelectNextSoundScheme
 {
 	/**** Constructors ****/
 
-	public U2G_SelectNextSoundScheme()
+	public SelectNextSoundScheme()
 	{
 	}
 
-	public U2G_SelectNextSoundScheme(System.IO.Stream stream)
+	public SelectNextSoundScheme(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SelectNextSoundScheme(System.IO.BinaryReader reader)
+	public SelectNextSoundScheme(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4409,7 +4411,7 @@ public class U2G_SelectNextSoundScheme
 
 }
 
-public class U2G_StartTestMode
+public class StartTestMode
 {
 	private int _p1; // int_32
 	private int _p2; // int_32
@@ -4427,11 +4429,11 @@ public class U2G_StartTestMode
 
 	/**** Constructors ****/
 
-	public U2G_StartTestMode()
+	public StartTestMode()
 	{
 	}
 
-	public U2G_StartTestMode(int p1,
+	public StartTestMode(int p1,
 		int p2,
 		int p3,
 		byte mode)
@@ -4442,12 +4444,12 @@ public class U2G_StartTestMode
 		this.mode = mode;
 	}
 
-	public U2G_StartTestMode(System.IO.Stream stream)
+	public StartTestMode(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StartTestMode(System.IO.BinaryReader reader)
+	public StartTestMode(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4513,7 +4515,7 @@ public class U2G_StartTestMode
 			return false;
 		}
 
-		U2G_StartTestMode p = obj as U2G_StartTestMode;
+		StartTestMode p = obj as StartTestMode;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4522,7 +4524,7 @@ public class U2G_StartTestMode
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_StartTestMode p)
+	public bool Equals(StartTestMode p)
 	{
 		if ((object) p == null)
 		{
@@ -4549,7 +4551,7 @@ public class U2G_StartTestMode
 	}
 }
 
-public class U2G_IMURequest
+public class IMURequest
 {
 	private uint _length_ms; // uint_32
 
@@ -4558,21 +4560,21 @@ public class U2G_IMURequest
 
 	/**** Constructors ****/
 
-	public U2G_IMURequest()
+	public IMURequest()
 	{
 	}
 
-	public U2G_IMURequest(uint length_ms)
+	public IMURequest(uint length_ms)
 	{
 		this.length_ms = length_ms;
 	}
 
-	public U2G_IMURequest(System.IO.Stream stream)
+	public IMURequest(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_IMURequest(System.IO.BinaryReader reader)
+	public IMURequest(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4632,7 +4634,7 @@ public class U2G_IMURequest
 			return false;
 		}
 
-		U2G_IMURequest p = obj as U2G_IMURequest;
+		IMURequest p = obj as IMURequest;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4641,7 +4643,7 @@ public class U2G_IMURequest
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_IMURequest p)
+	public bool Equals(IMURequest p)
 	{
 		if ((object) p == null)
 		{
@@ -4662,7 +4664,7 @@ public class U2G_IMURequest
 	}
 }
 
-public class U2G_PlayAnimation
+public class PlayAnimation
 {
 	private uint _numLoops; // uint_32
 	private string _animationName; // string[uint_8]
@@ -4685,23 +4687,23 @@ public class U2G_PlayAnimation
 
 	/**** Constructors ****/
 
-	public U2G_PlayAnimation()
+	public PlayAnimation()
 	{
 	}
 
-	public U2G_PlayAnimation(uint numLoops,
+	public PlayAnimation(uint numLoops,
 		string animationName)
 	{
 		this.numLoops = numLoops;
 		this.animationName = animationName;
 	}
 
-	public U2G_PlayAnimation(System.IO.Stream stream)
+	public PlayAnimation(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_PlayAnimation(System.IO.BinaryReader reader)
+	public PlayAnimation(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4775,7 +4777,7 @@ public class U2G_PlayAnimation
 			return false;
 		}
 
-		U2G_PlayAnimation p = obj as U2G_PlayAnimation;
+		PlayAnimation p = obj as PlayAnimation;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4784,7 +4786,7 @@ public class U2G_PlayAnimation
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_PlayAnimation p)
+	public bool Equals(PlayAnimation p)
 	{
 		if ((object) p == null)
 		{
@@ -4807,20 +4809,20 @@ public class U2G_PlayAnimation
 	}
 }
 
-public class U2G_ReadAnimationFile
+public class ReadAnimationFile
 {
 	/**** Constructors ****/
 
-	public U2G_ReadAnimationFile()
+	public ReadAnimationFile()
 	{
 	}
 
-	public U2G_ReadAnimationFile(System.IO.Stream stream)
+	public ReadAnimationFile(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_ReadAnimationFile(System.IO.BinaryReader reader)
+	public ReadAnimationFile(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4850,7 +4852,7 @@ public class U2G_ReadAnimationFile
 
 }
 
-public class U2G_StartFaceTracking
+public class StartFaceTracking
 {
 	private byte _timeout_sec; // uint_8
 
@@ -4859,21 +4861,21 @@ public class U2G_StartFaceTracking
 
 	/**** Constructors ****/
 
-	public U2G_StartFaceTracking()
+	public StartFaceTracking()
 	{
 	}
 
-	public U2G_StartFaceTracking(byte timeout_sec)
+	public StartFaceTracking(byte timeout_sec)
 	{
 		this.timeout_sec = timeout_sec;
 	}
 
-	public U2G_StartFaceTracking(System.IO.Stream stream)
+	public StartFaceTracking(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StartFaceTracking(System.IO.BinaryReader reader)
+	public StartFaceTracking(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -4933,7 +4935,7 @@ public class U2G_StartFaceTracking
 			return false;
 		}
 
-		U2G_StartFaceTracking p = obj as U2G_StartFaceTracking;
+		StartFaceTracking p = obj as StartFaceTracking;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -4942,7 +4944,7 @@ public class U2G_StartFaceTracking
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_StartFaceTracking p)
+	public bool Equals(StartFaceTracking p)
 	{
 		if ((object) p == null)
 		{
@@ -4963,20 +4965,20 @@ public class U2G_StartFaceTracking
 	}
 }
 
-public class U2G_StopFaceTracking
+public class StopFaceTracking
 {
 	/**** Constructors ****/
 
-	public U2G_StopFaceTracking()
+	public StopFaceTracking()
 	{
 	}
 
-	public U2G_StopFaceTracking(System.IO.Stream stream)
+	public StopFaceTracking(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StopFaceTracking(System.IO.BinaryReader reader)
+	public StopFaceTracking(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5006,20 +5008,20 @@ public class U2G_StopFaceTracking
 
 }
 
-public class U2G_StartLookingForMarkers
+public class StartLookingForMarkers
 {
 	/**** Constructors ****/
 
-	public U2G_StartLookingForMarkers()
+	public StartLookingForMarkers()
 	{
 	}
 
-	public U2G_StartLookingForMarkers(System.IO.Stream stream)
+	public StartLookingForMarkers(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StartLookingForMarkers(System.IO.BinaryReader reader)
+	public StartLookingForMarkers(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5049,20 +5051,20 @@ public class U2G_StartLookingForMarkers
 
 }
 
-public class U2G_StopLookingForMarkers
+public class StopLookingForMarkers
 {
 	/**** Constructors ****/
 
-	public U2G_StopLookingForMarkers()
+	public StopLookingForMarkers()
 	{
 	}
 
-	public U2G_StopLookingForMarkers(System.IO.Stream stream)
+	public StopLookingForMarkers(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_StopLookingForMarkers(System.IO.BinaryReader reader)
+	public StopLookingForMarkers(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5092,7 +5094,7 @@ public class U2G_StopLookingForMarkers
 
 }
 
-public class U2G_SetVisionSystemParams
+public class SetVisionSystemParams
 {
 	private int _autoexposureOn; // int_32
 	private float _exposureTime; // float_32
@@ -5122,11 +5124,11 @@ public class U2G_SetVisionSystemParams
 
 	/**** Constructors ****/
 
-	public U2G_SetVisionSystemParams()
+	public SetVisionSystemParams()
 	{
 	}
 
-	public U2G_SetVisionSystemParams(int autoexposureOn,
+	public SetVisionSystemParams(int autoexposureOn,
 		float exposureTime,
 		int integerCountsIncrement,
 		float minExposureTime,
@@ -5145,12 +5147,12 @@ public class U2G_SetVisionSystemParams
 		this.highValue = highValue;
 	}
 
-	public U2G_SetVisionSystemParams(System.IO.Stream stream)
+	public SetVisionSystemParams(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetVisionSystemParams(System.IO.BinaryReader reader)
+	public SetVisionSystemParams(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5224,7 +5226,7 @@ public class U2G_SetVisionSystemParams
 			return false;
 		}
 
-		U2G_SetVisionSystemParams p = obj as U2G_SetVisionSystemParams;
+		SetVisionSystemParams p = obj as SetVisionSystemParams;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -5233,7 +5235,7 @@ public class U2G_SetVisionSystemParams
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetVisionSystemParams p)
+	public bool Equals(SetVisionSystemParams p)
 	{
 		if ((object) p == null)
 		{
@@ -5268,7 +5270,7 @@ public class U2G_SetVisionSystemParams
 	}
 }
 
-public class U2G_SetFaceDetectParams
+public class SetFaceDetectParams
 {
 	private float _scaleFactor; // float_32
 	private int _minNeighbors; // int_32
@@ -5292,11 +5294,11 @@ public class U2G_SetFaceDetectParams
 
 	/**** Constructors ****/
 
-	public U2G_SetFaceDetectParams()
+	public SetFaceDetectParams()
 	{
 	}
 
-	public U2G_SetFaceDetectParams(float scaleFactor,
+	public SetFaceDetectParams(float scaleFactor,
 		int minNeighbors,
 		int minObjectHeight,
 		int minObjectWidth,
@@ -5311,12 +5313,12 @@ public class U2G_SetFaceDetectParams
 		this.maxObjectWidth = maxObjectWidth;
 	}
 
-	public U2G_SetFaceDetectParams(System.IO.Stream stream)
+	public SetFaceDetectParams(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetFaceDetectParams(System.IO.BinaryReader reader)
+	public SetFaceDetectParams(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5386,7 +5388,7 @@ public class U2G_SetFaceDetectParams
 			return false;
 		}
 
-		U2G_SetFaceDetectParams p = obj as U2G_SetFaceDetectParams;
+		SetFaceDetectParams p = obj as SetFaceDetectParams;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -5395,7 +5397,7 @@ public class U2G_SetFaceDetectParams
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetFaceDetectParams p)
+	public bool Equals(SetFaceDetectParams p)
 	{
 		if ((object) p == null)
 		{
@@ -5426,7 +5428,7 @@ public class U2G_SetFaceDetectParams
 	}
 }
 
-public class U2G_SetActiveObjectLEDs
+public class SetActiveObjectLEDs
 {
 	private uint _objectID; // uint_32
 	private uint _color; // uint_32
@@ -5468,11 +5470,11 @@ public class U2G_SetActiveObjectLEDs
 
 	/**** Constructors ****/
 
-	public U2G_SetActiveObjectLEDs()
+	public SetActiveObjectLEDs()
 	{
 	}
 
-	public U2G_SetActiveObjectLEDs(uint objectID,
+	public SetActiveObjectLEDs(uint objectID,
 		uint color,
 		uint onPeriod_ms,
 		uint offPeriod_ms,
@@ -5499,12 +5501,12 @@ public class U2G_SetActiveObjectLEDs
 		this.robotID = robotID;
 	}
 
-	public U2G_SetActiveObjectLEDs(System.IO.Stream stream)
+	public SetActiveObjectLEDs(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetActiveObjectLEDs(System.IO.BinaryReader reader)
+	public SetActiveObjectLEDs(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5586,7 +5588,7 @@ public class U2G_SetActiveObjectLEDs
 			return false;
 		}
 
-		U2G_SetActiveObjectLEDs p = obj as U2G_SetActiveObjectLEDs;
+		SetActiveObjectLEDs p = obj as SetActiveObjectLEDs;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -5595,7 +5597,7 @@ public class U2G_SetActiveObjectLEDs
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetActiveObjectLEDs p)
+	public bool Equals(SetActiveObjectLEDs p)
 	{
 		if ((object) p == null)
 		{
@@ -5638,7 +5640,7 @@ public class U2G_SetActiveObjectLEDs
 	}
 }
 
-public class U2G_SetAllActiveObjectLEDs
+public class SetAllActiveObjectLEDs
 {
 	private uint _objectID; // uint_32
 	private uint[] _color; // uint_32[8]
@@ -5744,7 +5746,7 @@ public class U2G_SetAllActiveObjectLEDs
 
 	/**** Constructors ****/
 
-	public U2G_SetAllActiveObjectLEDs()
+	public SetAllActiveObjectLEDs()
 	{
 		this.color = new uint[8];
 		this.onPeriod_ms = new uint[8];
@@ -5753,7 +5755,7 @@ public class U2G_SetAllActiveObjectLEDs
 		this.transitionOffPeriod_ms = new uint[8];
 	}
 
-	public U2G_SetAllActiveObjectLEDs(uint objectID,
+	public SetAllActiveObjectLEDs(uint objectID,
 		uint[] color,
 		uint[] onPeriod_ms,
 		uint[] offPeriod_ms,
@@ -5776,12 +5778,12 @@ public class U2G_SetAllActiveObjectLEDs
 		this.robotID = robotID;
 	}
 
-	public U2G_SetAllActiveObjectLEDs(System.IO.Stream stream)
+	public SetAllActiveObjectLEDs(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public U2G_SetAllActiveObjectLEDs(System.IO.BinaryReader reader)
+	public SetAllActiveObjectLEDs(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -5884,7 +5886,7 @@ public class U2G_SetAllActiveObjectLEDs
 			return false;
 		}
 
-		U2G_SetAllActiveObjectLEDs p = obj as U2G_SetAllActiveObjectLEDs;
+		SetAllActiveObjectLEDs p = obj as SetAllActiveObjectLEDs;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -5893,7 +5895,7 @@ public class U2G_SetAllActiveObjectLEDs
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_SetAllActiveObjectLEDs p)
+	public bool Equals(SetAllActiveObjectLEDs p)
 	{
 		if ((object) p == null)
 		{
@@ -5932,7 +5934,7 @@ public class U2G_SetAllActiveObjectLEDs
 	}
 }
 
-public class U2G_Message {
+public class Message {
 	public enum Tag {
 		Ping,	//0
 		ConnectToRobot,	//1
@@ -5996,7 +5998,7 @@ public class U2G_Message {
 
 	private object _state = null;
 
-	public Anki.Cozmo.U2G_Ping Ping
+	public Anki.Cozmo.U2G.Ping Ping
 	{
 		get {
 			if (_tag != Tag.Ping) {
@@ -6004,7 +6006,7 @@ public class U2G_Message {
 					"Cannot access union member \"Ping\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_Ping)this._state;
+			return (Anki.Cozmo.U2G.Ping)this._state;
 		}
 		
 		set {
@@ -6013,7 +6015,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ConnectToRobot ConnectToRobot
+	public Anki.Cozmo.U2G.ConnectToRobot ConnectToRobot
 	{
 		get {
 			if (_tag != Tag.ConnectToRobot) {
@@ -6021,7 +6023,7 @@ public class U2G_Message {
 					"Cannot access union member \"ConnectToRobot\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ConnectToRobot)this._state;
+			return (Anki.Cozmo.U2G.ConnectToRobot)this._state;
 		}
 		
 		set {
@@ -6030,7 +6032,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ConnectToUiDevice ConnectToUiDevice
+	public Anki.Cozmo.U2G.ConnectToUiDevice ConnectToUiDevice
 	{
 		get {
 			if (_tag != Tag.ConnectToUiDevice) {
@@ -6038,7 +6040,7 @@ public class U2G_Message {
 					"Cannot access union member \"ConnectToUiDevice\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ConnectToUiDevice)this._state;
+			return (Anki.Cozmo.U2G.ConnectToUiDevice)this._state;
 		}
 		
 		set {
@@ -6047,7 +6049,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_DisconnectFromUiDevice DisconnectFromUiDevice
+	public Anki.Cozmo.U2G.DisconnectFromUiDevice DisconnectFromUiDevice
 	{
 		get {
 			if (_tag != Tag.DisconnectFromUiDevice) {
@@ -6055,7 +6057,7 @@ public class U2G_Message {
 					"Cannot access union member \"DisconnectFromUiDevice\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_DisconnectFromUiDevice)this._state;
+			return (Anki.Cozmo.U2G.DisconnectFromUiDevice)this._state;
 		}
 		
 		set {
@@ -6064,7 +6066,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ForceAddRobot ForceAddRobot
+	public Anki.Cozmo.U2G.ForceAddRobot ForceAddRobot
 	{
 		get {
 			if (_tag != Tag.ForceAddRobot) {
@@ -6072,7 +6074,7 @@ public class U2G_Message {
 					"Cannot access union member \"ForceAddRobot\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ForceAddRobot)this._state;
+			return (Anki.Cozmo.U2G.ForceAddRobot)this._state;
 		}
 		
 		set {
@@ -6081,7 +6083,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StartEngine StartEngine
+	public Anki.Cozmo.U2G.StartEngine StartEngine
 	{
 		get {
 			if (_tag != Tag.StartEngine) {
@@ -6089,7 +6091,7 @@ public class U2G_Message {
 					"Cannot access union member \"StartEngine\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StartEngine)this._state;
+			return (Anki.Cozmo.U2G.StartEngine)this._state;
 		}
 		
 		set {
@@ -6098,7 +6100,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_DriveWheels DriveWheels
+	public Anki.Cozmo.U2G.DriveWheels DriveWheels
 	{
 		get {
 			if (_tag != Tag.DriveWheels) {
@@ -6106,7 +6108,7 @@ public class U2G_Message {
 					"Cannot access union member \"DriveWheels\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_DriveWheels)this._state;
+			return (Anki.Cozmo.U2G.DriveWheels)this._state;
 		}
 		
 		set {
@@ -6115,7 +6117,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_TurnInPlace TurnInPlace
+	public Anki.Cozmo.U2G.TurnInPlace TurnInPlace
 	{
 		get {
 			if (_tag != Tag.TurnInPlace) {
@@ -6123,7 +6125,7 @@ public class U2G_Message {
 					"Cannot access union member \"TurnInPlace\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_TurnInPlace)this._state;
+			return (Anki.Cozmo.U2G.TurnInPlace)this._state;
 		}
 		
 		set {
@@ -6132,7 +6134,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_FaceObject FaceObject
+	public Anki.Cozmo.U2G.FaceObject FaceObject
 	{
 		get {
 			if (_tag != Tag.FaceObject) {
@@ -6140,7 +6142,7 @@ public class U2G_Message {
 					"Cannot access union member \"FaceObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_FaceObject)this._state;
+			return (Anki.Cozmo.U2G.FaceObject)this._state;
 		}
 		
 		set {
@@ -6149,7 +6151,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_MoveHead MoveHead
+	public Anki.Cozmo.U2G.MoveHead MoveHead
 	{
 		get {
 			if (_tag != Tag.MoveHead) {
@@ -6157,7 +6159,7 @@ public class U2G_Message {
 					"Cannot access union member \"MoveHead\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_MoveHead)this._state;
+			return (Anki.Cozmo.U2G.MoveHead)this._state;
 		}
 		
 		set {
@@ -6166,7 +6168,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_MoveLift MoveLift
+	public Anki.Cozmo.U2G.MoveLift MoveLift
 	{
 		get {
 			if (_tag != Tag.MoveLift) {
@@ -6174,7 +6176,7 @@ public class U2G_Message {
 					"Cannot access union member \"MoveLift\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_MoveLift)this._state;
+			return (Anki.Cozmo.U2G.MoveLift)this._state;
 		}
 		
 		set {
@@ -6183,7 +6185,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetLiftHeight SetLiftHeight
+	public Anki.Cozmo.U2G.SetLiftHeight SetLiftHeight
 	{
 		get {
 			if (_tag != Tag.SetLiftHeight) {
@@ -6191,7 +6193,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetLiftHeight\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetLiftHeight)this._state;
+			return (Anki.Cozmo.U2G.SetLiftHeight)this._state;
 		}
 		
 		set {
@@ -6200,7 +6202,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetHeadAngle SetHeadAngle
+	public Anki.Cozmo.U2G.SetHeadAngle SetHeadAngle
 	{
 		get {
 			if (_tag != Tag.SetHeadAngle) {
@@ -6208,7 +6210,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetHeadAngle\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetHeadAngle)this._state;
+			return (Anki.Cozmo.U2G.SetHeadAngle)this._state;
 		}
 		
 		set {
@@ -6217,7 +6219,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_TrackHeadToObject TrackHeadToObject
+	public Anki.Cozmo.U2G.TrackHeadToObject TrackHeadToObject
 	{
 		get {
 			if (_tag != Tag.TrackHeadToObject) {
@@ -6225,7 +6227,7 @@ public class U2G_Message {
 					"Cannot access union member \"TrackHeadToObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_TrackHeadToObject)this._state;
+			return (Anki.Cozmo.U2G.TrackHeadToObject)this._state;
 		}
 		
 		set {
@@ -6234,7 +6236,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StopAllMotors StopAllMotors
+	public Anki.Cozmo.U2G.StopAllMotors StopAllMotors
 	{
 		get {
 			if (_tag != Tag.StopAllMotors) {
@@ -6242,7 +6244,7 @@ public class U2G_Message {
 					"Cannot access union member \"StopAllMotors\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StopAllMotors)this._state;
+			return (Anki.Cozmo.U2G.StopAllMotors)this._state;
 		}
 		
 		set {
@@ -6251,7 +6253,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ImageRequest ImageRequest
+	public Anki.Cozmo.U2G.ImageRequest ImageRequest
 	{
 		get {
 			if (_tag != Tag.ImageRequest) {
@@ -6259,7 +6261,7 @@ public class U2G_Message {
 					"Cannot access union member \"ImageRequest\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ImageRequest)this._state;
+			return (Anki.Cozmo.U2G.ImageRequest)this._state;
 		}
 		
 		set {
@@ -6268,7 +6270,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetRobotImageSendMode SetRobotImageSendMode
+	public Anki.Cozmo.U2G.SetRobotImageSendMode SetRobotImageSendMode
 	{
 		get {
 			if (_tag != Tag.SetRobotImageSendMode) {
@@ -6276,7 +6278,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetRobotImageSendMode\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetRobotImageSendMode)this._state;
+			return (Anki.Cozmo.U2G.SetRobotImageSendMode)this._state;
 		}
 		
 		set {
@@ -6285,7 +6287,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SaveImages SaveImages
+	public Anki.Cozmo.U2G.SaveImages SaveImages
 	{
 		get {
 			if (_tag != Tag.SaveImages) {
@@ -6293,7 +6295,7 @@ public class U2G_Message {
 					"Cannot access union member \"SaveImages\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SaveImages)this._state;
+			return (Anki.Cozmo.U2G.SaveImages)this._state;
 		}
 		
 		set {
@@ -6302,7 +6304,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SaveRobotState SaveRobotState
+	public Anki.Cozmo.U2G.SaveRobotState SaveRobotState
 	{
 		get {
 			if (_tag != Tag.SaveRobotState) {
@@ -6310,7 +6312,7 @@ public class U2G_Message {
 					"Cannot access union member \"SaveRobotState\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SaveRobotState)this._state;
+			return (Anki.Cozmo.U2G.SaveRobotState)this._state;
 		}
 		
 		set {
@@ -6319,7 +6321,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_EnableDisplay EnableDisplay
+	public Anki.Cozmo.U2G.EnableDisplay EnableDisplay
 	{
 		get {
 			if (_tag != Tag.EnableDisplay) {
@@ -6327,7 +6329,7 @@ public class U2G_Message {
 					"Cannot access union member \"EnableDisplay\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_EnableDisplay)this._state;
+			return (Anki.Cozmo.U2G.EnableDisplay)this._state;
 		}
 		
 		set {
@@ -6336,7 +6338,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetHeadlights SetHeadlights
+	public Anki.Cozmo.U2G.SetHeadlights SetHeadlights
 	{
 		get {
 			if (_tag != Tag.SetHeadlights) {
@@ -6344,7 +6346,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetHeadlights\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetHeadlights)this._state;
+			return (Anki.Cozmo.U2G.SetHeadlights)this._state;
 		}
 		
 		set {
@@ -6353,7 +6355,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_GotoPose GotoPose
+	public Anki.Cozmo.U2G.GotoPose GotoPose
 	{
 		get {
 			if (_tag != Tag.GotoPose) {
@@ -6361,7 +6363,7 @@ public class U2G_Message {
 					"Cannot access union member \"GotoPose\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_GotoPose)this._state;
+			return (Anki.Cozmo.U2G.GotoPose)this._state;
 		}
 		
 		set {
@@ -6370,7 +6372,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_PlaceObjectOnGround PlaceObjectOnGround
+	public Anki.Cozmo.U2G.PlaceObjectOnGround PlaceObjectOnGround
 	{
 		get {
 			if (_tag != Tag.PlaceObjectOnGround) {
@@ -6378,7 +6380,7 @@ public class U2G_Message {
 					"Cannot access union member \"PlaceObjectOnGround\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_PlaceObjectOnGround)this._state;
+			return (Anki.Cozmo.U2G.PlaceObjectOnGround)this._state;
 		}
 		
 		set {
@@ -6387,7 +6389,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_PlaceObjectOnGroundHere PlaceObjectOnGroundHere
+	public Anki.Cozmo.U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHere
 	{
 		get {
 			if (_tag != Tag.PlaceObjectOnGroundHere) {
@@ -6395,7 +6397,7 @@ public class U2G_Message {
 					"Cannot access union member \"PlaceObjectOnGroundHere\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_PlaceObjectOnGroundHere)this._state;
+			return (Anki.Cozmo.U2G.PlaceObjectOnGroundHere)this._state;
 		}
 		
 		set {
@@ -6404,7 +6406,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ExecuteTestPlan ExecuteTestPlan
+	public Anki.Cozmo.U2G.ExecuteTestPlan ExecuteTestPlan
 	{
 		get {
 			if (_tag != Tag.ExecuteTestPlan) {
@@ -6412,7 +6414,7 @@ public class U2G_Message {
 					"Cannot access union member \"ExecuteTestPlan\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ExecuteTestPlan)this._state;
+			return (Anki.Cozmo.U2G.ExecuteTestPlan)this._state;
 		}
 		
 		set {
@@ -6421,7 +6423,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SelectNextObject SelectNextObject
+	public Anki.Cozmo.U2G.SelectNextObject SelectNextObject
 	{
 		get {
 			if (_tag != Tag.SelectNextObject) {
@@ -6429,7 +6431,7 @@ public class U2G_Message {
 					"Cannot access union member \"SelectNextObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SelectNextObject)this._state;
+			return (Anki.Cozmo.U2G.SelectNextObject)this._state;
 		}
 		
 		set {
@@ -6438,7 +6440,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_PickAndPlaceObject PickAndPlaceObject
+	public Anki.Cozmo.U2G.PickAndPlaceObject PickAndPlaceObject
 	{
 		get {
 			if (_tag != Tag.PickAndPlaceObject) {
@@ -6446,7 +6448,7 @@ public class U2G_Message {
 					"Cannot access union member \"PickAndPlaceObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_PickAndPlaceObject)this._state;
+			return (Anki.Cozmo.U2G.PickAndPlaceObject)this._state;
 		}
 		
 		set {
@@ -6455,7 +6457,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_TraverseObject TraverseObject
+	public Anki.Cozmo.U2G.TraverseObject TraverseObject
 	{
 		get {
 			if (_tag != Tag.TraverseObject) {
@@ -6463,7 +6465,7 @@ public class U2G_Message {
 					"Cannot access union member \"TraverseObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_TraverseObject)this._state;
+			return (Anki.Cozmo.U2G.TraverseObject)this._state;
 		}
 		
 		set {
@@ -6472,7 +6474,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetRobotCarryingObject SetRobotCarryingObject
+	public Anki.Cozmo.U2G.SetRobotCarryingObject SetRobotCarryingObject
 	{
 		get {
 			if (_tag != Tag.SetRobotCarryingObject) {
@@ -6480,7 +6482,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetRobotCarryingObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetRobotCarryingObject)this._state;
+			return (Anki.Cozmo.U2G.SetRobotCarryingObject)this._state;
 		}
 		
 		set {
@@ -6489,7 +6491,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ClearAllBlocks ClearAllBlocks
+	public Anki.Cozmo.U2G.ClearAllBlocks ClearAllBlocks
 	{
 		get {
 			if (_tag != Tag.ClearAllBlocks) {
@@ -6497,7 +6499,7 @@ public class U2G_Message {
 					"Cannot access union member \"ClearAllBlocks\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ClearAllBlocks)this._state;
+			return (Anki.Cozmo.U2G.ClearAllBlocks)this._state;
 		}
 		
 		set {
@@ -6506,7 +6508,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_VisionWhileMoving VisionWhileMoving
+	public Anki.Cozmo.U2G.VisionWhileMoving VisionWhileMoving
 	{
 		get {
 			if (_tag != Tag.VisionWhileMoving) {
@@ -6514,7 +6516,7 @@ public class U2G_Message {
 					"Cannot access union member \"VisionWhileMoving\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_VisionWhileMoving)this._state;
+			return (Anki.Cozmo.U2G.VisionWhileMoving)this._state;
 		}
 		
 		set {
@@ -6523,7 +6525,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ExecuteBehavior ExecuteBehavior
+	public Anki.Cozmo.U2G.ExecuteBehavior ExecuteBehavior
 	{
 		get {
 			if (_tag != Tag.ExecuteBehavior) {
@@ -6531,7 +6533,7 @@ public class U2G_Message {
 					"Cannot access union member \"ExecuteBehavior\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ExecuteBehavior)this._state;
+			return (Anki.Cozmo.U2G.ExecuteBehavior)this._state;
 		}
 		
 		set {
@@ -6540,7 +6542,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetBehaviorState SetBehaviorState
+	public Anki.Cozmo.U2G.SetBehaviorState SetBehaviorState
 	{
 		get {
 			if (_tag != Tag.SetBehaviorState) {
@@ -6548,7 +6550,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetBehaviorState\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetBehaviorState)this._state;
+			return (Anki.Cozmo.U2G.SetBehaviorState)this._state;
 		}
 		
 		set {
@@ -6557,7 +6559,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_AbortPath AbortPath
+	public Anki.Cozmo.U2G.AbortPath AbortPath
 	{
 		get {
 			if (_tag != Tag.AbortPath) {
@@ -6565,7 +6567,7 @@ public class U2G_Message {
 					"Cannot access union member \"AbortPath\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_AbortPath)this._state;
+			return (Anki.Cozmo.U2G.AbortPath)this._state;
 		}
 		
 		set {
@@ -6574,7 +6576,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_AbortAll AbortAll
+	public Anki.Cozmo.U2G.AbortAll AbortAll
 	{
 		get {
 			if (_tag != Tag.AbortAll) {
@@ -6582,7 +6584,7 @@ public class U2G_Message {
 					"Cannot access union member \"AbortAll\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_AbortAll)this._state;
+			return (Anki.Cozmo.U2G.AbortAll)this._state;
 		}
 		
 		set {
@@ -6591,7 +6593,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_DrawPoseMarker DrawPoseMarker
+	public Anki.Cozmo.U2G.DrawPoseMarker DrawPoseMarker
 	{
 		get {
 			if (_tag != Tag.DrawPoseMarker) {
@@ -6599,7 +6601,7 @@ public class U2G_Message {
 					"Cannot access union member \"DrawPoseMarker\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_DrawPoseMarker)this._state;
+			return (Anki.Cozmo.U2G.DrawPoseMarker)this._state;
 		}
 		
 		set {
@@ -6608,7 +6610,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ErasePoseMarker ErasePoseMarker
+	public Anki.Cozmo.U2G.ErasePoseMarker ErasePoseMarker
 	{
 		get {
 			if (_tag != Tag.ErasePoseMarker) {
@@ -6616,7 +6618,7 @@ public class U2G_Message {
 					"Cannot access union member \"ErasePoseMarker\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ErasePoseMarker)this._state;
+			return (Anki.Cozmo.U2G.ErasePoseMarker)this._state;
 		}
 		
 		set {
@@ -6625,7 +6627,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetWheelControllerGains SetWheelControllerGains
+	public Anki.Cozmo.U2G.SetWheelControllerGains SetWheelControllerGains
 	{
 		get {
 			if (_tag != Tag.SetWheelControllerGains) {
@@ -6633,7 +6635,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetWheelControllerGains\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetWheelControllerGains)this._state;
+			return (Anki.Cozmo.U2G.SetWheelControllerGains)this._state;
 		}
 		
 		set {
@@ -6642,7 +6644,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetHeadControllerGains SetHeadControllerGains
+	public Anki.Cozmo.U2G.SetHeadControllerGains SetHeadControllerGains
 	{
 		get {
 			if (_tag != Tag.SetHeadControllerGains) {
@@ -6650,7 +6652,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetHeadControllerGains\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetHeadControllerGains)this._state;
+			return (Anki.Cozmo.U2G.SetHeadControllerGains)this._state;
 		}
 		
 		set {
@@ -6659,7 +6661,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetLiftControllerGains SetLiftControllerGains
+	public Anki.Cozmo.U2G.SetLiftControllerGains SetLiftControllerGains
 	{
 		get {
 			if (_tag != Tag.SetLiftControllerGains) {
@@ -6667,7 +6669,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetLiftControllerGains\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetLiftControllerGains)this._state;
+			return (Anki.Cozmo.U2G.SetLiftControllerGains)this._state;
 		}
 		
 		set {
@@ -6676,7 +6678,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SelectNextSoundScheme SelectNextSoundScheme
+	public Anki.Cozmo.U2G.SelectNextSoundScheme SelectNextSoundScheme
 	{
 		get {
 			if (_tag != Tag.SelectNextSoundScheme) {
@@ -6684,7 +6686,7 @@ public class U2G_Message {
 					"Cannot access union member \"SelectNextSoundScheme\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SelectNextSoundScheme)this._state;
+			return (Anki.Cozmo.U2G.SelectNextSoundScheme)this._state;
 		}
 		
 		set {
@@ -6693,7 +6695,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StartTestMode StartTestMode
+	public Anki.Cozmo.U2G.StartTestMode StartTestMode
 	{
 		get {
 			if (_tag != Tag.StartTestMode) {
@@ -6701,7 +6703,7 @@ public class U2G_Message {
 					"Cannot access union member \"StartTestMode\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StartTestMode)this._state;
+			return (Anki.Cozmo.U2G.StartTestMode)this._state;
 		}
 		
 		set {
@@ -6710,7 +6712,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_IMURequest IMURequest
+	public Anki.Cozmo.U2G.IMURequest IMURequest
 	{
 		get {
 			if (_tag != Tag.IMURequest) {
@@ -6718,7 +6720,7 @@ public class U2G_Message {
 					"Cannot access union member \"IMURequest\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_IMURequest)this._state;
+			return (Anki.Cozmo.U2G.IMURequest)this._state;
 		}
 		
 		set {
@@ -6727,7 +6729,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_PlayAnimation PlayAnimation
+	public Anki.Cozmo.U2G.PlayAnimation PlayAnimation
 	{
 		get {
 			if (_tag != Tag.PlayAnimation) {
@@ -6735,7 +6737,7 @@ public class U2G_Message {
 					"Cannot access union member \"PlayAnimation\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_PlayAnimation)this._state;
+			return (Anki.Cozmo.U2G.PlayAnimation)this._state;
 		}
 		
 		set {
@@ -6744,7 +6746,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_ReadAnimationFile ReadAnimationFile
+	public Anki.Cozmo.U2G.ReadAnimationFile ReadAnimationFile
 	{
 		get {
 			if (_tag != Tag.ReadAnimationFile) {
@@ -6752,7 +6754,7 @@ public class U2G_Message {
 					"Cannot access union member \"ReadAnimationFile\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_ReadAnimationFile)this._state;
+			return (Anki.Cozmo.U2G.ReadAnimationFile)this._state;
 		}
 		
 		set {
@@ -6761,7 +6763,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StartFaceTracking StartFaceTracking
+	public Anki.Cozmo.U2G.StartFaceTracking StartFaceTracking
 	{
 		get {
 			if (_tag != Tag.StartFaceTracking) {
@@ -6769,7 +6771,7 @@ public class U2G_Message {
 					"Cannot access union member \"StartFaceTracking\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StartFaceTracking)this._state;
+			return (Anki.Cozmo.U2G.StartFaceTracking)this._state;
 		}
 		
 		set {
@@ -6778,7 +6780,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StopFaceTracking StopFaceTracking
+	public Anki.Cozmo.U2G.StopFaceTracking StopFaceTracking
 	{
 		get {
 			if (_tag != Tag.StopFaceTracking) {
@@ -6786,7 +6788,7 @@ public class U2G_Message {
 					"Cannot access union member \"StopFaceTracking\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StopFaceTracking)this._state;
+			return (Anki.Cozmo.U2G.StopFaceTracking)this._state;
 		}
 		
 		set {
@@ -6795,7 +6797,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StartLookingForMarkers StartLookingForMarkers
+	public Anki.Cozmo.U2G.StartLookingForMarkers StartLookingForMarkers
 	{
 		get {
 			if (_tag != Tag.StartLookingForMarkers) {
@@ -6803,7 +6805,7 @@ public class U2G_Message {
 					"Cannot access union member \"StartLookingForMarkers\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StartLookingForMarkers)this._state;
+			return (Anki.Cozmo.U2G.StartLookingForMarkers)this._state;
 		}
 		
 		set {
@@ -6812,7 +6814,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_StopLookingForMarkers StopLookingForMarkers
+	public Anki.Cozmo.U2G.StopLookingForMarkers StopLookingForMarkers
 	{
 		get {
 			if (_tag != Tag.StopLookingForMarkers) {
@@ -6820,7 +6822,7 @@ public class U2G_Message {
 					"Cannot access union member \"StopLookingForMarkers\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_StopLookingForMarkers)this._state;
+			return (Anki.Cozmo.U2G.StopLookingForMarkers)this._state;
 		}
 		
 		set {
@@ -6829,7 +6831,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetVisionSystemParams SetVisionSystemParams
+	public Anki.Cozmo.U2G.SetVisionSystemParams SetVisionSystemParams
 	{
 		get {
 			if (_tag != Tag.SetVisionSystemParams) {
@@ -6837,7 +6839,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetVisionSystemParams\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetVisionSystemParams)this._state;
+			return (Anki.Cozmo.U2G.SetVisionSystemParams)this._state;
 		}
 		
 		set {
@@ -6846,7 +6848,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetFaceDetectParams SetFaceDetectParams
+	public Anki.Cozmo.U2G.SetFaceDetectParams SetFaceDetectParams
 	{
 		get {
 			if (_tag != Tag.SetFaceDetectParams) {
@@ -6854,7 +6856,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetFaceDetectParams\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetFaceDetectParams)this._state;
+			return (Anki.Cozmo.U2G.SetFaceDetectParams)this._state;
 		}
 		
 		set {
@@ -6863,7 +6865,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetActiveObjectLEDs SetActiveObjectLEDs
+	public Anki.Cozmo.U2G.SetActiveObjectLEDs SetActiveObjectLEDs
 	{
 		get {
 			if (_tag != Tag.SetActiveObjectLEDs) {
@@ -6871,7 +6873,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetActiveObjectLEDs\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetActiveObjectLEDs)this._state;
+			return (Anki.Cozmo.U2G.SetActiveObjectLEDs)this._state;
 		}
 		
 		set {
@@ -6880,7 +6882,7 @@ public class U2G_Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G_SetAllActiveObjectLEDs SetAllActiveObjectLEDs
+	public Anki.Cozmo.U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDs
 	{
 		get {
 			if (_tag != Tag.SetAllActiveObjectLEDs) {
@@ -6888,7 +6890,7 @@ public class U2G_Message {
 					"Cannot access union member \"SetAllActiveObjectLEDs\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G_SetAllActiveObjectLEDs)this._state;
+			return (Anki.Cozmo.U2G.SetAllActiveObjectLEDs)this._state;
 		}
 		
 		set {
@@ -6904,163 +6906,163 @@ public class U2G_Message {
 		newTag = (Tag)reader.ReadByte();
 		switch(newTag) {
 		case Tag.Ping:
-			_state = new Anki.Cozmo.U2G_Ping(reader);
+			_state = new Anki.Cozmo.U2G.Ping(reader);
 			break;
 		case Tag.ConnectToRobot:
-			_state = new Anki.Cozmo.U2G_ConnectToRobot(reader);
+			_state = new Anki.Cozmo.U2G.ConnectToRobot(reader);
 			break;
 		case Tag.ConnectToUiDevice:
-			_state = new Anki.Cozmo.U2G_ConnectToUiDevice(reader);
+			_state = new Anki.Cozmo.U2G.ConnectToUiDevice(reader);
 			break;
 		case Tag.DisconnectFromUiDevice:
-			_state = new Anki.Cozmo.U2G_DisconnectFromUiDevice(reader);
+			_state = new Anki.Cozmo.U2G.DisconnectFromUiDevice(reader);
 			break;
 		case Tag.ForceAddRobot:
-			_state = new Anki.Cozmo.U2G_ForceAddRobot(reader);
+			_state = new Anki.Cozmo.U2G.ForceAddRobot(reader);
 			break;
 		case Tag.StartEngine:
-			_state = new Anki.Cozmo.U2G_StartEngine(reader);
+			_state = new Anki.Cozmo.U2G.StartEngine(reader);
 			break;
 		case Tag.DriveWheels:
-			_state = new Anki.Cozmo.U2G_DriveWheels(reader);
+			_state = new Anki.Cozmo.U2G.DriveWheels(reader);
 			break;
 		case Tag.TurnInPlace:
-			_state = new Anki.Cozmo.U2G_TurnInPlace(reader);
+			_state = new Anki.Cozmo.U2G.TurnInPlace(reader);
 			break;
 		case Tag.FaceObject:
-			_state = new Anki.Cozmo.U2G_FaceObject(reader);
+			_state = new Anki.Cozmo.U2G.FaceObject(reader);
 			break;
 		case Tag.MoveHead:
-			_state = new Anki.Cozmo.U2G_MoveHead(reader);
+			_state = new Anki.Cozmo.U2G.MoveHead(reader);
 			break;
 		case Tag.MoveLift:
-			_state = new Anki.Cozmo.U2G_MoveLift(reader);
+			_state = new Anki.Cozmo.U2G.MoveLift(reader);
 			break;
 		case Tag.SetLiftHeight:
-			_state = new Anki.Cozmo.U2G_SetLiftHeight(reader);
+			_state = new Anki.Cozmo.U2G.SetLiftHeight(reader);
 			break;
 		case Tag.SetHeadAngle:
-			_state = new Anki.Cozmo.U2G_SetHeadAngle(reader);
+			_state = new Anki.Cozmo.U2G.SetHeadAngle(reader);
 			break;
 		case Tag.TrackHeadToObject:
-			_state = new Anki.Cozmo.U2G_TrackHeadToObject(reader);
+			_state = new Anki.Cozmo.U2G.TrackHeadToObject(reader);
 			break;
 		case Tag.StopAllMotors:
-			_state = new Anki.Cozmo.U2G_StopAllMotors(reader);
+			_state = new Anki.Cozmo.U2G.StopAllMotors(reader);
 			break;
 		case Tag.ImageRequest:
-			_state = new Anki.Cozmo.U2G_ImageRequest(reader);
+			_state = new Anki.Cozmo.U2G.ImageRequest(reader);
 			break;
 		case Tag.SetRobotImageSendMode:
-			_state = new Anki.Cozmo.U2G_SetRobotImageSendMode(reader);
+			_state = new Anki.Cozmo.U2G.SetRobotImageSendMode(reader);
 			break;
 		case Tag.SaveImages:
-			_state = new Anki.Cozmo.U2G_SaveImages(reader);
+			_state = new Anki.Cozmo.U2G.SaveImages(reader);
 			break;
 		case Tag.SaveRobotState:
-			_state = new Anki.Cozmo.U2G_SaveRobotState(reader);
+			_state = new Anki.Cozmo.U2G.SaveRobotState(reader);
 			break;
 		case Tag.EnableDisplay:
-			_state = new Anki.Cozmo.U2G_EnableDisplay(reader);
+			_state = new Anki.Cozmo.U2G.EnableDisplay(reader);
 			break;
 		case Tag.SetHeadlights:
-			_state = new Anki.Cozmo.U2G_SetHeadlights(reader);
+			_state = new Anki.Cozmo.U2G.SetHeadlights(reader);
 			break;
 		case Tag.GotoPose:
-			_state = new Anki.Cozmo.U2G_GotoPose(reader);
+			_state = new Anki.Cozmo.U2G.GotoPose(reader);
 			break;
 		case Tag.PlaceObjectOnGround:
-			_state = new Anki.Cozmo.U2G_PlaceObjectOnGround(reader);
+			_state = new Anki.Cozmo.U2G.PlaceObjectOnGround(reader);
 			break;
 		case Tag.PlaceObjectOnGroundHere:
-			_state = new Anki.Cozmo.U2G_PlaceObjectOnGroundHere(reader);
+			_state = new Anki.Cozmo.U2G.PlaceObjectOnGroundHere(reader);
 			break;
 		case Tag.ExecuteTestPlan:
-			_state = new Anki.Cozmo.U2G_ExecuteTestPlan(reader);
+			_state = new Anki.Cozmo.U2G.ExecuteTestPlan(reader);
 			break;
 		case Tag.SelectNextObject:
-			_state = new Anki.Cozmo.U2G_SelectNextObject(reader);
+			_state = new Anki.Cozmo.U2G.SelectNextObject(reader);
 			break;
 		case Tag.PickAndPlaceObject:
-			_state = new Anki.Cozmo.U2G_PickAndPlaceObject(reader);
+			_state = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
 			break;
 		case Tag.TraverseObject:
-			_state = new Anki.Cozmo.U2G_TraverseObject(reader);
+			_state = new Anki.Cozmo.U2G.TraverseObject(reader);
 			break;
 		case Tag.SetRobotCarryingObject:
-			_state = new Anki.Cozmo.U2G_SetRobotCarryingObject(reader);
+			_state = new Anki.Cozmo.U2G.SetRobotCarryingObject(reader);
 			break;
 		case Tag.ClearAllBlocks:
-			_state = new Anki.Cozmo.U2G_ClearAllBlocks(reader);
+			_state = new Anki.Cozmo.U2G.ClearAllBlocks(reader);
 			break;
 		case Tag.VisionWhileMoving:
-			_state = new Anki.Cozmo.U2G_VisionWhileMoving(reader);
+			_state = new Anki.Cozmo.U2G.VisionWhileMoving(reader);
 			break;
 		case Tag.ExecuteBehavior:
-			_state = new Anki.Cozmo.U2G_ExecuteBehavior(reader);
+			_state = new Anki.Cozmo.U2G.ExecuteBehavior(reader);
 			break;
 		case Tag.SetBehaviorState:
-			_state = new Anki.Cozmo.U2G_SetBehaviorState(reader);
+			_state = new Anki.Cozmo.U2G.SetBehaviorState(reader);
 			break;
 		case Tag.AbortPath:
-			_state = new Anki.Cozmo.U2G_AbortPath(reader);
+			_state = new Anki.Cozmo.U2G.AbortPath(reader);
 			break;
 		case Tag.AbortAll:
-			_state = new Anki.Cozmo.U2G_AbortAll(reader);
+			_state = new Anki.Cozmo.U2G.AbortAll(reader);
 			break;
 		case Tag.DrawPoseMarker:
-			_state = new Anki.Cozmo.U2G_DrawPoseMarker(reader);
+			_state = new Anki.Cozmo.U2G.DrawPoseMarker(reader);
 			break;
 		case Tag.ErasePoseMarker:
-			_state = new Anki.Cozmo.U2G_ErasePoseMarker(reader);
+			_state = new Anki.Cozmo.U2G.ErasePoseMarker(reader);
 			break;
 		case Tag.SetWheelControllerGains:
-			_state = new Anki.Cozmo.U2G_SetWheelControllerGains(reader);
+			_state = new Anki.Cozmo.U2G.SetWheelControllerGains(reader);
 			break;
 		case Tag.SetHeadControllerGains:
-			_state = new Anki.Cozmo.U2G_SetHeadControllerGains(reader);
+			_state = new Anki.Cozmo.U2G.SetHeadControllerGains(reader);
 			break;
 		case Tag.SetLiftControllerGains:
-			_state = new Anki.Cozmo.U2G_SetLiftControllerGains(reader);
+			_state = new Anki.Cozmo.U2G.SetLiftControllerGains(reader);
 			break;
 		case Tag.SelectNextSoundScheme:
-			_state = new Anki.Cozmo.U2G_SelectNextSoundScheme(reader);
+			_state = new Anki.Cozmo.U2G.SelectNextSoundScheme(reader);
 			break;
 		case Tag.StartTestMode:
-			_state = new Anki.Cozmo.U2G_StartTestMode(reader);
+			_state = new Anki.Cozmo.U2G.StartTestMode(reader);
 			break;
 		case Tag.IMURequest:
-			_state = new Anki.Cozmo.U2G_IMURequest(reader);
+			_state = new Anki.Cozmo.U2G.IMURequest(reader);
 			break;
 		case Tag.PlayAnimation:
-			_state = new Anki.Cozmo.U2G_PlayAnimation(reader);
+			_state = new Anki.Cozmo.U2G.PlayAnimation(reader);
 			break;
 		case Tag.ReadAnimationFile:
-			_state = new Anki.Cozmo.U2G_ReadAnimationFile(reader);
+			_state = new Anki.Cozmo.U2G.ReadAnimationFile(reader);
 			break;
 		case Tag.StartFaceTracking:
-			_state = new Anki.Cozmo.U2G_StartFaceTracking(reader);
+			_state = new Anki.Cozmo.U2G.StartFaceTracking(reader);
 			break;
 		case Tag.StopFaceTracking:
-			_state = new Anki.Cozmo.U2G_StopFaceTracking(reader);
+			_state = new Anki.Cozmo.U2G.StopFaceTracking(reader);
 			break;
 		case Tag.StartLookingForMarkers:
-			_state = new Anki.Cozmo.U2G_StartLookingForMarkers(reader);
+			_state = new Anki.Cozmo.U2G.StartLookingForMarkers(reader);
 			break;
 		case Tag.StopLookingForMarkers:
-			_state = new Anki.Cozmo.U2G_StopLookingForMarkers(reader);
+			_state = new Anki.Cozmo.U2G.StopLookingForMarkers(reader);
 			break;
 		case Tag.SetVisionSystemParams:
-			_state = new Anki.Cozmo.U2G_SetVisionSystemParams(reader);
+			_state = new Anki.Cozmo.U2G.SetVisionSystemParams(reader);
 			break;
 		case Tag.SetFaceDetectParams:
-			_state = new Anki.Cozmo.U2G_SetFaceDetectParams(reader);
+			_state = new Anki.Cozmo.U2G.SetFaceDetectParams(reader);
 			break;
 		case Tag.SetActiveObjectLEDs:
-			_state = new Anki.Cozmo.U2G_SetActiveObjectLEDs(reader);
+			_state = new Anki.Cozmo.U2G.SetActiveObjectLEDs(reader);
 			break;
 		case Tag.SetAllActiveObjectLEDs:
-			_state = new Anki.Cozmo.U2G_SetAllActiveObjectLEDs(reader);
+			_state = new Anki.Cozmo.U2G.SetAllActiveObjectLEDs(reader);
 			break;
 		default:
 			break;
@@ -7416,7 +7418,7 @@ public class U2G_Message {
 			return false;
 		}
 
-		U2G_Message p = obj as U2G_Message;
+		Message p = obj as Message;
 		if ((System.Object) p == null)
 		{
 			return false;
@@ -7425,7 +7427,7 @@ public class U2G_Message {
 		return this.Equals(p);
 	}
 
-	public bool Equals(U2G_Message p)
+	public bool Equals(Message p)
 	{
 		if ((object) p == null)
 		{
@@ -7723,6 +7725,8 @@ public class U2G_Message {
 		}
 	}
 }
+
+} // namespace U2G
 
 } // namespace Cozmo
 

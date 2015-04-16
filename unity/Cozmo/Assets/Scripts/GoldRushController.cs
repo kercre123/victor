@@ -34,8 +34,8 @@ public class GoldRushController : GameController {
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
 	int lastCarriedObjectId = -1;
-	internal int goldExtractingObjectId = -1;
-	internal ObservedObject goldCollectingObject = null;
+	[System.NonSerialized] public ObservedObject goldExtractingObject = null;
+	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
 	int baseObjectId = -1;
 	ScreenMessage hintMessage;
 	private bool audioLocatorEnabled = true;
@@ -161,7 +161,7 @@ public class GoldRushController : GameController {
 	{
 		base.Enter_BUILDING ();
 		lastCarriedObjectId = -1;
-		goldExtractingObjectId = -1;
+		goldExtractingObject = null;
 		playButton.gameObject.SetActive (false);
 		buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
@@ -198,7 +198,7 @@ public class GoldRushController : GameController {
 				{
 					// picked up our detector block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
-					goldExtractingObjectId = robot.carryingObjectID;
+					goldExtractingObject = robot.knownObjects.Find( x=> x.ID == robot.carryingObjectID );
 					//UpdateDetectorLights (1);
 					hintMessage.ShowMessage("Now place the extractor on the collector", Color.black);
 				}
@@ -321,7 +321,7 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
-			SendLightMessage(0);
+			if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage(0);
 			CozmoVision.EnableDing();
 			break;
 		case PlayState.EXTRACTING:
@@ -492,11 +492,11 @@ public class GoldRushController : GameController {
 	{
 		// will end up doing active block light stuff here
 		uint color = 0xFFFF00FF;
-		SendLightMessage (1, color, 0x33);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0x33);
 		yield return new WaitForSeconds(rewardTime/2.0f);
-		SendLightMessage (1, color, 0xCC);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0xCC);
 		yield return new WaitForSeconds(rewardTime/2.0f);
-		SendLightMessage (0);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (0);
 		// award points
 		scores[0]+= 10;
 		audio.Stop();
@@ -519,11 +519,11 @@ public class GoldRushController : GameController {
 			float g = 255 * light_intensity;
 			
 			uint color = ((uint)r << 24 | (uint)g << 16 ) | 0x00FF;
-			SendLightMessage(light_intensity, color, 0x33);
+			if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage(light_intensity, color, 0x33);
 		}
 	}
 
-	void SendLightMessage(float light_intensity, uint color = 0, byte which_lcds = 0xFF)
+	/*void SendLightMessage(float light_intensity, uint color = 0, byte which_lcds = 0xFF)
 	{
 		U2G_SetActiveObjectLEDs msg = new U2G_SetActiveObjectLEDs ();
 		msg.objectID = (uint)goldExtractingObjectId;
@@ -546,6 +546,6 @@ public class GoldRushController : GameController {
 		U2G_Message msgWrapper = new U2G_Message{SetActiveObjectLEDs = msg};
 		//msgWrapper.U2G_SetActiveObjectLEDs(msg);
 		RobotEngineManager.instance.channel.Send (msgWrapper);
-	}
+	}*/
 	#endregion
 }
