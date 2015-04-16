@@ -411,26 +411,26 @@ namespace Anki {
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
-          switch (message.GetType()) {
-            case G2U_Message::Type::RobotConnected:
+          switch (message.GetTag()) {
+            case G2U_Message::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
               break;
-            case G2U_Message::Type::RobotState:
+            case G2U_Message::Tag::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
-            case G2U_Message::Type::RobotObservedObject:
+            case G2U_Message::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
-            case G2U_Message::Type::UiDeviceAvailable:
+            case G2U_Message::Tag::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
               break;
-            case G2U_Message::Type::RobotAvailable:
+            case G2U_Message::Tag::RobotAvailable:
               HandleRobotConnection(message.Get_RobotAvailable());
               break;
-            case G2U_Message::Type::ImageChunk:
+            case G2U_Message::Tag::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
               break;
-            case G2U_Message::Type::RobotDeletedObject:
+            case G2U_Message::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
@@ -789,12 +789,12 @@ namespace Anki {
                 // TODO: How to choose which robot
                 const RobotID_t robotID = 1;
                 
-                // I - Request a single image from the game for a specified robot
+                // U - Request a single image from the game for a specified robot
                 ImageSendMode_t mode = ISM_SINGLE_SHOT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT+I - Toggle image streaming from the game
-                  static bool streamOn = false;
+                  static bool streamOn = true;
                   if (streamOn) {
                     mode = ISM_OFF;
                     printf("Turning game image streaming OFF.\n");
@@ -1573,6 +1573,9 @@ namespace Anki {
               if(didForceAdd) {
                 PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
               }
+              
+              // Turn on image streaming to game/UI by default:
+              SendImageRequest(ISM_STREAM, 1);
               
               uiState_ = UI_RUNNING;
             }

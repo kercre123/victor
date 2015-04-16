@@ -67,7 +67,7 @@ public class Robot
 				break;
 			}
 			
-			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( (x.WorldPosition - WorldPosition).z ) < tooHigh );
+			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( x.WorldPosition.z - WorldPosition.z ) < tooHigh );
 			
 			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
 				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
@@ -205,7 +205,7 @@ public class Robot
 
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
-		//Debug.Log( "found " + message.objectID );
+		//Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
 
 		if( knownObject == null )
 		{
