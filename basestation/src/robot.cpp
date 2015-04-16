@@ -240,8 +240,7 @@ namespace Anki {
         jsonFile << json.toStyledString();
         jsonFile.close();
         
-        
-#if(1)
+#if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
         char stateMsgLine[512];
@@ -2227,11 +2226,12 @@ namespace Anki {
         }
         
         // Write image to file (recompressing as jpeg again!)
+        static u32 imgCounter = 0;
         char imgFilename[256];
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_img_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp());
+        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp(), imgCounter++);
         imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
