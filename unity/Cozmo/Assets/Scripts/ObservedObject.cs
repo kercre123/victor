@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
 
 public class ObservedObject
 {
@@ -31,7 +33,7 @@ public class ObservedObject
 		TimeCreated = Time.time;
 	}
 
-	public void UpdateInfo( G2U_RobotObservedObject message )
+	public void UpdateInfo( G2U.RobotObservedObject message )
 	{
 		RobotID = message.robotID;
 		Family = message.objectFamily;

@@ -18,25 +18,27 @@ namespace Anki {
 
 namespace Cozmo {
 
-// MESSAGE U2G_Ping
-struct U2G_Ping
+namespace U2G {
+
+// MESSAGE Ping
+struct Ping
 {
 	uint32_t counter;
 	
 	/**** Constructors ****/
-	U2G_Ping() = default;
-	U2G_Ping(const U2G_Ping& other) = default;
-	U2G_Ping(U2G_Ping& other) = default;
-	U2G_Ping(U2G_Ping&& other) noexcept = default;
-	U2G_Ping& operator=(const U2G_Ping& other) = default;
-	U2G_Ping& operator=(U2G_Ping&& other) noexcept = default;
+	Ping() = default;
+	Ping(const Ping& other) = default;
+	Ping(Ping& other) = default;
+	Ping(Ping&& other) noexcept = default;
+	Ping& operator=(const Ping& other) = default;
+	Ping& operator=(Ping&& other) noexcept = default;
 	
-	explicit U2G_Ping(uint32_t counter)
+	explicit Ping(uint32_t counter)
 	:counter(counter)
 	{}
 
-	explicit U2G_Ping(const uint8_t* buff, size_t len);
-	explicit U2G_Ping(const CLAD::SafeMessageBuffer& buffer);
+	explicit Ping(const uint8_t* buff, size_t len);
+	explicit Ping(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -48,29 +50,29 @@ struct U2G_Ping
 
 	size_t Size() const;
 
-	bool operator==(const U2G_Ping& other) const;
-	bool operator!=(const U2G_Ping& other) const;
+	bool operator==(const Ping& other) const;
+	bool operator!=(const Ping& other) const;
 };
 
-// MESSAGE U2G_ConnectToRobot
-struct U2G_ConnectToRobot
+// MESSAGE ConnectToRobot
+struct ConnectToRobot
 {
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_ConnectToRobot() = default;
-	U2G_ConnectToRobot(const U2G_ConnectToRobot& other) = default;
-	U2G_ConnectToRobot(U2G_ConnectToRobot& other) = default;
-	U2G_ConnectToRobot(U2G_ConnectToRobot&& other) noexcept = default;
-	U2G_ConnectToRobot& operator=(const U2G_ConnectToRobot& other) = default;
-	U2G_ConnectToRobot& operator=(U2G_ConnectToRobot&& other) noexcept = default;
+	ConnectToRobot() = default;
+	ConnectToRobot(const ConnectToRobot& other) = default;
+	ConnectToRobot(ConnectToRobot& other) = default;
+	ConnectToRobot(ConnectToRobot&& other) noexcept = default;
+	ConnectToRobot& operator=(const ConnectToRobot& other) = default;
+	ConnectToRobot& operator=(ConnectToRobot&& other) noexcept = default;
 	
-	explicit U2G_ConnectToRobot(uint8_t robotID)
+	explicit ConnectToRobot(uint8_t robotID)
 	:robotID(robotID)
 	{}
 
-	explicit U2G_ConnectToRobot(const uint8_t* buff, size_t len);
-	explicit U2G_ConnectToRobot(const CLAD::SafeMessageBuffer& buffer);
+	explicit ConnectToRobot(const uint8_t* buff, size_t len);
+	explicit ConnectToRobot(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -82,29 +84,29 @@ struct U2G_ConnectToRobot
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ConnectToRobot& other) const;
-	bool operator!=(const U2G_ConnectToRobot& other) const;
+	bool operator==(const ConnectToRobot& other) const;
+	bool operator!=(const ConnectToRobot& other) const;
 };
 
-// MESSAGE U2G_ConnectToUiDevice
-struct U2G_ConnectToUiDevice
+// MESSAGE ConnectToUiDevice
+struct ConnectToUiDevice
 {
 	uint8_t deviceID;
 	
 	/**** Constructors ****/
-	U2G_ConnectToUiDevice() = default;
-	U2G_ConnectToUiDevice(const U2G_ConnectToUiDevice& other) = default;
-	U2G_ConnectToUiDevice(U2G_ConnectToUiDevice& other) = default;
-	U2G_ConnectToUiDevice(U2G_ConnectToUiDevice&& other) noexcept = default;
-	U2G_ConnectToUiDevice& operator=(const U2G_ConnectToUiDevice& other) = default;
-	U2G_ConnectToUiDevice& operator=(U2G_ConnectToUiDevice&& other) noexcept = default;
+	ConnectToUiDevice() = default;
+	ConnectToUiDevice(const ConnectToUiDevice& other) = default;
+	ConnectToUiDevice(ConnectToUiDevice& other) = default;
+	ConnectToUiDevice(ConnectToUiDevice&& other) noexcept = default;
+	ConnectToUiDevice& operator=(const ConnectToUiDevice& other) = default;
+	ConnectToUiDevice& operator=(ConnectToUiDevice&& other) noexcept = default;
 	
-	explicit U2G_ConnectToUiDevice(uint8_t deviceID)
+	explicit ConnectToUiDevice(uint8_t deviceID)
 	:deviceID(deviceID)
 	{}
 
-	explicit U2G_ConnectToUiDevice(const uint8_t* buff, size_t len);
-	explicit U2G_ConnectToUiDevice(const CLAD::SafeMessageBuffer& buffer);
+	explicit ConnectToUiDevice(const uint8_t* buff, size_t len);
+	explicit ConnectToUiDevice(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -116,29 +118,29 @@ struct U2G_ConnectToUiDevice
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ConnectToUiDevice& other) const;
-	bool operator!=(const U2G_ConnectToUiDevice& other) const;
+	bool operator==(const ConnectToUiDevice& other) const;
+	bool operator!=(const ConnectToUiDevice& other) const;
 };
 
-// MESSAGE U2G_DisconnectFromUiDevice
-struct U2G_DisconnectFromUiDevice
+// MESSAGE DisconnectFromUiDevice
+struct DisconnectFromUiDevice
 {
 	uint8_t deviceID;
 	
 	/**** Constructors ****/
-	U2G_DisconnectFromUiDevice() = default;
-	U2G_DisconnectFromUiDevice(const U2G_DisconnectFromUiDevice& other) = default;
-	U2G_DisconnectFromUiDevice(U2G_DisconnectFromUiDevice& other) = default;
-	U2G_DisconnectFromUiDevice(U2G_DisconnectFromUiDevice&& other) noexcept = default;
-	U2G_DisconnectFromUiDevice& operator=(const U2G_DisconnectFromUiDevice& other) = default;
-	U2G_DisconnectFromUiDevice& operator=(U2G_DisconnectFromUiDevice&& other) noexcept = default;
+	DisconnectFromUiDevice() = default;
+	DisconnectFromUiDevice(const DisconnectFromUiDevice& other) = default;
+	DisconnectFromUiDevice(DisconnectFromUiDevice& other) = default;
+	DisconnectFromUiDevice(DisconnectFromUiDevice&& other) noexcept = default;
+	DisconnectFromUiDevice& operator=(const DisconnectFromUiDevice& other) = default;
+	DisconnectFromUiDevice& operator=(DisconnectFromUiDevice&& other) noexcept = default;
 	
-	explicit U2G_DisconnectFromUiDevice(uint8_t deviceID)
+	explicit DisconnectFromUiDevice(uint8_t deviceID)
 	:deviceID(deviceID)
 	{}
 
-	explicit U2G_DisconnectFromUiDevice(const uint8_t* buff, size_t len);
-	explicit U2G_DisconnectFromUiDevice(const CLAD::SafeMessageBuffer& buffer);
+	explicit DisconnectFromUiDevice(const uint8_t* buff, size_t len);
+	explicit DisconnectFromUiDevice(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -150,26 +152,26 @@ struct U2G_DisconnectFromUiDevice
 
 	size_t Size() const;
 
-	bool operator==(const U2G_DisconnectFromUiDevice& other) const;
-	bool operator!=(const U2G_DisconnectFromUiDevice& other) const;
+	bool operator==(const DisconnectFromUiDevice& other) const;
+	bool operator!=(const DisconnectFromUiDevice& other) const;
 };
 
-// MESSAGE U2G_ForceAddRobot
-struct U2G_ForceAddRobot
+// MESSAGE ForceAddRobot
+struct ForceAddRobot
 {
 	std::array<uint8_t, 16> ipAddress;
 	uint8_t robotID;
 	uint8_t isSimulated;
 	
 	/**** Constructors ****/
-	U2G_ForceAddRobot() = default;
-	U2G_ForceAddRobot(const U2G_ForceAddRobot& other) = default;
-	U2G_ForceAddRobot(U2G_ForceAddRobot& other) = default;
-	U2G_ForceAddRobot(U2G_ForceAddRobot&& other) noexcept = default;
-	U2G_ForceAddRobot& operator=(const U2G_ForceAddRobot& other) = default;
-	U2G_ForceAddRobot& operator=(U2G_ForceAddRobot&& other) noexcept = default;
+	ForceAddRobot() = default;
+	ForceAddRobot(const ForceAddRobot& other) = default;
+	ForceAddRobot(ForceAddRobot& other) = default;
+	ForceAddRobot(ForceAddRobot&& other) noexcept = default;
+	ForceAddRobot& operator=(const ForceAddRobot& other) = default;
+	ForceAddRobot& operator=(ForceAddRobot&& other) noexcept = default;
 	
-	explicit U2G_ForceAddRobot(const std::array<uint8_t, 16>& ipAddress
+	explicit ForceAddRobot(const std::array<uint8_t, 16>& ipAddress
 		,uint8_t robotID
 		,uint8_t isSimulated)
 	:ipAddress(ipAddress)
@@ -177,8 +179,8 @@ struct U2G_ForceAddRobot
 	,isSimulated(isSimulated)
 	{}
 
-	explicit U2G_ForceAddRobot(const uint8_t* buff, size_t len);
-	explicit U2G_ForceAddRobot(const CLAD::SafeMessageBuffer& buffer);
+	explicit ForceAddRobot(const uint8_t* buff, size_t len);
+	explicit ForceAddRobot(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -190,32 +192,32 @@ struct U2G_ForceAddRobot
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ForceAddRobot& other) const;
-	bool operator!=(const U2G_ForceAddRobot& other) const;
+	bool operator==(const ForceAddRobot& other) const;
+	bool operator!=(const ForceAddRobot& other) const;
 };
 
-// MESSAGE U2G_StartEngine
-struct U2G_StartEngine
+// MESSAGE StartEngine
+struct StartEngine
 {
 	uint8_t asHost;
 	std::array<uint8_t, 16> vizHostIP;
 	
 	/**** Constructors ****/
-	U2G_StartEngine() = default;
-	U2G_StartEngine(const U2G_StartEngine& other) = default;
-	U2G_StartEngine(U2G_StartEngine& other) = default;
-	U2G_StartEngine(U2G_StartEngine&& other) noexcept = default;
-	U2G_StartEngine& operator=(const U2G_StartEngine& other) = default;
-	U2G_StartEngine& operator=(U2G_StartEngine&& other) noexcept = default;
+	StartEngine() = default;
+	StartEngine(const StartEngine& other) = default;
+	StartEngine(StartEngine& other) = default;
+	StartEngine(StartEngine&& other) noexcept = default;
+	StartEngine& operator=(const StartEngine& other) = default;
+	StartEngine& operator=(StartEngine&& other) noexcept = default;
 	
-	explicit U2G_StartEngine(uint8_t asHost
+	explicit StartEngine(uint8_t asHost
 		,const std::array<uint8_t, 16>& vizHostIP)
 	:asHost(asHost)
 	,vizHostIP(vizHostIP)
 	{}
 
-	explicit U2G_StartEngine(const uint8_t* buff, size_t len);
-	explicit U2G_StartEngine(const CLAD::SafeMessageBuffer& buffer);
+	explicit StartEngine(const uint8_t* buff, size_t len);
+	explicit StartEngine(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -227,32 +229,32 @@ struct U2G_StartEngine
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StartEngine& other) const;
-	bool operator!=(const U2G_StartEngine& other) const;
+	bool operator==(const StartEngine& other) const;
+	bool operator!=(const StartEngine& other) const;
 };
 
-// MESSAGE U2G_DriveWheels
-struct U2G_DriveWheels
+// MESSAGE DriveWheels
+struct DriveWheels
 {
 	float lwheel_speed_mmps;
 	float rwheel_speed_mmps;
 	
 	/**** Constructors ****/
-	U2G_DriveWheels() = default;
-	U2G_DriveWheels(const U2G_DriveWheels& other) = default;
-	U2G_DriveWheels(U2G_DriveWheels& other) = default;
-	U2G_DriveWheels(U2G_DriveWheels&& other) noexcept = default;
-	U2G_DriveWheels& operator=(const U2G_DriveWheels& other) = default;
-	U2G_DriveWheels& operator=(U2G_DriveWheels&& other) noexcept = default;
+	DriveWheels() = default;
+	DriveWheels(const DriveWheels& other) = default;
+	DriveWheels(DriveWheels& other) = default;
+	DriveWheels(DriveWheels&& other) noexcept = default;
+	DriveWheels& operator=(const DriveWheels& other) = default;
+	DriveWheels& operator=(DriveWheels&& other) noexcept = default;
 	
-	explicit U2G_DriveWheels(float lwheel_speed_mmps
+	explicit DriveWheels(float lwheel_speed_mmps
 		,float rwheel_speed_mmps)
 	:lwheel_speed_mmps(lwheel_speed_mmps)
 	,rwheel_speed_mmps(rwheel_speed_mmps)
 	{}
 
-	explicit U2G_DriveWheels(const uint8_t* buff, size_t len);
-	explicit U2G_DriveWheels(const CLAD::SafeMessageBuffer& buffer);
+	explicit DriveWheels(const uint8_t* buff, size_t len);
+	explicit DriveWheels(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -264,32 +266,32 @@ struct U2G_DriveWheels
 
 	size_t Size() const;
 
-	bool operator==(const U2G_DriveWheels& other) const;
-	bool operator!=(const U2G_DriveWheels& other) const;
+	bool operator==(const DriveWheels& other) const;
+	bool operator!=(const DriveWheels& other) const;
 };
 
-// MESSAGE U2G_TurnInPlace
-struct U2G_TurnInPlace
+// MESSAGE TurnInPlace
+struct TurnInPlace
 {
 	float angle_rad;
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_TurnInPlace() = default;
-	U2G_TurnInPlace(const U2G_TurnInPlace& other) = default;
-	U2G_TurnInPlace(U2G_TurnInPlace& other) = default;
-	U2G_TurnInPlace(U2G_TurnInPlace&& other) noexcept = default;
-	U2G_TurnInPlace& operator=(const U2G_TurnInPlace& other) = default;
-	U2G_TurnInPlace& operator=(U2G_TurnInPlace&& other) noexcept = default;
+	TurnInPlace() = default;
+	TurnInPlace(const TurnInPlace& other) = default;
+	TurnInPlace(TurnInPlace& other) = default;
+	TurnInPlace(TurnInPlace&& other) noexcept = default;
+	TurnInPlace& operator=(const TurnInPlace& other) = default;
+	TurnInPlace& operator=(TurnInPlace&& other) noexcept = default;
 	
-	explicit U2G_TurnInPlace(float angle_rad
+	explicit TurnInPlace(float angle_rad
 		,uint8_t robotID)
 	:angle_rad(angle_rad)
 	,robotID(robotID)
 	{}
 
-	explicit U2G_TurnInPlace(const uint8_t* buff, size_t len);
-	explicit U2G_TurnInPlace(const CLAD::SafeMessageBuffer& buffer);
+	explicit TurnInPlace(const uint8_t* buff, size_t len);
+	explicit TurnInPlace(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -301,12 +303,12 @@ struct U2G_TurnInPlace
 
 	size_t Size() const;
 
-	bool operator==(const U2G_TurnInPlace& other) const;
-	bool operator!=(const U2G_TurnInPlace& other) const;
+	bool operator==(const TurnInPlace& other) const;
+	bool operator!=(const TurnInPlace& other) const;
 };
 
-// MESSAGE U2G_FaceObject
-struct U2G_FaceObject
+// MESSAGE FaceObject
+struct FaceObject
 {
 	uint32_t objectID;
 	float turnAngleTol;
@@ -315,14 +317,14 @@ struct U2G_FaceObject
 	uint8_t headTrackWhenDone;
 	
 	/**** Constructors ****/
-	U2G_FaceObject() = default;
-	U2G_FaceObject(const U2G_FaceObject& other) = default;
-	U2G_FaceObject(U2G_FaceObject& other) = default;
-	U2G_FaceObject(U2G_FaceObject&& other) noexcept = default;
-	U2G_FaceObject& operator=(const U2G_FaceObject& other) = default;
-	U2G_FaceObject& operator=(U2G_FaceObject&& other) noexcept = default;
+	FaceObject() = default;
+	FaceObject(const FaceObject& other) = default;
+	FaceObject(FaceObject& other) = default;
+	FaceObject(FaceObject&& other) noexcept = default;
+	FaceObject& operator=(const FaceObject& other) = default;
+	FaceObject& operator=(FaceObject&& other) noexcept = default;
 	
-	explicit U2G_FaceObject(uint32_t objectID
+	explicit FaceObject(uint32_t objectID
 		,float turnAngleTol
 		,float maxTurnAngle
 		,uint8_t robotID
@@ -334,8 +336,8 @@ struct U2G_FaceObject
 	,headTrackWhenDone(headTrackWhenDone)
 	{}
 
-	explicit U2G_FaceObject(const uint8_t* buff, size_t len);
-	explicit U2G_FaceObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit FaceObject(const uint8_t* buff, size_t len);
+	explicit FaceObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -347,29 +349,29 @@ struct U2G_FaceObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_FaceObject& other) const;
-	bool operator!=(const U2G_FaceObject& other) const;
+	bool operator==(const FaceObject& other) const;
+	bool operator!=(const FaceObject& other) const;
 };
 
-// MESSAGE U2G_MoveHead
-struct U2G_MoveHead
+// MESSAGE MoveHead
+struct MoveHead
 {
 	float speed_rad_per_sec;
 	
 	/**** Constructors ****/
-	U2G_MoveHead() = default;
-	U2G_MoveHead(const U2G_MoveHead& other) = default;
-	U2G_MoveHead(U2G_MoveHead& other) = default;
-	U2G_MoveHead(U2G_MoveHead&& other) noexcept = default;
-	U2G_MoveHead& operator=(const U2G_MoveHead& other) = default;
-	U2G_MoveHead& operator=(U2G_MoveHead&& other) noexcept = default;
+	MoveHead() = default;
+	MoveHead(const MoveHead& other) = default;
+	MoveHead(MoveHead& other) = default;
+	MoveHead(MoveHead&& other) noexcept = default;
+	MoveHead& operator=(const MoveHead& other) = default;
+	MoveHead& operator=(MoveHead&& other) noexcept = default;
 	
-	explicit U2G_MoveHead(float speed_rad_per_sec)
+	explicit MoveHead(float speed_rad_per_sec)
 	:speed_rad_per_sec(speed_rad_per_sec)
 	{}
 
-	explicit U2G_MoveHead(const uint8_t* buff, size_t len);
-	explicit U2G_MoveHead(const CLAD::SafeMessageBuffer& buffer);
+	explicit MoveHead(const uint8_t* buff, size_t len);
+	explicit MoveHead(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -381,29 +383,29 @@ struct U2G_MoveHead
 
 	size_t Size() const;
 
-	bool operator==(const U2G_MoveHead& other) const;
-	bool operator!=(const U2G_MoveHead& other) const;
+	bool operator==(const MoveHead& other) const;
+	bool operator!=(const MoveHead& other) const;
 };
 
-// MESSAGE U2G_MoveLift
-struct U2G_MoveLift
+// MESSAGE MoveLift
+struct MoveLift
 {
 	float speed_rad_per_sec;
 	
 	/**** Constructors ****/
-	U2G_MoveLift() = default;
-	U2G_MoveLift(const U2G_MoveLift& other) = default;
-	U2G_MoveLift(U2G_MoveLift& other) = default;
-	U2G_MoveLift(U2G_MoveLift&& other) noexcept = default;
-	U2G_MoveLift& operator=(const U2G_MoveLift& other) = default;
-	U2G_MoveLift& operator=(U2G_MoveLift&& other) noexcept = default;
+	MoveLift() = default;
+	MoveLift(const MoveLift& other) = default;
+	MoveLift(MoveLift& other) = default;
+	MoveLift(MoveLift&& other) noexcept = default;
+	MoveLift& operator=(const MoveLift& other) = default;
+	MoveLift& operator=(MoveLift&& other) noexcept = default;
 	
-	explicit U2G_MoveLift(float speed_rad_per_sec)
+	explicit MoveLift(float speed_rad_per_sec)
 	:speed_rad_per_sec(speed_rad_per_sec)
 	{}
 
-	explicit U2G_MoveLift(const uint8_t* buff, size_t len);
-	explicit U2G_MoveLift(const CLAD::SafeMessageBuffer& buffer);
+	explicit MoveLift(const uint8_t* buff, size_t len);
+	explicit MoveLift(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -415,26 +417,26 @@ struct U2G_MoveLift
 
 	size_t Size() const;
 
-	bool operator==(const U2G_MoveLift& other) const;
-	bool operator!=(const U2G_MoveLift& other) const;
+	bool operator==(const MoveLift& other) const;
+	bool operator!=(const MoveLift& other) const;
 };
 
-// MESSAGE U2G_SetLiftHeight
-struct U2G_SetLiftHeight
+// MESSAGE SetLiftHeight
+struct SetLiftHeight
 {
 	float height_mm;
 	float max_speed_rad_per_sec;
 	float accel_rad_per_sec2;
 	
 	/**** Constructors ****/
-	U2G_SetLiftHeight() = default;
-	U2G_SetLiftHeight(const U2G_SetLiftHeight& other) = default;
-	U2G_SetLiftHeight(U2G_SetLiftHeight& other) = default;
-	U2G_SetLiftHeight(U2G_SetLiftHeight&& other) noexcept = default;
-	U2G_SetLiftHeight& operator=(const U2G_SetLiftHeight& other) = default;
-	U2G_SetLiftHeight& operator=(U2G_SetLiftHeight&& other) noexcept = default;
+	SetLiftHeight() = default;
+	SetLiftHeight(const SetLiftHeight& other) = default;
+	SetLiftHeight(SetLiftHeight& other) = default;
+	SetLiftHeight(SetLiftHeight&& other) noexcept = default;
+	SetLiftHeight& operator=(const SetLiftHeight& other) = default;
+	SetLiftHeight& operator=(SetLiftHeight&& other) noexcept = default;
 	
-	explicit U2G_SetLiftHeight(float height_mm
+	explicit SetLiftHeight(float height_mm
 		,float max_speed_rad_per_sec
 		,float accel_rad_per_sec2)
 	:height_mm(height_mm)
@@ -442,8 +444,8 @@ struct U2G_SetLiftHeight
 	,accel_rad_per_sec2(accel_rad_per_sec2)
 	{}
 
-	explicit U2G_SetLiftHeight(const uint8_t* buff, size_t len);
-	explicit U2G_SetLiftHeight(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetLiftHeight(const uint8_t* buff, size_t len);
+	explicit SetLiftHeight(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -455,26 +457,26 @@ struct U2G_SetLiftHeight
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetLiftHeight& other) const;
-	bool operator!=(const U2G_SetLiftHeight& other) const;
+	bool operator==(const SetLiftHeight& other) const;
+	bool operator!=(const SetLiftHeight& other) const;
 };
 
-// MESSAGE U2G_SetHeadAngle
-struct U2G_SetHeadAngle
+// MESSAGE SetHeadAngle
+struct SetHeadAngle
 {
 	float angle_rad;
 	float max_speed_rad_per_sec;
 	float accel_rad_per_sec2;
 	
 	/**** Constructors ****/
-	U2G_SetHeadAngle() = default;
-	U2G_SetHeadAngle(const U2G_SetHeadAngle& other) = default;
-	U2G_SetHeadAngle(U2G_SetHeadAngle& other) = default;
-	U2G_SetHeadAngle(U2G_SetHeadAngle&& other) noexcept = default;
-	U2G_SetHeadAngle& operator=(const U2G_SetHeadAngle& other) = default;
-	U2G_SetHeadAngle& operator=(U2G_SetHeadAngle&& other) noexcept = default;
+	SetHeadAngle() = default;
+	SetHeadAngle(const SetHeadAngle& other) = default;
+	SetHeadAngle(SetHeadAngle& other) = default;
+	SetHeadAngle(SetHeadAngle&& other) noexcept = default;
+	SetHeadAngle& operator=(const SetHeadAngle& other) = default;
+	SetHeadAngle& operator=(SetHeadAngle&& other) noexcept = default;
 	
-	explicit U2G_SetHeadAngle(float angle_rad
+	explicit SetHeadAngle(float angle_rad
 		,float max_speed_rad_per_sec
 		,float accel_rad_per_sec2)
 	:angle_rad(angle_rad)
@@ -482,8 +484,8 @@ struct U2G_SetHeadAngle
 	,accel_rad_per_sec2(accel_rad_per_sec2)
 	{}
 
-	explicit U2G_SetHeadAngle(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadAngle(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetHeadAngle(const uint8_t* buff, size_t len);
+	explicit SetHeadAngle(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -495,32 +497,32 @@ struct U2G_SetHeadAngle
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetHeadAngle& other) const;
-	bool operator!=(const U2G_SetHeadAngle& other) const;
+	bool operator==(const SetHeadAngle& other) const;
+	bool operator!=(const SetHeadAngle& other) const;
 };
 
-// MESSAGE U2G_TrackHeadToObject
-struct U2G_TrackHeadToObject
+// MESSAGE TrackHeadToObject
+struct TrackHeadToObject
 {
 	uint32_t objectID;
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_TrackHeadToObject() = default;
-	U2G_TrackHeadToObject(const U2G_TrackHeadToObject& other) = default;
-	U2G_TrackHeadToObject(U2G_TrackHeadToObject& other) = default;
-	U2G_TrackHeadToObject(U2G_TrackHeadToObject&& other) noexcept = default;
-	U2G_TrackHeadToObject& operator=(const U2G_TrackHeadToObject& other) = default;
-	U2G_TrackHeadToObject& operator=(U2G_TrackHeadToObject&& other) noexcept = default;
+	TrackHeadToObject() = default;
+	TrackHeadToObject(const TrackHeadToObject& other) = default;
+	TrackHeadToObject(TrackHeadToObject& other) = default;
+	TrackHeadToObject(TrackHeadToObject&& other) noexcept = default;
+	TrackHeadToObject& operator=(const TrackHeadToObject& other) = default;
+	TrackHeadToObject& operator=(TrackHeadToObject&& other) noexcept = default;
 	
-	explicit U2G_TrackHeadToObject(uint32_t objectID
+	explicit TrackHeadToObject(uint32_t objectID
 		,uint8_t robotID)
 	:objectID(objectID)
 	,robotID(robotID)
 	{}
 
-	explicit U2G_TrackHeadToObject(const uint8_t* buff, size_t len);
-	explicit U2G_TrackHeadToObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit TrackHeadToObject(const uint8_t* buff, size_t len);
+	explicit TrackHeadToObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -532,23 +534,23 @@ struct U2G_TrackHeadToObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_TrackHeadToObject& other) const;
-	bool operator!=(const U2G_TrackHeadToObject& other) const;
+	bool operator==(const TrackHeadToObject& other) const;
+	bool operator!=(const TrackHeadToObject& other) const;
 };
 
-// MESSAGE U2G_StopAllMotors
-struct U2G_StopAllMotors
+// MESSAGE StopAllMotors
+struct StopAllMotors
 {
 	
 	/**** Constructors ****/
-	U2G_StopAllMotors() = default;
-	U2G_StopAllMotors(const U2G_StopAllMotors& other) = default;
-	U2G_StopAllMotors(U2G_StopAllMotors& other) = default;
-	U2G_StopAllMotors(U2G_StopAllMotors&& other) noexcept = default;
-	U2G_StopAllMotors& operator=(const U2G_StopAllMotors& other) = default;
-	U2G_StopAllMotors& operator=(U2G_StopAllMotors&& other) noexcept = default;
-		explicit U2G_StopAllMotors(const uint8_t* buff, size_t len);
-	explicit U2G_StopAllMotors(const CLAD::SafeMessageBuffer& buffer);
+	StopAllMotors() = default;
+	StopAllMotors(const StopAllMotors& other) = default;
+	StopAllMotors(StopAllMotors& other) = default;
+	StopAllMotors(StopAllMotors&& other) noexcept = default;
+	StopAllMotors& operator=(const StopAllMotors& other) = default;
+	StopAllMotors& operator=(StopAllMotors&& other) noexcept = default;
+		explicit StopAllMotors(const uint8_t* buff, size_t len);
+	explicit StopAllMotors(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -560,32 +562,32 @@ struct U2G_StopAllMotors
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StopAllMotors& other) const;
-	bool operator!=(const U2G_StopAllMotors& other) const;
+	bool operator==(const StopAllMotors& other) const;
+	bool operator!=(const StopAllMotors& other) const;
 };
 
-// MESSAGE U2G_ImageRequest
-struct U2G_ImageRequest
+// MESSAGE ImageRequest
+struct ImageRequest
 {
 	uint8_t robotID;
 	uint8_t mode;
 	
 	/**** Constructors ****/
-	U2G_ImageRequest() = default;
-	U2G_ImageRequest(const U2G_ImageRequest& other) = default;
-	U2G_ImageRequest(U2G_ImageRequest& other) = default;
-	U2G_ImageRequest(U2G_ImageRequest&& other) noexcept = default;
-	U2G_ImageRequest& operator=(const U2G_ImageRequest& other) = default;
-	U2G_ImageRequest& operator=(U2G_ImageRequest&& other) noexcept = default;
+	ImageRequest() = default;
+	ImageRequest(const ImageRequest& other) = default;
+	ImageRequest(ImageRequest& other) = default;
+	ImageRequest(ImageRequest&& other) noexcept = default;
+	ImageRequest& operator=(const ImageRequest& other) = default;
+	ImageRequest& operator=(ImageRequest&& other) noexcept = default;
 	
-	explicit U2G_ImageRequest(uint8_t robotID
+	explicit ImageRequest(uint8_t robotID
 		,uint8_t mode)
 	:robotID(robotID)
 	,mode(mode)
 	{}
 
-	explicit U2G_ImageRequest(const uint8_t* buff, size_t len);
-	explicit U2G_ImageRequest(const CLAD::SafeMessageBuffer& buffer);
+	explicit ImageRequest(const uint8_t* buff, size_t len);
+	explicit ImageRequest(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -597,32 +599,32 @@ struct U2G_ImageRequest
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ImageRequest& other) const;
-	bool operator!=(const U2G_ImageRequest& other) const;
+	bool operator==(const ImageRequest& other) const;
+	bool operator!=(const ImageRequest& other) const;
 };
 
-// MESSAGE U2G_SetRobotImageSendMode
-struct U2G_SetRobotImageSendMode
+// MESSAGE SetRobotImageSendMode
+struct SetRobotImageSendMode
 {
 	uint8_t mode;
 	uint8_t resolution;
 	
 	/**** Constructors ****/
-	U2G_SetRobotImageSendMode() = default;
-	U2G_SetRobotImageSendMode(const U2G_SetRobotImageSendMode& other) = default;
-	U2G_SetRobotImageSendMode(U2G_SetRobotImageSendMode& other) = default;
-	U2G_SetRobotImageSendMode(U2G_SetRobotImageSendMode&& other) noexcept = default;
-	U2G_SetRobotImageSendMode& operator=(const U2G_SetRobotImageSendMode& other) = default;
-	U2G_SetRobotImageSendMode& operator=(U2G_SetRobotImageSendMode&& other) noexcept = default;
+	SetRobotImageSendMode() = default;
+	SetRobotImageSendMode(const SetRobotImageSendMode& other) = default;
+	SetRobotImageSendMode(SetRobotImageSendMode& other) = default;
+	SetRobotImageSendMode(SetRobotImageSendMode&& other) noexcept = default;
+	SetRobotImageSendMode& operator=(const SetRobotImageSendMode& other) = default;
+	SetRobotImageSendMode& operator=(SetRobotImageSendMode&& other) noexcept = default;
 	
-	explicit U2G_SetRobotImageSendMode(uint8_t mode
+	explicit SetRobotImageSendMode(uint8_t mode
 		,uint8_t resolution)
 	:mode(mode)
 	,resolution(resolution)
 	{}
 
-	explicit U2G_SetRobotImageSendMode(const uint8_t* buff, size_t len);
-	explicit U2G_SetRobotImageSendMode(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetRobotImageSendMode(const uint8_t* buff, size_t len);
+	explicit SetRobotImageSendMode(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -634,29 +636,29 @@ struct U2G_SetRobotImageSendMode
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetRobotImageSendMode& other) const;
-	bool operator!=(const U2G_SetRobotImageSendMode& other) const;
+	bool operator==(const SetRobotImageSendMode& other) const;
+	bool operator!=(const SetRobotImageSendMode& other) const;
 };
 
-// MESSAGE U2G_SaveImages
-struct U2G_SaveImages
+// MESSAGE SaveImages
+struct SaveImages
 {
 	uint8_t mode;
 	
 	/**** Constructors ****/
-	U2G_SaveImages() = default;
-	U2G_SaveImages(const U2G_SaveImages& other) = default;
-	U2G_SaveImages(U2G_SaveImages& other) = default;
-	U2G_SaveImages(U2G_SaveImages&& other) noexcept = default;
-	U2G_SaveImages& operator=(const U2G_SaveImages& other) = default;
-	U2G_SaveImages& operator=(U2G_SaveImages&& other) noexcept = default;
+	SaveImages() = default;
+	SaveImages(const SaveImages& other) = default;
+	SaveImages(SaveImages& other) = default;
+	SaveImages(SaveImages&& other) noexcept = default;
+	SaveImages& operator=(const SaveImages& other) = default;
+	SaveImages& operator=(SaveImages&& other) noexcept = default;
 	
-	explicit U2G_SaveImages(uint8_t mode)
+	explicit SaveImages(uint8_t mode)
 	:mode(mode)
 	{}
 
-	explicit U2G_SaveImages(const uint8_t* buff, size_t len);
-	explicit U2G_SaveImages(const CLAD::SafeMessageBuffer& buffer);
+	explicit SaveImages(const uint8_t* buff, size_t len);
+	explicit SaveImages(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -668,29 +670,29 @@ struct U2G_SaveImages
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SaveImages& other) const;
-	bool operator!=(const U2G_SaveImages& other) const;
+	bool operator==(const SaveImages& other) const;
+	bool operator!=(const SaveImages& other) const;
 };
 
-// MESSAGE U2G_SaveRobotState
-struct U2G_SaveRobotState
+// MESSAGE SaveRobotState
+struct SaveRobotState
 {
 	uint8_t mode;
 	
 	/**** Constructors ****/
-	U2G_SaveRobotState() = default;
-	U2G_SaveRobotState(const U2G_SaveRobotState& other) = default;
-	U2G_SaveRobotState(U2G_SaveRobotState& other) = default;
-	U2G_SaveRobotState(U2G_SaveRobotState&& other) noexcept = default;
-	U2G_SaveRobotState& operator=(const U2G_SaveRobotState& other) = default;
-	U2G_SaveRobotState& operator=(U2G_SaveRobotState&& other) noexcept = default;
+	SaveRobotState() = default;
+	SaveRobotState(const SaveRobotState& other) = default;
+	SaveRobotState(SaveRobotState& other) = default;
+	SaveRobotState(SaveRobotState&& other) noexcept = default;
+	SaveRobotState& operator=(const SaveRobotState& other) = default;
+	SaveRobotState& operator=(SaveRobotState&& other) noexcept = default;
 	
-	explicit U2G_SaveRobotState(uint8_t mode)
+	explicit SaveRobotState(uint8_t mode)
 	:mode(mode)
 	{}
 
-	explicit U2G_SaveRobotState(const uint8_t* buff, size_t len);
-	explicit U2G_SaveRobotState(const CLAD::SafeMessageBuffer& buffer);
+	explicit SaveRobotState(const uint8_t* buff, size_t len);
+	explicit SaveRobotState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -702,29 +704,29 @@ struct U2G_SaveRobotState
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SaveRobotState& other) const;
-	bool operator!=(const U2G_SaveRobotState& other) const;
+	bool operator==(const SaveRobotState& other) const;
+	bool operator!=(const SaveRobotState& other) const;
 };
 
-// MESSAGE U2G_EnableDisplay
-struct U2G_EnableDisplay
+// MESSAGE EnableDisplay
+struct EnableDisplay
 {
 	uint8_t enable;
 	
 	/**** Constructors ****/
-	U2G_EnableDisplay() = default;
-	U2G_EnableDisplay(const U2G_EnableDisplay& other) = default;
-	U2G_EnableDisplay(U2G_EnableDisplay& other) = default;
-	U2G_EnableDisplay(U2G_EnableDisplay&& other) noexcept = default;
-	U2G_EnableDisplay& operator=(const U2G_EnableDisplay& other) = default;
-	U2G_EnableDisplay& operator=(U2G_EnableDisplay&& other) noexcept = default;
+	EnableDisplay() = default;
+	EnableDisplay(const EnableDisplay& other) = default;
+	EnableDisplay(EnableDisplay& other) = default;
+	EnableDisplay(EnableDisplay&& other) noexcept = default;
+	EnableDisplay& operator=(const EnableDisplay& other) = default;
+	EnableDisplay& operator=(EnableDisplay&& other) noexcept = default;
 	
-	explicit U2G_EnableDisplay(uint8_t enable)
+	explicit EnableDisplay(uint8_t enable)
 	:enable(enable)
 	{}
 
-	explicit U2G_EnableDisplay(const uint8_t* buff, size_t len);
-	explicit U2G_EnableDisplay(const CLAD::SafeMessageBuffer& buffer);
+	explicit EnableDisplay(const uint8_t* buff, size_t len);
+	explicit EnableDisplay(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -736,29 +738,29 @@ struct U2G_EnableDisplay
 
 	size_t Size() const;
 
-	bool operator==(const U2G_EnableDisplay& other) const;
-	bool operator!=(const U2G_EnableDisplay& other) const;
+	bool operator==(const EnableDisplay& other) const;
+	bool operator!=(const EnableDisplay& other) const;
 };
 
-// MESSAGE U2G_SetHeadlights
-struct U2G_SetHeadlights
+// MESSAGE SetHeadlights
+struct SetHeadlights
 {
 	uint8_t intensity;
 	
 	/**** Constructors ****/
-	U2G_SetHeadlights() = default;
-	U2G_SetHeadlights(const U2G_SetHeadlights& other) = default;
-	U2G_SetHeadlights(U2G_SetHeadlights& other) = default;
-	U2G_SetHeadlights(U2G_SetHeadlights&& other) noexcept = default;
-	U2G_SetHeadlights& operator=(const U2G_SetHeadlights& other) = default;
-	U2G_SetHeadlights& operator=(U2G_SetHeadlights&& other) noexcept = default;
+	SetHeadlights() = default;
+	SetHeadlights(const SetHeadlights& other) = default;
+	SetHeadlights(SetHeadlights& other) = default;
+	SetHeadlights(SetHeadlights&& other) noexcept = default;
+	SetHeadlights& operator=(const SetHeadlights& other) = default;
+	SetHeadlights& operator=(SetHeadlights&& other) noexcept = default;
 	
-	explicit U2G_SetHeadlights(uint8_t intensity)
+	explicit SetHeadlights(uint8_t intensity)
 	:intensity(intensity)
 	{}
 
-	explicit U2G_SetHeadlights(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadlights(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetHeadlights(const uint8_t* buff, size_t len);
+	explicit SetHeadlights(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -770,12 +772,12 @@ struct U2G_SetHeadlights
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetHeadlights& other) const;
-	bool operator!=(const U2G_SetHeadlights& other) const;
+	bool operator==(const SetHeadlights& other) const;
+	bool operator!=(const SetHeadlights& other) const;
 };
 
-// MESSAGE U2G_GotoPose
-struct U2G_GotoPose
+// MESSAGE GotoPose
+struct GotoPose
 {
 	float x_mm;
 	float y_mm;
@@ -784,14 +786,14 @@ struct U2G_GotoPose
 	uint8_t useManualSpeed;
 	
 	/**** Constructors ****/
-	U2G_GotoPose() = default;
-	U2G_GotoPose(const U2G_GotoPose& other) = default;
-	U2G_GotoPose(U2G_GotoPose& other) = default;
-	U2G_GotoPose(U2G_GotoPose&& other) noexcept = default;
-	U2G_GotoPose& operator=(const U2G_GotoPose& other) = default;
-	U2G_GotoPose& operator=(U2G_GotoPose&& other) noexcept = default;
+	GotoPose() = default;
+	GotoPose(const GotoPose& other) = default;
+	GotoPose(GotoPose& other) = default;
+	GotoPose(GotoPose&& other) noexcept = default;
+	GotoPose& operator=(const GotoPose& other) = default;
+	GotoPose& operator=(GotoPose&& other) noexcept = default;
 	
-	explicit U2G_GotoPose(float x_mm
+	explicit GotoPose(float x_mm
 		,float y_mm
 		,float rad
 		,uint8_t level
@@ -803,8 +805,8 @@ struct U2G_GotoPose
 	,useManualSpeed(useManualSpeed)
 	{}
 
-	explicit U2G_GotoPose(const uint8_t* buff, size_t len);
-	explicit U2G_GotoPose(const CLAD::SafeMessageBuffer& buffer);
+	explicit GotoPose(const uint8_t* buff, size_t len);
+	explicit GotoPose(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -816,12 +818,12 @@ struct U2G_GotoPose
 
 	size_t Size() const;
 
-	bool operator==(const U2G_GotoPose& other) const;
-	bool operator!=(const U2G_GotoPose& other) const;
+	bool operator==(const GotoPose& other) const;
+	bool operator!=(const GotoPose& other) const;
 };
 
-// MESSAGE U2G_PlaceObjectOnGround
-struct U2G_PlaceObjectOnGround
+// MESSAGE PlaceObjectOnGround
+struct PlaceObjectOnGround
 {
 	float x_mm;
 	float y_mm;
@@ -830,14 +832,14 @@ struct U2G_PlaceObjectOnGround
 	uint8_t useManualSpeed;
 	
 	/**** Constructors ****/
-	U2G_PlaceObjectOnGround() = default;
-	U2G_PlaceObjectOnGround(const U2G_PlaceObjectOnGround& other) = default;
-	U2G_PlaceObjectOnGround(U2G_PlaceObjectOnGround& other) = default;
-	U2G_PlaceObjectOnGround(U2G_PlaceObjectOnGround&& other) noexcept = default;
-	U2G_PlaceObjectOnGround& operator=(const U2G_PlaceObjectOnGround& other) = default;
-	U2G_PlaceObjectOnGround& operator=(U2G_PlaceObjectOnGround&& other) noexcept = default;
+	PlaceObjectOnGround() = default;
+	PlaceObjectOnGround(const PlaceObjectOnGround& other) = default;
+	PlaceObjectOnGround(PlaceObjectOnGround& other) = default;
+	PlaceObjectOnGround(PlaceObjectOnGround&& other) noexcept = default;
+	PlaceObjectOnGround& operator=(const PlaceObjectOnGround& other) = default;
+	PlaceObjectOnGround& operator=(PlaceObjectOnGround&& other) noexcept = default;
 	
-	explicit U2G_PlaceObjectOnGround(float x_mm
+	explicit PlaceObjectOnGround(float x_mm
 		,float y_mm
 		,float rad
 		,uint8_t level
@@ -849,8 +851,8 @@ struct U2G_PlaceObjectOnGround
 	,useManualSpeed(useManualSpeed)
 	{}
 
-	explicit U2G_PlaceObjectOnGround(const uint8_t* buff, size_t len);
-	explicit U2G_PlaceObjectOnGround(const CLAD::SafeMessageBuffer& buffer);
+	explicit PlaceObjectOnGround(const uint8_t* buff, size_t len);
+	explicit PlaceObjectOnGround(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -862,23 +864,23 @@ struct U2G_PlaceObjectOnGround
 
 	size_t Size() const;
 
-	bool operator==(const U2G_PlaceObjectOnGround& other) const;
-	bool operator!=(const U2G_PlaceObjectOnGround& other) const;
+	bool operator==(const PlaceObjectOnGround& other) const;
+	bool operator!=(const PlaceObjectOnGround& other) const;
 };
 
-// MESSAGE U2G_PlaceObjectOnGroundHere
-struct U2G_PlaceObjectOnGroundHere
+// MESSAGE PlaceObjectOnGroundHere
+struct PlaceObjectOnGroundHere
 {
 	
 	/**** Constructors ****/
-	U2G_PlaceObjectOnGroundHere() = default;
-	U2G_PlaceObjectOnGroundHere(const U2G_PlaceObjectOnGroundHere& other) = default;
-	U2G_PlaceObjectOnGroundHere(U2G_PlaceObjectOnGroundHere& other) = default;
-	U2G_PlaceObjectOnGroundHere(U2G_PlaceObjectOnGroundHere&& other) noexcept = default;
-	U2G_PlaceObjectOnGroundHere& operator=(const U2G_PlaceObjectOnGroundHere& other) = default;
-	U2G_PlaceObjectOnGroundHere& operator=(U2G_PlaceObjectOnGroundHere&& other) noexcept = default;
-		explicit U2G_PlaceObjectOnGroundHere(const uint8_t* buff, size_t len);
-	explicit U2G_PlaceObjectOnGroundHere(const CLAD::SafeMessageBuffer& buffer);
+	PlaceObjectOnGroundHere() = default;
+	PlaceObjectOnGroundHere(const PlaceObjectOnGroundHere& other) = default;
+	PlaceObjectOnGroundHere(PlaceObjectOnGroundHere& other) = default;
+	PlaceObjectOnGroundHere(PlaceObjectOnGroundHere&& other) noexcept = default;
+	PlaceObjectOnGroundHere& operator=(const PlaceObjectOnGroundHere& other) = default;
+	PlaceObjectOnGroundHere& operator=(PlaceObjectOnGroundHere&& other) noexcept = default;
+		explicit PlaceObjectOnGroundHere(const uint8_t* buff, size_t len);
+	explicit PlaceObjectOnGroundHere(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -890,23 +892,23 @@ struct U2G_PlaceObjectOnGroundHere
 
 	size_t Size() const;
 
-	bool operator==(const U2G_PlaceObjectOnGroundHere& other) const;
-	bool operator!=(const U2G_PlaceObjectOnGroundHere& other) const;
+	bool operator==(const PlaceObjectOnGroundHere& other) const;
+	bool operator!=(const PlaceObjectOnGroundHere& other) const;
 };
 
-// MESSAGE U2G_ExecuteTestPlan
-struct U2G_ExecuteTestPlan
+// MESSAGE ExecuteTestPlan
+struct ExecuteTestPlan
 {
 	
 	/**** Constructors ****/
-	U2G_ExecuteTestPlan() = default;
-	U2G_ExecuteTestPlan(const U2G_ExecuteTestPlan& other) = default;
-	U2G_ExecuteTestPlan(U2G_ExecuteTestPlan& other) = default;
-	U2G_ExecuteTestPlan(U2G_ExecuteTestPlan&& other) noexcept = default;
-	U2G_ExecuteTestPlan& operator=(const U2G_ExecuteTestPlan& other) = default;
-	U2G_ExecuteTestPlan& operator=(U2G_ExecuteTestPlan&& other) noexcept = default;
-		explicit U2G_ExecuteTestPlan(const uint8_t* buff, size_t len);
-	explicit U2G_ExecuteTestPlan(const CLAD::SafeMessageBuffer& buffer);
+	ExecuteTestPlan() = default;
+	ExecuteTestPlan(const ExecuteTestPlan& other) = default;
+	ExecuteTestPlan(ExecuteTestPlan& other) = default;
+	ExecuteTestPlan(ExecuteTestPlan&& other) noexcept = default;
+	ExecuteTestPlan& operator=(const ExecuteTestPlan& other) = default;
+	ExecuteTestPlan& operator=(ExecuteTestPlan&& other) noexcept = default;
+		explicit ExecuteTestPlan(const uint8_t* buff, size_t len);
+	explicit ExecuteTestPlan(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -918,23 +920,23 @@ struct U2G_ExecuteTestPlan
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ExecuteTestPlan& other) const;
-	bool operator!=(const U2G_ExecuteTestPlan& other) const;
+	bool operator==(const ExecuteTestPlan& other) const;
+	bool operator!=(const ExecuteTestPlan& other) const;
 };
 
-// MESSAGE U2G_SelectNextObject
-struct U2G_SelectNextObject
+// MESSAGE SelectNextObject
+struct SelectNextObject
 {
 	
 	/**** Constructors ****/
-	U2G_SelectNextObject() = default;
-	U2G_SelectNextObject(const U2G_SelectNextObject& other) = default;
-	U2G_SelectNextObject(U2G_SelectNextObject& other) = default;
-	U2G_SelectNextObject(U2G_SelectNextObject&& other) noexcept = default;
-	U2G_SelectNextObject& operator=(const U2G_SelectNextObject& other) = default;
-	U2G_SelectNextObject& operator=(U2G_SelectNextObject&& other) noexcept = default;
-		explicit U2G_SelectNextObject(const uint8_t* buff, size_t len);
-	explicit U2G_SelectNextObject(const CLAD::SafeMessageBuffer& buffer);
+	SelectNextObject() = default;
+	SelectNextObject(const SelectNextObject& other) = default;
+	SelectNextObject(SelectNextObject& other) = default;
+	SelectNextObject(SelectNextObject&& other) noexcept = default;
+	SelectNextObject& operator=(const SelectNextObject& other) = default;
+	SelectNextObject& operator=(SelectNextObject&& other) noexcept = default;
+		explicit SelectNextObject(const uint8_t* buff, size_t len);
+	explicit SelectNextObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -946,26 +948,26 @@ struct U2G_SelectNextObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SelectNextObject& other) const;
-	bool operator!=(const U2G_SelectNextObject& other) const;
+	bool operator==(const SelectNextObject& other) const;
+	bool operator!=(const SelectNextObject& other) const;
 };
 
-// MESSAGE U2G_PickAndPlaceObject
-struct U2G_PickAndPlaceObject
+// MESSAGE PickAndPlaceObject
+struct PickAndPlaceObject
 {
 	int32_t objectID;
 	uint8_t usePreDockPose;
 	uint8_t useManualSpeed;
 	
 	/**** Constructors ****/
-	U2G_PickAndPlaceObject() = default;
-	U2G_PickAndPlaceObject(const U2G_PickAndPlaceObject& other) = default;
-	U2G_PickAndPlaceObject(U2G_PickAndPlaceObject& other) = default;
-	U2G_PickAndPlaceObject(U2G_PickAndPlaceObject&& other) noexcept = default;
-	U2G_PickAndPlaceObject& operator=(const U2G_PickAndPlaceObject& other) = default;
-	U2G_PickAndPlaceObject& operator=(U2G_PickAndPlaceObject&& other) noexcept = default;
+	PickAndPlaceObject() = default;
+	PickAndPlaceObject(const PickAndPlaceObject& other) = default;
+	PickAndPlaceObject(PickAndPlaceObject& other) = default;
+	PickAndPlaceObject(PickAndPlaceObject&& other) noexcept = default;
+	PickAndPlaceObject& operator=(const PickAndPlaceObject& other) = default;
+	PickAndPlaceObject& operator=(PickAndPlaceObject&& other) noexcept = default;
 	
-	explicit U2G_PickAndPlaceObject(int32_t objectID
+	explicit PickAndPlaceObject(int32_t objectID
 		,uint8_t usePreDockPose
 		,uint8_t useManualSpeed)
 	:objectID(objectID)
@@ -973,8 +975,8 @@ struct U2G_PickAndPlaceObject
 	,useManualSpeed(useManualSpeed)
 	{}
 
-	explicit U2G_PickAndPlaceObject(const uint8_t* buff, size_t len);
-	explicit U2G_PickAndPlaceObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit PickAndPlaceObject(const uint8_t* buff, size_t len);
+	explicit PickAndPlaceObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -986,32 +988,32 @@ struct U2G_PickAndPlaceObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_PickAndPlaceObject& other) const;
-	bool operator!=(const U2G_PickAndPlaceObject& other) const;
+	bool operator==(const PickAndPlaceObject& other) const;
+	bool operator!=(const PickAndPlaceObject& other) const;
 };
 
-// MESSAGE U2G_TraverseObject
-struct U2G_TraverseObject
+// MESSAGE TraverseObject
+struct TraverseObject
 {
 	uint8_t usePreDockPose;
 	uint8_t useManualSpeed;
 	
 	/**** Constructors ****/
-	U2G_TraverseObject() = default;
-	U2G_TraverseObject(const U2G_TraverseObject& other) = default;
-	U2G_TraverseObject(U2G_TraverseObject& other) = default;
-	U2G_TraverseObject(U2G_TraverseObject&& other) noexcept = default;
-	U2G_TraverseObject& operator=(const U2G_TraverseObject& other) = default;
-	U2G_TraverseObject& operator=(U2G_TraverseObject&& other) noexcept = default;
+	TraverseObject() = default;
+	TraverseObject(const TraverseObject& other) = default;
+	TraverseObject(TraverseObject& other) = default;
+	TraverseObject(TraverseObject&& other) noexcept = default;
+	TraverseObject& operator=(const TraverseObject& other) = default;
+	TraverseObject& operator=(TraverseObject&& other) noexcept = default;
 	
-	explicit U2G_TraverseObject(uint8_t usePreDockPose
+	explicit TraverseObject(uint8_t usePreDockPose
 		,uint8_t useManualSpeed)
 	:usePreDockPose(usePreDockPose)
 	,useManualSpeed(useManualSpeed)
 	{}
 
-	explicit U2G_TraverseObject(const uint8_t* buff, size_t len);
-	explicit U2G_TraverseObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit TraverseObject(const uint8_t* buff, size_t len);
+	explicit TraverseObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1023,32 +1025,32 @@ struct U2G_TraverseObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_TraverseObject& other) const;
-	bool operator!=(const U2G_TraverseObject& other) const;
+	bool operator==(const TraverseObject& other) const;
+	bool operator!=(const TraverseObject& other) const;
 };
 
-// MESSAGE U2G_SetRobotCarryingObject
-struct U2G_SetRobotCarryingObject
+// MESSAGE SetRobotCarryingObject
+struct SetRobotCarryingObject
 {
 	int32_t objectID;
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_SetRobotCarryingObject() = default;
-	U2G_SetRobotCarryingObject(const U2G_SetRobotCarryingObject& other) = default;
-	U2G_SetRobotCarryingObject(U2G_SetRobotCarryingObject& other) = default;
-	U2G_SetRobotCarryingObject(U2G_SetRobotCarryingObject&& other) noexcept = default;
-	U2G_SetRobotCarryingObject& operator=(const U2G_SetRobotCarryingObject& other) = default;
-	U2G_SetRobotCarryingObject& operator=(U2G_SetRobotCarryingObject&& other) noexcept = default;
+	SetRobotCarryingObject() = default;
+	SetRobotCarryingObject(const SetRobotCarryingObject& other) = default;
+	SetRobotCarryingObject(SetRobotCarryingObject& other) = default;
+	SetRobotCarryingObject(SetRobotCarryingObject&& other) noexcept = default;
+	SetRobotCarryingObject& operator=(const SetRobotCarryingObject& other) = default;
+	SetRobotCarryingObject& operator=(SetRobotCarryingObject&& other) noexcept = default;
 	
-	explicit U2G_SetRobotCarryingObject(int32_t objectID
+	explicit SetRobotCarryingObject(int32_t objectID
 		,uint8_t robotID)
 	:objectID(objectID)
 	,robotID(robotID)
 	{}
 
-	explicit U2G_SetRobotCarryingObject(const uint8_t* buff, size_t len);
-	explicit U2G_SetRobotCarryingObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetRobotCarryingObject(const uint8_t* buff, size_t len);
+	explicit SetRobotCarryingObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1060,23 +1062,23 @@ struct U2G_SetRobotCarryingObject
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetRobotCarryingObject& other) const;
-	bool operator!=(const U2G_SetRobotCarryingObject& other) const;
+	bool operator==(const SetRobotCarryingObject& other) const;
+	bool operator!=(const SetRobotCarryingObject& other) const;
 };
 
-// MESSAGE U2G_ClearAllBlocks
-struct U2G_ClearAllBlocks
+// MESSAGE ClearAllBlocks
+struct ClearAllBlocks
 {
 	
 	/**** Constructors ****/
-	U2G_ClearAllBlocks() = default;
-	U2G_ClearAllBlocks(const U2G_ClearAllBlocks& other) = default;
-	U2G_ClearAllBlocks(U2G_ClearAllBlocks& other) = default;
-	U2G_ClearAllBlocks(U2G_ClearAllBlocks&& other) noexcept = default;
-	U2G_ClearAllBlocks& operator=(const U2G_ClearAllBlocks& other) = default;
-	U2G_ClearAllBlocks& operator=(U2G_ClearAllBlocks&& other) noexcept = default;
-		explicit U2G_ClearAllBlocks(const uint8_t* buff, size_t len);
-	explicit U2G_ClearAllBlocks(const CLAD::SafeMessageBuffer& buffer);
+	ClearAllBlocks() = default;
+	ClearAllBlocks(const ClearAllBlocks& other) = default;
+	ClearAllBlocks(ClearAllBlocks& other) = default;
+	ClearAllBlocks(ClearAllBlocks&& other) noexcept = default;
+	ClearAllBlocks& operator=(const ClearAllBlocks& other) = default;
+	ClearAllBlocks& operator=(ClearAllBlocks&& other) noexcept = default;
+		explicit ClearAllBlocks(const uint8_t* buff, size_t len);
+	explicit ClearAllBlocks(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1088,29 +1090,29 @@ struct U2G_ClearAllBlocks
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ClearAllBlocks& other) const;
-	bool operator!=(const U2G_ClearAllBlocks& other) const;
+	bool operator==(const ClearAllBlocks& other) const;
+	bool operator!=(const ClearAllBlocks& other) const;
 };
 
-// MESSAGE U2G_VisionWhileMoving
-struct U2G_VisionWhileMoving
+// MESSAGE VisionWhileMoving
+struct VisionWhileMoving
 {
 	uint8_t enable;
 	
 	/**** Constructors ****/
-	U2G_VisionWhileMoving() = default;
-	U2G_VisionWhileMoving(const U2G_VisionWhileMoving& other) = default;
-	U2G_VisionWhileMoving(U2G_VisionWhileMoving& other) = default;
-	U2G_VisionWhileMoving(U2G_VisionWhileMoving&& other) noexcept = default;
-	U2G_VisionWhileMoving& operator=(const U2G_VisionWhileMoving& other) = default;
-	U2G_VisionWhileMoving& operator=(U2G_VisionWhileMoving&& other) noexcept = default;
+	VisionWhileMoving() = default;
+	VisionWhileMoving(const VisionWhileMoving& other) = default;
+	VisionWhileMoving(VisionWhileMoving& other) = default;
+	VisionWhileMoving(VisionWhileMoving&& other) noexcept = default;
+	VisionWhileMoving& operator=(const VisionWhileMoving& other) = default;
+	VisionWhileMoving& operator=(VisionWhileMoving&& other) noexcept = default;
 	
-	explicit U2G_VisionWhileMoving(uint8_t enable)
+	explicit VisionWhileMoving(uint8_t enable)
 	:enable(enable)
 	{}
 
-	explicit U2G_VisionWhileMoving(const uint8_t* buff, size_t len);
-	explicit U2G_VisionWhileMoving(const CLAD::SafeMessageBuffer& buffer);
+	explicit VisionWhileMoving(const uint8_t* buff, size_t len);
+	explicit VisionWhileMoving(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1122,29 +1124,29 @@ struct U2G_VisionWhileMoving
 
 	size_t Size() const;
 
-	bool operator==(const U2G_VisionWhileMoving& other) const;
-	bool operator!=(const U2G_VisionWhileMoving& other) const;
+	bool operator==(const VisionWhileMoving& other) const;
+	bool operator!=(const VisionWhileMoving& other) const;
 };
 
-// MESSAGE U2G_ExecuteBehavior
-struct U2G_ExecuteBehavior
+// MESSAGE ExecuteBehavior
+struct ExecuteBehavior
 {
 	uint8_t behaviorMode;
 	
 	/**** Constructors ****/
-	U2G_ExecuteBehavior() = default;
-	U2G_ExecuteBehavior(const U2G_ExecuteBehavior& other) = default;
-	U2G_ExecuteBehavior(U2G_ExecuteBehavior& other) = default;
-	U2G_ExecuteBehavior(U2G_ExecuteBehavior&& other) noexcept = default;
-	U2G_ExecuteBehavior& operator=(const U2G_ExecuteBehavior& other) = default;
-	U2G_ExecuteBehavior& operator=(U2G_ExecuteBehavior&& other) noexcept = default;
+	ExecuteBehavior() = default;
+	ExecuteBehavior(const ExecuteBehavior& other) = default;
+	ExecuteBehavior(ExecuteBehavior& other) = default;
+	ExecuteBehavior(ExecuteBehavior&& other) noexcept = default;
+	ExecuteBehavior& operator=(const ExecuteBehavior& other) = default;
+	ExecuteBehavior& operator=(ExecuteBehavior&& other) noexcept = default;
 	
-	explicit U2G_ExecuteBehavior(uint8_t behaviorMode)
+	explicit ExecuteBehavior(uint8_t behaviorMode)
 	:behaviorMode(behaviorMode)
 	{}
 
-	explicit U2G_ExecuteBehavior(const uint8_t* buff, size_t len);
-	explicit U2G_ExecuteBehavior(const CLAD::SafeMessageBuffer& buffer);
+	explicit ExecuteBehavior(const uint8_t* buff, size_t len);
+	explicit ExecuteBehavior(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1156,29 +1158,29 @@ struct U2G_ExecuteBehavior
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ExecuteBehavior& other) const;
-	bool operator!=(const U2G_ExecuteBehavior& other) const;
+	bool operator==(const ExecuteBehavior& other) const;
+	bool operator!=(const ExecuteBehavior& other) const;
 };
 
-// MESSAGE U2G_SetBehaviorState
-struct U2G_SetBehaviorState
+// MESSAGE SetBehaviorState
+struct SetBehaviorState
 {
 	uint8_t behaviorState;
 	
 	/**** Constructors ****/
-	U2G_SetBehaviorState() = default;
-	U2G_SetBehaviorState(const U2G_SetBehaviorState& other) = default;
-	U2G_SetBehaviorState(U2G_SetBehaviorState& other) = default;
-	U2G_SetBehaviorState(U2G_SetBehaviorState&& other) noexcept = default;
-	U2G_SetBehaviorState& operator=(const U2G_SetBehaviorState& other) = default;
-	U2G_SetBehaviorState& operator=(U2G_SetBehaviorState&& other) noexcept = default;
+	SetBehaviorState() = default;
+	SetBehaviorState(const SetBehaviorState& other) = default;
+	SetBehaviorState(SetBehaviorState& other) = default;
+	SetBehaviorState(SetBehaviorState&& other) noexcept = default;
+	SetBehaviorState& operator=(const SetBehaviorState& other) = default;
+	SetBehaviorState& operator=(SetBehaviorState&& other) noexcept = default;
 	
-	explicit U2G_SetBehaviorState(uint8_t behaviorState)
+	explicit SetBehaviorState(uint8_t behaviorState)
 	:behaviorState(behaviorState)
 	{}
 
-	explicit U2G_SetBehaviorState(const uint8_t* buff, size_t len);
-	explicit U2G_SetBehaviorState(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetBehaviorState(const uint8_t* buff, size_t len);
+	explicit SetBehaviorState(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1190,23 +1192,23 @@ struct U2G_SetBehaviorState
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetBehaviorState& other) const;
-	bool operator!=(const U2G_SetBehaviorState& other) const;
+	bool operator==(const SetBehaviorState& other) const;
+	bool operator!=(const SetBehaviorState& other) const;
 };
 
-// MESSAGE U2G_AbortPath
-struct U2G_AbortPath
+// MESSAGE AbortPath
+struct AbortPath
 {
 	
 	/**** Constructors ****/
-	U2G_AbortPath() = default;
-	U2G_AbortPath(const U2G_AbortPath& other) = default;
-	U2G_AbortPath(U2G_AbortPath& other) = default;
-	U2G_AbortPath(U2G_AbortPath&& other) noexcept = default;
-	U2G_AbortPath& operator=(const U2G_AbortPath& other) = default;
-	U2G_AbortPath& operator=(U2G_AbortPath&& other) noexcept = default;
-		explicit U2G_AbortPath(const uint8_t* buff, size_t len);
-	explicit U2G_AbortPath(const CLAD::SafeMessageBuffer& buffer);
+	AbortPath() = default;
+	AbortPath(const AbortPath& other) = default;
+	AbortPath(AbortPath& other) = default;
+	AbortPath(AbortPath&& other) noexcept = default;
+	AbortPath& operator=(const AbortPath& other) = default;
+	AbortPath& operator=(AbortPath&& other) noexcept = default;
+		explicit AbortPath(const uint8_t* buff, size_t len);
+	explicit AbortPath(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1218,23 +1220,23 @@ struct U2G_AbortPath
 
 	size_t Size() const;
 
-	bool operator==(const U2G_AbortPath& other) const;
-	bool operator!=(const U2G_AbortPath& other) const;
+	bool operator==(const AbortPath& other) const;
+	bool operator!=(const AbortPath& other) const;
 };
 
-// MESSAGE U2G_AbortAll
-struct U2G_AbortAll
+// MESSAGE AbortAll
+struct AbortAll
 {
 	
 	/**** Constructors ****/
-	U2G_AbortAll() = default;
-	U2G_AbortAll(const U2G_AbortAll& other) = default;
-	U2G_AbortAll(U2G_AbortAll& other) = default;
-	U2G_AbortAll(U2G_AbortAll&& other) noexcept = default;
-	U2G_AbortAll& operator=(const U2G_AbortAll& other) = default;
-	U2G_AbortAll& operator=(U2G_AbortAll&& other) noexcept = default;
-		explicit U2G_AbortAll(const uint8_t* buff, size_t len);
-	explicit U2G_AbortAll(const CLAD::SafeMessageBuffer& buffer);
+	AbortAll() = default;
+	AbortAll(const AbortAll& other) = default;
+	AbortAll(AbortAll& other) = default;
+	AbortAll(AbortAll&& other) noexcept = default;
+	AbortAll& operator=(const AbortAll& other) = default;
+	AbortAll& operator=(AbortAll&& other) noexcept = default;
+		explicit AbortAll(const uint8_t* buff, size_t len);
+	explicit AbortAll(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1246,12 +1248,12 @@ struct U2G_AbortAll
 
 	size_t Size() const;
 
-	bool operator==(const U2G_AbortAll& other) const;
-	bool operator!=(const U2G_AbortAll& other) const;
+	bool operator==(const AbortAll& other) const;
+	bool operator!=(const AbortAll& other) const;
 };
 
-// MESSAGE U2G_DrawPoseMarker
-struct U2G_DrawPoseMarker
+// MESSAGE DrawPoseMarker
+struct DrawPoseMarker
 {
 	float x_mm;
 	float y_mm;
@@ -1259,14 +1261,14 @@ struct U2G_DrawPoseMarker
 	uint8_t level;
 	
 	/**** Constructors ****/
-	U2G_DrawPoseMarker() = default;
-	U2G_DrawPoseMarker(const U2G_DrawPoseMarker& other) = default;
-	U2G_DrawPoseMarker(U2G_DrawPoseMarker& other) = default;
-	U2G_DrawPoseMarker(U2G_DrawPoseMarker&& other) noexcept = default;
-	U2G_DrawPoseMarker& operator=(const U2G_DrawPoseMarker& other) = default;
-	U2G_DrawPoseMarker& operator=(U2G_DrawPoseMarker&& other) noexcept = default;
+	DrawPoseMarker() = default;
+	DrawPoseMarker(const DrawPoseMarker& other) = default;
+	DrawPoseMarker(DrawPoseMarker& other) = default;
+	DrawPoseMarker(DrawPoseMarker&& other) noexcept = default;
+	DrawPoseMarker& operator=(const DrawPoseMarker& other) = default;
+	DrawPoseMarker& operator=(DrawPoseMarker&& other) noexcept = default;
 	
-	explicit U2G_DrawPoseMarker(float x_mm
+	explicit DrawPoseMarker(float x_mm
 		,float y_mm
 		,float rad
 		,uint8_t level)
@@ -1276,8 +1278,8 @@ struct U2G_DrawPoseMarker
 	,level(level)
 	{}
 
-	explicit U2G_DrawPoseMarker(const uint8_t* buff, size_t len);
-	explicit U2G_DrawPoseMarker(const CLAD::SafeMessageBuffer& buffer);
+	explicit DrawPoseMarker(const uint8_t* buff, size_t len);
+	explicit DrawPoseMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1289,23 +1291,23 @@ struct U2G_DrawPoseMarker
 
 	size_t Size() const;
 
-	bool operator==(const U2G_DrawPoseMarker& other) const;
-	bool operator!=(const U2G_DrawPoseMarker& other) const;
+	bool operator==(const DrawPoseMarker& other) const;
+	bool operator!=(const DrawPoseMarker& other) const;
 };
 
-// MESSAGE U2G_ErasePoseMarker
-struct U2G_ErasePoseMarker
+// MESSAGE ErasePoseMarker
+struct ErasePoseMarker
 {
 	
 	/**** Constructors ****/
-	U2G_ErasePoseMarker() = default;
-	U2G_ErasePoseMarker(const U2G_ErasePoseMarker& other) = default;
-	U2G_ErasePoseMarker(U2G_ErasePoseMarker& other) = default;
-	U2G_ErasePoseMarker(U2G_ErasePoseMarker&& other) noexcept = default;
-	U2G_ErasePoseMarker& operator=(const U2G_ErasePoseMarker& other) = default;
-	U2G_ErasePoseMarker& operator=(U2G_ErasePoseMarker&& other) noexcept = default;
-		explicit U2G_ErasePoseMarker(const uint8_t* buff, size_t len);
-	explicit U2G_ErasePoseMarker(const CLAD::SafeMessageBuffer& buffer);
+	ErasePoseMarker() = default;
+	ErasePoseMarker(const ErasePoseMarker& other) = default;
+	ErasePoseMarker(ErasePoseMarker& other) = default;
+	ErasePoseMarker(ErasePoseMarker&& other) noexcept = default;
+	ErasePoseMarker& operator=(const ErasePoseMarker& other) = default;
+	ErasePoseMarker& operator=(ErasePoseMarker&& other) noexcept = default;
+		explicit ErasePoseMarker(const uint8_t* buff, size_t len);
+	explicit ErasePoseMarker(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1317,12 +1319,12 @@ struct U2G_ErasePoseMarker
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ErasePoseMarker& other) const;
-	bool operator!=(const U2G_ErasePoseMarker& other) const;
+	bool operator==(const ErasePoseMarker& other) const;
+	bool operator!=(const ErasePoseMarker& other) const;
 };
 
-// MESSAGE U2G_SetWheelControllerGains
-struct U2G_SetWheelControllerGains
+// MESSAGE SetWheelControllerGains
+struct SetWheelControllerGains
 {
 	float kpLeft;
 	float kiLeft;
@@ -1332,14 +1334,14 @@ struct U2G_SetWheelControllerGains
 	float maxIntegralErrorRight;
 	
 	/**** Constructors ****/
-	U2G_SetWheelControllerGains() = default;
-	U2G_SetWheelControllerGains(const U2G_SetWheelControllerGains& other) = default;
-	U2G_SetWheelControllerGains(U2G_SetWheelControllerGains& other) = default;
-	U2G_SetWheelControllerGains(U2G_SetWheelControllerGains&& other) noexcept = default;
-	U2G_SetWheelControllerGains& operator=(const U2G_SetWheelControllerGains& other) = default;
-	U2G_SetWheelControllerGains& operator=(U2G_SetWheelControllerGains&& other) noexcept = default;
+	SetWheelControllerGains() = default;
+	SetWheelControllerGains(const SetWheelControllerGains& other) = default;
+	SetWheelControllerGains(SetWheelControllerGains& other) = default;
+	SetWheelControllerGains(SetWheelControllerGains&& other) noexcept = default;
+	SetWheelControllerGains& operator=(const SetWheelControllerGains& other) = default;
+	SetWheelControllerGains& operator=(SetWheelControllerGains&& other) noexcept = default;
 	
-	explicit U2G_SetWheelControllerGains(float kpLeft
+	explicit SetWheelControllerGains(float kpLeft
 		,float kiLeft
 		,float maxIntegralErrorLeft
 		,float kpRight
@@ -1353,8 +1355,8 @@ struct U2G_SetWheelControllerGains
 	,maxIntegralErrorRight(maxIntegralErrorRight)
 	{}
 
-	explicit U2G_SetWheelControllerGains(const uint8_t* buff, size_t len);
-	explicit U2G_SetWheelControllerGains(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetWheelControllerGains(const uint8_t* buff, size_t len);
+	explicit SetWheelControllerGains(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1366,26 +1368,26 @@ struct U2G_SetWheelControllerGains
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetWheelControllerGains& other) const;
-	bool operator!=(const U2G_SetWheelControllerGains& other) const;
+	bool operator==(const SetWheelControllerGains& other) const;
+	bool operator!=(const SetWheelControllerGains& other) const;
 };
 
-// MESSAGE U2G_SetHeadControllerGains
-struct U2G_SetHeadControllerGains
+// MESSAGE SetHeadControllerGains
+struct SetHeadControllerGains
 {
 	float kp;
 	float ki;
 	float maxIntegralError;
 	
 	/**** Constructors ****/
-	U2G_SetHeadControllerGains() = default;
-	U2G_SetHeadControllerGains(const U2G_SetHeadControllerGains& other) = default;
-	U2G_SetHeadControllerGains(U2G_SetHeadControllerGains& other) = default;
-	U2G_SetHeadControllerGains(U2G_SetHeadControllerGains&& other) noexcept = default;
-	U2G_SetHeadControllerGains& operator=(const U2G_SetHeadControllerGains& other) = default;
-	U2G_SetHeadControllerGains& operator=(U2G_SetHeadControllerGains&& other) noexcept = default;
+	SetHeadControllerGains() = default;
+	SetHeadControllerGains(const SetHeadControllerGains& other) = default;
+	SetHeadControllerGains(SetHeadControllerGains& other) = default;
+	SetHeadControllerGains(SetHeadControllerGains&& other) noexcept = default;
+	SetHeadControllerGains& operator=(const SetHeadControllerGains& other) = default;
+	SetHeadControllerGains& operator=(SetHeadControllerGains&& other) noexcept = default;
 	
-	explicit U2G_SetHeadControllerGains(float kp
+	explicit SetHeadControllerGains(float kp
 		,float ki
 		,float maxIntegralError)
 	:kp(kp)
@@ -1393,8 +1395,8 @@ struct U2G_SetHeadControllerGains
 	,maxIntegralError(maxIntegralError)
 	{}
 
-	explicit U2G_SetHeadControllerGains(const uint8_t* buff, size_t len);
-	explicit U2G_SetHeadControllerGains(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetHeadControllerGains(const uint8_t* buff, size_t len);
+	explicit SetHeadControllerGains(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1406,26 +1408,26 @@ struct U2G_SetHeadControllerGains
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetHeadControllerGains& other) const;
-	bool operator!=(const U2G_SetHeadControllerGains& other) const;
+	bool operator==(const SetHeadControllerGains& other) const;
+	bool operator!=(const SetHeadControllerGains& other) const;
 };
 
-// MESSAGE U2G_SetLiftControllerGains
-struct U2G_SetLiftControllerGains
+// MESSAGE SetLiftControllerGains
+struct SetLiftControllerGains
 {
 	float kp;
 	float ki;
 	float maxIntegralError;
 	
 	/**** Constructors ****/
-	U2G_SetLiftControllerGains() = default;
-	U2G_SetLiftControllerGains(const U2G_SetLiftControllerGains& other) = default;
-	U2G_SetLiftControllerGains(U2G_SetLiftControllerGains& other) = default;
-	U2G_SetLiftControllerGains(U2G_SetLiftControllerGains&& other) noexcept = default;
-	U2G_SetLiftControllerGains& operator=(const U2G_SetLiftControllerGains& other) = default;
-	U2G_SetLiftControllerGains& operator=(U2G_SetLiftControllerGains&& other) noexcept = default;
+	SetLiftControllerGains() = default;
+	SetLiftControllerGains(const SetLiftControllerGains& other) = default;
+	SetLiftControllerGains(SetLiftControllerGains& other) = default;
+	SetLiftControllerGains(SetLiftControllerGains&& other) noexcept = default;
+	SetLiftControllerGains& operator=(const SetLiftControllerGains& other) = default;
+	SetLiftControllerGains& operator=(SetLiftControllerGains&& other) noexcept = default;
 	
-	explicit U2G_SetLiftControllerGains(float kp
+	explicit SetLiftControllerGains(float kp
 		,float ki
 		,float maxIntegralError)
 	:kp(kp)
@@ -1433,8 +1435,8 @@ struct U2G_SetLiftControllerGains
 	,maxIntegralError(maxIntegralError)
 	{}
 
-	explicit U2G_SetLiftControllerGains(const uint8_t* buff, size_t len);
-	explicit U2G_SetLiftControllerGains(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetLiftControllerGains(const uint8_t* buff, size_t len);
+	explicit SetLiftControllerGains(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1446,23 +1448,23 @@ struct U2G_SetLiftControllerGains
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetLiftControllerGains& other) const;
-	bool operator!=(const U2G_SetLiftControllerGains& other) const;
+	bool operator==(const SetLiftControllerGains& other) const;
+	bool operator!=(const SetLiftControllerGains& other) const;
 };
 
-// MESSAGE U2G_SelectNextSoundScheme
-struct U2G_SelectNextSoundScheme
+// MESSAGE SelectNextSoundScheme
+struct SelectNextSoundScheme
 {
 	
 	/**** Constructors ****/
-	U2G_SelectNextSoundScheme() = default;
-	U2G_SelectNextSoundScheme(const U2G_SelectNextSoundScheme& other) = default;
-	U2G_SelectNextSoundScheme(U2G_SelectNextSoundScheme& other) = default;
-	U2G_SelectNextSoundScheme(U2G_SelectNextSoundScheme&& other) noexcept = default;
-	U2G_SelectNextSoundScheme& operator=(const U2G_SelectNextSoundScheme& other) = default;
-	U2G_SelectNextSoundScheme& operator=(U2G_SelectNextSoundScheme&& other) noexcept = default;
-		explicit U2G_SelectNextSoundScheme(const uint8_t* buff, size_t len);
-	explicit U2G_SelectNextSoundScheme(const CLAD::SafeMessageBuffer& buffer);
+	SelectNextSoundScheme() = default;
+	SelectNextSoundScheme(const SelectNextSoundScheme& other) = default;
+	SelectNextSoundScheme(SelectNextSoundScheme& other) = default;
+	SelectNextSoundScheme(SelectNextSoundScheme&& other) noexcept = default;
+	SelectNextSoundScheme& operator=(const SelectNextSoundScheme& other) = default;
+	SelectNextSoundScheme& operator=(SelectNextSoundScheme&& other) noexcept = default;
+		explicit SelectNextSoundScheme(const uint8_t* buff, size_t len);
+	explicit SelectNextSoundScheme(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1474,12 +1476,12 @@ struct U2G_SelectNextSoundScheme
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SelectNextSoundScheme& other) const;
-	bool operator!=(const U2G_SelectNextSoundScheme& other) const;
+	bool operator==(const SelectNextSoundScheme& other) const;
+	bool operator!=(const SelectNextSoundScheme& other) const;
 };
 
-// MESSAGE U2G_StartTestMode
-struct U2G_StartTestMode
+// MESSAGE StartTestMode
+struct StartTestMode
 {
 	int32_t p1;
 	int32_t p2;
@@ -1487,14 +1489,14 @@ struct U2G_StartTestMode
 	uint8_t mode;
 	
 	/**** Constructors ****/
-	U2G_StartTestMode() = default;
-	U2G_StartTestMode(const U2G_StartTestMode& other) = default;
-	U2G_StartTestMode(U2G_StartTestMode& other) = default;
-	U2G_StartTestMode(U2G_StartTestMode&& other) noexcept = default;
-	U2G_StartTestMode& operator=(const U2G_StartTestMode& other) = default;
-	U2G_StartTestMode& operator=(U2G_StartTestMode&& other) noexcept = default;
+	StartTestMode() = default;
+	StartTestMode(const StartTestMode& other) = default;
+	StartTestMode(StartTestMode& other) = default;
+	StartTestMode(StartTestMode&& other) noexcept = default;
+	StartTestMode& operator=(const StartTestMode& other) = default;
+	StartTestMode& operator=(StartTestMode&& other) noexcept = default;
 	
-	explicit U2G_StartTestMode(int32_t p1
+	explicit StartTestMode(int32_t p1
 		,int32_t p2
 		,int32_t p3
 		,uint8_t mode)
@@ -1504,8 +1506,8 @@ struct U2G_StartTestMode
 	,mode(mode)
 	{}
 
-	explicit U2G_StartTestMode(const uint8_t* buff, size_t len);
-	explicit U2G_StartTestMode(const CLAD::SafeMessageBuffer& buffer);
+	explicit StartTestMode(const uint8_t* buff, size_t len);
+	explicit StartTestMode(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1517,29 +1519,29 @@ struct U2G_StartTestMode
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StartTestMode& other) const;
-	bool operator!=(const U2G_StartTestMode& other) const;
+	bool operator==(const StartTestMode& other) const;
+	bool operator!=(const StartTestMode& other) const;
 };
 
-// MESSAGE U2G_IMURequest
-struct U2G_IMURequest
+// MESSAGE IMURequest
+struct IMURequest
 {
 	uint32_t length_ms;
 	
 	/**** Constructors ****/
-	U2G_IMURequest() = default;
-	U2G_IMURequest(const U2G_IMURequest& other) = default;
-	U2G_IMURequest(U2G_IMURequest& other) = default;
-	U2G_IMURequest(U2G_IMURequest&& other) noexcept = default;
-	U2G_IMURequest& operator=(const U2G_IMURequest& other) = default;
-	U2G_IMURequest& operator=(U2G_IMURequest&& other) noexcept = default;
+	IMURequest() = default;
+	IMURequest(const IMURequest& other) = default;
+	IMURequest(IMURequest& other) = default;
+	IMURequest(IMURequest&& other) noexcept = default;
+	IMURequest& operator=(const IMURequest& other) = default;
+	IMURequest& operator=(IMURequest&& other) noexcept = default;
 	
-	explicit U2G_IMURequest(uint32_t length_ms)
+	explicit IMURequest(uint32_t length_ms)
 	:length_ms(length_ms)
 	{}
 
-	explicit U2G_IMURequest(const uint8_t* buff, size_t len);
-	explicit U2G_IMURequest(const CLAD::SafeMessageBuffer& buffer);
+	explicit IMURequest(const uint8_t* buff, size_t len);
+	explicit IMURequest(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1551,32 +1553,32 @@ struct U2G_IMURequest
 
 	size_t Size() const;
 
-	bool operator==(const U2G_IMURequest& other) const;
-	bool operator!=(const U2G_IMURequest& other) const;
+	bool operator==(const IMURequest& other) const;
+	bool operator!=(const IMURequest& other) const;
 };
 
-// MESSAGE U2G_PlayAnimation
-struct U2G_PlayAnimation
+// MESSAGE PlayAnimation
+struct PlayAnimation
 {
 	uint32_t numLoops;
 	std::string animationName;
 	
 	/**** Constructors ****/
-	U2G_PlayAnimation() = default;
-	U2G_PlayAnimation(const U2G_PlayAnimation& other) = default;
-	U2G_PlayAnimation(U2G_PlayAnimation& other) = default;
-	U2G_PlayAnimation(U2G_PlayAnimation&& other) noexcept = default;
-	U2G_PlayAnimation& operator=(const U2G_PlayAnimation& other) = default;
-	U2G_PlayAnimation& operator=(U2G_PlayAnimation&& other) noexcept = default;
+	PlayAnimation() = default;
+	PlayAnimation(const PlayAnimation& other) = default;
+	PlayAnimation(PlayAnimation& other) = default;
+	PlayAnimation(PlayAnimation&& other) noexcept = default;
+	PlayAnimation& operator=(const PlayAnimation& other) = default;
+	PlayAnimation& operator=(PlayAnimation&& other) noexcept = default;
 	
-	explicit U2G_PlayAnimation(uint32_t numLoops
+	explicit PlayAnimation(uint32_t numLoops
 		,const std::string& animationName)
 	:numLoops(numLoops)
 	,animationName(animationName)
 	{}
 
-	explicit U2G_PlayAnimation(const uint8_t* buff, size_t len);
-	explicit U2G_PlayAnimation(const CLAD::SafeMessageBuffer& buffer);
+	explicit PlayAnimation(const uint8_t* buff, size_t len);
+	explicit PlayAnimation(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1588,23 +1590,23 @@ struct U2G_PlayAnimation
 
 	size_t Size() const;
 
-	bool operator==(const U2G_PlayAnimation& other) const;
-	bool operator!=(const U2G_PlayAnimation& other) const;
+	bool operator==(const PlayAnimation& other) const;
+	bool operator!=(const PlayAnimation& other) const;
 };
 
-// MESSAGE U2G_ReadAnimationFile
-struct U2G_ReadAnimationFile
+// MESSAGE ReadAnimationFile
+struct ReadAnimationFile
 {
 	
 	/**** Constructors ****/
-	U2G_ReadAnimationFile() = default;
-	U2G_ReadAnimationFile(const U2G_ReadAnimationFile& other) = default;
-	U2G_ReadAnimationFile(U2G_ReadAnimationFile& other) = default;
-	U2G_ReadAnimationFile(U2G_ReadAnimationFile&& other) noexcept = default;
-	U2G_ReadAnimationFile& operator=(const U2G_ReadAnimationFile& other) = default;
-	U2G_ReadAnimationFile& operator=(U2G_ReadAnimationFile&& other) noexcept = default;
-		explicit U2G_ReadAnimationFile(const uint8_t* buff, size_t len);
-	explicit U2G_ReadAnimationFile(const CLAD::SafeMessageBuffer& buffer);
+	ReadAnimationFile() = default;
+	ReadAnimationFile(const ReadAnimationFile& other) = default;
+	ReadAnimationFile(ReadAnimationFile& other) = default;
+	ReadAnimationFile(ReadAnimationFile&& other) noexcept = default;
+	ReadAnimationFile& operator=(const ReadAnimationFile& other) = default;
+	ReadAnimationFile& operator=(ReadAnimationFile&& other) noexcept = default;
+		explicit ReadAnimationFile(const uint8_t* buff, size_t len);
+	explicit ReadAnimationFile(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1616,29 +1618,29 @@ struct U2G_ReadAnimationFile
 
 	size_t Size() const;
 
-	bool operator==(const U2G_ReadAnimationFile& other) const;
-	bool operator!=(const U2G_ReadAnimationFile& other) const;
+	bool operator==(const ReadAnimationFile& other) const;
+	bool operator!=(const ReadAnimationFile& other) const;
 };
 
-// MESSAGE U2G_StartFaceTracking
-struct U2G_StartFaceTracking
+// MESSAGE StartFaceTracking
+struct StartFaceTracking
 {
 	uint8_t timeout_sec;
 	
 	/**** Constructors ****/
-	U2G_StartFaceTracking() = default;
-	U2G_StartFaceTracking(const U2G_StartFaceTracking& other) = default;
-	U2G_StartFaceTracking(U2G_StartFaceTracking& other) = default;
-	U2G_StartFaceTracking(U2G_StartFaceTracking&& other) noexcept = default;
-	U2G_StartFaceTracking& operator=(const U2G_StartFaceTracking& other) = default;
-	U2G_StartFaceTracking& operator=(U2G_StartFaceTracking&& other) noexcept = default;
+	StartFaceTracking() = default;
+	StartFaceTracking(const StartFaceTracking& other) = default;
+	StartFaceTracking(StartFaceTracking& other) = default;
+	StartFaceTracking(StartFaceTracking&& other) noexcept = default;
+	StartFaceTracking& operator=(const StartFaceTracking& other) = default;
+	StartFaceTracking& operator=(StartFaceTracking&& other) noexcept = default;
 	
-	explicit U2G_StartFaceTracking(uint8_t timeout_sec)
+	explicit StartFaceTracking(uint8_t timeout_sec)
 	:timeout_sec(timeout_sec)
 	{}
 
-	explicit U2G_StartFaceTracking(const uint8_t* buff, size_t len);
-	explicit U2G_StartFaceTracking(const CLAD::SafeMessageBuffer& buffer);
+	explicit StartFaceTracking(const uint8_t* buff, size_t len);
+	explicit StartFaceTracking(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1650,23 +1652,23 @@ struct U2G_StartFaceTracking
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StartFaceTracking& other) const;
-	bool operator!=(const U2G_StartFaceTracking& other) const;
+	bool operator==(const StartFaceTracking& other) const;
+	bool operator!=(const StartFaceTracking& other) const;
 };
 
-// MESSAGE U2G_StopFaceTracking
-struct U2G_StopFaceTracking
+// MESSAGE StopFaceTracking
+struct StopFaceTracking
 {
 	
 	/**** Constructors ****/
-	U2G_StopFaceTracking() = default;
-	U2G_StopFaceTracking(const U2G_StopFaceTracking& other) = default;
-	U2G_StopFaceTracking(U2G_StopFaceTracking& other) = default;
-	U2G_StopFaceTracking(U2G_StopFaceTracking&& other) noexcept = default;
-	U2G_StopFaceTracking& operator=(const U2G_StopFaceTracking& other) = default;
-	U2G_StopFaceTracking& operator=(U2G_StopFaceTracking&& other) noexcept = default;
-		explicit U2G_StopFaceTracking(const uint8_t* buff, size_t len);
-	explicit U2G_StopFaceTracking(const CLAD::SafeMessageBuffer& buffer);
+	StopFaceTracking() = default;
+	StopFaceTracking(const StopFaceTracking& other) = default;
+	StopFaceTracking(StopFaceTracking& other) = default;
+	StopFaceTracking(StopFaceTracking&& other) noexcept = default;
+	StopFaceTracking& operator=(const StopFaceTracking& other) = default;
+	StopFaceTracking& operator=(StopFaceTracking&& other) noexcept = default;
+		explicit StopFaceTracking(const uint8_t* buff, size_t len);
+	explicit StopFaceTracking(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1678,23 +1680,23 @@ struct U2G_StopFaceTracking
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StopFaceTracking& other) const;
-	bool operator!=(const U2G_StopFaceTracking& other) const;
+	bool operator==(const StopFaceTracking& other) const;
+	bool operator!=(const StopFaceTracking& other) const;
 };
 
-// MESSAGE U2G_StartLookingForMarkers
-struct U2G_StartLookingForMarkers
+// MESSAGE StartLookingForMarkers
+struct StartLookingForMarkers
 {
 	
 	/**** Constructors ****/
-	U2G_StartLookingForMarkers() = default;
-	U2G_StartLookingForMarkers(const U2G_StartLookingForMarkers& other) = default;
-	U2G_StartLookingForMarkers(U2G_StartLookingForMarkers& other) = default;
-	U2G_StartLookingForMarkers(U2G_StartLookingForMarkers&& other) noexcept = default;
-	U2G_StartLookingForMarkers& operator=(const U2G_StartLookingForMarkers& other) = default;
-	U2G_StartLookingForMarkers& operator=(U2G_StartLookingForMarkers&& other) noexcept = default;
-		explicit U2G_StartLookingForMarkers(const uint8_t* buff, size_t len);
-	explicit U2G_StartLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
+	StartLookingForMarkers() = default;
+	StartLookingForMarkers(const StartLookingForMarkers& other) = default;
+	StartLookingForMarkers(StartLookingForMarkers& other) = default;
+	StartLookingForMarkers(StartLookingForMarkers&& other) noexcept = default;
+	StartLookingForMarkers& operator=(const StartLookingForMarkers& other) = default;
+	StartLookingForMarkers& operator=(StartLookingForMarkers&& other) noexcept = default;
+		explicit StartLookingForMarkers(const uint8_t* buff, size_t len);
+	explicit StartLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1706,23 +1708,23 @@ struct U2G_StartLookingForMarkers
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StartLookingForMarkers& other) const;
-	bool operator!=(const U2G_StartLookingForMarkers& other) const;
+	bool operator==(const StartLookingForMarkers& other) const;
+	bool operator!=(const StartLookingForMarkers& other) const;
 };
 
-// MESSAGE U2G_StopLookingForMarkers
-struct U2G_StopLookingForMarkers
+// MESSAGE StopLookingForMarkers
+struct StopLookingForMarkers
 {
 	
 	/**** Constructors ****/
-	U2G_StopLookingForMarkers() = default;
-	U2G_StopLookingForMarkers(const U2G_StopLookingForMarkers& other) = default;
-	U2G_StopLookingForMarkers(U2G_StopLookingForMarkers& other) = default;
-	U2G_StopLookingForMarkers(U2G_StopLookingForMarkers&& other) noexcept = default;
-	U2G_StopLookingForMarkers& operator=(const U2G_StopLookingForMarkers& other) = default;
-	U2G_StopLookingForMarkers& operator=(U2G_StopLookingForMarkers&& other) noexcept = default;
-		explicit U2G_StopLookingForMarkers(const uint8_t* buff, size_t len);
-	explicit U2G_StopLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
+	StopLookingForMarkers() = default;
+	StopLookingForMarkers(const StopLookingForMarkers& other) = default;
+	StopLookingForMarkers(StopLookingForMarkers& other) = default;
+	StopLookingForMarkers(StopLookingForMarkers&& other) noexcept = default;
+	StopLookingForMarkers& operator=(const StopLookingForMarkers& other) = default;
+	StopLookingForMarkers& operator=(StopLookingForMarkers&& other) noexcept = default;
+		explicit StopLookingForMarkers(const uint8_t* buff, size_t len);
+	explicit StopLookingForMarkers(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1734,12 +1736,12 @@ struct U2G_StopLookingForMarkers
 
 	size_t Size() const;
 
-	bool operator==(const U2G_StopLookingForMarkers& other) const;
-	bool operator!=(const U2G_StopLookingForMarkers& other) const;
+	bool operator==(const StopLookingForMarkers& other) const;
+	bool operator!=(const StopLookingForMarkers& other) const;
 };
 
-// MESSAGE U2G_SetVisionSystemParams
-struct U2G_SetVisionSystemParams
+// MESSAGE SetVisionSystemParams
+struct SetVisionSystemParams
 {
 	int32_t autoexposureOn;
 	float exposureTime;
@@ -1751,14 +1753,14 @@ struct U2G_SetVisionSystemParams
 	uint8_t highValue;
 	
 	/**** Constructors ****/
-	U2G_SetVisionSystemParams() = default;
-	U2G_SetVisionSystemParams(const U2G_SetVisionSystemParams& other) = default;
-	U2G_SetVisionSystemParams(U2G_SetVisionSystemParams& other) = default;
-	U2G_SetVisionSystemParams(U2G_SetVisionSystemParams&& other) noexcept = default;
-	U2G_SetVisionSystemParams& operator=(const U2G_SetVisionSystemParams& other) = default;
-	U2G_SetVisionSystemParams& operator=(U2G_SetVisionSystemParams&& other) noexcept = default;
+	SetVisionSystemParams() = default;
+	SetVisionSystemParams(const SetVisionSystemParams& other) = default;
+	SetVisionSystemParams(SetVisionSystemParams& other) = default;
+	SetVisionSystemParams(SetVisionSystemParams&& other) noexcept = default;
+	SetVisionSystemParams& operator=(const SetVisionSystemParams& other) = default;
+	SetVisionSystemParams& operator=(SetVisionSystemParams&& other) noexcept = default;
 	
-	explicit U2G_SetVisionSystemParams(int32_t autoexposureOn
+	explicit SetVisionSystemParams(int32_t autoexposureOn
 		,float exposureTime
 		,int32_t integerCountsIncrement
 		,float minExposureTime
@@ -1776,8 +1778,8 @@ struct U2G_SetVisionSystemParams
 	,highValue(highValue)
 	{}
 
-	explicit U2G_SetVisionSystemParams(const uint8_t* buff, size_t len);
-	explicit U2G_SetVisionSystemParams(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetVisionSystemParams(const uint8_t* buff, size_t len);
+	explicit SetVisionSystemParams(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1789,12 +1791,12 @@ struct U2G_SetVisionSystemParams
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetVisionSystemParams& other) const;
-	bool operator!=(const U2G_SetVisionSystemParams& other) const;
+	bool operator==(const SetVisionSystemParams& other) const;
+	bool operator!=(const SetVisionSystemParams& other) const;
 };
 
-// MESSAGE U2G_SetFaceDetectParams
-struct U2G_SetFaceDetectParams
+// MESSAGE SetFaceDetectParams
+struct SetFaceDetectParams
 {
 	float scaleFactor;
 	int32_t minNeighbors;
@@ -1804,14 +1806,14 @@ struct U2G_SetFaceDetectParams
 	int32_t maxObjectWidth;
 	
 	/**** Constructors ****/
-	U2G_SetFaceDetectParams() = default;
-	U2G_SetFaceDetectParams(const U2G_SetFaceDetectParams& other) = default;
-	U2G_SetFaceDetectParams(U2G_SetFaceDetectParams& other) = default;
-	U2G_SetFaceDetectParams(U2G_SetFaceDetectParams&& other) noexcept = default;
-	U2G_SetFaceDetectParams& operator=(const U2G_SetFaceDetectParams& other) = default;
-	U2G_SetFaceDetectParams& operator=(U2G_SetFaceDetectParams&& other) noexcept = default;
+	SetFaceDetectParams() = default;
+	SetFaceDetectParams(const SetFaceDetectParams& other) = default;
+	SetFaceDetectParams(SetFaceDetectParams& other) = default;
+	SetFaceDetectParams(SetFaceDetectParams&& other) noexcept = default;
+	SetFaceDetectParams& operator=(const SetFaceDetectParams& other) = default;
+	SetFaceDetectParams& operator=(SetFaceDetectParams&& other) noexcept = default;
 	
-	explicit U2G_SetFaceDetectParams(float scaleFactor
+	explicit SetFaceDetectParams(float scaleFactor
 		,int32_t minNeighbors
 		,int32_t minObjectHeight
 		,int32_t minObjectWidth
@@ -1825,8 +1827,8 @@ struct U2G_SetFaceDetectParams
 	,maxObjectWidth(maxObjectWidth)
 	{}
 
-	explicit U2G_SetFaceDetectParams(const uint8_t* buff, size_t len);
-	explicit U2G_SetFaceDetectParams(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetFaceDetectParams(const uint8_t* buff, size_t len);
+	explicit SetFaceDetectParams(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1838,12 +1840,12 @@ struct U2G_SetFaceDetectParams
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetFaceDetectParams& other) const;
-	bool operator!=(const U2G_SetFaceDetectParams& other) const;
+	bool operator==(const SetFaceDetectParams& other) const;
+	bool operator!=(const SetFaceDetectParams& other) const;
 };
 
-// MESSAGE U2G_SetActiveObjectLEDs
-struct U2G_SetActiveObjectLEDs
+// MESSAGE SetActiveObjectLEDs
+struct SetActiveObjectLEDs
 {
 	uint32_t objectID;
 	uint32_t color;
@@ -1859,14 +1861,14 @@ struct U2G_SetActiveObjectLEDs
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_SetActiveObjectLEDs() = default;
-	U2G_SetActiveObjectLEDs(const U2G_SetActiveObjectLEDs& other) = default;
-	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs& other) = default;
-	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs&& other) noexcept = default;
-	U2G_SetActiveObjectLEDs& operator=(const U2G_SetActiveObjectLEDs& other) = default;
-	U2G_SetActiveObjectLEDs& operator=(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	SetActiveObjectLEDs() = default;
+	SetActiveObjectLEDs(const SetActiveObjectLEDs& other) = default;
+	SetActiveObjectLEDs(SetActiveObjectLEDs& other) = default;
+	SetActiveObjectLEDs(SetActiveObjectLEDs&& other) noexcept = default;
+	SetActiveObjectLEDs& operator=(const SetActiveObjectLEDs& other) = default;
+	SetActiveObjectLEDs& operator=(SetActiveObjectLEDs&& other) noexcept = default;
 	
-	explicit U2G_SetActiveObjectLEDs(uint32_t objectID
+	explicit SetActiveObjectLEDs(uint32_t objectID
 		,uint32_t color
 		,uint32_t onPeriod_ms
 		,uint32_t offPeriod_ms
@@ -1892,8 +1894,8 @@ struct U2G_SetActiveObjectLEDs
 	,robotID(robotID)
 	{}
 
-	explicit U2G_SetActiveObjectLEDs(const uint8_t* buff, size_t len);
-	explicit U2G_SetActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit SetActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1905,12 +1907,12 @@ struct U2G_SetActiveObjectLEDs
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetActiveObjectLEDs& other) const;
-	bool operator!=(const U2G_SetActiveObjectLEDs& other) const;
+	bool operator==(const SetActiveObjectLEDs& other) const;
+	bool operator!=(const SetActiveObjectLEDs& other) const;
 };
 
-// MESSAGE U2G_SetAllActiveObjectLEDs
-struct U2G_SetAllActiveObjectLEDs
+// MESSAGE SetAllActiveObjectLEDs
+struct SetAllActiveObjectLEDs
 {
 	uint32_t objectID;
 	std::array<uint32_t, 8> color;
@@ -1924,14 +1926,14 @@ struct U2G_SetAllActiveObjectLEDs
 	uint8_t robotID;
 	
 	/**** Constructors ****/
-	U2G_SetAllActiveObjectLEDs() = default;
-	U2G_SetAllActiveObjectLEDs(const U2G_SetAllActiveObjectLEDs& other) = default;
-	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs& other) = default;
-	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
-	U2G_SetAllActiveObjectLEDs& operator=(const U2G_SetAllActiveObjectLEDs& other) = default;
-	U2G_SetAllActiveObjectLEDs& operator=(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
+	SetAllActiveObjectLEDs() = default;
+	SetAllActiveObjectLEDs(const SetAllActiveObjectLEDs& other) = default;
+	SetAllActiveObjectLEDs(SetAllActiveObjectLEDs& other) = default;
+	SetAllActiveObjectLEDs(SetAllActiveObjectLEDs&& other) noexcept = default;
+	SetAllActiveObjectLEDs& operator=(const SetAllActiveObjectLEDs& other) = default;
+	SetAllActiveObjectLEDs& operator=(SetAllActiveObjectLEDs&& other) noexcept = default;
 	
-	explicit U2G_SetAllActiveObjectLEDs(uint32_t objectID
+	explicit SetAllActiveObjectLEDs(uint32_t objectID
 		,const std::array<uint32_t, 8>& color
 		,const std::array<uint32_t, 8>& onPeriod_ms
 		,const std::array<uint32_t, 8>& offPeriod_ms
@@ -1953,8 +1955,8 @@ struct U2G_SetAllActiveObjectLEDs
 	,robotID(robotID)
 	{}
 
-	explicit U2G_SetAllActiveObjectLEDs(const uint8_t* buff, size_t len);
-	explicit U2G_SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	explicit SetAllActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -1966,287 +1968,287 @@ struct U2G_SetAllActiveObjectLEDs
 
 	size_t Size() const;
 
-	bool operator==(const U2G_SetAllActiveObjectLEDs& other) const;
-	bool operator!=(const U2G_SetAllActiveObjectLEDs& other) const;
+	bool operator==(const SetAllActiveObjectLEDs& other) const;
+	bool operator!=(const SetAllActiveObjectLEDs& other) const;
 };
 
-// UNION U2G_Message
-class U2G_Message
+// UNION Message
+class Message
 {
 public:
-	using Tag = U2G_MessageTag;
+	using Tag = MessageTag;
 	/**** Constructors ****/
-	U2G_Message() :_tag(Tag::INVALID) { }
-	explicit U2G_Message(const CLAD::SafeMessageBuffer& buff);
-	explicit U2G_Message(const uint8_t* buffer, size_t length);
+	Message() :_tag(Tag::INVALID) { }
+	explicit Message(const CLAD::SafeMessageBuffer& buff);
+	explicit Message(const uint8_t* buffer, size_t length);
 
-	~U2G_Message() { ClearCurrent(); }
+	~Message() { ClearCurrent(); }
 	Tag GetTag() const { return _tag; }
 
 	/** Ping **/
-	const Anki::Cozmo::U2G_Ping& Get_Ping() const;
-	void Set_Ping(const Anki::Cozmo::U2G_Ping& new_Ping);
-	void Set_Ping(Anki::Cozmo::U2G_Ping&& new_Ping);
+	const Anki::Cozmo::U2G::Ping& Get_Ping() const;
+	void Set_Ping(const Anki::Cozmo::U2G::Ping& new_Ping);
+	void Set_Ping(Anki::Cozmo::U2G::Ping&& new_Ping);
 
 	/** ConnectToRobot **/
-	const Anki::Cozmo::U2G_ConnectToRobot& Get_ConnectToRobot() const;
-	void Set_ConnectToRobot(const Anki::Cozmo::U2G_ConnectToRobot& new_ConnectToRobot);
-	void Set_ConnectToRobot(Anki::Cozmo::U2G_ConnectToRobot&& new_ConnectToRobot);
+	const Anki::Cozmo::U2G::ConnectToRobot& Get_ConnectToRobot() const;
+	void Set_ConnectToRobot(const Anki::Cozmo::U2G::ConnectToRobot& new_ConnectToRobot);
+	void Set_ConnectToRobot(Anki::Cozmo::U2G::ConnectToRobot&& new_ConnectToRobot);
 
 	/** ConnectToUiDevice **/
-	const Anki::Cozmo::U2G_ConnectToUiDevice& Get_ConnectToUiDevice() const;
-	void Set_ConnectToUiDevice(const Anki::Cozmo::U2G_ConnectToUiDevice& new_ConnectToUiDevice);
-	void Set_ConnectToUiDevice(Anki::Cozmo::U2G_ConnectToUiDevice&& new_ConnectToUiDevice);
+	const Anki::Cozmo::U2G::ConnectToUiDevice& Get_ConnectToUiDevice() const;
+	void Set_ConnectToUiDevice(const Anki::Cozmo::U2G::ConnectToUiDevice& new_ConnectToUiDevice);
+	void Set_ConnectToUiDevice(Anki::Cozmo::U2G::ConnectToUiDevice&& new_ConnectToUiDevice);
 
 	/** DisconnectFromUiDevice **/
-	const Anki::Cozmo::U2G_DisconnectFromUiDevice& Get_DisconnectFromUiDevice() const;
-	void Set_DisconnectFromUiDevice(const Anki::Cozmo::U2G_DisconnectFromUiDevice& new_DisconnectFromUiDevice);
-	void Set_DisconnectFromUiDevice(Anki::Cozmo::U2G_DisconnectFromUiDevice&& new_DisconnectFromUiDevice);
+	const Anki::Cozmo::U2G::DisconnectFromUiDevice& Get_DisconnectFromUiDevice() const;
+	void Set_DisconnectFromUiDevice(const Anki::Cozmo::U2G::DisconnectFromUiDevice& new_DisconnectFromUiDevice);
+	void Set_DisconnectFromUiDevice(Anki::Cozmo::U2G::DisconnectFromUiDevice&& new_DisconnectFromUiDevice);
 
 	/** ForceAddRobot **/
-	const Anki::Cozmo::U2G_ForceAddRobot& Get_ForceAddRobot() const;
-	void Set_ForceAddRobot(const Anki::Cozmo::U2G_ForceAddRobot& new_ForceAddRobot);
-	void Set_ForceAddRobot(Anki::Cozmo::U2G_ForceAddRobot&& new_ForceAddRobot);
+	const Anki::Cozmo::U2G::ForceAddRobot& Get_ForceAddRobot() const;
+	void Set_ForceAddRobot(const Anki::Cozmo::U2G::ForceAddRobot& new_ForceAddRobot);
+	void Set_ForceAddRobot(Anki::Cozmo::U2G::ForceAddRobot&& new_ForceAddRobot);
 
 	/** StartEngine **/
-	const Anki::Cozmo::U2G_StartEngine& Get_StartEngine() const;
-	void Set_StartEngine(const Anki::Cozmo::U2G_StartEngine& new_StartEngine);
-	void Set_StartEngine(Anki::Cozmo::U2G_StartEngine&& new_StartEngine);
+	const Anki::Cozmo::U2G::StartEngine& Get_StartEngine() const;
+	void Set_StartEngine(const Anki::Cozmo::U2G::StartEngine& new_StartEngine);
+	void Set_StartEngine(Anki::Cozmo::U2G::StartEngine&& new_StartEngine);
 
 	/** DriveWheels **/
-	const Anki::Cozmo::U2G_DriveWheels& Get_DriveWheels() const;
-	void Set_DriveWheels(const Anki::Cozmo::U2G_DriveWheels& new_DriveWheels);
-	void Set_DriveWheels(Anki::Cozmo::U2G_DriveWheels&& new_DriveWheels);
+	const Anki::Cozmo::U2G::DriveWheels& Get_DriveWheels() const;
+	void Set_DriveWheels(const Anki::Cozmo::U2G::DriveWheels& new_DriveWheels);
+	void Set_DriveWheels(Anki::Cozmo::U2G::DriveWheels&& new_DriveWheels);
 
 	/** TurnInPlace **/
-	const Anki::Cozmo::U2G_TurnInPlace& Get_TurnInPlace() const;
-	void Set_TurnInPlace(const Anki::Cozmo::U2G_TurnInPlace& new_TurnInPlace);
-	void Set_TurnInPlace(Anki::Cozmo::U2G_TurnInPlace&& new_TurnInPlace);
+	const Anki::Cozmo::U2G::TurnInPlace& Get_TurnInPlace() const;
+	void Set_TurnInPlace(const Anki::Cozmo::U2G::TurnInPlace& new_TurnInPlace);
+	void Set_TurnInPlace(Anki::Cozmo::U2G::TurnInPlace&& new_TurnInPlace);
 
 	/** FaceObject **/
-	const Anki::Cozmo::U2G_FaceObject& Get_FaceObject() const;
-	void Set_FaceObject(const Anki::Cozmo::U2G_FaceObject& new_FaceObject);
-	void Set_FaceObject(Anki::Cozmo::U2G_FaceObject&& new_FaceObject);
+	const Anki::Cozmo::U2G::FaceObject& Get_FaceObject() const;
+	void Set_FaceObject(const Anki::Cozmo::U2G::FaceObject& new_FaceObject);
+	void Set_FaceObject(Anki::Cozmo::U2G::FaceObject&& new_FaceObject);
 
 	/** MoveHead **/
-	const Anki::Cozmo::U2G_MoveHead& Get_MoveHead() const;
-	void Set_MoveHead(const Anki::Cozmo::U2G_MoveHead& new_MoveHead);
-	void Set_MoveHead(Anki::Cozmo::U2G_MoveHead&& new_MoveHead);
+	const Anki::Cozmo::U2G::MoveHead& Get_MoveHead() const;
+	void Set_MoveHead(const Anki::Cozmo::U2G::MoveHead& new_MoveHead);
+	void Set_MoveHead(Anki::Cozmo::U2G::MoveHead&& new_MoveHead);
 
 	/** MoveLift **/
-	const Anki::Cozmo::U2G_MoveLift& Get_MoveLift() const;
-	void Set_MoveLift(const Anki::Cozmo::U2G_MoveLift& new_MoveLift);
-	void Set_MoveLift(Anki::Cozmo::U2G_MoveLift&& new_MoveLift);
+	const Anki::Cozmo::U2G::MoveLift& Get_MoveLift() const;
+	void Set_MoveLift(const Anki::Cozmo::U2G::MoveLift& new_MoveLift);
+	void Set_MoveLift(Anki::Cozmo::U2G::MoveLift&& new_MoveLift);
 
 	/** SetLiftHeight **/
-	const Anki::Cozmo::U2G_SetLiftHeight& Get_SetLiftHeight() const;
-	void Set_SetLiftHeight(const Anki::Cozmo::U2G_SetLiftHeight& new_SetLiftHeight);
-	void Set_SetLiftHeight(Anki::Cozmo::U2G_SetLiftHeight&& new_SetLiftHeight);
+	const Anki::Cozmo::U2G::SetLiftHeight& Get_SetLiftHeight() const;
+	void Set_SetLiftHeight(const Anki::Cozmo::U2G::SetLiftHeight& new_SetLiftHeight);
+	void Set_SetLiftHeight(Anki::Cozmo::U2G::SetLiftHeight&& new_SetLiftHeight);
 
 	/** SetHeadAngle **/
-	const Anki::Cozmo::U2G_SetHeadAngle& Get_SetHeadAngle() const;
-	void Set_SetHeadAngle(const Anki::Cozmo::U2G_SetHeadAngle& new_SetHeadAngle);
-	void Set_SetHeadAngle(Anki::Cozmo::U2G_SetHeadAngle&& new_SetHeadAngle);
+	const Anki::Cozmo::U2G::SetHeadAngle& Get_SetHeadAngle() const;
+	void Set_SetHeadAngle(const Anki::Cozmo::U2G::SetHeadAngle& new_SetHeadAngle);
+	void Set_SetHeadAngle(Anki::Cozmo::U2G::SetHeadAngle&& new_SetHeadAngle);
 
 	/** TrackHeadToObject **/
-	const Anki::Cozmo::U2G_TrackHeadToObject& Get_TrackHeadToObject() const;
-	void Set_TrackHeadToObject(const Anki::Cozmo::U2G_TrackHeadToObject& new_TrackHeadToObject);
-	void Set_TrackHeadToObject(Anki::Cozmo::U2G_TrackHeadToObject&& new_TrackHeadToObject);
+	const Anki::Cozmo::U2G::TrackHeadToObject& Get_TrackHeadToObject() const;
+	void Set_TrackHeadToObject(const Anki::Cozmo::U2G::TrackHeadToObject& new_TrackHeadToObject);
+	void Set_TrackHeadToObject(Anki::Cozmo::U2G::TrackHeadToObject&& new_TrackHeadToObject);
 
 	/** StopAllMotors **/
-	const Anki::Cozmo::U2G_StopAllMotors& Get_StopAllMotors() const;
-	void Set_StopAllMotors(const Anki::Cozmo::U2G_StopAllMotors& new_StopAllMotors);
-	void Set_StopAllMotors(Anki::Cozmo::U2G_StopAllMotors&& new_StopAllMotors);
+	const Anki::Cozmo::U2G::StopAllMotors& Get_StopAllMotors() const;
+	void Set_StopAllMotors(const Anki::Cozmo::U2G::StopAllMotors& new_StopAllMotors);
+	void Set_StopAllMotors(Anki::Cozmo::U2G::StopAllMotors&& new_StopAllMotors);
 
 	/** ImageRequest **/
-	const Anki::Cozmo::U2G_ImageRequest& Get_ImageRequest() const;
-	void Set_ImageRequest(const Anki::Cozmo::U2G_ImageRequest& new_ImageRequest);
-	void Set_ImageRequest(Anki::Cozmo::U2G_ImageRequest&& new_ImageRequest);
+	const Anki::Cozmo::U2G::ImageRequest& Get_ImageRequest() const;
+	void Set_ImageRequest(const Anki::Cozmo::U2G::ImageRequest& new_ImageRequest);
+	void Set_ImageRequest(Anki::Cozmo::U2G::ImageRequest&& new_ImageRequest);
 
 	/** SetRobotImageSendMode **/
-	const Anki::Cozmo::U2G_SetRobotImageSendMode& Get_SetRobotImageSendMode() const;
-	void Set_SetRobotImageSendMode(const Anki::Cozmo::U2G_SetRobotImageSendMode& new_SetRobotImageSendMode);
-	void Set_SetRobotImageSendMode(Anki::Cozmo::U2G_SetRobotImageSendMode&& new_SetRobotImageSendMode);
+	const Anki::Cozmo::U2G::SetRobotImageSendMode& Get_SetRobotImageSendMode() const;
+	void Set_SetRobotImageSendMode(const Anki::Cozmo::U2G::SetRobotImageSendMode& new_SetRobotImageSendMode);
+	void Set_SetRobotImageSendMode(Anki::Cozmo::U2G::SetRobotImageSendMode&& new_SetRobotImageSendMode);
 
 	/** SaveImages **/
-	const Anki::Cozmo::U2G_SaveImages& Get_SaveImages() const;
-	void Set_SaveImages(const Anki::Cozmo::U2G_SaveImages& new_SaveImages);
-	void Set_SaveImages(Anki::Cozmo::U2G_SaveImages&& new_SaveImages);
+	const Anki::Cozmo::U2G::SaveImages& Get_SaveImages() const;
+	void Set_SaveImages(const Anki::Cozmo::U2G::SaveImages& new_SaveImages);
+	void Set_SaveImages(Anki::Cozmo::U2G::SaveImages&& new_SaveImages);
 
 	/** SaveRobotState **/
-	const Anki::Cozmo::U2G_SaveRobotState& Get_SaveRobotState() const;
-	void Set_SaveRobotState(const Anki::Cozmo::U2G_SaveRobotState& new_SaveRobotState);
-	void Set_SaveRobotState(Anki::Cozmo::U2G_SaveRobotState&& new_SaveRobotState);
+	const Anki::Cozmo::U2G::SaveRobotState& Get_SaveRobotState() const;
+	void Set_SaveRobotState(const Anki::Cozmo::U2G::SaveRobotState& new_SaveRobotState);
+	void Set_SaveRobotState(Anki::Cozmo::U2G::SaveRobotState&& new_SaveRobotState);
 
 	/** EnableDisplay **/
-	const Anki::Cozmo::U2G_EnableDisplay& Get_EnableDisplay() const;
-	void Set_EnableDisplay(const Anki::Cozmo::U2G_EnableDisplay& new_EnableDisplay);
-	void Set_EnableDisplay(Anki::Cozmo::U2G_EnableDisplay&& new_EnableDisplay);
+	const Anki::Cozmo::U2G::EnableDisplay& Get_EnableDisplay() const;
+	void Set_EnableDisplay(const Anki::Cozmo::U2G::EnableDisplay& new_EnableDisplay);
+	void Set_EnableDisplay(Anki::Cozmo::U2G::EnableDisplay&& new_EnableDisplay);
 
 	/** SetHeadlights **/
-	const Anki::Cozmo::U2G_SetHeadlights& Get_SetHeadlights() const;
-	void Set_SetHeadlights(const Anki::Cozmo::U2G_SetHeadlights& new_SetHeadlights);
-	void Set_SetHeadlights(Anki::Cozmo::U2G_SetHeadlights&& new_SetHeadlights);
+	const Anki::Cozmo::U2G::SetHeadlights& Get_SetHeadlights() const;
+	void Set_SetHeadlights(const Anki::Cozmo::U2G::SetHeadlights& new_SetHeadlights);
+	void Set_SetHeadlights(Anki::Cozmo::U2G::SetHeadlights&& new_SetHeadlights);
 
 	/** GotoPose **/
-	const Anki::Cozmo::U2G_GotoPose& Get_GotoPose() const;
-	void Set_GotoPose(const Anki::Cozmo::U2G_GotoPose& new_GotoPose);
-	void Set_GotoPose(Anki::Cozmo::U2G_GotoPose&& new_GotoPose);
+	const Anki::Cozmo::U2G::GotoPose& Get_GotoPose() const;
+	void Set_GotoPose(const Anki::Cozmo::U2G::GotoPose& new_GotoPose);
+	void Set_GotoPose(Anki::Cozmo::U2G::GotoPose&& new_GotoPose);
 
 	/** PlaceObjectOnGround **/
-	const Anki::Cozmo::U2G_PlaceObjectOnGround& Get_PlaceObjectOnGround() const;
-	void Set_PlaceObjectOnGround(const Anki::Cozmo::U2G_PlaceObjectOnGround& new_PlaceObjectOnGround);
-	void Set_PlaceObjectOnGround(Anki::Cozmo::U2G_PlaceObjectOnGround&& new_PlaceObjectOnGround);
+	const Anki::Cozmo::U2G::PlaceObjectOnGround& Get_PlaceObjectOnGround() const;
+	void Set_PlaceObjectOnGround(const Anki::Cozmo::U2G::PlaceObjectOnGround& new_PlaceObjectOnGround);
+	void Set_PlaceObjectOnGround(Anki::Cozmo::U2G::PlaceObjectOnGround&& new_PlaceObjectOnGround);
 
 	/** PlaceObjectOnGroundHere **/
-	const Anki::Cozmo::U2G_PlaceObjectOnGroundHere& Get_PlaceObjectOnGroundHere() const;
-	void Set_PlaceObjectOnGroundHere(const Anki::Cozmo::U2G_PlaceObjectOnGroundHere& new_PlaceObjectOnGroundHere);
-	void Set_PlaceObjectOnGroundHere(Anki::Cozmo::U2G_PlaceObjectOnGroundHere&& new_PlaceObjectOnGroundHere);
+	const Anki::Cozmo::U2G::PlaceObjectOnGroundHere& Get_PlaceObjectOnGroundHere() const;
+	void Set_PlaceObjectOnGroundHere(const Anki::Cozmo::U2G::PlaceObjectOnGroundHere& new_PlaceObjectOnGroundHere);
+	void Set_PlaceObjectOnGroundHere(Anki::Cozmo::U2G::PlaceObjectOnGroundHere&& new_PlaceObjectOnGroundHere);
 
 	/** ExecuteTestPlan **/
-	const Anki::Cozmo::U2G_ExecuteTestPlan& Get_ExecuteTestPlan() const;
-	void Set_ExecuteTestPlan(const Anki::Cozmo::U2G_ExecuteTestPlan& new_ExecuteTestPlan);
-	void Set_ExecuteTestPlan(Anki::Cozmo::U2G_ExecuteTestPlan&& new_ExecuteTestPlan);
+	const Anki::Cozmo::U2G::ExecuteTestPlan& Get_ExecuteTestPlan() const;
+	void Set_ExecuteTestPlan(const Anki::Cozmo::U2G::ExecuteTestPlan& new_ExecuteTestPlan);
+	void Set_ExecuteTestPlan(Anki::Cozmo::U2G::ExecuteTestPlan&& new_ExecuteTestPlan);
 
 	/** SelectNextObject **/
-	const Anki::Cozmo::U2G_SelectNextObject& Get_SelectNextObject() const;
-	void Set_SelectNextObject(const Anki::Cozmo::U2G_SelectNextObject& new_SelectNextObject);
-	void Set_SelectNextObject(Anki::Cozmo::U2G_SelectNextObject&& new_SelectNextObject);
+	const Anki::Cozmo::U2G::SelectNextObject& Get_SelectNextObject() const;
+	void Set_SelectNextObject(const Anki::Cozmo::U2G::SelectNextObject& new_SelectNextObject);
+	void Set_SelectNextObject(Anki::Cozmo::U2G::SelectNextObject&& new_SelectNextObject);
 
 	/** PickAndPlaceObject **/
-	const Anki::Cozmo::U2G_PickAndPlaceObject& Get_PickAndPlaceObject() const;
-	void Set_PickAndPlaceObject(const Anki::Cozmo::U2G_PickAndPlaceObject& new_PickAndPlaceObject);
-	void Set_PickAndPlaceObject(Anki::Cozmo::U2G_PickAndPlaceObject&& new_PickAndPlaceObject);
+	const Anki::Cozmo::U2G::PickAndPlaceObject& Get_PickAndPlaceObject() const;
+	void Set_PickAndPlaceObject(const Anki::Cozmo::U2G::PickAndPlaceObject& new_PickAndPlaceObject);
+	void Set_PickAndPlaceObject(Anki::Cozmo::U2G::PickAndPlaceObject&& new_PickAndPlaceObject);
 
 	/** TraverseObject **/
-	const Anki::Cozmo::U2G_TraverseObject& Get_TraverseObject() const;
-	void Set_TraverseObject(const Anki::Cozmo::U2G_TraverseObject& new_TraverseObject);
-	void Set_TraverseObject(Anki::Cozmo::U2G_TraverseObject&& new_TraverseObject);
+	const Anki::Cozmo::U2G::TraverseObject& Get_TraverseObject() const;
+	void Set_TraverseObject(const Anki::Cozmo::U2G::TraverseObject& new_TraverseObject);
+	void Set_TraverseObject(Anki::Cozmo::U2G::TraverseObject&& new_TraverseObject);
 
 	/** SetRobotCarryingObject **/
-	const Anki::Cozmo::U2G_SetRobotCarryingObject& Get_SetRobotCarryingObject() const;
-	void Set_SetRobotCarryingObject(const Anki::Cozmo::U2G_SetRobotCarryingObject& new_SetRobotCarryingObject);
-	void Set_SetRobotCarryingObject(Anki::Cozmo::U2G_SetRobotCarryingObject&& new_SetRobotCarryingObject);
+	const Anki::Cozmo::U2G::SetRobotCarryingObject& Get_SetRobotCarryingObject() const;
+	void Set_SetRobotCarryingObject(const Anki::Cozmo::U2G::SetRobotCarryingObject& new_SetRobotCarryingObject);
+	void Set_SetRobotCarryingObject(Anki::Cozmo::U2G::SetRobotCarryingObject&& new_SetRobotCarryingObject);
 
 	/** ClearAllBlocks **/
-	const Anki::Cozmo::U2G_ClearAllBlocks& Get_ClearAllBlocks() const;
-	void Set_ClearAllBlocks(const Anki::Cozmo::U2G_ClearAllBlocks& new_ClearAllBlocks);
-	void Set_ClearAllBlocks(Anki::Cozmo::U2G_ClearAllBlocks&& new_ClearAllBlocks);
+	const Anki::Cozmo::U2G::ClearAllBlocks& Get_ClearAllBlocks() const;
+	void Set_ClearAllBlocks(const Anki::Cozmo::U2G::ClearAllBlocks& new_ClearAllBlocks);
+	void Set_ClearAllBlocks(Anki::Cozmo::U2G::ClearAllBlocks&& new_ClearAllBlocks);
 
 	/** VisionWhileMoving **/
-	const Anki::Cozmo::U2G_VisionWhileMoving& Get_VisionWhileMoving() const;
-	void Set_VisionWhileMoving(const Anki::Cozmo::U2G_VisionWhileMoving& new_VisionWhileMoving);
-	void Set_VisionWhileMoving(Anki::Cozmo::U2G_VisionWhileMoving&& new_VisionWhileMoving);
+	const Anki::Cozmo::U2G::VisionWhileMoving& Get_VisionWhileMoving() const;
+	void Set_VisionWhileMoving(const Anki::Cozmo::U2G::VisionWhileMoving& new_VisionWhileMoving);
+	void Set_VisionWhileMoving(Anki::Cozmo::U2G::VisionWhileMoving&& new_VisionWhileMoving);
 
 	/** ExecuteBehavior **/
-	const Anki::Cozmo::U2G_ExecuteBehavior& Get_ExecuteBehavior() const;
-	void Set_ExecuteBehavior(const Anki::Cozmo::U2G_ExecuteBehavior& new_ExecuteBehavior);
-	void Set_ExecuteBehavior(Anki::Cozmo::U2G_ExecuteBehavior&& new_ExecuteBehavior);
+	const Anki::Cozmo::U2G::ExecuteBehavior& Get_ExecuteBehavior() const;
+	void Set_ExecuteBehavior(const Anki::Cozmo::U2G::ExecuteBehavior& new_ExecuteBehavior);
+	void Set_ExecuteBehavior(Anki::Cozmo::U2G::ExecuteBehavior&& new_ExecuteBehavior);
 
 	/** SetBehaviorState **/
-	const Anki::Cozmo::U2G_SetBehaviorState& Get_SetBehaviorState() const;
-	void Set_SetBehaviorState(const Anki::Cozmo::U2G_SetBehaviorState& new_SetBehaviorState);
-	void Set_SetBehaviorState(Anki::Cozmo::U2G_SetBehaviorState&& new_SetBehaviorState);
+	const Anki::Cozmo::U2G::SetBehaviorState& Get_SetBehaviorState() const;
+	void Set_SetBehaviorState(const Anki::Cozmo::U2G::SetBehaviorState& new_SetBehaviorState);
+	void Set_SetBehaviorState(Anki::Cozmo::U2G::SetBehaviorState&& new_SetBehaviorState);
 
 	/** AbortPath **/
-	const Anki::Cozmo::U2G_AbortPath& Get_AbortPath() const;
-	void Set_AbortPath(const Anki::Cozmo::U2G_AbortPath& new_AbortPath);
-	void Set_AbortPath(Anki::Cozmo::U2G_AbortPath&& new_AbortPath);
+	const Anki::Cozmo::U2G::AbortPath& Get_AbortPath() const;
+	void Set_AbortPath(const Anki::Cozmo::U2G::AbortPath& new_AbortPath);
+	void Set_AbortPath(Anki::Cozmo::U2G::AbortPath&& new_AbortPath);
 
 	/** AbortAll **/
-	const Anki::Cozmo::U2G_AbortAll& Get_AbortAll() const;
-	void Set_AbortAll(const Anki::Cozmo::U2G_AbortAll& new_AbortAll);
-	void Set_AbortAll(Anki::Cozmo::U2G_AbortAll&& new_AbortAll);
+	const Anki::Cozmo::U2G::AbortAll& Get_AbortAll() const;
+	void Set_AbortAll(const Anki::Cozmo::U2G::AbortAll& new_AbortAll);
+	void Set_AbortAll(Anki::Cozmo::U2G::AbortAll&& new_AbortAll);
 
 	/** DrawPoseMarker **/
-	const Anki::Cozmo::U2G_DrawPoseMarker& Get_DrawPoseMarker() const;
-	void Set_DrawPoseMarker(const Anki::Cozmo::U2G_DrawPoseMarker& new_DrawPoseMarker);
-	void Set_DrawPoseMarker(Anki::Cozmo::U2G_DrawPoseMarker&& new_DrawPoseMarker);
+	const Anki::Cozmo::U2G::DrawPoseMarker& Get_DrawPoseMarker() const;
+	void Set_DrawPoseMarker(const Anki::Cozmo::U2G::DrawPoseMarker& new_DrawPoseMarker);
+	void Set_DrawPoseMarker(Anki::Cozmo::U2G::DrawPoseMarker&& new_DrawPoseMarker);
 
 	/** ErasePoseMarker **/
-	const Anki::Cozmo::U2G_ErasePoseMarker& Get_ErasePoseMarker() const;
-	void Set_ErasePoseMarker(const Anki::Cozmo::U2G_ErasePoseMarker& new_ErasePoseMarker);
-	void Set_ErasePoseMarker(Anki::Cozmo::U2G_ErasePoseMarker&& new_ErasePoseMarker);
+	const Anki::Cozmo::U2G::ErasePoseMarker& Get_ErasePoseMarker() const;
+	void Set_ErasePoseMarker(const Anki::Cozmo::U2G::ErasePoseMarker& new_ErasePoseMarker);
+	void Set_ErasePoseMarker(Anki::Cozmo::U2G::ErasePoseMarker&& new_ErasePoseMarker);
 
 	/** SetWheelControllerGains **/
-	const Anki::Cozmo::U2G_SetWheelControllerGains& Get_SetWheelControllerGains() const;
-	void Set_SetWheelControllerGains(const Anki::Cozmo::U2G_SetWheelControllerGains& new_SetWheelControllerGains);
-	void Set_SetWheelControllerGains(Anki::Cozmo::U2G_SetWheelControllerGains&& new_SetWheelControllerGains);
+	const Anki::Cozmo::U2G::SetWheelControllerGains& Get_SetWheelControllerGains() const;
+	void Set_SetWheelControllerGains(const Anki::Cozmo::U2G::SetWheelControllerGains& new_SetWheelControllerGains);
+	void Set_SetWheelControllerGains(Anki::Cozmo::U2G::SetWheelControllerGains&& new_SetWheelControllerGains);
 
 	/** SetHeadControllerGains **/
-	const Anki::Cozmo::U2G_SetHeadControllerGains& Get_SetHeadControllerGains() const;
-	void Set_SetHeadControllerGains(const Anki::Cozmo::U2G_SetHeadControllerGains& new_SetHeadControllerGains);
-	void Set_SetHeadControllerGains(Anki::Cozmo::U2G_SetHeadControllerGains&& new_SetHeadControllerGains);
+	const Anki::Cozmo::U2G::SetHeadControllerGains& Get_SetHeadControllerGains() const;
+	void Set_SetHeadControllerGains(const Anki::Cozmo::U2G::SetHeadControllerGains& new_SetHeadControllerGains);
+	void Set_SetHeadControllerGains(Anki::Cozmo::U2G::SetHeadControllerGains&& new_SetHeadControllerGains);
 
 	/** SetLiftControllerGains **/
-	const Anki::Cozmo::U2G_SetLiftControllerGains& Get_SetLiftControllerGains() const;
-	void Set_SetLiftControllerGains(const Anki::Cozmo::U2G_SetLiftControllerGains& new_SetLiftControllerGains);
-	void Set_SetLiftControllerGains(Anki::Cozmo::U2G_SetLiftControllerGains&& new_SetLiftControllerGains);
+	const Anki::Cozmo::U2G::SetLiftControllerGains& Get_SetLiftControllerGains() const;
+	void Set_SetLiftControllerGains(const Anki::Cozmo::U2G::SetLiftControllerGains& new_SetLiftControllerGains);
+	void Set_SetLiftControllerGains(Anki::Cozmo::U2G::SetLiftControllerGains&& new_SetLiftControllerGains);
 
 	/** SelectNextSoundScheme **/
-	const Anki::Cozmo::U2G_SelectNextSoundScheme& Get_SelectNextSoundScheme() const;
-	void Set_SelectNextSoundScheme(const Anki::Cozmo::U2G_SelectNextSoundScheme& new_SelectNextSoundScheme);
-	void Set_SelectNextSoundScheme(Anki::Cozmo::U2G_SelectNextSoundScheme&& new_SelectNextSoundScheme);
+	const Anki::Cozmo::U2G::SelectNextSoundScheme& Get_SelectNextSoundScheme() const;
+	void Set_SelectNextSoundScheme(const Anki::Cozmo::U2G::SelectNextSoundScheme& new_SelectNextSoundScheme);
+	void Set_SelectNextSoundScheme(Anki::Cozmo::U2G::SelectNextSoundScheme&& new_SelectNextSoundScheme);
 
 	/** StartTestMode **/
-	const Anki::Cozmo::U2G_StartTestMode& Get_StartTestMode() const;
-	void Set_StartTestMode(const Anki::Cozmo::U2G_StartTestMode& new_StartTestMode);
-	void Set_StartTestMode(Anki::Cozmo::U2G_StartTestMode&& new_StartTestMode);
+	const Anki::Cozmo::U2G::StartTestMode& Get_StartTestMode() const;
+	void Set_StartTestMode(const Anki::Cozmo::U2G::StartTestMode& new_StartTestMode);
+	void Set_StartTestMode(Anki::Cozmo::U2G::StartTestMode&& new_StartTestMode);
 
 	/** IMURequest **/
-	const Anki::Cozmo::U2G_IMURequest& Get_IMURequest() const;
-	void Set_IMURequest(const Anki::Cozmo::U2G_IMURequest& new_IMURequest);
-	void Set_IMURequest(Anki::Cozmo::U2G_IMURequest&& new_IMURequest);
+	const Anki::Cozmo::U2G::IMURequest& Get_IMURequest() const;
+	void Set_IMURequest(const Anki::Cozmo::U2G::IMURequest& new_IMURequest);
+	void Set_IMURequest(Anki::Cozmo::U2G::IMURequest&& new_IMURequest);
 
 	/** PlayAnimation **/
-	const Anki::Cozmo::U2G_PlayAnimation& Get_PlayAnimation() const;
-	void Set_PlayAnimation(const Anki::Cozmo::U2G_PlayAnimation& new_PlayAnimation);
-	void Set_PlayAnimation(Anki::Cozmo::U2G_PlayAnimation&& new_PlayAnimation);
+	const Anki::Cozmo::U2G::PlayAnimation& Get_PlayAnimation() const;
+	void Set_PlayAnimation(const Anki::Cozmo::U2G::PlayAnimation& new_PlayAnimation);
+	void Set_PlayAnimation(Anki::Cozmo::U2G::PlayAnimation&& new_PlayAnimation);
 
 	/** ReadAnimationFile **/
-	const Anki::Cozmo::U2G_ReadAnimationFile& Get_ReadAnimationFile() const;
-	void Set_ReadAnimationFile(const Anki::Cozmo::U2G_ReadAnimationFile& new_ReadAnimationFile);
-	void Set_ReadAnimationFile(Anki::Cozmo::U2G_ReadAnimationFile&& new_ReadAnimationFile);
+	const Anki::Cozmo::U2G::ReadAnimationFile& Get_ReadAnimationFile() const;
+	void Set_ReadAnimationFile(const Anki::Cozmo::U2G::ReadAnimationFile& new_ReadAnimationFile);
+	void Set_ReadAnimationFile(Anki::Cozmo::U2G::ReadAnimationFile&& new_ReadAnimationFile);
 
 	/** StartFaceTracking **/
-	const Anki::Cozmo::U2G_StartFaceTracking& Get_StartFaceTracking() const;
-	void Set_StartFaceTracking(const Anki::Cozmo::U2G_StartFaceTracking& new_StartFaceTracking);
-	void Set_StartFaceTracking(Anki::Cozmo::U2G_StartFaceTracking&& new_StartFaceTracking);
+	const Anki::Cozmo::U2G::StartFaceTracking& Get_StartFaceTracking() const;
+	void Set_StartFaceTracking(const Anki::Cozmo::U2G::StartFaceTracking& new_StartFaceTracking);
+	void Set_StartFaceTracking(Anki::Cozmo::U2G::StartFaceTracking&& new_StartFaceTracking);
 
 	/** StopFaceTracking **/
-	const Anki::Cozmo::U2G_StopFaceTracking& Get_StopFaceTracking() const;
-	void Set_StopFaceTracking(const Anki::Cozmo::U2G_StopFaceTracking& new_StopFaceTracking);
-	void Set_StopFaceTracking(Anki::Cozmo::U2G_StopFaceTracking&& new_StopFaceTracking);
+	const Anki::Cozmo::U2G::StopFaceTracking& Get_StopFaceTracking() const;
+	void Set_StopFaceTracking(const Anki::Cozmo::U2G::StopFaceTracking& new_StopFaceTracking);
+	void Set_StopFaceTracking(Anki::Cozmo::U2G::StopFaceTracking&& new_StopFaceTracking);
 
 	/** StartLookingForMarkers **/
-	const Anki::Cozmo::U2G_StartLookingForMarkers& Get_StartLookingForMarkers() const;
-	void Set_StartLookingForMarkers(const Anki::Cozmo::U2G_StartLookingForMarkers& new_StartLookingForMarkers);
-	void Set_StartLookingForMarkers(Anki::Cozmo::U2G_StartLookingForMarkers&& new_StartLookingForMarkers);
+	const Anki::Cozmo::U2G::StartLookingForMarkers& Get_StartLookingForMarkers() const;
+	void Set_StartLookingForMarkers(const Anki::Cozmo::U2G::StartLookingForMarkers& new_StartLookingForMarkers);
+	void Set_StartLookingForMarkers(Anki::Cozmo::U2G::StartLookingForMarkers&& new_StartLookingForMarkers);
 
 	/** StopLookingForMarkers **/
-	const Anki::Cozmo::U2G_StopLookingForMarkers& Get_StopLookingForMarkers() const;
-	void Set_StopLookingForMarkers(const Anki::Cozmo::U2G_StopLookingForMarkers& new_StopLookingForMarkers);
-	void Set_StopLookingForMarkers(Anki::Cozmo::U2G_StopLookingForMarkers&& new_StopLookingForMarkers);
+	const Anki::Cozmo::U2G::StopLookingForMarkers& Get_StopLookingForMarkers() const;
+	void Set_StopLookingForMarkers(const Anki::Cozmo::U2G::StopLookingForMarkers& new_StopLookingForMarkers);
+	void Set_StopLookingForMarkers(Anki::Cozmo::U2G::StopLookingForMarkers&& new_StopLookingForMarkers);
 
 	/** SetVisionSystemParams **/
-	const Anki::Cozmo::U2G_SetVisionSystemParams& Get_SetVisionSystemParams() const;
-	void Set_SetVisionSystemParams(const Anki::Cozmo::U2G_SetVisionSystemParams& new_SetVisionSystemParams);
-	void Set_SetVisionSystemParams(Anki::Cozmo::U2G_SetVisionSystemParams&& new_SetVisionSystemParams);
+	const Anki::Cozmo::U2G::SetVisionSystemParams& Get_SetVisionSystemParams() const;
+	void Set_SetVisionSystemParams(const Anki::Cozmo::U2G::SetVisionSystemParams& new_SetVisionSystemParams);
+	void Set_SetVisionSystemParams(Anki::Cozmo::U2G::SetVisionSystemParams&& new_SetVisionSystemParams);
 
 	/** SetFaceDetectParams **/
-	const Anki::Cozmo::U2G_SetFaceDetectParams& Get_SetFaceDetectParams() const;
-	void Set_SetFaceDetectParams(const Anki::Cozmo::U2G_SetFaceDetectParams& new_SetFaceDetectParams);
-	void Set_SetFaceDetectParams(Anki::Cozmo::U2G_SetFaceDetectParams&& new_SetFaceDetectParams);
+	const Anki::Cozmo::U2G::SetFaceDetectParams& Get_SetFaceDetectParams() const;
+	void Set_SetFaceDetectParams(const Anki::Cozmo::U2G::SetFaceDetectParams& new_SetFaceDetectParams);
+	void Set_SetFaceDetectParams(Anki::Cozmo::U2G::SetFaceDetectParams&& new_SetFaceDetectParams);
 
 	/** SetActiveObjectLEDs **/
-	const Anki::Cozmo::U2G_SetActiveObjectLEDs& Get_SetActiveObjectLEDs() const;
-	void Set_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& new_SetActiveObjectLEDs);
-	void Set_SetActiveObjectLEDs(Anki::Cozmo::U2G_SetActiveObjectLEDs&& new_SetActiveObjectLEDs);
+	const Anki::Cozmo::U2G::SetActiveObjectLEDs& Get_SetActiveObjectLEDs() const;
+	void Set_SetActiveObjectLEDs(const Anki::Cozmo::U2G::SetActiveObjectLEDs& new_SetActiveObjectLEDs);
+	void Set_SetActiveObjectLEDs(Anki::Cozmo::U2G::SetActiveObjectLEDs&& new_SetActiveObjectLEDs);
 
 	/** SetAllActiveObjectLEDs **/
-	const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& Get_SetAllActiveObjectLEDs() const;
-	void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
-	void Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G_SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+	const Anki::Cozmo::U2G::SetAllActiveObjectLEDs& Get_SetAllActiveObjectLEDs() const;
+	void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G::SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
+	void Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G::SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
 
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
@@ -2261,61 +2263,63 @@ private:
 	Tag _tag;
 
 	union {
-		Anki::Cozmo::U2G_Ping _Ping;
-		Anki::Cozmo::U2G_ConnectToRobot _ConnectToRobot;
-		Anki::Cozmo::U2G_ConnectToUiDevice _ConnectToUiDevice;
-		Anki::Cozmo::U2G_DisconnectFromUiDevice _DisconnectFromUiDevice;
-		Anki::Cozmo::U2G_ForceAddRobot _ForceAddRobot;
-		Anki::Cozmo::U2G_StartEngine _StartEngine;
-		Anki::Cozmo::U2G_DriveWheels _DriveWheels;
-		Anki::Cozmo::U2G_TurnInPlace _TurnInPlace;
-		Anki::Cozmo::U2G_FaceObject _FaceObject;
-		Anki::Cozmo::U2G_MoveHead _MoveHead;
-		Anki::Cozmo::U2G_MoveLift _MoveLift;
-		Anki::Cozmo::U2G_SetLiftHeight _SetLiftHeight;
-		Anki::Cozmo::U2G_SetHeadAngle _SetHeadAngle;
-		Anki::Cozmo::U2G_TrackHeadToObject _TrackHeadToObject;
-		Anki::Cozmo::U2G_StopAllMotors _StopAllMotors;
-		Anki::Cozmo::U2G_ImageRequest _ImageRequest;
-		Anki::Cozmo::U2G_SetRobotImageSendMode _SetRobotImageSendMode;
-		Anki::Cozmo::U2G_SaveImages _SaveImages;
-		Anki::Cozmo::U2G_SaveRobotState _SaveRobotState;
-		Anki::Cozmo::U2G_EnableDisplay _EnableDisplay;
-		Anki::Cozmo::U2G_SetHeadlights _SetHeadlights;
-		Anki::Cozmo::U2G_GotoPose _GotoPose;
-		Anki::Cozmo::U2G_PlaceObjectOnGround _PlaceObjectOnGround;
-		Anki::Cozmo::U2G_PlaceObjectOnGroundHere _PlaceObjectOnGroundHere;
-		Anki::Cozmo::U2G_ExecuteTestPlan _ExecuteTestPlan;
-		Anki::Cozmo::U2G_SelectNextObject _SelectNextObject;
-		Anki::Cozmo::U2G_PickAndPlaceObject _PickAndPlaceObject;
-		Anki::Cozmo::U2G_TraverseObject _TraverseObject;
-		Anki::Cozmo::U2G_SetRobotCarryingObject _SetRobotCarryingObject;
-		Anki::Cozmo::U2G_ClearAllBlocks _ClearAllBlocks;
-		Anki::Cozmo::U2G_VisionWhileMoving _VisionWhileMoving;
-		Anki::Cozmo::U2G_ExecuteBehavior _ExecuteBehavior;
-		Anki::Cozmo::U2G_SetBehaviorState _SetBehaviorState;
-		Anki::Cozmo::U2G_AbortPath _AbortPath;
-		Anki::Cozmo::U2G_AbortAll _AbortAll;
-		Anki::Cozmo::U2G_DrawPoseMarker _DrawPoseMarker;
-		Anki::Cozmo::U2G_ErasePoseMarker _ErasePoseMarker;
-		Anki::Cozmo::U2G_SetWheelControllerGains _SetWheelControllerGains;
-		Anki::Cozmo::U2G_SetHeadControllerGains _SetHeadControllerGains;
-		Anki::Cozmo::U2G_SetLiftControllerGains _SetLiftControllerGains;
-		Anki::Cozmo::U2G_SelectNextSoundScheme _SelectNextSoundScheme;
-		Anki::Cozmo::U2G_StartTestMode _StartTestMode;
-		Anki::Cozmo::U2G_IMURequest _IMURequest;
-		Anki::Cozmo::U2G_PlayAnimation _PlayAnimation;
-		Anki::Cozmo::U2G_ReadAnimationFile _ReadAnimationFile;
-		Anki::Cozmo::U2G_StartFaceTracking _StartFaceTracking;
-		Anki::Cozmo::U2G_StopFaceTracking _StopFaceTracking;
-		Anki::Cozmo::U2G_StartLookingForMarkers _StartLookingForMarkers;
-		Anki::Cozmo::U2G_StopLookingForMarkers _StopLookingForMarkers;
-		Anki::Cozmo::U2G_SetVisionSystemParams _SetVisionSystemParams;
-		Anki::Cozmo::U2G_SetFaceDetectParams _SetFaceDetectParams;
-		Anki::Cozmo::U2G_SetActiveObjectLEDs _SetActiveObjectLEDs;
-		Anki::Cozmo::U2G_SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
+		Anki::Cozmo::U2G::Ping _Ping;
+		Anki::Cozmo::U2G::ConnectToRobot _ConnectToRobot;
+		Anki::Cozmo::U2G::ConnectToUiDevice _ConnectToUiDevice;
+		Anki::Cozmo::U2G::DisconnectFromUiDevice _DisconnectFromUiDevice;
+		Anki::Cozmo::U2G::ForceAddRobot _ForceAddRobot;
+		Anki::Cozmo::U2G::StartEngine _StartEngine;
+		Anki::Cozmo::U2G::DriveWheels _DriveWheels;
+		Anki::Cozmo::U2G::TurnInPlace _TurnInPlace;
+		Anki::Cozmo::U2G::FaceObject _FaceObject;
+		Anki::Cozmo::U2G::MoveHead _MoveHead;
+		Anki::Cozmo::U2G::MoveLift _MoveLift;
+		Anki::Cozmo::U2G::SetLiftHeight _SetLiftHeight;
+		Anki::Cozmo::U2G::SetHeadAngle _SetHeadAngle;
+		Anki::Cozmo::U2G::TrackHeadToObject _TrackHeadToObject;
+		Anki::Cozmo::U2G::StopAllMotors _StopAllMotors;
+		Anki::Cozmo::U2G::ImageRequest _ImageRequest;
+		Anki::Cozmo::U2G::SetRobotImageSendMode _SetRobotImageSendMode;
+		Anki::Cozmo::U2G::SaveImages _SaveImages;
+		Anki::Cozmo::U2G::SaveRobotState _SaveRobotState;
+		Anki::Cozmo::U2G::EnableDisplay _EnableDisplay;
+		Anki::Cozmo::U2G::SetHeadlights _SetHeadlights;
+		Anki::Cozmo::U2G::GotoPose _GotoPose;
+		Anki::Cozmo::U2G::PlaceObjectOnGround _PlaceObjectOnGround;
+		Anki::Cozmo::U2G::PlaceObjectOnGroundHere _PlaceObjectOnGroundHere;
+		Anki::Cozmo::U2G::ExecuteTestPlan _ExecuteTestPlan;
+		Anki::Cozmo::U2G::SelectNextObject _SelectNextObject;
+		Anki::Cozmo::U2G::PickAndPlaceObject _PickAndPlaceObject;
+		Anki::Cozmo::U2G::TraverseObject _TraverseObject;
+		Anki::Cozmo::U2G::SetRobotCarryingObject _SetRobotCarryingObject;
+		Anki::Cozmo::U2G::ClearAllBlocks _ClearAllBlocks;
+		Anki::Cozmo::U2G::VisionWhileMoving _VisionWhileMoving;
+		Anki::Cozmo::U2G::ExecuteBehavior _ExecuteBehavior;
+		Anki::Cozmo::U2G::SetBehaviorState _SetBehaviorState;
+		Anki::Cozmo::U2G::AbortPath _AbortPath;
+		Anki::Cozmo::U2G::AbortAll _AbortAll;
+		Anki::Cozmo::U2G::DrawPoseMarker _DrawPoseMarker;
+		Anki::Cozmo::U2G::ErasePoseMarker _ErasePoseMarker;
+		Anki::Cozmo::U2G::SetWheelControllerGains _SetWheelControllerGains;
+		Anki::Cozmo::U2G::SetHeadControllerGains _SetHeadControllerGains;
+		Anki::Cozmo::U2G::SetLiftControllerGains _SetLiftControllerGains;
+		Anki::Cozmo::U2G::SelectNextSoundScheme _SelectNextSoundScheme;
+		Anki::Cozmo::U2G::StartTestMode _StartTestMode;
+		Anki::Cozmo::U2G::IMURequest _IMURequest;
+		Anki::Cozmo::U2G::PlayAnimation _PlayAnimation;
+		Anki::Cozmo::U2G::ReadAnimationFile _ReadAnimationFile;
+		Anki::Cozmo::U2G::StartFaceTracking _StartFaceTracking;
+		Anki::Cozmo::U2G::StopFaceTracking _StopFaceTracking;
+		Anki::Cozmo::U2G::StartLookingForMarkers _StartLookingForMarkers;
+		Anki::Cozmo::U2G::StopLookingForMarkers _StopLookingForMarkers;
+		Anki::Cozmo::U2G::SetVisionSystemParams _SetVisionSystemParams;
+		Anki::Cozmo::U2G::SetFaceDetectParams _SetFaceDetectParams;
+		Anki::Cozmo::U2G::SetActiveObjectLEDs _SetActiveObjectLEDs;
+		Anki::Cozmo::U2G::SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
 	};
 };
+
+} // namespace U2G
 
 } // namespace Cozmo
 

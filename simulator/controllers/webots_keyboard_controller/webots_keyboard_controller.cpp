@@ -69,7 +69,7 @@ namespace Anki {
         const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
         const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
         
-        U2G_Ping _pingMsg;
+        U2G::Ping _pingMsg;
         
         std::set<int> lastKeysPressed_;
         
@@ -199,7 +199,7 @@ namespace Anki {
       void ProcessKeystroke(void);
       void ProcessJoystick(void);
       void PrintHelp(void);
-      void SendMessage(const U2G_Message& msg);
+      void SendMessage(const U2G::Message& msg);
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
       void SendTurnInPlace(const f32 angle_rad);
       void SendMoveHead(const f32 speed_rad_per_sec);
@@ -246,12 +246,12 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void HandleRobotStateUpdate(G2U_RobotState const& msg)
+      void HandleRobotStateUpdate(G2U::RobotState const& msg)
       {
         robotPosition_ = {msg.pose_x, msg.pose_y};
       }
       
-      void HandleRobotObservedObject(G2U_RobotObservedObject const& msg)
+      void HandleRobotObservedObject(G2U::RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
@@ -286,11 +286,11 @@ namespace Anki {
             lastObjectID = msg.objectID;
             
             printf("Telling robot to track head to object %d\n", msg.objectID);
-            U2G_TrackHeadToObject m;
+            U2G::TrackHeadToObject m;
             m.robotID = msg.robotID;
             m.objectID = msg.objectID;
             
-            U2G_Message message;
+            U2G::Message message;
             message.Set_TrackHeadToObject(m);
             SendMessage(message);
           }
@@ -298,41 +298,41 @@ namespace Anki {
         }
       }
       
-      void HandleRobotObservedNothing(G2U_RobotObservedNothing const& msg)
+      void HandleRobotObservedNothing(G2U::RobotObservedNothing const& msg)
       {
         currentlyObservedObject.Reset();
       }
       
-      void HandleRobotDeletedObject(G2U_RobotDeletedObject const& msg)
+      void HandleRobotDeletedObject(G2U::RobotDeletedObject const& msg)
       {
         printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
       }
 
-      void HandleRobotConnection(const G2U_RobotAvailable& msgIn)
+      void HandleRobotConnection(const G2U::RobotAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any robot that's
         // advertising (since we don't have a selection mechanism here)
         printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
-        U2G_ConnectToRobot msgOut;
+        U2G::ConnectToRobot msgOut;
         msgOut.robotID = msgIn.robotID;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_ConnectToRobot(msgOut);
         SendMessage(message);
       }
       
-      void HandleUiDeviceConnection(const G2U_UiDeviceAvailable& msgIn)
+      void HandleUiDeviceConnection(const G2U::UiDeviceAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any UI device that's
         // advertising (since we don't have a selection mechanism here)
         printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
-        U2G_ConnectToUiDevice msgOut;
+        U2G::ConnectToUiDevice msgOut;
         msgOut.deviceID = msgIn.deviceID;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_ConnectToUiDevice(msgOut);
         SendMessage(message);
       }
       
-      void HandleRobotConnected(G2U_RobotConnected const &msg)
+      void HandleRobotConnected(G2U::RobotConnected const &msg)
       {
         // Once robot connects, set resolution
         SendSetRobotImageSendMode(ISM_STREAM);
@@ -340,7 +340,7 @@ namespace Anki {
       
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
-      void HandleImageChunk(G2U_ImageChunk const& msg)
+      void HandleImageChunk(G2U::ImageChunk const& msg)
       {
         const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
         
@@ -410,27 +410,27 @@ namespace Anki {
         
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
-        msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
+        msgHandler_.RegisterCallbackForMessage([](const G2U::Message& message) {
           switch (message.GetTag()) {
-            case G2U_Message::Tag::RobotConnected:
+            case G2U::Message::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
               break;
-            case G2U_Message::Tag::RobotState:
+            case G2U::Message::Tag::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
-            case G2U_Message::Tag::RobotObservedObject:
+            case G2U::Message::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
-            case G2U_Message::Tag::UiDeviceAvailable:
+            case G2U::Message::Tag::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
               break;
-            case G2U_Message::Tag::RobotAvailable:
+            case G2U::Message::Tag::RobotAvailable:
               HandleRobotConnection(message.Get_RobotAvailable());
               break;
-            case G2U_Message::Tag::ImageChunk:
+            case G2U::Message::Tag::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
               break;
-            case G2U_Message::Tag::RobotDeletedObject:
+            case G2U::Message::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
@@ -989,9 +989,9 @@ namespace Anki {
                   static bool visionWhileMovingEnabled = false;
                   visionWhileMovingEnabled = !visionWhileMovingEnabled;
                   printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
-                  U2G_VisionWhileMoving msg;
+                  U2G::VisionWhileMoving msg;
                   msg.enable = visionWhileMovingEnabled;
-                  U2G_Message msgWrapper;
+                  U2G::Message msgWrapper;
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
                 } else {
@@ -1014,7 +1014,7 @@ namespace Anki {
                   };
                   static s32 colorIndex = 0;
                   
-                  U2G_SetActiveObjectLEDs msg;
+                  U2G::SetActiveObjectLEDs msg;
                   msg.objectID = currentlyObservedObject.id;
                   msg.robotID = 1;
                   msg.onPeriod_ms = 250;
@@ -1051,7 +1051,7 @@ namespace Anki {
                     colorIndex = 0;
                   }
                   
-                  U2G_Message msgWrapper;
+                  U2G::Message msgWrapper;
                   msgWrapper.Set_SetActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
@@ -1067,14 +1067,14 @@ namespace Anki {
               case (s32)'O':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  U2G_FaceObject msg;
+                  U2G::FaceObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
                   msg.turnAngleTol = DEG_TO_RAD(5);
                   msg.maxTurnAngle = DEG_TO_RAD(90);
                   msg.headTrackWhenDone = 0;
                   
-                  U2G_Message msgWrapper;
+                  U2G::Message msgWrapper;
                   msgWrapper.Set_FaceObject(msg);
                   SendMessage(msgWrapper);
                 } else {
@@ -1530,14 +1530,14 @@ namespace Anki {
         }
         
         if(doForceAddRobot) {
-          U2G_ForceAddRobot msg;
+          U2G::ForceAddRobot msg;
           msg.isSimulated = forcedRobotIsSim;
           msg.robotID = forcedRobotId;
           
           std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
           std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
           
-          U2G_Message message;
+          U2G::Message message;
           message.Set_ForceAddRobot(msg);
           msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
         }
@@ -1559,12 +1559,12 @@ namespace Anki {
               // robot if necessary, and switch states in the UI
               
               PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.\n");
-              U2G_StartEngine msg;
+              U2G::StartEngine msg;
               msg.asHost = 1; // TODO: Support running as client?
               std::string vizIpStr = "127.0.0.1";
               std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
               std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
-              U2G_Message message;
+              U2G::Message message;
               message.Set_StartEngine(msg);
               msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
 
@@ -1585,7 +1585,7 @@ namespace Anki {
           case UI_RUNNING:
           {
             // Send ping to engine
-            U2G_Message message;
+            U2G::Message message;
             message.Set_Ping(_pingMsg);
             msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
             ++_pingMsg.counter;
@@ -1621,7 +1621,7 @@ namespace Anki {
             
             /*
             // DEBUG!!!!!
-            U2G_SetRobotCarryingObject m;
+            U2G::SetRobotCarryingObject m;
             m.objectID = 500;
             m.robotID = 1;
             message.Set_SetRobotCarryingObject(m);
@@ -1638,7 +1638,7 @@ namespace Anki {
         
       }
       
-      void SendMessage(const U2G_Message& msg)
+      void SendMessage(const U2G::Message& msg)
       {
         UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
         msgHandler_.SendMessage(devID, msg); 
@@ -1646,78 +1646,78 @@ namespace Anki {
       
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
       {
-        U2G_DriveWheels m;
+        U2G::DriveWheels m;
         m.lwheel_speed_mmps = lwheel_speed_mmps;
         m.rwheel_speed_mmps = rwheel_speed_mmps;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_DriveWheels(m);
         SendMessage(message);
       }
       
       void SendTurnInPlace(const f32 angle_rad)
       {
-        U2G_TurnInPlace m;
+        U2G::TurnInPlace m;
         m.robotID = 1;
         m.angle_rad = angle_rad;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_TurnInPlace(m);
         SendMessage(message);
       }
       
       void SendMoveHead(const f32 speed_rad_per_sec)
       {
-        U2G_MoveHead m;
+        U2G::MoveHead m;
         m.speed_rad_per_sec = speed_rad_per_sec;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_MoveHead(m);
         SendMessage(message);
       }
       
       void SendMoveLift(const f32 speed_rad_per_sec)
       {
-        U2G_MoveLift m;
+        U2G::MoveLift m;
         m.speed_rad_per_sec = speed_rad_per_sec;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_MoveLift(m);
         SendMessage(message);
       }
       
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel)
       {
-        U2G_SetHeadAngle m;
+        U2G::SetHeadAngle m;
         m.angle_rad = rad;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetHeadAngle(m);
         SendMessage(message);
       }
       
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel)
       {
-        U2G_SetLiftHeight m;
+        U2G::SetLiftHeight m;
         m.height_mm = mm;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetLiftHeight(m);
         SendMessage(message);
       }
       
       void SendStopAllMotors()
       {
-        U2G_StopAllMotors m;
-        U2G_Message message;
+        U2G::StopAllMotors m;
+        U2G::Message message;
         message.Set_StopAllMotors(m);
         SendMessage(message);
       }
       
       void SendImageRequest(u8 mode, u8 robotID)
       {
-        U2G_ImageRequest m;
+        U2G::ImageRequest m;
         m.robotID = robotID;
         m.mode = mode;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_ImageRequest(m);
         SendMessage(message);
       }
@@ -1740,26 +1740,26 @@ namespace Anki {
           }
         }
         
-        U2G_SetRobotImageSendMode m;
+        U2G::SetRobotImageSendMode m;
         m.mode = mode;
         m.resolution = resolution;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetRobotImageSendMode(m);
         SendMessage(message);
       }
       
       void SendSaveImages(SaveMode_t mode, bool alsoSaveState)
       {
-        U2G_SaveImages m;
+        U2G::SaveImages m;
         m.mode = mode;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SaveImages(m);
         SendMessage(message);
         
         if(alsoSaveState) {
-          U2G_SaveRobotState msgSaveState;
+          U2G::SaveRobotState msgSaveState;
           msgSaveState.mode = mode;
-          U2G_Message messageWrapper;
+          U2G::Message messageWrapper;
           messageWrapper.Set_SaveRobotState(msgSaveState);
           SendMessage(messageWrapper);
         }
@@ -1767,79 +1767,79 @@ namespace Anki {
       
       void SendEnableDisplay(bool on)
       {
-        U2G_EnableDisplay m;
+        U2G::EnableDisplay m;
         m.enable = on;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_EnableDisplay(m);
         SendMessage(message);
      }
       
       void SendSetHeadlights(u8 intensity)
       {
-        U2G_SetHeadlights m;
+        U2G::SetHeadlights m;
         m.intensity = intensity;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetHeadlights(m);
         SendMessage(message);
       }
       
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed)
       {
-        U2G_GotoPose m;
+        U2G::GotoPose m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G_Message message;
+        U2G::Message message;
         message.Set_GotoPose(m);
         SendMessage(message);
       }
       
       void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
       {
-        U2G_PlaceObjectOnGround m;
+        U2G::PlaceObjectOnGround m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G_Message message;
+        U2G::Message message;
         message.Set_PlaceObjectOnGround(m);
         SendMessage(message);
       }
       
       void SendExecuteTestPlan()
       {
-        U2G_ExecuteTestPlan m;
-        U2G_Message message;
+        U2G::ExecuteTestPlan m;
+        U2G::Message message;
         message.Set_ExecuteTestPlan(m);
         SendMessage(message);
       }
       
       void SendClearAllBlocks()
       {
-        U2G_ClearAllBlocks m;
-        U2G_Message message;
+        U2G::ClearAllBlocks m;
+        U2G::Message message;
         message.Set_ClearAllBlocks(m);
         SendMessage(message);
       }
       
       void SendSelectNextObject()
       {
-        U2G_SelectNextObject m;
-        U2G_Message message;
+        U2G::SelectNextObject m;
+        U2G::Message message;
         message.Set_SelectNextObject(m);
         SendMessage(message);
       }
       
       void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
       {
-        U2G_PickAndPlaceObject m;
+        U2G::PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
         m.objectID = -1;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_PickAndPlaceObject(m);
         SendMessage(message);
       }
@@ -1851,64 +1851,64 @@ namespace Anki {
       
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {
-        U2G_TraverseObject m;
+        U2G::TraverseObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G_Message message;
+        U2G::Message message;
         message.Set_TraverseObject(m);
         SendMessage(message);
       }
       
       void SendExecuteBehavior(BehaviorManager::Mode mode)
       {
-        U2G_ExecuteBehavior m;
+        U2G::ExecuteBehavior m;
         m.behaviorMode = mode;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_ExecuteBehavior(m);
         SendMessage(message);
       }
       
       void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
       {
-        U2G_SetBehaviorState m;
+        U2G::SetBehaviorState m;
         m.behaviorState = nextState;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetBehaviorState(m);
         SendMessage(message);
       }
       
       void SendAbortPath()
       {
-        U2G_AbortPath m;
-        U2G_Message message;
+        U2G::AbortPath m;
+        U2G::Message message;
         message.Set_AbortPath(m);
         SendMessage(message);
       }
       
       void SendAbortAll()
       {
-        U2G_AbortAll m;
-        U2G_Message message;
+        U2G::AbortAll m;
+        U2G::Message message;
         message.Set_AbortAll(m);
         SendMessage(message);
       }
       
       void SendDrawPoseMarker(const Pose3d& p)
       {
-        U2G_DrawPoseMarker m;
+        U2G::DrawPoseMarker m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_DrawPoseMarker(m);
         SendMessage(message);
       }
       
       void SendErasePoseMarker()
       {
-        U2G_ErasePoseMarker m;
-        U2G_Message message;
+        U2G::ErasePoseMarker m;
+        U2G::Message message;
         message.Set_ErasePoseMarker(m);
         SendMessage(message);
       }
@@ -1916,14 +1916,14 @@ namespace Anki {
       void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
                                     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
       {
-        U2G_SetWheelControllerGains m;
+        U2G::SetWheelControllerGains m;
         m.kpLeft = kpLeft;
         m.kiLeft = kiLeft;
         m.maxIntegralErrorLeft = maxErrorSumLeft;
         m.kpRight = kpRight;
         m.kiRight = kiRight;
         m.maxIntegralErrorRight = maxErrorSumRight;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetWheelControllerGains(m);
         SendMessage(message);
       }
@@ -1931,51 +1931,51 @@ namespace Anki {
       
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
       {
-        U2G_SetHeadControllerGains m;
+        U2G::SetHeadControllerGains m;
         m.kp = kp;
         m.ki = ki;
         m.maxIntegralError = maxErrorSum;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetHeadControllerGains(m);
         SendMessage(message);
       }
       
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
       {
-        U2G_SetLiftControllerGains m;
+        U2G::SetLiftControllerGains m;
         m.kp = kp;
         m.ki = ki;
         m.maxIntegralError = maxErrorSum;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_SetLiftControllerGains(m);
         SendMessage(message);
       }
       
       void SendSelectNextSoundScheme()
       {
-        U2G_SelectNextSoundScheme m;
-        U2G_Message message;
+        U2G::SelectNextSoundScheme m;
+        U2G::Message message;
         message.Set_SelectNextSoundScheme(m);
         SendMessage(message);
       }
       
       void SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
       {
-        U2G_StartTestMode m;
+        U2G::StartTestMode m;
         m.mode = mode;
         m.p1 = p1;
         m.p2 = p2;
         m.p3 = p3;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_StartTestMode(m);
         SendMessage(message);
       }
       
       void SendIMURequest(u32 length_ms)
       {
-        U2G_IMURequest m;
+        U2G::IMURequest m;
         m.length_ms = length_ms;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_IMURequest(m);
         SendMessage(message);
       }
@@ -1987,11 +1987,11 @@ namespace Anki {
         // Don't send repeated animation commands within a half second
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
-          U2G_PlayAnimation m;
+          U2G::PlayAnimation m;
           //m.animationID = animId;
           strncpy(&(m.animationName[0]), animName, 32);
           m.numLoops = numLoops;
-          U2G_Message message;
+          U2G::Message message;
           message.Set_PlayAnimation(m);
           SendMessage(message);
           lastSendTime_sec = inputController.getTime();
@@ -2003,31 +2003,31 @@ namespace Anki {
       
       void SendReadAnimationFile()
       {
-        U2G_ReadAnimationFile m;
-        U2G_Message message;
+        U2G::ReadAnimationFile m;
+        U2G::Message message;
         message.Set_ReadAnimationFile(m);
         SendMessage(message);
       }
       
       void SendStartFaceTracking(u8 timeout_sec)
       {
-        U2G_StartFaceTracking m;
+        U2G::StartFaceTracking m;
         m.timeout_sec = timeout_sec;
-        U2G_Message message;
+        U2G::Message message;
         message.Set_StartFaceTracking(m);
         SendMessage(message);
       }
       
       void SendStopFaceTracking()
       {
-        U2G_StopFaceTracking m;
-        U2G_Message message;
+        U2G::StopFaceTracking m;
+        U2G::Message message;
         message.Set_StopFaceTracking(m);
         SendMessage(message);
         
         // For now, have to re-enable marker finding b/c turning on face
         // tracking will have stopped it:
-        U2G_StartLookingForMarkers m2;
+        U2G::StartLookingForMarkers m2;
         message.Set_StartLookingForMarkers(m2);
         SendMessage(message);
       }
@@ -2036,7 +2036,7 @@ namespace Anki {
       {
         if (root_) {
            // Vision system params
-           U2G_SetVisionSystemParams p;
+           U2G::SetVisionSystemParams p;
            p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
            p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
            p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
@@ -2047,7 +2047,7 @@ namespace Anki {
            p.limitFramerate = root_->getField("camera_limitFramerate")->getSFInt32();
            
            printf("New Camera params\n");
-          U2G_Message message;
+          U2G::Message message;
           message.Set_SetVisionSystemParams(p);
           SendMessage(message);
          }
@@ -2057,7 +2057,7 @@ namespace Anki {
       {
         if (root_) {
           // Face Detect params
-          U2G_SetFaceDetectParams p;
+          U2G::SetFaceDetectParams p;
           p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
           p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
           p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
@@ -2066,7 +2066,7 @@ namespace Anki {
           p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
           
           printf("New Face detect params\n");
-          U2G_Message message;
+          U2G::Message message;
           message.Set_SetFaceDetectParams(p);
           SendMessage(message);
         }
@@ -2075,7 +2075,7 @@ namespace Anki {
       void SendForceAddRobot()
       {
         if (root_) {
-          U2G_ForceAddRobot msg;
+          U2G::ForceAddRobot msg;
           msg.isSimulated = false;
           msg.ipAddress.fill('\0'); // ensure null-termination after copy below
           
@@ -2089,7 +2089,7 @@ namespace Anki {
             msg.robotID = static_cast<u8>(idField->getSFInt32());
             
             printf("Sending message to force-add robot %d at %s\n", msg.robotID, ipStr.c_str());
-            U2G_Message message;
+            U2G::Message message;
             message.Set_ForceAddRobot(msg);
             SendMessage(message);
           } else {

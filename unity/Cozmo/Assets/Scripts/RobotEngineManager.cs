@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
 
 public enum ActionCompleted
 {
@@ -290,51 +292,51 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ReceivedMessage(G2U_Message message)
+	private void ReceivedMessage(G2U.Message message)
 	{
 		switch (message.GetTag ()) {
-		case G2U_Message.Tag.Ping:
+		case G2U.Message.Tag.Ping:
 			break;
-		case G2U_Message.Tag.RobotAvailable:
+		case G2U.Message.Tag.RobotAvailable:
 			ReceivedSpecificMessage(message.RobotAvailable);
 			break;
-		case G2U_Message.Tag.UiDeviceAvailable:
+		case G2U.Message.Tag.UiDeviceAvailable:
 			ReceivedSpecificMessage(message.UiDeviceAvailable);
 			break;
-		case G2U_Message.Tag.RobotConnected:
+		case G2U.Message.Tag.RobotConnected:
 			ReceivedSpecificMessage(message.RobotConnected);
 			break;
-		case G2U_Message.Tag.UiDeviceConnected:
+		case G2U.Message.Tag.UiDeviceConnected:
 			ReceivedSpecificMessage(message.UiDeviceConnected);
 			break;
-		case G2U_Message.Tag.RobotDisconnected:
+		case G2U.Message.Tag.RobotDisconnected:
 			ReceivedSpecificMessage(message.RobotDisconnected);
 			break;
-		case G2U_Message.Tag.RobotObservedObject:
+		case G2U.Message.Tag.RobotObservedObject:
 			ReceivedSpecificMessage(message.RobotObservedObject);
 			break;
-		case G2U_Message.Tag.RobotObservedNothing:
+		case G2U.Message.Tag.RobotObservedNothing:
 			ReceivedSpecificMessage(message.RobotObservedNothing);
 			break;
-		case G2U_Message.Tag.DeviceDetectedVisionMarker:
+		case G2U.Message.Tag.DeviceDetectedVisionMarker:
 			ReceivedSpecificMessage(message.DeviceDetectedVisionMarker);
 			break;
-		case G2U_Message.Tag.PlaySound:
+		case G2U.Message.Tag.PlaySound:
 			ReceivedSpecificMessage(message.PlaySound);
 			break;
-		case G2U_Message.Tag.StopSound:
+		case G2U.Message.Tag.StopSound:
 			ReceivedSpecificMessage(message.StopSound);
 			break;
-		case G2U_Message.Tag.ImageChunk:
+		case G2U.Message.Tag.ImageChunk:
 			ReceivedSpecificMessage(message.ImageChunk);
 			break;
-		case G2U_Message.Tag.RobotState:
+		case G2U.Message.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
 			break;
-		case G2U_Message.Tag.RobotCompletedAction:
+		case G2U.Message.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
-		case G2U_Message.Tag.RobotDeletedObject:
+		case G2U.Message.Tag.RobotDeletedObject:
 			ReceivedSpecificMessage(message.RobotDeletedObject);
 			break;
 		default:
@@ -343,23 +345,23 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 	
-	private void ReceivedSpecificMessage(G2U_RobotAvailable message)
+	private void ReceivedSpecificMessage(G2U.RobotAvailable message)
 	{
-		U2G_ConnectToRobot response = new U2G_ConnectToRobot();
+		U2G.ConnectToRobot response = new U2G.ConnectToRobot();
 		response.robotID = (byte)message.robotID;
 		
-		channel.Send (new U2G_Message{ConnectToRobot=response});
+		channel.Send (new U2G.Message{ConnectToRobot=response});
 	}
 	
-	private void ReceivedSpecificMessage(G2U_UiDeviceAvailable message)
+	private void ReceivedSpecificMessage(G2U.UiDeviceAvailable message)
 	{
-		U2G_ConnectToUiDevice response = new U2G_ConnectToUiDevice ();
+		U2G.ConnectToUiDevice response = new U2G.ConnectToUiDevice ();
 		response.deviceID = (byte)message.deviceID;
 		
-		channel.Send (new U2G_Message{ConnectToUiDevice=response});
+		channel.Send (new U2G.Message{ConnectToUiDevice=response});
 	}
 	
-	private void ReceivedSpecificMessage(G2U_RobotConnected message)
+	private void ReceivedSpecificMessage(G2U.RobotConnected message)
 	{
 		// no longer a good indicator
 //		if (RobotConnected != null) {
@@ -367,26 +369,26 @@ public class RobotEngineManager : MonoBehaviour {
 //		}
 	}
 	
-	private void ReceivedSpecificMessage(G2U_UiDeviceConnected message)
+	private void ReceivedSpecificMessage(G2U.UiDeviceConnected message)
 	{
 		Debug.Log ("Device connected: " + message.deviceID.ToString());
 	}
 	
-	private void ReceivedSpecificMessage(G2U_RobotDisconnected message)
+	private void ReceivedSpecificMessage(G2U.RobotDisconnected message)
 	{
 		Debug.LogError ("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString ("0.00") + " seconds.", this);
 		Disconnect ();
 		Disconnected (DisconnectionReason.RobotDisconnected);
 	}
 	
-	private void ReceivedSpecificMessage(G2U_RobotObservedObject message)
+	private void ReceivedSpecificMessage(G2U.RobotObservedObject message)
 	{
 		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
 		current.UpdateObservedObjectInfo( message );
 	}
 
-	private void ReceivedSpecificMessage( G2U_RobotObservedNothing message )
+	private void ReceivedSpecificMessage( G2U.RobotObservedNothing message )
 	{
 		if( current.selectedObjects.Count == 0 && !current.isBusy )
 		{
@@ -397,7 +399,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ReceivedSpecificMessage( G2U_RobotDeletedObject message )
+	private void ReceivedSpecificMessage( G2U.RobotDeletedObject message )
 	{
 		Debug.Log( "Deleted object with ID " +message.objectID );
 
@@ -430,7 +432,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ReceivedSpecificMessage( G2U_RobotCompletedAction message )
+	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )
 	{
 		bool success = message.success > 0;
 		ActionCompleted action_type = (ActionCompleted)message.actionType;
@@ -456,22 +458,22 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)
+	private void ReceivedSpecificMessage(G2U.DeviceDetectedVisionMarker message)
 	{
 
 	}
 	
-	private void ReceivedSpecificMessage(G2U_PlaySound message)
+	private void ReceivedSpecificMessage(G2U.PlaySound message)
 	{
 		
 	}
 	
-	private void ReceivedSpecificMessage(G2U_StopSound message)
+	private void ReceivedSpecificMessage(G2U.StopSound message)
 	{
 		
 	}
 	
-	private void ReceivedSpecificMessage( G2U_RobotState message )
+	private void ReceivedSpecificMessage( G2U.RobotState message )
 	{
 		if (!isRobotConnected) {
 			Debug.Log ("Robot " + message.robotID.ToString() + " sent first state message.");
@@ -501,7 +503,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private Color32[] grayArray;
 	private byte[] colorArray;
 	
-	private void ReceivedSpecificMessage( G2U_ImageChunk message )
+	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
 		switch( (ImageEncoding_t)message.imageEncoding )
 		{
@@ -517,7 +519,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void GrayRaw( G2U_ImageChunk message )
+	private void GrayRaw( G2U.ImageChunk message )
 	{
 		if( grayArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
@@ -573,7 +575,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
-	private void ColorJpeg( G2U_ImageChunk message )
+	private void ColorJpeg( G2U.ImageChunk message )
 	{
 		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
@@ -668,7 +670,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void StartEngine(string vizHostIP)
 	{
-		U2G_StartEngine message = new U2G_StartEngine ();
+		U2G.StartEngine message = new U2G.StartEngine ();
 		message.asHost = 1;
 		int length = 0;
 		if (!string.IsNullOrEmpty (vizHostIP)) {
@@ -680,7 +682,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		message.vizHostIP [length] = 0;
 		
-		channel.Send (new U2G_Message{StartEngine=message});
+		channel.Send (new U2G.Message{StartEngine=message});
 	}
 	
 	/// <summary>
@@ -699,7 +701,7 @@ public class RobotEngineManager : MonoBehaviour {
 			throw new ArgumentNullException("robotIP");
 		}
 		
-		U2G_ForceAddRobot message = new U2G_ForceAddRobot ();
+		U2G.ForceAddRobot message = new U2G.ForceAddRobot ();
 		if (Encoding.UTF8.GetByteCount (robotIP) + 1 > message.ipAddress.Length) {
 			throw new ArgumentException("IP address too long.", "robotIP");
 		}
@@ -709,7 +711,7 @@ public class RobotEngineManager : MonoBehaviour {
 		message.robotID = (byte)robotID;
 		message.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 		
-		channel.Send (new U2G_Message{ForceAddRobot=message});
+		channel.Send (new U2G.Message{ForceAddRobot=message});
 	}
 	
 	public enum ImageSendMode_t

@@ -56,7 +56,7 @@ namespace Anki {
     }
     
 
-    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const G2U_Message& msg)
+    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const G2U::Message& msg)
     {
       #if(RUN_UI_MESSAGE_TCP_SERVER)
       
@@ -81,11 +81,11 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      U2G_Message message;
+      U2G::Message message;
       if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
         PRINT_NAMED_ERROR("UiMessageHandler.MessageBufferWrongSize",
                           "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
-                          U2G_MessageTagToString(message.GetTag()),
+                          U2G::MessageTagToString(message.GetTag()),
                           message.Size(), // not all messages are fixed size, so indeterminate
                           packet.dataLen
                           );

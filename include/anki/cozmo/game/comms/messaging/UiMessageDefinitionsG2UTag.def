@@ -11,7 +11,9 @@ namespace Anki {
 
 namespace Cozmo {
 
-enum class G2U_MessageTag : uint8_t {
+namespace G2U {
+
+enum class MessageTag : uint8_t {
 	Ping,	// 0
 	RobotAvailable,	// 1
 	UiDeviceAvailable,	// 2
@@ -30,17 +32,19 @@ enum class G2U_MessageTag : uint8_t {
 	INVALID
 };
 
-const char* G2U_MessageTagToString(const G2U_MessageTag type);
+const char* MessageTagToString(const MessageTag type);
+} // namespace G2U
+
 } // namespace Cozmo
 
 } // namespace Anki
 
 template<>
-struct std::hash<Anki::Cozmo::G2U_MessageTag>
+struct std::hash<Anki::Cozmo::G2U::MessageTag>
 {
-	size_t operator()(Anki::Cozmo::G2U_MessageTag t) const
+	size_t operator()(Anki::Cozmo::G2U::MessageTag t) const
 	{
-		return static_cast<std::underlying_type<Anki::Cozmo::G2U_MessageTag>::type>(t);
+		return static_cast<std::underlying_type<Anki::Cozmo::G2U::MessageTag>::type>(t);
 	}
 };
 
