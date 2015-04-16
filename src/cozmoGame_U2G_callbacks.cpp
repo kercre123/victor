@@ -76,11 +76,11 @@ namespace Cozmo {
     return robot;
   }
   
-  void CozmoGameImpl::ProcessBadType_U2G_Message(U2G_Message::Type type)
+  void CozmoGameImpl::ProcessBadTag_U2G_Message(U2G_Message::Tag tag)
   {
-    PRINT_NAMED_WARNING("CozmoGameImpl.ProcessBadType",
+    PRINT_NAMED_WARNING("CozmoGameImpl.ProcessBadTag",
                         "Got unknown message with id %d.\n",
-                        type);
+                        tag);
   }
   
   void CozmoGameImpl::Process_Ping(U2G_Ping const& msg)

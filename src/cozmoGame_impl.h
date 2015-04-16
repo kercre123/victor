@@ -126,7 +126,7 @@ namespace Cozmo {
     //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
     
     void RegisterCallbacksU2G();
-    void ProcessBadType_U2G_Message(U2G_Message::Type type);
+    void ProcessBadTag_U2G_Message(U2G_Message::Tag tag);
 #include "comms/messaging/UiMessageDefinitionsU2G_declarations.def"
     
     //
