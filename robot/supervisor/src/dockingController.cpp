@@ -51,14 +51,14 @@ namespace Anki {
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
         
-        u32 lastDockingErrorSignalRecvdTime_ = 0;
+        TimeStamp_t lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 500000;
+        const u32 STOPPED_TRACKING_TIMEOUT_MS = 500;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
-        const u32 GIVEUP_DOCKING_TIMEOUT_US = 1000000;
+        const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
         const u16 DOCK_APPROACH_SPEED_MMPS = 30;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
@@ -280,7 +280,7 @@ namespace Anki {
             if (dockMsg.x_distErr > 0.f && ABS(dockMsg.angleErr) < 0.75f*PIDIV2_F) {
              
               // Update time that last good error signal was received
-              lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
               
               // No more to do if we're just tracking a marker, but not docking to it.
               if (trackingOnly_) {
@@ -383,10 +383,10 @@ namespace Anki {
           case LOOKING_FOR_BLOCK:
             
             if ((!pastPointOfNoReturn_)
-              && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US)) {
+              && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
             }
             break;
@@ -395,12 +395,12 @@ namespace Anki {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
-                && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) ) {
+                && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
               break;
             }
@@ -658,7 +658,7 @@ namespace Anki {
         useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
         pastPointOfNoReturn_ = false;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         mode_ = LOOKING_FOR_BLOCK;
         
         success_ = false;
@@ -667,7 +667,7 @@ namespace Anki {
       void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
         useManualSpeed_ = useManualSpeed;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
         success_ = false;
@@ -714,7 +714,7 @@ namespace Anki {
         lastMarkerDistY_ = 0.f;
         lastMarkerAng_ = 0.f;
         
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         mode_ = LOOKING_FOR_BLOCK;
       }
       
