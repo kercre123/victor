@@ -258,7 +258,7 @@ public class CozmoVision : MonoBehaviour
 		fade = !OptionsScreen.GetToggleDisableVisionFade();
 
 		//start at no alpha
-		float alpha = 0f;
+		float alpha = fade ? 0f : 1f;
 
 		Color color = image.color;
 		color.a = alpha;
@@ -315,7 +315,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		PlayVisionActivateSound();
 
-		if(fadingIn || image.color.a >= 1f) return;
+		if(fadingIn || image.color.a >= 1f || !fade) return;
 
 		fadeTimer = 0f;
 		fadingIn = true;

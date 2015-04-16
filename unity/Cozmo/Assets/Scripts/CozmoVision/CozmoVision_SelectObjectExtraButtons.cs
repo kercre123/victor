@@ -94,12 +94,26 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			button.box = box;
 			button.SetText(box.text.text);
 			button.SetTextColor(box.text.color);
-			
-			button.line.points2.Clear();
-			button.line.points2.Add( buttonPosition );
-			button.line.points2.Add( boxPosition );
-			button.line.SetColor( box.color );
-			button.line.Draw();
+
+			//dmd hide lines when build instructions are open
+			if(GameLayoutTracker.instance == null) {
+				buttonPosition = RectTransformUtility.WorldToScreenPoint( button.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, buttonPosition );
+				buttonPosition.x += 12f;
+
+				boxPosition = RectTransformUtility.WorldToScreenPoint(  box.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, boxPosition );
+
+				button.line.points2.Clear();
+				button.line.points2.Add( buttonPosition );
+				button.line.points2.Add( boxPosition );
+				button.line.SetColor( box.color );
+				button.line.Draw();
+				//Debug.Log("drawing line from("+buttonPosition+") to("+boxPosition+")");
+			}
+			else {
+				button.line.points2.Clear();
+				button.line.Draw();
+				box.gameObject.SetActive(false);
+			}
 		}
 	}
 	
@@ -107,6 +121,10 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 	{
 		base.OnDisable();
 		
+		HideButtonsAndLines();
+	}
+
+	void HideButtonsAndLines() {
 		for( int i = 0; i < observedObjectButtons.Length; ++i )
 		{ 
 			if( observedObjectButtons[i] != null )

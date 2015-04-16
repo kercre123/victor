@@ -29,6 +29,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool dirty = false;
 	Robot robot = null;
 
+	public static GameLayoutTracker instance = null;
+
 	//uint currentObjectType = 0;
 
 	GameLayout currentLayout {
@@ -47,6 +49,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void OnEnable () {
+
+		instance = this;
+
 		currentLayoutIndex = 0;
 		currentPageIndex = 0;
 
@@ -82,6 +87,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void OnDisable() {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
+
+		if(instance == this) instance = null;
 	}
 
 	void RefreshLayout () {

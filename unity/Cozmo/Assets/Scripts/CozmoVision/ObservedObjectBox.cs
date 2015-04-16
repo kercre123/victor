@@ -39,6 +39,17 @@ public class ObservedObjectBox : MonoBehaviour
 		}
 	}
 
+	private Canvas _canvas;
+	public Canvas canvas {
+		get {
+			if(!initialized) Initialize();
+			return _canvas;
+		}
+		private set {
+			_canvas = value;
+		}
+	}
+
 	public Color color { get; private set; }
 
 	protected bool initialized { get; private set; }
@@ -55,6 +66,8 @@ public class ObservedObjectBox : MonoBehaviour
 
 		rectTransform = transform as RectTransform;
 		color = Color.white;
+
+		canvas = GetComponentInParent<Canvas>();
 
 		//Debug.Log(gameObject.name + " ObservedObjectBox Awake rectTransform("+rectTransform+") text("+text+")");
 	}

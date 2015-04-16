@@ -51,7 +51,7 @@ public class ObservedObjectButton1 : ObservedObjectBox1
 			if( corners.Length > 3 )
 			{
 				center = corners[0];
-				center.x += 5f; // offset so the line reaches the button
+				//center.x += 5f; // offset so the line reaches the button
 				center.y = ( corners[0].y + corners[1].y ) * 0.5f;
 			}
 
