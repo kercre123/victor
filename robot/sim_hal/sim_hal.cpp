@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <vector>
+#include <set>
 
 // Our Includes
 #include "anki/common/robot/errorHandling.h"
@@ -104,15 +105,16 @@ namespace Anki {
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
       
-      // Emitter for block communication
+      // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
+      webots::Receiver *blockCommsReceiver_;
       
       // Block ID flashing parameters
       s32 flashBlockIdx_ = -1;
       TimeStamp_t flashStartTime_ = 0;
       
       // List of all blockIDs
-      std::vector<u8> blockIDs_;
+      std::set<s32> blockIDs_;
       
       // For tracking wheel distance travelled
       f32 motorPositions_[HAL::MOTOR_COUNT];
@@ -186,15 +188,18 @@ namespace Anki {
         liftMotor_->setVelocity(rad_per_sec);
       }
       
-      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer) {
+      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
+      {
         
         // Check that blockID is valid
-        if (blockID >= blockIDs_.size()) {
+        //if (blockID >= blockIDs_.size()) {
+        if (blockIDs_.count(blockID) == 0) {
+          PRINT("***ERROR (SendBlockMessage): Unknown active block ID %d\n", blockID);
           return RESULT_FAIL;
         }
         
         // Set channel
-        blockCommsEmitter_->setChannel( blockIDs_[blockID] );
+        blockCommsEmitter_->setChannel( blockID );
         
         // Prepend msgID to buffer
         u16 msgSize = BlockMessages::GetSize(msgID);
@@ -354,7 +359,10 @@ namespace Anki {
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
-      
+      blockCommsReceiver_ = webotRobot_.getReceiver("blockCommsReceiver");
+      blockCommsReceiver_->setChannel(-1); // Listen to all blocks
+      blockCommsReceiver_->enable(TIME_STEP);
+
       // Reset index of block that is currently flashing ID
       flashBlockIdx_ = -1;
       
@@ -371,10 +379,17 @@ namespace Anki {
         webots::Node* nd = rootChildren->getMFNode(n);
         webots::Field* blockColorField = nd->getField("blockColor");
         webots::Field* activeField = nd->getField("active");
-        if (blockColorField && activeField) {
+        webots::Field* activeIdField = nd->getField("activeID");
+        if (blockColorField && activeField && activeIdField) {
           if (activeField->getSFBool()) {
-            printf("Found active block %d\n", n);
-            blockIDs_.push_back(n);
+            const s32 activeID = activeIdField->getSFInt32();
+            
+            if(blockIDs_.count(activeID) > 0) {
+              printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);
+            } else {
+              printf("Found active block %d\n", activeID);
+              blockIDs_.insert(activeID);
+            }
             continue;
           }
         }
@@ -674,6 +689,24 @@ namespace Anki {
           }
         }
         
+        // TODO: Make block comms receiver checking into a HAL function at some point
+        //   and call it from the main execution loop
+        while(blockCommsReceiver_->getQueueLength() > 0) {
+          int dataSize = blockCommsReceiver_->getDataSize();
+          
+          if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
+            // Pass along block-moved messages to basestation
+            u8* data = (u8*)blockCommsReceiver_->getData();
+            BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
+            Messages::ActiveObjectMoved msgOut;
+            msgOut.objectID = msgIn->blockID;
+            HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
+          } else {
+            printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
+          }
+          blockCommsReceiver_->nextPacket();
+        }
+        
         return RESULT_OK;
       }
       
@@ -918,11 +951,17 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color) {
-      
+    Result HAL::SetBlockLight(const u8 blockID, const u32* color,
+                              const u32* onPeriod_ms, const u32* offPeriod_ms,
+                              const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+    {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
         m.color[i] = color[i];
+        m.onPeriod_ms[i] = onPeriod_ms[i];
+        m.offPeriod_ms[i] = offPeriod_ms[i];
+        m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);
+        m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == nullptr ? 0 : transitionOffPeriod_ms[i]);
       }
       
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);

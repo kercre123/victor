@@ -8,6 +8,8 @@
 #include "spiData.h"
 
 //#define DO_MOTOR_TESTING
+//#define DO_GEAR_RATIO_TESTING
+//#define DO_FIXED_DISTANCE_TESTING
 
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
@@ -131,7 +133,7 @@ int main(void)
   nrf_gpio_cfg_output(PIN_LED2);
   // LED1 set means on, LED1 clear means off
   nrf_gpio_pin_clear(PIN_LED2);
-  nrf_gpio_pin_set(PIN_LED1);    
+  nrf_gpio_pin_set(PIN_LED1);
   
 #if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
@@ -139,11 +141,45 @@ int main(void)
   nrf_gpio_pin_set(PIN_LED2);
   while (1)
   {
+		#ifdef DO_FIXED_DISTANCE_TESTING
+			MicroWait(3000000);
+			while(MotorGetPosition(0) <= 16384) // go 0.25m
+			{
+				MotorsSetPower(0, 0x2000);
+				MotorsSetPower(1, 0x2000);    
+				MotorsUpdate();
+				MicroWait(5000);
+				MotorsUpdate();
+			}
+			MotorsSetPower(0, 0);
+			MotorsSetPower(1, 0);
+			MotorsUpdate();
+			MicroWait(5000);
+			MotorsUpdate();
+			
+			MicroWait(3000000);
+			while(MotorGetPosition(0) >= 0) // go back 0.25m
+			{
+				MotorsSetPower(0, -0x2000);
+				MotorsSetPower(1, -0x2000);    
+				MotorsUpdate();
+				MicroWait(5000);
+				MotorsUpdate();
+			}
+			MotorsSetPower(0, 0);
+			MotorsSetPower(1, 0);
+			MotorsUpdate();
+			MicroWait(5000);
+			MotorsUpdate();
+		#endif
+		
     UARTPutString("\r\nForward ends with...");
-    for (int i = 0; i < 2; i++)
-      MotorsSetPower(i, 0x2000);   
-    for (int i = 2; i < 4; i++)
-      MotorsSetPower(i, 0x6800); 
+    #ifndef DO_GEAR_RATIO_TESTING
+			for (int i = 0; i < 2; i++)
+				MotorsSetPower(i, 0x2000);   
+			for (int i = 2; i < 4; i++)
+				MotorsSetPower(i, 0x6800); 
+		#endif 
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
@@ -152,12 +188,13 @@ int main(void)
     MotorsPrintEncodersRaw();
     
     UARTPutString("\r\nBackward ends with...");
-    
-    for (int i = 0; i < 2; i++)    
-      MotorsSetPower(i, -0x2000);
-    for (int i = 2; i < 4; i++)
-      MotorsSetPower(i, -0x6800); 
-    MotorsUpdate();
+    #ifndef DO_GEAR_RATIO_TESTING
+			for (int i = 0; i < 2; i++)    
+				MotorsSetPower(i, -0x2000);
+			for (int i = 2; i < 4; i++)
+				MotorsSetPower(i, -0x6800); 
+    #endif
+		MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
 
@@ -166,7 +203,7 @@ int main(void)
     
     BatteryUpdate();
   }
-  
+	
 #else
   while (1)
   {    

@@ -40,23 +40,20 @@ namespace Anki {
       // (Aligned with center of marker)
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const f32 distance,
-                    const Radians& headAngle);
+                    const f32 distance);
       
       // Pose is aligned with normal (facing the marker), but offset by the given
       // vector. Note that a shift along the negative Y axis is equivalent to
       // the simple case above. (The marker is in the X-Z plane.
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const Vec3f& offset,
-                    const Radians& headAngle);
+                    const Vec3f& offset);
       
       // Specify arbitrary position relative to marker
       // poseWrtMarker's parent should be the marker's pose.
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const Pose3d&  poseWrtMarker,
-                    const Radians& headAngle);
+                    const Pose3d&  poseWrtMarker);
       
       // For creating a pre-action pose in its current position, given the
       // canonical pre-action pose and the currennt pose of its marker's
@@ -74,9 +71,6 @@ namespace Anki {
       // its marker's parent.
       //Result GetCurrentPose(const Pose3d& markerParentPose,
       //                    Pose3d& currentPose) const;
-      
-      // Get the head angle associated with this pre-action pair
-      const Radians& GetHeadAngle() const;
       
       // Get the Code of the Marker this PreActionPose is "attached" to.
       //const Vision::Marker::Code& GetMarkerCode() const;
@@ -101,8 +95,6 @@ namespace Anki {
       
       Pose3d _poseWrtMarkerParent;
       
-      Radians _headAngle;
-      
       f32     _heightTolerance;
       
     }; // class PreActionPose
@@ -116,10 +108,6 @@ namespace Anki {
     
     inline const Vision::KnownMarker* PreActionPose::GetMarker() const {
       return _marker;
-    }
-    
-    inline const Radians& PreActionPose::GetHeadAngle() const {
-      return _headAngle;
     }
     
     inline const Pose3d& PreActionPose::GetPose() const {

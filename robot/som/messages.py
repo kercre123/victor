@@ -207,7 +207,7 @@ class RobotState(MessageBase):
         MessageBase.__init__(self)
         self.timestamp = 0
         self.poseFrameId = 0
-        self.pose = Pose()
+        self.pose = self.Pose()
         self.leftWheelSpeed  = 0.0
         self.rightWheelSpeed = 0.0
         self.headAngle = 0.0
@@ -219,7 +219,7 @@ class RobotState(MessageBase):
         self.proxLeft = 255
         self.proxForward = 255
         self.proxRight = 255
-        self.currPathSegment = -1
+        self.curPathSegment = -1
         self.numFreeSegmentSlots = 0
         self.battVolt10x = 0
         self.status = 0

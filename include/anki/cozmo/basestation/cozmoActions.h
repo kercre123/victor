@@ -57,6 +57,9 @@ namespace Anki {
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
+      
     private:
       bool     _isGoalSet;
       Pose3d   _goalPose;
@@ -94,7 +97,6 @@ namespace Anki {
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       bool                       _alreadyAtGoal;
-      Radians                    _finalHeadAngle;
       
     }; // DriveToObjectAction
     
@@ -154,8 +156,8 @@ namespace Anki {
     };  // class MoveHeadToAngleAction
     
     
-    // Tilt head and rotate body to face the specified object. Use angles
-    // specified at construction to control the body rotation.
+    // Tilt head and rotate body to face the specified (marker on an) object.
+    // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public IAction
     {
     public:
@@ -164,7 +166,12 @@ namespace Anki {
       // the action fails. For angles in between, the robot will first turn
       // to face the object, then tilt its head. To disallow turning, set
       // maxTurnAngle to zero.
+      
       FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool headTrackWhenDone = false);
+      
+      FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
+                       Radians turnAngleTol, Radians maxTurnAngle,
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
@@ -178,14 +185,43 @@ namespace Anki {
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
+      // Amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      
+      // Override to allow wheel control while facing the object
+      virtual bool ShouldLockWheels() const override { return false; }
+      
       CompoundActionParallel _compoundAction;
       
-      ObjectID   _objectID;
-      Radians    _turnAngleTol;
-      Radians    _maxTurnAngle;
-      bool       _headTrackWhenDone;
+      ObjectID             _objectID;
+      Vision::Marker::Code _whichCode;
+      Radians              _turnAngleTol;
+      Radians              _maxTurnAngle;
+      f32                  _waitToVerifyTime;
+      bool                 _headTrackWhenDone;
       
     }; // FaceObjectAction
+    
+    
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public FaceObjectAction
+    {
+    public:
+      VisuallyVerifyObjectAction(ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual s32 GetType() const override { return ACTION_VISUALLY_VERIFY_OBJECT; }
+      
+    protected:
+      
+      virtual bool ShouldLockWheels() const override { return true; }
+      
+    }; // class VisuallyVerifyObjectAction
     
     
     // Interface for actions that involve "docking" with an object
@@ -193,6 +229,8 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID, const bool useManualSpeed);
+      
+      virtual ~IDockAction();
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
@@ -221,14 +259,18 @@ namespace Anki {
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
+      
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
+      const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
-
+      VisuallyVerifyObjectAction* _visuallyVerifyAction;
     }; // class IDockAction
 
     
@@ -260,17 +302,18 @@ namespace Anki {
       // carrying, for verification.
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
-      
     }; // class DockWithObjectAction
 
     
-    // Common compound action
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then picking/placing it.
     class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
     {
     public:
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed)})
       {
         

@@ -69,6 +69,10 @@ Supervisor {
 		Emitter { 
 		  name "blockCommsEmitter"
 		}
+		
+		Receiver {
+		  name "blockCommsReceiver"
+		}
    	
 		# Are these still needed?
 		GPS {

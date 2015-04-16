@@ -65,9 +65,10 @@ namespace Anki
         
         // Define new ObjectFamilies here:
         // (and be sure to instantiate them in the .cpp file)
-        static const ObjectFamily MATS;     // Fixed mats, platforms, and bridges.
-        static const ObjectFamily RAMPS;    // Ramps
-        static const ObjectFamily BLOCKS;   // Blocks
+        static const ObjectFamily MATS;                // Fixed mats, platforms, and bridges.
+        static const ObjectFamily RAMPS;               // Ramps
+        static const ObjectFamily BLOCKS;              // Blocks
+        static const ObjectFamily ACTIVE_BLOCKS;       // Blocks with LEDs
         static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
         
       protected:

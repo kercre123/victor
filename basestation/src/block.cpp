@@ -124,7 +124,7 @@ namespace Anki {
         {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()}
       }};
       
-      // Add a pre-LOW-dock pose to each face, at fixed distance normal to the face,
+      // Add a pre-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
       {
         for(auto const& Rvec : preActionPoseRotations) {
@@ -132,21 +132,7 @@ namespace Anki {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(-15));
-          }
-
-        }
-      }
-      
-      // Add a pre-HIGH-dock pose to each face, at fixed distance normal to the face,
-      // and one for each orientation of the block
-      {
-        for(auto const& Rvec : preActionPoseRotations) {
-          
-          for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -(halfHeight+GetSize().z())}}, &marker->GetPose());
-            preDockPose.RotateBy(Rvec);
-            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEG_TO_RAD(15));
+            AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
           }
 
         }
@@ -160,7 +146,7 @@ namespace Anki {
         for(auto const& Rvec : preActionPoseRotations) {
           Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
           prePlacementPose.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose, DEG_TO_RAD(-15));
+          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose);
         }
       }
       
@@ -451,6 +437,320 @@ namespace Anki {
       return RotationAmbiguities;
     }
 
+#pragma mark ---  ActiveCube Implementation ---
+    
+    std::vector<RotationMatrix3d> const& ActiveCube::GetRotationAmbiguities() const
+    {
+      
+      // TODO: Adjust if/when active blocks aren't fully ambiguous
+      static const std::vector<RotationMatrix3d> RotationAmbiguities; /* = {
+        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
+        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
+        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
+        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
+        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
+      };
+                                                                       */
+      
+      return RotationAmbiguities;
+    }
+    
+    ActiveCube::ActiveCube(ObjectType type)
+    : Block(type)
+    , _activeID(-1)
+    {
+      // For now, assume 6 different markers, so we can avoid rotation ambiguities
+      // Verify that here by making sure a set of markers has as many elements
+      // as the original list:
+      std::list<Vision::KnownMarker> const& markerList = GetMarkers();
+      std::set<Vision::Marker::Code> uniqueCodes;
+      for(auto & marker : markerList) {
+        uniqueCodes.insert(marker.GetCode());
+      }
+      CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
+    }
+  
+    void ActiveCube::SetLEDs(const WhichLEDs whichLEDs, const ColorRGBA& color,
+                             const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
+                             const bool turnOffUnspecifiedLEDs)
+    {
+      static const u8 FIRST_BIT = 0x01;
+      u8 shiftedLEDs = static_cast<u8>(whichLEDs);
+      for(u8 iLED=0; iLED<8; ++iLED) {
+        // If this LED is specified in whichLEDs (its bit is set), then
+        // update
+        if(shiftedLEDs & FIRST_BIT) {
+          _ledState[iLED].color        = color;
+          _ledState[iLED].onPeriod_ms  = onPeriod_ms;
+          _ledState[iLED].offPeriod_ms = offPeriod_ms;
+          _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
+          _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
+        } else if(turnOffUnspecifiedLEDs) {
+          _ledState[iLED].color        = 0;
+          _ledState[iLED].onPeriod_ms  = 0;
+          _ledState[iLED].offPeriod_ms = 1000;
+          _ledState[iLED].transitionOnPeriod_ms = 0;
+          _ledState[iLED].transitionOffPeriod_ms = 0;
+        }
+        shiftedLEDs = shiftedLEDs >> 1;
+      }
+    }
+    
+    void ActiveCube::SetLEDs(const std::array<u32,NUM_LEDS>& colors,
+                             const std::array<u32,NUM_LEDS>& onPeriods_ms,
+                             const std::array<u32,NUM_LEDS>& offPeriods_ms,
+                             const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
+                             const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms)
+    {
+      for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+        _ledState[iLED].color        = colors[iLED];
+        _ledState[iLED].onPeriod_ms  = onPeriods_ms[iLED];
+        _ledState[iLED].offPeriod_ms = offPeriods_ms[iLED];
+        _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
+        _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
+      }
+    }
+    
+    void ActiveCube::MakeStateRelativeToXY(const Point2f& xyPosition)
+    {
+      const WhichLEDs referenceLED = GetCornerClosestToXY(xyPosition, false);
+      switch(referenceLED)
+      {
+        case WhichLEDs::TOP_UPPER_LEFT:
+          // Nothing to do
+          return;
+          
+        case WhichLEDs::TOP_UPPER_RIGHT:
+          // Rotate clockwise one slot
+          RotatePatternAroundTopFace(true);
+          return;
+          
+        case WhichLEDs::TOP_LOWER_LEFT:
+          // Rotate counterclockwise one slot
+          RotatePatternAroundTopFace(false);
+          return;
+          
+        case WhichLEDs::TOP_LOWER_RIGHT:
+          // Rotate two slots (either direction)
+          // TODO: Do this in one shot
+          RotatePatternAroundTopFace(true);
+          RotatePatternAroundTopFace(true);
+          return;
+          
+        default:
+          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY",
+                            "Unexpected reference LED %d.\n", referenceLED);
+          return;
+      }
+    }
+    
+    /*
+    void ActiveCube::TurnOffAllLEDs()
+    {
+      SetLEDs(WhichLEDs::ALL, NamedColors::BLACK, 0, 0);
+    }
+     */
+    
+    void ActiveCube::Identify()
+    {
+      // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
+      switch(_markers.front().GetCode())
+      {
+        case Vision::MARKER_1:
+          _activeID = 1;
+          break;
+          
+        case Vision::MARKER_INVERTED_1:
+          _activeID = 2;
+          break;
+          
+        default:
+          _activeID = -1;
+          PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
+                            "ActiveID not defined for block with front marker = %d\n",
+                            _markers.front().GetCode());
+      }
+    } // Identify()
+    
+    std::map<s32,bool>& ActiveCube::GetAvailableIDs()
+    {
+      static std::map<s32,bool> availableIDs;
+      return availableIDs;
+    }
+    
+    void ActiveCube::RegisterAvailableID(s32 activeID)
+    {
+      if(ActiveCube::GetAvailableIDs().count(activeID) > 0) {
+        PRINT_NAMED_WARNING("ActiveCube.RegisterAvailableID",
+                            "Ignoring duplicate registration of available ID %d.\n", activeID);
+      } else {
+        ActiveCube::GetAvailableIDs()[activeID] = false;
+      }
+      
+    }
+    
+    void ActiveCube::ClearAvailableIDs()
+    {
+      ActiveCube::GetAvailableIDs().clear();
+    }
+    
+    const Vision::KnownMarker& ActiveCube::GetTopMarker(Pose3d& topMarkerPoseWrtOrigin) const
+    {
+      // Compare each face's normal's dot product with the Z axis and return the
+      // one that is most closely aligned.
+      // TODO: Better, cheaper algorithm for finding top face?
+      //const Vision::KnownMarker* topMarker = _markers.front();
+      auto topMarker = _markers.begin();
+      f32 maxDotProd = std::numeric_limits<f32>::min();
+      //for(FaceName whichFace = FIRST_FACE; whichFace < NUM_FACES; ++whichFace) {
+      for(auto marker = _markers.begin(); marker != _markers.end(); ++marker) {
+        //const Vision::KnownMarker& marker = _markers[whichFace];
+        Pose3d poseWrtOrigin = marker->GetPose().GetWithRespectToOrigin();
+        const f32 currentDotProd = DotProduct(marker->ComputeNormal(poseWrtOrigin), Z_AXIS_3D());
+        if(currentDotProd > maxDotProd) {
+          //topFace = whichFace;
+          topMarker = marker;
+          topMarkerPoseWrtOrigin = poseWrtOrigin;
+          maxDotProd = currentDotProd;
+        }
+      }
+      
+      PRINT_INFO("TopMarker = %s\n", Vision::MarkerTypeStrings[topMarker->GetCode()]);
+      
+      return *topMarker;
+    }
+    
+    WhichLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition,
+                                                           bool getTopAndBottom) const
+    {
+      // Get a vector from center of marker in its current pose to given xyPosition
+      Pose3d topMarkerPose;
+      GetTopMarker(topMarkerPose);
+      const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
+      const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
+      
+      Radians angle = std::atan2(v.y(), v.x());
+      angle -= topMarkerPose.GetRotationAngle<'Z'>();
+      //assert(angle >= -M_PI && angle <= M_PI); // No longer needed: Radians class handles this
+      
+      WhichLEDs whichLEDs = WhichLEDs::NONE;
+      if(angle > 0.f) {
+        if(angle < M_PI_2) {
+          // Between 0 and 90 degrees: Upper Right Corner
+          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Upper Right\n",
+                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          whichLEDs = (getTopAndBottom ? WhichLEDs::TOP_BTM_UPPER_RIGHT : WhichLEDs::TOP_UPPER_RIGHT);
+        } else {
+          // Between 90 and 180: Upper Left Corner
+          //assert(angle<=M_PI);
+          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Upper Left\n",
+                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          whichLEDs = (getTopAndBottom ? WhichLEDs::TOP_BTM_UPPER_LEFT : WhichLEDs::TOP_UPPER_LEFT);
+        }
+      } else {
+        //assert(angle >= -M_PI);
+        if(angle > -M_PI_2) {
+          // Between -90 and 0: Lower Right Corner
+          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Lower Right\n",
+                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          whichLEDs = (getTopAndBottom ? WhichLEDs::TOP_BTM_LOWER_RIGHT : WhichLEDs::TOP_LOWER_RIGHT);
+        } else {
+          // Between -90 and -180: Lower Left Corner
+          //assert(angle >= -M_PI);
+          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Lower Left\n",
+                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          whichLEDs = (getTopAndBottom ? WhichLEDs::TOP_BTM_LOWER_LEFT : WhichLEDs::TOP_LOWER_LEFT);
+        }
+      }
+      
+      return whichLEDs;
+    } // GetCornerClosestToXY()
+    
+    WhichLEDs ActiveCube::GetFaceClosestToXY(const Point2f& xyPosition) const
+    {
+      // Get a vector from center of marker in its current pose to given xyPosition
+      Pose3d topMarkerPose;
+      GetTopMarker(topMarkerPose);
+      const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
+      const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
+      
+      f32 angle = std::atan2(v.y(), v.x());
+      assert(angle >= -M_PI && angle <= M_PI);
+      
+      WhichLEDs whichLEDs = WhichLEDs::NONE;
+      if(angle < M_PI_4 && angle >= -M_PI_4) {
+        // Between -45 and 45 degrees: Right Face
+        whichLEDs = WhichLEDs::RIGHT_FACE;
+      }
+      else if(angle < 3*M_PI_4 && angle >= M_PI_4) {
+        // Between 45 and 135 degrees: Back Face
+        whichLEDs = WhichLEDs::BACK_FACE;
+      }
+      else if(angle < -M_PI_4 && angle >= -3*M_PI_4) {
+        // Between -45 and -135: Front Face
+        whichLEDs = WhichLEDs::FRONT_FACE;
+      }
+      else {
+        // Between -135 && +135: Left Face
+        assert(angle < -3*M_PI_4 || angle > 3*M_PI_4);
+        whichLEDs = WhichLEDs::LEFT_FACE;
+      }
+      
+      return whichLEDs;
+    } // GetFaceClosestToXY()
+    
+/*
+    WhichLEDs ActiveCube::RotatePatternAroundTopFace(WhichLEDs pattern, bool clockwise)
+    {
+      static const u8 MASK = 0x88; // 0b10001000
+      const u8 oldPattern = static_cast<u8>(pattern);
+      if(clockwise) {
+        return static_cast<WhichLEDs>( ((oldPattern << 1) & ~MASK) | ((oldPattern & MASK) >> 3) );
+      } else {
+        return static_cast<WhichLEDs>( ((oldPattern >> 1) & ~MASK) | ((oldPattern & MASK) << 3) );
+      }
+    }
+  */
+    void ActiveCube::RotatePatternAroundTopFace(bool clockwise)
+    {
+      static const u8 cwRotatedPosition[NUM_LEDS] = {
+        4, 0, 6, 2, 5, 1, 7, 3
+      };
+      static const u8 ccwRotatedPosition[NUM_LEDS] = {
+        1, 5, 3, 7, 0, 4, 2, 6
+      };
+      
+      // Choose the appropriate LUT
+      const u8* rotatedPosition = (clockwise ? cwRotatedPosition : ccwRotatedPosition);
+      
+      // Create the new state array
+      std::array<LEDstate,NUM_LEDS> newState;
+      for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+        newState[rotatedPosition[iLED]] = _ledState[iLED];
+      }
+      
+      // Swap new state into place
+      std::swap(newState, _ledState);
+    } // RotatePatternAroundTopFace()
+    
+    void ActiveCube::FillMessage(MessageSetBlockLights& m) const
+    {
+      m.blockID = _activeID;
+      
+      assert(m.onPeriod_ms.size() == NUM_LEDS);
+      assert(m.offPeriod_ms.size() == NUM_LEDS);
+      assert(m.color.size() == NUM_LEDS);
+      
+      for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+        m.color[iLED] = _ledState[iLED].color;
+        m.onPeriod_ms[iLED]  = _ledState[iLED].onPeriod_ms;
+        m.offPeriod_ms[iLED] = _ledState[iLED].offPeriod_ms;
+        m.transitionOnPeriod_ms[iLED]  = _ledState[iLED].transitionOnPeriod_ms;
+        m.transitionOffPeriod_ms[iLED] = _ledState[iLED].transitionOffPeriod_ms;
+      }
+    }
     
   } // namespace Cozmo
 } // namespace Anki

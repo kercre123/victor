@@ -39,6 +39,8 @@
 #include "anki/planning/shared/path.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
@@ -302,7 +304,7 @@ namespace Anki {
       
       bool IsHeadLocked() const { return _headLocked; }
       bool IsLiftLocked() const { return _liftLocked; }
-      bool AreWheelsLockeD() const { return _wheelsLocked; }
+      bool AreWheelsLocked() const { return _wheelsLocked; }
       
       // Below are low-level actions to tell the robot to do something "now"
       // without using the ActionList system:
@@ -437,8 +439,25 @@ namespace Anki {
      
       
       // =========  Block messages  ============
-      // color: The desired colors of each LED ordered by BlockLEDPosition
-      Result SetBlockLights(const u8 blockID, const u32* color);
+      
+      // Return nullptr on failure to find ActiveObject
+      ActiveCube* GetActiveObject(const ObjectID objectID);
+      
+      // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
+      Result SetObjectLights(const ObjectID& objectID,
+                             const std::array<u32,NUM_BLOCK_LEDS>& color,
+                             const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
+                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms);
+      
+      // Set all LEDs of the specified block to the same color/flashrate
+      Result SetObjectLights(const ObjectID& objectID,
+                             const WhichLEDs whichLEDs,
+                             const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
+                             const bool turnOffUnspecifiedLEDs,
+                             const bool makeRelative, const Point2f& relativeToPoint);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }
@@ -702,10 +721,11 @@ namespace Anki {
       Result SendSetCarryState(CarryState_t state);
 
       
-      // =========  Block messages  ============
-      Result SendFlashBlockIDs();
-      Result SendSetBlockLights(const u8 blockID, const u32* color);
-      void ActiveBlockLightTest(const u8 blockID);  // For testing
+      // =========  Active Object messages  ============
+      Result SendFlashObjectIDs();
+      Result SendSetObjectLights(const ActiveCube* activeCube);
+      Result SendSetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
       
       
     }; // class Robot
