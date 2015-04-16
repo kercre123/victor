@@ -43,15 +43,14 @@ foreach(INPUT ${CLAD_INPUTS})
     # C#
     set(CS_OUTPUT "${CS_OUTPUT_DIRECTORY}/${INPUT_BASE_NAME}.cs")
     
-    set(ALL_OUTPUTS 
+    set(CLAD_OUTPUTS ${CLAD_OUTPUTS}
         "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
         "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}")
-    set(CLAD_OUTPUTS ${CLAD_OUTPUTS} ${ALL_OUTPUTS})
     
     add_custom_command(
-        OUTPUT ${ALL_OUTPUTS}
+        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
         
         COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_main_emitter.py
             -C ${INPUT_DIRECTORY}
@@ -61,6 +60,15 @@ foreach(INPUT ${CLAD_INPUTS})
             --header-output-extension .def
             ${INPUT}
         
+        MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
+        DEPENDS ${CLAD_DEPENDENCIES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        VERBATIM
+    )
+        
+    add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}"
+        
         COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CSharp_main_emitter.py
             -C ${INPUT_DIRECTORY}
             --output-file-override ${CS_OUTPUT}
@@ -69,7 +77,6 @@ foreach(INPUT ${CLAD_INPUTS})
         MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
         DEPENDS ${CLAD_DEPENDENCIES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "building ${INPUT_DIRECTORY}/${INPUT}"
         VERBATIM
     )
     
@@ -79,18 +86,25 @@ foreach(INPUT ${CLAD_INPUTS})
         set(CPP_DECLARATIONS_OUTPUT "${CPP_OUTPUT_DIRECTORY}/${INPUT_BASE}_declarations.def")
         set(CPP_SWITCH_OUTPUT "${CPP_OUTPUT_DIRECTORY}/${INPUT_BASE}_switch.def")
         
-        set(EXTRA_OUTPUTS 
+        set(CLAD_OUTPUTS ${CLAD_OUTPUTS}
             "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
             "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}")
-        set(CLAD_OUTPUTS ${CLAD_OUTPUTS} ${EXTRA_OUTPUTS})
         
         add_custom_command(
-            OUTPUT ${EXTRA_OUTPUTS}
+            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
         
             COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_declarations_emitter.py
                 -C ${INPUT_DIRECTORY}
                 -o ${CPP_OUTPUT_DIRECTORY}
                 ${INPUT}
+        
+            MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
+            DEPENDS ${CLAD_DEPENDENCIES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            VERBATIM
+        )
+        add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}"
         
             COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_switch_emitter.py
                 -C ${INPUT_DIRECTORY}
@@ -100,7 +114,6 @@ foreach(INPUT ${CLAD_INPUTS})
             MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
             DEPENDS ${CLAD_DEPENDENCIES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "building ${INPUT_DIRECTORY}/${INPUT}"
             VERBATIM
         )
     endif()

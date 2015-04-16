@@ -392,8 +392,11 @@ if __name__ == '__main__':
         if options.verbose:
             print('')
             print('Wiping all ignored files from the entire repository...')
-        ankibuild.util.File.execute(['git', 'clean', '-Xdf', '--', REPO_ROOT])
+        old_dir = ankibuild.util.File.pwd()
+        ankibuild.util.File.cd(REPO_ROOT)
+        ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
         ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
+        ankibuild.util.File.cd(old_dir)
     
     print('DONE command {0} on {1}'.format(options.command, platforms_text))
     
