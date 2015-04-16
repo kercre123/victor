@@ -911,6 +911,9 @@ namespace Anki {
         _visuallyVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID,
                                                                _dockMarker->GetCode());
 
+        // Disable the visual verification from issuing a completion signal
+        _visuallyVerifyAction->SetIsPartOfCompoundAction(true);
+        
         return SUCCESS;
       }
       
@@ -1031,8 +1034,7 @@ namespace Anki {
           
         default:
           PRINT_NAMED_WARNING("PickAndPlaceObjectAction.GetType",
-                              "Unexpected dock action %d in determining action type.\n",
-                              _dockAction);
+                              "Dock action not set before determining action type.\n");
           return ACTION_PICK_AND_PLACE_INCOMPLETE;
       }
     }
@@ -1097,8 +1099,7 @@ namespace Anki {
         }
         default:
           PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
-                            "Unexpected dock action %d in determining filling completion signal.\n",
-                            _dockAction);
+                            "Dock action not set before filling completion signal.\n");
       }
       
       IDockAction::EmitCompletionSignal(robot, success);

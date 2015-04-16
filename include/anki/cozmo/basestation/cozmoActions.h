@@ -318,10 +318,10 @@ namespace Anki {
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
-        new VisuallyVerifyObjectAction(objectID),
+        //new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed)})
       {
-        
+
       }
       
       // GetType returns the type from the PickAndPlaceObjectAction, which is
