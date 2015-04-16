@@ -22,7 +22,7 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/shared/actionTypes.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 namespace Anki {
   
