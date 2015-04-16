@@ -54,7 +54,7 @@ public class ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1, byte makeRelative = 1 )
 	{
-		U2G_SetActiveObjectLEDs message = new U2G_SetActiveObjectLEDs ();
+		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
 		message.robotID = RobotEngineManager.instance.current.ID;
 		message.onPeriod_ms = onPeriod_ms;
@@ -70,6 +70,6 @@ public class ObservedObject
 		message.relativeToX = RobotEngineManager.instance.current.WorldPosition.x;
 		message.relativeToY = RobotEngineManager.instance.current.WorldPosition.y;
 
-		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetActiveObjectLEDs = message } );
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
 }
