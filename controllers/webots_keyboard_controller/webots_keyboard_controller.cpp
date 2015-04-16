@@ -411,26 +411,26 @@ namespace Anki {
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
         msgHandler_.RegisterCallbackForMessage([](const G2U_Message& message) {
-          switch (message.GetType()) {
-            case G2U_Message::Type::RobotConnected:
+          switch (message.GetTag()) {
+            case G2U_Message::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
               break;
-            case G2U_Message::Type::RobotState:
+            case G2U_Message::Tag::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
-            case G2U_Message::Type::RobotObservedObject:
+            case G2U_Message::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
-            case G2U_Message::Type::UiDeviceAvailable:
+            case G2U_Message::Tag::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
               break;
-            case G2U_Message::Type::RobotAvailable:
+            case G2U_Message::Tag::RobotAvailable:
               HandleRobotConnection(message.Get_RobotAvailable());
               break;
-            case G2U_Message::Type::ImageChunk:
+            case G2U_Message::Tag::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
               break;
-            case G2U_Message::Type::RobotDeletedObject:
+            case G2U_Message::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
             default:
