@@ -5,7 +5,7 @@ public class GoldRushGameActions : GameActions {
 
 	public override string TARGET { get { return "Search"; } }
 	public override string PICK_UP { get { return "Pick Up"; } }
-	public override string DROP { get { if (GoldRushController.inExtractRange) return "Extract"; else return "Deposit"; } }
+	public override string DROP { get { if (GoldRushController.instance.inExtractRange) return "Extract"; else return "Deposit"; } }
 	public override string STACK { get { return "Stack"; } }
 	public override string ROLL { get { return "Roll"; } }
 	public override string ALIGN { get { return "Align"; } }
@@ -45,7 +45,7 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
 
-			if( GoldRushController.inDepositRange || GoldRushController.inExtractRange )
+			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
 			{
 				buttons[0].SetMode( ActionButtonMode.DROP );
 			}
@@ -71,11 +71,11 @@ public class GoldRushGameActions : GameActions {
 	public override void Drop()
 	{
 		//extract or deposit
-		if (GoldRushController.inExtractRange) 
+		if (GoldRushController.instance.inExtractRange) 
 		{
 			GoldRushController.instance.BeginExtracting();
 		}
-		else if (GoldRushController.inDepositRange)
+		else if (GoldRushController.instance.inDepositRange)
 		{
 			GoldRushController.instance.BeginDepositing();
 		}

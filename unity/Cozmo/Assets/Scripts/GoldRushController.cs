@@ -21,9 +21,6 @@ public class GoldRushController : GameController {
 	private float lastPlayTime = 0;
 	private int timerEventIndex = 0;
 
-	internal static bool inExtractRange = false;
-	internal static bool inDepositRange = false;
-
 	[SerializeField] float hideRadius;	//radius around cube's initial position in which its gold will be buried
 	[SerializeField] float findRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float returnRadius;	//dropping cube within find radius will trigger transmutation/score
@@ -47,16 +44,21 @@ public class GoldRushController : GameController {
 	{
 		IDLE,
 		SEARCHING,
+		CAN_EXTRACT,
 		EXTRACTING,
 		READY_TO_RETURN,
 		RETURNING,
 		RETURNED,
+		DEPOSITING,
 		NUMSTATES
 	};
 
 	private PlayState playState = PlayState.IDLE;
 	float playStateTimer = 0;
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
+
+	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
+	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
 
 	enum BuildState
 	{
@@ -106,10 +108,6 @@ public class GoldRushController : GameController {
 		totalActiveTime = 0;
 		timerEventIndex = 0;
 		scores [0] = 0;
-
-		inExtractRange = false;
-		inDepositRange = false;
-
 	}
 
 	protected override void Exit_PLAYING()
@@ -119,10 +117,9 @@ public class GoldRushController : GameController {
 		CozmoVision.EnableDing(); // just in case we were in searching mode
 		//ActionButton.DROP = null;
 		//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
+		playState = PlayState.IDLE;
 		UpdateDetectorLights (0);
 		audio.Stop ();
-		inExtractRange = false;
-		inDepositRange = false;
 	}
 
 	protected override void Update_PLAYING() 
@@ -132,9 +129,6 @@ public class GoldRushController : GameController {
 		playStateTimer += Time.deltaTime;
 
 		UpdateTimerEvents (totalActiveTime);
-
-		inExtractRange = false;
-		inDepositRange = false;
 
 		switch(playState)
 		{
@@ -313,7 +307,6 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNED:
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
-			inDepositRange = true;
 			hintMessage.ShowMessage("Deposit the gold to collect points!", Color.black);
 			break;
 		default:
@@ -360,6 +353,18 @@ public class GoldRushController : GameController {
 		}
 	}
 
+	void UpdateCanExtract()
+	{
+		Vector2 buriedLocation;
+		if (buriedLocations.TryGetValue (robot.carryingObjectID, out buriedLocation)) {
+			float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
+			if( distance > findRadius )
+			{
+				EnterPlayState(PlayState.SEARCHING);
+			}
+		}
+	}
+
 	void UpdateSearching()
 	{
 		if(robot.carryingObjectID != -1) 
@@ -379,9 +384,9 @@ public class GoldRushController : GameController {
 							audio.Stop();
 							audio.loop = true;
 							gameObject.audio.PlayOneShot(foundBeep);
+							EnterPlayState(PlayState.CAN_EXTRACT);
 						}
 						foundItems.Add(robot.carryingObjectID);
-						inExtractRange = true;
 						Debug.Log("found!");
 					}
 					else if(distance <= detectRadius) 
@@ -397,8 +402,8 @@ public class GoldRushController : GameController {
 				}
 				else if(distance <= findRadius)
 				{
+					EnterPlayState(PlayState.CAN_EXTRACT);
 					UpdateDetectorLights (1);
-					inExtractRange = true;
 				}
 				else if( foundItems.Contains(robot.carryingObjectID) && distance > findRadius )
 				{
@@ -443,6 +448,7 @@ public class GoldRushController : GameController {
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
 		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
+		Debug.Log ("distance: " + distance);
 		if (distance < returnRadius) 
 		{
 			EnterPlayState(PlayState.RETURNED);
@@ -455,7 +461,6 @@ public class GoldRushController : GameController {
 	void UpdateReturned()
 	{
 		// todo: add code to make sure the player doen't leave the box before dropping it off
-		inDepositRange = true;
 	}
 
 	public void BeginExtracting()
@@ -472,6 +477,7 @@ public class GoldRushController : GameController {
 
 	public void BeginDepositing()
 	{
+		EnterPlayState (PlayState.DEPOSITING);
 		StartCoroutine(AwardPoints());
 	}
 
@@ -495,6 +501,7 @@ public class GoldRushController : GameController {
 		scores[0]+= 10;
 		audio.Stop();
 		audio.PlayOneShot(collectedSound);
+		yield return new WaitForSeconds (.9f);
 		EnterPlayState(PlayState.IDLE);
 	}
 #endregion
@@ -506,6 +513,7 @@ public class GoldRushController : GameController {
 
 		if (time_now - last_light_message_time > light_messaging_delay) 
 		{
+			Debug.Log("light_intensity: "+ light_intensity);
 			last_light_message_time = time_now;
 			float r = 255 * light_intensity;
 			float g = 255 * light_intensity;
