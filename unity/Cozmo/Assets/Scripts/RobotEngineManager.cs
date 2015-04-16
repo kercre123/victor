@@ -20,15 +20,18 @@ public enum ActionCompleted
 	PICKUP_OBJECT_HIGH,
 	PLACE_OBJECT_LOW,
 	PLACE_OBJECT_HIGH,
+	PICK_AND_PLACE_INCOMPLETE, 
 	CROSS_BRIDGE,
 	ASCEND_OR_DESCEND_RAMP,
 	TRAVERSE_OBJECT,
 	DRIVE_TO_AND_TRAVERSE_OBJECT,
 	FACE_OBJECT,
+	VISUALLY_VERIFY_OBJECT,
 	PLAY_ANIMATION,
 	PLAY_SOUND,
 	WAIT
 }
+
 
 public class RobotEngineManager : MonoBehaviour {
 	
@@ -46,7 +49,7 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField]
 	[HideInInspector]
 	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
-	
+
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
@@ -442,6 +445,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 		current.localBusyTimer = 0f;
+
+		if(!success) {
+			if(current.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
+				current.SetLiftHeight(1f);
+			}
+			else {
+				current.SetLiftHeight(0f);
+			}
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U_DeviceDetectedVisionMarker message)

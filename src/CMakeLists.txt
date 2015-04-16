@@ -6,9 +6,6 @@ add_definitions(-DCOZMO_BASESTATION)
 add_definitions(-DCORETECH_BASESTATION)
 
 
-add_subdirectory("comms/messaging")
-
-
 set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
 file(GLOB SOURCE_FILES
@@ -48,10 +45,10 @@ add_library(Cozmo_Game
 target_link_libraries(Cozmo_Game
   Cozmo_Basestation 
   CoreTech_Messaging_Basestation
-  CoreTech_Common_Basestation 
+  CoreTech_Common_Basestation
 )
 
-add_dependencies(Cozmo_Game CLAD)
+add_dependencies(Cozmo_Game Cozmo_Clad)
 
 
 

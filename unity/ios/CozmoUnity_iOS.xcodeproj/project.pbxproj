@@ -681,6 +681,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "\"${SRCROOT}/../../lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${SRCROOT}/../../lib/anki/cozmo-engine/resources\" \"${SRCROOT}/../../lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
+			showEnvVarsInLog = 0;
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {
 			isa = PBXShellScriptBuildPhase;
