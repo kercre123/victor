@@ -9,16 +9,59 @@
 #include "client.h"
 #include "driver/uart.h"
 
+#define min(a, b) (a < b ? a : b)
+
+#define user_procTaskPrio        0
+#define user_procTaskQueueLen    1
+os_event_t    user_procTaskQueue[user_procTaskQueueLen];
+
+#define rfrxbuf_len 2048 // Must be a power of 2
+#define rfrxbuf_lenmask (rfrxbuf_len - 1)
+static uint16 rfrxWind = 0;
+static uint16 rfrxRind = 0;
+static uint8 uartTXBuf[3200];
+
+
+
+
 
 void ICACHE_FLASH_ATTR client_receiveCB(uint8* data, uint16 len)
 {
-  uart_tx_one_char(0xbe);
-  uart_tx_one_char(0xef);
-  uart_tx_one_char((len & 0xff));
-  uart_tx_one_char(((len >> 8) & 0xff));
-  uart_tx_one_char(0x00); // Length byte 3
-  uart_tx_one_char(0x00); // Length byte 4
-  uart0_tx_buffer(data, len);
+  uint16 available = rfrxbuf_len - ((rfrxWind - rfrxRind) & rfrxbuf_lenmask);
+  uint16 writeOne;
+
+  if ((len + 6) > available)
+  {
+    os_printf("RFRX, no space %d > %d\r\n", len + 6, available);
+    return;
+  }
+
+  uartTXBuf[rfrxWind] = 0xbe; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0xef; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = (len & 0xff); rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = ((len >> 8) & 0xff); rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0x00; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0x00; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+
+  writeOne = min(len, rfrxbuf_len - rfrxWind);
+  os_memcpy(uartTXBuf + rfrxWind, data, writeOne);
+  if (writeOne < len)
+  {
+    os_memcpy(uartTXBuf, data + writeOne, len - writeOne);
+  }
+  rfrxWind = (rfrxWind + len) & rfrxbuf_lenmask;
+
+  system_os_post(user_procTaskPrio, 0, 0 );
+}
+
+
+static void ICACHE_FLASH_ATTR uartTxTask(os_event_t *events)
+{
+  while (rfrxRind != rfrxWind)
+  {
+    uart_tx_one_char(uartTXBuf[rfrxRind]);
+    rfrxRind = (rfrxRind + 1) & rfrxbuf_lenmask;
+  }
 }
 
 inline void uart0_recvCB()
@@ -116,10 +159,11 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_div_modify(0, UART_CLK_FREQ / 3000000);
-
     //uart_div_modify(0, UART_CLK_FREQ / 3000000);
-    uart_init(BIT_RATE_3000000, BIT_RATE_9600);
+
+    uart_init(BIT_RATE_3000000, BIT_RATE_115200);
+
+    os_printf("Espressif booting up...\r\n");
 
     // Create config for Wifi AP
     struct softap_config ap_config;
@@ -151,4 +195,10 @@ user_init()
 
     // Setup Basestation client
     clientInit(client_receiveCB);
+
+    // Setup the
+    system_os_task(uartTxTask, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
+
+    os_printf("user initalization complete\r\n");
+
 }

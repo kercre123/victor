@@ -42,7 +42,10 @@ class BaseStationSimulator(threading.Thread, serRadio.UDPClient):
         self.sendto(self.pingPkt, self.addr) # Send ping
         incoming = self.receive()
         if incoming:
-            sys.stdout.write("Basestation:\t%02x[%d]\r\n" % (ord(incoming[0]), len(incoming)))
+            try:
+                sys.stdout.write("Basestation:\t%02d[%d]\r\n" % (ord(incoming[0]), len(incoming)))
+            except:
+                sys.stderr.write("Basestation:\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
         time.sleep(RADIO_TICK_INTERVAL)
 
     def run(self):
@@ -106,7 +109,10 @@ class RobotSimulator(threading.Thread, serRadio.UARTRadioConn):
         # Receive
         incoming = self.read(1500)
         if incoming:
-            sys.stdout.write("Robot:\t%s... [%d]\r\n" % (incoming[:8], len(incoming)))
+            try:
+                sys.stdout.write("Robot:\t\t%02d[%d]\r\n" % (ord(incoming[6]), len(incoming)))
+            except:
+                sys.stderr.write("Robot:\t\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
 
     def run(self):
         "Run function for the thread"
