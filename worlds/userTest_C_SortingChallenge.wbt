@@ -194,21 +194,21 @@ DEF Red Block1x1 {
   name "Fire_01"
   translation 0.3 0 0.153997
   rotation 1 0 0 0
-  markerImg "symbols/fire.png"
+  markerImg "symbols/arrow.png"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
   translation 0.3 0 0.197997
   rotation 1 0 0 0
   blockColor 0 0 1
-  markerImg "symbols/kitty.png"
+  markerImg "symbols/bee.png"
 }
 DEF Green Block1x1 {
   name "AngryFace_01"
   translation 0.3 0 0.241997
   rotation 1 0 0 0
   blockColor 0 1 0
-  markerImg "symbols/spider.png"
+  markerImg "symbols/bullseye2.png"
 }
 BlockWorldComms {
 }

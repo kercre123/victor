@@ -6,9 +6,14 @@
  * Modifications: 
  */
 
+// TODO: Have CMake define this
+#define CORETECH_BASESTATION
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -21,6 +26,7 @@
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/block.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -83,6 +89,22 @@ namespace Anki {
         double poseMarkerColor_[2][3] = { {0.1, 0.8, 0.1} // Goto pose color
           ,{0.8, 0.1, 0.1} // Place object color
         };
+        
+        struct {
+          s32 family;
+          s32 type;
+          s32 id;
+          f32 area;
+          bool isActive;
+          
+          void Reset() {
+            family = -1;
+            type = -1;
+            id = -1;
+            area = 0;
+            isActive = false;
+          }
+        } currentlyObservedObject;
         
         BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
         
@@ -157,6 +179,9 @@ namespace Anki {
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
+        
+        Point2f robotPosition_;
+        
         /*
         u32 imgID_ = 0;
         u8 imgData_[3*640*480];
@@ -221,6 +246,11 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
+      void HandleRobotStateUpdate(G2U_RobotState const& msg)
+      {
+        robotPosition_ = {msg.pose_x, msg.pose_y};
+      }
+      
       void HandleRobotObservedObject(G2U_RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
@@ -237,6 +267,15 @@ namespace Anki {
           cozmoCam_->drawText(dispStr,
                               msg.img_topLeft_x + msg.img_width/4,
                               msg.img_topLeft_y + msg.img_height/2);
+          
+          const f32 area = msg.img_width * msg.img_height;
+          //if(area > currentlyObservedObject.area) {
+            currentlyObservedObject.family = msg.objectFamily;
+            currentlyObservedObject.type   = msg.objectType;
+            currentlyObservedObject.id     = msg.objectID;
+            currentlyObservedObject.isActive = msg.isActive;
+            currentlyObservedObject.area   = area;
+          //}
           
           /*
           // DEBUG!!!
@@ -257,6 +296,11 @@ namespace Anki {
           }
            */
         }
+      }
+      
+      void HandleRobotObservedNothing(G2U_RobotObservedNothing const& msg)
+      {
+        currentlyObservedObject.Reset();
       }
       
       void HandleRobotDeletedObject(G2U_RobotDeletedObject const& msg)
@@ -370,6 +414,9 @@ namespace Anki {
           switch (message.GetTag()) {
             case G2U_Message::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
+              break;
+            case G2U_Message::Tag::RobotState:
+              HandleRobotStateUpdate(message.Get_RobotState());
               break;
             case G2U_Message::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
@@ -742,12 +789,12 @@ namespace Anki {
                 // TODO: How to choose which robot
                 const RobotID_t robotID = 1;
                 
-                // I - Request a single image from the game for a specified robot
+                // U - Request a single image from the game for a specified robot
                 ImageSendMode_t mode = ISM_SINGLE_SHOT;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT+I - Toggle image streaming from the game
-                  static bool streamOn = false;
+                  static bool streamOn = true;
                   if (streamOn) {
                     mode = ISM_OFF;
                     printf("Turning game image streaming OFF.\n");
@@ -955,6 +1002,62 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'B':
+              {
+                if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
+                {
+                  // Proof of concept: cycle colors
+                  const s32 NUM_COLORS = 4;
+                  const ColorRGBA colorList[NUM_COLORS] = {
+                    NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+                    NamedColors::BLACK
+                  };
+                  static s32 colorIndex = 0;
+                  
+                  U2G_SetActiveObjectLEDs msg;
+                  msg.objectID = currentlyObservedObject.id;
+                  msg.robotID = 1;
+                  msg.onPeriod_ms = 250;
+                  msg.offPeriod_ms = 250;
+                  msg.transitionOnPeriod_ms = 500;
+                  msg.transitionOffPeriod_ms = 100;
+                  msg.turnOffUnspecifiedLEDs = 1;
+                  if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                    printf("Updating active block corner\n");
+                    msg.color = NamedColors::RED;
+                    
+                    /*
+                    static WhichLEDs cornerList[NUM_COLORS] = {
+                      WhichLEDs::TOP_BTM_UPPER_LEFT,
+                      WhichLEDs::TOP_BTM_UPPER_RIGHT,
+                      WhichLEDs::TOP_BTM_LOWER_RIGHT,
+                      WhichLEDs::TOP_BTM_LOWER_LEFT
+                    };
+                    msg.whichLEDs = static_cast<u8>(cornerList[colorIndex++]);
+                    */
+                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_BTM_UPPER_LEFT);
+                    msg.makeRelative = 1;
+                    msg.relativeToX = robotPosition_.x();
+                    msg.relativeToY = robotPosition_.y();
+                    
+                  } else {
+                    printf("Cycling active block color\n");
+                    msg.color = colorList[colorIndex++];
+                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_FACE);
+                    msg.makeRelative = 0;
+                  }
+                  
+                  if(colorIndex == NUM_COLORS) {
+                    colorIndex = 0;
+                  }
+                  
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_SetActiveObjectLEDs(msg);
+                  SendMessage(msgWrapper);
+                }
+                break;
+              }
+                
               case (s32)'M':
               {
                 SendSelectNextSoundScheme();
@@ -963,7 +1066,20 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                SendIMURequest(2000);
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  U2G_FaceObject msg;
+                  msg.robotID = 1;
+                  msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
+                  msg.turnAngleTol = DEG_TO_RAD(5);
+                  msg.maxTurnAngle = DEG_TO_RAD(90);
+                  msg.headTrackWhenDone = 0;
+                  
+                  U2G_Message msgWrapper;
+                  msgWrapper.Set_FaceObject(msg);
+                  SendMessage(msgWrapper);
+                } else {
+                  SendIMURequest(2000);
+                }
                 break;
               }
 
@@ -1458,6 +1574,9 @@ namespace Anki {
                 PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
               }
               
+              // Turn on image streaming to game/UI by default:
+              SendImageRequest(ISM_STREAM, 1);
+              
               uiState_ = UI_RUNNING;
             }
             break;
@@ -1500,6 +1619,14 @@ namespace Anki {
             ProcessKeystroke();
             ProcessJoystick();
             
+            /*
+            // DEBUG!!!!!
+            U2G_SetRobotCarryingObject m;
+            m.objectID = 500;
+            m.robotID = 1;
+            message.Set_SetRobotCarryingObject(m);
+            SendMessage(message);
+            */
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;
           }
