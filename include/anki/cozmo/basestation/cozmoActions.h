@@ -287,6 +287,10 @@ namespace Anki {
       // on what we were doing.
       virtual s32 GetType() const override;
       
+      // Override completion signal to fill in information about objects picked
+      // or placed
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const override;
+      
     protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
@@ -294,10 +298,6 @@ namespace Anki {
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual IAction::ActionResult Verify(Robot& robot) const override;
-      
-      // Override completion signal to fill in information about objects picked
-      // or placed
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -327,6 +327,12 @@ namespace Anki {
       // GetType returns the type from the PickAndPlaceObjectAction, which is
       // determined dynamically
       virtual s32 GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PickAndPlaceObjectAction's completion signal
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const override {
+        return _actions.back().second->EmitCompletionSignal(robot, success);
+      }
+      
     };
     
     

@@ -86,6 +86,13 @@ namespace Anki {
       // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
       
+      // This is called when the action stops running, as long as it is not
+      // marked as being part of a compound action. By default a RobotCompletedAction
+      // signal is emitted with the robot ID, the result of GetType(), and a success
+      // flag. Override in derived classes to fill in other fields of the signal
+      // as needed.
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const;
+
     protected:
       
       virtual ActionResult UpdateInternal(Robot& robot) = 0;
@@ -94,14 +101,6 @@ namespace Anki {
       
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
-      
-      // This is called when the action stops running, as long as it is not
-      // marked as being part of a compound action. By default a RobotCompletedAction
-      // signal is emitted with the robot ID, the result of GetType(), and a success
-      // flag. Override in derived classes to fill in other fields of the signal
-      // as needed.
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const;
-
       
     private:
       u8            _numRetriesRemaining;
