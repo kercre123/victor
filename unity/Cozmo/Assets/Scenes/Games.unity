@@ -2531,9 +2531,6 @@ MonoBehaviour:
   gyroSleepTime: 3
   text_x: {fileID: 968345671}
   text_y: {fileID: 66136252}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
-  text_headAngle: {fileID: 0}
   swipeTurnAngle: 0
   doubleTapTurnAround: 0
   headAngleChangeRate: 7.85398149
@@ -27112,9 +27109,6 @@ MonoBehaviour:
   gyroSleepTime: 3
   text_x: {fileID: 968345671}
   text_y: {fileID: 66136252}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
-  text_headAngle: {fileID: 0}
   swipeTurnAngle: 0
   doubleTapTurnAround: 0
   headAngleChangeRate: 7.85398149
@@ -29149,9 +29143,6 @@ MonoBehaviour:
   gyroSleepTime: 3
   text_x: {fileID: 968345671}
   text_y: {fileID: 66136252}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
-  text_headAngle: {fileID: 0}
   swipeTurnAngle: 0
   doubleTapTurnAround: 0
   headAngleChangeRate: 7.85398149
@@ -34784,14 +34775,14 @@ MonoBehaviour:
   text_ID: {fileID: 0}
   text_headAngle: {fileID: 0}
   text_poseAngle: {fileID: 0}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
+  text_leftWheelSpeed: {fileID: 0}
+  text_rightWheelSpeed: {fileID: 0}
   text_liftHeight: {fileID: 0}
   text_WorldPosition: {fileID: 0}
-  text_status: {fileID: 1406354668}
-  text_batteryPercent: {fileID: 274610270}
+  text_status: {fileID: 0}
+  text_batteryPercent: {fileID: 0}
   text_carryingObjectID: {fileID: 0}
-  text_headTrackingObjectID: {fileID: 929593726}
+  text_headTrackingObjectID: {fileID: 0}
   text_knownObjects: {fileID: 0}
 --- !u!114 &1513403957
 MonoBehaviour:
@@ -38424,9 +38415,6 @@ MonoBehaviour:
   gyroSleepTime: 3
   text_x: {fileID: 968345671}
   text_y: {fileID: 66136252}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
-  text_headAngle: {fileID: 0}
   swipeTurnAngle: 0
   doubleTapTurnAround: 0
   headAngleChangeRate: 7.85398149
@@ -43518,9 +43506,6 @@ MonoBehaviour:
   gyroSleepTime: 3
   text_x: {fileID: 968345671}
   text_y: {fileID: 66136252}
-  text_leftWheelSpeed: {fileID: 510440857}
-  text_rightWheelSpeed: {fileID: 826148280}
-  text_headAngle: {fileID: 0}
   swipeTurnAngle: 0
   doubleTapTurnAround: 0
   headAngleChangeRate: 7.85398149
