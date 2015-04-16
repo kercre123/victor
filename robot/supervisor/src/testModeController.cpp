@@ -85,15 +85,15 @@ namespace Anki {
         // Power   LSpeed  RSpeed (approx,In-air speeds)
         // 0.2      0      0
         // 0.25     0      0
-        // 0.3     11      7
-        // 0.35    26     25
-        // 0.4     41     39
-        // 0.5     70     70
-        // 0.6     95     95
-        // 0.7    122    121
-        // 0.8    148    145
-        // 0.9    172    170
-        // 1.0    193    192
+        // 0.3      4      0
+        // 0.35    13     13
+        // 0.4     27     27
+        // 0.5     49     49
+        // 0.6     67     67
+        // 0.7     91     91
+        // 0.8    109    109
+        // 0.9    128    128
+        // 1.0    150    147
         
         // Percent power to step up when
         // DTF_ENABLE_CYCLE_SPEEDS_TEST is enabled

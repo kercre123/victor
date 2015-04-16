@@ -126,10 +126,10 @@ namespace Anki {
 #elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 11) {
-        out_ol = 0.003810469 * x + 0.244934245;
+      if (x > 4) {
+        out_ol = 0.00480586416 * x + 0.27598429648;
       } else {
-        out_ol = 0.3 * x / 11;
+        out_ol = 0.3 * x / 4;
       }
 #else
 #error WheelController: Robot platform not defined!
@@ -161,10 +161,10 @@ namespace Anki {
 #elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 7) {
-        out_ol = 0.00379558458 * x + 0.25229054692;
+      if (x > 4) {
+        out_ol = 0.00480586416 * x + 0.27598429648;
       } else {
-        out_ol = 0.3 * x / 7;
+        out_ol = 0.3 * x / 4;
       }
 #else
 #error WheelController: Robot platform not defined!
