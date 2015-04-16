@@ -5,6 +5,21 @@ PROTO WebotsKeyboardController [
 
   field SFColor poseMarkerDiffuseColor 0.1 0.8 0.1
 
+  # Slow speed in mm/s (hold shift)
+  field SFFloat driveSpeedSlow 20
+
+  # Normal speed in mm/s 
+  field SFFloat driveSpeedNormal 60 
+
+  # Turbo speed in mm/s (hold alt)
+  field SFFloat driveSpeedTurbo 150
+  
+  # Value between 0 and 1 which determines how much the robot turns with 
+  # the left/right arrow keys when going forward or backward.
+  # At 1, it will turn one wheel at driveSpeed and the other not at all.
+  # At 0, it won't turn at all.
+  field SFFloat steeringCurvature 1.0
+
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
   field SFFloat lWheelKp 0.0005
   field SFFloat lWheelKi 0.00005
