@@ -295,6 +295,10 @@ namespace Anki {
       
       virtual IAction::ActionResult Verify(Robot& robot) const override;
       
+      // Override completion signal to fill in information about objects picked
+      // or placed
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const override;
+      
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
       
@@ -302,6 +306,7 @@ namespace Anki {
       // carrying, for verification.
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
+      
     }; // class DockWithObjectAction
 
     

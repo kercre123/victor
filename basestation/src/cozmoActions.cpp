@@ -1021,6 +1021,73 @@ namespace Anki {
       }
     }
     
+    void PickAndPlaceObjectAction::EmitCompletionSignal(Robot& robot, bool success) const
+    {
+      switch(_dockAction)
+      {
+        case DA_PICKUP_HIGH:
+        case DA_PICKUP_LOW:
+        {
+          if(!robot.IsCarryingObject()) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                              "Expecting robot to think it's carrying object for pickup action.\n");
+          } else {
+            const s32 carryObject = robot.GetCarryingObject().GetValue();
+            const s32 carryObjectOnTop = robot.GetCarryingObjectOnTop().GetValue();
+            
+            const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
+            
+            // TODO: Be able to fill in add'l objects carried in signal
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
+                                                                  carryObject,
+                                                                  carryObjectOnTop, -1, -1, -1,
+                                                                  numObjects,
+                                                                  success);
+            return;
+          }
+          break;
+        }
+        case DA_PLACE_HIGH:
+        case DA_PLACE_LOW:
+        {
+          // TODO: Be able to fill in more objects in the stack
+          Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          if(object == nullptr) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                              "Docking object %d not found in world after placing.\n",
+                              _dockObjectID.GetValue());
+          } else {
+            std::array<s32,5> objectStack;
+            auto objectStackIter = objectStack.begin();
+            objectStack.fill(-1);
+            uint8_t numObjects = 0;
+            while(object != nullptr && numObjects < objectStack.size()) {
+              *objectStackIter = object->GetID().GetValue();
+              ++objectStackIter;
+              ++numObjects;
+              object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
+            }
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
+                                                                  objectStack[0],
+                                                                  objectStack[1],
+                                                                  objectStack[2],
+                                                                  objectStack[3],
+                                                                  objectStack[4],
+                                                                  numObjects,
+                                                                  success);
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                            "Unexpected dock action %d in determining filling completion signal.\n",
+                            _dockAction);
+      }
+      
+      IDockAction::EmitCompletionSignal(robot, success);
+    }
+    
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
     {
       // Record the object's original pose (before picking it up) so we can

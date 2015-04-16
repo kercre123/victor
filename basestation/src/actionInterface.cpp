@@ -52,9 +52,7 @@ namespace Anki {
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
-          CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(),
-                                                                GetType(),
-                                                                result == SUCCESS);
+          EmitCompletionSignal(robot, result==SUCCESS);
           
           // Action is done, always completely unlock the robot
           robot.LockHead(false);
@@ -65,6 +63,13 @@ namespace Anki {
       }
       
       return result;
+    }
+    
+    void IActionRunner::EmitCompletionSignal(Robot& robot, bool success) const
+    {
+      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
+                                                            -1, -1, -1, -1, -1, 0,
+                                                            success);
     }
     
     bool IActionRunner::RetriesRemain()
