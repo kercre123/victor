@@ -53,9 +53,8 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const f32 distance,
-                                 const Radians& headAngle)
-    : PreActionPose(type, marker, Y_AXIS_3D() * -distance, headAngle)
+                                 const f32 distance)
+    : PreActionPose(type, marker, Y_AXIS_3D() * -distance)
     {
       
     } // PreActionPose Constructor
@@ -63,12 +62,10 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const Vec3f& offset,
-                                 const Radians& headAngle)
+                                 const Vec3f& offset)
     : _type(type)
     , _marker(marker)
     , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, &marker->GetPose()) // init w.r.t. marker
-    , _headAngle(headAngle)
     {
       // Now make pose w.r.t. marker parent
       if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
@@ -84,11 +81,9 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const Pose3d& poseWrtMarker,
-                                 const Radians& headAngle)
+                                 const Pose3d& poseWrtMarker)
     : _type(type)
     , _marker(marker)
-    , _headAngle(headAngle)
     {
       if(poseWrtMarker.GetParent() != &marker->GetPose()) {
         PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
@@ -110,7 +105,6 @@ namespace Anki {
     : _type(canonicalPose.GetActionType())
     , _marker(canonicalPose.GetMarker())
     , _poseWrtMarkerParent(markerParentPose*canonicalPose._poseWrtMarkerParent)
-    , _headAngle(canonicalPose.GetHeadAngle())
     {
       _poseWrtMarkerParent.SetParent(markerParentPose.GetParent());
       _poseWrtMarkerParent.SetName("PreActionPose");

@@ -80,7 +80,7 @@ int main(int argc, const char *argv[])
     printf("Usage:\n"
       "run_recognizeFaces cameraId imageWidth imageHeight\n"
       "Examples:\n"
-      "run_captureImages 1 640 480\n");
+      "run_recognizeFaces 1 640 480\n");
     return -1;
   }
 

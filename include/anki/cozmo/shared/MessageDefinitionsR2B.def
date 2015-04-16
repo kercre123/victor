@@ -214,11 +214,26 @@ END_MESSAGE_DEFINITION(PlaySoundOnBaseStation)
 START_MESSAGE_DEFINITION(StopSoundOnBaseStation, 1)
 END_MESSAGE_DEFINITION(StopSoundOnBaseStation)
 
+// GoalPose
+START_MESSAGE_DEFINITION(GoalPose, 1)
+ADD_MESSAGE_MEMBER(f32, pose_x)
+ADD_MESSAGE_MEMBER(f32, pose_y)
+ADD_MESSAGE_MEMBER(f32, pose_z)
+ADD_MESSAGE_MEMBER(f32, pose_angle)
+END_MESSAGE_DEFINITION(GoalPose)
 
 
-// ----- Block messages ------
+// ----- Active object messages ------
 
 // BlockIDFlashStarted
 START_TIMESTAMPED_MESSAGE_DEFINITION(BlockIDFlashStarted, 1)
 END_MESSAGE_DEFINITION(BlockIDFlashStarted)
+
+// ActiveObjectMoved
+START_MESSAGE_DEFINITION(ActiveObjectMoved, 1)
+ADD_MESSAGE_MEMBER(s32, objectID)
+//ADD_MESSAGE_MEMBER(f32, xAccel)
+//ADD_MESSAGE_MEMBER(f32, yAccel)
+//ADD_MESSAGE_MEMBER(f32, zAccel)
+END_MESSAGE_DEFINITION(ActiveObjectMoved)
 

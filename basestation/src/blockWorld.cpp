@@ -1,6 +1,7 @@
 
 // TODO: this include is shared b/w BS and Robot.  Move up a level.
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -67,6 +68,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
     
     // Instantiating an object family increments the unique counter:
@@ -103,13 +105,14 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
+      /*
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
-
+       */
       //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
@@ -118,6 +121,13 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
+      
+      //////////////////////////////////////////////////////////////////////////
+      // 1x1 Active Cubes
+      //
+      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER_INVERTED));
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -345,7 +355,8 @@ namespace Anki
           AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
-                           "Adding new %s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
+                           "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
+                           objSeen->IsActive() ? "active " : "",
                            objSeen->GetType().GetName().c_str(),
                            objSeen->GetID().GetValue(),
                            objSeen->GetPose().GetTranslation().x(),
@@ -431,6 +442,13 @@ namespace Anki
         //_obsProjectedObjects.emplace_back(obsID, boundingBox);
         _currentObservedObjectIDs.push_back(obsID);
         
+        // If this is an active object and has not been identified yet, identify
+        // it now.
+        if(observedObject->IsActive() && !observedObject->IsIdentified()) {
+          // TODO: Need to do more here probably...
+          observedObject->Identify();
+        }
+        
         // Signal the observation of this object, with its bounding box:
         const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
@@ -446,7 +464,8 @@ namespace Anki
                                                              obsObjTrans.x(),
                                                              obsObjTrans.y(),
                                                              obsObjTrans.z(),
-                                                             q.w(), q.x(), q.y(), q.z());
+                                                             q.w(), q.x(), q.y(), q.z(),
+                                                             observedObject->IsActive());
         
         if(_robot->GetTrackHeadToObject().IsSet() &&
            obsID == _robot->GetTrackHeadToObject() &&
@@ -652,7 +671,8 @@ namespace Anki
                                                                        obsObjTrans.x(),
                                                                        obsObjTrans.y(),
                                                                        obsObjTrans.z(),
-                                                                       q.w(), q.x(), q.y(), q.z());
+                                                                       q.w(), q.x(), q.y(), q.z(),
+                                                                       unobserved.object->IsActive());
                   ++numVisibleObjects;
                 } // if(IsWithinFieldOfView)
               } // for(each projectedCorner)
@@ -1316,6 +1336,12 @@ namespace Anki
         //
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp);
+        
+        //
+        // Find any observed active blocks from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp);
         
         //
         // Find any observed ramps from the remaining markers

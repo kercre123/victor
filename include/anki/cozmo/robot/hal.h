@@ -424,9 +424,14 @@ namespace Anki
       // BLOCK COMMS
       //
       void FlashBlockIDs();
-      Result SetBlockLight(const u8 blockID, const u32* color);
-
-
+      
+      // Set all LEDs of the specified block to the same color and flash rate
+      Result SetBlockLight(const u8 blockID, const u32* color,
+                           const u32* onPeriod_ms, const u32* offPeriod_ms,
+                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
+      
+      
+      
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //

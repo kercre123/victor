@@ -42,7 +42,6 @@ namespace Anki {
         
         const f32 BIG_RADIUS = 5000;
         
-#if(USE_DRIVE_CENTER_POSE)
         // Value ranging from 0 to 1.
         // The lower the value the more the expected distance approaches
         // the distance expected of a two-wheeled no-slip robot.
@@ -52,7 +51,6 @@ namespace Anki {
         // How correct is this assumption? Who knows?)
         // TODO: This value may change for different durometer treads
         const f32 SLIP_FACTOR = 0.7f;
-#endif
         
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
@@ -463,7 +461,6 @@ namespace Anki {
       
       f32 GetDriveCenterOffset()
       {
-#if(USE_DRIVE_CENTER_POSE)
         // Get offset of the drive center from robot origin depending on carry state
         f32 drive_offset = DRIVE_CENTER_OFFSET;
         if (PickAndPlaceController::IsCarryingBlock()) {
@@ -472,9 +469,6 @@ namespace Anki {
         }
         
         return drive_offset;
-#else
-        return 0.f;
-#endif
       }
       
       void Update()
@@ -587,7 +581,7 @@ namespace Anki {
           } else {
             
            
-#if(USE_DRIVE_CENTER_POSE)
+#if(1)
             // For treaded robot, assuming there is more slip of the slower tread than
             // there is on the faster one, thus making the total distance travelled
             // per tic closer to the maximum distance traversed by a wheel than
@@ -644,7 +638,7 @@ namespace Anki {
             }
             */
             
-#elif(1)
+#elif(0)
             // Compute distance traveled relative to previous position.
             // Drawing a straight line from the previous position to the new position forms a chord
             // in the circle defined by the turning radius as determined by the incremental wheel motion this tick.
@@ -782,7 +776,15 @@ namespace Anki {
         driveCenterPose.y() = robotOriginPose.GetY() + GetDriveCenterOffset() * sinf(angle);
         driveCenterPose.angle = robotOriginPose.angle;
       }
-      
+
+      void ConvertToOriginPose(const Anki::Embedded::Pose2d &driveCenterPose, Anki::Embedded::Pose2d &robotOriginPose)
+      {
+        f32 angle = driveCenterPose.angle.ToFloat();
+        
+        robotOriginPose.x() = driveCenterPose.GetX() - GetDriveCenterOffset() * cosf(angle);
+        robotOriginPose.y() = driveCenterPose.GetY() - GetDriveCenterOffset() * sinf(angle);
+        robotOriginPose.angle = driveCenterPose.angle;
+      }
   
       Radians GetCurrentMatOrientation()
       {

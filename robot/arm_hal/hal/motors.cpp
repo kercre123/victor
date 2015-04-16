@@ -3,7 +3,7 @@
 #include <limits.h>
 
 // Change this value to a number between 0.25 and 1.0 to limit the wheel's max speed
-#define MAX_WHEEL_SPEED 1.0
+#define MAX_WHEEL_SPEED 0.75
 
 namespace Anki
 {

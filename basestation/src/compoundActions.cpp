@@ -21,20 +21,15 @@ namespace Anki {
 #pragma mark ---- ICompoundAction ----
     
     ICompoundAction::ICompoundAction(std::initializer_list<IActionRunner*> actions)
-    : _name("[")
     {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
           PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
                               "Refusing to add a null action pointer to group.\n");
         } else {
-          _actions.emplace_back(false, action);
-          _actions.back().second->SetIsPartOfCompoundAction(true); 
-          _name += action->GetName();
-          _name += "+";
+          AddAction(action);
         }
       }
-      _name += "]";
     }
     
     ICompoundAction::~ICompoundAction()
@@ -51,6 +46,23 @@ namespace Anki {
       for(auto & actionPair : _actions) {
         actionPair.first = false;
         actionPair.second->Reset();
+      }
+    }
+    
+    void ICompoundAction::AddAction(IActionRunner* action)
+    {
+      if(_actions.empty()) {
+        _name = "["; // initialize with opening bracket for first action
+      } else {
+        _name.pop_back(); // remove last char ']'
+        _name += "+";
+      }
+      
+      _actions.emplace_back(false, action);
+      _actions.back().second->SetIsPartOfCompoundAction(true);
+      if(_actions.size()==1) {
+        _name += action->GetName();
+        _name += "]";
       }
     }
     
@@ -83,6 +95,7 @@ namespace Anki {
         if(actionIter->second->ShouldLockWheels()) {
           return true;
         }
+        ++actionIter;
       }
       return false;
     }

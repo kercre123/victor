@@ -27,6 +27,10 @@ namespace Anki {
       // Given a robotOriginPose, returns the pose of the drive center
       void ConvertToDriveCenterPose(const Anki::Embedded::Pose2d &robotOriginPose,
                                     Anki::Embedded::Pose2d &driveCenterPose);
+
+      // Given a drive center pose, returns the robot origin pose
+      void ConvertToOriginPose(const Anki::Embedded::Pose2d &driveCenterPose,
+                               Anki::Embedded::Pose2d &robotOriginPose);
       
       // Get the current pose frame ID
       PoseFrameID_t GetPoseFrameId();

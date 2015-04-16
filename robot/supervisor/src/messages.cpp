@@ -341,8 +341,6 @@ namespace Anki {
             // TODO: Maybe want to set manual speed via a different message?
             //       For now, using average wheel speed.
             f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
-            manualSpeed = CLIP(manualSpeed, -MAX_ASSISTED_RC_SPEED, MAX_ASSISTED_RC_SPEED);
-            PRINT("Commanding manual path speed %f mm/s.\n", manualSpeed);
             PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
           } else {
             PRINT("Ignoring DriveWheels message because robot is currently following a path.\n");
@@ -871,7 +869,8 @@ namespace Anki {
 
       void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.color);
+        HAL::SetBlockLight(msg.blockID, msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+                           msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 
 // ----------- Send messages -----------------
