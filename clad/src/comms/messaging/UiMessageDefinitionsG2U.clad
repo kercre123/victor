@@ -179,27 +179,10 @@ message PlaySound {
 message StopSound {
 }
 
-union Message {
-    Ping Ping,
-    RobotAvailable RobotAvailable,
-    UiDeviceAvailable UiDeviceAvailable,
-    RobotConnected RobotConnected,
-    RobotDisconnected RobotDisconnected,
-    UiDeviceConnected UiDeviceConnected,
-    //Bogus Bogus,
-    RobotState RobotState,
-    //RobotImage_320x240 RobotImage_320x240,
-    //RobotImage_640x480 RobotImage_640x480,
-    ImageChunk ImageChunk,
-    RobotObservedObject RobotObservedObject,
-    RobotObservedNothing RobotObservedNothing,
-    RobotDeletedObject RobotDeletedObject,
-    DeviceDetectedVisionMarker DeviceDetectedVisionMarker,
-    RobotCompletedAction RobotCompletedAction,
-    PlaySound PlaySound,
-    StopSound StopSound
-}
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "struct" instead of "message"
+union Message { }
 
-}
+} // namespace G2U
 } // namespace Cozmo
 } // namespace Anki

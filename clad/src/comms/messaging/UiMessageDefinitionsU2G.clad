@@ -354,61 +354,9 @@ message SetAllActiveObjectLEDs {
   uint_8   robotID
 }
 
-union Message {
-    Ping Ping,
-    ConnectToRobot ConnectToRobot,
-    ConnectToUiDevice ConnectToUiDevice,
-    DisconnectFromUiDevice DisconnectFromUiDevice,
-    ForceAddRobot ForceAddRobot,
-    StartEngine StartEngine,
-    DriveWheels DriveWheels,
-    TurnInPlace TurnInPlace,
-    FaceObject FaceObject,
-    MoveHead MoveHead,
-    MoveLift MoveLift,
-    SetLiftHeight SetLiftHeight,
-    SetHeadAngle SetHeadAngle,
-    TrackHeadToObject TrackHeadToObject,
-    StopAllMotors StopAllMotors,
-    ImageRequest ImageRequest,
-    SetRobotImageSendMode SetRobotImageSendMode,
-    SaveImages SaveImages,
-    SaveRobotState SaveRobotState,
-    EnableDisplay EnableDisplay,
-    SetHeadlights SetHeadlights,
-    GotoPose GotoPose,
-    PlaceObjectOnGround PlaceObjectOnGround,
-    PlaceObjectOnGroundHere PlaceObjectOnGroundHere,
-    ExecuteTestPlan ExecuteTestPlan,
-    SelectNextObject SelectNextObject,
-    PickAndPlaceObject PickAndPlaceObject,
-    TraverseObject TraverseObject,
-    SetRobotCarryingObject SetRobotCarryingObject,
-    ClearAllBlocks ClearAllBlocks,
-    VisionWhileMoving VisionWhileMoving,
-    ExecuteBehavior ExecuteBehavior,
-    SetBehaviorState SetBehaviorState,
-    AbortPath AbortPath,
-    AbortAll AbortAll,
-    DrawPoseMarker DrawPoseMarker,
-    ErasePoseMarker ErasePoseMarker,
-    SetWheelControllerGains SetWheelControllerGains,
-    SetHeadControllerGains SetHeadControllerGains,
-    SetLiftControllerGains SetLiftControllerGains,
-    SelectNextSoundScheme SelectNextSoundScheme,
-    StartTestMode StartTestMode,
-    IMURequest IMURequest,
-    PlayAnimation PlayAnimation,
-    ReadAnimationFile ReadAnimationFile,
-    StartFaceTracking StartFaceTracking,
-    StopFaceTracking StopFaceTracking,
-    StartLookingForMarkers StartLookingForMarkers,
-    StopLookingForMarkers StopLookingForMarkers,
-    SetVisionSystemParams SetVisionSystemParams,
-    SetFaceDetectParams SetFaceDetectParams,
-    SetActiveObjectLEDs SetActiveObjectLEDs,
-    SetAllActiveObjectLEDs SetAllActiveObjectLEDs
-}
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "struct" instead of "message"
+union Message { }
 
 } // namespace U2G
 } // namespace Cozmo
