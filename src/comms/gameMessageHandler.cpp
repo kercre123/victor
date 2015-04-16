@@ -65,7 +65,7 @@ namespace Cozmo {
         if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
           PRINT_NAMED_ERROR("GameMessageHandler.MessageBufferWrongSize",
                             "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
-                            G2U_Message::GetTypeName(message.GetType()),
+                            G2U_MessageTagToString(message.GetTag()),
                             message.Size(), // not all messages are fixed size, so indeterminate
                             packet.dataLen
                             );
