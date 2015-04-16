@@ -14,7 +14,7 @@ class MCUProxyServer(BaseSubServer):
 
     CLIENT_TIMEOUT = 60.0 # One minute for right now
     SERIAL_DEVICE = "/dev/ttyO2"
-    BAUD_RATE = 3000000
+    BAUD_RATE = 115200
     SERIAL_HEADER = "\xbe\xef"
 
     def __init__(self, server, verbose=False):
@@ -71,8 +71,10 @@ class MCUProxyServer(BaseSubServer):
             if self.v > 9: self.log("serRx: %s\n" % self.rawSerData)
             messageStart = self.rawSerData.find(self.SERIAL_HEADER)
             if messageStart == -1:
-                self.rawSerData = self.rawSerData[len(self.rawSerData)-len(self.SERIAL_HEADER):] # Throw out stuff we know we won't find header for
+                self.rawSerData = self.rawSerData[-len(self.SERIAL_HEADER):] # Throw out stuff we know we won't find header for
                 return
+            elif messageStart != 0:
+                self.clientSend(messages.PrintText(text="Torp WARN: serial seek \"%s\"\n" % ''.join(['%02x' % ord(c) for c in self.rawSerData])).serialize())
             self.rawSerData = self.rawSerData[messageStart + len(self.SERIAL_HEADER):]
             if len(self.rawSerData) < 4: self.rawSerData += self.mcu.read(4 - len(self.rawSerData))
             if len(self.rawSerData) < 4: # Something's wrong
@@ -89,7 +91,8 @@ class MCUProxyServer(BaseSubServer):
                 #if self.v: self.log("sr read %d\n" % length)
                 self.rawSerData += self.mcu.read(length - len(self.rawSerData))
             if len(self.rawSerData) < length: # Something is wrong
-                if self.v: self.log("Insufficient serial data %d < %d" % (len(self.rawSerData), length))
+                self.log("Insufficient serial data %d < %d" % (len(self.rawSerData), length))
+                self.clientSend(messages.PrintText(text="Torp WARN: serial underflow %d < %d\n" % (len(self.rawSerData), length)).serialize())
                 self.rawSerData = "" # Throw everything out and start over
                 return
             msgID = ord(self.rawSerData[0])

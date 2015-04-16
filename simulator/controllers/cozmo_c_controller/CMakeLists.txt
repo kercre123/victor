@@ -1,10 +1,11 @@
 # Cozmo C++-based controller for Webots simulator
 # 
-# Environment variable MATLAB_APP_ROOT needs to be defined!
+# Environment variable MATLAB_ROOT_DIR needs to be defined!
 
 # Include paths
 set(SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/simulator)
 set(SIMULATOR_SRC_DIR ${SIMULATOR_DIR}/src)
+set(SIMULATOR_HAL_DIR ${SIMULATOR_DIR}/hal)
 set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
@@ -78,7 +79,7 @@ target_link_libraries(cozmo_c_controller
 set_target_properties(
   cozmo_c_controller PROPERTIES
   COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT}/bin/maci64/"
   FOLDER "Webots Controllers"
   #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
   #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"
