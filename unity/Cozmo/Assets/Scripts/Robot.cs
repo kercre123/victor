@@ -299,7 +299,7 @@ public class Robot
 
 	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		FaceObject( selectedObjects[index] );
+		//FaceObject( selectedObjects[index] );
 
 		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
