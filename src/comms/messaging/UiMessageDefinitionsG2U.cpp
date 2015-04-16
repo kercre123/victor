@@ -8,45 +8,47 @@ namespace Anki {
 
 namespace Cozmo {
 
-// MESSAGE G2U_Ping
+namespace G2U {
 
-G2U_Ping::G2U_Ping(const uint8_t* buff, size_t len)
+// MESSAGE Ping
+
+Ping::Ping(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_Ping::G2U_Ping(const CLAD::SafeMessageBuffer& buffer)
+Ping::Ping(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_Ping::Pack(uint8_t* buff, size_t len) const
+size_t Ping::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_Ping::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t Ping::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->counter);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t G2U_Ping::Unpack(const uint8_t* buff, const size_t len)
+size_t Ping::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_Ping::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t Ping::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->counter);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_Ping::Size() const
+size_t Ping::Size() const
 {
 	size_t result = 0;
 	//counter
@@ -54,7 +56,7 @@ size_t G2U_Ping::Size() const
 	return result;
 }
 
-bool G2U_Ping::operator==(const G2U_Ping& other) const
+bool Ping::operator==(const Ping& other) const
 {
 	if (counter != other.counter) {
 		return false;
@@ -62,51 +64,51 @@ bool G2U_Ping::operator==(const G2U_Ping& other) const
 	return true;
 }
 
-bool G2U_Ping::operator!=(const G2U_Ping& other) const
+bool Ping::operator!=(const Ping& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotAvailable
+// MESSAGE RobotAvailable
 
-G2U_RobotAvailable::G2U_RobotAvailable(const uint8_t* buff, size_t len)
+RobotAvailable::RobotAvailable(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotAvailable::G2U_RobotAvailable(const CLAD::SafeMessageBuffer& buffer)
+RobotAvailable::RobotAvailable(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotAvailable::Pack(uint8_t* buff, size_t len) const
+size_t RobotAvailable::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t G2U_RobotAvailable::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotAvailable::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotAvailable::Size() const
+size_t RobotAvailable::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -114,7 +116,7 @@ size_t G2U_RobotAvailable::Size() const
 	return result;
 }
 
-bool G2U_RobotAvailable::operator==(const G2U_RobotAvailable& other) const
+bool RobotAvailable::operator==(const RobotAvailable& other) const
 {
 	if (robotID != other.robotID) {
 		return false;
@@ -122,51 +124,51 @@ bool G2U_RobotAvailable::operator==(const G2U_RobotAvailable& other) const
 	return true;
 }
 
-bool G2U_RobotAvailable::operator!=(const G2U_RobotAvailable& other) const
+bool RobotAvailable::operator!=(const RobotAvailable& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_UiDeviceAvailable
+// MESSAGE UiDeviceAvailable
 
-G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const uint8_t* buff, size_t len)
+UiDeviceAvailable::UiDeviceAvailable(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_UiDeviceAvailable::G2U_UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer)
+UiDeviceAvailable::UiDeviceAvailable(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_UiDeviceAvailable::Pack(uint8_t* buff, size_t len) const
+size_t UiDeviceAvailable::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_UiDeviceAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t UiDeviceAvailable::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->deviceID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t G2U_UiDeviceAvailable::Unpack(const uint8_t* buff, const size_t len)
+size_t UiDeviceAvailable::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_UiDeviceAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t UiDeviceAvailable::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->deviceID);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_UiDeviceAvailable::Size() const
+size_t UiDeviceAvailable::Size() const
 {
 	size_t result = 0;
 	//deviceID
@@ -174,7 +176,7 @@ size_t G2U_UiDeviceAvailable::Size() const
 	return result;
 }
 
-bool G2U_UiDeviceAvailable::operator==(const G2U_UiDeviceAvailable& other) const
+bool UiDeviceAvailable::operator==(const UiDeviceAvailable& other) const
 {
 	if (deviceID != other.deviceID) {
 		return false;
@@ -182,32 +184,32 @@ bool G2U_UiDeviceAvailable::operator==(const G2U_UiDeviceAvailable& other) const
 	return true;
 }
 
-bool G2U_UiDeviceAvailable::operator!=(const G2U_UiDeviceAvailable& other) const
+bool UiDeviceAvailable::operator!=(const UiDeviceAvailable& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotConnected
+// MESSAGE RobotConnected
 
-G2U_RobotConnected::G2U_RobotConnected(const uint8_t* buff, size_t len)
+RobotConnected::RobotConnected(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotConnected::G2U_RobotConnected(const CLAD::SafeMessageBuffer& buffer)
+RobotConnected::RobotConnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotConnected::Pack(uint8_t* buff, size_t len) const
+size_t RobotConnected::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->successful);
@@ -215,20 +217,20 @@ size_t G2U_RobotConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotConnected::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotConnected::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->successful);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotConnected::Size() const
+size_t RobotConnected::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -238,7 +240,7 @@ size_t G2U_RobotConnected::Size() const
 	return result;
 }
 
-bool G2U_RobotConnected::operator==(const G2U_RobotConnected& other) const
+bool RobotConnected::operator==(const RobotConnected& other) const
 {
 	if (robotID != other.robotID
 	|| successful != other.successful) {
@@ -247,32 +249,32 @@ bool G2U_RobotConnected::operator==(const G2U_RobotConnected& other) const
 	return true;
 }
 
-bool G2U_RobotConnected::operator!=(const G2U_RobotConnected& other) const
+bool RobotConnected::operator!=(const RobotConnected& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotDisconnected
+// MESSAGE RobotDisconnected
 
-G2U_RobotDisconnected::G2U_RobotDisconnected(const uint8_t* buff, size_t len)
+RobotDisconnected::RobotDisconnected(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotDisconnected::G2U_RobotDisconnected(const CLAD::SafeMessageBuffer& buffer)
+RobotDisconnected::RobotDisconnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotDisconnected::Pack(uint8_t* buff, size_t len) const
+size_t RobotDisconnected::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotDisconnected::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotDisconnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->timeSinceLastMsg_sec);
@@ -280,20 +282,20 @@ size_t G2U_RobotDisconnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotDisconnected::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotDisconnected::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotDisconnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotDisconnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->timeSinceLastMsg_sec);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotDisconnected::Size() const
+size_t RobotDisconnected::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -303,7 +305,7 @@ size_t G2U_RobotDisconnected::Size() const
 	return result;
 }
 
-bool G2U_RobotDisconnected::operator==(const G2U_RobotDisconnected& other) const
+bool RobotDisconnected::operator==(const RobotDisconnected& other) const
 {
 	if (robotID != other.robotID
 	|| timeSinceLastMsg_sec != other.timeSinceLastMsg_sec) {
@@ -312,32 +314,32 @@ bool G2U_RobotDisconnected::operator==(const G2U_RobotDisconnected& other) const
 	return true;
 }
 
-bool G2U_RobotDisconnected::operator!=(const G2U_RobotDisconnected& other) const
+bool RobotDisconnected::operator!=(const RobotDisconnected& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_UiDeviceConnected
+// MESSAGE UiDeviceConnected
 
-G2U_UiDeviceConnected::G2U_UiDeviceConnected(const uint8_t* buff, size_t len)
+UiDeviceConnected::UiDeviceConnected(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_UiDeviceConnected::G2U_UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer)
+UiDeviceConnected::UiDeviceConnected(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_UiDeviceConnected::Pack(uint8_t* buff, size_t len) const
+size_t UiDeviceConnected::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_UiDeviceConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t UiDeviceConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->deviceID);
 	buffer.Write(this->successful);
@@ -345,20 +347,20 @@ size_t G2U_UiDeviceConnected::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_UiDeviceConnected::Unpack(const uint8_t* buff, const size_t len)
+size_t UiDeviceConnected::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_UiDeviceConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t UiDeviceConnected::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->deviceID);
 	buffer.Read(this->successful);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_UiDeviceConnected::Size() const
+size_t UiDeviceConnected::Size() const
 {
 	size_t result = 0;
 	//deviceID
@@ -368,7 +370,7 @@ size_t G2U_UiDeviceConnected::Size() const
 	return result;
 }
 
-bool G2U_UiDeviceConnected::operator==(const G2U_UiDeviceConnected& other) const
+bool UiDeviceConnected::operator==(const UiDeviceConnected& other) const
 {
 	if (deviceID != other.deviceID
 	|| successful != other.successful) {
@@ -377,32 +379,32 @@ bool G2U_UiDeviceConnected::operator==(const G2U_UiDeviceConnected& other) const
 	return true;
 }
 
-bool G2U_UiDeviceConnected::operator!=(const G2U_UiDeviceConnected& other) const
+bool UiDeviceConnected::operator!=(const UiDeviceConnected& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotState
+// MESSAGE RobotState
 
-G2U_RobotState::G2U_RobotState(const uint8_t* buff, size_t len)
+RobotState::RobotState(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotState::G2U_RobotState(const CLAD::SafeMessageBuffer& buffer)
+RobotState::RobotState(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotState::Pack(uint8_t* buff, size_t len) const
+size_t RobotState::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->pose_x);
 	buffer.Write(this->pose_y);
@@ -426,13 +428,13 @@ size_t G2U_RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotState::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotState::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->pose_x);
 	buffer.Read(this->pose_y);
@@ -455,7 +457,7 @@ size_t G2U_RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotState::Size() const
+size_t RobotState::Size() const
 {
 	size_t result = 0;
 	//pose_x
@@ -497,7 +499,7 @@ size_t G2U_RobotState::Size() const
 	return result;
 }
 
-bool G2U_RobotState::operator==(const G2U_RobotState& other) const
+bool RobotState::operator==(const RobotState& other) const
 {
 	if (pose_x != other.pose_x
 	|| pose_y != other.pose_y
@@ -522,32 +524,32 @@ bool G2U_RobotState::operator==(const G2U_RobotState& other) const
 	return true;
 }
 
-bool G2U_RobotState::operator!=(const G2U_RobotState& other) const
+bool RobotState::operator!=(const RobotState& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_ImageChunk
+// MESSAGE ImageChunk
 
-G2U_ImageChunk::G2U_ImageChunk(const uint8_t* buff, size_t len)
+ImageChunk::ImageChunk(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_ImageChunk::G2U_ImageChunk(const CLAD::SafeMessageBuffer& buffer)
+ImageChunk::ImageChunk(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_ImageChunk::Pack(uint8_t* buff, size_t len) const
+size_t ImageChunk::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_ImageChunk::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t ImageChunk::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->imageId);
 	buffer.Write(this->frameTimeStamp);
@@ -562,13 +564,13 @@ size_t G2U_ImageChunk::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_ImageChunk::Unpack(const uint8_t* buff, const size_t len)
+size_t ImageChunk::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_ImageChunk::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t ImageChunk::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->imageId);
 	buffer.Read(this->frameTimeStamp);
@@ -582,7 +584,7 @@ size_t G2U_ImageChunk::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_ImageChunk::Size() const
+size_t ImageChunk::Size() const
 {
 	size_t result = 0;
 	//imageId
@@ -606,7 +608,7 @@ size_t G2U_ImageChunk::Size() const
 	return result;
 }
 
-bool G2U_ImageChunk::operator==(const G2U_ImageChunk& other) const
+bool ImageChunk::operator==(const ImageChunk& other) const
 {
 	if (imageId != other.imageId
 	|| frameTimeStamp != other.frameTimeStamp
@@ -622,32 +624,32 @@ bool G2U_ImageChunk::operator==(const G2U_ImageChunk& other) const
 	return true;
 }
 
-bool G2U_ImageChunk::operator!=(const G2U_ImageChunk& other) const
+bool ImageChunk::operator!=(const ImageChunk& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotObservedObject
+// MESSAGE RobotObservedObject
 
-G2U_RobotObservedObject::G2U_RobotObservedObject(const uint8_t* buff, size_t len)
+RobotObservedObject::RobotObservedObject(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotObservedObject::G2U_RobotObservedObject(const CLAD::SafeMessageBuffer& buffer)
+RobotObservedObject::RobotObservedObject(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotObservedObject::Pack(uint8_t* buff, size_t len) const
+size_t RobotObservedObject::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->objectFamily);
@@ -670,13 +672,13 @@ size_t G2U_RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotObservedObject::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotObservedObject::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->objectFamily);
@@ -698,7 +700,7 @@ size_t G2U_RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotObservedObject::Size() const
+size_t RobotObservedObject::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -738,7 +740,7 @@ size_t G2U_RobotObservedObject::Size() const
 	return result;
 }
 
-bool G2U_RobotObservedObject::operator==(const G2U_RobotObservedObject& other) const
+bool RobotObservedObject::operator==(const RobotObservedObject& other) const
 {
 	if (robotID != other.robotID
 	|| objectFamily != other.objectFamily
@@ -762,51 +764,51 @@ bool G2U_RobotObservedObject::operator==(const G2U_RobotObservedObject& other) c
 	return true;
 }
 
-bool G2U_RobotObservedObject::operator!=(const G2U_RobotObservedObject& other) const
+bool RobotObservedObject::operator!=(const RobotObservedObject& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotObservedNothing
+// MESSAGE RobotObservedNothing
 
-G2U_RobotObservedNothing::G2U_RobotObservedNothing(const uint8_t* buff, size_t len)
+RobotObservedNothing::RobotObservedNothing(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotObservedNothing::G2U_RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer)
+RobotObservedNothing::RobotObservedNothing(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotObservedNothing::Pack(uint8_t* buff, size_t len) const
+size_t RobotObservedNothing::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotObservedNothing::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotObservedNothing::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t G2U_RobotObservedNothing::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotObservedNothing::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotObservedNothing::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotObservedNothing::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotObservedNothing::Size() const
+size_t RobotObservedNothing::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -814,7 +816,7 @@ size_t G2U_RobotObservedNothing::Size() const
 	return result;
 }
 
-bool G2U_RobotObservedNothing::operator==(const G2U_RobotObservedNothing& other) const
+bool RobotObservedNothing::operator==(const RobotObservedNothing& other) const
 {
 	if (robotID != other.robotID) {
 		return false;
@@ -822,32 +824,32 @@ bool G2U_RobotObservedNothing::operator==(const G2U_RobotObservedNothing& other)
 	return true;
 }
 
-bool G2U_RobotObservedNothing::operator!=(const G2U_RobotObservedNothing& other) const
+bool RobotObservedNothing::operator!=(const RobotObservedNothing& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotDeletedObject
+// MESSAGE RobotDeletedObject
 
-G2U_RobotDeletedObject::G2U_RobotDeletedObject(const uint8_t* buff, size_t len)
+RobotDeletedObject::RobotDeletedObject(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotDeletedObject::G2U_RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer)
+RobotDeletedObject::RobotDeletedObject(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotDeletedObject::Pack(uint8_t* buff, size_t len) const
+size_t RobotDeletedObject::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotDeletedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotDeletedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->objectID);
@@ -855,20 +857,20 @@ size_t G2U_RobotDeletedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotDeletedObject::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotDeletedObject::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotDeletedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotDeletedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->objectID);
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotDeletedObject::Size() const
+size_t RobotDeletedObject::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -878,7 +880,7 @@ size_t G2U_RobotDeletedObject::Size() const
 	return result;
 }
 
-bool G2U_RobotDeletedObject::operator==(const G2U_RobotDeletedObject& other) const
+bool RobotDeletedObject::operator==(const RobotDeletedObject& other) const
 {
 	if (robotID != other.robotID
 	|| objectID != other.objectID) {
@@ -887,32 +889,32 @@ bool G2U_RobotDeletedObject::operator==(const G2U_RobotDeletedObject& other) con
 	return true;
 }
 
-bool G2U_RobotDeletedObject::operator!=(const G2U_RobotDeletedObject& other) const
+bool RobotDeletedObject::operator!=(const RobotDeletedObject& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_DeviceDetectedVisionMarker
+// MESSAGE DeviceDetectedVisionMarker
 
-G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const uint8_t* buff, size_t len)
+DeviceDetectedVisionMarker::DeviceDetectedVisionMarker(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_DeviceDetectedVisionMarker::G2U_DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer)
+DeviceDetectedVisionMarker::DeviceDetectedVisionMarker(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Pack(uint8_t* buff, size_t len) const
+size_t DeviceDetectedVisionMarker::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t DeviceDetectedVisionMarker::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->markerType);
 	buffer.Write(this->x_upperLeft);
@@ -927,13 +929,13 @@ size_t G2U_DeviceDetectedVisionMarker::Pack(CLAD::SafeMessageBuffer& buffer) con
 	return bytesWritten;
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Unpack(const uint8_t* buff, const size_t len)
+size_t DeviceDetectedVisionMarker::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t DeviceDetectedVisionMarker::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->markerType);
 	buffer.Read(this->x_upperLeft);
@@ -947,7 +949,7 @@ size_t G2U_DeviceDetectedVisionMarker::Unpack(const CLAD::SafeMessageBuffer& buf
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_DeviceDetectedVisionMarker::Size() const
+size_t DeviceDetectedVisionMarker::Size() const
 {
 	size_t result = 0;
 	//markerType
@@ -971,7 +973,7 @@ size_t G2U_DeviceDetectedVisionMarker::Size() const
 	return result;
 }
 
-bool G2U_DeviceDetectedVisionMarker::operator==(const G2U_DeviceDetectedVisionMarker& other) const
+bool DeviceDetectedVisionMarker::operator==(const DeviceDetectedVisionMarker& other) const
 {
 	if (markerType != other.markerType
 	|| x_upperLeft != other.x_upperLeft
@@ -987,32 +989,32 @@ bool G2U_DeviceDetectedVisionMarker::operator==(const G2U_DeviceDetectedVisionMa
 	return true;
 }
 
-bool G2U_DeviceDetectedVisionMarker::operator!=(const G2U_DeviceDetectedVisionMarker& other) const
+bool DeviceDetectedVisionMarker::operator!=(const DeviceDetectedVisionMarker& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_RobotCompletedAction
+// MESSAGE RobotCompletedAction
 
-G2U_RobotCompletedAction::G2U_RobotCompletedAction(const uint8_t* buff, size_t len)
+RobotCompletedAction::RobotCompletedAction(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_RobotCompletedAction::G2U_RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer)
+RobotCompletedAction::RobotCompletedAction(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_RobotCompletedAction::Pack(uint8_t* buff, size_t len) const
+size_t RobotCompletedAction::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->robotID);
 	buffer.Write(this->actionType);
@@ -1021,13 +1023,13 @@ size_t G2U_RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_RobotCompletedAction::Unpack(const uint8_t* buff, const size_t len)
+size_t RobotCompletedAction::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->robotID);
 	buffer.Read(this->actionType);
@@ -1035,7 +1037,7 @@ size_t G2U_RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_RobotCompletedAction::Size() const
+size_t RobotCompletedAction::Size() const
 {
 	size_t result = 0;
 	//robotID
@@ -1047,7 +1049,7 @@ size_t G2U_RobotCompletedAction::Size() const
 	return result;
 }
 
-bool G2U_RobotCompletedAction::operator==(const G2U_RobotCompletedAction& other) const
+bool RobotCompletedAction::operator==(const RobotCompletedAction& other) const
 {
 	if (robotID != other.robotID
 	|| actionType != other.actionType
@@ -1057,32 +1059,32 @@ bool G2U_RobotCompletedAction::operator==(const G2U_RobotCompletedAction& other)
 	return true;
 }
 
-bool G2U_RobotCompletedAction::operator!=(const G2U_RobotCompletedAction& other) const
+bool RobotCompletedAction::operator!=(const RobotCompletedAction& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_PlaySound
+// MESSAGE PlaySound
 
-G2U_PlaySound::G2U_PlaySound(const uint8_t* buff, size_t len)
+PlaySound::PlaySound(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_PlaySound::G2U_PlaySound(const CLAD::SafeMessageBuffer& buffer)
+PlaySound::PlaySound(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_PlaySound::Pack(uint8_t* buff, size_t len) const
+size_t PlaySound::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_PlaySound::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t PlaySound::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.WritePString<uint8_t>(this->soundFilename);
 	buffer.Write(this->numLoops);
@@ -1091,13 +1093,13 @@ size_t G2U_PlaySound::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_PlaySound::Unpack(const uint8_t* buff, const size_t len)
+size_t PlaySound::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_PlaySound::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t PlaySound::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.ReadPString<uint8_t>(this->soundFilename);
 	buffer.Read(this->numLoops);
@@ -1105,7 +1107,7 @@ size_t G2U_PlaySound::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_PlaySound::Size() const
+size_t PlaySound::Size() const
 {
 	size_t result = 0;
 	//soundFilename
@@ -1118,7 +1120,7 @@ size_t G2U_PlaySound::Size() const
 	return result;
 }
 
-bool G2U_PlaySound::operator==(const G2U_PlaySound& other) const
+bool PlaySound::operator==(const PlaySound& other) const
 {
 	if (soundFilename != other.soundFilename
 	|| numLoops != other.numLoops
@@ -1128,557 +1130,557 @@ bool G2U_PlaySound::operator==(const G2U_PlaySound& other) const
 	return true;
 }
 
-bool G2U_PlaySound::operator!=(const G2U_PlaySound& other) const
+bool PlaySound::operator!=(const PlaySound& other) const
 {
 	return !(operator==(other));
 }
 
 
-// MESSAGE G2U_StopSound
+// MESSAGE StopSound
 
-G2U_StopSound::G2U_StopSound(const uint8_t* buff, size_t len)
+StopSound::StopSound(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-G2U_StopSound::G2U_StopSound(const CLAD::SafeMessageBuffer& buffer)
+StopSound::StopSound(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t G2U_StopSound::Pack(uint8_t* buff, size_t len) const
+size_t StopSound::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_StopSound::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t StopSound::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t G2U_StopSound::Unpack(const uint8_t* buff, const size_t len)
+size_t StopSound::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_StopSound::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t StopSound::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_StopSound::Size() const
+size_t StopSound::Size() const
 {
 	size_t result = 0;
 	return result;
 }
 
-bool G2U_StopSound::operator==(const G2U_StopSound& other) const
+bool StopSound::operator==(const StopSound& other) const
 {
 	return true;
 }
 
-bool G2U_StopSound::operator!=(const G2U_StopSound& other) const
+bool StopSound::operator!=(const StopSound& other) const
 {
 	return !(operator==(other));
 }
 
 
-// UNION G2U_Message
+// UNION Message
 
-const char* G2U_MessageTagToString(const G2U_MessageTag tag) {
+const char* MessageTagToString(const MessageTag tag) {
 	switch (tag) {
-	case G2U_MessageTag::Ping:
+	case MessageTag::Ping:
 		return "Ping";
-	case G2U_MessageTag::RobotAvailable:
+	case MessageTag::RobotAvailable:
 		return "RobotAvailable";
-	case G2U_MessageTag::UiDeviceAvailable:
+	case MessageTag::UiDeviceAvailable:
 		return "UiDeviceAvailable";
-	case G2U_MessageTag::RobotConnected:
+	case MessageTag::RobotConnected:
 		return "RobotConnected";
-	case G2U_MessageTag::RobotDisconnected:
+	case MessageTag::RobotDisconnected:
 		return "RobotDisconnected";
-	case G2U_MessageTag::UiDeviceConnected:
+	case MessageTag::UiDeviceConnected:
 		return "UiDeviceConnected";
-	case G2U_MessageTag::RobotState:
+	case MessageTag::RobotState:
 		return "RobotState";
-	case G2U_MessageTag::ImageChunk:
+	case MessageTag::ImageChunk:
 		return "ImageChunk";
-	case G2U_MessageTag::RobotObservedObject:
+	case MessageTag::RobotObservedObject:
 		return "RobotObservedObject";
-	case G2U_MessageTag::RobotObservedNothing:
+	case MessageTag::RobotObservedNothing:
 		return "RobotObservedNothing";
-	case G2U_MessageTag::RobotDeletedObject:
+	case MessageTag::RobotDeletedObject:
 		return "RobotDeletedObject";
-	case G2U_MessageTag::DeviceDetectedVisionMarker:
+	case MessageTag::DeviceDetectedVisionMarker:
 		return "DeviceDetectedVisionMarker";
-	case G2U_MessageTag::RobotCompletedAction:
+	case MessageTag::RobotCompletedAction:
 		return "RobotCompletedAction";
-	case G2U_MessageTag::PlaySound:
+	case MessageTag::PlaySound:
 		return "PlaySound";
-	case G2U_MessageTag::StopSound:
+	case MessageTag::StopSound:
 		return "StopSound";
 	default:
 		return "INVALID";
 	}
 }
 
-G2U_Message::G2U_Message(const CLAD::SafeMessageBuffer& buff) :_tag(Tag::INVALID)
+Message::Message(const CLAD::SafeMessageBuffer& buff) :_tag(Tag::INVALID)
 {
 	Unpack(buff);
 }
 
-G2U_Message::G2U_Message(const uint8_t* buffer, size_t length) :_tag(Tag::INVALID)
+Message::Message(const uint8_t* buffer, size_t length) :_tag(Tag::INVALID)
 {
 	CLAD::SafeMessageBuffer buff(const_cast<uint8_t*>(buffer), length);
 	Unpack(buff);
 }
 
-const Anki::Cozmo::G2U_Ping& G2U_Message::Get_Ping() const
+const Anki::Cozmo::G2U::Ping& Message::Get_Ping() const
 {
 	assert(_tag == Tag::Ping);
 	return _Ping;
 }
-void G2U_Message::Set_Ping(const Anki::Cozmo::G2U_Ping& new_Ping)
+void Message::Set_Ping(const Anki::Cozmo::G2U::Ping& new_Ping)
 {
 	if(this->_tag == Tag::Ping) {
 		_Ping = new_Ping;
 	}
 	else {
 		ClearCurrent();
-		new(&_Ping) Anki::Cozmo::G2U_Ping{new_Ping};
+		new(&_Ping) Anki::Cozmo::G2U::Ping{new_Ping};
 		_tag = Tag::Ping;
 	}
 }
-void G2U_Message::Set_Ping(Anki::Cozmo::G2U_Ping&& new_Ping)
+void Message::Set_Ping(Anki::Cozmo::G2U::Ping&& new_Ping)
 {
 	if(this->_tag == Tag::Ping) {
 		_Ping = std::move(new_Ping);
 	}
 	else {
 		ClearCurrent();
-		new(&_Ping) Anki::Cozmo::G2U_Ping{std::move(new_Ping)};
+		new(&_Ping) Anki::Cozmo::G2U::Ping{std::move(new_Ping)};
 		_tag = Tag::Ping;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotAvailable& G2U_Message::Get_RobotAvailable() const
+const Anki::Cozmo::G2U::RobotAvailable& Message::Get_RobotAvailable() const
 {
 	assert(_tag == Tag::RobotAvailable);
 	return _RobotAvailable;
 }
-void G2U_Message::Set_RobotAvailable(const Anki::Cozmo::G2U_RobotAvailable& new_RobotAvailable)
+void Message::Set_RobotAvailable(const Anki::Cozmo::G2U::RobotAvailable& new_RobotAvailable)
 {
 	if(this->_tag == Tag::RobotAvailable) {
 		_RobotAvailable = new_RobotAvailable;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotAvailable) Anki::Cozmo::G2U_RobotAvailable{new_RobotAvailable};
+		new(&_RobotAvailable) Anki::Cozmo::G2U::RobotAvailable{new_RobotAvailable};
 		_tag = Tag::RobotAvailable;
 	}
 }
-void G2U_Message::Set_RobotAvailable(Anki::Cozmo::G2U_RobotAvailable&& new_RobotAvailable)
+void Message::Set_RobotAvailable(Anki::Cozmo::G2U::RobotAvailable&& new_RobotAvailable)
 {
 	if(this->_tag == Tag::RobotAvailable) {
 		_RobotAvailable = std::move(new_RobotAvailable);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotAvailable) Anki::Cozmo::G2U_RobotAvailable{std::move(new_RobotAvailable)};
+		new(&_RobotAvailable) Anki::Cozmo::G2U::RobotAvailable{std::move(new_RobotAvailable)};
 		_tag = Tag::RobotAvailable;
 	}
 }
 
 
-const Anki::Cozmo::G2U_UiDeviceAvailable& G2U_Message::Get_UiDeviceAvailable() const
+const Anki::Cozmo::G2U::UiDeviceAvailable& Message::Get_UiDeviceAvailable() const
 {
 	assert(_tag == Tag::UiDeviceAvailable);
 	return _UiDeviceAvailable;
 }
-void G2U_Message::Set_UiDeviceAvailable(const Anki::Cozmo::G2U_UiDeviceAvailable& new_UiDeviceAvailable)
+void Message::Set_UiDeviceAvailable(const Anki::Cozmo::G2U::UiDeviceAvailable& new_UiDeviceAvailable)
 {
 	if(this->_tag == Tag::UiDeviceAvailable) {
 		_UiDeviceAvailable = new_UiDeviceAvailable;
 	}
 	else {
 		ClearCurrent();
-		new(&_UiDeviceAvailable) Anki::Cozmo::G2U_UiDeviceAvailable{new_UiDeviceAvailable};
+		new(&_UiDeviceAvailable) Anki::Cozmo::G2U::UiDeviceAvailable{new_UiDeviceAvailable};
 		_tag = Tag::UiDeviceAvailable;
 	}
 }
-void G2U_Message::Set_UiDeviceAvailable(Anki::Cozmo::G2U_UiDeviceAvailable&& new_UiDeviceAvailable)
+void Message::Set_UiDeviceAvailable(Anki::Cozmo::G2U::UiDeviceAvailable&& new_UiDeviceAvailable)
 {
 	if(this->_tag == Tag::UiDeviceAvailable) {
 		_UiDeviceAvailable = std::move(new_UiDeviceAvailable);
 	}
 	else {
 		ClearCurrent();
-		new(&_UiDeviceAvailable) Anki::Cozmo::G2U_UiDeviceAvailable{std::move(new_UiDeviceAvailable)};
+		new(&_UiDeviceAvailable) Anki::Cozmo::G2U::UiDeviceAvailable{std::move(new_UiDeviceAvailable)};
 		_tag = Tag::UiDeviceAvailable;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotConnected& G2U_Message::Get_RobotConnected() const
+const Anki::Cozmo::G2U::RobotConnected& Message::Get_RobotConnected() const
 {
 	assert(_tag == Tag::RobotConnected);
 	return _RobotConnected;
 }
-void G2U_Message::Set_RobotConnected(const Anki::Cozmo::G2U_RobotConnected& new_RobotConnected)
+void Message::Set_RobotConnected(const Anki::Cozmo::G2U::RobotConnected& new_RobotConnected)
 {
 	if(this->_tag == Tag::RobotConnected) {
 		_RobotConnected = new_RobotConnected;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotConnected) Anki::Cozmo::G2U_RobotConnected{new_RobotConnected};
+		new(&_RobotConnected) Anki::Cozmo::G2U::RobotConnected{new_RobotConnected};
 		_tag = Tag::RobotConnected;
 	}
 }
-void G2U_Message::Set_RobotConnected(Anki::Cozmo::G2U_RobotConnected&& new_RobotConnected)
+void Message::Set_RobotConnected(Anki::Cozmo::G2U::RobotConnected&& new_RobotConnected)
 {
 	if(this->_tag == Tag::RobotConnected) {
 		_RobotConnected = std::move(new_RobotConnected);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotConnected) Anki::Cozmo::G2U_RobotConnected{std::move(new_RobotConnected)};
+		new(&_RobotConnected) Anki::Cozmo::G2U::RobotConnected{std::move(new_RobotConnected)};
 		_tag = Tag::RobotConnected;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotDisconnected& G2U_Message::Get_RobotDisconnected() const
+const Anki::Cozmo::G2U::RobotDisconnected& Message::Get_RobotDisconnected() const
 {
 	assert(_tag == Tag::RobotDisconnected);
 	return _RobotDisconnected;
 }
-void G2U_Message::Set_RobotDisconnected(const Anki::Cozmo::G2U_RobotDisconnected& new_RobotDisconnected)
+void Message::Set_RobotDisconnected(const Anki::Cozmo::G2U::RobotDisconnected& new_RobotDisconnected)
 {
 	if(this->_tag == Tag::RobotDisconnected) {
 		_RobotDisconnected = new_RobotDisconnected;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotDisconnected) Anki::Cozmo::G2U_RobotDisconnected{new_RobotDisconnected};
+		new(&_RobotDisconnected) Anki::Cozmo::G2U::RobotDisconnected{new_RobotDisconnected};
 		_tag = Tag::RobotDisconnected;
 	}
 }
-void G2U_Message::Set_RobotDisconnected(Anki::Cozmo::G2U_RobotDisconnected&& new_RobotDisconnected)
+void Message::Set_RobotDisconnected(Anki::Cozmo::G2U::RobotDisconnected&& new_RobotDisconnected)
 {
 	if(this->_tag == Tag::RobotDisconnected) {
 		_RobotDisconnected = std::move(new_RobotDisconnected);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotDisconnected) Anki::Cozmo::G2U_RobotDisconnected{std::move(new_RobotDisconnected)};
+		new(&_RobotDisconnected) Anki::Cozmo::G2U::RobotDisconnected{std::move(new_RobotDisconnected)};
 		_tag = Tag::RobotDisconnected;
 	}
 }
 
 
-const Anki::Cozmo::G2U_UiDeviceConnected& G2U_Message::Get_UiDeviceConnected() const
+const Anki::Cozmo::G2U::UiDeviceConnected& Message::Get_UiDeviceConnected() const
 {
 	assert(_tag == Tag::UiDeviceConnected);
 	return _UiDeviceConnected;
 }
-void G2U_Message::Set_UiDeviceConnected(const Anki::Cozmo::G2U_UiDeviceConnected& new_UiDeviceConnected)
+void Message::Set_UiDeviceConnected(const Anki::Cozmo::G2U::UiDeviceConnected& new_UiDeviceConnected)
 {
 	if(this->_tag == Tag::UiDeviceConnected) {
 		_UiDeviceConnected = new_UiDeviceConnected;
 	}
 	else {
 		ClearCurrent();
-		new(&_UiDeviceConnected) Anki::Cozmo::G2U_UiDeviceConnected{new_UiDeviceConnected};
+		new(&_UiDeviceConnected) Anki::Cozmo::G2U::UiDeviceConnected{new_UiDeviceConnected};
 		_tag = Tag::UiDeviceConnected;
 	}
 }
-void G2U_Message::Set_UiDeviceConnected(Anki::Cozmo::G2U_UiDeviceConnected&& new_UiDeviceConnected)
+void Message::Set_UiDeviceConnected(Anki::Cozmo::G2U::UiDeviceConnected&& new_UiDeviceConnected)
 {
 	if(this->_tag == Tag::UiDeviceConnected) {
 		_UiDeviceConnected = std::move(new_UiDeviceConnected);
 	}
 	else {
 		ClearCurrent();
-		new(&_UiDeviceConnected) Anki::Cozmo::G2U_UiDeviceConnected{std::move(new_UiDeviceConnected)};
+		new(&_UiDeviceConnected) Anki::Cozmo::G2U::UiDeviceConnected{std::move(new_UiDeviceConnected)};
 		_tag = Tag::UiDeviceConnected;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotState& G2U_Message::Get_RobotState() const
+const Anki::Cozmo::G2U::RobotState& Message::Get_RobotState() const
 {
 	assert(_tag == Tag::RobotState);
 	return _RobotState;
 }
-void G2U_Message::Set_RobotState(const Anki::Cozmo::G2U_RobotState& new_RobotState)
+void Message::Set_RobotState(const Anki::Cozmo::G2U::RobotState& new_RobotState)
 {
 	if(this->_tag == Tag::RobotState) {
 		_RobotState = new_RobotState;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotState) Anki::Cozmo::G2U_RobotState{new_RobotState};
+		new(&_RobotState) Anki::Cozmo::G2U::RobotState{new_RobotState};
 		_tag = Tag::RobotState;
 	}
 }
-void G2U_Message::Set_RobotState(Anki::Cozmo::G2U_RobotState&& new_RobotState)
+void Message::Set_RobotState(Anki::Cozmo::G2U::RobotState&& new_RobotState)
 {
 	if(this->_tag == Tag::RobotState) {
 		_RobotState = std::move(new_RobotState);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotState) Anki::Cozmo::G2U_RobotState{std::move(new_RobotState)};
+		new(&_RobotState) Anki::Cozmo::G2U::RobotState{std::move(new_RobotState)};
 		_tag = Tag::RobotState;
 	}
 }
 
 
-const Anki::Cozmo::G2U_ImageChunk& G2U_Message::Get_ImageChunk() const
+const Anki::Cozmo::G2U::ImageChunk& Message::Get_ImageChunk() const
 {
 	assert(_tag == Tag::ImageChunk);
 	return _ImageChunk;
 }
-void G2U_Message::Set_ImageChunk(const Anki::Cozmo::G2U_ImageChunk& new_ImageChunk)
+void Message::Set_ImageChunk(const Anki::Cozmo::G2U::ImageChunk& new_ImageChunk)
 {
 	if(this->_tag == Tag::ImageChunk) {
 		_ImageChunk = new_ImageChunk;
 	}
 	else {
 		ClearCurrent();
-		new(&_ImageChunk) Anki::Cozmo::G2U_ImageChunk{new_ImageChunk};
+		new(&_ImageChunk) Anki::Cozmo::G2U::ImageChunk{new_ImageChunk};
 		_tag = Tag::ImageChunk;
 	}
 }
-void G2U_Message::Set_ImageChunk(Anki::Cozmo::G2U_ImageChunk&& new_ImageChunk)
+void Message::Set_ImageChunk(Anki::Cozmo::G2U::ImageChunk&& new_ImageChunk)
 {
 	if(this->_tag == Tag::ImageChunk) {
 		_ImageChunk = std::move(new_ImageChunk);
 	}
 	else {
 		ClearCurrent();
-		new(&_ImageChunk) Anki::Cozmo::G2U_ImageChunk{std::move(new_ImageChunk)};
+		new(&_ImageChunk) Anki::Cozmo::G2U::ImageChunk{std::move(new_ImageChunk)};
 		_tag = Tag::ImageChunk;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotObservedObject& G2U_Message::Get_RobotObservedObject() const
+const Anki::Cozmo::G2U::RobotObservedObject& Message::Get_RobotObservedObject() const
 {
 	assert(_tag == Tag::RobotObservedObject);
 	return _RobotObservedObject;
 }
-void G2U_Message::Set_RobotObservedObject(const Anki::Cozmo::G2U_RobotObservedObject& new_RobotObservedObject)
+void Message::Set_RobotObservedObject(const Anki::Cozmo::G2U::RobotObservedObject& new_RobotObservedObject)
 {
 	if(this->_tag == Tag::RobotObservedObject) {
 		_RobotObservedObject = new_RobotObservedObject;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotObservedObject) Anki::Cozmo::G2U_RobotObservedObject{new_RobotObservedObject};
+		new(&_RobotObservedObject) Anki::Cozmo::G2U::RobotObservedObject{new_RobotObservedObject};
 		_tag = Tag::RobotObservedObject;
 	}
 }
-void G2U_Message::Set_RobotObservedObject(Anki::Cozmo::G2U_RobotObservedObject&& new_RobotObservedObject)
+void Message::Set_RobotObservedObject(Anki::Cozmo::G2U::RobotObservedObject&& new_RobotObservedObject)
 {
 	if(this->_tag == Tag::RobotObservedObject) {
 		_RobotObservedObject = std::move(new_RobotObservedObject);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotObservedObject) Anki::Cozmo::G2U_RobotObservedObject{std::move(new_RobotObservedObject)};
+		new(&_RobotObservedObject) Anki::Cozmo::G2U::RobotObservedObject{std::move(new_RobotObservedObject)};
 		_tag = Tag::RobotObservedObject;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotObservedNothing& G2U_Message::Get_RobotObservedNothing() const
+const Anki::Cozmo::G2U::RobotObservedNothing& Message::Get_RobotObservedNothing() const
 {
 	assert(_tag == Tag::RobotObservedNothing);
 	return _RobotObservedNothing;
 }
-void G2U_Message::Set_RobotObservedNothing(const Anki::Cozmo::G2U_RobotObservedNothing& new_RobotObservedNothing)
+void Message::Set_RobotObservedNothing(const Anki::Cozmo::G2U::RobotObservedNothing& new_RobotObservedNothing)
 {
 	if(this->_tag == Tag::RobotObservedNothing) {
 		_RobotObservedNothing = new_RobotObservedNothing;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotObservedNothing) Anki::Cozmo::G2U_RobotObservedNothing{new_RobotObservedNothing};
+		new(&_RobotObservedNothing) Anki::Cozmo::G2U::RobotObservedNothing{new_RobotObservedNothing};
 		_tag = Tag::RobotObservedNothing;
 	}
 }
-void G2U_Message::Set_RobotObservedNothing(Anki::Cozmo::G2U_RobotObservedNothing&& new_RobotObservedNothing)
+void Message::Set_RobotObservedNothing(Anki::Cozmo::G2U::RobotObservedNothing&& new_RobotObservedNothing)
 {
 	if(this->_tag == Tag::RobotObservedNothing) {
 		_RobotObservedNothing = std::move(new_RobotObservedNothing);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotObservedNothing) Anki::Cozmo::G2U_RobotObservedNothing{std::move(new_RobotObservedNothing)};
+		new(&_RobotObservedNothing) Anki::Cozmo::G2U::RobotObservedNothing{std::move(new_RobotObservedNothing)};
 		_tag = Tag::RobotObservedNothing;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotDeletedObject& G2U_Message::Get_RobotDeletedObject() const
+const Anki::Cozmo::G2U::RobotDeletedObject& Message::Get_RobotDeletedObject() const
 {
 	assert(_tag == Tag::RobotDeletedObject);
 	return _RobotDeletedObject;
 }
-void G2U_Message::Set_RobotDeletedObject(const Anki::Cozmo::G2U_RobotDeletedObject& new_RobotDeletedObject)
+void Message::Set_RobotDeletedObject(const Anki::Cozmo::G2U::RobotDeletedObject& new_RobotDeletedObject)
 {
 	if(this->_tag == Tag::RobotDeletedObject) {
 		_RobotDeletedObject = new_RobotDeletedObject;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotDeletedObject) Anki::Cozmo::G2U_RobotDeletedObject{new_RobotDeletedObject};
+		new(&_RobotDeletedObject) Anki::Cozmo::G2U::RobotDeletedObject{new_RobotDeletedObject};
 		_tag = Tag::RobotDeletedObject;
 	}
 }
-void G2U_Message::Set_RobotDeletedObject(Anki::Cozmo::G2U_RobotDeletedObject&& new_RobotDeletedObject)
+void Message::Set_RobotDeletedObject(Anki::Cozmo::G2U::RobotDeletedObject&& new_RobotDeletedObject)
 {
 	if(this->_tag == Tag::RobotDeletedObject) {
 		_RobotDeletedObject = std::move(new_RobotDeletedObject);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotDeletedObject) Anki::Cozmo::G2U_RobotDeletedObject{std::move(new_RobotDeletedObject)};
+		new(&_RobotDeletedObject) Anki::Cozmo::G2U::RobotDeletedObject{std::move(new_RobotDeletedObject)};
 		_tag = Tag::RobotDeletedObject;
 	}
 }
 
 
-const Anki::Cozmo::G2U_DeviceDetectedVisionMarker& G2U_Message::Get_DeviceDetectedVisionMarker() const
+const Anki::Cozmo::G2U::DeviceDetectedVisionMarker& Message::Get_DeviceDetectedVisionMarker() const
 {
 	assert(_tag == Tag::DeviceDetectedVisionMarker);
 	return _DeviceDetectedVisionMarker;
 }
-void G2U_Message::Set_DeviceDetectedVisionMarker(const Anki::Cozmo::G2U_DeviceDetectedVisionMarker& new_DeviceDetectedVisionMarker)
+void Message::Set_DeviceDetectedVisionMarker(const Anki::Cozmo::G2U::DeviceDetectedVisionMarker& new_DeviceDetectedVisionMarker)
 {
 	if(this->_tag == Tag::DeviceDetectedVisionMarker) {
 		_DeviceDetectedVisionMarker = new_DeviceDetectedVisionMarker;
 	}
 	else {
 		ClearCurrent();
-		new(&_DeviceDetectedVisionMarker) Anki::Cozmo::G2U_DeviceDetectedVisionMarker{new_DeviceDetectedVisionMarker};
+		new(&_DeviceDetectedVisionMarker) Anki::Cozmo::G2U::DeviceDetectedVisionMarker{new_DeviceDetectedVisionMarker};
 		_tag = Tag::DeviceDetectedVisionMarker;
 	}
 }
-void G2U_Message::Set_DeviceDetectedVisionMarker(Anki::Cozmo::G2U_DeviceDetectedVisionMarker&& new_DeviceDetectedVisionMarker)
+void Message::Set_DeviceDetectedVisionMarker(Anki::Cozmo::G2U::DeviceDetectedVisionMarker&& new_DeviceDetectedVisionMarker)
 {
 	if(this->_tag == Tag::DeviceDetectedVisionMarker) {
 		_DeviceDetectedVisionMarker = std::move(new_DeviceDetectedVisionMarker);
 	}
 	else {
 		ClearCurrent();
-		new(&_DeviceDetectedVisionMarker) Anki::Cozmo::G2U_DeviceDetectedVisionMarker{std::move(new_DeviceDetectedVisionMarker)};
+		new(&_DeviceDetectedVisionMarker) Anki::Cozmo::G2U::DeviceDetectedVisionMarker{std::move(new_DeviceDetectedVisionMarker)};
 		_tag = Tag::DeviceDetectedVisionMarker;
 	}
 }
 
 
-const Anki::Cozmo::G2U_RobotCompletedAction& G2U_Message::Get_RobotCompletedAction() const
+const Anki::Cozmo::G2U::RobotCompletedAction& Message::Get_RobotCompletedAction() const
 {
 	assert(_tag == Tag::RobotCompletedAction);
 	return _RobotCompletedAction;
 }
-void G2U_Message::Set_RobotCompletedAction(const Anki::Cozmo::G2U_RobotCompletedAction& new_RobotCompletedAction)
+void Message::Set_RobotCompletedAction(const Anki::Cozmo::G2U::RobotCompletedAction& new_RobotCompletedAction)
 {
 	if(this->_tag == Tag::RobotCompletedAction) {
 		_RobotCompletedAction = new_RobotCompletedAction;
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotCompletedAction) Anki::Cozmo::G2U_RobotCompletedAction{new_RobotCompletedAction};
+		new(&_RobotCompletedAction) Anki::Cozmo::G2U::RobotCompletedAction{new_RobotCompletedAction};
 		_tag = Tag::RobotCompletedAction;
 	}
 }
-void G2U_Message::Set_RobotCompletedAction(Anki::Cozmo::G2U_RobotCompletedAction&& new_RobotCompletedAction)
+void Message::Set_RobotCompletedAction(Anki::Cozmo::G2U::RobotCompletedAction&& new_RobotCompletedAction)
 {
 	if(this->_tag == Tag::RobotCompletedAction) {
 		_RobotCompletedAction = std::move(new_RobotCompletedAction);
 	}
 	else {
 		ClearCurrent();
-		new(&_RobotCompletedAction) Anki::Cozmo::G2U_RobotCompletedAction{std::move(new_RobotCompletedAction)};
+		new(&_RobotCompletedAction) Anki::Cozmo::G2U::RobotCompletedAction{std::move(new_RobotCompletedAction)};
 		_tag = Tag::RobotCompletedAction;
 	}
 }
 
 
-const Anki::Cozmo::G2U_PlaySound& G2U_Message::Get_PlaySound() const
+const Anki::Cozmo::G2U::PlaySound& Message::Get_PlaySound() const
 {
 	assert(_tag == Tag::PlaySound);
 	return _PlaySound;
 }
-void G2U_Message::Set_PlaySound(const Anki::Cozmo::G2U_PlaySound& new_PlaySound)
+void Message::Set_PlaySound(const Anki::Cozmo::G2U::PlaySound& new_PlaySound)
 {
 	if(this->_tag == Tag::PlaySound) {
 		_PlaySound = new_PlaySound;
 	}
 	else {
 		ClearCurrent();
-		new(&_PlaySound) Anki::Cozmo::G2U_PlaySound{new_PlaySound};
+		new(&_PlaySound) Anki::Cozmo::G2U::PlaySound{new_PlaySound};
 		_tag = Tag::PlaySound;
 	}
 }
-void G2U_Message::Set_PlaySound(Anki::Cozmo::G2U_PlaySound&& new_PlaySound)
+void Message::Set_PlaySound(Anki::Cozmo::G2U::PlaySound&& new_PlaySound)
 {
 	if(this->_tag == Tag::PlaySound) {
 		_PlaySound = std::move(new_PlaySound);
 	}
 	else {
 		ClearCurrent();
-		new(&_PlaySound) Anki::Cozmo::G2U_PlaySound{std::move(new_PlaySound)};
+		new(&_PlaySound) Anki::Cozmo::G2U::PlaySound{std::move(new_PlaySound)};
 		_tag = Tag::PlaySound;
 	}
 }
 
 
-const Anki::Cozmo::G2U_StopSound& G2U_Message::Get_StopSound() const
+const Anki::Cozmo::G2U::StopSound& Message::Get_StopSound() const
 {
 	assert(_tag == Tag::StopSound);
 	return _StopSound;
 }
-void G2U_Message::Set_StopSound(const Anki::Cozmo::G2U_StopSound& new_StopSound)
+void Message::Set_StopSound(const Anki::Cozmo::G2U::StopSound& new_StopSound)
 {
 	if(this->_tag == Tag::StopSound) {
 		_StopSound = new_StopSound;
 	}
 	else {
 		ClearCurrent();
-		new(&_StopSound) Anki::Cozmo::G2U_StopSound{new_StopSound};
+		new(&_StopSound) Anki::Cozmo::G2U::StopSound{new_StopSound};
 		_tag = Tag::StopSound;
 	}
 }
-void G2U_Message::Set_StopSound(Anki::Cozmo::G2U_StopSound&& new_StopSound)
+void Message::Set_StopSound(Anki::Cozmo::G2U::StopSound&& new_StopSound)
 {
 	if(this->_tag == Tag::StopSound) {
 		_StopSound = std::move(new_StopSound);
 	}
 	else {
 		ClearCurrent();
-		new(&_StopSound) Anki::Cozmo::G2U_StopSound{std::move(new_StopSound)};
+		new(&_StopSound) Anki::Cozmo::G2U::StopSound{std::move(new_StopSound)};
 		_tag = Tag::StopSound;
 	}
 }
 
 
-size_t G2U_Message::Unpack(const uint8_t* buff, const size_t len)
+size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	Tag newTag {Tag::INVALID};
 	const Tag oldTag {GetTag()};
@@ -1689,7 +1691,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	switch(newTag) {
 	case Tag::Ping:
 		if (newTag != oldTag) {
-			new(&(this->_Ping)) Anki::Cozmo::G2U_Ping(buffer);
+			new(&(this->_Ping)) Anki::Cozmo::G2U::Ping(buffer);
 		}
 		else {
 			this->_Ping.Unpack(buffer);
@@ -1697,7 +1699,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotAvailable:
 		if (newTag != oldTag) {
-			new(&(this->_RobotAvailable)) Anki::Cozmo::G2U_RobotAvailable(buffer);
+			new(&(this->_RobotAvailable)) Anki::Cozmo::G2U::RobotAvailable(buffer);
 		}
 		else {
 			this->_RobotAvailable.Unpack(buffer);
@@ -1705,7 +1707,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::UiDeviceAvailable:
 		if (newTag != oldTag) {
-			new(&(this->_UiDeviceAvailable)) Anki::Cozmo::G2U_UiDeviceAvailable(buffer);
+			new(&(this->_UiDeviceAvailable)) Anki::Cozmo::G2U::UiDeviceAvailable(buffer);
 		}
 		else {
 			this->_UiDeviceAvailable.Unpack(buffer);
@@ -1713,7 +1715,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotConnected:
 		if (newTag != oldTag) {
-			new(&(this->_RobotConnected)) Anki::Cozmo::G2U_RobotConnected(buffer);
+			new(&(this->_RobotConnected)) Anki::Cozmo::G2U::RobotConnected(buffer);
 		}
 		else {
 			this->_RobotConnected.Unpack(buffer);
@@ -1721,7 +1723,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotDisconnected:
 		if (newTag != oldTag) {
-			new(&(this->_RobotDisconnected)) Anki::Cozmo::G2U_RobotDisconnected(buffer);
+			new(&(this->_RobotDisconnected)) Anki::Cozmo::G2U::RobotDisconnected(buffer);
 		}
 		else {
 			this->_RobotDisconnected.Unpack(buffer);
@@ -1729,7 +1731,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::UiDeviceConnected:
 		if (newTag != oldTag) {
-			new(&(this->_UiDeviceConnected)) Anki::Cozmo::G2U_UiDeviceConnected(buffer);
+			new(&(this->_UiDeviceConnected)) Anki::Cozmo::G2U::UiDeviceConnected(buffer);
 		}
 		else {
 			this->_UiDeviceConnected.Unpack(buffer);
@@ -1737,7 +1739,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotState:
 		if (newTag != oldTag) {
-			new(&(this->_RobotState)) Anki::Cozmo::G2U_RobotState(buffer);
+			new(&(this->_RobotState)) Anki::Cozmo::G2U::RobotState(buffer);
 		}
 		else {
 			this->_RobotState.Unpack(buffer);
@@ -1745,7 +1747,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::ImageChunk:
 		if (newTag != oldTag) {
-			new(&(this->_ImageChunk)) Anki::Cozmo::G2U_ImageChunk(buffer);
+			new(&(this->_ImageChunk)) Anki::Cozmo::G2U::ImageChunk(buffer);
 		}
 		else {
 			this->_ImageChunk.Unpack(buffer);
@@ -1753,7 +1755,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotObservedObject:
 		if (newTag != oldTag) {
-			new(&(this->_RobotObservedObject)) Anki::Cozmo::G2U_RobotObservedObject(buffer);
+			new(&(this->_RobotObservedObject)) Anki::Cozmo::G2U::RobotObservedObject(buffer);
 		}
 		else {
 			this->_RobotObservedObject.Unpack(buffer);
@@ -1761,7 +1763,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotObservedNothing:
 		if (newTag != oldTag) {
-			new(&(this->_RobotObservedNothing)) Anki::Cozmo::G2U_RobotObservedNothing(buffer);
+			new(&(this->_RobotObservedNothing)) Anki::Cozmo::G2U::RobotObservedNothing(buffer);
 		}
 		else {
 			this->_RobotObservedNothing.Unpack(buffer);
@@ -1769,7 +1771,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotDeletedObject:
 		if (newTag != oldTag) {
-			new(&(this->_RobotDeletedObject)) Anki::Cozmo::G2U_RobotDeletedObject(buffer);
+			new(&(this->_RobotDeletedObject)) Anki::Cozmo::G2U::RobotDeletedObject(buffer);
 		}
 		else {
 			this->_RobotDeletedObject.Unpack(buffer);
@@ -1777,7 +1779,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::DeviceDetectedVisionMarker:
 		if (newTag != oldTag) {
-			new(&(this->_DeviceDetectedVisionMarker)) Anki::Cozmo::G2U_DeviceDetectedVisionMarker(buffer);
+			new(&(this->_DeviceDetectedVisionMarker)) Anki::Cozmo::G2U::DeviceDetectedVisionMarker(buffer);
 		}
 		else {
 			this->_DeviceDetectedVisionMarker.Unpack(buffer);
@@ -1785,7 +1787,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::RobotCompletedAction:
 		if (newTag != oldTag) {
-			new(&(this->_RobotCompletedAction)) Anki::Cozmo::G2U_RobotCompletedAction(buffer);
+			new(&(this->_RobotCompletedAction)) Anki::Cozmo::G2U::RobotCompletedAction(buffer);
 		}
 		else {
 			this->_RobotCompletedAction.Unpack(buffer);
@@ -1793,7 +1795,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::PlaySound:
 		if (newTag != oldTag) {
-			new(&(this->_PlaySound)) Anki::Cozmo::G2U_PlaySound(buffer);
+			new(&(this->_PlaySound)) Anki::Cozmo::G2U::PlaySound(buffer);
 		}
 		else {
 			this->_PlaySound.Unpack(buffer);
@@ -1801,7 +1803,7 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 		break;
 	case Tag::StopSound:
 		if (newTag != oldTag) {
-			new(&(this->_StopSound)) Anki::Cozmo::G2U_StopSound(buffer);
+			new(&(this->_StopSound)) Anki::Cozmo::G2U::StopSound(buffer);
 		}
 		else {
 			this->_StopSound.Unpack(buffer);
@@ -1814,13 +1816,13 @@ size_t G2U_Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	return buffer.GetBytesRead();
 }
 
-size_t G2U_Message::Pack(uint8_t* buff, size_t len) const
+size_t Message::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t G2U_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(_tag);
 	switch(GetTag()) {
@@ -1876,7 +1878,7 @@ size_t G2U_Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	return bytesWritten;
 }
 
-size_t G2U_Message::Size() const
+size_t Message::Size() const
 {
 	size_t result {1}; // tag = uint_8
 	switch(GetTag()) {
@@ -1932,59 +1934,61 @@ size_t G2U_Message::Size() const
 }
 
 
-void G2U_Message::ClearCurrent()
+void Message::ClearCurrent()
 {
 	switch(GetTag()) {
 	case Tag::Ping:
-		_Ping.~G2U_Ping();
+		_Ping.~Ping();
 		break;
 	case Tag::RobotAvailable:
-		_RobotAvailable.~G2U_RobotAvailable();
+		_RobotAvailable.~RobotAvailable();
 		break;
 	case Tag::UiDeviceAvailable:
-		_UiDeviceAvailable.~G2U_UiDeviceAvailable();
+		_UiDeviceAvailable.~UiDeviceAvailable();
 		break;
 	case Tag::RobotConnected:
-		_RobotConnected.~G2U_RobotConnected();
+		_RobotConnected.~RobotConnected();
 		break;
 	case Tag::RobotDisconnected:
-		_RobotDisconnected.~G2U_RobotDisconnected();
+		_RobotDisconnected.~RobotDisconnected();
 		break;
 	case Tag::UiDeviceConnected:
-		_UiDeviceConnected.~G2U_UiDeviceConnected();
+		_UiDeviceConnected.~UiDeviceConnected();
 		break;
 	case Tag::RobotState:
-		_RobotState.~G2U_RobotState();
+		_RobotState.~RobotState();
 		break;
 	case Tag::ImageChunk:
-		_ImageChunk.~G2U_ImageChunk();
+		_ImageChunk.~ImageChunk();
 		break;
 	case Tag::RobotObservedObject:
-		_RobotObservedObject.~G2U_RobotObservedObject();
+		_RobotObservedObject.~RobotObservedObject();
 		break;
 	case Tag::RobotObservedNothing:
-		_RobotObservedNothing.~G2U_RobotObservedNothing();
+		_RobotObservedNothing.~RobotObservedNothing();
 		break;
 	case Tag::RobotDeletedObject:
-		_RobotDeletedObject.~G2U_RobotDeletedObject();
+		_RobotDeletedObject.~RobotDeletedObject();
 		break;
 	case Tag::DeviceDetectedVisionMarker:
-		_DeviceDetectedVisionMarker.~G2U_DeviceDetectedVisionMarker();
+		_DeviceDetectedVisionMarker.~DeviceDetectedVisionMarker();
 		break;
 	case Tag::RobotCompletedAction:
-		_RobotCompletedAction.~G2U_RobotCompletedAction();
+		_RobotCompletedAction.~RobotCompletedAction();
 		break;
 	case Tag::PlaySound:
-		_PlaySound.~G2U_PlaySound();
+		_PlaySound.~PlaySound();
 		break;
 	case Tag::StopSound:
-		_StopSound.~G2U_StopSound();
+		_StopSound.~StopSound();
 		break;
 	default:
 		break;
 	}
 	_tag = Tag::INVALID;
 }
+
+} // namespace G2U
 
 } // namespace Cozmo
 
