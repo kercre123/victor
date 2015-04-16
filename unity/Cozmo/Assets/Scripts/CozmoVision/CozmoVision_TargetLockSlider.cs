@@ -56,17 +56,16 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		FadeIn();
 
-		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find( x => x.ID == robot.carryingObjectID) != null;
-		if((targetingPropInHand || robot.selectedObjects.Count == 0) && !robot.isBusy) AcquireTarget();
+		if(!robot.isBusy) AcquireTarget();
 
 		if(targetLockReticle != null) {
-			targetLockReticle.gameObject.SetActive(robot.selectedObjects.Count > 0);
+			targetLockReticle.gameObject.SetActive(robot.targetLockedObject != null);
 
-			if(robot.selectedObjects.Count > 0) {
+			if(robot.targetLockedObject != null) {
 
 				float w = imageRectTrans.sizeDelta.x;
 				float h = imageRectTrans.sizeDelta.y;
-				ObservedObject lockedObject = robot.selectedObjects[0];
+				ObservedObject lockedObject = robot.targetLockedObject;
 
 				float lockX = (lockedObject.VizRect.center.x / NativeResolution.x) * w;
 				float lockY = (lockedObject.VizRect.center.y / NativeResolution.y) * h;
@@ -81,67 +80,82 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	}
 
 	private void AcquireTarget() {
-		ObservedObject nearest = null;
-		ObservedObject mostFacing = null;
+		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.selectedObjects.Find(x => x.ID == robot.carryingObjectID) != null;
+		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
+								robot.selectedObjects.Find(x => x.ID == robot.targetLockedObject.ID) != null;
 
-		float bestDistFromCoz = float.MaxValue;
-		float bestAngleFromCoz = float.MaxValue;
-		Vector2 forward = robot.Forward;
-
-		for(int i=0; i<pertinentObjects.Count; i++) {
-			if(robot.carryingObjectID == pertinentObjects[i].ID) continue;
-			Vector2 atTarget = pertinentObjects[i].WorldPosition - robot.WorldPosition;
-
-			float angleFromCoz = Vector2.Angle(forward, atTarget);
-			if(angleFromCoz > 90f) continue;
-
-			float distFromCoz = atTarget.sqrMagnitude;
-			if(distFromCoz < bestDistFromCoz) {
-				bestDistFromCoz = distFromCoz;
-				nearest = pertinentObjects[i];
-			}
-
-			if(angleFromCoz < bestAngleFromCoz) {
-				bestAngleFromCoz = angleFromCoz;
-				mostFacing = pertinentObjects[i];
-			}
+		if(targetingPropInHand || !alreadyHasTarget) {
+			robot.selectedObjects.Clear();
+			robot.targetLockedObject = null;
 		}
 
-		ObservedObject best = mostFacing;
-		if(nearest != null && nearest != best) {
-			//Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
-			//float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
-			//if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
+		ObservedObject best = robot.targetLockedObject;
+
+		if(robot.selectedObjects.Count == 0) {
+			//ObservedObject nearest = null;
+			ObservedObject mostFacing = null;
+
+			float bestDistFromCoz = float.MaxValue;
+			float bestAngleFromCoz = float.MaxValue;
+			Vector2 forward = robot.Forward;
+
+			for(int i=0; i<robot.pertinentObjects.Count; i++) {
+				if(robot.carryingObjectID == robot.pertinentObjects[i].ID) continue;
+				Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
+
+				float angleFromCoz = Vector2.Angle(forward, atTarget);
+				if(angleFromCoz > 90f) continue;
+
+				float distFromCoz = atTarget.sqrMagnitude;
+				if(distFromCoz < bestDistFromCoz) {
+					bestDistFromCoz = distFromCoz;
+					//nearest = robot.pertinentObjects[i];
+				}
+
+				if(angleFromCoz < bestAngleFromCoz) {
+					bestAngleFromCoz = angleFromCoz;
+					mostFacing = robot.pertinentObjects[i];
+				}
+			}
+
+			best = mostFacing;
+			/*if(nearest != null && nearest != best) {
+				Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
+				float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
+				if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
+			}*/
 		}
 
 		robot.selectedObjects.Clear();
 
-		if(best != null) {
-			robot.selectedObjects.Add(best);
+		if(best != null) robot.selectedObjects.Add(best);
 
+		if(robot.selectedObjects.Count > 0) {
 			//find any other objects in a 'stack' with our selected
-			for(int i=0; i<pertinentObjects.Count; i++) {
-				if(best == pertinentObjects[i])
+			for(int i=0; i<robot.pertinentObjects.Count; i++) {
+				if(best == robot.pertinentObjects[i])
 					continue;
-				if(robot.carryingObjectID == pertinentObjects[i].ID)
+				if(robot.carryingObjectID == robot.pertinentObjects[i].ID)
 					continue;
 
-				float dist = Vector2.Distance((Vector2)pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+				float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
 				if(dist > best.Size.x * 0.5f) {
 					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
 					continue;
 				}
 
-				robot.selectedObjects.Add(pertinentObjects[i]);
+				robot.selectedObjects.Add(robot.pertinentObjects[i]);
 			}
 
 			//sort selected from ground up
 			robot.selectedObjects.Sort(( obj1, obj2 ) => {
 				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
 			});
+
+			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
 		}
 
-		Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
+		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
 	}
 
 }

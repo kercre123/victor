@@ -30,6 +30,9 @@ case Anki::Cozmo::U2G_Message::Tag::DriveWheels:
 case Anki::Cozmo::U2G_Message::Tag::TurnInPlace:
 	Process_TurnInPlace(msg.Get_TurnInPlace());
 	break;
+case Anki::Cozmo::U2G_Message::Tag::FaceObject:
+	Process_FaceObject(msg.Get_FaceObject());
+	break;
 case Anki::Cozmo::U2G_Message::Tag::MoveHead:
 	Process_MoveHead(msg.Get_MoveHead());
 	break;
@@ -155,5 +158,11 @@ case Anki::Cozmo::U2G_Message::Tag::SetVisionSystemParams:
 	break;
 case Anki::Cozmo::U2G_Message::Tag::SetFaceDetectParams:
 	Process_SetFaceDetectParams(msg.Get_SetFaceDetectParams());
+	break;
+case Anki::Cozmo::U2G_Message::Tag::SetActiveObjectLEDs:
+	Process_SetActiveObjectLEDs(msg.Get_SetActiveObjectLEDs());
+	break;
+case Anki::Cozmo::U2G_Message::Tag::SetAllActiveObjectLEDs:
+	Process_SetAllActiveObjectLEDs(msg.Get_SetAllActiveObjectLEDs());
 	break;
 }

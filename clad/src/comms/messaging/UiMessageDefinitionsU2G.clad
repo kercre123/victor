@@ -51,6 +51,22 @@ message U2G_TurnInPlace {
     uint_8 robotID
 }
 
+// FaceObject - Turns and tilts head to look at object in last known position
+//   If facing the object requires less than a turnAngleTol turn, then no
+//   turn is performed. If a turn greater than maxTurnAngle is required,
+//   the action fails. For angles in between, the robot will first turn
+//   to face the object, then tilt its head. To completely disallow turning,
+//   set maxTurnAngle to zero. (All angles in radians and forced to be positive.)
+//   Set headTrackWhenDone to non-zero to enable head tracking to the specified
+//   object once the robot has successfully faced it.
+message U2G_FaceObject {
+    uint_32  objectID,
+    float_32 turnAngleTol,
+    float_32 maxTurnAngle,
+    uint_8   robotID,
+    uint_8   headTrackWhenDone
+}
+
 // MoveHead
 message U2G_MoveHead {
     float_32 speed_rad_per_sec
@@ -307,6 +323,36 @@ message U2G_SetFaceDetectParams {
     int_32 maxObjectWidth
 }
 
+// SetActiveObjectLEDs
+message U2G_SetActiveObjectLEDs {
+    uint_32  objectID,
+    uint_32  color,
+    uint_32  onPeriod_ms,
+    uint_32  offPeriod_ms,
+    uint_32  transitionOnPeriod_ms,
+    uint_32  transitionOffPeriod_ms,
+    float_32 relativeToX,
+    float_32 relativeToY,
+    uint_8   whichLEDs,    // Bit pattern: see ActiveBlock.h
+    uint_8   makeRelative, // if 0, ignores relativeX/relativeY
+    uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
+    uint_8   robotID
+}
+
+// SetAllActiveObjectLEDs
+message U2G_SetAllActiveObjectLEDs {
+  uint_32  objectID,
+  uint_32  color[8],
+  uint_32  onPeriod_ms[8],
+  uint_32  offPeriod_ms[8],
+  uint_32  transitionOnPeriod_ms[8],
+  uint_32  transitionOffPeriod_ms[8],
+  float_32 relativeToX,
+  float_32 relativeToY,
+  uint_8   makeRelative,  // if 0, ignores relativeX/relativeY
+  uint_8   robotID
+}
+
 union U2G_Message {
     U2G_Ping Ping,
     U2G_ConnectToRobot ConnectToRobot,
@@ -316,6 +362,7 @@ union U2G_Message {
     U2G_StartEngine StartEngine,
     U2G_DriveWheels DriveWheels,
     U2G_TurnInPlace TurnInPlace,
+    U2G_FaceObject FaceObject,
     U2G_MoveHead MoveHead,
     U2G_MoveLift MoveLift,
     U2G_SetLiftHeight SetLiftHeight,
@@ -357,7 +404,9 @@ union U2G_Message {
     U2G_StartLookingForMarkers StartLookingForMarkers,
     U2G_StopLookingForMarkers StopLookingForMarkers,
     U2G_SetVisionSystemParams SetVisionSystemParams,
-    U2G_SetFaceDetectParams SetFaceDetectParams
+    U2G_SetFaceDetectParams SetFaceDetectParams,
+    U2G_SetActiveObjectLEDs SetActiveObjectLEDs,
+    U2G_SetAllActiveObjectLEDs SetAllActiveObjectLEDs
 }
 
 } // namespace Cozmo

@@ -106,7 +106,7 @@ public class GoldRushController : GameController {
 		resultsScore.text = "Score: " + scores [0];
 		CozmoVision.EnableDing(); // just in case we were in searching mode
 		extractButton.gameObject.SetActive (false);
-		ActionButton.DROP = null;
+		//ActionButton.DROP = null;
 		audio.Stop ();
 	}
 
@@ -174,7 +174,7 @@ public class GoldRushController : GameController {
 		// looking to see if we've created our stack
 	}
 
-	void CheckForStackSuccess(bool success, int action_type)
+	void CheckForStackSuccess(bool success, ActionCompleted action_type)
 	{
 		Debug.Log ("action type is: " + action_type);
 		if( success ) // hardcoded until we get enums over from the engine
@@ -182,7 +182,7 @@ public class GoldRushController : GameController {
 			switch(buildState)
 			{
 			case BuildState.WAITING_TO_PICKUP_BLOCK:
-				if( action_type == 5 || action_type == 6 )
+				if( (int)action_type == 5 || (int)action_type == 6 )
 				{
 					// picked up our fire block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
@@ -191,7 +191,7 @@ public class GoldRushController : GameController {
 				}
 				break;
 			case BuildState.WAITING_FOR_STACK:
-				if( action_type == 8 )
+				if( (int)action_type == 8 )
 				{
 					// picked up our fire block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_PLAY;
@@ -199,7 +199,7 @@ public class GoldRushController : GameController {
 				}
 				break;
 			case BuildState.WAITING_FOR_PLAY:
-				if( action_type == 6 )
+				if( (int)action_type == 6 )
 				{
 					// picked up our fire block (will need to verify that it's an active block later)
 					PlayRequested();
@@ -291,7 +291,7 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessageForDuration("Get that gold back to the base!", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
-			ActionButton.DROP = "COLLECT";
+			//ActionButton.DROP = "COLLECT";
 			hintMessage.ShowMessage("Drop off the gold to collect points!", Color.black);
 			break;
 		default:
@@ -315,7 +315,7 @@ public class GoldRushController : GameController {
 			hintMessage.KillMessage();
 			break;
 		case PlayState.RETURNING:
-			ActionButton.DROP = null;
+			//ActionButton.DROP = null;
 			break;
 		case PlayState.RETURNED:
 			hintMessage.KillMessage();

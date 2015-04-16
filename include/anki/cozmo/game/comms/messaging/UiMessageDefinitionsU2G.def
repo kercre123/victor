@@ -305,6 +305,52 @@ struct U2G_TurnInPlace
 	bool operator!=(const U2G_TurnInPlace& other) const;
 };
 
+// MESSAGE U2G_FaceObject
+struct U2G_FaceObject
+{
+	uint32_t objectID;
+	float turnAngleTol;
+	float maxTurnAngle;
+	uint8_t robotID;
+	uint8_t headTrackWhenDone;
+	
+	/**** Constructors ****/
+	U2G_FaceObject() = default;
+	U2G_FaceObject(const U2G_FaceObject& other) = default;
+	U2G_FaceObject(U2G_FaceObject& other) = default;
+	U2G_FaceObject(U2G_FaceObject&& other) noexcept = default;
+	U2G_FaceObject& operator=(const U2G_FaceObject& other) = default;
+	U2G_FaceObject& operator=(U2G_FaceObject&& other) noexcept = default;
+	
+	explicit U2G_FaceObject(uint32_t objectID
+		,float turnAngleTol
+		,float maxTurnAngle
+		,uint8_t robotID
+		,uint8_t headTrackWhenDone)
+	:objectID(objectID)
+	,turnAngleTol(turnAngleTol)
+	,maxTurnAngle(maxTurnAngle)
+	,robotID(robotID)
+	,headTrackWhenDone(headTrackWhenDone)
+	{}
+
+	explicit U2G_FaceObject(const uint8_t* buff, size_t len);
+	explicit U2G_FaceObject(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_FaceObject& other) const;
+	bool operator!=(const U2G_FaceObject& other) const;
+};
+
 // MESSAGE U2G_MoveHead
 struct U2G_MoveHead
 {
@@ -1796,6 +1842,134 @@ struct U2G_SetFaceDetectParams
 	bool operator!=(const U2G_SetFaceDetectParams& other) const;
 };
 
+// MESSAGE U2G_SetActiveObjectLEDs
+struct U2G_SetActiveObjectLEDs
+{
+	uint32_t objectID;
+	uint32_t color;
+	uint32_t onPeriod_ms;
+	uint32_t offPeriod_ms;
+	uint32_t transitionOnPeriod_ms;
+	uint32_t transitionOffPeriod_ms;
+	float relativeToX;
+	float relativeToY;
+	uint8_t whichLEDs;
+	uint8_t makeRelative;
+	uint8_t turnOffUnspecifiedLEDs;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	U2G_SetActiveObjectLEDs() = default;
+	U2G_SetActiveObjectLEDs(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	U2G_SetActiveObjectLEDs& operator=(const U2G_SetActiveObjectLEDs& other) = default;
+	U2G_SetActiveObjectLEDs& operator=(U2G_SetActiveObjectLEDs&& other) noexcept = default;
+	
+	explicit U2G_SetActiveObjectLEDs(uint32_t objectID
+		,uint32_t color
+		,uint32_t onPeriod_ms
+		,uint32_t offPeriod_ms
+		,uint32_t transitionOnPeriod_ms
+		,uint32_t transitionOffPeriod_ms
+		,float relativeToX
+		,float relativeToY
+		,uint8_t whichLEDs
+		,uint8_t makeRelative
+		,uint8_t turnOffUnspecifiedLEDs
+		,uint8_t robotID)
+	:objectID(objectID)
+	,color(color)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
+	,relativeToX(relativeToX)
+	,relativeToY(relativeToY)
+	,whichLEDs(whichLEDs)
+	,makeRelative(makeRelative)
+	,turnOffUnspecifiedLEDs(turnOffUnspecifiedLEDs)
+	,robotID(robotID)
+	{}
+
+	explicit U2G_SetActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit U2G_SetActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_SetActiveObjectLEDs& other) const;
+	bool operator!=(const U2G_SetActiveObjectLEDs& other) const;
+};
+
+// MESSAGE U2G_SetAllActiveObjectLEDs
+struct U2G_SetAllActiveObjectLEDs
+{
+	uint32_t objectID;
+	std::array<uint32_t, 8> color;
+	std::array<uint32_t, 8> onPeriod_ms;
+	std::array<uint32_t, 8> offPeriod_ms;
+	std::array<uint32_t, 8> transitionOnPeriod_ms;
+	std::array<uint32_t, 8> transitionOffPeriod_ms;
+	float relativeToX;
+	float relativeToY;
+	uint8_t makeRelative;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	U2G_SetAllActiveObjectLEDs() = default;
+	U2G_SetAllActiveObjectLEDs(const U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
+	U2G_SetAllActiveObjectLEDs& operator=(const U2G_SetAllActiveObjectLEDs& other) = default;
+	U2G_SetAllActiveObjectLEDs& operator=(U2G_SetAllActiveObjectLEDs&& other) noexcept = default;
+	
+	explicit U2G_SetAllActiveObjectLEDs(uint32_t objectID
+		,const std::array<uint32_t, 8>& color
+		,const std::array<uint32_t, 8>& onPeriod_ms
+		,const std::array<uint32_t, 8>& offPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOnPeriod_ms
+		,const std::array<uint32_t, 8>& transitionOffPeriod_ms
+		,float relativeToX
+		,float relativeToY
+		,uint8_t makeRelative
+		,uint8_t robotID)
+	:objectID(objectID)
+	,color(color)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
+	,relativeToX(relativeToX)
+	,relativeToY(relativeToY)
+	,makeRelative(makeRelative)
+	,robotID(robotID)
+	{}
+
+	explicit U2G_SetAllActiveObjectLEDs(const uint8_t* buff, size_t len);
+	explicit U2G_SetAllActiveObjectLEDs(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const U2G_SetAllActiveObjectLEDs& other) const;
+	bool operator!=(const U2G_SetAllActiveObjectLEDs& other) const;
+};
+
 // UNION U2G_Message
 class U2G_Message
 {
@@ -1848,6 +2022,11 @@ public:
 	const Anki::Cozmo::U2G_TurnInPlace& Get_TurnInPlace() const;
 	void Set_TurnInPlace(const Anki::Cozmo::U2G_TurnInPlace& new_TurnInPlace);
 	void Set_TurnInPlace(Anki::Cozmo::U2G_TurnInPlace&& new_TurnInPlace);
+
+	/** FaceObject **/
+	const Anki::Cozmo::U2G_FaceObject& Get_FaceObject() const;
+	void Set_FaceObject(const Anki::Cozmo::U2G_FaceObject& new_FaceObject);
+	void Set_FaceObject(Anki::Cozmo::U2G_FaceObject&& new_FaceObject);
 
 	/** MoveHead **/
 	const Anki::Cozmo::U2G_MoveHead& Get_MoveHead() const;
@@ -2059,6 +2238,16 @@ public:
 	void Set_SetFaceDetectParams(const Anki::Cozmo::U2G_SetFaceDetectParams& new_SetFaceDetectParams);
 	void Set_SetFaceDetectParams(Anki::Cozmo::U2G_SetFaceDetectParams&& new_SetFaceDetectParams);
 
+	/** SetActiveObjectLEDs **/
+	const Anki::Cozmo::U2G_SetActiveObjectLEDs& Get_SetActiveObjectLEDs() const;
+	void Set_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& new_SetActiveObjectLEDs);
+	void Set_SetActiveObjectLEDs(Anki::Cozmo::U2G_SetActiveObjectLEDs&& new_SetActiveObjectLEDs);
+
+	/** SetAllActiveObjectLEDs **/
+	const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& Get_SetAllActiveObjectLEDs() const;
+	void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
+	void Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G_SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2080,6 +2269,7 @@ private:
 		Anki::Cozmo::U2G_StartEngine _StartEngine;
 		Anki::Cozmo::U2G_DriveWheels _DriveWheels;
 		Anki::Cozmo::U2G_TurnInPlace _TurnInPlace;
+		Anki::Cozmo::U2G_FaceObject _FaceObject;
 		Anki::Cozmo::U2G_MoveHead _MoveHead;
 		Anki::Cozmo::U2G_MoveLift _MoveLift;
 		Anki::Cozmo::U2G_SetLiftHeight _SetLiftHeight;
@@ -2122,6 +2312,8 @@ private:
 		Anki::Cozmo::U2G_StopLookingForMarkers _StopLookingForMarkers;
 		Anki::Cozmo::U2G_SetVisionSystemParams _SetVisionSystemParams;
 		Anki::Cozmo::U2G_SetFaceDetectParams _SetFaceDetectParams;
+		Anki::Cozmo::U2G_SetActiveObjectLEDs _SetActiveObjectLEDs;
+		Anki::Cozmo::U2G_SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
 	};
 };
 

@@ -5,7 +5,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public enum ActionButtonMode {
+public enum ActionButtonMode
+{
 	DISABLED,
 	TARGET,
 	PICK_UP,
@@ -24,163 +25,104 @@ public class ActionButton
 	public Button button;
 	public Image image;
 	public Text text;
-	
-	private int index;
-	private ActionPanel panel;
-	
-	public void ClaimOwnership(ActionPanel panel) {
-		this.panel = panel;
-	}
-	
-	protected void PickAndPlaceObject()
-	{
-		RobotEngineManager.instance.current.PickAndPlaceObject( index );
-	}
-	
-	public void Cancel()
-	{
-		Debug.Log( "Cancel" );
-		
-		if( RobotEngineManager.instance != null )
-		{
-			RobotEngineManager.instance.current.selectedObjects.Clear();
-			RobotEngineManager.instance.current.SetHeadAngle();
-		}
-	}
-	
-	public void SetMode( ActionButtonMode mode, int i = 0, string append = null  )
+
+	public ActionButtonMode mode { get; private set; }
+
+	public void SetMode( ActionButtonMode m, int selectedObjectIndex = 0, string append = null )
 	{
 		button.onClick.RemoveAllListeners();
-
-		if(mode == ActionButtonMode.DISABLED) {
-			button.gameObject.SetActive(false);
-			//button.onClick.RemoveAllListeners();
+		mode = m;
+		
+		if( mode == ActionButtonMode.DISABLED || ActionPanel.instance == null || ActionPanel.instance.gameActions == null )
+		{
+			button.gameObject.SetActive( false );
 			return;
 		}
-		
-		image.sprite = panel.GetActionSprite(mode);
-		index = i;
 
-		switch(mode) {
-			case ActionButtonMode.TARGET:
-				text.text = TARGET;
-				//button.onClick.AddListener(vision.Action);
-				break;
+		GameActions gameActions = ActionPanel.instance.gameActions;
+
+		image.sprite = ActionButton.GetModeSprite( mode );
+		gameActions.selectedObjectIndex = selectedObjectIndex;
+		
+		switch( mode )
+		{
 			case ActionButtonMode.PICK_UP:
-				text.text = PICK_UP;
-				button.onClick.AddListener(PickAndPlaceObject);
-				button.onClick.AddListener(panel.ActionButtonClick);
+				text.text = gameActions.PICK_UP;
+				button.onClick.AddListener( gameActions.PickUp );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.DROP:
-				text.text = DROP;
-				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
-				button.onClick.AddListener(panel.ActionButtonClick);
+				text.text = gameActions.DROP;
+				button.onClick.AddListener( gameActions.Drop );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.STACK:
-				text.text = STACK;
-				button.onClick.AddListener(PickAndPlaceObject);
-				button.onClick.AddListener(panel.ActionButtonClick);
+				text.text = gameActions.STACK;
+				button.onClick.AddListener( gameActions.Stack );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.ROLL:
-				text.text = ROLL;
-				//button.onClick.AddListener(vision.Action);
+				text.text = gameActions.ROLL;
+				button.onClick.AddListener( gameActions.Roll );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.ALIGN:
-				text.text = ALIGN;
-				button.onClick.AddListener(RobotEngineManager.instance.current.PlaceObjectOnGroundHere);
-				button.onClick.AddListener(panel.ActionButtonClick);
+				text.text = gameActions.ALIGN;
+				button.onClick.AddListener( gameActions.Align );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.CHANGE:
-				text.text = CHANGE;
-				//button.onClick.AddListener(vision.Action);
+				text.text = gameActions.CHANGE;
+				button.onClick.AddListener( gameActions.Align );
+				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.CANCEL:
-				text.text = CANCEL;
-				button.onClick.AddListener(Cancel);
-				button.onClick.AddListener(panel.CancelButtonClick);
+				text.text = gameActions.CANCEL;
+				button.onClick.AddListener( gameActions.Cancel );
+				button.onClick.AddListener( gameActions.CancelButtonClick );
 				break;
 		}
-
+		
 		if( append != null ) text.text += append;
-		button.gameObject.SetActive(true);
+		
+		button.gameObject.SetActive( true );
 	}
 
-
-	private static string targetOverride = null;
-	public static string TARGET
+	public static Sprite GetModeSprite( ActionButtonMode mode )
 	{
-		get { if( targetOverride == null ) { return "Search"; } return targetOverride; }
+		if( ActionPanel.instance != null && ActionPanel.instance.gameActions != null )
+		{
+			switch( mode )
+			{
+				case ActionButtonMode.TARGET: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.PICK_UP: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.DROP: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.STACK: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.ROLL: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.ALIGN: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.CHANGE: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.CANCEL: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+			}
+		}
 		
-		set { targetOverride = value; }
+		return null;
 	}
 
-	private static string pickUpOverride = null;
-	public static string PICK_UP
+	public static string GetModeName( ActionButtonMode mode )
 	{
-		get { if( pickUpOverride == null ) { return "Pick Up"; } return pickUpOverride; }
-		
-		set { pickUpOverride = value; }
-	}
-
-	private static string dropOverride = null;
-	public static string DROP
-	{
-		get { if( dropOverride == null ) { return "Drop"; } return dropOverride; }
-		
-		set { dropOverride = value; }
-	}
-
-	private static string stackOverride = null;
-	public static string STACK
-	{
-		get { if( stackOverride == null ) { return "Stack"; } return stackOverride; }
-		
-		set { stackOverride = value; }
-	}
-
-	private static string rollOverride = null;
-	public static string ROLL
-	{
-		get { if( rollOverride == null ) { return "Roll"; } return rollOverride; }
-		
-		set { rollOverride = value; }
-	}
-
-	private static string alignOverride = null;
-	public static string ALIGN
-	{
-		get { if( alignOverride == null ) { return "Align"; } return alignOverride; }
-		
-		set { alignOverride = value; }
-	}
-
-	private static string changeOverride = null;
-	public static string CHANGE
-	{
-		get { if( changeOverride == null ) { return "Change"; } return changeOverride; }
-		
-		set { changeOverride = value; }
-	}
-
-	private static string cancelOverride = null;
-	public static string CANCEL
-	{
-		get { if( cancelOverride == null ) { return "Cancel"; } return cancelOverride; }
-		
-		set { cancelOverride = value; }
-	}
-
-	public static string GetModeName(ActionButtonMode mode) {
-		
-		switch(mode) {
-			case ActionButtonMode.TARGET: return TARGET;
-			case ActionButtonMode.PICK_UP: return PICK_UP;
-			case ActionButtonMode.DROP: return DROP;
-			case ActionButtonMode.STACK: return STACK;
-			case ActionButtonMode.ROLL: return ROLL;
-			case ActionButtonMode.ALIGN: return ALIGN;
-			case ActionButtonMode.CHANGE: return CHANGE;
-			case ActionButtonMode.CANCEL: return CANCEL;
+		if( ActionPanel.instance != null && ActionPanel.instance.gameActions != null )
+		{
+			switch( mode )
+			{
+				case ActionButtonMode.TARGET: return ActionPanel.instance.gameActions.TARGET;
+				case ActionButtonMode.PICK_UP: return ActionPanel.instance.gameActions.PICK_UP;
+				case ActionButtonMode.DROP: return ActionPanel.instance.gameActions.DROP;
+				case ActionButtonMode.STACK: return ActionPanel.instance.gameActions.STACK;
+				case ActionButtonMode.ROLL: return ActionPanel.instance.gameActions.ROLL;
+				case ActionButtonMode.ALIGN: return ActionPanel.instance.gameActions.ALIGN;
+				case ActionButtonMode.CHANGE: return ActionPanel.instance.gameActions.CHANGE;
+				case ActionButtonMode.CANCEL: return ActionPanel.instance.gameActions.CANCEL;
+			}
 		}
 		
 		return "None";
@@ -189,10 +131,8 @@ public class ActionButton
 
 public class ActionPanel : MonoBehaviour
 {
-	[SerializeField] protected ActionButton[] actionButtons;
-	[SerializeField] protected AudioClip actionButtonSound;
-	[SerializeField] protected AudioClip cancelButtonSound;
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	public ActionButton[] actionButtons;
+	
 	[SerializeField] protected RectTransform anchorToSnapToSideBar;
 	[SerializeField] protected float snapToSideBarScale = 1f;
 	[SerializeField] protected RectTransform anchorToCenterOnSideBar;
@@ -206,59 +146,23 @@ public class ActionPanel : MonoBehaviour
 	protected Rect rect;
 	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
+	protected int selectedObjectIndex;
 
-	protected bool isSmallScreen = false;
+	public bool IsSmallScreen { get; protected set; }
 
 	public static ActionPanel instance = null;
 
-	public Sprite GetActionSprite(ActionButtonMode mode) {
-		return actionSprites[(int)mode];
-	}
+	[System.NonSerialized] public GameActions gameActions;
 
 	protected virtual void Awake()
 	{
 		rTrans = transform as RectTransform;
 		canvas = GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
-		foreach(ActionButton button in actionButtons) button.ClaimOwnership(this);
 	}
 
 	public void DisableButtons() {
 		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
-	}
-	
-	public void SetActionButtons()
-	{
-		DisableButtons();
-		
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
-		
-		robot = RobotEngineManager.instance.current;
-
-		if( robot.isBusy ) return;
-		
-		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
-		{
-			if( robot.selectedObjects.Count > 0 ) actionButtons[1].SetMode( ActionButtonMode.STACK );
-			
-			actionButtons[0].SetMode( ActionButtonMode.DROP );
-		}
-		else
-		{
-			if( robot.selectedObjects.Count == 1 )
-			{
-				actionButtons[1].SetMode( ActionButtonMode.PICK_UP );
-			}
-			else
-			{
-				for( int i = 0; i < robot.selectedObjects.Count && i < 2; ++i )
-				{
-					if( actionButtons.Length > i ) actionButtons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? " Bottom" : " Top" );
-				}
-			}
-		}
-		
-		if( robot.selectedObjects.Count > 0 && actionButtons.Length > 2 ) actionButtons[2].SetMode( ActionButtonMode.CANCEL );
 	}
 
 	protected virtual void OnEnable()
@@ -277,7 +181,7 @@ public class ActionPanel : MonoBehaviour
 
 	protected virtual void ResizeToScreen() {
 		float dpi = Screen.dpi;//
-		isSmallScreen = false;
+		IsSmallScreen = false;
 		if(dpi == 0f) return;
 		
 		float refW = Screen.width;
@@ -310,8 +214,8 @@ public class ActionPanel : MonoBehaviour
 		}
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
-		isSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		if(isSmallScreen && anchorToScaleOnSmallScreens != null) {
+		IsSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
+		if(IsSmallScreen && anchorToScaleOnSmallScreens != null) {
 			
 			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
 			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
@@ -324,21 +228,8 @@ public class ActionPanel : MonoBehaviour
 		
 	}
 
-	public void ActionButtonClick()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( actionButtonSound, 1f );
-	}
-	
-	public void CancelButtonClick()
-	{
-		audio.volume = 1f;
-		audio.PlayOneShot( cancelButtonSound, 1f );
-	}
-
-	protected virtual void OnDisable()
+	public virtual void OnDisable()
 	{
 		if(instance == this) instance = null;
 	}
-
 }

@@ -120,10 +120,10 @@ public class RobotRelativeControls : MonoBehaviour {
 		RefreshTargetLock();
 
 		targetLockTimer += Time.deltaTime;
-		if(lastTargetLock == null && targetLock != null) targetLockTimer = 0f;
+		if(lastTargetLock == null && targetLock != null && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
 
 		//if we are unlocked this frame, let's reset our head angle back to sane value
-		if(lastTargetLock != null && targetLock == null) robot.SetHeadAngle();
+		if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();
 
 		bool newLock = lastTargetLock != targetLock;
 
@@ -298,7 +298,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(!targetLockSelectedObject) return null;
 		if(robot.selectedObjects.Count == 0) return null;
 
-		targetLock = robot.selectedObjects[0];
+		targetLock = robot.targetLockedObject;
 		if(targetLock == null) return null;
 
 		Vector2 robotForward = robot.Forward;
@@ -485,9 +485,10 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void CheckSwapTargetLock(Vector2 direction) {
 		if(direction.sqrMagnitude == 0f) return; 
-		if(CozmoVision.instance != null && CozmoVision.instance.pertinentObjects.Count <= 1) return;
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null && RobotEngineManager.instance.current.pertinentObjects.Count <= 1) return;
 
-		ObservedObject oldLock = robot.selectedObjects[0];
+		List<ObservedObject> pertinentObjects = RobotEngineManager.instance.current.pertinentObjects;
+		ObservedObject oldLock = robot.targetLockedObject;
 		Vector3 targetPos = oldLock.WorldPosition;
 		Vector3 atTarget = (targetPos - robot.WorldPosition).normalized;
 		Vector3 flatAtTarget = ((Vector2)atTarget).normalized;
@@ -497,7 +498,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		///sift and sort
 		if(direction.x != 0) {
-			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
+			potential = pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt) );
 
 			if(potential == null || potential.Count == 0) return;
 
@@ -517,7 +518,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		}
 		else {
-			potential = CozmoVision.instance.pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
+			potential = pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward) );
 
 			if(potential == null || potential.Count == 0) return;
 
@@ -537,8 +538,9 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		//robot.selectedObjects.Clear();
-		robot.selectedObjects.Remove(potential[0]);
-		robot.selectedObjects.Insert(0, potential[0]);
+		/*robot.selectedObjects.Remove(potential[0]);
+		robot.selectedObjects.Insert(0, potential[0]);*/
+		robot.targetLockedObject = potential[0];
 		targetLock = potential[0];
 		Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock.ID+") newLock("+targetLock.ID+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
 	}

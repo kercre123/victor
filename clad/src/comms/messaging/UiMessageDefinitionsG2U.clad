@@ -65,6 +65,7 @@ message G2U_RobotState {
     float_32 batteryVoltage,
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
     uint_8   status,                // See RobotStatusFlag in cozmoTypes.h
     uint_8   robotID
 }
@@ -119,7 +120,8 @@ message G2U_RobotObservedObject {
     float_32 quaternion1,    //     "
     float_32 quaternion2,    //     "
     float_32 quaternion3,    //     "
-    uint_8   markersVisible  // Observed via markers vs. "should" be visible based on previous observation
+    uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
+    uint_8   isActive
 }
 
 // RobotObservedNothing

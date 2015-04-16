@@ -24,7 +24,9 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 	protected void Update()
 	{
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
+		if( actionPanel == null ) return;
+
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || actionPanel.gameActions == null )
 		{
 			actionPanel.DisableButtons();
 			return;
@@ -38,7 +40,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 		{
 			robot.selectedObjects.Clear();
 			observedObjects.Clear();
-			observedObjects.AddRange( pertinentObjects );
+			observedObjects.AddRange( robot.pertinentObjects );
 
 			/*observedObjects.Sort( ( obj1 ,obj2 ) => // sort by distance from robot
 			{
@@ -110,7 +112,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 			FadeOut();
 		}
 
-		actionPanel.SetActionButtons();
+		actionPanel.gameActions.SetActionButtons();
 		Dings();
 	}
 

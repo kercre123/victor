@@ -174,7 +174,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      if(robot->AreWheelsLockeD()) {
+      if(robot->AreWheelsLocked()) {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
                          "Ignoring U2G_DriveWheels while wheels are locked.\n");
       } else {
@@ -255,6 +255,24 @@ namespace Cozmo {
     }
   }
   
+  
+  void CozmoGameImpl::Process_FaceObject(U2G_FaceObject const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      ObjectID objectID;
+      if(msg.objectID == u32_MAX) {
+        objectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        objectID = msg.objectID;
+      }
+      robot->GetActionList().AddAction(new FaceObjectAction(objectID,
+                                                            Radians(msg.turnAngleTol),
+                                                            Radians(msg.maxTurnAngle),
+                                                            msg.headTrackWhenDone));
+    }
+  }
   
   void CozmoGameImpl::Process_StopAllMotors(U2G_StopAllMotors const& msg)
   {
@@ -731,6 +749,58 @@ namespace Cozmo {
     }
   }
   
+  
+  void CozmoGameImpl::Process_SetActiveObjectLEDs(U2G_SetActiveObjectLEDs const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      assert(msg.objectID <= s32_MAX);
+      ObjectID whichObject;
+      whichObject = msg.objectID;
+      
+      robot->SetObjectLights(whichObject,
+                             static_cast<WhichLEDs>(msg.whichLEDs),
+                             msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                             msg.turnOffUnspecifiedLEDs,
+                             msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+
+      /*
+      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
+      if(activeCube != nullptr) {
+        activeCube->SetLEDs(static_cast<ActiveCube::WhichLEDs>(msg.whichLEDs),
+                            msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
+        
+        if(msg.makeRelative) {
+          activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY));
+        }
+        
+             }
+       */
+    }
+  }
+  
+  void CozmoGameImpl::Process_SetAllActiveObjectLEDs(U2G_SetAllActiveObjectLEDs const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      assert(msg.objectID <= s32_MAX);
+      ObjectID whichObject;
+      whichObject = msg.objectID;
+      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
+      if(activeCube != nullptr) {
+        activeCube->SetLEDs(msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+        
+        if(msg.makeRelative) {
+          activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY));
+        }
+      }
+    }
+  }
+
   void CozmoGameImpl::Process_VisionWhileMoving(U2G_VisionWhileMoving const& msg)
   {
     if(_isHost) {

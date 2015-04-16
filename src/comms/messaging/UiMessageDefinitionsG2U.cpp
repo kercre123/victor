@@ -419,6 +419,7 @@ size_t G2U_RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->batteryVoltage);
 	buffer.Write(this->carryingObjectID);
 	buffer.Write(this->carryingObjectOnTopID);
+	buffer.Write(this->headTrackingObjectID);
 	buffer.Write(this->status);
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -448,6 +449,7 @@ size_t G2U_RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->batteryVoltage);
 	buffer.Read(this->carryingObjectID);
 	buffer.Read(this->carryingObjectOnTopID);
+	buffer.Read(this->headTrackingObjectID);
 	buffer.Read(this->status);
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
@@ -486,6 +488,8 @@ size_t G2U_RobotState::Size() const
 	result += 4; // = int_32
 	//carryingObjectOnTopID
 	result += 4; // = int_32
+	//headTrackingObjectID
+	result += 4; // = int_32
 	//status
 	result += 1; // = uint_8
 	//robotID
@@ -510,6 +514,7 @@ bool G2U_RobotState::operator==(const G2U_RobotState& other) const
 	|| batteryVoltage != other.batteryVoltage
 	|| carryingObjectID != other.carryingObjectID
 	|| carryingObjectOnTopID != other.carryingObjectOnTopID
+	|| headTrackingObjectID != other.headTrackingObjectID
 	|| status != other.status
 	|| robotID != other.robotID) {
 		return false;
@@ -660,6 +665,7 @@ size_t G2U_RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->quaternion2);
 	buffer.Write(this->quaternion3);
 	buffer.Write(this->markersVisible);
+	buffer.Write(this->isActive);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
@@ -688,6 +694,7 @@ size_t G2U_RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->quaternion2);
 	buffer.Read(this->quaternion3);
 	buffer.Read(this->markersVisible);
+	buffer.Read(this->isActive);
 	return buffer.GetBytesRead();
 }
 
@@ -726,6 +733,8 @@ size_t G2U_RobotObservedObject::Size() const
 	result += 4; // = float_32
 	//markersVisible
 	result += 1; // = uint_8
+	//isActive
+	result += 1; // = uint_8
 	return result;
 }
 
@@ -746,7 +755,8 @@ bool G2U_RobotObservedObject::operator==(const G2U_RobotObservedObject& other) c
 	|| quaternion1 != other.quaternion1
 	|| quaternion2 != other.quaternion2
 	|| quaternion3 != other.quaternion3
-	|| markersVisible != other.markersVisible) {
+	|| markersVisible != other.markersVisible
+	|| isActive != other.isActive) {
 		return false;
 	}
 	return true;

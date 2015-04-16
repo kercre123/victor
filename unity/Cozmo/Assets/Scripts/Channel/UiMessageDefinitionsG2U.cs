@@ -728,6 +728,7 @@ public class G2U_RobotState
 	private float _batteryVoltage; // float_32
 	private int _carryingObjectID; // int_32
 	private int _carryingObjectOnTopID; // int_32
+	private int _headTrackingObjectID; // int_32
 	private byte _status; // uint_8
 	private byte _robotID; // uint_8
 
@@ -761,6 +762,8 @@ public class G2U_RobotState
 
 	public int carryingObjectOnTopID { get { return _carryingObjectOnTopID; } set { _carryingObjectOnTopID = value; } }
 
+	public int headTrackingObjectID { get { return _headTrackingObjectID; } set { _headTrackingObjectID = value; } }
+
 	public byte status { get { return _status; } set { _status = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
@@ -787,6 +790,7 @@ public class G2U_RobotState
 		float batteryVoltage,
 		int carryingObjectID,
 		int carryingObjectOnTopID,
+		int headTrackingObjectID,
 		byte status,
 		byte robotID)
 	{
@@ -805,6 +809,7 @@ public class G2U_RobotState
 		this.batteryVoltage = batteryVoltage;
 		this.carryingObjectID = carryingObjectID;
 		this.carryingObjectOnTopID = carryingObjectOnTopID;
+		this.headTrackingObjectID = headTrackingObjectID;
 		this.status = status;
 		this.robotID = robotID;
 	}
@@ -842,6 +847,7 @@ public class G2U_RobotState
 		_batteryVoltage = reader.ReadSingle();
 		_carryingObjectID = reader.ReadInt32();
 		_carryingObjectOnTopID = reader.ReadInt32();
+		_headTrackingObjectID = reader.ReadInt32();
 		_status = reader.ReadByte();
 		_robotID = reader.ReadByte();
 	}
@@ -869,6 +875,7 @@ public class G2U_RobotState
 		writer.Write((float)_batteryVoltage);
 		writer.Write((int)_carryingObjectID);
 		writer.Write((int)_carryingObjectOnTopID);
+		writer.Write((int)_headTrackingObjectID);
 		writer.Write((byte)_status);
 		writer.Write((byte)_robotID);
 	}
@@ -876,7 +883,7 @@ public class G2U_RobotState
 	public int Size 
 	{
 		get {
-			return 62;
+			return 66;
 		}
 	}
 
@@ -937,6 +944,7 @@ public class G2U_RobotState
 			&& this._batteryVoltage.Equals(p._batteryVoltage)
 			&& this._carryingObjectID.Equals(p._carryingObjectID)
 			&& this._carryingObjectOnTopID.Equals(p._carryingObjectOnTopID)
+			&& this._headTrackingObjectID.Equals(p._headTrackingObjectID)
 			&& this._status.Equals(p._status)
 			&& this._robotID.Equals(p._robotID);
 	}
@@ -961,6 +969,7 @@ public class G2U_RobotState
 			hash = hash * 23 + this._batteryVoltage.GetHashCode();
 			hash = hash * 23 + this._carryingObjectID.GetHashCode();
 			hash = hash * 23 + this._carryingObjectOnTopID.GetHashCode();
+			hash = hash * 23 + this._headTrackingObjectID.GetHashCode();
 			hash = hash * 23 + this._status.GetHashCode();
 			hash = hash * 23 + this._robotID.GetHashCode();
 			return hash;
@@ -1191,6 +1200,7 @@ public class G2U_RobotObservedObject
 	private float _quaternion2; // float_32
 	private float _quaternion3; // float_32
 	private byte _markersVisible; // uint_8
+	private byte _isActive; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
@@ -1224,6 +1234,8 @@ public class G2U_RobotObservedObject
 
 	public byte markersVisible { get { return _markersVisible; } set { _markersVisible = value; } }
 
+	public byte isActive { get { return _isActive; } set { _isActive = value; } }
+
 
 	/**** Constructors ****/
 
@@ -1246,7 +1258,8 @@ public class G2U_RobotObservedObject
 		float quaternion1,
 		float quaternion2,
 		float quaternion3,
-		byte markersVisible)
+		byte markersVisible,
+		byte isActive)
 	{
 		this.robotID = robotID;
 		this.objectFamily = objectFamily;
@@ -1264,6 +1277,7 @@ public class G2U_RobotObservedObject
 		this.quaternion2 = quaternion2;
 		this.quaternion3 = quaternion3;
 		this.markersVisible = markersVisible;
+		this.isActive = isActive;
 	}
 
 	public G2U_RobotObservedObject(System.IO.Stream stream)
@@ -1300,6 +1314,7 @@ public class G2U_RobotObservedObject
 		_quaternion2 = reader.ReadSingle();
 		_quaternion3 = reader.ReadSingle();
 		_markersVisible = reader.ReadByte();
+		_isActive = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -1326,12 +1341,13 @@ public class G2U_RobotObservedObject
 		writer.Write((float)_quaternion2);
 		writer.Write((float)_quaternion3);
 		writer.Write((byte)_markersVisible);
+		writer.Write((byte)_isActive);
 	}
 
 	public int Size 
 	{
 		get {
-			return 61;
+			return 62;
 		}
 	}
 
@@ -1392,7 +1408,8 @@ public class G2U_RobotObservedObject
 			&& this._quaternion1.Equals(p._quaternion1)
 			&& this._quaternion2.Equals(p._quaternion2)
 			&& this._quaternion3.Equals(p._quaternion3)
-			&& this._markersVisible.Equals(p._markersVisible);
+			&& this._markersVisible.Equals(p._markersVisible)
+			&& this._isActive.Equals(p._isActive);
 	}
 
 	public override int GetHashCode()
@@ -1416,6 +1433,7 @@ public class G2U_RobotObservedObject
 			hash = hash * 23 + this._quaternion2.GetHashCode();
 			hash = hash * 23 + this._quaternion3.GetHashCode();
 			hash = hash * 23 + this._markersVisible.GetHashCode();
+			hash = hash * 23 + this._isActive.GetHashCode();
 			return hash;
 		}
 	}

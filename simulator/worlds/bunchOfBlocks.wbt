@@ -171,6 +171,34 @@ DEF ArrowBlock Block1x1 {
   rotation 0 1 0 -1.57
   markerImg "symbols/arrow.png"
 }
+DEF ActiveBlock1 Block1x1 {
+  name "ActiveBlock"
+  translation -0.100 0.120 0.022
+  rotation 0 0 1 0.23
+  blockColor 0.5 0.85 0.5
+  markerImg_front "letters/1.png"
+  markerImg_back  "letters/2.png"
+  markerImg_left  "letters/3.png"
+  markerImg_right "letters/4.png"
+  markerImg_top   "letters/5.png"
+  markerImg_bottom "letters/6.png"
+  active TRUE 
+  activeID 1
+}
+DEF ActiveBlock2 Block1x1 {
+  name "ActiveBlock"
+  translation -0.120 0.070 0.022
+  rotation 0 0 1 0.23
+  blockColor 0.5 0.85 0.5
+  markerImg_front "letters/inverted/1.png"
+  markerImg_back  "letters/inverted/2.png"
+  markerImg_left  "letters/inverted/3.png"
+  markerImg_right "letters/inverted/4.png"
+  markerImg_top   "letters/inverted/5.png"
+  markerImg_bottom "letters/inverted/6.png"
+  active TRUE 
+  activeID 2
+}
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {

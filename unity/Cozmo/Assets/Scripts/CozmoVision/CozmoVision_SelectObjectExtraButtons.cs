@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,7 +43,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 	
 	protected void ConnectButtonsToBoxes()
 	{
-		if(isSmallScreen) return;
+		if(IsSmallScreen) return;
 
 		unassignedActiveObjectBoxes.Clear();
 		unassignedActiveObjectBoxes.AddRange( observedObjectBoxes.FindAll( x => x.gameObject.activeSelf ) );

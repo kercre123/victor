@@ -20,6 +20,7 @@ public class Robot
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
 	public int carryingObjectID { get; private set; }
+	public int headTrackingObjectID { get; private set; }
 	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
@@ -27,7 +28,56 @@ public class Robot
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-	public ObservedObject lastObjectHeadTracked;
+	public ObservedObject targetLockedObject;
+
+	private int lastHeadTrackingObjectID = -1;
+
+	public enum ObservedObjectListType {
+		OBSERVED_RECENTLY,
+		MARKERS_SEEN,
+		KNOWN
+	}
+	
+	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+	
+	protected ActionPanel actionPanel;
+	
+	private List<ObservedObject> _pertinentObjects = new List<ObservedObject>(); 
+	private int pertinenceStamp = -1; 
+	public List<ObservedObject> pertinentObjects
+	{
+		get
+		{
+			if(pertinenceStamp == Time.frameCount) return _pertinentObjects;
+			pertinenceStamp = Time.frameCount;
+			
+			float tooHigh = 2f * CozmoUtil.BLOCK_LENGTH_MM;
+			
+			_pertinentObjects.Clear();
+			
+			switch(observedObjectListType) {
+			case ObservedObjectListType.MARKERS_SEEN: 
+				_pertinentObjects.AddRange(markersVisibleObjects);
+				break;
+			case ObservedObjectListType.OBSERVED_RECENTLY: 
+				_pertinentObjects.AddRange(observedObjects);
+				break;
+			case ObservedObjectListType.KNOWN: 
+				_pertinentObjects.AddRange(knownObjects);
+				break;
+			}
+			
+			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( x.WorldPosition.z - WorldPosition.z ) < tooHigh );
+			
+			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
+				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+				float d2 = ( (Vector2)obj2.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+				return d1.CompareTo(d2);   
+			} );
+			
+			return _pertinentObjects;
+		}
+	}
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
@@ -53,9 +103,9 @@ public class Robot
 		get
 		{
 			return localBusyTimer > 0f 
-				|| Status( StatusFlag.IS_PICKING_OR_PLACING ) 
-				|| Status( StatusFlag.IS_PICKED_UP ) 
-				|| Status( StatusFlag.IS_PERFORMING_ACTION );
+				|| Status( StatusFlag.IS_PERFORMING_ACTION )
+				|| Status( StatusFlag.IS_ANIMATING ) 
+				|| Status( StatusFlag.IS_PICKED_UP );
 		}
 	}
 
@@ -69,12 +119,19 @@ public class Robot
 		ID = robotID;
 		selectedObjects = new List<ObservedObject>();
 		lastSelectedObjects = new List<ObservedObject>();
-		lastObjectHeadTracked = null;
 		observedObjects = new List<ObservedObject>();
 		lastObservedObjects = new List<ObservedObject>();
 		markersVisibleObjects = new List<ObservedObject>();
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
+
+		int objectPertinenceOverride = PlayerPrefs.GetInt( "ObjectPertinence", -1 );
+
+		if( objectPertinenceOverride >= 0 )
+		{
+			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
+			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
+		}
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
@@ -88,7 +145,6 @@ public class Robot
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
-		lastObjectHeadTracked = null;
 		observedObjects.Clear();
 		lastObservedObjects.Clear();
 		markersVisibleObjects.Clear();
@@ -98,6 +154,8 @@ public class Robot
 		WorldPosition = Vector3.zero;
 		Rotation = Quaternion.identity;
 		carryingObjectID = -1;
+		headTrackingObjectID = -1;
+		lastHeadTrackingObjectID = -1;
 	}
 
 	public void ClearObservedObjects()
@@ -130,6 +188,9 @@ public class Robot
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
+		headTrackingObjectID = message.headTrackingObjectID;
+
+		if( headTrackingObjectID == lastHeadTrackingObjectID ) lastHeadTrackingObjectID = -1;
 
 		Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
 	}
@@ -144,7 +205,7 @@ public class Robot
 
 		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
-		//Debug.Log( "found " + message.objectID );
+		//Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
 
 		if( knownObject == null )
 		{
@@ -189,37 +250,54 @@ public class Robot
 
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
+		if( isBusy ) return;
+
 		//Debug.Log( "Set Head Angle " + angle_rad );
-		
+
 		U2G_SetHeadAngle message = new U2G_SetHeadAngle();
 		message.angle_rad = angle_rad;
 		message.accel_rad_per_sec2 = 2f;
 		message.max_speed_rad_per_sec = 5f;
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message { SetHeadAngle = message } );
-		
-		lastObjectHeadTracked = null;
 	}
 	
-	public void TrackHeadToObject( ObservedObject observedObject )
+	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
-		if( lastObjectHeadTracked == null || lastObjectHeadTracked.ID != observedObject.ID )
+		if( isBusy || lastHeadTrackingObjectID == observedObject.ID || headTrackingObjectID == observedObject.ID ) return;
+
+		lastHeadTrackingObjectID = observedObject.ID;
+
+		if( faceObject )
 		{
-			Debug.Log( "Track Head To Object " + observedObject.ID );
-			
+			FaceObject( observedObject );
+		}
+		else
+		{
 			U2G_TrackHeadToObject message = new U2G_TrackHeadToObject();
 			message.objectID = (uint)observedObject.ID;
 			message.robotID = ID;
+
+			Debug.Log( "Track Head To Object " + message.objectID );
 			
 			RobotEngineManager.instance.channel.Send( new U2G_Message { TrackHeadToObject = message } );
-			
-			lastObjectHeadTracked = observedObject;
 		}
 	}
 
-	public void PickAndPlaceObject( int index = 0, bool usePreDockPose = true, bool useManualSpeed = false )
+	private void FaceObject( ObservedObject observedObject )
 	{
-		TrackHeadToObject( selectedObjects[index] );
+		U2G_FaceObject message = new U2G_FaceObject();
+		message.objectID = (uint)observedObject.ID;
+		message.robotID = ID;
+
+		Debug.Log( "Face Object " + message.objectID );
+		
+		RobotEngineManager.instance.channel.Send( new U2G_Message { FaceObject = message } );
+	}
+
+	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
+	{
+		FaceObject( selectedObjects[index] );
 
 		U2G_PickAndPlaceObject message = new U2G_PickAndPlaceObject();
 		message.objectID = selectedObjects[index].ID;
@@ -229,8 +307,6 @@ public class Robot
 		Debug.Log( "Pick And Place Object " + message.objectID + " usePreDockPose " + message.usePreDockPose + " useManualSpeed " + message.useManualSpeed );
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ PickAndPlaceObject = message } );
-		
-		lastObjectHeadTracked = null;
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
@@ -257,7 +333,6 @@ public class Robot
 		message.objectID = objectID;
 		
 		RobotEngineManager.instance.channel.Send( new U2G_Message{ SetRobotCarryingObject = message } );
-		lastObjectHeadTracked = null;
 		selectedObjects.Clear();
 		
 		SetLiftHeight( 0f );

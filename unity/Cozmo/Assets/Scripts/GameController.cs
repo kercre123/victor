@@ -19,7 +19,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
-	[SerializeField] protected BuildInstructionsController buildInstructionsController = null;
+	[SerializeField] protected GameLayoutTracker gameLayoutTracker = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
@@ -50,7 +50,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(buildInstructionsLayoutFilter);
+		if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(buildInstructionsLayoutFilter);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -87,7 +87,7 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
-		if(buildInstructionsController != null) buildInstructionsController.SetLayoutForGame(null);
+		if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(null);
 	}
 
 	GameState GetNextState() {
@@ -231,7 +231,7 @@ public class GameController : MonoBehaviour {
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
 
-		return buildInstructionsController.Validated;
+		return gameLayoutTracker.Validated;
 	}
 
 	protected virtual bool IsGameOver() {

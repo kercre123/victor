@@ -10,6 +10,7 @@ void Process_ForceAddRobot(const Anki::Cozmo::U2G_ForceAddRobot& msg);
 void Process_StartEngine(const Anki::Cozmo::U2G_StartEngine& msg);
 void Process_DriveWheels(const Anki::Cozmo::U2G_DriveWheels& msg);
 void Process_TurnInPlace(const Anki::Cozmo::U2G_TurnInPlace& msg);
+void Process_FaceObject(const Anki::Cozmo::U2G_FaceObject& msg);
 void Process_MoveHead(const Anki::Cozmo::U2G_MoveHead& msg);
 void Process_MoveLift(const Anki::Cozmo::U2G_MoveLift& msg);
 void Process_SetLiftHeight(const Anki::Cozmo::U2G_SetLiftHeight& msg);
@@ -52,3 +53,5 @@ void Process_StartLookingForMarkers(const Anki::Cozmo::U2G_StartLookingForMarker
 void Process_StopLookingForMarkers(const Anki::Cozmo::U2G_StopLookingForMarkers& msg);
 void Process_SetVisionSystemParams(const Anki::Cozmo::U2G_SetVisionSystemParams& msg);
 void Process_SetFaceDetectParams(const Anki::Cozmo::U2G_SetFaceDetectParams& msg);
+void Process_SetActiveObjectLEDs(const Anki::Cozmo::U2G_SetActiveObjectLEDs& msg);
+void Process_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G_SetAllActiveObjectLEDs& msg);
