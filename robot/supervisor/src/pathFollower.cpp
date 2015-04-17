@@ -1,6 +1,5 @@
 #include "anki/cozmo/robot/debug.h"
 #include "dockingController.h"
-#include "anki/planning/shared/path.h"
 #include "pathFollower.h"
 #include "localization.h"
 #include "steeringController.h"
@@ -566,7 +565,11 @@ namespace Anki
       u16 GetLastPathID() {
         return lastPathID_;
       }
-
+      
+      const Planning::Path& GetPath()
+      {
+        return path_;
+      }
       
       
       bool DriveStraight(f32 dist_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)

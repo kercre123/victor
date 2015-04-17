@@ -39,8 +39,12 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        const f32 DOCK_PATH_START_RADIUS_MM = 50;
-        const f32 DOCK_PATH_END_RADIUS_MM = 100;
+        f32 DOCK_PATH_START_RADIUS_MM = 25;
+        f32 DOCK_PATH_END_RADIUS_MM = 40;
+        
+        // Set of radii to try when generating Dubins path to marker
+        const u8 NUM_END_RADII = 3;
+        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, 25};
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
@@ -60,7 +64,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 30;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -318,7 +322,9 @@ namespace Anki {
                 ((pointOfNoReturnDistMM_ != 0) &&
                 (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
                 (mode_ == APPROACH_FOR_DOCK))) {
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+#endif
               pastPointOfNoReturn_ = true;
               
               // Since we're ignoring docking error signals from hereon, just set the lift to final height.
@@ -669,20 +675,48 @@ namespace Anki {
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
         
         
+
+        s8 endRadiiIdx = -1;
         f32 path_length;
-        u8 numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
-                                                              approachStartPose_.y(),
-                                                              approachStartPose_.angle.ToFloat(),
-                                                              dockPose_.x(),
-                                                              dockPose_.y(),
-                                                              dockPose_.angle.ToFloat(),
-                                                              DOCK_PATH_START_RADIUS_MM,
-                                                              DOCK_PATH_END_RADIUS_MM,
-                                                              DOCK_APPROACH_SPEED_MMPS,
-                                                              DOCK_APPROACH_ACCEL_MMPS2,
-                                                              DOCK_APPROACH_DECEL_MMPS2,
-                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
-                                                              &path_length);
+        u8 numPathSegments;
+        f32 maxSegmentSweepRad = 0;
+        do {
+          // Clear current path
+          PathFollower::ClearPath();
+         
+          if (++endRadiiIdx == NUM_END_RADII) {
+            //PRINT("Could not generate Dubins path\n");
+            followingBlockNormalPath_ = true;
+            break;
+          }
+          
+          numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
+                                                             approachStartPose_.y(),
+                                                             approachStartPose_.angle.ToFloat(),
+                                                             dockPose_.x(),
+                                                             dockPose_.y(),
+                                                             dockPose_.angle.ToFloat(),
+                                                             DOCK_PATH_START_RADIUS_MM,
+                                                             DOCK_PATH_END_RADII_MM[endRadiiIdx],
+                                                             DOCK_APPROACH_SPEED_MMPS,
+                                                             DOCK_APPROACH_ACCEL_MMPS2,
+                                                             DOCK_APPROACH_DECEL_MMPS2,
+                                                             FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
+                                                             &path_length);
+          
+          // Check if any of the arcs sweep an angle larger than PIDIV2
+          maxSegmentSweepRad = 0;
+          const Planning::Path& path = PathFollower::GetPath();
+          for (u8 s=0; s< numPathSegments; ++s) {
+            if (path.GetSegmentConstRef(s).GetType() == Planning::PST_ARC) {
+              f32 segSweepRad = ABS(path.GetSegmentConstRef(s).GetDef().arc.sweepRad);
+              if (segSweepRad > maxSegmentSweepRad) {
+                maxSegmentSweepRad = segSweepRad;
+              }
+            }
+          }
+          
+        } while (numPathSegments == 0 || maxSegmentSweepRad + 0.01f >= PIDIV2_F);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
         //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);
@@ -691,7 +725,7 @@ namespace Anki {
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
-        if (numPathSegments == 0 || path_length > 2 * distToBlock || followingBlockNormalPath_) {
+        if (followingBlockNormalPath_) {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -701,8 +735,7 @@ namespace Anki {
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
-          
-          followingBlockNormalPath_ = true;
+
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
