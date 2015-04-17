@@ -93,6 +93,8 @@ classdef VisionMarkerTrained
         
         matchDistance;
         
+        nearestNeighborLibrary;
+        
     end % Properties
                 
     methods 
@@ -108,7 +110,8 @@ classdef VisionMarkerTrained
             VerifyLabel = true;
             Initialize = true;
             ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
-                        
+            NearestNeighborLibrary = [];
+            
             parseVarargin(varargin{:});
             
             if ~Initialize
@@ -162,7 +165,46 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if iscell(VisionMarkerTrained.ProbeTree)
+                if ~isempty(NearestNeighborLibrary)
+                  VerifyLabel = false;
+                  assert(size(NearestNeighborLibrary.probeValues,1) == VisionMarkerTrained.ProbeParameters.GridSize^2, ...
+                    'NearestNeighborLibrary should be from a %dx%d probe pattern.', ...
+                    VisionMarkerTrained.ProbeParameters.GridSize, ...
+                    VisionMarkerTrained.ProbeParameters.GridSize);
+                  
+                  % Compute distance of the observed probes to all known
+                  % probes.
+                  
+                 probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+                 probeValues = (probeValues - dark)/(bright-dark);
+                 probeValues = im2uint8(probeValues(:));
+                 
+                 if isfield(NearestNeighborLibrary, 'gradMagWeights')
+                   d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+                   d = sum(NearestNeighborLibrary.gradMagWeights.*single(d),1) ./ sum(NearestNeighborLibrary.gradMagWeights,1);
+                 elseif isfield(NearestNeighborLibrary, 'gradMagValues')
+                   %Ix = abs(image_right(probeValues) - image_left(probeValues));
+                   %Iy = abs(image_down(probeValues) - image_up(probeValues));
+                   %probeWeights = max(0,min(1,single(column(1 - max(Ix,Iy)))));
+                   
+                   libraryWeights = im2single(NearestNeighborLibrary.gradMagValues);
+                   minVal = min(libraryWeights(:));
+                   maxVal = max(libraryWeights(:));
+                   w = 1 - (libraryWeights-minVal)/(maxVal-minVal);
+                   
+                   d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+                   %w = min(probeWeights(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), libraryWeights);
+                   d = sum(w.*single(d),1) ./ sum(w,1);
+                 else
+                   d = mean(imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues),1);
+                 end
+                 [minDist, index] = min(d);
+                 
+                 this.codeID = NearestNeighborLibrary.labels(index);
+                 this.codeName = NearestNeighborLibrary.labelNames{this.codeID};
+                 this.isValid = minDist < 25;
+                 
+                elseif iscell(VisionMarkerTrained.ProbeTree)
                   VerifyLabel = false;
                   numTrees = length(VisionMarkerTrained.ProbeTree);
                   codeNames = cell(1, numTrees);

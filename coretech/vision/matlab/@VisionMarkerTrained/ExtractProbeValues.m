@@ -70,7 +70,17 @@ pBarCleanup = onCleanup(@()delete(pBar));
 numDirs = length(markerImageDir);
 fnames = cell(numDirs,1);
 for i_dir = 1:numDirs
+  if isdir(markerImageDir{i_dir})
     fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
+  else 
+    % Assume it's a file list
+    assert(exist(markerImageDir{i_dir}, 'file')>0, ...
+      '%s is not a directory, so assuming it is a file list.', markerImageDir{i_dir});
+    fid = fopen(markerImageDir{i_dir}, 'r');
+    temp = textscan(fid, '%s', 'CommentStyle', '#', 'Delimiter', '\n');
+    fclose(fid)
+    fnames{i_dir} = temp{1};
+  end
 end
 fnames = vertcat(fnames{:});
 
@@ -218,7 +228,10 @@ for iImg = 1:numImages
     end % FOR inversion
         
     pBar.increment();
-    
+    if pBar.cancelled
+      disp('User cancelled.');
+      return;
+    end
 end % FOR each image
     
 % Stack all perturbations horizontally
@@ -338,6 +351,10 @@ for iImg = 1:numNeg
     end % FOR inversion
     
     pBar.increment();
+    if pBar.cancelled
+      disp('User cancelled.');
+      return;
+    end
 end % for each negative example
 
 allWhite = all(probeValuesNeg==1,1);
