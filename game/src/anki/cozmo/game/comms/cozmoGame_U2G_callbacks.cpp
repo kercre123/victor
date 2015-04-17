@@ -759,13 +759,14 @@ namespace Cozmo {
       ObjectID whichObject;
       whichObject = msg.objectID;
       
+      MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
       robot->SetObjectLights(whichObject,
                              static_cast<WhichLEDs>(msg.whichLEDs),
                              msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
                              msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
                              msg.turnOffUnspecifiedLEDs,
-                             msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
-
+                             makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+      
       /*
       ActiveCube* activeCube = robot->GetActiveObject(whichObject);
       if(activeCube != nullptr) {
