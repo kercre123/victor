@@ -73,7 +73,7 @@ public class ActionButton
 				break;
 			case ActionButtonMode.CHANGE:
 				text.text = gameActions.CHANGE;
-				button.onClick.AddListener( gameActions.Align );
+				button.onClick.AddListener( gameActions.Change );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.CANCEL:

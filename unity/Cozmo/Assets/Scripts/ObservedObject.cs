@@ -5,6 +5,20 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
+
+//Red, Orange, Yellow, Green, Blue, Purple
+public enum ActiveBlockType {
+	Off,
+	White,
+	Red,
+	Orange,
+	Yellow,
+	Green,
+	Blue,
+	Purple,
+	NumTypes
+}
+
 public class ObservedObject
 {
 	public uint RobotID { get; private set; }
@@ -25,6 +39,8 @@ public class ObservedObject
 	public float TimeCreated { get; private set; }
 
 	public uint Color { get; private set; }
+
+	public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 
 	public const float RemoveDelay = 0.15f;
 
@@ -64,7 +80,7 @@ public class ObservedObject
 	}
 
 	public void SendLightMessage( float light_intensity, uint color = 0, byte whichLEDs = byte.MaxValue, 
-	                             uint onPeriod_ms = uint.MaxValue, uint offPeriod_ms = 0,
+	                             uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1, byte makeRelative = 1 )
 	{

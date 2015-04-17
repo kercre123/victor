@@ -144,7 +144,6 @@ DEF AngryFaceBlock Block1x1 {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  rotation 0 0 -1 0
   name "CozmoBot_1"
   usbChannel 10
 }

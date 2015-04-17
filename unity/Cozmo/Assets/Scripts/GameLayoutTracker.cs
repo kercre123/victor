@@ -88,10 +88,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(ghostBlock != null) {
+			ghostBlock.gameObject.SetActive(true);
 			ghostBlock.Initialize();
 			ghostBlock.Hidden = true;
 			ghostBlock.Highlighted = false;
-			//ghostBlock.gameObject.SetActive(false);
 		}
 	}
 
@@ -110,6 +110,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
 
 		if(instance == this) instance = null;
+
+		if(ghostBlock != null) {
+			ghostBlock.gameObject.SetActive(false);
+		}
 	}
 
 	void RefreshLayout () {
@@ -253,6 +257,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	int ValidateBlocks() {
+		if(robot == null) return 0;
+
 		if(ghostBlock != null) {
 			ghostBlock.Hidden = true;
 			ghostBlock.Highlighted = false;
@@ -276,7 +282,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
 
-			Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.objectType+")");
+			//Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.objectType+")");
 
 			//cannot validate a block before the one it is stacked upon
 			//note: this requires that our ideal blocks be listed in order
@@ -292,9 +298,13 @@ public class GameLayoutTracker : MonoBehaviour {
 				if(block.objectType != (int)newObject.ObjectType) {
 					continue;
 				}
-//				if(block.objectFamily != (int)newObject.Family) {
-//					continue;
-//				}
+				if(block.objectFamily != (int)newObject.Family) {
+					continue;
+				}
+
+				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
+					continue;
+				}
 
 				//skip objects already assigned to a layout block
 				if(layout.blocks.Find( x => x.AssignedObjectID == newObject.ID) != null) continue;
@@ -321,7 +331,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						block.Highlighted = false;
 					}
 					else {
-						Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
+						//Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
 					}
 				}
@@ -348,7 +358,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						//are we basically on the same plane and roughly the correct distance away?
 						if(Mathf.Abs(realOffset.z) > coplanarFudge){
 							valid = false;
-							Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
+							//Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							break;
 						}
@@ -359,7 +369,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						float distanceError = Mathf.Abs(realDistance - idealDistance);
 						if( distanceError > distanceFudge ) {
 							valid = false;
-							Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
+							//Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							break;
 						}
@@ -412,7 +422,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		ghostBlock.Hidden = true;
 		ghostBlock.Highlighted = true;
 
-		Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
+		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
 	}
 
 }

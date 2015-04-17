@@ -28,6 +28,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] Material originalCornerMaterial = null;
 
 	int lastPropType = 0;
+	int lastFamilyType = 0;
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
@@ -64,6 +65,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		}
 
 		lastPropType = 0;
+		lastFamilyType = 0;
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
@@ -87,6 +89,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	bool Dirty() {
 		if(lastPropType != objectType) return true;
+		if(lastFamilyType != objectFamily) return true;
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
@@ -191,6 +194,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		}
 
 		lastPropType = objectType;
+		lastFamilyType = objectFamily;
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;

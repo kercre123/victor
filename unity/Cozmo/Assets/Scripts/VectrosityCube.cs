@@ -86,4 +86,9 @@ public class VectrosityCube : MonoBehaviour {
 		if(line == null) return;
 		line.material = mat;
 	}
+
+	void OnDestroy() {
+		if(line != null) VectorLine.Destroy(ref line);
+	}
+
 }
