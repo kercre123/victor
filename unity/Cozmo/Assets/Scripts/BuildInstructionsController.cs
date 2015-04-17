@@ -235,9 +235,9 @@ public class BuildInstructionsController : MonoBehaviour {
 		switch(currentPhase) {
 			case BuildStepPhase.REQUESTING:
 
-				if(robot.carryingObjectID != 0) {
+				if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
 					for(int i=0;i<robot.knownObjects.Count;i++) {
-						if(robot.knownObjects[i].ID != robot.carryingObjectID) continue;
+						if(robot.knownObjects[i].ID != robot.carryingObject) continue;
 
 						if(robot.knownObjects[i].ObjectType == currentStep.cube.objectType) {
 							screenMessage.ShowMessageForDuration("Cozmo has picked up the correct type of block!", 5f, Color.green);

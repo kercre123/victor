@@ -45,8 +45,8 @@ public class RobotStateText : MonoBehaviour {
 		if(text_WorldPosition != null) 		text_WorldPosition.text 	= prefix_WorldPosition + bot.WorldPosition.ToString("N");
 		if(text_status != null) 			text_status.text 			= prefix_status + bot.status;
 		if(text_batteryPercent != null) 	text_batteryPercent.text 	= prefix_batteryPercent + bot.batteryPercent.ToString("P");
-		if(text_carryingObjectID != null) 	text_carryingObjectID.text 	= prefix_carryingObjectID + bot.carryingObjectID.ToString();
-		if(text_headTracking != null) 		text_headTracking.text 		= prefix_headTracking + bot.headTrackingObjectID.ToString();
+		if(text_carryingObjectID != null) 	text_carryingObjectID.text 	= prefix_carryingObjectID + bot.carryingObject;
+		if(text_headTracking != null) 		text_headTracking.text 		= prefix_headTracking + bot.headTrackingObject;
 		if(text_knownObjects != null) 		text_knownObjects.text 		= prefix_text_knownObjects + bot.knownObjects.Count.ToString();
 	}
 }

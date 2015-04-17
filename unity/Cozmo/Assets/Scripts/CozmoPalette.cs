@@ -41,6 +41,13 @@ public class CozmoPalette : MonoBehaviour {
 		if(instance == this) instance = null;
 	}
 
+	public static uint ColorToUInt(Color color) {
+		return (uint)((color.r << 24) | (color.g << 16) | (color.b << 8)  | (color.a << 0));
+	}
+
+	public uint GetUIntColorForActiveBlockType(ActiveBlockType activeType) {
+		return ColorToUInt(activeBlockColors[(int)activeType]);
+	}
 
 	public Color GetColorForActiveBlockType(ActiveBlockType activeType) {
 		return activeBlockColors[(int)activeType];
@@ -56,5 +63,6 @@ public class CozmoPalette : MonoBehaviour {
 		digit = Mathf.Clamp(digit, 1, 6);
 		return digitSprites[digit-1];
 	}
+
 
 }

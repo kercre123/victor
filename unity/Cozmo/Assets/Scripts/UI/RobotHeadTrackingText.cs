@@ -12,10 +12,10 @@ public class RobotHeadTrackingText : MonoBehaviour
 	{
 		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
 		{
-			if( RobotEngineManager.instance.current.headTrackingObjectID != lastHeadTrackingObjectID )
-			{
-				text.text = "Head tracking object: " + RobotEngineManager.instance.current.headTrackingObjectID;
-				lastHeadTrackingObjectID = RobotEngineManager.instance.current.headTrackingObjectID;
+			if( RobotEngineManager.instance.current.headTrackingObject != lastHeadTrackingObjectID )
+			{	
+				text.text = "Head tracking object: " + RobotEngineManager.instance.current.headTrackingObject;
+				lastHeadTrackingObjectID = RobotEngineManager.instance.current.headTrackingObject;
 			}
 		}
 	}

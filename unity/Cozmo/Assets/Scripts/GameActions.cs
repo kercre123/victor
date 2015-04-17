@@ -67,7 +67,17 @@ public class GameActions : MonoBehaviour
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
+			if( buttons.Length > 1 )
+			{
+				if( robot.selectedObjects.Count > 0 )
+				{
+					buttons[1].SetMode( ActionButtonMode.STACK );
+				}
+				else
+				{
+					buttons[1].SetMode( ActionButtonMode.CHANGE );
+				}
+			}
 			
 			buttons[0].SetMode( ActionButtonMode.DROP );
 		}
@@ -110,17 +120,17 @@ public class GameActions : MonoBehaviour
 
 	public virtual void PickUp()
 	{
-		if( RobotEngineManager.instance != null ) RobotEngineManager.instance.current.PickAndPlaceObject( selectedObjectIndex );
+		if( robot != null ) robot.PickAndPlaceObject( selectedObjectIndex );
 	}
 	
 	public virtual void Drop()
 	{
-		if( RobotEngineManager.instance != null ) RobotEngineManager.instance.current.PlaceObjectOnGroundHere();
+		if( robot != null ) robot.PlaceObjectOnGroundHere();
 	}
 	
 	public virtual void Stack()
 	{
-		if( RobotEngineManager.instance != null ) RobotEngineManager.instance.current.PickAndPlaceObject( selectedObjectIndex );
+		if( robot != null ) robot.PickAndPlaceObject( selectedObjectIndex );
 	}
 	
 	public virtual void Roll()
@@ -136,16 +146,21 @@ public class GameActions : MonoBehaviour
 	public virtual void Change()
 	{
 		Debug.Log( "Change" );
+
+		if( robot != null && robot.carryingObject != null )
+		{
+			robot.carryingObject.SendLightMessage( 1f );
+		}
 	}
 	
 	public virtual void Cancel()
 	{
 		Debug.Log( "Cancel" );
 		
-		if( RobotEngineManager.instance != null )
+		if( robot != null  )
 		{
-			RobotEngineManager.instance.current.selectedObjects.Clear();
-			RobotEngineManager.instance.current.SetHeadAngle();
+			robot.selectedObjects.Clear();
+			robot.SetHeadAngle();
 		}
 	}
 }

@@ -122,6 +122,12 @@ public class ProjectBuilder {
 
     // Stop playing
     EditorApplication.isPlaying = false;
+	 
+	// Make sure Temp directory exists
+	string tempPath = System.IO.Path.Combine (System.IO.Path.GetDirectoryName (Application.dataPath), "Temp");
+	if (!System.IO.Directory.Exists (tempPath)) {
+		System.IO.Directory.CreateDirectory (tempPath);
+	}
 
     // Force-Reimport Assets
     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
