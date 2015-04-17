@@ -9,18 +9,17 @@ file(GLOB_RECURSE CLAD_INPUTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRE
     "${INPUT_DIRECTORY}/*.clad")
 
 file(RELATIVE_PATH HPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/include/anki/cozmo/game")
+    "${CMAKE_SOURCE_DIR}/game/include")
 file(RELATIVE_PATH CPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/src")
+    "${CMAKE_SOURCE_DIR}/game/src")
 file(RELATIVE_PATH CS_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel")
 
 # Every time any clad python file changes, we want to rerun clad
 # Make sure this is absolute
-set(CLAD_DIRECTORY "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 file(GLOB CLAD_DEPENDENCIES
-    "${CLAD_DIRECTORY}/clad/*.py"
-    "${CLAD_DIRECTORY}/emitters/*.py"
+    "${CLAD_DIR}/clad/*.py"
+    "${CLAD_DIR}/emitters/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/emitters/*.py")
 
 set(PYTHON python)
@@ -56,7 +55,6 @@ foreach(INPUT ${CLAD_INPUTS})
             -C ${INPUT_DIRECTORY}
             -r ${HPP_OUTPUT_DIRECTORY}
             -o ${CPP_OUTPUT_DIRECTORY}
-            --header-path-prefix anki/cozmo/game/
             --header-output-extension .def
             ${INPUT}
         

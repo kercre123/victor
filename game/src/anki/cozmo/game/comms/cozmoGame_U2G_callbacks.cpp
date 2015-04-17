@@ -44,7 +44,7 @@ namespace Cozmo {
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
     _uiMsgHandler.RegisterCallbackForMessage([this](const U2G::Message& msg) {
-#include "comms/messaging/UiMessageDefinitionsU2G_switch.def"
+#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G_switch.def"
     });
   } // RegisterCallbacksU2G()
   
