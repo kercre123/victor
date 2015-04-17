@@ -275,7 +275,7 @@ namespace Anki {
             currentlyObservedObject.area   = area;
           //}
           
-          
+          /*
           // DEBUG!!!
           // Track head to last object seen
           static u32 lastObjectID = u32_MAX;
@@ -292,7 +292,7 @@ namespace Anki {
             message.Set_TrackHeadToObject(m);
             SendMessage(message);
           }
-           
+           */
         }
       }
       
