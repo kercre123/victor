@@ -23,7 +23,7 @@ from emitters import CPP_emitter
 class UnionSwitchEmitter(ast.NodeVisitor):
     "An emitter that generates the handler switch statement."
     
-    def __init__(self, buf=sys.stdout):
+    def __init__(self, buf=sys.stdout, include_extension=None):
         self.buf = buf
     
     def visit_UnionDecl(self, node):
