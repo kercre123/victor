@@ -332,7 +332,15 @@ namespace Anki {
                 // Time to start turning off
                 newColor = ledParams_[i].color;
                 ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOffPeriod_ms;
-                ledParams_[i].state = LEDState::LED_TURNING_OFF;
+                
+                // Check for the special case that LED is just "on" and if so,
+                // just stay in this state.
+                if(ledParams_[i].offPeriod_ms > 0 ||
+                   ledParams_[i].transitionOffPeriod_ms > 0 ||
+                   ledParams_[i].transitionOnPeriod_ms > 0)
+                {
+                  ledParams_[i].state = LEDState::LED_TURNING_OFF;
+                }
                 break;
                 
               case LEDState::LED_OFF:

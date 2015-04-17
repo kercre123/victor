@@ -2685,7 +2685,8 @@ namespace Anki {
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                                   const bool turnOffUnspecifiedLEDs,
-                                  const bool makeRelative, const Point2f& relativeToPoint)
+                                  const MakeRelativeMode makeRelative,
+                                  const Point2f& relativeToPoint)
     {
       ActiveCube* activeCube = GetActiveObject(objectID);
       if(activeCube == nullptr) {
@@ -2696,7 +2697,7 @@ namespace Anki {
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         if(makeRelative) {
-          activeCube->MakeStateRelativeToXY(relativeToPoint);
+          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
         }
         
         MessageSetBlockLights m;

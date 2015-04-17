@@ -69,6 +69,17 @@ namespace Anki {
       LEDState state;
     } LEDParams;
 
+    // Use OFF to specify a pattern of LEDs in an absolute sense.
+    // Use BY_CORNER so that the specified pattern is rotated such that whatever is
+    //   specified for LED_0 ends up closest to the given relative position.
+    // Use BY_SIDE so that the specified pattern is rotated such that whatever is
+    //   specified for the LED_0 - LED_4 side ends up closest to the given relative
+    //   position.
+    enum MakeRelativeMode {
+      RELATIVE_LED_MODE_OFF = 0,
+      RELATIVE_LED_MODE_BY_CORNER,
+      RELATIVE_LED_MODE_BY_SIDE
+    };
     
     // The amount of time between sending the flash ID message
     // to one block and the next block.
