@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 2.8)
 
 # Since clad command line shows up in comments, make all paths relative
 # Dependencies/outputs must be absolute or commands will fail
+file(RELATIVE_PATH RELATIVE_CLAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CLAD_DIR})
+
 set(INPUT_DIRECTORY "src")
 file(GLOB_RECURSE CLAD_INPUTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}"
     "${INPUT_DIRECTORY}/*.clad")
@@ -51,7 +54,7 @@ foreach(INPUT ${CLAD_INPUTS})
     add_custom_command(
         OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
         
-        COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_main_emitter.py
+        COMMAND ${PYTHON} ${PYTHONFLAGS} ${RELATIVE_CLAD_DIR}/emitters/CPP_emitter.py
             -C ${INPUT_DIRECTORY}
             -r ${HPP_OUTPUT_DIRECTORY}
             -o ${CPP_OUTPUT_DIRECTORY}
@@ -67,9 +70,9 @@ foreach(INPUT ${CLAD_INPUTS})
     add_custom_command(
         OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}"
         
-        COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CSharp_main_emitter.py
+        COMMAND ${PYTHON} ${PYTHONFLAGS} ${RELATIVE_CLAD_DIR}/emitters/CSharp_emitter.py
             -C ${INPUT_DIRECTORY}
-            --output-file-override ${CS_OUTPUT}
+            --output-file ${CS_OUTPUT}
             ${INPUT}
         
         MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"

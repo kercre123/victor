@@ -364,7 +364,6 @@ if __name__ == '__main__':
     
     if options.command == 'wipeall!':
         if not dialog('Are you sure you want to wipe all ignored files from the entire repository?\n' +
-                'This will return the repository to a just-checked-out state.\n' +
                 'You will need to do a full reimport in Unity and rebuild everything from scratch. (Y/N)'):
             sys.exit('Operation cancelled.')
     
