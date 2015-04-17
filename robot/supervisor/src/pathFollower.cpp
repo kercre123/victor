@@ -89,6 +89,7 @@ namespace Anki
       {
         path_.Clear();
         currPathSegment_ = -1;
+        manualPathSpeed_ = false;
         pointTurnStarted_ = false;
         realPathSegment_ = -1;
 #if(ENABLE_PATH_VIZ)
@@ -236,6 +237,7 @@ namespace Anki
           realPathSegment_ = currPathSegment_;
           
 
+          /*
           // If the first part of the path is some tiny arc,
           // skip it because it tends to report gross errors that
           // make the steeringController jerky.
@@ -243,14 +245,18 @@ namespace Anki
           // TODO: Do this check for EVERY path segment?
           if ((currPathSegment_ == 0) &&
               (path_[0].GetType() == Planning::PST_ARC) &&
-              (ABS(path_[0].GetDef().arc.sweepRad) < 0.05) &&
+              (ABS(path_[0].GetLength() < 10))
               path_[0].GetDef().arc.radius <= 50) {
-            PRINT("Skipping short arc: sweep %f deg, radius %f mm\n",
+
+            PRINT("Skipping short arc: sweep %f deg, radius %f mm, length %fmm\n",
                   RAD_TO_DEG_F32( path_[0].GetDef().arc.sweepRad ),
-                  path_[0].GetDef().arc.radius);
+                  path_[0].GetDef().arc.radius,
+                  path_[0].GetLength());
+
             currPathSegment_++;
             realPathSegment_ = currPathSegment_;
           }
+           */
 
           
 
@@ -493,7 +499,7 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType());
+        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d, currSeg %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
 #endif
         
         // Go to next path segment if no longer in range of the current one
