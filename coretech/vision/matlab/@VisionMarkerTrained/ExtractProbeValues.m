@@ -20,6 +20,7 @@ numPerturbations = 100;
 perturbationType = 'normal'; % 'normal' or 'uniform'
 perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 computeGradMag = false;
+computeGradMagWeights = false;
 saveTree = true;
 
 probeRegion = VisionMarkerTrained.ProbeRegion;
@@ -31,6 +32,10 @@ probeRegion = VisionMarkerTrained.ProbeRegion;
 DEBUG_DISPLAY = false;
 
 parseVarargin(varargin{:});
+
+if computeGradMagWeights 
+  computeGradMag = true;
+end
 
 t_start = tic;
 
@@ -254,7 +259,6 @@ if averagePerturbations
     
     assert(size(probeValues,2) == numImages);
     
-    % Debug:
     numCols = ceil(sqrt(numImages));
     numRows = ceil(numImages/numCols);
     for iImg = 1:numImages
@@ -417,6 +421,12 @@ end
 trainingState.probeValues   = probeValues;
 if computeGradMag
   trainingState.gradMagValues = gradMagValues;
+  if computeGradMagWeights 
+    gradMagWeights = im2single(gradMagValues);
+    minVal = min(gradMagWeights(:));
+    maxVal = max(gradMagWeights(:));
+    trainingState.gradMagWeights = 1 - (gradMagWeights-minVal)/(maxVal-minVal);
+  end
 end
 trainingState.fnames        = fnames;
 trainingState.labels        = labels;

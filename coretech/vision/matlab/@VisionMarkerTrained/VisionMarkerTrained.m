@@ -106,7 +106,7 @@ classdef VisionMarkerTrained
             Size = 1;
             UseSingleProbe = false;
             CornerRefinementIterations = 25;
-            UseMexCornerRefinment = false;
+            UseMexCornerRefinment = true;
             VerifyLabel = true;
             Initialize = true;
             ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
