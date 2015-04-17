@@ -75,7 +75,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 			if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) ) // if holding a block
 			{
-				if( observedObjects.Count > 0 && observedObjects[0].ID != robot.carryingObject ) // if can see at least one block
+				if( observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject ) // if can see at least one block
 				{
 					robot.selectedObjects.Add( observedObjects[0] );
 					

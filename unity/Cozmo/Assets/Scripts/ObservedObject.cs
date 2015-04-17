@@ -10,7 +10,8 @@ public class ObservedObject
 	public uint RobotID { get; private set; }
 	public uint Family { get; private set; }
 	public uint ObjectType { get; private set; }
-	public int ID { get; private set; }
+
+	private int ID;
 
 	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.5f; } }
 
@@ -33,6 +34,20 @@ public class ObservedObject
 	public ObservedObject()
 	{
 		TimeCreated = Time.time;
+		ID = -1;
+		Family = uint.MaxValue;
+		ObjectType = uint.MaxValue;
+	}
+
+	public static implicit operator uint( ObservedObject observedObject )
+	{
+		if( observedObject == null )
+		{
+			Debug.LogWarning( "converting null ObservedObject into uint: returning uint.MaxValue" );
+			return uint.MaxValue;
+		}
+		
+		return (uint)observedObject.ID;
 	}
 
 	public static implicit operator int( ObservedObject observedObject )
@@ -70,7 +85,7 @@ public class ObservedObject
 	{
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
-		message.robotID = RobotEngineManager.instance.current.ID;
+		message.robotID = (byte)RobotID;
 		message.onPeriod_ms = onPeriod_ms;
 		message.offPeriod_ms = offPeriod_ms;
 		message.transitionOnPeriod_ms = transitionOnPeriod_ms;
@@ -82,8 +97,8 @@ public class ObservedObject
 		
 		message.whichLEDs = whichLEDs;
 		message.makeRelative = makeRelative;
-		message.relativeToX = RobotEngineManager.instance.current.WorldPosition.x;
-		message.relativeToY = RobotEngineManager.instance.current.WorldPosition.y;
+		message.relativeToX = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.x;
+		message.relativeToY = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.y;
 
 		Debug.Log( "SendLightMessage: color" + message.color + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 

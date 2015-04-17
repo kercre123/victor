@@ -403,28 +403,28 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		Debug.Log( "Deleted object with ID " +message.objectID );
 
-		ObservedObject deleted = current.knownObjects.Find( x=> x.ID == message.objectID );
+		ObservedObject deleted = current.knownObjects.Find( x=> x == message.objectID );
 
 		if( deleted != null )
 		{
 			current.knownObjects.Remove( deleted );
 		}
 
-		deleted = current.selectedObjects.Find( x=> x.ID == message.objectID );
+		deleted = current.selectedObjects.Find( x=> x == message.objectID );
 
 		if( deleted != null )
 		{
 			current.selectedObjects.Remove( deleted );
 		}
 
-		deleted = current.observedObjects.Find( x=> x.ID == message.objectID );
+		deleted = current.observedObjects.Find( x=> x == message.objectID );
 		
 		if( deleted != null )
 		{
 			current.observedObjects.Remove( deleted );
 		}
 
-		deleted = current.markersVisibleObjects.Find( x=> x.ID == message.objectID );
+		deleted = current.markersVisibleObjects.Find( x=> x == message.objectID );
 		
 		if( deleted != null )
 		{

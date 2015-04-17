@@ -51,7 +51,7 @@ public class ActionSlider {
 				   	   &&	RobotEngineManager.instance.current.targetLockedObject != null) {
 						
 						//dmd2do get prop family name from observedobject
-						text.text = "Cube " + RobotEngineManager.instance.current.targetLockedObject.ID;
+						text.text = "Cube " + RobotEngineManager.instance.current.targetLockedObject;
 					}
 					else {
 						text.text = "Target";

@@ -81,9 +81,9 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 	private void AcquireTarget() {
 		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.carryingObject != null && 
-								   robot.selectedObjects.Find(x => x.ID == robot.carryingObject) != null;
+								   robot.selectedObjects.Find(x => x == robot.carryingObject) != null;
 		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
-								robot.selectedObjects.Find(x => x.ID == robot.targetLockedObject) != null;
+								robot.selectedObjects.Find(x => x == robot.targetLockedObject) != null;
 
 		if(targetingPropInHand || !alreadyHasTarget) {
 			robot.selectedObjects.Clear();
@@ -101,7 +101,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			Vector2 forward = robot.Forward;
 
 			for(int i=0; i<robot.pertinentObjects.Count; i++) {
-				if(robot.carryingObject == robot.pertinentObjects[i].ID) continue;
+				if(robot.carryingObject == robot.pertinentObjects[i]) continue;
 				Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
 
 				float angleFromCoz = Vector2.Angle(forward, atTarget);
@@ -136,7 +136,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			for(int i=0; i<robot.pertinentObjects.Count; i++) {
 				if(best == robot.pertinentObjects[i])
 					continue;
-				if(robot.carryingObject == robot.pertinentObjects[i].ID)
+				if(robot.carryingObject == robot.pertinentObjects[i])
 					continue;
 
 				float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);

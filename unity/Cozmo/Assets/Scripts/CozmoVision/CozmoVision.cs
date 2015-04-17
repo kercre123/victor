@@ -104,15 +104,15 @@ public class CozmoVision : MonoBehaviour
 		box.rectTransform.sizeDelta = new Vector2( boxW, boxH );
 		box.rectTransform.anchoredPosition = new Vector2( boxX, -boxY );
 		
-		if( robot.selectedObjects.Find( x => x.ID == observedObject.ID ) != null )
+		if( robot.selectedObjects.Find( x => x == observedObject ) != null )
 		{
 			box.SetColor( selected );
-			box.text.text = "ID: " + observedObject.ID + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
+			box.text.text = "ID: " + observedObject + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
 		}
 		else
 		{
 			box.SetColor( select );
-			box.text.text = "Select ID: " + observedObject.ID + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
+			box.text.text = "Select ID: " + observedObject + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
 			box.observedObject = observedObject;
 		}
 		
@@ -125,7 +125,7 @@ public class CozmoVision : MonoBehaviour
 
 		for( int i = 0; i < robot.selectedObjects.Count; ++i )
 		{
-			if( robot.pertinentObjects.Find( x => x.ID == robot.selectedObjects[i].ID ) == null )
+			if( robot.pertinentObjects.Find( x => x == robot.selectedObjects[i] ) == null )
 			{
 				robot.selectedObjects.RemoveAt( i-- );
 			}

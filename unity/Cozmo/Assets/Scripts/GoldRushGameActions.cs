@@ -83,8 +83,10 @@ public class GoldRushGameActions : GameActions {
 
 	public override void Stack()
 	{
-		if( RobotEngineManager.instance != null ) RobotEngineManager.instance.current.PickAndPlaceObject( selectedObjectIndex );
+		if( robot == null ) return;
+
+		robot.PickAndPlaceObject( selectedObjectIndex );
 		GoldRushController.instance.goldCollectingObject = robot.selectedObjects [selectedObjectIndex];
-		Debug.Log ("gold collector id: " + GoldRushController.instance.goldCollectingObject.ID);
+		Debug.Log ("gold collector id: " + GoldRushController.instance.goldCollectingObject);
 	}
 }
