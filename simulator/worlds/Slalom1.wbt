@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.997321 -0.0360261 -0.0636594 5.25087
-  position 0.284292 -1.92318 1.11233
+  orientation -0.335485 0.48838 0.805565 4.15245
+  position -1.35173 0.49882 0.760538
 }
 Background {
   skyColor [
@@ -124,21 +124,21 @@ CozmoMat {
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
-  translation 0.3 0.22 0.0219969
+  translation 0.15 0.22 0.0219969
   rotation 1 0 0 0
   blockColor 0 0 1
   markerImg "symbols/kitty.png"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
-  translation 0.3 -0.22 0.0219969
+  translation 0.15 -0.22 0.0219969
   rotation 1 0 0 0
   blockColor 0 0 1
   markerImg "symbols/bee.png"
 }
 DEF ActiveBlock Block1x1 {
   name "ActiveBlock"
-  translation 0 0.3 0.0219969
+  translation -0.15 0.15 0.0219969
   blockColor 0.5 0.85 0.5
   active TRUE
   markerImg_front "letters/1.png"
@@ -150,7 +150,7 @@ DEF ActiveBlock Block1x1 {
 }
 DEF ActiveBlock2 Block1x1 {
   name "ActiveBlock"
-  translation 0 -0.3 0.0219969
+  translation -0.15 -0.15 0.0219969
   blockColor 0.5 0.85 0.5
   active TRUE
   activeID 2

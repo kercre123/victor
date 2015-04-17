@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -30,7 +30,7 @@ public class TankControls : MonoBehaviour {
 		float right = sliderRight.Vertical;
 
 		if(Intro.CurrentRobotID != 0) {
-			RobotEngineManager.instance.current.DriveWheels(left * CozmoUtil.MAX_WHEEL_SPEED, right * CozmoUtil.MAX_WHEEL_SPEED);
+			RobotEngineManager.instance.current.DriveWheels(left * CozmoUtil.MAX_WHEEL_SPEED_MM, right * CozmoUtil.MAX_WHEEL_SPEED_MM);
 			return;
 		}
 

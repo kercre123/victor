@@ -1320,6 +1320,7 @@ MonoBehaviour:
   - TwoButton
   - InteractionSlider
   - ObjectSelectButtons
+  - ManualLifter
   pertinentObjectTypes:
   - OBSERVED_RECENTLY
   - MARKERS_SEEN

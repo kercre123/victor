@@ -344,7 +344,7 @@ public class Robot
 
 	public void SetLiftHeight( float height )
 	{
-		Debug.Log( "Set Lift Height " + height );
+		//Debug.Log( "Set Lift Height " + height );
 		
 		U2G.SetLiftHeight message = new U2G.SetLiftHeight();
 		message.accel_rad_per_sec2 = 5f;
