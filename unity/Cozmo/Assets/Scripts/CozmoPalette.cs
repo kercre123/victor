@@ -4,18 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-//Red, Orange, Yellow, Green, Blue, Purple
-public enum ActiveBlockType {
-	Off,
-	White,
-	Red,
-	Orange,
-	Yellow,
-	Green,
-	Blue,
-	Purple,
-	NumTypes
-}
 
 [Serializable]
 public class ObjectkSymbolInfo {
@@ -41,6 +29,13 @@ public class CozmoPalette : MonoBehaviour {
 		if(instance == this) instance = null;
 	}
 
+	public static uint ColorToUInt(Color color) {
+		return (uint)(((uint)(255f * color.r) << 24) | ((uint)(255f * color.g) << 16) | ((uint)(255f * color.b) << 8)  | ((uint)(255f * color.a) << 0));
+	}
+
+	public uint GetUIntColorForActiveBlockType(ActiveBlockType activeType) {
+		return ColorToUInt(activeBlockColors[(int)activeType]);
+	}
 
 	public Color GetColorForActiveBlockType(ActiveBlockType activeType) {
 		return activeBlockColors[(int)activeType];
@@ -56,5 +51,6 @@ public class CozmoPalette : MonoBehaviour {
 		digit = Mathf.Clamp(digit, 1, 6);
 		return digitSprites[digit-1];
 	}
+
 
 }

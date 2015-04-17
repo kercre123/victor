@@ -38,7 +38,10 @@ public class Robot
 	{
 		get
 		{
-			if( _carryingObject != carryingObjectID ) _carryingObject = knownObjects.Find( x => x == carryingObjectID );
+			if( _carryingObject == null || _carryingObject.ID != carryingObjectID )
+			{
+				_carryingObject = knownObjects.Find( x => x.ID == carryingObjectID );
+			}
 
 			return _carryingObject;
 		}
@@ -49,7 +52,10 @@ public class Robot
 	{
 		get
 		{
-			if( _headTrackingObject != headTrackingObjectID ) _headTrackingObject = knownObjects.Find( x => x == headTrackingObjectID );
+			if( _headTrackingObject == null || _headTrackingObject.ID != headTrackingObjectID )
+			{
+				_headTrackingObject = knownObjects.Find( x => x.ID == headTrackingObjectID );
+			}
 			
 			return _headTrackingObject;
 		}
@@ -228,7 +234,7 @@ public class Robot
 			return;
 		}
 
-		ObservedObject knownObject = knownObjects.Find( x => x == message.objectID );
+		ObservedObject knownObject = knownObjects.Find( x => x.ID == message.objectID );
 
 		//Debug.Log( "found ObservedObject ID(" + message.objectID +") objectType(" + message.objectType +")" );
 
@@ -241,12 +247,12 @@ public class Robot
 
 		knownObject.UpdateInfo( message );
 
-		if( observedObjects.Find( x => x == message.objectID ) == null )
+		if( observedObjects.Find( x => x.ID == message.objectID ) == null )
 		{
 			observedObjects.Add( knownObject );
 		}
 
-		if( knownObject.MarkersVisible && markersVisibleObjects.Find( x => x == message.objectID ) == null )
+		if( knownObject.MarkersVisible && markersVisibleObjects.Find( x => x.ID == message.objectID ) == null )
 		{
 			markersVisibleObjects.Add( knownObject );
 		}
@@ -289,9 +295,9 @@ public class Robot
 	
 	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
-		if( /*isBusy ||*/ lastHeadTrackingObjectID == observedObject || headTrackingObjectID == observedObject ) return;
+		if( /*isBusy ||*/ lastHeadTrackingObjectID == observedObject.ID || headTrackingObjectID == observedObject.ID ) return;
 
-		lastHeadTrackingObjectID = observedObject;
+		lastHeadTrackingObjectID = observedObject.ID;
 
 		if( faceObject )
 		{
@@ -300,7 +306,7 @@ public class Robot
 		else
 		{
 			U2G.TrackHeadToObject message = new U2G.TrackHeadToObject();
-			message.objectID = (uint)observedObject;
+			message.objectID = (uint)observedObject.ID;
 			message.robotID = ID;
 
 			Debug.Log( "Track Head To Object " + message.objectID );
@@ -312,7 +318,7 @@ public class Robot
 	private void FaceObject( ObservedObject observedObject )
 	{
 		U2G.FaceObject message = new U2G.FaceObject();
-		message.objectID = observedObject;
+		message.objectID = (uint)observedObject.ID;
 		message.robotID = ID;
 
 		Debug.Log( "Face Object " + message.objectID );
@@ -322,10 +328,14 @@ public class Robot
 
 	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
+<<<<<<< HEAD
 		//TrackHeadToObject( selectedObjects[index] );
+=======
+		//FaceObject( selectedObjects[index] );
+>>>>>>> master
 
 		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
-		message.objectID = selectedObjects[index];
+		message.objectID = selectedObjects[index].ID;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		

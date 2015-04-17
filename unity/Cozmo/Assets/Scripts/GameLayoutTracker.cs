@@ -88,10 +88,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(ghostBlock != null) {
+			ghostBlock.gameObject.SetActive(true);
 			ghostBlock.Initialize();
 			ghostBlock.Hidden = true;
-			ghostBlock.Highlighted = true;
-			ghostBlock.gameObject.SetActive(false);
+			ghostBlock.Highlighted = false;
 		}
 	}
 
@@ -110,6 +110,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
 
 		if(instance == this) instance = null;
+
+		if(ghostBlock != null) {
+			ghostBlock.gameObject.SetActive(false);
+		}
 	}
 
 	void RefreshLayout () {
@@ -253,23 +257,32 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	int ValidateBlocks() {
-		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+		if(robot == null) return 0;
+
+		if(ghostBlock != null) {
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
+		}
 
 		GameLayout layout = currentLayout;
 		if(layout == null) return 0;
 
 		List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 
-		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
+		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
-			BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
-
+			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
 			block.Hidden = false;
 			block.Highlighted = true;
 			block.Validated = false;
 			block.AssignedObjectID = -1;
+		}
 
-			//Debug.Log("attempting to validate block of type("+block.objectType+")");
+		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+
+			//Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.objectType+")");
 
 			//cannot validate a block before the one it is stacked upon
 			//note: this requires that our ideal blocks be listed in order
@@ -282,8 +295,16 @@ public class GameLayoutTracker : MonoBehaviour {
 				ObservedObject newObject = robot.knownObjects[knownObjectIndex];
 
 				//skip objects of the wrong type
-				if(block.objectType != (int)newObject.ObjectType) continue;
-				if(block.objectFamily != (int)newObject.Family) continue;
+				if(block.objectType != (int)newObject.ObjectType) {
+					continue;
+				}
+				if(block.objectFamily != (int)newObject.Family) {
+					continue;
+				}
+
+				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
+					continue;
+				}
 
 				//skip objects already assigned to a layout block
 				if(layout.blocks.Find( x => x.AssignedObjectID == newObject) != null) continue;
@@ -310,8 +331,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						block.Highlighted = false;
 					}
 					else {
+						//Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
-						Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 					}
 				}
 				//if we have some blocks validated so far, then we'll do distance checks to each
@@ -337,8 +358,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						//are we basically on the same plane and roughly the correct distance away?
 						if(Mathf.Abs(realOffset.z) > coplanarFudge){
 							valid = false;
+							//Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
-							Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
 							break;
 						}
 
@@ -348,8 +369,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						float distanceError = Mathf.Abs(realDistance - idealDistance);
 						if( distanceError > distanceFudge ) {
 							valid = false;
+							//Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
-							Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							break;
 						}
 
@@ -374,7 +395,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	void PlaceGhostForObservedObject(ObservedObject failingObject, BuildInstructionsCube failingLayoutBlock, ObservedObject validObject, BuildInstructionsCube validLayoutBlock) {
 		if(ghostBlock == null) return;
 		//just use the ghost for the first fail detected
-		if(ghostBlock.gameObject.activeSelf) return;
+		if(ghostBlock.Highlighted) return;
 
 		Vector3 objectOffset = (failingObject.WorldPosition - validObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 		//convert to unity space
@@ -392,11 +413,16 @@ public class GameLayoutTracker : MonoBehaviour {
 			objectOffset.z = flatOffset.z;
 		}
 
+		//ghostBlock.gameObject.SetActive(true);
 		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
+		ghostBlock.objectType = failingLayoutBlock.objectType;
+		ghostBlock.objectFamily = failingLayoutBlock.objectFamily;
+		ghostBlock.activeBlockType = failingLayoutBlock.activeBlockType;
 		ghostBlock.baseColor = failingLayoutBlock.baseColor;
+		ghostBlock.Hidden = true;
 		ghostBlock.Highlighted = true;
-		ghostBlock.gameObject.SetActive(true);
-		Debug.Log("ghostBlock placed!");
+
+		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
 	}
 
 }

@@ -73,7 +73,7 @@ public class GameActions : MonoBehaviour
 				{
 					buttons[1].SetMode( ActionButtonMode.STACK );
 				}
-				else
+				else if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
 				{
 					buttons[1].SetMode( ActionButtonMode.CHANGE );
 				}
@@ -149,7 +149,10 @@ public class GameActions : MonoBehaviour
 
 		if( robot != null && robot.carryingObject != null )
 		{
-			robot.carryingObject.SendLightMessage( 1f );
+			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
+			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
+			robot.carryingObject.activeBlockType = (ActiveBlockType)typeIndex;
+			robot.carryingObject.SendLightMessage( 1f, CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
 		}
 	}
 	

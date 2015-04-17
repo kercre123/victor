@@ -6,6 +6,8 @@ using Vectrosity;
 [ExecuteInEditMode]
 public class BuildInstructionsCube : MonoBehaviour {
 
+	[SerializeField] bool debug = false;
+
 	[SerializeField] VectrosityCube vCube;
 	[SerializeField] MeshRenderer meshCube;
 	
@@ -26,6 +28,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] Material originalCornerMaterial = null;
 
 	int lastPropType = 0;
+	int lastFamilyType = 0;
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
@@ -62,6 +65,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		}
 
 		lastPropType = 0;
+		lastFamilyType = 0;
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
@@ -74,6 +78,8 @@ public class BuildInstructionsCube : MonoBehaviour {
 		if(Application.isPlaying) vCube.CreateWireFrame();
 		initialized = true;
 		Refresh();
+
+		Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
 	}
 
 	void Update () {
@@ -83,6 +89,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	bool Dirty() {
 		if(lastPropType != objectType) return true;
+		if(lastFamilyType != objectFamily) return true;
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
@@ -94,23 +101,46 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	void Refresh() {
 
-		if(Application.isPlaying) vCube.SetColor(baseColor);
+		if(Application.isPlaying) {
 
-		if(Highlighted) {
-			if(Application.isPlaying) vCube.Show();
-		}
-		else {
-			if(Application.isPlaying) vCube.Hide();
+			vCube.SetColor(baseColor);
+
+			if(Highlighted) {
+				vCube.Show();
+			}
+			else {
+				vCube.Hide();
+			}
 		}
 
 		meshCube.enabled = !Hidden;
-		if(!Hidden) {
+		if(Hidden) {
+			if(symbols != null) {
+				for(int i=0;i<symbols.Length;i++) {
+					symbols[i].gameObject.SetActive(false);
+				}
+			}
+			
+			if(symbolFrames != null) {
+				for(int i=0;i<symbolFrames.Length;i++) {
+					symbolFrames[i].gameObject.SetActive(false);
+				}
+			}
+			
+			if(activeCorners != null) {
+				for(int i=0;i<activeCorners.Length;i++) {
+					activeCorners[i].gameObject.SetActive(false);
+				}
+			}
+		}
+		else {
+
 			float alpha = (Validated || !Application.isPlaying) ? 1f : invalidAlpha;
 
 			Color color = baseColor;
 			color.a = alpha; //Highlighted ? 0f : 1f;
 			clonedBlockMaterial.color = color;
-
+		
 			if(symbols != null) {
 				if(objectFamily == 3) {
 					for(int i=0;i<symbols.Length;i++) {
@@ -120,6 +150,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 						color = symbols[i].color;
 						color.a = alpha;
 						symbols[i].color = color;
+						symbols[i].gameObject.SetActive(true);
 					}
 				}
 				else {
@@ -130,6 +161,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 						color = symbols[i].color;
 						color.a = alpha;
 						symbols[i].color = color;
+						symbols[i].gameObject.SetActive(true);
 					}
 				}
 			}
@@ -139,6 +171,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 					color = symbolFrames[i].color;
 					color.a = alpha;
 					symbolFrames[i].color = color;
+					symbolFrames[i].gameObject.SetActive(true);
 				}
 			}
 
@@ -161,6 +194,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		}
 
 		lastPropType = objectType;
+		lastFamilyType = objectFamily;
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
