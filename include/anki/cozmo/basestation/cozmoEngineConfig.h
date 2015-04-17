@@ -16,6 +16,13 @@ namespace Anki {
     // TODO: The headCamPose is eventually to be calibrated
     //       if it can't be manufactured to sufficient tolerance.
 #if(1)
+    // Cozmo v3.2
+    const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-0);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(3);
+    const f32 HEAD_CAM_TRANS_X_CORR = 1.f;
+    
+#elif(0)
+    // Cozmo v3.1
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
     const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(3);
     const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
