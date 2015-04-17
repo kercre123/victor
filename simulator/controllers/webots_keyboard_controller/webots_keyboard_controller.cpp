@@ -20,7 +20,8 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/game/comms/messaging/uiMessages.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"

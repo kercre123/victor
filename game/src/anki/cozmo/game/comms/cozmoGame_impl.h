@@ -132,7 +132,7 @@ namespace Cozmo {
     
     void RegisterCallbacksU2G();
     void ProcessBadTag_Message(U2G::Message::Tag tag);
-#include "anki/cozmo/game/comms/messaging/UiMessageDefinitionsU2G_declarations.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G_declarations.def"
     
     //
     // Member Variables

@@ -13,7 +13,7 @@ file(RELATIVE_PATH HPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 file(RELATIVE_PATH CPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     "${CMAKE_SOURCE_DIR}/game/src")
 file(RELATIVE_PATH CS_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/Channel")
+    "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/MessageBuffers")
 
 # Every time any clad python file changes, we want to rerun clad
 # Make sure this is absolute
