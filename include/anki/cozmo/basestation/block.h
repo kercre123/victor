@@ -305,10 +305,14 @@ namespace Anki {
                    const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms);
       
       // Make whatever state has been set on the block relative to a given (x,y)
-      // location, such that the pattern is rotated so that whatever is currently
-      // specified for LED 0 is applied to the LED currently closest to the given
-      // position
-      void MakeStateRelativeToXY(const Point2f& xyPosition);
+      //  location.
+      // When byUpperLeftCorner=true, "relative" means that the pattern is rotated
+      //  so that whatever is currently specified for LED 0 is applied to the LED
+      //  currently closest to the given position
+      // When byUpperLeftCorner=false, "relative" means that the pattern is rotated
+      //  so that whatever is specified for the side with LEDs 0 and 4 is applied
+      //  to the face currently closest to the given position
+      void MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode);
       
       // Trigger a brief change in flash/color to allow identification of this block
       // (Possibly actually flash out the block's ID? TBD...)
