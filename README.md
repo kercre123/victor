@@ -40,6 +40,7 @@ The basic commands are as follows:
     ./configure.py uninstall   # uninstall the app from a connected device.
     ./configure.py clean       # use xcodebuild to clean the generated projects (assuming they exist).
     ./configure.py delete      # delete all generated projects and compiled files.
+    ./configure.py wipeall!    # delete, then wipe all ignored files in the entire repository
 
 Only generate and delete are really useful for C++ developers since the other commands are just duplicates of what you have in Xcode. C# developers might find the terminal commands easier to work with, and eventually the terminal versions should be cross-platform.
 

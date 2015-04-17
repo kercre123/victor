@@ -442,9 +442,9 @@ public class GoldRushController : GameController {
 	void UpdateReturning()
 	{
 		Vector2 home_base_pos = Vector2.zero;
-		if (goldCollectingObject != null && robot.knownObjects.Find(x => x.ID == goldCollectingObject.ID) != null )
+		if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null )
 		{
-			home_base_pos = robot.knownObjects.Find(x => x.ID == goldCollectingObject.ID).WorldPosition;
+			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
 		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;

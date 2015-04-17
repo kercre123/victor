@@ -308,11 +308,11 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				//skip objects already assigned to a layout block
-				if(layout.blocks.Find( x => x.AssignedObjectID == newObject.ID) != null) continue;
+				if(layout.blocks.Find( x => x.AssignedObjectID == newObject) != null) continue;
 
 				if(validated.Count == 0) {
 					validated.Add(block);
-					block.AssignedObjectID = newObject.ID;
+					block.AssignedObjectID = newObject;
 					block.Validated = true;
 					block.Highlighted = false;
 					//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because first block placed on ground.");
@@ -320,7 +320,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				//if this ideal block needs to get stacked on one we already know about...
 				else if(block.cubeBelow != null) {
 
-					ObservedObject objectToStackUpon = robot.knownObjects.Find( x => x.ID == block.cubeBelow.AssignedObjectID);
+					ObservedObject objectToStackUpon = robot.knownObjects.Find( x => x == block.cubeBelow.AssignedObjectID);
 
 					Vector3 real = (newObject.WorldPosition - objectToStackUpon.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 					float dist = ((Vector2)real).magnitude;
@@ -328,7 +328,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 					if(valid) {
 						validated.Add(block);
-						block.AssignedObjectID = newObject.ID;
+						block.AssignedObjectID = newObject;
 						block.Validated = true;
 						block.Highlighted = false;
 						//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
@@ -355,7 +355,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						idealOffset.y = forward;
 						idealOffset.z = up;
 						
-						ObservedObject priorObject = robot.knownObjects.Find( x => x.ID == validated[validatedIndex].AssignedObjectID);
+						ObservedObject priorObject = robot.knownObjects.Find( x => x == validated[validatedIndex].AssignedObjectID);
 						Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 						
 						//are we basically on the same plane and roughly the correct distance away?
@@ -381,7 +381,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 					if(valid) {
 						validated.Add(block);
-						block.AssignedObjectID = newObject.ID;
+						block.AssignedObjectID = newObject;
 						block.Validated = true;
 						block.Highlighted = false;
 						//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
