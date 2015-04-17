@@ -116,10 +116,7 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_div_modify(0, UART_CLK_FREQ / 3000000);
-
-    //uart_div_modify(0, UART_CLK_FREQ / 3000000);
-    uart_init(BIT_RATE_3000000, BIT_RATE_9600);
+    uart_init(BIT_RATE_3000000, BIT_RATE_74880);
 
     // Create config for Wifi AP
     struct softap_config ap_config;
