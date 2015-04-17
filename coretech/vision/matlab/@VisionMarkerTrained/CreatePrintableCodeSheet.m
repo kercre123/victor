@@ -44,7 +44,9 @@ function CreatePrintableCodeSheet(varargin)
 %
 % Example Usage:
 %
-% Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials', }, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2);
+% Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
+%
+% OSX: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
 %
 % ------------
 % Andrew Stein
