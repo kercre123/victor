@@ -22,7 +22,7 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/shared/actionTypes.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 namespace Anki {
   
@@ -287,6 +287,10 @@ namespace Anki {
       // on what we were doing.
       virtual s32 GetType() const override;
       
+      // Override completion signal to fill in information about objects picked
+      // or placed
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const override;
+      
     protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
@@ -302,6 +306,7 @@ namespace Anki {
       // carrying, for verification.
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
+      
     }; // class DockWithObjectAction
 
     
@@ -313,15 +318,21 @@ namespace Anki {
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
-        new VisuallyVerifyObjectAction(objectID),
+        //new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed)})
       {
-        
+
       }
       
       // GetType returns the type from the PickAndPlaceObjectAction, which is
       // determined dynamically
       virtual s32 GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PickAndPlaceObjectAction's completion signal
+      virtual void EmitCompletionSignal(Robot& robot, bool success) const override {
+        return _actions.back().second->EmitCompletionSignal(robot, success);
+      }
+      
     };
     
     

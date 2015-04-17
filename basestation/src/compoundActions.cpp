@@ -60,10 +60,8 @@ namespace Anki {
       
       _actions.emplace_back(false, action);
       _actions.back().second->SetIsPartOfCompoundAction(true);
-      if(_actions.size()==1) {
-        _name += action->GetName();
-        _name += "]";
-      }
+      _name += action->GetName();
+      _name += "]";
     }
     
     bool ICompoundAction::ShouldLockHead() const

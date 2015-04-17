@@ -27,6 +27,7 @@ maxSmoothingFraction = 0.025; % fraction of max dim
 decodeMarkers = true;
 showComponents = false;
 returnInvalid = false;
+NearestNeighborLibrary = [];
 
 parseVarargin(varargin{:});
 
@@ -179,7 +180,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
     % Decode to find BlockMarker2D objects
     [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, ...
         quads_decode, quadTforms, minQuadArea, quadRefinementIterations, ...
-        embeddedConversions, showTiming, DEBUG_DISPLAY);
+        embeddedConversions, showTiming, NearestNeighborLibrary, DEBUG_DISPLAY);
 
     if returnInvalid
         validQuads = 1:length(quads);
