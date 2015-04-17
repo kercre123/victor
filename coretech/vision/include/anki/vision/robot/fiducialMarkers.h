@@ -20,6 +20,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/decisionTree_vision.h"
 
 #include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/robot/nearestNeighborLibrary.h"
+
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 // For old QR-style BlockMarkers
@@ -29,6 +31,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Set to 1 to use two "red/black" verification trees
 // Set to 0 to use (older) one-vs-all verifiers for each class
 #define USE_RED_BLACK_VERIFICATION_TREES 1
+
+// Set to 0 to use decision trees
+#define USE_NEAREST_NEIGHBOR_RECOGNITION 1
 
 #define NUM_BYTES_probeLocationsBuffer (sizeof(Point<s16>)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS + MEMORY_ALIGNMENT + 32)
 #define NUM_BYTES_probeWeightsBuffer (sizeof(s16)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS  + MEMORY_ALIGNMENT + 32)
@@ -165,9 +170,14 @@ namespace Anki
         f32& brightValue, f32& darkValue,
         bool& enoughContrast);
 
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      static bool isNearestNeighborLibraryInitialized;
+      static NearestNeighborLibrary nearestNeighborLibrary;
+#     else
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
-
+#     endif
+      
     }; // class VisionMarker
 
     // A FiducialMarkerParserBit object samples an input image, to determine if a given image

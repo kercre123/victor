@@ -42,10 +42,14 @@ namespace Anki
 {
   namespace Embedded
   {
+#   if USE_NEAREST_NEIGHBOR_RECOGNITION
+    bool VisionMarker::isNearestNeighborLibraryInitialized = false;
+#   else
     FiducialMarkerDecisionTree VisionMarker::multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
     bool VisionMarker::areTreesInitialized = false;
-
+#   endif
+    
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -594,6 +598,17 @@ namespace Anki
 
     void VisionMarker::Initialize()
     {
+      
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      
+      if(VisionMarker::isNearestNeighborLibraryInitialized == false) {
+        VisionMarker::nearestNeighborLibrary = NearestNeighborLibrary(NearestNeighborData, NUM_MARKERS_IN_LIBRARY, NUM_PROBES, NN_NUM_FRACTIONAL_BITS, ProbePoints_X, ProbePoints_Y, NUM_PROBE_POINTS);
+        
+        VisionMarker::isNearestNeighborLibraryInitialized = true;
+      }
+      
+#     else
+      
       if(VisionMarker::areTreesInitialized == false) {
         using namespace VisionMarkerDecisionTree;
 
@@ -610,6 +625,9 @@ namespace Anki
         
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
+      
+#     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
+      
     }
 
     Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
@@ -816,11 +834,13 @@ namespace Anki
       return lastResult;
     } // RefineCorners()
 
-    Result VisionMarker::Extract(
-      const Array<u8> &image,
-      const Array<f32> &homography, const u8 meanGrayvalueThreshold,
-      const f32 minContrastRatio,
-      MemoryStack scratch)
+    
+    
+    Result VisionMarker::Extract(const Array<u8> &image,
+                                 const Array<f32> &homography,
+                                 const u8 grayvalueThreshold, // Trees: for thresholding probes, NN: max distance threshold
+                                 const f32 minContrastRatio,
+                                 MemoryStack scratch)
     {
       using namespace VisionMarkerDecisionTree;
 
@@ -837,7 +857,14 @@ namespace Anki
 
       //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
 
-      AnkiAssert(NUM_TREES <= u8_MAX);
+      bool verified = false;
+      OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
+      
+#    if USE_NEAREST_NEIGHBOR_RECOGNITION
+      u32 minDistance = grayvalueThreshold;
+      
+#    else
+        AnkiAssert(NUM_TREES <= u8_MAX);
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         predictedLabelsHist[iLabel] = 0;
@@ -845,7 +872,7 @@ namespace Anki
       
       for(s32 iTree=0; iTree < NUM_TREES; ++iTree) {
         s32 tempLabel;
-        if((lastResult = VisionMarker::multiClassTrees[iTree].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+        if((lastResult = VisionMarker::multiClassTrees[iTree].Classify(image, homography, grayvalueThreshold, tempLabel)) != RESULT_OK) {
           return lastResult;
         }
         AnkiAssert(tempLabel < NUM_MARKER_LABELS_ORIENTED);
@@ -853,43 +880,48 @@ namespace Anki
         ++predictedLabelsHist[tempLabel];
       }
       
+      
       EndBenchmark("vme_classify");
-
+      
       BeginBenchmark("vme_verify");
       // See if a majority of the trees voted for the same label
       // TODO: use plurality of trees instead?
-      OrientedMarkerLabel labelWithMaxVotes = MARKER_UNKNOWN;
+      
       u8 maxVotes = 0;
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         if(predictedLabelsHist[iLabel] > maxVotes) {
           maxVotes = predictedLabelsHist[iLabel];
-          labelWithMaxVotes = static_cast<OrientedMarkerLabel>(iLabel);
+          selectedLabel = static_cast<OrientedMarkerLabel>(iLabel);
         }
       }
       
       AnkiConditionalErrorAndReturnValue(maxVotes>0, RESULT_FAIL, "VisionMarker.Extract.NoVotes", "No votes given to any marker label.\n")
-      AnkiConditionalErrorAndReturnValue(labelWithMaxVotes>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
+      AnkiConditionalErrorAndReturnValue(selectedLabel>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
       
       const f32 numVotesForMajority = static_cast<f32>(NUM_TREES)*0.5f;
-      if(static_cast<f32>(maxVotes) > numVotesForMajority &&
-         labelWithMaxVotes != MARKER_INVALID_000 &&
-         labelWithMaxVotes != MARKER_UNKNOWN)
+      verified = (static_cast<f32>(maxVotes) > numVotesForMajority &&
+                  selectedLabel != MARKER_INVALID_000 &&
+                  selectedLabel != MARKER_UNKNOWN);
+      
+#     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
+      
+      if(verified)
       {
         // We have a valid, verified classification.
         
         // 1. Get the unoriented type
-        this->markerType = RemoveOrientationLUT[labelWithMaxVotes];
+        this->markerType = RemoveOrientationLUT[selectedLabel];
         
         // 2. Reorder the original detected corners to the canonical ordering for
         // this type
         const Quadrilateral<f32> initQuad = this->corners;
         for(s32 i_corner=0; i_corner<4; ++i_corner)
         {
-          this->corners[i_corner] = initQuad[CornerReorderLUT[labelWithMaxVotes][i_corner]];
+          this->corners[i_corner] = initQuad[CornerReorderLUT[selectedLabel][i_corner]];
         }
         
         // 3. Keep track of what the original orientation was
-        this->observedOrientation = ObservedOrientationLUT[labelWithMaxVotes];
+        this->observedOrientation = ObservedOrientationLUT[selectedLabel];
         
         // Mark this as a valid marker (note that reaching this point should
         // be the only way isValid is true.
