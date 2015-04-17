@@ -1,13 +1,44 @@
 
 #include "anki/vision/robot/nearestNeighborLibrary.h"
 #include "anki/common/robot/array2d.h"
+#include "anki/common/robot/fixedLengthList.h"
 
 namespace Anki {
 namespace Embedded {
   
-  Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
-                                      const Array<f32> &homography,
-                                      Array<u8> &probeValues) const
+  NearestNeighborLibrary::NearestNeighborLibrary()
+  : _data(NULL)
+  , _labels(NULL)
+  , _probeXOffsets(NULL)
+  , _probeYOffsets(NULL)
+  {
+    
+  }
+  
+  
+  NearestNeighborLibrary::NearestNeighborLibrary(const u8* data,
+                                                 const u16* labels,
+                                                 const s32 numDataPoints, const s32 dataDim,
+                                                 const s16* probePoints_X, const s16* probePoints_Y,
+                                                 const s32 numProbePoints,
+                                                 MemoryStack& memory)
+  : _data(data)
+  , _numDataPoints(numDataPoints)
+  , _dataDimension(dataDim)
+  , _labels(labels)
+  , _probeXOffsets(probePoints_X)
+  , _probeYOffsets(probePoints_Y)
+  , _numProbeOffsets(numProbePoints)
+  {
+    _probeValues = FixedLengthList<u8>(_dataDimension, memory);
+
+    
+  }
+  
+  Result NearestNeighborLibrary::GetNearestNeighbor(const Array<u8> &image,
+                                                    const Array<f32> &homography,
+                                                    const s32 distThreshold,
+                                                    s32 &label, s32 &distance) const
   {
     const s32 imageHeight = image.get_size(0);
     const s32 imageWidth = image.get_size(1);
@@ -19,7 +50,7 @@ namespace Embedded {
     AnkiAssert(numProbeOffsets <= 9);
     
     const s32 numProbeOffsets = this->numProbeOffsets;
-    const s32 numProbes = this->numProbes;
+    const s32 numProbes = this->dataDimension;
     
     AnkiConditionalErrorAndReturnValue(probeValues.get_numElements()==numProbes, RESULT_FAIL_INVALID_SIZE,
                                        "VisionMarker::GetProbeValues",

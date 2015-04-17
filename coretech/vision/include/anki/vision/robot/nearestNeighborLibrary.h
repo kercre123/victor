@@ -13,33 +13,42 @@
 #ifndef ANKI_CORETECHEMBEDDED_VISION_NEAREST_NEIGHBOR_LIBRARY_H
 #define ANKI_CORETECHEMBEDDED_VISION_NEAREST_NEIGHBOR_LIBRARY_H
 
+#include "anki/common/types.h"
+#include "anki/common/robot/config.h"
+#include "anki/common/robot/array2d_declarations.h"
+#include "anki/common/robot/fixedLengthList_declarations.h"
+
 namespace Anki {
 namespace Embedded {
-  
-  template<typename T> class Array<T>;
   
   class NearestNeighborLibrary
   {
   public:
     NearestNeighborLibrary();
-    NearestNeighborLibrary(const u8* data, const s32 numDataPoints, const s32 dataDim,
+    NearestNeighborLibrary(const u8* data,
+                           const u16* labels,
+                           const s32 numDataPoints, const s32 dataDim,
                            const s16* probePoints_X, const s16* probePoints_Y,
-                           const s32 numProbePoints);
+                           const s32 numProbePoints, MemoryStack& memory);
     
-    Result GetProbeValues(const Array<u8> &image,
-                          const Array<f32> &homography,
-                          Array<u8> &probeValues) const;
+    Result GetNearestNeighbor(const Array<u8> &image,
+                              const Array<f32> &homography,
+                              const s32 distThreshold,
+                              s32 &label, s32 &distance) const;
 
-    
   protected:
     
-    const u8  * restrict libraryData; // numDataPoints rows x dataDimension cols
-    s32 numDataPoints;
-    s32 dataDimension;
+    const u8  * restrict _data; // numDataPoints rows x dataDimension cols
+    s32 _numDataPoints;
+    s32 _dataDimension;
     
-    const s16 * restrict probeXOffsets;
-    const s16 * restrict probeYOffsets;
-    s32 numProbeOffsets;
+    const u16 * restrict _labels; // numDataPoints in length
+    
+    const s16 * restrict _probeXOffsets;
+    const s16 * restrict _probeYOffsets;
+    s32 _numProbeOffsets;
+    
+    FixedLengthList<u8> _probeValues;
     
   }; // class NearestNeighborLibrary
   
