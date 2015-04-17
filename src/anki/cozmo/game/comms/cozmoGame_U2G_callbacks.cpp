@@ -794,9 +794,9 @@ namespace Cozmo {
         activeCube->SetLEDs(msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
         
-        if(msg.makeRelative) {
-          activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY));
-        }
+        MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
+        activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY), makeRelative);
+
       }
     }
   }
