@@ -19,7 +19,7 @@ os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 #define rfrxbuf_lenmask (rfrxbuf_len - 1)
 static uint16 rfrxWind = 0;
 static uint16 rfrxRind = 0;
-static uint8 uartTXBuf[3200];
+static uint8 uartTXBuf[rfrxbuf_len];
 
 
 
@@ -36,12 +36,12 @@ void ICACHE_FLASH_ATTR client_receiveCB(uint8* data, uint16 len)
     return;
   }
 
-  uartTXBuf[rfrxWind] = 0xbe; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
-  uartTXBuf[rfrxWind] = 0xef; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
-  uartTXBuf[rfrxWind] = (len & 0xff); rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0xbe;                rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0xef;                rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = (len & 0xff);        rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
   uartTXBuf[rfrxWind] = ((len >> 8) & 0xff); rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
-  uartTXBuf[rfrxWind] = 0x00; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
-  uartTXBuf[rfrxWind] = 0x00; rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0x00;                rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
+  uartTXBuf[rfrxWind] = 0x00;                rfrxWind = (rfrxWind + 1) & rfrxbuf_lenmask;
 
   writeOne = min(len, rfrxbuf_len - rfrxWind);
   os_memcpy(uartTXBuf + rfrxWind, data, writeOne);
@@ -51,7 +51,7 @@ void ICACHE_FLASH_ATTR client_receiveCB(uint8* data, uint16 len)
   }
   rfrxWind = (rfrxWind + len) & rfrxbuf_lenmask;
 
-  system_os_post(user_procTaskPrio, 0, 0 );
+  //system_os_post(user_procTaskPrio, 0, 0 );
 }
 
 
@@ -59,7 +59,7 @@ static void ICACHE_FLASH_ATTR uartTxTask(os_event_t *events)
 {
   while (rfrxRind != rfrxWind)
   {
-    uart_tx_one_char(uartTXBuf[rfrxRind]);
+    uart_tx_one_char(UART0, uartTXBuf[rfrxRind]);
     rfrxRind = (rfrxRind + 1) & rfrxbuf_lenmask;
   }
 }
