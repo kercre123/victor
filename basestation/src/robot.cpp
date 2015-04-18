@@ -212,6 +212,24 @@ namespace Anki {
           }
         }
         
+#if(0)
+        // Compose line for entire state msg in hex
+        char stateMsgLine[256];
+        memset(stateMsgLine,0,256);
+        
+        u8 msgBytes[256];
+        msg.GetBytes(msgBytes);
+        for (int i=0; i< msg.GetSize(); i++){
+          sprintf(&stateMsgLine[2*i], "%02x", (unsigned char)msgBytes[i]);
+        }
+        sprintf(&stateMsgLine[msg.GetSize() *2],"\n");
+        FILE *stateFile;
+        stateFile = fopen("RobotState.txt", "a");
+        fputs(stateMsgLine, stateFile);
+        fclose(stateFile);
+#endif
+
+        
         // Write state message to JSON file
         std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
         
@@ -222,8 +240,7 @@ namespace Anki {
         jsonFile << json.toStyledString();
         jsonFile.close();
         
-        
-#if(1)
+#if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
         char stateMsgLine[512];
@@ -982,8 +999,12 @@ namespace Anki {
       
       SelectPlanner(targetPoseWrtOrigin);
       
+      // Compute drive center pose of given target robot pose
+      Pose3d targetDriveCenterPose;
+      ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
+      
       // Compute drive center pose for start pose
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetPoseWrtOrigin);
+      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
 
       if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
         return RESULT_OK;
@@ -1067,12 +1088,6 @@ namespace Anki {
     // Sends message to move head at specified speed
     Result Robot::MoveHead(const f32 speed_rad_per_sec)
     {
-      if(_trackHeadToObjectID.IsSet()) {
-        PRINT_NAMED_INFO("Robot.MoveHead.DisableHeadTracking",
-                         "Disabling head tracking to object %d.\n",
-                         _trackHeadToObjectID.GetValue());
-        DisableTrackHeadToObject();
-      }
       return SendMoveHead(speed_rad_per_sec);
     }
     
@@ -1089,12 +1104,6 @@ namespace Anki {
                                   const f32 max_speed_rad_per_sec,
                                   const f32 accel_rad_per_sec2)
     {
-      if(_trackHeadToObjectID.IsSet()) {
-        PRINT_NAMED_INFO("Robot.MoveHeadToAngle.DisableHeadTracking",
-                         "Disabling head tracking to object %d.\n",
-                         _trackHeadToObjectID.GetValue());
-        DisableTrackHeadToObject();
-      }
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
     }
       
@@ -2005,6 +2014,13 @@ namespace Anki {
         m.imageSendMode = ISM_STREAM;
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
+        
+        // Reset pose on connect
+        PRINT_INFO("Setting pose to (0,0,0)\n");
+        Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
+        return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
+      } else {
+        PRINT_NAMED_WARNING("Robot.SendSyncTime.FailedToSend","");
       }
       
       return result;
@@ -2210,11 +2226,12 @@ namespace Anki {
         }
         
         // Write image to file (recompressing as jpeg again!)
+        static u32 imgCounter = 0;
         char imgFilename[256];
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_img_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp());
+        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp(), imgCounter++);
         imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
@@ -2668,7 +2685,8 @@ namespace Anki {
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                                   const bool turnOffUnspecifiedLEDs,
-                                  const bool makeRelative, const Point2f& relativeToPoint)
+                                  const MakeRelativeMode makeRelative,
+                                  const Point2f& relativeToPoint)
     {
       ActiveCube* activeCube = GetActiveObject(objectID);
       if(activeCube == nullptr) {
@@ -2679,7 +2697,7 @@ namespace Anki {
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         if(makeRelative) {
-          activeCube->MakeStateRelativeToXY(relativeToPoint);
+          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
         }
         
         MessageSetBlockLights m;

@@ -119,17 +119,17 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x;
+      f32 out_ol = x * 0.005;
 #     else
 #ifdef COZMO_ROBOT_V31
         f32 out_ol = 8.4E-7 * x3 - 0.000166336 * x2 + 0.01343098 * x;    // Treaded robot with wonky left wheel
 #elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 11) {
-        out_ol = 0.003810469 * x + 0.244934245;
+      if (x > 4) {
+        out_ol = 0.00480586416 * x + 0.27598429648;
       } else {
-        out_ol = 0.3 * x / 11;
+        out_ol = 0.3 * x / 4;
       }
 #else
 #error WheelController: Robot platform not defined!
@@ -154,17 +154,17 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x;
+      f32 out_ol = x * 0.005;
 #     else
 #ifdef COZMO_ROBOT_V31
         f32 out_ol = 4.824E-7 * x3 - 8.98123E-5 * x2 + 0.007008705 * x;   // Treaded robot with wonky left wheel
 #elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 7) {
-        out_ol = 0.00379558458 * x + 0.25229054692;
+      if (x > 4) {
+        out_ol = 0.00480586416 * x + 0.27598429648;
       } else {
-        out_ol = 0.3 * x / 7;
+        out_ol = 0.3 * x / 4;
       }
 #else
 #error WheelController: Robot platform not defined!

@@ -18,7 +18,7 @@ except:
     sys.stderr.write("Couldn't import python message definitions\r\n")
     sys.exit(1)
 
-CAMERA_FRAME_RATE = 30.0
+CAMERA_FRAME_RATE = 10.0
 RADIO_TICK_INTERVAL = 1.0/CAMERA_FRAME_RATE
 
 
@@ -29,6 +29,8 @@ class BaseStationSimulator(threading.Thread, serRadio.UDPClient):
         "Sets up the simulated base station, specify host:port of robot"
         threading.Thread.__init__(self)
         serRadio.UDPClient.__init__(self, host, port)
+        self.receiveCB = None
+        self.sendCB = None
         self._continue = True
         self.pingPkt = messages.PingMessage().serialize()
 
@@ -40,12 +42,17 @@ class BaseStationSimulator(threading.Thread, serRadio.UDPClient):
     def step(self):
         "One main loop step for the base station"
         self.sendto(self.pingPkt, self.addr) # Send ping
+        if self.sendCB:
+            self.sendCB(self.pingPkt)
         incoming = self.receive()
         if incoming:
-            try:
-                sys.stdout.write("Basestation:\t%02d[%d]\r\n" % (ord(incoming[0]), len(incoming)))
-            except:
-                sys.stderr.write("Basestation:\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
+            if self.receiveCB:
+                self.receiveCB(incoming)
+            else:
+                try:
+                    sys.stdout.write("Basestation:\t%02d[%d]\r\n" % (ord(incoming[0]), len(incoming)))
+                except:
+                    sys.stderr.write("Basestation:\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
         time.sleep(RADIO_TICK_INTERVAL)
 
     def run(self):
@@ -71,6 +78,8 @@ class RobotSimulator(threading.Thread, serRadio.UARTRadioConn):
         "Sets up the simulated robot, specify serial device"
         threading.Thread.__init__(self)
         serRadio.UARTRadioConn.__init__(self, serial_device)
+        self.receiveCB = None
+        self.sendCB = None
         self._continue = True
         self.icm = messages.ImageChunk()
         self.rsm = messages.RobotState()
@@ -101,18 +110,25 @@ class RobotSimulator(threading.Thread, serRadio.UARTRadioConn):
             self.icm.imageTimestamp = ti
             self.transmit(self.icm.serialize())
             self.lastICMTime = t
+            if self.sendCB:
+                self.sendCB(self.icm)
         elif t - self.lastRSMTime > self.RSM_INTERVAL:
             self.rsm.timestamp = ti
             self.rsm.poseFrameId += 1
             self.transmit(self.rsm.serialize())
             self.lastRSMtime = t
+            if self.sendCB:
+                self.sendCB(self.rsm)
         # Receive
         incoming = self.read(1500)
         if incoming:
-            try:
-                sys.stdout.write("Robot:\t\t%02d[%d]\r\n" % (ord(incoming[6]), len(incoming)))
-            except:
-                sys.stderr.write("Robot:\t\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
+            if self.receiveCB:
+                self.receiveCB(incoming)
+            else:
+                try:
+                    sys.stdout.write("Robot:\t\t%02d[%d]\r\n" % (ord(incoming[6]), len(incoming)))
+                except:
+                    sys.stderr.write("Robot:\t\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
 
     def run(self):
         "Run function for the thread"
@@ -127,8 +143,57 @@ class RobotSimulator(threading.Thread, serRadio.UARTRadioConn):
         self._continue = False
 
 
-def run(host="172.31.1.1", port=5551, com="com11"):
-    "Run a complete simulator"
+class LossTester(object):
+
+    def __init__(self, host, port, com):
+        self.b = BaseStationSimulator(host, port)
+        self.r = RobotSimulator(com)
+        self.b.receiveCB = self.brcb
+        self.b.sendCB    = self.bscb
+        self.r.receiveCB = self.rrcb
+        self.r.sendCB    = self.rscb
+        self.robotTxBalance = 0
+        self.basestationTxBalance = 0
+
+    def brcb(self, arg):
+        self.robotTxBalance -= 1
+
+    def bscb(self, arg):
+        self.basestationTxBalance += 1
+
+    def rrcb(self, arg):
+        self.basestationTxBalance -= 1
+
+    def rscb(self, arg):
+        self.robotTxBalance += 1
+
+    def report(self):
+        sys.stdout.write("R->B %d\t B->R %d\n" % (self.robotTxBalance, self.basestationTxBalance))
+
+    def run(self):
+        self.b.start()
+        self.r.start()
+        intvl = 1.0/10.0
+        while True:
+            self.report()
+            time.sleep(intvl)
+
+    def stop(self):
+        self.b.stop()
+        self.r.stop()
+
+def runLoss(host="172.31.1.1", port=5551, com="com11"):
+    lt = LossTester(host, port, com)
+    try:
+        lt.run()
+    except KeyboardInterrupt:
+        lt.stop()
+        return
+    finally:
+        lt.stop()
+
+def runSimple(host="172.31.1.1", port=5551, com="com11"):
+    "Run a simple simulator"
     b = BaseStationSimulator(host, port)
     r = RobotSimulator(com)
     try:

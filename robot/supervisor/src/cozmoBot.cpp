@@ -261,6 +261,8 @@ namespace Anki {
           SteeringController::ExecuteDirectDrive(0,0);
           LiftController::SetAngularVelocity(0);
           HeadController::SetAngularVelocity(0);
+          PickAndPlaceController::Reset();
+          PickAndPlaceController::SetCarryState(CARRY_NONE);
           wasConnected_ = false;
         }
 

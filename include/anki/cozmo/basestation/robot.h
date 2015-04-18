@@ -313,7 +313,6 @@ namespace Anki {
       Result MoveLift(const f32 speed_rad_per_sec);
       
       // Sends message to move head at specified speed
-      // Disables "track head to object" (see below) if it was enabled
       Result MoveHead(const f32 speed_rad_per_sec);
       
       // Sends a message to the robot to move the lift to the specified height
@@ -322,7 +321,6 @@ namespace Anki {
                               const f32 accel_rad_per_sec2);
       
       // Sends a message to the robot to move the head to the specified angle
-      // Disables "track head to object" (see below) if it was enabled
       Result MoveHeadToAngle(const f32 angle_rad,
                              const f32 max_speed_rad_per_sec,
                              const f32 accel_rad_per_sec2);
@@ -459,7 +457,8 @@ namespace Anki {
                              const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
                              const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                              const bool turnOffUnspecifiedLEDs,
-                             const bool makeRelative, const Point2f& relativeToPoint);
+                             const MakeRelativeMode makeRelative,
+                             const Point2f& relativeToPoint);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }

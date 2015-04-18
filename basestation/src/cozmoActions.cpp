@@ -561,6 +561,12 @@ namespace Anki {
         Vision::KnownMarker* closestMarker = nullptr;
         if(markers.size() == 1) {
           closestMarker = markers.front();
+          if(false == closestMarker->GetPose().GetWithRespectTo(robot.GetPose(), objectPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+                              "Could not get pose of marker with code %d of object %d "
+                              "w.r.t. robot pose.\n", _whichCode, _objectID.GetValue() );
+            return FAILURE_ABORT;
+          }
         } else {
           f32 closestDist = std::numeric_limits<f32>::max();
           Pose3d markerPoseWrtRobot;
@@ -625,6 +631,9 @@ namespace Anki {
       
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      // Can't track head to an object and face it
+      robot.DisableTrackHeadToObject();
       
       return SUCCESS;
     }
@@ -756,7 +765,17 @@ namespace Anki {
     , _angleTolerance(tolerance)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
     {
-
+      if(_headAngle < MIN_HEAD_ANGLE) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+                            "Requested head angle (%.1fdeg) less than min head angle (%.1fdeg). Clipping.\n",
+                            _headAngle.getDegrees(), RAD_TO_DEG(MIN_HEAD_ANGLE));
+        _headAngle = MIN_HEAD_ANGLE;
+      } else if(_headAngle > MAX_HEAD_ANGLE) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
+                            "Requested head angle (%.1fdeg) more than max head angle (%.1fdeg). Clipping.\n",
+                            _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
+        _headAngle = MAX_HEAD_ANGLE;
+      }
     }
     
     IActionRunner::ActionResult MoveHeadToAngleAction::Init(Robot &robot)
@@ -888,8 +907,12 @@ namespace Anki {
         
         // Set up a visual verification action to make sure we can still see the correct
         // marker of the selected object before proceeding
+        // NOTE: This also disables tracking head to object if there was any
         _visuallyVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID,
                                                                _dockMarker->GetCode());
+
+        // Disable the visual verification from issuing a completion signal
+        _visuallyVerifyAction->SetIsPartOfCompoundAction(true);
         
         return SUCCESS;
       }
@@ -1011,10 +1034,75 @@ namespace Anki {
           
         default:
           PRINT_NAMED_WARNING("PickAndPlaceObjectAction.GetType",
-                              "Unexpected dock action %d in determining action type.\n",
-                              _dockAction);
-          return ACTION_UNKNOWN;
+                              "Dock action not set before determining action type.\n");
+          return ACTION_PICK_AND_PLACE_INCOMPLETE;
       }
+    }
+    
+    void PickAndPlaceObjectAction::EmitCompletionSignal(Robot& robot, bool success) const
+    {
+      switch(_dockAction)
+      {
+        case DA_PICKUP_HIGH:
+        case DA_PICKUP_LOW:
+        {
+          if(!robot.IsCarryingObject()) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                              "Expecting robot to think it's carrying object for pickup action.\n");
+          } else {
+            const s32 carryObject = robot.GetCarryingObject().GetValue();
+            const s32 carryObjectOnTop = robot.GetCarryingObjectOnTop().GetValue();
+            
+            const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
+            
+            // TODO: Be able to fill in add'l objects carried in signal
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
+                                                                  carryObject,
+                                                                  carryObjectOnTop, -1, -1, -1,
+                                                                  numObjects,
+                                                                  success);
+            return;
+          }
+          break;
+        }
+        case DA_PLACE_HIGH:
+        case DA_PLACE_LOW:
+        {
+          // TODO: Be able to fill in more objects in the stack
+          Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          if(object == nullptr) {
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                              "Docking object %d not found in world after placing.\n",
+                              _dockObjectID.GetValue());
+          } else {
+            std::array<s32,5> objectStack;
+            auto objectStackIter = objectStack.begin();
+            objectStack.fill(-1);
+            uint8_t numObjects = 0;
+            while(object != nullptr && numObjects < objectStack.size()) {
+              *objectStackIter = object->GetID().GetValue();
+              ++objectStackIter;
+              ++numObjects;
+              object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
+            }
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
+                                                                  objectStack[0],
+                                                                  objectStack[1],
+                                                                  objectStack[2],
+                                                                  objectStack[3],
+                                                                  objectStack[4],
+                                                                  numObjects,
+                                                                  success);
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                            "Dock action not set before filling completion signal.\n");
+      }
+      
+      IDockAction::EmitCompletionSignal(robot, success);
     }
     
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)

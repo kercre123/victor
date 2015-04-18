@@ -159,7 +159,7 @@ namespace Anki {
         
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         trackingResolution   = resolution;
-        numPyramidLevels     = 4; // TODO: Compute from resolution to get down to a given size?
+        numPyramidLevels     = 3; // TODO: Compute from resolution to get down to a given size?
 #else
         //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
         trackingResolution   = Vision::CAMERA_RES_QQVGA; // 160x120
@@ -169,13 +169,13 @@ namespace Anki {
         trackingImageWidth   = Vision::CameraResInfo[trackingResolution].width;
         trackingImageHeight  = Vision::CameraResInfo[trackingResolution].height;
         
-        maxIterations             = 25;
+        maxIterations             = 50;
         verify_maxPixelDifference = 30;
         useWeights                = true;
        
 #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-        convergenceTolerance_angle    = DEG_TO_RAD(0.25);
-        convergenceTolerance_distance = 0.25f; // mm
+        convergenceTolerance_angle    = DEG_TO_RAD(0.05);
+        convergenceTolerance_distance = 0.05f; // mm
         
         numSamplingRegions            = 5;
         

@@ -30,10 +30,10 @@ fi
 
 # copy resources
 mkdir -p "$DSTDIR_META"
-rsync -r -t --delete $SRCDIR/ $DSTDIR_META/
+rsync -r -t --exclude=".*" --delete $SRCDIR/ $DSTDIR_META/
 
 # copy assets
 if [ -d "$ASSETSRDIR" ] ; then
   mkdir -p "$DSTDIR_ASSET"
-  rsync -r -t --delete $ASSETSRDIR/ $DSTDIR_ASSET/
+  rsync -r -t --exclude=".*" --delete $ASSETSRDIR/ $DSTDIR_ASSET/
 fi

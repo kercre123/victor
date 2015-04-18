@@ -105,8 +105,9 @@ namespace Anki {
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
       
-      // Emitter for block communication
+      // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
+      webots::Receiver *blockCommsReceiver_;
       
       // Block ID flashing parameters
       s32 flashBlockIdx_ = -1;
@@ -134,21 +135,8 @@ namespace Anki {
       // Approximate open-loop conversion of wheel power to angular wheel speed
       float WheelPowerToAngSpeed(float power)
       {
-        float speed_mm_per_s = 0;
-
-        // Approximate inverse of the open-loop wheel formula used in wheelController
-        power = CLIP(power, -1.0, 1.0);
-        f32 x = ABS(power);
-        f32 x2 = x*x;
-        f32 x3 = x*x2;
-        if (x >= 0.15) {
-          speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
-          if (power < 0) {
-            speed_mm_per_s *= -1;
-          }
-        } else {
-          speed_mm_per_s = 0;
-        }
+        // Inverse of speed-power formula in WheelController
+        float speed_mm_per_s = power / 0.005f;
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
@@ -358,7 +346,10 @@ namespace Anki {
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
-      
+      blockCommsReceiver_ = webotRobot_.getReceiver("blockCommsReceiver");
+      blockCommsReceiver_->setChannel(-1); // Listen to all blocks
+      blockCommsReceiver_->enable(TIME_STEP);
+
       // Reset index of block that is currently flashing ID
       flashBlockIdx_ = -1;
       
@@ -683,6 +674,24 @@ namespace Anki {
               flashStartTime_ = HAL::GetTimeStamp();
             }
           }
+        }
+        
+        // TODO: Make block comms receiver checking into a HAL function at some point
+        //   and call it from the main execution loop
+        while(blockCommsReceiver_->getQueueLength() > 0) {
+          int dataSize = blockCommsReceiver_->getDataSize();
+          
+          if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
+            // Pass along block-moved messages to basestation
+            u8* data = (u8*)blockCommsReceiver_->getData();
+            BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
+            Messages::ActiveObjectMoved msgOut;
+            msgOut.objectID = msgIn->blockID;
+            HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
+          } else {
+            printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
+          }
+          blockCommsReceiver_->nextPacket();
         }
         
         return RESULT_OK;

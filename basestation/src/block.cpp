@@ -513,11 +513,34 @@ namespace Anki {
       }
     }
     
-    void ActiveCube::MakeStateRelativeToXY(const Point2f& xyPosition)
+    void ActiveCube::MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode)
     {
-      const WhichLEDs referenceLED = GetCornerClosestToXY(xyPosition, false);
+      WhichLEDs referenceLED = WhichLEDs::NONE;
+      switch(mode)
+      {
+        case RELATIVE_LED_MODE_OFF:
+          // Nothing to do
+          return;
+          
+        case RELATIVE_LED_MODE_BY_CORNER:
+          referenceLED = GetCornerClosestToXY(xyPosition, false);
+          break;
+          
+        case RELATIVE_LED_MODE_BY_SIDE:
+          referenceLED = GetFaceClosestToXY(xyPosition);
+          break;
+          
+        default:
+          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %d.\n", mode);
+          return;
+      }
+      
       switch(referenceLED)
       {
+        //
+        // When using upper left corner (of current top face) as reference corner:
+        //
+          
         case WhichLEDs::TOP_UPPER_LEFT:
           // Nothing to do
           return;
@@ -533,6 +556,32 @@ namespace Anki {
           return;
           
         case WhichLEDs::TOP_LOWER_RIGHT:
+          // Rotate two slots (either direction)
+          // TODO: Do this in one shot
+          RotatePatternAroundTopFace(true);
+          RotatePatternAroundTopFace(true);
+          return;
+          
+        //
+        // When using upper side (of current top face) as reference side:
+        // (Note this is the current "Left" face of the block.)
+        //
+          
+        case WhichLEDs::LEFT_FACE:
+          // Nothing to do
+          return;
+          
+        case WhichLEDs::BACK_FACE:
+          // Rotate clockwise one slot
+          RotatePatternAroundTopFace(true);
+          return;
+
+        case WhichLEDs::FRONT_FACE:
+          // Rotate counterclockwise one slot
+          RotatePatternAroundTopFace(false);
+          return;
+          
+        case WhichLEDs::RIGHT_FACE:
           // Rotate two slots (either direction)
           // TODO: Do this in one shot
           RotatePatternAroundTopFace(true);
@@ -623,7 +672,7 @@ namespace Anki {
     }
     
     WhichLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition,
-                                                           bool getTopAndBottom) const
+                                               bool getTopAndBottom) const
     {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
@@ -676,26 +725,26 @@ namespace Anki {
       const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
       const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
       
-      f32 angle = std::atan2(v.y(), v.x());
-      assert(angle >= -M_PI && angle <= M_PI);
+      Radians angle = std::atan2(v.y(), v.x());
+      angle -= topMarkerPose.GetRotationAngle<'Z'>();
       
       WhichLEDs whichLEDs = WhichLEDs::NONE;
       if(angle < M_PI_4 && angle >= -M_PI_4) {
         // Between -45 and 45 degrees: Right Face
-        whichLEDs = WhichLEDs::RIGHT_FACE;
+        whichLEDs = WhichLEDs::BACK_FACE;
       }
       else if(angle < 3*M_PI_4 && angle >= M_PI_4) {
         // Between 45 and 135 degrees: Back Face
-        whichLEDs = WhichLEDs::BACK_FACE;
+        whichLEDs = WhichLEDs::LEFT_FACE;
       }
       else if(angle < -M_PI_4 && angle >= -3*M_PI_4) {
         // Between -45 and -135: Front Face
-        whichLEDs = WhichLEDs::FRONT_FACE;
+        whichLEDs = WhichLEDs::RIGHT_FACE;
       }
       else {
         // Between -135 && +135: Left Face
         assert(angle < -3*M_PI_4 || angle > 3*M_PI_4);
-        whichLEDs = WhichLEDs::LEFT_FACE;
+        whichLEDs = WhichLEDs::FRONT_FACE;
       }
       
       return whichLEDs;

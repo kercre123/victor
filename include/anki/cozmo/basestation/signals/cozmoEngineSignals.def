@@ -55,11 +55,20 @@ DEF_SIGNAL(RobotObservedFace,
            float x_upperLeft, float y_upperLeft,
            float width, float height)
 
-// Generic message when an Action completes, and whether it succeeded
+// Generic message when an Action completes, what type it was, and whether it succeeded.
+// Additional fields (marked with "Optional" below) can be used by specific actions
+// to provide other info. Use the type to determine which fields are valid.
 // TODO: currently success is just true/false, acutally return ActionResult codes
-// TODO: add a an actionType member?
 DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
            int32_t actionType,
+           int32_t objectID0,  // Optional
+           int32_t objectID1,  // Optional
+           int32_t objectID2,  // Optional
+           int32_t objectID3,  // Optional
+           int32_t objectID4,  // Optional
+           uint8_t numObjects, // Optional
            uint8_t success)
+
+
 
