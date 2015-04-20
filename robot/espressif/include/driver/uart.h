@@ -3,6 +3,8 @@
  * This file is part of Espressif's UART driver.
  * Copyright (C) 2013 - 2016, Espressif Systems
  *
+ * Modified for Anki use by Daniel Casner May 2015
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of version 3 of the GNU General Public License as
  * published by the Free Software Foundation.
@@ -22,16 +24,10 @@
 #include "eagle_soc.h"
 #include "c_types.h"
 
-#define UART_TX_BUFFER_SIZE 256
-#define UART_RX_BUFFER_SIZE 256
-
-#define UART_BUFF_EN  0   //use uart buffer
-#define UART_SELFTEST  0  //set 1:enable the loop test demo for uart buffer
-
-
 #define UART0   0
 #define UART1   1
 
+#define uartTaskPrio        USER_TASK_PRIO_2 // Highest allowed user task priority
 
 typedef enum {
     FIVE_BITS = 0x0,
@@ -142,63 +138,24 @@ typedef struct {
 } UartDevice;
 
 void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
-void uart0_sendStr(const char *str);
 
+/** Queue a UART packet for transmission
+ * @param data A pointer to the packet payload
+ * @param len The number of bytes of payload
+ */
+STATUS uartQueuePacket(uint8* data, uint16 len);
 
 ///////////////////////////////////////
 #define UART_FIFO_LEN  128  //define the tx fifo length
 #define UART_TX_EMPTY_THRESH_VAL 0x10
 
-
- struct UartBuffer{
-    uint32     UartBuffSize;
-    uint8     *pUartBuff;
-    uint8     *pInPos;
-    uint8     *pOutPos;
-    STATUS  BuffState;
-    uint16    Space;  //remanent space of the buffer
-    uint8  TcpControl;
-    struct  UartBuffer     *  nextBuff;
-};
-
-struct UartRxBuff{
-    uint32     UartRxBuffSize;
-    uint8     *pUartRxBuff;
-    uint8     *pWritePos;
-    uint8     *pReadPos;
-    STATUS RxBuffState;
-    uint32    Space;  //remanent space of the buffer
-} ;
-
-typedef enum {
-    RUN = 0,
-    BLOCK = 1,
-} TCPState;
-
-//void ICACHE_FLASH_ATTR uart_test_rx();
 STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
 STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
-void  uart1_sendStr_no_wait(const char *str);
-struct UartBuffer*  Uart_Buf_Init();
-
-
-#if UART_BUFF_EN
-LOCAL void  Uart_Buf_Cpy(struct UartBuffer* pCur, char* pdata , uint16 data_len);
-void  uart_buf_free(struct UartBuffer* pBuff);
-void  tx_buff_enq(char* pdata, uint16 data_len );
-LOCAL void  tx_fifo_insert(struct UartBuffer* pTxBuff, uint8 data_len,  uint8 uart_no);
-void  tx_start_uart_buffer(uint8 uart_no);
-uint16  rx_buff_deq(char* pdata, uint16 data_len );
-void  Uart_rx_buff_enq();
-#endif
-void  uart_rx_intr_enable(uint8 uart_no);
-void  uart_rx_intr_disable(uint8 uart_no);
-void uart0_tx_buffer(uint8 *buf, uint16 len);
 
 //==============================================
 #define FUNC_UART0_CTS 4
-#define FUNC_U0CTS                      4
-#define FUNC_U1TXD_BK                   2
+#define FUNC_U0CTS     4
+#define FUNC_U1TXD_BK  2
 #define UART_LINE_INV_MASK  (0x3f<<19)
 void UART_SetWordLength(uint8 uart_no, UartBitsNum4Char len);
 void UART_SetStopBits(uint8 uart_no, UartStopBitsNum bit_num);
@@ -210,7 +167,6 @@ void UART_WaitTxFifoEmpty(uint8 uart_no , uint32 time_out_us); //do not use if t
 void UART_ResetFifo(uint8 uart_no);
 void UART_ClearIntrStatus(uint8 uart_no,uint32 clr_mask);
 void UART_SetIntrEna(uint8 uart_no,uint32 ena_mask);
-void UART_SetPrintPort(uint8 uart_no);
 //==============================================
 
 #endif

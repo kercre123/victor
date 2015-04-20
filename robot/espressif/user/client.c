@@ -6,6 +6,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
+#include "driver/uart.h"
 
 #define DEBUG_CLIENT
 
@@ -17,8 +18,6 @@ static struct espconn *client;
 
 static UDPPacket* queuedPacket; /// Packet that is queued to send
 static uint8 nextReserve; /// Index of next buffer to reserve
-
-static clientReceiveCB userRecvCB;
 
 static void udpServerSentCB(void * arg)
 {
@@ -51,17 +50,15 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 
   espconn_regist_sentcb(client, udpServerSentCB);
 
-  userRecvCB(usrdata, len);
+  uartQueuePacket(usrdata, len);
 }
 
 
-sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
+sint8 ICACHE_FLASH_ATTR clientInit()
 {
   int8 err, i;
 
   os_printf("clientInit\n");
-
-  userRecvCB = recvFtn;
 
   client = NULL;
 
@@ -91,7 +88,7 @@ sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
     return err;
   }
 
-  user_print("\tno error\n");
+  os_printf("\tno error\n");
   return ESPCONN_OK;
 }
 
@@ -159,7 +156,7 @@ void clientQueuePacket(UDPPacket* pkt)
 void clientFreePacket(UDPPacket* pkt)
 {
 #ifdef DEBUG_CLIENT
-  os_printf("clientFreePacker\n");
+  os_printf("clientFreePacket\n");
 #endif
   pkt->state = PKT_BUF_AVAILABLE;
 }
