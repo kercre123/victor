@@ -152,6 +152,11 @@ namespace Anki {
       LED_LEFT_EYE_RIGHT,
       LED_LEFT_EYE_BOTTOM,
       LED_LEFT_EYE_LEFT,
+      LED_HEALTH_0,
+      LED_HEALTH_1,
+      LED_HEALTH_2,
+      LED_DIR_LEFT,
+      LED_DIR_RIGHT,
       NUM_LEDS
     };
 

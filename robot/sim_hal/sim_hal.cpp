@@ -408,6 +408,11 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       
+      leds_[LED_HEALTH_0] = webotRobot_.getLED("ledHealth0");
+      leds_[LED_HEALTH_1] = webotRobot_.getLED("ledHealth1");
+      leds_[LED_HEALTH_2] = webotRobot_.getLED("ledHealth2");
+      leds_[LED_DIR_LEFT] = webotRobot_.getLED("ledDirLeft");
+      leds_[LED_DIR_RIGHT] = webotRobot_.getLED("ledDirRight");
       
       isInitialized = true;
       return RESULT_OK;
