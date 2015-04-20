@@ -3282,7 +3282,8 @@ size_t SetActiveObjectLEDs::Pack(uint8_t* buff, size_t len) const
 size_t SetActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->objectID);
-	buffer.Write(this->color);
+	buffer.Write(this->onColor);
+	buffer.Write(this->offColor);
 	buffer.Write(this->onPeriod_ms);
 	buffer.Write(this->offPeriod_ms);
 	buffer.Write(this->transitionOnPeriod_ms);
@@ -3306,7 +3307,8 @@ size_t SetActiveObjectLEDs::Unpack(const uint8_t* buff, const size_t len)
 size_t SetActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->objectID);
-	buffer.Read(this->color);
+	buffer.Read(this->onColor);
+	buffer.Read(this->offColor);
 	buffer.Read(this->onPeriod_ms);
 	buffer.Read(this->offPeriod_ms);
 	buffer.Read(this->transitionOnPeriod_ms);
@@ -3325,7 +3327,9 @@ size_t SetActiveObjectLEDs::Size() const
 	size_t result = 0;
 	//objectID
 	result += 4; // = uint_32
-	//color
+	//onColor
+	result += 4; // = uint_32
+	//offColor
 	result += 4; // = uint_32
 	//onPeriod_ms
 	result += 4; // = uint_32
@@ -3353,7 +3357,8 @@ size_t SetActiveObjectLEDs::Size() const
 bool SetActiveObjectLEDs::operator==(const SetActiveObjectLEDs& other) const
 {
 	if (objectID != other.objectID
-	|| color != other.color
+	|| onColor != other.onColor
+	|| offColor != other.offColor
 	|| onPeriod_ms != other.onPeriod_ms
 	|| offPeriod_ms != other.offPeriod_ms
 	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
@@ -3397,7 +3402,8 @@ size_t SetAllActiveObjectLEDs::Pack(uint8_t* buff, size_t len) const
 size_t SetAllActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->objectID);
-	buffer.WriteFArray<uint32_t, 8>(this->color);
+	buffer.WriteFArray<uint32_t, 8>(this->onColor);
+	buffer.WriteFArray<uint32_t, 8>(this->offColor);
 	buffer.WriteFArray<uint32_t, 8>(this->onPeriod_ms);
 	buffer.WriteFArray<uint32_t, 8>(this->offPeriod_ms);
 	buffer.WriteFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
@@ -3419,7 +3425,8 @@ size_t SetAllActiveObjectLEDs::Unpack(const uint8_t* buff, const size_t len)
 size_t SetAllActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->objectID);
-	buffer.ReadFArray<uint32_t, 8>(this->color);
+	buffer.ReadFArray<uint32_t, 8>(this->onColor);
+	buffer.ReadFArray<uint32_t, 8>(this->offColor);
 	buffer.ReadFArray<uint32_t, 8>(this->onPeriod_ms);
 	buffer.ReadFArray<uint32_t, 8>(this->offPeriod_ms);
 	buffer.ReadFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
@@ -3436,7 +3443,9 @@ size_t SetAllActiveObjectLEDs::Size() const
 	size_t result = 0;
 	//objectID
 	result += 4; // = uint_32
-	//color
+	//onColor
+	result += 4 * 8; // = uint_32 * 8
+	//offColor
 	result += 4 * 8; // = uint_32 * 8
 	//onPeriod_ms
 	result += 4 * 8; // = uint_32 * 8
@@ -3460,7 +3469,8 @@ size_t SetAllActiveObjectLEDs::Size() const
 bool SetAllActiveObjectLEDs::operator==(const SetAllActiveObjectLEDs& other) const
 {
 	if (objectID != other.objectID
-	|| color != other.color
+	|| onColor != other.onColor
+	|| offColor != other.offColor
 	|| onPeriod_ms != other.onPeriod_ms
 	|| offPeriod_ms != other.offPeriod_ms
 	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms

@@ -761,8 +761,8 @@ namespace Cozmo {
       
       MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
       robot->SetObjectLights(whichObject,
-                             static_cast<WhichLEDs>(msg.whichLEDs),
-                             msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+                             static_cast<WhichBlockLEDs>(msg.whichLEDs),
+                             msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
                              msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
                              msg.turnOffUnspecifiedLEDs,
                              makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
@@ -770,7 +770,7 @@ namespace Cozmo {
       /*
       ActiveCube* activeCube = robot->GetActiveObject(whichObject);
       if(activeCube != nullptr) {
-        activeCube->SetLEDs(static_cast<ActiveCube::WhichLEDs>(msg.whichLEDs),
+        activeCube->SetLEDs(static_cast<ActiveCube::WhichBlockLEDs>(msg.whichLEDs),
                             msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
         
         if(msg.makeRelative) {
@@ -792,7 +792,7 @@ namespace Cozmo {
       whichObject = msg.objectID;
       ActiveCube* activeCube = robot->GetActiveObject(whichObject);
       if(activeCube != nullptr) {
-        activeCube->SetLEDs(msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+        activeCube->SetLEDs(msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
         
         MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
