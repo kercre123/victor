@@ -18,13 +18,14 @@
 % Example:
 % while true image = webotsCameraCapture(); imshow(image); pause(0.003); end;
 
-
 function image = webotsCameraCapture(varargin)
     
     persistent files;
     
     filenameDirectory = '/Volumes/RamDisk/image_captures/';
     filenamePattern = [filenameDirectory, '*.jpg'];
+    
+    allowLag = false; % If false, delete everything up to the second-to-last image
     
     % TODO: add timeout
     % timeout = 0;
@@ -43,26 +44,41 @@ function image = webotsCameraCapture(varargin)
         end
     end
     
-    firstIndex = Inf;
-    firstTimestamp = Inf;
+    timestamps = zeros(length(files), 2);
     
     for i = 1:length(files)
-        curTimestamp = sscanf(files(i).name, 'cozmo1_img_%d.jpg');
-        
-        if curTimestamp < firstTimestamp
-            firstTimestamp = curTimestamp;
-            firstIndex = i;
-        end
+        timestamps(i,:) = [sscanf(files(i).name, 'cozmo1_img_%d.jpg'), i];
     end
     
-    assert(~isinf(firstIndex));
+    sortedTimestamps = sortrows(timestamps, 1);
     
-    fullFilename = [filenameDirectory, files(firstIndex).name];
+    if allowLag
+        goodIndex = sortedTimestamps(1,2);
+        
+        fullFilename = [filenameDirectory, files(goodIndex).name];
     
-    image = imread(fullFilename);
+        image = imread(fullFilename);
 
-    system(['rm ', fullFilename]);
+        system(['rm ', fullFilename]);
     
-    files = [files(1:(firstIndex-1)), files((firstIndex+1):end)];
+        files = [files(1:(firstIndex-1)), files((firstIndex+1):end)];
+    else
+        goodIndex = sortedTimestamps(end-1,2);
+        
+        fullFilename = [filenameDirectory, files(goodIndex).name];
+    
+        image = imread(fullFilename);
+
+        fullFilenames = '';
+        for i = 1:(size(sortedTimestamps, 1) - 1)
+            fullFilenames = [fullFilenames, ' ', filenameDirectory, files(sortedTimestamps(i,2)).name]; %#ok<AGROW>
+        end
+        
+        system(['rm ', fullFilenames]);
+        
+        files = [];
+    end
+    
+    
 end % webotsCameraCapture()
 
