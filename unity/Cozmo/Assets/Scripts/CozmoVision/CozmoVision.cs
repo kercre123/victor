@@ -74,16 +74,19 @@ public class CozmoVision : MonoBehaviour
 		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
-		
-		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
-		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
-		canv.worldCamera = canvas.worldCamera;
+		if(observedObjectCanvasPrefab != null) {
+			observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
-		observedObjectBoxes.Clear();
-		observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
-		
-		foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
+			Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
+			canv.worldCamera = canvas.worldCamera;
+			
+			observedObjectBoxes.Clear();
+			observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
+			
+			foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
+
+		}
 
 		if(actionPanelPrefab != null) {
 			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
