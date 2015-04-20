@@ -48,7 +48,7 @@ namespace Anki {
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 35;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 40;
 
         //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
@@ -166,8 +166,9 @@ namespace Anki {
       // the horizontal field of view of the camera.
       bool IsMarkerInFOV(const Anki::Embedded::Pose2d &markerPose, const f32 markerWidth)
       {
-        // Half fov of camera at center horizontal
-        const f32 HALF_FOV = 0.3687;
+        // Half fov of camera at center horizontal.
+        // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
+        const f32 HALF_FOV = MIN(0.5*VisionSystem::GetHorizontalFOV(), 0.36);
         
         const f32 markerCenterX = markerPose.GetX();
         const f32 markerCenterY = markerPose.GetY();
