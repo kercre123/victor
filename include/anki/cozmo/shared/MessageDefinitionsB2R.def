@@ -220,8 +220,9 @@ END_MESSAGE_DEFINITION(SetHeadlight)
 
 // SetDefaultLights
 START_MESSAGE_DEFINITION(SetDefaultLights, 1)
-ADD_MESSAGE_MEMBER(u32, eye_left_color)
-ADD_MESSAGE_MEMBER(u32, eye_right_color)
+//ADD_MESSAGE_MEMBER(u32, eye_left_color)
+//ADD_MESSAGE_MEMBER(u32, eye_right_color)
+ADD_MESSAGE_MEMBER(u32, color)
 END_MESSAGE_DEFINITION(SetDefaultLights)
 
 // SetWheelControllerGains
@@ -560,6 +561,15 @@ END_MESSAGE_DEFINITION(ClientConnectionStatus)
 START_MESSAGE_DEFINITION(SetCarryState, 1)
 ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
 END_MESSAGE_DEFINITION(SetCarryState)
+
+START_MESSAGE_DEFINITION(SetBackpackLights, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onColor, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offColor, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 5)
+END_MESSAGE_DEFINITION(SetBackpackLights)
 
 
 ///////// Block messages ////////

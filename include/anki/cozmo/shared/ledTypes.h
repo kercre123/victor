@@ -7,6 +7,7 @@ namespace Anki {
 namespace Cozmo {
   
   // LED identifiers and colors
+  /*
   // Updated for "neutral" (non-hardware specific) order in 2.1
   typedef enum {
     // Eye segments (Old)
@@ -18,17 +19,21 @@ namespace Cozmo {
     LED_LEFT_EYE_RIGHT,
     LED_LEFT_EYE_BOTTOM,
     LED_LEFT_EYE_LEFT,
-    NUM_EYE_LEDS = LED_LEFT_EYE_LEFT,
     
-    // Health / direction bar on the top of the backpack
-    LED_BACKPACK_BACK,
+    NUM_EYE_LEDS
+  }  EyeLEDId;
+   */
+  
+  // Health / direction bar on the top of the backpack
+  typedef enum {
+    LED_BACKPACK_BACK = 0,
     LED_BACKPACK_MIDDLE,
     LED_BACKPACK_FRONT,
-    LED_BACKPACH_LEFT,
+    LED_BACKPACK_LEFT,
     LED_BACKPACK_RIGHT,
     
     NUM_LEDS
-  }  LEDId;
+  } LEDId;
   
   // The color format is identical to HTML Hex Triplets (RGB)
   typedef enum {

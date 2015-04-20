@@ -20,6 +20,7 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "proxSensors.h"
+#include "backpackLightController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -465,6 +466,7 @@ namespace Anki {
       }
 
       void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
+        /*
         u32 lColor = msg.eye_left_color;
         HAL::SetLED(LED_LEFT_EYE_TOP, lColor);
         HAL::SetLED(LED_LEFT_EYE_RIGHT, lColor);
@@ -476,6 +478,10 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_RIGHT, rColor);
         HAL::SetLED(LED_RIGHT_EYE_BOTTOM, rColor);
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
+         */
+        for(s32 i=0; i<NUM_LEDS; ++i) {
+          HAL::SetLED((LEDId)i, msg.color>>8);
+        }
       }
 
       void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
@@ -854,6 +860,15 @@ namespace Anki {
         PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
       }
 
+      void ProcessSetBackpackLightsMessage(const SetBackpackLights& msg)
+      {
+        for(s32 i=0; i<NUM_LEDS; ++i) {
+          BackpackLightController::SetParams((LEDId)i, msg.onPeriod_ms[i], msg.offColor[i],
+                                             msg.onPeriod_ms[i], msg.offPeriod_ms[i],
+                                             msg.transitionOnPeriod_ms[i], msg.transitionOffPeriod_ms[i]);
+        }
+      }
+      
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)

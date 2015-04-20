@@ -398,6 +398,7 @@ namespace Anki {
       }
       
       // Lights
+      /* Old eye LED segments
       leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
       leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
       leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
@@ -407,7 +408,13 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
       leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      */
       
+      leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("BackpackLED_");
+      leds_[LED_BACKPACK_LEFT] = webotRobot_.getLED("BackpackLED_");
+      leds_[LED_BACKPACK_RIGHT] = webotRobot_.getLED("BackpackLED_");
+      leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("BackpackLED_");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("BackpackLED_");
       
       isInitialized = true;
       return RESULT_OK;

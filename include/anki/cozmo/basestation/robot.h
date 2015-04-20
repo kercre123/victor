@@ -435,7 +435,9 @@ namespace Anki {
       void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
       
       // ========= Lights ==========
-      void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
+      
+      // Color specified as RGBA, where A(lpha) will be ignored
+      void SetDefaultLights(const u32 color);
      
       
       // =========  Block messages  ============

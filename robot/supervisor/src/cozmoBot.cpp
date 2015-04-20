@@ -22,6 +22,7 @@
 #include "visionSystem.h"
 #include "animationController.h"
 #include "proxSensors.h"
+#include "backpackLightController.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -145,11 +146,16 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
 
+        /* Deprecated: needs to be updated for OLED screen
         lastResult = EyeController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "EyeController init failed.\n");
-
-
+         */
+        
+        lastResult = BackpackLightController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "BackpackLightController init failed.\n");
+        
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -300,7 +306,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
 
         AnimationController::Update();
-        EyeController::Update();
+        //EyeController::Update(); // Deprecated! Needs updating for OLED screen
         HeadController::Update();
         LiftController::Update();
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
@@ -311,6 +317,7 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
         FaceTrackingController::Update();
+        BackpackLightController::Update();
 
         //////////////////////////////////////////////////////////////
         // State Machine
