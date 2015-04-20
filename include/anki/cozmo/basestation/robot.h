@@ -457,7 +457,8 @@ namespace Anki {
                              const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
                              const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                              const bool turnOffUnspecifiedLEDs,
-                             const bool makeRelative, const Point2f& relativeToPoint);
+                             const MakeRelativeMode makeRelative,
+                             const Point2f& relativeToPoint);
       
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }

@@ -14,7 +14,7 @@
 #else // COZMO_BASESTATION?
     // Engine / App
     // Include the file for whichever robot you want to be controlling with the app
-    #include "anki/cozmo/shared/cozmoConfig_v3.1.h"
+    #include "anki/cozmo/shared/cozmoConfig_v3.2.h"
 #endif
     
     #include "anki/cozmo/shared/cozmoConfig_common.h"
