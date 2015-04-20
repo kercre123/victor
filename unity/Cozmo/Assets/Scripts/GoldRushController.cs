@@ -559,7 +559,7 @@ public class GoldRushController : GameController {
 		
 		
 		uint color =  0xFF0000FF;
-		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SendLightMessageRelative(1, color, which_leds,1000,0,0,0,1,1,target_position.x,target_position.y);
+			if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SendLightMessageRelative(1, target_position, color, which_leds);
 		last_leds = which_leds;
 			}
 		
