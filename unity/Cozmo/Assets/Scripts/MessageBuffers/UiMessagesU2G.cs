@@ -5431,7 +5431,8 @@ public class SetFaceDetectParams
 public class SetActiveObjectLEDs
 {
 	private uint _objectID; // uint_32
-	private uint _color; // uint_32
+	private uint _onColor; // uint_32
+	private uint _offColor; // uint_32
 	private uint _onPeriod_ms; // uint_32
 	private uint _offPeriod_ms; // uint_32
 	private uint _transitionOnPeriod_ms; // uint_32
@@ -5445,7 +5446,9 @@ public class SetActiveObjectLEDs
 
 	public uint objectID { get { return _objectID; } set { _objectID = value; } }
 
-	public uint color { get { return _color; } set { _color = value; } }
+	public uint onColor { get { return _onColor; } set { _onColor = value; } }
+
+	public uint offColor { get { return _offColor; } set { _offColor = value; } }
 
 	public uint onPeriod_ms { get { return _onPeriod_ms; } set { _onPeriod_ms = value; } }
 
@@ -5475,7 +5478,8 @@ public class SetActiveObjectLEDs
 	}
 
 	public SetActiveObjectLEDs(uint objectID,
-		uint color,
+		uint onColor,
+		uint offColor,
 		uint onPeriod_ms,
 		uint offPeriod_ms,
 		uint transitionOnPeriod_ms,
@@ -5488,7 +5492,8 @@ public class SetActiveObjectLEDs
 		byte robotID)
 	{
 		this.objectID = objectID;
-		this.color = color;
+		this.onColor = onColor;
+		this.offColor = offColor;
 		this.onPeriod_ms = onPeriod_ms;
 		this.offPeriod_ms = offPeriod_ms;
 		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
@@ -5520,7 +5525,8 @@ public class SetActiveObjectLEDs
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_objectID = reader.ReadUInt32();
-		_color = reader.ReadUInt32();
+		_onColor = reader.ReadUInt32();
+		_offColor = reader.ReadUInt32();
 		_onPeriod_ms = reader.ReadUInt32();
 		_offPeriod_ms = reader.ReadUInt32();
 		_transitionOnPeriod_ms = reader.ReadUInt32();
@@ -5542,7 +5548,8 @@ public class SetActiveObjectLEDs
 	public void Pack(System.IO.BinaryWriter writer)
 	{
 		writer.Write((uint)_objectID);
-		writer.Write((uint)_color);
+		writer.Write((uint)_onColor);
+		writer.Write((uint)_offColor);
 		writer.Write((uint)_onPeriod_ms);
 		writer.Write((uint)_offPeriod_ms);
 		writer.Write((uint)_transitionOnPeriod_ms);
@@ -5558,7 +5565,7 @@ public class SetActiveObjectLEDs
 	public int Size 
 	{
 		get {
-			return 36;
+			return 40;
 		}
 	}
 
@@ -5605,7 +5612,8 @@ public class SetActiveObjectLEDs
 		}
 
 		return this._objectID.Equals(p._objectID)
-			&& this._color.Equals(p._color)
+			&& this._onColor.Equals(p._onColor)
+			&& this._offColor.Equals(p._offColor)
 			&& this._onPeriod_ms.Equals(p._onPeriod_ms)
 			&& this._offPeriod_ms.Equals(p._offPeriod_ms)
 			&& this._transitionOnPeriod_ms.Equals(p._transitionOnPeriod_ms)
@@ -5624,7 +5632,8 @@ public class SetActiveObjectLEDs
 		{
 			int hash = 17;
 			hash = hash * 23 + this._objectID.GetHashCode();
-			hash = hash * 23 + this._color.GetHashCode();
+			hash = hash * 23 + this._onColor.GetHashCode();
+			hash = hash * 23 + this._offColor.GetHashCode();
 			hash = hash * 23 + this._onPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._offPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._transitionOnPeriod_ms.GetHashCode();
@@ -5643,7 +5652,8 @@ public class SetActiveObjectLEDs
 public class SetAllActiveObjectLEDs
 {
 	private uint _objectID; // uint_32
-	private uint[] _color; // uint_32[8]
+	private uint[] _onColor; // uint_32[8]
+	private uint[] _offColor; // uint_32[8]
 	private uint[] _onPeriod_ms; // uint_32[8]
 	private uint[] _offPeriod_ms; // uint_32[8]
 	private uint[] _transitionOnPeriod_ms; // uint_32[8]
@@ -5655,19 +5665,35 @@ public class SetAllActiveObjectLEDs
 
 	public uint objectID { get { return _objectID; } set { _objectID = value; } }
 
-	public uint[] color
+	public uint[] onColor
 	{
 		get {
-			return _color;
+			return _onColor;
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("color fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("onColor fixed-length array is null. Must have a length of 8.", "value");
 			}
 			if (value.Length != 8) {
-				throw new System.ArgumentException("color fixed-length array is the wrong size. Must have a length of 8.", "value");
+				throw new System.ArgumentException("onColor fixed-length array is the wrong size. Must have a length of 8.", "value");
 			}
-			_color = value;
+			_onColor = value;
+		}
+	}
+
+	public uint[] offColor
+	{
+		get {
+			return _offColor;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("offColor fixed-length array is null. Must have a length of 8.", "value");
+			}
+			if (value.Length != 8) {
+				throw new System.ArgumentException("offColor fixed-length array is the wrong size. Must have a length of 8.", "value");
+			}
+			_offColor = value;
 		}
 	}
 
@@ -5748,7 +5774,8 @@ public class SetAllActiveObjectLEDs
 
 	public SetAllActiveObjectLEDs()
 	{
-		this.color = new uint[8];
+		this.onColor = new uint[8];
+		this.offColor = new uint[8];
 		this.onPeriod_ms = new uint[8];
 		this.offPeriod_ms = new uint[8];
 		this.transitionOnPeriod_ms = new uint[8];
@@ -5756,7 +5783,8 @@ public class SetAllActiveObjectLEDs
 	}
 
 	public SetAllActiveObjectLEDs(uint objectID,
-		uint[] color,
+		uint[] onColor,
+		uint[] offColor,
 		uint[] onPeriod_ms,
 		uint[] offPeriod_ms,
 		uint[] transitionOnPeriod_ms,
@@ -5767,7 +5795,8 @@ public class SetAllActiveObjectLEDs
 		byte robotID)
 	{
 		this.objectID = objectID;
-		this.color = color;
+		this.onColor = onColor;
+		this.offColor = offColor;
 		this.onPeriod_ms = onPeriod_ms;
 		this.offPeriod_ms = offPeriod_ms;
 		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
@@ -5797,9 +5826,13 @@ public class SetAllActiveObjectLEDs
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_objectID = reader.ReadUInt32();
-		_color = new uint[8];
+		_onColor = new uint[8];
 		for (int i = 0; i < 8; ++i) {
-			_color[i] = reader.ReadUInt32();
+			_onColor[i] = reader.ReadUInt32();
+		}
+		_offColor = new uint[8];
+		for (int i = 0; i < 8; ++i) {
+			_offColor[i] = reader.ReadUInt32();
 		}
 		_onPeriod_ms = new uint[8];
 		for (int i = 0; i < 8; ++i) {
@@ -5833,7 +5866,10 @@ public class SetAllActiveObjectLEDs
 	{
 		writer.Write((uint)_objectID);
 		for (int i = 0; i < 8; ++i) {
-			writer.Write((uint)_color[i]);
+			writer.Write((uint)_onColor[i]);
+		}
+		for (int i = 0; i < 8; ++i) {
+			writer.Write((uint)_offColor[i]);
 		}
 		for (int i = 0; i < 8; ++i) {
 			writer.Write((uint)_onPeriod_ms[i]);
@@ -5856,7 +5892,7 @@ public class SetAllActiveObjectLEDs
 	public int Size 
 	{
 		get {
-			return 174;
+			return 206;
 		}
 	}
 
@@ -5903,7 +5939,8 @@ public class SetAllActiveObjectLEDs
 		}
 
 		return this._objectID.Equals(p._objectID)
-			&& ArrayEquals<uint>(this._color,p._color)
+			&& ArrayEquals<uint>(this._onColor,p._onColor)
+			&& ArrayEquals<uint>(this._offColor,p._offColor)
 			&& ArrayEquals<uint>(this._onPeriod_ms,p._onPeriod_ms)
 			&& ArrayEquals<uint>(this._offPeriod_ms,p._offPeriod_ms)
 			&& ArrayEquals<uint>(this._transitionOnPeriod_ms,p._transitionOnPeriod_ms)
@@ -5920,7 +5957,8 @@ public class SetAllActiveObjectLEDs
 		{
 			int hash = 17;
 			hash = hash * 23 + this._objectID.GetHashCode();
-			hash = hash * 23 + this._color.GetHashCode();
+			hash = hash * 23 + this._onColor.GetHashCode();
+			hash = hash * 23 + this._offColor.GetHashCode();
 			hash = hash * 23 + this._onPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._offPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._transitionOnPeriod_ms.GetHashCode();

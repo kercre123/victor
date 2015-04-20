@@ -1848,7 +1848,8 @@ struct SetFaceDetectParams
 struct SetActiveObjectLEDs
 {
 	uint32_t objectID;
-	uint32_t color;
+	uint32_t onColor;
+	uint32_t offColor;
 	uint32_t onPeriod_ms;
 	uint32_t offPeriod_ms;
 	uint32_t transitionOnPeriod_ms;
@@ -1869,7 +1870,8 @@ struct SetActiveObjectLEDs
 	SetActiveObjectLEDs& operator=(SetActiveObjectLEDs&& other) noexcept = default;
 	
 	explicit SetActiveObjectLEDs(uint32_t objectID
-		,uint32_t color
+		,uint32_t onColor
+		,uint32_t offColor
 		,uint32_t onPeriod_ms
 		,uint32_t offPeriod_ms
 		,uint32_t transitionOnPeriod_ms
@@ -1881,7 +1883,8 @@ struct SetActiveObjectLEDs
 		,uint8_t turnOffUnspecifiedLEDs
 		,uint8_t robotID)
 	:objectID(objectID)
-	,color(color)
+	,onColor(onColor)
+	,offColor(offColor)
 	,onPeriod_ms(onPeriod_ms)
 	,offPeriod_ms(offPeriod_ms)
 	,transitionOnPeriod_ms(transitionOnPeriod_ms)
@@ -1915,7 +1918,8 @@ struct SetActiveObjectLEDs
 struct SetAllActiveObjectLEDs
 {
 	uint32_t objectID;
-	std::array<uint32_t, 8> color;
+	std::array<uint32_t, 8> onColor;
+	std::array<uint32_t, 8> offColor;
 	std::array<uint32_t, 8> onPeriod_ms;
 	std::array<uint32_t, 8> offPeriod_ms;
 	std::array<uint32_t, 8> transitionOnPeriod_ms;
@@ -1934,7 +1938,8 @@ struct SetAllActiveObjectLEDs
 	SetAllActiveObjectLEDs& operator=(SetAllActiveObjectLEDs&& other) noexcept = default;
 	
 	explicit SetAllActiveObjectLEDs(uint32_t objectID
-		,const std::array<uint32_t, 8>& color
+		,const std::array<uint32_t, 8>& onColor
+		,const std::array<uint32_t, 8>& offColor
 		,const std::array<uint32_t, 8>& onPeriod_ms
 		,const std::array<uint32_t, 8>& offPeriod_ms
 		,const std::array<uint32_t, 8>& transitionOnPeriod_ms
@@ -1944,7 +1949,8 @@ struct SetAllActiveObjectLEDs
 		,uint8_t makeRelative
 		,uint8_t robotID)
 	:objectID(objectID)
-	,color(color)
+	,onColor(onColor)
+	,offColor(offColor)
 	,onPeriod_ms(onPeriod_ms)
 	,offPeriod_ms(offPeriod_ms)
 	,transitionOnPeriod_ms(transitionOnPeriod_ms)

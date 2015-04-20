@@ -327,7 +327,8 @@ message SetFaceDetectParams {
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,
-    uint_32  color,
+    uint_32  onColor,
+    uint_32  offColor,
     uint_32  onPeriod_ms,
     uint_32  offPeriod_ms,
     uint_32  transitionOnPeriod_ms,
@@ -343,7 +344,8 @@ message SetActiveObjectLEDs {
 // SetAllActiveObjectLEDs
 message SetAllActiveObjectLEDs {
   uint_32  objectID,
-  uint_32  color[8],
+  uint_32  onColor[8],
+  uint_32  offColor[8],
   uint_32  onPeriod_ms[8],
   uint_32  offPeriod_ms[8],
   uint_32  transitionOnPeriod_ms[8],
