@@ -41,6 +41,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
 
 #define HAVE_ACTIVE_GRIPPER 0
 
@@ -425,8 +426,8 @@ namespace Anki
       //
       void FlashBlockIDs();
       
-      // Set all LEDs of the specified block to the same color and flash rate
-      Result SetBlockLight(const u8 blockID, const u32* color,
+      // Set the color and flashing of each LED on a block separately
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
       

@@ -13,7 +13,7 @@ namespace Anki
           // XXX STUB!
       }
       
-      Result SetBlockLight(const u8 blockID, const u32* color,
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
       {

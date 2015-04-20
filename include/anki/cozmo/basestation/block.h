@@ -290,7 +290,8 @@ namespace Anki {
       // whichLEDs will be turned off. Otherwise, they will be left in their current
       // state.
       // NOTE: Alpha is ignored.
-      void SetLEDs(const WhichLEDs whichLEDs, const ColorRGBA& color,
+      void SetLEDs(const WhichBlockLEDs whichLEDs, const ColorRGBA& onColor,
+                   const ColorRGBA& offColor,
                    const u32 onPeriod_ms, const u32 offPeriod_ms,
                    const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                    const bool turnOffUnspecifiedLEDs);
@@ -298,7 +299,8 @@ namespace Anki {
       // Specify individual colors and flash frequencies for all the LEDS of the block
       // The index of the arrays matches the diagram above.
       // NOTE: Alpha is ignored
-      void SetLEDs(const std::array<u32,NUM_LEDS>& colors,
+      void SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
+                   const std::array<u32,NUM_LEDS>& offColors,
                    const std::array<u32,NUM_LEDS>& onPeriods_ms,
                    const std::array<u32,NUM_LEDS>& offPeriods_ms,
                    const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
@@ -328,16 +330,16 @@ namespace Anki {
       
       // Take the given top LED pattern and create a pattern that indicates
       // the corresponding bottom LEDs as well
-      static WhichLEDs MakeTopAndBottomPattern(WhichLEDs topPattern);
+      static WhichBlockLEDs MakeTopAndBottomPattern(WhichBlockLEDs topPattern);
       
       // Get the LED specification for the top (and bottom) LEDs on the corner closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
-      WhichLEDs GetCornerClosestToXY(const Point2f& xyPosition,
+      WhichBlockLEDs GetCornerClosestToXY(const Point2f& xyPosition,
                                      bool getTopAndBottom) const;
       
       // Get the LED specification for the four LEDs on the face closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
-      WhichLEDs GetFaceClosestToXY(const Point2f& xyPosition) const;
+      WhichBlockLEDs GetFaceClosestToXY(const Point2f& xyPosition) const;
       
       // Rotate the currently specified pattern of colors/flashing once slot in
       // the specified direction (assuming you are looking down at the top face)
@@ -345,7 +347,7 @@ namespace Anki {
       
       // Helper for figuring out which LEDs will be selected after rotating
       // a given pattern of LEDs one slot in the specified direction
-      //static WhichLEDs RotatePatternAroundTopFace(WhichLEDs oldPattern, bool clockwise);
+      //static WhichBlockLEDs RotatePatternAroundTopFace(WhichBlockLEDs oldPattern, bool clockwise);
       
       // Populate a message specifying the current state of the block, for sending
       // out to actually set the physical block to match
@@ -360,7 +362,8 @@ namespace Anki {
       s32 _activeID;
       
       struct LEDstate {
-        ColorRGBA color;
+        ColorRGBA onColor;
+        ColorRGBA offColor;
         u32       onPeriod_ms;
         u32       offPeriod_ms;
         u32       transitionOnPeriod_ms;
@@ -452,9 +455,9 @@ namespace Anki {
      */
     
     
-    inline WhichLEDs ActiveCube::MakeTopAndBottomPattern(WhichLEDs topPattern) {
+    inline WhichBlockLEDs ActiveCube::MakeTopAndBottomPattern(WhichBlockLEDs topPattern) {
       u8 pattern = static_cast<u8>(topPattern);
-      return static_cast<WhichLEDs>((pattern << 4) + (pattern & 0x0F));
+      return static_cast<WhichBlockLEDs>((pattern << 4) + (pattern & 0x0F));
     }
     
   } // namespace Cozmo
