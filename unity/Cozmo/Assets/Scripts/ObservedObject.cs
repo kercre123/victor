@@ -23,13 +23,13 @@ public enum ActiveBlockType {
 public enum Light
 {
 	NONE              = 0,
-	TOP_NORTH_WEST    = 0x1,
-	TOP_NORTH_EAST    = 0x2,
-	TOP_SOUTH_EAST    = 0x4,
-	TOP_SOUTH_WEST    = 0x8,
-	BOTTOM_NORTH_WEST = 0x10,
-	BOTTOM_NORTH_EAST = 0x20,
-	BOTTOM_SOUTH_EAST = 0x40,
+	TOP_NORTH_WEST    = 0x01,
+	TOP_NORTH_EAST    = 0x10,
+	TOP_SOUTH_EAST    = 0x02,
+	TOP_SOUTH_WEST    = 0x20,
+	BOTTOM_NORTH_WEST = 0x04,
+	BOTTOM_NORTH_EAST = 0x40,
+	BOTTOM_SOUTH_EAST = 0x08,
 	BOTTOM_SOUTH_WEST = 0x80,
 	ALL = 0xff
 };
@@ -107,9 +107,8 @@ public class ObservedObject
 	}
 
 	public void SendLightMessageRelativeToRobot( float light_intensity, uint color = 0, byte whichLEDs = byte.MaxValue, 
-	                             uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
-	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
-	                             byte turnOffUnspecifiedLEDs = 1 )
+	                                             byte turnOffUnspecifiedLEDs = 1, uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                             				 uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0 )
 	{
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
@@ -128,7 +127,7 @@ public class ObservedObject
 		message.relativeToX = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.x;
 		message.relativeToY = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.y;
 		
-		Debug.Log( "SendLightMessage: color" + message.color + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+		Debug.Log( "SendLightMessageRelativeToRobot: color: " + message.color + " whichLEDs: " + (Light)message.whichLEDs + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
