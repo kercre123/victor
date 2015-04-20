@@ -552,7 +552,7 @@ Supervisor {
 
 			#Backpack lights
 			Transform {
-				translation 0 0 0.1
+				translation -0.009 0 0.025
 				children [
 					%{
 					  for i=0,2 do
