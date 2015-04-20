@@ -186,7 +186,7 @@ public class GoldRushController : GameController {
 	protected override void Update_BUILDING ()
 	{
 		base.Update_BUILDING ();
-		UpdateDirectionLights (Vector2.zero);
+		//UpdateDirectionLights (Vector2.zero);
 		// looking to see if we've created our stack
 	}
 
