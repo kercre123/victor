@@ -15,6 +15,9 @@
 #include "anki/cozmo/basestation/cozmoEngineConfig.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 
@@ -1058,26 +1061,28 @@ namespace Anki {
                   msg.turnOffUnspecifiedLEDs = 1;
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                     printf("Updating active block corner\n");
-                    msg.color = NamedColors::RED;
+                    msg.onColor = NamedColors::RED;
+                    msg.offColor = NamedColors::BLACK;
                     
                     /*
-                    static WhichLEDs cornerList[NUM_COLORS] = {
-                      WhichLEDs::TOP_BTM_UPPER_LEFT,
-                      WhichLEDs::TOP_BTM_UPPER_RIGHT,
-                      WhichLEDs::TOP_BTM_LOWER_RIGHT,
-                      WhichLEDs::TOP_BTM_LOWER_LEFT
+                    static WhichBlockLEDs cornerList[NUM_COLORS] = {
+                      WhichBlockLEDs::TOP_BTM_UPPER_LEFT,
+                      WhichBlockLEDs::TOP_BTM_UPPER_RIGHT,
+                      WhichBlockLEDs::TOP_BTM_LOWER_RIGHT,
+                      WhichBlockLEDs::TOP_BTM_LOWER_LEFT
                     };
                     msg.whichLEDs = static_cast<u8>(cornerList[colorIndex++]);
                     */
-                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_BTM_UPPER_LEFT);
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_BTM_UPPER_LEFT);
                     msg.makeRelative = 1;
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
                   } else {
                     printf("Cycling active block color\n");
-                    msg.color = colorList[colorIndex++];
-                    msg.whichLEDs = static_cast<u8>(WhichLEDs::TOP_FACE);
+                    msg.onColor = colorList[colorIndex++];
+                    msg.offColor = NamedColors::BLACK;
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE);
                     msg.makeRelative = 0;
                   }
                   
