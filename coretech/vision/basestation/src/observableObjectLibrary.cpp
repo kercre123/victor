@@ -58,7 +58,7 @@ namespace Anki {
     {
       // TODO: Warn/error if we are overwriting an existing object with this type?
       _knownObjects[object->GetType()] = object;
-      for(auto marker : object->GetMarkers()) {
+      for(auto & marker : object->GetMarkers()) {
         _objectsWithCode[marker.GetCode()].insert(object);
       }
     }
