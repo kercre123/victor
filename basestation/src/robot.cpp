@@ -2640,13 +2640,35 @@ namespace Anki {
     }
     
     
-    void Robot::SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color)
+    void Robot::SetDefaultLights(const u32 color)
     {
       MessageSetDefaultLights m;
-      m.eye_left_color = eye_left_color;
-      m.eye_right_color = eye_right_color;
+      //m.eye_left_color = eye_left_color;
+      //m.eye_right_color = eye_right_color;
+      m.color = color;
       _msgHandler->SendMessage(GetID(), m);
     }
+      
+      
+    void Robot::SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
+    {
+      MessageSetBackpackLights msg;
+      msg.onColor = onColor;
+      msg.offColor = offColor;
+      msg.onPeriod_ms = onPeriod_ms;
+      msg.offPeriod_ms = offPeriod_ms;
+      msg.transitionOnPeriod_ms = transitionOnPeriod_ms;
+      msg.transitionOffPeriod_ms = transitionOffPeriod_ms;
+      
+      _msgHandler->SendMessage(GetID(), msg);
+    }
+    
+
     
       
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
@@ -2680,8 +2702,8 @@ namespace Anki {
     }
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
-                                  const WhichLEDs whichLEDs,
-                                  const u32 color,
+                                  const WhichBlockLEDs whichLEDs,
+                                  const u32 onColor, const u32 offColor,
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                                   const bool turnOffUnspecifiedLEDs,
@@ -2693,7 +2715,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
-        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms,
+        activeCube->SetLEDs(whichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         if(makeRelative) {
@@ -2796,7 +2818,7 @@ namespace Anki {
     }
        */
       
-    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 color,
+    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 onColor, const u32 offColor,
                                       const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
       PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Deprecated.\n");
@@ -2825,7 +2847,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      activeCube->SetLEDs(ActiveCube::WhichLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      activeCube->SetLEDs(ActiveCube::WhichBlockLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
       
       return SendSetObjectLights(activeCube);
       */

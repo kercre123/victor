@@ -141,39 +141,6 @@ namespace Anki {
       ,NUM_PROX
     } ProxSensor_t;
 
-    // LED identifiers and colors
-    // Updated for "neutral" (non-hardware specific) order in 2.1
-    enum LEDId {
-      LED_RIGHT_EYE_TOP = 0,
-      LED_RIGHT_EYE_RIGHT,
-      LED_RIGHT_EYE_BOTTOM,
-      LED_RIGHT_EYE_LEFT,
-      LED_LEFT_EYE_TOP,
-      LED_LEFT_EYE_RIGHT,
-      LED_LEFT_EYE_BOTTOM,
-      LED_LEFT_EYE_LEFT,
-      LED_HEALTH_0,
-      LED_HEALTH_1,
-      LED_HEALTH_2,
-      LED_DIR_LEFT,
-      LED_DIR_RIGHT,
-      NUM_LEDS
-    };
-
-    // The color format is identical to HTML Hex Triplets (RGB)
-    enum LEDColor {
-      LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
-
-      LED_OFF =   0x000000,
-      LED_RED =   0xff0000,
-      LED_GREEN = 0x00ff00,
-      LED_YELLOW= 0xffff00,
-      LED_BLUE =  0x0000ff,
-      LED_PURPLE= 0xff00ff,
-      LED_CYAN =  0x00ffff,
-      LED_WHITE = 0xffffff
-    };
-
     enum WhichEye {
       EYE_LEFT,
       EYE_RIGHT,

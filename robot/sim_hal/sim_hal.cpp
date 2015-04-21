@@ -125,7 +125,7 @@ namespace Anki {
       HAL::IDCard idCard_;
       
       // Lights
-      webots::LED* leds_[NUM_LEDS] = {0};
+      webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -398,6 +398,7 @@ namespace Anki {
       }
       
       // Lights
+      /* Old eye LED segments
       leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
       leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
       leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
@@ -407,12 +408,13 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
       leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      */
       
-      leds_[LED_HEALTH_0] = webotRobot_.getLED("ledHealth0");
-      leds_[LED_HEALTH_1] = webotRobot_.getLED("ledHealth1");
-      leds_[LED_HEALTH_2] = webotRobot_.getLED("ledHealth2");
-      leds_[LED_DIR_LEFT] = webotRobot_.getLED("ledDirLeft");
-      leds_[LED_DIR_RIGHT] = webotRobot_.getLED("ledDirRight");
+      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
+      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
+      leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
       
       isInitialized = true;
       return RESULT_OK;
@@ -943,13 +945,14 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color,
+    Result HAL::SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                               const u32* onPeriod_ms, const u32* offPeriod_ms,
                               const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
     {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-        m.color[i] = color[i];
+        m.onColor[i] = onColor[i];
+        m.offColor[i] = offColor[i];
         m.onPeriod_ms[i] = onPeriod_ms[i];
         m.offPeriod_ms[i] = offPeriod_ms[i];
         m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);

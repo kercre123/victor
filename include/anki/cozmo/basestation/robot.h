@@ -40,6 +40,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -435,7 +436,16 @@ namespace Anki {
       void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
       
       // ========= Lights ==========
-      void SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color);
+      
+      // Color specified as RGBA, where A(lpha) will be ignored
+      void SetDefaultLights(const u32 color);
+      
+      void SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
      
       
       // =========  Block messages  ============
@@ -445,7 +455,8 @@ namespace Anki {
       
       // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
       Result SetObjectLights(const ObjectID& objectID,
-                             const std::array<u32,NUM_BLOCK_LEDS>& color,
+                             const std::array<u32,NUM_BLOCK_LEDS>& onColor,
+                             const std::array<u32,NUM_BLOCK_LEDS>& offColor,
                              const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
                              const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
                              const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
@@ -453,8 +464,9 @@ namespace Anki {
       
       // Set all LEDs of the specified block to the same color/flashrate
       Result SetObjectLights(const ObjectID& objectID,
-                             const WhichLEDs whichLEDs,
-                             const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms,
+                             const WhichBlockLEDs whichLEDs,
+                             const u32 onColor, const u32 offColor,
+                             const u32 onPeriod_ms, const u32 offPeriod_ms,
                              const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                              const bool turnOffUnspecifiedLEDs,
                              const MakeRelativeMode makeRelative,
@@ -725,7 +737,7 @@ namespace Anki {
       // =========  Active Object messages  ============
       Result SendFlashObjectIDs();
       Result SendSetObjectLights(const ActiveCube* activeCube);
-      Result SendSetObjectLights(const ObjectID& objectID, const u32 color, const u32 onPeriod_ms, const u32 offPeriod_ms);
+      Result SendSetObjectLights(const ObjectID& objectID, const u32 onColor, const u32 offColor, const u32 onPeriod_ms, const u32 offPeriod_ms);
       void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
       
       
