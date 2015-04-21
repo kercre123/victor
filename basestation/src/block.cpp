@@ -671,8 +671,8 @@ namespace Anki {
         }
       }
       
-      PRINT_INFO("ActiveCube %d's TopMarker is = %s\n", GetID().GetValue(),
-                 Vision::MarkerTypeStrings[topMarker->GetCode()]);
+      //PRINT_INFO("ActiveCube %d's TopMarker is = %s\n", GetID().GetValue(),
+      //           Vision::MarkerTypeStrings[topMarker->GetCode()]);
       
       return *topMarker;
     }

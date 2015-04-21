@@ -462,8 +462,8 @@ namespace Anki
           } else {
             topMarkerOrientation = activeCube->GetTopMarkerOrientation();
             
-            PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
-                       topMarkerOrientation.getDegrees());
+            //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
+            //           topMarkerOrientation.getDegrees());
           }
         }
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
@@ -684,9 +684,9 @@ namespace Anki
                     } else {
                       topMarkerOrientation = activeCube->GetTopMarkerOrientation();
                       
-                      PRINT_INFO("Unobserved object %d's rotation around Z = %.1fdeg\n",
-                                 unobserved.object->GetID().GetValue(),
-                                 topMarkerOrientation.getDegrees());
+//                      PRINT_INFO("Unobserved object %d's rotation around Z = %.1fdeg\n",
+//                                 unobserved.object->GetID().GetValue(),
+//                                 topMarkerOrientation.getDegrees());
                     }
                   }
                   CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
