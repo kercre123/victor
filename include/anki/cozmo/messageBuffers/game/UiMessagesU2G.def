@@ -1252,6 +1252,43 @@ struct AbortAll
 	bool operator!=(const AbortAll& other) const;
 };
 
+// MESSAGE CancelAction
+struct CancelAction
+{
+	int32_t actionType;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	CancelAction() = default;
+	CancelAction(const CancelAction& other) = default;
+	CancelAction(CancelAction& other) = default;
+	CancelAction(CancelAction&& other) noexcept = default;
+	CancelAction& operator=(const CancelAction& other) = default;
+	CancelAction& operator=(CancelAction&& other) noexcept = default;
+	
+	explicit CancelAction(int32_t actionType
+		,uint8_t robotID)
+	:actionType(actionType)
+	,robotID(robotID)
+	{}
+
+	explicit CancelAction(const uint8_t* buff, size_t len);
+	explicit CancelAction(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const CancelAction& other) const;
+	bool operator!=(const CancelAction& other) const;
+};
+
 // MESSAGE DrawPoseMarker
 struct DrawPoseMarker
 {
@@ -2325,6 +2362,11 @@ public:
 	void Set_AbortAll(const Anki::Cozmo::U2G::AbortAll& new_AbortAll);
 	void Set_AbortAll(Anki::Cozmo::U2G::AbortAll&& new_AbortAll);
 
+	/** CancelAction **/
+	const Anki::Cozmo::U2G::CancelAction& Get_CancelAction() const;
+	void Set_CancelAction(const Anki::Cozmo::U2G::CancelAction& new_CancelAction);
+	void Set_CancelAction(Anki::Cozmo::U2G::CancelAction&& new_CancelAction);
+
 	/** DrawPoseMarker **/
 	const Anki::Cozmo::U2G::DrawPoseMarker& Get_DrawPoseMarker() const;
 	void Set_DrawPoseMarker(const Anki::Cozmo::U2G::DrawPoseMarker& new_DrawPoseMarker);
@@ -2478,6 +2520,7 @@ private:
 		Anki::Cozmo::U2G::SetBehaviorState _SetBehaviorState;
 		Anki::Cozmo::U2G::AbortPath _AbortPath;
 		Anki::Cozmo::U2G::AbortAll _AbortAll;
+		Anki::Cozmo::U2G::CancelAction _CancelAction;
 		Anki::Cozmo::U2G::DrawPoseMarker _DrawPoseMarker;
 		Anki::Cozmo::U2G::ErasePoseMarker _ErasePoseMarker;
 		Anki::Cozmo::U2G::SetWheelControllerGains _SetWheelControllerGains;

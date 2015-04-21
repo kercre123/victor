@@ -37,6 +37,7 @@ void Process_ExecuteBehavior(const Anki::Cozmo::U2G::ExecuteBehavior& msg);
 void Process_SetBehaviorState(const Anki::Cozmo::U2G::SetBehaviorState& msg);
 void Process_AbortPath(const Anki::Cozmo::U2G::AbortPath& msg);
 void Process_AbortAll(const Anki::Cozmo::U2G::AbortAll& msg);
+void Process_CancelAction(const Anki::Cozmo::U2G::CancelAction& msg);
 void Process_DrawPoseMarker(const Anki::Cozmo::U2G::DrawPoseMarker& msg);
 void Process_ErasePoseMarker(const Anki::Cozmo::U2G::ErasePoseMarker& msg);
 void Process_SetWheelControllerGains(const Anki::Cozmo::U2G::SetWheelControllerGains& msg);
