@@ -2674,32 +2674,38 @@ namespace Anki {
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
       Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+     
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in the ACTIVE_OBJECT family in the world.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
       
       if(!object->IsActive()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d does not appear to be an active object.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       if(!object->IsIdentified()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d is active but has not been identified.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
-      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
-      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
       if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d could not be cast to an ActiveCube.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       return activeCube;
-    }
+    } // GetActiveObject()
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichBlockLEDs whichLEDs,
