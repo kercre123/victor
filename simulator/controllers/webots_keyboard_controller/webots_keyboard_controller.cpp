@@ -341,12 +341,13 @@ namespace Anki {
       
       void HandleRobotCompletedAction(const G2U::RobotCompletedAction& msg)
       {
+        const bool success = (ActionResult)msg.result == ActionResult::SUCCESS;
         switch((RobotActionType)msg.actionType)
         {
           case RobotActionType::PICKUP_OBJECT_HIGH:
           case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
               printf("%d ", msg.objectIDs[i]);
             }
@@ -356,7 +357,7 @@ namespace Anki {
           case RobotActionType::PLACE_OBJECT_HIGH:
           case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
               printf("%d ", msg.objectIDs[i]);
             }
@@ -365,7 +366,7 @@ namespace Anki {
 
           default:
             printf("Robot %d completed action with type=%d and %s.\n",
-                   msg.robotID, msg.actionType, (msg.success ? "SUCCEEDED" : "FAILED"));
+                   msg.robotID, msg.actionType, (success ? "SUCCEEDED" : "FAILED"));
         }
         
       }

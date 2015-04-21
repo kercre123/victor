@@ -404,7 +404,7 @@ namespace Cozmo {
   
     msg.robotID = robotID;
     msg.actionType = (s32)actionType;
-    msg.success = (s32)result;
+    msg.result = (s32)result;
     
     msg.objectIDs[0] = objectID0;
     msg.objectIDs[1] = objectID1;

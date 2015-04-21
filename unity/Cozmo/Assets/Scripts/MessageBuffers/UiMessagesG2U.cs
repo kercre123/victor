@@ -1874,13 +1874,15 @@ public class RobotCompletedAction
 {
 	private uint _robotID; // uint_32
 	private int _actionType; // int_32
+	private int _result; // int_32
 	private int[] _objectIDs; // int_32[5]
 	private byte _numObjects; // uint_8
-	private byte _success; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
 	public int actionType { get { return _actionType; } set { _actionType = value; } }
+
+	public int result { get { return _result; } set { _result = value; } }
 
 	public int[] objectIDs
 	{
@@ -1900,8 +1902,6 @@ public class RobotCompletedAction
 
 	public byte numObjects { get { return _numObjects; } set { _numObjects = value; } }
 
-	public byte success { get { return _success; } set { _success = value; } }
-
 
 	/**** Constructors ****/
 
@@ -1912,15 +1912,15 @@ public class RobotCompletedAction
 
 	public RobotCompletedAction(uint robotID,
 		int actionType,
+		int result,
 		int[] objectIDs,
-		byte numObjects,
-		byte success)
+		byte numObjects)
 	{
 		this.robotID = robotID;
 		this.actionType = actionType;
+		this.result = result;
 		this.objectIDs = objectIDs;
 		this.numObjects = numObjects;
-		this.success = success;
 	}
 
 	public RobotCompletedAction(System.IO.Stream stream)
@@ -1943,12 +1943,12 @@ public class RobotCompletedAction
 	{
 		_robotID = reader.ReadUInt32();
 		_actionType = reader.ReadInt32();
+		_result = reader.ReadInt32();
 		_objectIDs = new int[5];
 		for (int i = 0; i < 5; ++i) {
 			_objectIDs[i] = reader.ReadInt32();
 		}
 		_numObjects = reader.ReadByte();
-		_success = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -1961,17 +1961,17 @@ public class RobotCompletedAction
 	{
 		writer.Write((uint)_robotID);
 		writer.Write((int)_actionType);
+		writer.Write((int)_result);
 		for (int i = 0; i < 5; ++i) {
 			writer.Write((int)_objectIDs[i]);
 		}
 		writer.Write((byte)_numObjects);
-		writer.Write((byte)_success);
 	}
 
 	public int Size 
 	{
 		get {
-			return 30;
+			return 33;
 		}
 	}
 
@@ -2019,9 +2019,9 @@ public class RobotCompletedAction
 
 		return this._robotID.Equals(p._robotID)
 			&& this._actionType.Equals(p._actionType)
+			&& this._result.Equals(p._result)
 			&& ArrayEquals<int>(this._objectIDs,p._objectIDs)
-			&& this._numObjects.Equals(p._numObjects)
-			&& this._success.Equals(p._success);
+			&& this._numObjects.Equals(p._numObjects);
 	}
 
 	public override int GetHashCode()
@@ -2031,9 +2031,9 @@ public class RobotCompletedAction
 			int hash = 17;
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._result.GetHashCode();
 			hash = hash * 23 + this._objectIDs.GetHashCode();
 			hash = hash * 23 + this._numObjects.GetHashCode();
-			hash = hash * 23 + this._success.GetHashCode();
 			return hash;
 		}
 	}
