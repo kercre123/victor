@@ -110,7 +110,11 @@ public class ObservedObject
 	                                             byte turnOffUnspecifiedLEDs = 1, uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                             				 uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0 )
 	{
-		if( Family != 3 ) return;
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
 
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
@@ -141,7 +145,11 @@ public class ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
 	{
-		if( Family != 3 ) return;
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
 
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
@@ -172,7 +180,11 @@ public class ObservedObject
 	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                                     byte turnOffUnspecifiedLEDs = 1 )
 	{
-		if( Family != 3 ) return;
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
 
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs();
 		message.objectID = (uint)ID;
