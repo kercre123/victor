@@ -79,7 +79,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		initialized = true;
 		Refresh();
 
-		Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
+		//Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
 	}
 
 	void Update () {

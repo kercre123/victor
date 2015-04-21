@@ -29,6 +29,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
+	[SerializeField] protected GameObject objectToDisableWhileVisionActive;
+
 
 	protected ActionPanel actionPanel;
 
@@ -274,6 +276,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = alpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	protected void RefreshFade()
@@ -334,6 +338,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = fromAlpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(false);
 	}
 
 	protected void FadeOut()
@@ -356,6 +362,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = fromAlpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	protected void StopLoopingTargetSound()
@@ -479,6 +487,7 @@ public class CozmoVision : MonoBehaviour
 		StopLoopingTargetSound();
 
 		if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	public void Selection(ObservedObject obj)

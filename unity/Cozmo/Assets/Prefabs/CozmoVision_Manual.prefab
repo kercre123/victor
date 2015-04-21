@@ -321,6 +321,7 @@ MonoBehaviour:
   observedObjectCanvasPrefab: {fileID: 0}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
+  objectToDisableWhileVisionActive: {fileID: 0}
 --- !u!114 &11408706
 MonoBehaviour:
   m_ObjectHideFlags: 1

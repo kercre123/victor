@@ -15,6 +15,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_userTestMode;
 
 	[SerializeField] ComboBox pertinent_objects;
+	[SerializeField] InputField pertinent_object_range;
 
 	public const int REVERSE_LIKE_A_CAR = 1;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
@@ -83,8 +84,14 @@ public class OptionsScreen : MonoBehaviour {
 			pertinent_objects.ClearItems();
 			pertinent_objects.AddItems(pertinentObjectTypes);
 			pertinent_objects.OnSelectionChanged = ObjectPertinence;
-			pertinent_objects.SelectedIndex = PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), -1);
+			pertinent_objects.SelectedIndex = PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), 0);
 		}
+
+		if(pertinent_object_range != null) {
+			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 220).ToString();
+			pertinent_object_range.onValueChange.AddListener(ObjectPertinenceRange);
+		}
+
 	}
 
 	void AddListeners() {
@@ -156,8 +163,16 @@ public class OptionsScreen : MonoBehaviour {
 		Init();
 	}
 
-	void ObjectPertinence(int index) {
-		PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), index);
+	void ObjectPertinence(int value) {
+		PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), value);
+	}
+
+	void ObjectPertinenceRange(string value) {
+
+		int range;
+		if(int.TryParse(value, out range)) {
+			PlayerPrefs.SetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), range);
+		}
 	}
 
 	void MaxTurnSpeedChanged(float val) {
@@ -188,6 +203,14 @@ public class OptionsScreen : MonoBehaviour {
 		return PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
 	}
 
+	public static int GetObjectPertinenceTypeOverride() {
+		return PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), 0);
+	}
+
+	public static int GetObjectPertinenceRangeOverride() {
+		return PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 220);
+	}
+
 	void ToggleUserTestMode(bool val) {
 		PlayerPrefs.SetInt("UserTestMode", val ? 1 : 0);
 		//Debug.Log("ToggleUserTestMode("+val+")");
@@ -202,13 +225,15 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
 		PlayerPrefs.DeleteKey("ControlSchemeIndex");
 		PlayerPrefs.DeleteKey("VisionSchemeIndex");
-		PlayerPrefs.DeleteKey("VisionDisabled");
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 		PlayerPrefs.DeleteKey("ToggleUserTestMode");
-		PlayerPrefs.DeleteKey("ObjectPertinence");
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());
+		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("ObjectPertinenceRange" + i.ToString());
 		}
 
 		for(int i = 0; i < 5; ++i) {

@@ -95,14 +95,13 @@ GameObject:
   - 224: {fileID: 22450872}
   - 114: {fileID: 11450854}
   - 82: {fileID: 8250898}
-  - 114: {fileID: 11426302}
   m_Layer: 5
   m_Name: CozmoVision_SelectObjectExtraButtons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &150878
 GameObject:
   m_ObjectHideFlags: 1
@@ -287,19 +286,6 @@ AudioSource:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
---- !u!114 &11426302
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 082a07cbd26174c13b9f9bd0765d61ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  children:
-  - {fileID: 0}
 --- !u!114 &11434604
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -441,7 +427,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
-  observedObjectListType: 1
+  objectToDisableWhileVisionActive: {fileID: 0}
   reticle: {fileID: 22487256}
 --- !u!114 &11450866
 MonoBehaviour:

@@ -451,7 +451,7 @@ MonoBehaviour:
     type: 2}
   selected: {r: 0, g: 1, b: 0, a: 1}
   select: {r: 1, g: .478431374, b: 0, a: 1}
-  observedObjectListType: 1
+  objectToDisableWhileVisionActive: {fileID: 0}
   targetLockReticle: {fileID: 22407504}
   targetLockReticleScale: 1.10000002
 --- !u!114 &11407510

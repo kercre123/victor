@@ -99,7 +99,6 @@ public class GameActions : MonoBehaviour
 		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButtonMode.CANCEL );
 	}
 
-
 	public virtual void ActionButtonClick()
 	{
 		if( audio != null )
@@ -120,17 +119,117 @@ public class GameActions : MonoBehaviour
 
 	public virtual void PickUp()
 	{
-		if( robot != null ) robot.PickAndPlaceObject( selectedObjectIndex );
+		Debug.Log( "PickUp" );
+
+		if( robot != null ) {
+			robot.PickAndPlaceObject( selectedObjectIndex );
+			if(CozmoBusyPanel.instance != null)	{
+
+				ObservedObject obj = robot.selectedObjects[selectedObjectIndex];
+				if(obj != null) {
+					string desc = "Cozmo is attempting to pick-up\n";
+
+					if(obj.Family == 3) {
+						desc += "an Active Block.";
+					}
+					else {
+						desc += "a ";
+
+						if(CozmoPalette.instance != null) {
+							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
+						}
+
+						desc += "Block.";
+					}
+
+
+					CozmoBusyPanel.instance.SetDescription(desc);
+				}
+			}
+		}
 	}
 	
 	public virtual void Drop()
 	{
-		if( robot != null ) robot.PlaceObjectOnGroundHere();
+		Debug.Log( "Drop" );
+
+		if( robot != null ) {
+			robot.PlaceObjectOnGroundHere();
+			if(CozmoBusyPanel.instance != null)	{
+				
+				ObservedObject obj = robot.carryingObject;
+				if(obj != null) {
+					string desc = "Cozmo is attempting to drop\n";
+					
+					if(obj.Family == 3) {
+						desc += "an Active Block.";
+					}
+					else {
+						desc += "a ";
+						
+						if(CozmoPalette.instance != null) {
+							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
+						}
+						
+						desc += "Block.";
+					}
+					
+					CozmoBusyPanel.instance.SetDescription(desc);
+				}
+			}
+		}
 	}
 	
 	public virtual void Stack()
 	{
-		if( robot != null ) robot.PickAndPlaceObject( selectedObjectIndex );
+		Debug.Log( "Stack" );
+
+		if( robot != null ) {
+			robot.PickAndPlaceObject( selectedObjectIndex );
+			if(CozmoBusyPanel.instance != null)	{
+				
+				ObservedObject obj = robot.carryingObject;
+				if(obj != null) {
+					string desc = "Cozmo is attempting to stack\n";
+					
+					if(obj.Family == 3) {
+						desc += "an Active Block";
+					}
+					else {
+						desc += "a ";
+						
+						if(CozmoPalette.instance != null) {
+							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
+						}
+						
+						desc += "Block";
+					}
+
+					ObservedObject target = robot.selectedObjects[selectedObjectIndex];
+					if(target != null) {
+						
+						desc += "\n on top of ";
+
+						if(target.Family == 3) {
+							desc += "an Active Block";
+						}
+						else {
+							desc += "a ";
+							
+							if(CozmoPalette.instance != null) {
+								desc += CozmoPalette.instance.GetNameForObjectType((int)target.ObjectType) + " ";
+							}
+							
+							desc += "Block";
+						}
+					}
+
+					desc += ".";
+
+					CozmoBusyPanel.instance.SetDescription(desc);
+				}
+			}
+		}
 	}
 	
 	public virtual void Roll()
@@ -147,7 +246,7 @@ public class GameActions : MonoBehaviour
 	{
 		Debug.Log( "Change" );
 
-		if( robot != null && robot.carryingObject != null )
+		if( robot != null && robot.carryingObject != null && robot.carryingObject.Family == 3)
 		{
 			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
 			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
