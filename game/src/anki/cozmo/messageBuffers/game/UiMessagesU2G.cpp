@@ -3490,6 +3490,96 @@ bool SetAllActiveObjectLEDs::operator!=(const SetAllActiveObjectLEDs& other) con
 }
 
 
+// MESSAGE SetBackpackLEDs
+
+SetBackpackLEDs::SetBackpackLEDs(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+SetBackpackLEDs::SetBackpackLEDs(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t SetBackpackLEDs::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t SetBackpackLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.WriteFArray<uint32_t, 5>(this->onColor);
+	buffer.WriteFArray<uint32_t, 5>(this->offColor);
+	buffer.WriteFArray<uint32_t, 5>(this->onPeriod_ms);
+	buffer.WriteFArray<uint32_t, 5>(this->offPeriod_ms);
+	buffer.WriteFArray<uint32_t, 5>(this->transitionOnPeriod_ms);
+	buffer.WriteFArray<uint32_t, 5>(this->transitionOffPeriod_ms);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t SetBackpackLEDs::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t SetBackpackLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.ReadFArray<uint32_t, 5>(this->onColor);
+	buffer.ReadFArray<uint32_t, 5>(this->offColor);
+	buffer.ReadFArray<uint32_t, 5>(this->onPeriod_ms);
+	buffer.ReadFArray<uint32_t, 5>(this->offPeriod_ms);
+	buffer.ReadFArray<uint32_t, 5>(this->transitionOnPeriod_ms);
+	buffer.ReadFArray<uint32_t, 5>(this->transitionOffPeriod_ms);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t SetBackpackLEDs::Size() const
+{
+	size_t result = 0;
+	//onColor
+	result += 4 * 5; // = uint_32 * 5
+	//offColor
+	result += 4 * 5; // = uint_32 * 5
+	//onPeriod_ms
+	result += 4 * 5; // = uint_32 * 5
+	//offPeriod_ms
+	result += 4 * 5; // = uint_32 * 5
+	//transitionOnPeriod_ms
+	result += 4 * 5; // = uint_32 * 5
+	//transitionOffPeriod_ms
+	result += 4 * 5; // = uint_32 * 5
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool SetBackpackLEDs::operator==(const SetBackpackLEDs& other) const
+{
+	if (onColor != other.onColor
+	|| offColor != other.offColor
+	|| onPeriod_ms != other.onPeriod_ms
+	|| offPeriod_ms != other.offPeriod_ms
+	|| transitionOnPeriod_ms != other.transitionOnPeriod_ms
+	|| transitionOffPeriod_ms != other.transitionOffPeriod_ms
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool SetBackpackLEDs::operator!=(const SetBackpackLEDs& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -3600,6 +3690,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetActiveObjectLEDs";
 	case MessageTag::SetAllActiveObjectLEDs:
 		return "SetAllActiveObjectLEDs";
+	case MessageTag::SetBackpackLEDs:
+		return "SetBackpackLEDs";
 	default:
 		return "INVALID";
 	}
@@ -5153,6 +5245,35 @@ void Message::Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G::SetAllActiveObjectLED
 }
 
 
+const Anki::Cozmo::U2G::SetBackpackLEDs& Message::Get_SetBackpackLEDs() const
+{
+	assert(_tag == Tag::SetBackpackLEDs);
+	return _SetBackpackLEDs;
+}
+void Message::Set_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& new_SetBackpackLEDs)
+{
+	if(this->_tag == Tag::SetBackpackLEDs) {
+		_SetBackpackLEDs = new_SetBackpackLEDs;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetBackpackLEDs) Anki::Cozmo::U2G::SetBackpackLEDs{new_SetBackpackLEDs};
+		_tag = Tag::SetBackpackLEDs;
+	}
+}
+void Message::Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBackpackLEDs)
+{
+	if(this->_tag == Tag::SetBackpackLEDs) {
+		_SetBackpackLEDs = std::move(new_SetBackpackLEDs);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetBackpackLEDs) Anki::Cozmo::U2G::SetBackpackLEDs{std::move(new_SetBackpackLEDs)};
+		_tag = Tag::SetBackpackLEDs;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -5592,6 +5713,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetAllActiveObjectLEDs.Unpack(buffer);
 		}
 		break;
+	case Tag::SetBackpackLEDs:
+		if (newTag != oldTag) {
+			new(&(this->_SetBackpackLEDs)) Anki::Cozmo::U2G::SetBackpackLEDs(buffer);
+		}
+		else {
+			this->_SetBackpackLEDs.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -5768,6 +5897,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::SetAllActiveObjectLEDs:
 		this->_SetAllActiveObjectLEDs.Pack(buffer);
 		break;
+	case Tag::SetBackpackLEDs:
+		this->_SetBackpackLEDs.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -5938,6 +6070,9 @@ size_t Message::Size() const
 	case Tag::SetAllActiveObjectLEDs:
 		result += _SetAllActiveObjectLEDs.Size();
 		break;
+	case Tag::SetBackpackLEDs:
+		result += _SetBackpackLEDs.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -6106,6 +6241,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::SetAllActiveObjectLEDs:
 		_SetAllActiveObjectLEDs.~SetAllActiveObjectLEDs();
+		break;
+	case Tag::SetBackpackLEDs:
+		_SetBackpackLEDs.~SetBackpackLEDs();
 		break;
 	default:
 		break;

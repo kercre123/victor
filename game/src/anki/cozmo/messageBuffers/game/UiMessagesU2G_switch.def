@@ -165,4 +165,7 @@ case Anki::Cozmo::U2G::Message::Tag::SetActiveObjectLEDs:
 case Anki::Cozmo::U2G::Message::Tag::SetAllActiveObjectLEDs:
 	Process_SetAllActiveObjectLEDs(msg.Get_SetAllActiveObjectLEDs());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::SetBackpackLEDs:
+	Process_SetBackpackLEDs(msg.Get_SetBackpackLEDs());
+	break;
 }

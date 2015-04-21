@@ -356,6 +356,18 @@ message SetAllActiveObjectLEDs {
   uint_8   robotID
 }
 
+// SetBackpackLEDs
+//  See ledTypes.h for the enumeration of the available backpack LEDs.
+message SetBackpackLEDs {
+  uint_32  onColor[5],
+  uint_32  offColor[5],
+  uint_32  onPeriod_ms[5],
+  uint_32  offPeriod_ms[5],
+  uint_32  transitionOnPeriod_ms[5],
+  uint_32  transitionOffPeriod_ms[5],
+  uint_8   robotID
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "struct" instead of "message"
 union Message { }

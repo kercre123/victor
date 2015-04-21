@@ -5972,6 +5972,293 @@ public class SetAllActiveObjectLEDs
 	}
 }
 
+public class SetBackpackLEDs
+{
+	private uint[] _onColor; // uint_32[5]
+	private uint[] _offColor; // uint_32[5]
+	private uint[] _onPeriod_ms; // uint_32[5]
+	private uint[] _offPeriod_ms; // uint_32[5]
+	private uint[] _transitionOnPeriod_ms; // uint_32[5]
+	private uint[] _transitionOffPeriod_ms; // uint_32[5]
+	private byte _robotID; // uint_8
+
+	public uint[] onColor
+	{
+		get {
+			return _onColor;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("onColor fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("onColor fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_onColor = value;
+		}
+	}
+
+	public uint[] offColor
+	{
+		get {
+			return _offColor;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("offColor fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("offColor fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_offColor = value;
+		}
+	}
+
+	public uint[] onPeriod_ms
+	{
+		get {
+			return _onPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_onPeriod_ms = value;
+		}
+	}
+
+	public uint[] offPeriod_ms
+	{
+		get {
+			return _offPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_offPeriod_ms = value;
+		}
+	}
+
+	public uint[] transitionOnPeriod_ms
+	{
+		get {
+			return _transitionOnPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_transitionOnPeriod_ms = value;
+		}
+	}
+
+	public uint[] transitionOffPeriod_ms
+	{
+		get {
+			return _transitionOffPeriod_ms;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is null. Must have a length of 5.", "value");
+			}
+			if (value.Length != 5) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is the wrong size. Must have a length of 5.", "value");
+			}
+			_transitionOffPeriod_ms = value;
+		}
+	}
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public SetBackpackLEDs()
+	{
+		this.onColor = new uint[5];
+		this.offColor = new uint[5];
+		this.onPeriod_ms = new uint[5];
+		this.offPeriod_ms = new uint[5];
+		this.transitionOnPeriod_ms = new uint[5];
+		this.transitionOffPeriod_ms = new uint[5];
+	}
+
+	public SetBackpackLEDs(uint[] onColor,
+		uint[] offColor,
+		uint[] onPeriod_ms,
+		uint[] offPeriod_ms,
+		uint[] transitionOnPeriod_ms,
+		uint[] transitionOffPeriod_ms,
+		byte robotID)
+	{
+		this.onColor = onColor;
+		this.offColor = offColor;
+		this.onPeriod_ms = onPeriod_ms;
+		this.offPeriod_ms = offPeriod_ms;
+		this.transitionOnPeriod_ms = transitionOnPeriod_ms;
+		this.transitionOffPeriod_ms = transitionOffPeriod_ms;
+		this.robotID = robotID;
+	}
+
+	public SetBackpackLEDs(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public SetBackpackLEDs(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_onColor = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_onColor[i] = reader.ReadUInt32();
+		}
+		_offColor = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_offColor[i] = reader.ReadUInt32();
+		}
+		_onPeriod_ms = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_onPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_offPeriod_ms = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_offPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_transitionOnPeriod_ms = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_transitionOnPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_transitionOffPeriod_ms = new uint[5];
+		for (int i = 0; i < 5; ++i) {
+			_transitionOffPeriod_ms[i] = reader.ReadUInt32();
+		}
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_onColor[i]);
+		}
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_offColor[i]);
+		}
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_onPeriod_ms[i]);
+		}
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_offPeriod_ms[i]);
+		}
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_transitionOnPeriod_ms[i]);
+		}
+		for (int i = 0; i < 5; ++i) {
+			writer.Write((uint)_transitionOffPeriod_ms[i]);
+		}
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 121;
+		}
+	}
+
+	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
+		if (ReferenceEquals(a1, a2))
+			return true;
+
+		if (a1 == null || a2 == null)
+			return false;
+
+		if (a1.Length != a2.Length)
+			return false;
+
+		for (int i = 0; i < a1.Length; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+
+		SetBackpackLEDs p = obj as SetBackpackLEDs;
+		if ((System.Object) p == null)
+		{
+			return false;
+		}
+
+		return this.Equals(p);
+	}
+
+	public bool Equals(SetBackpackLEDs p)
+	{
+		if ((object) p == null)
+		{
+			return false;
+		}
+
+		return ArrayEquals<uint>(this._onColor,p._onColor)
+			&& ArrayEquals<uint>(this._offColor,p._offColor)
+			&& ArrayEquals<uint>(this._onPeriod_ms,p._onPeriod_ms)
+			&& ArrayEquals<uint>(this._offPeriod_ms,p._offPeriod_ms)
+			&& ArrayEquals<uint>(this._transitionOnPeriod_ms,p._transitionOnPeriod_ms)
+			&& ArrayEquals<uint>(this._transitionOffPeriod_ms,p._transitionOffPeriod_ms)
+			&& this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._onColor.GetHashCode();
+			hash = hash * 23 + this._offColor.GetHashCode();
+			hash = hash * 23 + this._onPeriod_ms.GetHashCode();
+			hash = hash * 23 + this._offPeriod_ms.GetHashCode();
+			hash = hash * 23 + this._transitionOnPeriod_ms.GetHashCode();
+			hash = hash * 23 + this._transitionOffPeriod_ms.GetHashCode();
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class Message {
 	public enum Tag {
 		Ping,	//0
@@ -6027,6 +6314,7 @@ public class Message {
 		SetFaceDetectParams,	//50
 		SetActiveObjectLEDs,	//51
 		SetAllActiveObjectLEDs,	//52
+		SetBackpackLEDs,	//53
 		INVALID
 	};
 
@@ -6937,6 +7225,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.SetBackpackLEDs SetBackpackLEDs
+	{
+		get {
+			if (_tag != Tag.SetBackpackLEDs) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetBackpackLEDs\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.SetBackpackLEDs)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetBackpackLEDs : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -7101,6 +7406,9 @@ public class Message {
 			break;
 		case Tag.SetAllActiveObjectLEDs:
 			_state = new Anki.Cozmo.U2G.SetAllActiveObjectLEDs(reader);
+			break;
+		case Tag.SetBackpackLEDs:
+			_state = new Anki.Cozmo.U2G.SetBackpackLEDs(reader);
 			break;
 		default:
 			break;
@@ -7273,6 +7581,9 @@ public class Message {
 		case Tag.SetAllActiveObjectLEDs:
 			SetAllActiveObjectLEDs.Pack(writer);
 			break;
+		case Tag.SetBackpackLEDs:
+			SetBackpackLEDs.Pack(writer);
+			break;
 		default:
 			break;
 		}
@@ -7443,6 +7754,9 @@ public class Message {
 			case Tag.SetAllActiveObjectLEDs:
 				result += SetAllActiveObjectLEDs.Size;
 				break;
+			case Tag.SetBackpackLEDs:
+				result += SetBackpackLEDs.Size;
+				break;
 			default:
 				return 0;
 			}
@@ -7585,6 +7899,8 @@ public class Message {
 			return this.SetActiveObjectLEDs.Equals(p.SetActiveObjectLEDs);
 		case Tag.SetAllActiveObjectLEDs:
 			return this.SetAllActiveObjectLEDs.Equals(p.SetAllActiveObjectLEDs);
+		case Tag.SetBackpackLEDs:
+			return this.SetBackpackLEDs.Equals(p.SetBackpackLEDs);
 		default:
 			return false;
 		}
@@ -7755,6 +8071,9 @@ public class Message {
 				break;
 			case Tag.SetAllActiveObjectLEDs:
 				hash = hash * 23 + this.SetAllActiveObjectLEDs.GetHashCode();
+				break;
+			case Tag.SetBackpackLEDs:
+				hash = hash * 23 + this.SetBackpackLEDs.GetHashCode();
 				break;
 			default:
 				break;

@@ -666,7 +666,7 @@ namespace Anki {
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
                   // p3: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
                   p1 = LTF_CYCLE_ALL;
-                  p2 = LED_RIGHT_EYE_RIGHT;
+                  p2 = LED_BACKPACK_RIGHT;
                   p3 = LED_GREEN;
                   break;
                 default:
@@ -917,6 +917,41 @@ namespace Anki {
                   SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
                   
                 }
+                break;
+              }
+                
+              case (s32)'L':
+              {
+                static bool backpackLightsOn = false;
+                
+                U2G::SetBackpackLEDs msg;
+                msg.robotID = 1;
+                for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i)
+                {
+                  msg.onColor[i] = 0;
+                  msg.offColor[i] = 0;
+                  msg.onPeriod_ms[i] = 1000;
+                  msg.offPeriod_ms[i] = 2000;
+                  msg.transitionOnPeriod_ms[i] = 500;
+                  msg.transitionOffPeriod_ms[i] = 500;
+                }
+                
+                if(!backpackLightsOn) {
+                  msg.onColor[LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
+                  msg.onColor[LED_BACKPACK_LEFT]   = NamedColors::RED;
+                  msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
+                  msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
+                  msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
+                  msg.offColor[LED_BACKPACK_LEFT]  = NamedColors::GREEN;
+                  msg.offColor[LED_BACKPACK_RIGHT] = NamedColors::RED;
+                }
+                
+                U2G::Message msgWrapper;
+                msgWrapper.Set_SetBackpackLEDs(msg);
+                msgHandler_.SendMessage(1, msgWrapper);
+
+                backpackLightsOn = !backpackLightsOn;
+                
                 break;
               }
                 
