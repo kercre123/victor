@@ -432,6 +432,12 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual s32 GetType() const override { return ACTION_TRAVERSE_OBJECT; }
       
+      virtual void Cancel(Robot& robot) override {
+        if(_chosenAction != nullptr) {
+          _chosenAction->Cancel(robot);
+        }
+      }
+      
     protected:
       
       // Update will just call the chosenAction's implementation

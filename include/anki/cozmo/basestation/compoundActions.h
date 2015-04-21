@@ -41,6 +41,9 @@ namespace Anki {
       
       virtual s32 GetType() const override { return -2; }
       
+      // Calls cancel on any constituent actions that aren't already done.
+      virtual void Cancel(Robot& robot) override final;
+      
     protected:
       
       // Call the constituent actions' Reset() methods and mark them each not done.

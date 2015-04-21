@@ -201,5 +201,10 @@ namespace Anki {
       return result;
     } // UpdateInternal()
     
+    void IAction::Cancel(Robot& robot)
+    {
+      Cleanup(robot);
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

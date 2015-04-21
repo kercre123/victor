@@ -98,6 +98,17 @@ namespace Anki {
       return false;
     }
 
+    
+    void ICompoundAction::Cancel(Robot& robot)
+    {
+      for(auto action : _actions) {
+        if(action.first == false) {
+          action.second->Cancel(robot);
+          action.first = true;
+        }
+      }
+    }
+    
 #pragma mark ---- CompoundActionSequential ----
     
     CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
@@ -191,7 +202,7 @@ namespace Anki {
       return SUCCESS;
       
     } // CompoundActionSequential::Update()
-    
+
     
 #pragma mark ---- CompoundActionParallel ----
     

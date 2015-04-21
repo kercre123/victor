@@ -57,6 +57,8 @@ namespace Anki {
       
       ActionResult Update(Robot& robot);
       
+      virtual void Cancel(Robot& robot) = 0;
+      
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
       void SetNumRetries(const u8 numRetries) {_numRetriesRemaining = numRetries;}
@@ -137,6 +139,9 @@ namespace Anki {
       IAction();
       virtual ~IAction() { }
       
+      // For use when an object is cancelled. Just calls Cleanup(robot)
+      virtual void Cancel(Robot& robot) override final;
+      
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
@@ -158,7 +163,7 @@ namespace Anki {
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
       // Derived classes can implement any required cleanup by overriding this
-      // method. It is called when UpdateInternal() is about to anything other than
+      // method. It is called when UpdateInternal() is about return to anything other than
       // RUNNING. Note that it cannot change the ActionResult (so if UpdateInternal
       // is about to failure or success, nothing that Cleanup does can change that.)
       virtual void Cleanup(Robot& robot) { }
