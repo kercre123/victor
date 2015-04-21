@@ -1014,6 +1014,28 @@ namespace Anki {
                 
               case (s32)'Q':
               {
+                /* Debugging U2G message for drawing quad
+                U2G::VisualizeQuad msg;
+                msg.xLowerRight = 250.f;
+                msg.yLowerRight = -0250.f;
+                msg.zLowerRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xUpperLeft = -250.f;
+                msg.yUpperLeft = 250.f;
+                msg.zUpperLeft = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xLowerLeft = -250.f;
+                msg.yLowerLeft = -250.f;
+                msg.zLowerLeft = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xUpperRight = 250.f;
+                msg.yUpperRight = 250.f;
+                msg.zUpperRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.quadID = 998;
+                msg.color = NamedColors::ORANGE;
+                
+                U2G::Message msgWrapper;
+                msgWrapper.Set_VisualizeQuad(msg);
+                msgHandler_.SendMessage(1, msgWrapper);
+                */
+                
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
                   SendAbortAll();
@@ -1021,6 +1043,7 @@ namespace Anki {
                   // Just Q: Just cancel path
                   SendAbortPath();
                 }
+                
                 break;
               }
                 
