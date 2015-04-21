@@ -394,6 +394,7 @@ struct RobotObservedObject
 	float quaternion1;
 	float quaternion2;
 	float quaternion3;
+	float topFaceOrientation_rad;
 	uint8_t markersVisible;
 	uint8_t isActive;
 	
@@ -420,6 +421,7 @@ struct RobotObservedObject
 		,float quaternion1
 		,float quaternion2
 		,float quaternion3
+		,float topFaceOrientation_rad
 		,uint8_t markersVisible
 		,uint8_t isActive)
 	:robotID(robotID)
@@ -437,6 +439,7 @@ struct RobotObservedObject
 	,quaternion1(quaternion1)
 	,quaternion2(quaternion2)
 	,quaternion3(quaternion3)
+	,topFaceOrientation_rad(topFaceOrientation_rad)
 	,markersVisible(markersVisible)
 	,isActive(isActive)
 	{}

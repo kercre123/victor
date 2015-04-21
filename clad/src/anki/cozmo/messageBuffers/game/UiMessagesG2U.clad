@@ -121,6 +121,7 @@ message RobotObservedObject {
     float_32 quaternion1,    //     "
     float_32 quaternion2,    //     "
     float_32 quaternion3,    //     "
+    float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
     uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
     uint_8   isActive
 }

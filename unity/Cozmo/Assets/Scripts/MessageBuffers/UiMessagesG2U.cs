@@ -1201,6 +1201,7 @@ public class RobotObservedObject
 	private float _quaternion1; // float_32
 	private float _quaternion2; // float_32
 	private float _quaternion3; // float_32
+	private float _topFaceOrientation_rad; // float_32
 	private byte _markersVisible; // uint_8
 	private byte _isActive; // uint_8
 
@@ -1234,6 +1235,8 @@ public class RobotObservedObject
 
 	public float quaternion3 { get { return _quaternion3; } set { _quaternion3 = value; } }
 
+	public float topFaceOrientation_rad { get { return _topFaceOrientation_rad; } set { _topFaceOrientation_rad = value; } }
+
 	public byte markersVisible { get { return _markersVisible; } set { _markersVisible = value; } }
 
 	public byte isActive { get { return _isActive; } set { _isActive = value; } }
@@ -1260,6 +1263,7 @@ public class RobotObservedObject
 		float quaternion1,
 		float quaternion2,
 		float quaternion3,
+		float topFaceOrientation_rad,
 		byte markersVisible,
 		byte isActive)
 	{
@@ -1278,6 +1282,7 @@ public class RobotObservedObject
 		this.quaternion1 = quaternion1;
 		this.quaternion2 = quaternion2;
 		this.quaternion3 = quaternion3;
+		this.topFaceOrientation_rad = topFaceOrientation_rad;
 		this.markersVisible = markersVisible;
 		this.isActive = isActive;
 	}
@@ -1315,6 +1320,7 @@ public class RobotObservedObject
 		_quaternion1 = reader.ReadSingle();
 		_quaternion2 = reader.ReadSingle();
 		_quaternion3 = reader.ReadSingle();
+		_topFaceOrientation_rad = reader.ReadSingle();
 		_markersVisible = reader.ReadByte();
 		_isActive = reader.ReadByte();
 	}
@@ -1342,6 +1348,7 @@ public class RobotObservedObject
 		writer.Write((float)_quaternion1);
 		writer.Write((float)_quaternion2);
 		writer.Write((float)_quaternion3);
+		writer.Write((float)_topFaceOrientation_rad);
 		writer.Write((byte)_markersVisible);
 		writer.Write((byte)_isActive);
 	}
@@ -1349,7 +1356,7 @@ public class RobotObservedObject
 	public int Size 
 	{
 		get {
-			return 62;
+			return 66;
 		}
 	}
 
@@ -1410,6 +1417,7 @@ public class RobotObservedObject
 			&& this._quaternion1.Equals(p._quaternion1)
 			&& this._quaternion2.Equals(p._quaternion2)
 			&& this._quaternion3.Equals(p._quaternion3)
+			&& this._topFaceOrientation_rad.Equals(p._topFaceOrientation_rad)
 			&& this._markersVisible.Equals(p._markersVisible)
 			&& this._isActive.Equals(p._isActive);
 	}
@@ -1434,6 +1442,7 @@ public class RobotObservedObject
 			hash = hash * 23 + this._quaternion1.GetHashCode();
 			hash = hash * 23 + this._quaternion2.GetHashCode();
 			hash = hash * 23 + this._quaternion3.GetHashCode();
+			hash = hash * 23 + this._topFaceOrientation_rad.GetHashCode();
 			hash = hash * 23 + this._markersVisible.GetHashCode();
 			hash = hash * 23 + this._isActive.GetHashCode();
 			return hash;

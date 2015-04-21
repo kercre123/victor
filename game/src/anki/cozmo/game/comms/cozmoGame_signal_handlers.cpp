@@ -80,9 +80,10 @@ namespace Cozmo {
                                               float img_x_upperLeft,  float img_y_upperLeft,
                                               float img_width,  float img_height,
                                               float world_x, float world_y, float world_z,
-                                              float q0, float q1, float q2, float q3, 
+                                              float q0, float q1, float q2, float q3,
+                                              float topMarkerOrientation_rad,
                                               bool isActive) {
-      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, markersVisible, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3, isActive);
+      this->HandleRobotObservedObjectSignal(robotID, objectFamily, objectType, objectID, markersVisible, img_x_upperLeft, img_y_upperLeft, img_width, img_height, world_x, world_y, world_z, q0, q1, q2, q3, topMarkerOrientation_rad, isActive);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbRobotObservedObjectSignal));
     
@@ -266,6 +267,7 @@ namespace Cozmo {
                                                       float world_y,
                                                       float world_z,
                                                       float q0, float q1, float q2, float q3,
+                                                      float topMarkerOrientation_rad,
                                                       bool isActive)
   {
     // Send a message out to UI that the robot saw an object
@@ -286,6 +288,7 @@ namespace Cozmo {
     msg.quaternion2   = q2;
     msg.quaternion3   = q3;
     msg.markersVisible= markersVisible;
+    msg.topFaceOrientation_rad = topMarkerOrientation_rad;
     msg.isActive      = static_cast<uint8_t>(isActive);
     
     // TODO: Look up which UI device to notify based on the robotID that saw the object
