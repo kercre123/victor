@@ -1113,6 +1113,24 @@ namespace Anki {
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
+                  } else if( modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                    static s32 cornerIndex = 0;
+                    
+                    printf("Turning corner %d new color %d (%x)\n",
+                           cornerIndex, colorIndex, u32(colorList[colorIndex]));
+                    
+                    msg.whichLEDs = (1 << cornerIndex);
+                    msg.onColor = colorList[colorIndex];
+                    msg.offColor = 0;
+                    msg.turnOffUnspecifiedLEDs = 0;
+                    msg.makeRelative = 0;
+                    
+                    ++cornerIndex;
+                    if(cornerIndex == NUM_BLOCK_LEDS) {
+                      cornerIndex = 0;
+                      ++colorIndex;
+                    }
+                    
                   } else {
                     printf("Cycling active block color\n");
                     msg.onColor = colorList[colorIndex++];
