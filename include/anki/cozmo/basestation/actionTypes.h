@@ -43,8 +43,8 @@ namespace Cozmo {
   };
   
   enum class ActionResult : s32 {
+    SUCCESS = 0,
     RUNNING,
-    SUCCESS,
     FAILURE_TIMEOUT,
     FAILURE_PROCEED,
     FAILURE_RETRY,
