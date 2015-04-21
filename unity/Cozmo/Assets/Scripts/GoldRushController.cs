@@ -8,6 +8,8 @@ using System;
 public class GoldRushController : GameController {
 	public static GoldRushController instance = null;
 
+	public const uint COLOR_GOLD = 0xFFFF00FF;
+
 	[SerializeField] protected AudioClip foundBeep;
 	[SerializeField] protected AudioClip collectedSound;
 	[SerializeField] protected AudioSource timerAudio;
@@ -16,7 +18,7 @@ public class GoldRushController : GameController {
 	[SerializeField] protected Button extractButton = null;
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
-	public float light_messaging_delay = .05f;
+	public float light_messaging_delay = .125f;
 	private float last_light_message_time = -1;
 	private float lastPlayTime = 0;
 	private int timerEventIndex = 0;
@@ -184,6 +186,7 @@ public class GoldRushController : GameController {
 	protected override void Update_BUILDING ()
 	{
 		base.Update_BUILDING ();
+		//UpdateDirectionLights (Vector2.zero);
 		// looking to see if we've created our stack
 	}
 
@@ -293,7 +296,7 @@ public class GoldRushController : GameController {
 			foundItems.Clear();
 			buriedLocations.Clear();
 			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
-			buriedLocations[robot.carryingObject] = (Vector2)robot.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * findRadius;
+			buriedLocations[robot.carryingObject] = (Vector2)goldCollectingObject.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * returnRadius;
 			CozmoVision.EnableDing(false);
 			break;
 		case PlayState.EXTRACTING:
@@ -308,6 +311,10 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNED:
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
+			//if ( goldCollectingObject != null )
+			//{
+			//	goldCollectingObject.SendLightMessage(1, COLOR_GOLD, 0xFF, 500, 200); 
+			//}
 			hintMessage.ShowMessage("Deposit the gold to collect points!", Color.black);
 			break;
 		default:
@@ -488,19 +495,22 @@ public class GoldRushController : GameController {
 #region IEnumerator
 	IEnumerator StartExtracting()
 	{
-		yield return new WaitForSeconds(extractionTime);
+		uint color = COLOR_GOLD;
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0xCC);
+		yield return new WaitForSeconds(extractionTime/2.0f);
+		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0xFF);
+		yield return new WaitForSeconds(extractionTime/2.0f);
 		EnterPlayState (PlayState.RETURNING);
 	}
 
 	IEnumerator AwardPoints()
 	{
 		// will end up doing active block light stuff here
-		uint color = 0xFFFF00FF;
-		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0x33);
-		yield return new WaitForSeconds(rewardTime/2.0f);
+		uint color = COLOR_GOLD;
 		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (1, color, 0xCC);
-		yield return new WaitForSeconds(rewardTime/2.0f);
+		yield return new WaitForSeconds(rewardTime);
 		if( goldExtractingObject != null ) goldExtractingObject.SendLightMessage (0);
+
 		// award points
 		scores[0]+= 10;
 		audio.Stop();
@@ -532,36 +542,46 @@ public class GoldRushController : GameController {
 		float time_now = Time.realtimeSinceStartup;
 		
 		if (time_now - last_light_message_time > light_messaging_delay) 
-			{
-		Vector3 heading3 = robot.Forward;
-		Vector2 heading = new Vector2(heading3.x, heading3.y);
-		heading = heading.normalized;
-		Vector2 to_target = target_position - new Vector2 (robot.WorldPosition.x, robot.WorldPosition.y);
-		to_target = to_target.normalized;
-		float dot_product = Vector2.Dot(heading, to_target);
-		float angle_between = MathUtil.DotProductAngle(heading, to_target);
-		
-		Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
-		
-		
-		last_light_message_time = time_now;
-		byte which_leds = 1;
-		// need to check angle variance in each of four directions
-		// our allowed delta is ~5 degrees
-		float allowed_delta = .09f;
-		if( (angle_between <= allowed_delta && angle_between >= -allowed_delta) // facing
-		   || (angle_between <= (Math.PI) + allowed_delta && angle_between >= (Math.PI) - allowed_delta) // behind
-		   || (angle_between <= (Math.PI/2) + allowed_delta && angle_between >= (Math.PI/2) - allowed_delta) // behind
-		   || (angle_between <= (Math.PI/3) + allowed_delta && angle_between >= (Math.PI/3) - allowed_delta)) // behind
 		{
-			which_leds = 0x11;
-		}
-		
-		
-		uint color =  0xFF0000FF;
-		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SendLightMessageRelative(1, color, which_leds,1000,0,0,0,1,1,target_position.x,target_position.y);
-		last_leds = which_leds;
+			Vector3 heading3 = robot.Forward;
+			Vector2 heading = new Vector2(heading3.x, heading3.y);
+			heading = heading.normalized;
+			Vector2 to_target = target_position - new Vector2 (robot.WorldPosition.x, robot.WorldPosition.y);
+			to_target = to_target.normalized;
+			float dot_product = Vector2.Dot(heading, to_target);
+			float angle_between = MathUtil.DotProductAngle(heading, to_target);
+			
+			Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
+			
+			
+			last_light_message_time = time_now;
+			byte which_leds = 1; // front face, right side
+			byte relative_mode = 1;
+			// need to check angle variance in each of four directions
+			// our allowed delta is ~5 degrees
+
+			float allowed_delta = .18f;
+			if( (angle_between <= allowed_delta && angle_between >= -allowed_delta) // facing
+			   || (angle_between <= (Math.PI) + allowed_delta && angle_between >= (Math.PI) - allowed_delta) // behind
+			   || (angle_between <= (Math.PI/2) + allowed_delta && angle_between >= (Math.PI/2) - allowed_delta) // behind
+			   || (angle_between <= (Math.PI/3) + allowed_delta && angle_between >= (Math.PI/3) - allowed_delta)) // behind
+			{
+				which_leds = 0x11; // front face, both sides
+				relative_mode = 2;
 			}
+			/*
+			else if( (angle_between <= Math.PI/4 && Vector3.Dot(heading3, robot.Right) < 0)) // robot's forward
+				        //|| (angle_between <= Math.PI/4 && Vector3.Dot(heading3, robot.Right) < 0)
+			{
+					which_leds = 2;
+			}
+			*/
+
+			
+			uint color =  COLOR_GOLD;
+			if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SendLightMessageRelative(1, target_position, color, which_leds, relative_mode);
+			last_leds = which_leds;
+		}
 		
 	}
 
