@@ -368,6 +368,13 @@ namespace Anki {
         u32       offPeriod_ms;
         u32       transitionOnPeriod_ms;
         u32       transitionOffPeriod_ms;
+        
+        LEDstate()
+        : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
+        , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
+        {
+          
+        }
       };
      
       // Keep track of flash rate and color of each LED
