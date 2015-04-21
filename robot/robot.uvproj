@@ -773,6 +773,16 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1832,6 +1842,16 @@
               <FileName>offboardVisionSystem.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>
