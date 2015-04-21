@@ -479,7 +479,7 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_BOTTOM, rColor);
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
          */
-        for(s32 i=0; i<NUM_LEDS; ++i) {
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
           HAL::SetLED((LEDId)i, msg.color>>8);
         }
       }
@@ -862,8 +862,8 @@ namespace Anki {
 
       void ProcessSetBackpackLightsMessage(const SetBackpackLights& msg)
       {
-        for(s32 i=0; i<NUM_LEDS; ++i) {
-          BackpackLightController::SetParams((LEDId)i, msg.onPeriod_ms[i], msg.offColor[i],
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          BackpackLightController::SetParams((LEDId)i, msg.onColor[i], msg.offColor[i],
                                              msg.onPeriod_ms[i], msg.offPeriod_ms[i],
                                              msg.transitionOnPeriod_ms[i], msg.transitionOffPeriod_ms[i]);
         }

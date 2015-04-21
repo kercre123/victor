@@ -32,7 +32,7 @@ namespace Cozmo {
     LED_BACKPACK_LEFT,
     LED_BACKPACK_RIGHT,
     
-    NUM_LEDS
+    NUM_BACKPACK_LEDS
   } LEDId;
   
   // The color format is identical to HTML Hex Triplets (RGB)

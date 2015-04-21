@@ -2648,6 +2648,27 @@ namespace Anki {
       m.color = color;
       _msgHandler->SendMessage(GetID(), m);
     }
+      
+      
+    void Robot::SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
+    {
+      MessageSetBackpackLights msg;
+      msg.onColor = onColor;
+      msg.offColor = offColor;
+      msg.onPeriod_ms = onPeriod_ms;
+      msg.offPeriod_ms = offPeriod_ms;
+      msg.transitionOnPeriod_ms = transitionOnPeriod_ms;
+      msg.transitionOffPeriod_ms = transitionOffPeriod_ms;
+      
+      _msgHandler->SendMessage(GetID(), msg);
+    }
+    
+
     
       
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)

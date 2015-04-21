@@ -26,13 +26,14 @@ namespace Cozmo {
     u32 result;
     
     const u8* fg = (const u8*)(&onColor);
+    const u8* bg = (const u8*)(&offColor);
     u8* result_u8 = (u8*)(&result);
     
-    const u32 alpha_u32 = alpha + 1;
-    
-    result_u8[3] = (unsigned char)((alpha_u32 * fg[3]) >> 8);
-    result_u8[2] = (unsigned char)((alpha_u32 * fg[2]) >> 8);
-    result_u8[1] = (unsigned char)((alpha_u32 * fg[1]) >> 8);
+    const u32 alpha_u32    = alpha + 1;
+    const u32 invAlpha_u32 = 256 - alpha;
+    result_u8[3] = (unsigned char)((alpha_u32 * fg[3] + invAlpha_u32 * bg[3]) >> 8);
+    result_u8[2] = (unsigned char)((alpha_u32 * fg[2] + invAlpha_u32 * bg[2]) >> 8);
+    result_u8[1] = (unsigned char)((alpha_u32 * fg[1] + invAlpha_u32 * bg[1]) >> 8);
     result_u8[0] = 0xff;
     
     return result;
@@ -43,27 +44,24 @@ namespace Cozmo {
   {
     bool colorUpdated = false;
     
-    newColor = ledParams.onColor;
-
     if(currentTime > ledParams.nextSwitchTime)
     {
-      u32 newColor = 0;
-      
       switch(ledParams.state)
       {
         case LEDState_t::LED_STATE_ON:
-          // Time to start turning off
-          ledParams.nextSwitchTime = currentTime + ledParams.transitionOffPeriod_ms;
-          
           // Check for the special case that LED is just "on" and if so,
           // just stay in this state.
           if(ledParams.offPeriod_ms > 0 ||
              ledParams.transitionOffPeriod_ms > 0 ||
              ledParams.transitionOnPeriod_ms > 0)
           {
+            // Time to start turning off
             newColor = ledParams.onColor;
+            ledParams.nextSwitchTime = currentTime + ledParams.transitionOffPeriod_ms;
             ledParams.state = LEDState_t::LED_STATE_TURNING_OFF;
             colorUpdated = true;
+          } else {
+            ledParams.nextSwitchTime = currentTime + ledParams.onPeriod_ms;
           }
           break;
           

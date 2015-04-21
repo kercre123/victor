@@ -125,7 +125,7 @@ namespace Anki {
       HAL::IDCard idCard_;
       
       // Lights
-      webots::LED* leds_[NUM_LEDS] = {0};
+      webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization

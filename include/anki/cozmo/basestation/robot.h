@@ -40,6 +40,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -438,6 +439,13 @@ namespace Anki {
       
       // Color specified as RGBA, where A(lpha) will be ignored
       void SetDefaultLights(const u32 color);
+      
+      void SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                             const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
      
       
       // =========  Block messages  ============

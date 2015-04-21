@@ -28,7 +28,7 @@ namespace BackpackLightController {
     
     //LEDId       _ledLUT[NUM_LEDS];
     
-    LEDParams_t _ledParams[NUM_LEDS];
+    LEDParams_t _ledParams[NUM_BACKPACK_LEDS];
     
   };
   
@@ -42,9 +42,10 @@ namespace BackpackLightController {
     _ledLUT[4] = LEDId::LED_BACKPACK_MIDDLE;
     */
     
-    for(s32 i=0; i<NUM_LEDS; ++i) {
+    for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
       _ledParams[i].onColor = 0;
       _ledParams[i].offColor = 0;
+      _ledParams[i].nextSwitchTime = u32_MAX;
     }
     
     return RESULT_OK;
@@ -54,7 +55,7 @@ namespace BackpackLightController {
   {
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     
-    for(int i=0; i<NUM_LEDS; ++i)
+    for(int i=0; i<NUM_BACKPACK_LEDS; ++i)
     {
       u32 newColor;
       const bool colorUpdated = GetCurrentLEDcolor(_ledParams[i], currentTime, newColor);

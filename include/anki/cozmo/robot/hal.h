@@ -396,9 +396,6 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
 
-      // Set the intensity for each LED channel in the range [0, 255]
-      void LEDSet(u8 leds[NUM_LEDS]);
-
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color);
 
