@@ -41,6 +41,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
 
 #define HAVE_ACTIVE_GRIPPER 0
 
@@ -395,9 +396,6 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // UI LEDs
 
-      // Set the intensity for each LED channel in the range [0, 255]
-      void LEDSet(u8 leds[NUM_LEDS]);
-
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color);
 
@@ -425,8 +423,8 @@ namespace Anki
       //
       void FlashBlockIDs();
       
-      // Set all LEDs of the specified block to the same color and flash rate
-      Result SetBlockLight(const u8 blockID, const u32* color,
+      // Set the color and flashing of each LED on a block separately
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
       
