@@ -34,7 +34,6 @@ public enum ActionCompleted
 	WAIT
 }
 
-
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;

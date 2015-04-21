@@ -47,6 +47,12 @@ public class CozmoPalette : MonoBehaviour {
 		return info != null ? info.sprite : null;
 	}
 
+	public string GetNameForObjectType(int objType) {
+		ObjectkSymbolInfo info = objectSymbolInfos.Find(x => x.ObjectType == objType);
+		
+		return info != null ? info.Name : "Unknown";
+	}
+
 	public Sprite GetDigitSprite(int digit) {
 		digit = Mathf.Clamp(digit, 1, 6);
 		return digitSprites[digit-1];

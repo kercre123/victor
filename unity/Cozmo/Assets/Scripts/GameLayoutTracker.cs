@@ -294,11 +294,12 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				ObservedObject newObject = robot.knownObjects[knownObjectIndex];
 
-				//skip objects of the wrong type
-				if(block.objectType != (int)newObject.ObjectType) {
+				if(block.objectFamily != (int)newObject.Family) {
 					continue;
 				}
-				if(block.objectFamily != (int)newObject.Family) {
+
+				//skip objects of the wrong type
+				if(block.objectFamily != 3 && block.objectType != (int)newObject.ObjectType) {
 					continue;
 				}
 
@@ -314,6 +315,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					block.AssignedObjectID = newObject;
 					block.Validated = true;
 					block.Highlighted = false;
+					//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because first block placed on ground.");
 				}
 				//if this ideal block needs to get stacked on one we already know about...
 				else if(block.cubeBelow != null) {
@@ -329,6 +331,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						block.AssignedObjectID = newObject;
 						block.Validated = true;
 						block.Highlighted = false;
+						//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
 					}
 					else {
 						//Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
@@ -381,6 +384,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						block.AssignedObjectID = newObject;
 						block.Validated = true;
 						block.Highlighted = false;
+						//Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
 					}
 				}
 

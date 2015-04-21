@@ -29,6 +29,8 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
+	[SerializeField] protected GameObject objectToDisableWhileVisionActive;
+
 
 	protected ActionPanel actionPanel;
 
@@ -74,16 +76,19 @@ public class CozmoVision : MonoBehaviour
 		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
 		canvas = GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
-		
-		observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
-		Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
-		canv.worldCamera = canvas.worldCamera;
+		if(observedObjectCanvasPrefab != null) {
+			observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
-		observedObjectBoxes.Clear();
-		observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
-		
-		foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
+			Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
+			canv.worldCamera = canvas.worldCamera;
+			
+			observedObjectBoxes.Clear();
+			observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
+			
+			foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
+
+		}
 
 		if(actionPanelPrefab != null) {
 			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
@@ -271,6 +276,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = alpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	protected void RefreshFade()
@@ -331,6 +338,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = fromAlpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(false);
 	}
 
 	protected void FadeOut()
@@ -353,6 +362,8 @@ public class CozmoVision : MonoBehaviour
 		color = selected;
 		color.a = fromAlpha;
 		selected = color;
+
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	protected void StopLoopingTargetSound()
@@ -476,6 +487,7 @@ public class CozmoVision : MonoBehaviour
 		StopLoopingTargetSound();
 
 		if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
 	}
 
 	public void Selection(ObservedObject obj)

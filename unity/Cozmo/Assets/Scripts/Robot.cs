@@ -30,6 +30,8 @@ public class Robot
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject targetLockedObject;
 
+	public ActionCompleted lastActionRequested = ActionCompleted.UNKNOWN;
+
 	private int carryingObjectID;
 	private int headTrackingObjectID;
 
@@ -60,10 +62,12 @@ public class Robot
 	public enum ObservedObjectListType {
 		OBSERVED_RECENTLY,
 		MARKERS_SEEN,
-		KNOWN
+		KNOWN,
+		KNOWN_IN_RANGE
 	}
 	
-	[SerializeField] protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+	protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
+	protected float objectPertinenceRange = 220f;
 	
 	protected ActionPanel actionPanel;
 	
@@ -81,17 +85,20 @@ public class Robot
 			_pertinentObjects.Clear();
 			
 			switch(observedObjectListType) {
-			case ObservedObjectListType.MARKERS_SEEN: 
-				_pertinentObjects.AddRange(markersVisibleObjects);
-				break;
-			case ObservedObjectListType.OBSERVED_RECENTLY: 
-				_pertinentObjects.AddRange(observedObjects);
-				break;
-			case ObservedObjectListType.KNOWN: 
-				_pertinentObjects.AddRange(knownObjects);
-				break;
+				case ObservedObjectListType.MARKERS_SEEN: 
+					_pertinentObjects.AddRange(markersVisibleObjects);
+					break;
+				case ObservedObjectListType.OBSERVED_RECENTLY: 
+					_pertinentObjects.AddRange(observedObjects);
+					break;
+				case ObservedObjectListType.KNOWN: 
+					_pertinentObjects.AddRange(knownObjects);
+					break;
+				case ObservedObjectListType.KNOWN_IN_RANGE: 
+					_pertinentObjects.AddRange( knownObjects.FindAll( x=> ((Vector2)x.WorldPosition - (Vector2)WorldPosition).magnitude <= objectPertinenceRange ));
+					break;
 			}
-			
+
 			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( x.WorldPosition.z - WorldPosition.z ) < tooHigh );
 			
 			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
@@ -150,13 +157,21 @@ public class Robot
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
-		int objectPertinenceOverride = PlayerPrefs.GetInt( "ObjectPertinence", -1 );
+		int objectPertinenceOverride = OptionsScreen.GetObjectPertinenceTypeOverride();
 
 		if( objectPertinenceOverride >= 0 )
 		{
 			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
 			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
 		}
+
+		float objectPertinenceRangeOverride = OptionsScreen.GetObjectPertinenceRangeOverride();
+		if( objectPertinenceRangeOverride >= 0 )
+		{
+			objectPertinenceRange = objectPertinenceRangeOverride;
+			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
+		}
+
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
@@ -338,7 +353,7 @@ public class Robot
 
 	public void SetLiftHeight( float height )
 	{
-		Debug.Log( "Set Lift Height " + height );
+		//Debug.Log( "Set Lift Height " + height );
 		
 		U2G.SetLiftHeight message = new U2G.SetLiftHeight();
 		message.accel_rad_per_sec2 = 5f;

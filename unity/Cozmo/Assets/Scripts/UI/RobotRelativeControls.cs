@@ -274,7 +274,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			robotStartTurnFacing = robotFacing;
 			
 			verticalStick.AbsorbDoubleTap();
-			robot.DriveWheels(CozmoUtil.MAX_WHEEL_SPEED, -CozmoUtil.MAX_WHEEL_SPEED);
+			robot.DriveWheels(CozmoUtil.MAX_WHEEL_SPEED_MM, -CozmoUtil.MAX_WHEEL_SPEED_MM);
 			return;
 		}
 		
