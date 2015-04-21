@@ -8,7 +8,7 @@
 #include "osapi.h"
 #include "driver/uart.h"
 
-#define DEBUG_CLIENT
+//#define DEBUG_CLIENT
 
 #define NUM_RTX_BUFS 4
 static UDPPacket rtxbs[NUM_RTX_BUFS];
@@ -41,7 +41,6 @@ static void udpServerSentCB(void * arg)
 
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  char err = 0;
   client = (struct espconn *)arg;
 
 #ifdef DEBUG_CLIENT
@@ -131,7 +130,7 @@ void clientQueuePacket(UDPPacket* pkt)
 
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with udpServerSentCB
   err = espconn_sent(client, pkt->data, pkt->len);
-  if (err == ESPCONN_OK)
+  if (err >= 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
     pkt->state = PKT_BUF_QUEUED;
     // Append to queue

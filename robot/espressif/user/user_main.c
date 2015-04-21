@@ -30,7 +30,7 @@ user_init()
 
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
-    ap_config.channel = 7;
+    ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
 
@@ -53,7 +53,7 @@ user_init()
 
     // Setup Basestation client
     clientInit();
-    
+
     os_printf("user initalization complete\r\n");
 
 }

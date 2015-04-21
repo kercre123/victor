@@ -18,7 +18,7 @@ except:
     sys.stderr.write("Couldn't import python message definitions\r\n")
     sys.exit(1)
 
-CAMERA_FRAME_RATE = 10.0
+CAMERA_FRAME_RATE = 1.0
 RADIO_TICK_INTERVAL = 1.0/CAMERA_FRAME_RATE
 
 

@@ -188,7 +188,7 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  uart_tx_one_char(UART1, c);
+  uart_tx_one_char_no_wait(UART1, c);
 }
 
 /** Handles raw UART RX
@@ -250,7 +250,7 @@ LOCAL void handleUartRawRx(uint8 flag)
         outPkt = clientGetBuffer();
         if (outPkt == NULL)
         {
-          os_printf("WARN: No room for UART packet in radio queue\r\n");
+          os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
           phase = 0;
           break;
         }
@@ -264,7 +264,7 @@ LOCAL void handleUartRawRx(uint8 flag)
       case 7:
       {
         outPkt->data[outPkt->len++] = byte;
-        os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
+        //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
         if (outPkt->len >= (pktLen-1))
         {
           clientQueuePacket(outPkt);
@@ -278,6 +278,11 @@ LOCAL void handleUartRawRx(uint8 flag)
         phase = 0;
       }
     }
+  }
+
+  if (phase != 0) // In the middle of a packet
+  {
+    system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0); // Queue task to keep reading
   }
 }
 
