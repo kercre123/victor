@@ -111,8 +111,8 @@ namespace Anki {
           ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
           ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
           
-          ledParams_[i].state = LEDState_t::LED_STATE_ON;
           ledParams_[i].nextSwitchTime = 0; // force immediate upate
+          ledParams_[i].state = LEDState_t::LED_STATE_OFF;
         }
       }
       
