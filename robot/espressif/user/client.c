@@ -6,16 +6,9 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-
-//#define DEBUG_PRINT
-
-#ifdef DEBUG_PRINT
 #include "driver/uart.h"
-#define user_print(txt) uart0_tx_buffer(txt, os_strlen(txt))
-#else
-#define user_print(txt) //
-#endif
 
+//#define DEBUG_CLIENT
 
 #define NUM_RTX_BUFS 4
 static UDPPacket rtxbs[NUM_RTX_BUFS];
@@ -26,11 +19,11 @@ static struct espconn *client;
 static UDPPacket* queuedPacket; /// Packet that is queued to send
 static uint8 nextReserve; /// Index of next buffer to reserve
 
-static clientReceiveCB userRecvCB;
-
 static void udpServerSentCB(void * arg)
 {
-  user_print("udpServerSentCB\r\n");
+#ifdef DEBUG_CLIENT
+  os_printf("udpServerSentCB\n");
+#endif
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with clientQueuePacket
   if (queuedPacket != NULL)
   {
@@ -41,31 +34,30 @@ static void udpServerSentCB(void * arg)
   }
   else
   {
-    user_print("\tno queued packet!\r\n");
+    os_printf("WARN: udp sent callback with no packet queued\n");
   }
   os_intr_unlock();
 }
 
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  char err = 0;
   client = (struct espconn *)arg;
 
-  user_print("udpServerRecvCB\r\n");
+#ifdef DEBUG_CLIENT
+  os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+#endif
 
   espconn_regist_sentcb(client, udpServerSentCB);
 
-  userRecvCB(usrdata, len);
+  uartQueuePacket(usrdata, len);
 }
 
 
-sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
+sint8 ICACHE_FLASH_ATTR clientInit()
 {
   int8 err, i;
 
-  user_print("clientInit\r\n");
-
-  userRecvCB = recvFtn;
+  os_printf("clientInit\n");
 
   client = NULL;
 
@@ -84,18 +76,18 @@ sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
   err = espconn_regist_recvcb(udpServer, udpServerRecvCB);
   if (err != 0)
   {
-    user_print("Error registering callback\r\n");
+    os_printf("\tError registering callback %d\n", err);
     return err;
   }
 
   err = espconn_create(udpServer);
   if (err != 0)
   {
-    user_print("Error creating server\r\n");
+    os_printf("\tError creating server %d\n", err);
     return err;
   }
 
-  user_print("\tno error\r\n");
+  os_printf("\tno error\n");
   return ESPCONN_OK;
 }
 
@@ -103,7 +95,9 @@ sint8 ICACHE_FLASH_ATTR clientInit(clientReceiveCB recvFtn)
 UDPPacket* clientGetBuffer()
 {
   UDPPacket* ret = NULL;
-  user_print("clientGetBuffer\r\n");
+#ifdef DEBUG_CLIENT
+  os_printf("clientGetBuffer\n");
+#endif
 
   if (client != NULL)
   {
@@ -116,12 +110,10 @@ UDPPacket* clientGetBuffer()
     }
     os_intr_unlock();
   }
-#ifdef DEBUG_PRINT
+#ifdef DEBUG_CLIENT
   if (ret == NULL)
   {
-    char txt[200];
-    os_sprintf(txt, "\tfailed to reserve packet. nr=%d, [0]%x, [1]%x, [2]%x, [3]%x, qp=%x\r\n", nextReserve, rtxbs[0].state, rtxbs[1].state, rtxbs[2].state, rtxbs[3].state, queuedPacket);
-    user_print(txt);
+    os_printf("\tfailed to reserve packet. nr=%d, [0]%x, [1]%x, [2]%x, [3]%x, qp=%x\n", nextReserve, rtxbs[0].state, rtxbs[1].state, rtxbs[2].state, rtxbs[3].state, queuedPacket);
   }
 #endif
 
@@ -131,10 +123,14 @@ UDPPacket* clientGetBuffer()
 void clientQueuePacket(UDPPacket* pkt)
 {
   uint8 i;
-  user_print("clientQueuePacket\r\n");
+  int8 err;
+#ifdef DEBUG_CLIENT
+  os_printf("clientQueuePacket\n");
+#endif
 
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with udpServerSentCB
-  if (espconn_sent(client, pkt->data, pkt->len) == ESPCONN_OK)
+  err = espconn_sent(client, pkt->data, pkt->len);
+  if (err >= 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
     pkt->state = PKT_BUF_QUEUED;
     // Append to queue
@@ -151,7 +147,7 @@ void clientQueuePacket(UDPPacket* pkt)
   }
   else
   {
-    user_print("\tFailed to queue packet\r\n");
+    os_printf("Failed to queue UDP packet %d\n", err);
     pkt->state = PKT_BUF_AVAILABLE; // Relese the packet that failed to send
   }
   os_intr_unlock();
@@ -159,6 +155,8 @@ void clientQueuePacket(UDPPacket* pkt)
 
 void clientFreePacket(UDPPacket* pkt)
 {
-  user_print("clientFreePacker\r\n");
+#ifdef DEBUG_CLIENT
+  os_printf("clientFreePacket\n");
+#endif
   pkt->state = PKT_BUF_AVAILABLE;
 }

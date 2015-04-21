@@ -1,10 +1,34 @@
+/*
+ * File	: uart.h
+ * This file is part of Espressif's UART driver.
+ * Copyright (C) 2013 - 2016, Espressif Systems
+ *
+ * Modified for Anki use by Daniel Casner May 2015
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of version 3 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UART_APP_H
 #define UART_APP_H
 
 #include "uart_register.h"
+#include "eagle_soc.h"
+#include "c_types.h"
 
-#define RX_BUFF_SIZE    0x100
-#define TX_BUFF_SIZE    100
+#define UART0   0
+#define UART1   1
+
+// USER_TASK_PRIO_2 is the highest allowed user task priority
+#define uartTaskPrio USER_TASK_PRIO_0
 
 typedef enum {
     FIVE_BITS = 0x0,
@@ -14,34 +38,49 @@ typedef enum {
 } UartBitsNum4Char;
 
 typedef enum {
-    ONE_STOP_BIT             = 0,
-    ONE_HALF_STOP_BIT        = BIT2,
-    TWO_STOP_BIT             = BIT2
+    ONE_STOP_BIT             = 0x1,
+    ONE_HALF_STOP_BIT        = 0x2,
+    TWO_STOP_BIT             = 0x3
 } UartStopBitsNum;
 
 typedef enum {
-    NONE_BITS = 0,
-    ODD_BITS   = 0,
-    EVEN_BITS = BIT4
+    NONE_BITS = 0x2,
+    ODD_BITS   = 1,
+    EVEN_BITS = 0
 } UartParityMode;
 
 typedef enum {
     STICK_PARITY_DIS   = 0,
-    STICK_PARITY_EN    = BIT3 | BIT5
+    STICK_PARITY_EN    = 1
 } UartExistParity;
 
 typedef enum {
-    BIT_RATE_9600     = 9600,
-    BIT_RATE_19200   = 19200,
-    BIT_RATE_38400   = 38400,
-    BIT_RATE_57600   = 57600,
-    BIT_RATE_74880   = 74880,
+    UART_None_Inverse = 0x0,
+    UART_Rxd_Inverse = UART_RXD_INV,
+    UART_CTS_Inverse = UART_CTS_INV,
+    UART_Txd_Inverse = UART_TXD_INV,
+    UART_RTS_Inverse = UART_RTS_INV,
+} UART_LineLevelInverse;
+
+
+typedef enum {
+    BIT_RATE_300 = 300,
+    BIT_RATE_600 = 600,
+    BIT_RATE_1200 = 1200,
+    BIT_RATE_2400 = 2400,
+    BIT_RATE_4800 = 4800,
+    BIT_RATE_9600   = 9600,
+    BIT_RATE_19200  = 19200,
+    BIT_RATE_38400  = 38400,
+    BIT_RATE_57600  = 57600,
+    BIT_RATE_74880  = 74880,
     BIT_RATE_115200 = 115200,
     BIT_RATE_230400 = 230400,
     BIT_RATE_460800 = 460800,
     BIT_RATE_921600 = 921600,
-    BIT_RATE_1000000 = 1000000,
-    BIT_RATE_3000000 = 3000000,
+    BIT_RATE_1843200 = 1843200,
+    BIT_RATE_3000000 = 3000000, // Anki added
+    BIT_RATE_3686400 = 3686400,
 } UartBautRate;
 
 typedef enum {
@@ -49,6 +88,13 @@ typedef enum {
     HARDWARE_CTRL,
     XON_XOFF_CTRL
 } UartFlowCtrl;
+
+typedef enum {
+    USART_HardwareFlowControl_None = 0x0,
+    USART_HardwareFlowControl_RTS = 0x1,
+    USART_HardwareFlowControl_CTS = 0x2,
+    USART_HardwareFlowControl_CTS_RTS = 0x3
+} UART_HwFlowCtrl;
 
 typedef enum {
     EMPTY,
@@ -94,6 +140,34 @@ typedef struct {
 
 void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
 
-void uart0_tx_buffer(const uint8 *buf, uint16 len);
+/** Queue a UART packet for transmission
+ * @param data A pointer to the packet payload
+ * @param len The number of bytes of payload
+ */
+STATUS uartQueuePacket(uint8* data, uint16 len);
+
+///////////////////////////////////////
+#define UART_FIFO_LEN  128  //define the tx fifo length
+#define UART_TX_EMPTY_THRESH_VAL 0x10
+
+STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
+STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
+
+//==============================================
+#define FUNC_UART0_CTS 4
+#define FUNC_U0CTS     4
+#define FUNC_U1TXD_BK  2
+#define UART_LINE_INV_MASK  (0x3f<<19)
+void UART_SetWordLength(uint8 uart_no, UartBitsNum4Char len);
+void UART_SetStopBits(uint8 uart_no, UartStopBitsNum bit_num);
+void UART_SetLineInverse(uint8 uart_no, UART_LineLevelInverse inverse_mask);
+void UART_SetParity(uint8 uart_no, UartParityMode Parity_mode);
+void UART_SetBaudrate(uint8 uart_no,uint32 baud_rate);
+void UART_SetFlowCtrl(uint8 uart_no,UART_HwFlowCtrl flow_ctrl,uint8 rx_thresh);
+void UART_WaitTxFifoEmpty(uint8 uart_no , uint32 time_out_us); //do not use if tx flow control enabled
+void UART_ResetFifo(uint8 uart_no);
+void UART_ClearIntrStatus(uint8 uart_no,uint32 clr_mask);
+void UART_SetIntrEna(uint8 uart_no,uint32 ena_mask);
+//==============================================
 
 #endif
