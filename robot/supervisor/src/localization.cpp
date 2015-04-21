@@ -594,6 +594,7 @@ namespace Anki {
             // TODO: This is definitely not totally correct, but seems to be more
             //       right than not doing it, at least from what I can see from
             //       controlling it via the webots_keyboard_controller.
+            /*
             if (rDist * lDist >= 0) {
               // rDist and lDist are the same sign or at least one of them is zero
               f32 maxVal = MAX(ABS(lDist), ABS(rDist));
@@ -602,6 +603,7 @@ namespace Anki {
               }
               cDist = cDist * (1.f-SLIP_FACTOR) + (maxVal * SLIP_FACTOR);
             }
+             */
             
             // Get ICR offset from robot origin depending on carry state
             f32 driveCenterOffset = GetDriveCenterOffset();
@@ -616,13 +618,17 @@ namespace Anki {
               cTheta_meas = CLIP(cTheta_meas, cTheta, 0);
             }
             
+
+            /*
             // Assuming that the actual distance travelled is the expected distance
             // travelled (based on encoders) scaled by the
             // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
             // We only bother doing this if rotation is not too small.
-            if (ABS(cTheta_meas) > 0.001f) {
+            if (ABS(cTheta) > 0.003f) {
               cDist *= cTheta_meas / cTheta;
             }
+             */
+
             
             driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
             driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());

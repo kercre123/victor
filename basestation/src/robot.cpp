@@ -240,8 +240,7 @@ namespace Anki {
         jsonFile << json.toStyledString();
         jsonFile.close();
         
-        
-#if(1)
+#if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
         char stateMsgLine[512];
@@ -2227,11 +2226,12 @@ namespace Anki {
         }
         
         // Write image to file (recompressing as jpeg again!)
+        static u32 imgCounter = 0;
         char imgFilename[256];
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_img_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp());
+        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp(), imgCounter++);
         imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
@@ -2640,48 +2640,76 @@ namespace Anki {
     }
     
     
-    void Robot::SetDefaultLights(const u32 eye_left_color, const u32 eye_right_color)
+    void Robot::SetDefaultLights(const u32 color)
     {
       MessageSetDefaultLights m;
-      m.eye_left_color = eye_left_color;
-      m.eye_right_color = eye_right_color;
+      //m.eye_left_color = eye_left_color;
+      //m.eye_right_color = eye_right_color;
+      m.color = color;
       _msgHandler->SendMessage(GetID(), m);
     }
+      
+      
+    void Robot::SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
+    {
+      MessageSetBackpackLights msg;
+      msg.onColor = onColor;
+      msg.offColor = offColor;
+      msg.onPeriod_ms = onPeriod_ms;
+      msg.offPeriod_ms = offPeriod_ms;
+      msg.transitionOnPeriod_ms = transitionOnPeriod_ms;
+      msg.transitionOffPeriod_ms = transitionOffPeriod_ms;
+      
+      _msgHandler->SendMessage(GetID(), msg);
+    }
+    
+
     
       
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
       Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+     
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in the ACTIVE_OBJECT family in the world.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
       
       if(!object->IsActive()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d does not appear to be an active object.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       if(!object->IsIdentified()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d is active but has not been identified.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
-      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
-      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
       if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d could not be cast to an ActiveCube.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       return activeCube;
-    }
+    } // GetActiveObject()
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
-                                  const WhichLEDs whichLEDs,
-                                  const u32 color,
+                                  const WhichBlockLEDs whichLEDs,
+                                  const u32 onColor, const u32 offColor,
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                                   const bool turnOffUnspecifiedLEDs,
@@ -2693,12 +2721,15 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
-        activeCube->SetLEDs(whichLEDs, color, onPeriod_ms, offPeriod_ms,
+        
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
+        const WhichBlockLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
+                                                                                      relativeToPoint,
+                                                                                      makeRelative);
+        
+        activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
-        if(makeRelative) {
-          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
-        }
         
         MessageSetBlockLights m;
         activeCube->FillMessage(m);
@@ -2739,11 +2770,11 @@ namespace Anki {
         anyFailures = true;
       }
       
-      if(SendAbortDocking() != RESULT_OK) {
+      if(AbortDocking() != RESULT_OK) {
         anyFailures = true;
       }
       
-      if(SendAbortAnimation() != RESULT_OK) {
+      if(AbortAnimation() != RESULT_OK) {
         anyFailures = true;
       }
       
@@ -2753,6 +2784,16 @@ namespace Anki {
         return RESULT_OK;
       }
       
+    }
+      
+    Result Robot::AbortDocking()
+    {
+      return SendAbortDocking();
+    }
+      
+    Result Robot::AbortAnimation()
+    {
+      return SendAbortAnimation();
     }
     
     Result Robot::SendAbortAnimation()
@@ -2796,7 +2837,7 @@ namespace Anki {
     }
        */
       
-    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 color,
+    Result Robot::SendSetObjectLights(const ObjectID& objectID, const u32 onColor, const u32 offColor,
                                       const u32 onPeriod_ms, const u32 offPeriod_ms)
     {
       PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Deprecated.\n");
@@ -2825,7 +2866,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      activeCube->SetLEDs(ActiveCube::WhichLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      activeCube->SetLEDs(ActiveCube::WhichBlockLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
       
       return SendSetObjectLights(activeCube);
       */

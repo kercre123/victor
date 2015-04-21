@@ -39,12 +39,16 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        const f32 DOCK_PATH_START_RADIUS_MM = 50;
-        const f32 DOCK_PATH_END_RADIUS_MM = 100;
+        f32 DOCK_PATH_START_RADIUS_MM = 25;
+        f32 DOCK_PATH_END_RADIUS_MM = 40;
+        
+        // Set of radii to try when generating Dubins path to marker
+        const u8 NUM_END_RADII = 3;
+        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, 25};
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 35;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 40;
 
         //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
@@ -60,7 +64,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 30;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 20;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -137,7 +141,14 @@ namespace Anki {
         f32 lastMarkerDistX_ = 0.f;
         f32 lastMarkerDistY_ = 0.f;
         f32 lastMarkerAng_ = 0.f;
+
+        // Remember the last marker pose that was fully within the
+        // field of view of the camera.
+        Anki::Embedded::Pose2d lastMarkerPoseObservedInValidFOV_;
         
+        // If the marker is out of field of view, we will continue
+        // to traverse the path that was generated from that last good error signal.
+        bool markerOutOfFOV_ = false;
       } // "private" namespace
       
       bool IsBusy()
@@ -149,6 +160,67 @@ namespace Anki {
       {
         return success_;
       }
+      
+      
+      // Returns true if the last known pose of the marker is fully within
+      // the horizontal field of view of the camera.
+      bool IsMarkerInFOV(const Anki::Embedded::Pose2d &markerPose, const f32 markerWidth)
+      {
+        // Half fov of camera at center horizontal.
+        // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
+        const f32 HALF_FOV = MIN(0.5*VisionSystem::GetHorizontalFOV(), 0.36);
+        
+        const f32 markerCenterX = markerPose.GetX();
+        const f32 markerCenterY = markerPose.GetY();
+        
+        // Get current robot pose
+        f32 x,y;
+        Radians angle;
+        Localization::GetCurrentMatPose(x, y, angle);
+        
+        // Get angle field of view edges
+        Radians leftEdge = angle + HALF_FOV;
+        Radians rightEdge = angle - HALF_FOV;
+        
+        // Compute angle to marker from robot
+        Radians angleToMarkerCenter = atan2_fast(markerCenterY - y, markerCenterX - x);
+        
+        // Compute coordinates of marker edges
+        // (For now, assuming marker faces the robot.)
+        // TODO: Use marker
+        Radians angleToMarkerEdgeFromCenter = angleToMarkerCenter + PIDIV2_F;
+        
+        f32 markerLeftEdgeX = markerCenterX + 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerLeftEdgeY = markerCenterY + 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerRightEdgeX = markerCenterX - 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerRightEdgeY = markerCenterY - 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
+        
+        // Compute angle to marker edges from the robot
+        Radians angleToMarkerLeftEdge = atan2_fast(markerLeftEdgeY - y, markerLeftEdgeX - x);
+        Radians angleToMarkerRightEdge = atan2_fast(markerRightEdgeY - y, markerRightEdgeX - x);
+        
+        // Check if either of the edges is outside of the fov
+        f32 leftDiff = (leftEdge - angleToMarkerLeftEdge).ToFloat();
+        f32 rightDiff = (rightEdge - angleToMarkerLeftEdge).ToFloat();
+
+        // If leftDiff and rightDiff have same sign,
+        // then marker left edge is outside field of view
+        if (leftDiff * rightDiff > 0) {
+          return false;
+        }
+
+        leftDiff = (leftEdge - angleToMarkerRightEdge).ToFloat();
+        rightDiff = (rightEdge - angleToMarkerRightEdge).ToFloat();
+        
+        // If leftDiff and rightDiff have same sign,
+        // then marker right edge is outside field of view
+        if (leftDiff * rightDiff > 0) {
+          return false;
+        }
+        
+        return true;
+      }
+      
       
       Result SendGoalPoseMessage(const Anki::Embedded::Pose2d &p)
       {
@@ -251,7 +323,9 @@ namespace Anki {
                 ((pointOfNoReturnDistMM_ != 0) &&
                 (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
                 (mode_ == APPROACH_FOR_DOCK))) {
+#if(DEBUG_DOCK_CONTROLLER)
               PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+#endif
               pastPointOfNoReturn_ = true;
               
               // Since we're ignoring docking error signals from hereon, just set the lift to final height.
@@ -362,7 +436,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if ((!trackingOnly_) && (!pastPointOfNoReturn_)) {
+          if ((!trackingOnly_) && (!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -374,6 +448,21 @@ namespace Anki {
         } // while dockErrSignalMailbox has mail
 
         
+        
+        // Check if the pose of the marker that was in field of view should
+        // again be in field of view.
+        if (markerOutOfFOV_) {
+          // Marker has been outside field of view.
+          // Check if it should be visible again.
+          if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, 25.f)) {
+            PRINT("Marker should be in FOV\n");
+            // Fake the error signal received timestamp to reset the timeout
+            lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            markerOutOfFOV_ = false;
+          }
+        }
+        
+        
         Result retVal = RESULT_OK;
         
         switch(mode_)
@@ -383,6 +472,7 @@ namespace Anki {
           case LOOKING_FOR_BLOCK:
             
             if ((!pastPointOfNoReturn_)
+                && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
@@ -395,6 +485,7 @@ namespace Anki {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
+                && !markerOutOfFOV_
                 && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -478,9 +569,6 @@ namespace Anki {
           followingBlockNormalPath_ = false;
         }
         
-        // Clear current path
-        PathFollower::ClearPath();
-        
         // Create new path that is aligned with the normal of the block we want to dock to.
         // End point: Where the robot origin should be by the time the robot has docked.
         // Start point: Projected from end point at specified rad.
@@ -535,6 +623,28 @@ namespace Anki {
         blockPose_.angle = histPose.angle + rel_rad;
 
         
+        // Field of view check
+        if (!markerOutOfFOV_) {
+          // Marker has been in field of view.
+          // If it escapes, remember the last known pose of the marker.
+          if (PathFollower::IsTraversingPath() && !IsMarkerInFOV(blockPose_, 25.f)) {
+            PRINT("Marker signal is OUTSIDE FOV\n");
+            markerOutOfFOV_ = true;
+            lastMarkerPoseObservedInValidFOV_ = blockPose_;
+            return;
+          }
+        } else {
+          // Marker has been outside field of view,
+          // but the latest error signal may indicate that it is back in.
+          if (IsMarkerInFOV(blockPose_, 25.f)) {
+            PRINT("Marker signal is INSIDE FOV\n");
+            markerOutOfFOV_ = false;
+          }
+          //PRINT("Marker is expected to be out of FOV. Ignoring error signal\n");
+          return;
+        }
+
+        
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Rotate block so that it is parallel with approach start pose
         f32 rel_blockAngle = rel_rad - approachPath_dOrientation;
@@ -566,20 +676,48 @@ namespace Anki {
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
         
         
+
+        s8 endRadiiIdx = -1;
         f32 path_length;
-        u8 numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
-                                                              approachStartPose_.y(),
-                                                              approachStartPose_.angle.ToFloat(),
-                                                              dockPose_.x(),
-                                                              dockPose_.y(),
-                                                              dockPose_.angle.ToFloat(),
-                                                              DOCK_PATH_START_RADIUS_MM,
-                                                              DOCK_PATH_END_RADIUS_MM,
-                                                              DOCK_APPROACH_SPEED_MMPS,
-                                                              DOCK_APPROACH_ACCEL_MMPS2,
-                                                              DOCK_APPROACH_DECEL_MMPS2,
-                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
-                                                              &path_length);
+        u8 numPathSegments;
+        f32 maxSegmentSweepRad = 0;
+        do {
+          // Clear current path
+          PathFollower::ClearPath();
+         
+          if (++endRadiiIdx == NUM_END_RADII) {
+            //PRINT("Could not generate Dubins path\n");
+            followingBlockNormalPath_ = true;
+            break;
+          }
+          
+          numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
+                                                             approachStartPose_.y(),
+                                                             approachStartPose_.angle.ToFloat(),
+                                                             dockPose_.x(),
+                                                             dockPose_.y(),
+                                                             dockPose_.angle.ToFloat(),
+                                                             DOCK_PATH_START_RADIUS_MM,
+                                                             DOCK_PATH_END_RADII_MM[endRadiiIdx],
+                                                             DOCK_APPROACH_SPEED_MMPS,
+                                                             DOCK_APPROACH_ACCEL_MMPS2,
+                                                             DOCK_APPROACH_DECEL_MMPS2,
+                                                             FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
+                                                             &path_length);
+          
+          // Check if any of the arcs sweep an angle larger than PIDIV2
+          maxSegmentSweepRad = 0;
+          const Planning::Path& path = PathFollower::GetPath();
+          for (u8 s=0; s< numPathSegments; ++s) {
+            if (path.GetSegmentConstRef(s).GetType() == Planning::PST_ARC) {
+              f32 segSweepRad = ABS(path.GetSegmentConstRef(s).GetDef().arc.sweepRad);
+              if (segSweepRad > maxSegmentSweepRad) {
+                maxSegmentSweepRad = segSweepRad;
+              }
+            }
+          }
+          
+        } while (numPathSegments == 0 || maxSegmentSweepRad + 0.01f >= PIDIV2_F);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
         //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);
@@ -588,7 +726,7 @@ namespace Anki {
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
-        if (numPathSegments == 0 || path_length > 2 * distToBlock || followingBlockNormalPath_) {
+        if (followingBlockNormalPath_) {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -598,8 +736,7 @@ namespace Anki {
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
-          
-          followingBlockNormalPath_ = true;
+
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
@@ -700,6 +837,7 @@ namespace Anki {
         pointOfNoReturnDistMM_ = 0;
         pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
+        markerOutOfFOV_ = false;
         success_ = false;
       }
       

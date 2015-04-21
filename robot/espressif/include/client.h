@@ -30,17 +30,10 @@ typedef struct UDPPacket
   UDPPacketState state; ///< Used internally to this module @warning do not modify
 } UDPPacket;
 
-/** Callback type for data received by client
- * @param data The packet data
- * @param len The number of bytes of data received
- */
-typedef void (* clientReceiveCB)(uint8* data, uint16 len);
-
 /** Initalize the client connection
- * @param recvFtn Callback function for receiving packets
  * @return 0 for okay or non-zero on error
  */
-sint8 clientInit(clientReceiveCB recvFtn);
+sint8 clientInit();
 
 /** Get a packet buffer for writing
  * @return A pointer to a UDPPacket buffer for sending or NULL if none available. If a packet is provided, the packet

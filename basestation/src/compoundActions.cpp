@@ -98,6 +98,19 @@ namespace Anki {
       return false;
     }
 
+    
+    void ICompoundAction::Cleanup(Robot& robot)
+    {
+      for(auto action : _actions) {
+        // Call any actions' Cancel() method if they aren't done
+        const bool isDone = action.first;
+        if(!isDone) {
+          action.second->Cleanup(robot);
+          action.first = true;
+        }
+      }
+    }
+    
 #pragma mark ---- CompoundActionSequential ----
     
     CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
@@ -116,7 +129,7 @@ namespace Anki {
       _currentActionPair = _actions.begin();
     }
     
-    IAction::ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
     {
       SetStatus(GetName());
       
@@ -135,7 +148,7 @@ namespace Anki {
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
-            case SUCCESS:
+            case ActionResult::SUCCESS:
             {
               // Finished the current action, move ahead to the next
               isDone = true; // mark as done (not strictly necessary)
@@ -151,30 +164,31 @@ namespace Anki {
               // if that was the last action, we're done
               if(_currentActionPair == _actions.end()) {
 #             if USE_ACTION_CALLBACKS
-                RunCallbacks(SUCCESS);
+                RunCallbacks(ActionResult::SUCCESS);
 #             endif
-                return SUCCESS;
+                return ActionResult::SUCCESS;
               }
               
               // Otherwise, we are still running
-              return RUNNING;
+              return ActionResult::RUNNING;
             }
               
-            case FAILURE_RETRY:
+            case ActionResult::FAILURE_RETRY:
               // A constituent action failed . Reset all the constituent actions
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.Retrying",
                                  "%s triggered retry.\n", currentAction->GetName().c_str());
                 Reset();
-                return RUNNING;
+                return ActionResult::RUNNING;
               }
               // No retries remaining. Fall through:
               
-            case RUNNING:
-            case FAILURE_ABORT:
-            case FAILURE_TIMEOUT:
-            case FAILURE_PROCEED:
+            case ActionResult::RUNNING:
+            case ActionResult::FAILURE_ABORT:
+            case ActionResult::FAILURE_TIMEOUT:
+            case ActionResult::FAILURE_PROCEED:
+            case ActionResult::CANCELLED:
 #           if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
 #           endif
@@ -182,16 +196,16 @@ namespace Anki {
               
           } // switch(result)
         } else {
-          return RUNNING;
+          return ActionResult::RUNNING;
         } // if/else waitUntilTime
       } // if currentAction != actions.end()
       
       // Shouldn't normally get here, but this means we've completed everything
       // and are done
-      return SUCCESS;
+      return ActionResult::SUCCESS;
       
     } // CompoundActionSequential::Update()
-    
+
     
 #pragma mark ---- CompoundActionParallel ----
     
@@ -201,12 +215,12 @@ namespace Anki {
       
     }
     
-    IAction::ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
+    ActionResult CompoundActionParallel::UpdateInternal(Robot& robot)
     {
       // Return success unless we encounter anything still running or failed in loop below.
       // Note that we will return SUCCESS on the call following the one where the
       // last action actually finishes.
-      ActionResult result = SUCCESS;
+      ActionResult result = ActionResult::SUCCESS;
       
       SetStatus(GetName());
       
@@ -221,29 +235,29 @@ namespace Anki {
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
-            case SUCCESS:
+            case ActionResult::SUCCESS:
               // Just finished this action, mark it as done
               isDone = true;
               break;
               
-            case RUNNING:
+            case ActionResult::RUNNING:
               // If any action is still running the group is still running
-              result = RUNNING;
+              result = ActionResult::RUNNING;
               break;
               
-            case FAILURE_RETRY:
+            case ActionResult::FAILURE_RETRY:
               // If any retries are left, reset the group and try again.
               if(RetriesRemain()) {
                 PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
                                  "%s triggered retry.\n", currentAction->GetName().c_str());
                 Reset();
-                return RUNNING;
+                return ActionResult::RUNNING;
               }
               
               // If not, just fall through to other failure handlers:
-            case FAILURE_ABORT:
-            case FAILURE_PROCEED:
-            case FAILURE_TIMEOUT:
+            case ActionResult::FAILURE_ABORT:
+            case ActionResult::FAILURE_PROCEED:
+            case ActionResult::FAILURE_TIMEOUT:
               // Return failure, aborting updating remaining actions the group
 #             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
@@ -253,7 +267,7 @@ namespace Anki {
             default:
               PRINT_NAMED_ERROR("CompoundActionParallel.Update.UnknownResultCase", "\n");
               assert(false);
-              return FAILURE_ABORT;
+              return ActionResult::FAILURE_ABORT;
               
           } // switch(subResult)
           
@@ -261,7 +275,7 @@ namespace Anki {
       } // for each action in the group
       
 #     if USE_ACTION_CALLBACKS
-      if(result != RUNNING) {
+      if(result != ActionResult::RUNNING) {
         RunCallbacks(result);
       }
 #     endif

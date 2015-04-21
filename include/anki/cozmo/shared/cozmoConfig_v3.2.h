@@ -27,7 +27,7 @@ namespace Anki {
     // located for the treaded robot when not carrying a block.
     // (If you were to model the treaded robot as a two-wheel robot,
     // the drive center is the location between the two wheels)
-    const f32 DRIVE_CENTER_OFFSET = -22.f;
+    const f32 DRIVE_CENTER_OFFSET = -15.f;
 
     // The height of the lift (specifically upper wrist joint) at various configurations
     // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -43,7 +43,7 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 17.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 13.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
 
