@@ -432,9 +432,9 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual s32 GetType() const override { return ACTION_TRAVERSE_OBJECT; }
       
-      virtual void Cancel(Robot& robot) override {
+      virtual void Cleanup(Robot& robot) override {
         if(_chosenAction != nullptr) {
-          _chosenAction->Cancel(robot);
+          _chosenAction->Cleanup(robot);
         }
       }
       
@@ -480,6 +480,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
       //AnimationID_t _animID;
       std::string   _animName;

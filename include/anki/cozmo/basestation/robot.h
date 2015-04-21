@@ -480,6 +480,11 @@ namespace Anki {
       // TODO: Probably need a more elegant way of doing this.
       Result AbortAll();
       
+      // Abort things individual
+      // NOTE: Use ClearPath() above to abort a path
+      Result AbortAnimation();
+      Result AbortDocking(); // a.k.a. PickAndPlace
+      
     protected:
       
       // The robot's identifier

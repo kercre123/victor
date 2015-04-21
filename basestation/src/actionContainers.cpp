@@ -139,17 +139,12 @@ namespace Anki {
 
     void ActionQueue::Cancel(Robot &robot, s32 withType)
     {
-      for(auto actionIter = _queue.begin(); actionIter != _queue.end(); )
+      for(auto action : _queue)
       {
-        IActionRunner* action = _queue.front();
         CORETECH_ASSERT(action != nullptr);
         
         if(withType == -1 || action->GetType() == withType) {
           action->Cancel(robot);
-          delete action;
-          actionIter = _queue.erase(actionIter);
-        } else {
-          ++actionIter;
         }
       }
     }

@@ -1000,6 +1000,14 @@ namespace Anki {
       
       // Also return the robot's head to level
       robot.MoveHeadToAngle(0, 2.f, 6.f);
+      
+      // Abort anything that shouldn't still be running
+      if(robot.IsTraversingPath()) {
+        robot.ClearPath();
+      }
+      if(robot.IsPickingOrPlacing()) {
+        robot.AbortDocking();
+      }
     }
     
 #pragma mark ---- PickAndPlaceObjectAction ----
@@ -1563,6 +1571,14 @@ namespace Anki {
         return RUNNING;
       } else {
         return SUCCESS;
+      }
+    }
+    
+    void PlayAnimationAction::Cleanup(Robot& robot)
+    {
+      // Abort anything that shouldn't still be running
+      if(robot.IsAnimating()) {
+        robot.AbortAnimation();
       }
     }
     

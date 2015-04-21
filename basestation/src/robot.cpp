@@ -2761,11 +2761,11 @@ namespace Anki {
         anyFailures = true;
       }
       
-      if(SendAbortDocking() != RESULT_OK) {
+      if(AbortDocking() != RESULT_OK) {
         anyFailures = true;
       }
       
-      if(SendAbortAnimation() != RESULT_OK) {
+      if(AbortAnimation() != RESULT_OK) {
         anyFailures = true;
       }
       
@@ -2775,6 +2775,16 @@ namespace Anki {
         return RESULT_OK;
       }
       
+    }
+      
+    Result Robot::AbortDocking()
+    {
+      return SendAbortDocking();
+    }
+      
+    Result Robot::AbortAnimation()
+    {
+      return SendAbortAnimation();
     }
     
     Result Robot::SendAbortAnimation()

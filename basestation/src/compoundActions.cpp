@@ -99,11 +99,13 @@ namespace Anki {
     }
 
     
-    void ICompoundAction::Cancel(Robot& robot)
+    void ICompoundAction::Cleanup(Robot& robot)
     {
       for(auto action : _actions) {
-        if(action.first == false) {
-          action.second->Cancel(robot);
+        // Call any actions' Cancel() method if they aren't done
+        const bool isDone = action.first;
+        if(!isDone) {
+          action.second->Cleanup(robot);
           action.first = true;
         }
       }

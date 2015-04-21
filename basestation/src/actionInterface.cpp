@@ -26,6 +26,7 @@ namespace Anki {
     : _numRetriesRemaining(0)
     , _isPartOfCompoundAction(false)
     , _isRunning(false)
+    , _isCancelled(false)
     {
       
     }
@@ -43,13 +44,23 @@ namespace Anki {
         
         _isRunning = true;
       }
-      
-      ActionResult result = UpdateInternal(robot);
+
+      ActionResult result = RUNNING;
+      if(_isCancelled) {
+        PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
+                         "Cancelling %s.\n", GetName().c_str());
+        result = CANCELLED;
+        
+      } else {
+        result = UpdateInternal(robot);
+      }
       
       if(result != RUNNING) {
         PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
                          "%s completed %s.\n", GetName().c_str(),
                          (result==SUCCESS ? "successfully" : "but failed"));
+        
+        Cleanup(robot);
         
         if(!_isPartOfCompoundAction) {
           // Notify any listeners about this action's completion.
@@ -188,23 +199,16 @@ namespace Anki {
         Reset();
         result = RUNNING;
       }
-      
+
+#     if USE_ACTION_CALLBACKS
       if(result != RUNNING) {
-        // Success or fail, this action is done, so perform any cleanup required.
-        Cleanup(robot);
-        
-#       if USE_ACTION_CALLBACKS
         RunCallbacks(result);
-#       endif
       }
+#     endif
       
       return result;
     } // UpdateInternal()
     
-    void IAction::Cancel(Robot& robot)
-    {
-      Cleanup(robot);
-    }
     
   } // namespace Cozmo
 } // namespace Anki
