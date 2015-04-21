@@ -562,7 +562,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      robot->GetActionList().Cancel(*robot, -1, msg.actionType);
+      robot->GetActionList().Cancel(*robot, -1, (RobotActionType)msg.actionType);
     }
   }
   

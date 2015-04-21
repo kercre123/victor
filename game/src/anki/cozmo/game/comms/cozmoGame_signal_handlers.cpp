@@ -121,16 +121,16 @@ namespace Cozmo {
     _signalHandles.emplace_back( CozmoEngineSignals::RobotImageChunkAvailableSignal().ScopedSubscribe(cbRobotImageChunkAvailable));
     
     auto cbRobotCompletedAction = [this](RobotID_t robotID,
-                                         int32_t actionType,
+                                         RobotActionType actionType,
+                                         ActionResult result,
                                          int32_t objectID0,
                                          int32_t objectID1,
                                          int32_t objectID2,
                                          int32_t objectID3,
                                          int32_t objectID4,
-                                         uint8_t numObjects,
-                                         uint8_t success) {
-      this->HandleRobotCompletedAction(robotID, actionType, objectID0, objectID1, objectID2,
-                                       objectID3, objectID4, numObjects, success);
+                                         uint8_t numObjects) {
+      this->HandleRobotCompletedAction(robotID, actionType, result, objectID0, objectID1, objectID2,
+                                       objectID3, objectID4, numObjects);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
@@ -394,17 +394,17 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, int32_t actionType,
+  void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, RobotActionType actionType,
+                                                 ActionResult result,
                                                  int32_t objectID0, int32_t objectID1,
                                                  int32_t objectID2, int32_t objectID3,
-                                                 int32_t objectID4, uint8_t numObjects,
-                                                 uint8_t success)
+                                                 int32_t objectID4, uint8_t numObjects)
   {
     G2U::RobotCompletedAction msg;
   
     msg.robotID = robotID;
-    msg.actionType = actionType;
-    msg.success = success;
+    msg.actionType = (s32)actionType;
+    msg.success = (s32)result;
     
     msg.objectIDs[0] = objectID0;
     msg.objectIDs[1] = objectID1;
