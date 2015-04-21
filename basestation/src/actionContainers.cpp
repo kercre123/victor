@@ -143,7 +143,7 @@ namespace Anki {
       {
         CORETECH_ASSERT(action != nullptr);
         
-        if(withType == RobotActionType::ACTION_UNKNOWN || action->GetType() == withType) {
+        if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
           action->Cancel(robot);
         }
       }

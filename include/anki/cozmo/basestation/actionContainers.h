@@ -51,7 +51,7 @@ namespace Anki {
       // Blindly clear the queue
       void     Clear();
       
-      void     Cancel(Robot& robot, RobotActionType withType = RobotActionType::ACTION_UNKNOWN);
+      void     Cancel(Robot& robot, RobotActionType withType = RobotActionType::UNKNOWN);
       
       bool     IsEmpty() const { return _queue.empty(); }
       
@@ -99,7 +99,7 @@ namespace Anki {
       // does any cleanup specified by the action's Cancel/Cleanup methods.
       // (Use -1 for each to specify "all".)
       void       Cancel(Robot& robot, SlotHandle fromSlot = -1,
-                        RobotActionType withType = RobotActionType::ACTION_UNKNOWN);
+                        RobotActionType withType = RobotActionType::UNKNOWN);
       
       void       Print() const;
       

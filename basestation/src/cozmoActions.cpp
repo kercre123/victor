@@ -1029,21 +1029,21 @@ namespace Anki {
       switch(_dockAction)
       {
         case DA_PICKUP_HIGH:
-          return RobotActionType::ACTION_PICKUP_OBJECT_HIGH;
+          return RobotActionType::PICKUP_OBJECT_HIGH;
           
         case DA_PICKUP_LOW:
-          return RobotActionType::ACTION_PICKUP_OBJECT_LOW;
+          return RobotActionType::PICKUP_OBJECT_LOW;
           
         case DA_PLACE_HIGH:
-          return RobotActionType::ACTION_PLACE_OBJECT_HIGH;
+          return RobotActionType::PLACE_OBJECT_HIGH;
           
         case DA_PLACE_LOW:
-          return RobotActionType::ACTION_PLACE_OBJECT_LOW;
+          return RobotActionType::PLACE_OBJECT_LOW;
           
         default:
           PRINT_NAMED_WARNING("PickAndPlaceObjectAction.GetType",
                               "Dock action not set before determining action type.\n");
-          return RobotActionType::ACTION_PICK_AND_PLACE_INCOMPLETE;
+          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
       }
     }
     

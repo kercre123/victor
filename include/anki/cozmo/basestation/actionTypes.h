@@ -19,27 +19,27 @@ namespace Anki {
 namespace Cozmo {
   
   enum class RobotActionType : s32 {
-    ACTION_COMPOUND = -2,
-    ACTION_UNKNOWN = -1,
-    ACTION_DRIVE_TO_POSE,
-    ACTION_DRIVE_TO_OBJECT,
-    ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT,
-    ACTION_TURN_IN_PLACE,
-    ACTION_MOVE_HEAD_TO_ANGLE,
-    ACTION_PICKUP_OBJECT_LOW,         // Possible type of PickAndPlaceAction
-    ACTION_PICKUP_OBJECT_HIGH,        //   "
-    ACTION_PLACE_OBJECT_LOW,          //   "
-    ACTION_PLACE_OBJECT_HIGH,         //   "
-    ACTION_PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
-    ACTION_CROSS_BRIDGE,
-    ACTION_ASCEND_OR_DESCEND_RAMP,
-    ACTION_TRAVERSE_OBJECT,
-    ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT,
-    ACTION_FACE_OBJECT,
-    ACTION_VISUALLY_VERIFY_OBJECT,
-    ACTION_PLAY_ANIMATION,
-    ACTION_PLAY_SOUND,
-    ACTION_WAIT
+    COMPOUND = -2,
+    UNKNOWN = -1,
+    DRIVE_TO_POSE,
+    DRIVE_TO_OBJECT,
+    DRIVE_TO_PLACE_CARRIED_OBJECT,
+    TURN_IN_PLACE,
+    MOVE_HEAD_TO_ANGLE,
+    PICKUP_OBJECT_LOW,         // Possible type of PickAndPlaceAction
+    PICKUP_OBJECT_HIGH,        //   "
+    PLACE_OBJECT_LOW,          //   "
+    PLACE_OBJECT_HIGH,         //   "
+    PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
+    CROSS_BRIDGE,
+    ASCEND_OR_DESCEND_RAMP,
+    TRAVERSE_OBJECT,
+    DRIVE_TO_AND_TRAVERSE_OBJECT,
+    FACE_OBJECT,
+    VISUALLY_VERIFY_OBJECT,
+    PLAY_ANIMATION,
+    PLAY_SOUND,
+    WAIT
   };
   
   enum class ActionResult : s32 {

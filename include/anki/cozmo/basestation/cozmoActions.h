@@ -45,7 +45,7 @@ namespace Anki {
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_POSE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
     protected:
 
@@ -85,7 +85,7 @@ namespace Anki {
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
       
     protected:
       
@@ -107,7 +107,7 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT; }
       
     protected:
       
@@ -126,7 +126,7 @@ namespace Anki {
       TurnInPlaceAction(const Radians& angle);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_TURN_IN_PLACE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
     protected:
       
@@ -143,7 +143,7 @@ namespace Anki {
       MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_MOVE_HEAD_TO_ANGLE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
     protected:
       
@@ -175,7 +175,7 @@ namespace Anki {
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_FACE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
       
     protected:
       
@@ -215,7 +215,7 @@ namespace Anki {
                                  Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_VISUALLY_VERIFY_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
       
     protected:
       
@@ -343,7 +343,7 @@ namespace Anki {
       PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLACE_OBJECT_LOW; }
+      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
     protected:
       
@@ -371,7 +371,7 @@ namespace Anki {
         
       }
       
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLACE_OBJECT_LOW; }
+      virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
     };
     
     class CrossBridgeAction : public IDockAction
@@ -380,7 +380,7 @@ namespace Anki {
       CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_CROSS_BRIDGE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
       
     protected:
       
@@ -404,7 +404,7 @@ namespace Anki {
       AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_ASCEND_OR_DESCEND_RAMP; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
       
     protected:
       
@@ -430,7 +430,7 @@ namespace Anki {
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_TRAVERSE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
       
       virtual void Cleanup(Robot& robot) override {
         if(_chosenAction != nullptr) {
@@ -463,7 +463,7 @@ namespace Anki {
         
       }
       
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
     };
     
@@ -474,7 +474,7 @@ namespace Anki {
       PlayAnimationAction(const std::string& animName);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLAY_ANIMATION; }
+      virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
       
     protected:
       
@@ -495,7 +495,7 @@ namespace Anki {
       PlaySoundAction(const std::string& soundName);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLAY_SOUND; }
+      virtual RobotActionType GetType() const override { return RobotActionType::PLAY_SOUND; }
       
     protected:
       
@@ -515,7 +515,7 @@ namespace Anki {
       WaitAction(f32 waitTimeInSeconds);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_WAIT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::WAIT; }
       
     protected:
       
