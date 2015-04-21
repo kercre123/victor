@@ -9,7 +9,7 @@
 
 #ifdef DEBUG_UART
 // Use the head debug cable UART
-#define BAUDRATE 2900000 // Ask for this to actually get 3e6
+#define BAUDRATE 115200 // Ask for this to actually get 3e6
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -153,7 +153,7 @@ namespace Anki
         USART_Cmd(UART, DISABLE);
         USART_InitStructure.USART_BaudRate = BAUDRATE;
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_StopBits = USART_StopBits_2;
         USART_InitStructure.USART_Parity = USART_Parity_No;
         USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;

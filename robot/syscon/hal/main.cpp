@@ -139,11 +139,12 @@ int main(void)
   // Motor testing, loop forever
   nrf_gpio_pin_clear(PIN_LED1);
   nrf_gpio_pin_set(PIN_LED2);
+	MicroWait(2000000);
   while (1)
   {
 		#ifdef DO_FIXED_DISTANCE_TESTING
 			MicroWait(3000000);
-			while(MotorGetPosition(0) <= 16384) // go 0.25m
+			while(DebugWheelsGetTicks(0) <= 3987) // go 0.25m
 			{
 				MotorsSetPower(0, 0x2000);
 				MotorsSetPower(1, 0x2000);    
@@ -158,7 +159,7 @@ int main(void)
 			MotorsUpdate();
 			
 			MicroWait(3000000);
-			while(MotorGetPosition(0) >= 0) // go back 0.25m
+			while(DebugWheelsGetTicks(0) >= 0) // go back 0.25m
 			{
 				MotorsSetPower(0, -0x2000);
 				MotorsSetPower(1, -0x2000);    

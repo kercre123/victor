@@ -26,6 +26,7 @@ namespace Anki {
     : _numRetriesRemaining(0)
     , _isPartOfCompoundAction(false)
     , _isRunning(false)
+    , _isCancelled(false)
     {
       
     }
@@ -33,7 +34,7 @@ namespace Anki {
     // NOTE: THere should be no way for Update() to fail independently of its
     // call to UpdateInternal(). Otherwise, there's a possibility for an
     // IAction's Cleanup() method not be called on failure.
-    IActionRunner::ActionResult IActionRunner::Update(Robot& robot)
+    ActionResult IActionRunner::Update(Robot& robot)
     {
       if(!_isRunning && !_isPartOfCompoundAction) {
         // When the ActionRunner first starts, lock any specified subsystems
@@ -43,20 +44,30 @@ namespace Anki {
         
         _isRunning = true;
       }
+
+      ActionResult result = ActionResult::RUNNING;
+      if(_isCancelled) {
+        PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
+                         "Cancelling %s.\n", GetName().c_str());
+        result = ActionResult::CANCELLED;
+        
+      } else {
+        result = UpdateInternal(robot);
+      }
       
-      ActionResult result = UpdateInternal(robot);
-      
-      if(result != RUNNING) {
+      if(result != ActionResult::RUNNING) {
         PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
                          "%s completed %s.\n", GetName().c_str(),
-                         (result==SUCCESS ? "successfully" : "but failed"));
+                         (result==ActionResult::SUCCESS ? "successfully" : "but failed"));
+        
+        Cleanup(robot);
         
         if(!_isPartOfCompoundAction) {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
-          EmitCompletionSignal(robot, result==SUCCESS);
+          EmitCompletionSignal(robot, result);
           
           // Action is done, always completely unlock the robot
           robot.LockHead(false);
@@ -69,11 +80,10 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::EmitCompletionSignal(Robot& robot, bool success) const
+    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
     {
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(),
-                                                            -1, -1, -1, -1, -1, 0,
-                                                            success);
+      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
+                                                            -1, -1, -1, -1, -1, 0);
     }
     
     bool IActionRunner::RetriesRemain()
@@ -120,9 +130,9 @@ namespace Anki {
       _timeoutTime = -1.f;
     }
     
-    IAction::ActionResult IAction::UpdateInternal(Robot& robot)
+    ActionResult IAction::UpdateInternal(Robot& robot)
     {
-      ActionResult result = RUNNING;
+      ActionResult result = ActionResult::RUNNING;
       SetStatus(GetName());
       
       // On first call to Update(), figure out the waitUntilTime
@@ -140,7 +150,7 @@ namespace Anki {
                          "%s timed out after %.1f seconds.\n",
                          GetName().c_str(), GetTimeoutInSeconds());
         
-        result = FAILURE_TIMEOUT;
+        result = ActionResult::FAILURE_TIMEOUT;
       }
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds > _waitUntilTime)
@@ -155,7 +165,7 @@ namespace Anki {
           // just wait for the preconditions to be met. Otherwise, a failure
           // will get propagated out as the return value of the Update method.
           result = Init(robot);
-          if(result == SUCCESS) {
+          if(result == ActionResult::SUCCESS) {
             PRINT_NAMED_INFO("IAction.Update.PrecondtionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
             
@@ -164,7 +174,7 @@ namespace Anki {
             // need to do CheckIfDone() calls!)
             // TODO: there's probably a tidier way to do this.
             _preconditionsMet = true;
-            result = RUNNING;
+            result = ActionResult::RUNNING;
             
             // Don't check if done until a sufficient amount of time has passed
             // after preconditions are met
@@ -180,26 +190,24 @@ namespace Anki {
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
       
-      if(result == FAILURE_RETRY && RetriesRemain()) {
+      if(result == ActionResult::FAILURE_RETRY && RetriesRemain()) {
         PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
                          "Robot %d failed running action %s. Retrying.\n",
                          robot.GetID(), GetName().c_str());
         
         Reset();
-        result = RUNNING;
+        result = ActionResult::RUNNING;
       }
-      
-      if(result != RUNNING) {
-        // Success or fail, this action is done, so perform any cleanup required.
-        Cleanup(robot);
-        
-#       if USE_ACTION_CALLBACKS
+
+#     if USE_ACTION_CALLBACKS
+      if(result != ActionResult::RUNNING) {
         RunCallbacks(result);
-#       endif
       }
+#     endif
       
       return result;
     } // UpdateInternal()
+    
     
   } // namespace Cozmo
 } // namespace Anki

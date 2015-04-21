@@ -44,6 +44,7 @@ DEF_SIGNAL(RobotObservedObject,
            float img_width,  float img_height,
            float world_x, float world_y, float world_z,  // Absolute translation vector
            float q0, float q1, float q2, float q3,       // Absolute rotation, as a quaternion
+           float topFaceOrientation_rad,                 // Absolute rotation of top face, iff isActive==true
            bool isActive)
 
 DEF_SIGNAL(RobotObservedNothing, uint8_t robotID)
@@ -61,14 +62,15 @@ DEF_SIGNAL(RobotObservedFace,
 // TODO: currently success is just true/false, acutally return ActionResult codes
 DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
-           int32_t actionType,
-           int32_t objectID0,  // Optional
-           int32_t objectID1,  // Optional
-           int32_t objectID2,  // Optional
-           int32_t objectID3,  // Optional
-           int32_t objectID4,  // Optional
-           uint8_t numObjects, // Optional
-           uint8_t success)
+           RobotActionType actionType,   // See actionTypes.h
+           ActionResult result,          // See actionTypes.h
+           int32_t objectID0,            // Optional
+           int32_t objectID1,            // Optional
+           int32_t objectID2,            // Optional
+           int32_t objectID3,            // Optional
+           int32_t objectID4,            // Optional
+           uint8_t numObjects)           // Optional
+
 
 
 

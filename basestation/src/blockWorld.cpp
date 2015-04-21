@@ -452,6 +452,20 @@ namespace Anki
         // Signal the observation of this object, with its bounding box:
         const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
+        Radians topMarkerOrientation(0);
+        if(observedObject->IsActive()) {
+          ActiveCube* activeCube = dynamic_cast<ActiveCube*>(observedObject);
+          if(activeCube == nullptr) {
+            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
+                              obsID.GetValue());
+          } else {
+            topMarkerOrientation = activeCube->GetTopMarkerOrientation();
+            
+            //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
+            //           topMarkerOrientation.getDegrees());
+          }
+        }
         CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
                                                              inFamily,
                                                              obsType,
@@ -465,6 +479,7 @@ namespace Anki
                                                              obsObjTrans.y(),
                                                              obsObjTrans.z(),
                                                              q.w(), q.x(), q.y(), q.z(),
+                                                             topMarkerOrientation.ToFloat(),
                                                              observedObject->IsActive());
         
         if(_robot->GetTrackHeadToObject().IsSet() &&
@@ -659,6 +674,21 @@ namespace Anki
                   // Signal the observation of this object, with its bounding box:
                   const Vec3f& obsObjTrans = unobserved.object->GetPose().GetTranslation();
                   const UnitQuaternion<float>& q = unobserved.object->GetPose().GetRotation().GetQuaternion();
+                  Radians topMarkerOrientation(0);
+                  if(unobserved.object->IsActive()) {
+                    ActiveCube* activeCube = dynamic_cast<ActiveCube*>(unobserved.object);
+                    if(activeCube == nullptr) {
+                      PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects",
+                                        "UnobservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
+                                        unobserved.object->GetID().GetValue());
+                    } else {
+                      topMarkerOrientation = activeCube->GetTopMarkerOrientation();
+                      
+//                      PRINT_INFO("Unobserved object %d's rotation around Z = %.1fdeg\n",
+//                                 unobserved.object->GetID().GetValue(),
+//                                 topMarkerOrientation.getDegrees());
+                    }
+                  }
                   CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
                                                                        unobserved.family,
                                                                        unobserved.type,
@@ -672,6 +702,7 @@ namespace Anki
                                                                        obsObjTrans.y(),
                                                                        obsObjTrans.z(),
                                                                        q.w(), q.x(), q.y(), q.z(),
+                                                                       topMarkerOrientation.ToFloat(),
                                                                        unobserved.object->IsActive());
                   ++numVisibleObjects;
                 } // if(IsWithinFieldOfView)

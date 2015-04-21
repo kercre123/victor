@@ -131,8 +131,8 @@ namespace Anki {
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
 
         // LED assignments
-        const LEDId INDICATOR_LED_ID = LED_LEFT_EYE_TOP;
-        const LEDId HEADLIGHT_LED_ID = LED_RIGHT_EYE_TOP;
+        const LEDId INDICATOR_LED_ID = LED_BACKPACK_LEFT;
+        const LEDId HEADLIGHT_LED_ID = LED_BACKPACK_RIGHT;
         
       } // "private" namespace
       

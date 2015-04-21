@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/utils/signals/simpleSignal.hpp"
-
+#include "anki/cozmo/basestation/actionTypes.h"
 
 namespace Anki {
   namespace Cozmo {

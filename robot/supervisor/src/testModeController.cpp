@@ -981,7 +981,7 @@ namespace Anki {
           
           // Increment led
           ledID_ = (LEDId)((u8)ledID_+1);
-          if (ledID_ == NUM_LEDS) {
+          if (ledID_ == NUM_BACKPACK_LEDS) {
             ledID_ = (LEDId)0;
             
             // Increment color
