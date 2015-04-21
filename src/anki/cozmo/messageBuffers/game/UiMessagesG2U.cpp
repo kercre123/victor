@@ -666,6 +666,7 @@ size_t RobotObservedObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->quaternion1);
 	buffer.Write(this->quaternion2);
 	buffer.Write(this->quaternion3);
+	buffer.Write(this->topFaceOrientation_rad);
 	buffer.Write(this->markersVisible);
 	buffer.Write(this->isActive);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -695,6 +696,7 @@ size_t RobotObservedObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->quaternion1);
 	buffer.Read(this->quaternion2);
 	buffer.Read(this->quaternion3);
+	buffer.Read(this->topFaceOrientation_rad);
 	buffer.Read(this->markersVisible);
 	buffer.Read(this->isActive);
 	return buffer.GetBytesRead();
@@ -733,6 +735,8 @@ size_t RobotObservedObject::Size() const
 	result += 4; // = float_32
 	//quaternion3
 	result += 4; // = float_32
+	//topFaceOrientation_rad
+	result += 4; // = float_32
 	//markersVisible
 	result += 1; // = uint_8
 	//isActive
@@ -757,6 +761,7 @@ bool RobotObservedObject::operator==(const RobotObservedObject& other) const
 	|| quaternion1 != other.quaternion1
 	|| quaternion2 != other.quaternion2
 	|| quaternion3 != other.quaternion3
+	|| topFaceOrientation_rad != other.topFaceOrientation_rad
 	|| markersVisible != other.markersVisible
 	|| isActive != other.isActive) {
 		return false;
