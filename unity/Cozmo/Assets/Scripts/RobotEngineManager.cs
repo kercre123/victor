@@ -12,6 +12,7 @@ using U2G = Anki.Cozmo.U2G;
 
 public enum ActionCompleted
 {
+  COMPOUND = -2,
 	UNKNOWN = -1,
 	DRIVE_TO_POSE = 0,
 	DRIVE_TO_OBJECT,
