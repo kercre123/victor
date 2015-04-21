@@ -138,7 +138,7 @@ DEF Blue Block1x1 {
 }
 DEF ActiveBlock Block1x1 {
   name "ActiveBlock"
-  translation -0.15 0.15 0.0219969
+  translation -0.15 0.1 0.0219969
   blockColor 0.5 0.85 0.5
   active TRUE
   markerImg_front "letters/1.png"
@@ -150,7 +150,7 @@ DEF ActiveBlock Block1x1 {
 }
 DEF ActiveBlock2 Block1x1 {
   name "ActiveBlock"
-  translation -0.15 -0.15 0.0219969
+  translation -0.15 -0.1 0.0219969
   blockColor 0.5 0.85 0.5
   active TRUE
   activeID 2

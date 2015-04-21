@@ -141,7 +141,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 				float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
 				if(dist > best.Size.x * 0.5f) {
-					//Debug.Log("AcquireTarget rejecting " + robot.knownObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
+					//Debug.Log("AcquireTarget rejecting " + robot.pertinentObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
 					continue;
 				}
 
@@ -156,7 +156,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
 		}
 
-		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from knownObjects("+robot.knownObjects.Count+")");
+		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from pertinentObjects("+robot.pertinentObjects.Count+")");
 	}
 
 }

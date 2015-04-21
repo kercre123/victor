@@ -106,7 +106,7 @@ public class ObservedObject
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
 
-	public void SendLightMessageRelativeToRobot( float light_intensity, uint color = 0, byte whichLEDs = byte.MaxValue, 
+	public void SendLightMessageRelativeToRobot( float light_intensity, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
 	                                             byte turnOffUnspecifiedLEDs = 1, uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                             				 uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0 )
 	{
@@ -119,20 +119,22 @@ public class ObservedObject
 		message.transitionOffPeriod_ms = transitionOffPeriod_ms;
 		message.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
 		
-		message.color = color;
-		Color = color;
+		message.onColor = onColor;
+		Color = onColor;
+		
+		message.offColor = offColor;
 		
 		message.whichLEDs = whichLEDs;
 		message.makeRelative = 1;
 		message.relativeToX = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.x;
 		message.relativeToY = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.y;
 		
-		Debug.Log( "SendLightMessageRelativeToRobot: color: " + message.color + " whichLEDs: " + (Light)message.whichLEDs + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+		Debug.Log( "SendLightMessageRelativeToRobot: color: " + message.onColor + " offColor" + message.offColor + " whichLEDs: " + (Light)message.whichLEDs + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
 
-	public void SendLightMessage( float light_intensity, uint color = 0, byte whichLEDs = byte.MaxValue, 
+	public void SendLightMessage( float light_intensity, uint onColor = 0, uint offColor = 0,byte whichLEDs = byte.MaxValue, 
 	                             uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
@@ -146,20 +148,22 @@ public class ObservedObject
 		message.transitionOffPeriod_ms = transitionOffPeriod_ms;
 		message.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
 		
-		message.color = color;
-		Color = color;
-		
+		message.onColor = onColor;
+		Color = onColor;
+
+		message.offColor = offColor;
+
 		message.whichLEDs = whichLEDs;
 		message.makeRelative = 0;
 		message.relativeToX = 0;
 		message.relativeToY = 0;
 
-		Debug.Log( "SendLightMessage: color" + message.color + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+		Debug.Log( "SendLightMessage: onColor" + message.onColor + " offColor" + message.offColor + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
 
-	public void SendLightMessageRelative( float light_intensity, Vector2 relativeTo, uint color = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+	public void SendLightMessageRelative( float light_intensity, Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
 	                                     uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                                     byte turnOffUnspecifiedLEDs = 1 )
@@ -173,15 +177,17 @@ public class ObservedObject
 		message.transitionOffPeriod_ms = transitionOffPeriod_ms;
 		message.turnOffUnspecifiedLEDs = turnOffUnspecifiedLEDs;
 		
-		message.color = color;
-		Color = color;
+		message.onColor = onColor;
+		Color = onColor;
+		
+		message.offColor = offColor;
 		
 		message.whichLEDs = whichLEDs;
 		message.makeRelative = relativeMode;
 		message.relativeToX = relativeTo.x;
 		message.relativeToY = relativeTo.y;
 		
-		Debug.Log( "SendLightMessage: color" + message.color + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+		Debug.Log( "SendLightMessage: onColor" + message.onColor + " offColor" + message.offColor + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
