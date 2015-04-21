@@ -595,9 +595,9 @@ struct RobotCompletedAction
 {
 	uint32_t robotID;
 	int32_t actionType;
+	int32_t result;
 	std::array<int32_t, 5> objectIDs;
 	uint8_t numObjects;
-	uint8_t success;
 	
 	/**** Constructors ****/
 	RobotCompletedAction() = default;
@@ -609,14 +609,14 @@ struct RobotCompletedAction
 	
 	explicit RobotCompletedAction(uint32_t robotID
 		,int32_t actionType
+		,int32_t result
 		,const std::array<int32_t, 5>& objectIDs
-		,uint8_t numObjects
-		,uint8_t success)
+		,uint8_t numObjects)
 	:robotID(robotID)
 	,actionType(actionType)
+	,result(result)
 	,objectIDs(objectIDs)
 	,numObjects(numObjects)
-	,success(success)
 	{}
 
 	explicit RobotCompletedAction(const uint8_t* buff, size_t len);

@@ -341,22 +341,23 @@ namespace Anki {
       
       void HandleRobotCompletedAction(const G2U::RobotCompletedAction& msg)
       {
-        switch(msg.actionType)
+        const bool success = (ActionResult)msg.result == ActionResult::SUCCESS;
+        switch((RobotActionType)msg.actionType)
         {
-          case ACTION_PICKUP_OBJECT_HIGH:
-          case ACTION_PICKUP_OBJECT_LOW:
+          case RobotActionType::PICKUP_OBJECT_HIGH:
+          case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
               printf("%d ", msg.objectIDs[i]);
             }
             printf("\n");
             break;
             
-          case ACTION_PLACE_OBJECT_HIGH:
-          case ACTION_PLACE_OBJECT_LOW:
+          case RobotActionType::PLACE_OBJECT_HIGH:
+          case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
               printf("%d ", msg.objectIDs[i]);
             }
@@ -365,7 +366,7 @@ namespace Anki {
 
           default:
             printf("Robot %d completed action with type=%d and %s.\n",
-                   msg.robotID, msg.actionType, (msg.success ? "SUCCEEDED" : "FAILED"));
+                   msg.robotID, msg.actionType, (success ? "SUCCEEDED" : "FAILED"));
         }
         
       }
@@ -1014,13 +1015,46 @@ namespace Anki {
                 
               case (s32)'Q':
               {
+                /* Debugging U2G message for drawing quad
+                U2G::VisualizeQuad msg;
+                msg.xLowerRight = 250.f;
+                msg.yLowerRight = -0250.f;
+                msg.zLowerRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xUpperLeft = -250.f;
+                msg.yUpperLeft = 250.f;
+                msg.zUpperLeft = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xLowerLeft = -250.f;
+                msg.yLowerLeft = -250.f;
+                msg.zLowerLeft = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.xUpperRight = 250.f;
+                msg.yUpperRight = 250.f;
+                msg.zUpperRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
+                msg.quadID = 998;
+                msg.color = NamedColors::ORANGE;
+                
+                U2G::Message msgWrapper;
+                msgWrapper.Set_VisualizeQuad(msg);
+                msgHandler_.SendMessage(1, msgWrapper);
+                */
+                
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
                   SendAbortAll();
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  // ALT + Q: Cancel action
+                  U2G::CancelAction msg;
+                  msg.actionType = -1;
+                  msg.robotID = 1;
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_CancelAction(msg);
+                  msgHandler_.SendMessage(1, msgWrapper);
+                  
                 } else {
                   // Just Q: Just cancel path
                   SendAbortPath();
                 }
+                
                 break;
               }
                 
@@ -1123,7 +1157,9 @@ namespace Anki {
                     msg.onColor = colorList[colorIndex];
                     msg.offColor = 0;
                     msg.turnOffUnspecifiedLEDs = 0;
-                    msg.makeRelative = 0;
+                    msg.makeRelative = 1;
+                    msg.relativeToX = robotPosition_.x();
+                    msg.relativeToY = robotPosition_.y();
                     
                     ++cornerIndex;
                     if(cornerIndex == NUM_BLOCK_LEDS) {
