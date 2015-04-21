@@ -35,8 +35,8 @@ extern GlobalDataToBody g_dataToBody;
     u8 encoderPins[2];
     
     Fixed unitsPerTick;
-    Fixed position;
-    Fixed lastPosition;
+    Fixed64 position;
+    Fixed64 lastPosition;
     u32 count;
     u32 lastCount;
     
@@ -82,7 +82,8 @@ extern GlobalDataToBody g_dataToBody;
   
 	// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
   // for 8 encoder ticks per revolution, we compute the meters per tick as:
-  const Fixed METERS_PER_TICK = TO_FIXED((0.125 * 0.0292 * 3.14159265359) / 173.43); // 4 (should be 4.333)
+	// Applying a slip factor correction of 94.8%
+	const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43); // 1052
 	
   // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
@@ -109,7 +110,7 @@ extern GlobalDataToBody g_dataToBody;
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
-      METERS_PER_TICK,
+      1, // units per tick = 1 tick
       0, 0, 0, 0, 0, 0
     },
     {
@@ -120,7 +121,7 @@ extern GlobalDataToBody g_dataToBody;
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
-      METERS_PER_TICK,
+      1, // units per tick = 1 tick
       0, 0, 0, 0, 0, 0
     },
     {
@@ -415,15 +416,26 @@ void MotorsUpdate()
     // Restart the timer
     NRF_TIMER2->TASKS_START = 1;
   }
-  
+	
   // Update the SPI data structure to send data back to the head
-  g_dataToHead.speeds[0] = MotorsGetSpeed(0);
-  g_dataToHead.speeds[1] = MotorsGetSpeed(1);
+	// Wheel position and speed are recorded in encoder ticks, so we
+	// are applying conversions here for now, until code is refactored
+	Fixed64 tmp;
+	tmp = METERS_PER_TICK;
+	tmp *= MotorsGetSpeed(0);
+  g_dataToHead.speeds[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
+	tmp = METERS_PER_TICK;
+	tmp *= MotorsGetSpeed(1);
+  g_dataToHead.speeds[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
   g_dataToHead.speeds[2] = MotorsGetSpeed(2);
   g_dataToHead.speeds[3] = MotorsGetSpeed(3);
   
-  g_dataToHead.positions[0] = m_motors[0].position;
-  g_dataToHead.positions[1] = m_motors[1].position;
+	tmp = METERS_PER_TICK;
+	tmp *= m_motors[0].position;
+  g_dataToHead.positions[0] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
+	tmp = METERS_PER_TICK;
+	tmp *= m_motors[1].position;
+	g_dataToHead.positions[1] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
 }
@@ -443,9 +455,14 @@ void MotorsPrintEncodersRaw()
   UARTPutChar('0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN));
   UARTPutChar(' ');  
   UARTPutChar('L');
-  UARTPutDec(m_motors[0].position);
+	Fixed64 tmp;
+	tmp = METERS_PER_TICK;
+	tmp *= m_motors[0].position;
+  UARTPutDec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
   UARTPutChar('R');
-  UARTPutDec(m_motors[1].position);
+	tmp = METERS_PER_TICK;
+	tmp *= m_motors[1].position;
+  UARTPutDec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
   UARTPutChar('A');
   UARTPutDec(m_motors[2].position);
   UARTPutChar('H');
@@ -453,8 +470,8 @@ void MotorsPrintEncodersRaw()
   UARTPutChar('\n');
 }
 
-// Get position of motor
-s32 MotorGetPosition(u8 motorID)
+// Get wheel ticks
+s32 DebugWheelsGetTicks(u8 motorID)
 {
 	return m_motors[motorID].position;
 }
@@ -509,7 +526,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
   }
 }
 
-void MotorPrintEncoder(u8 motorID)
+void MotorPrintEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {
   int i = m_motors[motorID].position;
   UARTPutChar(i);
