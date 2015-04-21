@@ -368,6 +368,33 @@ message SetBackpackLEDs {
   uint_8   robotID
 }
 
+// VisualizeQuad
+//  Draws the specified quadrilateral using the Visualization system.
+//  The quadID will be created if new or replaced if it already exists (i.e., you
+//  do not need to send an EraseQuad message before updating an existing quad).
+message VisualizeQuad {
+  uint_32 quadID,
+  uint_32 color, // RGBA
+  float_32 xUpperLeft,
+  float_32 yUpperLeft,
+  float_32 zUpperLeft,
+  float_32 xLowerLeft,
+  float_32 yLowerLeft,
+  float_32 zLowerLeft,
+  float_32 xUpperRight,
+  float_32 yUpperRight,
+  float_32 zUpperRight,
+  float_32 xLowerRight,
+  float_32 yLowerRight,
+  float_32 zLowerRight
+}
+
+// EraseQuad
+//  Erase the visualized quad with the specified ID
+message EraseQuad {
+  uint_32 quadID
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "struct" instead of "message"
 union Message { }

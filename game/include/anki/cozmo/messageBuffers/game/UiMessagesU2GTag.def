@@ -68,6 +68,8 @@ enum class MessageTag : uint8_t {
 	SetActiveObjectLEDs,	// 51
 	SetAllActiveObjectLEDs,	// 52
 	SetBackpackLEDs,	// 53
+	VisualizeQuad,	// 54
+	EraseQuad,	// 55
 	INVALID
 };
 

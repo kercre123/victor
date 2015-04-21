@@ -2030,6 +2030,113 @@ struct SetBackpackLEDs
 	bool operator!=(const SetBackpackLEDs& other) const;
 };
 
+// MESSAGE VisualizeQuad
+struct VisualizeQuad
+{
+	uint32_t quadID;
+	uint32_t color;
+	float xUpperLeft;
+	float yUpperLeft;
+	float zUpperLeft;
+	float xLowerLeft;
+	float yLowerLeft;
+	float zLowerLeft;
+	float xUpperRight;
+	float yUpperRight;
+	float zUpperRight;
+	float xLowerRight;
+	float yLowerRight;
+	float zLowerRight;
+	
+	/**** Constructors ****/
+	VisualizeQuad() = default;
+	VisualizeQuad(const VisualizeQuad& other) = default;
+	VisualizeQuad(VisualizeQuad& other) = default;
+	VisualizeQuad(VisualizeQuad&& other) noexcept = default;
+	VisualizeQuad& operator=(const VisualizeQuad& other) = default;
+	VisualizeQuad& operator=(VisualizeQuad&& other) noexcept = default;
+	
+	explicit VisualizeQuad(uint32_t quadID
+		,uint32_t color
+		,float xUpperLeft
+		,float yUpperLeft
+		,float zUpperLeft
+		,float xLowerLeft
+		,float yLowerLeft
+		,float zLowerLeft
+		,float xUpperRight
+		,float yUpperRight
+		,float zUpperRight
+		,float xLowerRight
+		,float yLowerRight
+		,float zLowerRight)
+	:quadID(quadID)
+	,color(color)
+	,xUpperLeft(xUpperLeft)
+	,yUpperLeft(yUpperLeft)
+	,zUpperLeft(zUpperLeft)
+	,xLowerLeft(xLowerLeft)
+	,yLowerLeft(yLowerLeft)
+	,zLowerLeft(zLowerLeft)
+	,xUpperRight(xUpperRight)
+	,yUpperRight(yUpperRight)
+	,zUpperRight(zUpperRight)
+	,xLowerRight(xLowerRight)
+	,yLowerRight(yLowerRight)
+	,zLowerRight(zLowerRight)
+	{}
+
+	explicit VisualizeQuad(const uint8_t* buff, size_t len);
+	explicit VisualizeQuad(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const VisualizeQuad& other) const;
+	bool operator!=(const VisualizeQuad& other) const;
+};
+
+// MESSAGE EraseQuad
+struct EraseQuad
+{
+	uint32_t quadID;
+	
+	/**** Constructors ****/
+	EraseQuad() = default;
+	EraseQuad(const EraseQuad& other) = default;
+	EraseQuad(EraseQuad& other) = default;
+	EraseQuad(EraseQuad&& other) noexcept = default;
+	EraseQuad& operator=(const EraseQuad& other) = default;
+	EraseQuad& operator=(EraseQuad&& other) noexcept = default;
+	
+	explicit EraseQuad(uint32_t quadID)
+	:quadID(quadID)
+	{}
+
+	explicit EraseQuad(const uint8_t* buff, size_t len);
+	explicit EraseQuad(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const EraseQuad& other) const;
+	bool operator!=(const EraseQuad& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -2313,6 +2420,16 @@ public:
 	void Set_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& new_SetBackpackLEDs);
 	void Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBackpackLEDs);
 
+	/** VisualizeQuad **/
+	const Anki::Cozmo::U2G::VisualizeQuad& Get_VisualizeQuad() const;
+	void Set_VisualizeQuad(const Anki::Cozmo::U2G::VisualizeQuad& new_VisualizeQuad);
+	void Set_VisualizeQuad(Anki::Cozmo::U2G::VisualizeQuad&& new_VisualizeQuad);
+
+	/** EraseQuad **/
+	const Anki::Cozmo::U2G::EraseQuad& Get_EraseQuad() const;
+	void Set_EraseQuad(const Anki::Cozmo::U2G::EraseQuad& new_EraseQuad);
+	void Set_EraseQuad(Anki::Cozmo::U2G::EraseQuad&& new_EraseQuad);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2380,6 +2497,8 @@ private:
 		Anki::Cozmo::U2G::SetActiveObjectLEDs _SetActiveObjectLEDs;
 		Anki::Cozmo::U2G::SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
 		Anki::Cozmo::U2G::SetBackpackLEDs _SetBackpackLEDs;
+		Anki::Cozmo::U2G::VisualizeQuad _VisualizeQuad;
+		Anki::Cozmo::U2G::EraseQuad _EraseQuad;
 	};
 };
 
