@@ -2721,12 +2721,15 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
-        activeCube->SetLEDs(whichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+        
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
+        const WhichBlockLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
+                                                                                      relativeToPoint,
+                                                                                      makeRelative);
+        
+        activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
-        if(makeRelative) {
-          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
-        }
         
         MessageSetBlockLights m;
         activeCube->FillMessage(m);
