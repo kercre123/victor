@@ -110,6 +110,8 @@ public class ObservedObject
 	                                             byte turnOffUnspecifiedLEDs = 1, uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
 	                             				 uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0 )
 	{
+		if( Family != 3 ) return;
+
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
 		message.robotID = (byte)RobotID;
@@ -129,7 +131,7 @@ public class ObservedObject
 		message.relativeToX = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.x;
 		message.relativeToY = RobotEngineManager.instance.robots[(int)RobotID].WorldPosition.y;
 		
-		Debug.Log( "SendLightMessageRelativeToRobot: color: " + message.onColor + " offColor" + message.offColor + " whichLEDs: " + (Light)message.whichLEDs + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
+		Debug.Log( "SendLightMessageRelativeToRobot: color: " + message.onColor + " offColor: " + message.offColor + " whichLEDs: " + (Light)message.whichLEDs + " onPeriod_ms: " + onPeriod_ms + " offPeriod_ms: " + offPeriod_ms );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetActiveObjectLEDs = message } );
 	}
@@ -139,6 +141,8 @@ public class ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
 	{
+		if( Family != 3 ) return;
+
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs ();
 		message.objectID = (uint)ID;
 		message.robotID = (byte)RobotID;
@@ -168,6 +172,8 @@ public class ObservedObject
 	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                                     byte turnOffUnspecifiedLEDs = 1 )
 	{
+		if( Family != 3 ) return;
+
 		U2G.SetActiveObjectLEDs message = new U2G.SetActiveObjectLEDs();
 		message.objectID = (uint)ID;
 		message.robotID = RobotEngineManager.instance.current.ID;
