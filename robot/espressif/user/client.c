@@ -123,7 +123,8 @@ UDPPacket* clientGetBuffer()
 
 void clientQueuePacket(UDPPacket* pkt)
 {
-  uint8 err, i;
+  uint8 i;
+  int8 err;
 #ifdef DEBUG_CLIENT
   os_printf("clientQueuePacket\n");
 #endif

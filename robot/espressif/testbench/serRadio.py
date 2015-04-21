@@ -52,8 +52,6 @@ class UDPClient(socket.socket):
 class Tester:
     "A class to administer testing"
 
-    SER_XMIT_LEN = 1500 # Disable serial chunking
-
     def __init__(self, serial_device="/dev/ttyUSB0", udp_host="172.31.1.1", udp_port=5551, payload_length=1450):
         "Sets up the test"
         self.uart   = UARTRadioConn(serial_device)
@@ -74,12 +72,7 @@ class Tester:
     def sendOne(self):
         "Send one packet over serial"
         s, p = self.pktGen.next()
-        if len(p) > self.SER_XMIT_LEN:
-            for i in range(0, len(p), self.SER_XMIT_LEN):
-                self.uart.write(p[i:i+self.SER_XMIT_LEN])
-                time.sleep(0.25)
-        else:
-            self.uart.write(p)
+        self.uart.write(p)
         self.pktLog[s] = time.time()
 
     def console(self, max_length=10000):

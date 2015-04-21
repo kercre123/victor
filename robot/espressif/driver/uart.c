@@ -184,25 +184,23 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 /******************************************************************************
 * FunctionName : os_put_char
 * Description  : Write char function for os_printf etc. Writes to UART1, aka the
-*                debug port. Note this uses no-wait output so characters may be
-*                dropped if fifo is full
+*                debug port.
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  uart_tx_one_char_no_wait(UART1, c);
+  uart_tx_one_char(UART1, c);
 }
 
 /** Handles raw UART RX
  * Does packet header synchronization and passes data to handleUartPacketRx
- * @param len The number of bytes available in the FIFO
  * @param flags Any (error) flags that would affect packet processing
  */
-LOCAL void handleUartRawRx(uint8 len, uint8 flag)
+LOCAL void handleUartRawRx(uint8 flag)
 {
   static UDPPacket* outPkt = NULL;
   static uint16 pktLen = 0;
   static uint8  phase  = 0;
-  uint8 i, byte;
+  uint8 byte;
   if (flag != UART_SIG_RX_RDY)
   {
     os_printf("UART RX error: %d\r\n", flag);
@@ -213,7 +211,7 @@ LOCAL void handleUartRawRx(uint8 len, uint8 flag)
     }
   }
 
-  for (i=len; i > 0; i--)
+  while ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT)
   {
     byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
     switch (phase)
@@ -266,7 +264,8 @@ LOCAL void handleUartRawRx(uint8 len, uint8 flag)
       case 7:
       {
         outPkt->data[outPkt->len++] = byte;
-        if (outPkt->len >= pktLen)
+        os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
+        if (outPkt->len >= (pktLen-1))
         {
           clientQueuePacket(outPkt);
           phase = 0;
@@ -362,8 +361,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     case UART_SIG_RX_TIMEOUT:
     case UART_SIG_RX_OVERFLOW:
     {
-      fifo_len = (READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
-      handleUartRawRx(fifo_len, event->sig);
+      handleUartRawRx(event->sig);
       uart_rx_intr_enable(UART0);
       break;
     }
@@ -399,7 +397,7 @@ uart_rx_intr_handler(void *para)
   else if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
   {
     #if 1
-    handleUartRawRx((uint8)((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT), UART_SIG_RX_RDY);
+    handleUartRawRx(UART_SIG_RX_RDY);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
     #else
     uart_rx_intr_disable(UART0);
