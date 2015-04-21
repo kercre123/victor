@@ -103,16 +103,32 @@ namespace Anki {
       
       void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
       {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          ledParams_[i].onColor  = msg.onColor[i];
-          ledParams_[i].offColor = msg.offColor[i];
-          ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
-          ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
-          ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
-          ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
-          
-          ledParams_[i].nextSwitchTime = 0; // force immediate upate
-          ledParams_[i].state = LEDState_t::LED_STATE_OFF;
+        // See if the message is actually changing anything about the block's current
+        // state. If not, don't update anything.
+        bool isDifferent = false;
+        for(int i=0; i<NUM_BLOCK_LEDS && !isDifferent; ++i) {
+          isDifferent = (ledParams_[i].onColor  != msg.onColor[i]  ||
+                         ledParams_[i].offColor != msg.offColor[i] ||
+                         ledParams_[i].onPeriod_ms  != msg.onPeriod_ms[i] ||
+                         ledParams_[i].offPeriod_ms != msg.offPeriod_ms[i] ||
+                         ledParams_[i].transitionOffPeriod_ms != msg.transitionOffPeriod_ms[i] ||
+                         ledParams_[i].transitionOnPeriod_ms  != msg.transitionOnPeriod_ms[i]);
+        }
+        
+        if(isDifferent) {
+          for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
+            ledParams_[i].onColor  = msg.onColor[i];
+            ledParams_[i].offColor = msg.offColor[i];
+            ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
+            ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
+            ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+            ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
+            
+            ledParams_[i].nextSwitchTime = 0; // force immediate upate
+            ledParams_[i].state = LEDState_t::LED_STATE_OFF;
+          }
+        } else {
+          printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
       }
       
