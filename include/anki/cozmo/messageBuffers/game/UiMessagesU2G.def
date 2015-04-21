@@ -1978,6 +1978,58 @@ struct SetAllActiveObjectLEDs
 	bool operator!=(const SetAllActiveObjectLEDs& other) const;
 };
 
+// MESSAGE SetBackpackLEDs
+struct SetBackpackLEDs
+{
+	std::array<uint32_t, 5> onColor;
+	std::array<uint32_t, 5> offColor;
+	std::array<uint32_t, 5> onPeriod_ms;
+	std::array<uint32_t, 5> offPeriod_ms;
+	std::array<uint32_t, 5> transitionOnPeriod_ms;
+	std::array<uint32_t, 5> transitionOffPeriod_ms;
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	SetBackpackLEDs() = default;
+	SetBackpackLEDs(const SetBackpackLEDs& other) = default;
+	SetBackpackLEDs(SetBackpackLEDs& other) = default;
+	SetBackpackLEDs(SetBackpackLEDs&& other) noexcept = default;
+	SetBackpackLEDs& operator=(const SetBackpackLEDs& other) = default;
+	SetBackpackLEDs& operator=(SetBackpackLEDs&& other) noexcept = default;
+	
+	explicit SetBackpackLEDs(const std::array<uint32_t, 5>& onColor
+		,const std::array<uint32_t, 5>& offColor
+		,const std::array<uint32_t, 5>& onPeriod_ms
+		,const std::array<uint32_t, 5>& offPeriod_ms
+		,const std::array<uint32_t, 5>& transitionOnPeriod_ms
+		,const std::array<uint32_t, 5>& transitionOffPeriod_ms
+		,uint8_t robotID)
+	:onColor(onColor)
+	,offColor(offColor)
+	,onPeriod_ms(onPeriod_ms)
+	,offPeriod_ms(offPeriod_ms)
+	,transitionOnPeriod_ms(transitionOnPeriod_ms)
+	,transitionOffPeriod_ms(transitionOffPeriod_ms)
+	,robotID(robotID)
+	{}
+
+	explicit SetBackpackLEDs(const uint8_t* buff, size_t len);
+	explicit SetBackpackLEDs(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const SetBackpackLEDs& other) const;
+	bool operator!=(const SetBackpackLEDs& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -2256,6 +2308,11 @@ public:
 	void Set_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G::SetAllActiveObjectLEDs& new_SetAllActiveObjectLEDs);
 	void Set_SetAllActiveObjectLEDs(Anki::Cozmo::U2G::SetAllActiveObjectLEDs&& new_SetAllActiveObjectLEDs);
 
+	/** SetBackpackLEDs **/
+	const Anki::Cozmo::U2G::SetBackpackLEDs& Get_SetBackpackLEDs() const;
+	void Set_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& new_SetBackpackLEDs);
+	void Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBackpackLEDs);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2322,6 +2379,7 @@ private:
 		Anki::Cozmo::U2G::SetFaceDetectParams _SetFaceDetectParams;
 		Anki::Cozmo::U2G::SetActiveObjectLEDs _SetActiveObjectLEDs;
 		Anki::Cozmo::U2G::SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
+		Anki::Cozmo::U2G::SetBackpackLEDs _SetBackpackLEDs;
 	};
 };
 

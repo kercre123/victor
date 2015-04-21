@@ -829,6 +829,17 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_SetBackpackLEDs(U2G::SetBackpackLEDs const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->SetBackpackLights(msg.onColor, msg.offColor,
+                               msg.onPeriod_ms, msg.offPeriod_ms,
+                               msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+    }
+  }
+  
   
 }
 }

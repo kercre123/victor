@@ -67,6 +67,7 @@ enum class MessageTag : uint8_t {
 	SetFaceDetectParams,	// 50
 	SetActiveObjectLEDs,	// 51
 	SetAllActiveObjectLEDs,	// 52
+	SetBackpackLEDs,	// 53
 	INVALID
 };
 

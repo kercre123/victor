@@ -55,3 +55,4 @@ void Process_SetVisionSystemParams(const Anki::Cozmo::U2G::SetVisionSystemParams
 void Process_SetFaceDetectParams(const Anki::Cozmo::U2G::SetFaceDetectParams& msg);
 void Process_SetActiveObjectLEDs(const Anki::Cozmo::U2G::SetActiveObjectLEDs& msg);
 void Process_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G::SetAllActiveObjectLEDs& msg);
+void Process_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& msg);
