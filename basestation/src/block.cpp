@@ -671,9 +671,18 @@ namespace Anki {
         }
       }
       
-      PRINT_INFO("TopMarker = %s\n", Vision::MarkerTypeStrings[topMarker->GetCode()]);
+      PRINT_INFO("ActiveCube %d's TopMarker is = %s\n", GetID().GetValue(),
+                 Vision::MarkerTypeStrings[topMarker->GetCode()]);
       
       return *topMarker;
+    }
+    
+    Radians ActiveCube::GetTopMarkerOrientation() const
+    {
+      Pose3d topMarkerPose;
+      GetTopMarker(topMarkerPose);
+      const Radians angle( topMarkerPose.GetRotation().GetAngleAroundZaxis() );
+      return angle;
     }
     
     WhichBlockLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition,
@@ -682,8 +691,9 @@ namespace Anki {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
       GetTopMarker(topMarkerPose);
-      const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
-      const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
+      const Vec2f topMarkerCenter(topMarkerPose.GetTranslation());
+      Vec2f v(xyPosition);
+      v -= topMarkerCenter;
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();

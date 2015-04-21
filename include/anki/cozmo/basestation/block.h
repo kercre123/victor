@@ -335,7 +335,7 @@ namespace Anki {
       // Get the LED specification for the top (and bottom) LEDs on the corner closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
       WhichBlockLEDs GetCornerClosestToXY(const Point2f& xyPosition,
-                                     bool getTopAndBottom) const;
+                                          bool getTopAndBottom) const;
       
       // Get the LED specification for the four LEDs on the face closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
@@ -348,6 +348,11 @@ namespace Anki {
       // Helper for figuring out which LEDs will be selected after rotating
       // a given pattern of LEDs one slot in the specified direction
       //static WhichBlockLEDs RotatePatternAroundTopFace(WhichBlockLEDs oldPattern, bool clockwise);
+      
+      // Get the orientation of the top marker around the Z axis. An angle of 0
+      // means the top marker is in the canonical orienation, such that the corners
+      // are as shown in activeBlockTypes.h
+      Radians GetTopMarkerOrientation() const;
       
       // Populate a message specifying the current state of the block, for sending
       // out to actually set the physical block to match
