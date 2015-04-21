@@ -20,6 +20,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 #include <list>
 
@@ -42,16 +43,6 @@ namespace Anki {
     class IActionRunner
     {
     public:
-      
-      typedef enum  {
-        RUNNING,
-        SUCCESS,
-        FAILURE_TIMEOUT,
-        FAILURE_PROCEED,
-        FAILURE_RETRY,
-        FAILURE_ABORT,
-        CANCELLED
-      } ActionResult;
       
       IActionRunner();
       virtual ~IActionRunner() { }
@@ -81,7 +72,7 @@ namespace Anki {
       // Override this in derived classes to return a (probably unique) integer
       // representing this action's type. This will be reported in any
       // completion signal that is emitted.
-      virtual s32 GetType() const = 0;
+      virtual RobotActionType GetType() const = 0;
         
       virtual void Reset() = 0;
       
@@ -104,7 +95,7 @@ namespace Anki {
       // signal is emitted with the robot ID, the result of GetType(), and a success
       // flag. Override in derived classes to fill in other fields of the signal
       // as needed.
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const;
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const;
 
     protected:
       
@@ -169,7 +160,7 @@ namespace Anki {
       virtual ActionResult UpdateInternal(Robot& robot) override final;
 
       // Derived Actions should implement these.
-      virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
+      virtual ActionResult  Init(Robot& robot) { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
 

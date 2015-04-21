@@ -45,7 +45,7 @@ namespace Anki {
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_DRIVE_TO_POSE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_POSE; }
       
     protected:
 
@@ -85,7 +85,7 @@ namespace Anki {
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_DRIVE_TO_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_OBJECT; }
       
     protected:
       
@@ -107,7 +107,7 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_PLACE_CARRIED_OBJECT; }
       
     protected:
       
@@ -126,7 +126,7 @@ namespace Anki {
       TurnInPlaceAction(const Radians& angle);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_TURN_IN_PLACE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_TURN_IN_PLACE; }
       
     protected:
       
@@ -143,7 +143,7 @@ namespace Anki {
       MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual s32 GetType() const override { return ACTION_MOVE_HEAD_TO_ANGLE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_MOVE_HEAD_TO_ANGLE; }
       
     protected:
       
@@ -175,7 +175,7 @@ namespace Anki {
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_FACE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_FACE_OBJECT; }
       
     protected:
       
@@ -215,7 +215,7 @@ namespace Anki {
                                  Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_VISUALLY_VERIFY_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_VISUALLY_VERIFY_OBJECT; }
       
     protected:
       
@@ -254,7 +254,7 @@ namespace Anki {
       // order to define the parameters of docking and how to verify success.
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual IAction::ActionResult Verify(Robot& robot) const = 0;
+      virtual ActionResult Verify(Robot& robot) const = 0;
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
@@ -285,11 +285,11 @@ namespace Anki {
       
       // Override to determine type (pick/place, low/high) dynamically depending
       // on what we were doing.
-      virtual s32 GetType() const override;
+      virtual RobotActionType GetType() const override;
       
       // Override completion signal to fill in information about objects picked
       // or placed
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const override;
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
       
     protected:
       
@@ -297,7 +297,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) const override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -326,11 +326,11 @@ namespace Anki {
       
       // GetType returns the type from the PickAndPlaceObjectAction, which is
       // determined dynamically
-      virtual s32 GetType() const override { return _actions.back().second->GetType(); }
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PickAndPlaceObjectAction's completion signal
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const override {
-        return _actions.back().second->EmitCompletionSignal(robot, success);
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
+        return _actions.back().second->EmitCompletionSignal(robot, result);
       }
       
     };
@@ -343,7 +343,7 @@ namespace Anki {
       PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_LOW; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLACE_OBJECT_LOW; }
       
     protected:
       
@@ -371,7 +371,7 @@ namespace Anki {
         
       }
       
-      virtual s32 GetType() const override { return ACTION_PLACE_OBJECT_LOW; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLACE_OBJECT_LOW; }
     };
     
     class CrossBridgeAction : public IDockAction
@@ -380,7 +380,7 @@ namespace Anki {
       CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_CROSS_BRIDGE; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_CROSS_BRIDGE; }
       
     protected:
       
@@ -388,7 +388,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) const override;
       
       // Crossing a bridge _does_ require the second dockMarker,
       // so override the virtual method for setting it
@@ -404,13 +404,13 @@ namespace Anki {
       AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_ASCEND_OR_DESCEND_RAMP; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_ASCEND_OR_DESCEND_RAMP; }
       
     protected:
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual IAction::ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
@@ -430,7 +430,7 @@ namespace Anki {
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
-      virtual s32 GetType() const override { return ACTION_TRAVERSE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_TRAVERSE_OBJECT; }
       
       virtual void Cleanup(Robot& robot) override {
         if(_chosenAction != nullptr) {
@@ -463,7 +463,7 @@ namespace Anki {
         
       }
       
-      virtual s32 GetType() const override { return ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
     };
     
@@ -474,7 +474,7 @@ namespace Anki {
       PlayAnimationAction(const std::string& animName);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual s32 GetType() const override { return ACTION_PLAY_ANIMATION; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLAY_ANIMATION; }
       
     protected:
       
@@ -495,7 +495,7 @@ namespace Anki {
       PlaySoundAction(const std::string& soundName);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual s32 GetType() const override { return ACTION_PLAY_SOUND; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_PLAY_SOUND; }
       
     protected:
       
@@ -515,7 +515,7 @@ namespace Anki {
       WaitAction(f32 waitTimeInSeconds);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual s32 GetType() const override { return ACTION_WAIT; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_WAIT; }
       
     protected:
       

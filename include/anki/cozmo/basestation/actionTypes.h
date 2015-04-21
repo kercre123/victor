@@ -18,7 +18,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  enum RobotActionTypes : s32 {
+  enum class RobotActionType : s32 {
+    ACTION_COMPOUND = -2,
     ACTION_UNKNOWN = -1,
     ACTION_DRIVE_TO_POSE,
     ACTION_DRIVE_TO_OBJECT,
@@ -39,6 +40,16 @@ namespace Cozmo {
     ACTION_PLAY_ANIMATION,
     ACTION_PLAY_SOUND,
     ACTION_WAIT
+  };
+  
+  enum class ActionResult : s32 {
+    RUNNING,
+    SUCCESS,
+    FAILURE_TIMEOUT,
+    FAILURE_PROCEED,
+    FAILURE_RETRY,
+    FAILURE_ABORT,
+    CANCELLED
   };
   
 } // namespace Cozmo

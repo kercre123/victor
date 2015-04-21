@@ -16,6 +16,8 @@
 
 #include "anki/common/types.h"
 
+#include "anki/cozmo/basestation/actionTypes.h"
+
 #include <list>
 #include <map>
 
@@ -49,7 +51,7 @@ namespace Anki {
       // Blindly clear the queue
       void     Clear();
       
-      void     Cancel(Robot& robot, s32 withType = -1);
+      void     Cancel(Robot& robot, RobotActionType withType = RobotActionType::ACTION_UNKNOWN);
       
       bool     IsEmpty() const { return _queue.empty(); }
       
@@ -96,7 +98,8 @@ namespace Anki {
       // Only cancels actions from the specified slot with the specified type, and
       // does any cleanup specified by the action's Cancel/Cleanup methods.
       // (Use -1 for each to specify "all".)
-      void       Cancel(Robot& robot, SlotHandle fromSlot = -1, s32 withType = -1);
+      void       Cancel(Robot& robot, SlotHandle fromSlot = -1,
+                        RobotActionType withType = RobotActionType::ACTION_UNKNOWN);
       
       void       Print() const;
       

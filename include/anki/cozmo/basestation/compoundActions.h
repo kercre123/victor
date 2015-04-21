@@ -39,7 +39,7 @@ namespace Anki {
       virtual bool ShouldLockLift() const override;
       virtual bool ShouldLockWheels() const override;
       
-      virtual s32 GetType() const override { return -2; }
+      virtual RobotActionType GetType() const override { return RobotActionType::ACTION_COMPOUND; }
       
     protected:
       

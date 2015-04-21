@@ -32,7 +32,7 @@ namespace Anki {
       Clear();
     }
     
-    void ActionList::Cancel(Robot& robot, SlotHandle fromSlot, s32 withType)
+    void ActionList::Cancel(Robot& robot, SlotHandle fromSlot, RobotActionType withType)
     {
       // Clear specified slot / type
       for(auto & q : _queues) {
@@ -137,13 +137,13 @@ namespace Anki {
       }
     }
 
-    void ActionQueue::Cancel(Robot &robot, s32 withType)
+    void ActionQueue::Cancel(Robot &robot, RobotActionType withType)
     {
       for(auto action : _queue)
       {
         CORETECH_ASSERT(action != nullptr);
         
-        if(withType == -1 || action->GetType() == withType) {
+        if(withType == RobotActionType::ACTION_UNKNOWN || action->GetType() == withType) {
           action->Cancel(robot);
         }
       }
@@ -196,13 +196,13 @@ namespace Anki {
         VizManager::getInstance()->SetText(VizManager::ACTION, NamedColors::GREEN,
                                            "Action: %s", currentAction->GetName().c_str());
         
-        const IAction::ActionResult actionResult = currentAction->Update(robot);
+        const ActionResult actionResult = currentAction->Update(robot);
         
-        if(actionResult != IActionRunner::RUNNING) {
+        if(actionResult != ActionResult::RUNNING) {
           // Current action just finished, pop it
           PopCurrentAction();
           
-          if(actionResult != IAction::SUCCESS) {
+          if(actionResult != ActionResult::SUCCESS) {
             lastResult = RESULT_FAIL;
           }
           
