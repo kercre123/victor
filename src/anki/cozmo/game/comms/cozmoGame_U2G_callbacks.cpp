@@ -840,6 +840,20 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_VisualizeQuad(U2G::VisualizeQuad const& msg)
+  {
+    const Quad3f quad({msg.xUpperLeft,  msg.yUpperLeft,  msg.zUpperLeft},
+                      {msg.xUpperRight, msg.yUpperRight, msg.zUpperRight},
+                      {msg.xLowerLeft,  msg.yLowerLeft,  msg.zLowerLeft},
+                      {msg.xLowerRight, msg.yLowerRight, msg.zLowerRight});
+    
+    VizManager::getInstance()->DrawGenericQuad(msg.quadID, quad, msg.color);
+  }
+  
+  void CozmoGameImpl::Process_EraseQuad(U2G::EraseQuad const& msg)
+  {
+    VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
+  }
   
 }
 }
