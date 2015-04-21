@@ -343,8 +343,8 @@ namespace Anki {
       {
         switch((RobotActionType)msg.actionType)
         {
-          case RobotActionType::ACTION_PICKUP_OBJECT_HIGH:
-          case RobotActionType::ACTION_PICKUP_OBJECT_LOW:
+          case RobotActionType::PICKUP_OBJECT_HIGH:
+          case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
                    msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
@@ -353,8 +353,8 @@ namespace Anki {
             printf("\n");
             break;
             
-          case RobotActionType::ACTION_PLACE_OBJECT_HIGH:
-          case RobotActionType::ACTION_PLACE_OBJECT_LOW:
+          case RobotActionType::PLACE_OBJECT_HIGH:
+          case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
                    msg.robotID, (msg.success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
             for(int i=0; i<msg.numObjects; ++i) {
