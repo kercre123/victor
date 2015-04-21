@@ -2201,6 +2201,71 @@ bool AbortAll::operator!=(const AbortAll& other) const
 }
 
 
+// MESSAGE CancelAction
+
+CancelAction::CancelAction(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+CancelAction::CancelAction(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t CancelAction::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t CancelAction::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->actionType);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t CancelAction::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t CancelAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->actionType);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t CancelAction::Size() const
+{
+	size_t result = 0;
+	//actionType
+	result += 4; // = int_32
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool CancelAction::operator==(const CancelAction& other) const
+{
+	if (actionType != other.actionType
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool CancelAction::operator!=(const CancelAction& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE DrawPoseMarker
 
 DrawPoseMarker::DrawPoseMarker(const uint8_t* buff, size_t len)
@@ -3839,6 +3904,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "AbortPath";
 	case MessageTag::AbortAll:
 		return "AbortAll";
+	case MessageTag::CancelAction:
+		return "CancelAction";
 	case MessageTag::DrawPoseMarker:
 		return "DrawPoseMarker";
 	case MessageTag::ErasePoseMarker:
@@ -4912,6 +4979,35 @@ void Message::Set_AbortAll(Anki::Cozmo::U2G::AbortAll&& new_AbortAll)
 }
 
 
+const Anki::Cozmo::U2G::CancelAction& Message::Get_CancelAction() const
+{
+	assert(_tag == Tag::CancelAction);
+	return _CancelAction;
+}
+void Message::Set_CancelAction(const Anki::Cozmo::U2G::CancelAction& new_CancelAction)
+{
+	if(this->_tag == Tag::CancelAction) {
+		_CancelAction = new_CancelAction;
+	}
+	else {
+		ClearCurrent();
+		new(&_CancelAction) Anki::Cozmo::U2G::CancelAction{new_CancelAction};
+		_tag = Tag::CancelAction;
+	}
+}
+void Message::Set_CancelAction(Anki::Cozmo::U2G::CancelAction&& new_CancelAction)
+{
+	if(this->_tag == Tag::CancelAction) {
+		_CancelAction = std::move(new_CancelAction);
+	}
+	else {
+		ClearCurrent();
+		new(&_CancelAction) Anki::Cozmo::U2G::CancelAction{std::move(new_CancelAction)};
+		_tag = Tag::CancelAction;
+	}
+}
+
+
 const Anki::Cozmo::U2G::DrawPoseMarker& Message::Get_DrawPoseMarker() const
 {
 	assert(_tag == Tag::DrawPoseMarker);
@@ -5816,6 +5912,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_AbortAll.Unpack(buffer);
 		}
 		break;
+	case Tag::CancelAction:
+		if (newTag != oldTag) {
+			new(&(this->_CancelAction)) Anki::Cozmo::U2G::CancelAction(buffer);
+		}
+		else {
+			this->_CancelAction.Unpack(buffer);
+		}
+		break;
 	case Tag::DrawPoseMarker:
 		if (newTag != oldTag) {
 			new(&(this->_DrawPoseMarker)) Anki::Cozmo::U2G::DrawPoseMarker(buffer);
@@ -6106,6 +6210,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::AbortAll:
 		this->_AbortAll.Pack(buffer);
 		break;
+	case Tag::CancelAction:
+		this->_CancelAction.Pack(buffer);
+		break;
 	case Tag::DrawPoseMarker:
 		this->_DrawPoseMarker.Pack(buffer);
 		break;
@@ -6285,6 +6392,9 @@ size_t Message::Size() const
 	case Tag::AbortAll:
 		result += _AbortAll.Size();
 		break;
+	case Tag::CancelAction:
+		result += _CancelAction.Size();
+		break;
 	case Tag::DrawPoseMarker:
 		result += _DrawPoseMarker.Size();
 		break;
@@ -6462,6 +6572,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::AbortAll:
 		_AbortAll.~AbortAll();
+		break;
+	case Tag::CancelAction:
+		_CancelAction.~CancelAction();
 		break;
 	case Tag::DrawPoseMarker:
 		_DrawPoseMarker.~DrawPoseMarker();

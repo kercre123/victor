@@ -3765,6 +3765,128 @@ public class AbortAll
 
 }
 
+public class CancelAction
+{
+	private int _actionType; // int_32
+	private byte _robotID; // uint_8
+
+	public int actionType { get { return _actionType; } set { _actionType = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public CancelAction()
+	{
+	}
+
+	public CancelAction(int actionType,
+		byte robotID)
+	{
+		this.actionType = actionType;
+		this.robotID = robotID;
+	}
+
+	public CancelAction(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public CancelAction(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_actionType = reader.ReadInt32();
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((int)_actionType);
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 5;
+		}
+	}
+
+	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
+		if (ReferenceEquals(a1, a2))
+			return true;
+
+		if (a1 == null || a2 == null)
+			return false;
+
+		if (a1.Length != a2.Length)
+			return false;
+
+		for (int i = 0; i < a1.Length; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+
+		CancelAction p = obj as CancelAction;
+		if ((System.Object) p == null)
+		{
+			return false;
+		}
+
+		return this.Equals(p);
+	}
+
+	public bool Equals(CancelAction p)
+	{
+		if ((object) p == null)
+		{
+			return false;
+		}
+
+		return this._actionType.Equals(p._actionType)
+			&& this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class DrawPoseMarker
 {
 	private float _x_mm; // float_32
@@ -6639,27 +6761,28 @@ public class Message {
 		SetBehaviorState,	//32
 		AbortPath,	//33
 		AbortAll,	//34
-		DrawPoseMarker,	//35
-		ErasePoseMarker,	//36
-		SetWheelControllerGains,	//37
-		SetHeadControllerGains,	//38
-		SetLiftControllerGains,	//39
-		SelectNextSoundScheme,	//40
-		StartTestMode,	//41
-		IMURequest,	//42
-		PlayAnimation,	//43
-		ReadAnimationFile,	//44
-		StartFaceTracking,	//45
-		StopFaceTracking,	//46
-		StartLookingForMarkers,	//47
-		StopLookingForMarkers,	//48
-		SetVisionSystemParams,	//49
-		SetFaceDetectParams,	//50
-		SetActiveObjectLEDs,	//51
-		SetAllActiveObjectLEDs,	//52
-		SetBackpackLEDs,	//53
-		VisualizeQuad,	//54
-		EraseQuad,	//55
+		CancelAction,	//35
+		DrawPoseMarker,	//36
+		ErasePoseMarker,	//37
+		SetWheelControllerGains,	//38
+		SetHeadControllerGains,	//39
+		SetLiftControllerGains,	//40
+		SelectNextSoundScheme,	//41
+		StartTestMode,	//42
+		IMURequest,	//43
+		PlayAnimation,	//44
+		ReadAnimationFile,	//45
+		StartFaceTracking,	//46
+		StopFaceTracking,	//47
+		StartLookingForMarkers,	//48
+		StopLookingForMarkers,	//49
+		SetVisionSystemParams,	//50
+		SetFaceDetectParams,	//51
+		SetActiveObjectLEDs,	//52
+		SetAllActiveObjectLEDs,	//53
+		SetBackpackLEDs,	//54
+		VisualizeQuad,	//55
+		EraseQuad,	//56
 		INVALID
 	};
 
@@ -7264,6 +7387,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.CancelAction CancelAction
+	{
+		get {
+			if (_tag != Tag.CancelAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"CancelAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.CancelAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.CancelAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G.DrawPoseMarker DrawPoseMarker
 	{
 		get {
@@ -7732,6 +7872,9 @@ public class Message {
 		case Tag.AbortAll:
 			_state = new Anki.Cozmo.U2G.AbortAll(reader);
 			break;
+		case Tag.CancelAction:
+			_state = new Anki.Cozmo.U2G.CancelAction(reader);
+			break;
 		case Tag.DrawPoseMarker:
 			_state = new Anki.Cozmo.U2G.DrawPoseMarker(reader);
 			break;
@@ -7912,6 +8055,9 @@ public class Message {
 		case Tag.AbortAll:
 			AbortAll.Pack(writer);
 			break;
+		case Tag.CancelAction:
+			CancelAction.Pack(writer);
+			break;
 		case Tag.DrawPoseMarker:
 			DrawPoseMarker.Pack(writer);
 			break;
@@ -8091,6 +8237,9 @@ public class Message {
 			case Tag.AbortAll:
 				result += AbortAll.Size;
 				break;
+			case Tag.CancelAction:
+				result += CancelAction.Size;
+				break;
 			case Tag.DrawPoseMarker:
 				result += DrawPoseMarker.Size;
 				break;
@@ -8260,6 +8409,8 @@ public class Message {
 			return this.AbortPath.Equals(p.AbortPath);
 		case Tag.AbortAll:
 			return this.AbortAll.Equals(p.AbortAll);
+		case Tag.CancelAction:
+			return this.CancelAction.Equals(p.CancelAction);
 		case Tag.DrawPoseMarker:
 			return this.DrawPoseMarker.Equals(p.DrawPoseMarker);
 		case Tag.ErasePoseMarker:
@@ -8418,6 +8569,9 @@ public class Message {
 				break;
 			case Tag.AbortAll:
 				hash = hash * 23 + this.AbortAll.GetHashCode();
+				break;
+			case Tag.CancelAction:
+				hash = hash * 23 + this.CancelAction.GetHashCode();
 				break;
 			case Tag.DrawPoseMarker:
 				hash = hash * 23 + this.DrawPoseMarker.GetHashCode();

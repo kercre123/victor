@@ -1039,6 +1039,16 @@ namespace Anki {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
                   SendAbortAll();
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  // ALT + Q: Cancel action
+                  U2G::CancelAction msg;
+                  msg.actionType = -1;
+                  msg.robotID = 1;
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_CancelAction(msg);
+                  msgHandler_.SendMessage(1, msgWrapper);
+                  
                 } else {
                   // Just Q: Just cancel path
                   SendAbortPath();

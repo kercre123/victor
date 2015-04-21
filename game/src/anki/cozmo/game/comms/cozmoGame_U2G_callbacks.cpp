@@ -557,6 +557,15 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_CancelAction(U2G::CancelAction const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->GetActionList().Cancel(*robot, -1, msg.actionType);
+    }
+  }
+  
   void CozmoGameImpl::Process_DrawPoseMarker(U2G::DrawPoseMarker const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?

@@ -111,6 +111,9 @@ case Anki::Cozmo::U2G::Message::Tag::AbortPath:
 case Anki::Cozmo::U2G::Message::Tag::AbortAll:
 	Process_AbortAll(msg.Get_AbortAll());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::CancelAction:
+	Process_CancelAction(msg.Get_CancelAction());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::DrawPoseMarker:
 	Process_DrawPoseMarker(msg.Get_DrawPoseMarker());
 	break;

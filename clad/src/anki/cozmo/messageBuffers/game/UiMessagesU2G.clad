@@ -220,6 +220,15 @@ message AbortPath {
 message AbortAll {
 }
 
+// CancelAction
+//  Use actionType to cancel any queued actions of the specified type.
+//  Use actionType = -1 to cancel all actions, regardless of type.
+message CancelAction {
+  int_32 actionType,  // See actionTypes.h
+//  int_32 slotHandle,  // TODO: Add this later if it makes sense
+  uint_8 robotID
+}
+
 // DrawPoseMarker
 message DrawPoseMarker {
     float_32 x_mm,
