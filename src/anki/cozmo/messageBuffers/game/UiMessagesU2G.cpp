@@ -2201,6 +2201,71 @@ bool AbortAll::operator!=(const AbortAll& other) const
 }
 
 
+// MESSAGE CancelAction
+
+CancelAction::CancelAction(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+CancelAction::CancelAction(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t CancelAction::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t CancelAction::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->actionType);
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t CancelAction::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t CancelAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->actionType);
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t CancelAction::Size() const
+{
+	size_t result = 0;
+	//actionType
+	result += 4; // = int_32
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool CancelAction::operator==(const CancelAction& other) const
+{
+	if (actionType != other.actionType
+	|| robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool CancelAction::operator!=(const CancelAction& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE DrawPoseMarker
 
 DrawPoseMarker::DrawPoseMarker(const uint8_t* buff, size_t len)
@@ -3585,6 +3650,191 @@ bool SetBackpackLEDs::operator!=(const SetBackpackLEDs& other) const
 }
 
 
+// MESSAGE VisualizeQuad
+
+VisualizeQuad::VisualizeQuad(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+VisualizeQuad::VisualizeQuad(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t VisualizeQuad::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t VisualizeQuad::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->quadID);
+	buffer.Write(this->color);
+	buffer.Write(this->xUpperLeft);
+	buffer.Write(this->yUpperLeft);
+	buffer.Write(this->zUpperLeft);
+	buffer.Write(this->xLowerLeft);
+	buffer.Write(this->yLowerLeft);
+	buffer.Write(this->zLowerLeft);
+	buffer.Write(this->xUpperRight);
+	buffer.Write(this->yUpperRight);
+	buffer.Write(this->zUpperRight);
+	buffer.Write(this->xLowerRight);
+	buffer.Write(this->yLowerRight);
+	buffer.Write(this->zLowerRight);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t VisualizeQuad::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t VisualizeQuad::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->quadID);
+	buffer.Read(this->color);
+	buffer.Read(this->xUpperLeft);
+	buffer.Read(this->yUpperLeft);
+	buffer.Read(this->zUpperLeft);
+	buffer.Read(this->xLowerLeft);
+	buffer.Read(this->yLowerLeft);
+	buffer.Read(this->zLowerLeft);
+	buffer.Read(this->xUpperRight);
+	buffer.Read(this->yUpperRight);
+	buffer.Read(this->zUpperRight);
+	buffer.Read(this->xLowerRight);
+	buffer.Read(this->yLowerRight);
+	buffer.Read(this->zLowerRight);
+	return buffer.GetBytesRead();
+}
+
+size_t VisualizeQuad::Size() const
+{
+	size_t result = 0;
+	//quadID
+	result += 4; // = uint_32
+	//color
+	result += 4; // = uint_32
+	//xUpperLeft
+	result += 4; // = float_32
+	//yUpperLeft
+	result += 4; // = float_32
+	//zUpperLeft
+	result += 4; // = float_32
+	//xLowerLeft
+	result += 4; // = float_32
+	//yLowerLeft
+	result += 4; // = float_32
+	//zLowerLeft
+	result += 4; // = float_32
+	//xUpperRight
+	result += 4; // = float_32
+	//yUpperRight
+	result += 4; // = float_32
+	//zUpperRight
+	result += 4; // = float_32
+	//xLowerRight
+	result += 4; // = float_32
+	//yLowerRight
+	result += 4; // = float_32
+	//zLowerRight
+	result += 4; // = float_32
+	return result;
+}
+
+bool VisualizeQuad::operator==(const VisualizeQuad& other) const
+{
+	if (quadID != other.quadID
+	|| color != other.color
+	|| xUpperLeft != other.xUpperLeft
+	|| yUpperLeft != other.yUpperLeft
+	|| zUpperLeft != other.zUpperLeft
+	|| xLowerLeft != other.xLowerLeft
+	|| yLowerLeft != other.yLowerLeft
+	|| zLowerLeft != other.zLowerLeft
+	|| xUpperRight != other.xUpperRight
+	|| yUpperRight != other.yUpperRight
+	|| zUpperRight != other.zUpperRight
+	|| xLowerRight != other.xLowerRight
+	|| yLowerRight != other.yLowerRight
+	|| zLowerRight != other.zLowerRight) {
+		return false;
+	}
+	return true;
+}
+
+bool VisualizeQuad::operator!=(const VisualizeQuad& other) const
+{
+	return !(operator==(other));
+}
+
+
+// MESSAGE EraseQuad
+
+EraseQuad::EraseQuad(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+EraseQuad::EraseQuad(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t EraseQuad::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t EraseQuad::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->quadID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t EraseQuad::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t EraseQuad::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->quadID);
+	return buffer.GetBytesRead();
+}
+
+size_t EraseQuad::Size() const
+{
+	size_t result = 0;
+	//quadID
+	result += 4; // = uint_32
+	return result;
+}
+
+bool EraseQuad::operator==(const EraseQuad& other) const
+{
+	if (quadID != other.quadID) {
+		return false;
+	}
+	return true;
+}
+
+bool EraseQuad::operator!=(const EraseQuad& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -3659,6 +3909,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "AbortPath";
 	case MessageTag::AbortAll:
 		return "AbortAll";
+	case MessageTag::CancelAction:
+		return "CancelAction";
 	case MessageTag::DrawPoseMarker:
 		return "DrawPoseMarker";
 	case MessageTag::ErasePoseMarker:
@@ -3697,6 +3949,10 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetAllActiveObjectLEDs";
 	case MessageTag::SetBackpackLEDs:
 		return "SetBackpackLEDs";
+	case MessageTag::VisualizeQuad:
+		return "VisualizeQuad";
+	case MessageTag::EraseQuad:
+		return "EraseQuad";
 	default:
 		return "INVALID";
 	}
@@ -4728,6 +4984,35 @@ void Message::Set_AbortAll(Anki::Cozmo::U2G::AbortAll&& new_AbortAll)
 }
 
 
+const Anki::Cozmo::U2G::CancelAction& Message::Get_CancelAction() const
+{
+	assert(_tag == Tag::CancelAction);
+	return _CancelAction;
+}
+void Message::Set_CancelAction(const Anki::Cozmo::U2G::CancelAction& new_CancelAction)
+{
+	if(this->_tag == Tag::CancelAction) {
+		_CancelAction = new_CancelAction;
+	}
+	else {
+		ClearCurrent();
+		new(&_CancelAction) Anki::Cozmo::U2G::CancelAction{new_CancelAction};
+		_tag = Tag::CancelAction;
+	}
+}
+void Message::Set_CancelAction(Anki::Cozmo::U2G::CancelAction&& new_CancelAction)
+{
+	if(this->_tag == Tag::CancelAction) {
+		_CancelAction = std::move(new_CancelAction);
+	}
+	else {
+		ClearCurrent();
+		new(&_CancelAction) Anki::Cozmo::U2G::CancelAction{std::move(new_CancelAction)};
+		_tag = Tag::CancelAction;
+	}
+}
+
+
 const Anki::Cozmo::U2G::DrawPoseMarker& Message::Get_DrawPoseMarker() const
 {
 	assert(_tag == Tag::DrawPoseMarker);
@@ -5279,6 +5564,64 @@ void Message::Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBac
 }
 
 
+const Anki::Cozmo::U2G::VisualizeQuad& Message::Get_VisualizeQuad() const
+{
+	assert(_tag == Tag::VisualizeQuad);
+	return _VisualizeQuad;
+}
+void Message::Set_VisualizeQuad(const Anki::Cozmo::U2G::VisualizeQuad& new_VisualizeQuad)
+{
+	if(this->_tag == Tag::VisualizeQuad) {
+		_VisualizeQuad = new_VisualizeQuad;
+	}
+	else {
+		ClearCurrent();
+		new(&_VisualizeQuad) Anki::Cozmo::U2G::VisualizeQuad{new_VisualizeQuad};
+		_tag = Tag::VisualizeQuad;
+	}
+}
+void Message::Set_VisualizeQuad(Anki::Cozmo::U2G::VisualizeQuad&& new_VisualizeQuad)
+{
+	if(this->_tag == Tag::VisualizeQuad) {
+		_VisualizeQuad = std::move(new_VisualizeQuad);
+	}
+	else {
+		ClearCurrent();
+		new(&_VisualizeQuad) Anki::Cozmo::U2G::VisualizeQuad{std::move(new_VisualizeQuad)};
+		_tag = Tag::VisualizeQuad;
+	}
+}
+
+
+const Anki::Cozmo::U2G::EraseQuad& Message::Get_EraseQuad() const
+{
+	assert(_tag == Tag::EraseQuad);
+	return _EraseQuad;
+}
+void Message::Set_EraseQuad(const Anki::Cozmo::U2G::EraseQuad& new_EraseQuad)
+{
+	if(this->_tag == Tag::EraseQuad) {
+		_EraseQuad = new_EraseQuad;
+	}
+	else {
+		ClearCurrent();
+		new(&_EraseQuad) Anki::Cozmo::U2G::EraseQuad{new_EraseQuad};
+		_tag = Tag::EraseQuad;
+	}
+}
+void Message::Set_EraseQuad(Anki::Cozmo::U2G::EraseQuad&& new_EraseQuad)
+{
+	if(this->_tag == Tag::EraseQuad) {
+		_EraseQuad = std::move(new_EraseQuad);
+	}
+	else {
+		ClearCurrent();
+		new(&_EraseQuad) Anki::Cozmo::U2G::EraseQuad{std::move(new_EraseQuad)};
+		_tag = Tag::EraseQuad;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -5574,6 +5917,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_AbortAll.Unpack(buffer);
 		}
 		break;
+	case Tag::CancelAction:
+		if (newTag != oldTag) {
+			new(&(this->_CancelAction)) Anki::Cozmo::U2G::CancelAction(buffer);
+		}
+		else {
+			this->_CancelAction.Unpack(buffer);
+		}
+		break;
 	case Tag::DrawPoseMarker:
 		if (newTag != oldTag) {
 			new(&(this->_DrawPoseMarker)) Anki::Cozmo::U2G::DrawPoseMarker(buffer);
@@ -5726,6 +6077,22 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetBackpackLEDs.Unpack(buffer);
 		}
 		break;
+	case Tag::VisualizeQuad:
+		if (newTag != oldTag) {
+			new(&(this->_VisualizeQuad)) Anki::Cozmo::U2G::VisualizeQuad(buffer);
+		}
+		else {
+			this->_VisualizeQuad.Unpack(buffer);
+		}
+		break;
+	case Tag::EraseQuad:
+		if (newTag != oldTag) {
+			new(&(this->_EraseQuad)) Anki::Cozmo::U2G::EraseQuad(buffer);
+		}
+		else {
+			this->_EraseQuad.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -5848,6 +6215,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::AbortAll:
 		this->_AbortAll.Pack(buffer);
 		break;
+	case Tag::CancelAction:
+		this->_CancelAction.Pack(buffer);
+		break;
 	case Tag::DrawPoseMarker:
 		this->_DrawPoseMarker.Pack(buffer);
 		break;
@@ -5904,6 +6274,12 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 		break;
 	case Tag::SetBackpackLEDs:
 		this->_SetBackpackLEDs.Pack(buffer);
+		break;
+	case Tag::VisualizeQuad:
+		this->_VisualizeQuad.Pack(buffer);
+		break;
+	case Tag::EraseQuad:
+		this->_EraseQuad.Pack(buffer);
 		break;
 	default:
 		break;
@@ -6021,6 +6397,9 @@ size_t Message::Size() const
 	case Tag::AbortAll:
 		result += _AbortAll.Size();
 		break;
+	case Tag::CancelAction:
+		result += _CancelAction.Size();
+		break;
 	case Tag::DrawPoseMarker:
 		result += _DrawPoseMarker.Size();
 		break;
@@ -6077,6 +6456,12 @@ size_t Message::Size() const
 		break;
 	case Tag::SetBackpackLEDs:
 		result += _SetBackpackLEDs.Size();
+		break;
+	case Tag::VisualizeQuad:
+		result += _VisualizeQuad.Size();
+		break;
+	case Tag::EraseQuad:
+		result += _EraseQuad.Size();
 		break;
 	default:
 		return 0;
@@ -6193,6 +6578,9 @@ void Message::ClearCurrent()
 	case Tag::AbortAll:
 		_AbortAll.~AbortAll();
 		break;
+	case Tag::CancelAction:
+		_CancelAction.~CancelAction();
+		break;
 	case Tag::DrawPoseMarker:
 		_DrawPoseMarker.~DrawPoseMarker();
 		break;
@@ -6249,6 +6637,12 @@ void Message::ClearCurrent()
 		break;
 	case Tag::SetBackpackLEDs:
 		_SetBackpackLEDs.~SetBackpackLEDs();
+		break;
+	case Tag::VisualizeQuad:
+		_VisualizeQuad.~VisualizeQuad();
+		break;
+	case Tag::EraseQuad:
+		_EraseQuad.~EraseQuad();
 		break;
 	default:
 		break;
