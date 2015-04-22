@@ -32,8 +32,9 @@ PROTO WebotsKeyboardController [
   field SFFloat headKi 0.05
   field SFFloat headMaxErrorSum 2
 
-  field SFFloat liftKp 20
-  field SFFloat liftKi 0.03
+  field SFFloat liftKp 6
+  field SFFloat liftKd 5000
+  field SFFloat liftKi 0
   field SFFloat liftMaxErrorSum 10
 
   # Vision system params
