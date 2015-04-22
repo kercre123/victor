@@ -4,6 +4,7 @@ import os.path
 import time
 import pdb
 import random
+from math import *
 
 from PySide import QtCore, QtGui
 
@@ -362,19 +363,12 @@ class Ui_ImageWindow(QtGui.QLabel):
           
           painter.setPen(QtGui.QPen(lineColor, 3, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))  
           painter.drawLine(xScaleInv*corners[0][0], yScaleInv*corners[0][1], xScaleInv*corners[1][0], yScaleInv*corners[1][1])
-            
-          # plotHandle = plot(...
-          #     xScaleInv*([cornersX(2),cornersX(3),cornersX(4),cornersX(1)]+0.5),...
-          #     yScaleInv*([cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
-          #     linePlotType, 'LineWidth', 1)
-          # 
-          # plotHandle = plot(...
-          #     xScaleInv*([cornersX(1),cornersX(2)]+0.5),...
-          #     yScaleInv*([cornersY(1),cornersY(2)]+0.5),...
-          #     linePlotType, 'LineWidth', 3)
-          # 
-          # markerName = jsonTestData.Poses{curPoseIndex}.VisionMarkers{iMarker}.markerType(8:end)
-          # textHandle = text((cornersX(1)+cornersX(4))/2 + 5, (cornersY(1)+cornersY(4))/2, markerName, 'Color', linePlotType)
+                      
+          markerName = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][iMarker]['markerType'][7:]
+          painter.drawText(\
+            (xScaleInv*corners[0][0]+xScaleInv*corners[3][0])/2 + 5,\
+            (yScaleInv*corners[0][1]+yScaleInv*corners[3][1])/2,\
+            markerName)
         
         painter.setPen(QtGui.QPen(lineColor, 1, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
         for i in range(0,len(corners)):
@@ -393,7 +387,7 @@ class Ui_ImageWindow(QtGui.QLabel):
     [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, g_curMarkerIndex)
 
     realImageSize = [float(g_imageWindow.pixmap().height()), float(g_imageWindow.pixmap().width())]
-    displayImageSize = [float(self.height()), float(self.height())]
+    displayImageSize = [float(self.height()), float(self.width())]
 
     xScale = realImageSize[1] / displayImageSize[1]
     yScale = realImageSize[0] / displayImageSize[0]
@@ -444,7 +438,7 @@ class Ui_ImageWindow(QtGui.QLabel):
           if sum(whichCorners) < 4:
             for i in range(0,4):
               if whichCorners[i] == 0:
-                if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] <= g_curMarkerIndex):
+                if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) <= g_curMarkerIndex:
                   g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'].append({})
 
                 g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex][cornerNamesX[i]] = newPoint['x']
@@ -456,7 +450,7 @@ class Ui_ImageWindow(QtGui.QLabel):
           else:
             print('Cannot add point, because only 4 fiduciual marker corners are allowed')
     elif event.button() == QtCore.Qt.MouseButton.RightButton: # right click
-      minDist = Inf
+      minDist = float('Inf')
       minInd = -1
 
       if (g_pointsType == 'template') or (g_pointsType == 'fiducialMarker'):
@@ -466,15 +460,15 @@ class Ui_ImageWindow(QtGui.QLabel):
             continue
 
           ci += 1
-
-          dist = sqrt(pow(corners[ci][0] - newPoint['x'], 2) + pow(corners[ci][1] - newPoint['y'], 2))
+          
+          dist = sqrt(pow(corners[ci-1][0] - newPoint['x'], 2) + pow(corners[ci-1][1] - newPoint['y'], 2))
           if dist < minDist:
             minDist = dist
             minInd = i
 
         if (minInd != -1) and (minDist < (min(realImageSize[0], realImageSize[1])/50.0)):
           newMarkerData = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]
-
+          
           newMarkerData.pop(cornerNamesX[minInd])
           newMarkerData.pop(cornerNamesY[minInd])
 
@@ -483,7 +477,8 @@ class Ui_ImageWindow(QtGui.QLabel):
 
     # TODO: save thread
     if changed:
-      print(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex])
+      pass
+      #print(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex])
       #  Save()
 
     poseChanged(False)
