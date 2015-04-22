@@ -606,7 +606,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->SetLiftControllerGains(msg.kp, msg.ki, msg.maxIntegralError);
+      robot->SetLiftControllerGains(msg.kp, msg.kd, msg.ki, msg.maxIntegralError);
     }
   }
   

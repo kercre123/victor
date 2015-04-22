@@ -1416,6 +1416,7 @@ struct SetHeadControllerGains
 struct SetLiftControllerGains
 {
 	float kp;
+	float kd;
 	float ki;
 	float maxIntegralError;
 	
@@ -1428,9 +1429,11 @@ struct SetLiftControllerGains
 	SetLiftControllerGains& operator=(SetLiftControllerGains&& other) noexcept = default;
 	
 	explicit SetLiftControllerGains(float kp
+		,float kd
 		,float ki
 		,float maxIntegralError)
 	:kp(kp)
+	,kd(kd)
 	,ki(ki)
 	,maxIntegralError(maxIntegralError)
 	{}
