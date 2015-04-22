@@ -291,11 +291,15 @@ namespace Anki
           if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
             currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
           } else {
-            if((lastResult = currentMarker.Extract(
-              image,
-              refinedHomography, meanGrayvalueThreshold,
-              decode_minContrastRatio,
-              scratchOnchip)) != RESULT_OK)
+            if((lastResult = currentMarker.Extract(image,
+                                                   refinedHomography,
+#                                                  if USE_NEAREST_NEIGHBOR_RECOGNITION
+                                                   NEAREST_NEIGHBOR_DISTANCE_THRESHOLD, 
+#                                                  else
+                                                   meanGrayvalueThreshold,
+#                                                  endif
+                                                   decode_minContrastRatio,
+                                                   scratchOnchip)) != RESULT_OK)
             {
               return lastResult;
             }

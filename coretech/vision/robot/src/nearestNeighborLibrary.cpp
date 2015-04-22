@@ -25,7 +25,7 @@ namespace Embedded {
                                                  const s32 numProbePoints, const s32 numFractionalBits)
   : _data(numDataPoints, dataDim, const_cast<u8*>(data))
   , _weights(numDataPoints, dataDim, const_cast<u8*>(weights))
-  , _totalWeight(numDataPoints, 0)
+  , _totalWeight(numDataPoints, 1)
   , _numDataPoints(numDataPoints)
   , _dataDimension(dataDim)
   , _labels(labels)
@@ -37,9 +37,8 @@ namespace Embedded {
   , _numFractionalBits(numFractionalBits)
   , _probeValues(1, _dataDimension)
   {
-    for(s32 i=0; i<_dataDimension; ++i) {
-      _totalWeight += _weights.row(i);
-    }
+    // Sum all the weights for each example in the library along the columns:
+    cv::reduce(_weights, _totalWeight, 1, CV_REDUCE_SUM);
   }
   
 
@@ -49,6 +48,10 @@ namespace Embedded {
                                                     s32 &label, s32 &closestDistance)
   {
     GetProbeValues(image, homography);
+    
+    // Visualize probe values
+    //cv::Mat_<u8> temp(32,32,_probeValues.data);
+    //cv::imshow("ProbeValues", temp);
 
     const u8* restrict pProbeData = _probeValues[0];
     
@@ -58,20 +61,26 @@ namespace Embedded {
     {
       const u8* currentExample = _data[iExample];
       const u8* currentWeight  = _weights[iExample];
+      const s32 currentTotalWeight = _totalWeight(iExample, 0);
+      
+      // Visualize current example
+      //cv::Mat_<u8> temp(32,32,const_cast<u8*>(currentExample));
+      //cv::imshow("CurrentExample", temp);
+      //cv::waitKey();
       
       // The distance threshold for this example depends on the total weight
-      s32 currentDistThreshold = _totalWeight(0,iExample) * closestDistance;
+      const s32 currentDistThreshold = currentTotalWeight * closestDistance;
       s32 currentDistance = 0;
       s32 iProbe = 0;
       while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
       {
         const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
-        currentDistance += currentWeight[iProbe] * std::abs(diff);
+        currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
         ++iProbe;
       }
       
       if(currentDistance < currentDistThreshold) {
-        currentDistance /= _totalWeight(0,iExample);
+        currentDistance /= currentTotalWeight;
         if(currentDistance < closestDistance) {
           closestIndex = iExample;
           closestDistance = currentDistance;
@@ -125,6 +134,9 @@ namespace Embedded {
       probeYOffsetsF32[iOffset] = static_cast<f32>(_probeYOffsets[iOffset]) * fixedPointDivider;
     }
     
+    u8 minValue = u8_MAX;
+    u8 maxValue = 0;
+    
     for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
     {
       const f32 xCenter = static_cast<f32>(_probeXCenters[iProbe]) * fixedPointDivider;
@@ -156,7 +168,20 @@ namespace Embedded {
       
       pProbeData[iProbe] = static_cast<u8>(accumulator / numProbeOffsets);
       
+      // Keep track of min/max for normalization below
+      if(pProbeData[iProbe] < minValue) {
+        minValue = pProbeData[iProbe];
+      } else if(pProbeData[iProbe] > maxValue) {
+        maxValue = pProbeData[iProbe];
+      }
+      
     } // for each probe
+    
+    // Normalization to scale between 0 and 255:
+    const s32 divisor = static_cast<s32>(maxValue - minValue);
+    for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
+      pProbeData[iProbe] = (255*static_cast<s32>(pProbeData[iProbe] - minValue)) / divisor;
+    }
     
     return RESULT_OK;
   } // VisionMarker::GetProbeValues()

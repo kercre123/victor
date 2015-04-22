@@ -605,7 +605,7 @@ namespace Anki
                                                            NearestNeighborWeights,
                                                            NearestNeighborLabels,
                                                            NUM_MARKERS_IN_LIBRARY,
-                                                           NUM_PROBES*NUM_PROBES,
+                                                           NUM_PROBES,
                                                            ProbeCenters_X, ProbeCenters_Y,
                                                            ProbePoints_X,  ProbePoints_Y,
                                                            NUM_PROBE_POINTS,
@@ -886,7 +886,19 @@ namespace Anki
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
 #    if USE_NEAREST_NEIGHBOR_RECOGNITION
-      u32 minDistance = grayvalueThreshold;
+      
+      s32 label=-1;
+      s32 distance = grayvalueThreshold;
+      lastResult = VisionMarker::GetNearestNeighborLibrary().GetNearestNeighbor(image, homography, grayvalueThreshold, label, distance);
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "VisionMarker.Extract", "Failed finding nearest neighbor.\n");
+      
+      if(label != -1) {
+        AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
+                            "Valid label returned as nearest neighbor, but distance (%d) above threshold (%d).\n",
+                            distance, grayvalueThreshold);
+        verified = true;
+        selectedLabel = static_cast<OrientedMarkerLabel>(label);
+      }
       
 #    else
         AnkiAssert(NUM_TREES <= u8_MAX);
