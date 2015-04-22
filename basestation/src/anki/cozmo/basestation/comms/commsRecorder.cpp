@@ -11,7 +11,7 @@
  **/
 #include <stdlib.h>
 
-#include "comms/commsRecorder.h"
+#include "commsRecorder.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/shared/utilMessaging.h"
 #include <assert.h>
