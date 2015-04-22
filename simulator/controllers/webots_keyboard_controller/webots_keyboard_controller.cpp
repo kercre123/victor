@@ -1157,7 +1157,9 @@ namespace Anki {
                     msg.onColor = colorList[colorIndex];
                     msg.offColor = 0;
                     msg.turnOffUnspecifiedLEDs = 0;
-                    msg.makeRelative = 0;
+                    msg.makeRelative = 1;
+                    msg.relativeToX = robotPosition_.x();
+                    msg.relativeToY = robotPosition_.y();
                     
                     ++cornerIndex;
                     if(cornerIndex == NUM_BLOCK_LEDS) {

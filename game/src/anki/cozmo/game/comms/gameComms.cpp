@@ -66,10 +66,11 @@ namespace Cozmo {
       
       // Wrap message in header/footer
       // TODO: Include timestamp too?
-      char sendBuf[128];
+      char sendBuf[Comms::MsgPacket::MAX_SIZE];
       int sendBufLen = 0;
       
 #if(USE_UDP_UI_COMMS)
+      assert(p.dataLen < sizeof(sendBuf));
       memcpy(sendBuf, p.data, p.dataLen);
       sendBufLen = p.dataLen;
 #else
@@ -205,9 +206,9 @@ namespace Cozmo {
         if (recvDataSize > HEADER_SIZE) {
           u32 dataLen = recvBuf[HEADER_SIZE];
           
-          if (dataLen > 255) {
-            PRINT_NAMED_WARNING("GameComms.MsgTooBig", "Can't handle messages larger than 255\n");
-            dataLen = 255;
+          if (dataLen > Comms::MsgPacket::MAX_SIZE) {
+            PRINT_NAMED_WARNING("GameComms.MsgTooBig", "Can't handle messages larger than %d\n", Comms::MsgPacket::MAX_SIZE);
+            dataLen = Comms::MsgPacket::MAX_SIZE;
           }
           
           if (recvDataSize >= HEADER_SIZE + 4 + dataLen) {
