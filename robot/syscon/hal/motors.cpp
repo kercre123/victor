@@ -85,9 +85,9 @@ extern GlobalDataToBody g_dataToBody;
 	// Applying a slip factor correction of 94.8%
 	const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43); // 1052
 	
-  // Given a gear ratio of 729:1 and 4 encoder ticks per revolution, we
+  // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
   // compute the radians per tick on the lift as:
-  const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 729.0);
+  const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
   
   // Given a gear ratio of 324:1 and 8 encoder ticks per revolution, we
   // compute the radians per tick on the head as:
@@ -128,7 +128,7 @@ extern GlobalDataToBody g_dataToBody;
       LIFT_N1_PIN,
       LIFT_N2_PIN,
       LIFT_P_PIN,
-      true,   // Wired backward
+      false,   // Wired backward
       0,
       ENCODER_LIFTA_PIN,
       ENCODER_LIFTB_PIN,

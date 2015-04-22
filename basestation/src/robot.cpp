@@ -2675,32 +2675,38 @@ namespace Anki {
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
       Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+     
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
+                          "Object %d does not exist in the ACTIVE_OBJECT family in the world.\n",
+                          objectID.GetValue());
+        return nullptr;
+      }
       
       if(!object->IsActive()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d does not appear to be an active object.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       if(!object->IsIdentified()) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d is active but has not been identified.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
-      // TODO: Get rid of the need for reinterpret_cast here (add virtual GetActiveID() to ObsObject?)
-      ActiveCube* activeCube = reinterpret_cast<ActiveCube*>(object);
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
       if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
+        PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d could not be cast to an ActiveCube.\n",
                           objectID.GetValue());
         return nullptr;
       }
       
       return activeCube;
-    }
+    } // GetActiveObject()
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichBlockLEDs whichLEDs,
@@ -2716,12 +2722,15 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
-        activeCube->SetLEDs(whichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+        
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
+        const WhichBlockLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
+                                                                                      relativeToPoint,
+                                                                                      makeRelative);
+        
+        activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
-        if(makeRelative) {
-          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
-        }
         
         MessageSetBlockLights m;
         activeCube->FillMessage(m);
@@ -2729,6 +2738,33 @@ namespace Anki {
       }
     }
       
+    Result Robot::SetObjectLights(const ObjectID& objectID,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& onColor,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& offColor,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms,
+                                  const MakeRelativeMode makeRelative,
+                                  const Point2f& relativeToPoint)
+    {
+      ActiveCube* activeCube = GetActiveObject(objectID);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      } else {
+        
+        activeCube->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
+        activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+        
+        MessageSetBlockLights m;
+        activeCube->FillMessage(m);
+        return _msgHandler->SendMessage(GetID(), m);
+      }
+
+    }
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
@@ -2762,11 +2798,11 @@ namespace Anki {
         anyFailures = true;
       }
       
-      if(SendAbortDocking() != RESULT_OK) {
+      if(AbortDocking() != RESULT_OK) {
         anyFailures = true;
       }
       
-      if(SendAbortAnimation() != RESULT_OK) {
+      if(AbortAnimation() != RESULT_OK) {
         anyFailures = true;
       }
       
@@ -2776,6 +2812,16 @@ namespace Anki {
         return RESULT_OK;
       }
       
+    }
+      
+    Result Robot::AbortDocking()
+    {
+      return SendAbortDocking();
+    }
+      
+    Result Robot::AbortAnimation()
+    {
+      return SendAbortAnimation();
     }
     
     Result Robot::SendAbortAnimation()

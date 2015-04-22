@@ -16,6 +16,8 @@
 
 #include "anki/common/types.h"
 
+#include "anki/cozmo/basestation/actionTypes.h"
+
 #include <list>
 #include <map>
 
@@ -45,8 +47,11 @@ namespace Anki {
       
       Result   QueueNext(IActionRunner *,  u8 numRetries = 0);
       Result   QueueAtEnd(IActionRunner *, u8 numRetires = 0);
-      
+
+      // Blindly clear the queue
       void     Clear();
+      
+      void     Cancel(Robot& robot, RobotActionType withType = RobotActionType::UNKNOWN);
       
       bool     IsEmpty() const { return _queue.empty(); }
       
@@ -67,7 +72,7 @@ namespace Anki {
     class ActionList
     {
     public:
-      using SlotHandle = u32;
+      using SlotHandle = s32;
       
       ActionList();
       ~ActionList();
@@ -86,8 +91,15 @@ namespace Anki {
       Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
       
       bool       IsEmpty() const;
-      
+
+      // Blindly clears out the contents of the action list
       void       Clear();
+
+      // Only cancels actions from the specified slot with the specified type, and
+      // does any cleanup specified by the action's Cancel/Cleanup methods.
+      // (Use -1 for each to specify "all".)
+      void       Cancel(Robot& robot, SlotHandle fromSlot = -1,
+                        RobotActionType withType = RobotActionType::UNKNOWN);
       
       void       Print() const;
       

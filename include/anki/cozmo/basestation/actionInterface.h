@@ -20,6 +20,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/actionTypes.h"
 
 #include <list>
 
@@ -43,19 +44,22 @@ namespace Anki {
     {
     public:
       
-      typedef enum  {
-        RUNNING,
-        SUCCESS,
-        FAILURE_TIMEOUT,
-        FAILURE_PROCEED,
-        FAILURE_RETRY,
-        FAILURE_ABORT
-      } ActionResult;
-      
       IActionRunner();
       virtual ~IActionRunner() { }
       
       ActionResult Update(Robot& robot);
+      
+      void Cancel(Robot& robot) { _isCancelled = true; }
+      
+      // Derived classes can implement any required cleanup by overriding this
+      // method. It is called when Update() is about return to anything other than
+      // RUNNING (including cancellation). Note that it cannot change the ActionResult
+      // (so if Update is about to failure or success, nothing that Cleanup does
+      // can change that.)
+      // Note that this is also called on cancellation, so this should also cleanup
+      // after the action when stopped mid-way through (and, for example, abort
+      // [physical] robot functions)
+      virtual void Cleanup(Robot& robot) { }
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.
@@ -68,7 +72,7 @@ namespace Anki {
       // Override this in derived classes to return a (probably unique) integer
       // representing this action's type. This will be reported in any
       // completion signal that is emitted.
-      virtual s32 GetType() const = 0;
+      virtual RobotActionType GetType() const = 0;
         
       virtual void Reset() = 0;
       
@@ -91,7 +95,7 @@ namespace Anki {
       // signal is emitted with the robot ID, the result of GetType(), and a success
       // flag. Override in derived classes to fill in other fields of the signal
       // as needed.
-      virtual void EmitCompletionSignal(Robot& robot, bool success) const;
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const;
 
     protected:
       
@@ -109,6 +113,7 @@ namespace Anki {
       
       bool          _isPartOfCompoundAction;
       bool          _isRunning;
+      bool          _isCancelled;
       
 #   if USE_ACTION_CALLBACKS
     public:
@@ -137,6 +142,7 @@ namespace Anki {
       IAction();
       virtual ~IAction() { }
       
+      
       // Provide a retry function that will be called by Update() if
       // FAILURE_RETRY is returned by the derived CheckIfDone() method.
       //void SetRetryFunction(std::function<Result(Robot&)> retryFcn);
@@ -154,14 +160,10 @@ namespace Anki {
       virtual ActionResult UpdateInternal(Robot& robot) override final;
 
       // Derived Actions should implement these.
-      virtual ActionResult  Init(Robot& robot) { return SUCCESS; } // Optional: default is no preconditions to meet
+      virtual ActionResult  Init(Robot& robot) { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
       
-      // Derived classes can implement any required cleanup by overriding this
-      // method. It is called when UpdateInternal() is about to anything other than
-      // RUNNING. Note that it cannot change the ActionResult (so if UpdateInternal
-      // is about to failure or success, nothing that Cleanup does can change that.)
-      virtual void Cleanup(Robot& robot) { }
+
       
       //
       // Timing delays:

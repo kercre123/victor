@@ -290,9 +290,9 @@ namespace Anki {
       // whichLEDs will be turned off. Otherwise, they will be left in their current
       // state.
       // NOTE: Alpha is ignored.
-      void SetLEDs(const WhichBlockLEDs whichLEDs, const ColorRGBA& onColor,
-                   const ColorRGBA& offColor,
-                   const u32 onPeriod_ms, const u32 offPeriod_ms,
+      void SetLEDs(const WhichBlockLEDs whichLEDs,
+                   const ColorRGBA& onColor,        const ColorRGBA& offColor,
+                   const u32 onPeriod_ms,           const u32 offPeriod_ms,
                    const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
                    const bool turnOffUnspecifiedLEDs);
       
@@ -315,6 +315,12 @@ namespace Anki {
       //  so that whatever is specified for the side with LEDs 0 and 4 is applied
       //  to the face currently closest to the given position
       void MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode);
+      
+      // Similar to above, but returns rotated WhichBlockLEDs rather than changing
+      // the block's current state.
+      WhichBlockLEDs MakeWhichLEDsRelativeToXY(const WhichBlockLEDs whichLEDs,
+                                               const Point2f& xyPosition,
+                                               MakeRelativeMode mode) const;
       
       // Trigger a brief change in flash/color to allow identification of this block
       // (Possibly actually flash out the block's ID? TBD...)
@@ -347,7 +353,7 @@ namespace Anki {
       
       // Helper for figuring out which LEDs will be selected after rotating
       // a given pattern of LEDs one slot in the specified direction
-      //static WhichBlockLEDs RotatePatternAroundTopFace(WhichBlockLEDs oldPattern, bool clockwise);
+      static WhichBlockLEDs RotateWhichLEDsAroundTopFace(WhichBlockLEDs whichLEDs, bool clockwise);
       
       // Get the orientation of the top marker around the Z axis. An angle of 0
       // means the top marker is in the canonical orienation, such that the corners

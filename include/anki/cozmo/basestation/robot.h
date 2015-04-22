@@ -460,7 +460,9 @@ namespace Anki {
                              const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
                              const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
                              const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
-                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms);
+                             const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms,
+                             const MakeRelativeMode makeRelative,
+                             const Point2f& relativeToPoint);
       
       // Set all LEDs of the specified block to the same color/flashrate
       Result SetObjectLights(const ObjectID& objectID,
@@ -479,6 +481,11 @@ namespace Anki {
       // animations, and docking. This is like the big red E-stop button.
       // TODO: Probably need a more elegant way of doing this.
       Result AbortAll();
+      
+      // Abort things individual
+      // NOTE: Use ClearPath() above to abort a path
+      Result AbortAnimation();
+      Result AbortDocking(); // a.k.a. PickAndPlace
       
     protected:
       
