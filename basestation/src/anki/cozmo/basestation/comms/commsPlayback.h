@@ -13,7 +13,7 @@
 #ifndef BASESTATION_COMMS_COMMSLOGREADER_H_
 #define BASESTATION_COMMS_COMMSLOGREADER_H_
 
-#include "comms/commsRecorder.h"
+#include "commsRecorder.h"
 #include "anki/common/basestation/utils/helpers/includeFstream.h"
 #include "anki/common/basestation/utils/helpers/includeIostream.h"
 #include <stdio.h>

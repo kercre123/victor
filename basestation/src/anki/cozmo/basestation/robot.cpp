@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -2412,10 +2412,11 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
     {
       MessageSetLiftControllerGains m;
       m.kp = kp;
+      m.kd = kd;
       m.ki = ki;
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);

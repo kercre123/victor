@@ -392,7 +392,7 @@ namespace Anki {
       Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
                                      const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
       Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
-      Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      Result SetLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError);
       Result SendVisionSystemParams(VisionSystemParams_t p);
       Result SendFaceDetectParams(FaceDetectParams_t p);
       

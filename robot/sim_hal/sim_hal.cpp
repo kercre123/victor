@@ -141,6 +141,15 @@ namespace Anki {
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
       }
+
+      // Approximate open-loop conversion of lift power to angular lift speed
+      float LiftPowerToAngSpeed(float power)
+      {
+        // Inverse of speed-power formula in LiftController
+        float rad_per_s = power / 0.05f;
+        return rad_per_s;
+      }
+
       
       void MotorUpdate()
       {
@@ -168,12 +177,7 @@ namespace Anki {
       {
         headMotor_->setVelocity(rad_per_sec);
       }
-      
-      
-      void SetLiftAngularVelocity(const f32 rad_per_sec)
-      {
-        liftMotor_->setVelocity(rad_per_sec);
-      }
+
       
       Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
       {
@@ -500,8 +504,7 @@ namespace Anki {
           rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
-          // TODO: Assuming linear relationship, but it's not!
-          SetLiftAngularVelocity(power * MAX_LIFT_SPEED);
+          liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         case MOTOR_GRIP:

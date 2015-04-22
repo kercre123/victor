@@ -11,9 +11,8 @@
  **/
 
 
-#include "anki/cozmo/shared/ledTypes.h"
+#include "anki/cozmo/robot/ledController.h"
 
-#include <webots/Supervisor.hpp>
 #include <cassert>
 
 namespace Anki {
@@ -48,7 +47,7 @@ namespace Cozmo {
     {
       switch(ledParams.state)
       {
-        case LEDState_t::LED_STATE_ON:
+        case LED_STATE_ON:
           // Check for the special case that LED is just "on" and if so,
           // just stay in this state.
           if(ledParams.offPeriod_ms > 0 ||
@@ -58,34 +57,34 @@ namespace Cozmo {
             // Time to start turning off
             newColor = ledParams.onColor;
             ledParams.nextSwitchTime = currentTime + ledParams.transitionOffPeriod_ms;
-            ledParams.state = LEDState_t::LED_STATE_TURNING_OFF;
+            ledParams.state = LED_STATE_TURNING_OFF;
             colorUpdated = true;
           } else {
             ledParams.nextSwitchTime = currentTime + ledParams.onPeriod_ms;
           }
           break;
           
-        case LEDState_t::LED_STATE_OFF:
+        case LED_STATE_OFF:
           // Time to start turning on
           newColor = ledParams.offColor;
           ledParams.nextSwitchTime = currentTime + ledParams.transitionOnPeriod_ms;
-          ledParams.state = LEDState_t::LED_STATE_TURNING_ON;
+          ledParams.state = LED_STATE_TURNING_ON;
           colorUpdated = true;
           break;
           
-        case LEDState_t::LED_STATE_TURNING_ON:
+        case LED_STATE_TURNING_ON:
           // Time to be fully on:
           newColor = ledParams.onColor;
           ledParams.nextSwitchTime = currentTime + ledParams.onPeriod_ms;
-          ledParams.state = LEDState_t::LED_STATE_ON;
+          ledParams.state = LED_STATE_ON;
           colorUpdated = true;
           break;
           
-        case LEDState_t::LED_STATE_TURNING_OFF:
+        case LED_STATE_TURNING_OFF:
           // Time to be fully off
           newColor = ledParams.offColor;
           ledParams.nextSwitchTime = currentTime + ledParams.offPeriod_ms;
-          ledParams.state = LEDState_t::LED_STATE_OFF;
+          ledParams.state = LED_STATE_OFF;
           colorUpdated = true;
           break;
           
@@ -94,12 +93,12 @@ namespace Cozmo {
           assert(0);
       }
       
-    } else if(ledParams.state == LEDState_t::LED_STATE_TURNING_OFF) {
+    } else if(ledParams.state == LED_STATE_TURNING_OFF) {
       // Compute alpha b/w 0 and 255 w/ no floating point:
       const u8 alpha = ((ledParams.nextSwitchTime - currentTime)<<8) / ledParams.transitionOffPeriod_ms;
       newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, alpha);
       colorUpdated = true;
-    } else if(ledParams.state == LEDState_t::LED_STATE_TURNING_ON) {
+    } else if(ledParams.state == LED_STATE_TURNING_ON) {
       // Compute alpha b/w 0 and 255 w/ no floating point:
       const u8 alpha = 255 - ((ledParams.nextSwitchTime - currentTime)<<8) / ledParams.transitionOnPeriod_ms;
       newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, alpha);

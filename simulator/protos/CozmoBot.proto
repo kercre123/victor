@@ -862,6 +862,7 @@ Supervisor {
 					device [
 					  RotationalMotor {
 						name "LiftMotor"
+						maxVelocity 30
 					  }
 					  PositionSensor {
 					    name "LiftMotorPosSensor"

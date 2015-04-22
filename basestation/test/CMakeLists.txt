@@ -2,7 +2,7 @@
 
 file(GLOB TEST_SRC_FILES "*.cpp")
 
-include_directories(${PROJECT_SOURCE_DIR}/basestation/src)
+include_directories(${PROJECT_SOURCE_DIR}/basestation/src/anki/cozmo/basestation)
 
 add_executable(run_CozmoTests ${TEST_SRC_FILES})
   

@@ -18,10 +18,10 @@
  *
  **/
 
-#import "BLEVehicleManager.h"
-#import "BLECentralMultiplexer.h"
-#import "BLECentralServiceDescription.h"
-#import "BLELog.h"
+#import "BLEManager/BLEVehicleManager.h"
+#import "BLEManager/Central/BLECentralMultiplexer.h"
+#import "BLEManager/Central/BLECentralServiceDescription.h"
+#import "BLEManager/Logging/BLELog.h"
 
 #import <mach/mach_time.h>
 

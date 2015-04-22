@@ -494,7 +494,7 @@ namespace Anki {
       }
 
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
-        LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+        LiftController::SetGains(msg.kp, msg.kd, msg.ki, msg.maxIntegralError);
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
