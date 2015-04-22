@@ -60,11 +60,6 @@ namespace Anki {
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
         const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
-        f32 Kp_ = 0.5f; // proportional control constant
-        f32 Ki_ = 0.02f; // integral control constant
-        f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 10.f;
-        
         const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
         f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
         f32 LIFT_ANGLE_HIGH_LIMIT; // Initialize in Init()
@@ -75,8 +70,19 @@ namespace Anki {
         bool disengageGripperAtDest_ = false;
         f32  disengageAtAngle_ = 0.f;
         
+        f32 Kp_ = 3.f; // proportional control constant
+        f32 Kd_ = 0.f;  // derivative gain
+        f32 Ki_ = 0.f; // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        f32 MAX_ERROR_SUM = 10.f;
+        
         const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0,0,0};
 #else
+        f32 Kp_ = 6.f; // proportional control constant
+        f32 Kd_ = 5000.f;  // derivative gain
+        f32 Ki_ = 0.f; // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        f32 MAX_ERROR_SUM = 10.f;
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
@@ -95,6 +101,7 @@ namespace Anki {
         f32 currDesiredAngle_ = 0.f;
         f32 currDesiredRadVel_ = 0.f;
         f32 angleError_ = 0.f;
+        f32 prevAngleError_ = 0.f;
         f32 prevHalPos_ = 0.f;
         bool inPosition_  = true;
         
@@ -291,7 +298,7 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
       
-      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_sum)
+      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_diff, f32 error_sum)
       {
         // Open loop value to drive at desired speed
         f32 power = 0;
@@ -309,7 +316,7 @@ namespace Anki {
 #endif
         
         // Compute corrective value
-        f32 power_corr = (Kp_ * error) + (Ki_ * error_sum);
+        f32 power_corr = (Kp_ * error) + (Kd_ * error_diff * CONTROL_DT) + (Ki_ * error_sum);
         power += power_corr;
         
         return power;
@@ -580,7 +587,9 @@ namespace Anki {
             angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
             
             // Compute power required for desired speed
-            power_ = ComputeLiftPower(currDesiredRadVel_, angleError_, angleErrorSum_);
+            power_ = ComputeLiftPower(currDesiredRadVel_, angleError_, angleError_ - prevAngleError_, angleErrorSum_);
+            
+            prevAngleError_ = angleError_;
             
             // Update angle error sum
             angleErrorSum_ += angleError_;
@@ -688,11 +697,14 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+      void SetGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
       {
         Kp_ = kp;
+        Kd_ = kd;
         Ki_ = ki;
         MAX_ERROR_SUM = maxIntegralError;
+        PRINT("NEW LIFT GAINS: kp = %f, kd = %f, ki = %f, maxSum = %f\n",
+              Kp_, Kd_, Ki_, MAX_ERROR_SUM);
       }
       
       void Stop()

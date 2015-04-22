@@ -248,6 +248,7 @@ END_MESSAGE_DEFINITION(SetHeadControllerGains)
 // SetLiftControllerGains
 START_MESSAGE_DEFINITION(SetLiftControllerGains, 1)
 ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, kd)
 ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
