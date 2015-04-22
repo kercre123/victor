@@ -252,6 +252,7 @@ message SetHeadControllerGains {
 // SetLiftControllerGains
 message SetLiftControllerGains {
     float_32 kp,
+    float_32 kd,
     float_32 ki,
     float_32 maxIntegralError
 }
