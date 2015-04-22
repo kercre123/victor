@@ -163,29 +163,21 @@ def poseChanged(resetZoom):
   g_rawImage = QtGui.QPixmap(curImageFilename)
   g_toShowImage = QtGui.QPixmap(g_rawImage)
 
-  painter = QtGui.QPainter(g_toShowImage)
-  painter.setPen(QtGui.QColor(128, 128, 0))
-  painter.drawLine(0, 0, 200, 200);
-  painter.end()
+  #painter = QtGui.QPainter(g_toShowImage)
+  #painter.setPen(QtGui.QColor(128, 128, 0))
+  #painter.drawLine(0, 0, 200, 200)
+  #painter.end()
 
   g_imageWindow.setPixmap(g_toShowImage)
-
-  #g_imageWindow.resize(image.size() * 2)
 
   g_imageWindow.setScaledContents( True )
 
   g_imageWindow.setSizePolicy( QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored )
 
-  #g_imageWindow.setStyleSheet("background-image:url(" + curImageFilename + ")")
-
-#  pdb.set_trace()
-
 def getFiducialCorners(poseIndex, markerIndex):
   global g_data
 
   numVisionMarkers = len(g_data['jsonData']['Poses'][poseIndex]['VisionMarkers'])
-
-  #pdb.set_trace()
 
   if markerIndex >= numVisionMarkers:
     return ([], [0]*4)
@@ -309,18 +301,89 @@ class Ui_ImageWindow(QtGui.QLabel):
 
   def closeEvent(self, event):
     sys.exit(0)
-    #event.accept();
+    #event.accept()
     
   def paintEvent(self, event):
     super(Ui_ImageWindow, self).paintEvent(event)
-    painter = QtGui.QPainter(self)
-    painter.setPen(QtGui.QColor(128, 0, 128))
-    painter.drawLine(int(random.random()*400), int(random.random()*400), int(random.random()*400), int(random.random()*400))
-    #painter.drawLine(0, 0, 400, 400);
-    painter.end()
     
+    if g_imageWindow.pixmap() is None:
+      return
+    
+    # TODO: Draw the quads
+    
+    # painter = QtGui.QPainter(self)
+    # painter.setPen(QtGui.QColor(128, 0, 128))
+    # painter.drawLine(int(random.random()*400), int(random.random()*400), int(random.random()*400), int(random.random()*400))
+        
     #g_imageWindow.setPixmap(g_toShowImage)
     #print('Toasted')
+        
+    #pdb.set_trace()
+        
+    realImageSize = [float(g_imageWindow.pixmap().height()), float(g_imageWindow.pixmap().width())]
+    displayImageSize = [float(self.height()), float(self.width())]
+        
+    xScaleInv = displayImageSize[1] / realImageSize[1]
+    yScaleInv = displayImageSize[0] / realImageSize[0]
+    
+    if g_pointsType == 'template':
+      #padAmount = floor(size(imageResized)/2);
+      #imageResized = padarray(imageResized, padAmount);
+      # TODO: add padding
+      padAmount = [0,0];
+    else:
+      padAmount = [0,0];
+    
+    if (g_pointsType == 'template') or (g_pointsType == 'fiducialMarker'):
+      for iMarker in range(0,len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'])):
+        painter = QtGui.QPainter(self)
+        
+        if iMarker == g_curMarkerIndex:
+          #linePlotType = 'g'
+          #painter.setPen(QtGui.QColor(0, 255, 0))
+          lineColor = QtGui.QColor(0, 255, 0)
+        else:
+          #linePlotType = 'y'
+          #painter.setPen(QtGui.QColor(255, 255, 0))
+          lineColor = QtGui.QColor(255, 255, 0)
+        
+        [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, iMarker)
+        
+        #pdb.set_trace()
+        
+        corners = [(x+padAmount[1],y+padAmount[0]) for (x,y) in corners]
+        
+        # Plot the corners (and if 4 corners exist, the quad as well)
+        if len(corners) == 4:         
+          painter.setPen(QtGui.QPen(lineColor, 1, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
+          for iCur in range(1,4):
+            iNext = (iCur+1) % 4
+            painter.drawLine(xScaleInv*corners[iCur][0], yScaleInv*corners[iCur][1], xScaleInv*corners[iNext][0], yScaleInv*corners[iNext][1])
+          
+          painter.setPen(QtGui.QPen(lineColor, 3, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))  
+          painter.drawLine(xScaleInv*corners[0][0], yScaleInv*corners[0][1], xScaleInv*corners[1][0], yScaleInv*corners[1][1])
+            
+          # plotHandle = plot(...
+          #     xScaleInv*([cornersX(2),cornersX(3),cornersX(4),cornersX(1)]+0.5),...
+          #     yScaleInv*([cornersY(2),cornersY(3),cornersY(4),cornersY(1)]+0.5),...
+          #     linePlotType, 'LineWidth', 1)
+          # 
+          # plotHandle = plot(...
+          #     xScaleInv*([cornersX(1),cornersX(2)]+0.5),...
+          #     yScaleInv*([cornersY(1),cornersY(2)]+0.5),...
+          #     linePlotType, 'LineWidth', 3)
+          # 
+          # markerName = jsonTestData.Poses{curPoseIndex}.VisionMarkers{iMarker}.markerType(8:end)
+          # textHandle = text((cornersX(1)+cornersX(4))/2 + 5, (cornersY(1)+cornersY(4))/2, markerName, 'Color', linePlotType)
+        
+        painter.setPen(QtGui.QPen(lineColor, 1, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
+        for i in range(0,len(corners)):
+          center = QtCore.QPoint(xScaleInv*corners[i][0], yScaleInv*corners[i][1])
+          #pdb.set_trace()
+          painter.drawEllipse(center, 5, 5)
+          #scatterHandle = scatter(xScaleInv*(cornersX(i)+0.5), yScaleInv*(cornersY(i)+0.5), [linePlotType,'o'])
+
+        painter.end()
 
   def mousePressEvent(self, event):
     #print('clicked ' + str(event))
@@ -332,10 +395,8 @@ class Ui_ImageWindow(QtGui.QLabel):
     realImageSize = [float(g_imageWindow.pixmap().height()), float(g_imageWindow.pixmap().width())]
     displayImageSize = [float(self.height()), float(self.height())]
 
-    #pdb.set_trace()
-
-    xScale = displayImageSize[1] / realImageSize[1]
-    yScale = displayImageSize[0] / realImageSize[0]
+    xScale = realImageSize[1] / displayImageSize[1]
+    yScale = realImageSize[0] / displayImageSize[0]
 
     # TODO: add padding
     if g_pointsType == 'template':
@@ -379,6 +440,7 @@ class Ui_ImageWindow(QtGui.QLabel):
           #   fixBounds()
       else: # left click       
         if (g_pointsType=='template') or (g_pointsType=='fiducialMarker'):
+          #pdb.set_trace()
           if sum(whichCorners) < 4:
             for i in range(0,4):
               if whichCorners[i] == 0:
@@ -391,9 +453,8 @@ class Ui_ImageWindow(QtGui.QLabel):
                 break
 
             changed = True
-        else:
-          print('Cannot add point, because only 4 fiduciual marker corners are allowed')
-
+          else:
+            print('Cannot add point, because only 4 fiduciual marker corners are allowed')
     elif event.button() == QtCore.Qt.MouseButton.RightButton: # right click
       minDist = Inf
       minInd = -1
@@ -435,7 +496,7 @@ class ControlMainWindow(QtGui.QMainWindow):
       
     def closeEvent(self, event):
       sys.exit(0)
-      #event.accept();
+      #event.accept()
 
 if __name__ == "__main__":
   #global g_imageWindow
