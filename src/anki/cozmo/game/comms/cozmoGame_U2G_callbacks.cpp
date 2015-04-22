@@ -799,15 +799,12 @@ namespace Cozmo {
       assert(msg.objectID <= s32_MAX);
       ObjectID whichObject;
       whichObject = msg.objectID;
-      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
-      if(activeCube != nullptr) {
-        activeCube->SetLEDs(msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
-                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-        
-        MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
-        activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY), makeRelative);
-
-      }
+      MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
+      robot->SetObjectLights(whichObject,
+                             msg.onColor, msg.offColor,
+                             msg.onPeriod_ms, msg.offPeriod_ms,
+                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                             makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
     }
   }
 
