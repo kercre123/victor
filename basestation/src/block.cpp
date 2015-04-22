@@ -579,32 +579,6 @@ namespace Anki {
           RotatePatternAroundTopFace(true);
           return;
           
-        //
-        // When using upper side (of current top face) as reference side:
-        // (Note this is the current "Left" face of the block.)
-        //
-          
-        case WhichLEDs::LEFT_FACE:
-          // Nothing to do
-          return;
-          
-        case WhichLEDs::BACK_FACE:
-          // Rotate clockwise one slot
-          RotatePatternAroundTopFace(true);
-          return;
-
-        case WhichLEDs::FRONT_FACE:
-          // Rotate counterclockwise one slot
-          RotatePatternAroundTopFace(false);
-          return;
-          
-        case WhichLEDs::RIGHT_FACE:
-          // Rotate two slots (either direction)
-          // TODO: Do this in one shot
-          RotatePatternAroundTopFace(true);
-          RotatePatternAroundTopFace(true);
-          return;
-          
         default:
           PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY",
                             "Unexpected reference LED %d.\n", referenceLED);
