@@ -33,7 +33,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 
 #define USE_MATLAB_DETECTION 1
 
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
       using namespace Anki;
       Vision::MarkerType orientedMarkerCode = static_cast<Vision::MarkerType>(mxGetScalar(matlab.GetArray("code"))-1);
       
-      msg.markerType = static_cast<u16>(Embedded::VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarkerCode]);
+      msg.markerType = static_cast<u16>(Embedded::VisionMarker::RemoveOrientation(orientedMarkerCode));
       
       /*
       mxArray* mxByteArray = matlab.GetArray("byteArray");
