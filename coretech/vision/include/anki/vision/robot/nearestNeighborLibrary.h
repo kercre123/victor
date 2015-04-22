@@ -16,7 +16,6 @@
 #include "anki/common/types.h"
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/array2d_declarations.h"
-#include "anki/common/robot/fixedLengthList_declarations.h"
 
 namespace Anki {
 namespace Embedded {
@@ -26,29 +25,44 @@ namespace Embedded {
   public:
     NearestNeighborLibrary();
     NearestNeighborLibrary(const u8* data,
+                           const u8* weights,
                            const u16* labels,
                            const s32 numDataPoints, const s32 dataDim,
+                           const s16* probeCenters_X, const s16* probeCenters_Y,
                            const s16* probePoints_X, const s16* probePoints_Y,
-                           const s32 numProbePoints, MemoryStack& memory);
+                           const s32 numProbePoints, const s32 numFractionalBits);
     
     Result GetNearestNeighbor(const Array<u8> &image,
                               const Array<f32> &homography,
                               const s32 distThreshold,
-                              s32 &label, s32 &distance) const;
+                              s32 &label, s32 &distance);
 
+    s32 GetNumFractionalBits() const { return _numFractionalBits; }
+    
   protected:
     
-    const u8  * restrict _data; // numDataPoints rows x dataDimension cols
+    Result GetProbeValues(const Array<u8> &image,
+                        const Array<f32> &homography);
+    
+    const cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols
+    const cv::Mat_<u8> _weights; // numDataPoints rows x dataDimension cols
+    cv::Mat_<s32> _totalWeight; // 1 row x dataDimension cols
+    
     s32 _numDataPoints;
     s32 _dataDimension;
     
     const u16 * restrict _labels; // numDataPoints in length
     
+    const s16 * restrict _probeXCenters;
+    const s16 * restrict _probeYCenters;
+    
     const s16 * restrict _probeXOffsets;
     const s16 * restrict _probeYOffsets;
     s32 _numProbeOffsets;
     
-    FixedLengthList<u8> _probeValues;
+    s32 _numFractionalBits;
+    
+    std::vector<u8> _probeValues;
     
   }; // class NearestNeighborLibrary
   

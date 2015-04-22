@@ -57,6 +57,8 @@ classdef VisionMarkerTrained
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform, method);
         outputString = GenerateHeaderFiles(varargin);
+        [nearestNeighborString, markerDefString] = GenerateNearestNeighborHeaderFiles(varargin)
+        
         [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);

@@ -19,9 +19,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/decisionTree_vision.h"
 
-#include "anki/vision/robot/visionMarkerDecisionTrees.h"
-#include "anki/vision/robot/nearestNeighborLibrary.h"
-
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 // For old QR-style BlockMarkers
@@ -34,6 +31,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 // Set to 0 to use decision trees
 #define USE_NEAREST_NEIGHBOR_RECOGNITION 1
+
+#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#  include "anki/vision/robot/nearestNeighborLibrary.h"
+#else
+#  include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#endif
 
 #define NUM_BYTES_probeLocationsBuffer (sizeof(Point<s16>)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS + MEMORY_ALIGNMENT + 32)
 #define NUM_BYTES_probeWeightsBuffer (sizeof(s16)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS  + MEMORY_ALIGNMENT + 32)
@@ -171,8 +174,7 @@ namespace Anki
         bool& enoughContrast);
 
 #     if USE_NEAREST_NEIGHBOR_RECOGNITION
-      static bool isNearestNeighborLibraryInitialized;
-      static NearestNeighborLibrary nearestNeighborLibrary;
+      static NearestNeighborLibrary& GetNearestNeighborLibrary();
 #     else
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];

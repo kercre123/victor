@@ -2,13 +2,13 @@
 #include "anki/vision/robot/nearestNeighborLibrary.h"
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/fixedLengthList.h"
+#include "anki/common/robot/errorHandling.h"
 
 namespace Anki {
 namespace Embedded {
   
   NearestNeighborLibrary::NearestNeighborLibrary()
-  : _data(NULL)
-  , _labels(NULL)
+  : _labels(NULL)
   , _probeXOffsets(NULL)
   , _probeYOffsets(NULL)
   {
@@ -17,45 +17,94 @@ namespace Embedded {
   
   
   NearestNeighborLibrary::NearestNeighborLibrary(const u8* data,
+                                                 const u8* weights,
                                                  const u16* labels,
                                                  const s32 numDataPoints, const s32 dataDim,
+                                                 const s16* probeCenters_X, const s16* probeCenters_Y,
                                                  const s16* probePoints_X, const s16* probePoints_Y,
-                                                 const s32 numProbePoints,
-                                                 MemoryStack& memory)
-  : _data(data)
+                                                 const s32 numProbePoints, const s32 numFractionalBits)
+  : _data(numDataPoints, dataDim, const_cast<u8*>(data))
+  , _weights(numDataPoints, dataDim, const_cast<u8*>(weights))
+  , _totalWeight(numDataPoints, 0)
   , _numDataPoints(numDataPoints)
   , _dataDimension(dataDim)
   , _labels(labels)
+  , _probeXCenters(probeCenters_X)
+  , _probeYCenters(probeCenters_Y)
   , _probeXOffsets(probePoints_X)
   , _probeYOffsets(probePoints_Y)
   , _numProbeOffsets(numProbePoints)
+  , _numFractionalBits(numFractionalBits)
+  , _probeValues(_dataDimension)
   {
-    _probeValues = FixedLengthList<u8>(_dataDimension, memory);
-
-    
+    for(s32 i=0; i<_dataDimension; ++i) {
+      _totalWeight += _weights.row(i);
+    }
   }
   
+
   Result NearestNeighborLibrary::GetNearestNeighbor(const Array<u8> &image,
                                                     const Array<f32> &homography,
                                                     const s32 distThreshold,
-                                                    s32 &label, s32 &distance) const
+                                                    s32 &label, s32 &closestDistance)
+  {
+    GetProbeValues(image, homography);
+    
+    closestDistance = distThreshold;
+    s32 closestIndex = -1;
+    for(s32 iExample=0; iExample<_numDataPoints; ++iExample)
+    {
+      const u8* currentExample = _data[iExample];
+      const u8* currentWeight  = _weights[iExample];
+      
+      // The distance threshold for this example depends on the total weight
+      s32 currentDistThreshold = _totalWeight(0,iExample) * closestDistance;
+      s32 currentDistance = 0;
+      s32 iProbe = 0;
+      while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
+      {
+        const s32 diff = static_cast<s32>(_probeValues[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+        currentDistance += currentWeight[iProbe] * std::abs(diff);
+        ++iProbe;
+      }
+      
+      if(currentDistance < currentDistThreshold) {
+        currentDistance /= _totalWeight(0,iExample);
+        if(currentDistance < closestDistance) {
+          closestIndex = iExample;
+          closestDistance = currentDistance;
+        }
+      }
+    } // for each example
+    
+    if(closestIndex != -1) {
+      label = _labels[closestIndex];
+    } else {
+      label = -1;
+    }
+    
+    return RESULT_OK;
+  }
+  
+  Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
+                                              const Array<f32> &homography)
   {
     const s32 imageHeight = image.get_size(0);
     const s32 imageWidth = image.get_size(1);
     
-    AnkiConditionalErrorAndReturnValue(AreValid(*this, image, homography, probeValues),
+    AnkiConditionalErrorAndReturnValue(AreValid(image, homography),
                                        RESULT_FAIL_INVALID_OBJECT, "VisionMarker::GetProbeValues", "Invalid objects");
     
     // This function is optimized for 9 or fewer probes, but this is not a big issue
-    AnkiAssert(numProbeOffsets <= 9);
+    AnkiAssert(_numProbeOffsets <= 9);
     
-    const s32 numProbeOffsets = this->numProbeOffsets;
-    const s32 numProbes = this->dataDimension;
+    const s32 numProbeOffsets = _numProbeOffsets;
+    const s32 numProbes = _dataDimension;
     
-    AnkiConditionalErrorAndReturnValue(probeValues.get_numElements()==numProbes, RESULT_FAIL_INVALID_SIZE,
+    AnkiConditionalErrorAndReturnValue(_probeValues.size()==numProbes, RESULT_FAIL_INVALID_SIZE,
                                        "VisionMarker::GetProbeValues",
                                        "Output probeValues array should have room for %d probes (it has %d).\n",
-                                       numProbes, probeValues.get_numElements());
+                                       numProbes, _probeValues.size());
     
     const f32 h00 = homography[0][0];
     const f32 h10 = homography[1][0];
@@ -67,24 +116,22 @@ namespace Embedded {
     const f32 h12 = homography[1][2];
     const f32 h22 = homography[2][2];
     
-    const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << this->nearestNeighborNumFractionalBits);
+    const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << _numFractionalBits);
     
-    const NearestNeighborExample * restrict pNearestNeighborLib = reinterpret_cast<const NearestNeighborExample*>(this->nearestNeighborLibrary);
-    
-    u8* restrict pProbeData = probeValues.Pointer(0, 0);
+    u8* restrict pProbeData = &(_probeValues[0]);
     
     f32 probeXOffsetsF32[9];
     f32 probeYOffsetsF32[9];
     
     for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {
-      probeXOffsetsF32[iOffset] = static_cast<f32>(this->nearestNeighborLibrary.probeXOffsets[iOffset]) * fixedPointDivider;
-      probeYOffsetsF32[iOffset] = static_cast<f32>(this->nearestNeighborLibrary.probeYOffsets[iOffset]) * fixedPointDivider;
+      probeXOffsetsF32[iOffset] = static_cast<f32>(_probeXOffsets[iOffset]) * fixedPointDivider;
+      probeYOffsetsF32[iOffset] = static_cast<f32>(_probeYOffsets[iOffset]) * fixedPointDivider;
     }
     
     for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
     {
-      const f32 xCenter = static_cast<f32>(pNearestNeighborLib[iProbe].probeXCenter) * fixedPointDivider;
-      const f32 yCenter = static_cast<f32>(pNearestNeighborLib[iProbe].probeYCenter) * fixedPointDivider;
+      const f32 xCenter = static_cast<f32>(_probeXCenters[iProbe]) * fixedPointDivider;
+      const f32 yCenter = static_cast<f32>(_probeYCenters[iProbe]) * fixedPointDivider;
       
       u32 accumulator = 0;
       for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {

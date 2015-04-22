@@ -22,6 +22,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <assert.h>
 
+#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
+#endif 
+
 #define INITIALIZE_WITH_DEFINITION_TYPE 0
 //#define NUM_BITS 25 // TODO: make general
 #define NUM_BITS MAX_FIDUCIAL_MARKER_BITS // TODO: Why do we need a separate NUM_BITS?
@@ -42,9 +46,7 @@ namespace Anki
 {
   namespace Embedded
   {
-#   if USE_NEAREST_NEIGHBOR_RECOGNITION
-    bool VisionMarker::isNearestNeighborLibraryInitialized = false;
-#   else
+#   if !USE_NEAREST_NEIGHBOR_RECOGNITION
     FiducialMarkerDecisionTree VisionMarker::multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
     bool VisionMarker::areTreesInitialized = false;
@@ -596,18 +598,28 @@ namespace Anki
       return RESULT_OK;
     }
 
+#   if USE_NEAREST_NEIGHBOR_RECOGNITION
+    NearestNeighborLibrary& VisionMarker::GetNearestNeighborLibrary()
+    {
+      static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
+                                                           NearestNeighborWeights,
+                                                           NearestNeighborLabels,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES*NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X, ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NN_NUM_FRACTIONAL_BITS);
+      
+      return nearestNeighborLibrary;
+    }
+#   endif
+
+    
     void VisionMarker::Initialize()
     {
       
-#     if USE_NEAREST_NEIGHBOR_RECOGNITION
-      
-      if(VisionMarker::isNearestNeighborLibraryInitialized == false) {
-        VisionMarker::nearestNeighborLibrary = NearestNeighborLibrary(NearestNeighborData, NUM_MARKERS_IN_LIBRARY, NUM_PROBES, NN_NUM_FRACTIONAL_BITS, ProbePoints_X, ProbePoints_Y, NUM_PROBE_POINTS);
-        
-        VisionMarker::isNearestNeighborLibraryInitialized = true;
-      }
-      
-#     else
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
       
       if(VisionMarker::areTreesInitialized == false) {
         using namespace VisionMarkerDecisionTree;
@@ -634,7 +646,7 @@ namespace Anki
       const Array<f32> &homography, const f32 minContrastRatio,
       f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
-      using namespace VisionMarkerDecisionTree;
+      //using namespace VisionMarkerDecisionTree;
 
       Result lastResult = RESULT_OK;
 
@@ -655,7 +667,11 @@ namespace Anki
 
       f32 fixedPointDivider;
 
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      const s32 numFracBits = GetNearestNeighborLibrary().GetNumFractionalBits();
+#     else
       const s32 numFracBits = VisionMarker::multiClassTrees[0].get_numFractionalBits();
+#     endif
 
       AnkiAssert(numFracBits >= 0);
 
@@ -671,7 +687,7 @@ namespace Anki
 
       enoughContrast = true;
 
-      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
+      //const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
 
       u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
@@ -842,7 +858,7 @@ namespace Anki
                                  const f32 minContrastRatio,
                                  MemoryStack scratch)
     {
-      using namespace VisionMarkerDecisionTree;
+      //using namespace VisionMarkerDecisionTree;
 
       Result lastResult = RESULT_FAIL;
 
