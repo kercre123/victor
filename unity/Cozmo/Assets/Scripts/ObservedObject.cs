@@ -106,8 +106,7 @@ public class ObservedObject
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
 
-	public void SetAllActiveObjectLEDs( float[] light_intensity, uint[] onColor, uint[] offColor, byte[] whichLEDs, 
-	                                   byte[] turnOffUnspecifiedLEDs, uint[] onPeriod_ms, uint[] offPeriod_ms,
+	public void SetAllActiveObjectLEDs( uint[] onColor, uint[] offColor, uint[] onPeriod_ms, uint[] offPeriod_ms,
 	                                   uint[] transitionOnPeriod_ms, uint[] transitionOffPeriod_ms, 
 	                                   byte makeRelative = 0, float relativeToX = 0f, float relativeToY = 0f )
 	{
