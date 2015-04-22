@@ -150,6 +150,42 @@ def fixBounds():
   # TODO: implement
   pass
 
+def getMaxMarkerIndex(poseIndex):
+  global g_data
+  
+  numMarkers = len(g_data['jsonData']['Poses'][poseIndex]['VisionMarkers'])
+  
+  if numMarkers == 0:
+    return 0
+  
+  [corners, whichCorners] = getFiducialCorners(poseIndex, numMarkers)
+  
+  if len(corners) == 4:
+      maxIndex = numMarkers
+  else:
+      maxIndex = numMarkers - 1
+  
+  return maxIndex
+    
+def fixBounds():
+  global g_data
+  global g_curPoseIndex
+  global g_curMarkerIndex
+  
+  boundsFixed = False
+  
+  g_data['jsonData'] = sanitizeJsonTest(g_data['jsonData'])
+  
+  curPoseIndexOriginal = g_curPoseIndex
+  
+  g_curPoseIndex   = max(0, min(len(g_data['jsonData']['Poses'])-1, g_curPoseIndex))
+  g_curMarkerIndex = max(0, min(getMaxMarkerIndex(g_curPoseIndex),  g_curMarkerIndex))
+    
+  if curPoseIndexOriginal != g_curPoseIndex:
+    boundsFixed = True
+
+  return boundsFixed
+
 def poseChanged(resetZoom):
   global g_imageWindow
   global g_data
@@ -158,22 +194,23 @@ def poseChanged(resetZoom):
   global g_toShowImage
 
   fixBounds()
+  
+  # TODO: add in all the updates
+  
+  
 
   curImageFilename = g_data['testPath'] + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
 
   g_rawImage = QtGui.QPixmap(curImageFilename)
   g_toShowImage = QtGui.QPixmap(g_rawImage)
 
-  #painter = QtGui.QPainter(g_toShowImage)
-  #painter.setPen(QtGui.QColor(128, 128, 0))
-  #painter.drawLine(0, 0, 200, 200)
-  #painter.end()
-
   g_imageWindow.setPixmap(g_toShowImage)
 
   g_imageWindow.setScaledContents( True )
 
   g_imageWindow.setSizePolicy( QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored )
+  
+  
 
 def getFiducialCorners(poseIndex, markerIndex):
   global g_data
@@ -328,12 +365,12 @@ class Ui_ImageWindow(QtGui.QLabel):
     yScaleInv = displayImageSize[0] / realImageSize[0]
     
     if g_pointsType == 'template':
-      #padAmount = floor(size(imageResized)/2);
-      #imageResized = padarray(imageResized, padAmount);
+      #padAmount = floor(size(imageResized)/2)
+      #imageResized = padarray(imageResized, padAmount)
       # TODO: add padding
-      padAmount = [0,0];
+      padAmount = [0,0]
     else:
-      padAmount = [0,0];
+      padAmount = [0,0]
     
     if (g_pointsType == 'template') or (g_pointsType == 'fiducialMarker'):
       for iMarker in range(0,len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'])):
