@@ -682,7 +682,7 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
                 whichCorners(:, end+1) = newWhichCorners; %#ok<AGROW>
             end
         end % for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)
-    else % if isempty(poseIndex)
+    else % if isempty(markerIndex)
         cornersX = [];
         cornersY = [];
         whichCorners = zeros(4,1);
