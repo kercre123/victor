@@ -6,7 +6,7 @@ public class GoldRushGameActions : GameActions {
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
 	public override string DROP { get { if (GoldRushController.instance.inExtractRange) return "Extract"; else return "Deposit"; } }
-	//public override string STACK { get { return "Stack"; } }
+	public override string STACK { get { return "Place Scanner"; } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
 	//public override string CHANGE { get { return "Change"; } }
@@ -43,7 +43,10 @@ public class GoldRushGameActions : GameActions {
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
+			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
+			{
+				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
+			}
 
 			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
 			{
@@ -52,15 +55,21 @@ public class GoldRushGameActions : GameActions {
 		}
 		else
 		{
-			if( robot.selectedObjects.Count == 1 )
+			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
 			{
-				buttons[1].SetMode( ActionButtonMode.PICK_UP );
-			}
-			else
-			{
-				for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
+				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
-					buttons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
+					buttons[1].SetMode( ActionButtonMode.PICK_UP );
+				}
+				else
+				{
+					for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
+					{
+						if( robot.selectedObjects[i].Family == 3 )
+						{
+							buttons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
+						}
+					}
 				}
 			}
 		}

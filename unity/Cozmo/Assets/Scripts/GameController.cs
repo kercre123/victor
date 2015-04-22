@@ -29,7 +29,7 @@ public class GameController : MonoBehaviour {
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
 
-	protected GameState state = GameState.BUILDING;
+	internal GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
 	protected int[] scores;
 
