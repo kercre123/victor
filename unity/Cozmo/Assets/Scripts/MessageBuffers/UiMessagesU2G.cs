@@ -3765,6 +3765,128 @@ public class AbortAll
 
 }
 
+public class CancelAction
+{
+	private int _actionType; // int_32
+	private byte _robotID; // uint_8
+
+	public int actionType { get { return _actionType; } set { _actionType = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public CancelAction()
+	{
+	}
+
+	public CancelAction(int actionType,
+		byte robotID)
+	{
+		this.actionType = actionType;
+		this.robotID = robotID;
+	}
+
+	public CancelAction(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public CancelAction(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_actionType = reader.ReadInt32();
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((int)_actionType);
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 5;
+		}
+	}
+
+	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
+		if (ReferenceEquals(a1, a2))
+			return true;
+
+		if (a1 == null || a2 == null)
+			return false;
+
+		if (a1.Length != a2.Length)
+			return false;
+
+		for (int i = 0; i < a1.Length; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+
+		CancelAction p = obj as CancelAction;
+		if ((System.Object) p == null)
+		{
+			return false;
+		}
+
+		return this.Equals(p);
+	}
+
+	public bool Equals(CancelAction p)
+	{
+		if ((object) p == null)
+		{
+			return false;
+		}
+
+		return this._actionType.Equals(p._actionType)
+			&& this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class DrawPoseMarker
 {
 	private float _x_mm; // float_32
@@ -6268,6 +6390,349 @@ public class SetBackpackLEDs
 	}
 }
 
+public class VisualizeQuad
+{
+	private uint _quadID; // uint_32
+	private uint _color; // uint_32
+	private float _xUpperLeft; // float_32
+	private float _yUpperLeft; // float_32
+	private float _zUpperLeft; // float_32
+	private float _xLowerLeft; // float_32
+	private float _yLowerLeft; // float_32
+	private float _zLowerLeft; // float_32
+	private float _xUpperRight; // float_32
+	private float _yUpperRight; // float_32
+	private float _zUpperRight; // float_32
+	private float _xLowerRight; // float_32
+	private float _yLowerRight; // float_32
+	private float _zLowerRight; // float_32
+
+	public uint quadID { get { return _quadID; } set { _quadID = value; } }
+
+	public uint color { get { return _color; } set { _color = value; } }
+
+	public float xUpperLeft { get { return _xUpperLeft; } set { _xUpperLeft = value; } }
+
+	public float yUpperLeft { get { return _yUpperLeft; } set { _yUpperLeft = value; } }
+
+	public float zUpperLeft { get { return _zUpperLeft; } set { _zUpperLeft = value; } }
+
+	public float xLowerLeft { get { return _xLowerLeft; } set { _xLowerLeft = value; } }
+
+	public float yLowerLeft { get { return _yLowerLeft; } set { _yLowerLeft = value; } }
+
+	public float zLowerLeft { get { return _zLowerLeft; } set { _zLowerLeft = value; } }
+
+	public float xUpperRight { get { return _xUpperRight; } set { _xUpperRight = value; } }
+
+	public float yUpperRight { get { return _yUpperRight; } set { _yUpperRight = value; } }
+
+	public float zUpperRight { get { return _zUpperRight; } set { _zUpperRight = value; } }
+
+	public float xLowerRight { get { return _xLowerRight; } set { _xLowerRight = value; } }
+
+	public float yLowerRight { get { return _yLowerRight; } set { _yLowerRight = value; } }
+
+	public float zLowerRight { get { return _zLowerRight; } set { _zLowerRight = value; } }
+
+
+	/**** Constructors ****/
+
+	public VisualizeQuad()
+	{
+	}
+
+	public VisualizeQuad(uint quadID,
+		uint color,
+		float xUpperLeft,
+		float yUpperLeft,
+		float zUpperLeft,
+		float xLowerLeft,
+		float yLowerLeft,
+		float zLowerLeft,
+		float xUpperRight,
+		float yUpperRight,
+		float zUpperRight,
+		float xLowerRight,
+		float yLowerRight,
+		float zLowerRight)
+	{
+		this.quadID = quadID;
+		this.color = color;
+		this.xUpperLeft = xUpperLeft;
+		this.yUpperLeft = yUpperLeft;
+		this.zUpperLeft = zUpperLeft;
+		this.xLowerLeft = xLowerLeft;
+		this.yLowerLeft = yLowerLeft;
+		this.zLowerLeft = zLowerLeft;
+		this.xUpperRight = xUpperRight;
+		this.yUpperRight = yUpperRight;
+		this.zUpperRight = zUpperRight;
+		this.xLowerRight = xLowerRight;
+		this.yLowerRight = yLowerRight;
+		this.zLowerRight = zLowerRight;
+	}
+
+	public VisualizeQuad(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public VisualizeQuad(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_quadID = reader.ReadUInt32();
+		_color = reader.ReadUInt32();
+		_xUpperLeft = reader.ReadSingle();
+		_yUpperLeft = reader.ReadSingle();
+		_zUpperLeft = reader.ReadSingle();
+		_xLowerLeft = reader.ReadSingle();
+		_yLowerLeft = reader.ReadSingle();
+		_zLowerLeft = reader.ReadSingle();
+		_xUpperRight = reader.ReadSingle();
+		_yUpperRight = reader.ReadSingle();
+		_zUpperRight = reader.ReadSingle();
+		_xLowerRight = reader.ReadSingle();
+		_yLowerRight = reader.ReadSingle();
+		_zLowerRight = reader.ReadSingle();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_quadID);
+		writer.Write((uint)_color);
+		writer.Write((float)_xUpperLeft);
+		writer.Write((float)_yUpperLeft);
+		writer.Write((float)_zUpperLeft);
+		writer.Write((float)_xLowerLeft);
+		writer.Write((float)_yLowerLeft);
+		writer.Write((float)_zLowerLeft);
+		writer.Write((float)_xUpperRight);
+		writer.Write((float)_yUpperRight);
+		writer.Write((float)_zUpperRight);
+		writer.Write((float)_xLowerRight);
+		writer.Write((float)_yLowerRight);
+		writer.Write((float)_zLowerRight);
+	}
+
+	public int Size 
+	{
+		get {
+			return 56;
+		}
+	}
+
+	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
+		if (ReferenceEquals(a1, a2))
+			return true;
+
+		if (a1 == null || a2 == null)
+			return false;
+
+		if (a1.Length != a2.Length)
+			return false;
+
+		for (int i = 0; i < a1.Length; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+
+		VisualizeQuad p = obj as VisualizeQuad;
+		if ((System.Object) p == null)
+		{
+			return false;
+		}
+
+		return this.Equals(p);
+	}
+
+	public bool Equals(VisualizeQuad p)
+	{
+		if ((object) p == null)
+		{
+			return false;
+		}
+
+		return this._quadID.Equals(p._quadID)
+			&& this._color.Equals(p._color)
+			&& this._xUpperLeft.Equals(p._xUpperLeft)
+			&& this._yUpperLeft.Equals(p._yUpperLeft)
+			&& this._zUpperLeft.Equals(p._zUpperLeft)
+			&& this._xLowerLeft.Equals(p._xLowerLeft)
+			&& this._yLowerLeft.Equals(p._yLowerLeft)
+			&& this._zLowerLeft.Equals(p._zLowerLeft)
+			&& this._xUpperRight.Equals(p._xUpperRight)
+			&& this._yUpperRight.Equals(p._yUpperRight)
+			&& this._zUpperRight.Equals(p._zUpperRight)
+			&& this._xLowerRight.Equals(p._xLowerRight)
+			&& this._yLowerRight.Equals(p._yLowerRight)
+			&& this._zLowerRight.Equals(p._zLowerRight);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._quadID.GetHashCode();
+			hash = hash * 23 + this._color.GetHashCode();
+			hash = hash * 23 + this._xUpperLeft.GetHashCode();
+			hash = hash * 23 + this._yUpperLeft.GetHashCode();
+			hash = hash * 23 + this._zUpperLeft.GetHashCode();
+			hash = hash * 23 + this._xLowerLeft.GetHashCode();
+			hash = hash * 23 + this._yLowerLeft.GetHashCode();
+			hash = hash * 23 + this._zLowerLeft.GetHashCode();
+			hash = hash * 23 + this._xUpperRight.GetHashCode();
+			hash = hash * 23 + this._yUpperRight.GetHashCode();
+			hash = hash * 23 + this._zUpperRight.GetHashCode();
+			hash = hash * 23 + this._xLowerRight.GetHashCode();
+			hash = hash * 23 + this._yLowerRight.GetHashCode();
+			hash = hash * 23 + this._zLowerRight.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class EraseQuad
+{
+	private uint _quadID; // uint_32
+
+	public uint quadID { get { return _quadID; } set { _quadID = value; } }
+
+
+	/**** Constructors ****/
+
+	public EraseQuad()
+	{
+	}
+
+	public EraseQuad(uint quadID)
+	{
+		this.quadID = quadID;
+	}
+
+	public EraseQuad(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public EraseQuad(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_quadID = reader.ReadUInt32();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_quadID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 4;
+		}
+	}
+
+	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
+		if (ReferenceEquals(a1, a2))
+			return true;
+
+		if (a1 == null || a2 == null)
+			return false;
+
+		if (a1.Length != a2.Length)
+			return false;
+
+		for (int i = 0; i < a1.Length; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+
+		EraseQuad p = obj as EraseQuad;
+		if ((System.Object) p == null)
+		{
+			return false;
+		}
+
+		return this.Equals(p);
+	}
+
+	public bool Equals(EraseQuad p)
+	{
+		if ((object) p == null)
+		{
+			return false;
+		}
+
+		return this._quadID.Equals(p._quadID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._quadID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class Message {
 	public enum Tag {
 		Ping,	//0
@@ -6305,25 +6770,28 @@ public class Message {
 		SetBehaviorState,	//32
 		AbortPath,	//33
 		AbortAll,	//34
-		DrawPoseMarker,	//35
-		ErasePoseMarker,	//36
-		SetWheelControllerGains,	//37
-		SetHeadControllerGains,	//38
-		SetLiftControllerGains,	//39
-		SelectNextSoundScheme,	//40
-		StartTestMode,	//41
-		IMURequest,	//42
-		PlayAnimation,	//43
-		ReadAnimationFile,	//44
-		StartFaceTracking,	//45
-		StopFaceTracking,	//46
-		StartLookingForMarkers,	//47
-		StopLookingForMarkers,	//48
-		SetVisionSystemParams,	//49
-		SetFaceDetectParams,	//50
-		SetActiveObjectLEDs,	//51
-		SetAllActiveObjectLEDs,	//52
-		SetBackpackLEDs,	//53
+		CancelAction,	//35
+		DrawPoseMarker,	//36
+		ErasePoseMarker,	//37
+		SetWheelControllerGains,	//38
+		SetHeadControllerGains,	//39
+		SetLiftControllerGains,	//40
+		SelectNextSoundScheme,	//41
+		StartTestMode,	//42
+		IMURequest,	//43
+		PlayAnimation,	//44
+		ReadAnimationFile,	//45
+		StartFaceTracking,	//46
+		StopFaceTracking,	//47
+		StartLookingForMarkers,	//48
+		StopLookingForMarkers,	//49
+		SetVisionSystemParams,	//50
+		SetFaceDetectParams,	//51
+		SetActiveObjectLEDs,	//52
+		SetAllActiveObjectLEDs,	//53
+		SetBackpackLEDs,	//54
+		VisualizeQuad,	//55
+		EraseQuad,	//56
 		INVALID
 	};
 
@@ -6928,6 +7396,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.CancelAction CancelAction
+	{
+		get {
+			if (_tag != Tag.CancelAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"CancelAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.CancelAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.CancelAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G.DrawPoseMarker DrawPoseMarker
 	{
 		get {
@@ -7251,6 +7736,40 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.VisualizeQuad VisualizeQuad
+	{
+		get {
+			if (_tag != Tag.VisualizeQuad) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"VisualizeQuad\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.VisualizeQuad)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.VisualizeQuad : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.EraseQuad EraseQuad
+	{
+		get {
+			if (_tag != Tag.EraseQuad) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"EraseQuad\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.EraseQuad)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.EraseQuad : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
@@ -7362,6 +7881,9 @@ public class Message {
 		case Tag.AbortAll:
 			_state = new Anki.Cozmo.U2G.AbortAll(reader);
 			break;
+		case Tag.CancelAction:
+			_state = new Anki.Cozmo.U2G.CancelAction(reader);
+			break;
 		case Tag.DrawPoseMarker:
 			_state = new Anki.Cozmo.U2G.DrawPoseMarker(reader);
 			break;
@@ -7418,6 +7940,12 @@ public class Message {
 			break;
 		case Tag.SetBackpackLEDs:
 			_state = new Anki.Cozmo.U2G.SetBackpackLEDs(reader);
+			break;
+		case Tag.VisualizeQuad:
+			_state = new Anki.Cozmo.U2G.VisualizeQuad(reader);
+			break;
+		case Tag.EraseQuad:
+			_state = new Anki.Cozmo.U2G.EraseQuad(reader);
 			break;
 		default:
 			break;
@@ -7536,6 +8064,9 @@ public class Message {
 		case Tag.AbortAll:
 			AbortAll.Pack(writer);
 			break;
+		case Tag.CancelAction:
+			CancelAction.Pack(writer);
+			break;
 		case Tag.DrawPoseMarker:
 			DrawPoseMarker.Pack(writer);
 			break;
@@ -7592,6 +8123,12 @@ public class Message {
 			break;
 		case Tag.SetBackpackLEDs:
 			SetBackpackLEDs.Pack(writer);
+			break;
+		case Tag.VisualizeQuad:
+			VisualizeQuad.Pack(writer);
+			break;
+		case Tag.EraseQuad:
+			EraseQuad.Pack(writer);
 			break;
 		default:
 			break;
@@ -7709,6 +8246,9 @@ public class Message {
 			case Tag.AbortAll:
 				result += AbortAll.Size;
 				break;
+			case Tag.CancelAction:
+				result += CancelAction.Size;
+				break;
 			case Tag.DrawPoseMarker:
 				result += DrawPoseMarker.Size;
 				break;
@@ -7765,6 +8305,12 @@ public class Message {
 				break;
 			case Tag.SetBackpackLEDs:
 				result += SetBackpackLEDs.Size;
+				break;
+			case Tag.VisualizeQuad:
+				result += VisualizeQuad.Size;
+				break;
+			case Tag.EraseQuad:
+				result += EraseQuad.Size;
 				break;
 			default:
 				return 0;
@@ -7872,6 +8418,8 @@ public class Message {
 			return this.AbortPath.Equals(p.AbortPath);
 		case Tag.AbortAll:
 			return this.AbortAll.Equals(p.AbortAll);
+		case Tag.CancelAction:
+			return this.CancelAction.Equals(p.CancelAction);
 		case Tag.DrawPoseMarker:
 			return this.DrawPoseMarker.Equals(p.DrawPoseMarker);
 		case Tag.ErasePoseMarker:
@@ -7910,6 +8458,10 @@ public class Message {
 			return this.SetAllActiveObjectLEDs.Equals(p.SetAllActiveObjectLEDs);
 		case Tag.SetBackpackLEDs:
 			return this.SetBackpackLEDs.Equals(p.SetBackpackLEDs);
+		case Tag.VisualizeQuad:
+			return this.VisualizeQuad.Equals(p.VisualizeQuad);
+		case Tag.EraseQuad:
+			return this.EraseQuad.Equals(p.EraseQuad);
 		default:
 			return false;
 		}
@@ -8027,6 +8579,9 @@ public class Message {
 			case Tag.AbortAll:
 				hash = hash * 23 + this.AbortAll.GetHashCode();
 				break;
+			case Tag.CancelAction:
+				hash = hash * 23 + this.CancelAction.GetHashCode();
+				break;
 			case Tag.DrawPoseMarker:
 				hash = hash * 23 + this.DrawPoseMarker.GetHashCode();
 				break;
@@ -8083,6 +8638,12 @@ public class Message {
 				break;
 			case Tag.SetBackpackLEDs:
 				hash = hash * 23 + this.SetBackpackLEDs.GetHashCode();
+				break;
+			case Tag.VisualizeQuad:
+				hash = hash * 23 + this.VisualizeQuad.GetHashCode();
+				break;
+			case Tag.EraseQuad:
+				hash = hash * 23 + this.EraseQuad.GetHashCode();
 				break;
 			default:
 				break;

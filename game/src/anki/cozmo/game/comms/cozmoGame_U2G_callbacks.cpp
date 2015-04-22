@@ -557,6 +557,15 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_CancelAction(U2G::CancelAction const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->GetActionList().Cancel(*robot, -1, (RobotActionType)msg.actionType);
+    }
+  }
+  
   void CozmoGameImpl::Process_DrawPoseMarker(U2G::DrawPoseMarker const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -790,15 +799,12 @@ namespace Cozmo {
       assert(msg.objectID <= s32_MAX);
       ObjectID whichObject;
       whichObject = msg.objectID;
-      ActiveCube* activeCube = robot->GetActiveObject(whichObject);
-      if(activeCube != nullptr) {
-        activeCube->SetLEDs(msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
-                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-        
-        MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
-        activeCube->MakeStateRelativeToXY(Point2f(msg.relativeToX, msg.relativeToY), makeRelative);
-
-      }
+      MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
+      robot->SetObjectLights(whichObject,
+                             msg.onColor, msg.offColor,
+                             msg.onPeriod_ms, msg.offPeriod_ms,
+                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                             makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
     }
   }
 
@@ -840,6 +846,20 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_VisualizeQuad(U2G::VisualizeQuad const& msg)
+  {
+    const Quad3f quad({msg.xUpperLeft,  msg.yUpperLeft,  msg.zUpperLeft},
+                      {msg.xUpperRight, msg.yUpperRight, msg.zUpperRight},
+                      {msg.xLowerLeft,  msg.yLowerLeft,  msg.zLowerLeft},
+                      {msg.xLowerRight, msg.yLowerRight, msg.zLowerRight});
+    
+    VizManager::getInstance()->DrawGenericQuad(msg.quadID, quad, msg.color);
+  }
+  
+  void CozmoGameImpl::Process_EraseQuad(U2G::EraseQuad const& msg)
+  {
+    VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
+  }
   
 }
 }

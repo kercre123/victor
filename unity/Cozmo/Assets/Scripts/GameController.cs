@@ -29,7 +29,7 @@ public class GameController : MonoBehaviour {
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
 
-	protected GameState state = GameState.BUILDING;
+	internal GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
 	protected int[] scores;
 
@@ -50,7 +50,7 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(buildInstructionsLayoutFilter);
+		//if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(buildInstructionsLayoutFilter);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -87,7 +87,7 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
-		if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(null);
+		//if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(null);
 	}
 
 	GameState GetNextState() {

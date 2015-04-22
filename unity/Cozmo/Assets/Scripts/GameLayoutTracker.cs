@@ -163,14 +163,18 @@ public class GameLayoutTracker : MonoBehaviour {
 		Validated = completed;
 	}
 
-	public void SetLayoutForGame(string filterType) {
+	public bool GameHasLayoutForThisIndex(string filterType, int index) {
+		return layouts.FindAll(x => string.IsNullOrEmpty(filterType) || x.gameTypeFilter == filterType).Count > index;
+	}
+
+	public void SetLayoutForGame(string filterType, int index) {
 		gameTypeFilter = filterType;
 		
 		filteredLayouts = layouts.FindAll(x => string.IsNullOrEmpty(filterType) || x.gameTypeFilter == filterType);
 
-		//Debug.Log("SetLayoutForGame filterType("+filterType.ToString()+" filteredLayouts("+filteredLayouts.Count+")");
+		Debug.Log("SetLayoutForGame filterType("+filterType.ToString()+" filteredLayouts("+filteredLayouts.Count+") index("+index+")");
 
-		currentLayoutIndex = 0;
+		currentLayoutIndex = Mathf.Clamp(index, 0, filteredLayouts.Count-1);
 		showPreview = true;
 		Validated = false;
 
