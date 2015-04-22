@@ -493,8 +493,8 @@ namespace Anki {
           _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
           _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
         } else if(turnOffUnspecifiedLEDs) {
-          _ledState[iLED].onColor      = 0;
-          _ledState[iLED].offColor     = 0;
+          _ledState[iLED].onColor      = NamedColors::BLACK;
+          _ledState[iLED].offColor     = NamedColors::BLACK;
           _ledState[iLED].onPeriod_ms  = 0;
           _ledState[iLED].offPeriod_ms = 1000;
           _ledState[iLED].transitionOnPeriod_ms = 0;

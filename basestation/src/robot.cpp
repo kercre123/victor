@@ -2737,6 +2737,33 @@ namespace Anki {
       }
     }
       
+    Result Robot::SetObjectLights(const ObjectID& objectID,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& onColor,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& offColor,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms,
+                                  const MakeRelativeMode makeRelative,
+                                  const Point2f& relativeToPoint)
+    {
+      ActiveCube* activeCube = GetActiveObject(objectID);
+      if(activeCube == nullptr) {
+        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
+        return RESULT_FAIL_INVALID_OBJECT;
+      } else {
+        
+        activeCube->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+
+        // NOTE: if make relative mode is "off", this call doesn't do anything:
+        activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+        
+        MessageSetBlockLights m;
+        activeCube->FillMessage(m);
+        return _msgHandler->SendMessage(GetID(), m);
+      }
+
+    }
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
