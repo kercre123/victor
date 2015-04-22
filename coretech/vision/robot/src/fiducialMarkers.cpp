@@ -655,7 +655,9 @@ namespace Anki
       const Array<f32> &homography, const f32 minContrastRatio,
       f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
-      //using namespace VisionMarkerDecisionTree;
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+      using namespace VisionMarkerDecisionTree;
+#     endif
 
       Result lastResult = RESULT_OK;
 
@@ -867,7 +869,9 @@ namespace Anki
                                  const f32 minContrastRatio,
                                  MemoryStack scratch)
     {
-      //using namespace VisionMarkerDecisionTree;
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+      using namespace VisionMarkerDecisionTree;
+#     endif
 
       Result lastResult = RESULT_FAIL;
 
