@@ -349,7 +349,7 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec)
       {
         // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
-          power_ = ComputeLiftPower(rad_per_sec,0,0);
+        power_ = ComputeLiftPower(rad_per_sec,0,0,0);
         HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
         inPosition_ = true;
       }
