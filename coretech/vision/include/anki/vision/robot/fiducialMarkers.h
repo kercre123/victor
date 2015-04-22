@@ -17,8 +17,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/connectedComponents.h"
 
-#include "anki/vision/robot/decisionTree_vision.h"
-
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 // For old QR-style BlockMarkers
@@ -35,6 +33,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if USE_NEAREST_NEIGHBOR_RECOGNITION
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
 #else
+#  include "anki/vision/robot/decisionTree_vision.h"
 #  include "anki/vision/robot/visionMarkerDecisionTrees.h"
 #endif
 
@@ -160,6 +159,8 @@ namespace Anki
 
       s32 get_serializationSize() const;
 
+      static Vision::MarkerType RemoveOrientation(Vision::MarkerType orientedMarker);
+      
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky

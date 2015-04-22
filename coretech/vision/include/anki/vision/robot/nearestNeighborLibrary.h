@@ -62,7 +62,7 @@ namespace Embedded {
     
     s32 _numFractionalBits;
     
-    std::vector<u8> _probeValues;
+    cv::Mat_<u8> _probeValues;
     
   }; // class NearestNeighborLibrary
   

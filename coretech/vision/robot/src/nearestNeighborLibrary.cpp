@@ -35,7 +35,7 @@ namespace Embedded {
   , _probeYOffsets(probePoints_Y)
   , _numProbeOffsets(numProbePoints)
   , _numFractionalBits(numFractionalBits)
-  , _probeValues(_dataDimension)
+  , _probeValues(1, _dataDimension)
   {
     for(s32 i=0; i<_dataDimension; ++i) {
       _totalWeight += _weights.row(i);
@@ -49,6 +49,8 @@ namespace Embedded {
                                                     s32 &label, s32 &closestDistance)
   {
     GetProbeValues(image, homography);
+
+    const u8* restrict pProbeData = _probeValues[0];
     
     closestDistance = distThreshold;
     s32 closestIndex = -1;
@@ -63,7 +65,7 @@ namespace Embedded {
       s32 iProbe = 0;
       while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
       {
-        const s32 diff = static_cast<s32>(_probeValues[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+        const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
         currentDistance += currentWeight[iProbe] * std::abs(diff);
         ++iProbe;
       }
@@ -87,7 +89,7 @@ namespace Embedded {
   }
   
   Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
-                                              const Array<f32> &homography)
+                                                const Array<f32> &homography)
   {
     const s32 imageHeight = image.get_size(0);
     const s32 imageWidth = image.get_size(1);
@@ -101,11 +103,6 @@ namespace Embedded {
     const s32 numProbeOffsets = _numProbeOffsets;
     const s32 numProbes = _dataDimension;
     
-    AnkiConditionalErrorAndReturnValue(_probeValues.size()==numProbes, RESULT_FAIL_INVALID_SIZE,
-                                       "VisionMarker::GetProbeValues",
-                                       "Output probeValues array should have room for %d probes (it has %d).\n",
-                                       numProbes, _probeValues.size());
-    
     const f32 h00 = homography[0][0];
     const f32 h10 = homography[1][0];
     const f32 h20 = homography[2][0];
@@ -118,7 +115,7 @@ namespace Embedded {
     
     const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << _numFractionalBits);
     
-    u8* restrict pProbeData = &(_probeValues[0]);
+    u8* restrict pProbeData = _probeValues[0];
     
     f32 probeXOffsetsF32[9];
     f32 probeYOffsetsF32[9];

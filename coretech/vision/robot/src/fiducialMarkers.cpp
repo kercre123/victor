@@ -607,7 +607,7 @@ namespace Anki
                                                            NUM_MARKERS_IN_LIBRARY,
                                                            NUM_PROBES*NUM_PROBES,
                                                            ProbeCenters_X, ProbeCenters_Y,
-                                                           ProbePoints_X, ProbePoints_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
                                                            NUM_PROBE_POINTS,
                                                            NN_NUM_FRACTIONAL_BITS);
       
@@ -640,6 +640,15 @@ namespace Anki
       
 #     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
       
+    }
+    
+    Vision::MarkerType VisionMarker::RemoveOrientation(Vision::MarkerType orientedMarker)
+    {
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      return RemoveOrientationLUT[orientedMarker];
+#     else
+      return VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarker];
+#     endif
     }
 
     Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
