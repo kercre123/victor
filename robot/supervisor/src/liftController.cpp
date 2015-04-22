@@ -1,4 +1,5 @@
 #include "liftController.h"
+#include "pickAndPlaceController.h"
 #include "anki/common/robot/config.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -39,7 +40,7 @@ namespace Anki {
 #if RECALIBRATE_AT_LIMITS
         // Power with which to approach limit angle (after the intended velocity profile has been executed)
         // TODO: Shouldn't have to be this strong. Lower when 2.1 version electronics are ready.
-        const f32 LIMIT_APPROACH_POWER = 0.6;
+        const f32 LIMIT_APPROACH_POWER = 0.4;
 #endif
 
         // This value should be the lowest speed the lift can be commanded to move
@@ -59,8 +60,8 @@ namespace Anki {
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
         const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
-        f32 Kp_ = 20.f; // proportional control constant
-        f32 Ki_ = 0.03f; // integral control constant
+        f32 Kp_ = 0.5f; // proportional control constant
+        f32 Ki_ = 0.02f; // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 10.f;
         
@@ -73,15 +74,18 @@ namespace Anki {
         // For disengaging gripper once the lift has reached its final position
         bool disengageGripperAtDest_ = false;
         f32  disengageAtAngle_ = 0.f;
-#endif
+        
+        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0,0,0};
+#else
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.2274f;
-        const f32 BASE_POWER_UP = 0.1468f;
-        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.2148f;
-        const f32 BASE_POWER_DOWN = 0.1561f;
+        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.0517f;
+        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.2312f, 0.3082f, 0.37f}; // 0.37f is a guesstimate
+        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0521f;
+        const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.1389f, 0.05f, 0.f};
         
+#endif
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
         // and the lower lift joint on the forklift assembly.
@@ -287,6 +291,30 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
       
+      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_sum)
+      {
+        // Open loop value to drive at desired speed
+        f32 power = 0;
+        
+#ifdef SIMULATOR
+        power = desired_speed_rad_per_sec * 0.05;
+#else
+        CarryState_t cs = PickAndPlaceController::GetCarryState();
+        if (desired_speed_rad_per_sec > 0) {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP[cs];
+        } else {
+          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_DOWN - BASE_POWER_DOWN[cs];
+        }
+        
+#endif
+        
+        // Compute corrective value
+        f32 power_corr = (Kp_ * error) + (Ki_ * error_sum);
+        power += power_corr;
+        
+        return power;
+      }
+      
       void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         maxSpeedRad_ = max_speed_rad_per_sec;
@@ -314,7 +342,7 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec)
       {
         // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
-        power_ = CLIP(rad_per_sec / HAL::MAX_LIFT_SPEED, -1.0, 1.0);
+          power_ = ComputeLiftPower(rad_per_sec,0,0);
         HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
         inPosition_ = true;
       }
@@ -516,23 +544,6 @@ namespace Anki {
       
       bool IsInPosition(void) {
         return inPosition_;
-      }
-      
-      f32 ComputeLiftPower(f32 desired_speed_rad_per_sec, f32 error, f32 error_sum)
-      {
-        // Open loop value to drive at desired speed
-        f32 power = 0;
-        if (desired_speed_rad_per_sec > 0) {
-          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP;
-        } else {
-          power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_DOWN + BASE_POWER_DOWN;
-        }
- 
-        // Compute corrective value
-        f32 power_corr = (Kp_ * error) + (Ki_ * error_sum);
-        power += power_corr;
-        
-        return power;
       }
       
       

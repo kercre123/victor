@@ -35,10 +35,11 @@ namespace Anki {
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
 
-    // Cozmo v3.2, with treads and clutched lift
-    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
+    // Cozmo v3.2, with clutch-less lift and stronger motor
+    // These are heights of the wrist joint.
+    const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 77.f;
-    const f32 LIFT_HEIGHT_CARRY    = 95.f;
+    const f32 LIFT_HEIGHT_CARRY    = 92.f;
     const f32 LIFT_PLACE_HIGH_SLOP = 5.f;
     
     // Distance between the robot origin and the distance along the robot's x-axis
