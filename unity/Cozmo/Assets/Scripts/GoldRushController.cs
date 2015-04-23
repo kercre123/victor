@@ -101,6 +101,8 @@ public class GoldRushController : GameController {
 		base.OnEnable();
 
 		instance = this;
+
+		MessageDelay = .05f;
 	}
 
 	protected override void OnDisable()

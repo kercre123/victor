@@ -97,7 +97,7 @@ public class Light
 
 	public bool Position( PositionFlag s )
 	{
-		return (position & s) == s;
+		return (position | s) == s;
 	}
 }
 
