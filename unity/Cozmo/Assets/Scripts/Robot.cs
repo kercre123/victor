@@ -237,6 +237,14 @@ public class Robot
 
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
+
+		for( int i = 0; i < knownObjects.Count; ++i )
+		{
+			if( knownObjects[i].Family == 3 && knownObjects[i].lightsChanged )
+			{
+				knownObjects[i].SetAllActiveObjectLEDs();
+			}
+		}
 	}
 
 	public void UpdateObservedObjectInfo( G2U.RobotObservedObject message )

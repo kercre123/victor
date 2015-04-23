@@ -311,35 +311,33 @@ public class SlalomController : GameController {
 				
 			for( int i = 0; i < 8; ++i )
 			{
-				currentObstacle.onColor[i] = 0;
-				currentObstacle.offColor[i] = 0;
-				currentObstacle.onPeriod_ms[i] = 1000;
-				currentObstacle.offPeriod_ms[i] = 0;
-				currentObstacle.transitionOnPeriod_ms[i] = 0;
-				currentObstacle.transitionOffPeriod_ms[i] = 0;
+				currentObstacle.lights[i].onColor = 0;
+				currentObstacle.lights[i].offColor = 0;
+				currentObstacle.lights[i].onPeriod_ms = 1000;
+				currentObstacle.lights[i].offPeriod_ms = 0;
+				currentObstacle.lights[i].transitionOnPeriod_ms = 0;
+				currentObstacle.lights[i].transitionOffPeriod_ms = 0;
 				
 				if( i == 0 || i == 2 )
 				{
-					currentObstacle.onColor[i] = yellow;
+					currentObstacle.lights[i].onColor = yellow;
 				}
 				else if( i == 1 || i == 3 )
 				{
 					if( distanceFromRobot > distanceFromCurrentObstacle )
 					{
-						currentObstacle.onColor[i] = red;
-						currentObstacle.onPeriod_ms[i] = 125;
-						currentObstacle.offPeriod_ms[i] = 125;
+						currentObstacle.lights[i].onColor = red;
+						currentObstacle.lights[i].onPeriod_ms = 125;
+						currentObstacle.lights[i].offPeriod_ms = 125;
 					}
 					else
 					{
-						nextObstacle.onColor[i] = red;
-						nextObstacle.onPeriod_ms[i] = 125;
-						nextObstacle.offPeriod_ms[i] = 125;
+						nextObstacle.lights[i].onColor = red;
+						nextObstacle.lights[i].onPeriod_ms = 125;
+						nextObstacle.lights[i].offPeriod_ms = 125;
 					}
 				}
 			}
-
-			currentObstacle.SetAllActiveObjectLEDs( 1, robot.WorldPosition.x, robot.WorldPosition.y );
 			
 			timeDelay = Time.time + 0.5f;
 		}
