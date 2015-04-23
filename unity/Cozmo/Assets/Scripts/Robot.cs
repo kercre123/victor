@@ -253,7 +253,7 @@ public class Robot
 
 		if( knownObject == null )
 		{
-			knownObject = new ObservedObject();
+			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 
 			knownObjects.Add( knownObject );
 		}

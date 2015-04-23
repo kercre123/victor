@@ -18,20 +18,13 @@ public class SlalomController : GameController {
 	bool lastPassCrossUp = true;
 	bool forward = true;
 	Robot robot;
-	Vector2 lastRobotPos;
+	//Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
 	float totalAngleFromObstacleTraversed;
 	bool courseCompleted = false;
 	int tapesCrossed = 0;
 
 	private float timeDelay = 0f;
-	
-	private uint[] onColor;
-	private uint[] offColor;
-	private uint[] onPeriod_ms;
-	private uint[] offPeriod_ms;
-	private uint[] transitionOnPeriod_ms;
-	private uint[] transitionOffPeriod_ms;
 
 	ObservedObject currentObstacle { 
 		get {
@@ -160,8 +153,7 @@ public class SlalomController : GameController {
 		}
 
 		totalAngleFromObstacleTraversed = 0f;
-		lastRobotPos = robot.WorldPosition;
-		Vector2 currentObstacleToRobot = lastRobotPos - currentObstaclePos;
+		Vector2 currentObstacleToRobot = (Vector2)robot.WorldPosition - currentObstaclePos;
 		lastAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
 	}
 
@@ -169,6 +161,7 @@ public class SlalomController : GameController {
 		base.Update_PLAYING();
 
 		Vector2 robotPos = robot.WorldPosition;
+		Vector2 lastRobotPos = robot.LastWorldPosition;
 
 		Vector2 currentObstacleToRobot = robotPos - currentObstaclePos;
 		float newAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot.normalized) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
@@ -210,8 +203,6 @@ public class SlalomController : GameController {
 			//todo: single obstacle mode just records laps
 			Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") single obstacle? currentPassClockwise("+lastPassCrossUp+")");
 		}
-
-		lastRobotPos = robotPos;
 
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
@@ -309,51 +300,46 @@ public class SlalomController : GameController {
 	public void UpdateLights()
 	{
 		if( Time.time > timeDelay && CozmoPalette.instance != null && 
-		   ( ( robot.LastWorldPosition != robot.WorldPosition && robot.LastRotation != robot.Rotation ) || onColor == null ) )
+		   currentObstacle != null && currentObstacle.Family == 3 && nextObstacle != null && nextObstacle.Family == 3 &&
+		   robot.LastWorldPosition != robot.WorldPosition && robot.LastRotation != robot.Rotation )
 		{
-			if( onColor == null )
+			uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
+			uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
+
+			float distanceFromRobot = Vector2.Distance( robot.WorldPosition, nextObstacle.WorldPosition );
+			float distanceFromCurrentObstacle = Vector2.Distance( currentObstacle.WorldPosition, nextObstacle.WorldPosition );
+				
+			for( int i = 0; i < 8; ++i )
 			{
-				onColor = new uint[8];
-				offColor = new uint[8];
-				onPeriod_ms = new uint[8];
-				offPeriod_ms = new uint[8];
-				transitionOnPeriod_ms = new uint[8];
-				transitionOffPeriod_ms = new uint[8];
+				currentObstacle.onColor[i] = 0;
+				currentObstacle.offColor[i] = 0;
+				currentObstacle.onPeriod_ms[i] = 1000;
+				currentObstacle.offPeriod_ms[i] = 0;
+				currentObstacle.transitionOnPeriod_ms[i] = 0;
+				currentObstacle.transitionOffPeriod_ms[i] = 0;
 				
-				uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
-				uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
-				
-				for( int i = 0; i < 8; ++i )
+				if( i == 0 || i == 2 )
 				{
-					onColor[i] = 0;
-					offColor[i] = 0;
-					onPeriod_ms[i] = 1000;
-					offPeriod_ms[i] = 0;
-					transitionOnPeriod_ms[i] = 0;
-					transitionOffPeriod_ms[i] = 0;
-					
-					if( i == 0 || i == 2 )
+					currentObstacle.onColor[i] = yellow;
+				}
+				else if( i == 1 || i == 3 )
+				{
+					if( distanceFromRobot > distanceFromCurrentObstacle )
 					{
-						onColor[i] = yellow;
+						currentObstacle.onColor[i] = red;
+						currentObstacle.onPeriod_ms[i] = 125;
+						currentObstacle.offPeriod_ms[i] = 125;
 					}
-					else if( i == 1 || i == 3 )
+					else
 					{
-						onColor[i] = red;
-						onPeriod_ms[i] = 125;
-						offPeriod_ms[i] = 125;
+						nextObstacle.onColor[i] = red;
+						nextObstacle.onPeriod_ms[i] = 125;
+						nextObstacle.offPeriod_ms[i] = 125;
 					}
 				}
 			}
-			
-			for( int i = 0; i < robot.knownObjects.Count; ++i )
-			{
-				if( robot.knownObjects[i].Family == 3 )
-				{
-					robot.knownObjects[i].SetAllActiveObjectLEDs( onColor, offColor, onPeriod_ms, offPeriod_ms, 
-					                                       transitionOnPeriod_ms, transitionOffPeriod_ms, 
-					                                       1, robot.WorldPosition.x, robot.WorldPosition.y );
-				}
-			}
+
+			currentObstacle.SetAllActiveObjectLEDs( 1, robot.WorldPosition.x, robot.WorldPosition.y );
 			
 			timeDelay = Time.time + 0.5f;
 		}

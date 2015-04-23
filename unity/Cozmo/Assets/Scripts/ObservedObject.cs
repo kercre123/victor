@@ -56,15 +56,35 @@ public class ObservedObject
 
 	public uint Color { get; private set; }
 
+	public uint[] onColor { get; private set; }
+	public uint[] offColor { get; private set; }
+	public uint[] onPeriod_ms { get; private set; }
+	public uint[] offPeriod_ms { get; private set; }
+	public uint[] transitionOnPeriod_ms { get; private set; }
+	public uint[] transitionOffPeriod_ms { get; private set; }
+
 	public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 
 	public const float RemoveDelay = 0.15f;
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
-	public ObservedObject()
+	public ObservedObject( int objectID, uint objectFamily, uint objectType )
 	{
 		TimeCreated = Time.time;
+		Family = objectFamily;
+		ObjectType = objectType;
+		ID = objectID;
+
+		if( Family == 3 )
+		{
+			onColor = new uint[8];
+			offColor = new uint[8];
+			onPeriod_ms = new uint[8];
+			offPeriod_ms = new uint[8];
+			transitionOnPeriod_ms = new uint[8];
+			transitionOffPeriod_ms = new uint[8];
+		}
 	}
 
 	public static implicit operator uint( ObservedObject observedObject )
@@ -93,9 +113,6 @@ public class ObservedObject
 	public void UpdateInfo( G2U.RobotObservedObject message )
 	{
 		RobotID = message.robotID;
-		Family = message.objectFamily;
-		ObjectType = message.objectType;
-		ID = message.objectID;
 		VizRect = new Rect( message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height );
 
 		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
@@ -106,9 +123,7 @@ public class ObservedObject
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
 
-	public void SetAllActiveObjectLEDs( uint[] onColor, uint[] offColor, uint[] onPeriod_ms, uint[] offPeriod_ms,
-	                                   uint[] transitionOnPeriod_ms, uint[] transitionOffPeriod_ms, 
-	                                   byte makeRelative = 0, float relativeToX = 0f, float relativeToY = 0f )
+	public void SetAllActiveObjectLEDs( byte makeRelative = 0, float relativeToX = 0f, float relativeToY = 0f )
 	{
 		if( Family != 3 )
 		{
