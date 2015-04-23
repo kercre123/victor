@@ -2571,6 +2571,7 @@ size_t SetLiftControllerGains::Pack(uint8_t* buff, size_t len) const
 size_t SetLiftControllerGains::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->kp);
+	buffer.Write(this->kd);
 	buffer.Write(this->ki);
 	buffer.Write(this->maxIntegralError);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -2586,6 +2587,7 @@ size_t SetLiftControllerGains::Unpack(const uint8_t* buff, const size_t len)
 size_t SetLiftControllerGains::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->kp);
+	buffer.Read(this->kd);
 	buffer.Read(this->ki);
 	buffer.Read(this->maxIntegralError);
 	return buffer.GetBytesRead();
@@ -2595,6 +2597,8 @@ size_t SetLiftControllerGains::Size() const
 {
 	size_t result = 0;
 	//kp
+	result += 4; // = float_32
+	//kd
 	result += 4; // = float_32
 	//ki
 	result += 4; // = float_32
@@ -2606,6 +2610,7 @@ size_t SetLiftControllerGains::Size() const
 bool SetLiftControllerGains::operator==(const SetLiftControllerGains& other) const
 {
 	if (kp != other.kp
+	|| kd != other.kd
 	|| ki != other.ki
 	|| maxIntegralError != other.maxIntegralError) {
 		return false;

@@ -223,12 +223,12 @@ GameObject:
   - 82: {fileID: 8225370}
   - 114: {fileID: 11499864}
   m_Layer: 5
-  m_Name: EnergyHuntController
+  m_Name: Treasure Hunt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &125390
 GameObject:
   m_ObjectHideFlags: 0
@@ -1065,6 +1065,7 @@ MonoBehaviour:
   textTime: {fileID: 11425414}
   autoPlay: 0
   playButton: {fileID: 11413714}
+  gameLayoutTracker: {fileID: 0}
   buildInstructionsLayoutFilter: Energy Hunt
   resultsPanel: {fileID: 11425374}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
@@ -1097,6 +1098,7 @@ MonoBehaviour:
   findEnergy: {fileID: 8300000, guid: d1c99f5c9d69b4fdf8b9e3f28deddc9b, type: 3}
   dropEnergy: {fileID: 8300000, guid: e11ce7364ac694bdc92be00a12c87c32, type: 3}
   timeUp: {fileID: 8300000, guid: 588d9e8829ac64e99868d70a6aabe550, type: 3}
+  gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
   timeExtension: {fileID: 8300000, guid: 72cb5b89fd63249b98d1ea8d93c2eb23, type: 3}
   extractButton: {fileID: 11425380}
   detectRangeDelayFar: 2
@@ -1108,7 +1110,11 @@ MonoBehaviour:
   detectRadius: 300
   extractionTime: 1.5
   rewardTime: .75
+  numDropsForBonusTime: 1
+  baseTimeBonus: 30
+  bonusTimeDecay: .666666687
   resultsScore: {fileID: 11425412}
+  gameStartingInDelay: 1.29999995
 --- !u!114 &11425404
 MonoBehaviour:
   m_ObjectHideFlags: 1

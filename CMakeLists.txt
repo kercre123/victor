@@ -40,11 +40,6 @@ endif(ANKI_IOS_BUILD)
 
 set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
-set(COZMO_ENGINE_INCLUDE_DIR ${COZMO_ENGINE_DIR}/include)
-file(GLOB COZMO_ENGINE_INCLUDE_FILES "${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/shared/*.h")
-
-set(COZMO_GAME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/game/include)
-
 # Defining this will make Webots controller and plugins targets in cozmo-engine 
 # get copied to cozmo-game/simulator
 set(COZMO_GAME_SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/simulator)
@@ -56,8 +51,9 @@ if (NOT SYSTEM_ROOT_PATH_DEFINED)
 endif(NOT SYSTEM_ROOT_PATH_DEFINED)
 
 include_directories(
-  ${COZMO_ENGINE_INCLUDE_DIR}
-  ${COZMO_GAME_INCLUDE_DIR}
+  ${COZMO_ENGINE_DIR}/basestation/include
+  ${COZMO_ENGINE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/game/include
   ${CORETECH_ROOT_DIR}/common/include
   ${CORETECH_ROOT_DIR}/messaging/include
   ${CORETECH_ROOT_DIR}/vision/include
