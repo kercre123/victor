@@ -259,7 +259,7 @@ public class GameActions : MonoBehaviour
 			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
 			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
 			robot.carryingObject.activeBlockType = (ActiveBlockType)typeIndex;
-			robot.carryingObject.SetActiveObjectLEDs( 1f, CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
+			robot.carryingObject.SetActiveObjectLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
 		}
 	}
 	
