@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class SlalomController : GameController {
+	public static SlalomController instance = null;
 
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
@@ -23,8 +24,6 @@ public class SlalomController : GameController {
 	float totalAngleFromObstacleTraversed;
 	bool courseCompleted = false;
 	int tapesCrossed = 0;
-
-	private float timeDelay = 0f;
 
 	ObservedObject currentObstacle { 
 		get {
@@ -114,6 +113,20 @@ public class SlalomController : GameController {
 			
 			return obstaclePositions[nextIndex];
 		}
+	}
+
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+		
+		instance = this;
+	}
+	
+	protected override void OnDisable()
+	{
+		base.OnEnable();
+		
+		if( instance == this ) instance = null;
 	}
 
 	protected override void Update_BUILDING() {
@@ -299,9 +312,8 @@ public class SlalomController : GameController {
 
 	public void UpdateLights()
 	{
-		if( Time.time > timeDelay && CozmoPalette.instance != null && 
-		   currentObstacle != null && currentObstacle.Family == 3 && nextObstacle != null && nextObstacle.Family == 3 &&
-		   robot.LastWorldPosition != robot.WorldPosition && robot.LastRotation != robot.Rotation )
+		if( CozmoPalette.instance != null && currentObstacle != null && currentObstacle.Family == 3 && 
+		   nextObstacle != null && nextObstacle.Family == 3 )
 		{
 			uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
 			uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
@@ -338,8 +350,6 @@ public class SlalomController : GameController {
 					}
 				}
 			}
-			
-			timeDelay = Time.time + 0.5f;
 		}
 	}
 }

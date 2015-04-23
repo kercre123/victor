@@ -97,7 +97,7 @@ public class Light
 
 	public bool Position( PositionFlag s )
 	{
-		return (position & s) == s;
+		return (position | s) == s;
 	}
 }
 
@@ -156,6 +156,8 @@ public class ObservedObject
 	public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 
 	public const float RemoveDelay = 0.15f;
+
+	public static float messageDelay = 0f;
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 

@@ -37,7 +37,10 @@ public class GameController : MonoBehaviour {
 
 	float errorMsgTimer = 0f;
 
-	void OnEnable () {
+	private static float _MessageDelay = 0.5f;
+	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
+
+	protected virtual void OnEnable () {
 		state = GameState.BUILDING;
 		stateTimer = 0f;
 		scores = new int[numPlayers];
@@ -81,7 +84,7 @@ public class GameController : MonoBehaviour {
 		buildRequested = false;
 	}
 
-	void OnDisable () {
+	protected virtual void OnDisable () {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
