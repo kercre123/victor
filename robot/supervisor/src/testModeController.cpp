@@ -159,7 +159,8 @@ namespace Anki {
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
-        bool liftDoHeightTest_ = false;
+        u32 liftTestMode_ = 0;
+        s32 noddingCycleTime_ms_ = 2.f;
         //// End of LiftTest  //////
         
         
@@ -652,7 +653,7 @@ namespace Anki {
       }
       
       
-      Result LiftTestInit(s32 flags, s32 printPeriod_ms)
+      Result LiftTestInit(s32 flags, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
         PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
@@ -660,8 +661,9 @@ namespace Anki {
         ticCnt2_ = 0;
         printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
         liftPower_ = LIFT_POWER_CMD;
-        liftDoHeightTest_ = flags & LiftTF_TEST_HEIGHTS;
-        if (!liftDoHeightTest_) {
+        liftTestMode_ = flags;
+        noddingCycleTime_ms_ = noddingCycleTime_ms == 0 ? PI_F : noddingCycleTime_ms;
+        if (liftTestMode_ == LiftTF_TEST_POWER) {
           LiftController::Disable();
         }
         return RESULT_OK;
@@ -670,49 +672,81 @@ namespace Anki {
       
       Result LiftTestUpdate()
       {
-        static bool up = false;
         
-        // As long as the lift is moving reset the counter
-        if (ABS(LiftController::GetAngularVelocity()) > 0.1f) {
-          ticCnt_ = 0;
-        }
-        
-        // Change direction
-        if (ticCnt_++ >= 1000 / TIME_STEP) {
-          
-
-          if (liftDoHeightTest_) {
-            up = !up;
-            if (up) {
-              PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
-              LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
-            } else {
-              PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
-              LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
-            }
-          
-          } else {
-            up = !up;
-            if (up) {
-              PRINT("Lift UP %f power\n", liftPower_);
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
-            } else {
-              PRINT("Lift DOWN %f power\n", -liftPower_);
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+        switch (liftTestMode_) {
+          case LiftTF_NODDING: {
+            static Radians theta = 0;
+            const f32 lowHeight = LIFT_HEIGHT_LOWDOCK;
+            const f32 highHeight = LIFT_HEIGHT_CARRY;
+            const f32 midHeight = 0.5f * (highHeight + lowHeight);
+            const f32 amplitude = highHeight - midHeight;
+            
+            const f32 thetaStep = 2*PI_F / noddingCycleTime_ms_ * TIME_STEP;
+            
+            LiftController::Enable();
+            f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
+            LiftController::SetDesiredHeight(newHeight);
+            theta += thetaStep;
+            
+            PERIODIC_PRINT(200, "Lift height %f mm\n", newHeight);
+            
+            return RESULT_OK;
+          }
+          case LiftTF_TEST_POWER:
+          case LiftTF_TEST_HEIGHTS:
+          {
+            static bool up = false;
+            
+            // As long as the lift is moving reset the counter
+            if (ABS(LiftController::GetAngularVelocity()) > 0.1f) {
+              ticCnt_ = 0;
             }
             
-
-            // Cycle through different power levels
-            if (!up) {
-              liftPower_ += 0.1;
-              if (liftPower_ >=1.01f) {
-                liftPower_ = LIFT_POWER_CMD;
+            // Change direction
+            if (ticCnt_++ >= 1000 / TIME_STEP) {
+              
+              
+              if (liftTestMode_ == LiftTF_TEST_HEIGHTS) {
+                up = !up;
+                if (up) {
+                  PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
+                  LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
+                } else {
+                  PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
+                  LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
+                }
+                
+              } else {
+                up = !up;
+                if (up) {
+                  PRINT("Lift UP %f power\n", liftPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
+                } else {
+                  PRINT("Lift DOWN %f power\n", -liftPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+                }
+                
+                
+                // Cycle through different power levels
+                if (!up) {
+                  liftPower_ += 0.05;
+                  if (liftPower_ >=1.01f) {
+                    liftPower_ = LIFT_POWER_CMD;
+                  }
+                }
               }
+              
+              ticCnt_ = 0;
             }
+            break;
           }
-          
-          ticCnt_ = 0;
+          default:
+          {
+            PRINT("WARN: Unknown lift test mode %d\n", liftTestMode_);
+            Reset();
+          }
         }
+        
         
 
         // Print speed
@@ -1137,7 +1171,7 @@ namespace Anki {
             updateFunc = DriveTestUpdate;
             break;
           case TM_LIFT:
-            ret = LiftTestInit(p1,p2);
+            ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
             break;
           case TM_LIFT_TOGGLE:
