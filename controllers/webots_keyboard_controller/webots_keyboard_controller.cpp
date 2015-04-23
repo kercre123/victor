@@ -12,7 +12,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
