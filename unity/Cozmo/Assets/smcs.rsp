@@ -1,0 +1,4 @@
+/nologo:"(This is the best I could come up with for comments.)"
+/nologo:"This is a response file. See http://docs.unity3d.com/Manual/PlatformDependentCompilation.html"
+/nologo:"Also see https://github.com/mono/mono/blob/master/mcs/mcs/settings.cs"
+-nowarn:0414
