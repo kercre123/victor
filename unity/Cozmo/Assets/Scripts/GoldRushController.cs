@@ -658,7 +658,7 @@ public class GoldRushController : GameController {
 			float g = 255 * light_intensity;
 			
 			uint color = ((uint)r << 24 | (uint)g << 16 ) | 0x00FF;
-			if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs(light_intensity, color, 0, 0x33);
+			if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs(color, 0, 0x33);
 		}
 	}
 
@@ -704,7 +704,7 @@ public class GoldRushController : GameController {
 
 			
 			uint color =  COLOR_RED;
-			if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDsRelative(1, target_position, color, 0, which_leds, relative_mode);
+			if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDsRelative(target_position, color, 0, which_leds, relative_mode);
 			last_leds = which_leds;
 		}
 		
