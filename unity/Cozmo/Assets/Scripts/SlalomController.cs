@@ -24,6 +24,15 @@ public class SlalomController : GameController {
 	bool courseCompleted = false;
 	int tapesCrossed = 0;
 
+	private float timeDelay = 0f;
+	
+	private uint[] onColor;
+	private uint[] offColor;
+	private uint[] onPeriod_ms;
+	private uint[] offPeriod_ms;
+	private uint[] transitionOnPeriod_ms;
+	private uint[] transitionOffPeriod_ms;
+
 	ObservedObject currentObstacle { 
 		get {
 			if(obstacles == null) return null;
@@ -297,4 +306,56 @@ public class SlalomController : GameController {
 		Debug.Log("NextObstacle scores("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+") lastPassCrossUp("+lastPassCrossUp+")");
 	}
 
+	public void UpdateLights()
+	{
+		if( Time.time > timeDelay && CozmoPalette.instance != null && 
+		   ( ( robot.LastWorldPosition != robot.WorldPosition && robot.LastRotation != robot.Rotation ) || onColor == null ) )
+		{
+			if( onColor == null )
+			{
+				onColor = new uint[8];
+				offColor = new uint[8];
+				onPeriod_ms = new uint[8];
+				offPeriod_ms = new uint[8];
+				transitionOnPeriod_ms = new uint[8];
+				transitionOffPeriod_ms = new uint[8];
+				
+				uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
+				uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
+				
+				for( int i = 0; i < 8; ++i )
+				{
+					onColor[i] = 0;
+					offColor[i] = 0;
+					onPeriod_ms[i] = 1000;
+					offPeriod_ms[i] = 0;
+					transitionOnPeriod_ms[i] = 0;
+					transitionOffPeriod_ms[i] = 0;
+					
+					if( i == 0 || i == 2 )
+					{
+						onColor[i] = yellow;
+					}
+					else if( i == 1 || i == 3 )
+					{
+						onColor[i] = red;
+						onPeriod_ms[i] = 125;
+						offPeriod_ms[i] = 125;
+					}
+				}
+			}
+			
+			for( int i = 0; i < robot.knownObjects.Count; ++i )
+			{
+				if( robot.knownObjects[i].Family == 3 )
+				{
+					robot.knownObjects[i].SetAllActiveObjectLEDs( onColor, offColor, onPeriod_ms, offPeriod_ms, 
+					                                       transitionOnPeriod_ms, transitionOffPeriod_ms, 
+					                                       1, robot.WorldPosition.x, robot.WorldPosition.y );
+				}
+			}
+			
+			timeDelay = Time.time + 0.5f;
+		}
+	}
 }
