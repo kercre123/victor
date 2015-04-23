@@ -8,6 +8,9 @@ if(APPLE)
        DESTINATION ${PROJECT_SOURCE_DIR}/simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
        FILE_PERMISSIONS OWNER_READ GROUP_READ
   )
+  
+  include_directories( 
+    ${COZMO_GAME_SIMULATOR_DIR}/include)
 
   # TODO: Get this from an environment variable?
   set(WEBOTS_APP_DIR /Applications/Webots)
