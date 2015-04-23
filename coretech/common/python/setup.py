@@ -24,8 +24,6 @@ extensions = [
         "../robot/src/geometry.cpp",
         "../robot/src/hostIntrinsics_m4.cpp",
         "../robot/src/interpolate.cpp",
-        "../robot/src/matlabConverters.cpp",
-        "../robot/src/matlabInterface.cpp",
         "../robot/src/matrix.cpp",
         "../robot/src/memory.cpp",
         "../robot/src/opencvLight.cpp",
