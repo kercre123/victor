@@ -128,7 +128,22 @@ def loadJson(filename):
 
     return jsonData
 
-#def loadTestFile(testFilename):
+def saveTestFile():
+    global g_data
+    
+    allTestFilenames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
+    
+    testFilename = allTestFilenames[curTestIndex]
+
+    testFilename.replace('\\', '/')
+    testFilename.replace('//', '/')
+
+    jsonData = sanitizeJsonTest(g_data['jsonData'])
+    
+    f = open(testFilename, 'w')
+    jsonData = json.dump(jsonData, f, indent=2)
+    f.close()
+
 def loadTestFile():
     global g_mainWindow
     global g_data
@@ -141,8 +156,6 @@ def loadTestFile():
 
     testFilename.replace('\\', '/')
     testFilename.replace('//', '/')
-
-    #pdb.set_trace()
 
     #try:
     jsonData = loadJson(testFilename)
@@ -457,10 +470,11 @@ class ConnectedMainWindow(Ui_MainWindow):
         global g_curPoseIndex
         global g_curMarkerIndex
         
-        markerName = self.markerType.text()
-        
+        markerName = self.markerType.text().upper()
+                
         if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) > g_curMarkerIndex:
             g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'] = 'MARKER_' + markerName
+            saveTestFile()
             
         poseChanged(False)
         
@@ -569,7 +583,7 @@ class Ui_ImageWindow(QtGui.QLabel):
                 
                 [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, iMarker)
                                 
-                corners = [(x+padAmount[1],y+padAmount[0]) for (x,y) in corners]
+                corners = [(x+padAmount[1]-0.5,y+padAmount[0]-0.5) for (x,y) in corners]
                 
                 # Plot the corners (and if 4 corners exist, the quad as well)
                 if len(corners) == 4:                 
@@ -691,9 +705,7 @@ class Ui_ImageWindow(QtGui.QLabel):
 
         # TODO: save thread
         if changed:
-            pass
-            #print(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex])
-            #    Save()
+            saveTestFile()
 
         poseChanged(False)
 
