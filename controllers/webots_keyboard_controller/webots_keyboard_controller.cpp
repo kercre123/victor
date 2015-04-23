@@ -656,7 +656,8 @@ namespace Anki {
                   break;
                 case TM_LIFT:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
-                  p2 = 25;
+                  p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
+                  p3 = 25;
                   break;
                 case TM_HEAD:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
