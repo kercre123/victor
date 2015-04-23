@@ -37,8 +37,9 @@ end
 assert(size(probeValues,1) == 32 && size(probeValues,2)==32, ...
   'Expecting 32x32 probeValues array.')
 
+probeValues = im2double(probeValues);
+
 if useLog
-  probeValues = im2double(probeValues);
   probeValues = log(max(eps, probeValues));
 end
 

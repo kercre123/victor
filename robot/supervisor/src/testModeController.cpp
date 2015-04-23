@@ -135,17 +135,25 @@ namespace Anki {
         // 1.0     3.7              3.9
         //
         //
-        // *** Cozmo 2 ***
+        // *** Cozmo 3.2 (stronger lift motor, lower gear reduction) ***
         // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
-        // 0.2     0.3              0.5
-        // 0.3     0.7              0.9
-        // 0.4     1.1              1.3
-        // 0.5     1.5              1.7
-        // 0.6     2.0              2.2
-        // 0.7     2.4              2.6
-        // 0.8     2.8              3.0
-        // 0.9     3.2              3.4
-        // 1.0     3.6              3.8
+        // 0.2     1.0              1.0 (only moved a few degrees)
+        // 0.25    1.5              1.5 (only moved a few degrees)
+        // 0.3     2.0              3.0
+        // 0.35    2.5              3.5
+        // 0.4     3.0              5.0
+        // 0.45    4.0              6.0
+        // 0.5     5.0              7.0
+        // 0.55    6.0              8.0
+        // 0.6     7.0              9.2
+        // 0.65    8.0              10.0
+        // 0.7     9.0              11.0
+        // 0.75    10               12
+        // 0.8     11               13
+        // 0.85    12               14
+        // 0.9     13               14.5
+        // 0.95    14               15
+        // 1.0     15               16
         
         f32 liftPower_ = 1;
         const f32 LIFT_POWER_CMD = 0.2f;
@@ -650,7 +658,7 @@ namespace Anki {
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 40 : printPeriod_ms / TIME_STEP;
+        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
         liftPower_ = LIFT_POWER_CMD;
         liftDoHeightTest_ = flags & LiftTF_TEST_HEIGHTS;
         if (!liftDoHeightTest_) {
@@ -664,8 +672,13 @@ namespace Anki {
       {
         static bool up = false;
         
+        // As long as the lift is moving reset the counter
+        if (ABS(LiftController::GetAngularVelocity()) > 0.1f) {
+          ticCnt_ = 0;
+        }
+        
         // Change direction
-        if (ticCnt_++ >= 3000 / TIME_STEP) {
+        if (ticCnt_++ >= 1000 / TIME_STEP) {
           
 
           if (liftDoHeightTest_) {
@@ -708,7 +721,9 @@ namespace Anki {
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
           f32 lHeight = LiftController::GetHeightMM();
-          PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          if (ABS(lSpeed) > 0.001 || ABS(lSpeed_filt) > 0.001) {
+            PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          }
           ticCnt2_ = 0;
         }
 

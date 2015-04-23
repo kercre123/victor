@@ -228,7 +228,7 @@ namespace Anki
       void UARTInit()
       {
         // Configure the UART - and light up purple to indicate UART
-        SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
+        SetLED(LED_BACKPACK_FRONT, LED_PURPLE);
         UARTConfigure();
       }
 

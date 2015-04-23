@@ -4,7 +4,11 @@ function d = CheckIntraLibraryDistances(nnLibrary)
 
 N = size(nnLibrary.probeValues,2);
 X = single(nnLibrary.probeValues);
-W = single(nnLibrary.gradMagWeights);
+if isfield(nnLibrary, 'gradMagWeights')
+  W = single(nnLibrary.gradMagWeights);
+else
+  W = ones(size(X), 'single');
+end
 sumW = sum(W,1);
 
 d = nan(N);
@@ -15,7 +19,10 @@ for i = 1:N
   
 end
 
-imagesc(d), axis image
+if nargout==0
+  imagesc(d), axis image
+  clear d
+end
 
 end
 
