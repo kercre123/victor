@@ -1,5 +1,6 @@
 import sys
 import json
+import os
 import os.path
 import time
 import pdb
@@ -14,10 +15,14 @@ from editGroundTruthWindow import Ui_MainWindow
 
 g_toShowSize = [480, 640]
 
+global g_imageWindow
+global g_mainWindow
+
 g_startJsonDirectory = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
 g_startJsonFilename = 'tracking_00000_all.json'
 g_data = None
 g_imageWindow = None
+g_mainWindow = None
 g_curTestIndex = 0
 g_maxTestIndex = 0
 g_curPoseIndex = 0
@@ -107,11 +112,15 @@ def sanitizeJsonTest(jsonData):
     return jsonData
 
 def loadJson(filename):
+    #filename = filename.encode('ascii')
+    
     print('Loading json ' + filename)
 
     f = open(filename, 'r')
     jsonData = json.load(f)
     f.close()
+    
+    #pdb.set_trace()
 
     jsonData = sanitizeJsonTest(jsonData)
 
@@ -119,16 +128,23 @@ def loadJson(filename):
 
     return jsonData
 
-def loadTestFile(testFilename):
+#def loadTestFile(testFilename):
+def loadTestFile():
+    global g_mainWindow
     global g_data
-    global g_curPoseIndex
-    global g_curMarkerIndex
-
+    
     # TODO: cache in more efficient format?
+
+    allTestFilenames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
+
+    testFilename = allTestFilenames[curTestIndex]
 
     testFilename.replace('\\', '/')
     testFilename.replace('//', '/')
 
+    #pdb.set_trace()
+
+    #try:
     jsonData = loadJson(testFilename)
     modificationTime_json = os.path.getmtime(testFilename)
 
@@ -137,12 +153,21 @@ def loadTestFile(testFilename):
 
     g_data = {
         'jsonData':jsonData,
+        'allTestFilenames':allTestFilenames,
         'testFilename':testFilename,
         'testPath':testPath,
         'testFileModificationTime':modificationTime_json}
-
-    g_curPoseIndex = 4
-    g_curMarkerIndex = 0
+    
+    #if g_mainWindow is not None:
+    # g_mainWindow.ui.setMaxTestIndex(len(allTestFilenames) - 1)
+    # g_mainWindow.ui.testJsonFilename1.setText(testPath)
+    # g_mainWindow.ui.testJsonFilename2.setText(testFilename)
+    # g_mainWindow.ui.setCurPoseIndex(0, False)
+    # g_mainWindow.ui.setMaxPoseIndex(len(jsonData['Poses'])-1)
+    # g_mainWindow.ui.setCurMarkerIndex(0, False)
+    # g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(0))
+    #except:
+    #    pass
 
     poseChanged(True)
 
@@ -158,19 +183,25 @@ def getMaxMarkerIndex(poseIndex):
     if numMarkers == 0:
         return 0
     
-    [corners, whichCorners] = getFiducialCorners(poseIndex, numMarkers)
+    [corners, whichCorners] = getFiducialCorners(poseIndex, numMarkers-1)
     
     if len(corners) == 4:
-            maxIndex = numMarkers
+        maxIndex = numMarkers
     else:
-            maxIndex = numMarkers - 1
+        maxIndex = numMarkers - 1
+    
+    #pdb.set_trace()
+    
+    print('maxIndex = ' + str(maxIndex))
     
     return maxIndex
         
 def fixBounds():
+    global g_mainWindow
     global g_data
     global g_curPoseIndex
     global g_curMarkerIndex
+    global g_maxMarkerIndex
     
     boundsFixed = False
     
@@ -178,38 +209,86 @@ def fixBounds():
     
     curPoseIndexOriginal = g_curPoseIndex
     
-    g_curPoseIndex     = max(0, min(len(g_data['jsonData']['Poses'])-1, g_curPoseIndex))
-    g_curMarkerIndex = max(0, min(getMaxMarkerIndex(g_curPoseIndex),    g_curMarkerIndex))
-        
+    g_curPoseIndex   = max(0, min(len(g_data['jsonData']['Poses'])-1, g_curPoseIndex))
+    g_curMarkerIndex = max(0, min(getMaxMarkerIndex(g_curPoseIndex),  g_curMarkerIndex))
+    
+    g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
+            
     if curPoseIndexOriginal != g_curPoseIndex:
         boundsFixed = True
 
     return boundsFixed
 
+def getTestNamesFromDirectory():
+    global g_curTestIndex
+    
+    if g_mainWindow is None:
+        return None, 0, 0
+    
+    testDirectory = g_mainWindow.ui.testJsonFilename1.text()
+    testDirectory = testDirectory.replace('\\', '/')
+    testDirectory = testDirectory.replace('//', '/')
+    
+    testFilename  = g_mainWindow.ui.testJsonFilename2.text()
+    testFilename = testFilename.replace('\\', '/')
+    testFilename = testFilename.replace('//', '/')
+    
+    if (len(testFilename) > 5) and (testFilename[(-5):] != '.json'):
+        testFilename = [testFilename, '.json'];
+    
+    files = []
+    for f in os.listdir(testDirectory):
+        if os.path.isfile(os.path.join(testDirectory,f)) and (len(f) > 5) and (f[(-5):] == '.json'):
+            files.append(os.path.join(testDirectory,f))
+        
+    curTestIndex = g_curTestIndex
+    
+    # curTestIndex = 0;
+    # for i in range(0, len(files)):
+    #     if testFilename == files[i]:
+    #         curTestIndex = i
+    
+    maxTestIndex = len(files) - 1
+    
+    return files, curTestIndex, maxTestIndex
+
 def poseChanged(resetZoom):
+    global g_mainWindow
     global g_imageWindow
     global g_data
     global g_curPoseIndex
     global g_rawImage
     global g_toShowImage
-
+        
     fixBounds()
+    
+    g_mainWindow.ui.setMaxTestIndex(len(g_data['allTestFilenames']) - 1)
+    g_mainWindow.ui.testJsonFilename1.setText(g_data['testPath'])
+    g_mainWindow.ui.testJsonFilename2.setText(g_data['testFilename'])
+    g_mainWindow.ui.setCurPoseIndex(0, False)
+    g_mainWindow.ui.setMaxPoseIndex(len(g_data['jsonData']['Poses'])-1)
+    g_mainWindow.ui.setCurMarkerIndex(0, False)
+    g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
     
     # TODO: add in all the updates
     
-    curImageFilename = g_data['testPath'] + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
+    #allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
 
+    #if g_mainWindow is not None:
+    #    g_mainWindow.ui.updateNumbers()
+                    
+    curImageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
+
+    #print('Load image file ' + curImageFilename)
     g_rawImage = QtGui.QPixmap(curImageFilename)
     g_toShowImage = QtGui.QPixmap(g_rawImage)
 
     g_imageWindow.setPixmap(g_toShowImage)
 
-    g_imageWindow.setScaledContents( True )
+    g_imageWindow.setScaledContents(True)
 
     g_imageWindow.setSizePolicy( QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored )
     
-    
-
 def getFiducialCorners(poseIndex, markerIndex):
     global g_data
 
@@ -256,37 +335,85 @@ class ConnectedMainWindow(Ui_MainWindow):
     def __init__(self):
         super(ConnectedMainWindow, self).__init__()
 
-        loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
-
-    def setTestIndex(self, value):
+        #loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
+        
+    def setCurTestIndex(self, value, updatePose=False):
         global g_curTestIndex
         global g_maxTestIndex
-
-        print('setTestIndex pressed', value)
+        global g_startJsonDirectory
+        global g_startJsonFilename
 
         g_curTestIndex = max(0, min(g_maxTestIndex, value))
 
         self.test_current.setText(str(g_curTestIndex))
+        
+        loadTestFile()
+        
+        #files, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
+        
+        #self.setMaxTestIndex(len(files))
+        
+        #pdb.set_trace()
+            
+        #loadTestFile(files[curTestIndex])
+        #loadTestFile(testDirectory + '/' + testFilename)
+        #loadTestFile('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00000_all.json')
+        
+        #pdb.set_trace()
+        
+        if updatePose:
+            poseChanged(True)
+        
+    def setMaxTestIndex(self, value):
+        global g_maxTestIndex;        
+        g_maxTestIndex = value
+        self.test_max.setText(str(value))
 
-    def setPoseIndex(self, value):
+    def setCurPoseIndex(self, value, updatePose=False):
         global g_curPoseIndex
         global g_maxPoseIndex
-
-        print('setPoseIndex pressed', value)
 
         g_curPoseIndex = max(0, min(g_maxPoseIndex, value))
 
         self.pose_current.setText(str(g_curPoseIndex))
+        
+        if updatePose:
+            poseChanged(True)
 
-    def setMarkerIndex(self, value):
+    def setMaxPoseIndex(self, value):
+        global g_maxPoseIndex;        
+        g_maxPoseIndex = value
+        self.pose_max.setText(str(value))  
+
+    def setCurMarkerIndex(self, value, updatePose=False):
         global g_curMarkerIndex
+        global g_curPoseIndex
         global g_maxMarkerIndex
 
-        print('setMarkerIndex pressed', value)
+        #self.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
 
         g_curMarkerIndex = max(0, min(g_maxMarkerIndex, value))
 
         self.marker_current.setText(str(g_curMarkerIndex))
+        
+        if updatePose:
+            poseChanged(False)
+        
+    def setMaxMarkerIndex(self, value):
+        global g_maxMarkerIndex;        
+        g_maxMarkerIndex = value
+        self.marker_max.setText(str(value))
+        
+    def updateNumbers(self):
+        allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
+                
+        self.setCurTestIndex(g_curTestIndex, False)
+        self.setCurPoseIndex(g_curPoseIndex, False)
+        self.setCurMarkerIndex(g_curMarkerIndex, False)
+        
+        self.setMaxTestIndex(maxTestIndex)
+        self.setMaxPoseIndex(len(g_data['jsonData']['Poses']))
+        self.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
 
     def setupUi(self, mainWindow):
         super(ConnectedMainWindow, self).setupUi(mainWindow)
@@ -303,32 +430,37 @@ class ConnectedMainWindow(Ui_MainWindow):
         self.marker_current.setText(str(g_curMarkerIndex))
         self.marker_max.setText(str(g_maxMarkerIndex))
 
-        self.testJsonFilename1.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
-        self.testJsonFilename2.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
+        #self.testJsonFilename1.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
+        #self.testJsonFilename2.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
+        
+        self.testJsonFilename1.returnPressed.connect(loadTestFile)
+        self.testJsonFilename2.returnPressed.connect(loadTestFile)
 
-        self.test_current.returnPressed.connect(lambda: self.setTestIndex(int(self.test_current.text())))
+        self.test_current.returnPressed.connect(lambda: self.setCurTestIndex(int(self.test_current.text())))
 
-        self.test_previous1.clicked.connect(lambda: self.setTestIndex(g_curTestIndex-1))
-        self.test_previous2.clicked.connect(lambda: self.setTestIndex(g_curTestIndex-10))
-        self.test_previous3.clicked.connect(lambda: self.setTestIndex(g_curTestIndex-100))
-        self.test_next1.clicked.connect(lambda: self.setTestIndex(g_curTestIndex+1))
-        self.test_next2.clicked.connect(lambda: self.setTestIndex(g_curTestIndex+10))
-        self.test_next3.clicked.connect(lambda: self.setTestIndex(g_curTestIndex+100))
 
-        self.pose_previous1.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex-1))
-        self.pose_previous2.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex-10))
-        self.pose_previous3.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex-100))
-        self.pose_next1.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex+1))
-        self.pose_next2.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex+10))
-        self.pose_next3.clicked.connect(lambda: self.setPoseIndex(g_curPoseIndex+100))
+        # TODO: these g_* values are probably immediately evaluated, which needs to be fixed
+        self.test_previous1.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-1, True))
+        self.test_previous2.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-10, True))
+        self.test_previous3.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-100, True))
+        self.test_next1.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+1, True))
+        self.test_next2.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+10, True))
+        self.test_next3.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+100, True))
 
-        self.marker_previous1.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex-1))
-        self.marker_previous2.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex-10))
-        self.marker_previous3.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex-100))
-        self.marker_next1.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex+1))
-        self.marker_next2.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex+10))
-        self.marker_next3.clicked.connect(lambda: self.setMarkerIndex(g_curMarkerIndex+100))
+        self.pose_previous1.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-1, True))
+        self.pose_previous2.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-10, True))
+        self.pose_previous3.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-100, True))
+        self.pose_next1.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+1, True))
+        self.pose_next2.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+10, True))
+        self.pose_next3.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+100, True))
 
+        self.marker_previous1.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-1, True))
+        self.marker_previous2.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-10, True))
+        self.marker_previous3.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-100, True))
+        self.marker_next1.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+1, True))
+        self.marker_next2.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+10, True))
+        self.marker_next3.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+100, True))
+        
 class Ui_ImageWindow(QtGui.QLabel):
     def __init__(self, parent=None):
         super(Ui_ImageWindow, self).__init__(parent)
@@ -375,18 +507,12 @@ class Ui_ImageWindow(QtGui.QLabel):
                 painter = QtGui.QPainter(self)
                 
                 if iMarker == g_curMarkerIndex:
-                    #linePlotType = 'g'
-                    #painter.setPen(QtGui.QColor(0, 255, 0))
                     lineColor = QtGui.QColor(0, 255, 0)
                 else:
-                    #linePlotType = 'y'
-                    #painter.setPen(QtGui.QColor(255, 255, 0))
                     lineColor = QtGui.QColor(255, 255, 0)
                 
                 [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, iMarker)
-                
-                #pdb.set_trace()
-                
+                                
                 corners = [(x+padAmount[1],y+padAmount[0]) for (x,y) in corners]
                 
                 # Plot the corners (and if 4 corners exist, the quad as well)
@@ -529,18 +655,15 @@ class ControlMainWindow(QtGui.QMainWindow):
         #event.accept()
 
 if __name__ == "__main__":
-    #global g_imageWindow
-    #global g_curTestIndex
-    #global g_maxTestIndex
-
     app = QtGui.QApplication(sys.argv)
 
     g_imageWindow = Ui_ImageWindow()
     g_imageWindow.show()
 
-    mySW = ControlMainWindow()
-    mySW.show()
-
+    g_mainWindow = ControlMainWindow()
+    g_mainWindow.show()
+    g_mainWindow.ui.updateNumbers()
+    
     #loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
 
     sys.exit(app.exec_())
