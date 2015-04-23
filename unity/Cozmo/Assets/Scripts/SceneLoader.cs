@@ -8,6 +8,7 @@ public class SceneLoader : MonoBehaviour {
 	public void LoadScene () {
 		if(string.IsNullOrEmpty(scene)) return;
 
+		Debug.Log("SceneLoader Application.LoadLevel("+scene+")");
 		Application.LoadLevel(scene);
 	}
 }

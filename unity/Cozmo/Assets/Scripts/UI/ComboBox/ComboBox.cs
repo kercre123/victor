@@ -403,8 +403,13 @@ public class ComboBox : MonoBehaviour
 		comboTextRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, comboButtonRectTransform.sizeDelta.y);
 	}
 
+	bool initialized = false;
 	public void InitControl()
 	{
+		if(initialized) return;
+
+		initialized = true;
+
 		var cbi = transform.Find("Button/ComboButton/Image");
 		var cbt = transform.Find("Button/ComboButton/Text");
 		var cba = transform.Find("Button/Arrow");

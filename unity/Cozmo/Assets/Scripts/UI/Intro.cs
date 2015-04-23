@@ -162,7 +162,7 @@ public class Intro : MonoBehaviour {
 		}
 
 		error.text = "";
-		Application.LoadLevel("Games");
+		Application.LoadLevel("GameMenu");
 	}
 
 }

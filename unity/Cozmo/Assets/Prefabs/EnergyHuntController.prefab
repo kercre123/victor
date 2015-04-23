@@ -223,12 +223,12 @@ GameObject:
   - 82: {fileID: 8225370}
   - 114: {fileID: 11499864}
   m_Layer: 5
-  m_Name: Treasure Hunt
+  m_Name: EnergyHuntController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &125390
 GameObject:
   m_ObjectHideFlags: 0
@@ -1065,8 +1065,7 @@ MonoBehaviour:
   textTime: {fileID: 11425414}
   autoPlay: 0
   playButton: {fileID: 11413714}
-  gameLayoutTracker: {fileID: 0}
-  buildInstructionsLayoutFilter: TreasureHunt
+  buildInstructionsLayoutFilter: Energy Hunt
   resultsPanel: {fileID: 11425374}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
   playingLoopSound: {fileID: 0}

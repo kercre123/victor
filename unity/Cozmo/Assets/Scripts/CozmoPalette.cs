@@ -21,7 +21,12 @@ public class CozmoPalette : MonoBehaviour {
 
 	public static CozmoPalette instance = null;
 
-	void OnEnable () {
+	void Awake() {
+		if(instance != null) {
+			GameObject.Destroy(gameObject);
+			return;
+		}
+		DontDestroyOnLoad(gameObject);
 		instance = this;
 	}
 	

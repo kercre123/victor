@@ -19,7 +19,6 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
-	[SerializeField] protected GameLayoutTracker gameLayoutTracker = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip playerScoreSound;
@@ -50,7 +49,6 @@ public class GameController : MonoBehaviour {
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
-		//if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(buildInstructionsLayoutFilter);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 	}
 
@@ -87,7 +85,6 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
-		//if(gameLayoutTracker != null) gameLayoutTracker.SetLayoutForGame(null);
 	}
 
 	GameState GetNextState() {
@@ -230,8 +227,9 @@ public class GameController : MonoBehaviour {
 	protected virtual bool IsGameReady() {
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
+		if(GameLayoutTracker.instance == null) return false;
 
-		return gameLayoutTracker.Validated;
+		return GameLayoutTracker.instance.Validated;
 	}
 
 	protected virtual bool IsGameOver() {

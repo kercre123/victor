@@ -69,17 +69,25 @@ public class GameActions : MonoBehaviour
 		{
 			if( buttons.Length > 1 )
 			{
-				if( robot.selectedObjects.Count > 0 )
-				{
-					buttons[1].SetMode( ActionButtonMode.STACK );
-				}
-				else if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
+				if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
 				{
 					buttons[1].SetMode( ActionButtonMode.CHANGE );
 				}
+
 			}
-			
-			buttons[0].SetMode( ActionButtonMode.DROP );
+
+			bool stack = false;
+
+			if( robot.selectedObjects.Count > 0 )
+			{
+				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
+				if(distance <= CozmoUtil.BLOCK_LENGTH_MM) {
+					buttons[0].SetMode( ActionButtonMode.STACK );
+					stack = true;
+				}
+			}
+
+			if(!stack) buttons[0].SetMode( ActionButtonMode.DROP );
 		}
 		else
 		{
