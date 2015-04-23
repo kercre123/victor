@@ -96,6 +96,20 @@ public class GoldRushController : GameController {
 		instance = this;
 	}
 
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+
+		instance = this;
+	}
+
+	protected override void OnDisable()
+	{
+		base.OnEnable();
+
+		if( instance == this ) instance = null;
+	}
+
 	protected override void RefreshHUD ()
 	{
 		base.RefreshHUD ();

@@ -157,6 +157,8 @@ public class ObservedObject
 
 	public const float RemoveDelay = 0.15f;
 
+	public static float messageDelay = 0f;
+
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
 	public ObservedObject( int objectID, uint objectFamily, uint objectType )

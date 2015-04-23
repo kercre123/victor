@@ -238,12 +238,17 @@ public class Robot
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
 
-		for( int i = 0; i < knownObjects.Count; ++i )
+		if( Time.time > ObservedObject.messageDelay )
 		{
-			if( knownObjects[i].Family == 3 && knownObjects[i].lightsChanged )
+			for( int i = 0; i < knownObjects.Count; ++i )
 			{
-				knownObjects[i].SetAllActiveObjectLEDs();
+				if( knownObjects[i].Family == 3 && knownObjects[i].lightsChanged )
+				{
+					knownObjects[i].SetAllActiveObjectLEDs();
+				}
 			}
+
+			ObservedObject.messageDelay = Time.time + GameController.MessageDelay;
 		}
 	}
 
