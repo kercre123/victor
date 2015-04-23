@@ -24,6 +24,7 @@ namespace Embedded {
   {
   public:
     NearestNeighborLibrary();
+    
     NearestNeighborLibrary(const u8* data,
                            const u8* weights,
                            const u16* labels,
@@ -31,6 +32,14 @@ namespace Embedded {
                            const s16* probeCenters_X, const s16* probeCenters_Y,
                            const s16* probePoints_X, const s16* probePoints_Y,
                            const s32 numProbePoints, const s32 numFractionalBits);
+    
+    NearestNeighborLibrary(const u8* HoGdata,
+                           const u16* labels,
+                           const s32 numDataPoints, const s32 dataDim,
+                           const s16* probeCenters_X, const s16* probeCenters_Y,
+                           const s16* probePoints_X, const s16* probePoints_Y,
+                           const s32 numProbePoints, const s32 numFractionalBits,
+                           const s32 numHogScales, const s32 numHogOrientations);
     
     Result GetNearestNeighbor(const Array<u8> &image,
                               const Array<f32> &homography,
@@ -43,6 +52,8 @@ namespace Embedded {
     
     Result GetProbeValues(const Array<u8> &image,
                         const Array<f32> &homography);
+    
+    Result GetProbeHoG();
     
     const cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols
     const cv::Mat_<u8> _weights; // numDataPoints rows x dataDimension cols
@@ -62,7 +73,12 @@ namespace Embedded {
     
     s32 _numFractionalBits;
     
+    const bool _useHoG;
+    s32 _numHogScales;
+    s32 _numHogOrientations;
+    
     cv::Mat_<u8> _probeValues;
+    cv::Mat_<u8> _probeHoG;
     
   }; // class NearestNeighborLibrary
   

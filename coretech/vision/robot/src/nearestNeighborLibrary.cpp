@@ -11,6 +11,7 @@ namespace Embedded {
   : _labels(NULL)
   , _probeXOffsets(NULL)
   , _probeYOffsets(NULL)
+  , _useHoG(false)
   {
     
   }
@@ -35,10 +36,38 @@ namespace Embedded {
   , _probeYOffsets(probePoints_Y)
   , _numProbeOffsets(numProbePoints)
   , _numFractionalBits(numFractionalBits)
+  , _useHoG(false)
   , _probeValues(1, _dataDimension)
   {
     // Sum all the weights for each example in the library along the columns:
     cv::reduce(_weights, _totalWeight, 1, CV_REDUCE_SUM);
+  }
+  
+  
+  NearestNeighborLibrary::NearestNeighborLibrary(const u8* HoGdata,
+                                                 const u16* labels,
+                                                 const s32 numDataPoints, const s32 dataDim,
+                                                 const s16* probeCenters_X, const s16* probeCenters_Y,
+                                                 const s16* probePoints_X, const s16* probePoints_Y,
+                                                 const s32 numProbePoints, const s32 numFractionalBits,
+                                                 const s32 numHogScales, const s32 numHogOrientations)
+  : _data(numDataPoints, dataDim, const_cast<u8*>(HoGdata))
+  , _numDataPoints(numDataPoints)
+  , _dataDimension(dataDim)
+  , _labels(labels)
+  , _probeXCenters(probeCenters_X)
+  , _probeYCenters(probeCenters_Y)
+  , _probeXOffsets(probePoints_X)
+  , _probeYOffsets(probePoints_Y)
+  , _numProbeOffsets(numProbePoints)
+  , _numFractionalBits(numFractionalBits)
+  , _useHoG(true)
+  , _numHogScales(numHogScales)
+  , _numHogOrientations(numHogOrientations)
+  , _probeValues(1, _dataDimension)
+  , _probeHoG((_useHoG ? 16 : 0), _numHogScales*_numHogOrientations)
+  {
+
   }
   
 
@@ -46,46 +75,70 @@ namespace Embedded {
                                                     const Array<f32> &homography,
                                                     const s32 distThreshold,
                                                     s32 &label, s32 &closestDistance)
+
   {
+  
     GetProbeValues(image, homography);
     
     // Visualize probe values
     //cv::Mat_<u8> temp(32,32,_probeValues.data);
     //cv::imshow("ProbeValues", temp);
-
-    const u8* restrict pProbeData = _probeValues[0];
+    if(_useHoG) {
+      GetProbeHoG();
+      assert(_probeHoG.isContinuous());
+      assert(_probeHoG.rows*_probeHoG.cols == _dataDimension);
+    }
+    const u8* restrict pProbeData = (_useHoG ? _probeHoG[0] : _probeValues[0]);
     
     closestDistance = distThreshold;
     s32 closestIndex = -1;
     for(s32 iExample=0; iExample<_numDataPoints; ++iExample)
     {
       const u8* currentExample = _data[iExample];
-      const u8* currentWeight  = _weights[iExample];
-      const s32 currentTotalWeight = _totalWeight(iExample, 0);
-      
-      // Visualize current example
-      //cv::Mat_<u8> temp(32,32,const_cast<u8*>(currentExample));
-      //cv::imshow("CurrentExample", temp);
-      //cv::waitKey();
-      
-      // The distance threshold for this example depends on the total weight
-      const s32 currentDistThreshold = currentTotalWeight * closestDistance;
+
       s32 currentDistance = 0;
       s32 iProbe = 0;
-      while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
-      {
-        const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
-        currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
-        ++iProbe;
-      }
-      
-      if(currentDistance < currentDistThreshold) {
-        currentDistance /= currentTotalWeight;
+
+      if(_useHoG) {
+        while(iProbe < _dataDimension && currentDistance < closestDistance) {
+          const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+          currentDistance += std::abs(diff);
+          ++iProbe;
+        }
+        
         if(currentDistance < closestDistance) {
           closestIndex = iExample;
           closestDistance = currentDistance;
         }
-      }
+        
+      } else {
+        
+        const u8* currentWeight  = _weights[iExample];
+        const s32 currentTotalWeight = _totalWeight(iExample, 0);
+        
+        // Visualize current example
+        //cv::Mat_<u8> temp(32,32,const_cast<u8*>(currentExample));
+        //cv::imshow("CurrentExample", temp);
+        //cv::waitKey();
+        
+        // The distance threshold for this example depends on the total weight
+        const s32 currentDistThreshold = currentTotalWeight * closestDistance;
+        while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
+        {
+          const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+          currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
+          ++iProbe;
+        }
+        
+        if(currentDistance < currentDistThreshold) {
+          currentDistance /= currentTotalWeight;
+          if(currentDistance < closestDistance) {
+            closestIndex = iExample;
+            closestDistance = currentDistance;
+          }
+        }
+      } // if(_useHoG)
+      
     } // for each example
     
     if(closestIndex != -1) {
@@ -95,7 +148,7 @@ namespace Embedded {
     }
     
     return RESULT_OK;
-  }
+  } // GetNearestNeighbor()
   
   Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
                                                 const Array<f32> &homography)
@@ -185,6 +238,76 @@ namespace Embedded {
     
     return RESULT_OK;
   } // VisionMarker::GetProbeValues()
+  
+  
+  Result NearestNeighborLibrary::GetProbeHoG()
+  {
+    static cv::Mat_<u8> whichHist;
+    if(whichHist.empty()) {
+      s32 gridSize = static_cast<s32>(sqrt(_dataDimension));
+      AnkiAssert(gridSize*gridSize == _dataDimension);
+      
+      whichHist = cv::Mat_<u8>(gridSize, gridSize);
+      for(s32 y=1; y<=gridSize; ++y) {
+        const s32 yi = std::ceil(4*static_cast<f32>(y)/static_cast<f32>(gridSize));
+        for(s32 x=1; x<=gridSize; ++x) {
+          const s32 xi = std::ceil(4*static_cast<f32>(x)/static_cast<f32>(gridSize));
+          const s32 bin = yi + (xi-1)*4;
+          AnkiAssert(bin > 0 && bin <= 16);
+          whichHist(yi-1,xi-1) = bin - 1;
+        }
+      }
+    }
+    
+    for(s32 iScale=0; iScale<_numHogScales; ++iScale) {
+      const s32 scale = 1 << iScale;
+      
+      for(s32 i=0; i<_probeValues.rows; ++i)
+      {
+        const u8* probeValues_i = _probeValues[i];
+        const u8* probeValues_iUp = _probeValues[std::max(0, i-scale)];
+        const u8* probeValues_iDown = _probeValues[std::min(_probeValues.rows-1, i+scale)];
+        const u8* whichHist_i = whichHist[i];
+        
+        for(s32 j=0; j<_probeValues.cols; ++j)
+        {
+          const s32 jLeft  = std::max(0, j-scale);
+          const s32 jRight = std::min(_probeValues.cols-1, j+scale);
+          
+          const s32 Ix = probeValues_i[jRight] - probeValues_i[jLeft];
+          const s32 Iy = probeValues_iDown[j] - probeValues_iUp[j];
+          
+          const f32 mag = sqrtf(static_cast<f32>(Ix*Ix + Iy*Iy));
+          f32 orient = std::atan2(Iy, Ix);
+          
+          if(std::abs(-M_PI - orient) < 1e-6f) {
+            orient = M_PI;
+          }
+          
+          // From (-pi, pi] to (0, 2pi] and then to (0, 1] and finally to (0, numBins] and 1:numBins
+          const f32 scaledOrient = (orient + M_PI)/(2*M_PI) * _numHogOrientations;
+          const s32 binnedOrient_R = std::ceil(scaledOrient);
+          const f32 weight_L = binnedOrient_R - scaledOrient;
+          s32 binnedOrient_L = binnedOrient_R - 1;
+          if(binnedOrient_L == 0) {
+            binnedOrient_L = _numHogOrientations;
+          }
+          const f32 weight_R = 1.f - weight_L;
+          
+          const s32 row   = whichHist_i[j];
+          const s32 col_L = binnedOrient_L + iScale*_numHogOrientations - 1;
+          const s32 col_R = binnedOrient_R + iScale*_numHogOrientations - 1;
+          
+          _probeHoG(row,col_L) += mag*weight_L;
+          _probeHoG(row,col_R) += mag*weight_R;
+          
+        }
+      }
+    }
+    
+    return RESULT_OK;
+    
+  } // GetProbeHoG()
   
 } // namespace Embedded
 } // namesapce Anki
