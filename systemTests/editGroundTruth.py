@@ -111,23 +111,6 @@ def sanitizeJsonTest(jsonData):
 
     return jsonData
 
-def loadJson(filename):
-    #filename = filename.encode('ascii')
-    
-    print('Loading json ' + filename)
-
-    f = open(filename, 'r')
-    jsonData = json.load(f)
-    f.close()
-    
-    #pdb.set_trace()
-
-    jsonData = sanitizeJsonTest(jsonData)
-
-    #print(jsonData)
-
-    return jsonData
-
 def saveTestFile():
     global g_data
     
@@ -140,8 +123,14 @@ def saveTestFile():
 
     jsonData = sanitizeJsonTest(g_data['jsonData'])
     
+    jsonDataString = json.dumps(jsonData, indent=2)
+    
+    # TODO: only change the leading spaces
+    jsonDataString = jsonDataString.replace('  ', '\t')
+    
     f = open(testFilename, 'w')
-    jsonData = json.dump(jsonData, f, indent=2)
+    #jsonData = json.dump(jsonData, f, indent=2)
+    f.write(jsonDataString)
     f.close()
 
 def loadTestFile():
@@ -158,7 +147,17 @@ def loadTestFile():
     testFilename.replace('//', '/')
 
     #try:
-    jsonData = loadJson(testFilename)
+    #jsonData = loadJson(testFilename)
+    #filename = filename.encode('ascii')
+    
+    print('Loading json ' + testFilename)
+
+    f = open(testFilename, 'r')
+    jsonData = json.load(f)
+    f.close()
+    
+    jsonData = sanitizeJsonTest(jsonData)
+    
     modificationTime_json = os.path.getmtime(testFilename)
 
     testPath = testFilename[:testFilename.rfind('/')]
@@ -420,12 +419,8 @@ class ConnectedMainWindow(Ui_MainWindow):
         global g_curPoseIndex
         global g_maxPoseIndex
 
-        print('g_curPoseIndex ' + str(g_curPoseIndex) + ' increment ' + str(increment) + ' g_maxPoseIndex ' + str(g_maxPoseIndex))
-
         g_curPoseIndex = max(0, min(g_maxPoseIndex, g_curPoseIndex+increment))
         
-        print('g_curPoseIndex ' + str(g_curPoseIndex))
-
         self.pose_current.setText(str(g_curPoseIndex))
         
         if updatePose:
