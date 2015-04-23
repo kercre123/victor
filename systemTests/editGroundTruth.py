@@ -192,7 +192,7 @@ def getMaxMarkerIndex(poseIndex):
     
     #pdb.set_trace()
     
-    print('maxIndex = ' + str(maxIndex))
+    #print('maxIndex = ' + str(maxIndex))
     
     return maxIndex
         
@@ -262,7 +262,7 @@ def poseChanged(resetZoom):
     global g_toShowImage
         
     fixBounds()
-    
+        
     g_mainWindow.ui.setMaxTestIndex(len(g_data['allTestFilenames']) - 1)
     g_mainWindow.ui.testJsonFilename1.setText(g_data['testPath'])
     g_mainWindow.ui.testJsonFilename2.setText(g_data['testFilename'])
@@ -270,6 +270,11 @@ def poseChanged(resetZoom):
     g_mainWindow.ui.setMaxPoseIndex(len(g_data['jsonData']['Poses'])-1)
     g_mainWindow.ui.setCurMarkerIndex(g_curMarkerIndex, False)
     g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
+    
+    if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) > g_curMarkerIndex:
+        g_mainWindow.ui.markerType.setText(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'][7:])
+    else:
+        g_mainWindow.ui.markerType.setText('UNKNOWN')
     
     # TODO: add in all the updates
     
@@ -279,7 +284,9 @@ def poseChanged(resetZoom):
     #    g_mainWindow.ui.updateNumbers()
                     
     curImageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
-
+    
+    g_mainWindow.ui.pose_filename.setText(curImageFilename)
+    
     #print('Load image file ' + curImageFilename)
     g_rawImage = QtGui.QPixmap(curImageFilename)
     g_toShowImage = QtGui.QPixmap(g_rawImage)
@@ -315,8 +322,8 @@ def getFiducialCorners(poseIndex, markerIndex):
                 for i in range(0,4):
                     newCornersX[i] = curMarkerData[cornerNamesX[i]]
                     newCornersY[i] = curMarkerData[cornerNamesY[i]]
-
-                corners.append((newCornersX,newCornersY))
+                
+                corners.append(zip(newCornersX,newCornersY))
                 whichCorners.append(whichCorners)
     else: # if markerIndex is None
         whichCorners = [0] * 4
@@ -445,6 +452,18 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_maxMarkerIndex = value
         self.marker_max.setText(str(value))
         
+    def updateMarkerName(self):
+        global g_data
+        global g_curPoseIndex
+        global g_curMarkerIndex
+        
+        markerName = self.markerType.text()
+        
+        if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) > g_curMarkerIndex:
+            g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'] = 'MARKER_' + markerName
+            
+        poseChanged(False)
+        
     def updateNumbers(self):
         allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
                 
@@ -471,11 +490,9 @@ class ConnectedMainWindow(Ui_MainWindow):
         self.marker_current.setText(str(g_curMarkerIndex))
         self.marker_max.setText(str(g_maxMarkerIndex))
 
-        #self.testJsonFilename1.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
-        #self.testJsonFilename2.returnPressed.connect(lambda: loadTestFile(self.testJsonFilename1.text() + '/' + self.testJsonFilename2.text()))
-        
         self.testJsonFilename1.returnPressed.connect(loadTestFile)
         self.testJsonFilename2.returnPressed.connect(loadTestFile)
+        self.markerType.returnPressed.connect(self.updateMarkerName)
 
         self.test_current.returnPressed.connect(lambda: self.setCurTestIndex(int(self.test_current.text())))
 
@@ -580,6 +597,8 @@ class Ui_ImageWindow(QtGui.QLabel):
                 painter.end()
 
     def mousePressEvent(self, event):
+        global g_curMarkerIndex
+        
         #print('clicked ' + str(event))
 
         buttonModifiers = event.modifiers()
@@ -608,30 +627,25 @@ class Ui_ImageWindow(QtGui.QLabel):
             if buttonModifiers == QtCore.Qt.ShiftModifier: # shift + left click
                 [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, None)
 
-                minDist = Inf
+                minDist = float('Inf')
                 minInd = -1
 
                 if (g_pointsType=='template') or (g_pointsType=='fiducialMarker'):
-                    ci = 0
-
                     for iMarker in range(0,len(corners)):
-                        ci += 1
+                        meanCornersX = sum([x for x,y in corners[iMarker]]) / len(corners[iMarker])
+                        meanCornersY = sum([y for x,y in corners[iMarker]]) / len(corners[iMarker])
+                        
+                        dist = sqrt(pow(meanCornersX - newPoint['x'], 2.0) + pow(meanCornersY - newPoint['y'], 2.0))
+                        
+                        if dist < minDist:
+                            minDist = dist
+                            minInd = iMarker
+                    
+                    if minInd != -1:
+                        g_curMarkerIndex = minInd
+                        #fixBounds()
+                        poseChanged(False)
 
-                        pdb.set_trace()
-
-                        # TODO: fix
-
-                    #     meanCornersX = mean(cornersX(:,iMarker))
-                    #     meanCornersY = mean(cornersY(:,iMarker))
-                    #
-                    #     dist = sqrt((meanCornersX - newPoint.x)^2 + (meanCornersY - newPoint.y)^2)
-                    #     if dist < minDist:
-                    #         minDist = dist
-                    #         minInd = iMarker
-                    #
-                    # if minInd ~= -1:
-                    #     curMarkerIndex = minInd
-                    #     fixBounds()
             else: # left click             
                 if (g_pointsType=='template') or (g_pointsType=='fiducialMarker'):
                     #pdb.set_trace()
