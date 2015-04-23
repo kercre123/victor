@@ -265,7 +265,7 @@ LOCAL void handleUartRawRx(uint8 flag)
       {
         outPkt->data[outPkt->len++] = byte;
         //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
-        if (outPkt->len >= (pktLen-1))
+        if (outPkt->len >= pktLen)
         {
           clientQueuePacket(outPkt);
           phase = 0;
