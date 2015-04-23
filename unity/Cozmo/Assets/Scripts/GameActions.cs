@@ -81,7 +81,7 @@ public class GameActions : MonoBehaviour
 			if( robot.selectedObjects.Count > 0 )
 			{
 				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
-				if(distance <= CozmoUtil.BLOCK_LENGTH_MM) {
+				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 2f) {
 					buttons[0].SetMode( ActionButtonMode.STACK );
 					stack = true;
 				}
