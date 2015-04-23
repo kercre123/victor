@@ -205,6 +205,7 @@ public class GoldRushController : GameController {
 	protected override void Enter_BUILDING ()
 	{
 		base.Enter_BUILDING ();
+		GameLayoutTracker.instance.ValidateBuild ();
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
 		playButton.gameObject.SetActive (false);
@@ -243,6 +244,11 @@ public class GoldRushController : GameController {
 					goldCollectingObject = obj;
 				}
 			}
+		}
+
+		if (goldExtractingObject != null && robot.carryingObject != null ) 
+		{
+			UpdateDirectionLights(Vector2.zero);
 		}
 
 		if( Input.GetKeyDown(KeyCode.C ))
@@ -343,9 +349,12 @@ public class GoldRushController : GameController {
 
 	void PlayNotificationAudio(AudioClip clip)
 	{
-		notificationAudio.Stop ();
-		Debug.Log ("Should be playing " + clip.name);
-		notificationAudio.PlayOneShot (clip);
+		if (notificationAudio != null) 
+		{
+			notificationAudio.Stop ();
+			Debug.Log ("Should be playing " + clip.name);
+			notificationAudio.PlayOneShot (clip);
+		}
 	}
 
 	void EnableAudioLocator(bool on)
