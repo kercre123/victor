@@ -257,6 +257,7 @@ def poseChanged(resetZoom):
     global g_imageWindow
     global g_data
     global g_curPoseIndex
+    global g_curMarkerIndex
     global g_rawImage
     global g_toShowImage
         
@@ -265,9 +266,9 @@ def poseChanged(resetZoom):
     g_mainWindow.ui.setMaxTestIndex(len(g_data['allTestFilenames']) - 1)
     g_mainWindow.ui.testJsonFilename1.setText(g_data['testPath'])
     g_mainWindow.ui.testJsonFilename2.setText(g_data['testFilename'])
-    g_mainWindow.ui.setCurPoseIndex(0, False)
+    g_mainWindow.ui.setCurPoseIndex(g_curPoseIndex, False)
     g_mainWindow.ui.setMaxPoseIndex(len(g_data['jsonData']['Poses'])-1)
-    g_mainWindow.ui.setCurMarkerIndex(0, False)
+    g_mainWindow.ui.setCurMarkerIndex(g_curMarkerIndex, False)
     g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
     
     # TODO: add in all the updates
@@ -336,6 +337,21 @@ class ConnectedMainWindow(Ui_MainWindow):
         super(ConnectedMainWindow, self).__init__()
 
         #loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
+    
+    def incrementCurTestIndex(self, increment, updatePose=False):
+        global g_curTestIndex
+        global g_maxTestIndex
+        global g_startJsonDirectory
+        global g_startJsonFilename
+
+        g_curTestIndex = max(0, min(g_maxTestIndex, g_curTestIndex+increment))
+
+        self.test_current.setText(str(g_curTestIndex))
+        
+        loadTestFile()
+        
+        if updatePose:
+            poseChanged(True)
         
     def setCurTestIndex(self, value, updatePose=False):
         global g_curTestIndex
@@ -379,6 +395,21 @@ class ConnectedMainWindow(Ui_MainWindow):
         
         if updatePose:
             poseChanged(True)
+            
+    def incrementCurPoseIndex(self, increment, updatePose=False):
+        global g_curPoseIndex
+        global g_maxPoseIndex
+
+        print('g_curPoseIndex ' + str(g_curPoseIndex) + ' increment ' + str(increment) + ' g_maxPoseIndex ' + str(g_maxPoseIndex))
+
+        g_curPoseIndex = max(0, min(g_maxPoseIndex, g_curPoseIndex+increment))
+        
+        print('g_curPoseIndex ' + str(g_curPoseIndex))
+
+        self.pose_current.setText(str(g_curPoseIndex))
+        
+        if updatePose:
+            poseChanged(True)            
 
     def setMaxPoseIndex(self, value):
         global g_maxPoseIndex;        
@@ -390,14 +421,24 @@ class ConnectedMainWindow(Ui_MainWindow):
         global g_curPoseIndex
         global g_maxMarkerIndex
 
-        #self.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
-
         g_curMarkerIndex = max(0, min(g_maxMarkerIndex, value))
 
         self.marker_current.setText(str(g_curMarkerIndex))
         
         if updatePose:
             poseChanged(False)
+            
+    def incrementCurMarkerIndex(self, increment, updatePose=False):
+        global g_curMarkerIndex
+        global g_curPoseIndex
+        global g_maxMarkerIndex
+
+        g_curMarkerIndex = max(0, min(g_maxMarkerIndex, g_curMarkerIndex+increment))
+
+        self.marker_current.setText(str(g_curMarkerIndex))
+        
+        if updatePose:
+            poseChanged(False)            
         
     def setMaxMarkerIndex(self, value):
         global g_maxMarkerIndex;        
@@ -438,28 +479,26 @@ class ConnectedMainWindow(Ui_MainWindow):
 
         self.test_current.returnPressed.connect(lambda: self.setCurTestIndex(int(self.test_current.text())))
 
+        self.test_previous1.clicked.connect(lambda: self.incrementCurTestIndex(-1, True))
+        self.test_previous2.clicked.connect(lambda: self.incrementCurTestIndex(-10, True))
+        self.test_previous3.clicked.connect(lambda: self.incrementCurTestIndex(-100, True))
+        self.test_next1.clicked.connect(lambda: self.incrementCurTestIndex(1, True))
+        self.test_next2.clicked.connect(lambda: self.incrementCurTestIndex(10, True))
+        self.test_next3.clicked.connect(lambda: self.incrementCurTestIndex(100, True))
 
-        # TODO: these g_* values are probably immediately evaluated, which needs to be fixed
-        self.test_previous1.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-1, True))
-        self.test_previous2.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-10, True))
-        self.test_previous3.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex-100, True))
-        self.test_next1.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+1, True))
-        self.test_next2.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+10, True))
-        self.test_next3.clicked.connect(lambda: self.setCurTestIndex(g_curTestIndex+100, True))
+        self.pose_previous1.clicked.connect(lambda: self.incrementCurPoseIndex(-1, True))
+        self.pose_previous2.clicked.connect(lambda: self.incrementCurPoseIndex(-10, True))
+        self.pose_previous3.clicked.connect(lambda: self.incrementCurPoseIndex(-100, True))
+        self.pose_next1.clicked.connect(lambda: self.incrementCurPoseIndex(1, True))
+        self.pose_next2.clicked.connect(lambda: self.incrementCurPoseIndex(10, True))
+        self.pose_next3.clicked.connect(lambda: self.incrementCurPoseIndex(100, True))
 
-        self.pose_previous1.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-1, True))
-        self.pose_previous2.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-10, True))
-        self.pose_previous3.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex-100, True))
-        self.pose_next1.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+1, True))
-        self.pose_next2.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+10, True))
-        self.pose_next3.clicked.connect(lambda: self.setCurPoseIndex(g_curPoseIndex+100, True))
-
-        self.marker_previous1.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-1, True))
-        self.marker_previous2.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-10, True))
-        self.marker_previous3.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex-100, True))
-        self.marker_next1.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+1, True))
-        self.marker_next2.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+10, True))
-        self.marker_next3.clicked.connect(lambda: self.setCurMarkerIndex(g_curMarkerIndex+100, True))
+        self.marker_previous1.clicked.connect(lambda: self.incrementCurMarkerIndex(-1, True))
+        self.marker_previous2.clicked.connect(lambda: self.incrementCurMarkerIndex(-10, True))
+        self.marker_previous3.clicked.connect(lambda: self.incrementCurMarkerIndex(-100, True))
+        self.marker_next1.clicked.connect(lambda: self.incrementCurMarkerIndex(1, True))
+        self.marker_next2.clicked.connect(lambda: self.incrementCurMarkerIndex(10, True))
+        self.marker_next3.clicked.connect(lambda: self.incrementCurMarkerIndex(100, True))
         
 class Ui_ImageWindow(QtGui.QLabel):
     def __init__(self, parent=None):
