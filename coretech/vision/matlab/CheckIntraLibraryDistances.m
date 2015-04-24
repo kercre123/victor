@@ -29,7 +29,7 @@ end
 
 function helper
 %%
-[iSame,jSame] = find(d < 30);
+[iSame,jSame] = find(d < 15);
 gridSize = sqrt(size(nnLibrary.probeValues,1));
 for i = 1:length(iSame)
   subplot 121, imagesc(reshape(nnLibrary.probeValues(:,iSame(i)), gridSize, gridSize)), axis image 

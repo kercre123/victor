@@ -196,7 +196,7 @@ for i_label = 1:numLabels
             %reorder = rot90(rot90(rot90(reorder)));
             reorder = rot90(reorder);
         otherwise
-            error('Unrecognized angle string "%s"', angleStr);
+            error('Unrecognized angle string "%s"', orientationAngleStr);
     end
     reorderingString{i_label} = sprintf('  {%d,%d,%d,%d},\n', reorder(:)-1);
     
