@@ -128,10 +128,12 @@ public class ObservedObject
 	public bool lightsChanged;
 
 	private byte _relativeMode;
-	public byte relativeMode { get { return _relativeMode; } private set { Set( value, ref _relativeMode ); } }
-	
-	public float relativeToX;
-	public float relativeToY;
+	public byte relativeMode { get { return _relativeMode; } set { Set( value, ref _relativeMode ); } }
+
+	private float _relativeToX;
+	public float relativeToX { get { return _relativeToX; } set { Set( value, ref _relativeToX ); } }
+	private float _relativeToY;
+	public float relativeToY { get { return _relativeToY; } set { Set( value, ref _relativeToY ); } }
 
 	private void Set( byte newValue, ref byte oldValue )
 	{
@@ -265,6 +267,8 @@ public class ObservedObject
 			Debug.LogWarning( "Cannot send light message for non active block " + ID );
 			return;
 		}
+
+		this.Color = onColor;
 
 		for( int i = 0; i < lights.Length; ++i )
 		{

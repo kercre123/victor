@@ -320,7 +320,11 @@ public class SlalomController : GameController {
 
 			float distanceFromRobot = Vector2.Distance( robot.WorldPosition, nextObstacle.WorldPosition );
 			float distanceFromCurrentObstacle = Vector2.Distance( currentObstacle.WorldPosition, nextObstacle.WorldPosition );
-				
+
+			currentObstacle.relativeMode = 1;
+			currentObstacle.relativeToX = robot.WorldPosition.x;
+			currentObstacle.relativeToY = robot.WorldPosition.y;
+			
 			for( int i = 0; i < 8; ++i )
 			{
 				currentObstacle.lights[i].onColor = 0;
