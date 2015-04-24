@@ -62,6 +62,7 @@ PROTO WebotsKeyboardController [
   field SFInt32 liftTest_flags 0  
   field SFInt32 liftTest_nodCycleTimeMS 2000  
   field SFInt32 headTest_flags 0
+  field SFInt32 headTest_nodCycleTimeMS 2000  
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
