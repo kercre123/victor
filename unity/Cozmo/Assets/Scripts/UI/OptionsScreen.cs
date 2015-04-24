@@ -29,6 +29,13 @@ public class OptionsScreen : MonoBehaviour {
 		Robot.ObservedObjectListType.KNOWN.ToString() };
 
 	public static OptionsScreen instance = null;
+	public static bool Open {
+		get {
+			if(instance == null) return false;
+			if(instance.optionsAnchor == null) return false;
+			return instance.optionsAnchor.activeSelf;
+		}
+	}
 
 	void Awake () {
 		if(instance != null) {
