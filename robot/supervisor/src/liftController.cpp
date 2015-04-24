@@ -35,8 +35,16 @@ namespace Anki {
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
         const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
-        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.5f);
-        f32 LIFT_ANGLE_LOW_LIMIT; // Initialize in Init()
+        // Only angles greater than this can contribute to error
+        // TODO: Find out what this actually is
+        const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
+        
+        // If angle is within this tolerance of the desired angle
+        // we are considered to be in position
+        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.75f);
+        
+        // Initialized in Init()
+        f32 LIFT_ANGLE_LOW_LIMIT;
 
 #ifdef SIMULATOR
         // For disengaging gripper once the lift has reached its final position
@@ -48,8 +56,11 @@ namespace Anki {
         f32 Ki_ = 0.f; // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 10.f;
+        
+        // Constant power bias to counter gravity
+        const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
 #else
-        f32 Kp_ = 2.f; // proportional control constant
+        f32 Kp_ = 3.f; // proportional control constant
         f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.05f; // integral control constant
         f32 angleErrorSum_ = 0.f;
@@ -61,6 +72,9 @@ namespace Anki {
         const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.2312f, 0.3082f, 0.37f}; // 0.37f is a guesstimate
         const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0521f;
         const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.1389f, 0.05f, 0.f};
+
+        // Constant power bias to counter gravity
+        const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -69,7 +83,6 @@ namespace Anki {
         Radians desiredAngle_ = 0.f;
         f32 desiredHeight_ = 0.f;
         f32 currDesiredAngle_ = 0.f;
-        f32 angleError_ = 0.f;
         f32 prevAngleError_ = 0.f;
         f32 prevHalPos_ = 0.f;
         bool inPosition_  = true;
@@ -113,7 +126,6 @@ namespace Anki {
         LiftCalibState calState_ = LCS_IDLE;
 
         bool isCalibrated_ = false;
-        bool calibPending_ = false;
         u32 lastLiftMovedTime_ms = 0;
 
         
@@ -143,17 +155,25 @@ namespace Anki {
       
       void Enable()
       {
-        enable_ = true;
+        if (!enable_) {
+          enable_ = true;
         
-        SetDesiredHeight(Rad2Height(currentAngle_.ToFloat()));
+          currDesiredAngle_ = currentAngle_.ToFloat();
+          SetDesiredHeight(Rad2Height(currentAngle_.ToFloat()));
+        }
       }
       
       void Disable()
       {
-        enable_ = false;
-        
-        power_ = 0;
-        HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+        if (enable_) {
+          enable_ = false;
+          
+          inPosition_ = true;
+          angleErrorSum_ = 0.f;
+          
+          power_ = 0;
+          HAL::MotorSetPower(HAL::MOTOR_LIFT, power_);
+        }
       }
       
       
@@ -311,7 +331,14 @@ namespace Anki {
           targetHeight = LIFT_HEIGHT_LOWDOCK;
           maxSpeedRad_ = rad_per_sec;
         } else {
-          targetHeight = Rad2Height(currentAngle_.ToFloat());
+          // Compute the expected height if we were to start slowing down now
+          f32 radToStop = 0.5f*(radSpeed_*radSpeed_) / accelRad_;
+          if (radSpeed_ < 0) {
+            radToStop *= -1;
+          }
+          targetHeight = CLIP(Rad2Height( currentAngle_.ToFloat() + radToStop ), LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+          //PRINT("Stopping: radSpeed %f, accelRad %f, radToStop %f, currentAngle %f, targetHeight %f\n",
+          //      radSpeed_, accelRad_, radToStop, currentAngle_.ToFloat(), targetHeight);
         }
         SetDesiredHeight(targetHeight);
       }
@@ -386,19 +413,13 @@ namespace Anki {
         
         
         desiredAngle_ = Height2Rad(desiredHeight_);
-        angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+        prevAngleError_ = 0;
         
         f32 startRadSpeed = radSpeed_;
-        f32 startRad = currentAngle_.ToFloat();
-        if (!inPosition_) {
-          startRad = currDesiredAngle_;
-        } else {
-          angleErrorSum_ = 0.f;
-        }
+        f32 startRad = currDesiredAngle_;
         
         lastLiftMovedTime_ms = HAL::GetTimeStamp();
         inPosition_ = false;
-        calibPending_ = false;
         
 
         /*
@@ -478,24 +499,33 @@ namespace Anki {
         }
       
         // Compute position error
-        angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
+        // Ignore if it's less than encoder resolution
+        f32 angleError = currDesiredAngle_ - currentAngle_.ToFloat();
+        if (ABS(angleError) < ENCODER_ANGLE_RES) {
+          angleError = 0;
+        }
+
         
         // Compute power
-        power_ = (Kp_ * angleError_) + (Kd_ * (angleError_ - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
+        power_ = ANTI_GRAVITY_POWER_BIAS + (Kp_ * angleError) + (Kd_ * (angleError - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
         
         // Update error terms
-        prevAngleError_ = angleError_;
-        angleErrorSum_ += angleError_;
+        prevAngleError_ = angleError;
+        angleErrorSum_ += angleError;
         angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
 
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+        if((ABS(angleError) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
+            
+            // Keep angleErrorSum from accumulating once we're in position
+            angleErrorSum_ -= angleError;
+            
             inPosition_ = true;
 #if(DEBUG_LIFT_CONTROLLER)
             PRINT(" LIFT HEIGHT REACHED (%f mm)\n", GetHeightMM());
@@ -512,9 +542,9 @@ namespace Anki {
                        currDesiredAngle_,
                        radSpeed_,
                        desiredAngle_.ToFloat(),
-                       angleError_,
+                       angleError,
                        angleErrorSum_,
-                       inPosition_,
+                       inPosition_ ? 1 : 0,
                        power_);
         PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
 #endif
