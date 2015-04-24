@@ -94,7 +94,9 @@ namespace Anki {
     } LiftTestFlags;
 
     typedef enum {
-      HTF_TEST_ANGLES = 0x01
+      HTF_TEST_POWER = 0,
+      HTF_TEST_ANGLES,
+      HTF_NODDING
     } HeadTestFlags;
     
     typedef enum {

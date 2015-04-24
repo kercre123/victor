@@ -159,8 +159,8 @@ namespace Anki {
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
-        u32 liftTestMode_ = 0;
-        s32 noddingCycleTime_ms_ = 2.f;
+        LiftTestFlags liftTestMode_ = LiftTF_TEST_POWER;
+        s32 liftNodCycleTime_ms_ = 2000;
         //// End of LiftTest  //////
         
         
@@ -173,7 +173,8 @@ namespace Anki {
         const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
-        bool headDoAngleTest_ = false;
+        HeadTestFlags headTestMode_ = HTF_TEST_POWER;
+        s32 headNodCycleTime_ms_ = 2000;
         //// End of HeadTest //////
         
         
@@ -653,16 +654,16 @@ namespace Anki {
       }
       
       
-      Result LiftTestInit(s32 flags, s32 noddingCycleTime_ms, s32 printPeriod_ms)
+      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
+        PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", mode, printPeriod_ms);
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
         printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
         liftPower_ = LIFT_POWER_CMD;
-        liftTestMode_ = flags;
-        noddingCycleTime_ms_ = noddingCycleTime_ms == 0 ? PI_F : noddingCycleTime_ms;
+        liftTestMode_ = (LiftTestFlags)mode;
+        liftNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
         if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
           LiftController::Disable();
         }
@@ -681,12 +682,13 @@ namespace Anki {
             const f32 midHeight = 0.5f * (highHeight + lowHeight);
             const f32 amplitude = highHeight - midHeight;
             
-            const f32 thetaStep = 2*PI_F / noddingCycleTime_ms_ * TIME_STEP;
+            const f32 thetaStep = 2*PI_F / liftNodCycleTime_ms_ * TIME_STEP;
             
-            LiftController::Enable();
             f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
             LiftController::SetDesiredHeight(newHeight);
             theta += thetaStep;
+            
+            break;
           }
           case LiftTF_TEST_POWER:
           case LiftTF_TEST_HEIGHTS:
@@ -810,15 +812,16 @@ namespace Anki {
       }
       
       
-      Result HeadTestInit(s32 flags, s32 printPeriod_ms)
+      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting HeadTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
+        PRINT("\n==== Starting HeadTest (flags = %d, printPeriod_ms = %d)=====\n", mode, printPeriod_ms);
         ticCnt_ = 0;
         ticCnt2_ = 0;
         headPower_ = HEAD_POWER_CMD;
         printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 5 : printPeriod_ms / TIME_STEP;
-        headDoAngleTest_ = flags & HTF_TEST_ANGLES;
-        if (!headDoAngleTest_) {
+        headTestMode_ = (HeadTestFlags)mode;
+        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
+        if (headTestMode_ == HTF_TEST_POWER) {
           HeadController::Disable();
         }
         return RESULT_OK;
@@ -827,41 +830,70 @@ namespace Anki {
       
       Result HeadTestUpdate()
       {
-        static bool up = false;
         
-        // Change direction
-        if (ticCnt_++ >= 3000 / TIME_STEP) {
-          
-          if (headDoAngleTest_) {
-            up = !up;
-            if (up) {
-              PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
-              HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
-            } else {
-              PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
-              HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
-            }
-          } else {
-            up = !up;
-            if (up) {
-              PRINT("Head UP %f power\n", headPower_);
-              HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
-            } else {
-              PRINT("Head DOWN %f power\n", -headPower_);
-              HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
-            }
+        switch(headTestMode_) {
+          case HTF_TEST_POWER:
+          case HTF_TEST_ANGLES:
+          {
+            static bool up = false;
             
-            // Cycle through different power levels
-            if (!up) {
-              headPower_ += 0.1;
-              if (headPower_ >=1.01f) {
-                headPower_ = HEAD_POWER_CMD;
+            // Change direction
+            if (ticCnt_++ >= 3000 / TIME_STEP) {
+              
+              if (headTestMode_ == HTF_TEST_ANGLES) {
+                up = !up;
+                if (up) {
+                  PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
+                  HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
+                } else {
+                  PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
+                  HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
+                }
+              } else {
+                up = !up;
+                if (up) {
+                  PRINT("Head UP %f power\n", headPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
+                } else {
+                  PRINT("Head DOWN %f power\n", -headPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
+                }
+                
+                // Cycle through different power levels
+                if (!up) {
+                  headPower_ += 0.1;
+                  if (headPower_ >=1.01f) {
+                    headPower_ = HEAD_POWER_CMD;
+                  }
+                }
               }
+              
+              ticCnt_ = 0;
             }
+
+            break;
           }
-          
-          ticCnt_ = 0;
+          case HTF_NODDING:
+          {
+            static Radians theta = 0;
+            const f32 lowAngle = MAX_HEAD_ANGLE;
+            const f32 highAngle = MIN_HEAD_ANGLE;
+            const f32 midAngle = 0.5f * (highAngle + lowAngle);
+            const f32 amplitude = highAngle - midAngle;
+            
+            const f32 thetaStep = 2*PI_F / headNodCycleTime_ms_ * TIME_STEP;
+            
+            f32 newAngle = amplitude * sinf(theta.ToFloat()) + midAngle;
+            HeadController::SetDesiredAngle(newAngle);
+            theta += thetaStep;
+            
+            break;
+          }
+          default:
+            PRINT("WARN: Unknown head test mode %d\n", headTestMode_);
+            break;
         }
+        
         
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
@@ -1176,7 +1208,7 @@ namespace Anki {
             updateFunc = LiftToggleTestUpdate;
             break;
           case TM_HEAD:
-            ret = HeadTestInit(p1,p2);
+            ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
           case TM_IMU:
