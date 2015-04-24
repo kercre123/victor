@@ -1109,7 +1109,7 @@ MonoBehaviour:
   detectRadius: 300
   extractionTime: 1.5
   rewardTime: .75
-  numDropsForBonusTime: 1
+  numDropsForBonusTime: 3
   baseTimeBonus: 30
   bonusTimeDecay: .666666687
   resultsScore: {fileID: 11425412}
