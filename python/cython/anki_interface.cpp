@@ -14,6 +14,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#include <vector>
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -23,6 +24,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/serialize.h"
+
+#include "anki/vision/robot/lucasKanade.h"
+#include "anki/vision/robot/fiducialMarkers.h"
+#include "anki/vision/robot/fiducialDetection.h"
 
 #include "anki.h"
 
@@ -187,7 +192,7 @@ template<typename Type> Array<Type> NumpyArrayToArray(const PyObject *numpyArray
   npy_intp *pythonStrides = PyArray_STRIDES(numpyArray);
 
   AnkiConditionalErrorAndReturnValue(sizeof(Type) == pythonStrides[1],
-    Array<Type>(), "NumpyArrayToArray", "sizeof doesn't match stride");
+    Array<Type>(), "NumpyArrayToArray", "sizeof doesn't match stride %d != %d", sizeof(Type), pythonStrides[1]);
 
   for(s32 y=0; y<arrayHeight; y++) {
     const Type * restrict pNumpyArray = reinterpret_cast<Type*>( pNumpyArray_start + y * pythonStrides[0] );
@@ -284,4 +289,212 @@ int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, cons
   return -1;
 } // int SaveEmbeddedArray_fromNumpy(PyObject *numpyArray, const char *filename, const int compressionLevel)
 
+PyObject* DetectFiducialMarkers_numpy(
+  PyObject *numpyImage,
+  const int useIntegralImageFiltering,
+  const s32 scaleImage_numPyramidLevels,
+  const s32 scaleImage_thresholdMultiplier,
+  const s16 component1d_minComponentWidth,
+  const s16 component1d_maxSkipDistance,
+  const s32 component_minimumNumPixels,
+  const s32 component_maximumNumPixels,
+  const s32 component_sparseMultiplyThreshold,
+  const s32 component_solidMultiplyThreshold,
+  const f32 component_minHollowRatio,
+  const s32 quads_minQuadArea,
+  const s32 quads_quadSymmetryThreshold,
+  const s32 quads_minDistanceFromImageEdge,
+  const f32 decode_minContrastRatio,
+  const s32 quadRefinementIterations,
+  const s32 numRefinementSamples,
+  const f32 quadRefinementMaxCornerChange,
+  const f32 quadRefinementMinCornerChange,
+  const int returnInvalidMarkers)
+{
+  const s32 maxMarkers = 500;
+  const s32 maxExtractedQuads = 5000;
+  const s32 maxConnectedComponentSegments = 0xFFFFF; // 0xFFFFF is a little over one million
+  const s32 bufferSize = 100000000;
+  
+  initNumpy();
+
+  if(!PyArray_Check(numpyImage)) {
+    AnkiError("DetectFiducialMarkers_numpy", "Input is not a Numpy array");
+    return NULL;
+  }
+
+  const s32 numpyDataType = PyArray_TYPE(numpyImage);
+  
+  if(numpyDataType != NPY_UINT8) {
+    AnkiError("DetectFiducialMarkers_numpy", "Input is not a uint8 Numpy array");
+    return NULL;
+  }
+  
+  MemoryStack scratch0(malloc(bufferSize), bufferSize);
+  MemoryStack scratch1(malloc(bufferSize), bufferSize);
+  MemoryStack scratch2(malloc(bufferSize), bufferSize);
+  MemoryStack scratch3(malloc(bufferSize), bufferSize);
+
+  if(!scratch0.IsValid() || !scratch1.IsValid() || !scratch2.IsValid() || !scratch3.IsValid()) {
+    AnkiError("DetectFiducialMarkers_numpy", "Out of memory");
+
+    if(scratch0.get_buffer())
+      free(scratch0.get_buffer());
+
+    if(scratch1.get_buffer())
+      free(scratch1.get_buffer());
+      
+    if(scratch2.get_buffer())
+      free(scratch2.get_buffer());
+      
+    if(scratch3.get_buffer())
+      free(scratch3.get_buffer());            
+
+    return NULL;
+  }
+
+  Array<u8> ankiImage = NumpyArrayToArray<u8>(numpyImage, scratch0);
+
+  //printf("%d %d %d %d\n", *ankiImage.Pointer(10,10), *ankiImage.Pointer(20,10), *ankiImage.Pointer(30,10), *ankiImage.Pointer(10,30));
+
+  if(!ankiImage.IsValid()) {
+    free(scratch0.get_buffer());
+    free(scratch1.get_buffer());
+    free(scratch2.get_buffer());
+    free(scratch3.get_buffer());
+
+    return NULL;
+  }
+  
+  FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratch0);
+
+  markers.set_size(maxMarkers);
+  homographies.set_size(maxMarkers);
+
+  for(s32 i=0; i<maxMarkers; i++) {
+    Array<f32> newArray(3, 3, scratch0);
+    homographies[i] = newArray;
+  }
+  
+  {
+    const Anki::Result result = DetectFiducialMarkers(
+      ankiImage,
+      markers,
+      homographies,
+      useIntegralImageFiltering,
+      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
+      component1d_minComponentWidth, component1d_maxSkipDistance,
+      component_minimumNumPixels, component_maximumNumPixels,
+      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
+      component_minHollowRatio,
+      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
+      decode_minContrastRatio,
+      maxConnectedComponentSegments,
+      maxExtractedQuads,
+      quadRefinementIterations,
+      numRefinementSamples,
+      quadRefinementMaxCornerChange,
+      quadRefinementMinCornerChange,
+      returnInvalidMarkers,
+      scratch1,
+      scratch2,
+      scratch3);
+
+    if(result != Anki::RESULT_OK) {
+      AnkiError("DetectFiducialMarkers_numpy", "DetectFiducialMarkers failed 0x%x", result);
+      
+      free(scratch0.get_buffer());
+      free(scratch1.get_buffer());
+      free(scratch2.get_buffer());
+      free(scratch3.get_buffer());
+
+      return NULL;
+    }
+  }
+  
+  const s32 numMarkers = markers.get_size();
+
+  PyObject* outputList = PyList_New(4);
+
+  printf("Outputting %d markers\n", numMarkers);
+
+  if(numMarkers != 0) {
+    // Output quads
+    {
+      PyObject* quads = PyList_New(numMarkers);
+    
+      for(s32 i=0; i<numMarkers; i++) {
+        PyObject* curQuad = PyList_New(4);
+      
+        for(s32 j=0; j<4; j++) {
+          PyObject* curPoint = PyList_New(2);
+        
+          PyList_SetItem(curPoint, 0, PyFloat_FromDouble(markers[i].corners[j].x));
+          PyList_SetItem(curPoint, 1, PyFloat_FromDouble(markers[i].corners[j].y));
+        
+          PyList_SetItem(curQuad, j, curPoint);
+        }
+      
+        PyList_SetItem(quads, i, curQuad);
+      } // for(s32 i=0; i<numMarkers; i++)
+  
+      PyList_SetItem(outputList, 0, quads);
+    } // Output quads
+    
+    // Marker types
+    {
+      PyObject* markerTypes = PyList_New(numMarkers);
+      
+      for(s32 i=0; i<numMarkers; i++) {
+        PyList_SetItem(markerTypes, i, PyInt_FromLong(markers[i].markerType));
+      } // for(s32 i=0; i<numMarkers; i++)
+  
+      PyList_SetItem(outputList, 1, markerTypes);
+    } // Marker types
+    
+    // Marker type names
+    {
+      PyObject* markerNames = PyList_New(numMarkers);
+      
+      for(s32 i=0; i<numMarkers; i++) {
+        AnkiAssert(markers[i].markerType >= 0 && markers[i].markerType <= Anki::Vision::NUM_MARKER_TYPES);
+        
+        PyList_SetItem(
+          markerNames, 
+          i, 
+          PyString_FromStringAndSize(
+            Anki::Vision::MarkerTypeStrings[markers[i].markerType], 
+            strlen(Anki::Vision::MarkerTypeStrings[markers[i].markerType])));      
+      } // for(s32 i=0; i<numMarkers; i++)
+  
+      PyList_SetItem(outputList, 2, markerNames);      
+    } // Marker type names
+
+    // Marker validity
+    {
+      PyObject* markerValidity = PyList_New(numMarkers);
+      
+      for(s32 i=0; i<numMarkers; i++) {
+        PyList_SetItem(markerValidity, i, PyInt_FromLong(markers[i].validity));
+      } // for(s32 i=0; i<numMarkers; i++)
+  
+      PyList_SetItem(outputList, 3, markerValidity);
+    } // Marker validity
+  } else { // if(numMarkers != 0)
+    PyList_SetItem(outputList, 0, PyList_New(0));
+    PyList_SetItem(outputList, 1, PyList_New(0));
+    PyList_SetItem(outputList, 2, PyList_New(0));
+    PyList_SetItem(outputList, 3, PyList_New(0));
+  } // if(numMarkers != 0) ... else
+
+  free(scratch0.get_buffer());
+  free(scratch1.get_buffer());
+  free(scratch2.get_buffer());
+  free(scratch3.get_buffer());
+  
+  printf("Reached the end\n");
+  
+  return outputList;
+} // DetectFiducialMarkers_numpy()
 
