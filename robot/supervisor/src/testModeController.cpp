@@ -663,7 +663,7 @@ namespace Anki {
         liftPower_ = LIFT_POWER_CMD;
         liftTestMode_ = flags;
         noddingCycleTime_ms_ = noddingCycleTime_ms == 0 ? PI_F : noddingCycleTime_ms;
-        if (liftTestMode_ == LiftTF_TEST_POWER) {
+        if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
           LiftController::Disable();
         }
         return RESULT_OK;
@@ -687,10 +687,6 @@ namespace Anki {
             f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
             LiftController::SetDesiredHeight(newHeight);
             theta += thetaStep;
-            
-            PERIODIC_PRINT(200, "Lift height %f mm\n", newHeight);
-            
-            return RESULT_OK;
           }
           case LiftTF_TEST_POWER:
           case LiftTF_TEST_HEIGHTS:
@@ -704,7 +700,6 @@ namespace Anki {
             
             // Change direction
             if (ticCnt_++ >= 1000 / TIME_STEP) {
-              
               
               if (liftTestMode_ == LiftTF_TEST_HEIGHTS) {
                 up = !up;
@@ -740,6 +735,8 @@ namespace Anki {
             }
             break;
           }
+          case LiftTF_DISABLE_MOTOR:
+            break;
           default:
           {
             PRINT("WARN: Unknown lift test mode %d\n", liftTestMode_);

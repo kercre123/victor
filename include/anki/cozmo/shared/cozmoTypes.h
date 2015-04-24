@@ -89,7 +89,8 @@ namespace Anki {
     typedef enum {
       LiftTF_TEST_POWER = 0,
       LiftTF_TEST_HEIGHTS,
-      LiftTF_NODDING
+      LiftTF_NODDING,
+      LiftTF_DISABLE_MOTOR
     } LiftTestFlags;
 
     typedef enum {
