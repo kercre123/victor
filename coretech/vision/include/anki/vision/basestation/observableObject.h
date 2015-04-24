@@ -157,7 +157,7 @@ namespace Anki {
       // Return the same-distance tolerance to use in the X/Y/Z dimensions.
       // The default implementation simply uses the canonical bounding cube,
       // rotated to the object's current pose.
-      constexpr static f32 DEFAULT_SAME_DIST_TOL_FRACTION = 1.f; // fraction of GetSize() to use
+      constexpr static f32 DEFAULT_SAME_DIST_TOL_FRACTION = 0.8f; // fraction of GetSize() to use
       virtual Point3f GetSameDistanceTolerance() const;
       
       // Return the same angle tolerance for matching. Default is 45 degrees.

@@ -599,7 +599,10 @@ namespace Anki
         // location, but which must not be there because we saw something behind
         // that location:
         const Vision::Camera& camera = _robot->GetCamera();
-        if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true) &&
+        const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNcols()));
+        const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNrows()));
+        if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true,
+                                            xBorderPad, yBorderPad) &&
            (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
         {
           // We "should" have seen the object! Delete it or mark it somehow
