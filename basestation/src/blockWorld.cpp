@@ -62,6 +62,11 @@ namespace Anki
   namespace Cozmo
   {
     
+    // Minimum number of times we need to observe an object to keep it and signal
+    // that we saw it.
+    // TODO: Move this to some config/parameters file somewhere
+    const int MIN_TIMES_TO_OBSERVE_OBJECT = 2;
+    
     int BlockWorld::ObjectFamily::UniqueFamilyCounter = 0;
     
     // Instantiate object families here:
@@ -415,6 +420,13 @@ namespace Anki
         
         CORETECH_ASSERT(observedObject != nullptr);
         
+        // If this is an active object and has not been identified yet, identify
+        // it now.
+        if(observedObject->IsActive() && !observedObject->IsIdentified()) {
+          // TODO: Need to do more here probably...
+          observedObject->Identify();
+        }
+        
         const ObjectID obsID = observedObject->GetID();
         const ObjectType obsType = observedObject->GetType();
         
@@ -438,49 +450,46 @@ namespace Anki
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
         }
-        Rectangle<f32> boundingBox(projectedCorners);
-        //_obsProjectedObjects.emplace_back(obsID, boundingBox);
-        _currentObservedObjectIDs.push_back(obsID);
         
-        // If this is an active object and has not been identified yet, identify
-        // it now.
-        if(observedObject->IsActive() && !observedObject->IsIdentified()) {
-          // TODO: Need to do more here probably...
-          observedObject->Identify();
-        }
-        
-        // Signal the observation of this object, with its bounding box:
-        const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
-        const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
-        Radians topMarkerOrientation(0);
-        if(observedObject->IsActive()) {
-          ActiveCube* activeCube = dynamic_cast<ActiveCube*>(observedObject);
-          if(activeCube == nullptr) {
-            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
-                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
-                              obsID.GetValue());
-          } else {
-            topMarkerOrientation = activeCube->GetTopMarkerOrientation();
-            
-            //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
-            //           topMarkerOrientation.getDegrees());
+        if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
+        {
+          Rectangle<f32> boundingBox(projectedCorners);
+          //_obsProjectedObjects.emplace_back(obsID, boundingBox);
+          _currentObservedObjectIDs.push_back(obsID);
+          
+          // Signal the observation of this object, with its bounding box:
+          const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
+          const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
+          Radians topMarkerOrientation(0);
+          if(observedObject->IsActive()) {
+            ActiveCube* activeCube = dynamic_cast<ActiveCube*>(observedObject);
+            if(activeCube == nullptr) {
+              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                                "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
+                                obsID.GetValue());
+            } else {
+              topMarkerOrientation = activeCube->GetTopMarkerOrientation();
+              
+              //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
+              //           topMarkerOrientation.getDegrees());
+            }
           }
-        }
-        CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
-                                                             inFamily,
-                                                             obsType,
-                                                             obsID,
-                                                             true, // markers are visible
-                                                             boundingBox.GetX(),
-                                                             boundingBox.GetY(),
-                                                             boundingBox.GetWidth(),
-                                                             boundingBox.GetHeight(),
-                                                             obsObjTrans.x(),
-                                                             obsObjTrans.y(),
-                                                             obsObjTrans.z(),
-                                                             q.w(), q.x(), q.y(), q.z(),
-                                                             topMarkerOrientation.ToFloat(),
-                                                             observedObject->IsActive());
+          CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
+                                                               inFamily,
+                                                               obsType,
+                                                               obsID,
+                                                               true, // markers are visible
+                                                               boundingBox.GetX(),
+                                                               boundingBox.GetY(),
+                                                               boundingBox.GetWidth(),
+                                                               boundingBox.GetHeight(),
+                                                               obsObjTrans.x(),
+                                                               obsObjTrans.y(),
+                                                               obsObjTrans.z(),
+                                                               q.w(), q.x(), q.y(), q.z(),
+                                                               topMarkerOrientation.ToFloat(),
+                                                               observedObject->IsActive());
+        } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
         if(_robot->GetTrackHeadToObject().IsSet() &&
            obsID == _robot->GetTrackHeadToObject() &&
@@ -566,26 +575,38 @@ namespace Anki
       std::vector<UnobservedObjectContainer> unobservedObjects;
       
       //for(auto & objectTypes : objectsExisting) {
-      for(auto objectFamily : _existingObjects) {
-        auto objectsExisting = objectFamily.second;
-        for(auto objectTypeIter = objectsExisting.begin();
-            objectTypeIter != objectsExisting.end(); ++objectTypeIter)
+      for(auto & objectFamily : _existingObjects)
+      {
+        for(auto & objectsByType : objectFamily.second)
         {
-          ObjectsMapByID_t& objectIdMap = objectTypeIter->second;
+          ObjectsMapByID_t& objectIdMap = objectsByType.second;
           for(auto objectIter = objectIdMap.begin();
-              objectIter != objectIdMap.end(); ++objectIter)
+              objectIter != objectIdMap.end(); )
           {
-            Vision::ObservableObject* object = objectIter->second;;
+            Vision::ObservableObject* object = objectIter->second;
+            
             if(object->GetLastObservedTime() < atTimestamp) {
-              //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-              unobservedObjects.emplace_back(objectFamily.first, objectTypeIter->first, objectIter->second);
-            } // if object was not observed
-            else {
-              /* Always re-drawing everything now
-              // Object was observed, update it's visualization
-              object->Visualize();
-               */
+              if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+                // If this object has only been seen once and that was too long ago,
+                // just delete it
+                PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
+                                 "Removing %s object %d that was only observed %d time(s).\n",
+                                 object->GetType().GetName().c_str(),
+                                 object->GetID().GetValue(),
+                                 object->GetNumTimesObserved());
+                objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
+              } else {
+                // Otherwise, add it to the list for further checks below to see if
+                // we "should" have seen the object
+                
+                //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
+                unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second);
+                ++objectIter;
+              }
+            } else { // if object was not observed
+              ++objectIter;
             }
+            
           } // for object IDs of this type
         } // for each object type
       } // for each object family
