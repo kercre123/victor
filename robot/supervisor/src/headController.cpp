@@ -19,9 +19,6 @@ namespace HeadController {
       const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
       const f32 DEFAULT_DURATION_SEC     = 0.5f;
-
-      // Head angle on startup
-      //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
       
       // Currently applied power
       f32 power_ = 0;
@@ -61,11 +58,6 @@ namespace HeadController {
       // For generating position and speed profile
       VelocityProfileGenerator vpg_;
       
-      // Whether or not to recalibrate the motors when they hard limit
-      //const bool RECALIBRATE_AT_LIMIT = false;
-      
-      // If head comes within this distance to limit angle, trigger recalibration.
-      //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
       
       // Nodding
       bool isNodding_ = false;
@@ -88,12 +80,11 @@ namespace HeadController {
       
       HeadCalibState calState_ = HCS_IDLE;
       bool isCalibrated_ = false;
-      //bool limitingDetected_ = false;
-      u32 lastHeadMovedTime_us = 0;
+      u32 lastHeadMovedTime_ms = 0;
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
       
-      const u32 HEAD_STOP_TIME = 500000;  // usec
+      const u32 HEAD_STOP_TIME = 500;  // ms
       
       bool enable_ = true;
       
@@ -163,7 +154,7 @@ namespace HeadController {
           case HCS_LOWER_HEAD:
             power_ = -0.7;
             HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
-            lastHeadMovedTime_us = HAL::GetMicroCounter();
+            lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
             break;
             
@@ -171,28 +162,27 @@ namespace HeadController {
             // Check for when head stops moving for 0.2 seconds
             if (!IsMoving()) {
               
-              if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+              if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
                 // Turn off motor
                 power_ = 0.0;
                 HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
                 
                 // Set timestamp to be used in next state to wait for motor to "relax"
-                lastHeadMovedTime_us = HAL::GetMicroCounter();
+                lastHeadMovedTime_ms = HAL::GetTimeStamp();
                 
                 // Go to next state
                 calState_ = HCS_SET_CURR_ANGLE;
               }
             } else {
-              lastHeadMovedTime_us = HAL::GetMicroCounter();
+              lastHeadMovedTime_ms = HAL::GetTimeStamp();
             }
             break;
             
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
-            if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+            if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
               PRINT("HEAD Calibrated\n");
               ResetLowAnglePosition();
-              //SetDesiredAngle(HEAD_START_ANGLE);
               calState_ = HCS_IDLE;
             }
             break;
@@ -395,29 +385,6 @@ namespace HeadController {
         }
         
         
-        /*
-        // Convert angleError_ to power
-        if(ABS(angleError_) < ANGLE_TOLERANCE) {
-          angleErrorSum_ = 0.f;
-          
-          // If desired angle is low position, let it fall through to recalibration
-          if (!(RECALIBRATE_AT_LIMIT && desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)) {
-            power_ = 0.f;
-            
-            if (desiredAngle_ == currDesiredAngle_) {
-              inPosition_ = true;
-#             if(DEBUG_HEAD_CONTROLLER)
-              PRINT(" HEAD ANGLE REACHED (%f rad)\n", currentAngle_.ToFloat());
-#             endif
-            }
-          }
-        } else {
-          power_ = minPower_ + (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
-          angleErrorSum_ += angleError_;
-          angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
-          inPosition_ = false;
-        }
-         */
         
 #       if(DEBUG_HEAD_CONTROLLER)
         PERIODIC_PRINT(100, "HEAD: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
@@ -433,33 +400,6 @@ namespace HeadController {
         
         power_ = CLIP(power_, -1.0, 1.0);
         
-/*
-        // If within 5 degrees of MIN_HEAD_ANGLE and the head isn't moving while downward power is applied,
-        // assume we've hit the limit and recalibrate.
-        if (limitingDetected_ ||
-              ((power_ < 0)
-               && (desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)
-               && (desiredAngle_.ToFloat() == currDesiredAngle_)
-               && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
-               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
-                
-          if (!limitingDetected_) {
-#           if(DEBUG_LIFT_CONTROLLER)
-            PRINT("START RECAL HEAD\n");
-#           endif
-            lastHeadMovedTime_us = HAL::GetMicroCounter();
-            limitingDetected_ = true;
-          } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
-#           if(DEBUG_LIFT_CONTROLLER)
-            PRINT("END RECAL HEAD\n");
-#           endif
-            ResetLowAnglePosition();
-            inPosition_ = true;
-          }
-          power_ = 0.f;
-            
-        }
-*/
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
