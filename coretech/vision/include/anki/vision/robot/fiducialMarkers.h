@@ -32,7 +32,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #if USE_NEAREST_NEIGHBOR_RECOGNITION
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
-#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically
 #else
 #  include "anki/vision/robot/decisionTree_vision.h"
 #  include "anki/vision/robot/visionMarkerDecisionTrees.h"
