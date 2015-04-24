@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -8,18 +9,12 @@ public class LevelSelectPanel : MonoBehaviour {
 
 	[SerializeField] Text textTitle;
 	[SerializeField] string gameName = "Unknown";
-	[SerializeField] int gameControllerIndex = 1;
 	[SerializeField] int numLevels = 10;
 	[SerializeField] GameObject levelSelectionPrefab;
 	[SerializeField] ScrollRect scrollRect;
 	[SerializeField] Sprite[] previews;
 
 	List<LevelSelectButton> levelSelectButtons = new List<LevelSelectButton>();
-
-	[SerializeField] GameObjectSelector gameMenuSelector;
-	[SerializeField] GameObjectSelector gameControllerSelector;
-	[SerializeField] GameLayoutTracker gameLayoutTracker;
-
 
 	void Awake() {
 
@@ -43,9 +38,10 @@ public class LevelSelectPanel : MonoBehaviour {
 				preview = previews[spriteIndex];
 			}
 
-			bool interactive = gameLayoutTracker.GameHasLayoutForThisIndex(gameName, i);
+			bool interactive = i < 2;
 
-			selectButton.Initialize((i+1).ToString(), preview, interactive ? UnityEngine.Random.Range(1,3) : 0, interactive, delegate{LaunchLevel(i+1);});
+			int level = i+1;
+			selectButton.Initialize(level.ToString(), preview, interactive ? UnityEngine.Random.Range(1,3) : 0, interactive, delegate{LaunchGame(level);});
 
 			levelSelectButtons.Add(selectButton);
 		}
@@ -56,10 +52,15 @@ public class LevelSelectPanel : MonoBehaviour {
 		scrollRectT.sizeDelta = size;
 	}
 
-	void LaunchLevel(int level) {
-		gameControllerSelector.SetScreenIndex(gameControllerIndex);
-		gameMenuSelector.SetScreenIndex(1);
-		gameLayoutTracker.SetLayoutForGame(gameName, level-1);
+	void LaunchGame(int level) {
+
+		Debug.Log("LevelSelectPanel LaunchGame gameName("+gameName+") level("+level+")");
+		PlayerPrefs.SetString("CurrentGame", gameName);
+		PlayerPrefs.SetInt(gameName + "_CurrentLevel", level);
+
+		string sceneName = Regex.Replace(gameName, "[ ]", string.Empty);
+
+		Application.LoadLevel(sceneName);
 	}
 
 }

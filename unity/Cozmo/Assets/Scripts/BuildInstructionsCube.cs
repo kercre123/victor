@@ -6,7 +6,7 @@ using Vectrosity;
 [ExecuteInEditMode]
 public class BuildInstructionsCube : MonoBehaviour {
 
-	[SerializeField] bool debug = false;
+	//[SerializeField] bool debug = false;
 
 	[SerializeField] VectrosityCube vCube;
 	[SerializeField] MeshRenderer meshCube;
@@ -105,12 +105,12 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 			vCube.SetColor(baseColor);
 
-			if(Highlighted) {
-				vCube.Show();
-			}
-			else {
+			//if(Highlighted) {
+			//	vCube.Show();
+			//}
+			//else {
 				vCube.Hide();
-			}
+			//}
 		}
 
 		meshCube.enabled = !Hidden;

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class SlalomController : GameController {
+	public static SlalomController instance = null;
 
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
@@ -18,7 +19,7 @@ public class SlalomController : GameController {
 	bool lastPassCrossUp = true;
 	bool forward = true;
 	Robot robot;
-	Vector2 lastRobotPos;
+	//Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
 	float totalAngleFromObstacleTraversed;
 	bool courseCompleted = false;
@@ -114,6 +115,20 @@ public class SlalomController : GameController {
 		}
 	}
 
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+		
+		instance = this;
+	}
+	
+	protected override void OnDisable()
+	{
+		base.OnEnable();
+		
+		if( instance == this ) instance = null;
+	}
+
 	protected override void Update_BUILDING() {
 		base.Update_BUILDING();
 
@@ -151,8 +166,7 @@ public class SlalomController : GameController {
 		}
 
 		totalAngleFromObstacleTraversed = 0f;
-		lastRobotPos = robot.WorldPosition;
-		Vector2 currentObstacleToRobot = lastRobotPos - currentObstaclePos;
+		Vector2 currentObstacleToRobot = (Vector2)robot.WorldPosition - currentObstaclePos;
 		lastAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
 	}
 
@@ -160,6 +174,7 @@ public class SlalomController : GameController {
 		base.Update_PLAYING();
 
 		Vector2 robotPos = robot.WorldPosition;
+		Vector2 lastRobotPos = robot.LastWorldPosition;
 
 		Vector2 currentObstacleToRobot = robotPos - currentObstaclePos;
 		float newAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot.normalized) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
@@ -201,8 +216,6 @@ public class SlalomController : GameController {
 			//todo: single obstacle mode just records laps
 			Debug.Log("Update_PLAYING currentObstacleIndex("+currentObstacleIndex+") single obstacle? currentPassClockwise("+lastPassCrossUp+")");
 		}
-
-		lastRobotPos = robotPos;
 
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
@@ -297,4 +310,50 @@ public class SlalomController : GameController {
 		Debug.Log("NextObstacle scores("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+") lastPassCrossUp("+lastPassCrossUp+")");
 	}
 
+	public void UpdateLights()
+	{
+		if( CozmoPalette.instance != null && currentObstacle != null && currentObstacle.Family == 3 && 
+		   nextObstacle != null && nextObstacle.Family == 3 )
+		{
+			uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
+			uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
+
+			float distanceFromRobot = Vector2.Distance( robot.WorldPosition, nextObstacle.WorldPosition );
+			float distanceFromCurrentObstacle = Vector2.Distance( currentObstacle.WorldPosition, nextObstacle.WorldPosition );
+
+			currentObstacle.relativeMode = 1;
+			currentObstacle.relativeToX = robot.WorldPosition.x;
+			currentObstacle.relativeToY = robot.WorldPosition.y;
+			
+			for( int i = 0; i < 8; ++i )
+			{
+				currentObstacle.lights[i].onColor = 0;
+				currentObstacle.lights[i].offColor = 0;
+				currentObstacle.lights[i].onPeriod_ms = 1000;
+				currentObstacle.lights[i].offPeriod_ms = 0;
+				currentObstacle.lights[i].transitionOnPeriod_ms = 0;
+				currentObstacle.lights[i].transitionOffPeriod_ms = 0;
+				
+				if( i == 0 || i == 2 )
+				{
+					currentObstacle.lights[i].onColor = yellow;
+				}
+				else if( i == 1 || i == 3 )
+				{
+					if( distanceFromRobot > distanceFromCurrentObstacle )
+					{
+						currentObstacle.lights[i].onColor = red;
+						currentObstacle.lights[i].onPeriod_ms = 125;
+						currentObstacle.lights[i].offPeriod_ms = 125;
+					}
+					else
+					{
+						nextObstacle.lights[i].onColor = red;
+						nextObstacle.lights[i].onPeriod_ms = 125;
+						nextObstacle.lights[i].offPeriod_ms = 125;
+					}
+				}
+			}
+		}
+	}
 }

@@ -15,7 +15,9 @@ public class Robot
 	public float liftHeight_mm { get; private set; }
 
 	public Vector3 WorldPosition { get; private set; }
+	public Vector3 LastWorldPosition { get; private set; }
 	public Quaternion Rotation { get; private set; }
+	public Quaternion LastRotation { get; private set; }
 	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
 
@@ -172,7 +174,6 @@ public class Robot
 			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
 		}
 
-
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
 
@@ -224,7 +225,6 @@ public class Robot
 		leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
 		rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
 		liftHeight_mm = message.liftHeight_mm;
-		WorldPosition = new Vector3(message.pose_x, message.pose_y,	message.pose_z);
 		status = (StatusFlag)message.status;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
@@ -232,7 +232,24 @@ public class Robot
 
 		if( headTrackingObjectID == lastHeadTrackingObjectID ) lastHeadTrackingObjectID = -1;
 
-		Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
+		LastWorldPosition = WorldPosition;
+		WorldPosition = new Vector3(message.pose_x, message.pose_y,	message.pose_z);
+
+		LastRotation = Rotation;
+		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
+
+		if( Time.time > ObservedObject.messageDelay )
+		{
+			for( int i = 0; i < knownObjects.Count; ++i )
+			{
+				if( knownObjects[i].Family == 3 && knownObjects[i].lightsChanged )
+				{
+					knownObjects[i].SetAllActiveObjectLEDs();
+				}
+			}
+
+			ObservedObject.messageDelay = Time.time + GameController.MessageDelay;
+		}
 	}
 
 	public void UpdateObservedObjectInfo( G2U.RobotObservedObject message )
@@ -249,7 +266,7 @@ public class Robot
 
 		if( knownObject == null )
 		{
-			knownObject = new ObservedObject();
+			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 
 			knownObjects.Add( knownObject );
 		}

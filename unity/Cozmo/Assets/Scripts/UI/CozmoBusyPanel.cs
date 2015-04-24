@@ -17,6 +17,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 			return;
 		}
 		instance = this;
+		DontDestroyOnLoad(gameObject);
 	}
 
 	// Update is called once per frame

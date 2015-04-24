@@ -96,7 +96,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 			button.SetTextColor(box.text.color);
 
 			//dmd hide lines when info panels are open
-			if(InfoPanelSelector.instance == null) {
+			if(GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase != GameLayoutTracker.LayoutTrackerPhase.DISABLED) {
 				buttonPosition = RectTransformUtility.WorldToScreenPoint( button.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, buttonPosition );
 				buttonPosition.x += 12f;
 
