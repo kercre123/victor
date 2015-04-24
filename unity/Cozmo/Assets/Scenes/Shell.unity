@@ -4107,7 +4107,6 @@ MonoBehaviour:
   - MARKERS_SEEN
   - KNOWN
   - KNOWN IN RANGE
-  instance: {fileID: 0}
 --- !u!1 &1075674714
 GameObject:
   m_ObjectHideFlags: 0
