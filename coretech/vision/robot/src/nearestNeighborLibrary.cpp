@@ -4,6 +4,8 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/errorHandling.h"
 
+#include <array>
+
 namespace Anki {
 namespace Embedded {
   
@@ -65,7 +67,8 @@ namespace Embedded {
   , _numHogScales(numHogScales)
   , _numHogOrientations(numHogOrientations)
   , _probeValues(1, _dataDimension)
-  , _probeHoG((_useHoG ? 16 : 0), _numHogScales*_numHogOrientations)
+  , _probeHoG(16, _numHogScales*_numHogOrientations)
+  , _probeHoG_F32(16, _numHogScales*_numHogOrientations)
   {
 
   }
@@ -81,17 +84,28 @@ namespace Embedded {
     GetProbeValues(image, homography);
     
     // Visualize probe values
-    //cv::Mat_<u8> temp(32,32,_probeValues.data);
-    //cv::imshow("ProbeValues", temp);
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    cv::imshow("ProbeValues", temp);
+    
     if(_useHoG) {
       GetProbeHoG();
       assert(_probeHoG.isContinuous());
-      assert(_probeHoG.rows*_probeHoG.cols == _dataDimension);
+      
+      // Visualize HoG values
+      cv::Mat_<u8> temp(16,32,_probeHoG.data);
+      cv::imshow("ProbeHoG", _probeHoG);
+      cv::waitKey();
+      
     }
     const u8* restrict pProbeData = (_useHoG ? _probeHoG[0] : _probeValues[0]);
     
     closestDistance = distThreshold;
     s32 closestIndex = -1;
+    
+    if(_useHoG) {
+      closestDistance *= _probeHoG.rows*_probeHoG.cols;
+    }
+    
     for(s32 iExample=0; iExample<_numDataPoints; ++iExample)
     {
       const u8* currentExample = _data[iExample];
@@ -100,6 +114,13 @@ namespace Embedded {
       s32 iProbe = 0;
 
       if(_useHoG) {
+        
+        // Visualize current example
+        //cv::Mat_<u8> temp(16, _numHogScales*_numHogOrientations,
+        //                  const_cast<u8*>(currentExample));
+        //cv::imshow("CurrentExample", temp);
+        //cv::waitKey();
+        
         while(iProbe < _dataDimension && currentDistance < closestDistance) {
           const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
           currentDistance += std::abs(diff);
@@ -117,7 +138,8 @@ namespace Embedded {
         const s32 currentTotalWeight = _totalWeight(iExample, 0);
         
         // Visualize current example
-        //cv::Mat_<u8> temp(32,32,const_cast<u8*>(currentExample));
+        //cv::Mat_<u8> temp(32, 32, const_cast<u8*>(currentExample));
+        //cv::namedWindow("CurrentExample", CV_WINDOW_KEEPRATIO);
         //cv::imshow("CurrentExample", temp);
         //cv::waitKey();
         
@@ -143,6 +165,9 @@ namespace Embedded {
     
     if(closestIndex != -1) {
       label = _labels[closestIndex];
+      if(_useHoG) {
+        closestDistance /= _probeHoG.rows * _probeHoG.cols;
+      }
     } else {
       label = -1;
     }
@@ -242,25 +267,39 @@ namespace Embedded {
   
   Result NearestNeighborLibrary::GetProbeHoG()
   {
-    static cv::Mat_<u8> whichHist;
-    if(whichHist.empty()) {
-      s32 gridSize = static_cast<s32>(sqrt(_dataDimension));
+    static const s32 gridSize = static_cast<s32>(sqrt(_dataDimension));
+    static cv::Mat_<u8> whichHist(gridSize, gridSize);
+    static bool whichHistInitialized = false;
+    if(!whichHistInitialized) {
       AnkiAssert(gridSize*gridSize == _dataDimension);
       
-      whichHist = cv::Mat_<u8>(gridSize, gridSize);
       for(s32 y=1; y<=gridSize; ++y) {
+        u8* whichHist_y = whichHist[y-1];
         const s32 yi = std::ceil(4*static_cast<f32>(y)/static_cast<f32>(gridSize));
         for(s32 x=1; x<=gridSize; ++x) {
           const s32 xi = std::ceil(4*static_cast<f32>(x)/static_cast<f32>(gridSize));
           const s32 bin = yi + (xi-1)*4;
           AnkiAssert(bin > 0 && bin <= 16);
-          whichHist(yi-1,xi-1) = bin - 1;
+          whichHist_y[x-1] = bin - 1;
         }
       }
+      
+      whichHistInitialized = true;
+      
+      // Visualize whichHist
+      //cv::imshow("WhichHist", whichHist*16);
+      //cv::waitKey();
     }
+    
+    const f32 oneOver255 = 1.f / 255.f;
+    
+    _probeHoG_F32 = 0.f;
     
     for(s32 iScale=0; iScale<_numHogScales; ++iScale) {
       const s32 scale = 1 << iScale;
+      
+      std::array<f32,16> histSums;
+      histSums.fill(0);
       
       for(s32 i=0; i<_probeValues.rows; ++i)
       {
@@ -274,10 +313,10 @@ namespace Embedded {
           const s32 jLeft  = std::max(0, j-scale);
           const s32 jRight = std::min(_probeValues.cols-1, j+scale);
           
-          const s32 Ix = probeValues_i[jRight] - probeValues_i[jLeft];
-          const s32 Iy = probeValues_iDown[j] - probeValues_iUp[j];
+          const f32 Ix = static_cast<f32>(probeValues_i[jRight] - probeValues_i[jLeft]) * oneOver255;
+          const f32 Iy = static_cast<f32>(probeValues_iDown[j] - probeValues_iUp[j]) * oneOver255;
           
-          const f32 mag = sqrtf(static_cast<f32>(Ix*Ix + Iy*Iy));
+          const f32 mag = sqrtf(Ix*Ix + Iy*Iy);
           f32 orient = std::atan2(Iy, Ix);
           
           if(std::abs(-M_PI - orient) < 1e-6f) {
@@ -288,6 +327,7 @@ namespace Embedded {
           const f32 scaledOrient = (orient + M_PI)/(2*M_PI) * _numHogOrientations;
           const s32 binnedOrient_R = std::ceil(scaledOrient);
           const f32 weight_L = binnedOrient_R - scaledOrient;
+          AnkiAssert(weight_L >= 0.f && weight_L <= 1.f);
           s32 binnedOrient_L = binnedOrient_R - 1;
           if(binnedOrient_L == 0) {
             binnedOrient_L = _numHogOrientations;
@@ -298,12 +338,29 @@ namespace Embedded {
           const s32 col_L = binnedOrient_L + iScale*_numHogOrientations - 1;
           const s32 col_R = binnedOrient_R + iScale*_numHogOrientations - 1;
           
-          _probeHoG(row,col_L) += mag*weight_L;
-          _probeHoG(row,col_R) += mag*weight_R;
+          AnkiAssert(col_L >= 0 && col_L < _probeHoG.cols);
+          AnkiAssert(col_R >= 0 && col_R < _probeHoG.cols);
           
-        }
+          const f32 leftVal  = mag*weight_L;
+          const f32 rightVal = mag*weight_R;
+          _probeHoG_F32(row,col_L) += leftVal;
+          _probeHoG_F32(row,col_R) += rightVal;
+          
+          histSums[row] += leftVal + rightVal;
+        } // for j
+      } // for i
+      
+      // Normalize each histogram at this scale to sum to one
+      for(s32 row=0; row<_probeHoG_F32.rows; ++row) {
+        cv::Mat_<f32> H = _probeHoG_F32(cv::Range(row,row+1),
+                                        cv::Range(iScale*_numHogOrientations,
+                                                  (iScale+1)*_numHogOrientations));
+        H /= histSums[row];
       }
-    }
+      
+    } // for scale
+    
+    _probeHoG_F32.convertTo(_probeHoG, CV_8UC1, 255);
     
     return RESULT_OK;
     

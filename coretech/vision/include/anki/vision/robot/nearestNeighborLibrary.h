@@ -79,6 +79,7 @@ namespace Embedded {
     
     cv::Mat_<u8> _probeValues;
     cv::Mat_<u8> _probeHoG;
+    cv::Mat_<f32> _probeHoG_F32;
     
   }; // class NearestNeighborLibrary
   

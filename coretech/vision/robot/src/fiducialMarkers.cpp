@@ -601,6 +601,7 @@ namespace Anki
 #   if USE_NEAREST_NEIGHBOR_RECOGNITION
     NearestNeighborLibrary& VisionMarker::GetNearestNeighborLibrary()
     {
+      
       static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
                                                            NearestNeighborWeights,
                                                            NearestNeighborLabels,
@@ -610,6 +611,19 @@ namespace Anki
                                                            ProbePoints_X,  ProbePoints_Y,
                                                            NUM_PROBE_POINTS,
                                                            NN_NUM_FRACTIONAL_BITS);
+      
+      /*
+      // HoG version:
+      static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
+                                                           NearestNeighborLabels,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NN_NUM_FRACTIONAL_BITS,
+                                                           4, 8);
+      */
       
       return nearestNeighborLibrary;
     }

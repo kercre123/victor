@@ -29,11 +29,12 @@ end
 
 function helper
 %%
-[iSame,jSame] = find(d < 10);
+[iSame,jSame] = find(d < 30);
+gridSize = sqrt(size(nnLibrary.probeValues,1));
 for i = 1:length(iSame)
-  subplot 121, imagesc(reshape(nnLibrary.probeValues(:,iSame(i)), 32,32)), axis image 
+  subplot 121, imagesc(reshape(nnLibrary.probeValues(:,iSame(i)), gridSize, gridSize)), axis image 
   title(sprintf('%d of %d', i, length(iSame)))
-  subplot 122, imagesc(reshape(nnLibrary.probeValues(:,jSame(i)), 32,32)), axis image
+  subplot 122, imagesc(reshape(nnLibrary.probeValues(:,jSame(i)), gridSize, gridSize)), axis image
   title(d(iSame(i),jSame(i)))
   pause
 end
