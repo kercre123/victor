@@ -6,10 +6,14 @@ public class GameController : MonoBehaviour {
 
 	public enum GameState {
 		BUILDING,
+		PRE_GAME,
 		PLAYING,
 		RESULTS
 	}
 
+	[SerializeField] protected Text countdownText = null;
+	[SerializeField] protected float countdownToStart = 0f;
+	[SerializeField] protected AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
@@ -21,6 +25,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Button playButton = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] protected Image resultsPanel = null;
+	[SerializeField] protected AudioClip gameStartSound;
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] protected AudioClip playingLoopSound;
 	[SerializeField] protected AudioClip gameOverSound;
@@ -30,6 +35,8 @@ public class GameController : MonoBehaviour {
 
 	internal GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
+	protected int currentCountdown = 0;
+
 	protected int[] scores;
 
 	protected int winnerIndex;
@@ -97,6 +104,9 @@ public class GameController : MonoBehaviour {
 			case GameState.BUILDING:
 				if((playRequested || autoPlay) && IsGameReady()) return GameState.PLAYING; 
 				break;
+			case GameState.PRE_GAME:
+				if(IsPreGameCompleted()) return GameState.PLAYING; 
+				break;
 			case GameState.PLAYING:
 				if(buildRequested) return GameState.BUILDING;
 				if(IsGameOver()) return GameState.RESULTS;
@@ -116,6 +126,7 @@ public class GameController : MonoBehaviour {
 
 		switch(state) {
 			case GameState.BUILDING: 	Enter_BUILDING(); break;
+			case GameState.PRE_GAME: 	Enter_PRE_GAME(); break;
 			case GameState.PLAYING: 	Enter_PLAYING(); break;
 			case GameState.RESULTS: 	Enter_RESULTS(); break;
 		}
@@ -124,6 +135,7 @@ public class GameController : MonoBehaviour {
 	void UpdateState() {
 		switch(state) {
 			case GameState.BUILDING: 	Update_BUILDING(); break;
+			case GameState.PRE_GAME: 	Update_PRE_GAME(); break;
 			case GameState.PLAYING: 	Update_PLAYING(); break;
 			case GameState.RESULTS: 	Update_RESULTS(); break;
 		}
@@ -132,6 +144,7 @@ public class GameController : MonoBehaviour {
 	void ExitState() {
 		switch(state) {
 			case GameState.BUILDING: 	Exit_BUILDING(); break;
+			case GameState.PRE_GAME: 	Exit_PRE_GAME(); break;
 			case GameState.PLAYING: 	Exit_PLAYING(); break;
 			case GameState.RESULTS: 	Exit_RESULTS(); break;
 		}
@@ -197,8 +210,42 @@ public class GameController : MonoBehaviour {
 		if(playButton != null) playButton.gameObject.SetActive(false);
 	}
 		
+	protected virtual void Enter_PRE_GAME() {
+		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+		if(countdownText != null) {
+			int remaining = Mathf.CeilToInt(countdownToStart);
+			if(countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+			countdownText.text = remaining.ToString();
+			currentCountdown = remaining;
+			countdownText.gameObject.SetActive(true);
+		}
+	}
+	protected virtual void Update_PRE_GAME() {
+		//Debug.Log(gameObject.name + " Update_PRE_GAME");
+		//add game specific intro messaging in an override of this method
+		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
+		//	or if this game has a count-down before start, we display that count down here
+
+		if(countdownToStart > 0f && countdownText != null) {
+			int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - stateTimer, 0, countdownToStart) );
+			if(remaining != currentCountdown && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+			countdownText.text = remaining.ToString();
+			currentCountdown = remaining;
+
+			countdownText.gameObject.SetActive(true);
+		}
+	}
+	protected virtual void Exit_PRE_GAME() {
+		Debug.Log(gameObject.name + " Exit_PRE_GAME");
+		if(countdownText != null) {
+			countdownText.gameObject.SetActive(false);
+		}
+	}
+
 	protected virtual void Enter_PLAYING() {
 		Debug.Log(gameObject.name + " Enter_PLAYING");
+		if(gameStartSound != null && audio != null) audio.PlayOneShot(gameStartSound);
+
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
 	}
@@ -233,6 +280,19 @@ public class GameController : MonoBehaviour {
 		if(GameLayoutTracker.instance == null) return false;
 
 		return GameLayoutTracker.instance.Validated;
+	}
+
+	protected virtual bool IsPreGameCompleted() {
+		if(RobotEngineManager.instance == null) return false;
+		if(RobotEngineManager.instance.current == null) return false;
+		if(GameLayoutTracker.instance == null) return false;
+
+		//add game specific gating in an override of this method
+		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
+		//	or if this game has a count-down before start, handle that check here
+		if(countdownToStart > 0f && stateTimer < countdownToStart) return false;
+
+		return true;
 	}
 
 	protected virtual bool IsGameOver() {

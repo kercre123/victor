@@ -207,7 +207,9 @@ public class GoldRushController : GameController {
 	protected override void Enter_BUILDING ()
 	{
 		base.Enter_BUILDING ();
-		GameLayoutTracker.instance.ValidateBuild ();
+		if(RobotEngineManager.instance == null) return;
+
+		if(GameLayoutTracker.instance != null) GameLayoutTracker.instance.ValidateBuild ();
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
 		playButton.gameObject.SetActive (false);

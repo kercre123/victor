@@ -234,10 +234,10 @@ public class SlalomController : GameController {
 		
 		obstacles.Clear();
 		for(int i=0;i<robot.knownObjects.Count;i++) {
-			//if(robot.knownObjects[i].objectType == ObservedObjectType.Gold) {
-			//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
-			obstacles.Add(robot.knownObjects[i]);
-			//}
+			if(robot.knownObjects[i].Family == 3) {
+				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
+				obstacles.Add(robot.knownObjects[i]);
+			}
 		}
 
 		return obstacles.Count > 1;

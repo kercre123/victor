@@ -62,6 +62,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	int validCount = 0;
 	int lastValidCount = 0;
 
+	bool hidden = false;
+
 	void OnEnable () {
 		Phase = LayoutTrackerPhase.PREVIEW;
 
@@ -121,6 +123,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
+
+		hidden = false;
 	}
 
 	void Update () {
@@ -152,6 +156,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(hideDuringPreview != null) hideDuringPreview.SetActive(true);
 	}
 
+	public void Show() {
+		hidden = false;
+	}
+
+	public void Hide() {
+		hidden = true;
+		layoutInstructionsPanel.SetActive(false);
+		layoutPreviewPanel.SetActive(false);
+		layoutInstructionsCamera.gameObject.SetActive(false);
+	}
+
 	void RefreshLayout () {
 
 		bool completed = validCount == currentLayout.blocks.Count;
@@ -173,7 +188,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			case LayoutTrackerPhase.PREVIEW:
 				ShowAllBlocks();
 				layoutInstructionsPanel.SetActive(false);
-				layoutPreviewPanel.SetActive(true);
+				layoutPreviewPanel.SetActive(!hidden);
 				hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
 				break;
@@ -189,18 +204,18 @@ public class GameLayoutTracker : MonoBehaviour {
 					instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
 				}
 
-				layoutInstructionsPanel.SetActive(true);
+				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
 				hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(true);
+				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
 				instructionsProgress.text = "Layout completed!";
-				layoutInstructionsPanel.SetActive(true);
+				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
 				hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(true);
+				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
 				break;
 
