@@ -908,7 +908,9 @@ namespace Anki
       s32 label=-1;
       s32 distance = grayvalueThreshold;
       lastResult = VisionMarker::GetNearestNeighborLibrary().GetNearestNeighbor(image, homography, grayvalueThreshold, label, distance);
-      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "VisionMarker.Extract", "Failed finding nearest neighbor.\n");
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                         "VisionMarker.Extract",
+                                         "Failed finding nearest neighbor.\n");
       
       if(label != -1) {
         AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",

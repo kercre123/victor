@@ -80,8 +80,15 @@ namespace Embedded {
                                                     s32 &label, s32 &closestDistance)
 
   {
-  
-    GetProbeValues(image, homography);
+    // Set these return values up front, in case of failure
+    closestDistance = distThreshold;
+    label = -1;
+    
+    Result lastResult = GetProbeValues(image, homography);
+    
+    AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                       "NearestNeighborLibrary.GetNearestNeighbor",
+                                       "GetProbeValues() failed.\n");
     
     // Visualize probe values
     //cv::Mat_<u8> temp(32,32,_probeValues.data);
@@ -99,7 +106,7 @@ namespace Embedded {
     }
     const u8* restrict pProbeData = (_useHoG ? _probeHoG[0] : _probeValues[0]);
     
-    closestDistance = distThreshold;
+
     s32 closestIndex = -1;
     
     if(_useHoG) {
@@ -168,8 +175,6 @@ namespace Embedded {
       if(_useHoG) {
         closestDistance /= _probeHoG.rows * _probeHoG.cols;
       }
-    } else {
-      label = -1;
     }
     
     return RESULT_OK;
@@ -256,13 +261,17 @@ namespace Embedded {
     } // for each probe
     
     // Normalization to scale between 0 and 255:
+    AnkiConditionalErrorAndReturnValue(maxValue > minValue, RESULT_FAIL,
+                                       "NearestNeighborLibrary.GetProbeValues",
+                                       "Probe max (%d) <= min (%d).\n", maxValue, minValue);
     const s32 divisor = static_cast<s32>(maxValue - minValue);
+    AnkiAssert(divisor > 0);
     for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
       pProbeData[iProbe] = (255*static_cast<s32>(pProbeData[iProbe] - minValue)) / divisor;
     }
     
     return RESULT_OK;
-  } // VisionMarker::GetProbeValues()
+  } // NearestNeighborLibrary::GetProbeValues()
   
   
   Result NearestNeighborLibrary::GetProbeHoG()
