@@ -84,17 +84,17 @@ namespace Embedded {
     GetProbeValues(image, homography);
     
     // Visualize probe values
-    cv::Mat_<u8> temp(32,32,_probeValues.data);
-    cv::imshow("ProbeValues", temp);
+    //cv::Mat_<u8> temp(32,32,_probeValues.data);
+    //cv::imshow("ProbeValues", temp);
     
     if(_useHoG) {
       GetProbeHoG();
       assert(_probeHoG.isContinuous());
       
       // Visualize HoG values
-      cv::Mat_<u8> temp(16,32,_probeHoG.data);
-      cv::imshow("ProbeHoG", _probeHoG);
-      cv::waitKey();
+      //cv::Mat_<u8> temp(16,32,_probeHoG.data);
+      //cv::imshow("ProbeHoG", _probeHoG);
+      //cv::waitKey();
       
     }
     const u8* restrict pProbeData = (_useHoG ? _probeHoG[0] : _probeValues[0]);
