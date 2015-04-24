@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {
   

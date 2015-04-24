@@ -6,6 +6,7 @@ set(ROBOT_SIM_HAL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/robot/sim_hal)
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 
 include_directories( 
+  ${COZMO_BASESTATION_INCLUDE_DIR}
   ${ROBOT_SIM_HAL_SOURCE_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
 )

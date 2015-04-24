@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#import "BLEVehicleMessage.h"
+#import "BLEManager/Vehicle/BLEVehicleMessage.h"
 
 @implementation BLEVehicleMessage
 

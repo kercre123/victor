@@ -17,7 +17,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/imgproc/imgproc.hpp"

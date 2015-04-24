@@ -81,6 +81,7 @@ typedef enum {
     BIT_RATE_1843200 = 1843200,
     BIT_RATE_3000000 = 3000000, // Anki added
     BIT_RATE_3686400 = 3686400,
+    BIT_RATE_5000000 = 5000000, // Anki added
 } UartBautRate;
 
 typedef enum {
