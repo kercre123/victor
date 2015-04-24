@@ -16,11 +16,11 @@ classdef VisionMarkerTrained
             'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
-        MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
+        MinContrastRatio = 1.05; %1.25;  % bright/dark has to be at least this
         
         SquareWidthFraction = 0.1;     % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
-        CornerRadiusFraction = 0.25;    % as a fraction of the fiducial width
+        CornerRadiusFraction = 0;    % as a fraction of the fiducial width
         
         ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
             1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
@@ -107,7 +107,7 @@ classdef VisionMarkerTrained
             Pose = [];
             Size = 1;
             UseSingleProbe = false;
-            CornerRefinementIterations = 25;
+            CornerRefinementIterations = 100;
             UseMexCornerRefinment = true;
             VerifyLabel = true;
             Initialize = true;
@@ -158,7 +158,7 @@ classdef VisionMarkerTrained
                 if CornerRefinementIterations > 0
                     if UseMexCornerRefinment
                         [this.corners, this.H] = mexRefineQuadrilateral(im2uint8(img), int16(this.corners-1), single(this.H), ...
-                            CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5);
+                            CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5, .005);
                         this.corners = this.corners + 1;
                     else
                         [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
