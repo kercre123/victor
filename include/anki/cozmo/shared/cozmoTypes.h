@@ -87,11 +87,16 @@ namespace Anki {
     } DriveTestFlags;
     
     typedef enum {
-      LiftTF_TEST_HEIGHTS = 0x01
+      LiftTF_TEST_POWER = 0,
+      LiftTF_TEST_HEIGHTS,
+      LiftTF_NODDING,
+      LiftTF_DISABLE_MOTOR
     } LiftTestFlags;
 
     typedef enum {
-      HTF_TEST_ANGLES = 0x01
+      HTF_TEST_POWER = 0,
+      HTF_TEST_ANGLES,
+      HTF_NODDING
     } HeadTestFlags;
     
     typedef enum {
