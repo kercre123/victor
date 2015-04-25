@@ -36,7 +36,8 @@ namespace Anki {
       //
       // Inherited Virtual Methods
       //
-    
+      virtual ~MatPiece(); 
+      
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
       
