@@ -172,6 +172,8 @@ namespace Anki {
         robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
+        robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
+        robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
       }
 
       RobotState const& GetRobotStateMsg() {
