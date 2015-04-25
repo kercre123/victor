@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
-    <height>785</height>
+    <width>259</width>
+    <height>861</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -170,7 +170,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>550</y>
+      <y>630</y>
       <width>241</width>
       <height>91</height>
      </rect>
@@ -365,7 +365,7 @@
       <x>10</x>
       <y>380</y>
       <width>241</width>
-      <height>171</height>
+      <height>251</height>
      </rect>
     </property>
     <property name="title">
@@ -500,6 +500,19 @@
       </rect>
      </property>
     </widget>
+    <widget class="QPushButton" name="trackMarkerAcrossPoses">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>180</y>
+       <width>241</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Track marker across poses</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QTextBrowser" name="textBrowser">
     <property name="enabled">
@@ -508,7 +521,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>650</y>
+      <y>730</y>
       <width>241</width>
       <height>91</height>
      </rect>
@@ -532,7 +545,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>261</width>
+     <width>259</width>
      <height>22</height>
     </rect>
    </property>

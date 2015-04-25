@@ -7,7 +7,11 @@ import pdb
 import random
 from math import *
 
-from PySide import QtCore, QtGui
+import anki # If this fails, be sure to run products-cozmo/python/cython/make.sh
+
+import cv2 # If this fails, compile opencv, and set your dylib directory to the compiled dynamic libraries
+
+from PySide import QtCore, QtGui # If this fails, install QT Open Source 4.8.6 and easy_install PySide
 
 import numpy as np
 
@@ -145,10 +149,6 @@ def loadTestFile():
 
     testFilename.replace('\\', '/')
     testFilename.replace('//', '/')
-
-    #try:
-    #jsonData = loadJson(testFilename)
-    #filename = filename.encode('ascii')
     
     print('Loading json ' + testFilename)
 
@@ -170,17 +170,6 @@ def loadTestFile():
         'testPath':testPath,
         'testFileModificationTime':modificationTime_json}
     
-    #if g_mainWindow is not None:
-    # g_mainWindow.ui.setMaxTestIndex(len(allTestFilenames) - 1)
-    # g_mainWindow.ui.testJsonFilename1.setText(testPath)
-    # g_mainWindow.ui.testJsonFilename2.setText(testFilename)
-    # g_mainWindow.ui.setCurPoseIndex(0, False)
-    # g_mainWindow.ui.setMaxPoseIndex(len(jsonData['Poses'])-1)
-    # g_mainWindow.ui.setCurMarkerIndex(0, False)
-    # g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(0))
-    #except:
-    #    pass
-
     poseChanged(True)
 
 def fixBounds():
@@ -351,6 +340,186 @@ def getFiducialCorners(poseIndex, markerIndex):
 
     return (corners, whichCorners)
 
+def extractMarkers(image, returnInvalidMarkers):
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    imageSize = image.shape
+    useIntegralImageFiltering = True
+    scaleImage_thresholdMultiplier = 1.0
+    scaleImage_numPyramidLevels = 3
+    component1d_minComponentWidth = 0
+    component1d_maxSkipDistance = 0
+    minSideLength = round(0.01*max(imageSize[0],imageSize[1]))
+    maxSideLength = round(0.97*min(imageSize[0],imageSize[1]))
+    component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength))
+    component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength))
+    component_sparseMultiplyThreshold = 1000.0
+    component_solidMultiplyThreshold = 2.0
+    component_minHollowRatio = 1.0
+    quads_minQuadArea = 100 / 4
+    quads_quadSymmetryThreshold = 2.0
+    quads_minDistanceFromImageEdge = 2
+    decode_minContrastRatio = 1.25
+    quadRefinementIterations = 5
+    numRefinementSamples = 100
+    quadRefinementMaxCornerChange = 5.0
+    quadRefinementMinCornerChange = 0.005
+    returnInvalidMarkers = int(returnInvalidMarkers)
+    
+    quads, markerTypes, markerNames, markerValidity = anki.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
+    
+    return quads, markerTypes, markerNames, markerValidity
+
+def detectClosestFiducialMarker(image, quad):
+    quads, markerTypes, markerNames, markerValidity = extractMarkers(image, 1)
+    
+    if len(quads) == 0:
+        return quad, 0
+    
+    # For each candidate quad corner, find the distance to the closest query quad corner
+    
+    closestQuadInd = -1
+    closestQuadDist = float('Inf')
+    
+    for iQuad in range(0,len(quads)):
+        curQuad = quads[iQuad]
+        
+        sumCornerDists = 0
+        
+        # For quad iQuad, what is the sum of the best distances between all four corners?
+        for iCorner in range(0,4):
+            closestCornerInd = -1
+            closestCornerDist = float('Inf')
+        
+            for jCorner in range(0,4):
+                curCornerDist = sqrt(pow(curQuad[jCorner][0] - quad[iCorner][0], 2.0) + pow(curQuad[jCorner][1] - quad[iCorner][1], 2.0))
+                
+                if curCornerDist < closestCornerDist:
+                    closestCornerDist = curCornerDist
+                    closestCornerInd = jCorner
+            
+            sumCornerDists += closestCornerDist
+            
+        if sumCornerDists < closestQuadDist:
+            closestQuadDist = sumCornerDists
+            closestQuadInd = iQuad       
+
+    reorderedQuad = [quads[closestQuadInd][0], quads[closestQuadInd][2], quads[closestQuadInd][3], quads[closestQuadInd][1]]
+    
+    return reorderedQuad, closestQuadDist
+
+def trackQuadrilateral(startImage, startQuad, endImage):
+    numPointsPerDimension = 10
+    
+    xRange = (min((x for x,y in startQuad)), max((x for x,y in startQuad)))
+    yRange = (min((y for x,y in startQuad)), max((y for x,y in startQuad)))
+    
+    quadShortWidth = min([xRange[0], yRange[0]])
+    
+    winSize = int(round(quadShortWidth * 2 / numPointsPerDimension))
+    
+    flow_lk_params = dict(winSize  = (winSize,winSize), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), minEigThreshold = 5e-3)
+    
+    points0 = []
+    for y in np.linspace(yRange[0], yRange[1], numPointsPerDimension):
+        for x in np.linspace(xRange[0], xRange[1], numPointsPerDimension):
+            points0.append((x,y))
+    
+    points0 = np.array(points0).reshape(-1,1,2).astype('float32')
+
+    points1, st, err = cv2.calcOpticalFlowPyrLK(startImage, endImage, points0, None, **flow_lk_params)
+    
+    goodPoints0 = points0[st==1]
+    goodPoints1 = points1[st==1]
+    
+    homography, inliers = cv2.findHomography( goodPoints0, goodPoints1, cv2.RANSAC, ransacReprojThreshold = 1)
+    
+    startQuadArray = np.zeros((3,4))
+    
+    startQuadArray[2,:] = 1
+    
+    for i in range(0,4):
+        startQuadArray[0,:] = [x for x,y in startQuad]
+        startQuadArray[1,:] = [y for x,y in startQuad]
+    
+    warpedQuadArray = np.matrix(homography) * np.matrix(startQuadArray)
+    
+    warpedQuad = []
+    for i in range(0,4):
+        warpedQuad.append((warpedQuadArray[0,i] / warpedQuadArray[2,i], warpedQuadArray[1,i] / warpedQuadArray[2,i]))
+        
+    return warpedQuad
+    
+def trackTemplate():
+    global g_data
+    global g_mainWindow
+    global g_imageWindow
+    global g_curPoseIndex
+    global g_maxPoseIndex
+    global g_curMarkerIndex
+
+    [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, g_curMarkerIndex)
+    
+    if len(corners) != 4:
+        print("The current marker doesn't have four corners")
+        return
+
+    startPoseIndex = g_curPoseIndex
+    startMarkerIndex = g_curMarkerIndex
+        
+    imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][startPoseIndex]['ImageFile']
+    lastImage = cv2.imread(imageFilename, 0)
+    
+    detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(lastImage, corners)
+    
+    if detectedQuadDistance < (4*5):
+        lastQuad = detectedQuad
+    else:
+        lastQuad = corners
+            
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgUpperLeft']  = lastQuad[0][0]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgUpperLeft']  = lastQuad[0][1]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgUpperRight'] = lastQuad[1][0]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgUpperRight'] = lastQuad[1][1]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgLowerRight'] = lastQuad[2][0]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgLowerRight'] = lastQuad[2][1]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgLowerLeft']  = lastQuad[3][0]
+    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgLowerLeft']  = lastQuad[3][1]
+    
+    for iPose in range(startPoseIndex+1, g_maxPoseIndex):
+        imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][iPose]['ImageFile']
+        
+        curImage = cv2.imread(imageFilename, 0)
+        
+        # Track points between the previous image and the current image
+        curQuad = trackQuadrilateral(lastImage, lastQuad, curImage)
+                
+        # Match this quad to the best detected quad
+        detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(curImage, curQuad)
+        
+        if detectedQuadDistance < (4*5):
+            curQuad = detectedQuad
+        else:
+            curQuad = curQuad
+            
+        if len(g_data['jsonData']['Poses'][iPose]['VisionMarkers']) < 1:
+            g_data['jsonData']['Poses'][iPose]['VisionMarkers'].append({})
+            
+        if not isinstance(g_data['jsonData']['Poses'][iPose]['VisionMarkers'], dict):
+            g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0] = {}
+            
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgUpperLeft']  = curQuad[0][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgUpperLeft']  = curQuad[0][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgUpperRight'] = curQuad[1][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgUpperRight'] = curQuad[1][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgLowerRight'] = curQuad[2][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgLowerRight'] = curQuad[2][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgLowerLeft']  = curQuad[3][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgLowerLeft']  = curQuad[3][1]
+        
+    # TODO: save the output
+
 class ConnectedMainWindow(Ui_MainWindow):
     def __init__(self):
         super(ConnectedMainWindow, self).__init__()
@@ -504,6 +673,8 @@ class ConnectedMainWindow(Ui_MainWindow):
         self.markerType.returnPressed.connect(self.updateMarkerName)
 
         self.test_current.returnPressed.connect(lambda: self.setCurTestIndex(int(self.test_current.text())))
+
+        self.trackMarkerAcrossPoses.clicked.connect(trackTemplate)
 
         self.test_previous1.clicked.connect(lambda: self.incrementCurTestIndex(-1, True))
         self.test_previous2.clicked.connect(lambda: self.incrementCurTestIndex(-10, True))

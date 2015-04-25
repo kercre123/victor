@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'editGroundTruthWindow.ui'
 #
-# Created: Thu Apr 23 11:26:13 2015
+# Created: Thu Apr 23 15:34:25 2015
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(261, 785)
+        MainWindow.resize(259, 861)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.groupBox = QtGui.QGroupBox(self.centralwidget)
@@ -56,7 +56,7 @@ class Ui_MainWindow(object):
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.groupBox_4 = QtGui.QGroupBox(self.centralwidget)
-        self.groupBox_4.setGeometry(QtCore.QRect(10, 550, 241, 91))
+        self.groupBox_4.setGeometry(QtCore.QRect(10, 630, 241, 91))
         self.groupBox_4.setObjectName("groupBox_4")
         self.radio_fiducialMarkerPoints = QtGui.QRadioButton(self.groupBox_4)
         self.radio_fiducialMarkerPoints.setGeometry(QtCore.QRect(10, 30, 151, 18))
@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
         self.pose_filename.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
         self.pose_filename.setObjectName("pose_filename")
         self.groupBox_3 = QtGui.QGroupBox(self.centralwidget)
-        self.groupBox_3.setGeometry(QtCore.QRect(10, 380, 241, 171))
+        self.groupBox_3.setGeometry(QtCore.QRect(10, 380, 241, 251))
         self.groupBox_3.setObjectName("groupBox_3")
         self.marker_previous1 = QtGui.QPushButton(self.groupBox_3)
         self.marker_previous1.setGeometry(QtCore.QRect(0, 30, 81, 32))
@@ -141,13 +141,16 @@ class Ui_MainWindow(object):
         self.markerType = QtGui.QLineEdit(self.groupBox_3)
         self.markerType.setGeometry(QtCore.QRect(10, 140, 221, 21))
         self.markerType.setObjectName("markerType")
+        self.trackMarkerAcrossPoses = QtGui.QPushButton(self.groupBox_3)
+        self.trackMarkerAcrossPoses.setGeometry(QtCore.QRect(0, 180, 241, 32))
+        self.trackMarkerAcrossPoses.setObjectName("trackMarkerAcrossPoses")
         self.textBrowser = QtGui.QTextBrowser(self.centralwidget)
         self.textBrowser.setEnabled(False)
-        self.textBrowser.setGeometry(QtCore.QRect(10, 650, 241, 91))
+        self.textBrowser.setGeometry(QtCore.QRect(10, 730, 241, 91))
         self.textBrowser.setObjectName("textBrowser")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar()
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 261, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 259, 22))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
@@ -187,6 +190,7 @@ class Ui_MainWindow(object):
         self.marker_next2.setText(QtGui.QApplication.translate("MainWindow", "+10", None, QtGui.QApplication.UnicodeUTF8))
         self.marker_next3.setText(QtGui.QApplication.translate("MainWindow", "+100", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("MainWindow", " /", None, QtGui.QApplication.UnicodeUTF8))
+        self.trackMarkerAcrossPoses.setText(QtGui.QApplication.translate("MainWindow", "Track marker across poses", None, QtGui.QApplication.UnicodeUTF8))
         self.textBrowser.setHtml(QtGui.QApplication.translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
