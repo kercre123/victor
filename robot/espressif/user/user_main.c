@@ -19,7 +19,7 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_init(BIT_RATE_3000000, BIT_RATE_74880);
+    uart_init(BIT_RATE_3686400, BIT_RATE_74880);
 
     os_printf("Espressif booting up...\r\n");
 

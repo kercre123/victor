@@ -26,7 +26,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 // The angle wrt the mat at which the user is expected to be.
 // For happy head-nodding demo purposes.

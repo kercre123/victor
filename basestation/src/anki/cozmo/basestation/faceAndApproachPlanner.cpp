@@ -14,7 +14,7 @@
 
 #include "pathPlanner.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 // amount of radians to be off from the desired angle in order to

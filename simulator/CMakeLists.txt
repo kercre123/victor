@@ -2,6 +2,8 @@
 if(APPLE)
   # Defines
   add_definitions(-DSIMULATOR)
+  
+  include_directories(include)
 
   # TODO: Get this from an environment variable?
   set(WEBOTS_APP_DIR /Applications/Webots)
