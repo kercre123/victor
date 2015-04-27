@@ -27,8 +27,9 @@ public class ActionButton
 	public Text text;
 
 	public ActionButtonMode mode { get; private set; }
+	public bool doActionOnRelease { get; private set; }
 
-	public void SetMode( ActionButtonMode m, int selectedObjectIndex = 0, string append = null )
+	public void SetMode( ActionButtonMode m, bool onRelease = true, int selectedObjectIndex = 0, string append = null )
 	{
 		button.onClick.RemoveAllListeners();
 		mode = m;
@@ -42,49 +43,49 @@ public class ActionButton
 		GameActions gameActions = GameActions.instance;
 
 		image.sprite = ActionButton.GetModeSprite( mode );
+		text.text = ActionButton.GetModeName( mode );
+		doActionOnRelease = onRelease;
+
+		if( append != null ) text.text += append;
+
 		gameActions.selectedObjectIndex = selectedObjectIndex;
 		
 		switch( mode )
 		{
+			case ActionButtonMode.TARGET:
+				button.onClick.AddListener( gameActions.Target );
+				//button.onClick.AddListener( gameActions.ActionButtonClick );
+				break;
 			case ActionButtonMode.PICK_UP:
-				text.text = gameActions.PICK_UP;
 				button.onClick.AddListener( gameActions.PickUp );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.DROP:
-				text.text = gameActions.DROP;
 				button.onClick.AddListener( gameActions.Drop );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.STACK:
-				text.text = gameActions.STACK;
 				button.onClick.AddListener( gameActions.Stack );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.ROLL:
-				text.text = gameActions.ROLL;
 				button.onClick.AddListener( gameActions.Roll );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.ALIGN:
-				text.text = gameActions.ALIGN;
 				button.onClick.AddListener( gameActions.Align );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.CHANGE:
-				text.text = gameActions.CHANGE;
 				button.onClick.AddListener( gameActions.Change );
 				button.onClick.AddListener( gameActions.ActionButtonClick );
 				break;
 			case ActionButtonMode.CANCEL:
-				text.text = gameActions.CANCEL;
 				button.onClick.AddListener( gameActions.Cancel );
 				button.onClick.AddListener( gameActions.CancelButtonClick );
 				break;
 		}
-		
-		if( append != null ) text.text += append;
-		
+
 		button.gameObject.SetActive( true );
 	}
 
@@ -151,12 +152,6 @@ public class ActionPanel : MonoBehaviour
 	public bool IsSmallScreen { get; protected set; }
 
 	public static ActionPanel instance = null;
-
-	public GameActions gameActions {
-		get {
-			return GameActions.instance;
-		}
-	}
 
 	protected virtual void Awake()
 	{

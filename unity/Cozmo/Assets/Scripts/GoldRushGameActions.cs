@@ -67,7 +67,7 @@ public class GoldRushGameActions : GameActions {
 					{
 						if( robot.selectedObjects[i].Family == 3 )
 						{
-							buttons[i].SetMode( ActionButtonMode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
+							buttons[i].SetMode( ActionButtonMode.PICK_UP, true, i, i == 0 ? BOTTOM : TOP );
 						}
 					}
 				}
