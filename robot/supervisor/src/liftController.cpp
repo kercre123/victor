@@ -295,7 +295,7 @@ namespace Anki {
       
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
-        maxSpeedRad_ = max_speed_rad_per_sec;
+        maxSpeedRad_ = ABS(max_speed_rad_per_sec);
         accelRad_ = accel_rad_per_sec2;
       }
       

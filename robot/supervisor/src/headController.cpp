@@ -13,8 +13,8 @@ namespace HeadController {
 
     namespace {
       
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
-
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
+      
       // Used when calling SetDesiredAngle with just an angle:
       const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
@@ -63,7 +63,6 @@ namespace HeadController {
       // Speed and acceleration params
       f32 maxSpeedRad_ = 1.0f;
       f32 accelRad_ = 2.0f;
-      f32 approachSpeedRad_ = 0.1f;
       
       // For generating position and speed profile
       VelocityProfileGenerator vpg_;
@@ -91,6 +90,9 @@ namespace HeadController {
       HeadCalibState calState_ = HCS_IDLE;
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
+      
+      u32 lastInPositionTime_ms_;
+      const u32 IN_POSITION_TIME_MS = 200;
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
       
@@ -261,7 +263,7 @@ namespace HeadController {
   
     void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
-      maxSpeedRad_ = MAX(ABS(max_speed_rad_per_sec), approachSpeedRad_);
+      maxSpeedRad_ = ABS(max_speed_rad_per_sec);
       accelRad_ = accel_rad_per_sec2;
     }
     
@@ -324,7 +326,7 @@ namespace HeadController {
         // Start profile of head trajectory
         vpg_.StartProfile(startRadSpeed, startRad,
                           maxSpeedRad_, accelRad_,
-                          approachSpeedRad_, desiredAngle_.ToFloat(),
+                          0, desiredAngle_.ToFloat(),
                           CONTROL_DT);
 
       }
@@ -389,14 +391,23 @@ namespace HeadController {
         angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
         
         // If accurately tracking current desired angle...
-        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)
-           || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
-          power_ = 0.f;
-          inPosition_ = true;
+        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+          
+          if (lastInPositionTime_ms_ == 0) {
+            lastInPositionTime_ms_ = HAL::GetTimeStamp();
+          } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
+            
+            power_ = 0;
+            inPosition_ = true;
+            
 #         if(DEBUG_HEAD_CONTROLLER)
-          PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
+            PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
 #         endif
+          }
+        } else {
+          lastInPositionTime_ms_ = 0;
         }
+
         
         
         
