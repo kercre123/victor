@@ -29,8 +29,8 @@ PROTO WebotsKeyboardController [
   field SFFloat rWheelMaxErrorSum 5000
 
   field SFFloat headKp 8
-  field SFFloat headKi 0.05
-  field SFFloat headKd 0
+  field SFFloat headKi 0.2
+  field SFFloat headKd 2000
   field SFFloat headMaxErrorSum 2
 
   field SFFloat liftKp 3
