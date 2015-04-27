@@ -60,6 +60,8 @@ user_init()
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
+    ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+    ap_config.beacon_interval = 33;
 
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
