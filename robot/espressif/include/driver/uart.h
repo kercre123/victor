@@ -27,8 +27,8 @@
 #define UART0   0
 #define UART1   1
 
-// USER_TASK_PRIO_2 is the highest allowed user task priority
-#define uartTaskPrio USER_TASK_PRIO_0
+/// USER_TASK_PRIO_2 is the highest allowed user task priority
+#define uartTaskPrio USER_TASK_PRIO_2
 
 typedef enum {
     FIVE_BITS = 0x0,
