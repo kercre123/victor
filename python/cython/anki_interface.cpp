@@ -47,6 +47,10 @@ template<> int getNumpyDataType<s64>() { return NPY_INT64; }
 template<> int getNumpyDataType<f32>() { return NPY_FLOAT32; }
 template<> int getNumpyDataType<f64>() { return NPY_FLOAT64; }
 
+extern bool g_saveBinaryImage;
+extern bool g_saveBinaryInitialized;
+extern Anki::Embedded::Array<u8> g_binaryImage;
+
 PyMODINIT_FUNC initNumpy(void)
 {
    import_array();
@@ -415,7 +419,7 @@ PyObject* DetectFiducialMarkers_numpy(
   
   const s32 numMarkers = markers.get_size();
 
-  PyObject* outputList = PyList_New(4);
+  PyObject* outputList = PyList_New(5);
 
   printf("Outputting %d markers\n", numMarkers);
 
@@ -481,11 +485,19 @@ PyObject* DetectFiducialMarkers_numpy(
   
       PyList_SetItem(outputList, 3, markerValidity);
     } // Marker validity
+    
+    // Binary characteristic scale image (from computeCharacteristicScale.cpp)
+    if(g_saveBinaryImage) {
+      PyList_SetItem(outputList, 4, ArrayToNumpyArray<u8>(g_binaryImage));
+    } else {
+      PyList_SetItem(outputList, 4, PyList_New(0));
+    }
   } else { // if(numMarkers != 0)
     PyList_SetItem(outputList, 0, PyList_New(0));
     PyList_SetItem(outputList, 1, PyList_New(0));
     PyList_SetItem(outputList, 2, PyList_New(0));
     PyList_SetItem(outputList, 3, PyList_New(0));
+    PyList_SetItem(outputList, 4, PyList_New(0));
   } // if(numMarkers != 0) ... else
 
   free(scratch0.get_buffer());
@@ -493,7 +505,7 @@ PyObject* DetectFiducialMarkers_numpy(
   free(scratch2.get_buffer());
   free(scratch3.get_buffer());
   
-  printf("Reached the end\n");
+  //printf("Reached the end\n");
   
   return outputList;
 } // DetectFiducialMarkers_numpy()

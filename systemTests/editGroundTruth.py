@@ -367,12 +367,14 @@ def extractMarkers(image, returnInvalidMarkers):
     quadRefinementMinCornerChange = 0.005
     returnInvalidMarkers = int(returnInvalidMarkers)
     
-    quads, markerTypes, markerNames, markerValidity = anki.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
+    quads, markerTypes, markerNames, markerValidity, binaryImage = anki.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
     
-    return quads, markerTypes, markerNames, markerValidity
+    return quads, markerTypes, markerNames, markerValidity, binaryImage
 
 def detectClosestFiducialMarker(image, quad):
-    quads, markerTypes, markerNames, markerValidity = extractMarkers(image, 1)
+    quads, markerTypes, markerNames, markerValidity, binaryImage = extractMarkers(image, 1)
+    
+    pdb.set_trace()
     
     if len(quads) == 0:
         return quad, 0
@@ -459,16 +461,20 @@ def trackTemplate():
     global g_maxPoseIndex
     global g_curMarkerIndex
 
+    if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) <= g_curMarkerIndex:
+        print('No marker labeled')
+        return
+    
+    if isinstance(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'], dict):
+        g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] = [ g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] ]    
+
     [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, g_curMarkerIndex)
     
     if len(corners) != 4:
         print("The current marker doesn't have four corners")
         return
 
-    startPoseIndex = g_curPoseIndex
-    startMarkerIndex = g_curMarkerIndex
-        
-    imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][startPoseIndex]['ImageFile']
+    imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
     lastImage = cv2.imread(imageFilename, 0)
     
     detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(lastImage, corners)
@@ -477,16 +483,24 @@ def trackTemplate():
         lastQuad = detectedQuad
     else:
         lastQuad = corners
-            
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgUpperLeft']  = lastQuad[0][0]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgUpperLeft']  = lastQuad[0][1]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgUpperRight'] = lastQuad[1][0]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgUpperRight'] = lastQuad[1][1]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgLowerRight'] = lastQuad[2][0]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgLowerRight'] = lastQuad[2][1]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['x_imgLowerLeft']  = lastQuad[3][0]
-    g_data['jsonData']['Poses'][startPoseIndex]['VisionMarkers'][0]['y_imgLowerLeft']  = lastQuad[3][1]
+
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['x_imgUpperLeft']  = lastQuad[0][0]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgUpperLeft']  = lastQuad[0][1]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['x_imgUpperRight'] = lastQuad[1][0]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgUpperRight'] = lastQuad[1][1]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerRight'] = lastQuad[2][0]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerRight'] = lastQuad[2][1]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerLeft']  = lastQuad[3][0]
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerLeft']  = lastQuad[3][1]
     
+    if 'markerType' not in g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]:
+        g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'] = 'MARKER_UNKNOWN'
+        
+    markerType = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType']
+        
+    startPoseIndex = g_curPoseIndex
+    startMarkerIndex = g_curMarkerIndex
+        
     for iPose in range(startPoseIndex+1, g_maxPoseIndex):
         imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][iPose]['ImageFile']
         
@@ -500,23 +514,29 @@ def trackTemplate():
         
         if detectedQuadDistance < (4*5):
             curQuad = detectedQuad
+            suffix = '_Good' # TODO: comment out
         else:
             curQuad = curQuad
-            
-        if len(g_data['jsonData']['Poses'][iPose]['VisionMarkers']) < 1:
+            suffix = '_Bad' # TODO: comment out
+        
+        # TODO: will this work when the g_curMarkerIndex is not zero
+        while len(g_data['jsonData']['Poses'][iPose]['VisionMarkers']) <= g_curMarkerIndex:
             g_data['jsonData']['Poses'][iPose]['VisionMarkers'].append({})
-            
+        
         if not isinstance(g_data['jsonData']['Poses'][iPose]['VisionMarkers'], dict):
-            g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0] = {}
-            
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgUpperLeft']  = curQuad[0][0]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgUpperLeft']  = curQuad[0][1]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgUpperRight'] = curQuad[1][0]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgUpperRight'] = curQuad[1][1]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgLowerRight'] = curQuad[2][0]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgLowerRight'] = curQuad[2][1]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['x_imgLowerLeft']  = curQuad[3][0]
-        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][0]['y_imgLowerLeft']  = curQuad[3][1]
+            g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex] = {}
+
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['x_imgUpperLeft']  = curQuad[0][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['y_imgUpperLeft']  = curQuad[0][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['x_imgUpperRight'] = curQuad[1][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['y_imgUpperRight'] = curQuad[1][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerRight'] = curQuad[2][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerRight'] = curQuad[2][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerLeft']  = curQuad[3][0]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerLeft']  = curQuad[3][1]
+        g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['markerType'] = markerType + suffix
+        
+        #pdb.set_trace()
         
     # TODO: save the output
 
