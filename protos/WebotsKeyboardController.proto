@@ -28,13 +28,14 @@ PROTO WebotsKeyboardController [
   field SFFloat rWheelKi 0.00005
   field SFFloat rWheelMaxErrorSum 5000
 
-  field SFFloat headKp 2.0
+  field SFFloat headKp 8
   field SFFloat headKi 0.05
+  field SFFloat headKd 0
   field SFFloat headMaxErrorSum 2
 
-  field SFFloat liftKp 6
-  field SFFloat liftKd 5000
-  field SFFloat liftKi 0
+  field SFFloat liftKp 3
+  field SFFloat liftKi 0.05
+  field SFFloat liftKd 3000
   field SFFloat liftMaxErrorSum 10
 
   # Vision system params
@@ -76,10 +77,6 @@ Supervisor {
 
   translation IS translation
   rotation IS rotation
-
-  # Need to reference one of fields for some reason
-  # to avoid error messages on startup
-  %{junk = fields.headKp}%
   
   children [
 
