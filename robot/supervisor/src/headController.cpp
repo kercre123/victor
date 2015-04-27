@@ -31,6 +31,7 @@ namespace HeadController {
       f32 currDesiredRadVel_ = 0.f;
       f32 angleError_ = 0.f;
       f32 angleErrorSum_ = 0.f;
+      f32 prevAngleError_ = 0.f;      
       f32 prevHalPos_ = 0.f;
       bool inPosition_  = true;
       
@@ -42,14 +43,16 @@ namespace HeadController {
       f32 Ki_ = 0.1f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
 
+      const f32 BASE_POWER  = 0.f;
 #else
       f32 Kp_ = 8.f;  // proportional control constant
-      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Kd_ = 2000.f;  // derivative control constant
       f32 Ki_ = 0.2f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
       
+      const f32 BASE_POWER  = 0.2f;
 #endif
-
+      
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
       // TODO: Measure this when the head is working! These numbers are completely made up.
@@ -259,6 +262,26 @@ namespace HeadController {
       f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
       HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
       inPosition_ = true;
+      
+      /*
+      // Command a target angle based on the sign of the desired speed
+      f32 targetAngle = 0;
+      if (rad_per_sec > 0) {
+        targetAngle = MAX_HEAD_ANGLE;
+        maxSpeedRad_ = rad_per_sec;
+      } else if (rad_per_sec < 0) {
+        targetAngle = MIN_HEAD_ANGLE;
+        maxSpeedRad_ = rad_per_sec;
+      } else {
+        // Compute the expected height if we were to start slowing down now
+        f32 radToStop = 0.5f*(radSpeed_*radSpeed_) / accelRad_;
+        if (radSpeed_ < 0) {
+          radToStop *= -1;
+        }
+        targetAngle = currentAngle_.ToFloat() + radToStop;
+      }
+      SetDesiredAngle(targetAngle);
+      */
     }
   
     void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
@@ -285,6 +308,8 @@ namespace HeadController {
       
       desiredAngle_ = angle;
       angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+      prevAngleError_ = 0;
+      
       
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD (fixedDuration): SetDesiredAngle %f rads (duration %f)\n", desiredAngle_.ToFloat(), duration_seconds);
@@ -374,22 +399,22 @@ namespace HeadController {
         // Compute current angle error
         angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
         
-        
-        // Open loop value to drive at desired speed
-        //power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
-        
-        // Compute corrective value
-        f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
+        // Compute power value
+        power_ = (Kp_ * angleError_) + (Kd_ * (angleError_ - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
         
         // Add base power in the direction of the desired general direction
-        //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-        //power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-        power_ = power_corr + ((desiredAngle_.ToFloat() - currentAngle_.ToFloat() > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        if (power_ > 0) {
+          power_ += BASE_POWER;
+        } else if (power_ < 0) {
+          power_ -= BASE_POWER;
+        }
         
         // Update angle error sum
+        prevAngleError_ = angleError_;
         angleErrorSum_ += angleError_;
         angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
         
+
         // If accurately tracking current desired angle...
         if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
           
