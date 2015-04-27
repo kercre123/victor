@@ -33,7 +33,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
   visionUnitTestController.cpp
   
-  ${PROJECT_SOURCE_DIR}/basestation/src/comms/robot/robotMessages.cpp
+  ${PROJECT_SOURCE_DIR}/basestation/src/anki/cozmo/basestation/comms/robot/robotMessages.cpp
 
   # this is where the Supervisor object lives, it must be early in the compile list?!?
   #${SIMULATOR_HAL_DIR}/sim_hal.cpp

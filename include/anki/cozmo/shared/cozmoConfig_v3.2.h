@@ -40,13 +40,13 @@ namespace Anki {
     const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
     const f32 LIFT_HEIGHT_HIGHDOCK = 77.f;
     const f32 LIFT_HEIGHT_CARRY    = 92.f;
-    const f32 LIFT_PLACE_HIGH_SLOP = 5.f;
+    const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
     const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 13.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;
 
 
     // The distance to the bridge ground marker that the robot must

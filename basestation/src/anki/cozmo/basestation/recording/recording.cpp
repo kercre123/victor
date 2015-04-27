@@ -13,7 +13,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "recording.h"
 #include "anki/messaging/basestation/IComms.h"
-#include "comms/commsRecorder.h"
+#include "../comms/commsRecorder.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 //#include "basestation/version.h"

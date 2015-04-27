@@ -7,10 +7,11 @@ OBJS:=user/user_main.o user/client.o driver/uart.o
 
 SRCS:=user/user_main.c user/client.c driver/uart.c
 
+CWD := $(shell pwd)
 GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106
-ESPTOOL_PY:=../../../esptool/esptool.py
-FW_TOOL:=/home/dc/esp8266/other/esptool/esptool
-SDK:=/home/dc/esp8266/esp_iot_sdk_v1.0.1_b2
+ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
+FW_TOOL:= $(CWD)/../../../coretech-external/espressif/other/esptool/esptool
+SDK:= ../../../coretech-external/espressif/iot_sdk
 PORT:=com11
 BAUD:=230400
 

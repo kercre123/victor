@@ -22,9 +22,8 @@ file(GLOB COZMO_SIMULATOR_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/simulato
 
 include_directories( 
   ${ROBOT_SRC_DIR}
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/robot
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/simulator
-  ${COZMO_INCLUDE_DIR}/anki/cozmo/shared
+  ${COZMO_INCLUDE_DIR}
+  ${COZMO_BASESTATION_INCLUDE_DIR}
   ${PHYSICS_PLUGIN_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
