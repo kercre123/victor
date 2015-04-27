@@ -56,6 +56,9 @@ $(FW_FILE_2): $(TARGET_OUT)
 	@echo "FW $@"
 	$(FW_TOOL) -eo $(TARGET_OUT) -es .irom0.text $@ -ec
 
+vm : $(SRCS)
+	ssh l "cd Documents/GitHub/products-cozmo/robot/espressif && make build"
+
 build : $(FW_FILE_1) $(FW_FILE_2)
 
 burn :
