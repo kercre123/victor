@@ -14,6 +14,7 @@
 #include "anki/common/types.h"
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/shared/radians.h"
 
 //#include <array>
 
@@ -61,6 +62,11 @@ namespace Anki {
       f32     GetCenter_y()      const;
       f32     GetSkew()          const;
       const Point2f& GetCenter() const;
+      
+      // Compute vertical/horizontal FOV angles.
+      // (These are full field of view, not half field of view.)
+      Radians ComputeVerticalFOV() const;
+      Radians ComputeHorizontalFOV() const;
       
       //const   DistortionCoeffVector& get_distortionCoeffs() const;
       
@@ -115,6 +121,15 @@ namespace Anki {
     inline f32  CameraCalibration::GetSkew() const
     { return _skew; }
     
+    inline Radians CameraCalibration::ComputeVerticalFOV() const {
+      return Radians(2.f*std::atan2f(0.5f*static_cast<f32>(GetNrows()),
+                                     GetFocalLength_y()));
+    }
+    
+    inline Radians CameraCalibration::ComputeHorizontalFOV() const {
+      return Radians(2.f*std::atan2f(0.5f*static_cast<f32>(GetNcols()),
+                                     GetFocalLength_x()));
+    }
     
   } // namesapce Vision
 } // namespace Anki
