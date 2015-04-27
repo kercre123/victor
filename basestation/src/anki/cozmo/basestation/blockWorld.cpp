@@ -1411,7 +1411,7 @@ namespace Anki
         // Even if there were no markers observed, check to see if there are
         // any previously-observed objects that are partially visible (some part
         // of them projects into the image even if none of their markers fully do)
-        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastMsgTimestamp());
+        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
       }
       
       if(numObjectsObserved == 0) {
