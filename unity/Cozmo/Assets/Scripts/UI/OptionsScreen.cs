@@ -4,6 +4,7 @@ using System.Collections;
 
 public class OptionsScreen : MonoBehaviour {
 
+	[SerializeField] GameObject optionsAnchor;
 	[SerializeField] Slider slider_turnSpeed;
 	[SerializeField] Toggle toggle_reverseLikeACar;
 	[SerializeField] ComboBox combo_controls;
@@ -27,9 +28,31 @@ public class OptionsScreen : MonoBehaviour {
 		Robot.ObservedObjectListType.MARKERS_SEEN.ToString(),
 		Robot.ObservedObjectListType.KNOWN.ToString() };
 
+	public static OptionsScreen instance = null;
+	public static bool Open {
+		get {
+			if(instance == null) return false;
+			if(instance.optionsAnchor == null) return false;
+			return instance.optionsAnchor.activeSelf;
+		}
+	}
+
+	void Awake () {
+		if(instance != null) {
+			Debug.Log("OptionsScreen destroying self, because instance already exists.");
+			GameObject.Destroy(gameObject);
+			return;
+		}
+		instance = this;
+		DontDestroyOnLoad(gameObject);
+	}
+
 	void OnEnable () {
+		if(instance != this) return;
+
 		Init();
 		AddListeners();
+		optionsAnchor.SetActive(false);
 	}
 
 	void Init () {
@@ -67,6 +90,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(combo_controls != null) {
+			combo_controls.InitControl();
 			combo_controls.ClearItems();
 			combo_controls.AddItems(controlStyles);
 			combo_controls.OnSelectionChanged = ControlsSelected;
@@ -74,6 +98,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(combo_vision != null) {
+			combo_vision.InitControl();
 			combo_vision.ClearItems();
 			combo_vision.AddItems(visionStyles);
 			combo_vision.OnSelectionChanged = SetVisionSelected;
@@ -81,6 +106,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(pertinent_objects != null) {
+			pertinent_objects.InitControl();
 			pertinent_objects.ClearItems();
 			pertinent_objects.AddItems(pertinentObjectTypes);
 			pertinent_objects.OnSelectionChanged = ObjectPertinence;

@@ -36,8 +36,18 @@ public class VectrosityCube : MonoBehaviour {
 	};
 
 	VectorLine line = null;
+	//bool initialized = false;
+	Color color = Color.white;
 
 	void OnEnable() {
+//		if(initialized) {
+//			if(line != null) {
+//				VectorLine.Destroy(ref line);
+//			}
+//			Debug.Log(gameObject.name + " OnEnable already initialized, remake line");
+//			CreateWireFrame();
+//		}
+
 		if(!debugEditing) return;
 
 		SetMaterial(lineMaterial);
@@ -52,13 +62,19 @@ public class VectrosityCube : MonoBehaviour {
 	public void Show() {
 		if(line == null) return;
 		//Debug.Log(gameObject.name + " Show");
+		//SetColor(color);
+		//line.point = cubePoints;
+		//line.Draw3D();
 		line.active = true;
 	}
 
 	public void Hide() {
 		if(line == null) return;
 		//Debug.Log(gameObject.name + " Hide");
+		//line.points3.Clear();
+		//line.Draw3D();
 		line.active = false;
+		//SetTempColor(Color.clear);
 	}
 
 	public void CreateWireFrame () {
@@ -75,15 +91,27 @@ public class VectrosityCube : MonoBehaviour {
 		// This object is a rigidbody, so the vector object will do exactly what this object does
 		VectorManager.ObjectSetup(gameObject, line, Visibility.Always, Brightness.None, false);
 		//line.Draw3DAuto();
+
+		SetColor(color);
+		SetMaterial(lineMaterial);
+
+		//initialized = true;
+	}
+
+	void SetTempColor(Color color) {
+		if(line == null) return;
+		line.SetColor(color);
 	}
 
 	public void SetColor(Color color) {
 		if(line == null) return;
+		this.color = color;
 		line.SetColor(color);
 	}
 
 	public void SetMaterial(Material mat) {
 		if(line == null) return;
+		lineMaterial = mat;
 		line.material = mat;
 	}
 

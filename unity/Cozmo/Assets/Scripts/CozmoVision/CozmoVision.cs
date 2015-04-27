@@ -29,7 +29,6 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected GameObject observedObjectCanvasPrefab;
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
-	[SerializeField] protected GameObject objectToDisableWhileVisionActive;
 
 
 	protected ActionPanel actionPanel;
@@ -277,7 +276,9 @@ public class CozmoVision : MonoBehaviour
 		color.a = alpha;
 		selected = color;
 
-		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
+		if(GameLayoutTracker.instance != null) {
+			GameLayoutTracker.instance.Show();
+		}
 	}
 
 	protected void RefreshFade()
@@ -339,7 +340,9 @@ public class CozmoVision : MonoBehaviour
 		color.a = fromAlpha;
 		selected = color;
 
-		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(false);
+		if(GameLayoutTracker.instance != null) {
+			GameLayoutTracker.instance.Hide();
+		}
 	}
 
 	protected void FadeOut()
@@ -363,7 +366,9 @@ public class CozmoVision : MonoBehaviour
 		color.a = fromAlpha;
 		selected = color;
 
-		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
+		if(GameLayoutTracker.instance != null) {
+			GameLayoutTracker.instance.Show();
+		}
 	}
 
 	protected void StopLoopingTargetSound()
@@ -487,7 +492,9 @@ public class CozmoVision : MonoBehaviour
 		StopLoopingTargetSound();
 
 		if(actionPanel != null) actionPanel.gameObject.SetActive(false);
-		if(objectToDisableWhileVisionActive != null) objectToDisableWhileVisionActive.SetActive(true);
+		if(GameLayoutTracker.instance != null) {
+			GameLayoutTracker.instance.Show();
+		}
 	}
 
 	public void Selection(ObservedObject obj)

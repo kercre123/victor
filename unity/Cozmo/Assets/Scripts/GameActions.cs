@@ -24,27 +24,16 @@ public class GameActions : MonoBehaviour
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
-	protected virtual IEnumerator SetActionPanelReference()
-	{
-		while( ActionPanel.instance == null )
-		{
-			yield return null;
-		}
-
-		if( ActionPanel.instance.gameActions != this )
-		{
-			ActionPanel.instance.gameActions = this;
-		}
-	}
+	public static GameActions instance = null;
 
 	protected virtual void OnEnable()
 	{
-		StartCoroutine( SetActionPanelReference() );
+		instance = this;
 	}
 
 	public virtual void OnDisable()
 	{
-		if( ActionPanel.instance != null && ActionPanel.instance.gameActions == this ) ActionPanel.instance.gameActions = null;
+		if( instance == this ) instance = null;
 	}
 
 	public Sprite GetActionSprite( ActionButtonMode mode )
@@ -69,17 +58,25 @@ public class GameActions : MonoBehaviour
 		{
 			if( buttons.Length > 1 )
 			{
-				if( robot.selectedObjects.Count > 0 )
-				{
-					buttons[1].SetMode( ActionButtonMode.STACK );
-				}
-				else if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
+				if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
 				{
 					buttons[1].SetMode( ActionButtonMode.CHANGE );
 				}
+
 			}
-			
-			buttons[0].SetMode( ActionButtonMode.DROP );
+
+			bool stack = false;
+
+			if( robot.selectedObjects.Count > 0 )
+			{
+				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
+				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 2f) {
+					buttons[0].SetMode( ActionButtonMode.STACK );
+					stack = true;
+				}
+			}
+
+			if(!stack) buttons[0].SetMode( ActionButtonMode.DROP );
 		}
 		else
 		{
@@ -251,7 +248,7 @@ public class GameActions : MonoBehaviour
 			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
 			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
 			robot.carryingObject.activeBlockType = (ActiveBlockType)typeIndex;
-			robot.carryingObject.SetActiveObjectLEDs( 1f, CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
+			robot.carryingObject.SetActiveObjectLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
 		}
 	}
 	

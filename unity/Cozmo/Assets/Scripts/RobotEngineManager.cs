@@ -12,7 +12,7 @@ using U2G = Anki.Cozmo.U2G;
 
 public enum ActionCompleted
 {
-  COMPOUND = -2,
+	COMPOUND = -2,
 	UNKNOWN = -1,
 	DRIVE_TO_POSE = 0,
 	DRIVE_TO_OBJECT,
@@ -47,6 +47,9 @@ public class RobotEngineManager : MonoBehaviour {
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
+	[SerializeField] private GameObject robotBusyPanelPrefab;
+
+	private CozmoBusyPanel busyPanel = null;
 
 	[SerializeField]
 	[HideInInspector]
@@ -183,7 +186,12 @@ public class RobotEngineManager : MonoBehaviour {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
 		}
-		
+
+		if(busyPanel == null && robotBusyPanelPrefab != null) {
+			GameObject busyPanelObject = (GameObject)GameObject.Instantiate(robotBusyPanelPrefab);
+			busyPanel = busyPanelObject.GetComponent<CozmoBusyPanel>();
+		}
+
 		Application.runInBackground = true;
 
 		channel = new UdpChannel ();

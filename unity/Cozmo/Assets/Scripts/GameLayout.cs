@@ -1,17 +1,19 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
-using U2G = Anki.Cozmo.U2G;
 
 public class GameLayout : MonoBehaviour {
 
-	[SerializeField] public string title;
+	[SerializeField] public Camera previewCamera;
+	[SerializeField] public string gameName = "Unknown";
+	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
-	[SerializeField] public string gameTypeFilter = null;
+
+	[TextArea(5,30)]
+	[SerializeField] public string initialInstruction = null;
+
+	[TextArea(5,30)]
+	[SerializeField] public string secondInstruction = null;
 
 	public void Initialize () {
 
