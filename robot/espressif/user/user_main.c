@@ -11,8 +11,9 @@
 /// USER_TASK_PRIO_0 is the lowest (idle) task priority
 #define userTaskPrio USER_TASK_PRIO_0
 
-/// System task
+/// The depth of the user idle task
 #define    userTaskQueueLen    4
+/// Queue for user idle task
 os_event_t userTaskQueue[userTaskQueueLen];
 
 /** User "idle" task
@@ -21,7 +22,13 @@ os_event_t userTaskQueue[userTaskQueueLen];
  */
 LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
 {
-  uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
+  static const uint32 INTERVAL = 100000;
+  static uint32 counter = 0;
+  if (counter++ > INTERVAL)
+  {
+    uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
+    counter = 0;
+  }
   system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
@@ -76,7 +83,7 @@ user_init()
 
     // Setup user task
     system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
-    system_os_post(userTaskPrio, 0, 0); // Post user task
+    //system_os_post(userTaskPrio, 0, 0); // Post user task
 
     os_printf("user initalization complete\r\n");
 
