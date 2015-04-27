@@ -235,7 +235,11 @@ namespace HeadController {
 #endif
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
     }
-
+  
+    f32 GetAngularVelocity()
+    {
+      return radSpeed_;
+    }
     
     void SetAngularVelocity(const f32 rad_per_sec)
     {
@@ -244,14 +248,14 @@ namespace HeadController {
       HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
       inPosition_ = true;
     }
-    
-    void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
+  
+    void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
       maxSpeedRad_ = MAX(ABS(max_speed_rad_per_sec), approachSpeedRad_);
       accelRad_ = accel_rad_per_sec2;
     }
     
-    void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
+    void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
     {
       max_speed_rad_per_sec = maxSpeedRad_;
       accel_rad_per_sec2 = accelRad_;

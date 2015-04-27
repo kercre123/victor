@@ -898,9 +898,12 @@ namespace Anki {
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+          f32 hSpeed_filt = HeadController::GetAngularVelocity();
           f32 hPos = HeadController::GetAngleRad();
           
-          PRINT("Head speed %f rad/s, angle %f rad\n", hSpeed, hPos);
+          if (ABS(hSpeed) > 0 || ABS(hSpeed_filt) > 0) {
+            PRINT("Head speed %f rad/s (filt %f rad/s), angle %f rad\n", hSpeed, hSpeed_filt, hPos);
+          }
           ticCnt2_ = 0;
         }
         
