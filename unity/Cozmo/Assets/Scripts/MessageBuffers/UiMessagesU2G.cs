@@ -4231,10 +4231,13 @@ public class SetWheelControllerGains
 public class SetHeadControllerGains
 {
 	private float _kp; // float_32
+	private float _kd; // float_32
 	private float _ki; // float_32
 	private float _maxIntegralError; // float_32
 
 	public float kp { get { return _kp; } set { _kp = value; } }
+
+	public float kd { get { return _kd; } set { _kd = value; } }
 
 	public float ki { get { return _ki; } set { _ki = value; } }
 
@@ -4248,10 +4251,12 @@ public class SetHeadControllerGains
 	}
 
 	public SetHeadControllerGains(float kp,
+		float kd,
 		float ki,
 		float maxIntegralError)
 	{
 		this.kp = kp;
+		this.kd = kd;
 		this.ki = ki;
 		this.maxIntegralError = maxIntegralError;
 	}
@@ -4275,6 +4280,7 @@ public class SetHeadControllerGains
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_kp = reader.ReadSingle();
+		_kd = reader.ReadSingle();
 		_ki = reader.ReadSingle();
 		_maxIntegralError = reader.ReadSingle();
 	}
@@ -4288,6 +4294,7 @@ public class SetHeadControllerGains
 	public void Pack(System.IO.BinaryWriter writer)
 	{
 		writer.Write((float)_kp);
+		writer.Write((float)_kd);
 		writer.Write((float)_ki);
 		writer.Write((float)_maxIntegralError);
 	}
@@ -4295,7 +4302,7 @@ public class SetHeadControllerGains
 	public int Size 
 	{
 		get {
-			return 12;
+			return 16;
 		}
 	}
 
@@ -4342,6 +4349,7 @@ public class SetHeadControllerGains
 		}
 
 		return this._kp.Equals(p._kp)
+			&& this._kd.Equals(p._kd)
 			&& this._ki.Equals(p._ki)
 			&& this._maxIntegralError.Equals(p._maxIntegralError);
 	}
@@ -4352,6 +4360,7 @@ public class SetHeadControllerGains
 		{
 			int hash = 17;
 			hash = hash * 23 + this._kp.GetHashCode();
+			hash = hash * 23 + this._kd.GetHashCode();
 			hash = hash * 23 + this._ki.GetHashCode();
 			hash = hash * 23 + this._maxIntegralError.GetHashCode();
 			return hash;

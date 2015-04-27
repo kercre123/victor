@@ -2501,6 +2501,7 @@ size_t SetHeadControllerGains::Pack(uint8_t* buff, size_t len) const
 size_t SetHeadControllerGains::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->kp);
+	buffer.Write(this->kd);
 	buffer.Write(this->ki);
 	buffer.Write(this->maxIntegralError);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -2516,6 +2517,7 @@ size_t SetHeadControllerGains::Unpack(const uint8_t* buff, const size_t len)
 size_t SetHeadControllerGains::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->kp);
+	buffer.Read(this->kd);
 	buffer.Read(this->ki);
 	buffer.Read(this->maxIntegralError);
 	return buffer.GetBytesRead();
@@ -2525,6 +2527,8 @@ size_t SetHeadControllerGains::Size() const
 {
 	size_t result = 0;
 	//kp
+	result += 4; // = float_32
+	//kd
 	result += 4; // = float_32
 	//ki
 	result += 4; // = float_32
@@ -2536,6 +2540,7 @@ size_t SetHeadControllerGains::Size() const
 bool SetHeadControllerGains::operator==(const SetHeadControllerGains& other) const
 {
 	if (kp != other.kp
+	|| kd != other.kd
 	|| ki != other.ki
 	|| maxIntegralError != other.maxIntegralError) {
 		return false;

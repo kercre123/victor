@@ -252,7 +252,7 @@ struct RobotState
 	int32_t carryingObjectID;
 	int32_t carryingObjectOnTopID;
 	int32_t headTrackingObjectID;
-	uint8_t status;
+	uint32_t status;
 	uint8_t robotID;
 	
 	/**** Constructors ****/
@@ -279,7 +279,7 @@ struct RobotState
 		,int32_t carryingObjectID
 		,int32_t carryingObjectOnTopID
 		,int32_t headTrackingObjectID
-		,uint8_t status
+		,uint32_t status
 		,uint8_t robotID)
 	:pose_x(pose_x)
 	,pose_y(pose_y)
