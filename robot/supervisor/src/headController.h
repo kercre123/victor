@@ -82,7 +82,7 @@ namespace Anki {
       
       Result Update();
       
-      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
       
       // Stop nodding or any movement immediately
       void Stop();

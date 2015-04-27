@@ -36,10 +36,20 @@ namespace HeadController {
       
       const f32 SPEED_FILTERING_COEFF = 0.5f;
 
-      f32 Kp_ = 2.f; // proportional control constant
-      f32 Ki_ = 0.05f; // integral control constant
-      f32 MAX_ERROR_SUM = 4.f; // 2.f;
-     
+#ifdef SIMULATOR
+      f32 Kp_ = 20.f; // proportional control constant
+      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Ki_ = 0.1f; // integral control constant
+      f32 MAX_ERROR_SUM = 2.f;
+
+#else
+      f32 Kp_ = 8.f;  // proportional control constant
+      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Ki_ = 0.2f; // integral control constant
+      f32 MAX_ERROR_SUM = 2.f;
+      
+#endif
+
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
       // TODO: Measure this when the head is working! These numbers are completely made up.
@@ -423,13 +433,16 @@ namespace HeadController {
       return RESULT_OK;
     }
     
-    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       Kp_ = kp;
       Ki_ = ki;
+      Kd_ = kd;
       MAX_ERROR_SUM = maxIntegralError;
+      PRINT("New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+            Kp_, Ki_, Kd_, MAX_ERROR_SUM);
     }
-    
+  
     void StartNodding(const f32 lowAngle, const f32 highAngle,
                       const u16 period_ms, const s32 numLoops,
                       const f32 easeInFraction, const f32 easeOutFraction)

@@ -492,11 +492,11 @@ namespace Anki {
       }
       
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
-        HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+        HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
-        LiftController::SetGains(msg.kp, msg.kd, msg.ki, msg.maxIntegralError);
+        LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {

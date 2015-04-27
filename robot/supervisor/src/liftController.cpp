@@ -570,14 +570,14 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      void SetGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
       {
         Kp_ = kp;
-        Kd_ = kd;
         Ki_ = ki;
+        Kd_ = kd;
         MAX_ERROR_SUM = maxIntegralError;
-        PRINT("NEW LIFT GAINS: kp = %f, kd = %f, ki = %f, maxSum = %f\n",
-              Kp_, Kd_, Ki_, MAX_ERROR_SUM);
+        PRINT("New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+              Kp_, Ki_, Kd_, MAX_ERROR_SUM);
       }
       
       void Stop()
