@@ -56,6 +56,7 @@ namespace Anki {
         TEXT_LABEL_BATTERY,
         TEXT_LABEL_VID_RATE,
         TEXT_LABEL_STATUS_FLAG,
+        TEXT_LABEL_STATUS_FLAG_2,
         TEXT_LABEL_DOCK_ERROR_SIGNAL,
         NUM_TEXT_LABELS
       } VizTextLabelType;
@@ -405,6 +406,11 @@ namespace Anki {
               msg.status & IS_CARRYING_BLOCK ? "CARRY" : "",
               msg.status & IS_PICKING_OR_PLACING ? "PAP" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "        %7s %7s",
+              msg.status & LIFT_IN_POS ? "" : "LIFTING",
+              msg.status & HEAD_IN_POS ? "" : "HEADING");
+      DrawText(TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
     }
     
     

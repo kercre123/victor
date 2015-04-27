@@ -2403,21 +2403,22 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
       
-    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;
       m.kp = kp;
       m.ki = ki;
+      m.kd = kd;
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SetLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       MessageSetLiftControllerGains m;
       m.kp = kp;
-      m.kd = kd;
       m.ki = ki;
+      m.kd = kd;      
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);
     }
