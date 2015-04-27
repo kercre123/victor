@@ -305,6 +305,16 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public void CancelAction(int actionType=-1)
+	{
+		U2G.CancelAction message = new U2G.CancelAction();
+		message.robotID = ID;
+		message.actionType = actionType;
+
+		Debug.Log( "CancelAction actionType("+actionType+")" );
+		RobotEngineManager.instance.channel.Send( new U2G.Message { CancelAction = message } );
+	}
+
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
 		//if( isBusy ) return;

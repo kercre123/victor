@@ -37,8 +37,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] float coplanarFudge = 0.2f;
 	[SerializeField] float distanceFudge = 0.5f;
 
-
-
+	[SerializeField] AudioClip blockValidatedSound = null;
+	[SerializeField] AudioClip layoutValidatedSound = null;
+	
 	Robot robot = null;
 	bool blocksInitialized = false;
 	BuildInstructionsCube ghostBlock;
@@ -59,6 +60,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	int currentLevelNumber = 1;
 	
 	int validCount = 0;
+	int lastValidCount = 0;
+
+	bool hidden = false;
 
 	void OnEnable () {
 		Phase = LayoutTrackerPhase.PREVIEW;
@@ -74,6 +78,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Validated = false;
 		validCount = 0;
+		lastValidCount = 0;
 
 		currentGameName = PlayerPrefs.GetString("CurrentGame", "Slalom");
 		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
@@ -118,10 +123,25 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
+
+		hidden = false;
 	}
 
 	void Update () {
+
+		if(validCount == currentLayout.blocks.Count) {
+			if(lastValidCount != currentLayout.blocks.Count) {
+				audio.PlayOneShot(layoutValidatedSound);
+			}
+		}
+		else if(validCount > lastValidCount) {
+			audio.PlayOneShot(blockValidatedSound);
+		}
+
+
 		RefreshLayout();
+
+		lastValidCount = validCount;
 	}
 
 	void OnDisable() {
@@ -134,6 +154,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(hideDuringPreview != null) hideDuringPreview.SetActive(true);
+	}
+
+	public void Show() {
+		hidden = false;
+	}
+
+	public void Hide() {
+		hidden = true;
+		layoutInstructionsPanel.SetActive(false);
+		layoutPreviewPanel.SetActive(false);
+		layoutInstructionsCamera.gameObject.SetActive(false);
 	}
 
 	void RefreshLayout () {
@@ -157,25 +188,35 @@ public class GameLayoutTracker : MonoBehaviour {
 			case LayoutTrackerPhase.PREVIEW:
 				ShowAllBlocks();
 				layoutInstructionsPanel.SetActive(false);
-				layoutPreviewPanel.SetActive(true);
+				layoutPreviewPanel.SetActive(!hidden);
 				hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
 				break;
 
 			case LayoutTrackerPhase.BUILDING:
-				instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
-				layoutInstructionsPanel.SetActive(true);
+				if(validCount == 0 && !string.IsNullOrEmpty(currentLayout.initialInstruction)) {
+					instructionsProgress.text = currentLayout.initialInstruction;
+				}
+				else if(validCount == 1 && !string.IsNullOrEmpty(currentLayout.secondInstruction)) {
+					instructionsProgress.text = currentLayout.secondInstruction;
+				}
+				else {
+					instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
+				}
+
+				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
 				hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(true);
+				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
 				instructionsProgress.text = "Layout completed!";
-				layoutInstructionsPanel.SetActive(true);
+				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
 				hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(true);
+				layoutInstructionsCamera.gameObject.SetActive(!hidden);
+
 				break;
 
 		}
@@ -184,42 +225,82 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void SuccessOrFailure(bool success, ActionCompleted action_type) {
-		if(success) {
-			switch(action_type) {
-				case ActionCompleted.UNKNOWN://	ACTION_UNKNOWN = -1,
-					break;
-				case ActionCompleted.DRIVE_TO_POSE:
-					break;
-				case ActionCompleted.DRIVE_TO_OBJECT:
-					break;
-				case ActionCompleted.DRIVE_TO_PLACE_CARRIED_OBJECT:
-					break;
-				case ActionCompleted.TURN_IN_PLACE:
-					break;
-				case ActionCompleted.MOVE_HEAD_TO_ANGLE:
-					break;
-				case ActionCompleted.PICKUP_OBJECT_LOW:
-				case ActionCompleted.PICKUP_OBJECT_HIGH:
-					break;
-				case ActionCompleted.PLACE_OBJECT_LOW:
-				case ActionCompleted.PLACE_OBJECT_HIGH:
-					break;
-				case ActionCompleted.CROSS_BRIDGE:
-				case ActionCompleted.ASCEND_OR_DESCEND_RAMP:
-				case ActionCompleted.TRAVERSE_OBJECT:
-				case ActionCompleted.DRIVE_TO_AND_TRAVERSE_OBJECT:
-				case ActionCompleted.FACE_OBJECT:
-				case ActionCompleted.PLAY_ANIMATION:
-				case ActionCompleted.PLAY_SOUND:
-				case ActionCompleted.WAIT:
-					break;
-			}
+		if(Phase != LayoutTrackerPhase.BUILDING) return;
+
+		bool validate = false;
+
+		switch(action_type) {
+			case ActionCompleted.UNKNOWN://	ACTION_UNKNOWN = -1,
+				break;
+			case ActionCompleted.DRIVE_TO_POSE:
+				break;
+			case ActionCompleted.DRIVE_TO_OBJECT:
+				break;
+			case ActionCompleted.DRIVE_TO_PLACE_CARRIED_OBJECT:
+				break;
+			case ActionCompleted.TURN_IN_PLACE:
+				break;
+			case ActionCompleted.MOVE_HEAD_TO_ANGLE:
+				break;
+			case ActionCompleted.PICKUP_OBJECT_LOW:
+			case ActionCompleted.PICKUP_OBJECT_HIGH:
+				BuildInstructionsCube layoutCubeMatchingCarried = null;
+				if(robot.carryingObject >= 0) {
+					for(int i=0;i<currentLayout.blocks.Count;i++) {
+						if(robot.carryingObject.Family == 3 && currentLayout.blocks[i].objectFamily != 3) continue;
+						if(robot.carryingObject.Family != 3 && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
+						layoutCubeMatchingCarried = currentLayout.blocks[i];
+						break;
+					}
+					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.carryingObject.activeBlockType != layoutCubeMatchingCarried.activeBlockType) {
+						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockType.ToString()+".", Color.white);
+					}
+					else if(layoutCubeMatchingCarried.cubeBelow == null) {
+						if(validCount == 0) {
+							screenMessage.ShowMessage("Good.  Now drop this block anywhere to start the build.", Color.white);
+						}
+						else {
+							screenMessage.ShowMessage("Good.  Now drop this block the correct distance from the first block.", Color.white);
+						}
+					}
+					else {
+						screenMessage.ShowMessage("Good.  Now stack this block on a correct block.", Color.white);
+					}
+				}
+				else {
+					screenMessage.KillMessage();
+				}
+				
+				break;
+			case ActionCompleted.PLACE_OBJECT_LOW:
+			case ActionCompleted.PLACE_OBJECT_HIGH:
+				validate = true;
+				break;
+			case ActionCompleted.CROSS_BRIDGE:
+			case ActionCompleted.ASCEND_OR_DESCEND_RAMP:
+			case ActionCompleted.TRAVERSE_OBJECT:
+			case ActionCompleted.DRIVE_TO_AND_TRAVERSE_OBJECT:
+			case ActionCompleted.FACE_OBJECT:
+			case ActionCompleted.PLAY_ANIMATION:
+			case ActionCompleted.PLAY_SOUND:
+			case ActionCompleted.WAIT:
+				break;
 		}
-		else {
+
+		if(!success) {
 			screenMessage.ShowMessageForDuration("Cozmo ran into difficulty, let's try that again.", 5f, Color.yellow);
 		}
 
-		validCount = ValidateBlocks();
+		if(validate) {
+			string error = ValidateBlocks();
+			if(validCount <= lastValidCount) {
+				screenMessage.ShowMessage(error, Color.red);
+			}
+			else {
+				//Debug.Log("validation sucess.  lastValidCount("+lastValidCount+")->validCount("+validCount+")");
+				screenMessage.ShowMessage("Awesome!  Cozmo placed that block correctly.", Color.white);
+			}
+		}
 	}
 
 	void ShowAllBlocks() {
@@ -234,11 +315,16 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
-	int ValidateBlocks() {
-		if(RobotEngineManager.instance == null) return 0;
+	string ValidateBlocks() {
+		string error = "";
+		validCount = 0;
+
+		if(RobotEngineManager.instance == null) return error;
 
 		robot = RobotEngineManager.instance.current;
-		if(robot == null) return 0;
+		if(robot == null) return error;
+
+		bool invalidated = false;
 
 		if(ghostBlock != null) {
 			ghostBlock.Hidden = true;
@@ -246,7 +332,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		GameLayout layout = currentLayout;
-		if(layout == null) return 0;
+		if(layout == null) return error;
 
 		List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 
@@ -315,6 +401,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
 					}
 					else {
+						if(!invalidated) error = "Whoops. That block needs to be stacked on the correct block.";
+						invalidated = true;
 						if(debug) Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
 					}
@@ -340,7 +428,9 @@ public class GameLayoutTracker : MonoBehaviour {
 						Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 						
 						//are we basically on the same plane and roughly the correct distance away?
-						if(Mathf.Abs(realOffset.z) > coplanarFudge){
+						if(Mathf.Abs(realOffset.z) > coplanarFudge) {
+							if(!invalidated) error = "Whoops. That block needs to be placed on the ground.";
+							invalidated = true;
 							valid = false;
 							if(debug) Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
@@ -352,6 +442,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 						float distanceError = Mathf.Abs(realDistance - idealDistance);
 						if( distanceError > distanceFudge ) {
+							if(!invalidated) error = "Whoops. That block was placed " + distanceError.ToString("N") + " block lengths too " + (realDistance > idealDistance ? "far from" : "close to" ) + " the " + CozmoPalette.instance.GetNameForObjectType(validated[validatedIndex].objectType) + " block.";
+							invalidated = true;
 							valid = false;
 							if(debug) Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
@@ -373,7 +465,9 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		}
 
-		return validated.Count;
+		validCount = validated.Count;
+
+		return error;
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
@@ -417,7 +511,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	public void EndPreview() {
 		Phase = LayoutTrackerPhase.BUILDING;
-		validCount = ValidateBlocks();
+		ValidateBlocks();
 	}
 
 }

@@ -33,13 +33,13 @@ public class ActionButton
 		button.onClick.RemoveAllListeners();
 		mode = m;
 		
-		if( mode == ActionButtonMode.DISABLED || ActionPanel.instance == null || ActionPanel.instance.gameActions == null )
+		if( mode == ActionButtonMode.DISABLED || GameActions.instance == null )
 		{
 			button.gameObject.SetActive( false );
 			return;
 		}
 
-		GameActions gameActions = ActionPanel.instance.gameActions;
+		GameActions gameActions = GameActions.instance;
 
 		image.sprite = ActionButton.GetModeSprite( mode );
 		gameActions.selectedObjectIndex = selectedObjectIndex;
@@ -90,18 +90,18 @@ public class ActionButton
 
 	public static Sprite GetModeSprite( ActionButtonMode mode )
 	{
-		if( ActionPanel.instance != null && ActionPanel.instance.gameActions != null )
+		if( GameActions.instance != null )
 		{
 			switch( mode )
 			{
-				case ActionButtonMode.TARGET: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.PICK_UP: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.DROP: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.STACK: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.ROLL: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.ALIGN: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.CHANGE: return ActionPanel.instance.gameActions.GetActionSprite( mode );
-				case ActionButtonMode.CANCEL: return ActionPanel.instance.gameActions.GetActionSprite( mode );
+				case ActionButtonMode.TARGET: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.PICK_UP: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.DROP: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.STACK: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.ROLL: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.ALIGN: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.CHANGE: return GameActions.instance.GetActionSprite( mode );
+				case ActionButtonMode.CANCEL: return GameActions.instance.GetActionSprite( mode );
 			}
 		}
 		
@@ -110,18 +110,18 @@ public class ActionButton
 
 	public static string GetModeName( ActionButtonMode mode )
 	{
-		if( ActionPanel.instance != null && ActionPanel.instance.gameActions != null )
+		if( GameActions.instance != null )
 		{
 			switch( mode )
 			{
-				case ActionButtonMode.TARGET: return ActionPanel.instance.gameActions.TARGET;
-				case ActionButtonMode.PICK_UP: return ActionPanel.instance.gameActions.PICK_UP;
-				case ActionButtonMode.DROP: return ActionPanel.instance.gameActions.DROP;
-				case ActionButtonMode.STACK: return ActionPanel.instance.gameActions.STACK;
-				case ActionButtonMode.ROLL: return ActionPanel.instance.gameActions.ROLL;
-				case ActionButtonMode.ALIGN: return ActionPanel.instance.gameActions.ALIGN;
-				case ActionButtonMode.CHANGE: return ActionPanel.instance.gameActions.CHANGE;
-				case ActionButtonMode.CANCEL: return ActionPanel.instance.gameActions.CANCEL;
+				case ActionButtonMode.TARGET: return GameActions.instance.TARGET;
+				case ActionButtonMode.PICK_UP: return GameActions.instance.PICK_UP;
+				case ActionButtonMode.DROP: return GameActions.instance.DROP;
+				case ActionButtonMode.STACK: return GameActions.instance.STACK;
+				case ActionButtonMode.ROLL: return GameActions.instance.ROLL;
+				case ActionButtonMode.ALIGN: return GameActions.instance.ALIGN;
+				case ActionButtonMode.CHANGE: return GameActions.instance.CHANGE;
+				case ActionButtonMode.CANCEL: return GameActions.instance.CANCEL;
 			}
 		}
 		
@@ -152,7 +152,11 @@ public class ActionPanel : MonoBehaviour
 
 	public static ActionPanel instance = null;
 
-	[System.NonSerialized] public GameActions gameActions;
+	public GameActions gameActions {
+		get {
+			return GameActions.instance;
+		}
+	}
 
 	protected virtual void Awake()
 	{

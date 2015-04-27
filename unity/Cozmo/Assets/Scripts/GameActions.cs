@@ -24,27 +24,16 @@ public class GameActions : MonoBehaviour
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
-	protected virtual IEnumerator SetActionPanelReference()
-	{
-		while( ActionPanel.instance == null )
-		{
-			yield return null;
-		}
-
-		if( ActionPanel.instance.gameActions != this )
-		{
-			ActionPanel.instance.gameActions = this;
-		}
-	}
+	public static GameActions instance = null;
 
 	protected virtual void OnEnable()
 	{
-		StartCoroutine( SetActionPanelReference() );
+		instance = this;
 	}
 
 	public virtual void OnDisable()
 	{
-		if( ActionPanel.instance != null && ActionPanel.instance.gameActions == this ) ActionPanel.instance.gameActions = null;
+		if( instance == this ) instance = null;
 	}
 
 	public Sprite GetActionSprite( ActionButtonMode mode )
@@ -81,7 +70,7 @@ public class GameActions : MonoBehaviour
 			if( robot.selectedObjects.Count > 0 )
 			{
 				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
-				if(distance <= CozmoUtil.BLOCK_LENGTH_MM) {
+				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 2f) {
 					buttons[0].SetMode( ActionButtonMode.STACK );
 					stack = true;
 				}

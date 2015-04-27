@@ -28,10 +28,18 @@ public class OptionsScreen : MonoBehaviour {
 		Robot.ObservedObjectListType.MARKERS_SEEN.ToString(),
 		Robot.ObservedObjectListType.KNOWN.ToString() };
 
-	public OptionsScreen instance = null;
+	public static OptionsScreen instance = null;
+	public static bool Open {
+		get {
+			if(instance == null) return false;
+			if(instance.optionsAnchor == null) return false;
+			return instance.optionsAnchor.activeSelf;
+		}
+	}
 
 	void Awake () {
 		if(instance != null) {
+			Debug.Log("OptionsScreen destroying self, because instance already exists.");
 			GameObject.Destroy(gameObject);
 			return;
 		}
@@ -40,6 +48,8 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	void OnEnable () {
+		if(instance != this) return;
+
 		Init();
 		AddListeners();
 		optionsAnchor.SetActive(false);

@@ -9,6 +9,12 @@ public class GameLayout : MonoBehaviour {
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
 
+	[TextArea(5,30)]
+	[SerializeField] public string initialInstruction = null;
+
+	[TextArea(5,30)]
+	[SerializeField] public string secondInstruction = null;
+
 	public void Initialize () {
 
 		//init cubes in order, so their canvas draw order is apt

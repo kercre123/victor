@@ -59,7 +59,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 			return;
 		}
 
-		//robot.CancelCurrentActions();
+		robot.CancelAction();
 
 	}
 
