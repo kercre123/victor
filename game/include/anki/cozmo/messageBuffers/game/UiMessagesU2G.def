@@ -1413,6 +1413,7 @@ struct SetWheelControllerGains
 struct SetHeadControllerGains
 {
 	float kp;
+	float kd;
 	float ki;
 	float maxIntegralError;
 	
@@ -1425,9 +1426,11 @@ struct SetHeadControllerGains
 	SetHeadControllerGains& operator=(SetHeadControllerGains&& other) noexcept = default;
 	
 	explicit SetHeadControllerGains(float kp
+		,float kd
 		,float ki
 		,float maxIntegralError)
 	:kp(kp)
+	,kd(kd)
 	,ki(ki)
 	,maxIntegralError(maxIntegralError)
 	{}

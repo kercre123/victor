@@ -731,7 +731,7 @@ public class RobotState
 	private int _carryingObjectID; // int_32
 	private int _carryingObjectOnTopID; // int_32
 	private int _headTrackingObjectID; // int_32
-	private byte _status; // uint_8
+	private uint _status; // uint_32
 	private byte _robotID; // uint_8
 
 	public float pose_x { get { return _pose_x; } set { _pose_x = value; } }
@@ -766,7 +766,7 @@ public class RobotState
 
 	public int headTrackingObjectID { get { return _headTrackingObjectID; } set { _headTrackingObjectID = value; } }
 
-	public byte status { get { return _status; } set { _status = value; } }
+	public uint status { get { return _status; } set { _status = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
 
@@ -793,7 +793,7 @@ public class RobotState
 		int carryingObjectID,
 		int carryingObjectOnTopID,
 		int headTrackingObjectID,
-		byte status,
+		uint status,
 		byte robotID)
 	{
 		this.pose_x = pose_x;
@@ -850,7 +850,7 @@ public class RobotState
 		_carryingObjectID = reader.ReadInt32();
 		_carryingObjectOnTopID = reader.ReadInt32();
 		_headTrackingObjectID = reader.ReadInt32();
-		_status = reader.ReadByte();
+		_status = reader.ReadUInt32();
 		_robotID = reader.ReadByte();
 	}
 
@@ -878,14 +878,14 @@ public class RobotState
 		writer.Write((int)_carryingObjectID);
 		writer.Write((int)_carryingObjectOnTopID);
 		writer.Write((int)_headTrackingObjectID);
-		writer.Write((byte)_status);
+		writer.Write((uint)_status);
 		writer.Write((byte)_robotID);
 	}
 
 	public int Size 
 	{
 		get {
-			return 66;
+			return 69;
 		}
 	}
 

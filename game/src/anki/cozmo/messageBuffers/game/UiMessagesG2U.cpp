@@ -493,7 +493,7 @@ size_t RobotState::Size() const
 	//headTrackingObjectID
 	result += 4; // = int_32
 	//status
-	result += 1; // = uint_8
+	result += 4; // = uint_32
 	//robotID
 	result += 1; // = uint_8
 	return result;
