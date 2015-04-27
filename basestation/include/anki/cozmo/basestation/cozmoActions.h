@@ -156,6 +156,33 @@ namespace Anki {
     };  // class MoveHeadToAngleAction
     
     
+    class MoveLiftToHeightAction : public IAction
+    {
+    public:
+      enum class Preset : u8 {
+        LOW_DOCK,
+        HIGH_DOCK,
+        CARRY
+      };
+      
+      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 2.f);
+      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 2.f);
+      
+      virtual const std::string& GetName() const override { return _name; };
+      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
+      
+    protected:
+      
+      static f32 GetPresetHeight(Preset preset);
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      f32          _height_mm;
+      f32          _heightTolerance;
+      std::string  _name;
+    }; // class MoveLiftToHeightAction
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public IAction

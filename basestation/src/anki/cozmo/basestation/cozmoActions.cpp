@@ -635,6 +635,9 @@ namespace Anki {
       // Can't track head to an object and face it
       robot.DisableTrackHeadToObject();
       
+      // Drop lift
+      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
+      
       return ActionResult::SUCCESS;
     }
     
@@ -802,6 +805,55 @@ namespace Anki {
       return result;
     }
          
+#pragma mark ---- MoveLiftToHeightAction ----
+                                
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm)
+    : _height_mm(height_mm)
+    , _heightTolerance(tolerance_mm)
+    , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
+    {
+      
+    }
+    
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
+    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm)
+    {
+      
+    }
+    
+    
+    f32 MoveLiftToHeightAction::GetPresetHeight(Preset preset)
+    {
+      static const std::map<Preset, f32> LUT = {
+        {Preset::LOW_DOCK,  LIFT_HEIGHT_LOWDOCK},
+        {Preset::HIGH_DOCK, LIFT_HEIGHT_HIGHDOCK},
+        {Preset::CARRY,     LIFT_HEIGHT_CARRY}
+      };
+      
+      return LUT.at(preset);
+    }
+    
+    ActionResult MoveLiftToHeightAction::Init(Robot& robot)
+    {
+      // TODO: Add ability to specify speed/accel
+      if(robot.MoveLiftToHeight(_height_mm, 5, 10) != RESULT_OK) {
+        return ActionResult::FAILURE_ABORT;
+      } else {
+        return ActionResult::SUCCESS;
+      }
+    }
+    
+    ActionResult MoveLiftToHeightAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if(NEAR(robot.GetLiftHeight(), _height_mm, _heightTolerance)) {
+        result = ActionResult::SUCCESS;
+      }
+      
+      return result;
+    }
+    
     
 #pragma mark ---- IDockAction ----
     
