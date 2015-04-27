@@ -110,14 +110,16 @@ namespace Anki {
 
     // Bit flags for RobotState message
     typedef enum {
-      IS_MOVING               = 0x01,  // Head, lift, or wheels
-      IS_CARRYING_BLOCK       = 0x02,
-      IS_PICKING_OR_PLACING   = 0x04,
-      IS_PICKED_UP            = 0x08,
-      IS_PROX_FORWARD_BLOCKED = 0x10,
-      IS_PROX_SIDE_BLOCKED    = 0x20,
-      IS_ANIMATING            = 0x40,
-      IS_PERFORMING_ACTION    = 0x80
+      IS_MOVING               = 0x00000001,  // Head, lift, or wheels
+      IS_CARRYING_BLOCK       = 0x00000002,
+      IS_PICKING_OR_PLACING   = 0x00000004,
+      IS_PICKED_UP            = 0x00000008,
+      IS_PROX_FORWARD_BLOCKED = 0x00000010,
+      IS_PROX_SIDE_BLOCKED    = 0x00000020,
+      IS_ANIMATING            = 0x00000040,
+      IS_PERFORMING_ACTION    = 0x00000080,
+      LIFT_IN_POS             = 0x00000100,
+      HEAD_IN_POS             = 0x00000200
     } RobotStatusFlag;
 
 

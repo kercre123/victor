@@ -216,7 +216,7 @@ namespace Cozmo {
         
         if(relTime_ms == 0) {
           // Get into position ASAP:
-          HeadController::SetSpeedAndAccel(10*M_PI, 1000.f);
+          HeadController::SetMaxSpeedAndAccel(10*M_PI, 1000.f);
           HeadController::SetDesiredAngle(angle_rad);
         } else {
           const f32 duration_sec = (animStartTime_ms + relTime_ms - HAL::GetTimeStamp())*0.001f;
@@ -241,7 +241,7 @@ namespace Cozmo {
       {
         if(relTime_ms == 0) {
           // Get the head in position to start animation [as fast as possible?]
-          HeadController::SetSpeedAndAccel(10*M_PI, 1000.f);
+          HeadController::SetMaxSpeedAndAccel(10*M_PI, 1000.f);
           HeadController::SetDesiredAngle(GetAngleRad(StartHeadNod.lowAngle_deg));
           
           // TODO: Switch to method that takes desired time into account:
@@ -258,7 +258,7 @@ namespace Cozmo {
       {
         if(relTime_ms == 0) {
           // Get to start position ASAP
-          LiftController::SetSpeedAndAccel(1000.f, 1000.f);
+          LiftController::SetMaxSpeedAndAccel(1000.f, 1000.f);
           LiftController::SetDesiredHeight(SetLiftHeight.targetHeight);
         } else {
           const f32 duration_sec = (animStartTime_ms + relTime_ms - HAL::GetTimeStamp())*0.001f;
@@ -281,7 +281,7 @@ namespace Cozmo {
       {
         if(relTime_ms == 0) {
           // Get the lift in position to start animation [as fast as possible?]
-          LiftController::SetSpeedAndAccel(1000.f, 1000.f);
+          LiftController::SetMaxSpeedAndAccel(1000.f, 1000.f);
           LiftController::SetDesiredHeight(StartLiftNod.lowHeight);
           
           // TODO: Switch to method that takes desired time into account:

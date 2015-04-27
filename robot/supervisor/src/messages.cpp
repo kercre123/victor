@@ -172,6 +172,8 @@ namespace Anki {
         robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
+        robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
+        robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -375,12 +377,12 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
-        LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
-        HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
 
@@ -490,11 +492,11 @@ namespace Anki {
       }
       
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
-        HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+        HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
-        LiftController::SetGains(msg.kp, msg.kd, msg.ki, msg.maxIntegralError);
+        LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {

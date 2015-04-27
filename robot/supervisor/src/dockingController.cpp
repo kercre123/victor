@@ -368,7 +368,7 @@ namespace Anki {
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
-                HeadController::SetSpeedAndAccel(2.5, 10);
+                HeadController::SetMaxSpeedAndAccel(2.5, 10);
                 //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 
                 // Make sure bottom of camera FOV doesn't tilt below the bottom of the block

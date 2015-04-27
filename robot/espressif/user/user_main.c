@@ -4,12 +4,39 @@
 #include "osapi.h"
 #include "gpio.h"
 #include "os_type.h"
-#include "user_config.h"
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
 
-//Init function
+/// USER_TASK_PRIO_0 is the lowest (idle) task priority
+#define userTaskPrio USER_TASK_PRIO_0
+
+/// The depth of the user idle task
+#define    userTaskQueueLen    4
+/// Queue for user idle task
+os_event_t userTaskQueue[userTaskQueueLen];
+
+/** User "idle" task
+ * Called by OS with lowest priority.
+ * Always requeues itself.
+ */
+LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
+{
+  static const uint32 INTERVAL = 100000;
+  static uint32 counter = 0;
+  if (counter++ > INTERVAL)
+  {
+    uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
+    counter = 0;
+  }
+  system_os_post(userTaskPrio, 0, 0); // Repost ourselves
+}
+
+/** User initialization function
+ * This function is responsible for setting all the wireless parameters and
+ * Setting up any user application code to run on the espressif.
+ * It is called automatically from the os main function.
+ */
 void ICACHE_FLASH_ATTR
 user_init()
 {
@@ -53,6 +80,10 @@ user_init()
 
     // Setup Basestation client
     clientInit();
+
+    // Setup user task
+    system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
+    //system_os_post(userTaskPrio, 0, 0); // Post user task
 
     os_printf("user initalization complete\r\n");
 
