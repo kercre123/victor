@@ -847,6 +847,12 @@ namespace Anki
       
       if(not matsSeen.empty()) {
         
+        // TODO: False mat marker localization causes the mat to be created in weird places which is messing up game dev.
+        //       Seems to happen particular when looking at the number 1. Disabled for now.
+        PRINT_NAMED_WARNING("UpdateRobotPose.TempIgnore", "Ignoring mat marker. Robot localization disabled.");
+        return false;
+        
+        
         // Is the robot "on" any of the mats it sees?
         // TODO: What to do if robot is "on" more than one mat simultaneously?
         MatPiece* onMat = nullptr;
