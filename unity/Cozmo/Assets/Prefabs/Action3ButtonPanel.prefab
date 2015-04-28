@@ -62,6 +62,7 @@ GameObject:
   - 222: {fileID: 22261252}
   - 114: {fileID: 11461254}
   - 114: {fileID: 11461256}
+  - 114: {fileID: 11412018}
   m_Layer: 5
   m_Name: Action Button 3
   m_TagString: Untagged
@@ -115,6 +116,7 @@ GameObject:
   - 222: {fileID: 22261256}
   - 114: {fileID: 11461262}
   - 114: {fileID: 11461264}
+  - 114: {fileID: 11412020}
   m_Layer: 5
   m_Name: Action Button 2
   m_TagString: Untagged
@@ -133,6 +135,7 @@ GameObject:
   - 222: {fileID: 22261258}
   - 114: {fileID: 11461266}
   - 114: {fileID: 11461268}
+  - 114: {fileID: 11412022}
   m_Layer: 5
   m_Name: Action Button 1
   m_TagString: Untagged
@@ -267,6 +270,45 @@ AudioSource:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
+--- !u!114 &11412018
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 161252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 11461254}
+  text: {fileID: 11461252}
+--- !u!114 &11412020
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 161258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 11461262}
+  text: {fileID: 11461250}
+--- !u!114 &11412022
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 161260}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 11461266}
+  text: {fileID: 11461248}
 --- !u!114 &11461246
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -279,15 +321,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   actionButtons:
-  - button: {fileID: 11461268}
-    image: {fileID: 11461266}
-    text: {fileID: 11461248}
-  - button: {fileID: 11461264}
-    image: {fileID: 11461262}
-    text: {fileID: 11461250}
-  - button: {fileID: 11461256}
-    image: {fileID: 11461254}
-    text: {fileID: 11461252}
+  - {fileID: 11412022}
+  - {fileID: 11412020}
+  - {fileID: 11412018}
   anchorToSnapToSideBar: {fileID: 22461256}
   snapToSideBarScale: 1
   anchorToCenterOnSideBar: {fileID: 22461266}
@@ -431,8 +467,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Cancel
+      - m_Target: {fileID: 11412018}
+        m_MethodName: OnRelease
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -545,8 +581,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Cancel
+      - m_Target: {fileID: 11412020}
+        m_MethodName: OnRelease
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -619,8 +655,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Action
+      - m_Target: {fileID: 11412022}
+        m_MethodName: OnRelease
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

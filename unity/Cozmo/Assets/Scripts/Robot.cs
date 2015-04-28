@@ -30,12 +30,13 @@ public class Robot
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-	public ObservedObject targetLockedObject;
+	public ObservedObject targetLockedObject = null;
 
 	public ActionCompleted lastActionRequested = ActionCompleted.UNKNOWN;
+	public bool searching = false;
 
-	private int carryingObjectID;
-	private int headTrackingObjectID;
+	private int carryingObjectID = -1;
+	private int headTrackingObjectID = -1;
 	private int lastHeadTrackingObjectID = -1;
 
 	private float lastAngle_rad = float.MaxValue;
@@ -200,6 +201,10 @@ public class Robot
 		headTrackingObjectID = -1;
 		lastHeadTrackingObjectID = -1;
 		targetLockedObject = null;
+		searching = false;
+		lastActionRequested = ActionCompleted.UNKNOWN;
+		lastAngle_rad = float.MaxValue;
+		lastLiftHeight_mm = float.MaxValue;
 	}
 
 	public void ClearObservedObjects()

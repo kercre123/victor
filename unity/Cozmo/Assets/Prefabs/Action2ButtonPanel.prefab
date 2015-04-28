@@ -135,6 +135,7 @@ GameObject:
   - 114: {fileID: 11463380}
   - 114: {fileID: 11463382}
   - 114: {fileID: 11443714}
+  - 114: {fileID: 11478742}
   m_Layer: 5
   m_Name: Action Button 2
   m_TagString: Untagged
@@ -171,6 +172,7 @@ GameObject:
   - 114: {fileID: 11463386}
   - 114: {fileID: 11463388}
   - 114: {fileID: 11443716}
+  - 114: {fileID: 11478744}
   m_Layer: 5
   m_Name: Action Button 1
   m_TagString: Untagged
@@ -611,8 +613,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Action
+      - m_Target: {fileID: 11478742}
+        m_MethodName: OnRelease
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -706,8 +708,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Cancel
+      - m_Target: {fileID: 11478744}
+        m_MethodName: OnRelease
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -732,12 +734,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   actionButtons:
-  - button: {fileID: 11463388}
-    image: {fileID: 11463378}
-    text: {fileID: 11463374}
-  - button: {fileID: 11463382}
-    image: {fileID: 11463384}
-    text: {fileID: 11463376}
+  - {fileID: 11478744}
+  - {fileID: 11478742}
   anchorToSnapToSideBar: {fileID: 22463388}
   snapToSideBarScale: 1
   anchorToCenterOnSideBar: {fileID: 0}
@@ -780,6 +778,32 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 32
+--- !u!114 &11478742
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 163380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 11463384}
+  text: {fileID: 11463376}
+--- !u!114 &11478744
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 163384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 11463378}
+  text: {fileID: 11463374}
 --- !u!222 &22213098
 CanvasRenderer:
   m_ObjectHideFlags: 1

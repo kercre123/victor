@@ -12,6 +12,7 @@ public class ActionSlider {
 	[SerializeField] private GameObject highlight;
 	[SerializeField] private Text text;
 	[SerializeField] private Image image;
+	[SerializeField] private Image[] hints;
 	
 	public bool Pressed { get; private set; }
 	
@@ -26,15 +27,28 @@ public class ActionSlider {
 
 		currentAction = button;
 		Pressed = down;
-		
-		if(button.mode == ActionButtonMode.DISABLED) return;
 
-		highlight.SetActive(Pressed);
+		if(button.mode != ActionButton.Mode.DISABLED) {
+			highlight.SetActive(Pressed);
+			text.gameObject.SetActive(Pressed);
+		}
 		
-		text.gameObject.SetActive(Pressed);
-
 		text.text = currentAction.text.text;
 		image.sprite = currentAction.image.sprite;
+
+		SetHints();
+	}
+
+	private void SetHints()
+	{
+		for(int i = 0; i < hints.Length && ActionSliderPanel.instance != null && i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
+			if(hints[i] != null) {
+				if(hints[i].sprite != ActionSliderPanel.instance.actionButtons[i].image.sprite) {
+					hints[i].sprite = ActionSliderPanel.instance.actionButtons[i].image.sprite;
+				}
+				hints[i].gameObject.SetActive(!Pressed && ActionSliderPanel.instance.actionButtons[i].mode != ActionButton.Mode.DISABLED);
+			}
+		}
 	}
 }
 
@@ -51,14 +65,14 @@ public class ActionSliderPanel : ActionPanel
 	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
 	protected bool interactLastFrame = false;
-	protected ActionButtonMode lastMode = ActionButtonMode.DISABLED;
+	protected ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
 	protected override void Awake() {
 		base.Awake();
 		
 		//actionSlider.ClaimOwnership(this);
 		actionSlider.slider.value = 0f;
-		actionSlider.SetMode(centerAction, true);
+		actionSlider.SetMode(centerAction, false);
 	}
 	
 	protected void Update() {
@@ -73,7 +87,7 @@ public class ActionSliderPanel : ActionPanel
 		if(!actionSlider.Pressed) {
 			
 			if(interactLastFrame) {
-				DoReleaseAction();
+				actionSlider.currentAction.OnRelease();
 			}
 
 			robot.selectedObjects.Clear();
@@ -90,7 +104,7 @@ public class ActionSliderPanel : ActionPanel
 		//if we have a new target, let's see if our current slider mode wants to initiate an interaction
 		/*if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
 			
-			if(lastMode != actionSlider.actionButtonMode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
+			if(lastMode != actionSlider.ActionButton.Mode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
 			   robot.selectedObjects[0] != robot.lastSelectedObjects[0] ) {
 				
 				InitiateAssistedInteraction();
@@ -113,11 +127,9 @@ public class ActionSliderPanel : ActionPanel
 	}
 	
 	private void RefreshSliderMode() {
-		GameActions.instance.SetActionButtons();
-
 		ActionButton currentButton = centerAction;
 
-		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButtonMode.DISABLED) {
+		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButton.Mode.DISABLED) {
 			currentButton = bottomAction;
 
 			float minZ = float.MaxValue;
@@ -127,7 +139,7 @@ public class ActionSliderPanel : ActionPanel
 				robot.targetLockedObject = robot.selectedObjects[i];
 			}
 		}
-		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButtonMode.DISABLED) {
+		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButton.Mode.DISABLED) {
 			currentButton = topAction;
 			
 			float maxZ = float.MinValue;
@@ -140,7 +152,7 @@ public class ActionSliderPanel : ActionPanel
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 		
-		if(currentButton.mode != lastMode && currentButton.mode != ActionButtonMode.TARGET) {
+		if(currentButton.mode != lastMode && currentButton.mode != ActionButton.Mode.TARGET) {
 			SlideInSound();
 		}
 		else if(currentButton.mode != lastMode) {
@@ -151,16 +163,12 @@ public class ActionSliderPanel : ActionPanel
 	}
 	
 	/*private void InitiateAssistedInteraction() {
-		switch(actionSlider.actionButtonMode) {
-			case ActionButtonMode.TARGET:
+		switch(actionSlider.ActionButton.Mode) {
+			case ActionButton.Mode.TARGET:
 				//do auto-targeting here!
 				break;
 		}
 	}*/
-	
-	private void DoReleaseAction() {
-		if( actionSlider.currentAction.doActionOnRelease ) actionSlider.currentAction.button.onClick.Invoke();
-	}
 
 	public void SlideInSound()
 	{
