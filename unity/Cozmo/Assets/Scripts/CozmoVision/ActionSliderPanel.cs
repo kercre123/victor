@@ -9,56 +9,32 @@ using System.Collections.Generic;
 [System.Serializable]
 public class ActionSlider {
 	public Slider slider;
-	public Image image;
-	public Text text;
-	public GameObject highlight;
+	[SerializeField] private GameObject highlight;
+	[SerializeField] private Text text;
+	[SerializeField] private Image image;
 	
 	public bool Pressed { get; private set; }
+	
+	public ActionButton currentAction { get; private set; }
 
-	public ActionButtonMode actionButtonMode { get; private set; }
-	public ActionButton actionButton { get; private set; }
-
-	public void SetMode(ActionButtonMode mode, bool down, ActionButton button = null) {
+	public void SetMode(ActionButton button, bool down) {
 		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
-		actionButton = button;
-		actionButtonMode = mode;
-		Pressed = down;
-		
-		if(mode == ActionButtonMode.DISABLED) {
-			//slider.gameObject.SetActive(false);
-			//slider.onClick.RemoveAllListeners();
+		if( button == null ) {
+			Debug.LogError( "Slider was given a current action of null" );
 			return;
 		}
+
+		currentAction = button;
+		Pressed = down;
+		
+		if(button.mode == ActionButtonMode.DISABLED) return;
 
 		highlight.SetActive(Pressed);
 		
 		text.gameObject.SetActive(Pressed);
 
-		if(actionButton == null) {
-			text.text = ActionButton.GetModeName(mode);
-			image.sprite = ActionButton.GetModeSprite(mode);
-		}
-		else {
-			text.text = actionButton.text.text;
-			image.sprite = actionButton.image.sprite;
-		}
-		
-		switch(mode) {
-			case ActionButtonMode.TARGET:
-				if(Pressed) {
-					if(		RobotEngineManager.instance != null
-					   && 	RobotEngineManager.instance.current != null
-				   	   &&	RobotEngineManager.instance.current.targetLockedObject != null) {
-						
-						//dmd2do get prop family name from observedobject
-						text.text = "Cube " + RobotEngineManager.instance.current.targetLockedObject;
-					}
-					else {
-						text.text = "Target";
-					}
-				}
-				break;
-		}
+		text.text = currentAction.text.text;
+		image.sprite = currentAction.image.sprite;
 	}
 }
 
@@ -68,24 +44,25 @@ public class ActionSliderPanel : ActionPanel
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
 
+	protected ActionButton bottomAction { get { return actionButtons[0]; } }
+	protected ActionButton topAction { get { return actionButtons[1]; } }
+	protected ActionButton centerAction { get { return actionButtons[2]; } }
+
 	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	public ActionButton bottomAction { get { return actionButtons[0]; } }
-	public ActionButton topAction { get { return actionButtons[1]; } }
-
-	bool interactLastFrame = false;
-	ActionButtonMode lastMode = ActionButtonMode.DISABLED;
+	protected bool interactLastFrame = false;
+	protected ActionButtonMode lastMode = ActionButtonMode.DISABLED;
 
 	protected override void Awake() {
 		base.Awake();
 		
 		//actionSlider.ClaimOwnership(this);
 		actionSlider.slider.value = 0f;
-		actionSlider.SetMode(ActionButtonMode.TARGET, false);
+		actionSlider.SetMode(centerAction, true);
 	}
 	
 	protected void Update() {
-		lastMode = actionSlider.actionButtonMode;
+		lastMode = actionSlider.currentAction.mode;
 
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
 			return;
@@ -101,8 +78,9 @@ public class ActionSliderPanel : ActionPanel
 
 			robot.selectedObjects.Clear();
 			interactLastFrame = false;
+			robot.targetLockedObject = null;
 			
-			actionSlider.SetMode(ActionButtonMode.TARGET, false);
+			actionSlider.SetMode(centerAction, false);
 
 			return;
 		}
@@ -125,7 +103,7 @@ public class ActionSliderPanel : ActionPanel
 	}
 
 	public void ToggleInteract(bool val) {
-		actionSlider.SetMode(actionSlider.actionButtonMode, val, actionSlider.actionButton);
+		actionSlider.SetMode(actionSlider.currentAction, val);
 		
 		if(!val) {
 			actionSlider.slider.value = 0f;
@@ -135,14 +113,12 @@ public class ActionSliderPanel : ActionPanel
 	}
 	
 	private void RefreshSliderMode() {
-		gameActions.SetActionButtons();
+		GameActions.instance.SetActionButtons();
 
-		ActionButton currentButton = null;
-		ActionButtonMode currentMode = ActionButtonMode.TARGET;
+		ActionButton currentButton = centerAction;
 
 		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = bottomAction;
-			currentMode = bottomAction.mode;
 
 			float minZ = float.MaxValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -153,7 +129,6 @@ public class ActionSliderPanel : ActionPanel
 		}
 		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButtonMode.DISABLED) {
 			currentButton = topAction;
-			currentMode = topAction.mode;
 			
 			float maxZ = float.MinValue;
 			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
@@ -165,14 +140,14 @@ public class ActionSliderPanel : ActionPanel
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 		
-		if(currentMode != lastMode && currentMode != ActionButtonMode.TARGET) {
+		if(currentButton.mode != lastMode && currentButton.mode != ActionButtonMode.TARGET) {
 			SlideInSound();
 		}
-		else if(currentMode != lastMode) {
+		else if(currentButton.mode != lastMode) {
 			SlideOutSound();
 		}
 		//Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
-		actionSlider.SetMode(currentMode, actionSlider.Pressed, currentButton);
+		actionSlider.SetMode(currentButton, actionSlider.Pressed);
 	}
 	
 	/*private void InitiateAssistedInteraction() {
@@ -184,7 +159,7 @@ public class ActionSliderPanel : ActionPanel
 	}*/
 	
 	private void DoReleaseAction() {
-		if(actionSlider.actionButton != null) actionSlider.actionButton.button.onClick.Invoke();
+		if( actionSlider.currentAction.doActionOnRelease ) actionSlider.currentAction.button.onClick.Invoke();
 	}
 
 	public void SlideInSound()
@@ -198,5 +173,4 @@ public class ActionSliderPanel : ActionPanel
 		audio.volume = 1f;
 		audio.PlayOneShot( slideOutSound, 1f );
 	}
-
 }
