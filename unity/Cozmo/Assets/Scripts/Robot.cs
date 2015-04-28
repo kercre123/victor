@@ -390,8 +390,6 @@ public class Robot
 
 	public void PickAndPlaceObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		//TrackHeadToObject( selectedObjects[index] );
-
 		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
 		message.objectID = selectedObject;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
@@ -401,6 +399,22 @@ public class Robot
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ PickAndPlaceObject = message } );
 
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+	public void GotoPose( float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false )
+	{
+		U2G.GotoPose message = new U2G.GotoPose();
+		message.level = System.Convert.ToByte( level );
+		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		message.x_mm = x_mm;
+		message.y_mm = y_mm;
+		message.rad = rad;
+
+		Debug.Log( "Go to Pose: x: " + message.x_mm + " y: " + message.y_mm + " useManualSpeed: " + message.useManualSpeed + " level: " + message.level );
+		
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ GotoPose = message } );
+		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
@@ -442,7 +456,7 @@ public class Robot
 		targetLockedObject = null;
 		
 		SetLiftHeight( 0f );
-		SetHeadAngle( defaultHeadAngle );
+		SetHeadAngle();
 	}
 	
 	public void ClearAllBlocks()
@@ -455,7 +469,7 @@ public class Robot
 		Reset();
 		
 		SetLiftHeight( 0f );
-		SetHeadAngle( defaultHeadAngle );
+		SetHeadAngle();
 	}
 	
 	public void VisionWhileMoving( bool enable )
