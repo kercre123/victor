@@ -15,6 +15,10 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected float countdownToStart = 0f;
 	[SerializeField] protected AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
+	[SerializeField] protected AudioClip[] timerSounds;
+	[SerializeField] protected int[] timerEventTimes = {80,70,60,50,40,30,20,10,9,8,7,6,5,4,3,2,1};
+	[SerializeField] protected AudioSource notificationAudio;
+	[SerializeField] protected AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
 	[SerializeField] protected Text textScore = null;
@@ -37,14 +41,20 @@ public class GameController : MonoBehaviour {
 	protected float stateTimer = 0f;
 	protected int currentCountdown = 0;
 
+	protected float lastPlayTime = 0;
+	protected int timerEventIndex = 0;
+	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
+
 	protected int[] scores;
 
 	protected int winnerIndex;
 	protected bool firstFrame = true;
 
-	float errorMsgTimer = 0f;
+	protected float errorMsgTimer = 0f;
 
-	private static float _MessageDelay = 0.5f;
+	protected Robot robot;
+
+	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
 
 	protected virtual void OnEnable () {
@@ -243,11 +253,17 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_PLAYING() {
+
+		timerEventIndex = 0;
+		bonusTime = 0;
+
 		Debug.Log(gameObject.name + " Enter_PLAYING");
 		if(gameStartSound != null && audio != null) audio.PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
+
+
 	}
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
@@ -316,5 +332,44 @@ public class GameController : MonoBehaviour {
 
 	public void BuildRequested() {
 		buildRequested = true;
+	}
+
+	protected void ResetTimerIndex(float timer)
+	{
+		// need to reset when we've added bonus time
+		timerEventIndex = 0;
+		int next_event_time = timerEventTimes[timerEventIndex];
+		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
+		{
+			next_event_time = timerEventTimes[timerEventIndex];
+			timerEventIndex++;
+		}
+	}
+	
+	protected void UpdateTimerEvents (float timer)
+	{
+		if (timerEventIndex < timerEventTimes.Length) 
+		{
+			// get our next event
+			int next_event_time = timerEventTimes[timerEventIndex];
+			if( (int)((maxPlayTime+bonusTime)-timer) <= next_event_time )
+			{
+				if( !notificationAudio.isPlaying ) // defer to other notifications
+				{
+					notificationAudio.PlayOneShot(timerSounds[timerEventIndex]);
+				}
+				timerEventIndex++;
+			}
+		}
+	}
+	
+	protected void PlayNotificationAudio(AudioClip clip)
+	{
+		if (notificationAudio != null) 
+		{
+			notificationAudio.Stop ();
+			Debug.Log ("Should be playing " + clip.name);
+			notificationAudio.PlayOneShot (clip);
+		}
 	}
 }

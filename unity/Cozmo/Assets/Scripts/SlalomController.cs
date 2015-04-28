@@ -18,7 +18,6 @@ public class SlalomController : GameController {
 	int currentObstacleIndex = 0;
 	bool lastPassCrossUp = true;
 	bool forward = true;
-	Robot robot;
 	//Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
 	float totalAngleFromObstacleTraversed;

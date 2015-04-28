@@ -12,15 +12,12 @@ public class GoldRushController : GameController {
 
 	[SerializeField] protected AudioClip foundBeep;
 	[SerializeField] protected AudioClip collectedSound;
-	[SerializeField] protected AudioSource notificationAudio;
-	[SerializeField] protected AudioClip[] timerSounds;
-	[SerializeField] protected int[] timerEventTimes = {60,30,10,9,8,7,6,5,4,3,2,1};
 	[SerializeField] protected AudioClip pickupEnergyScanner;
 	[SerializeField] protected AudioClip placeEnergyScanner;
 	[SerializeField] protected AudioClip findEnergy;
 	[SerializeField] protected AudioClip dropEnergy;
 	[SerializeField] protected AudioClip timeUp;
-	[SerializeField] protected AudioClip gameStartingIn;
+
 	[SerializeField] protected AudioClip timeExtension;
 	[SerializeField] protected Button extractButton = null;
 	public float detectRangeDelayFar = 2.0f;
@@ -28,8 +25,6 @@ public class GoldRushController : GameController {
 	public float light_messaging_delay = .05f;
 	private float last_light_message_time = -1;
 
-	private float lastPlayTime = 0;
-	private int timerEventIndex = 0;
 	private int numDrops = 0;
 
 	[SerializeField] float hideRadius;	//radius around cube's initial position in which its gold will be buried
@@ -39,6 +34,7 @@ public class GoldRushController : GameController {
 	[SerializeField] float extractionTime = 1.5f; //time it takes to extract
 	[SerializeField] float rewardTime = 1.5f; //time it takes to reward
 	[SerializeField] int numDropsForBonusTime = 1;
+
 	[SerializeField] float baseTimeBonus = 30f;
 	[SerializeField] float bonusTimeDecay = 2f / 3f;
 
@@ -54,6 +50,7 @@ public class GoldRushController : GameController {
 	ScreenMessage hintMessage;
 	private bool audioLocatorEnabled = true;
 	byte last_leds = 0xFF;
+	bool sent = false;
 
 	enum PlayState
 	{
@@ -71,7 +68,7 @@ public class GoldRushController : GameController {
 	private PlayState playState = PlayState.IDLE;
 	float playStateTimer = 0;
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
-	float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
+
 
 	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
 	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
@@ -86,7 +83,7 @@ public class GoldRushController : GameController {
 
 	private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
-	Robot robot;
+
 	//int lastHeldID;
 
 	void Awake()
@@ -138,10 +135,9 @@ public class GoldRushController : GameController {
 		playState = PlayState.IDLE;
 		playStateTimer = 0;
 		totalActiveTime = 0;
-		timerEventIndex = 0;
 		scores [0] = 0;
 		numDrops = 0;
-		bonusTime = 0;
+
 		CozmoVision.EnableDing(false); // just in case we were in searching mode
 		SetEnergyBars (0, 0);
 	}
@@ -230,7 +226,7 @@ public class GoldRushController : GameController {
 		hintMessage.KillMessage ();
 		base.Exit_BUILDING ();
 	}
-	bool sent = false;
+
 	protected override void Update_BUILDING ()
 	{
 		base.Update_BUILDING ();
@@ -320,45 +316,6 @@ public class GoldRushController : GameController {
 
 		//game specific end conditions...
 		return false;
-	}
-
-	void ResetTimerIndex(float timer)
-	{
-		// need to reset when we've added bonus time
-		timerEventIndex = 0;
-		int next_event_time = timerEventTimes[timerEventIndex];
-		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
-		{
-			next_event_time = timerEventTimes[timerEventIndex];
-			timerEventIndex++;
-		}
-	}
-	
-	void UpdateTimerEvents (float timer)
-	{
-		if (timerEventIndex < timerEventTimes.Length) 
-		{
-			// get our next event
-			int next_event_time = timerEventTimes[timerEventIndex];
-			if( (int)((maxPlayTime+bonusTime)-timer) <= next_event_time )
-			{
-				if( !notificationAudio.isPlaying ) // defer to other notifications
-				{
-					notificationAudio.PlayOneShot(timerSounds[timerEventIndex]);
-				}
-				timerEventIndex++;
-			}
-		}
-	}
-
-	void PlayNotificationAudio(AudioClip clip)
-	{
-		if (notificationAudio != null) 
-		{
-			notificationAudio.Stop ();
-			Debug.Log ("Should be playing " + clip.name);
-			notificationAudio.PlayOneShot (clip);
-		}
 	}
 
 	void EnableAudioLocator(bool on)
