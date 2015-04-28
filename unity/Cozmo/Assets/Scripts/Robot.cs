@@ -162,6 +162,14 @@ public class Robot
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
+		RobotEngineManager.instance.DisconnectedFromClient += Reset;
+
+		RefreshObjectPertinence();
+
+	}
+
+	public void RefreshObjectPertinence() {
+
 		int objectPertinenceOverride = OptionsScreen.GetObjectPertinenceTypeOverride();
 
 		if( objectPertinenceOverride >= 0 )
@@ -176,8 +184,6 @@ public class Robot
 			objectPertinenceRange = objectPertinenceRangeOverride;
 			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
 		}
-
-		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
 
 	private void Reset( DisconnectionReason reason = DisconnectionReason.None )

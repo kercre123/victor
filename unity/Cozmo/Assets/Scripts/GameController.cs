@@ -60,6 +60,9 @@ public class GameController : MonoBehaviour {
 
 	protected Robot robot;
 
+	public float gameStartingInDelay = 1.3f;
+	int lastTimerSeconds = 0;
+
 	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
 
@@ -118,7 +121,7 @@ public class GameController : MonoBehaviour {
 		//consider switching states
 		switch(state) {
 			case GameState.BUILDING:
-				if((playRequested || autoPlay) && IsGameReady()) return GameState.PLAYING; 
+				if((playRequested || autoPlay) && IsGameReady()) return GameState.PRE_GAME; 
 				break;
 			case GameState.PRE_GAME:
 				if(IsPreGameCompleted()) return GameState.PLAYING; 
@@ -129,7 +132,7 @@ public class GameController : MonoBehaviour {
 				break;
 			case GameState.RESULTS:
 				if(buildRequested) return GameState.BUILDING;
-				if(playRequested && IsGameReady()) return GameState.PLAYING;
+				if(playRequested && IsGameReady()) return GameState.PRE_GAME;
 				break;
 		}
 
@@ -178,16 +181,14 @@ public class GameController : MonoBehaviour {
 
 		if (textTime != null && state == GameState.PLAYING) {
 			if (maxPlayTime > 0f) {
-				textTime.text = Mathf.FloorToInt (maxPlayTime - stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString ();
 			} else {
-				textTime.text = Mathf.FloorToInt (stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (stateTimer).ToString ();
 			}
 		} else {
 			textTime.text = string.Empty;
 		}
 
-
-		
 		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
 			if(textError != null) {
 				//set specific text once we have analyzer
@@ -230,10 +231,10 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_PRE_GAME");
 		if(countdownText != null) {
 			int remaining = Mathf.CeilToInt(countdownToStart);
-			if(countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+			if(countdownTickSound != null && audio != null) audio.PlayOneShot(gameStartingIn);
 			countdownText.text = remaining.ToString();
 			currentCountdown = remaining;
-			countdownText.gameObject.SetActive(true);
+			countdownText.gameObject.SetActive(false);
 		}
 
 		lastTimerSeconds = 0;
@@ -244,20 +245,21 @@ public class GameController : MonoBehaviour {
 		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
 		//	or if this game has a count-down before start, we display that count down here
 
-		if(countdownToStart > 0f) {
+		if(countdownToStart > 0f && stateTimer >= gameStartingInDelay) {
 
-			int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - stateTimer, 0, countdownToStart) );
+			int remaining = Mathf.CeilToInt( Mathf.Clamp(gameStartingInDelay + countdownToStart - stateTimer, 0, countdownToStart) );
 
+			PlayCountdownAudio(remaining);
+			
 			if(countdownText != null) {
 
-				if(remaining != currentCountdown && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
 				countdownText.text = remaining.ToString();
 				currentCountdown = remaining;
 
 				countdownText.gameObject.SetActive(true);
 			}
 
-			PlayCountdownAudio(remaining);
+
 		}
 	}
 
@@ -323,7 +325,7 @@ public class GameController : MonoBehaviour {
 		//add game specific gating in an override of this method
 		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
 		//	or if this game has a count-down before start, handle that check here
-		if(countdownToStart > 0f && stateTimer < countdownToStart) return false;
+		if(countdownToStart > 0f && stateTimer < (countdownToStart + gameStartingInDelay)) return false;
 
 		return true;
 	}
@@ -351,32 +353,22 @@ public class GameController : MonoBehaviour {
 		buildRequested = true;
 	}
 
-//	protected void ResetTimerIndex(float timer)
-//	{
-//		// need to reset when we've added bonus time
-//		timerEventIndex = 0;
-//		int next_event_time = timerEventTimes[timerEventIndex];
-//		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
-//		{
-//			next_event_time = timerEventTimes[timerEventIndex];
-//			timerEventIndex++;
-//		}
-//	}
+	protected void PlayCountdownAudio(int secondsLeft) {
+		bool played = false;
 
-	public float gameStartingInDelay = 1.3f;
-	int lastTimerSeconds = 0;
-	protected void PlayCountdownAudio (int secondsLeft)
-	{
 		for(int i=0; i<timerSounds.Length; i++) {
-			if(secondsLeft == timerSounds[i].time && lastTimerSeconds > timerSounds[i].time) {
+			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
 				// defer to other notifications
 				if( !notificationAudio.isPlaying ) {
 					notificationAudio.PlayOneShot(timerSounds[i].sound);
 				}
+				played = true;
 				break;
 			}
 		}
 
+		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+		
 		lastTimerSeconds = secondsLeft;
 	}
 	

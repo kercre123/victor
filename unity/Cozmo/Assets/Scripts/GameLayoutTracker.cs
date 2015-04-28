@@ -129,6 +129,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void Update () {
 
+		if(Input.GetKeyDown(KeyCode.V)) {
+			ValidateBlocks();
+		}
+
 		if(validCount == currentLayout.blocks.Count) {
 			if(lastValidCount != currentLayout.blocks.Count) {
 				audio.PlayOneShot(layoutValidatedSound);
