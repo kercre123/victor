@@ -166,7 +166,8 @@ public class GoldRushController : GameController {
 
 		playStateTimer += Time.deltaTime;
 
-		UpdateTimerEvents (totalActiveTime);
+		int secondsLeft = Mathf.CeilToInt((maxPlayTime + bonusTime) - totalActiveTime);
+		PlayCountdownAudio(secondsLeft);
 
 		if( robot != null )
 		{
@@ -587,7 +588,7 @@ public class GoldRushController : GameController {
 		int timer_index = timerSounds.Length - 3;
 		while( timer_index < timerSounds.Length )
 		{
-			PlayNotificationAudio(timerSounds [timer_index]);
+			PlayNotificationAudio(timerSounds [timer_index].sound);
 			timer_index++;
 			yield return new WaitForSeconds (1);
 		}
@@ -623,7 +624,7 @@ public class GoldRushController : GameController {
 			int num_bonuses_awarded = (numDrops / numDropsForBonusTime) - 1;
 			float awardedTime = num_bonuses_awarded == 0 ? baseTimeBonus : baseTimeBonus*bonusTimeDecay;
 			bonusTime += awardedTime;
-			ResetTimerIndex(totalActiveTime);
+			//ResetTimerIndex(totalActiveTime);
 			SetEnergyBars(numDropsForBonusTime, color);
 
 		}

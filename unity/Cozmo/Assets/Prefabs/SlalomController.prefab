@@ -295,12 +295,98 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &192068
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 492068}
+  - 82: {fileID: 8292068}
+  m_Layer: 0
+  m_Name: NotificationAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &492068
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 192068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22475720}
+  m_RootOrder: 7
 --- !u!82 &8275692
 AudioSource:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 175720}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+--- !u!82 &8292068
+AudioSource:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 192068}
   m_Enabled: 1
   serializedVersion: 3
   m_audioClip: {fileID: 0}
@@ -783,6 +869,43 @@ MonoBehaviour:
   countdownToStart: 5
   countdownTickSound: {fileID: 8300000, guid: 68a0eccfd709a45ceb9c422dfdd6d145, type: 3}
   maxPlayTime: 60
+  timerSounds:
+  - time: 1
+    sound: {fileID: 8300000, guid: 5cb604773e21245808f4e243aaa7223a, type: 3}
+  - time: 2
+    sound: {fileID: 8300000, guid: a0908384ad42448e9bd10e92845c880c, type: 3}
+  - time: 3
+    sound: {fileID: 8300000, guid: 98afbf8ab2ffb4fdeab921230480c0c7, type: 3}
+  - time: 4
+    sound: {fileID: 8300000, guid: c717550ae88044674ad09b7a5b15e8fb, type: 3}
+  - time: 5
+    sound: {fileID: 8300000, guid: e198a00397231488c916bf8ce43459a3, type: 3}
+  - time: 6
+    sound: {fileID: 8300000, guid: e159736d8d7d34f608899ab3fec88bb1, type: 3}
+  - time: 7
+    sound: {fileID: 8300000, guid: a1203dfaa110b42da820daff691cc13b, type: 3}
+  - time: 8
+    sound: {fileID: 8300000, guid: 55f2d99baeb994a388a631dfe8c0671a, type: 3}
+  - time: 9
+    sound: {fileID: 8300000, guid: d7419bf6cf89f466391b0537316ea2a4, type: 3}
+  - time: 10
+    sound: {fileID: 8300000, guid: 54c3df62cd7944a8fb1d24334920b772, type: 3}
+  - time: 20
+    sound: {fileID: 8300000, guid: e0ceaac6f640040c3a31d0ddb573876e, type: 3}
+  - time: 30
+    sound: {fileID: 8300000, guid: b9d12930e71f643e583fb7dc5b8bb412, type: 3}
+  - time: 40
+    sound: {fileID: 8300000, guid: ff45ea9f97bca40a99bf458a2bad32c4, type: 3}
+  - time: 50
+    sound: {fileID: 8300000, guid: f615012620174473289c60f11340eddf, type: 3}
+  - time: 60
+    sound: {fileID: 8300000, guid: 05ccc0f247dfb4295b76ca35df0ac5ea, type: 3}
+  - time: 70
+    sound: {fileID: 8300000, guid: 11ba49c66df394d618a30d25d9e793d1, type: 3}
+  - time: 80
+    sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
+  notificationAudio: {fileID: 8292068}
+  gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
   scoreToWin: 0
   numPlayers: 1
   textScore: {fileID: 11475700}
@@ -797,6 +920,7 @@ MonoBehaviour:
   playerScoreSound: {fileID: 8300000, guid: 08703ad4536e54d47b9007f9d66b31b3, type: 3}
   playingLoopSound: {fileID: 0}
   gameOverSound: {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
+  gameStartingInDelay: 1.29999995
   thereAndBackAgain: 1
   endless: 1
   trackWithCornerTriggers: 0
@@ -1268,6 +1392,7 @@ RectTransform:
   - {fileID: 22476680}
   - {fileID: 22475706}
   - {fileID: 22475716}
+  - {fileID: 492068}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}

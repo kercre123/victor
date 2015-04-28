@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 
 public class GameController : MonoBehaviour {
@@ -11,12 +12,17 @@ public class GameController : MonoBehaviour {
 		RESULTS
 	}
 
+	[Serializable]
+	public class TimerAudio {
+		public int time = 0;
+		public AudioClip sound = null;
+	}
+
 	[SerializeField] protected Text countdownText = null;
 	[SerializeField] protected float countdownToStart = 0f;
 	[SerializeField] protected AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
-	[SerializeField] protected AudioClip[] timerSounds;
-	[SerializeField] protected int[] timerEventTimes = {80,70,60,50,40,30,20,10,9,8,7,6,5,4,3,2,1};
+	[SerializeField] protected TimerAudio[] timerSounds;
 	[SerializeField] protected AudioSource notificationAudio;
 	[SerializeField] protected AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
@@ -229,6 +235,8 @@ public class GameController : MonoBehaviour {
 			currentCountdown = remaining;
 			countdownText.gameObject.SetActive(true);
 		}
+
+		lastTimerSeconds = 0;
 	}
 	protected virtual void Update_PRE_GAME() {
 		//Debug.Log(gameObject.name + " Update_PRE_GAME");
@@ -236,15 +244,23 @@ public class GameController : MonoBehaviour {
 		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
 		//	or if this game has a count-down before start, we display that count down here
 
-		if(countdownToStart > 0f && countdownText != null) {
-			int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - stateTimer, 0, countdownToStart) );
-			if(remaining != currentCountdown && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
-			countdownText.text = remaining.ToString();
-			currentCountdown = remaining;
+		if(countdownToStart > 0f) {
 
-			countdownText.gameObject.SetActive(true);
+			int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - stateTimer, 0, countdownToStart) );
+
+			if(countdownText != null) {
+
+				if(remaining != currentCountdown && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+				countdownText.text = remaining.ToString();
+				currentCountdown = remaining;
+
+				countdownText.gameObject.SetActive(true);
+			}
+
+			PlayCountdownAudio(remaining);
 		}
 	}
+
 	protected virtual void Exit_PRE_GAME() {
 		Debug.Log(gameObject.name + " Exit_PRE_GAME");
 		if(countdownText != null) {
@@ -265,6 +281,7 @@ public class GameController : MonoBehaviour {
 
 
 	}
+
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
@@ -334,33 +351,33 @@ public class GameController : MonoBehaviour {
 		buildRequested = true;
 	}
 
-	protected void ResetTimerIndex(float timer)
+//	protected void ResetTimerIndex(float timer)
+//	{
+//		// need to reset when we've added bonus time
+//		timerEventIndex = 0;
+//		int next_event_time = timerEventTimes[timerEventIndex];
+//		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
+//		{
+//			next_event_time = timerEventTimes[timerEventIndex];
+//			timerEventIndex++;
+//		}
+//	}
+
+	public float gameStartingInDelay = 1.3f;
+	int lastTimerSeconds = 0;
+	protected void PlayCountdownAudio (int secondsLeft)
 	{
-		// need to reset when we've added bonus time
-		timerEventIndex = 0;
-		int next_event_time = timerEventTimes[timerEventIndex];
-		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
-		{
-			next_event_time = timerEventTimes[timerEventIndex];
-			timerEventIndex++;
-		}
-	}
-	
-	protected void UpdateTimerEvents (float timer)
-	{
-		if (timerEventIndex < timerEventTimes.Length) 
-		{
-			// get our next event
-			int next_event_time = timerEventTimes[timerEventIndex];
-			if( (int)((maxPlayTime+bonusTime)-timer) <= next_event_time )
-			{
-				if( !notificationAudio.isPlaying ) // defer to other notifications
-				{
-					notificationAudio.PlayOneShot(timerSounds[timerEventIndex]);
+		for(int i=0; i<timerSounds.Length; i++) {
+			if(secondsLeft == timerSounds[i].time && lastTimerSeconds > timerSounds[i].time) {
+				// defer to other notifications
+				if( !notificationAudio.isPlaying ) {
+					notificationAudio.PlayOneShot(timerSounds[i].sound);
 				}
-				timerEventIndex++;
+				break;
 			}
 		}
+
+		lastTimerSeconds = secondsLeft;
 	}
 	
 	protected void PlayNotificationAudio(AudioClip clip)
