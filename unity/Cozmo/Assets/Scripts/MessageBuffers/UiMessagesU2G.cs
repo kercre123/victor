@@ -65,17 +65,17 @@ public class Ping
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -84,25 +84,29 @@ public class Ping
 		return true;
 	}
 
+	public static bool operator ==(Ping a, Ping b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(Ping a, Ping b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		Ping p = obj as Ping;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as Ping);
 	}
 
 	public bool Equals(Ping p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -178,17 +182,17 @@ public class ConnectToRobot
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -197,25 +201,29 @@ public class ConnectToRobot
 		return true;
 	}
 
+	public static bool operator ==(ConnectToRobot a, ConnectToRobot b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ConnectToRobot a, ConnectToRobot b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ConnectToRobot p = obj as ConnectToRobot;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ConnectToRobot);
 	}
 
 	public bool Equals(ConnectToRobot p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -291,17 +299,17 @@ public class ConnectToUiDevice
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -310,25 +318,29 @@ public class ConnectToUiDevice
 		return true;
 	}
 
+	public static bool operator ==(ConnectToUiDevice a, ConnectToUiDevice b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ConnectToUiDevice a, ConnectToUiDevice b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ConnectToUiDevice p = obj as ConnectToUiDevice;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ConnectToUiDevice);
 	}
 
 	public bool Equals(ConnectToUiDevice p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -404,17 +416,17 @@ public class DisconnectFromUiDevice
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -423,25 +435,29 @@ public class DisconnectFromUiDevice
 		return true;
 	}
 
+	public static bool operator ==(DisconnectFromUiDevice a, DisconnectFromUiDevice b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(DisconnectFromUiDevice a, DisconnectFromUiDevice b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		DisconnectFromUiDevice p = obj as DisconnectFromUiDevice;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as DisconnectFromUiDevice);
 	}
 
 	public bool Equals(DisconnectFromUiDevice p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -551,17 +567,17 @@ public class ForceAddRobot
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -570,25 +586,29 @@ public class ForceAddRobot
 		return true;
 	}
 
+	public static bool operator ==(ForceAddRobot a, ForceAddRobot b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ForceAddRobot a, ForceAddRobot b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ForceAddRobot p = obj as ForceAddRobot;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ForceAddRobot);
 	}
 
 	public bool Equals(ForceAddRobot p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -603,7 +623,6 @@ public class ForceAddRobot
 		unchecked
 		{
 			int hash = 17;
-			hash = hash * 23 + this._ipAddress.GetHashCode();
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._isSimulated.GetHashCode();
 			return hash;
@@ -695,17 +714,17 @@ public class StartEngine
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -714,25 +733,29 @@ public class StartEngine
 		return true;
 	}
 
+	public static bool operator ==(StartEngine a, StartEngine b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(StartEngine a, StartEngine b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		StartEngine p = obj as StartEngine;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as StartEngine);
 	}
 
 	public bool Equals(StartEngine p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -747,7 +770,6 @@ public class StartEngine
 		{
 			int hash = 17;
 			hash = hash * 23 + this._asHost.GetHashCode();
-			hash = hash * 23 + this._vizHostIP.GetHashCode();
 			return hash;
 		}
 	}
@@ -817,17 +839,17 @@ public class DriveWheels
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -836,25 +858,29 @@ public class DriveWheels
 		return true;
 	}
 
+	public static bool operator ==(DriveWheels a, DriveWheels b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(DriveWheels a, DriveWheels b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		DriveWheels p = obj as DriveWheels;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as DriveWheels);
 	}
 
 	public bool Equals(DriveWheels p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -939,17 +965,17 @@ public class TurnInPlace
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -958,25 +984,29 @@ public class TurnInPlace
 		return true;
 	}
 
+	public static bool operator ==(TurnInPlace a, TurnInPlace b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(TurnInPlace a, TurnInPlace b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		TurnInPlace p = obj as TurnInPlace;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as TurnInPlace);
 	}
 
 	public bool Equals(TurnInPlace p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1082,17 +1112,17 @@ public class FaceObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1101,25 +1131,29 @@ public class FaceObject
 		return true;
 	}
 
+	public static bool operator ==(FaceObject a, FaceObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(FaceObject a, FaceObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		FaceObject p = obj as FaceObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as FaceObject);
 	}
 
 	public bool Equals(FaceObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1203,17 +1237,17 @@ public class MoveHead
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1222,25 +1256,29 @@ public class MoveHead
 		return true;
 	}
 
+	public static bool operator ==(MoveHead a, MoveHead b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(MoveHead a, MoveHead b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		MoveHead p = obj as MoveHead;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as MoveHead);
 	}
 
 	public bool Equals(MoveHead p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1316,17 +1354,17 @@ public class MoveLift
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1335,25 +1373,29 @@ public class MoveLift
 		return true;
 	}
 
+	public static bool operator ==(MoveLift a, MoveLift b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(MoveLift a, MoveLift b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		MoveLift p = obj as MoveLift;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as MoveLift);
 	}
 
 	public bool Equals(MoveLift p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1443,17 +1485,17 @@ public class SetLiftHeight
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1462,25 +1504,29 @@ public class SetLiftHeight
 		return true;
 	}
 
+	public static bool operator ==(SetLiftHeight a, SetLiftHeight b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetLiftHeight a, SetLiftHeight b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetLiftHeight p = obj as SetLiftHeight;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetLiftHeight);
 	}
 
 	public bool Equals(SetLiftHeight p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1574,17 +1620,17 @@ public class SetHeadAngle
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1593,25 +1639,29 @@ public class SetHeadAngle
 		return true;
 	}
 
+	public static bool operator ==(SetHeadAngle a, SetHeadAngle b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetHeadAngle a, SetHeadAngle b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetHeadAngle p = obj as SetHeadAngle;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetHeadAngle);
 	}
 
 	public bool Equals(SetHeadAngle p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1698,17 +1748,17 @@ public class TrackHeadToObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1717,25 +1767,29 @@ public class TrackHeadToObject
 		return true;
 	}
 
+	public static bool operator ==(TrackHeadToObject a, TrackHeadToObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(TrackHeadToObject a, TrackHeadToObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		TrackHeadToObject p = obj as TrackHeadToObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as TrackHeadToObject);
 	}
 
 	public bool Equals(TrackHeadToObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1863,17 +1917,17 @@ public class ImageRequest
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1882,25 +1936,29 @@ public class ImageRequest
 		return true;
 	}
 
+	public static bool operator ==(ImageRequest a, ImageRequest b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ImageRequest a, ImageRequest b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ImageRequest p = obj as ImageRequest;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ImageRequest);
 	}
 
 	public bool Equals(ImageRequest p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1985,17 +2043,17 @@ public class SetRobotImageSendMode
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2004,25 +2062,29 @@ public class SetRobotImageSendMode
 		return true;
 	}
 
+	public static bool operator ==(SetRobotImageSendMode a, SetRobotImageSendMode b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetRobotImageSendMode a, SetRobotImageSendMode b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetRobotImageSendMode p = obj as SetRobotImageSendMode;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetRobotImageSendMode);
 	}
 
 	public bool Equals(SetRobotImageSendMode p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2100,17 +2162,17 @@ public class SaveImages
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2119,25 +2181,29 @@ public class SaveImages
 		return true;
 	}
 
+	public static bool operator ==(SaveImages a, SaveImages b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SaveImages a, SaveImages b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SaveImages p = obj as SaveImages;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SaveImages);
 	}
 
 	public bool Equals(SaveImages p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2213,17 +2279,17 @@ public class SaveRobotState
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2232,25 +2298,29 @@ public class SaveRobotState
 		return true;
 	}
 
+	public static bool operator ==(SaveRobotState a, SaveRobotState b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SaveRobotState a, SaveRobotState b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SaveRobotState p = obj as SaveRobotState;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SaveRobotState);
 	}
 
 	public bool Equals(SaveRobotState p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2326,17 +2396,17 @@ public class EnableDisplay
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2345,25 +2415,29 @@ public class EnableDisplay
 		return true;
 	}
 
+	public static bool operator ==(EnableDisplay a, EnableDisplay b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(EnableDisplay a, EnableDisplay b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		EnableDisplay p = obj as EnableDisplay;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as EnableDisplay);
 	}
 
 	public bool Equals(EnableDisplay p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2439,17 +2513,17 @@ public class SetHeadlights
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2458,25 +2532,29 @@ public class SetHeadlights
 		return true;
 	}
 
+	public static bool operator ==(SetHeadlights a, SetHeadlights b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetHeadlights a, SetHeadlights b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetHeadlights p = obj as SetHeadlights;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetHeadlights);
 	}
 
 	public bool Equals(SetHeadlights p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2580,17 +2658,17 @@ public class GotoPose
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2599,25 +2677,29 @@ public class GotoPose
 		return true;
 	}
 
+	public static bool operator ==(GotoPose a, GotoPose b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(GotoPose a, GotoPose b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		GotoPose p = obj as GotoPose;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as GotoPose);
 	}
 
 	public bool Equals(GotoPose p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2729,17 +2811,17 @@ public class PlaceObjectOnGround
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2748,25 +2830,29 @@ public class PlaceObjectOnGround
 		return true;
 	}
 
+	public static bool operator ==(PlaceObjectOnGround a, PlaceObjectOnGround b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(PlaceObjectOnGround a, PlaceObjectOnGround b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		PlaceObjectOnGround p = obj as PlaceObjectOnGround;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as PlaceObjectOnGround);
 	}
 
 	public bool Equals(PlaceObjectOnGround p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2993,17 +3079,17 @@ public class PickAndPlaceObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3012,25 +3098,29 @@ public class PickAndPlaceObject
 		return true;
 	}
 
+	public static bool operator ==(PickAndPlaceObject a, PickAndPlaceObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(PickAndPlaceObject a, PickAndPlaceObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		PickAndPlaceObject p = obj as PickAndPlaceObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as PickAndPlaceObject);
 	}
 
 	public bool Equals(PickAndPlaceObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3117,17 +3207,17 @@ public class TraverseObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3136,25 +3226,29 @@ public class TraverseObject
 		return true;
 	}
 
+	public static bool operator ==(TraverseObject a, TraverseObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(TraverseObject a, TraverseObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		TraverseObject p = obj as TraverseObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as TraverseObject);
 	}
 
 	public bool Equals(TraverseObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3239,17 +3333,17 @@ public class SetRobotCarryingObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3258,25 +3352,29 @@ public class SetRobotCarryingObject
 		return true;
 	}
 
+	public static bool operator ==(SetRobotCarryingObject a, SetRobotCarryingObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetRobotCarryingObject a, SetRobotCarryingObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetRobotCarryingObject p = obj as SetRobotCarryingObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetRobotCarryingObject);
 	}
 
 	public bool Equals(SetRobotCarryingObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3397,17 +3495,17 @@ public class VisionWhileMoving
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3416,25 +3514,29 @@ public class VisionWhileMoving
 		return true;
 	}
 
+	public static bool operator ==(VisionWhileMoving a, VisionWhileMoving b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(VisionWhileMoving a, VisionWhileMoving b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		VisionWhileMoving p = obj as VisionWhileMoving;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as VisionWhileMoving);
 	}
 
 	public bool Equals(VisionWhileMoving p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3510,17 +3612,17 @@ public class ExecuteBehavior
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3529,25 +3631,29 @@ public class ExecuteBehavior
 		return true;
 	}
 
+	public static bool operator ==(ExecuteBehavior a, ExecuteBehavior b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ExecuteBehavior a, ExecuteBehavior b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ExecuteBehavior p = obj as ExecuteBehavior;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ExecuteBehavior);
 	}
 
 	public bool Equals(ExecuteBehavior p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3623,17 +3729,17 @@ public class SetBehaviorState
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3642,25 +3748,29 @@ public class SetBehaviorState
 		return true;
 	}
 
+	public static bool operator ==(SetBehaviorState a, SetBehaviorState b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetBehaviorState a, SetBehaviorState b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetBehaviorState p = obj as SetBehaviorState;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetBehaviorState);
 	}
 
 	public bool Equals(SetBehaviorState p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3829,17 +3939,17 @@ public class CancelAction
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3848,25 +3958,29 @@ public class CancelAction
 		return true;
 	}
 
+	public static bool operator ==(CancelAction a, CancelAction b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(CancelAction a, CancelAction b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		CancelAction p = obj as CancelAction;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as CancelAction);
 	}
 
 	public bool Equals(CancelAction p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -3965,17 +4079,17 @@ public class DrawPoseMarker
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -3984,25 +4098,29 @@ public class DrawPoseMarker
 		return true;
 	}
 
+	public static bool operator ==(DrawPoseMarker a, DrawPoseMarker b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(DrawPoseMarker a, DrawPoseMarker b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		DrawPoseMarker p = obj as DrawPoseMarker;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as DrawPoseMarker);
 	}
 
 	public bool Equals(DrawPoseMarker p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4162,17 +4280,17 @@ public class SetWheelControllerGains
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4181,25 +4299,29 @@ public class SetWheelControllerGains
 		return true;
 	}
 
+	public static bool operator ==(SetWheelControllerGains a, SetWheelControllerGains b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetWheelControllerGains a, SetWheelControllerGains b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetWheelControllerGains p = obj as SetWheelControllerGains;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetWheelControllerGains);
 	}
 
 	public bool Equals(SetWheelControllerGains p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4306,17 +4428,17 @@ public class SetHeadControllerGains
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4325,25 +4447,29 @@ public class SetHeadControllerGains
 		return true;
 	}
 
+	public static bool operator ==(SetHeadControllerGains a, SetHeadControllerGains b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetHeadControllerGains a, SetHeadControllerGains b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetHeadControllerGains p = obj as SetHeadControllerGains;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetHeadControllerGains);
 	}
 
 	public bool Equals(SetHeadControllerGains p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4446,17 +4572,17 @@ public class SetLiftControllerGains
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4465,25 +4591,29 @@ public class SetLiftControllerGains
 		return true;
 	}
 
+	public static bool operator ==(SetLiftControllerGains a, SetLiftControllerGains b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetLiftControllerGains a, SetLiftControllerGains b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetLiftControllerGains p = obj as SetLiftControllerGains;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetLiftControllerGains);
 	}
 
 	public bool Equals(SetLiftControllerGains p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4629,17 +4759,17 @@ public class StartTestMode
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4648,25 +4778,29 @@ public class StartTestMode
 		return true;
 	}
 
+	public static bool operator ==(StartTestMode a, StartTestMode b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(StartTestMode a, StartTestMode b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		StartTestMode p = obj as StartTestMode;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as StartTestMode);
 	}
 
 	public bool Equals(StartTestMode p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4748,17 +4882,17 @@ public class IMURequest
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4767,25 +4901,29 @@ public class IMURequest
 		return true;
 	}
 
+	public static bool operator ==(IMURequest a, IMURequest b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(IMURequest a, IMURequest b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		IMURequest p = obj as IMURequest;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as IMURequest);
 	}
 
 	public bool Equals(IMURequest p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4876,6 +5014,9 @@ public class PlayAnimation
 			writer.Write((byte)_animationName_bytes.Length);
 			writer.Write(_animationName_bytes);
 		}
+		else {
+			writer.Write((byte)0);
+		}
 	}
 
 	public int Size 
@@ -4891,17 +5032,17 @@ public class PlayAnimation
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -4910,25 +5051,29 @@ public class PlayAnimation
 		return true;
 	}
 
+	public static bool operator ==(PlayAnimation a, PlayAnimation b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(PlayAnimation a, PlayAnimation b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		PlayAnimation p = obj as PlayAnimation;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as PlayAnimation);
 	}
 
 	public bool Equals(PlayAnimation p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -4943,7 +5088,6 @@ public class PlayAnimation
 		{
 			int hash = 17;
 			hash = hash * 23 + this._numLoops.GetHashCode();
-			hash = hash * 23 + this._animationName.GetHashCode();
 			return hash;
 		}
 	}
@@ -5049,17 +5193,17 @@ public class StartFaceTracking
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -5068,25 +5212,29 @@ public class StartFaceTracking
 		return true;
 	}
 
+	public static bool operator ==(StartFaceTracking a, StartFaceTracking b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(StartFaceTracking a, StartFaceTracking b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		StartFaceTracking p = obj as StartFaceTracking;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as StartFaceTracking);
 	}
 
 	public bool Equals(StartFaceTracking p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -5340,17 +5488,17 @@ public class SetVisionSystemParams
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -5359,25 +5507,29 @@ public class SetVisionSystemParams
 		return true;
 	}
 
+	public static bool operator ==(SetVisionSystemParams a, SetVisionSystemParams b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetVisionSystemParams a, SetVisionSystemParams b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetVisionSystemParams p = obj as SetVisionSystemParams;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetVisionSystemParams);
 	}
 
 	public bool Equals(SetVisionSystemParams p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -5502,17 +5654,17 @@ public class SetFaceDetectParams
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -5521,25 +5673,29 @@ public class SetFaceDetectParams
 		return true;
 	}
 
+	public static bool operator ==(SetFaceDetectParams a, SetFaceDetectParams b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetFaceDetectParams a, SetFaceDetectParams b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetFaceDetectParams p = obj as SetFaceDetectParams;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetFaceDetectParams);
 	}
 
 	public bool Equals(SetFaceDetectParams p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -5709,17 +5865,17 @@ public class SetActiveObjectLEDs
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -5728,25 +5884,29 @@ public class SetActiveObjectLEDs
 		return true;
 	}
 
+	public static bool operator ==(SetActiveObjectLEDs a, SetActiveObjectLEDs b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetActiveObjectLEDs a, SetActiveObjectLEDs b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetActiveObjectLEDs p = obj as SetActiveObjectLEDs;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetActiveObjectLEDs);
 	}
 
 	public bool Equals(SetActiveObjectLEDs p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -6036,17 +6196,17 @@ public class SetAllActiveObjectLEDs
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -6055,25 +6215,29 @@ public class SetAllActiveObjectLEDs
 		return true;
 	}
 
+	public static bool operator ==(SetAllActiveObjectLEDs a, SetAllActiveObjectLEDs b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetAllActiveObjectLEDs a, SetAllActiveObjectLEDs b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetAllActiveObjectLEDs p = obj as SetAllActiveObjectLEDs;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetAllActiveObjectLEDs);
 	}
 
 	public bool Equals(SetAllActiveObjectLEDs p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -6097,12 +6261,6 @@ public class SetAllActiveObjectLEDs
 		{
 			int hash = 17;
 			hash = hash * 23 + this._objectID.GetHashCode();
-			hash = hash * 23 + this._onColor.GetHashCode();
-			hash = hash * 23 + this._offColor.GetHashCode();
-			hash = hash * 23 + this._onPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._offPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._transitionOnPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._transitionOffPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._relativeToX.GetHashCode();
 			hash = hash * 23 + this._relativeToY.GetHashCode();
 			hash = hash * 23 + this._makeRelative.GetHashCode();
@@ -6331,17 +6489,17 @@ public class SetBackpackLEDs
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -6350,25 +6508,29 @@ public class SetBackpackLEDs
 		return true;
 	}
 
+	public static bool operator ==(SetBackpackLEDs a, SetBackpackLEDs b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetBackpackLEDs a, SetBackpackLEDs b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		SetBackpackLEDs p = obj as SetBackpackLEDs;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as SetBackpackLEDs);
 	}
 
 	public bool Equals(SetBackpackLEDs p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -6387,12 +6549,6 @@ public class SetBackpackLEDs
 		unchecked
 		{
 			int hash = 17;
-			hash = hash * 23 + this._onColor.GetHashCode();
-			hash = hash * 23 + this._offColor.GetHashCode();
-			hash = hash * 23 + this._onPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._offPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._transitionOnPeriod_ms.GetHashCode();
-			hash = hash * 23 + this._transitionOffPeriod_ms.GetHashCode();
 			hash = hash * 23 + this._robotID.GetHashCode();
 			return hash;
 		}
@@ -6547,17 +6703,17 @@ public class VisualizeQuad
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -6566,25 +6722,29 @@ public class VisualizeQuad
 		return true;
 	}
 
+	public static bool operator ==(VisualizeQuad a, VisualizeQuad b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(VisualizeQuad a, VisualizeQuad b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		VisualizeQuad p = obj as VisualizeQuad;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as VisualizeQuad);
 	}
 
 	public bool Equals(VisualizeQuad p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -6686,17 +6846,17 @@ public class EraseQuad
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -6705,25 +6865,29 @@ public class EraseQuad
 		return true;
 	}
 
+	public static bool operator ==(EraseQuad a, EraseQuad b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(EraseQuad a, EraseQuad b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		EraseQuad p = obj as EraseQuad;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as EraseQuad);
 	}
 
 	public bool Equals(EraseQuad p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -7779,701 +7943,950 @@ public class Message {
 		}
 	}
 
-	public System.IO.Stream Unpack(System.IO.Stream stream)
+	/**** Constructors ****/
+
+	public Message()
+	{
+	}
+
+	public Message(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public Message(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		Tag newTag = Tag.INVALID;
-		newTag = (Tag)reader.ReadByte();
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		Tag newTag = (Tag)reader.ReadByte();
 		switch(newTag) {
 		case Tag.Ping:
-			_state = new Anki.Cozmo.U2G.Ping(reader);
+			Ping = new Anki.Cozmo.U2G.Ping(reader);
 			break;
 		case Tag.ConnectToRobot:
-			_state = new Anki.Cozmo.U2G.ConnectToRobot(reader);
+			ConnectToRobot = new Anki.Cozmo.U2G.ConnectToRobot(reader);
 			break;
 		case Tag.ConnectToUiDevice:
-			_state = new Anki.Cozmo.U2G.ConnectToUiDevice(reader);
+			ConnectToUiDevice = new Anki.Cozmo.U2G.ConnectToUiDevice(reader);
 			break;
 		case Tag.DisconnectFromUiDevice:
-			_state = new Anki.Cozmo.U2G.DisconnectFromUiDevice(reader);
+			DisconnectFromUiDevice = new Anki.Cozmo.U2G.DisconnectFromUiDevice(reader);
 			break;
 		case Tag.ForceAddRobot:
-			_state = new Anki.Cozmo.U2G.ForceAddRobot(reader);
+			ForceAddRobot = new Anki.Cozmo.U2G.ForceAddRobot(reader);
 			break;
 		case Tag.StartEngine:
-			_state = new Anki.Cozmo.U2G.StartEngine(reader);
+			StartEngine = new Anki.Cozmo.U2G.StartEngine(reader);
 			break;
 		case Tag.DriveWheels:
-			_state = new Anki.Cozmo.U2G.DriveWheels(reader);
+			DriveWheels = new Anki.Cozmo.U2G.DriveWheels(reader);
 			break;
 		case Tag.TurnInPlace:
-			_state = new Anki.Cozmo.U2G.TurnInPlace(reader);
+			TurnInPlace = new Anki.Cozmo.U2G.TurnInPlace(reader);
 			break;
 		case Tag.FaceObject:
-			_state = new Anki.Cozmo.U2G.FaceObject(reader);
+			FaceObject = new Anki.Cozmo.U2G.FaceObject(reader);
 			break;
 		case Tag.MoveHead:
-			_state = new Anki.Cozmo.U2G.MoveHead(reader);
+			MoveHead = new Anki.Cozmo.U2G.MoveHead(reader);
 			break;
 		case Tag.MoveLift:
-			_state = new Anki.Cozmo.U2G.MoveLift(reader);
+			MoveLift = new Anki.Cozmo.U2G.MoveLift(reader);
 			break;
 		case Tag.SetLiftHeight:
-			_state = new Anki.Cozmo.U2G.SetLiftHeight(reader);
+			SetLiftHeight = new Anki.Cozmo.U2G.SetLiftHeight(reader);
 			break;
 		case Tag.SetHeadAngle:
-			_state = new Anki.Cozmo.U2G.SetHeadAngle(reader);
+			SetHeadAngle = new Anki.Cozmo.U2G.SetHeadAngle(reader);
 			break;
 		case Tag.TrackHeadToObject:
-			_state = new Anki.Cozmo.U2G.TrackHeadToObject(reader);
+			TrackHeadToObject = new Anki.Cozmo.U2G.TrackHeadToObject(reader);
 			break;
 		case Tag.StopAllMotors:
-			_state = new Anki.Cozmo.U2G.StopAllMotors(reader);
+			StopAllMotors = new Anki.Cozmo.U2G.StopAllMotors(reader);
 			break;
 		case Tag.ImageRequest:
-			_state = new Anki.Cozmo.U2G.ImageRequest(reader);
+			ImageRequest = new Anki.Cozmo.U2G.ImageRequest(reader);
 			break;
 		case Tag.SetRobotImageSendMode:
-			_state = new Anki.Cozmo.U2G.SetRobotImageSendMode(reader);
+			SetRobotImageSendMode = new Anki.Cozmo.U2G.SetRobotImageSendMode(reader);
 			break;
 		case Tag.SaveImages:
-			_state = new Anki.Cozmo.U2G.SaveImages(reader);
+			SaveImages = new Anki.Cozmo.U2G.SaveImages(reader);
 			break;
 		case Tag.SaveRobotState:
-			_state = new Anki.Cozmo.U2G.SaveRobotState(reader);
+			SaveRobotState = new Anki.Cozmo.U2G.SaveRobotState(reader);
 			break;
 		case Tag.EnableDisplay:
-			_state = new Anki.Cozmo.U2G.EnableDisplay(reader);
+			EnableDisplay = new Anki.Cozmo.U2G.EnableDisplay(reader);
 			break;
 		case Tag.SetHeadlights:
-			_state = new Anki.Cozmo.U2G.SetHeadlights(reader);
+			SetHeadlights = new Anki.Cozmo.U2G.SetHeadlights(reader);
 			break;
 		case Tag.GotoPose:
-			_state = new Anki.Cozmo.U2G.GotoPose(reader);
+			GotoPose = new Anki.Cozmo.U2G.GotoPose(reader);
 			break;
 		case Tag.PlaceObjectOnGround:
-			_state = new Anki.Cozmo.U2G.PlaceObjectOnGround(reader);
+			PlaceObjectOnGround = new Anki.Cozmo.U2G.PlaceObjectOnGround(reader);
 			break;
 		case Tag.PlaceObjectOnGroundHere:
-			_state = new Anki.Cozmo.U2G.PlaceObjectOnGroundHere(reader);
+			PlaceObjectOnGroundHere = new Anki.Cozmo.U2G.PlaceObjectOnGroundHere(reader);
 			break;
 		case Tag.ExecuteTestPlan:
-			_state = new Anki.Cozmo.U2G.ExecuteTestPlan(reader);
+			ExecuteTestPlan = new Anki.Cozmo.U2G.ExecuteTestPlan(reader);
 			break;
 		case Tag.SelectNextObject:
-			_state = new Anki.Cozmo.U2G.SelectNextObject(reader);
+			SelectNextObject = new Anki.Cozmo.U2G.SelectNextObject(reader);
 			break;
 		case Tag.PickAndPlaceObject:
-			_state = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
+			PickAndPlaceObject = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
 			break;
 		case Tag.TraverseObject:
-			_state = new Anki.Cozmo.U2G.TraverseObject(reader);
+			TraverseObject = new Anki.Cozmo.U2G.TraverseObject(reader);
 			break;
 		case Tag.SetRobotCarryingObject:
-			_state = new Anki.Cozmo.U2G.SetRobotCarryingObject(reader);
+			SetRobotCarryingObject = new Anki.Cozmo.U2G.SetRobotCarryingObject(reader);
 			break;
 		case Tag.ClearAllBlocks:
-			_state = new Anki.Cozmo.U2G.ClearAllBlocks(reader);
+			ClearAllBlocks = new Anki.Cozmo.U2G.ClearAllBlocks(reader);
 			break;
 		case Tag.VisionWhileMoving:
-			_state = new Anki.Cozmo.U2G.VisionWhileMoving(reader);
+			VisionWhileMoving = new Anki.Cozmo.U2G.VisionWhileMoving(reader);
 			break;
 		case Tag.ExecuteBehavior:
-			_state = new Anki.Cozmo.U2G.ExecuteBehavior(reader);
+			ExecuteBehavior = new Anki.Cozmo.U2G.ExecuteBehavior(reader);
 			break;
 		case Tag.SetBehaviorState:
-			_state = new Anki.Cozmo.U2G.SetBehaviorState(reader);
+			SetBehaviorState = new Anki.Cozmo.U2G.SetBehaviorState(reader);
 			break;
 		case Tag.AbortPath:
-			_state = new Anki.Cozmo.U2G.AbortPath(reader);
+			AbortPath = new Anki.Cozmo.U2G.AbortPath(reader);
 			break;
 		case Tag.AbortAll:
-			_state = new Anki.Cozmo.U2G.AbortAll(reader);
+			AbortAll = new Anki.Cozmo.U2G.AbortAll(reader);
 			break;
 		case Tag.CancelAction:
-			_state = new Anki.Cozmo.U2G.CancelAction(reader);
+			CancelAction = new Anki.Cozmo.U2G.CancelAction(reader);
 			break;
 		case Tag.DrawPoseMarker:
-			_state = new Anki.Cozmo.U2G.DrawPoseMarker(reader);
+			DrawPoseMarker = new Anki.Cozmo.U2G.DrawPoseMarker(reader);
 			break;
 		case Tag.ErasePoseMarker:
-			_state = new Anki.Cozmo.U2G.ErasePoseMarker(reader);
+			ErasePoseMarker = new Anki.Cozmo.U2G.ErasePoseMarker(reader);
 			break;
 		case Tag.SetWheelControllerGains:
-			_state = new Anki.Cozmo.U2G.SetWheelControllerGains(reader);
+			SetWheelControllerGains = new Anki.Cozmo.U2G.SetWheelControllerGains(reader);
 			break;
 		case Tag.SetHeadControllerGains:
-			_state = new Anki.Cozmo.U2G.SetHeadControllerGains(reader);
+			SetHeadControllerGains = new Anki.Cozmo.U2G.SetHeadControllerGains(reader);
 			break;
 		case Tag.SetLiftControllerGains:
-			_state = new Anki.Cozmo.U2G.SetLiftControllerGains(reader);
+			SetLiftControllerGains = new Anki.Cozmo.U2G.SetLiftControllerGains(reader);
 			break;
 		case Tag.SelectNextSoundScheme:
-			_state = new Anki.Cozmo.U2G.SelectNextSoundScheme(reader);
+			SelectNextSoundScheme = new Anki.Cozmo.U2G.SelectNextSoundScheme(reader);
 			break;
 		case Tag.StartTestMode:
-			_state = new Anki.Cozmo.U2G.StartTestMode(reader);
+			StartTestMode = new Anki.Cozmo.U2G.StartTestMode(reader);
 			break;
 		case Tag.IMURequest:
-			_state = new Anki.Cozmo.U2G.IMURequest(reader);
+			IMURequest = new Anki.Cozmo.U2G.IMURequest(reader);
 			break;
 		case Tag.PlayAnimation:
-			_state = new Anki.Cozmo.U2G.PlayAnimation(reader);
+			PlayAnimation = new Anki.Cozmo.U2G.PlayAnimation(reader);
 			break;
 		case Tag.ReadAnimationFile:
-			_state = new Anki.Cozmo.U2G.ReadAnimationFile(reader);
+			ReadAnimationFile = new Anki.Cozmo.U2G.ReadAnimationFile(reader);
 			break;
 		case Tag.StartFaceTracking:
-			_state = new Anki.Cozmo.U2G.StartFaceTracking(reader);
+			StartFaceTracking = new Anki.Cozmo.U2G.StartFaceTracking(reader);
 			break;
 		case Tag.StopFaceTracking:
-			_state = new Anki.Cozmo.U2G.StopFaceTracking(reader);
+			StopFaceTracking = new Anki.Cozmo.U2G.StopFaceTracking(reader);
 			break;
 		case Tag.StartLookingForMarkers:
-			_state = new Anki.Cozmo.U2G.StartLookingForMarkers(reader);
+			StartLookingForMarkers = new Anki.Cozmo.U2G.StartLookingForMarkers(reader);
 			break;
 		case Tag.StopLookingForMarkers:
-			_state = new Anki.Cozmo.U2G.StopLookingForMarkers(reader);
+			StopLookingForMarkers = new Anki.Cozmo.U2G.StopLookingForMarkers(reader);
 			break;
 		case Tag.SetVisionSystemParams:
-			_state = new Anki.Cozmo.U2G.SetVisionSystemParams(reader);
+			SetVisionSystemParams = new Anki.Cozmo.U2G.SetVisionSystemParams(reader);
 			break;
 		case Tag.SetFaceDetectParams:
-			_state = new Anki.Cozmo.U2G.SetFaceDetectParams(reader);
+			SetFaceDetectParams = new Anki.Cozmo.U2G.SetFaceDetectParams(reader);
 			break;
 		case Tag.SetActiveObjectLEDs:
-			_state = new Anki.Cozmo.U2G.SetActiveObjectLEDs(reader);
+			SetActiveObjectLEDs = new Anki.Cozmo.U2G.SetActiveObjectLEDs(reader);
 			break;
 		case Tag.SetAllActiveObjectLEDs:
-			_state = new Anki.Cozmo.U2G.SetAllActiveObjectLEDs(reader);
+			SetAllActiveObjectLEDs = new Anki.Cozmo.U2G.SetAllActiveObjectLEDs(reader);
 			break;
 		case Tag.SetBackpackLEDs:
-			_state = new Anki.Cozmo.U2G.SetBackpackLEDs(reader);
+			SetBackpackLEDs = new Anki.Cozmo.U2G.SetBackpackLEDs(reader);
 			break;
 		case Tag.VisualizeQuad:
-			_state = new Anki.Cozmo.U2G.VisualizeQuad(reader);
+			VisualizeQuad = new Anki.Cozmo.U2G.VisualizeQuad(reader);
 			break;
 		case Tag.EraseQuad:
-			_state = new Anki.Cozmo.U2G.EraseQuad(reader);
+			EraseQuad = new Anki.Cozmo.U2G.EraseQuad(reader);
 			break;
 		default:
 			break;
+
 		}
 		_tag = newTag;
-		return stream;
 	}
 
-	public System.IO.Stream Pack(System.IO.Stream stream)
+	public void Pack(System.IO.Stream stream)
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
 		writer.Write((byte)GetTag());
 		switch(GetTag()) {
 		case Tag.Ping:
+			if (Ping == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			Ping.Pack(writer);
 			break;
 		case Tag.ConnectToRobot:
+			if (ConnectToRobot == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ConnectToRobot.Pack(writer);
 			break;
 		case Tag.ConnectToUiDevice:
+			if (ConnectToUiDevice == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ConnectToUiDevice.Pack(writer);
 			break;
 		case Tag.DisconnectFromUiDevice:
+			if (DisconnectFromUiDevice == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			DisconnectFromUiDevice.Pack(writer);
 			break;
 		case Tag.ForceAddRobot:
+			if (ForceAddRobot == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ForceAddRobot.Pack(writer);
 			break;
 		case Tag.StartEngine:
+			if (StartEngine == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StartEngine.Pack(writer);
 			break;
 		case Tag.DriveWheels:
+			if (DriveWheels == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			DriveWheels.Pack(writer);
 			break;
 		case Tag.TurnInPlace:
+			if (TurnInPlace == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			TurnInPlace.Pack(writer);
 			break;
 		case Tag.FaceObject:
+			if (FaceObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			FaceObject.Pack(writer);
 			break;
 		case Tag.MoveHead:
+			if (MoveHead == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			MoveHead.Pack(writer);
 			break;
 		case Tag.MoveLift:
+			if (MoveLift == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			MoveLift.Pack(writer);
 			break;
 		case Tag.SetLiftHeight:
+			if (SetLiftHeight == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetLiftHeight.Pack(writer);
 			break;
 		case Tag.SetHeadAngle:
+			if (SetHeadAngle == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetHeadAngle.Pack(writer);
 			break;
 		case Tag.TrackHeadToObject:
+			if (TrackHeadToObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			TrackHeadToObject.Pack(writer);
 			break;
 		case Tag.StopAllMotors:
+			if (StopAllMotors == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StopAllMotors.Pack(writer);
 			break;
 		case Tag.ImageRequest:
+			if (ImageRequest == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ImageRequest.Pack(writer);
 			break;
 		case Tag.SetRobotImageSendMode:
+			if (SetRobotImageSendMode == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetRobotImageSendMode.Pack(writer);
 			break;
 		case Tag.SaveImages:
+			if (SaveImages == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SaveImages.Pack(writer);
 			break;
 		case Tag.SaveRobotState:
+			if (SaveRobotState == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SaveRobotState.Pack(writer);
 			break;
 		case Tag.EnableDisplay:
+			if (EnableDisplay == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			EnableDisplay.Pack(writer);
 			break;
 		case Tag.SetHeadlights:
+			if (SetHeadlights == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetHeadlights.Pack(writer);
 			break;
 		case Tag.GotoPose:
+			if (GotoPose == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			GotoPose.Pack(writer);
 			break;
 		case Tag.PlaceObjectOnGround:
+			if (PlaceObjectOnGround == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			PlaceObjectOnGround.Pack(writer);
 			break;
 		case Tag.PlaceObjectOnGroundHere:
+			if (PlaceObjectOnGroundHere == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			PlaceObjectOnGroundHere.Pack(writer);
 			break;
 		case Tag.ExecuteTestPlan:
+			if (ExecuteTestPlan == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ExecuteTestPlan.Pack(writer);
 			break;
 		case Tag.SelectNextObject:
+			if (SelectNextObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SelectNextObject.Pack(writer);
 			break;
 		case Tag.PickAndPlaceObject:
+			if (PickAndPlaceObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			PickAndPlaceObject.Pack(writer);
 			break;
 		case Tag.TraverseObject:
+			if (TraverseObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			TraverseObject.Pack(writer);
 			break;
 		case Tag.SetRobotCarryingObject:
+			if (SetRobotCarryingObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetRobotCarryingObject.Pack(writer);
 			break;
 		case Tag.ClearAllBlocks:
+			if (ClearAllBlocks == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ClearAllBlocks.Pack(writer);
 			break;
 		case Tag.VisionWhileMoving:
+			if (VisionWhileMoving == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			VisionWhileMoving.Pack(writer);
 			break;
 		case Tag.ExecuteBehavior:
+			if (ExecuteBehavior == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ExecuteBehavior.Pack(writer);
 			break;
 		case Tag.SetBehaviorState:
+			if (SetBehaviorState == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetBehaviorState.Pack(writer);
 			break;
 		case Tag.AbortPath:
+			if (AbortPath == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			AbortPath.Pack(writer);
 			break;
 		case Tag.AbortAll:
+			if (AbortAll == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			AbortAll.Pack(writer);
 			break;
 		case Tag.CancelAction:
+			if (CancelAction == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			CancelAction.Pack(writer);
 			break;
 		case Tag.DrawPoseMarker:
+			if (DrawPoseMarker == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			DrawPoseMarker.Pack(writer);
 			break;
 		case Tag.ErasePoseMarker:
+			if (ErasePoseMarker == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ErasePoseMarker.Pack(writer);
 			break;
 		case Tag.SetWheelControllerGains:
+			if (SetWheelControllerGains == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetWheelControllerGains.Pack(writer);
 			break;
 		case Tag.SetHeadControllerGains:
+			if (SetHeadControllerGains == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetHeadControllerGains.Pack(writer);
 			break;
 		case Tag.SetLiftControllerGains:
+			if (SetLiftControllerGains == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetLiftControllerGains.Pack(writer);
 			break;
 		case Tag.SelectNextSoundScheme:
+			if (SelectNextSoundScheme == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SelectNextSoundScheme.Pack(writer);
 			break;
 		case Tag.StartTestMode:
+			if (StartTestMode == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StartTestMode.Pack(writer);
 			break;
 		case Tag.IMURequest:
+			if (IMURequest == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			IMURequest.Pack(writer);
 			break;
 		case Tag.PlayAnimation:
+			if (PlayAnimation == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			PlayAnimation.Pack(writer);
 			break;
 		case Tag.ReadAnimationFile:
+			if (ReadAnimationFile == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ReadAnimationFile.Pack(writer);
 			break;
 		case Tag.StartFaceTracking:
+			if (StartFaceTracking == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StartFaceTracking.Pack(writer);
 			break;
 		case Tag.StopFaceTracking:
+			if (StopFaceTracking == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StopFaceTracking.Pack(writer);
 			break;
 		case Tag.StartLookingForMarkers:
+			if (StartLookingForMarkers == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StartLookingForMarkers.Pack(writer);
 			break;
 		case Tag.StopLookingForMarkers:
+			if (StopLookingForMarkers == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StopLookingForMarkers.Pack(writer);
 			break;
 		case Tag.SetVisionSystemParams:
+			if (SetVisionSystemParams == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetVisionSystemParams.Pack(writer);
 			break;
 		case Tag.SetFaceDetectParams:
+			if (SetFaceDetectParams == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetFaceDetectParams.Pack(writer);
 			break;
 		case Tag.SetActiveObjectLEDs:
+			if (SetActiveObjectLEDs == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetActiveObjectLEDs.Pack(writer);
 			break;
 		case Tag.SetAllActiveObjectLEDs:
+			if (SetAllActiveObjectLEDs == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetAllActiveObjectLEDs.Pack(writer);
 			break;
 		case Tag.SetBackpackLEDs:
+			if (SetBackpackLEDs == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			SetBackpackLEDs.Pack(writer);
 			break;
 		case Tag.VisualizeQuad:
+			if (VisualizeQuad == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			VisualizeQuad.Pack(writer);
 			break;
 		case Tag.EraseQuad:
+			if (EraseQuad == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			EraseQuad.Pack(writer);
 			break;
 		default:
 			break;
 		}
-		return stream;
 	}
 
-	public int Size
+	public int Size 
 	{
 		get {
-			int result = 1; // tag = uint_8
+			int result = 1; // tag = byte
 			switch(GetTag()) {
 			case Tag.Ping:
+				if (Ping == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += Ping.Size;
 				break;
 			case Tag.ConnectToRobot:
+				if (ConnectToRobot == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ConnectToRobot.Size;
 				break;
 			case Tag.ConnectToUiDevice:
+				if (ConnectToUiDevice == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ConnectToUiDevice.Size;
 				break;
 			case Tag.DisconnectFromUiDevice:
+				if (DisconnectFromUiDevice == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += DisconnectFromUiDevice.Size;
 				break;
 			case Tag.ForceAddRobot:
+				if (ForceAddRobot == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ForceAddRobot.Size;
 				break;
 			case Tag.StartEngine:
+				if (StartEngine == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StartEngine.Size;
 				break;
 			case Tag.DriveWheels:
+				if (DriveWheels == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += DriveWheels.Size;
 				break;
 			case Tag.TurnInPlace:
+				if (TurnInPlace == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += TurnInPlace.Size;
 				break;
 			case Tag.FaceObject:
+				if (FaceObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += FaceObject.Size;
 				break;
 			case Tag.MoveHead:
+				if (MoveHead == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += MoveHead.Size;
 				break;
 			case Tag.MoveLift:
+				if (MoveLift == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += MoveLift.Size;
 				break;
 			case Tag.SetLiftHeight:
+				if (SetLiftHeight == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetLiftHeight.Size;
 				break;
 			case Tag.SetHeadAngle:
+				if (SetHeadAngle == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetHeadAngle.Size;
 				break;
 			case Tag.TrackHeadToObject:
+				if (TrackHeadToObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += TrackHeadToObject.Size;
 				break;
 			case Tag.StopAllMotors:
+				if (StopAllMotors == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StopAllMotors.Size;
 				break;
 			case Tag.ImageRequest:
+				if (ImageRequest == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ImageRequest.Size;
 				break;
 			case Tag.SetRobotImageSendMode:
+				if (SetRobotImageSendMode == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetRobotImageSendMode.Size;
 				break;
 			case Tag.SaveImages:
+				if (SaveImages == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SaveImages.Size;
 				break;
 			case Tag.SaveRobotState:
+				if (SaveRobotState == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SaveRobotState.Size;
 				break;
 			case Tag.EnableDisplay:
+				if (EnableDisplay == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += EnableDisplay.Size;
 				break;
 			case Tag.SetHeadlights:
+				if (SetHeadlights == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetHeadlights.Size;
 				break;
 			case Tag.GotoPose:
+				if (GotoPose == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += GotoPose.Size;
 				break;
 			case Tag.PlaceObjectOnGround:
+				if (PlaceObjectOnGround == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += PlaceObjectOnGround.Size;
 				break;
 			case Tag.PlaceObjectOnGroundHere:
+				if (PlaceObjectOnGroundHere == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += PlaceObjectOnGroundHere.Size;
 				break;
 			case Tag.ExecuteTestPlan:
+				if (ExecuteTestPlan == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ExecuteTestPlan.Size;
 				break;
 			case Tag.SelectNextObject:
+				if (SelectNextObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SelectNextObject.Size;
 				break;
 			case Tag.PickAndPlaceObject:
+				if (PickAndPlaceObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += PickAndPlaceObject.Size;
 				break;
 			case Tag.TraverseObject:
+				if (TraverseObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += TraverseObject.Size;
 				break;
 			case Tag.SetRobotCarryingObject:
+				if (SetRobotCarryingObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetRobotCarryingObject.Size;
 				break;
 			case Tag.ClearAllBlocks:
+				if (ClearAllBlocks == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ClearAllBlocks.Size;
 				break;
 			case Tag.VisionWhileMoving:
+				if (VisionWhileMoving == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += VisionWhileMoving.Size;
 				break;
 			case Tag.ExecuteBehavior:
+				if (ExecuteBehavior == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ExecuteBehavior.Size;
 				break;
 			case Tag.SetBehaviorState:
+				if (SetBehaviorState == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetBehaviorState.Size;
 				break;
 			case Tag.AbortPath:
+				if (AbortPath == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += AbortPath.Size;
 				break;
 			case Tag.AbortAll:
+				if (AbortAll == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += AbortAll.Size;
 				break;
 			case Tag.CancelAction:
+				if (CancelAction == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += CancelAction.Size;
 				break;
 			case Tag.DrawPoseMarker:
+				if (DrawPoseMarker == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += DrawPoseMarker.Size;
 				break;
 			case Tag.ErasePoseMarker:
+				if (ErasePoseMarker == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ErasePoseMarker.Size;
 				break;
 			case Tag.SetWheelControllerGains:
+				if (SetWheelControllerGains == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetWheelControllerGains.Size;
 				break;
 			case Tag.SetHeadControllerGains:
+				if (SetHeadControllerGains == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetHeadControllerGains.Size;
 				break;
 			case Tag.SetLiftControllerGains:
+				if (SetLiftControllerGains == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetLiftControllerGains.Size;
 				break;
 			case Tag.SelectNextSoundScheme:
+				if (SelectNextSoundScheme == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SelectNextSoundScheme.Size;
 				break;
 			case Tag.StartTestMode:
+				if (StartTestMode == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StartTestMode.Size;
 				break;
 			case Tag.IMURequest:
+				if (IMURequest == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += IMURequest.Size;
 				break;
 			case Tag.PlayAnimation:
+				if (PlayAnimation == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += PlayAnimation.Size;
 				break;
 			case Tag.ReadAnimationFile:
+				if (ReadAnimationFile == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ReadAnimationFile.Size;
 				break;
 			case Tag.StartFaceTracking:
+				if (StartFaceTracking == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StartFaceTracking.Size;
 				break;
 			case Tag.StopFaceTracking:
+				if (StopFaceTracking == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StopFaceTracking.Size;
 				break;
 			case Tag.StartLookingForMarkers:
+				if (StartLookingForMarkers == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StartLookingForMarkers.Size;
 				break;
 			case Tag.StopLookingForMarkers:
+				if (StopLookingForMarkers == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StopLookingForMarkers.Size;
 				break;
 			case Tag.SetVisionSystemParams:
+				if (SetVisionSystemParams == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetVisionSystemParams.Size;
 				break;
 			case Tag.SetFaceDetectParams:
+				if (SetFaceDetectParams == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetFaceDetectParams.Size;
 				break;
 			case Tag.SetActiveObjectLEDs:
+				if (SetActiveObjectLEDs == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetActiveObjectLEDs.Size;
 				break;
 			case Tag.SetAllActiveObjectLEDs:
+				if (SetAllActiveObjectLEDs == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetAllActiveObjectLEDs.Size;
 				break;
 			case Tag.SetBackpackLEDs:
+				if (SetBackpackLEDs == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += SetBackpackLEDs.Size;
 				break;
 			case Tag.VisualizeQuad:
+				if (VisualizeQuad == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += VisualizeQuad.Size;
 				break;
 			case Tag.EraseQuad:
+				if (EraseQuad == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += EraseQuad.Size;
 				break;
 			default:
-				return 0;
+				// Just tag size
+				break;
 			}
 			return result;
 		}
 	}
+
+	public static bool operator ==(Message a, Message b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(Message a, Message b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		Message p = obj as Message;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as Message);
 	}
 
 	public bool Equals(Message p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
 
-		if (!this._tag.Equals(p._tag))
-		{
-			return false;
-		}
-
-		switch(GetTag()) {
-
-		case Tag.Ping:
-			return this.Ping.Equals(p.Ping);
-		case Tag.ConnectToRobot:
-			return this.ConnectToRobot.Equals(p.ConnectToRobot);
-		case Tag.ConnectToUiDevice:
-			return this.ConnectToUiDevice.Equals(p.ConnectToUiDevice);
-		case Tag.DisconnectFromUiDevice:
-			return this.DisconnectFromUiDevice.Equals(p.DisconnectFromUiDevice);
-		case Tag.ForceAddRobot:
-			return this.ForceAddRobot.Equals(p.ForceAddRobot);
-		case Tag.StartEngine:
-			return this.StartEngine.Equals(p.StartEngine);
-		case Tag.DriveWheels:
-			return this.DriveWheels.Equals(p.DriveWheels);
-		case Tag.TurnInPlace:
-			return this.TurnInPlace.Equals(p.TurnInPlace);
-		case Tag.FaceObject:
-			return this.FaceObject.Equals(p.FaceObject);
-		case Tag.MoveHead:
-			return this.MoveHead.Equals(p.MoveHead);
-		case Tag.MoveLift:
-			return this.MoveLift.Equals(p.MoveLift);
-		case Tag.SetLiftHeight:
-			return this.SetLiftHeight.Equals(p.SetLiftHeight);
-		case Tag.SetHeadAngle:
-			return this.SetHeadAngle.Equals(p.SetHeadAngle);
-		case Tag.TrackHeadToObject:
-			return this.TrackHeadToObject.Equals(p.TrackHeadToObject);
-		case Tag.StopAllMotors:
-			return this.StopAllMotors.Equals(p.StopAllMotors);
-		case Tag.ImageRequest:
-			return this.ImageRequest.Equals(p.ImageRequest);
-		case Tag.SetRobotImageSendMode:
-			return this.SetRobotImageSendMode.Equals(p.SetRobotImageSendMode);
-		case Tag.SaveImages:
-			return this.SaveImages.Equals(p.SaveImages);
-		case Tag.SaveRobotState:
-			return this.SaveRobotState.Equals(p.SaveRobotState);
-		case Tag.EnableDisplay:
-			return this.EnableDisplay.Equals(p.EnableDisplay);
-		case Tag.SetHeadlights:
-			return this.SetHeadlights.Equals(p.SetHeadlights);
-		case Tag.GotoPose:
-			return this.GotoPose.Equals(p.GotoPose);
-		case Tag.PlaceObjectOnGround:
-			return this.PlaceObjectOnGround.Equals(p.PlaceObjectOnGround);
-		case Tag.PlaceObjectOnGroundHere:
-			return this.PlaceObjectOnGroundHere.Equals(p.PlaceObjectOnGroundHere);
-		case Tag.ExecuteTestPlan:
-			return this.ExecuteTestPlan.Equals(p.ExecuteTestPlan);
-		case Tag.SelectNextObject:
-			return this.SelectNextObject.Equals(p.SelectNextObject);
-		case Tag.PickAndPlaceObject:
-			return this.PickAndPlaceObject.Equals(p.PickAndPlaceObject);
-		case Tag.TraverseObject:
-			return this.TraverseObject.Equals(p.TraverseObject);
-		case Tag.SetRobotCarryingObject:
-			return this.SetRobotCarryingObject.Equals(p.SetRobotCarryingObject);
-		case Tag.ClearAllBlocks:
-			return this.ClearAllBlocks.Equals(p.ClearAllBlocks);
-		case Tag.VisionWhileMoving:
-			return this.VisionWhileMoving.Equals(p.VisionWhileMoving);
-		case Tag.ExecuteBehavior:
-			return this.ExecuteBehavior.Equals(p.ExecuteBehavior);
-		case Tag.SetBehaviorState:
-			return this.SetBehaviorState.Equals(p.SetBehaviorState);
-		case Tag.AbortPath:
-			return this.AbortPath.Equals(p.AbortPath);
-		case Tag.AbortAll:
-			return this.AbortAll.Equals(p.AbortAll);
-		case Tag.CancelAction:
-			return this.CancelAction.Equals(p.CancelAction);
-		case Tag.DrawPoseMarker:
-			return this.DrawPoseMarker.Equals(p.DrawPoseMarker);
-		case Tag.ErasePoseMarker:
-			return this.ErasePoseMarker.Equals(p.ErasePoseMarker);
-		case Tag.SetWheelControllerGains:
-			return this.SetWheelControllerGains.Equals(p.SetWheelControllerGains);
-		case Tag.SetHeadControllerGains:
-			return this.SetHeadControllerGains.Equals(p.SetHeadControllerGains);
-		case Tag.SetLiftControllerGains:
-			return this.SetLiftControllerGains.Equals(p.SetLiftControllerGains);
-		case Tag.SelectNextSoundScheme:
-			return this.SelectNextSoundScheme.Equals(p.SelectNextSoundScheme);
-		case Tag.StartTestMode:
-			return this.StartTestMode.Equals(p.StartTestMode);
-		case Tag.IMURequest:
-			return this.IMURequest.Equals(p.IMURequest);
-		case Tag.PlayAnimation:
-			return this.PlayAnimation.Equals(p.PlayAnimation);
-		case Tag.ReadAnimationFile:
-			return this.ReadAnimationFile.Equals(p.ReadAnimationFile);
-		case Tag.StartFaceTracking:
-			return this.StartFaceTracking.Equals(p.StartFaceTracking);
-		case Tag.StopFaceTracking:
-			return this.StopFaceTracking.Equals(p.StopFaceTracking);
-		case Tag.StartLookingForMarkers:
-			return this.StartLookingForMarkers.Equals(p.StartLookingForMarkers);
-		case Tag.StopLookingForMarkers:
-			return this.StopLookingForMarkers.Equals(p.StopLookingForMarkers);
-		case Tag.SetVisionSystemParams:
-			return this.SetVisionSystemParams.Equals(p.SetVisionSystemParams);
-		case Tag.SetFaceDetectParams:
-			return this.SetFaceDetectParams.Equals(p.SetFaceDetectParams);
-		case Tag.SetActiveObjectLEDs:
-			return this.SetActiveObjectLEDs.Equals(p.SetActiveObjectLEDs);
-		case Tag.SetAllActiveObjectLEDs:
-			return this.SetAllActiveObjectLEDs.Equals(p.SetAllActiveObjectLEDs);
-		case Tag.SetBackpackLEDs:
-			return this.SetBackpackLEDs.Equals(p.SetBackpackLEDs);
-		case Tag.VisualizeQuad:
-			return this.VisualizeQuad.Equals(p.VisualizeQuad);
-		case Tag.EraseQuad:
-			return this.EraseQuad.Equals(p.EraseQuad);
-		default:
-			return false;
-		}
+		return (_tag == p._tag && _state.Equals(p._state));
 	}
 
 	public override int GetHashCode()
@@ -8482,181 +8895,7 @@ public class Message {
 		{
 			int hash = 17;
 			hash = hash * 23 + this._tag.GetHashCode();
-			switch(GetTag()) {
-			case Tag.Ping:
-				hash = hash * 23 + this.Ping.GetHashCode();
-				break;
-			case Tag.ConnectToRobot:
-				hash = hash * 23 + this.ConnectToRobot.GetHashCode();
-				break;
-			case Tag.ConnectToUiDevice:
-				hash = hash * 23 + this.ConnectToUiDevice.GetHashCode();
-				break;
-			case Tag.DisconnectFromUiDevice:
-				hash = hash * 23 + this.DisconnectFromUiDevice.GetHashCode();
-				break;
-			case Tag.ForceAddRobot:
-				hash = hash * 23 + this.ForceAddRobot.GetHashCode();
-				break;
-			case Tag.StartEngine:
-				hash = hash * 23 + this.StartEngine.GetHashCode();
-				break;
-			case Tag.DriveWheels:
-				hash = hash * 23 + this.DriveWheels.GetHashCode();
-				break;
-			case Tag.TurnInPlace:
-				hash = hash * 23 + this.TurnInPlace.GetHashCode();
-				break;
-			case Tag.FaceObject:
-				hash = hash * 23 + this.FaceObject.GetHashCode();
-				break;
-			case Tag.MoveHead:
-				hash = hash * 23 + this.MoveHead.GetHashCode();
-				break;
-			case Tag.MoveLift:
-				hash = hash * 23 + this.MoveLift.GetHashCode();
-				break;
-			case Tag.SetLiftHeight:
-				hash = hash * 23 + this.SetLiftHeight.GetHashCode();
-				break;
-			case Tag.SetHeadAngle:
-				hash = hash * 23 + this.SetHeadAngle.GetHashCode();
-				break;
-			case Tag.TrackHeadToObject:
-				hash = hash * 23 + this.TrackHeadToObject.GetHashCode();
-				break;
-			case Tag.StopAllMotors:
-				hash = hash * 23 + this.StopAllMotors.GetHashCode();
-				break;
-			case Tag.ImageRequest:
-				hash = hash * 23 + this.ImageRequest.GetHashCode();
-				break;
-			case Tag.SetRobotImageSendMode:
-				hash = hash * 23 + this.SetRobotImageSendMode.GetHashCode();
-				break;
-			case Tag.SaveImages:
-				hash = hash * 23 + this.SaveImages.GetHashCode();
-				break;
-			case Tag.SaveRobotState:
-				hash = hash * 23 + this.SaveRobotState.GetHashCode();
-				break;
-			case Tag.EnableDisplay:
-				hash = hash * 23 + this.EnableDisplay.GetHashCode();
-				break;
-			case Tag.SetHeadlights:
-				hash = hash * 23 + this.SetHeadlights.GetHashCode();
-				break;
-			case Tag.GotoPose:
-				hash = hash * 23 + this.GotoPose.GetHashCode();
-				break;
-			case Tag.PlaceObjectOnGround:
-				hash = hash * 23 + this.PlaceObjectOnGround.GetHashCode();
-				break;
-			case Tag.PlaceObjectOnGroundHere:
-				hash = hash * 23 + this.PlaceObjectOnGroundHere.GetHashCode();
-				break;
-			case Tag.ExecuteTestPlan:
-				hash = hash * 23 + this.ExecuteTestPlan.GetHashCode();
-				break;
-			case Tag.SelectNextObject:
-				hash = hash * 23 + this.SelectNextObject.GetHashCode();
-				break;
-			case Tag.PickAndPlaceObject:
-				hash = hash * 23 + this.PickAndPlaceObject.GetHashCode();
-				break;
-			case Tag.TraverseObject:
-				hash = hash * 23 + this.TraverseObject.GetHashCode();
-				break;
-			case Tag.SetRobotCarryingObject:
-				hash = hash * 23 + this.SetRobotCarryingObject.GetHashCode();
-				break;
-			case Tag.ClearAllBlocks:
-				hash = hash * 23 + this.ClearAllBlocks.GetHashCode();
-				break;
-			case Tag.VisionWhileMoving:
-				hash = hash * 23 + this.VisionWhileMoving.GetHashCode();
-				break;
-			case Tag.ExecuteBehavior:
-				hash = hash * 23 + this.ExecuteBehavior.GetHashCode();
-				break;
-			case Tag.SetBehaviorState:
-				hash = hash * 23 + this.SetBehaviorState.GetHashCode();
-				break;
-			case Tag.AbortPath:
-				hash = hash * 23 + this.AbortPath.GetHashCode();
-				break;
-			case Tag.AbortAll:
-				hash = hash * 23 + this.AbortAll.GetHashCode();
-				break;
-			case Tag.CancelAction:
-				hash = hash * 23 + this.CancelAction.GetHashCode();
-				break;
-			case Tag.DrawPoseMarker:
-				hash = hash * 23 + this.DrawPoseMarker.GetHashCode();
-				break;
-			case Tag.ErasePoseMarker:
-				hash = hash * 23 + this.ErasePoseMarker.GetHashCode();
-				break;
-			case Tag.SetWheelControllerGains:
-				hash = hash * 23 + this.SetWheelControllerGains.GetHashCode();
-				break;
-			case Tag.SetHeadControllerGains:
-				hash = hash * 23 + this.SetHeadControllerGains.GetHashCode();
-				break;
-			case Tag.SetLiftControllerGains:
-				hash = hash * 23 + this.SetLiftControllerGains.GetHashCode();
-				break;
-			case Tag.SelectNextSoundScheme:
-				hash = hash * 23 + this.SelectNextSoundScheme.GetHashCode();
-				break;
-			case Tag.StartTestMode:
-				hash = hash * 23 + this.StartTestMode.GetHashCode();
-				break;
-			case Tag.IMURequest:
-				hash = hash * 23 + this.IMURequest.GetHashCode();
-				break;
-			case Tag.PlayAnimation:
-				hash = hash * 23 + this.PlayAnimation.GetHashCode();
-				break;
-			case Tag.ReadAnimationFile:
-				hash = hash * 23 + this.ReadAnimationFile.GetHashCode();
-				break;
-			case Tag.StartFaceTracking:
-				hash = hash * 23 + this.StartFaceTracking.GetHashCode();
-				break;
-			case Tag.StopFaceTracking:
-				hash = hash * 23 + this.StopFaceTracking.GetHashCode();
-				break;
-			case Tag.StartLookingForMarkers:
-				hash = hash * 23 + this.StartLookingForMarkers.GetHashCode();
-				break;
-			case Tag.StopLookingForMarkers:
-				hash = hash * 23 + this.StopLookingForMarkers.GetHashCode();
-				break;
-			case Tag.SetVisionSystemParams:
-				hash = hash * 23 + this.SetVisionSystemParams.GetHashCode();
-				break;
-			case Tag.SetFaceDetectParams:
-				hash = hash * 23 + this.SetFaceDetectParams.GetHashCode();
-				break;
-			case Tag.SetActiveObjectLEDs:
-				hash = hash * 23 + this.SetActiveObjectLEDs.GetHashCode();
-				break;
-			case Tag.SetAllActiveObjectLEDs:
-				hash = hash * 23 + this.SetAllActiveObjectLEDs.GetHashCode();
-				break;
-			case Tag.SetBackpackLEDs:
-				hash = hash * 23 + this.SetBackpackLEDs.GetHashCode();
-				break;
-			case Tag.VisualizeQuad:
-				hash = hash * 23 + this.VisualizeQuad.GetHashCode();
-				break;
-			case Tag.EraseQuad:
-				hash = hash * 23 + this.EraseQuad.GetHashCode();
-				break;
-			default:
-				break;
-			}
+			hash = hash * 23 + this._state.GetHashCode();
 			return hash;
 		}
 	}

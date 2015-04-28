@@ -30,13 +30,13 @@ PROTO WebotsKeyboardController [
 
   field SFFloat headKp 8
   field SFFloat headKi 0.2
-  field SFFloat headKd 2000
+  field SFFloat headKd 100
   field SFFloat headMaxErrorSum 2
 
   field SFFloat liftKp 3
-  field SFFloat liftKi 0.05
-  field SFFloat liftKd 3000
-  field SFFloat liftMaxErrorSum 10
+  field SFFloat liftKi 0.1
+  field SFFloat liftKd 250
+  field SFFloat liftMaxErrorSum 5
 
   # Vision system params
   field SFString streamResolution "QVGA"
