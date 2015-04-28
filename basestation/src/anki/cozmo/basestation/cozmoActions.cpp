@@ -635,6 +635,9 @@ namespace Anki {
       // Can't track head to an object and face it
       robot.DisableTrackHeadToObject();
       
+      // Get lift out of the way
+      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
+      
       return ActionResult::SUCCESS;
     }
     
@@ -795,13 +798,90 @@ namespace Anki {
       // Wait to get a state message back from the physical robot saying its head
       // is in the commanded position
       // TODO: Is this really necessary in practice?
-      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat())) {
+      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat()) ||
+         !robot.IsHeadMoving()) {
         result = ActionResult::SUCCESS;
       }
       
       return result;
     }
          
+#pragma mark ---- MoveLiftToHeightAction ----
+                                
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm)
+    : _height_mm(height_mm)
+    , _heightTolerance(tolerance_mm)
+    , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
+    {
+      
+    }
+    
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
+    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm)
+    {
+      
+    }
+    
+    
+    f32 MoveLiftToHeightAction::GetPresetHeight(Preset preset)
+    {
+      static const std::map<Preset, f32> LUT = {
+        {Preset::LOW_DOCK,   LIFT_HEIGHT_LOWDOCK},
+        {Preset::HIGH_DOCK,  LIFT_HEIGHT_HIGHDOCK},
+        {Preset::CARRY,      LIFT_HEIGHT_CARRY},
+        {Preset::OUT_OF_FOV, -1.f},
+      };
+      
+      return LUT.at(preset);
+    }
+    
+    ActionResult MoveLiftToHeightAction::Init(Robot& robot)
+    {
+      if(_height_mm < 0.f) {
+        // Choose whatever is closer to current height, LOW or CARRY:
+        const f32 currentHeight = robot.GetLiftHeight();
+        const f32 low   = GetPresetHeight(Preset::LOW_DOCK);
+        const f32 carry = GetPresetHeight(Preset::CARRY);
+        // Absolute values here shouldn't be necessary, since these are supposed
+        // to be the lowest and highest possible lift settings, but just in case...
+        if( std::abs(currentHeight-low) < std::abs(carry-currentHeight)) {
+          _height_mm = low;
+        } else {
+          _height_mm = carry;
+        }
+      }
+      
+      // TODO: Add ability to specify speed/accel
+      if(robot.MoveLiftToHeight(_height_mm, 5, 10) != RESULT_OK) {
+        return ActionResult::FAILURE_ABORT;
+      } else {
+        return ActionResult::SUCCESS;
+      }
+    }
+    
+    ActionResult MoveLiftToHeightAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      // TODO: Somehow verify robot got command to move lift before declaring success
+      /*
+      // Wait for the lift to start moving (meaning robot received command) and
+      // then stop moving
+      static bool liftStartedMoving = false;
+      if(!liftStartedMoving) {
+        liftStartedMoving = robot.IsLiftMoving();
+      }
+      else
+       */
+      if(NEAR(_height_mm, robot.GetLiftHeight(), _heightTolerance) ||
+         !robot.IsLiftMoving())
+      {
+        result = ActionResult::SUCCESS;
+      }
+      
+      return result;
+    }
+    
     
 #pragma mark ---- IDockAction ----
     

@@ -155,6 +155,38 @@ namespace Anki {
       std::string _name;
     };  // class MoveHeadToAngleAction
     
+    // Set the lift to specified height with a given tolerance. Note that settign
+    // the tolerance too small will likely lead to an action timeout.
+    class MoveLiftToHeightAction : public IAction
+    {
+    public:
+      
+      // Named presets:
+      enum class Preset : u8 {
+        LOW_DOCK,
+        HIGH_DOCK,
+        CARRY,
+        OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
+      };
+      
+      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
+      
+      virtual const std::string& GetName() const override { return _name; };
+      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
+      
+    protected:
+      
+      static f32 GetPresetHeight(Preset preset);
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+      f32          _height_mm;
+      f32          _heightTolerance;
+      std::string  _name;
+    }; // class MoveLiftToHeightAction
+    
     
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.

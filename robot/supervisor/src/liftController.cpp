@@ -293,19 +293,19 @@ namespace Anki {
         return power;
       }
       
-      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
+      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
-        maxSpeedRad_ = max_speed_rad_per_sec;
+        maxSpeedRad_ = ABS(max_speed_rad_per_sec);
         accelRad_ = accel_rad_per_sec2;
       }
       
-      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
+      void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
       {
         maxSpeedRad_ = Height2Rad(max_speed_mm_per_sec);
         accelRad_    = Height2Rad(accel_mm_per_sec2);
       }
       
-      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
+      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
       {
         max_speed_rad_per_sec = maxSpeedRad_;
         accel_rad_per_sec2 = accelRad_;
@@ -570,14 +570,14 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      void SetGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
       {
         Kp_ = kp;
-        Kd_ = kd;
         Ki_ = ki;
+        Kd_ = kd;
         MAX_ERROR_SUM = maxIntegralError;
-        PRINT("NEW LIFT GAINS: kp = %f, kd = %f, ki = %f, maxSum = %f\n",
-              Kp_, Kd_, Ki_, MAX_ERROR_SUM);
+        PRINT("New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+              Kp_, Ki_, Kd_, MAX_ERROR_SUM);
       }
       
       void Stop()

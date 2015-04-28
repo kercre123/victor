@@ -185,6 +185,7 @@ class RobotState(MessageBase):
         "f32", # Lift Height
         "f32", # Raw Gyro Z
         "f32", # Raw accel Y
+        "u32",  # Status, see RobotStatusFlag
         "u16", # last path ID
         "u8",  # Prox left
         "u8",  # Prox forward
@@ -192,7 +193,6 @@ class RobotState(MessageBase):
         "s8",  # Current path segment, -1 if not traversing a path
         "u8",  # Num free segment slots
         "u8",  # Battery voltage x10
-        "u8",  # Status, see RobotStatusFlag
     ]
 
     class Pose(object):

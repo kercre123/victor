@@ -404,37 +404,37 @@ namespace Anki {
   template<>
   inline Radians Pose3d::GetRotationAngle<'X'>() const
   {
-    return GetRotationMatrix().GetAngleAroundXaxis();
+    return GetRotation().GetAngleAroundXaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'Y'>() const
   {
-    return GetRotationMatrix().GetAngleAroundYaxis();
+    return GetRotation().GetAngleAroundYaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'Z'>() const
   {
-    return GetRotationMatrix().GetAngleAroundZaxis();
+    return GetRotation().GetAngleAroundZaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'x'>() const
   {
-    return GetRotationMatrix().GetAngleAroundXaxis();
+    return GetRotation().GetAngleAroundXaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'y'>() const
   {
-    return GetRotationMatrix().GetAngleAroundYaxis();
+    return GetRotation().GetAngleAroundYaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'z'>() const
   {
-    return GetRotationMatrix().GetAngleAroundZaxis();
+    return GetRotation().GetAngleAroundZaxis();
   }
   
   inline void Pose3d::SetRotation(const Rotation3d& R)

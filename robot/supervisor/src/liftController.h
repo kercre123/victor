@@ -34,12 +34,12 @@ namespace Anki {
       bool IsCalibrated();
 
       // Specifies max velocity and acceleration that SetDesiredHeight() uses.
-      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
+      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
       // Specify max velocity/acceleration in terms of linear movement instead
       // of angular adjustment
-      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
+      void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
       
       f32 GetAngularVelocity();
       
@@ -85,7 +85,7 @@ namespace Anki {
       
       Result Update();
 
-      void SetGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError);
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
       
       // Stops any nodding or movement at all.
       void Stop();

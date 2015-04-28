@@ -305,6 +305,8 @@ namespace Anki {
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
       _isMoving = static_cast<bool>(msg.status & IS_MOVING);
+      _isHeadMoving = !static_cast<bool>(msg.status & HEAD_IN_POS);
+      _isLiftMoving = !static_cast<bool>(msg.status & LIFT_IN_POS);
       
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
@@ -2403,21 +2405,22 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
       
-    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       MessageSetHeadControllerGains m;
       m.kp = kp;
       m.ki = ki;
+      m.kd = kd;
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);
     }
     
-    Result Robot::SetLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxIntegralError)
+    Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       MessageSetLiftControllerGains m;
       m.kp = kp;
-      m.kd = kd;
       m.ki = ki;
+      m.kd = kd;      
       m.maxIntegralError = maxIntegralError;
       return _msgHandler->SendMessage(_ID, m);
     }

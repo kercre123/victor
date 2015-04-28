@@ -39,7 +39,8 @@ namespace Cozmo {
     VISUALLY_VERIFY_OBJECT,
     PLAY_ANIMATION,
     PLAY_SOUND,
-    WAIT
+    WAIT,
+    MOVE_LIFT_TO_HEIGHT
   };
   
   enum class ActionResult : s32 {
