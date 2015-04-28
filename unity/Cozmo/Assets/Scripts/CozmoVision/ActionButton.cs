@@ -25,7 +25,8 @@ public class ActionButton : MonoBehaviour
 	public Image image;
 	public Text text;
 
-	private event Action<bool> action;
+	private event Action<bool, ObservedObject> action;
+	private ObservedObject selectedObject;
 	
 	public Mode mode { get; private set; }
 	
@@ -33,7 +34,7 @@ public class ActionButton : MonoBehaviour
 	{
 		if( action != null )
 		{
-			action( true );
+			action( true, selectedObject );
 		}
 	}
 	
@@ -41,14 +42,15 @@ public class ActionButton : MonoBehaviour
 	{
 		if( action != null )
 		{
-			action( false );
+			action( false, selectedObject );
 		}
 	}
 	
-	public void SetMode( Mode m, int selectedObjectIndex = 0, string append = null )
+	public void SetMode( Mode m, ObservedObject selected = null, string append = null )
 	{
 		action = null;
 		mode = m;
+		selectedObject = selected;
 		
 		if( mode == Mode.DISABLED || GameActions.instance == null )
 		{
@@ -64,34 +66,32 @@ public class ActionButton : MonoBehaviour
 		
 		if( append != null ) text.text += append;
 		
-		gameActions.selectedObjectIndex = selectedObjectIndex;
-		
 		switch( mode )
 		{
-		case Mode.TARGET:
-			action = gameActions.Target;
-			break;
-		case Mode.PICK_UP:
-			action = gameActions.PickUp;
-			break;
-		case Mode.DROP:
-			action = gameActions.Drop;
-			break;
-		case Mode.STACK:
-			action = gameActions.Stack;
-			break;
-		case Mode.ROLL:
-			action = gameActions.Roll;
-			break;
-		case Mode.ALIGN:
-			action = gameActions.Align;
-			break;
-		case Mode.CHANGE:
-			action = gameActions.Change;
-			break;
-		case Mode.CANCEL:
-			action = gameActions.Cancel;
-			break;
+			case Mode.TARGET:
+				action = gameActions.Target;
+				break;
+			case Mode.PICK_UP:
+				action = gameActions.PickUp;
+				break;
+			case Mode.DROP:
+				action = gameActions.Drop;
+				break;
+			case Mode.STACK:
+				action = gameActions.Stack;
+				break;
+			case Mode.ROLL:
+				action = gameActions.Roll;
+				break;
+			case Mode.ALIGN:
+				action = gameActions.Align;
+				break;
+			case Mode.CHANGE:
+				action = gameActions.Change;
+				break;
+			case Mode.CANCEL:
+				action = gameActions.Cancel;
+				break;
 		}
 
 		if( button != null ) button.gameObject.SetActive( true );

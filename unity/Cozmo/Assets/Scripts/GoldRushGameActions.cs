@@ -67,7 +67,7 @@ public class GoldRushGameActions : GameActions {
 					{
 						if( robot.selectedObjects[i].Family == 3 )
 						{
-							buttons[i].SetMode( ActionButton.Mode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
+							buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
 						}
 					}
 				}
@@ -77,7 +77,7 @@ public class GoldRushGameActions : GameActions {
 		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButton.Mode.CANCEL );
 	}
 
-	public override void Drop( bool onRelease )
+	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -94,14 +94,14 @@ public class GoldRushGameActions : GameActions {
 		}
 	}
 
-	public override void Stack( bool onRelease )
+	public override void Stack( bool onRelease, ObservedObject selectedObject )
 	{
 		if( robot == null || !onRelease ) return;
 
 		ActionButtonClick();
 
-		robot.PickAndPlaceObject( selectedObjectIndex );
-		GoldRushController.instance.goldCollectingObject = robot.selectedObjects [selectedObjectIndex];
+		robot.PickAndPlaceObject( selectedObject );
+		GoldRushController.instance.goldCollectingObject = selectedObject;
 		Debug.Log ("gold collector id: " + GoldRushController.instance.goldCollectingObject);
 	}
 }
