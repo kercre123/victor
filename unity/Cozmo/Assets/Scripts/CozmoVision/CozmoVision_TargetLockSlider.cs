@@ -41,7 +41,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		ShowObservedObjects();
 		RefreshFade();
 		AcquireTarget();
-		GameActions.instance.SetActionButtons();
+		GameActions.instance.SetActionButtons( true );
 
 		if(!actionSliderPanel.Engaged) {
 

@@ -7,7 +7,7 @@ public class GameActions : MonoBehaviour
 	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
 	
-	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && slider != null && slider.Pressed ) return "Object " + robot.targetLockedObject; return "Search"; } }
+	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
 	public virtual string PICK_UP { get { return "Pick Up"; } }
 	public virtual string DROP { get { return "Drop"; } }
 	public virtual string STACK { get { return "Stack"; } }
@@ -23,24 +23,12 @@ public class GameActions : MonoBehaviour
 
 	protected Robot robot;
 	protected ActionButton[] buttons;
-	protected ActionSlider slider;
 
 	public static GameActions instance = null;
 
 	protected virtual void OnEnable()
 	{
 		instance = this;
-
-		ActionSliderPanel sliderPanel = ActionPanel.instance as ActionSliderPanel;
-
-		if( sliderPanel != null )
-		{
-			slider = sliderPanel.actionSlider;
-		}
-		else
-		{
-			slider = null;
-		}
 	}
 
 	public virtual void OnDisable()
@@ -53,7 +41,7 @@ public class GameActions : MonoBehaviour
 		return actionSprites[(int)mode];
 	}
 
-	public virtual void SetActionButtons() // 0 is bottom button, 1 is top button
+	public virtual void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( ActionPanel.instance == null ) return;
 
@@ -107,7 +95,7 @@ public class GameActions : MonoBehaviour
 
 		if( buttons.Length > 2 )
 		{
-			if( slider != null )
+			if( isSlider )
 			{
 				buttons[2].SetMode( ActionButton.Mode.TARGET );
 			}
