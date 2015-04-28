@@ -21,6 +21,7 @@ public class ActionButton : MonoBehaviour
 		NUM_MODES
 	}
 
+	[SerializeField] private Button button;
 	public Image image;
 	public Text text;
 
@@ -51,6 +52,7 @@ public class ActionButton : MonoBehaviour
 		
 		if( mode == Mode.DISABLED || GameActions.instance == null )
 		{
+			if( button != null ) button.gameObject.SetActive( false );
 			image.gameObject.SetActive( false );
 			return;
 		}
@@ -91,7 +93,8 @@ public class ActionButton : MonoBehaviour
 			action = gameActions.Cancel;
 			break;
 		}
-		
+
+		if( button != null ) button.gameObject.SetActive( true );
 		image.gameObject.SetActive( true );
 	}
 	

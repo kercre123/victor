@@ -28,7 +28,7 @@ public class GoldRushGameActions : GameActions {
 	}
 	*/
 
-	public override void SetActionButtons() // 0 is bottom button, 1 is top button
+	public override void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( ActionPanel.instance == null ) return;
 		
@@ -81,6 +81,8 @@ public class GoldRushGameActions : GameActions {
 	{
 		if( !onRelease ) return;
 
+		ActionButtonClick();
+
 		//extract or deposit
 		if (GoldRushController.instance.inExtractRange) 
 		{
@@ -95,6 +97,8 @@ public class GoldRushGameActions : GameActions {
 	public override void Stack( bool onRelease )
 	{
 		if( robot == null || !onRelease ) return;
+
+		ActionButtonClick();
 
 		robot.PickAndPlaceObject( selectedObjectIndex );
 		GoldRushController.instance.goldCollectingObject = robot.selectedObjects [selectedObjectIndex];
