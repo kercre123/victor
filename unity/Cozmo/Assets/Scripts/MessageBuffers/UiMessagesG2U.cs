@@ -65,17 +65,17 @@ public class Ping
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -84,25 +84,29 @@ public class Ping
 		return true;
 	}
 
+	public static bool operator ==(Ping a, Ping b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(Ping a, Ping b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		Ping p = obj as Ping;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as Ping);
 	}
 
 	public bool Equals(Ping p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -178,17 +182,17 @@ public class RobotAvailable
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -197,25 +201,29 @@ public class RobotAvailable
 		return true;
 	}
 
+	public static bool operator ==(RobotAvailable a, RobotAvailable b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotAvailable a, RobotAvailable b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotAvailable p = obj as RobotAvailable;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotAvailable);
 	}
 
 	public bool Equals(RobotAvailable p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -291,17 +299,17 @@ public class UiDeviceAvailable
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -310,25 +318,29 @@ public class UiDeviceAvailable
 		return true;
 	}
 
+	public static bool operator ==(UiDeviceAvailable a, UiDeviceAvailable b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(UiDeviceAvailable a, UiDeviceAvailable b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		UiDeviceAvailable p = obj as UiDeviceAvailable;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as UiDeviceAvailable);
 	}
 
 	public bool Equals(UiDeviceAvailable p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -411,17 +423,17 @@ public class RobotConnected
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -430,25 +442,29 @@ public class RobotConnected
 		return true;
 	}
 
+	public static bool operator ==(RobotConnected a, RobotConnected b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotConnected a, RobotConnected b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotConnected p = obj as RobotConnected;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotConnected);
 	}
 
 	public bool Equals(RobotConnected p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -533,17 +549,17 @@ public class RobotDisconnected
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -552,25 +568,29 @@ public class RobotDisconnected
 		return true;
 	}
 
+	public static bool operator ==(RobotDisconnected a, RobotDisconnected b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotDisconnected a, RobotDisconnected b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotDisconnected p = obj as RobotDisconnected;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotDisconnected);
 	}
 
 	public bool Equals(RobotDisconnected p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -655,17 +675,17 @@ public class UiDeviceConnected
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -674,25 +694,29 @@ public class UiDeviceConnected
 		return true;
 	}
 
+	public static bool operator ==(UiDeviceConnected a, UiDeviceConnected b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(UiDeviceConnected a, UiDeviceConnected b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		UiDeviceConnected p = obj as UiDeviceConnected;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as UiDeviceConnected);
 	}
 
 	public bool Equals(UiDeviceConnected p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -889,17 +913,17 @@ public class RobotState
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -908,25 +932,29 @@ public class RobotState
 		return true;
 	}
 
+	public static bool operator ==(RobotState a, RobotState b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotState a, RobotState b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotState p = obj as RobotState;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotState);
 	}
 
 	public bool Equals(RobotState p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1112,17 +1140,17 @@ public class ImageChunk
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1131,25 +1159,29 @@ public class ImageChunk
 		return true;
 	}
 
+	public static bool operator ==(ImageChunk a, ImageChunk b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ImageChunk a, ImageChunk b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		ImageChunk p = obj as ImageChunk;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as ImageChunk);
 	}
 
 	public bool Equals(ImageChunk p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1178,7 +1210,6 @@ public class ImageChunk
 			hash = hash * 23 + this._imageEncoding.GetHashCode();
 			hash = hash * 23 + this._imageChunkCount.GetHashCode();
 			hash = hash * 23 + this._chunkId.GetHashCode();
-			hash = hash * 23 + this._data.GetHashCode();
 			return hash;
 		}
 	}
@@ -1360,17 +1391,17 @@ public class RobotObservedObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1379,25 +1410,29 @@ public class RobotObservedObject
 		return true;
 	}
 
+	public static bool operator ==(RobotObservedObject a, RobotObservedObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotObservedObject a, RobotObservedObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotObservedObject p = obj as RobotObservedObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotObservedObject);
 	}
 
 	public bool Equals(RobotObservedObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1507,17 +1542,17 @@ public class RobotObservedNothing
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1526,25 +1561,29 @@ public class RobotObservedNothing
 		return true;
 	}
 
+	public static bool operator ==(RobotObservedNothing a, RobotObservedNothing b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotObservedNothing a, RobotObservedNothing b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotObservedNothing p = obj as RobotObservedNothing;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotObservedNothing);
 	}
 
 	public bool Equals(RobotObservedNothing p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1627,17 +1666,17 @@ public class RobotDeletedObject
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1646,25 +1685,29 @@ public class RobotDeletedObject
 		return true;
 	}
 
+	public static bool operator ==(RobotDeletedObject a, RobotDeletedObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotDeletedObject a, RobotDeletedObject b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotDeletedObject p = obj as RobotDeletedObject;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotDeletedObject);
 	}
 
 	public bool Equals(RobotDeletedObject p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1798,17 +1841,17 @@ public class DeviceDetectedVisionMarker
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1817,25 +1860,29 @@ public class DeviceDetectedVisionMarker
 		return true;
 	}
 
+	public static bool operator ==(DeviceDetectedVisionMarker a, DeviceDetectedVisionMarker b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(DeviceDetectedVisionMarker a, DeviceDetectedVisionMarker b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		DeviceDetectedVisionMarker p = obj as DeviceDetectedVisionMarker;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as DeviceDetectedVisionMarker);
 	}
 
 	public bool Equals(DeviceDetectedVisionMarker p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -1975,17 +2022,17 @@ public class RobotCompletedAction
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -1994,25 +2041,29 @@ public class RobotCompletedAction
 		return true;
 	}
 
+	public static bool operator ==(RobotCompletedAction a, RobotCompletedAction b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotCompletedAction a, RobotCompletedAction b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		RobotCompletedAction p = obj as RobotCompletedAction;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as RobotCompletedAction);
 	}
 
 	public bool Equals(RobotCompletedAction p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2032,7 +2083,6 @@ public class RobotCompletedAction
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._actionType.GetHashCode();
 			hash = hash * 23 + this._result.GetHashCode();
-			hash = hash * 23 + this._objectIDs.GetHashCode();
 			hash = hash * 23 + this._numObjects.GetHashCode();
 			return hash;
 		}
@@ -2116,6 +2166,9 @@ public class PlaySound
 			writer.Write((byte)_soundFilename_bytes.Length);
 			writer.Write(_soundFilename_bytes);
 		}
+		else {
+			writer.Write((byte)0);
+		}
 		writer.Write((byte)_numLoops);
 		writer.Write((byte)_volume);
 	}
@@ -2134,17 +2187,17 @@ public class PlaySound
 		}
 	}
 
-	public static bool ArrayEquals<T>(T[] a1, T[] a2) {
-		if (ReferenceEquals(a1, a2))
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
 			return true;
 
-		if (a1 == null || a2 == null)
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
 			return false;
 
-		if (a1.Length != a2.Length)
+		if (a1.Count != a2.Count)
 			return false;
 
-		for (int i = 0; i < a1.Length; i++)
+		for (int i = 0; i < a1.Count; i++)
 		{
 			if (!a1[i].Equals(a2[i])) {
 				return false;
@@ -2153,25 +2206,29 @@ public class PlaySound
 		return true;
 	}
 
+	public static bool operator ==(PlaySound a, PlaySound b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(PlaySound a, PlaySound b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		PlaySound p = obj as PlaySound;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as PlaySound);
 	}
 
 	public bool Equals(PlaySound p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
@@ -2186,7 +2243,6 @@ public class PlaySound
 		unchecked
 		{
 			int hash = 17;
-			hash = hash * 23 + this._soundFilename.GetHashCode();
 			hash = hash * 23 + this._numLoops.GetHashCode();
 			hash = hash * 23 + this._volume.GetHashCode();
 			return hash;
@@ -2518,239 +2574,320 @@ public class Message {
 		}
 	}
 
-	public System.IO.Stream Unpack(System.IO.Stream stream)
+	/**** Constructors ****/
+
+	public Message()
+	{
+	}
+
+	public Message(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public Message(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		Tag newTag = Tag.INVALID;
-		newTag = (Tag)reader.ReadByte();
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		Tag newTag = (Tag)reader.ReadByte();
 		switch(newTag) {
 		case Tag.Ping:
-			_state = new Anki.Cozmo.G2U.Ping(reader);
+			Ping = new Anki.Cozmo.G2U.Ping(reader);
 			break;
 		case Tag.RobotAvailable:
-			_state = new Anki.Cozmo.G2U.RobotAvailable(reader);
+			RobotAvailable = new Anki.Cozmo.G2U.RobotAvailable(reader);
 			break;
 		case Tag.UiDeviceAvailable:
-			_state = new Anki.Cozmo.G2U.UiDeviceAvailable(reader);
+			UiDeviceAvailable = new Anki.Cozmo.G2U.UiDeviceAvailable(reader);
 			break;
 		case Tag.RobotConnected:
-			_state = new Anki.Cozmo.G2U.RobotConnected(reader);
+			RobotConnected = new Anki.Cozmo.G2U.RobotConnected(reader);
 			break;
 		case Tag.RobotDisconnected:
-			_state = new Anki.Cozmo.G2U.RobotDisconnected(reader);
+			RobotDisconnected = new Anki.Cozmo.G2U.RobotDisconnected(reader);
 			break;
 		case Tag.UiDeviceConnected:
-			_state = new Anki.Cozmo.G2U.UiDeviceConnected(reader);
+			UiDeviceConnected = new Anki.Cozmo.G2U.UiDeviceConnected(reader);
 			break;
 		case Tag.RobotState:
-			_state = new Anki.Cozmo.G2U.RobotState(reader);
+			RobotState = new Anki.Cozmo.G2U.RobotState(reader);
 			break;
 		case Tag.ImageChunk:
-			_state = new Anki.Cozmo.G2U.ImageChunk(reader);
+			ImageChunk = new Anki.Cozmo.G2U.ImageChunk(reader);
 			break;
 		case Tag.RobotObservedObject:
-			_state = new Anki.Cozmo.G2U.RobotObservedObject(reader);
+			RobotObservedObject = new Anki.Cozmo.G2U.RobotObservedObject(reader);
 			break;
 		case Tag.RobotObservedNothing:
-			_state = new Anki.Cozmo.G2U.RobotObservedNothing(reader);
+			RobotObservedNothing = new Anki.Cozmo.G2U.RobotObservedNothing(reader);
 			break;
 		case Tag.RobotDeletedObject:
-			_state = new Anki.Cozmo.G2U.RobotDeletedObject(reader);
+			RobotDeletedObject = new Anki.Cozmo.G2U.RobotDeletedObject(reader);
 			break;
 		case Tag.DeviceDetectedVisionMarker:
-			_state = new Anki.Cozmo.G2U.DeviceDetectedVisionMarker(reader);
+			DeviceDetectedVisionMarker = new Anki.Cozmo.G2U.DeviceDetectedVisionMarker(reader);
 			break;
 		case Tag.RobotCompletedAction:
-			_state = new Anki.Cozmo.G2U.RobotCompletedAction(reader);
+			RobotCompletedAction = new Anki.Cozmo.G2U.RobotCompletedAction(reader);
 			break;
 		case Tag.PlaySound:
-			_state = new Anki.Cozmo.G2U.PlaySound(reader);
+			PlaySound = new Anki.Cozmo.G2U.PlaySound(reader);
 			break;
 		case Tag.StopSound:
-			_state = new Anki.Cozmo.G2U.StopSound(reader);
+			StopSound = new Anki.Cozmo.G2U.StopSound(reader);
 			break;
 		default:
 			break;
+
 		}
 		_tag = newTag;
-		return stream;
 	}
 
-	public System.IO.Stream Pack(System.IO.Stream stream)
+	public void Pack(System.IO.Stream stream)
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
 		writer.Write((byte)GetTag());
 		switch(GetTag()) {
 		case Tag.Ping:
+			if (Ping == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			Ping.Pack(writer);
 			break;
 		case Tag.RobotAvailable:
+			if (RobotAvailable == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotAvailable.Pack(writer);
 			break;
 		case Tag.UiDeviceAvailable:
+			if (UiDeviceAvailable == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			UiDeviceAvailable.Pack(writer);
 			break;
 		case Tag.RobotConnected:
+			if (RobotConnected == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotConnected.Pack(writer);
 			break;
 		case Tag.RobotDisconnected:
+			if (RobotDisconnected == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotDisconnected.Pack(writer);
 			break;
 		case Tag.UiDeviceConnected:
+			if (UiDeviceConnected == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			UiDeviceConnected.Pack(writer);
 			break;
 		case Tag.RobotState:
+			if (RobotState == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotState.Pack(writer);
 			break;
 		case Tag.ImageChunk:
+			if (ImageChunk == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			ImageChunk.Pack(writer);
 			break;
 		case Tag.RobotObservedObject:
+			if (RobotObservedObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotObservedObject.Pack(writer);
 			break;
 		case Tag.RobotObservedNothing:
+			if (RobotObservedNothing == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotObservedNothing.Pack(writer);
 			break;
 		case Tag.RobotDeletedObject:
+			if (RobotDeletedObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotDeletedObject.Pack(writer);
 			break;
 		case Tag.DeviceDetectedVisionMarker:
+			if (DeviceDetectedVisionMarker == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			DeviceDetectedVisionMarker.Pack(writer);
 			break;
 		case Tag.RobotCompletedAction:
+			if (RobotCompletedAction == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			RobotCompletedAction.Pack(writer);
 			break;
 		case Tag.PlaySound:
+			if (PlaySound == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			PlaySound.Pack(writer);
 			break;
 		case Tag.StopSound:
+			if (StopSound == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
 			StopSound.Pack(writer);
 			break;
 		default:
 			break;
 		}
-		return stream;
 	}
 
-	public int Size
+	public int Size 
 	{
 		get {
-			int result = 1; // tag = uint_8
+			int result = 1; // tag = byte
 			switch(GetTag()) {
 			case Tag.Ping:
+				if (Ping == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += Ping.Size;
 				break;
 			case Tag.RobotAvailable:
+				if (RobotAvailable == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotAvailable.Size;
 				break;
 			case Tag.UiDeviceAvailable:
+				if (UiDeviceAvailable == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += UiDeviceAvailable.Size;
 				break;
 			case Tag.RobotConnected:
+				if (RobotConnected == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotConnected.Size;
 				break;
 			case Tag.RobotDisconnected:
+				if (RobotDisconnected == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotDisconnected.Size;
 				break;
 			case Tag.UiDeviceConnected:
+				if (UiDeviceConnected == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += UiDeviceConnected.Size;
 				break;
 			case Tag.RobotState:
+				if (RobotState == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotState.Size;
 				break;
 			case Tag.ImageChunk:
+				if (ImageChunk == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += ImageChunk.Size;
 				break;
 			case Tag.RobotObservedObject:
+				if (RobotObservedObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotObservedObject.Size;
 				break;
 			case Tag.RobotObservedNothing:
+				if (RobotObservedNothing == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotObservedNothing.Size;
 				break;
 			case Tag.RobotDeletedObject:
+				if (RobotDeletedObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotDeletedObject.Size;
 				break;
 			case Tag.DeviceDetectedVisionMarker:
+				if (DeviceDetectedVisionMarker == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += DeviceDetectedVisionMarker.Size;
 				break;
 			case Tag.RobotCompletedAction:
+				if (RobotCompletedAction == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += RobotCompletedAction.Size;
 				break;
 			case Tag.PlaySound:
+				if (PlaySound == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += PlaySound.Size;
 				break;
 			case Tag.StopSound:
+				if (StopSound == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
 				result += StopSound.Size;
 				break;
 			default:
-				return 0;
+				// Just tag size
+				break;
 			}
 			return result;
 		}
 	}
+
+	public static bool operator ==(Message a, Message b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(Message a, Message b)
+	{
+		return !(a == b);
+	}
+
 	public override bool Equals(System.Object obj)
 	{
-		if (obj == null)
-		{
-			return false;
-		}
-
-		Message p = obj as Message;
-		if ((System.Object) p == null)
-		{
-			return false;
-		}
-
-		return this.Equals(p);
+		return this.Equals(obj as Message);
 	}
 
 	public bool Equals(Message p)
 	{
-		if ((object) p == null)
+		if (System.Object.ReferenceEquals(p, null))
 		{
 			return false;
 		}
 
-		if (!this._tag.Equals(p._tag))
-		{
-			return false;
-		}
-
-		switch(GetTag()) {
-
-		case Tag.Ping:
-			return this.Ping.Equals(p.Ping);
-		case Tag.RobotAvailable:
-			return this.RobotAvailable.Equals(p.RobotAvailable);
-		case Tag.UiDeviceAvailable:
-			return this.UiDeviceAvailable.Equals(p.UiDeviceAvailable);
-		case Tag.RobotConnected:
-			return this.RobotConnected.Equals(p.RobotConnected);
-		case Tag.RobotDisconnected:
-			return this.RobotDisconnected.Equals(p.RobotDisconnected);
-		case Tag.UiDeviceConnected:
-			return this.UiDeviceConnected.Equals(p.UiDeviceConnected);
-		case Tag.RobotState:
-			return this.RobotState.Equals(p.RobotState);
-		case Tag.ImageChunk:
-			return this.ImageChunk.Equals(p.ImageChunk);
-		case Tag.RobotObservedObject:
-			return this.RobotObservedObject.Equals(p.RobotObservedObject);
-		case Tag.RobotObservedNothing:
-			return this.RobotObservedNothing.Equals(p.RobotObservedNothing);
-		case Tag.RobotDeletedObject:
-			return this.RobotDeletedObject.Equals(p.RobotDeletedObject);
-		case Tag.DeviceDetectedVisionMarker:
-			return this.DeviceDetectedVisionMarker.Equals(p.DeviceDetectedVisionMarker);
-		case Tag.RobotCompletedAction:
-			return this.RobotCompletedAction.Equals(p.RobotCompletedAction);
-		case Tag.PlaySound:
-			return this.PlaySound.Equals(p.PlaySound);
-		case Tag.StopSound:
-			return this.StopSound.Equals(p.StopSound);
-		default:
-			return false;
-		}
+		return (_tag == p._tag && _state.Equals(p._state));
 	}
 
 	public override int GetHashCode()
@@ -2759,55 +2896,7 @@ public class Message {
 		{
 			int hash = 17;
 			hash = hash * 23 + this._tag.GetHashCode();
-			switch(GetTag()) {
-			case Tag.Ping:
-				hash = hash * 23 + this.Ping.GetHashCode();
-				break;
-			case Tag.RobotAvailable:
-				hash = hash * 23 + this.RobotAvailable.GetHashCode();
-				break;
-			case Tag.UiDeviceAvailable:
-				hash = hash * 23 + this.UiDeviceAvailable.GetHashCode();
-				break;
-			case Tag.RobotConnected:
-				hash = hash * 23 + this.RobotConnected.GetHashCode();
-				break;
-			case Tag.RobotDisconnected:
-				hash = hash * 23 + this.RobotDisconnected.GetHashCode();
-				break;
-			case Tag.UiDeviceConnected:
-				hash = hash * 23 + this.UiDeviceConnected.GetHashCode();
-				break;
-			case Tag.RobotState:
-				hash = hash * 23 + this.RobotState.GetHashCode();
-				break;
-			case Tag.ImageChunk:
-				hash = hash * 23 + this.ImageChunk.GetHashCode();
-				break;
-			case Tag.RobotObservedObject:
-				hash = hash * 23 + this.RobotObservedObject.GetHashCode();
-				break;
-			case Tag.RobotObservedNothing:
-				hash = hash * 23 + this.RobotObservedNothing.GetHashCode();
-				break;
-			case Tag.RobotDeletedObject:
-				hash = hash * 23 + this.RobotDeletedObject.GetHashCode();
-				break;
-			case Tag.DeviceDetectedVisionMarker:
-				hash = hash * 23 + this.DeviceDetectedVisionMarker.GetHashCode();
-				break;
-			case Tag.RobotCompletedAction:
-				hash = hash * 23 + this.RobotCompletedAction.GetHashCode();
-				break;
-			case Tag.PlaySound:
-				hash = hash * 23 + this.PlaySound.GetHashCode();
-				break;
-			case Tag.StopSound:
-				hash = hash * 23 + this.StopSound.GetHashCode();
-				break;
-			default:
-				break;
-			}
+			hash = hash * 23 + this._state.GetHashCode();
 			return hash;
 		}
 	}
