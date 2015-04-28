@@ -798,7 +798,8 @@ namespace Anki {
       // Wait to get a state message back from the physical robot saying its head
       // is in the commanded position
       // TODO: Is this really necessary in practice?
-      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat())) {
+      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat()) ||
+         !robot.IsHeadMoving()) {
         result = ActionResult::SUCCESS;
       }
       
@@ -862,7 +863,19 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      if(NEAR(robot.GetLiftHeight(), _height_mm, _heightTolerance)) {
+      // TODO: Somehow verify robot got command to move lift before declaring success
+      /*
+      // Wait for the lift to start moving (meaning robot received command) and
+      // then stop moving
+      static bool liftStartedMoving = false;
+      if(!liftStartedMoving) {
+        liftStartedMoving = robot.IsLiftMoving();
+      }
+      else
+       */
+      if(NEAR(_height_mm, robot.GetLiftHeight(), _heightTolerance) ||
+         !robot.IsLiftMoving())
+      {
         result = ActionResult::SUCCESS;
       }
       

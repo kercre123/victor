@@ -169,8 +169,8 @@ namespace Anki {
         OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
-      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 2.f);
-      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 2.f);
+      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
       
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
