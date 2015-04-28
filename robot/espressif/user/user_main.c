@@ -53,7 +53,7 @@ user_init()
     // Create config for Wifi AP
     struct softap_config ap_config;
 
-    os_strcpy(ap_config.ssid, "AnkiEspressif");
+    os_strcpy(ap_config.ssid, "AnkiEspressif1");
 
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;

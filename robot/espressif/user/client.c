@@ -10,7 +10,7 @@
 
 //#define DEBUG_CLIENT
 
-#define NUM_RTX_BUFS 4
+#define NUM_RTX_BUFS 16
 static UDPPacket rtxbs[NUM_RTX_BUFS];
 
 static struct espconn *udpServer;
