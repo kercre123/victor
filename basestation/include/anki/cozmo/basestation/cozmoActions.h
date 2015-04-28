@@ -165,7 +165,8 @@ namespace Anki {
       enum class Preset : u8 {
         LOW_DOCK,
         HIGH_DOCK,
-        CARRY
+        CARRY,
+        OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
       MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 2.f);

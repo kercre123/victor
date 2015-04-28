@@ -635,8 +635,8 @@ namespace Anki {
       // Can't track head to an object and face it
       robot.DisableTrackHeadToObject();
       
-      // Drop lift
-      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK));
+      // Get lift out of the way
+      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
       
       return ActionResult::SUCCESS;
     }
@@ -825,9 +825,10 @@ namespace Anki {
     f32 MoveLiftToHeightAction::GetPresetHeight(Preset preset)
     {
       static const std::map<Preset, f32> LUT = {
-        {Preset::LOW_DOCK,  LIFT_HEIGHT_LOWDOCK},
-        {Preset::HIGH_DOCK, LIFT_HEIGHT_HIGHDOCK},
-        {Preset::CARRY,     LIFT_HEIGHT_CARRY}
+        {Preset::LOW_DOCK,   LIFT_HEIGHT_LOWDOCK},
+        {Preset::HIGH_DOCK,  LIFT_HEIGHT_HIGHDOCK},
+        {Preset::CARRY,      LIFT_HEIGHT_CARRY},
+        {Preset::OUT_OF_FOV, -1.f},
       };
       
       return LUT.at(preset);
@@ -835,6 +836,20 @@ namespace Anki {
     
     ActionResult MoveLiftToHeightAction::Init(Robot& robot)
     {
+      if(_height_mm < 0.f) {
+        // Choose whatever is closer to current height, LOW or CARRY:
+        const f32 currentHeight = robot.GetLiftHeight();
+        const f32 low   = GetPresetHeight(Preset::LOW_DOCK);
+        const f32 carry = GetPresetHeight(Preset::CARRY);
+        // Absolute values here shouldn't be necessary, since these are supposed
+        // to be the lowest and highest possible lift settings, but just in case...
+        if( std::abs(currentHeight-low) < std::abs(carry-currentHeight)) {
+          _height_mm = low;
+        } else {
+          _height_mm = carry;
+        }
+      }
+      
       // TODO: Add ability to specify speed/accel
       if(robot.MoveLiftToHeight(_height_mm, 5, 10) != RESULT_OK) {
         return ActionResult::FAILURE_ABORT;
