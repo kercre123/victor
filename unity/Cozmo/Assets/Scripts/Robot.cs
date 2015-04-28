@@ -388,12 +388,12 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message { FaceObject = message } );
 	}
 
-	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
+	public void PickAndPlaceObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
 		//TrackHeadToObject( selectedObjects[index] );
 
 		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
-		message.objectID = selectedObjects[index];
+		message.objectID = selectedObject;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		

@@ -147,8 +147,8 @@ public class RobotRelativeControls : MonoBehaviour {
 			CheckGyroTurning();
 			CheckDebugHorizontalAxesTurning();
 
-			if(verticalStick != null && verticalStick.Vertical != 0f) {
-				if(headAngleStick == null || !headAngleStick.IsPressed) {
+			if(inputs.y != 0) {
+				if(headAngleStick == null || !robot.searching) {
 					if(robot.selectedObjects.Count == 0 && !robot.isBusy) {
 						robot.SetHeadAngle();
 					}

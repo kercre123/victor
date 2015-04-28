@@ -19,8 +19,6 @@ public class GameActions : MonoBehaviour
 	protected virtual string TOP { get { return " TOP"; } }
 	protected virtual string BOTTOM { get { return " BOTTOM"; } }
 
-	[System.NonSerialized] public int selectedObjectIndex;
-
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
@@ -88,7 +86,7 @@ public class GameActions : MonoBehaviour
 			{
 				for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
 				{
-					buttons[i].SetMode( ActionButton.Mode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
+					buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
 				}
 			}
 		}
@@ -124,7 +122,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 
-	public virtual void PickUp( bool onRelease )
+	public virtual void PickUp( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -133,10 +131,10 @@ public class GameActions : MonoBehaviour
 		Debug.Log( "PickUp" );
 
 		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObjectIndex );
+			robot.PickAndPlaceObject( selectedObject );
 			if(CozmoBusyPanel.instance != null)	{
 
-				ObservedObject obj = robot.selectedObjects[selectedObjectIndex];
+				ObservedObject obj = selectedObject;
 				if(obj != null) {
 					string desc = "Cozmo is attempting to pick-up\n";
 
@@ -160,7 +158,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Drop( bool onRelease )
+	public virtual void Drop( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -195,7 +193,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Stack( bool onRelease )
+	public virtual void Stack( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -204,7 +202,7 @@ public class GameActions : MonoBehaviour
 		Debug.Log( "Stack" );
 
 		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObjectIndex );
+			robot.PickAndPlaceObject( selectedObject );
 			if(CozmoBusyPanel.instance != null)	{
 				
 				ObservedObject obj = robot.carryingObject;
@@ -224,7 +222,7 @@ public class GameActions : MonoBehaviour
 						desc += "Block";
 					}
 
-					ObservedObject target = robot.selectedObjects[selectedObjectIndex];
+					ObservedObject target = selectedObject;
 					if(target != null) {
 						
 						desc += "\n on top of ";
@@ -251,7 +249,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Roll( bool onRelease )
+	public virtual void Roll( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -260,7 +258,7 @@ public class GameActions : MonoBehaviour
 		Debug.Log( "Roll" );
 	}
 	
-	public virtual void Align( bool onRelease )
+	public virtual void Align( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -269,7 +267,7 @@ public class GameActions : MonoBehaviour
 		Debug.Log( "Align" );
 	}
 	
-	public virtual void Change( bool onRelease )
+	public virtual void Change( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -286,7 +284,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Cancel( bool onRelease )
+	public virtual void Cancel( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
 
@@ -302,7 +300,7 @@ public class GameActions : MonoBehaviour
 		}
 	}
 
-	public virtual void Target( bool onRelease )
+	public virtual void Target( bool onRelease, ObservedObject selectedObject )
 	{
 		if( onRelease )
 		{
