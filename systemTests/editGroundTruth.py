@@ -51,7 +51,7 @@ def sanitizeJsonTest(jsonData):
     if 'Blocks' in jsonData:
         if isinstance(jsonData['Blocks'], dict):
             jsonData['Blocks'] = [jsonData['Blocks']]
-            
+
         for i in range(0,len(jsonData['Blocks'])):
             if 'templateWidth_mm' not in jsonData['Blocks'][i]:
                 jsonData['Blocks'][i]['templateWidth_mm'] = 0
@@ -117,21 +117,21 @@ def sanitizeJsonTest(jsonData):
 
 def saveTestFile():
     global g_data
-    
+
     allTestFilenames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
-    
+
     testFilename = allTestFilenames[curTestIndex]
 
     testFilename.replace('\\', '/')
     testFilename.replace('//', '/')
 
     jsonData = sanitizeJsonTest(g_data['jsonData'])
-    
+
     jsonDataString = json.dumps(jsonData, indent=2)
-    
+
     # TODO: only change the leading spaces
     jsonDataString = jsonDataString.replace('  ', '\t')
-    
+
     f = open(testFilename, 'w')
     #jsonData = json.dump(jsonData, f, indent=2)
     f.write(jsonDataString)
@@ -140,7 +140,7 @@ def saveTestFile():
 def loadTestFile():
     global g_mainWindow
     global g_data
-    
+
     # TODO: cache in more efficient format?
 
     allTestFilenames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
@@ -149,15 +149,15 @@ def loadTestFile():
 
     testFilename.replace('\\', '/')
     testFilename.replace('//', '/')
-    
+
     print('Loading json ' + testFilename)
 
     f = open(testFilename, 'r')
     jsonData = json.load(f)
     f.close()
-    
+
     jsonData = sanitizeJsonTest(jsonData)
-    
+
     modificationTime_json = os.path.getmtime(testFilename)
 
     testPath = testFilename[:testFilename.rfind('/')]
@@ -169,7 +169,7 @@ def loadTestFile():
         'testFilename':testFilename,
         'testPath':testPath,
         'testFileModificationTime':modificationTime_json}
-    
+
     poseChanged(True)
 
 def fixBounds():
@@ -178,43 +178,43 @@ def fixBounds():
 
 def getMaxMarkerIndex(poseIndex):
     global g_data
-    
+
     numMarkers = len(g_data['jsonData']['Poses'][poseIndex]['VisionMarkers'])
-    
+
     if numMarkers == 0:
         return 0
-    
+
     [corners, whichCorners] = getFiducialCorners(poseIndex, numMarkers-1)
-    
+
     if len(corners) == 4:
         maxIndex = numMarkers
     else:
         maxIndex = numMarkers - 1
-    
+
     #pdb.set_trace()
-    
+
     #print('maxIndex = ' + str(maxIndex))
-    
+
     return maxIndex
-        
+
 def fixBounds():
     global g_mainWindow
     global g_data
     global g_curPoseIndex
     global g_curMarkerIndex
     global g_maxMarkerIndex
-    
+
     boundsFixed = False
-    
+
     g_data['jsonData'] = sanitizeJsonTest(g_data['jsonData'])
-    
+
     curPoseIndexOriginal = g_curPoseIndex
-    
+
     g_curPoseIndex   = max(0, min(len(g_data['jsonData']['Poses'])-1, g_curPoseIndex))
     g_curMarkerIndex = max(0, min(getMaxMarkerIndex(g_curPoseIndex),  g_curMarkerIndex))
-    
+
     g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
-            
+
     if curPoseIndexOriginal != g_curPoseIndex:
         boundsFixed = True
 
@@ -222,35 +222,35 @@ def fixBounds():
 
 def getTestNamesFromDirectory():
     global g_curTestIndex
-    
+
     if g_mainWindow is None:
         return None, 0, 0
-    
+
     testDirectory = g_mainWindow.ui.testJsonFilename1.text()
     testDirectory = testDirectory.replace('\\', '/')
     testDirectory = testDirectory.replace('//', '/')
-    
+
     testFilename  = g_mainWindow.ui.testJsonFilename2.text()
     testFilename = testFilename.replace('\\', '/')
     testFilename = testFilename.replace('//', '/')
-    
+
     if (len(testFilename) > 5) and (testFilename[(-5):] != '.json'):
         testFilename = [testFilename, '.json'];
-    
+
     files = []
     for f in os.listdir(testDirectory):
         if os.path.isfile(os.path.join(testDirectory,f)) and (len(f) > 5) and (f[(-5):] == '.json'):
             files.append(os.path.join(testDirectory,f))
-        
+
     curTestIndex = g_curTestIndex
-    
+
     # curTestIndex = 0;
     # for i in range(0, len(files)):
     #     if testFilename == files[i]:
     #         curTestIndex = i
-    
+
     maxTestIndex = len(files) - 1
-    
+
     return files, curTestIndex, maxTestIndex
 
 def poseChanged(resetZoom):
@@ -261,9 +261,9 @@ def poseChanged(resetZoom):
     global g_curMarkerIndex
     global g_rawImage
     global g_toShowImage
-        
+
     fixBounds()
-        
+
     g_mainWindow.ui.setMaxTestIndex(len(g_data['allTestFilenames']) - 1)
     g_mainWindow.ui.testJsonFilename1.setText(g_data['testPath'])
     g_mainWindow.ui.testJsonFilename2.setText(g_data['testFilename'])
@@ -271,23 +271,23 @@ def poseChanged(resetZoom):
     g_mainWindow.ui.setMaxPoseIndex(len(g_data['jsonData']['Poses'])-1)
     g_mainWindow.ui.setCurMarkerIndex(g_curMarkerIndex, False)
     g_mainWindow.ui.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
-    
+
     if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) > g_curMarkerIndex:
         g_mainWindow.ui.markerType.setText(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'][7:])
     else:
         g_mainWindow.ui.markerType.setText('UNKNOWN')
-    
+
     # TODO: add in all the updates
-    
+
     #allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
 
     #if g_mainWindow is not None:
     #    g_mainWindow.ui.updateNumbers()
-                    
+
     curImageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
-    
+
     g_mainWindow.ui.pose_filename.setText(curImageFilename)
-    
+
     #print('Load image file ' + curImageFilename)
     g_rawImage = QtGui.QPixmap(curImageFilename)
     g_toShowImage = QtGui.QPixmap(g_rawImage)
@@ -297,7 +297,7 @@ def poseChanged(resetZoom):
     g_imageWindow.setScaledContents(True)
 
     g_imageWindow.setSizePolicy( QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored )
-    
+
 def getFiducialCorners(poseIndex, markerIndex):
     global g_data
 
@@ -323,7 +323,7 @@ def getFiducialCorners(poseIndex, markerIndex):
                 for i in range(0,4):
                     newCornersX[i] = curMarkerData[cornerNamesX[i]]
                     newCornersY[i] = curMarkerData[cornerNamesY[i]]
-                
+
                 corners.append(zip(newCornersX,newCornersY))
                 whichCorners.append(whichCorners)
     else: # if markerIndex is None
@@ -366,93 +366,134 @@ def extractMarkers(image, returnInvalidMarkers):
     quadRefinementMaxCornerChange = 5.0
     quadRefinementMinCornerChange = 0.005
     returnInvalidMarkers = int(returnInvalidMarkers)
-    
+
     quads, markerTypes, markerNames, markerValidity, binaryImage = anki.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
-    
+
+    #pdb.set_trace()
+
     return quads, markerTypes, markerNames, markerValidity, binaryImage
 
 def detectClosestFiducialMarker(image, quad):
     quads, markerTypes, markerNames, markerValidity, binaryImage = extractMarkers(image, 1)
-    
-    pdb.set_trace()
-    
+
+    print('quads = ' + str(quads))
+
+    if binaryImage != []:
+        cv2.imshow("binaryImage", binaryImage*255)
+
+        binaryImage2 = cv2.cvtColor(binaryImage*255, cv2.COLOR_GRAY2RGB)
+
+        for toDrawQuad in quads:
+            cornerIndexes = [0,2,3,1,0]
+            for i in range(0,4):
+                iCur = cornerIndexes[i]
+                iNext = cornerIndexes[i+1]
+                p0 = tuple([int(x) for x in toDrawQuad[iCur]])
+                p1 = tuple([int(x) for x in toDrawQuad[iNext]])
+                cv2.line(binaryImage2, p0, p1, (0,255,0), 3)
+
+        cv2.imshow("binaryImage2", binaryImage2)
+
+        cv2.waitKey(1);
+
     if len(quads) == 0:
-        return quad, 0
-    
+        return quad, float('Inf')
+
     # For each candidate quad corner, find the distance to the closest query quad corner
-    
+
     closestQuadInd = -1
     closestQuadDist = float('Inf')
-    
+
     for iQuad in range(0,len(quads)):
         curQuad = quads[iQuad]
-        
+
         sumCornerDists = 0
-        
+
         # For quad iQuad, what is the sum of the best distances between all four corners?
         for iCorner in range(0,4):
             closestCornerInd = -1
             closestCornerDist = float('Inf')
-        
+
             for jCorner in range(0,4):
                 curCornerDist = sqrt(pow(curQuad[jCorner][0] - quad[iCorner][0], 2.0) + pow(curQuad[jCorner][1] - quad[iCorner][1], 2.0))
-                
+
                 if curCornerDist < closestCornerDist:
                     closestCornerDist = curCornerDist
                     closestCornerInd = jCorner
-            
+
             sumCornerDists += closestCornerDist
-            
+
         if sumCornerDists < closestQuadDist:
             closestQuadDist = sumCornerDists
-            closestQuadInd = iQuad       
+            closestQuadInd = iQuad
 
     reorderedQuad = [quads[closestQuadInd][0], quads[closestQuadInd][2], quads[closestQuadInd][3], quads[closestQuadInd][1]]
-    
+
     return reorderedQuad, closestQuadDist
 
-def trackQuadrilateral(startImage, startQuad, endImage):
+def trackQuadrilateral(startImage, startQuad, endImage, drawDebug=False):
     numPointsPerDimension = 10
-    
+
     xRange = (min((x for x,y in startQuad)), max((x for x,y in startQuad)))
     yRange = (min((y for x,y in startQuad)), max((y for x,y in startQuad)))
-    
-    quadShortWidth = min([xRange[0], yRange[0]])
-    
-    winSize = int(round(quadShortWidth * 2 / numPointsPerDimension))
-    
+
+    #quadShortWidth = min([xRange[0], yRange[0]])
+    quadLongWidth = max([abs(xRange[1]-xRange[0]), abs(yRange[1]-yRange[0])])
+
+    winSize = max(3, int(round(quadLongWidth * 2 / numPointsPerDimension)))
+
+    #print('startQuad = ' + str(startQuad))
+    #print('xRange = ' + str(xRange))
+    #print('yRange = ' + str(yRange))
+    #print('winSize = ' + str(winSize))
+
     flow_lk_params = dict(winSize  = (winSize,winSize), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), minEigThreshold = 5e-3)
-    
+
     points0 = []
     for y in np.linspace(yRange[0], yRange[1], numPointsPerDimension):
         for x in np.linspace(xRange[0], xRange[1], numPointsPerDimension):
             points0.append((x,y))
-    
+
     points0 = np.array(points0).reshape(-1,1,2).astype('float32')
 
     points1, st, err = cv2.calcOpticalFlowPyrLK(startImage, endImage, points0, None, **flow_lk_params)
-    
+
     goodPoints0 = points0[st==1]
     goodPoints1 = points1[st==1]
-    
+
+    if drawDebug:
+        startImageToShow = cv2.cvtColor(startImage*255, cv2.COLOR_GRAY2RGB)
+
+        for p0, p1 in zip(goodPoints0, goodPoints1):
+            cv2.line(startImageToShow,
+                     tuple(p0.round().astype('int32').tolist()),
+                     tuple(p1.round().astype('int32').tolist()),
+                     (0,255,0),
+                     1)
+
+        cv2.imshow("startImageToShow", startImageToShow)
+
+    if goodPoints1.shape[0] < 4:
+        return [[0,0], [0,0], [0,0], [0,0]]
+
     homography, inliers = cv2.findHomography( goodPoints0, goodPoints1, cv2.RANSAC, ransacReprojThreshold = 1)
-    
+
     startQuadArray = np.zeros((3,4))
-    
+
     startQuadArray[2,:] = 1
-    
+
     for i in range(0,4):
         startQuadArray[0,:] = [x for x,y in startQuad]
         startQuadArray[1,:] = [y for x,y in startQuad]
-    
+
     warpedQuadArray = np.matrix(homography) * np.matrix(startQuadArray)
-    
+
     warpedQuad = []
     for i in range(0,4):
         warpedQuad.append((warpedQuadArray[0,i] / warpedQuadArray[2,i], warpedQuadArray[1,i] / warpedQuadArray[2,i]))
-        
+
     return warpedQuad
-    
+
 def trackTemplate():
     global g_data
     global g_mainWindow
@@ -464,21 +505,21 @@ def trackTemplate():
     if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) <= g_curMarkerIndex:
         print('No marker labeled')
         return
-    
+
     if isinstance(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'], dict):
-        g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] = [ g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] ]    
+        g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] = [ g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'] ]
 
     [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, g_curMarkerIndex)
-    
+
     if len(corners) != 4:
         print("The current marker doesn't have four corners")
         return
 
     imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][g_curPoseIndex]['ImageFile']
     lastImage = cv2.imread(imageFilename, 0)
-    
+
     detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(lastImage, corners)
-    
+
     if detectedQuadDistance < (4*5):
         lastQuad = detectedQuad
     else:
@@ -492,37 +533,42 @@ def trackTemplate():
     g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerRight'] = lastQuad[2][1]
     g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerLeft']  = lastQuad[3][0]
     g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerLeft']  = lastQuad[3][1]
-    
+
     if 'markerType' not in g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]:
         g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'] = 'MARKER_UNKNOWN'
-        
+
     markerType = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType']
-        
+
     startPoseIndex = g_curPoseIndex
     startMarkerIndex = g_curMarkerIndex
-        
+
     for iPose in range(startPoseIndex+1, g_maxPoseIndex):
         imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][iPose]['ImageFile']
-        
+
         curImage = cv2.imread(imageFilename, 0)
-        
+
         # Track points between the previous image and the current image
-        curQuad = trackQuadrilateral(lastImage, lastQuad, curImage)
-                
+        curQuad = trackQuadrilateral(lastImage, lastQuad, curImage, True)
+
         # Match this quad to the best detected quad
         detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(curImage, curQuad)
-        
+
+        print('detectedQuadDistance = ' + str(detectedQuadDistance))
+
         if detectedQuadDistance < (4*5):
             curQuad = detectedQuad
             suffix = '_Good' # TODO: comment out
         else:
             curQuad = curQuad
             suffix = '_Bad' # TODO: comment out
-        
+
+            pdb.set_trace()
+            #cv2.waitKey()
+
         # TODO: will this work when the g_curMarkerIndex is not zero
         while len(g_data['jsonData']['Poses'][iPose]['VisionMarkers']) <= g_curMarkerIndex:
             g_data['jsonData']['Poses'][iPose]['VisionMarkers'].append({})
-        
+
         if not isinstance(g_data['jsonData']['Poses'][iPose]['VisionMarkers'], dict):
             g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex] = {}
 
@@ -535,9 +581,12 @@ def trackTemplate():
         g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['x_imgLowerLeft']  = curQuad[3][0]
         g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['y_imgLowerLeft']  = curQuad[3][1]
         g_data['jsonData']['Poses'][iPose]['VisionMarkers'][g_curMarkerIndex]['markerType'] = markerType + suffix
-        
+
+        lastImage = curImage
+        lastQuad = curQuad
+
         #pdb.set_trace()
-        
+
     # TODO: save the output
 
 class ConnectedMainWindow(Ui_MainWindow):
@@ -545,7 +594,7 @@ class ConnectedMainWindow(Ui_MainWindow):
         super(ConnectedMainWindow, self).__init__()
 
         #loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
-    
+
     def incrementCurTestIndex(self, increment, updatePose=False):
         global g_curTestIndex
         global g_maxTestIndex
@@ -555,12 +604,12 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_curTestIndex = max(0, min(g_maxTestIndex, g_curTestIndex+increment))
 
         self.test_current.setText(str(g_curTestIndex))
-        
+
         loadTestFile()
-        
+
         if updatePose:
             poseChanged(True)
-        
+
     def setCurTestIndex(self, value, updatePose=False):
         global g_curTestIndex
         global g_maxTestIndex
@@ -570,26 +619,26 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_curTestIndex = max(0, min(g_maxTestIndex, value))
 
         self.test_current.setText(str(g_curTestIndex))
-        
+
         loadTestFile()
-        
+
         #files, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
-        
+
         #self.setMaxTestIndex(len(files))
-        
+
         #pdb.set_trace()
-            
+
         #loadTestFile(files[curTestIndex])
         #loadTestFile(testDirectory + '/' + testFilename)
         #loadTestFile('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00000_all.json')
-        
+
         #pdb.set_trace()
-        
+
         if updatePose:
             poseChanged(True)
-        
+
     def setMaxTestIndex(self, value):
-        global g_maxTestIndex;        
+        global g_maxTestIndex;
         g_maxTestIndex = value
         self.test_max.setText(str(value))
 
@@ -600,25 +649,25 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_curPoseIndex = max(0, min(g_maxPoseIndex, value))
 
         self.pose_current.setText(str(g_curPoseIndex))
-        
+
         if updatePose:
             poseChanged(True)
-            
+
     def incrementCurPoseIndex(self, increment, updatePose=False):
         global g_curPoseIndex
         global g_maxPoseIndex
 
         g_curPoseIndex = max(0, min(g_maxPoseIndex, g_curPoseIndex+increment))
-        
+
         self.pose_current.setText(str(g_curPoseIndex))
-        
+
         if updatePose:
-            poseChanged(True)            
+            poseChanged(True)
 
     def setMaxPoseIndex(self, value):
-        global g_maxPoseIndex;        
+        global g_maxPoseIndex;
         g_maxPoseIndex = value
-        self.pose_max.setText(str(value))  
+        self.pose_max.setText(str(value))
 
     def setCurMarkerIndex(self, value, updatePose=False):
         global g_curMarkerIndex
@@ -628,10 +677,10 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_curMarkerIndex = max(0, min(g_maxMarkerIndex, value))
 
         self.marker_current.setText(str(g_curMarkerIndex))
-        
+
         if updatePose:
             poseChanged(False)
-            
+
     def incrementCurMarkerIndex(self, increment, updatePose=False):
         global g_curMarkerIndex
         global g_curPoseIndex
@@ -640,35 +689,35 @@ class ConnectedMainWindow(Ui_MainWindow):
         g_curMarkerIndex = max(0, min(g_maxMarkerIndex, g_curMarkerIndex+increment))
 
         self.marker_current.setText(str(g_curMarkerIndex))
-        
+
         if updatePose:
-            poseChanged(False)            
-        
+            poseChanged(False)
+
     def setMaxMarkerIndex(self, value):
-        global g_maxMarkerIndex;        
+        global g_maxMarkerIndex;
         g_maxMarkerIndex = value
         self.marker_max.setText(str(value))
-        
+
     def updateMarkerName(self):
         global g_data
         global g_curPoseIndex
         global g_curMarkerIndex
-        
+
         markerName = self.markerType.text().upper()
-                
+
         if len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers']) > g_curMarkerIndex:
             g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]['markerType'] = 'MARKER_' + markerName
             saveTestFile()
-            
+
         poseChanged(False)
-        
+
     def updateNumbers(self):
         allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
-                
+
         self.setCurTestIndex(g_curTestIndex, False)
         self.setCurPoseIndex(g_curPoseIndex, False)
         self.setCurMarkerIndex(g_curMarkerIndex, False)
-        
+
         self.setMaxTestIndex(maxTestIndex)
         self.setMaxPoseIndex(len(g_data['jsonData']['Poses']))
         self.setMaxMarkerIndex(getMaxMarkerIndex(g_curPoseIndex))
@@ -716,7 +765,7 @@ class ConnectedMainWindow(Ui_MainWindow):
         self.marker_next1.clicked.connect(lambda: self.incrementCurMarkerIndex(1, True))
         self.marker_next2.clicked.connect(lambda: self.incrementCurMarkerIndex(10, True))
         self.marker_next3.clicked.connect(lambda: self.incrementCurMarkerIndex(100, True))
-        
+
 class Ui_ImageWindow(QtGui.QLabel):
     def __init__(self, parent=None):
         super(Ui_ImageWindow, self).__init__(parent)
@@ -726,30 +775,30 @@ class Ui_ImageWindow(QtGui.QLabel):
     def closeEvent(self, event):
         sys.exit(0)
         #event.accept()
-        
+
     def paintEvent(self, event):
         super(Ui_ImageWindow, self).paintEvent(event)
-        
+
         if g_imageWindow.pixmap() is None:
             return
-        
+
         # TODO: Draw the quads
-        
+
         # painter = QtGui.QPainter(self)
         # painter.setPen(QtGui.QColor(128, 0, 128))
         # painter.drawLine(int(random.random()*400), int(random.random()*400), int(random.random()*400), int(random.random()*400))
-                
+
         #g_imageWindow.setPixmap(g_toShowImage)
         #print('Toasted')
-                
+
         #pdb.set_trace()
-                
+
         realImageSize = [float(g_imageWindow.pixmap().height()), float(g_imageWindow.pixmap().width())]
         displayImageSize = [float(self.height()), float(self.width())]
-                
+
         xScaleInv = displayImageSize[1] / realImageSize[1]
         yScaleInv = displayImageSize[0] / realImageSize[0]
-        
+
         if g_pointsType == 'template':
             #padAmount = floor(size(imageResized)/2)
             #imageResized = padarray(imageResized, padAmount)
@@ -757,36 +806,36 @@ class Ui_ImageWindow(QtGui.QLabel):
             padAmount = [0,0]
         else:
             padAmount = [0,0]
-        
+
         if (g_pointsType == 'template') or (g_pointsType == 'fiducialMarker'):
             for iMarker in range(0,len(g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'])):
                 painter = QtGui.QPainter(self)
-                
+
                 if iMarker == g_curMarkerIndex:
                     lineColor = QtGui.QColor(0, 255, 0)
                 else:
                     lineColor = QtGui.QColor(255, 255, 0)
-                
+
                 [corners, whichCorners] = getFiducialCorners(g_curPoseIndex, iMarker)
-                                
-                corners = [(x+padAmount[1]-0.5,y+padAmount[0]-0.5) for (x,y) in corners]
-                
+
+                #corners = [(x+padAmount[1]-0.5,y+padAmount[0]-0.5) for (x,y) in corners]
+
                 # Plot the corners (and if 4 corners exist, the quad as well)
-                if len(corners) == 4:                 
+                if len(corners) == 4:
                     painter.setPen(QtGui.QPen(lineColor, 1, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
                     for iCur in range(1,4):
                         iNext = (iCur+1) % 4
                         painter.drawLine(xScaleInv*corners[iCur][0], yScaleInv*corners[iCur][1], xScaleInv*corners[iNext][0], yScaleInv*corners[iNext][1])
-                    
-                    painter.setPen(QtGui.QPen(lineColor, 3, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))    
+
+                    painter.setPen(QtGui.QPen(lineColor, 3, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
                     painter.drawLine(xScaleInv*corners[0][0], yScaleInv*corners[0][1], xScaleInv*corners[1][0], yScaleInv*corners[1][1])
-                                            
+
                     markerName = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][iMarker]['markerType'][7:]
                     painter.drawText(\
                         (xScaleInv*corners[0][0]+xScaleInv*corners[3][0])/2 + 5,\
                         (yScaleInv*corners[0][1]+yScaleInv*corners[3][1])/2,\
                         markerName)
-                
+
                 painter.setPen(QtGui.QPen(lineColor, 1, QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.BevelJoin))
                 for i in range(0,len(corners)):
                     center = QtCore.QPoint(xScaleInv*corners[i][0], yScaleInv*corners[i][1])
@@ -798,7 +847,7 @@ class Ui_ImageWindow(QtGui.QLabel):
 
     def mousePressEvent(self, event):
         global g_curMarkerIndex
-        
+
         #print('clicked ' + str(event))
 
         buttonModifiers = event.modifiers()
@@ -834,19 +883,19 @@ class Ui_ImageWindow(QtGui.QLabel):
                     for iMarker in range(0,len(corners)):
                         meanCornersX = sum([x for x,y in corners[iMarker]]) / len(corners[iMarker])
                         meanCornersY = sum([y for x,y in corners[iMarker]]) / len(corners[iMarker])
-                        
+
                         dist = sqrt(pow(meanCornersX - newPoint['x'], 2.0) + pow(meanCornersY - newPoint['y'], 2.0))
-                        
+
                         if dist < minDist:
                             minDist = dist
                             minInd = iMarker
-                    
+
                     if minInd != -1:
                         g_curMarkerIndex = minInd
                         #fixBounds()
                         poseChanged(False)
 
-            else: # left click             
+            else: # left click
                 if (g_pointsType=='template') or (g_pointsType=='fiducialMarker'):
                     #pdb.set_trace()
                     if sum(whichCorners) < 4:
@@ -874,7 +923,7 @@ class Ui_ImageWindow(QtGui.QLabel):
                         continue
 
                     ci += 1
-                    
+
                     dist = sqrt(pow(corners[ci-1][0] - newPoint['x'], 2) + pow(corners[ci-1][1] - newPoint['y'], 2))
                     if dist < minDist:
                         minDist = dist
@@ -882,7 +931,7 @@ class Ui_ImageWindow(QtGui.QLabel):
 
                 if (minInd != -1) and (minDist < (min(realImageSize[0], realImageSize[1])/50.0)):
                     newMarkerData = g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex]
-                    
+
                     newMarkerData.pop(cornerNamesX[minInd])
                     newMarkerData.pop(cornerNamesY[minInd])
 
@@ -900,7 +949,7 @@ class ControlMainWindow(QtGui.QMainWindow):
         super(ControlMainWindow, self).__init__(parent)
         self.ui = ConnectedMainWindow()
         self.ui.setupUi(self)
-        
+
     def closeEvent(self, event):
         sys.exit(0)
         #event.accept()
@@ -914,7 +963,7 @@ if __name__ == "__main__":
     g_mainWindow = ControlMainWindow()
     g_mainWindow.show()
     g_mainWindow.ui.updateNumbers()
-    
+
     #loadTestFile(g_startJsonDirectory + '/' + g_startJsonFilename)
 
     sys.exit(app.exec_())

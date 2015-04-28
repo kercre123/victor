@@ -485,20 +485,19 @@ PyObject* DetectFiducialMarkers_numpy(
   
       PyList_SetItem(outputList, 3, markerValidity);
     } // Marker validity
-    
-    // Binary characteristic scale image (from computeCharacteristicScale.cpp)
-    if(g_saveBinaryImage) {
-      PyList_SetItem(outputList, 4, ArrayToNumpyArray<u8>(g_binaryImage));
-    } else {
-      PyList_SetItem(outputList, 4, PyList_New(0));
-    }
   } else { // if(numMarkers != 0)
     PyList_SetItem(outputList, 0, PyList_New(0));
     PyList_SetItem(outputList, 1, PyList_New(0));
     PyList_SetItem(outputList, 2, PyList_New(0));
     PyList_SetItem(outputList, 3, PyList_New(0));
-    PyList_SetItem(outputList, 4, PyList_New(0));
   } // if(numMarkers != 0) ... else
+    
+  // Binary characteristic scale image (from computeCharacteristicScale.cpp)
+  if(g_saveBinaryImage) {
+    PyList_SetItem(outputList, 4, ArrayToNumpyArray<u8>(g_binaryImage));
+  } else {
+    PyList_SetItem(outputList, 4, PyList_New(0));
+  }
 
   free(scratch0.get_buffer());
   free(scratch1.get_buffer());
