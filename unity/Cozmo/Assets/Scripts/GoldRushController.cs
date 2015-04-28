@@ -357,7 +357,7 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			PlayNotificationAudio(findEnergy);
 			foundItems.Clear();
 			buriedLocations.Clear();
@@ -377,12 +377,12 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessage("Find the energy!", Color.black);
 			break;
 		case PlayState.RETURNING:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			PlayNotificationAudio(dropEnergy);
 			hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
 

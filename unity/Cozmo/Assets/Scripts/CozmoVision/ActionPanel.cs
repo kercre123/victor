@@ -5,131 +5,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public enum ActionButtonMode
-{
-	DISABLED,
-	TARGET,
-	PICK_UP,
-	DROP,
-	STACK,
-	ROLL,
-	ALIGN,
-	CHANGE,
-	CANCEL,
-	NUM_MODES
-}
-
-[System.Serializable]
-public class ActionButton
-{
-	public Button button;
-	public Image image;
-	public Text text;
-
-	public ActionButtonMode mode { get; private set; }
-	public bool doActionOnRelease { get; private set; }
-
-	public void SetMode( ActionButtonMode m, bool onRelease = true, int selectedObjectIndex = 0, string append = null )
-	{
-		button.onClick.RemoveAllListeners();
-		mode = m;
-		
-		if( mode == ActionButtonMode.DISABLED || GameActions.instance == null )
-		{
-			button.gameObject.SetActive( false );
-			return;
-		}
-
-		GameActions gameActions = GameActions.instance;
-
-		image.sprite = ActionButton.GetModeSprite( mode );
-		text.text = ActionButton.GetModeName( mode );
-		doActionOnRelease = onRelease;
-
-		if( append != null ) text.text += append;
-
-		gameActions.selectedObjectIndex = selectedObjectIndex;
-		
-		switch( mode )
-		{
-			case ActionButtonMode.TARGET:
-				button.onClick.AddListener( gameActions.Target );
-				//button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.PICK_UP:
-				button.onClick.AddListener( gameActions.PickUp );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.DROP:
-				button.onClick.AddListener( gameActions.Drop );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.STACK:
-				button.onClick.AddListener( gameActions.Stack );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.ROLL:
-				button.onClick.AddListener( gameActions.Roll );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.ALIGN:
-				button.onClick.AddListener( gameActions.Align );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.CHANGE:
-				button.onClick.AddListener( gameActions.Change );
-				button.onClick.AddListener( gameActions.ActionButtonClick );
-				break;
-			case ActionButtonMode.CANCEL:
-				button.onClick.AddListener( gameActions.Cancel );
-				button.onClick.AddListener( gameActions.CancelButtonClick );
-				break;
-		}
-
-		button.gameObject.SetActive( true );
-	}
-
-	public static Sprite GetModeSprite( ActionButtonMode mode )
-	{
-		if( GameActions.instance != null )
-		{
-			switch( mode )
-			{
-				case ActionButtonMode.TARGET: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.PICK_UP: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.DROP: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.STACK: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.ROLL: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.ALIGN: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.CHANGE: return GameActions.instance.GetActionSprite( mode );
-				case ActionButtonMode.CANCEL: return GameActions.instance.GetActionSprite( mode );
-			}
-		}
-		
-		return null;
-	}
-
-	public static string GetModeName( ActionButtonMode mode )
-	{
-		if( GameActions.instance != null )
-		{
-			switch( mode )
-			{
-				case ActionButtonMode.TARGET: return GameActions.instance.TARGET;
-				case ActionButtonMode.PICK_UP: return GameActions.instance.PICK_UP;
-				case ActionButtonMode.DROP: return GameActions.instance.DROP;
-				case ActionButtonMode.STACK: return GameActions.instance.STACK;
-				case ActionButtonMode.ROLL: return GameActions.instance.ROLL;
-				case ActionButtonMode.ALIGN: return GameActions.instance.ALIGN;
-				case ActionButtonMode.CHANGE: return GameActions.instance.CHANGE;
-				case ActionButtonMode.CANCEL: return GameActions.instance.CANCEL;
-			}
-		}
-		
-		return "None";
-	}
-}
-
 public class ActionPanel : MonoBehaviour
 {
 	public ActionButton[] actionButtons;
@@ -161,7 +36,7 @@ public class ActionPanel : MonoBehaviour
 	}
 
 	public void DisableButtons() {
-		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButtonMode.DISABLED);
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButton.Mode.DISABLED);
 	}
 
 	protected virtual void OnEnable()

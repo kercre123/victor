@@ -45,12 +45,12 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
 			{
-				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
+				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK );
 			}
 
 			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
 			{
-				buttons[0].SetMode( ActionButtonMode.DROP );
+				buttons[0].SetMode( ActionButton.Mode.DROP );
 			}
 		}
 		else
@@ -59,7 +59,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
-					buttons[1].SetMode( ActionButtonMode.PICK_UP );
+					buttons[1].SetMode( ActionButton.Mode.PICK_UP );
 				}
 				else
 				{
@@ -67,18 +67,20 @@ public class GoldRushGameActions : GameActions {
 					{
 						if( robot.selectedObjects[i].Family == 3 )
 						{
-							buttons[i].SetMode( ActionButtonMode.PICK_UP, true, i, i == 0 ? BOTTOM : TOP );
+							buttons[i].SetMode( ActionButton.Mode.PICK_UP, i, i == 0 ? BOTTOM : TOP );
 						}
 					}
 				}
 			}
 		}
 		
-		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButtonMode.CANCEL );
+		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButton.Mode.CANCEL );
 	}
 
-	public override void Drop()
+	public override void Drop( bool onRelease )
 	{
+		if( !onRelease ) return;
+
 		//extract or deposit
 		if (GoldRushController.instance.inExtractRange) 
 		{
@@ -90,9 +92,9 @@ public class GoldRushGameActions : GameActions {
 		}
 	}
 
-	public override void Stack()
+	public override void Stack( bool onRelease )
 	{
-		if( robot == null ) return;
+		if( robot == null || !onRelease ) return;
 
 		robot.PickAndPlaceObject( selectedObjectIndex );
 		GoldRushController.instance.goldCollectingObject = robot.selectedObjects [selectedObjectIndex];
