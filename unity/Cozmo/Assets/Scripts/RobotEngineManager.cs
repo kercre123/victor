@@ -447,6 +447,7 @@ public class RobotEngineManager : MonoBehaviour {
 		Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();
+		current.targetLockedObject = null;
 		
 		current.SetHeadAngle();
 		

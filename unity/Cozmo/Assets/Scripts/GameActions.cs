@@ -278,10 +278,11 @@ public class GameActions : MonoBehaviour
 	{
 		Debug.Log( "Cancel" );
 		
-		if( robot != null  )
+		if( robot != null )
 		{
 			robot.selectedObjects.Clear();
 			robot.SetHeadAngle();
+			robot.targetLockedObject = null;
 		}
 	}
 

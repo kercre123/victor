@@ -135,9 +135,9 @@ public class CozmoVision : MonoBehaviour
 			}
 		}
 
-		if(robot.selectedObjects.Count == 0) {
+		/*if(robot.selectedObjects.Count == 0) {
 			robot.SetHeadAngle();
-		}
+		}*/
 	}
 	
 	protected virtual void ShowObservedObjects()
