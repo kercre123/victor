@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿//#define RUSH_DEBUG
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -85,12 +86,13 @@ public class GoldRushController : GameController {
 
 
 	//int lastHeldID;
-
+	int instance_count = 0;
 	void Awake()
 	{
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
 		extractButton.gameObject.SetActive (false);
 		instance = this;
+		instance_count++;
 	}
 
 	protected override void OnEnable()
@@ -104,9 +106,11 @@ public class GoldRushController : GameController {
 
 	protected override void OnDisable()
 	{
-		base.OnEnable();
+		base.OnDisable();
 
 		if( instance == this ) instance = null;
+
+		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
 	}
 
 	protected override void RefreshHUD ()
@@ -203,9 +207,10 @@ public class GoldRushController : GameController {
 	protected override void Enter_BUILDING ()
 	{
 		base.Enter_BUILDING ();
+
 		if(RobotEngineManager.instance == null) return;
 
-		if(GameLayoutTracker.instance != null) GameLayoutTracker.instance.ValidateBuild ();
+		//GameLayoutTracker.instance.ValidateBuild ();
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
 		playButton.gameObject.SetActive (false);
@@ -245,7 +250,7 @@ public class GoldRushController : GameController {
 				}
 			}
 		}
-
+#if RUSH_DEBUG
 		if (goldExtractingObject != null && robot.carryingObject != null ) 
 		{
 			UpdateDirectionLights(Vector2.zero);
@@ -255,6 +260,8 @@ public class GoldRushController : GameController {
 		{
 			StartCoroutine(CountdownToPlay());
 		}
+
+#endif
 	}
 
 	void CheckForStackSuccess(bool success, ActionCompleted action_type)
@@ -349,11 +356,12 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
+			robot.SetHeadAngle(0);
 			PlayNotificationAudio(findEnergy);
 			foundItems.Clear();
 			buriedLocations.Clear();
-			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
-			buriedLocations[robot.carryingObject] = (Vector2)goldCollectingObject.WorldPosition + randomSpot * hideRadius + randomSpot.normalized * returnRadius;
+			Vector2 randomSpot = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value); 
+			buriedLocations[robot.carryingObject] = randomSpot * hideRadius;
 			break;
 		case PlayState.CAN_EXTRACT:
 			if ( goldExtractingObject != null )
@@ -368,10 +376,12 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessage("Find the energy!", Color.black);
 			break;
 		case PlayState.RETURNING:
+			robot.SetHeadAngle(0);
 			PlayNotificationAudio(dropEnergy);
 			hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
+			robot.SetHeadAngle(0);
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
 
@@ -534,7 +544,19 @@ public class GoldRushController : GameController {
 
 	void UpdateReturned()
 	{
+		Vector2 home_base_pos = Vector2.zero;
+		if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null )
+		{
+			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
+			Debug.Log("home_base_pos: "+home_base_pos.ToString());
+		}
 		// todo: add code to make sure the player doen't leave the box before dropping it off
+		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
+		Debug.Log ("distance: " + distance);
+		if (distance > returnRadius) 
+		{
+			EnterPlayState(PlayState.RETURNING);
+		}
 	}
 
 	public void BeginExtracting()
@@ -706,26 +728,8 @@ public class GoldRushController : GameController {
 			msg.transitionOnPeriod_ms[i] = 0;
 			msg.transitionOffPeriod_ms[i] = 0;
 		}
-
-		/*msg.objectID = (uint)goldExtractingObjectId;
-		msg.robotID = 1;
-		msg.onPeriod_ms = 100000000;
-		msg.offPeriod_ms = 0;
-		msg.transitionOnPeriod_ms = 0;
-		msg.transitionOffPeriod_ms = 0;
-		msg.turnOffUnspecifiedLEDs = 1;
-		//Color32 color = new Color32 (0, 1, 1, 1);
-		 
-		msg.color = color;
-		
-		msg.whichLEDs = which_lcds;
-		msg.makeRelative = 1;
-		msg.relativeToX = robot.WorldPosition.x;
-		msg.relativeToY = robot.WorldPosition.y;*/
-		
 		
 		Anki.Cozmo.U2G.Message msgWrapper = new Anki.Cozmo.U2G.Message{SetBackpackLEDs = msg};
-		//msgWrapper.U2G_SetActiveObjectLEDs(msg);
 		RobotEngineManager.instance.channel.Send (msgWrapper);
 	}
 	#endregion

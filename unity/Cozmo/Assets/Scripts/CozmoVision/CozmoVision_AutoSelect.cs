@@ -26,7 +26,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 	{
 		if( actionPanel == null ) return;
 
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || actionPanel.gameActions == null )
+		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || GameActions.instance == null )
 		{
 			actionPanel.DisableButtons();
 			return;
@@ -112,7 +112,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 			FadeOut();
 		}
 
-		actionPanel.gameActions.SetActionButtons();
+		GameActions.instance.SetActionButtons();
 		Dings();
 	}
 

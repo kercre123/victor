@@ -229,8 +229,8 @@ namespace Anki {
       void SendErasePoseMarker();
       void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
                                     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
-      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum);
-      void SendLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxErrorSum);
+      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
+      void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
@@ -1075,18 +1075,18 @@ namespace Anki {
                   
                   // Head and lift gains
                   f32 kp = root_->getField("headKp")->getSFFloat();
-                  f32 kd = 0;
                   f32 ki = root_->getField("headKi")->getSFFloat();
+                  f32 kd = root_->getField("headKd")->getSFFloat();
                   f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
-                  printf("New head gains: kp=%f ki=%f maxErrorSum=%f\n", kp, ki, maxErrorSum);
-                  SendHeadControllerGains(kp, ki, maxErrorSum);
+                  printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                  SendHeadControllerGains(kp, ki, kd, maxErrorSum);
                   
                   kp = root_->getField("liftKp")->getSFFloat();
-                  kd = root_->getField("liftKd")->getSFFloat();
                   ki = root_->getField("liftKi")->getSFFloat();
+                  kd = root_->getField("liftKd")->getSFFloat();
                   maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
-                  printf("New lift gains: kp=%f kd=%f ki=%f maxErrorSum=%f\n", kp, kd, ki, maxErrorSum);
-                  SendLiftControllerGains(kp, kd, ki, maxErrorSum);
+                  printf("New lift gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                  SendLiftControllerGains(kp, ki, kd, maxErrorSum);
                 } else {
                   printf("No WebotsKeyboardController was found in world\n");
                 }
@@ -2061,23 +2061,24 @@ namespace Anki {
       }
 
       
-      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 maxErrorSum)
+      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
       {
         U2G::SetHeadControllerGains m;
         m.kp = kp;
         m.ki = ki;
+        m.kd = kd;
         m.maxIntegralError = maxErrorSum;
         U2G::Message message;
         message.Set_SetHeadControllerGains(m);
         SendMessage(message);
       }
       
-      void SendLiftControllerGains(const f32 kp, const f32 kd, const f32 ki, const f32 maxErrorSum)
+      void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
       {
         U2G::SetLiftControllerGains m;
         m.kp = kp;
-        m.kd = kd;
         m.ki = ki;
+        m.kd = kd;
         m.maxIntegralError = maxErrorSum;
         U2G::Message message;
         message.Set_SetLiftControllerGains(m);
