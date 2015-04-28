@@ -53,13 +53,15 @@ user_init()
     // Create config for Wifi AP
     struct softap_config ap_config;
 
-    os_strcpy(ap_config.ssid, "AnkiEspressif");
+    os_strcpy(ap_config.ssid, "AnkiEspressif1");
 
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
+    ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+    ap_config.beacon_interval = 33;
 
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
