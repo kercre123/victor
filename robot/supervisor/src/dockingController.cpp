@@ -39,12 +39,11 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        f32 DOCK_PATH_START_RADIUS_MM = 25;
-        f32 DOCK_PATH_END_RADIUS_MM = 40;
+        f32 DOCK_PATH_START_RADIUS_MM = WHEEL_DIST_HALF_MM;
         
         // Set of radii to try when generating Dubins path to marker
         const u8 NUM_END_RADII = 3;
-        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, 25};
+        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, WHEEL_DIST_HALF_MM};
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
