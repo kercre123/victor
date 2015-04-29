@@ -5,7 +5,7 @@ public class GoldRushGameActions : GameActions {
 
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
-	public override string DROP { get { if (GoldRushController.instance.inExtractRange) return "Extract"; else return "Deposit"; } }
+	public override string DROP { get { if (gameController.inExtractRange) return "Extract"; else return "Deposit"; } }
 	public override string STACK { get { return "Place Scanner"; } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
@@ -15,11 +15,18 @@ public class GoldRushGameActions : GameActions {
 	//protected override string TOP { get { return " TOP"; } }
 	//protected override string BOTTOM { get { return " BOTTOM"; } }
 	// Use this for initialization
+	GoldRushController gameController;
+
+	void Awake() {
+		gameController = GetComponent<GoldRushController>();
+	}
+
 
 	/*
 	protected override void OnEnable ()
 	{
 		base.OnEnable ();
+
 	}
 
 	public override void OnDisable ()
@@ -43,19 +50,19 @@ public class GoldRushGameActions : GameActions {
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.BUILDING )
 			{
 				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK );
 			}
 
-			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
+			if( gameController.inDepositRange || gameController.inExtractRange )
 			{
 				buttons[0].SetMode( ActionButton.Mode.DROP );
 			}
 		}
 		else
 		{
-			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.BUILDING )
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
@@ -84,13 +91,13 @@ public class GoldRushGameActions : GameActions {
 		ActionButtonClick();
 
 		//extract or deposit
-		if (GoldRushController.instance.inExtractRange) 
+		if (gameController.inExtractRange) 
 		{
-			GoldRushController.instance.BeginExtracting();
+			gameController.BeginExtracting();
 		}
-		else if (GoldRushController.instance.inDepositRange)
+		else if (gameController.inDepositRange)
 		{
-			GoldRushController.instance.BeginDepositing();
+			gameController.BeginDepositing();
 		}
 	}
 
@@ -101,7 +108,7 @@ public class GoldRushGameActions : GameActions {
 		ActionButtonClick();
 
 		robot.PickAndPlaceObject( selectedObject );
-		GoldRushController.instance.goldCollectingObject = selectedObject;
-		Debug.Log ("gold collector id: " + GoldRushController.instance.goldCollectingObject);
+		gameController.goldCollectingObject = selectedObject;
+		Debug.Log ("gold collector id: " + gameController.goldCollectingObject);
 	}
 }

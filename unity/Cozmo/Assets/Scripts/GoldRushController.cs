@@ -7,7 +7,6 @@ using Anki.Cozmo;
 using System;
 
 public class GoldRushController : GameController {
-	public static GoldRushController instance = null;
 
 	public const uint COLOR_RED = 0xFF0000FF;
 
@@ -84,22 +83,15 @@ public class GoldRushController : GameController {
 
 	private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
-
-	//int lastHeldID;
-	int instance_count = 0;
 	void Awake()
 	{
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
 		extractButton.gameObject.SetActive (false);
-		instance = this;
-		instance_count++;
 	}
 
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-
-		instance = this;
 
 		MessageDelay = .05f;
 	}
@@ -107,10 +99,6 @@ public class GoldRushController : GameController {
 	protected override void OnDisable()
 	{
 		base.OnDisable();
-
-		if( instance == this ) instance = null;
-
-		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
 	}
 
 	protected override void RefreshHUD ()
@@ -142,7 +130,7 @@ public class GoldRushController : GameController {
 		scores [0] = 0;
 		numDrops = 0;
 
-		CozmoVision.EnableDing(false); // just in case we were in searching mode
+		//CozmoVision.EnableDing(false); // just in case we were in searching mode
 		SetEnergyBars (0, 0);
 	}
 
@@ -171,8 +159,9 @@ public class GoldRushController : GameController {
 
 		if( robot != null )
 		{
-			foreach(ObservedObject obj in robot.knownObjects)
+			for(int i=0;i<robot.knownObjects.Count;i++)
 			{
+				ObservedObject obj = robot.knownObjects[i];
 				if( obj.Family != 3 )
 				{
 					goldCollectingObject = obj;
@@ -205,65 +194,69 @@ public class GoldRushController : GameController {
 		}
 	}
 
-	protected override void Enter_BUILDING ()
+	protected override void Enter_PRE_GAME ()
 	{
-		base.Enter_BUILDING ();
+		base.Enter_PRE_GAME ();
 
 		if(RobotEngineManager.instance == null) return;
 
-		//GameLayoutTracker.instance.ValidateBuild ();
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
-		playButton.gameObject.SetActive (false);
-		buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
+		goldCollectingObject = null;
 
 		robot = RobotEngineManager.instance.current;
-		RobotEngineManager.instance.SuccessOrFailure += CheckForStackSuccess;
 
-		goldCollectingObject = null;
+		RefreshGameProps();
 
 		hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
 		PlayNotificationAudio (pickupEnergyScanner);
 	}
 
-	protected override void Exit_BUILDING ()
+	protected override void Exit_PRE_GAME ()
 	{
-		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
 		hintMessage.KillMessage ();
-		base.Exit_BUILDING ();
+		base.Exit_PRE_GAME ();
 	}
 
-	protected override void Update_BUILDING ()
+	protected override void Update_PRE_GAME ()
 	{
-		base.Update_BUILDING ();
-		if( robot != null )
-		{
-			foreach(ObservedObject obj in robot.knownObjects)
-			{
-				if( obj.Family == 3 && goldExtractingObject == null )
-				{
-					goldExtractingObject = obj;
-					goldExtractingObject.SetActiveObjectLEDs(1, COLOR_RED, 0, 0xFF, 150, 150); 
-				}
-				else if( obj.Family != 3 )
-				{
-					goldCollectingObject = obj;
-				}
-			}
-		}
+		base.Update_PRE_GAME ();
+
+		RefreshGameProps();
+
 #if RUSH_DEBUG
 		if (goldExtractingObject != null && robot.carryingObject != null ) 
 		{
 			UpdateDirectionLights(Vector2.zero);
 		}
 
-		if( Input.GetKeyDown(KeyCode.C ))
-		{
-			StartCoroutine(CountdownToPlay());
-		}
+//		if( Input.GetKeyDown(KeyCode.C ))
+//		{
+//			StartCoroutine(CountdownToPlay());
+//		}
 
 #endif
+
 	}
+
+	void RefreshGameProps() {
+		if(robot == null) return;
+
+		for(int i=0;i<robot.knownObjects.Count;i++)
+		{
+			ObservedObject obj = robot.knownObjects[i];
+			if( obj.Family == 3 && goldExtractingObject == null )
+			{
+				goldExtractingObject = obj;
+				goldExtractingObject.SetActiveObjectLEDs(1, COLOR_RED, 0, 0xFF, 150, 150); 
+			}
+			else if( obj.Family != 3 )
+			{
+				goldCollectingObject = obj;
+			}
+		}
+	}
+
 
 	void CheckForStackSuccess(bool success, ActionCompleted action_type)
 	{
@@ -310,9 +303,23 @@ public class GoldRushController : GameController {
 
 	protected override bool IsGameReady() 
 	{
-		//if(!base.IsGameReady()) return false;
+		if(!base.IsGameReady()) return false;
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
+
+		return true;
+	}
+
+	protected override bool IsPreGameCompleted() 
+	{
+		if(!base.IsPreGameCompleted()) return false;
+		if(RobotEngineManager.instance == null) return false;
+		if(RobotEngineManager.instance.current == null) return false;
+
+		if(goldExtractingObject == null) return false;
+		if(goldCollectingObject == null) return false;
+		if(robot.carryingObject == null) return false;
+		if(robot.carryingObject != goldExtractingObject) return false;
 
 		return true;
 	}
