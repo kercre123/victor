@@ -8,9 +8,9 @@ from distutils.extension import Extension
 import numpy
 
 extensions = [
-    Extension("anki",
-        ["anki.pyx",
-        "anki_interface.cpp",
+    Extension("ankic",
+        ["ankic.pyx",
+        "ankic_interface.cpp",
         "../../coretech/common/robot/src/array2d.cpp",
         "../../coretech/common/robot/src/benchmarking.cpp",
         "../../coretech/common/robot/src/comparisons.cpp",
@@ -98,6 +98,6 @@ extensions = [
 ]
 
 setup(
-  name = "anki",
+  name = "ankic",
   ext_modules = cythonize(extensions),
 )
