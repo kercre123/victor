@@ -421,7 +421,7 @@ namespace Anki {
           vpg_.Step(startRadSpeed, startRad);
         }
         
-        lastLiftMovedTime_ms = HAL::GetTimeStamp();
+        lastInPositionTime_ms_ = 0;
         inPosition_ = false;
         
 
@@ -520,7 +520,7 @@ namespace Anki {
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+        if((ABS(angleError) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_)) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();

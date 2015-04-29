@@ -323,6 +323,7 @@ namespace HeadController {
         angleErrorSum_ = 0.f;
       }
       
+      lastInPositionTime_ms_ = 0;
       inPosition_ = false;
       
       if (FLT_NEAR(angleError_,0.f)) {
@@ -415,7 +416,7 @@ namespace HeadController {
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+        if(((ABS(angleError_) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_))) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();
