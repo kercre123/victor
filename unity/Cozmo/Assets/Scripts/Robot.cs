@@ -323,19 +323,28 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message { CancelAction = message } );
 	}
 
+	private float setHeadAngleTime = 0f;
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
-		if( headAngle_rad == angle_rad )
+		if( headTrackingObject == -1 ) // if not head tracking
 		{
-			lastAngle_rad = float.MaxValue;
+			if( headAngle_rad == angle_rad )
+			{
+				lastAngle_rad = float.MaxValue;
+				return;
+			}
+			else if( lastAngle_rad == angle_rad )
+			{
+				return;
+			}
+		}
+		else if( Time.time < setHeadAngleTime + CozmoUtil.LOCAL_BUSY_TIME ) // compensate for time for robot to know to not be head tracking
+		{
 			return;
 		}
-		else if( lastAngle_rad == angle_rad )
-		{
-			return;
-		}
-		
+
 		lastAngle_rad = angle_rad;
+		setHeadAngleTime = Time.time;
 
 		Debug.Log( "Set Head Angle " + angle_rad );
 
