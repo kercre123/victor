@@ -5,7 +5,7 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 
 //#define DO_MOTOR_TESTING
 

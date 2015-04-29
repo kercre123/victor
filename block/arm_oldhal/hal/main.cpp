@@ -2,7 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 
 //#define SEND_IMAGE_ONLY_TEST_BASESTATION
 
