@@ -27,7 +27,7 @@ public class GoldRushGameActions : GameActions {
 		base.OnDisable ();
 	}
 	*/
-
+	
 	public override void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( ActionPanel.instance == null ) return;
@@ -45,12 +45,12 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
 			{
-				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK );
+				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
 
 			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
 			{
-				buttons[0].SetMode( ActionButton.Mode.DROP );
+				buttons[0].SetMode( ActionButton.Mode.DROP, null );
 			}
 		}
 		else
@@ -59,7 +59,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
-					buttons[1].SetMode( ActionButton.Mode.PICK_UP );
+					buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
 				}
 				else
 				{
@@ -78,15 +78,15 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET );
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{
-				buttons[2].SetMode( ActionButton.Mode.CANCEL );
+				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
 			}
 		}
 	}
-
+	
 	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;

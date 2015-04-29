@@ -46,7 +46,7 @@ public class ActionButton : MonoBehaviour
 		}
 	}
 	
-	public void SetMode( Mode m, ObservedObject selected = null, string append = null )
+	public void SetMode( Mode m, ObservedObject selected, string append = null )
 	{
 		action = null;
 		mode = m;
