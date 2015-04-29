@@ -3,7 +3,7 @@
 #include "nrf_gpio.h"
 #include "uart.h"
 #include "timer.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 
 namespace
 {
