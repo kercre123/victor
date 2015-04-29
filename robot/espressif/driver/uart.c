@@ -36,6 +36,8 @@ extern UartDevice    UartDev;
 #define    uartTaskQueueLen    10
 os_event_t uartTaskQueue[uartTaskQueueLen];
 
+static bool handleRxMutex = false;
+
 typedef enum
 {
   UART_SIG_TX_RDY,
@@ -201,6 +203,9 @@ LOCAL void handleUartRawRx(uint8 flag)
   static uint16 pktLen = 0;
   static uint8  phase  = 0;
   uint8 byte;
+
+  handleRxMutex = true; // Must call this at the very beginning of the function for mutexing
+
   if (flag != UART_SIG_RX_RDY)
   {
     os_printf("UART RX error: %d\r\n", flag);
@@ -267,8 +272,8 @@ LOCAL void handleUartRawRx(uint8 flag)
         //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
         if (outPkt->len >= pktLen)
         {
-          clientQueuePacket(outPkt);
           phase = 0;
+          clientQueuePacket(outPkt);
         }
         break;
       }
@@ -284,6 +289,8 @@ LOCAL void handleUartRawRx(uint8 flag)
   {
     system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0); // Queue task to keep reading
   }
+
+  handleRxMutex = false; // Must call this at the end of the function for mutexing
 }
 
 /** Length of the TX buffer
@@ -366,7 +373,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     case UART_SIG_RX_TIMEOUT:
     case UART_SIG_RX_OVERFLOW:
     {
-      handleUartRawRx(event->sig);
+      if (!handleRxMutex) handleUartRawRx(event->sig);
       uart_rx_intr_enable(UART0);
       break;
     }
@@ -402,7 +409,7 @@ uart_rx_intr_handler(void *para)
   else if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
   {
     #if 1
-    handleUartRawRx(UART_SIG_RX_RDY);
+    if (!handleRxMutex) handleUartRawRx(UART_SIG_RX_RDY);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
     #else
     uart_rx_intr_disable(UART0);
@@ -441,15 +448,16 @@ void ICACHE_FLASH_ATTR
 uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 {
 
-    system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
+  handleRxMutex = false;
+  system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
 
-    UartDev.baut_rate = uart0_br;
-    uart_config(UART0);
-    UartDev.baut_rate = uart1_br;
-    uart_config(UART1);
-    ETS_UART_INTR_ENABLE(); // XXX What does this do?
+  UartDev.baut_rate = uart0_br;
+  uart_config(UART0);
+  UartDev.baut_rate = uart1_br;
+  uart_config(UART1);
+  ETS_UART_INTR_ENABLE(); // XXX What does this do?
 
-    os_install_putc1(os_put_char);
+  os_install_putc1(os_put_char);
 }
 
 void ICACHE_FLASH_ATTR
