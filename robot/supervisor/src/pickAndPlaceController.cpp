@@ -406,7 +406,7 @@ namespace Anki {
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(-20));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
                   break;
                 } // LOW
                 default:
