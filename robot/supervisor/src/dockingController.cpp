@@ -276,6 +276,13 @@ namespace Anki {
       void HighDockLiftUpdate() {
         if (doHighDockLiftTracking_) {
           
+          f32 lastCommandedHeight = LiftController::GetDesiredHeight();
+          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK) {
+            // We're already at the high lift position.
+            // No need to repeatedly command it.
+            return;
+          }
+          
           // Compute desired slope of lift height during approach.
           const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
           
@@ -295,7 +302,7 @@ namespace Anki {
             f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
             
             // Keep between current desired height and high dock height
-            liftHeight = CLIP(liftHeight, LiftController::GetDesiredHeight(), LIFT_HEIGHT_HIGHDOCK);
+            liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK);
             
             // Apply height
             LiftController::SetDesiredHeight(liftHeight);
