@@ -7,7 +7,7 @@ import pdb
 import random
 from math import *
 
-import anki # If this fails, be sure to run products-cozmo/python/cython/make.sh
+import ankic # If this fails, be sure to run products-cozmo/python/cython/make.sh
 
 import cv2 # If this fails, compile opencv, and set your dylib directory to the compiled dynamic libraries
 
@@ -22,7 +22,11 @@ g_toShowSize = [480, 640]
 global g_imageWindow
 global g_mainWindow
 
-g_startJsonDirectory = '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
+if os.name == 'nt':
+    g_startJsonDirectory = 'c:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
+else:
+    g_startJsonDirectory = '~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
+
 g_startJsonFilename = 'tracking_00000_all.json'
 g_data = None
 g_imageWindow = None
@@ -145,6 +149,9 @@ def loadTestFile():
 
     allTestFilenames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
 
+    if curTestIndex >= len(allTestFilenames):
+        return
+
     testFilename = allTestFilenames[curTestIndex]
 
     testFilename.replace('\\', '/')
@@ -238,20 +245,17 @@ def getTestNamesFromDirectory():
         testFilename = [testFilename, '.json'];
 
     files = []
-    for f in os.listdir(testDirectory):
-        if os.path.isfile(os.path.join(testDirectory,f)) and (len(f) > 5) and (f[(-5):] == '.json'):
-            files.append(os.path.join(testDirectory,f))
-
-    curTestIndex = g_curTestIndex
-
-    # curTestIndex = 0;
-    # for i in range(0, len(files)):
-    #     if testFilename == files[i]:
-    #         curTestIndex = i
-
+    
+    try:
+        for f in os.listdir(testDirectory):
+            if os.path.isfile(os.path.join(testDirectory,f)) and (len(f) > 5) and (f[(-5):] == '.json'):
+                files.append(os.path.join(testDirectory,f))
+    except:
+        print('Could not load from directory ' + testDirectory)
+        
     maxTestIndex = len(files) - 1
 
-    return files, curTestIndex, maxTestIndex
+    return files, g_curTestIndex, maxTestIndex
 
 def poseChanged(resetZoom):
     global g_mainWindow
@@ -367,7 +371,7 @@ def extractMarkers(image, returnInvalidMarkers):
     quadRefinementMinCornerChange = 0.005
     returnInvalidMarkers = int(returnInvalidMarkers)
 
-    quads, markerTypes, markerNames, markerValidity, binaryImage = anki.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
+    quads, markerTypes, markerNames, markerValidity, binaryImage = ankic.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
 
     #pdb.set_trace()
 
@@ -713,6 +717,9 @@ class ConnectedMainWindow(Ui_MainWindow):
 
     def updateNumbers(self):
         allTestNames, curTestIndex, maxTestIndex = getTestNamesFromDirectory()
+        
+        if allTestNames is None or allTestNames == []:
+            return
 
         self.setCurTestIndex(g_curTestIndex, False)
         self.setCurPoseIndex(g_curPoseIndex, False)
