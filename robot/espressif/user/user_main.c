@@ -83,6 +83,10 @@ user_init()
     // Setup Basestation client
     clientInit();
 
+    // Enable UART0 RX interrupt
+    // Only after clientInit
+    uart_rx_intr_enable(UART0);
+
     // Setup user task
     system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
     //system_os_post(userTaskPrio, 0, 0); // Post user task

@@ -36,8 +36,6 @@ extern UartDevice    UartDev;
 #define    uartTaskQueueLen    10
 os_event_t uartTaskQueue[uartTaskQueueLen];
 
-static bool handleRxMutex = false;
-
 typedef enum
 {
   UART_SIG_TX_RDY,
@@ -53,22 +51,22 @@ LOCAL void uart_rx_intr_handler(void *para);
 const uint8 UART_PACKET_HEADER[] = {0xbe, 0xef};
 #define UART_PACKET_HEADER_LEN 2
 
-static inline void uart_rx_intr_disable(uint8 uart_no)
+inline void uart_rx_intr_disable(uint8 uart_no)
 {
   CLEAR_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 }
 
-static inline void uart_rx_intr_enable(uint8 uart_no)
+inline void uart_rx_intr_enable(uint8 uart_no)
 {
   SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
 }
 
-static inline void uart_tx_intr_disable(uint8 uart_no)
+inline void uart_tx_intr_disable(uint8 uart_no)
 {
   CLEAR_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_TXFIFO_EMPTY_INT_ENA);
 }
 
-static inline void uart_tx_intr_enable(uint8 uart_no)
+inline void uart_tx_intr_enable(uint8 uart_no)
 {
   SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_TXFIFO_EMPTY_INT_ENA);
 }
@@ -202,9 +200,10 @@ LOCAL void handleUartRawRx(uint8 flag)
   static UDPPacket* outPkt = NULL;
   static uint16 pktLen = 0;
   static uint8  phase  = 0;
+  bool continueTask = true;
   uint8 byte;
 
-  handleRxMutex = true; // Must call this at the very beginning of the function for mutexing
+  uart_tx_intr_disable(UART0);
 
   if (flag != UART_SIG_RX_RDY)
   {
@@ -216,7 +215,7 @@ LOCAL void handleUartRawRx(uint8 flag)
     }
   }
 
-  while ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT)
+  while (continueTask && ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT))
   {
     byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
     switch (phase)
@@ -274,6 +273,7 @@ LOCAL void handleUartRawRx(uint8 flag)
         {
           phase = 0;
           clientQueuePacket(outPkt);
+          continueTask = false;
         }
         break;
       }
@@ -285,12 +285,14 @@ LOCAL void handleUartRawRx(uint8 flag)
     }
   }
 
-  if (phase != 0) // In the middle of a packet
+  if ((phase != 0) || (continueTask == false)) // In the middle of a packet or more in queue but need to yield
   {
     system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0); // Queue task to keep reading
   }
-
-  handleRxMutex = false; // Must call this at the end of the function for mutexing
+  else // Otherwise
+  {
+    uart_tx_intr_enable(UART0); // Re-enable the interrupt for when we have more data
+  }
 }
 
 /** Length of the TX buffer
@@ -373,7 +375,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     case UART_SIG_RX_TIMEOUT:
     case UART_SIG_RX_OVERFLOW:
     {
-      if (!handleRxMutex) handleUartRawRx(event->sig);
+      handleUartRawRx(event->sig);
       uart_rx_intr_enable(UART0);
       break;
     }
@@ -409,7 +411,7 @@ uart_rx_intr_handler(void *para)
   else if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
   {
     #if 1
-    if (!handleRxMutex) handleUartRawRx(UART_SIG_RX_RDY);
+    handleUartRawRx(UART_SIG_RX_RDY);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
     #else
     uart_rx_intr_disable(UART0);
@@ -448,14 +450,14 @@ void ICACHE_FLASH_ATTR
 uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 {
 
-  handleRxMutex = false;
   system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
 
   UartDev.baut_rate = uart0_br;
   uart_config(UART0);
   UartDev.baut_rate = uart1_br;
   uart_config(UART1);
-  ETS_UART_INTR_ENABLE(); // XXX What does this do?
+  uart_rx_intr_disable(UART0); // Don't receive RX interrupts at first
+  ETS_UART_INTR_ENABLE(); // What does this do? If we don't call it, it nothing works
 
   os_install_putc1(os_put_char);
 }
