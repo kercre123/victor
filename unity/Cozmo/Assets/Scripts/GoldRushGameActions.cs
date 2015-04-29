@@ -74,7 +74,17 @@ public class GoldRushGameActions : GameActions {
 			}
 		}
 		
-		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButton.Mode.CANCEL );
+		if( buttons.Length > 2 )
+		{
+			if( isSlider )
+			{
+				buttons[2].SetMode( ActionButton.Mode.TARGET );
+			}
+			else if( robot.selectedObjects.Count > 0 )
+			{
+				buttons[2].SetMode( ActionButton.Mode.CANCEL );
+			}
+		}
 	}
 
 	public override void Drop( bool onRelease, ObservedObject selectedObject )
