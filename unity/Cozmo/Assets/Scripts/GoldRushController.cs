@@ -580,7 +580,6 @@ public class GoldRushController : GameController {
 
 #region IEnumerator
 
-	public float gameStartingInDelay = 1.3f;
 	IEnumerator CountdownToPlay()
 	{
 		PlayNotificationAudio (gameStartingIn);

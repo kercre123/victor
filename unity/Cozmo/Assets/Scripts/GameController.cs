@@ -60,8 +60,15 @@ public class GameController : MonoBehaviour {
 
 	protected Robot robot;
 
-	public float gameStartingInDelay = 1.3f;
-	int lastTimerSeconds = 0;
+	//public float gameStartingInDelay = 1.3f;
+
+	public float gameStartingInDelay {
+		get {
+			return gameStartingIn != null ? gameStartingIn.length : 0f;
+		}
+	}
+
+	protected int lastTimerSeconds = 0;
 
 	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
@@ -231,7 +238,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_PRE_GAME");
 		if(countdownText != null) {
 			int remaining = Mathf.CeilToInt(countdownToStart);
-			if(countdownTickSound != null && audio != null) audio.PlayOneShot(gameStartingIn);
+			if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
 			countdownText.text = remaining.ToString();
 			currentCountdown = remaining;
 			countdownText.gameObject.SetActive(false);
