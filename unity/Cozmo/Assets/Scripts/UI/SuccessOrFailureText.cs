@@ -38,7 +38,5 @@ public class SuccessOrFailureText : ScreenMessage
 			if(failure != null) audio.PlayOneShot( failure );
 			ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
 		}
-		
-		StartCoroutine( TurnOffText(timeOnScreen) );
 	}
 }

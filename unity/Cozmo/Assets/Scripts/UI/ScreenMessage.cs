@@ -6,22 +6,27 @@ public class ScreenMessage : MonoBehaviour {
 
 	[SerializeField] protected Text text;
 
-	IEnumerator coroutine = null;
+	float hideTimer = 0f;
 
 	void Awake () {
 		text.text = null;
 		text.gameObject.SetActive(true);
 	}
 
+	void Update() {
+		if(hideTimer > 0f) {
+			hideTimer -= Time.deltaTime;
+
+			if(hideTimer <= 0f) {
+				text.text = string.Empty;
+			}
+		}
+	}
+
 	public void ShowMessageForDuration(string message, float time_in_seconds, Color color)
 	{
-		if(coroutine != null) StopCoroutine(coroutine);
-
-		//text.text = G2U.Message;
 		ShowMessage (message, color);
-
-		coroutine = TurnOffText(time_in_seconds);
-		StartCoroutine(coroutine);
+		hideTimer = time_in_seconds;
 	}
 
 	public void ShowMessage(string message, Color color)
@@ -33,27 +38,22 @@ public class ScreenMessage : MonoBehaviour {
 		}
 		text.text = message;
 		text.color = color;
+		hideTimer = 0f;
 	}
 
 	public void KillMessage()
 	{
 		if (text == null) 
 		{
-			//Debug.LogError("text is null for some reason");
+			Debug.LogError("text is null for some reason");
 			return;
 		}
 		text.text = string.Empty;
+		hideTimer = 0f;
 	}
 
-	protected IEnumerator TurnOffText(float duration)
+	public void TurnOffText(float time_in_seconds)
 	{
-		float time = Time.time + duration;
-		
-		while( time > Time.time )
-		{
-			yield return null;
-		}
-		
-		KillMessage();
+		hideTimer = time_in_seconds;
 	}
 }
