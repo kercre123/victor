@@ -191,6 +191,7 @@ public class OptionsScreen : MonoBehaviour {
 
 	void ObjectPertinence(int value) {
 		PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), value);
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.RefreshObjectPertinence();
 	}
 
 	void ObjectPertinenceRange(string value) {
@@ -199,6 +200,8 @@ public class OptionsScreen : MonoBehaviour {
 		if(int.TryParse(value, out range)) {
 			PlayerPrefs.SetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), range);
 		}
+
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.RefreshObjectPertinence();
 	}
 
 	void MaxTurnSpeedChanged(float val) {

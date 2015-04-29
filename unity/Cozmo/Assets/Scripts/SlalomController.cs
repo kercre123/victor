@@ -18,7 +18,6 @@ public class SlalomController : GameController {
 	int currentObstacleIndex = 0;
 	bool lastPassCrossUp = true;
 	bool forward = true;
-	Robot robot;
 	//Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
 	float totalAngleFromObstacleTraversed;
@@ -141,6 +140,21 @@ public class SlalomController : GameController {
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
 
+		//game specific start conditions...
+		robot = RobotEngineManager.instance.current;
+		
+		obstacles.Clear();
+		for(int i=0;i<robot.knownObjects.Count;i++) {
+			if(robot.knownObjects[i].Family == 3) {
+				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
+				obstacles.Add(robot.knownObjects[i]);
+			}
+		}
+		
+		if(obstacles.Count < 2) {
+			Debug.LogError(gameObject.name + " Enter_PLAYING found only "+obstacles.Count+" obstacles.  At least two obstacles required to play Slalom." );
+		}
+
 		tapesCrossed = 0;
 		courseCompleted = false;
 		currentObstacleIndex = 0;
@@ -224,23 +238,30 @@ public class SlalomController : GameController {
 		if(textProgress != null) {
 			textProgress.text = "index("+currentObstacleIndex+") angle("+totalAngleFromObstacleTraversed+")";
 		}
+
+		int remaining = Mathf.CeilToInt( Mathf.Clamp(maxPlayTime - stateTimer, 0, maxPlayTime) );
+
+		if(remaining <= 30f) {
+
+			PlayCountdownAudio(remaining);
+			
+			if(countdownText != null) {
+				
+				countdownText.text = remaining.ToString();
+				currentCountdown = remaining;
+				
+				countdownText.gameObject.SetActive(true);
+			}
+		}
+		else if(countdownText != null) {
+			countdownText.gameObject.SetActive(false);
+		}
+
 	}
 
 	protected override bool IsGameReady() {
 		if(!base.IsGameReady()) return false;
-		
-		//game specific start conditions...
-		robot = RobotEngineManager.instance.current;
-		
-		obstacles.Clear();
-		for(int i=0;i<robot.knownObjects.Count;i++) {
-			if(robot.knownObjects[i].Family == 3) {
-				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
-				obstacles.Add(robot.knownObjects[i]);
-			}
-		}
-
-		return obstacles.Count > 1;
+		return true;
 	}
 
 	protected override bool IsGameOver() {
