@@ -8,6 +8,7 @@ public class GameLayout : MonoBehaviour {
 	[SerializeField] public string gameName = "Unknown";
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
+	[SerializeField] public Transform startPositionMarker;
 
 	[TextArea(5,30)]
 	[SerializeField] public string initialInstruction = null;

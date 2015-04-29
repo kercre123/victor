@@ -518,4 +518,26 @@ public class GameLayoutTracker : MonoBehaviour {
 		ValidateBlocks();
 	}
 
+	public Vector3 GetStartingPositionFromLayout() {
+		if(currentLayout == null) return Vector3.zero;
+		if(currentLayout.startPositionMarker == null) return Vector3.zero;
+	
+		Vector3 pos = currentLayout.startPositionMarker.position;
+		float forward = pos.z;
+		float up = pos.y;
+		pos.y = forward;
+		pos.z = up;
+
+		return pos;
+	}
+
+	public float GetStartingAngleFromLayout() {
+		if(currentLayout == null) return 0f;
+		if(currentLayout.startPositionMarker == null) return 0f;
+		
+		float angle = currentLayout.startPositionMarker.eulerAngles.y * Mathf.Deg2Rad;
+
+		return angle;
+	}
+
 }

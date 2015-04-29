@@ -69,6 +69,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected int lastTimerSeconds = 0;
+	protected float coundownTimer = 0f;
 
 	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
@@ -234,38 +235,48 @@ public class GameController : MonoBehaviour {
 		if(playButton != null) playButton.gameObject.SetActive(false);
 	}
 		
+	bool countdownAnnounced = false;
 	protected virtual void Enter_PRE_GAME() {
 		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+
 		if(countdownText != null) {
-			int remaining = Mathf.CeilToInt(countdownToStart);
-			if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
-			countdownText.text = remaining.ToString();
-			currentCountdown = remaining;
 			countdownText.gameObject.SetActive(false);
 		}
 
-		lastTimerSeconds = 0;
+		coundownTimer = countdownToStart;
+		countdownAnnounced = false;
 	}
+
 	protected virtual void Update_PRE_GAME() {
 		//Debug.Log(gameObject.name + " Update_PRE_GAME");
 		//add game specific intro messaging in an override of this method
 		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
 		//	or if this game has a count-down before start, we display that count down here
 
-		if(countdownToStart > 0f && stateTimer >= gameStartingInDelay) {
+		if(countdownToStart > 0f) {
 
-			int remaining = Mathf.CeilToInt( Mathf.Clamp(gameStartingInDelay + countdownToStart - stateTimer, 0, countdownToStart) );
-
-			PlayCountdownAudio(remaining);
-			
-			if(countdownText != null) {
-
-				countdownText.text = remaining.ToString();
-				currentCountdown = remaining;
-
-				countdownText.gameObject.SetActive(true);
+			if(!countdownAnnounced) {
+				if(coundownTimer == countdownToStart) {
+					if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
+					lastTimerSeconds = 0;
+				}
 			}
 
+			countdownAnnounced = true;
+
+			if(stateTimer >= gameStartingInDelay) {
+
+				coundownTimer -= Time.deltaTime;
+				int remaining = Mathf.CeilToInt( Mathf.Clamp(coundownTimer, 0f, countdownToStart) );
+
+				PlayCountdownAudio(remaining);
+				
+				if(countdownText != null) {
+					countdownText.text = remaining.ToString();
+					currentCountdown = remaining;
+					countdownText.gameObject.SetActive(true);
+				}
+			}
 
 		}
 	}
@@ -332,7 +343,7 @@ public class GameController : MonoBehaviour {
 		//add game specific gating in an override of this method
 		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
 		//	or if this game has a count-down before start, handle that check here
-		if(countdownToStart > 0f && stateTimer < (countdownToStart + gameStartingInDelay)) return false;
+		if(countdownToStart > 0f && coundownTimer > 0f) return false;
 
 		return true;
 	}
