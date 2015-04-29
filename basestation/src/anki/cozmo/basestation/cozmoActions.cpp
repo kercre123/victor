@@ -146,6 +146,10 @@ namespace Anki {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed calling execute path.\n");
           result = ActionResult::FAILURE_ABORT;
         }
+        else if (p.GetNumSegments() == 0) {
+          PRINT_NAMED_INFO("DriveToPoseAction.Init", "Faking startedTraversingPath because path is empty.");
+          _startedTraversingPath = true;
+        }
       }
       
       return result;
@@ -365,6 +369,12 @@ namespace Anki {
           }
           else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
             result = ActionResult::FAILURE_ABORT;
+          }
+          else if(p.GetNumSegments() == 0) {
+            PRINT_NAMED_WARNING("DriveToObjectAction.InitHelper.EmptyPath",
+                             "Empty path. If start pose == end pose, alreadyAtGoal should have been set");
+            _alreadyAtGoal = true;
+            result = ActionResult::SUCCESS;
           }
           else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 6.f) != RESULT_OK) {
             result = ActionResult::FAILURE_ABORT;
