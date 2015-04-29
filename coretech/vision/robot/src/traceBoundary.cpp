@@ -72,6 +72,18 @@ namespace Anki
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
       endComponentIndex = numComponents - 1;
 
+      /*printf("Transitions:\n");
+      u16 lastComponent = u16_MAX;
+      for(s32 i=0; i<numComponents; i++) {
+        if((*componentsU16)[i].id != lastComponent) {
+
+          printf("Transitioned from %d to %d at %d\n", lastComponent, (*componentsU16)[i].id, i);
+          lastComponent = (*componentsU16)[i].id;
+        } else {
+          printf("%d\n", i);
+        }
+      }*/
+
       if(useU16) {
         for(s32 i=startComponentIndex; i<numComponents; i++) {
           if((*componentsU16)[i].id != componentIdU16) {
@@ -88,6 +100,16 @@ namespace Anki
           boundingBox.top = MIN(boundingBox.top, y);
           boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
         }
+                
+        printf("Checking for other components:\n");
+        for(s32 i=endComponentIndex; i<numComponents; i++) {
+          if((*componentsU16)[i].id == componentIdU16) {
+
+            printf("Found at %d\n", i);
+
+          }
+        }
+        
       } else { // if(useU16)
         for(s32 i=startComponentIndex; i<numComponents; i++) {
           if((*componentsS32)[i].id != componentIdS32) {
@@ -175,7 +197,7 @@ namespace Anki
         } // for(s32 iSegment=startComponentIndex; iSegment<=endComponentIndex; iSegment++)
       } // if(useU16) ... else
 
-      //#define PRINT_OUT_EDGE_LIMITS
+      #define PRINT_OUT_EDGE_LIMITS
 #ifdef PRINT_OUT_EDGE_LIMITS
       CoreTechPrint("  ");
       for(s32 i=0; i<boxWidth;i++){
@@ -204,7 +226,7 @@ namespace Anki
 
       for(s32 y=0; y<boxHeight; y++) {
         if(edge_left[y] == s16_MAX || edge_right[y] == s16_MIN) {
-          //CoreTechPrint("edge_left[%d]=%d edge_right[%d]=%d\n", y, static_cast<s32>(edge_left[y]), y, static_cast<s32>(edge_right[y]));
+          CoreTechPrint("edge_left[%d]=%d edge_right[%d]=%d\n", y, static_cast<s32>(edge_left[y]), y, static_cast<s32>(edge_right[y]));
           //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
           isNonContiguous = true;
         }
@@ -212,13 +234,14 @@ namespace Anki
 
       for(s32 x=0; x<boxWidth; x++) {
         if(edge_top[x] == s16_MAX || edge_bottom[x] == s16_MIN) {
-          //CoreTechPrint("edge_top[%d]=%d edge_bottom[%d]=%d\n", x, static_cast<s32>(edge_left[x]), x, static_cast<s32>(edge_right[x]));
+          CoreTechPrint("edge_top[%d]=%d edge_bottom[%d]=%d\n", x, static_cast<s32>(edge_left[x]), x, static_cast<s32>(edge_right[x]));
           //AnkiWarn("TraceNextExteriorBoundary", "Bad edge");
           isNonContiguous = true;
         }
       }
 
       if(isNonContiguous) {
+        printf("non contiguous\n");
         return RESULT_OK;
       }
 

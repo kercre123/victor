@@ -34,7 +34,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <arm_neon.h>
 #endif
 
-#define STORE_BINARY_IMAGE 0
+#define STORE_BINARY_IMAGE 1
 #if STORE_BINARY_IMAGE
 #warning Storing binary image
 bool g_saveBinaryImage = true;

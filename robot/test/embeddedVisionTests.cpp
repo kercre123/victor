@@ -11,7 +11,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //#define RUN_PC_ONLY_TESTS
 //#define RUN_HIGH_MEMORY_TESTS
-//#define JUST_FIDUCIAL_DETECTION
+#define JUST_FIDUCIAL_DETECTION
 
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/gtestLight.h"
@@ -4056,8 +4056,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
-  image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
+  //Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
+  //image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
+
+  Array<u8> image = Array<u8>::LoadImage("/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData//trackingImages/tracking_00000_cozmo1_img_545642.jpg", scratchOffchip);
 
   //image.Show("image", true);
 
@@ -4112,6 +4114,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   //markers.Print("markers");
   //markers[0].Print();
+  
+  while(true) {}
 
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
@@ -5796,7 +5800,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
+  //CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
 #if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);

@@ -17,7 +17,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/matlabInterface.h"
 
-//#define SHOW_DRAWN_COMPONENTS
+#define SHOW_DRAWN_COMPONENTS
 
 namespace Anki
 {
@@ -232,6 +232,8 @@ namespace Anki
           return lastResult;
 
         markers.set_size(extractedQuads.get_size());
+
+        printf("quads %d\n", extractedQuads.get_size());
 
         EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
