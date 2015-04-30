@@ -834,11 +834,12 @@ namespace Anki {
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
 
       s32 pixel = 0;
+      s32 imgWidth = headCam_->getWidth();
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          frame[pixel++] = webots::Camera::imageGetRed(image,   headCam_->getWidth(), x, y);
-          frame[pixel++] = webots::Camera::imageGetGreen(image, headCam_->getWidth(), x, y);
-          frame[pixel++] = webots::Camera::imageGetBlue(image,  headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetRed(image, imgWidth, x, y);
+          frame[pixel++] = webots::Camera::imageGetGreen(image, imgWidth, x, y);
+          frame[pixel++] = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
         }
       }
       
