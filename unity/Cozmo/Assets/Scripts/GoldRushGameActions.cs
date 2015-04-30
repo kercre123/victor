@@ -37,6 +37,12 @@ public class GoldRushGameActions : GameActions {
 	
 	public override void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
+		if( gameController.state == GameController.GameState.BUILDING )
+		{
+			base.SetActionButtons( isSlider );
+			return;
+		}
+
 		if( ActionPanel.instance == null ) return;
 		
 		ActionPanel.instance.DisableButtons();
