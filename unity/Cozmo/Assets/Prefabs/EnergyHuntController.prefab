@@ -499,7 +499,7 @@ AudioSource:
   m_GameObject: {fileID: 125388}
   m_Enabled: 1
   serializedVersion: 3
-  m_audioClip: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 3a92989e3fa2e409796d5978fe2e138f, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -1643,7 +1643,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 15
 --- !u!223 &22393906
 Canvas:
   m_ObjectHideFlags: 1
