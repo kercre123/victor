@@ -141,18 +141,7 @@ DEF ActiveBlock Block1x1 {
   markerImg_top "letters/5.png"
   markerImg_bottom "letters/6.png"
 }
-DEF AngryFaceBlock Block1x1 {
-  hidden translation_1 -0.022 0 0
-  hidden rotation_1 0 1 0 -1.57079
-  hidden translation_2 0.022 0 0
-  hidden rotation_2 0 1 0 1.57079
-  hidden translation_3 0 0 -0.022
-  hidden rotation_3 0 1 0 3.14159
-  hidden translation_4 0 0 0.022
-  hidden translation_5 0 0.022 0
-  hidden rotation_5 1 0 0 -1.57079
-  hidden translation_6 0 -0.022 0
-  hidden rotation_6 1 0 0 1.57079
+DEF BullsEyeBlock Block1x1 {
   name "AngryFace_01"
   translation 0.3 0 0.0219957
   rotation 0.302681 0.572133 -0.762265 1.25592e-05
