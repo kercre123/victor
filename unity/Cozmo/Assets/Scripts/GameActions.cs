@@ -323,13 +323,12 @@ public class GameActions : MonoBehaviour
 
 	public virtual void Target( bool onRelease, ObservedObject selectedObject )
 	{
-		if( onRelease )
-		{
-			robot.searching = false;
-		}
-		else
+		if( !onRelease ) return;
+
+		if( robot != null )
 		{
 			robot.searching = true;
+			//Debug.Log( "On Press" );
 		}
 	}
 }

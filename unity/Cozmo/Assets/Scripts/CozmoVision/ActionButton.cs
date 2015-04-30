@@ -48,7 +48,7 @@ public class ActionButton : MonoBehaviour
 	
 	public void SetMode( Mode m, ObservedObject selected, string append = null )
 	{
-		action = null;
+		action = DefaultAction;
 		mode = m;
 		selectedObject = selected;
 		
@@ -65,32 +65,32 @@ public class ActionButton : MonoBehaviour
 		text.text = ActionButton.GetModeName( mode );
 		
 		if( append != null ) text.text += append;
-		
+
 		switch( mode )
 		{
 			case Mode.TARGET:
-				action = gameActions.Target;
+				action += gameActions.Target;
 				break;
 			case Mode.PICK_UP:
-				action = gameActions.PickUp;
+				action += gameActions.PickUp;
 				break;
 			case Mode.DROP:
-				action = gameActions.Drop;
+				action += gameActions.Drop;
 				break;
 			case Mode.STACK:
 				action = gameActions.Stack;
 				break;
 			case Mode.ROLL:
-				action = gameActions.Roll;
+				action += gameActions.Roll;
 				break;
 			case Mode.ALIGN:
-				action = gameActions.Align;
+				action += gameActions.Align;
 				break;
 			case Mode.CHANGE:
-				action = gameActions.Change;
+				action += gameActions.Change;
 				break;
 			case Mode.CANCEL:
-				action = gameActions.Cancel;
+				action += gameActions.Cancel;
 				break;
 		}
 
@@ -136,5 +136,14 @@ public class ActionButton : MonoBehaviour
 		}
 		
 		return string.Empty;
+	}
+
+	private void DefaultAction( bool onRelease, ObservedObject selectedObject )
+	{
+		if( onRelease && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		{
+			RobotEngineManager.instance.current.searching = false;
+			//Debug.Log( "On Release" );
+		}
 	}
 }
