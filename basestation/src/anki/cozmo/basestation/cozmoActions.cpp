@@ -541,6 +541,8 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
+      _waitToVerifyTime = -1.f;
+      
       Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
