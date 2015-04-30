@@ -35,8 +35,11 @@
 // Make the (very restrictive) assumption that there is only every one of each
 // type of object in the world at a time (e.g. a single "AngryFace" block or a
 // single "Fire" block). So if we see one, always match it to the one we've already
-// seen, if it exists. (Only for physical robots)
-#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 1
+// seen, if it exists.
+//  0 = turn this off
+//  1 = turn this on just for physical robots
+//  2 = turn this on for physical and simulatd robots
+#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 2
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -303,10 +306,15 @@ namespace Anki
 
         if(matchingObject == nullptr) {
           
-#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+#         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
           
           ObjectsMapByID_t objectsWithType = GetExistingObjectsByType(objSeen->GetType());
-          if(!objectsWithType.empty() && _robot->IsPhysical()) {
+          if(!objectsWithType.empty()
+#            if ONLY_ALLOW_ONE_OBJECT_PER_TYPE == 1
+             && _robot->IsPhysical()
+#            endif
+             )
+          {
             // We already know about an object of this type. Assume the one we
             // are seeing is that one. Just update it to be in the pose of the
             // observed object. (Only for physical robots)
