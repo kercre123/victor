@@ -169,6 +169,10 @@ void UART_WaitTxFifoEmpty(uint8 uart_no , uint32 time_out_us); //do not use if t
 void UART_ResetFifo(uint8 uart_no);
 void UART_ClearIntrStatus(uint8 uart_no,uint32 clr_mask);
 void UART_SetIntrEna(uint8 uart_no,uint32 ena_mask);
+void uart_rx_intr_disable(uint8 uart_no);
+void uart_rx_intr_enable(uint8 uart_no);
+void uart_tx_intr_disable(uint8 uart_no);
+void uart_tx_intr_enable(uint8 uart_no);
 //==============================================
 
 #endif

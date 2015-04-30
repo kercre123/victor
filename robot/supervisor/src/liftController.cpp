@@ -41,7 +41,7 @@ namespace Anki {
         
         // If angle is within this tolerance of the desired angle
         // we are considered to be in position
-        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(0.75f);
+        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
         
         // Initialized in Init()
         f32 LIFT_ANGLE_LOW_LIMIT;
@@ -60,11 +60,11 @@ namespace Anki {
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
 #else
-        f32 Kp_ = 3.f; // proportional control constant
-        f32 Kd_ = 3000.f;  // derivative gain
-        f32 Ki_ = 0.05f; // integral control constant
+        f32 Kp_ = 3.f;    // proportional control constant
+        f32 Kd_ = 250.f;  // derivative gain
+        f32 Ki_ = 0.1f;   // integral control constant
         f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 10.f;
+        f32 MAX_ERROR_SUM = 5.f;
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
@@ -417,8 +417,11 @@ namespace Anki {
         
         f32 startRadSpeed = radSpeed_;
         f32 startRad = currDesiredAngle_;
+        if (!inPosition_) {
+          vpg_.Step(startRadSpeed, startRad);
+        }
         
-        lastLiftMovedTime_ms = HAL::GetTimeStamp();
+        lastInPositionTime_ms_ = 0;
         inPosition_ = false;
         
 
@@ -517,7 +520,7 @@ namespace Anki {
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+        if((ABS(angleError) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_)) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();

@@ -1,5 +1,5 @@
-#ifndef SPI_DATA_H
-#define SPI_DATA_H
+#ifndef SPINE_DATA_H
+#define SPINE_DATA_H
 
 #include <stdint.h>
 #include "hal/portable.h"
@@ -40,7 +40,7 @@ struct GlobalDataToHead
   Fixed VBat;
   Fixed Vusb;
   u8    chargeStat;
-  
+
   uint8_t RESERVED[14];  // Pad out to 64 bytes
   char tail;
 };
@@ -54,7 +54,7 @@ struct GlobalDataToBody
 {
   GlobalCommon common;
   int16_t motorPWM[4];
-  
+
   uint8_t RESERVED[51];  // Pad out to 64 bytes
   char tail;
 };

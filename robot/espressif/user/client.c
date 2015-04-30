@@ -10,7 +10,7 @@
 
 //#define DEBUG_CLIENT
 
-#define NUM_RTX_BUFS 4
+#define NUM_RTX_BUFS 16
 static UDPPacket rtxbs[NUM_RTX_BUFS];
 
 static struct espconn *udpServer;
@@ -129,26 +129,33 @@ void clientQueuePacket(UDPPacket* pkt)
 #endif
 
   os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with udpServerSentCB
-  err = espconn_sent(client, pkt->data, pkt->len);
-  if (err >= 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+  if (pkt->state != PKT_BUF_RESERVED)
   {
-    pkt->state = PKT_BUF_QUEUED;
-    // Append to queue
-    if (queuedPacket == NULL)
-    {
-      queuedPacket = pkt;
-    }
-    else
-    {
-      UDPPacket* n = queuedPacket;
-      while (n->next != NULL) n = n->next;
-      n->next = pkt;
-    }
+    os_printf("Invalid pkt to queue. %d[%d] state=%d at %08x\r\n", pkt->data[0], pkt->len, pkt->state, pkt);
   }
   else
   {
-    os_printf("Failed to queue UDP packet %d\n", err);
-    pkt->state = PKT_BUF_AVAILABLE; // Relese the packet that failed to send
+    err = espconn_sent(client, pkt->data, pkt->len);
+    if (err >= 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+    {
+      pkt->state = PKT_BUF_QUEUED;
+      // Append to queue
+      if (queuedPacket == NULL)
+      {
+        queuedPacket = pkt;
+      }
+      else
+      {
+        UDPPacket* n = queuedPacket;
+        while (n->next != NULL) n = n->next;
+        n->next = pkt;
+      }
+    }
+    else
+    {
+      os_printf("Failed to queue UDP packet %d\n", err);
+      pkt->state = PKT_BUF_AVAILABLE; // Relese the packet that failed to send
+    }
   }
   os_intr_unlock();
 }

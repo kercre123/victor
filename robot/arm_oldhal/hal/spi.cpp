@@ -3,7 +3,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
 #include "lib/stm32f4xx.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 
 namespace Anki
 {

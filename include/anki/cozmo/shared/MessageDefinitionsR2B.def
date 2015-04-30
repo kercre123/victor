@@ -223,6 +223,10 @@ ADD_MESSAGE_MEMBER(f32, pose_angle)
 ADD_MESSAGE_MEMBER(u8, followingMarkerNormal)
 END_MESSAGE_DEFINITION(GoalPose)
 
+// SyncTimeAck
+START_MESSAGE_DEFINITION(SyncTimeAck, 1)
+END_MESSAGE_DEFINITION(SyncTimeAck)
+
 
 // ----- Active object messages ------
 

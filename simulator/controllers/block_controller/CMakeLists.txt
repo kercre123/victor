@@ -4,10 +4,12 @@ add_definitions(-DCOZMO_ROBOT)
 
 set(ROBOT_SIM_HAL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/robot/sim_hal)
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
+set(ROBOT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/robot/include)
 
 include_directories( 
   ${COZMO_BASESTATION_INCLUDE_DIR}
   ${ROBOT_SIM_HAL_SOURCE_DIR}
+  ${ROBOT_INCLUDE_DIR}
   ${WEBOTS_CPP_INCLUDE_DIR}
 )
 

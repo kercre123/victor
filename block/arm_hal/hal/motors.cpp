@@ -1,5 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 #include <limits.h>
 
 // Change this value to a number between 0.25 and 1.0 to limit the wheel's max speed
