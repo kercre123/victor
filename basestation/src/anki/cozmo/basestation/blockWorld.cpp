@@ -329,9 +329,10 @@ namespace Anki
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
                                 "Did not match observed object to existing %s object "
                                 "by pose, but assuming there's only one that must match "
-                                "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE=1)\n",
+                                "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
                                 objSeen->GetType().GetName().c_str(),
-                                observedObject->GetID().GetValue());
+                                observedObject->GetID().GetValue(),
+                                ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
 
             observedObject->SetPose( objSeen->GetPose() );
             
