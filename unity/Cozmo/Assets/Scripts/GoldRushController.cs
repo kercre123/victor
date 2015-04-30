@@ -196,6 +196,8 @@ public class GoldRushController : GameController {
 
 	protected override void Enter_PRE_GAME ()
 	{
+
+		Debug.Log("Enter_PRE_GAME");
 		base.Enter_PRE_GAME ();
 
 		if(RobotEngineManager.instance == null) return;
@@ -214,21 +216,28 @@ public class GoldRushController : GameController {
 
 	protected override void Exit_PRE_GAME ()
 	{
+		Debug.Log("Exit_PRE_GAME");
 		hintMessage.KillMessage ();
 		base.Exit_PRE_GAME ();
 	}
 
 	protected override void Update_PRE_GAME ()
 	{
-		base.Update_PRE_GAME ();
+
+		if(stateTimer < pickupEnergyScanner.length) return;
 
 		RefreshGameProps();
+		if(!PropsAreCorrect()) return;
+
+		base.Update_PRE_GAME ();
+
+
 
 #if RUSH_DEBUG
-		if (goldExtractingObject != null && robot.carryingObject != null ) 
-		{
-			UpdateDirectionLights(Vector2.zero);
-		}
+//		if (goldExtractingObject != null && robot.carryingObject != null ) 
+//		{
+//			UpdateDirectionLights(Vector2.zero);
+//		}
 
 //		if( Input.GetKeyDown(KeyCode.C ))
 //		{
@@ -241,7 +250,7 @@ public class GoldRushController : GameController {
 
 	void RefreshGameProps() {
 		if(robot == null) return;
-
+		Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
 		for(int i=0;i<robot.knownObjects.Count;i++)
 		{
 			ObservedObject obj = robot.knownObjects[i];
@@ -304,8 +313,6 @@ public class GoldRushController : GameController {
 	protected override bool IsGameReady() 
 	{
 		if(!base.IsGameReady()) return false;
-		if(RobotEngineManager.instance == null) return false;
-		if(RobotEngineManager.instance.current == null) return false;
 
 		return true;
 	}
@@ -313,14 +320,15 @@ public class GoldRushController : GameController {
 	protected override bool IsPreGameCompleted() 
 	{
 		if(!base.IsPreGameCompleted()) return false;
-		if(RobotEngineManager.instance == null) return false;
-		if(RobotEngineManager.instance.current == null) return false;
+		return PropsAreCorrect();
+	}
 
+	bool PropsAreCorrect() {
 		if(goldExtractingObject == null) return false;
 		if(goldCollectingObject == null) return false;
 		if(robot.carryingObject == null) return false;
 		if(robot.carryingObject != goldExtractingObject) return false;
-
+		
 		return true;
 	}
 

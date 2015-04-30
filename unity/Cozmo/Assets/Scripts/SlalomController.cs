@@ -271,8 +271,6 @@ public class SlalomController : GameController {
 			if(countdownText != null) {
 				
 				countdownText.text = remaining.ToString();
-				currentCountdown = remaining;
-				
 				countdownText.gameObject.SetActive(true);
 			}
 		}

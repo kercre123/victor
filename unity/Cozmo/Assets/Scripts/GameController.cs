@@ -45,8 +45,7 @@ public class GameController : MonoBehaviour {
 
 	internal GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
-	protected int currentCountdown = 0;
-
+	protected bool countdownAnnounced = false;
 	protected float lastPlayTime = 0;
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
@@ -64,7 +63,9 @@ public class GameController : MonoBehaviour {
 
 	public float gameStartingInDelay {
 		get {
-			return gameStartingIn != null ? gameStartingIn.length : 0f;
+			float duration = gameStartingIn != null ? gameStartingIn.length : 0f;
+			Debug.Log("gameStartingInDelay: " + duration);
+			return duration;
 		}
 	}
 
@@ -235,7 +236,6 @@ public class GameController : MonoBehaviour {
 		if(playButton != null) playButton.gameObject.SetActive(false);
 	}
 		
-	bool countdownAnnounced = false;
 	protected virtual void Enter_PRE_GAME() {
 		Debug.Log(gameObject.name + " Enter_PRE_GAME");
 
@@ -256,13 +256,10 @@ public class GameController : MonoBehaviour {
 		if(countdownToStart > 0f) {
 
 			if(!countdownAnnounced) {
-				if(coundownTimer == countdownToStart) {
-					if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
-					lastTimerSeconds = 0;
-				}
+				if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
+				lastTimerSeconds = 0;
+				countdownAnnounced = true;
 			}
-
-			countdownAnnounced = true;
 
 			if(stateTimer >= gameStartingInDelay) {
 
@@ -273,7 +270,6 @@ public class GameController : MonoBehaviour {
 				
 				if(countdownText != null) {
 					countdownText.text = remaining.ToString();
-					currentCountdown = remaining;
 					countdownText.gameObject.SetActive(true);
 				}
 			}
