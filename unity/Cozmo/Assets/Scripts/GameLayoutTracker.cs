@@ -38,7 +38,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] Text instructionsProgress;
 	[SerializeField] Button buttonStartPlaying;
 	[SerializeField] ScreenMessage screenMessage = null;
-	[SerializeField] float coplanarFudge = 0.2f;
+	[SerializeField] float coplanarFudge = 0.5f;
 	[SerializeField] float distanceFudge = 0.5f;
 
 	[SerializeField] AudioClip blockValidatedSound = null;
@@ -219,7 +219,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
-		robot = RobotEngineManager.instance.current;
+		robot = RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null;
 
 		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.INVENTORY);
 
@@ -238,7 +238,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
 
-				robot.SetHeadAngle();
+				if(robot != null) robot.SetHeadAngle();
 
 				for(int i=0;i<blocks2d.Count;i++) {
 					int known = GetKnownObjectCountForBlock(blocks2d[i].Block);
@@ -422,10 +422,12 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				//skip objects of the wrong type
 				if(block.objectFamily != 3 && block.objectType != (int)newObject.ObjectType) {
+					if(debug) Debug.Log("skip objects of the wrong type");
 					continue;
 				}
 
 				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
+					if(debug) Debug.Log("skip active block of the wrong color");
 					continue;
 				}
 

@@ -5,8 +5,8 @@ public class GoldRushGameActions : GameActions {
 
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
-	public override string DROP { get { if (gameController.inExtractRange) return "Extract"; else return "Deposit"; } }
-	public override string STACK { get { return "Place Scanner"; } }
+	public override string DROP { get { if (gameController.inExtractRange) return ActionName( "Extract", base.DROP, base.DROP ); else return ActionName( "Deposit", base.DROP, base.DROP ); } }
+	public override string STACK { get { return ActionName( "Place Scanner", base.STACK, base.STACK ); } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
 	//public override string CHANGE { get { return "Change"; } }
@@ -15,12 +15,14 @@ public class GoldRushGameActions : GameActions {
 	//protected override string TOP { get { return " TOP"; } }
 	//protected override string BOTTOM { get { return " BOTTOM"; } }
 	// Use this for initialization
-	GoldRushController gameController;
+	private GoldRushController gameController;
 
-	void Awake() {
+	protected override void Awake()
+	{
+		base.Awake();
+
 		gameController = GetComponent<GoldRushController>();
 	}
-
 
 	/*
 	protected override void OnEnable ()

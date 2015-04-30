@@ -19,10 +19,31 @@ public class GameActions : MonoBehaviour
 	protected virtual string TOP { get { return " TOP"; } }
 	protected virtual string BOTTOM { get { return " BOTTOM"; } }
 
+	protected string ActionName( string name, string building, string pregame )
+	{
+		if( gameController != null )
+		{
+			switch( gameController.state )
+			{
+				case GameController.GameState.BUILDING: if( building != null ) return building; break;
+				case GameController.GameState.PRE_GAME: if( pregame != null ) return pregame; break;
+			}
+		}
+
+		return name;
+	}
+
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
 	public static GameActions instance = null;
+
+	private GameController gameController;
+
+	protected virtual void Awake()
+	{
+		gameController = GetComponent<GameController>();
+	}
 
 	protected virtual void OnEnable()
 	{
@@ -68,7 +89,7 @@ public class GameActions : MonoBehaviour
 			if( robot.selectedObjects.Count > 0 )
 			{
 				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
-				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 2f) {
+				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f) {
 					buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 					stack = true;
 				}

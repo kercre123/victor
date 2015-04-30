@@ -211,10 +211,13 @@ public class GoldRushController : GameController {
 		RefreshGameProps();
 
 		hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
-		PlayNotificationAudio (pickupEnergyScanner);
+		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
+		{
+			PlayNotificationAudio (pickupEnergyScanner);
+		}
 	}
 
-	protected override void Exit_PRE_GAME ()
+	protected override void Exit_PRE_GAME () 
 	{
 		Debug.Log("Exit_PRE_GAME");
 		hintMessage.KillMessage ();
