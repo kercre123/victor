@@ -7,21 +7,17 @@ using Anki.Cozmo;
 using System;
 
 public class GoldRushController : GameController {
-	public static GoldRushController instance = null;
 
 	public const uint COLOR_RED = 0xFF0000FF;
 
 	[SerializeField] protected AudioClip foundBeep;
 	[SerializeField] protected AudioClip collectedSound;
-	[SerializeField] protected AudioSource notificationAudio;
-	[SerializeField] protected AudioClip[] timerSounds;
-	[SerializeField] protected int[] timerEventTimes = {60,30,10,9,8,7,6,5,4,3,2,1};
 	[SerializeField] protected AudioClip pickupEnergyScanner;
 	[SerializeField] protected AudioClip placeEnergyScanner;
 	[SerializeField] protected AudioClip findEnergy;
 	[SerializeField] protected AudioClip dropEnergy;
 	[SerializeField] protected AudioClip timeUp;
-	[SerializeField] protected AudioClip gameStartingIn;
+
 	[SerializeField] protected AudioClip timeExtension;
 	[SerializeField] protected Button extractButton = null;
 	public float detectRangeDelayFar = 2.0f;
@@ -29,8 +25,6 @@ public class GoldRushController : GameController {
 	public float light_messaging_delay = .05f;
 	private float last_light_message_time = -1;
 
-	private float lastPlayTime = 0;
-	private int timerEventIndex = 0;
 	private int numDrops = 0;
 
 	[SerializeField] float hideRadius;	//radius around cube's initial position in which its gold will be buried
@@ -40,6 +34,7 @@ public class GoldRushController : GameController {
 	[SerializeField] float extractionTime = 1.5f; //time it takes to extract
 	[SerializeField] float rewardTime = 1.5f; //time it takes to reward
 	[SerializeField] int numDropsForBonusTime = 1;
+
 	[SerializeField] float baseTimeBonus = 30f;
 	[SerializeField] float bonusTimeDecay = 2f / 3f;
 
@@ -55,6 +50,7 @@ public class GoldRushController : GameController {
 	ScreenMessage hintMessage;
 	private bool audioLocatorEnabled = true;
 	byte last_leds = 0xFF;
+	bool sent = false;
 
 	enum PlayState
 	{
@@ -72,7 +68,7 @@ public class GoldRushController : GameController {
 	private PlayState playState = PlayState.IDLE;
 	float playStateTimer = 0;
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
-	float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
+
 
 	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
 	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
@@ -87,22 +83,15 @@ public class GoldRushController : GameController {
 
 	private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
-	Robot robot;
-	//int lastHeldID;
-	int instance_count = 0;
 	void Awake()
 	{
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
 		extractButton.gameObject.SetActive (false);
-		instance = this;
-		instance_count++;
 	}
 
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-
-		instance = this;
 
 		MessageDelay = .05f;
 	}
@@ -110,10 +99,6 @@ public class GoldRushController : GameController {
 	protected override void OnDisable()
 	{
 		base.OnDisable();
-
-		if( instance == this ) instance = null;
-
-		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
 	}
 
 	protected override void RefreshHUD ()
@@ -142,11 +127,10 @@ public class GoldRushController : GameController {
 		playState = PlayState.IDLE;
 		playStateTimer = 0;
 		totalActiveTime = 0;
-		timerEventIndex = 0;
 		scores [0] = 0;
 		numDrops = 0;
-		bonusTime = 0;
-		CozmoVision.EnableDing(false); // just in case we were in searching mode
+
+		//CozmoVision.EnableDing(false); // just in case we were in searching mode
 		SetEnergyBars (0, 0);
 	}
 
@@ -170,12 +154,14 @@ public class GoldRushController : GameController {
 
 		playStateTimer += Time.deltaTime;
 
-		UpdateTimerEvents (totalActiveTime);
+		int secondsLeft = Mathf.CeilToInt((maxPlayTime + bonusTime) - totalActiveTime);
+		PlayCountdownAudio(secondsLeft);
 
 		if( robot != null )
 		{
-			foreach(ObservedObject obj in robot.knownObjects)
+			for(int i=0;i<robot.knownObjects.Count;i++)
 			{
+				ObservedObject obj = robot.knownObjects[i];
 				if( obj.Family != 3 )
 				{
 					goldCollectingObject = obj;
@@ -208,65 +194,69 @@ public class GoldRushController : GameController {
 		}
 	}
 
-	protected override void Enter_BUILDING ()
+	protected override void Enter_PRE_GAME ()
 	{
-		base.Enter_BUILDING ();
+		base.Enter_PRE_GAME ();
 
 		if(RobotEngineManager.instance == null) return;
 
-		//GameLayoutTracker.instance.ValidateBuild ();
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
-		playButton.gameObject.SetActive (false);
-		buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
+		goldCollectingObject = null;
 
 		robot = RobotEngineManager.instance.current;
-		RobotEngineManager.instance.SuccessOrFailure += CheckForStackSuccess;
 
-		goldCollectingObject = null;
+		RefreshGameProps();
 
 		hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
 		PlayNotificationAudio (pickupEnergyScanner);
 	}
 
-	protected override void Exit_BUILDING ()
+	protected override void Exit_PRE_GAME ()
 	{
-		RobotEngineManager.instance.SuccessOrFailure -= CheckForStackSuccess;
 		hintMessage.KillMessage ();
-		base.Exit_BUILDING ();
+		base.Exit_PRE_GAME ();
 	}
-	bool sent = false;
-	protected override void Update_BUILDING ()
+
+	protected override void Update_PRE_GAME ()
 	{
-		base.Update_BUILDING ();
-		if( robot != null )
-		{
-			foreach(ObservedObject obj in robot.knownObjects)
-			{
-				if( obj.Family == 3 && goldExtractingObject == null )
-				{
-					goldExtractingObject = obj;
-					goldExtractingObject.SetActiveObjectLEDs(1, COLOR_RED, 0, 0xFF, 150, 150); 
-				}
-				else if( obj.Family != 3 )
-				{
-					goldCollectingObject = obj;
-				}
-			}
-		}
+		base.Update_PRE_GAME ();
+
+		RefreshGameProps();
+
 #if RUSH_DEBUG
 		if (goldExtractingObject != null && robot.carryingObject != null ) 
 		{
 			UpdateDirectionLights(Vector2.zero);
 		}
 
-		if( Input.GetKeyDown(KeyCode.C ))
-		{
-			StartCoroutine(CountdownToPlay());
-		}
+//		if( Input.GetKeyDown(KeyCode.C ))
+//		{
+//			StartCoroutine(CountdownToPlay());
+//		}
 
 #endif
+
 	}
+
+	void RefreshGameProps() {
+		if(robot == null) return;
+
+		for(int i=0;i<robot.knownObjects.Count;i++)
+		{
+			ObservedObject obj = robot.knownObjects[i];
+			if( obj.Family == 3 && goldExtractingObject == null )
+			{
+				goldExtractingObject = obj;
+				goldExtractingObject.SetActiveObjectLEDs(1, COLOR_RED, 0, 0xFF, 150, 150); 
+			}
+			else if( obj.Family != 3 )
+			{
+				goldCollectingObject = obj;
+			}
+		}
+	}
+
 
 	void CheckForStackSuccess(bool success, ActionCompleted action_type)
 	{
@@ -313,9 +303,23 @@ public class GoldRushController : GameController {
 
 	protected override bool IsGameReady() 
 	{
-		//if(!base.IsGameReady()) return false;
+		if(!base.IsGameReady()) return false;
 		if(RobotEngineManager.instance == null) return false;
 		if(RobotEngineManager.instance.current == null) return false;
+
+		return true;
+	}
+
+	protected override bool IsPreGameCompleted() 
+	{
+		if(!base.IsPreGameCompleted()) return false;
+		if(RobotEngineManager.instance == null) return false;
+		if(RobotEngineManager.instance.current == null) return false;
+
+		if(goldExtractingObject == null) return false;
+		if(goldCollectingObject == null) return false;
+		if(robot.carryingObject == null) return false;
+		if(robot.carryingObject != goldExtractingObject) return false;
 
 		return true;
 	}
@@ -327,45 +331,6 @@ public class GoldRushController : GameController {
 
 		//game specific end conditions...
 		return false;
-	}
-
-	void ResetTimerIndex(float timer)
-	{
-		// need to reset when we've added bonus time
-		timerEventIndex = 0;
-		int next_event_time = timerEventTimes[timerEventIndex];
-		while( (int)(maxPlayTime+bonusTime-timer) <= next_event_time )
-		{
-			next_event_time = timerEventTimes[timerEventIndex];
-			timerEventIndex++;
-		}
-	}
-	
-	void UpdateTimerEvents (float timer)
-	{
-		if (timerEventIndex < timerEventTimes.Length) 
-		{
-			// get our next event
-			int next_event_time = timerEventTimes[timerEventIndex];
-			if( (int)((maxPlayTime+bonusTime)-timer) <= next_event_time )
-			{
-				if( !notificationAudio.isPlaying ) // defer to other notifications
-				{
-					notificationAudio.PlayOneShot(timerSounds[timerEventIndex]);
-				}
-				timerEventIndex++;
-			}
-		}
-	}
-
-	void PlayNotificationAudio(AudioClip clip)
-	{
-		if (notificationAudio != null) 
-		{
-			notificationAudio.Stop ();
-			Debug.Log ("Should be playing " + clip.name);
-			notificationAudio.PlayOneShot (clip);
-		}
 	}
 
 	void EnableAudioLocator(bool on)
@@ -399,7 +364,7 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			PlayNotificationAudio(findEnergy);
 			foundItems.Clear();
 			buriedLocations.Clear();
@@ -419,12 +384,12 @@ public class GoldRushController : GameController {
 			hintMessage.ShowMessage("Find the energy!", Color.black);
 			break;
 		case PlayState.RETURNING:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			PlayNotificationAudio(dropEnergy);
 			hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
-			robot.SetHeadAngle(0);
+			robot.SetHeadAngle();
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
 
@@ -622,7 +587,6 @@ public class GoldRushController : GameController {
 
 #region IEnumerator
 
-	public float gameStartingInDelay = 1.3f;
 	IEnumerator CountdownToPlay()
 	{
 		PlayNotificationAudio (gameStartingIn);
@@ -630,7 +594,7 @@ public class GoldRushController : GameController {
 		int timer_index = timerSounds.Length - 3;
 		while( timer_index < timerSounds.Length )
 		{
-			PlayNotificationAudio(timerSounds [timer_index]);
+			PlayNotificationAudio(timerSounds [timer_index].sound);
 			timer_index++;
 			yield return new WaitForSeconds (1);
 		}
@@ -666,7 +630,7 @@ public class GoldRushController : GameController {
 			int num_bonuses_awarded = (numDrops / numDropsForBonusTime) - 1;
 			float awardedTime = num_bonuses_awarded == 0 ? baseTimeBonus : baseTimeBonus*bonusTimeDecay;
 			bonusTime += awardedTime;
-			ResetTimerIndex(totalActiveTime);
+			//ResetTimerIndex(totalActiveTime);
 			SetEnergyBars(numDropsForBonusTime, color);
 
 		}

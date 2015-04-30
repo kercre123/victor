@@ -657,12 +657,12 @@ namespace Anki {
                 case TM_LIFT:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
                   p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
-                  p3 = 25;
+                  p3 = 250;
                   break;
                 case TM_HEAD:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
-                  p3 = 25;
+                  p3 = 250;
                   break;
                 case TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
@@ -942,9 +942,13 @@ namespace Anki {
                 if(!backpackLightsOn) {
                   msg.onColor[LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
                   msg.onColor[LED_BACKPACK_LEFT]   = NamedColors::RED;
-                  msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
-                  msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
-                  msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
+                  
+                  //msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
+                  //msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
+                  //msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
+                  msg.onColor[LED_BACKPACK_INNER_LEFT]   = NamedColors::BLUE;
+                  msg.onColor[LED_BACKPACK_INNER_RIGHT]   = NamedColors::YELLOW;
+                  
                   msg.offColor[LED_BACKPACK_LEFT]  = NamedColors::GREEN;
                   msg.offColor[LED_BACKPACK_RIGHT] = NamedColors::RED;
                 }

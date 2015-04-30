@@ -5,9 +5,9 @@ public class GameActions : MonoBehaviour
 {
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButtonMode.NUM_MODES];
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
 	
-	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && slider != null && slider.Pressed ) return "Object " + robot.targetLockedObject; return "Search"; } }
+	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
 	public virtual string PICK_UP { get { return "Pick Up"; } }
 	public virtual string DROP { get { return "Drop"; } }
 	public virtual string STACK { get { return "Stack"; } }
@@ -19,28 +19,14 @@ public class GameActions : MonoBehaviour
 	protected virtual string TOP { get { return " TOP"; } }
 	protected virtual string BOTTOM { get { return " BOTTOM"; } }
 
-	[System.NonSerialized] public int selectedObjectIndex;
-
 	protected Robot robot;
 	protected ActionButton[] buttons;
-	protected ActionSlider slider;
 
 	public static GameActions instance = null;
 
 	protected virtual void OnEnable()
 	{
 		instance = this;
-
-		ActionSliderPanel sliderPanel = ActionPanel.instance as ActionSliderPanel;
-
-		if( sliderPanel != null )
-		{
-			slider = sliderPanel.actionSlider;
-		}
-		else
-		{
-			slider = null;
-		}
 	}
 
 	public virtual void OnDisable()
@@ -48,12 +34,12 @@ public class GameActions : MonoBehaviour
 		if( instance == this ) instance = null;
 	}
 
-	public Sprite GetActionSprite( ActionButtonMode mode )
+	public Sprite GetActionSprite( ActionButton.Mode mode )
 	{
 		return actionSprites[(int)mode];
 	}
 
-	public virtual void SetActionButtons() // 0 is bottom button, 1 is top button
+	public virtual void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( ActionPanel.instance == null ) return;
 
@@ -72,7 +58,7 @@ public class GameActions : MonoBehaviour
 			{
 				if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
 				{
-					buttons[1].SetMode( ActionButtonMode.CHANGE );
+					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
 				}
 
 			}
@@ -83,37 +69,37 @@ public class GameActions : MonoBehaviour
 			{
 				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
 				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 2f) {
-					buttons[0].SetMode( ActionButtonMode.STACK );
+					buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 					stack = true;
 				}
 			}
 
-			if(!stack) buttons[0].SetMode( ActionButtonMode.DROP );
+			if(!stack) buttons[0].SetMode( ActionButton.Mode.DROP, null );
 		}
 		else
 		{
 			if( robot.selectedObjects.Count == 1 )
 			{
-				buttons[1].SetMode( ActionButtonMode.PICK_UP );
+				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
 			}
 			else
 			{
 				for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
 				{
-					buttons[i].SetMode( ActionButtonMode.PICK_UP, true, i, i == 0 ? BOTTOM : TOP );
+					buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
 				}
 			}
 		}
 
 		if( buttons.Length > 2 )
 		{
-			if( slider != null )
+			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButtonMode.TARGET, false );
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{
-				buttons[2].SetMode( ActionButtonMode.CANCEL );
+				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
 			}
 		}
 	}
@@ -136,15 +122,19 @@ public class GameActions : MonoBehaviour
 		}
 	}
 
-	public virtual void PickUp()
+	public virtual void PickUp( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "PickUp" );
 
 		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObjectIndex );
+			robot.PickAndPlaceObject( selectedObject );
 			if(CozmoBusyPanel.instance != null)	{
 
-				ObservedObject obj = robot.selectedObjects[selectedObjectIndex];
+				ObservedObject obj = selectedObject;
 				if(obj != null) {
 					string desc = "Cozmo is attempting to pick-up\n";
 
@@ -168,8 +158,12 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Drop()
+	public virtual void Drop( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "Drop" );
 
 		if( robot != null ) {
@@ -199,12 +193,16 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Stack()
+	public virtual void Stack( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "Stack" );
 
 		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObjectIndex );
+			robot.PickAndPlaceObject( selectedObject );
 			if(CozmoBusyPanel.instance != null)	{
 				
 				ObservedObject obj = robot.carryingObject;
@@ -224,7 +222,7 @@ public class GameActions : MonoBehaviour
 						desc += "Block";
 					}
 
-					ObservedObject target = robot.selectedObjects[selectedObjectIndex];
+					ObservedObject target = selectedObject;
 					if(target != null) {
 						
 						desc += "\n on top of ";
@@ -251,18 +249,30 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Roll()
+	public virtual void Roll( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "Roll" );
 	}
 	
-	public virtual void Align()
+	public virtual void Align( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "Align" );
 	}
 	
-	public virtual void Change()
+	public virtual void Change( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		Debug.Log( "Change" );
 
 		if( robot != null && robot.carryingObject != null && robot.carryingObject.Family == 3)
@@ -274,94 +284,31 @@ public class GameActions : MonoBehaviour
 		}
 	}
 	
-	public virtual void Cancel()
+	public virtual void Cancel( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		CancelButtonClick();
+
 		Debug.Log( "Cancel" );
 		
-		if( robot != null  )
+		if( robot != null )
 		{
 			robot.selectedObjects.Clear();
 			robot.SetHeadAngle();
+			robot.targetLockedObject = null;
 		}
 	}
 
-	public virtual void Target()
+	public virtual void Target( bool onRelease, ObservedObject selectedObject )
 	{
-		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.carryingObject != null && 
-			robot.selectedObjects.Find(x => x == robot.carryingObject) != null;
-		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
-			robot.selectedObjects.Find(x => x == robot.targetLockedObject) != null;
-		
-		if(targetingPropInHand || !alreadyHasTarget) {
-			robot.selectedObjects.Clear();
-			robot.targetLockedObject = null;
+		if( onRelease )
+		{
+			robot.searching = false;
 		}
-		
-		ObservedObject best = robot.targetLockedObject;
-		
-		if(robot.selectedObjects.Count == 0) {
-			//ObservedObject nearest = null;
-			ObservedObject mostFacing = null;
-			
-			float bestDistFromCoz = float.MaxValue;
-			float bestAngleFromCoz = float.MaxValue;
-			Vector2 forward = robot.Forward;
-			
-			for(int i=0; i<robot.pertinentObjects.Count; i++) {
-				if(robot.carryingObject == robot.pertinentObjects[i]) continue;
-				Vector2 atTarget = robot.pertinentObjects[i].WorldPosition - robot.WorldPosition;
-				
-				float angleFromCoz = Vector2.Angle(forward, atTarget);
-				if(angleFromCoz > 90f) continue;
-				
-				float distFromCoz = atTarget.sqrMagnitude;
-				if(distFromCoz < bestDistFromCoz) {
-					bestDistFromCoz = distFromCoz;
-					//nearest = robot.pertinentObjects[i];
-				}
-				
-				if(angleFromCoz < bestAngleFromCoz) {
-					bestAngleFromCoz = angleFromCoz;
-					mostFacing = robot.pertinentObjects[i];
-				}
-			}
-			
-			best = mostFacing;
-			/*if(nearest != null && nearest != best) {
-				Debug.Log("AcquireTarget found nearer object than the one closest to center view.");
-				float dist1 = (mostFacing.WorldPosition - robot.WorldPosition).sqrMagnitude;
-				if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
-			}*/
+		else
+		{
+			robot.searching = true;
 		}
-		
-		robot.selectedObjects.Clear();
-		
-		if(best != null) robot.selectedObjects.Add(best);
-		
-		if(robot.selectedObjects.Count > 0) {
-			//find any other objects in a 'stack' with our selected
-			for(int i=0; i<robot.pertinentObjects.Count; i++) {
-				if(best == robot.pertinentObjects[i])
-					continue;
-				if(robot.carryingObject == robot.pertinentObjects[i])
-					continue;
-				
-				float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
-				if(dist > best.Size.x * 0.5f) {
-					//Debug.Log("AcquireTarget rejecting " + robot.pertinentObjects[i].ID +" because it is dist("+dist+") mm from best("+best.ID+") robot.carryingObjectID("+robot.carryingObjectID+")");
-					continue;
-				}
-				
-				robot.selectedObjects.Add(robot.pertinentObjects[i]);
-			}
-			
-			//sort selected from ground up
-			robot.selectedObjects.Sort(( obj1, obj2 ) => {
-				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
-			});
-			
-			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
-		}
-		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from pertinentObjects("+robot.pertinentObjects.Count+")");
 	}
 }

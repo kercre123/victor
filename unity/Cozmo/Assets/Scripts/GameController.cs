@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 
 public class GameController : MonoBehaviour {
@@ -11,10 +12,19 @@ public class GameController : MonoBehaviour {
 		RESULTS
 	}
 
+	[Serializable]
+	public class TimerAudio {
+		public int time = 0;
+		public AudioClip sound = null;
+	}
+
 	[SerializeField] protected Text countdownText = null;
 	[SerializeField] protected float countdownToStart = 0f;
 	[SerializeField] protected AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
+	[SerializeField] protected TimerAudio[] timerSounds;
+	[SerializeField] protected AudioSource notificationAudio;
+	[SerializeField] protected AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int numPlayers = 1;
 	[SerializeField] protected Text textScore = null;
@@ -37,14 +47,31 @@ public class GameController : MonoBehaviour {
 	protected float stateTimer = 0f;
 	protected int currentCountdown = 0;
 
+	protected float lastPlayTime = 0;
+	protected int timerEventIndex = 0;
+	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
+
 	protected int[] scores;
 
 	protected int winnerIndex;
 	protected bool firstFrame = true;
 
-	float errorMsgTimer = 0f;
+	protected float errorMsgTimer = 0f;
 
-	private static float _MessageDelay = 0.5f;
+	protected Robot robot;
+
+	//public float gameStartingInDelay = 1.3f;
+
+	public float gameStartingInDelay {
+		get {
+			return gameStartingIn != null ? gameStartingIn.length : 0f;
+		}
+	}
+
+	protected int lastTimerSeconds = 0;
+	protected float coundownTimer = 0f;
+
+	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
 
 	protected virtual void OnEnable () {
@@ -102,7 +129,7 @@ public class GameController : MonoBehaviour {
 		//consider switching states
 		switch(state) {
 			case GameState.BUILDING:
-				if((playRequested || autoPlay) && IsGameReady()) return GameState.PLAYING; 
+				if((playRequested || autoPlay) && IsGameReady()) return GameState.PRE_GAME; 
 				break;
 			case GameState.PRE_GAME:
 				if(IsPreGameCompleted()) return GameState.PLAYING; 
@@ -113,7 +140,7 @@ public class GameController : MonoBehaviour {
 				break;
 			case GameState.RESULTS:
 				if(buildRequested) return GameState.BUILDING;
-				if(playRequested && IsGameReady()) return GameState.PLAYING;
+				if(playRequested && IsGameReady()) return GameState.PRE_GAME;
 				break;
 		}
 
@@ -162,16 +189,14 @@ public class GameController : MonoBehaviour {
 
 		if (textTime != null && state == GameState.PLAYING) {
 			if (maxPlayTime > 0f) {
-				textTime.text = Mathf.FloorToInt (maxPlayTime - stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString ();
 			} else {
-				textTime.text = Mathf.FloorToInt (stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (stateTimer).ToString ();
 			}
 		} else {
 			textTime.text = string.Empty;
 		}
 
-
-		
 		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
 			if(textError != null) {
 				//set specific text once we have analyzer
@@ -210,31 +235,52 @@ public class GameController : MonoBehaviour {
 		if(playButton != null) playButton.gameObject.SetActive(false);
 	}
 		
+	bool countdownAnnounced = false;
 	protected virtual void Enter_PRE_GAME() {
 		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+
 		if(countdownText != null) {
-			int remaining = Mathf.CeilToInt(countdownToStart);
-			if(countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
-			countdownText.text = remaining.ToString();
-			currentCountdown = remaining;
-			countdownText.gameObject.SetActive(true);
+			countdownText.gameObject.SetActive(false);
 		}
+
+		coundownTimer = countdownToStart;
+		countdownAnnounced = false;
 	}
+
 	protected virtual void Update_PRE_GAME() {
 		//Debug.Log(gameObject.name + " Update_PRE_GAME");
 		//add game specific intro messaging in an override of this method
 		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
 		//	or if this game has a count-down before start, we display that count down here
 
-		if(countdownToStart > 0f && countdownText != null) {
-			int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - stateTimer, 0, countdownToStart) );
-			if(remaining != currentCountdown && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
-			countdownText.text = remaining.ToString();
-			currentCountdown = remaining;
+		if(countdownToStart > 0f) {
 
-			countdownText.gameObject.SetActive(true);
+			if(!countdownAnnounced) {
+				if(coundownTimer == countdownToStart) {
+					if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
+					lastTimerSeconds = 0;
+				}
+			}
+
+			countdownAnnounced = true;
+
+			if(stateTimer >= gameStartingInDelay) {
+
+				coundownTimer -= Time.deltaTime;
+				int remaining = Mathf.CeilToInt( Mathf.Clamp(coundownTimer, 0f, countdownToStart) );
+
+				PlayCountdownAudio(remaining);
+				
+				if(countdownText != null) {
+					countdownText.text = remaining.ToString();
+					currentCountdown = remaining;
+					countdownText.gameObject.SetActive(true);
+				}
+			}
+
 		}
 	}
+
 	protected virtual void Exit_PRE_GAME() {
 		Debug.Log(gameObject.name + " Exit_PRE_GAME");
 		if(countdownText != null) {
@@ -243,12 +289,19 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_PLAYING() {
+
+		timerEventIndex = 0;
+		bonusTime = 0;
+
 		Debug.Log(gameObject.name + " Enter_PLAYING");
 		if(gameStartSound != null && audio != null) audio.PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
+
+
 	}
+
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
@@ -290,7 +343,7 @@ public class GameController : MonoBehaviour {
 		//add game specific gating in an override of this method
 		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
 		//	or if this game has a count-down before start, handle that check here
-		if(countdownToStart > 0f && stateTimer < countdownToStart) return false;
+		if(countdownToStart > 0f && coundownTimer > 0f) return false;
 
 		return true;
 	}
@@ -316,5 +369,34 @@ public class GameController : MonoBehaviour {
 
 	public void BuildRequested() {
 		buildRequested = true;
+	}
+
+	protected void PlayCountdownAudio(int secondsLeft) {
+		bool played = false;
+
+		for(int i=0; i<timerSounds.Length; i++) {
+			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
+				// defer to other notifications
+				if( !notificationAudio.isPlaying ) {
+					notificationAudio.PlayOneShot(timerSounds[i].sound);
+				}
+				played = true;
+				break;
+			}
+		}
+
+		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+		
+		lastTimerSeconds = secondsLeft;
+	}
+	
+	protected void PlayNotificationAudio(AudioClip clip)
+	{
+		if (notificationAudio != null) 
+		{
+			notificationAudio.Stop ();
+			Debug.Log ("Should be playing " + clip.name);
+			notificationAudio.PlayOneShot (clip);
+		}
 	}
 }

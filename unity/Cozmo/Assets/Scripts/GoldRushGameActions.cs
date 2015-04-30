@@ -5,7 +5,7 @@ public class GoldRushGameActions : GameActions {
 
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
-	public override string DROP { get { if (GoldRushController.instance.inExtractRange) return "Extract"; else return "Deposit"; } }
+	public override string DROP { get { if (gameController.inExtractRange) return "Extract"; else return "Deposit"; } }
 	public override string STACK { get { return "Place Scanner"; } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
@@ -15,11 +15,18 @@ public class GoldRushGameActions : GameActions {
 	//protected override string TOP { get { return " TOP"; } }
 	//protected override string BOTTOM { get { return " BOTTOM"; } }
 	// Use this for initialization
+	GoldRushController gameController;
+
+	void Awake() {
+		gameController = GetComponent<GoldRushController>();
+	}
+
 
 	/*
 	protected override void OnEnable ()
 	{
 		base.OnEnable ();
+
 	}
 
 	public override void OnDisable ()
@@ -27,8 +34,8 @@ public class GoldRushGameActions : GameActions {
 		base.OnDisable ();
 	}
 	*/
-
-	public override void SetActionButtons() // 0 is bottom button, 1 is top button
+	
+	public override void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( ActionPanel.instance == null ) return;
 		
@@ -43,23 +50,23 @@ public class GoldRushGameActions : GameActions {
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.BUILDING )
 			{
-				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButtonMode.STACK );
+				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
 
-			if( GoldRushController.instance.inDepositRange || GoldRushController.instance.inExtractRange )
+			if( gameController.inDepositRange || gameController.inExtractRange )
 			{
-				buttons[0].SetMode( ActionButtonMode.DROP );
+				buttons[0].SetMode( ActionButton.Mode.DROP, null );
 			}
 		}
 		else
 		{
-			if( GoldRushController.instance.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.BUILDING )
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
-					buttons[1].SetMode( ActionButtonMode.PICK_UP );
+					buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
 				}
 				else
 				{
@@ -67,35 +74,51 @@ public class GoldRushGameActions : GameActions {
 					{
 						if( robot.selectedObjects[i].Family == 3 )
 						{
-							buttons[i].SetMode( ActionButtonMode.PICK_UP, true, i, i == 0 ? BOTTOM : TOP );
+							buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
 						}
 					}
 				}
 			}
 		}
 		
-		if( robot.selectedObjects.Count > 0 && buttons.Length > 2 ) buttons[2].SetMode( ActionButtonMode.CANCEL );
+		if( buttons.Length > 2 )
+		{
+			if( isSlider )
+			{
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+			}
+			else if( robot.selectedObjects.Count > 0 )
+			{
+				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
+			}
+		}
 	}
-
-	public override void Drop()
+	
+	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
+		if( !onRelease ) return;
+
+		ActionButtonClick();
+
 		//extract or deposit
-		if (GoldRushController.instance.inExtractRange) 
+		if (gameController.inExtractRange) 
 		{
-			GoldRushController.instance.BeginExtracting();
+			gameController.BeginExtracting();
 		}
-		else if (GoldRushController.instance.inDepositRange)
+		else if (gameController.inDepositRange)
 		{
-			GoldRushController.instance.BeginDepositing();
+			gameController.BeginDepositing();
 		}
 	}
 
-	public override void Stack()
+	public override void Stack( bool onRelease, ObservedObject selectedObject )
 	{
-		if( robot == null ) return;
+		if( robot == null || !onRelease ) return;
 
-		robot.PickAndPlaceObject( selectedObjectIndex );
-		GoldRushController.instance.goldCollectingObject = robot.selectedObjects [selectedObjectIndex];
-		Debug.Log ("gold collector id: " + GoldRushController.instance.goldCollectingObject);
+		ActionButtonClick();
+
+		robot.PickAndPlaceObject( selectedObject );
+		gameController.goldCollectingObject = selectedObject;
+		Debug.Log ("gold collector id: " + gameController.goldCollectingObject);
 	}
 }

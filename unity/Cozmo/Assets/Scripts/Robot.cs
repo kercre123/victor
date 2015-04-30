@@ -30,12 +30,17 @@ public class Robot
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-	public ObservedObject targetLockedObject;
+	public ObservedObject targetLockedObject = null;
 
 	public ActionCompleted lastActionRequested = ActionCompleted.UNKNOWN;
+	public bool searching = false;
 
-	private int carryingObjectID;
-	private int headTrackingObjectID;
+	private int carryingObjectID = -1;
+	private int headTrackingObjectID = -1;
+	private int lastHeadTrackingObjectID = -1;
+
+	private float lastAngle_rad = float.MaxValue;
+	private float lastLiftHeight_mm = float.MaxValue;
 
 	private ObservedObject _carryingObject = null;
 	public ObservedObject carryingObject
@@ -58,8 +63,6 @@ public class Robot
 			return _headTrackingObject;
 		}
 	}
-
-	private int lastHeadTrackingObjectID = -1;
 
 	public enum ObservedObjectListType {
 		OBSERVED_RECENTLY,
@@ -159,6 +162,14 @@ public class Robot
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
 
+		RobotEngineManager.instance.DisconnectedFromClient += Reset;
+
+		RefreshObjectPertinence();
+
+	}
+
+	public void RefreshObjectPertinence() {
+
 		int objectPertinenceOverride = OptionsScreen.GetObjectPertinenceTypeOverride();
 
 		if( objectPertinenceOverride >= 0 )
@@ -173,8 +184,6 @@ public class Robot
 			objectPertinenceRange = objectPertinenceRangeOverride;
 			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
 		}
-
-		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 	}
 
 	private void Reset( DisconnectionReason reason = DisconnectionReason.None )
@@ -197,6 +206,11 @@ public class Robot
 		carryingObjectID = -1;
 		headTrackingObjectID = -1;
 		lastHeadTrackingObjectID = -1;
+		targetLockedObject = null;
+		searching = false;
+		lastActionRequested = ActionCompleted.UNKNOWN;
+		lastAngle_rad = float.MaxValue;
+		lastLiftHeight_mm = float.MaxValue;
 	}
 
 	public void ClearObservedObjects()
@@ -284,7 +298,7 @@ public class Robot
 		}
 	}
 
-	public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
+	public void DriveWheels( float leftWheelSpeedMmps, float rightWheelSpeedMmps )
 	{
 		//Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
 		U2G.DriveWheels message = new U2G.DriveWheels ();
@@ -305,7 +319,7 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
-	public void CancelAction(int actionType=-1)
+	public void CancelAction( int actionType = -1 )
 	{
 		U2G.CancelAction message = new U2G.CancelAction();
 		message.robotID = ID;
@@ -315,11 +329,30 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message { CancelAction = message } );
 	}
 
+	private float setHeadAngleTime = 0f;
 	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
 	{
-		//if( isBusy ) return;
+		if( headTrackingObject == -1 ) // if not head tracking
+		{
+			if( headAngle_rad == angle_rad )
+			{
+				lastAngle_rad = float.MaxValue;
+				return;
+			}
+			else if( lastAngle_rad == angle_rad )
+			{
+				return;
+			}
+		}
+		else if( Time.time < setHeadAngleTime + CozmoUtil.LOCAL_BUSY_TIME ) // compensate for time for robot to know to not be head tracking
+		{
+			return;
+		}
 
-		//Debug.Log( "Set Head Angle " + angle_rad );
+		lastAngle_rad = angle_rad;
+		setHeadAngleTime = Time.time;
+
+		Debug.Log( "Set Head Angle " + angle_rad );
 
 		U2G.SetHeadAngle message = new U2G.SetHeadAngle();
 		message.angle_rad = angle_rad;
@@ -331,7 +364,15 @@ public class Robot
 	
 	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
 	{
-		if( /*isBusy ||*/ lastHeadTrackingObjectID == observedObject || headTrackingObjectID == observedObject ) return;
+		if( headTrackingObjectID == observedObject )
+		{
+			lastHeadTrackingObjectID = -1;
+			return;
+		}
+		else if( lastHeadTrackingObjectID == observedObject )
+		{
+			return;
+		}
 
 		lastHeadTrackingObjectID = observedObject;
 
@@ -362,12 +403,10 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message { FaceObject = message } );
 	}
 
-	public void PickAndPlaceObject( int index, bool usePreDockPose = true, bool useManualSpeed = false )
+	public void PickAndPlaceObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		//TrackHeadToObject( selectedObjects[index] );
-
 		U2G.PickAndPlaceObject message = new U2G.PickAndPlaceObject();
-		message.objectID = selectedObjects[index];
+		message.objectID = selectedObject;
 		message.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
@@ -378,8 +417,36 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public void GotoPose( float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false )
+	{
+		U2G.GotoPose message = new U2G.GotoPose();
+		message.level = System.Convert.ToByte( level );
+		message.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		message.x_mm = x_mm;
+		message.y_mm = y_mm;
+		message.rad = rad;
+
+		Debug.Log( "Go to Pose: x: " + message.x_mm + " y: " + message.y_mm + " useManualSpeed: " + message.useManualSpeed + " level: " + message.level );
+		
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ GotoPose = message } );
+		
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
 	public void SetLiftHeight( float height )
 	{
+		if( liftHeight_mm == height )
+		{
+			lastLiftHeight_mm  = float.MaxValue;
+			return;
+		}
+		else if( lastLiftHeight_mm == height )
+		{
+			return;
+		}
+		
+		lastLiftHeight_mm = height;
+
 		//Debug.Log( "Set Lift Height " + height );
 		
 		U2G.SetLiftHeight message = new U2G.SetLiftHeight();
@@ -401,9 +468,10 @@ public class Robot
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetRobotCarryingObject = message } );
 		selectedObjects.Clear();
+		targetLockedObject = null;
 		
 		SetLiftHeight( 0f );
-		SetHeadAngle( defaultHeadAngle );
+		SetHeadAngle();
 	}
 	
 	public void ClearAllBlocks()
@@ -416,7 +484,7 @@ public class Robot
 		Reset();
 		
 		SetLiftHeight( 0f );
-		SetHeadAngle( defaultHeadAngle );
+		SetHeadAngle();
 	}
 	
 	public void VisionWhileMoving( bool enable )

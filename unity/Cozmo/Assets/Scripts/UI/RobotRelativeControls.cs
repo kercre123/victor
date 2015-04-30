@@ -39,7 +39,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float gyroSleepTimer = 0f;
 	float maxTurnFactor = 1f;
 	bool reverseLikeACar = true;
-	bool targetLockSelectedObject = true;
+	//bool targetLockSelectedObject = true;
 	Robot robot = null;
 	bool driveForwardOnlyMode = false;
 	bool driveReverseOnlyMode = false;
@@ -71,7 +71,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 		reverseLikeACar = PlayerPrefs.GetInt("ReverseLikeACar", OptionsScreen.REVERSE_LIKE_A_CAR) == 1;
 		//Debug.Log(gameObject.name + " OnEnable reverseLikeACar("+reverseLikeACar+")");
-		targetLockSelectedObject = PlayerPrefs.GetInt("VisionSchemeIndex", 0) == 2;
+		//targetLockSelectedObject = PlayerPrefs.GetInt("VisionSchemeIndex", 0) == 0;
 		targetLock = null;
 		lastTargetLock = null;
 
@@ -121,7 +121,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(lastTargetLock == null && targetLock != null && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
 
 		//if we are unlocked this frame, let's reset our head angle back to sane value
-		if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();
+		//if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();
 
 		bool newLock = lastTargetLock != targetLock;
 
@@ -147,9 +147,9 @@ public class RobotRelativeControls : MonoBehaviour {
 			CheckGyroTurning();
 			CheckDebugHorizontalAxesTurning();
 
-			if(verticalStick != null && verticalStick.Vertical != 0f) {
-				if(headAngleStick == null || !headAngleStick.IsPressed) {
-					if(robot.selectedObjects.Count == 0 && !robot.isBusy && Mathf.Abs(robot.headAngle_rad) > 0.05f ) {
+			if(inputs.y != 0) {
+				if(headAngleStick == null || !robot.searching) {
+					if(robot.selectedObjects.Count == 0 && !robot.isBusy) {
 						robot.SetHeadAngle();
 					}
 				}
@@ -293,7 +293,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	public bool debugTargetLock = false;
 	ObservedObject RefreshTargetLock() {
 		targetLock = null;
-		if(!targetLockSelectedObject) return null;
+		//if(!targetLockSelectedObject) return null;
 		if(robot.selectedObjects.Count == 0) return null;
 
 		targetLock = robot.targetLockedObject;

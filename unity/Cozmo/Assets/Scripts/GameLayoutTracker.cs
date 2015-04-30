@@ -15,7 +15,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	public enum LayoutTrackerPhase {
 		DISABLED,
-		PREVIEW,
+		INVENTORY,
 		BUILDING,
 		COMPLETE
 	}
@@ -30,6 +30,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject layoutInstructionsPanel = null;
 	[SerializeField] Camera layoutInstructionsCamera = null;
 	[SerializeField] GameObject ghostPrefab = null;
+
+	[SerializeField] GameObject block2dPrefab = null;
+	[SerializeField] RectTransform block2dAnchor = null;
+
 	[SerializeField] Text instructionsTitle;
 	[SerializeField] Text instructionsProgress;
 	[SerializeField] Button buttonStartPlaying;
@@ -64,8 +68,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	bool hidden = false;
 
+	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
+
 	void OnEnable () {
-		Phase = LayoutTrackerPhase.PREVIEW;
+		Phase = LayoutTrackerPhase.INVENTORY;
 
 		if(!blocksInitialized) {
 			for(int i=0; i<layouts.Count; i++) {
@@ -103,6 +109,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			return;
 		}
 
+		SetUpInventory();
+
 		currentLayout.previewCamera.gameObject.SetActive(true);
 		string fullName = currentGameName + " #" + currentLevelNumber;
 		previewTitle.text = fullName;
@@ -127,7 +135,43 @@ public class GameLayoutTracker : MonoBehaviour {
 		hidden = false;
 	}
 
+	void SetUpInventory() {
+	
+		blocks2d.Clear();
+		
+		int count = currentLayout.blocks.Count;
+		for(int i=0; i<count; i++) {
+			BuildInstructionsCube block = currentLayout.blocks[i];
+			GameObject block2dObj = (GameObject)GameObject.Instantiate(block2dPrefab);
+			RectTransform blockTrans = block2dObj.transform as RectTransform;
+			blockTrans.SetParent(block2dAnchor, false);
+			Vector2 pos = blockTrans.anchoredPosition;
+			float w = blockTrans.sizeDelta.x * 1.5f;
+			pos.x = (-w * count * 0.5f) + w * (i + 0.5f);
+			
+			blockTrans.anchoredPosition = pos;
+			LayoutBlock2d block2d = block2dObj.GetComponent<LayoutBlock2d>();
+
+			//count any duplicates so this one knows when to be validated
+			int num = 1;
+			foreach(LayoutBlock2d prior in blocks2d) {
+				if(prior.Block.objectFamily != block.objectFamily) continue;
+				if(prior.Block.objectFamily != 3 && prior.Block.objectType != block.objectType) continue;
+				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType) continue;
+				num++;
+			}
+			
+			block2d.Initialize(block, num);
+			
+			blocks2d.Add(block2d);
+		}
+	}
+
 	void Update () {
+
+		if(Input.GetKeyDown(KeyCode.V)) {
+			ValidateBlocks();
+		}
 
 		if(validCount == currentLayout.blocks.Count) {
 			if(lastValidCount != currentLayout.blocks.Count) {
@@ -175,7 +219,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
-		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.PREVIEW);
+		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.INVENTORY);
 
 		switch(Phase) {
 			case LayoutTrackerPhase.DISABLED:
@@ -185,12 +229,18 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutInstructionsCamera.gameObject.SetActive(false);
 				break;
 
-			case LayoutTrackerPhase.PREVIEW:
+			case LayoutTrackerPhase.INVENTORY:
 				ShowAllBlocks();
 				layoutInstructionsPanel.SetActive(false);
 				layoutPreviewPanel.SetActive(!hidden);
 				hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+
+				for(int i=0;i<blocks2d.Count;i++) {
+					int known = GetKnownObjectCountForBlock(blocks2d[i].Block);
+					blocks2d[i].Validate(known >= blocks2d[i].Dupe);
+				}
+
 				break;
 
 			case LayoutTrackerPhase.BUILDING:
@@ -315,6 +365,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
+	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 	string ValidateBlocks() {
 		string error = "";
 		validCount = 0;
@@ -334,7 +385,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		GameLayout layout = currentLayout;
 		if(layout == null) return error;
 
-		List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
+		validated.Clear();
 
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
@@ -378,10 +429,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				if(layout.blocks.Find( x => x.AssignedObjectID == newObject) != null) continue;
 
 				if(validated.Count == 0) {
-					validated.Add(block);
-					block.AssignedObjectID = newObject;
-					block.Validated = true;
-					block.Highlighted = false;
+					ValidateBlock(layoutBlockIndex, newObject);
 					if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because first block placed on ground.");
 				}
 				//if this ideal block needs to get stacked on one we already know about...
@@ -394,10 +442,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					bool valid = dist < distanceFudge && Mathf.Abs(1f - real.z) < coplanarFudge;
 
 					if(valid) {
-						validated.Add(block);
-						block.AssignedObjectID = newObject;
-						block.Validated = true;
-						block.Highlighted = false;
+						ValidateBlock(layoutBlockIndex, newObject);
 						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
 					}
 					else {
@@ -453,10 +498,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					}
 
 					if(valid) {
-						validated.Add(block);
-						block.AssignedObjectID = newObject;
-						block.Validated = true;
-						block.Highlighted = false;
+						ValidateBlock(layoutBlockIndex, newObject);
 						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
 					}
 				}
@@ -468,6 +510,14 @@ public class GameLayoutTracker : MonoBehaviour {
 		validCount = validated.Count;
 
 		return error;
+	}
+
+	void ValidateBlock(int layoutBlockIndex, int newObject) {
+		BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
+		validated.Add(block);
+		block.AssignedObjectID = newObject;
+		block.Validated = true;
+		block.Highlighted = false;
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
@@ -504,6 +554,22 @@ public class GameLayoutTracker : MonoBehaviour {
 		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
 	}
 
+	int GetKnownObjectCountForBlock(BuildInstructionsCube block) {
+		if(robot == null) return 0;
+
+		int count = 0;
+
+		for(int i=0;i<robot.knownObjects.Count;i++) {
+			ObservedObject obj = robot.knownObjects[i];
+			if(obj.Family != block.objectFamily) continue;
+			if(obj.Family != 3 && obj.ObjectType != block.objectType) continue;
+			if(obj.Family == 3 && obj.activeBlockType != block.activeBlockType) continue;
+			count++;
+		}
+
+		return count;
+	}
+
 	public void ValidateBuild() {
 		Validated = true;
 		Phase = LayoutTrackerPhase.DISABLED;
@@ -512,6 +578,28 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void EndPreview() {
 		Phase = LayoutTrackerPhase.BUILDING;
 		ValidateBlocks();
+	}
+
+	public Vector3 GetStartingPositionFromLayout() {
+		if(currentLayout == null) return Vector3.zero;
+		if(currentLayout.startPositionMarker == null) return Vector3.zero;
+	
+		Vector3 pos = currentLayout.startPositionMarker.position;
+		float forward = pos.z;
+		float up = pos.y;
+		pos.y = forward;
+		pos.z = up;
+
+		return pos;
+	}
+
+	public float GetStartingAngleFromLayout() {
+		if(currentLayout == null) return 0f;
+		if(currentLayout.startPositionMarker == null) return 0f;
+		
+		float angle = currentLayout.startPositionMarker.eulerAngles.y * Mathf.Deg2Rad;
+
+		return angle;
 	}
 
 }
