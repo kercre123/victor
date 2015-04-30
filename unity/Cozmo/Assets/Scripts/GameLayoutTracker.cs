@@ -593,6 +593,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(currentLayout == null) return Vector3.zero;
 		if(currentLayout.startPositionMarker == null) return Vector3.zero;
 	
+		//ObservedObject firstObj = null;
+		//ObservedObject secondObj = null;
+		//Vector3 layoutRight = currentLayout.blocks[1].AssignedObjectID
+
+
 		Vector3 pos = currentLayout.startPositionMarker.position;
 		float forward = pos.z;
 		float up = pos.y;
