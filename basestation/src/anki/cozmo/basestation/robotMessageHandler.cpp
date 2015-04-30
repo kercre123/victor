@@ -571,6 +571,14 @@ namespace Anki {
 
       return RESULT_OK;
     }
+    
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageSyncTimeAck const& msg)
+    {
+      PRINT_INFO("SyncTime acknowledged");
+      robot->SetSyncTimeAcknowledged(true);
+
+      return RESULT_OK;
+    }
 
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockIDFlashStarted const& msg)
     {
