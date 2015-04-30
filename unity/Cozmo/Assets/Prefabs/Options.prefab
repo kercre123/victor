@@ -1723,7 +1723,6 @@ MonoBehaviour:
   - MARKERS_SEEN
   - KNOWN
   - KNOWN IN RANGE
-  instance: {fileID: 0}
 --- !u!114 &11413646
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4516,7 +4515,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 14
+  m_SortingOrder: 20
 --- !u!224 &22412372
 RectTransform:
   m_ObjectHideFlags: 1
