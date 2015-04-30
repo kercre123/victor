@@ -1,5 +1,5 @@
 #include "motors.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"

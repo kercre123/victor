@@ -28,7 +28,6 @@ namespace HeadController {
       Radians currentAngle_ = 0.f;
       Radians desiredAngle_ = 0.f;
       f32 currDesiredAngle_ = 0.f;
-      f32 currDesiredRadVel_ = 0.f;
       f32 angleError_ = 0.f;
       f32 angleErrorSum_ = 0.f;
       f32 prevAngleError_ = 0.f;      
@@ -46,7 +45,7 @@ namespace HeadController {
       const f32 BASE_POWER  = 0.f;
 #else
       f32 Kp_ = 8.f;  // proportional control constant
-      f32 Kd_ = 2000.f;  // derivative control constant
+      f32 Kd_ = 100.f;  // derivative control constant
       f32 Ki_ = 0.2f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
       
@@ -318,13 +317,13 @@ namespace HeadController {
       f32 startRadSpeed = radSpeed_;
       f32 startRad = currentAngle_.ToFloat();
       if (!inPosition_) {
-        startRadSpeed = currDesiredRadVel_;
-        startRad = currDesiredAngle_;
+        vpg_.Step(startRadSpeed, startRad);
       } else {
         startRadSpeed = 0;
         angleErrorSum_ = 0.f;
       }
       
+      lastInPositionTime_ms_ = 0;
       inPosition_ = false;
       
       if (FLT_NEAR(angleError_,0.f)) {
@@ -394,7 +393,8 @@ namespace HeadController {
       if(not inPosition_) {
 
         // Get the current desired head angle
-        vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
+        f32 currDesiredRadVel;
+        vpg_.Step(currDesiredRadVel, currDesiredAngle_);
         
         // Compute current angle error
         angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
@@ -416,7 +416,7 @@ namespace HeadController {
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)) {
+        if(((ABS(angleError_) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_))) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();

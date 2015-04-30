@@ -10,6 +10,7 @@ set(PHYSICS_PLUGIN_DIR ${SIMULATOR_DIR}/plugins/physics/cozmo_physics)
 
 set(ROBOT_SRC_DIR ${PROJECT_SOURCE_DIR}/robot/supervisor/src)
 set(ROBOT_SIM_HAL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/robot/sim_hal)
+set(ROBOT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/robot/include)
 
 file(GLOB COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/*.cpp")
 list(REMOVE_ITEM COZMO_ROBOT_SUPERVISOR_SRC "${ROBOT_SRC_DIR}/offboardVisionSystem.cpp")
@@ -22,6 +23,7 @@ file(GLOB COZMO_SIMULATOR_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/simulato
 
 include_directories( 
   ${ROBOT_SRC_DIR}
+  ${ROBOT_INCLUDE_DIR}
   ${COZMO_INCLUDE_DIR}
   ${COZMO_BASESTATION_INCLUDE_DIR}
   ${PHYSICS_PLUGIN_DIR}

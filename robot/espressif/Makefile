@@ -12,7 +12,7 @@ GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106
 ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
 FW_TOOL:= $(CWD)/../../../coretech-external/espressif/other/esptool/esptool
 SDK:= ../../../coretech-external/espressif/iot_sdk
-PORT:=com11
+PORT:=com8
 BAUD:=230400
 
 XTLIB:=$(SDK)/lib
@@ -55,6 +55,9 @@ $(FW_FILE_1): $(TARGET_OUT)
 $(FW_FILE_2): $(TARGET_OUT)
 	@echo "FW $@"
 	$(FW_TOOL) -eo $(TARGET_OUT) -es .irom0.text $@ -ec
+
+vm : $(SRCS)
+	ssh l "cd Documents/GitHub/products-cozmo/robot/espressif && make build"
 
 build : $(FW_FILE_1) $(FW_FILE_2)
 

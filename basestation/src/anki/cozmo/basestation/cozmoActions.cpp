@@ -146,6 +146,10 @@ namespace Anki {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed calling execute path.\n");
           result = ActionResult::FAILURE_ABORT;
         }
+        else if (p.GetNumSegments() == 0) {
+          PRINT_NAMED_INFO("DriveToPoseAction.Init", "Faking startedTraversingPath because path is empty.");
+          _startedTraversingPath = true;
+        }
       }
       
       return result;
@@ -365,6 +369,12 @@ namespace Anki {
           }
           else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
             result = ActionResult::FAILURE_ABORT;
+          }
+          else if(p.GetNumSegments() == 0) {
+            PRINT_NAMED_WARNING("DriveToObjectAction.InitHelper.EmptyPath",
+                             "Empty path. If start pose == end pose, alreadyAtGoal should have been set");
+            _alreadyAtGoal = true;
+            result = ActionResult::SUCCESS;
           }
           else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 6.f) != RESULT_OK) {
             result = ActionResult::FAILURE_ABORT;
@@ -626,8 +636,20 @@ namespace Anki {
       //  rotates around the neck.
       const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
       const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      //const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      //_compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+      // TODO: Just commanding fixed head angle depending on height of object.
+      //       Verify this is ok with the wide angle lens. If not, dynamically compute
+      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
+      //       of the image.
+      Radians headAngle = DEG_TO_RAD_F32(-15);
+      if (heightDiff > 0) {
+        headAngle = DEG_TO_RAD_F32(17);
+      }
       _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+
       
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);

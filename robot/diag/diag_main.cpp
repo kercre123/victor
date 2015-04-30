@@ -2,7 +2,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 #include "diag.h"
 
 #define U_ID_0 (*(uint32_t*) 0x1FFF7A10)

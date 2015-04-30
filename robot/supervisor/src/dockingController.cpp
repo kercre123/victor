@@ -39,12 +39,11 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        f32 DOCK_PATH_START_RADIUS_MM = 25;
-        f32 DOCK_PATH_END_RADIUS_MM = 40;
+        f32 DOCK_PATH_START_RADIUS_MM = WHEEL_DIST_HALF_MM;
         
         // Set of radii to try when generating Dubins path to marker
         const u8 NUM_END_RADII = 3;
-        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, 25};
+        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, WHEEL_DIST_HALF_MM};
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
@@ -135,6 +134,9 @@ namespace Anki {
         
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
         const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 17.f;
+
+        // Whether or not to raise lift in prep for high docking
+        bool doHighDockLiftTracking_ = false;
         
         // Indicates when we're only tracking a marker but not trying to dock to it
         bool trackingOnly_ = false;
@@ -266,6 +268,49 @@ namespace Anki {
         
         return CLIP(liftH, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
       }
+
+      
+      // If docking to a high block, assumes we're trying to pick it up!
+      // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
+      // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
+      void HighDockLiftUpdate() {
+        if (doHighDockLiftTracking_) {
+          
+          f32 lastCommandedHeight = LiftController::GetDesiredHeight();
+          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK) {
+            // We're already at the high lift position.
+            // No need to repeatedly command it.
+            return;
+          }
+          
+          // Compute desired slope of lift height during approach.
+          const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+          
+          // Compute current estimated distance to marker
+          f32 robotX, robotY;
+          Radians robotAngle;
+          Localization::GetCurrentMatPose(robotX, robotY, robotAngle);
+          
+          f32 diffX = (blockPose_.GetX() - robotX);
+          f32 diffY = (blockPose_.GetY() - robotY);
+          f32 estDistToMarker = sqrtf(diffX * diffX + diffY * diffY);
+
+          
+          if (estDistToMarker < START_LIFT_TRACKING_DIST_MM) {
+            
+            // Compute current desired lift height based on current distance to block.
+            f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
+            
+            // Keep between current desired height and high dock height
+            liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK);
+            
+            // Apply height
+            LiftController::SetDesiredHeight(liftHeight);
+          }
+        }
+
+      }
+      
       
       Result Update()
       {
@@ -406,26 +451,10 @@ namespace Anki {
                 }
 
                 // If docking to a high block, assumes we're trying to pick it up!
-                // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
-                // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
-                if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
-                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  
-                  // Compute desired slope of lift height during approach.
-                  const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
-                  
-                  // Compute current desired lift height based on current distance to block.
-                  f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - dockMsg.x_distErr);
-                  
-                  // Capping to highdock lift height
-                  liftHeight = MIN(liftHeight, LIFT_HEIGHT_HIGHDOCK);
-                  
-                  // Adding a little extra height to gain more "hookage" since we're coming in at an angle.
-                  liftHeight += 2;
-                  
-                  LiftController::SetDesiredHeight(liftHeight);
+                if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
+                  doHighDockLiftTracking_ = true;
                 }
-                
+
               }
               /* Now done on basestation directly
               // Send to basestation for visualization
@@ -482,6 +511,8 @@ namespace Anki {
             break;
           case APPROACH_FOR_DOCK:
           {
+            HighDockLiftUpdate();
+            
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
@@ -796,6 +827,7 @@ namespace Anki {
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
         pastPointOfNoReturn_ = false;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+        doHighDockLiftTracking_ = false;
         mode_ = LOOKING_FOR_BLOCK;
         
         success_ = false;
@@ -838,6 +870,7 @@ namespace Anki {
         pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
         markerOutOfFOV_ = false;
+        doHighDockLiftTracking_ = false;
         success_ = false;
       }
       

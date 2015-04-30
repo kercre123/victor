@@ -200,6 +200,12 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
+        // Send ACK back to basestation
+        Messages::SyncTimeAck stMsg;
+        if(!HAL::RadioSendMessage(SyncTimeAck_ID, &stMsg)) {
+          PRINT("Failed to send sync time ack message.\n");
+        }
+        
       } // ProcessRobotInit()
 
 
