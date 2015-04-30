@@ -272,7 +272,7 @@ namespace Anki
 
         markers.set_size(extractedQuads.get_size());
 
-        printf("quads %d\n", extractedQuads.get_size());
+        //printf("quads %d\n", extractedQuads.get_size());
 
         EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
