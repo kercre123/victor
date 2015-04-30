@@ -56,7 +56,7 @@ public class GoldRushGameActions : GameActions {
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( gameController.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.PRE_GAME )
 			{
 				if( robot.selectedObjects.Count > 0 && buttons.Length > 1 ) buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
@@ -68,7 +68,7 @@ public class GoldRushGameActions : GameActions {
 		}
 		else
 		{
-			if( gameController.state == GameController.GameState.BUILDING )
+			if( gameController.state == GameController.GameState.PRE_GAME )
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
