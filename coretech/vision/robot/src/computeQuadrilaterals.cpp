@@ -151,11 +151,10 @@ namespace Anki
         //EndBenchmark("TraceNextExteriorBoundary");
 
         printf("extractedBoundary.size = %d\n", extractedBoundary.get_size());
+        startComponentIndex = endComponentIndex + 1;
 
         if(extractedBoundary.get_size() == 0)
           continue;
-
-        startComponentIndex = endComponentIndex + 1;
 
         //BeginBenchmark("ExtractLaplacianPeaks");
         // 2. Compute the Laplacian peaks
