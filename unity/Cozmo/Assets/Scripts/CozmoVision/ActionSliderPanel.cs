@@ -87,8 +87,7 @@ public class ActionSliderPanel : ActionPanel
 		
 		robot = RobotEngineManager.instance.current;
 
-		if(!actionSlider.Pressed)
-		{
+		if(!actionSlider.Pressed) {
 			if(!upLastFrame) actionSlider.currentAction.OnRelease();
 
 			upLastFrame = true;
