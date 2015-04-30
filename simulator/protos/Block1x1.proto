@@ -171,6 +171,7 @@ Supervisor {
             Shape {
       	      appearance Appearance {
                 material Material {
+                  diffuseColor 0.3 0.3 0.3
                 }
               }
               geometry Box {
