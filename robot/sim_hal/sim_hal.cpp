@@ -13,7 +13,7 @@
 #include "messages.h"
 #include "wheelController.h"
 
-#include "sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/sim_overlayDisplay.h"
 #include "BlockMessages.h"
 
 // Webots Includes
@@ -125,7 +125,7 @@ namespace Anki {
       HAL::IDCard idCard_;
       
       // Lights
-      webots::LED* leds_[NUM_LEDS] = {0};
+      webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -141,6 +141,15 @@ namespace Anki {
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
       }
+
+      // Approximate open-loop conversion of lift power to angular lift speed
+      float LiftPowerToAngSpeed(float power)
+      {
+        // Inverse of speed-power formula in LiftController
+        float rad_per_s = power / 0.05f;
+        return rad_per_s;
+      }
+
       
       void MotorUpdate()
       {
@@ -168,12 +177,7 @@ namespace Anki {
       {
         headMotor_->setVelocity(rad_per_sec);
       }
-      
-      
-      void SetLiftAngularVelocity(const f32 rad_per_sec)
-      {
-        liftMotor_->setVelocity(rad_per_sec);
-      }
+
       
       Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
       {
@@ -398,6 +402,7 @@ namespace Anki {
       }
       
       // Lights
+      /* Old eye LED segments
       leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
       leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
       leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
@@ -407,6 +412,21 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
       leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      */
+      
+      /*
+      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
+      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
+      leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
+       */
+      
+      leds_[LED_BACKPACK_LEFT]        = webotRobot_.getLED("backpackLED0");
+      leds_[LED_BACKPACK_INNER_LEFT]  = webotRobot_.getLED("backpackLED1");
+      leds_[LED_BACKPACK_INNER_RIGHT] = webotRobot_.getLED("backpackLED2");
+      leds_[LED_BACKPACK_RIGHT]       = webotRobot_.getLED("backpackLED3");
+      leds_[LED_BACKPACK_MIDDLE]      = leds_[LED_BACKPACK_INNER_RIGHT];
       
       
       isInitialized = true;
@@ -493,8 +513,7 @@ namespace Anki {
           rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
-          // TODO: Assuming linear relationship, but it's not!
-          SetLiftAngularVelocity(power * MAX_LIFT_SPEED);
+          liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
         case MOTOR_GRIP:
@@ -938,13 +957,14 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color,
+    Result HAL::SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                               const u32* onPeriod_ms, const u32* offPeriod_ms,
                               const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
     {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-        m.color[i] = color[i];
+        m.onColor[i] = onColor[i];
+        m.offColor[i] = offColor[i];
         m.onPeriod_ms[i] = onPeriod_ms[i];
         m.offPeriod_ms[i] = offPeriod_ms[i];
         m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);

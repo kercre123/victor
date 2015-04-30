@@ -20,6 +20,7 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "proxSensors.h"
+#include "backpackLightController.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -171,6 +172,8 @@ namespace Anki {
         robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
+        robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
+        robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -197,6 +200,12 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
+        // Send ACK back to basestation
+        Messages::SyncTimeAck stMsg;
+        if(!HAL::RadioSendMessage(SyncTimeAck_ID, &stMsg)) {
+          PRINT("Failed to send sync time ack message.\n");
+        }
+        
       } // ProcessRobotInit()
 
 
@@ -374,12 +383,12 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
-        LiftController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
-        HeadController::SetSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
 
@@ -465,6 +474,7 @@ namespace Anki {
       }
 
       void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
+        /*
         u32 lColor = msg.eye_left_color;
         HAL::SetLED(LED_LEFT_EYE_TOP, lColor);
         HAL::SetLED(LED_LEFT_EYE_RIGHT, lColor);
@@ -476,6 +486,10 @@ namespace Anki {
         HAL::SetLED(LED_RIGHT_EYE_RIGHT, rColor);
         HAL::SetLED(LED_RIGHT_EYE_BOTTOM, rColor);
         HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
+         */
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          HAL::SetLED((LEDId)i, msg.color>>8);
+        }
       }
 
       void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
@@ -484,11 +498,11 @@ namespace Anki {
       }
       
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
-        HeadController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+        HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
-        LiftController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
+        LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
@@ -854,6 +868,15 @@ namespace Anki {
         PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
       }
 
+      void ProcessSetBackpackLightsMessage(const SetBackpackLights& msg)
+      {
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          BackpackLightController::SetParams((LEDId)i, msg.onColor[i], msg.offColor[i],
+                                             msg.onPeriod_ms[i], msg.offPeriod_ms[i],
+                                             msg.transitionOnPeriod_ms[i], msg.transitionOffPeriod_ms[i]);
+        }
+      }
+      
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
@@ -869,7 +892,7 @@ namespace Anki {
 
       void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.color, msg.onPeriod_ms, msg.offPeriod_ms,
+        HAL::SetBlockLight(msg.blockID, msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 

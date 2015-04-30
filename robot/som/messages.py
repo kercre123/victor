@@ -117,7 +117,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 74
+    ID = 75
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -169,7 +169,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 63
+    ID = 64
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -185,6 +185,7 @@ class RobotState(MessageBase):
         "f32", # Lift Height
         "f32", # Raw Gyro Z
         "f32", # Raw accel Y
+        "u32",  # Status, see RobotStatusFlag
         "u16", # last path ID
         "u8",  # Prox left
         "u8",  # Prox forward
@@ -192,7 +193,6 @@ class RobotState(MessageBase):
         "s8",  # Current path segment, -1 if not traversing a path
         "u8",  # Num free segment slots
         "u8",  # Battery voltage x10
-        "u8",  # Status, see RobotStatusFlag
     ]
 
     class Pose(object):
@@ -246,7 +246,7 @@ class RobotState(MessageBase):
         return struct.unpack('I', buffer[1:5])(0)
 
 class PrintText(MessageBase):
-    ID = 73
+    ID = 74
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
@@ -491,7 +491,7 @@ class StartTestMode(MessageBase):
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
-    ID = 61
+    ID = 62
     FORMAT = []
 
     def _getMembers(self):
@@ -507,7 +507,7 @@ class FlashBlockIDs(MessageBase):
 class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
-    ID = 62
+    ID = 63
     FORMAT = [("%dI" % NUM_LIGHTS), # color
               "u8",  # blockID
              ]

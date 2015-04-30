@@ -4,109 +4,39 @@
 #include "osapi.h"
 #include "gpio.h"
 #include "os_type.h"
-#include "user_config.h"
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
 
+/// USER_TASK_PRIO_0 is the lowest (idle) task priority
+#define userTaskPrio USER_TASK_PRIO_0
 
-void ICACHE_FLASH_ATTR client_receiveCB(uint8* data, uint16 len)
+/// The depth of the user idle task
+#define    userTaskQueueLen    4
+/// Queue for user idle task
+os_event_t userTaskQueue[userTaskQueueLen];
+
+/** User "idle" task
+ * Called by OS with lowest priority.
+ * Always requeues itself.
+ */
+LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
 {
-  uart_tx_one_char(0xbe);
-  uart_tx_one_char(0xef);
-  uart_tx_one_char((len & 0xff));
-  uart_tx_one_char(((len >> 8) & 0xff));
-  uart_tx_one_char(0x00); // Length byte 3
-  uart_tx_one_char(0x00); // Length byte 4
-  uart0_tx_buffer(data, len);
-}
-
-inline void uart0_recvCB()
-{
-  static uint32 serRxLen = 0;
-  static UDPPacket* outPkt = NULL;
-  static uint8 phase = 0;
-  uint8 byte = 0;
-  uint8 err;
-
-  while (READ_PERI_REG(UART_STATUS(0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
+  static const uint32 INTERVAL = 100000;
+  static uint32 counter = 0;
+  if (counter++ > INTERVAL)
   {
-    byte = READ_PERI_REG(UART_FIFO(0)) & 0xFF;
-
-    switch (phase)
-    {
-      case 0: // Header byte 1
-      {
-        if (byte == 0xbe) phase++;
-        break;
-      }
-      case 1: // Header byte 2
-      {
-        if (byte == 0xef) phase++;
-        else phase = 0;
-        break;
-      }
-      case 2: // Packet length, 4 bytes
-      {
-        serRxLen  = (byte <<  0);
-        phase++;
-        break;
-      }
-      case 3:
-      {
-        serRxLen |= (byte <<  8);
-        phase++;
-        break;
-      }
-      case 4:
-      {
-        serRxLen |= (byte << 16);
-        phase++;
-        break;
-      }
-      case 5:
-      {
-        serRxLen |= (byte << 24);
-        if (serRxLen < PKT_BUFFER_SIZE) phase++;
-        else phase = 0; // Got an invalid length, have to throw out the packet
-        break;
-      }
-      case 6: // Start of payload
-      {
-        outPkt = clientGetBuffer();
-        if (outPkt == NULL)
-        {
-          phase = 0;
-          break;
-        }
-        else
-        {
-          outPkt->len = 0;
-          phase++;
-        }
-        // No break, explicit fall through to next case
-      }
-      case 7:
-      {
-        outPkt->data[outPkt->len++] = byte;
-        if (outPkt->len >= serRxLen)
-        {
-          clientQueuePacket(outPkt);
-          phase = 0;
-        }
-        break;
-      }
-      default:
-      {
-        os_printf("UART phase default, SHOULD NEVER HAPPEN!\r\n");
-        phase = 0;
-      }
-    }
+    uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
+    counter = 0;
   }
+  system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
-
-//Init function
+/** User initialization function
+ * This function is responsible for setting all the wireless parameters and
+ * Setting up any user application code to run on the espressif.
+ * It is called automatically from the os main function.
+ */
 void ICACHE_FLASH_ATTR
 user_init()
 {
@@ -116,18 +46,22 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_init(BIT_RATE_3000000, BIT_RATE_74880);
+    uart_init(BIT_RATE_3686400, BIT_RATE_74880);
+
+    os_printf("Espressif booting up...\r\n");
 
     // Create config for Wifi AP
     struct softap_config ap_config;
 
-    os_strcpy(ap_config.ssid, "AnkiEspressif");
+    os_strcpy(ap_config.ssid, "AnkiEspressif1");
 
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
-    ap_config.channel = 7;
+    ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
+    ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+    ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
@@ -147,5 +81,16 @@ user_init()
     wifi_softap_dhcps_start();
 
     // Setup Basestation client
-    clientInit(client_receiveCB);
+    clientInit();
+
+    // Enable UART0 RX interrupt
+    // Only after clientInit
+    uart_rx_intr_enable(UART0);
+
+    // Setup user task
+    system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
+    //system_os_post(userTaskPrio, 0, 0); // Post user task
+
+    os_printf("user initalization complete\r\n");
+
 }

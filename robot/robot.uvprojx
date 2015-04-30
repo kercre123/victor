@@ -363,7 +363,7 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,STM32F40_41xxx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,OFFBOARD_VISION</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,STM32F40_41xxx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,OFFBOARD_VISION,COZMO_ROBOT_V32</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -782,6 +782,21 @@
               <FileName>offboardVisionSystem.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.h</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1856,6 +1871,21 @@
               <FileName>offboardVisionSystem.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.h</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Mark Pauley. All rights reserved.
 //
 
-#import "BLECentralServiceDescription.h"
+#import "BLEManager/Central/BLECentralServiceDescription.h"
 
 @implementation BLECentralServiceDescription
 

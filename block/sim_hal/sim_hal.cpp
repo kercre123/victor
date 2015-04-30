@@ -12,7 +12,7 @@
 #include "messages.h"
 #include "wheelController.h"
 
-#include "sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/sim_overlayDisplay.h"
 #include "BlockMessages.h"
 
 // Webots Includes

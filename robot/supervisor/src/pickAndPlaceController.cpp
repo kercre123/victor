@@ -45,9 +45,6 @@ namespace Anki {
         
         const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
         
-        const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
-        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(17);
-        
         // Distance at which robot should start driving blind
         // along last generated docking path during DA_PICKUP_HIGH.
         const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 30;
@@ -175,39 +172,33 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
+            LiftController::SetMaxSpeedAndAccel(5, 10);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = 0;
                 break;
               case DA_RAMP_DESCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
                 dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
                 break;
               case DA_CROSS_BRIDGE:
-                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
                 dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
                 break;
               default:
@@ -415,7 +406,7 @@ namespace Anki {
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(-20));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
                   break;
                 } // LOW
                 default:

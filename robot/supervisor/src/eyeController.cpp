@@ -108,6 +108,7 @@ namespace EyeController {
   {
     _eyeAnimMode = NONE;
     
+    /*
     _leftEye.segments[EYE_SEGMENT_TOP]    = LED_LEFT_EYE_TOP;
     _leftEye.segments[EYE_SEGMENT_LEFT]   = LED_LEFT_EYE_LEFT;
     _leftEye.segments[EYE_SEGMENT_RIGHT]  = LED_LEFT_EYE_RIGHT;
@@ -117,6 +118,7 @@ namespace EyeController {
     _rightEye.segments[EYE_SEGMENT_LEFT]   = LED_RIGHT_EYE_LEFT;
     _rightEye.segments[EYE_SEGMENT_RIGHT]  = LED_RIGHT_EYE_RIGHT;
     _rightEye.segments[EYE_SEGMENT_BOTTOM] = LED_RIGHT_EYE_BOTTOM;
+    */
     
     SetEyeColor(LED_OFF);
     
@@ -124,7 +126,7 @@ namespace EyeController {
     
     _enable = true;
     
-    return RESULT_OK;
+    return RESULT_FAIL; // Deprecated, so fail if called for now (needs updating for OLED display)
   } // Init()
 
   

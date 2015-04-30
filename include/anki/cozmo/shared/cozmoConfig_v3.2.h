@@ -35,17 +35,18 @@ namespace Anki {
     // flies off of the robot and comes back! So for now, we just don't
     // drive the lift down that far. We also skip calibration in sim.
 
-    // Cozmo v3.2, with treads and clutched lift
-    const f32 LIFT_HEIGHT_LOWDOCK  = 23.f;
-    const f32 LIFT_HEIGHT_HIGHDOCK = 77.f;
-    const f32 LIFT_HEIGHT_CARRY    = 95.f;
-    const f32 LIFT_PLACE_HIGH_SLOP = 5.f;
+    // Cozmo v3.2, with clutch-less lift and stronger motor
+    // These are heights of the wrist joint.
+    const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
+    const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
+    const f32 LIFT_HEIGHT_CARRY    = 92.f;
+    const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 13.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 17.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;
 
 
     // The distance to the bridge ground marker that the robot must
@@ -78,7 +79,7 @@ namespace Anki {
 
     // TODO: convert to using these in degree form?
     const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 40.f);
+    const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 34.f);
 
     // Head angle may exceed limits by this amount before
     // it is considered to be out of calibration.

@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Mark Pauley. All rights reserved.
 //
 
-#import "BLEPeripheralConnectionAttempt.h"
+#import "BLEManager/Central/BLEPeripheralConnectionAttempt.h"
 
 @implementation BLEPeripheralConnectionAttempt
 @synthesize numAttempts;

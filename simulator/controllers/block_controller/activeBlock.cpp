@@ -9,6 +9,8 @@
 #include "activeBlock.h"
 #include "BlockMessages.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
+#include "anki/cozmo/robot/ledController.h"
 #include <stdio.h>
 #include <assert.h>
 
@@ -40,7 +42,7 @@ namespace Anki {
         BlockState state_ = NORMAL;
         
         webots::LED* led_[NUM_BLOCK_LEDS];
-        LEDParams ledParams_[NUM_BLOCK_LEDS];
+        LEDParams_t ledParams_[NUM_BLOCK_LEDS];
         
         typedef enum {
           UNKNOWN = -1,
@@ -101,15 +103,32 @@ namespace Anki {
       
       void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
       {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          ledParams_[i].color = msg.color[i];
-          ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
-          ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
-          ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
-          ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
-          
-          ledParams_[i].state = LEDState::LED_ON;
-          ledParams_[i].nextSwitchTime = 0; // force immediate upate
+        // See if the message is actually changing anything about the block's current
+        // state. If not, don't update anything.
+        bool isDifferent = false;
+        for(int i=0; i<NUM_BLOCK_LEDS && !isDifferent; ++i) {
+          isDifferent = (ledParams_[i].onColor  != msg.onColor[i]  ||
+                         ledParams_[i].offColor != msg.offColor[i] ||
+                         ledParams_[i].onPeriod_ms  != msg.onPeriod_ms[i] ||
+                         ledParams_[i].offPeriod_ms != msg.offPeriod_ms[i] ||
+                         ledParams_[i].transitionOffPeriod_ms != msg.transitionOffPeriod_ms[i] ||
+                         ledParams_[i].transitionOnPeriod_ms  != msg.transitionOnPeriod_ms[i]);
+        }
+        
+        if(isDifferent) {
+          for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
+            ledParams_[i].onColor  = msg.onColor[i];
+            ledParams_[i].offColor = msg.offColor[i];
+            ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
+            ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
+            ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+            ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
+            
+            ledParams_[i].nextSwitchTime = 0; // force immediate upate
+            ledParams_[i].state = LEDState_t::LED_STATE_OFF;
+          }
+        } else {
+          printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
       }
       
@@ -283,7 +302,7 @@ namespace Anki {
         led_[index]->set(rgbaColor>>8);
       }
       
-      void SetLED(WhichLEDs whichLEDs, u32 color)
+      void SetLED(WhichBlockLEDs whichLEDs, u32 color)
       {
         static const u8 FIRST_BIT = 0x01;
         u8 shiftedLEDs = static_cast<u8>(whichLEDs);
@@ -300,87 +319,16 @@ namespace Anki {
         SetLED_helper(ledIndexLUT[currentUpAxis_][ledIndex], color);
       }
 
-      // Alpha blending (w/ black) without using floating point:
-      //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
-      inline u32 AlphaBlend(const u32 color, const u8 alpha)
-      {
-        u32 result;
-        
-        const u8* fg = (const u8*)(&color);
-        u8* result_u8 = (u8*)(&result);
-
-        const u32 alpha_u32 = alpha + 1;
-        
-        result_u8[3] = (unsigned char)((alpha_u32 * fg[3]) >> 8);
-        result_u8[2] = (unsigned char)((alpha_u32 * fg[2]) >> 8);
-        result_u8[1] = (unsigned char)((alpha_u32 * fg[1]) >> 8);
-        result_u8[0] = 0xff;
-        
-        return result;
-      }
-      
       
       void ApplyLEDParams(TimeStamp_t currentTime)
       {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          if(currentTime > ledParams_[i].nextSwitchTime) {
-            u32 newColor = 0;
-            
-            switch(ledParams_[i].state)
-            {
-              case LEDState::LED_ON:
-                // Time to start turning off
-                newColor = ledParams_[i].color;
-                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOffPeriod_ms;
-                
-                // Check for the special case that LED is just "on" and if so,
-                // just stay in this state.
-                if(ledParams_[i].offPeriod_ms > 0 ||
-                   ledParams_[i].transitionOffPeriod_ms > 0 ||
-                   ledParams_[i].transitionOnPeriod_ms > 0)
-                {
-                  ledParams_[i].state = LEDState::LED_TURNING_OFF;
-                }
-                break;
-                
-              case LEDState::LED_OFF:
-                // Time to start turning on
-                newColor = 0;
-                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].transitionOnPeriod_ms;
-                ledParams_[i].state = LEDState::LED_TURNING_ON;
-                break;
-                
-              case LEDState::LED_TURNING_ON:
-                // Time to be fully on:
-                newColor = ledParams_[i].color;
-                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].onPeriod_ms;
-                ledParams_[i].state = LEDState::LED_ON;
-                break;
-                
-              case LEDState::LED_TURNING_OFF:
-                // Time to be fully off
-                newColor = 0;
-                ledParams_[i].nextSwitchTime = currentTime + ledParams_[i].offPeriod_ms;
-                ledParams_[i].state = LEDState::LED_OFF;
-                break;
-                
-              default:
-                // Should never get here
-                assert(0);
-            }
-            
+        for(int i=0; i<NUM_BLOCK_LEDS; ++i)
+        {
+          u32 newColor;
+          const bool colorUpdated = GetCurrentLEDcolor(ledParams_[i], currentTime, newColor);
+          if(colorUpdated) {
             SetLED_helper(ledIndexLUT[currentUpAxis_][i], newColor);
-            
-          } else if(ledParams_[i].state == LEDState::LED_TURNING_OFF) {
-            // Compute alpha b/w 0 and 255 w/ no floating point:
-            const u8 alpha = ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOffPeriod_ms;
-            SetLED_helper(ledIndexLUT[currentUpAxis_][i], AlphaBlend(ledParams_[i].color, alpha));
-          } else if(ledParams_[i].state == LEDState::LED_TURNING_ON) {
-            // Compute alpha b/w 0 and 255 w/ no floating point:
-            const u8 alpha = 255 - ((ledParams_[i].nextSwitchTime - currentTime)<<8) / ledParams_[i].transitionOnPeriod_ms;
-            SetLED_helper(ledIndexLUT[currentUpAxis_][i], AlphaBlend(ledParams_[i].color, alpha));
-          } // if(currentTime > nextSwitchTime)
-          
+          }
         } // for each LED
       } // ApplyLEDParams()
       
@@ -390,7 +338,6 @@ namespace Anki {
         }
       }
       
-      
       Result Update() {
         if (block_controller.step(TIMESTEP) != -1) {
           
@@ -398,10 +345,10 @@ namespace Anki {
           // Test: Blink all LEDs in order
           static u32 p=0;
           //static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
-          static WhichLEDs prevIdx = WhichLEDs::TOP_UPPER_LEFT, idx = WhichLEDs::TOP_UPPER_LEFT;
+          static WhichBlockLEDs prevIdx = WhichBlockLEDs::TOP_UPPER_LEFT, idx = WhichBlockLEDs::TOP_UPPER_LEFT;
           if (p++ == 100) {
             SetLED(prevIdx, 0);
-            if (idx == WhichLEDs::TOP_UPPER_LEFT) {
+            if (idx == WhichBlockLEDs::TOP_UPPER_LEFT) {
               // Top upper left is green
               SetLED(idx, 0x00ff0000);
             } else {
@@ -411,9 +358,9 @@ namespace Anki {
             prevIdx = idx;
 
             // Increment LED position index
-            idx = static_cast<WhichLEDs>(static_cast<u8>(idx)<<1);
-            if(idx == WhichLEDs::NONE) {
-              idx = WhichLEDs::TOP_UPPER_LEFT;
+            idx = static_cast<WhichBlockLEDs>(static_cast<u8>(idx)<<1);
+            if(idx == WhichBlockLEDs::NONE) {
+              idx = WhichBlockLEDs::TOP_UPPER_LEFT;
             }
             p = 0;
           }

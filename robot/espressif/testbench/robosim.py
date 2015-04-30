@@ -18,7 +18,7 @@ except:
     sys.stderr.write("Couldn't import python message definitions\r\n")
     sys.exit(1)
 
-CAMERA_FRAME_RATE = 10.0
+CAMERA_FRAME_RATE = 1.0
 RADIO_TICK_INTERVAL = 1.0/CAMERA_FRAME_RATE
 
 
@@ -49,7 +49,10 @@ class BaseStationSimulator(threading.Thread, serRadio.UDPClient):
             if self.receiveCB:
                 self.receiveCB(incoming)
             else:
-                sys.stdout.write("Basestation:\t%02x[%d]\r\n" % (ord(incoming[0]), len(incoming)))
+                try:
+                    sys.stdout.write("Basestation:\t%02d[%d]\r\n" % (ord(incoming[0]), len(incoming)))
+                except:
+                    sys.stderr.write("Basestation:\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
         time.sleep(RADIO_TICK_INTERVAL)
 
     def run(self):
@@ -122,7 +125,10 @@ class RobotSimulator(threading.Thread, serRadio.UARTRadioConn):
             if self.receiveCB:
                 self.receiveCB(incoming)
             else:
-                sys.stdout.write("Robot:\t%s... [%d]\r\n" % (incoming[:8], len(incoming)))
+                try:
+                    sys.stdout.write("Robot:\t\t%02d[%d]\r\n" % (ord(incoming[6]), len(incoming)))
+                except:
+                    sys.stderr.write("Robot:\t\tmalformed packet %s... [%d]\r\n" % (incoming[:8], len(incoming)))
 
     def run(self):
         "Run function for the thread"
