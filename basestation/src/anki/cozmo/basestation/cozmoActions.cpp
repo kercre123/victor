@@ -674,6 +674,11 @@ namespace Anki {
         return compoundResult;
       }
 
+      // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+      if (robot.IsHeadMoving()) {
+        _waitToVerifyTime = -1;
+      }
+
       const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       if(_waitToVerifyTime < 0.f) {
         _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
@@ -1072,6 +1077,11 @@ namespace Anki {
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+        if (robot.IsHeadMoving()) {
+          _waitToVerifyTime = -1;
+        }
         
         // Set the verification time if not already set
         if(_waitToVerifyTime < 0.f) {
