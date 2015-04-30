@@ -87,21 +87,20 @@ public class ActionSliderPanel : ActionPanel
 		
 		robot = RobotEngineManager.instance.current;
 
-		if(!robot.isBusy) {
-			if(!actionSlider.Pressed) {
-				if(!upLastFrame) actionSlider.currentAction.OnRelease();
+		if(!actionSlider.Pressed)
+		{
+			if(!upLastFrame) actionSlider.currentAction.OnRelease();
 
-				upLastFrame = true;
-				downLastFrame = false;
-			}
-			else {
-				if(!downLastFrame) actionSlider.currentAction.OnPress();
+			upLastFrame = true;
+			downLastFrame = false;
+		}
+		else {
+			if(!downLastFrame) actionSlider.currentAction.OnPress();
 
-				downLastFrame = true;
-				upLastFrame = false;
+			downLastFrame = true;
+			upLastFrame = false;
 
-				RefreshSliderMode();
-			}
+			RefreshSliderMode();
 		}
 	}
 
