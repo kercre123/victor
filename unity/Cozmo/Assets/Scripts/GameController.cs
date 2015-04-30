@@ -263,8 +263,9 @@ public class GameController : MonoBehaviour {
 
 			if(stateTimer >= gameStartingInDelay) {
 
-				coundownTimer -= Time.deltaTime;
 				int remaining = Mathf.CeilToInt( Mathf.Clamp(coundownTimer, 0f, countdownToStart) );
+
+				coundownTimer -= Time.deltaTime;
 
 				PlayCountdownAudio(remaining);
 				
