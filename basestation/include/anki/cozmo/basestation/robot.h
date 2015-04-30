@@ -373,6 +373,7 @@ namespace Anki {
       bool IsAnimating() const;
       
       Result SyncTime();
+      void SetSyncTimeAcknowledged(bool ack);
       
       // Turn on/off headlight LEDs
       Result SetHeadlight(u8 intensity);
@@ -500,6 +501,9 @@ namespace Anki {
       // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
       double            _lastStateMsgTime_sec;
       bool              _newStateMsgAvailable;
+      
+      // Whether or not the robot acknowledged a SyncTime message
+      bool              _syncTimeAcknowledged;
       
       // A reference to the MessageHandler that the robot uses for outgoing comms
       IRobotMessageHandler* _msgHandler;
