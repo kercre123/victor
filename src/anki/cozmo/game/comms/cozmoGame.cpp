@@ -256,12 +256,19 @@ namespace Cozmo {
       const f32 timeSinceLastUiPing = currentTime_sec - _lastPingTimeFromUI_sec;
       
       if(timeSinceLastUiPing > UI_PING_TIMEOUT_SEC) {
+        /*
         PRINT_NAMED_ERROR("CozmoGameImpl.Update",
                           "Lost connection to UI (no ping in %.2f seconds). Resetting.\n",
                           timeSinceLastUiPing);
         
         Init(_config);
         return lastResult;
+         */
+        
+        PRINT_NAMED_WARNING("CozmoGameImpl.Update",
+                            "No ping from UI in %.2f seconds, but NOT ressetting.\n",
+                            timeSinceLastUiPing);
+        _lastPingCounterFromUI = -1.f;
       }
     }
     
