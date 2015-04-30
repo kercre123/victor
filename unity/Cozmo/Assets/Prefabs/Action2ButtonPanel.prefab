@@ -789,6 +789,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  button: {fileID: 11463382}
   image: {fileID: 11463384}
   text: {fileID: 11463376}
 --- !u!114 &11478744
@@ -802,6 +803,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  button: {fileID: 11463388}
   image: {fileID: 11463378}
   text: {fileID: 11463374}
 --- !u!222 &22213098

@@ -281,6 +281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  button: {fileID: 11461256}
   image: {fileID: 11461254}
   text: {fileID: 11461252}
 --- !u!114 &11412020
@@ -294,6 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  button: {fileID: 11461264}
   image: {fileID: 11461262}
   text: {fileID: 11461250}
 --- !u!114 &11412022
@@ -307,6 +309,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f55a0aab9d6944f21805a4cd5e5a5cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  button: {fileID: 11461268}
   image: {fileID: 11461266}
   text: {fileID: 11461248}
 --- !u!114 &11461246

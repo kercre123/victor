@@ -64,7 +64,7 @@ public class GameController : MonoBehaviour {
 	public float gameStartingInDelay {
 		get {
 			float duration = gameStartingIn != null ? gameStartingIn.length : 0f;
-			Debug.Log("gameStartingInDelay: " + duration);
+			//Debug.Log("gameStartingInDelay: " + duration);
 			return duration;
 		}
 	}

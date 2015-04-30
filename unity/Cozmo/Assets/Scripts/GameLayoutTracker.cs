@@ -565,7 +565,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		int count = 0;
 
-		Debug.Log("GetKnownObjectCountForBlock robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		//Debug.Log("GetKnownObjectCountForBlock robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
 		for(int i=0;i<robot.knownObjects.Count;i++) {
 
