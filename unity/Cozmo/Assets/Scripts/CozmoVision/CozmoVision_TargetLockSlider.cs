@@ -43,13 +43,14 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		AcquireTarget();
 		GameActions.instance.SetActionButtons( true );
 
-		if(!actionSliderPanel.Engaged) {
+		if(!robot.searching) {
 
 			targetLockTimer = 0f;
 			//Debug.Log("frame("+Time.frameCount+") robot.selectedObjects.Clear();" );
-			//robot.selectedObjects.Clear();
+			robot.selectedObjects.Clear();
 
 			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
+			robot.targetLockedObject = null;
 
 			FadeOut();
 
@@ -57,10 +58,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		}
 
 		FadeIn();
-
-		if(!robot.isBusy) actionSliderPanel.actionSlider.currentAction.OnPress();
-
-		if(!robot.searching) robot.targetLockedObject = null;
 
 		if(targetLockReticle != null) {
 			targetLockReticle.gameObject.SetActive(robot.targetLockedObject != null);
@@ -160,8 +157,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			
 			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
 		}
-		
-		if(!actionSliderPanel.Engaged) robot.targetLockedObject = null;
 		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from pertinentObjects("+robot.pertinentObjects.Count+")");
 	}
 }

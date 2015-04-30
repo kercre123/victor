@@ -39,7 +39,7 @@ public class ActionSlider {
 		SetHints();
 	}
 
-	private void SetHints()
+	public void SetHints()
 	{
 		for(int i = 0; i < hints.Length && ActionSliderPanel.instance != null && i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
 			if(hints[i] != null) {
@@ -62,9 +62,10 @@ public class ActionSliderPanel : ActionPanel
 	protected ActionButton topAction { get { return actionButtons[1]; } }
 	protected ActionButton centerAction { get { return actionButtons[2]; } }
 
-	public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
+	//public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	protected bool interactLastFrame = false;
+	protected bool upLastFrame = false;
+	protected bool downLastFrame = false;
 	protected ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
 	protected override void Awake() {
@@ -78,42 +79,30 @@ public class ActionSliderPanel : ActionPanel
 	protected void Update() {
 		lastMode = actionSlider.currentAction.mode;
 
+		if(actionSlider != null) actionSlider.SetHints();
+
 		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
 			return;
 		}
 		
 		robot = RobotEngineManager.instance.current;
 
-		if(!actionSlider.Pressed) {
-			
-			if(interactLastFrame) {
-				actionSlider.currentAction.OnRelease();
+		if(!robot.isBusy) {
+			if(!actionSlider.Pressed) {
+				if(!upLastFrame) actionSlider.currentAction.OnRelease();
+
+				upLastFrame = true;
+				downLastFrame = false;
 			}
+			else {
+				if(!downLastFrame) actionSlider.currentAction.OnPress();
 
-			robot.selectedObjects.Clear();
-			interactLastFrame = false;
-			robot.targetLockedObject = null;
-			
-			actionSlider.SetMode(centerAction, false);
+				downLastFrame = true;
+				upLastFrame = false;
 
-			return;
+				RefreshSliderMode();
+			}
 		}
-
-		RefreshSliderMode();
-		
-		//if we have a new target, let's see if our current slider mode wants to initiate an interaction
-		/*if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
-			
-			if(lastMode != actionSlider.ActionButton.Mode || robot.selectedObjects.Count != robot.lastSelectedObjects.Count ||
-			   robot.selectedObjects[0] != robot.lastSelectedObjects[0] ) {
-				
-				InitiateAssistedInteraction();
-			}
-		}*/
-			
-		interactLastFrame = true;
-		
-		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}
 
 	public void ToggleInteract(bool val) {
@@ -125,7 +114,7 @@ public class ActionSliderPanel : ActionPanel
 		
 		//Debug.Log("ToggleInteract("+val+")");
 	}
-	
+
 	private void RefreshSliderMode() {
 		ActionButton currentButton = centerAction;
 
