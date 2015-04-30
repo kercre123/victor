@@ -222,8 +222,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 		for(int i=0; i<robotList.Count; i++) {
-			if(robotList[i].localBusyTimer <= 0f) continue;
-			robotList[i].localBusyTimer -= Time.deltaTime;
+			robotList[i].CooldownTimers(Time.deltaTime);
 		}
 
 		float robotStateTimeout = 3.0f;

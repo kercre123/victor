@@ -219,6 +219,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
+		robot = RobotEngineManager.instance.current;
+
 		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.INVENTORY);
 
 		switch(Phase) {
@@ -235,6 +237,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(!hidden);
 				hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+
+				robot.SetHeadAngle();
 
 				for(int i=0;i<blocks2d.Count;i++) {
 					int known = GetKnownObjectCountForBlock(blocks2d[i].Block);
@@ -559,11 +563,16 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		int count = 0;
 
+		Debug.Log("GetKnownObjectCountForBlock robot.knownObjects.Count("+robot.knownObjects.Count+")");
+
 		for(int i=0;i<robot.knownObjects.Count;i++) {
+
 			ObservedObject obj = robot.knownObjects[i];
+
 			if(obj.Family != block.objectFamily) continue;
 			if(obj.Family != 3 && obj.ObjectType != block.objectType) continue;
-			if(obj.Family == 3 && obj.activeBlockType != block.activeBlockType) continue;
+			//if(obj.Family == 3 && obj.activeBlockType != block.activeBlockType) continue;
+
 			count++;
 		}
 
