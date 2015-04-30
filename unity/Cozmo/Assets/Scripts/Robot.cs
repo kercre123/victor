@@ -39,8 +39,11 @@ public class Robot
 	private int headTrackingObjectID = -1;
 	private int lastHeadTrackingObjectID = -1;
 
-	private float lastAngle_rad = float.MaxValue;
-	private float lastLiftHeight_mm = float.MaxValue;
+	private float headAngleRequested = float.MaxValue;
+	private float lastHeadAngleRequestTime = 0f;
+	private float liftHeightRequested = float.MaxValue;
+	private float lastLiftHeightRequestTime = 0f;
+
 
 	private ObservedObject _carryingObject = null;
 	public ObservedObject carryingObject
@@ -165,7 +168,12 @@ public class Robot
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
 		RefreshObjectPertinence();
+	}
 
+	public void CooldownTimers(float delta) {
+		if(localBusyTimer > 0f) {
+			localBusyTimer -= delta;
+		}
 	}
 
 	public void RefreshObjectPertinence() {
@@ -209,8 +217,8 @@ public class Robot
 		targetLockedObject = null;
 		searching = false;
 		lastActionRequested = ActionCompleted.UNKNOWN;
-		lastAngle_rad = float.MaxValue;
-		lastLiftHeight_mm = float.MaxValue;
+		headAngleRequested = float.MaxValue;
+		liftHeightRequested = float.MaxValue;
 	}
 
 	public void ClearObservedObjects()
@@ -329,28 +337,23 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message { CancelAction = message } );
 	}
 
-	private float setHeadAngleTime = 0f;
-	public void SetHeadAngle( float angle_rad = defaultHeadAngle )
+
+	public void SetHeadAngle( float angle_rad = 0f) //defaultHeadAngle )
 	{
-		if( headTrackingObject == -1 ) // if not head tracking
-		{
-			if( headAngle_rad == angle_rad )
-			{
-				lastAngle_rad = float.MaxValue;
-				return;
-			}
-			else if( lastAngle_rad == angle_rad )
-			{
-				return;
-			}
-		}
-		else if( Time.time < setHeadAngleTime + CozmoUtil.LOCAL_BUSY_TIME ) // compensate for time for robot to know to not be head tracking
+		if( headTrackingObject != -1 ) // if head tracking skip?
 		{
 			return;
 		}
 
-		lastAngle_rad = angle_rad;
-		setHeadAngleTime = Time.time;
+		if( Time.time < lastHeadAngleRequestTime + CozmoUtil.LOCAL_BUSY_TIME && headAngleRequested == angle_rad)
+		{
+			return;
+		}
+
+		if(Mathf.Abs(angle_rad - headAngle_rad) < 0.001f) return;
+
+		headAngleRequested = angle_rad;
+		lastHeadAngleRequestTime = Time.time;
 
 		Debug.Log( "Set Head Angle " + angle_rad );
 
@@ -358,7 +361,7 @@ public class Robot
 		message.angle_rad = angle_rad;
 		message.accel_rad_per_sec2 = 2f;
 		message.max_speed_rad_per_sec = 5f;
-		
+		   
 		RobotEngineManager.instance.channel.Send( new U2G.Message { SetHeadAngle = message } );
 	}
 	
@@ -435,17 +438,16 @@ public class Robot
 
 	public void SetLiftHeight( float height )
 	{
+
+		if(Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height == liftHeightRequested) return;
+
 		if( liftHeight_mm == height )
 		{
-			lastLiftHeight_mm  = float.MaxValue;
 			return;
 		}
-		else if( lastLiftHeight_mm == height )
-		{
-			return;
-		}
-		
-		lastLiftHeight_mm = height;
+
+		liftHeightRequested = height;
+		lastLiftHeightRequestTime = Time.time;
 
 		//Debug.Log( "Set Lift Height " + height );
 		
