@@ -380,7 +380,7 @@ def extractMarkers(image, returnInvalidMarkers):
 def detectClosestFiducialMarker(image, quad):
     quads, markerTypes, markerNames, markerValidity, binaryImage = extractMarkers(image, 1)
 
-    print('quads = ' + str(quads))
+    #print('quads = ' + str(quads))
 
     if binaryImage != []:
         cv2.imshow("binaryImage", binaryImage*255)
@@ -433,7 +433,24 @@ def detectClosestFiducialMarker(image, quad):
 
     reorderedQuad = [quads[closestQuadInd][0], quads[closestQuadInd][2], quads[closestQuadInd][3], quads[closestQuadInd][1]]
 
-    return reorderedQuad, closestQuadDist
+    # Rotate marker to match the original
+    
+    bestRotatedQuad = []
+    bestRotatedDistance = float('Inf')
+    
+    reorderedQuadRotated = reorderedQuad[:]
+    for iRotation in range(0,4):
+        totalDist = 0
+        for iCorner in range(0,4):
+            totalDist += sqrt(pow(reorderedQuadRotated[iCorner][0] - quad[iCorner][0], 2.0) + pow(reorderedQuadRotated[iCorner][1] - quad[iCorner][1], 2.0))
+            
+        if totalDist < bestRotatedDistance:
+            bestRotatedDistance = totalDist
+            bestRotatedQuad = reorderedQuadRotated[:]
+        
+        reorderedQuadRotated = [reorderedQuadRotated[1], reorderedQuadRotated[2], reorderedQuadRotated[3], reorderedQuadRotated[0]]
+
+    return bestRotatedQuad, bestRotatedDistance
 
 def trackQuadrilateral(startImage, startQuad, endImage, drawDebug=False):
     numPointsPerDimension = 10
@@ -557,17 +574,19 @@ def trackTemplate():
         # Match this quad to the best detected quad
         detectedQuad, detectedQuadDistance = detectClosestFiducialMarker(curImage, curQuad)
 
-        print('detectedQuadDistance = ' + str(detectedQuadDistance))
+        #print('detectedQuadDistance = ' + str(detectedQuadDistance))
 
+        suffix = ''
         if detectedQuadDistance < (4*5):
             curQuad = detectedQuad
-            suffix = '_Good' # TODO: comment out
+            #suffix = '_Good' # TODO: comment out
         else:
             curQuad = curQuad
-            suffix = '_Bad' # TODO: comment out
+            #suffix = '_Bad' # TODO: comment out
 
-            pdb.set_trace()
-            #cv2.waitKey()
+            #pdb.set_trace()
+        
+        cv2.waitKey(1)
 
         # TODO: will this work when the g_curMarkerIndex is not zero
         while len(g_data['jsonData']['Poses'][iPose]['VisionMarkers']) <= g_curMarkerIndex:
@@ -591,7 +610,18 @@ def trackTemplate():
 
         #pdb.set_trace()
 
-    # TODO: save the output
+    saveTestFile()
+    poseChanged(False)
+
+def clearMarkers():
+    global g_data
+    global g_curPoseIndex
+    global g_curMarkerIndex
+    
+    g_data['jsonData']['Poses'][g_curPoseIndex]['VisionMarkers'][g_curMarkerIndex] = {}
+    
+    saveTestFile()
+    poseChanged(False)
 
 class ConnectedMainWindow(Ui_MainWindow):
     def __init__(self):
@@ -751,6 +781,7 @@ class ConnectedMainWindow(Ui_MainWindow):
         self.test_current.returnPressed.connect(lambda: self.setCurTestIndex(int(self.test_current.text())))
 
         self.trackMarkerAcrossPoses.clicked.connect(trackTemplate)
+        self.clearAllMarkers.clicked.connect(clearMarkers)
 
         self.test_previous1.clicked.connect(lambda: self.incrementCurTestIndex(-1, True))
         self.test_previous2.clicked.connect(lambda: self.incrementCurTestIndex(-10, True))
