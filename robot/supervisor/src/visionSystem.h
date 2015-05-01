@@ -28,17 +28,7 @@
 namespace Anki {
   namespace Cozmo {
     namespace VisionSystem {
-      
-      //
-      // Methods:
-      //
-      
-      Result Init(void);
-      bool IsInitialized();
-      
-      // Accessors
-      const HAL::CameraInfo* GetCameraCalibration();
-      f32 GetTrackingMarkerWidth();
+    
       
       // This is main Update() call to be called in a loop from above.
       //
@@ -47,42 +37,7 @@ namespace Anki {
       //   by main execution (which updates the state).
       Result Update(const Messages::RobotState robotState);
       
-      void StopTracking();
-
-      // Select a block type to look for to dock with.
-      // Use MARKER_UNKNOWN to disable.
-      // Next time the vision system sees a block of this type while looking
-      // for blocks, it will initialize a template tracker and switch to
-      // docking mode.
-      // If checkAngleX is true, then tracking will be considered as a failure if
-      // the X angle is greater than TrackerParameters::MAX_BLOCK_DOCKING_ANGLE.
-      Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                              const f32                  markerWidth_mm,
-                              const bool                 checkAngleX);
-      
-      // Same as above, except the robot will only start tracking the marker
-      // if its observed centroid is within the specified radius (in pixels)
-      // from the given image point.
-      Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                              const f32                  markerWidth_mm,
-                              const Embedded::Point2f&   imageCenter,
-                              const f32                  radius,
-                              const bool                 checkAngleX);
-      
-      u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
-                           Embedded::Array<u8>&       imageOut,
-                           Embedded::MemoryStack      scratch);
-      
-      
-      // Returns a const reference to the list of the most recently observed
-      // vision markers.
-      const Embedded::FixedLengthList<Embedded::VisionMarker>& GetObservedMarkerList();
-      
-      // Return a const pointer to the largest (in terms of image size)
-      // VisionMarker of the specified type.  Pointer is NULL if there is none.
-      const Embedded::VisionMarker* GetLargestVisionMarker(const Vision::MarkerType withType);
-      
-      // Compute the 3D pose of a VisionMarker w.r.t. the camera.
+        // Compute the 3D pose of a VisionMarker w.r.t. the camera.
       // - If the pose w.r.t. the robot is required, follow this with a call to
       //    the GetWithRespectToRobot() method below.
       // - If ignoreOrientation=true, the orientation of the marker within the

@@ -3,6 +3,8 @@
 
 #include "anki/common/shared/mailbox_impl.h"
 
+#include "anki/common/robot/array2d.h"
+
 #include "messages.h"
 #include "localization.h"
 #include "visionSystem.h"
@@ -1013,6 +1015,78 @@ namespace Anki {
         lastPingTime_ = 0;
       }
 
+      Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
+      {
+        Messages::ImageChunk m;
+        
+        switch(img.get_size(0)) {
+          case 240:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==320, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_QVGA;
+            break;
+            
+          case 480:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==640, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_VGA;
+            break;
+            
+          default:
+            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            return RESULT_FAIL;
+        }
+
+        static u32 imgID = 0;
+        const cv::vector<int> compressionParams = {
+          CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
+        };
+        
+        cv::Mat cvImg;
+        cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+        
+        cv::vector<u8> compressedBuffer;
+        cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
+        
+        const u32 numTotalBytes = compressedBuffer.size();
+
+        //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
+        
+        m.frameTimeStamp = captureTime;
+        m.imageId = ++imgID;
+        m.chunkId = 0;
+        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
+        m.imageEncoding = Vision::IE_JPEG_COLOR;
+        
+        u32 totalByteCnt = 0;
+        u32 chunkByteCnt = 0;
+        
+        for(s32 i=0; i<numTotalBytes; ++i)
+        {
+          m.data[chunkByteCnt] = compressedBuffer[i];
+          
+          ++chunkByteCnt;
+          ++totalByteCnt;
+          
+          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+            //PRINT("Sending image chunk %d\n", m.chunkId);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            ++m.chunkId;
+            chunkByteCnt = 0;
+          } else if (totalByteCnt == numTotalBytes) {
+            // This should be the last message!
+            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+            m.chunkSize = chunkByteCnt;
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+          }
+        } // for each byte in the compressed buffer
+        
+        return RESULT_OK;
+      } // CompressAndSendImage()
+      
+      
     } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki

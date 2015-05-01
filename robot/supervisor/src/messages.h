@@ -23,6 +23,7 @@
 #define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/common/types.h"
+#include "anki/common/robot/array2d_declarations.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -98,6 +99,9 @@ namespace Anki {
       
       // Resets the receipt of init message
       void ResetInit();
+      
+      // Send out a chunked up JPEG-compressed image
+      Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime);
       
     } // namespace Messages
   } // namespace Cozmo
