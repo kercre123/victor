@@ -60,20 +60,12 @@ namespace Anki {
         Embedded::Point2f ptStamp_;
         Radians angleStamp_;
         
-        Vision::MarkerType dockToMarker_;
-        Vision::MarkerType dockToMarker2_;  // 2nd marker used for bridge crossing only
-        f32 markerWidth_ = 0;
         f32 dockOffsetDistX_ = 0;
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
         
         // Last seen marker pose used for bridge crossing
         f32 relMarkerX_, relMarkerY_, relMarkerAng_;
-        
-        // Expected location of the desired dock marker in the image.
-        // If not specified, marker may be located anywhere in the image.
-        Embedded::Point2f markerCenter_;
-        f32 pixelSearchRadius_;
         
         CarryState_t carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
@@ -240,27 +232,11 @@ namespace Anki {
                     break;
                 }
 
-                if (pixelSearchRadius_ < 0) {
-                  DockingController::StartDocking(dockToMarker_,
-                                                  markerWidth_,
-                                                  dockOffsetDistX_,
-                                                  dockOffsetDistY_,
-                                                  dockOffsetAng_,
-                                                  checkAngleX,
-                                                  useManualSpeed_,
-                                                  pointOfNoReturnDist);
-                } else {
-                  DockingController::StartDocking(dockToMarker_,
-                                                  markerWidth_,
-                                                  markerCenter_,
-                                                  pixelSearchRadius_,
-                                                  dockOffsetDistX_,
-                                                  dockOffsetDistY_,
-                                                  dockOffsetAng_,
-                                                  checkAngleX,
-                                                  useManualSpeed_,
-                                                  pointOfNoReturnDist);
-                }
+                DockingController::StartDocking(dockOffsetDistX_,
+                                                dockOffsetDistY_,
+                                                dockOffsetAng_,
+                                                useManualSpeed_,
+                                                pointOfNoReturnDist);
               }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
@@ -491,7 +467,7 @@ namespace Anki {
             // Keep driving until the marker on the other side of the bridge is seen.
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
               // Set vision marker to look for marker
-              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
               UpdatePoseSnapshot();
               mode_ = TRAVERSE_BRIDGE;
               #if(DEBUG_PAP_CONTROLLER)
@@ -513,7 +489,7 @@ namespace Anki {
               }
             } else {
               // Marker tracking timedout. Start it again.
-              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
               #if(DEBUG_PAP_CONTROLLER)
               PRINT("TRAVERSE_BRIDGE: Restarting tracking\n");
               #endif
@@ -566,14 +542,11 @@ namespace Anki {
         return carryState_;
       }
       
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const bool useManualSpeed,
+      void DockToBlock(const bool useManualSpeed,
                        const DockAction_t action)
       {
 #if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", markerType, action);
+        PRINT("PAP: DOCK TO BLOCK (action %d)\n", action);
 #endif
 
         if (action == DA_PLACE_LOW) {
@@ -582,13 +555,6 @@ namespace Anki {
         }
         
         action_ = action;
-        dockToMarker_ = markerType;
-        dockToMarker2_ = markerType2;
-        markerWidth_  = markerWidth_mm;
-        
-        markerCenter_.x = -1.f;
-        markerCenter_.y = -1.f;
-        pixelSearchRadius_ = -1.f;
         
         dockOffsetDistX_ = 0;
         dockOffsetDistY_ = 0;
@@ -601,20 +567,7 @@ namespace Anki {
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
-      
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const Embedded::Point2f& markerCenter,
-                       const f32 pixelSearchRadius,
-                       const bool useManualSpeed,
-                       const DockAction_t action)
-      {
-        DockToBlock(markerType, markerType2, markerWidth_mm, useManualSpeed, action);
-        
-        markerCenter_ = markerCenter;
-        pixelSearchRadius_ = pixelSearchRadius;
-      }
+
       
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {

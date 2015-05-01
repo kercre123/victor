@@ -62,23 +62,9 @@ namespace Anki {
       void SetCarryState(CarryState_t state);
       CarryState_t GetCarryState();
       
-      // Picks up the specified block, or places the block in hand on top of the specified block
-      // depending on the specified action.
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const bool useManualSpeed,
-                       const DockAction_t action);
-      
-      // Same as above except docking will only occur if the specified marker is found
-      // at the specified image coordinates within pixelSearchRadius
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const Embedded::Point2f& markerCenter,
-                       const f32 pixelSearchRadius,
-                       const bool useManualSpeed,                       
-                       const DockAction_t action);
+      // Starts the docking process, relying on the relative pose of the marker to be
+      // transmitted from cozmo-engine immediately after calling this.
+      void DockToBlock(const bool useManualSpeed, const DockAction_t action);
        
       // Places block on ground and backs out.
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
