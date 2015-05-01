@@ -272,7 +272,7 @@ public class GoldRushController : GameController {
 	}
 
 
-	void CheckForStackSuccess(bool success, ActionCompleted action_type)
+	void CheckForStackSuccess(bool success, RobotActionType action_type)
 	{
 		Debug.Log ("action type is: " + action_type);
 		if( success ) // hardcoded until we get enums over from the engine
