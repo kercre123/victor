@@ -1094,8 +1094,8 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
         if(currentTime >= _waitToVerifyTime) {
-          PRINT_NAMED_INFO("IDockAction.CheckIfDone",
-                           "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
+          //PRINT_NAMED_INFO("IDockAction.CheckIfDone",
+          //                 "Robot has stopped moving and picking/placing. Will attempt to verify success.\n");
           
           actionResult = Verify(robot);
         }
@@ -1128,8 +1128,17 @@ namespace Anki {
     
     PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
+    , _placementVerifyAction(nullptr)
+    , _verifyComplete(false)
     {
       
+    }
+    
+    PickAndPlaceObjectAction::~PickAndPlaceObjectAction()
+    {
+      if(_placementVerifyAction != nullptr) {
+        delete _placementVerifyAction;
+      }
     }
     
     const std::string& PickAndPlaceObjectAction::GetName() const
@@ -1262,44 +1271,9 @@ namespace Anki {
       
       return RESULT_OK;
     } // SelectDockAction()
-    
-    // This helper is used both by PickAndPlaceObjectAction and PlaceObjectOnGroundAction
-    // to verify whether they succeeded.
-    static ActionResult VerifyObjectPlacementHelper(Robot& robot, ObjectID objectID,
-                                                                   const Vision::KnownMarker* objectMarker)
-    {
-      if(robot.IsCarryingObject() == true) {
-        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.RobotCarryignObject",
-                          "Expecting robot to think it's NOT carrying an object at this point.\n");
-        return ActionResult::FAILURE_ABORT;
-      }
-      
-      // TODO: check to see it ended up in the right place?
-      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("VerifyObjectPlacementHelper.CarryObjectNoLongerExists",
-                          "Object %d we were carrying no longer exists in the world.\n",
-                          robot.GetCarryingObject().GetValue());
-        return ActionResult::FAILURE_ABORT;
-      }
-      else if(object->GetLastObservedTime() > (robot.GetLastMsgTimestamp()-500))
-      {
-        // We've seen the object in the last half second (which could
-        // not be true if we were still carrying it)
-        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementSuccess",
-                         "Verification of object placement SUCCEEDED!\n");
-        return ActionResult::SUCCESS;
-      } else {
-        PRINT_NAMED_INFO("VerifyObjectPlacementHelper.ObjectPlacementFailure",
-                         "Verification of object placement FAILED!\n");
-        // TODO: correct to assume we are still carrying the object? Maybe object fell out of view?
-        robot.SetObjectAsAttachedToLift(objectID, objectMarker); // re-pickup object to attach it to the lift again
-        return ActionResult::FAILURE_RETRY;
-      }
-    } // VerifyObjectPlacementHelper()
 
     
-    ActionResult PickAndPlaceObjectAction::Verify(Robot& robot) const
+    ActionResult PickAndPlaceObjectAction::Verify(Robot& robot)
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
       
@@ -1378,17 +1352,58 @@ namespace Anki {
           
         case DA_PLACE_LOW:
         case DA_PLACE_HIGH:
+        {
           if(robot.GetLastPickOrPlaceSucceeded()) {
-            // If the physical robot thinks it succeeded, do a verification of the placement:
-            result = VerifyObjectPlacementHelper(robot, _carryObjectID, _carryObjectMarker);
             
-            if(result != ActionResult::SUCCESS) {
-              PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
-                                "Robot thinks it placed the object, but verification of "
-                                "placement failed. Not sure where carry object %d is, so deleting it.\n",
-                                robot.GetCarryingObject().GetValue());
-              robot.GetBlockWorld().ClearObject(robot.GetCarryingObject());
+            if(robot.IsCarryingObject() == true) {
+              PRINT_NAMED_ERROR("PickAndPlaceObjectAction::Verify",
+                                "Expecting robot to think it's NOT carrying an object at this point.\n");
+              return ActionResult::FAILURE_ABORT;
             }
+            
+            // If the physical robot thinks it succeeded, move the lift out of the
+            // way, and attempt to visually verify
+            if(_placementVerifyAction == nullptr) {
+              _placementVerifyAction = new CompoundActionSequential( {
+                new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV),
+                new VisuallyVerifyObjectAction(_carryObjectID)
+              });
+            }
+            
+            result = _placementVerifyAction->Update(robot);
+            
+            if(result != ActionResult::RUNNING) {
+              
+              // Visual verification is done
+              delete _placementVerifyAction;
+              _placementVerifyAction = nullptr;
+              
+              if(result != ActionResult::SUCCESS) {
+                PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                  "Robot thinks it placed the object, but verification of "
+                                  "placement failed. Not sure where carry object %d is, so deleting it.\n",
+                                  robot.GetCarryingObject().GetValue());
+                robot.GetBlockWorld().ClearObject(robot.GetCarryingObject());
+              }
+              else if(_dockAction == DA_PLACE_HIGH) {
+                
+                // If we are placing high and verification succeeded, lower the lift
+                if(!_verifyComplete) {
+                  _verifyComplete = true;
+                  
+                  // We still need to
+                  MoveLiftToHeightAction::Preset finalHeight = MoveLiftToHeightAction::Preset::CARRY;
+                  if(result == ActionResult::SUCCESS) {
+                    // Visual verification succeeded, drop lift
+                    finalHeight = MoveLiftToHeightAction::Preset::LOW_DOCK;
+                  }
+                  _placementVerifyAction = new MoveLiftToHeightAction(finalHeight);
+                  result = ActionResult::RUNNING;
+                  
+                }
+              }
+            } // if(result != ActionResult::RUNNING)
+            
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track, so we are probably still holding the block
@@ -1399,7 +1414,8 @@ namespace Anki {
           }
           
           break;
-          
+        } // PLACE
+
         default:
           PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
                             "Don't know how to verify unexpected dockAction %d.\n", _dockAction);
@@ -1416,8 +1432,16 @@ namespace Anki {
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
+    : _verifyAction(nullptr)
     {
       
+    }
+    
+    PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
+    {
+      if(_verifyAction != nullptr) {
+        delete _verifyAction;
+      }
     }
     
     const std::string& PlaceObjectOnGroundAction::GetName() const
@@ -1449,6 +1473,8 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
+        _verifyAction = new VisuallyVerifyObjectAction(_carryingObjectID, _carryObjectMarker->GetCode());
+        
       } // if/else IsCarryingObject()
       
       // If we were moving, stop moving.
@@ -1475,9 +1501,9 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
 
-        actionResult = VerifyObjectPlacementHelper(robot, _carryingObjectID, _carryObjectMarker);
-        
-        if(actionResult != ActionResult::SUCCESS) {
+        actionResult = _verifyAction->Update(robot);
+
+        if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
           PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
                             "VerityObjectPlaceHelper reported failure, just deleting object %d.\n",
                             _carryingObjectID.GetValue());
@@ -1522,7 +1548,7 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    ActionResult CrossBridgeAction::Verify(Robot& robot) const
+    ActionResult CrossBridgeAction::Verify(Robot& robot)
     {
       // TODO: Need some kind of verificaiton here?
       PRINT_NAMED_INFO("CrossBridgeAction.Verify.BridgeCrossingComplete",
@@ -1581,7 +1607,7 @@ namespace Anki {
     } // SelectDockAction()
     
     
-    ActionResult AscendOrDescendRampAction::Verify(Robot& robot) const
+    ActionResult AscendOrDescendRampAction::Verify(Robot& robot)
     {
       // TODO: Need to do some kind of verification here?
       PRINT_NAMED_INFO("AscendOrDescendRampAction.Verify.RampAscentOrDescentComplete",

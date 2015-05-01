@@ -449,31 +449,8 @@ namespace Anki {
               SteeringController::ExecuteDirectDrive(0,0);
               
               if (HeadController::IsInPosition()) {
-                switch(action_) {
-                  case DA_PLACE_LOW:
-                  case DA_PICKUP_LOW:
-                  case DA_PICKUP_HIGH:
-                    mode_ = IDLE;
-                    lastActionSucceeded_ = true;
-                    //isCarryingBlock_ = true;
-                    break;
-                  case DA_PLACE_HIGH:
-                    if(lastActionSucceeded_) {
-                      LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                      mode_ = LOWER_LIFT;
-                    } else {
-                      mode_ = IDLE;
-                      lastActionSucceeded_ = true;
-                    }
-                    #if(DEBUG_PAP_CONTROLLER)
-                    PRINT("PAP: LOWERING LIFT\n");
-                    #endif
-                    break;
-                  default:
-                    PRINT("ERROR: Reached BACKUP unexpectedly (action = %d)\n", action_);
-                    mode_ = IDLE;
-                    break;
-                }
+                mode_ = IDLE;
+                lastActionSucceeded_ = true;
               }
             }
             break;

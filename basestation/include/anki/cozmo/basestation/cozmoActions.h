@@ -188,33 +188,6 @@ namespace Anki {
     }; // class MoveLiftToHeightAction
     
     
-    class MoveLiftToHeightAction : public IAction
-    {
-    public:
-      enum class Preset : u8 {
-        LOW_DOCK,
-        HIGH_DOCK,
-        CARRY
-      };
-      
-      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 2.f);
-      MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 2.f);
-      
-      virtual const std::string& GetName() const override { return _name; };
-      virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
-      
-    protected:
-      
-      static f32 GetPresetHeight(Preset preset);
-      
-      virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(Robot& robot) override;
-      
-      f32          _height_mm;
-      f32          _heightTolerance;
-      std::string  _name;
-    }; // class MoveLiftToHeightAction
-    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public IAction
@@ -313,7 +286,7 @@ namespace Anki {
       // order to define the parameters of docking and how to verify success.
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual ActionResult Verify(Robot& robot) const = 0;
+      virtual ActionResult Verify(Robot& robot) = 0;
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
@@ -339,6 +312,7 @@ namespace Anki {
     {
     public:
       PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
+      virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -356,7 +330,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -366,7 +340,10 @@ namespace Anki {
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
       
-    }; // class DockWithObjectAction
+      IActionRunner*             _placementVerifyAction;
+      bool                       _verifyComplete; // used in PLACE modes
+      
+    }; // class PickAndPlaceObjectAction
 
     
     // Common compound action for driving to an object, visually verifying we
@@ -400,6 +377,7 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction();
+      virtual ~PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -414,6 +392,7 @@ namespace Anki {
       
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
+      VisuallyVerifyObjectAction* _verifyAction;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -447,7 +426,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       // Crossing a bridge _does_ require the second dockMarker,
       // so override the virtual method for setting it
@@ -469,7 +448,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       
