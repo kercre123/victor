@@ -6,9 +6,8 @@ add_definitions(-DCOZMO_BASESTATION)
 
 
 # Include paths
-  include_directories(
+include_directories(
   ${WEBOTS_CPP_INCLUDE_DIR}
-  ${COZMO_ENGINE_INCLUDE_DIR}/anki/cozmo/basestation
 )
 
 # Link paths

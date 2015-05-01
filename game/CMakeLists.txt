@@ -7,13 +7,11 @@ add_definitions(-DCORETECH_BASESTATION)
 
 file(GLOB_RECURSE SOURCE_FILES
     "src/*.cpp"
-    "${CLAD_DIR}/support/cpp/source/*.cpp"
 )
 
 file(GLOB_RECURSE PRIVATE_HEADER_FILES
     "src/*.h"
     "src/*.def"
-    "${CLAD_DIR}/support/cpp/include/CLAD/*.h"
 )
 
 file(GLOB_RECURSE PUBLIC_HEADER_FILES
@@ -35,10 +33,8 @@ target_link_libraries(Cozmo_Game
   Cozmo_Basestation 
   CoreTech_Messaging_Basestation
   CoreTech_Common_Basestation
+  ${CLAD_CPP_LIBRARY_NAME}
 )
 
-add_dependencies(Cozmo_Game Cozmo_Clad)
-
-
-
-
+add_dependencies(Cozmo_Game
+    Cozmo_Game_Clad)
