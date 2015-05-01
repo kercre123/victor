@@ -1,12 +1,12 @@
-% function allCompiledResults = runTests_detectFiducialMarkers()
+% function allCompiledResults = runTests_tracking()
 
 % On PC
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
+% allCompiledResults = runTests_tracking('C:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
 
 % On Mac
-% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
-function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
+function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
@@ -14,7 +14,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.basics = 3;
     numComputeThreads.perPose = 3;
     
-    % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
+    % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
 %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
@@ -341,7 +341,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     keyboard
     
     allCompiledResults = resultsData;
-end % runTests_detectFiducialMarkers()
+end % runTests_tracking()
 
 function allTestData = getTestData(testJsonPattern)
     testJsonPattern = strrep(testJsonPattern, '\', '/');
@@ -528,7 +528,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
             
             save(allInputFilename, 'allTestData', 'rotationList', 'algorithmParameters');
             
-            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_tracking_basicStats(localWorkQueue, allTestData, rotationList, algorithmParameters);'];
             
             runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
             
@@ -578,7 +578,7 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
             
             save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
             
-            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_tracking_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
             
             runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
             
@@ -604,5 +604,5 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
 end % run_recompileperPoseStats()
 
 function resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots)
-    resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose, showPlots);
+    resultsData_overall = runTests_tracking_compileOverallStats(resultsData_perPose, showPlots);
 end % run_compileOverallStats()
