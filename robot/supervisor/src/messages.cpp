@@ -229,7 +229,7 @@ namespace Anki {
         //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
-
+        /*
         PRINT("Robot %s localization update from "
               "basestation  at currTime=%d for frame at time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n",
               res == RESULT_OK ? "PROCESSED" : "IGNORED",
@@ -238,6 +238,7 @@ namespace Anki {
               currentMatX, currentMatY,
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());
+         */
 #if(USE_OVERLAY_DISPLAY)
         {
           using namespace Sim::OverlayDisplay;

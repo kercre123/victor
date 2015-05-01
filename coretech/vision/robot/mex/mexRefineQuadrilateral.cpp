@@ -15,7 +15,7 @@ using namespace Anki::Embedded;
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  const s32 bufferSize = 10000;
+  const s32 bufferSize = 500000;
   u8 buffer[bufferSize];
   MemoryStack scratch(buffer, bufferSize);
   AnkiConditionalErrorAndReturn(scratch.IsValid(), "mexRefineQuadrilateral", "Memory could not be allocated");
@@ -24,7 +24,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   AnkiConditionalErrorAndReturn(mxGetClassID(prhs[0]) == mxUINT8_CLASS, "mexRefineQuadrilateral", "prhs[0] should be UINT8");
   Array<u8> image = mxArrayToArray<u8>(prhs[argIndex++], scratch);
-
+  
+  AnkiConditionalErrorAndReturn(image.IsValid(), "mexRefineQuadrilateral", "Could not create %dx%d image in %d-byte buffer.\n", mxGetM(prhs[0]), mxGetN(prhs[0]), bufferSize);
   AnkiConditionalErrorAndReturn(mxGetClassID(prhs[1]) == mxINT16_CLASS, "mexRefineQuadrilateral", "prhs[1] should be INT16");
   AnkiConditionalErrorAndReturn(mxGetM(prhs[1]) == 4 && mxGetN(prhs[1]) == 2, "mexRefineQuadrilateral", "prhs[1] should be 4x2 array");
   Array<s16> initQuadData = mxArrayToArray<s16>(prhs[argIndex++], scratch);

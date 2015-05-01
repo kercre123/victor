@@ -58,6 +58,8 @@ namespace Anki {
       const f32 markerSize_sides = 30.f;
       const f32 markerSize_top   = 30.f;
       
+      /* COMMENTING OUT B/C THESE MARKERS DON'T CURRENTLY EXIST IN NN LIBRARY
+       
       // Front Face
       AddMarker(Vision::MARKER_PLATFORMNORTH, // Vision::MARKER_INVERTED_E,
                 Pose3d(M_PI_2, Z_AXIS_3D(), {length*.5f, 0.f, -.5f*height}),
@@ -77,6 +79,7 @@ namespace Anki {
       AddMarker(Vision::MARKER_PLATFORMWEST, //Vision::MARKER_INVERTED_RAMPLEFT,
                 Pose3d(0.f, Z_AXIS_3D(), {0, -width*.5f, -.5f*height}),
                 markerSize_sides);
+      */
       
       // Top Faces:
       AddMarker(Vision::MARKER_INVERTED_A, //TODO: Vision::MARKER_ANKILOGOWITHBITS001,
