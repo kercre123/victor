@@ -17,6 +17,7 @@
 		461ED4551ABCBCF400683D5A /* Unity_iPhone_Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 461ED4511ABCBCEA00683D5A /* Unity_iPhone_Tests.m */; };
 		461ED4591ABCBD7900683D5A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 461ED4571ABCBD7900683D5A /* InfoPlist.strings */; };
 		461ED45A1ABCBD8100683D5A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 461ED4571ABCBD7900683D5A /* InfoPlist.strings */; };
+		4658DBFE1AF32B0300CBFB77 /* libClad_Support_Cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4658DBFD1AF32B0300CBFB77 /* libClad_Support_Cpp.a */; };
 		465B5F021A98177A00AB809E /* CrashReporter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB21A98177A00AB809E /* CrashReporter.mm */; };
 		465B5F031A98177A00AB809E /* iPhone_OrientationSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB51A98177A00AB809E /* iPhone_OrientationSupport.mm */; };
 		465B5F041A98177A00AB809E /* iPhone_Profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 465B5EB61A98177A00AB809E /* iPhone_Profiler.cpp */; };
@@ -124,6 +125,7 @@
 		461ED4501ABCBCEA00683D5A /* Unity-iPhone Tests-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Unity-iPhone Tests-Prefix.pch"; sourceTree = "<group>"; };
 		461ED4511ABCBCEA00683D5A /* Unity_iPhone_Tests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Unity_iPhone_Tests.m; sourceTree = "<group>"; };
 		461ED4581ABCBD7900683D5A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = InfoPlist.strings; sourceTree = "<group>"; };
+		4658DBFD1AF32B0300CBFB77 /* libClad_Support_Cpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libClad_Support_Cpp.a; path = "../../generated/game-ios/Xcode/lib/Debug/libClad_Support_Cpp.a"; sourceTree = "<group>"; };
 		465B5EB11A98177A00AB809E /* CrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporter.h; sourceTree = "<group>"; };
 		465B5EB21A98177A00AB809E /* CrashReporter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CrashReporter.mm; sourceTree = "<group>"; };
 		465B5EB31A98177A00AB809E /* iPhone_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iPhone_Common.h; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 				468C75D41A96B6B6001011B7 /* libCoreTech_Vision_Robot.a in Frameworks */,
 				468C75D51A96B6B6001011B7 /* libCozmo_Basestation.a in Frameworks */,
 				468C75D61A96B6B6001011B7 /* libCozmo_Game.a in Frameworks */,
+				4658DBFE1AF32B0300CBFB77 /* libClad_Support_Cpp.a in Frameworks */,
 				468C75D71A96B6B6001011B7 /* libjsoncpp.a in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
 				830B5C110E5ED4C100C7819F /* UIKit.framework in Frameworks */,
@@ -326,6 +329,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4658DBFD1AF32B0300CBFB77 /* libClad_Support_Cpp.a */,
 				83B2574E0E63025400468741 /* libiconv.2.dylib */,
 				46F5C1561A97E65C0078F6E7 /* libiPhone-lib.a */,
 				46F5C0BA1A96CC360078F6E7 /* libCSharpBinding.a */,
@@ -813,6 +817,7 @@
 					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/Xcode/lib/$(CONFIGURATION)",
 					"$(ANKI_BUILD_UNITY_BUILD_DIR)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"/Users/gregnage/cozmo-game/generated/game-ios/Xcode/lib/Debug",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -855,6 +860,7 @@
 					"$(ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR)/Xcode/lib/$(CONFIGURATION)",
 					"$(ANKI_BUILD_UNITY_BUILD_DIR)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"/Users/gregnage/cozmo-game/generated/game-ios/Xcode/lib/Debug",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";

@@ -2,127 +2,16 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-# Since clad command line shows up in comments, make all paths relative
-# Dependencies/outputs must be absolute or commands will fail
-file(RELATIVE_PATH RELATIVE_CLAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CLAD_DIR})
+file(GLOB_RECURSE CLAD_INPUT_FILE_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.clad")
 
-set(INPUT_DIRECTORY "src")
-file(GLOB_RECURSE CLAD_INPUTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}"
-    "${INPUT_DIRECTORY}/*.clad")
-
-file(RELATIVE_PATH HPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/game/include")
-file(RELATIVE_PATH CPP_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/game/src")
-file(RELATIVE_PATH CS_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/MessageBuffers")
-
-# Every time any clad python file changes, we want to rerun clad
-# Make sure this is absolute
-file(GLOB CLAD_DEPENDENCIES
-    "${CLAD_DIR}/clad/*.py"
-    "${CLAD_DIR}/emitters/*.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/emitters/*.py")
-
-set(PYTHON python)
-set(PYTHONFLAGS -u)
-
-set(CLAD_OUTPUTS "")
-foreach(INPUT ${CLAD_INPUTS})
-    # Compute current clad INPUT file without extension
-    GET_FILENAME_COMPONENT(INPUT_NAME ${INPUT} NAME)
-    GET_FILENAME_COMPONENT(INPUT_BASE_NAME ${INPUT} NAME_WE)
-    GET_FILENAME_COMPONENT(INPUT_LOCAL_DIRECTORY ${INPUT} DIRECTORY)
-    set(INPUT_BASE "${INPUT_LOCAL_DIRECTORY}/${INPUT_BASE_NAME}")
+file(GLOB_RECURSE CLAD_COZMO_CPP_INPUT_FILE_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*U2G*.clad")
     
-    # C++
-    # HACK: use .def because xcode doesn't like generated headers
-    set(HPP_OUTPUT "${HPP_OUTPUT_DIRECTORY}/${INPUT_BASE}.def")
-    set(TAG_HPP_OUTPUT "${HPP_OUTPUT_DIRECTORY}/${INPUT_BASE}Tag.def")
-    set(CPP_OUTPUT "${CPP_OUTPUT_DIRECTORY}/${INPUT_BASE}.cpp")
-    
-    # C#
-    set(CS_OUTPUT "${CS_OUTPUT_DIRECTORY}/${INPUT_BASE_NAME}.cs")
-    
-    set(CLAD_OUTPUTS ${CLAD_OUTPUTS}
-        "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}")
-    
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
-        
-        COMMAND ${PYTHON} ${PYTHONFLAGS} ${RELATIVE_CLAD_DIR}/emitters/CPP_emitter.py
-            -C ${INPUT_DIRECTORY}
-            -r ${HPP_OUTPUT_DIRECTORY}
-            -o ${CPP_OUTPUT_DIRECTORY}
-            --header-output-extension .def
-            ${INPUT}
-        
-        MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
-        DEPENDS ${CLAD_DEPENDENCIES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        VERBATIM
-    )
-        
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}"
-        
-        COMMAND ${PYTHON} ${PYTHONFLAGS} ${RELATIVE_CLAD_DIR}/emitters/CSharp_emitter.py
-            -C ${INPUT_DIRECTORY}
-            --output-file ${CS_OUTPUT}
-            ${INPUT}
-        
-        MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
-        DEPENDS ${CLAD_DEPENDENCIES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        VERBATIM
-    )
-    
-    # Extra C++ generators for U2G messages only
-    if(${INPUT_BASE} MATCHES "U2G")
-        
-        set(CPP_DECLARATIONS_OUTPUT "${CPP_OUTPUT_DIRECTORY}/${INPUT_BASE}_declarations.def")
-        set(CPP_SWITCH_OUTPUT "${CPP_OUTPUT_DIRECTORY}/${INPUT_BASE}_switch.def")
-        
-        set(CLAD_OUTPUTS ${CLAD_OUTPUTS}
-            "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}")
-        
-        add_custom_command(
-            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
-        
-            COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_declarations_emitter.py
-                -C ${INPUT_DIRECTORY}
-                -o ${CPP_OUTPUT_DIRECTORY}
-                ${INPUT}
-        
-            MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
-            DEPENDS ${CLAD_DEPENDENCIES}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            VERBATIM
-        )
-        add_custom_command(
-            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}"
-        
-            COMMAND ${PYTHON} ${PYTHONFLAGS} emitters/cozmo_CPP_switch_emitter.py
-                -C ${INPUT_DIRECTORY}
-                -o ${CPP_OUTPUT_DIRECTORY}
-                ${INPUT}
-        
-            MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
-            DEPENDS ${CLAD_DEPENDENCIES}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            VERBATIM
-        )
-    endif()
-endforeach()
-
-add_custom_target(
-    Cozmo_Clad ALL
-    DEPENDS ${CLAD_OUTPUTS}
-    VERBATIM
-)
-
+create_clad_target("Cozmo_Game_Clad"
+    "${CLAD_INPUT_FILE_LIST}" "${CLAD_COZMO_CPP_INPUT_FILE_LIST}"
+    "src" "${COZMO_ENGINE_DIR}/clad/src/"
+    ""
+    "${PROJECT_SOURCE_DIR}/game/src" "${PROJECT_SOURCE_DIR}/game/include"
+    "${PROJECT_SOURCE_DIR}/unity/Cozmo/Assets/Scripts/MessageBuffers"
+    "")
