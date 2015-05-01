@@ -32,20 +32,20 @@ public class Robot
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject targetLockedObject = null;
 
-	public RobotActionType lastActionRequested = RobotActionType.UNKNOWN;
-	public bool searching = false;
+	public RobotActionType lastActionRequested;
+	public bool searching;
 
-	private int carryingObjectID = -1;
-	private int headTrackingObjectID = -1;
-	private int lastHeadTrackingObjectID = -1;
+	private int carryingObjectID;
+	private int headTrackingObjectID;
+	private int lastHeadTrackingObjectID;
 
-	private float headAngleRequested = float.MaxValue;
-	private float lastHeadAngleRequestTime = 0f;
-	private float liftHeightRequested = float.MaxValue;
-	private float lastLiftHeightRequestTime = 0f;
+	private float headAngleRequested;
+	private float lastHeadAngleRequestTime;
+	private float liftHeightRequested;
+	private float lastLiftHeightRequestTime;
 
 
-	private ObservedObject _carryingObject = null;
+	private ObservedObject _carryingObject;
 	public ObservedObject carryingObject
 	{
 		get
@@ -56,7 +56,7 @@ public class Robot
 		}
 	}
 
-	private ObservedObject _headTrackingObject = null;
+	private ObservedObject _headTrackingObject;
 	public ObservedObject headTrackingObject
 	{
 		get
@@ -121,7 +121,6 @@ public class Robot
 
 	// er, should be 5?
 	private const float MaxVoltage = 5.0f;
-	private const float defaultHeadAngle = 0f;
 
 	[System.FlagsAttribute]
 	public enum StatusFlag
@@ -164,6 +163,8 @@ public class Robot
 		markersVisibleObjects = new List<ObservedObject>();
 		lastMarkersVisibleObjects = new List<ObservedObject>();
 		knownObjects = new List<ObservedObject>();
+
+		ClearData();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
@@ -215,10 +216,23 @@ public class Robot
 		headTrackingObjectID = -1;
 		lastHeadTrackingObjectID = -1;
 		targetLockedObject = null;
+		_carryingObject = null;
+		_headTrackingObject = null;
 		searching = false;
 		lastActionRequested = RobotActionType.UNKNOWN;
 		headAngleRequested = float.MaxValue;
 		liftHeightRequested = float.MaxValue;
+		headAngle_rad = float.MaxValue;
+		poseAngle_rad = float.MaxValue;
+		leftWheelSpeed_mmps = float.MaxValue;
+		rightWheelSpeed_mmps = float.MaxValue;
+		liftHeight_mm = float.MaxValue;
+		batteryPercent = float.MaxValue;
+		LastWorldPosition = Vector3.zero;
+		WorldPosition = Vector3.zero;
+		LastRotation = Quaternion.identity;
+		Rotation = Quaternion.identity;
+		localBusyTimer = 0f;
 	}
 
 	public void ClearObservedObjects()
@@ -338,19 +352,19 @@ public class Robot
 	}
 
 
-	public void SetHeadAngle( float angle_rad = 0f) //defaultHeadAngle )
+	public void SetHeadAngle( float angle_rad = 0f )
 	{
-		if( headTrackingObject != -1 ) // if head tracking skip?
+		if( headTrackingObject == -1 ) // if not head tracking, don't send same message as last
+		{
+			if( Mathf.Abs( angle_rad - headAngle_rad ) < 0.001f || Mathf.Abs( headAngleRequested - angle_rad ) < 0.001f )
+			{
+				return;
+			}
+		}
+		else if( Time.time < lastHeadAngleRequestTime + CozmoUtil.LOCAL_BUSY_TIME ) // else, override head tracking after delay
 		{
 			return;
 		}
-
-		if( Time.time < lastHeadAngleRequestTime + CozmoUtil.LOCAL_BUSY_TIME && headAngleRequested == angle_rad)
-		{
-			return;
-		}
-
-		if(Mathf.Abs(angle_rad - headAngle_rad) < 0.001f) return;
 
 		headAngleRequested = angle_rad;
 		lastHeadAngleRequestTime = Time.time;
@@ -438,7 +452,6 @@ public class Robot
 
 	public void SetLiftHeight( float height )
 	{
-
 		if(Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height == liftHeightRequested) return;
 
 		if( liftHeight_mm == height )
