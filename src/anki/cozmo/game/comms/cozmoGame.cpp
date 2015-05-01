@@ -268,7 +268,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("CozmoGameImpl.Update",
                             "No ping from UI in %.2f seconds, but NOT ressetting.\n",
                             timeSinceLastUiPing);
-        _lastPingCounterFromUI = -1.f;
+        _lastPingTimeFromUI_sec = -1.f;
       }
     }
     
