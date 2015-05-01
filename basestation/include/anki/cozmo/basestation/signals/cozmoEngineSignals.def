@@ -62,8 +62,8 @@ DEF_SIGNAL(RobotObservedFace,
 // TODO: currently success is just true/false, acutally return ActionResult codes
 DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
-           RobotActionType actionType,   // See actionTypes.h
-           ActionResult result,          // See actionTypes.h
+           RobotActionType actionType,   // See actionTypes.def
+           ActionResult result,          // See actionTypes.def
            int32_t objectID0,            // Optional
            int32_t objectID1,            // Optional
            int32_t objectID2,            // Optional
