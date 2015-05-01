@@ -55,7 +55,7 @@ public class GoldRushGameActions : GameActions {
 		buttons = ActionPanel.instance.actionButtons;
 		
 		if( robot.isBusy ) return;
-		
+
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
 			if( gameController.state == GameController.GameState.PRE_GAME )
@@ -65,7 +65,14 @@ public class GoldRushGameActions : GameActions {
 
 			if( gameController.inDepositRange || gameController.inExtractRange )
 			{
-				buttons[0].SetMode( ActionButton.Mode.DROP, null );
+				if( buttons.Length > 2 && isSlider )
+				{
+					buttons[2].SetMode( ActionButton.Mode.DROP, null );
+				}
+				else if( buttons.Length > 0 )
+				{
+					buttons[0].SetMode( ActionButton.Mode.DROP, null );
+				}
 			}
 		}
 		else
@@ -101,7 +108,7 @@ public class GoldRushGameActions : GameActions {
 			}
 		}
 	}
-	
+
 	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;
