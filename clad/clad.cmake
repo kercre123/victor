@@ -11,24 +11,6 @@ set(COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 get_filename_component(CLAD_DIR "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/../tools/message-buffers" ABSOLUTE)
 
 
-# You must include the target ${CLAD_CPP_LIBRARY_NAME} in any library that includes CLAD C++ code.
-set(CLAD_CPP_LIBRARY_NAME "Clad_Support_Cpp")
-include_directories("${CLAD_DIR}/support/cpp/include")
-
-# Internal only (define C++ support library, once.)
-GET_PROPERTY(CLAD_INCLUSION_GUARD GLOBAL PROPERTY CladInclusionGuard) 
-if(NOT CLAD_INCLUSION_GUARD)
-    SET_PROPERTY(GLOBAL PROPERTY CladInclusionGuard "TRUE")
-    
-    file(GLOB CLAD_SUPPORT_CPP
-        "${CLAD_DIR}/support/cpp/include/CLAD/*.h"
-        "${CLAD_DIR}/support/cpp/source/*.cpp")
-    add_library(
-        ${CLAD_CPP_LIBRARY_NAME} STATIC
-        ${CLAD_SUPPORT_CPP})
-endif()
-
-
 # Only needed internally.
 # Every time any clad python file changes, we want to rerun clad
 # Make sure these are absolute
@@ -52,9 +34,12 @@ set(CLAD_DEPENDENCIES "${CLAD_DEPENDENCIES}" "${CLAD_SUPPORT_DEPENDENCIES}")
 #
 # VARIABLE_NAME: The name of the variable to set.
 # DIRECTORY: The directory to make it relative to.
-# PATH: The name of the ${CMAKE_CURRENT_SOURCE_DIR}-relative or absolute path.
+# PATH_LIST: The name of the ${CMAKE_CURRENT_SOURCE_DIR}-relative or absolute path.
 #
 function(make_relative VARIABLE_NAME DIRECTORY PATH_LIST)
+    
+    # ABSOLUTE also cleans up .. entries
+    get_filename_component(DIRECTORY "${DIRECTORY}" ABSOLUTE)
     
     set(RESULT_LIST "")
     foreach(PATH ${PATH_LIST})
@@ -70,6 +55,29 @@ function(make_relative VARIABLE_NAME DIRECTORY PATH_LIST)
     # PARENT_SCOPE makes changes the caller's scope
     set("${VARIABLE_NAME}" "${RESULT_LIST}" PARENT_SCOPE)
 endfunction(make_relative)
+
+
+# Sets a variable to the absolute, normalized version of a path or lists of paths.
+#
+# make_absolute(VARIABLE_NAME PATH_LIST)
+#
+# VARIABLE_NAME: The name of the variable to set.
+# PATH_LIST: The name of the ${CMAKE_CURRENT_SOURCE_DIR}-relative or absolute path.
+#
+function(make_absolute VARIABLE_NAME PATH_LIST)
+    
+    set(RESULT_LIST "")
+    foreach(PATH ${PATH_LIST})
+        # ABSOLUTE also cleans up .. entries
+        get_filename_component(PATH "${PATH}" ABSOLUTE)
+        set(RESULT_LIST ${RESULT_LIST} "${PATH}")
+    endforeach(PATH)
+    
+    #message("make_absolute ${VARIABLE_NAME}: ${PATH_LIST} -> ${RESULT_LIST}")
+    
+    # PARENT_SCOPE makes changes the caller's scope
+    set("${VARIABLE_NAME}" "${RESULT_LIST}" PARENT_SCOPE)
+endfunction(make_absolute)
 
 
 # Runs CLAD generation for a certain language on a certain file
@@ -128,7 +136,6 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
         set(COMMON_COMMAND_LINE ${COMMON_COMMAND_LINE} -I "${INCLUDE_DIRECTORY_LIST}")
     endif()
 
-    set(GENERATED_FILES "")
     foreach(INPUT ${INPUT_FILE_LIST})
         # Compute current clad INPUT file without extension
         GET_FILENAME_COMPONENT(INPUT_NAME "${INPUT}" NAME)
@@ -150,13 +157,13 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             set(TAG_HPP_OUTPUT "${HEADER_OUTPUT_DIRECTORY}/${INPUT_BASE}Tag.def")
             set(CPP_OUTPUT "${MAIN_OUTPUT_DIRECTORY}/${INPUT_BASE}.cpp")
             
-            set(GENERATED_FILES ${GENERATED_FILES}
+            set(GENERATED_FILES
                 "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}")
+            make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
             
             add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}" "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_OUTPUT}"
+                OUTPUT ${GENERATED_FILES}
                 
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${EMITTER_PATH}/CPP_emitter.py"
                     ${COMMON_COMMAND_LINE}
@@ -171,6 +178,9 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
                 VERBATIM
             )
             
+            set(GENERATED_FILES ${GENERATED_FILES}
+                "${CMAKE_CURRENT_SOURCE_DIR}/${TAG_HPP_OUTPUT}")
+            
         elseif("${EMITTER}" STREQUAL "cozmo_CPP")
             
             # HACK: use .def because xcode doesn't like generated headers
@@ -178,12 +188,13 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             set(CPP_DECLARATIONS_OUTPUT "${MAIN_OUTPUT_DIRECTORY}/${INPUT_BASE}_declarations.def")
             set(CPP_SWITCH_OUTPUT "${MAIN_OUTPUT_DIRECTORY}/${INPUT_BASE}_switch.def")
         
-            set(GENERATED_FILES ${GENERATED_FILES}
+            set(GENERATED_FILES
                 "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}")
-        
+            make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
+            
             add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
+                OUTPUT ${GENERATED_FILES}
         
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${CUSTOM_EMITTER_PATH}/cozmo_CPP_declarations_emitter.py"
                     ${COMMON_COMMAND_LINE}
@@ -214,11 +225,12 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             # C# uses a flattened directory structure
             set(CS_OUTPUT "${MAIN_OUTPUT_DIRECTORY}/${INPUT_BASE_NAME}.cs")
             
-            set(GENERATED_FILES ${GENERATED_FILES}
+            set(GENERATED_FILES
                 "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}")
+            make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
             
             add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CS_OUTPUT}"
+                OUTPUT ${GENERATED_FILES}
                 
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${EMITTER_PATH}/CSharp_emitter.py"
                     ${COMMON_COMMAND_LINE}
@@ -286,6 +298,8 @@ function(create_clad_target TARGET_NAME
         run_clad("CURRENT" "Python" "${INPUT_FILE_LIST}" "${INPUT_DIRECTORY}" "${INCLUDE_DIRECTORIES}" "${PYTHON_OUTPUT_DIRECTORY}")
         set(GENERATED_FILES ${GENERATED_FILES} ${CURRENT})
     endif()
+    
+    message("GENERATED_FILES: ${GENERATED_FILES}")
     
     if(GENERATED_FILES)
         add_custom_target(

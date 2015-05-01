@@ -7,9 +7,10 @@ if (NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
 endif(NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
 
 set(CORETECH_EXTERNAL_DIR $ENV{CORETECH_EXTERNAL_DIR})
-message("CORETECH_EXTERNAL_DIR = " ${CORETECH_EXTERNAL_DIR})
+message("-- CORETECH_EXTERNAL_DIR = " ${CORETECH_EXTERNAL_DIR})
 
 include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/clad/clad.cmake")
 
 if(NOT DEFINED ANKI_IOS_BUILD)
   set(ANKI_IOS_BUILD 0)
@@ -44,8 +45,6 @@ set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(COZMO_BASESTATION_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/basestation/include)
 file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/shared/*.h")
 
-message("COZMO_INCLUDE_DIR = " ${COZMO_INCLUDE_DIR})
-
 # This sets the root path for the PlatformPathManager when not on iOS
 if (NOT SYSTEM_ROOT_PATH_DEFINED)
   add_definitions(-DSYSTEM_ROOT_PATH=${PROJECT_SOURCE_DIR})
@@ -58,9 +57,11 @@ include_directories(
   coretech/messaging/include
   coretech/vision/include
   coretech/planning/include
+  ${CLAD_DIR}/support/cpp/include
 )
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
+add_subdirectory(clad)
 add_subdirectory(basestation)
 add_subdirectory(coretech)
 
