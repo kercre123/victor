@@ -96,7 +96,7 @@ public class GoldRushGameActions : GameActions {
 			}
 		}
 		
-		if( buttons.Length > 2 )
+		if( gameController.state == GameController.GameState.PRE_GAME && buttons.Length > 2 )
 		{
 			if( isSlider )
 			{
