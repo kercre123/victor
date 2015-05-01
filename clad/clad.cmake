@@ -25,7 +25,7 @@ if(NOT CLAD_INCLUSION_GUARD)
         "${CLAD_DIR}/support/cpp/source/*.cpp")
     add_library(
         ${CLAD_CPP_LIBRARY_NAME} STATIC
-        "${CLAD_SUPPORT_CPP}")
+        ${CLAD_SUPPORT_CPP})
 endif()
 
 
