@@ -323,7 +323,7 @@ public class GameActions : MonoBehaviour
 
 	public virtual void Target( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( onRelease ) return;
 
 		if( robot != null )
 		{
