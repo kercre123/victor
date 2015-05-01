@@ -65,7 +65,7 @@ function(make_relative VARIABLE_NAME DIRECTORY PATH_LIST)
         set(RESULT_LIST ${RESULT_LIST} "${PATH}")
     endforeach(PATH)
     
-    message("make_relative ${VARIABLE_NAME}: ${PATH_LIST} -> ${RESULT_LIST}")
+    #message("make_relative ${VARIABLE_NAME}: ${PATH_LIST} -> ${RESULT_LIST}")
     
     # PARENT_SCOPE makes changes the caller's scope
     set("${VARIABLE_NAME}" "${RESULT_LIST}" PARENT_SCOPE)
