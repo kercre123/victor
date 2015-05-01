@@ -32,7 +32,7 @@ public class Robot
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public ObservedObject targetLockedObject = null;
 
-	public ActionCompleted lastActionRequested = ActionCompleted.UNKNOWN;
+	public RobotActionType lastActionRequested = RobotActionType.UNKNOWN;
 	public bool searching = false;
 
 	private int carryingObjectID = -1;
@@ -216,7 +216,7 @@ public class Robot
 		lastHeadTrackingObjectID = -1;
 		targetLockedObject = null;
 		searching = false;
-		lastActionRequested = ActionCompleted.UNKNOWN;
+		lastActionRequested = RobotActionType.UNKNOWN;
 		headAngleRequested = float.MaxValue;
 		liftHeightRequested = float.MaxValue;
 	}

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Anki.Cozmo;
 
 public class SuccessOrFailureText : ScreenMessage
 {
@@ -26,7 +27,7 @@ public class SuccessOrFailureText : ScreenMessage
 		}
 	}
 
-	private void SuccessOrFailure( bool s, ActionCompleted action_type )
+	private void SuccessOrFailure( bool s, RobotActionType action_type )
 	{
 		if( s )
 		{

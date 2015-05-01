@@ -158,8 +158,8 @@ message DeviceDetectedVisionMarker {
 // TODO: Add action type, more informative result codes...
 message RobotCompletedAction {
     uint_32 robotID,
-    int_32  actionType,    // see enum in actionTypes.h
-    int_32  result,        // see enum in actionTypes.h
+    int_32  actionType,    // see enum in actionTypes.def
+    int_32  result,        // see enum in actionTypes.def
     int_32  objectIDs[5],  // For Pick & Place actions, the stack of object IDs, from bottom, -1 if none
     uint_8  numObjects     // Number of objects in stack (objectsIDs >= 0)
 }
