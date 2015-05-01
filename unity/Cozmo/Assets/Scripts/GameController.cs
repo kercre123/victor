@@ -392,7 +392,7 @@ public class GameController : MonoBehaviour {
 		if (notificationAudio != null) 
 		{
 			notificationAudio.Stop ();
-			Debug.Log ("Should be playing " + clip.name);
+			Debug.LogWarning ("Should be playing " + clip.name);
 			notificationAudio.PlayOneShot (clip);
 		}
 	}

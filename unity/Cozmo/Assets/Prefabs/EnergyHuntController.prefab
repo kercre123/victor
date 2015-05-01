@@ -500,7 +500,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 3
   m_audioClip: {fileID: 8300000, guid: 3a92989e3fa2e409796d5978fe2e138f, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -1201,6 +1201,7 @@ MonoBehaviour:
   baseTimeBonus: 30
   bonusTimeDecay: .666666687
   resultsScore: {fileID: 11413718}
+  testpitch: 1
 --- !u!114 &11425404
 MonoBehaviour:
   m_ObjectHideFlags: 1
