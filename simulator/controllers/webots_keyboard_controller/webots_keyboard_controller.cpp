@@ -31,7 +31,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/actionTypes.h"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
 
 #include <stdio.h>
 #include <string.h>

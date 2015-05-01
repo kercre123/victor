@@ -278,26 +278,26 @@ public class GameLayoutTracker : MonoBehaviour {
 		buttonStartPlaying.gameObject.SetActive(Phase == LayoutTrackerPhase.COMPLETE);
 	}
 
-	void SuccessOrFailure(bool success, ActionCompleted action_type) {
+	void SuccessOrFailure(bool success, RobotActionType action_type) {
 		if(Phase != LayoutTrackerPhase.BUILDING) return;
 
 		bool validate = false;
 
 		switch(action_type) {
-			case ActionCompleted.UNKNOWN://	ACTION_UNKNOWN = -1,
+			case RobotActionType.UNKNOWN://	ACTION_UNKNOWN = -1,
 				break;
-			case ActionCompleted.DRIVE_TO_POSE:
+			case RobotActionType.DRIVE_TO_POSE:
 				break;
-			case ActionCompleted.DRIVE_TO_OBJECT:
+			case RobotActionType.DRIVE_TO_OBJECT:
 				break;
-			case ActionCompleted.DRIVE_TO_PLACE_CARRIED_OBJECT:
+			case RobotActionType.DRIVE_TO_PLACE_CARRIED_OBJECT:
 				break;
-			case ActionCompleted.TURN_IN_PLACE:
+			case RobotActionType.TURN_IN_PLACE:
 				break;
-			case ActionCompleted.MOVE_HEAD_TO_ANGLE:
+			case RobotActionType.MOVE_HEAD_TO_ANGLE:
 				break;
-			case ActionCompleted.PICKUP_OBJECT_LOW:
-			case ActionCompleted.PICKUP_OBJECT_HIGH:
+			case RobotActionType.PICKUP_OBJECT_LOW:
+			case RobotActionType.PICKUP_OBJECT_HIGH:
 				BuildInstructionsCube layoutCubeMatchingCarried = null;
 				if(robot.carryingObject >= 0) {
 					for(int i=0;i<currentLayout.blocks.Count;i++) {
@@ -326,18 +326,18 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 				
 				break;
-			case ActionCompleted.PLACE_OBJECT_LOW:
-			case ActionCompleted.PLACE_OBJECT_HIGH:
+			case RobotActionType.PLACE_OBJECT_LOW:
+			case RobotActionType.PLACE_OBJECT_HIGH:
 				validate = true;
 				break;
-			case ActionCompleted.CROSS_BRIDGE:
-			case ActionCompleted.ASCEND_OR_DESCEND_RAMP:
-			case ActionCompleted.TRAVERSE_OBJECT:
-			case ActionCompleted.DRIVE_TO_AND_TRAVERSE_OBJECT:
-			case ActionCompleted.FACE_OBJECT:
-			case ActionCompleted.PLAY_ANIMATION:
-			case ActionCompleted.PLAY_SOUND:
-			case ActionCompleted.WAIT:
+			case RobotActionType.CROSS_BRIDGE:
+			case RobotActionType.ASCEND_OR_DESCEND_RAMP:
+			case RobotActionType.TRAVERSE_OBJECT:
+			case RobotActionType.DRIVE_TO_AND_TRAVERSE_OBJECT:
+			case RobotActionType.FACE_OBJECT:
+			case RobotActionType.PLAY_ANIMATION:
+			case RobotActionType.PLAY_SOUND:
+			case RobotActionType.WAIT:
 				break;
 		}
 
