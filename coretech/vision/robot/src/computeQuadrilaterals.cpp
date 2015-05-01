@@ -136,6 +136,8 @@ namespace Anki
 
       s32 startComponentIndex = 0;
 
+      //printf("components.get_maximumId() = %d\n", components.get_maximumId());
+
       // Go throught the list of components, and for each id, extract a quadrilateral. If the
       // quadrilateral looks reasonable, add it to the list extractedQuads.
       for(s32 iComponent=0; iComponent<components.get_maximumId(); iComponent++) {
@@ -148,10 +150,12 @@ namespace Anki
           return lastResult;
         //EndBenchmark("TraceNextExteriorBoundary");
 
-        if(extractedBoundary.get_size() == 0)
-          continue;
+        //printf("extractedBoundary.size = %d\n", extractedBoundary.get_size());
 
         startComponentIndex = endComponentIndex + 1;
+
+        if(extractedBoundary.get_size() == 0)
+          continue;
 
         //BeginBenchmark("ExtractLaplacianPeaks");
         // 2. Compute the Laplacian peaks
@@ -164,6 +168,12 @@ namespace Anki
 
         Quadrilateral<s16> quad(peaks[0], peaks[1], peaks[2], peaks[3]);
         Quadrilateral<s16> quadSwapped;
+
+        /*printf("curQuad = (%d,%d), (%d,%d), (%d,%d), (%d,%d)\n", 
+          quad[0].x, quad[0].y,
+          quad[1].x, quad[1].y,
+          quad[2].x, quad[2].y,
+          quad[3].x, quad[3].y);*/
 
         // 3. If the quadraleteral is reasonable, add the quad to the list of extractedQuads
         // IsQuadrilateralValidAndUpdateOrdering also changes the order of the points, into the non-rotated and corner-opposite format

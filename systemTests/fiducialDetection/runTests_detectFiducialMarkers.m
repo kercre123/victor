@@ -1,10 +1,10 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
 % On PC
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
 
 % On Mac
-% allCompiledResults = runTests_detectFiducialMarkers('~/Code/products-cozmo-large-files/systemTestsData/scripts/fiducialDetection_*.json', '~/Code/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
@@ -30,10 +30,16 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %         'matlab_with_refinement_jpg'};
     
     % Run just the tests you want
+%     runWhichAlgorithms = {...
+%         'matlab_with_refinement',...
+%         'matlab_with_refinement_jpg',...
+%         'matlab_with_refinement_jpg_preprocess',...
+%         };
+
     runWhichAlgorithms = {...
-        'matlab_with_refinement',...
-        'matlab_with_refinement_jpg',...
-        'matlab_with_refinement_jpg_preprocess',...
+        'c_with_refinement',...
+        'c_with_refinement_jpg',...
+        'c_with_refinement_nathanJpg',...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -161,6 +167,89 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
             end % showJpgResults
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement_jpg')
+            isSimpleTest = false;
+            
+            showJpgResults = true;
+            
+            jpgCompression = round(linspace(0,100,10));
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_jpg = zeros(length(jpgCompression)+2, 1);
+            compressionPercent_jpg = zeros(length(jpgCompression)+2, 1);
+            
+            for iJpg = 1:length(jpgCompression)
+                algorithmParametersN = algorithmParametersOrig;
+                algorithmParametersN.useMatlabForAll = false;
+                algorithmParametersN.extractionFunctionName = sprintf('c_with_refinement_jpg%d', jpgCompression(iJpg));
+                algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
+                
+                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                
+                percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
+                compressionPercent_jpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                
+                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+            end % for iJpg = 1:length(jpgCompression)
+            
+            if showJpgResults
+                figure();
+                percentMarkersCorrect_jpg((length(jpgCompression)+1):end) = 100 * resultsData.('c_with_refinement').percentMarkersCorrect;
+                compressionPercent_jpg(length(jpgCompression)+1) = 100 * resultsData.('c_with_refinement').compressedFileSizeTotal / resultsData.('c_with_refinement').uncompressedFileSizeTotal;
+                compressionPercent_jpg(end) = 100;
+                plot(compressionPercent_jpg, percentMarkersCorrect_jpg, 'LineWidth', 1);
+                axis([0,100,0,100]);
+                xlabel('File size (percent)')
+                ylabel('Markers detected (percent)')
+                title('Accuracy of fiducial detection with different amounts of jpg compression')
+                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
+                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
+            end % showJpgResults
+            
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement_nathanJpg')
+            isSimpleTest = false;
+            
+            showJpgResults = true;
+            
+            jpgCompression = round(linspace(0,100,10));
+%             jpgCompression = jpgCompression(end:-1:1);
+            percentMarkersCorrect_nathanJpg = zeros(length(jpgCompression)+2, 1);
+            compressionPercent_nathanJpg = zeros(length(jpgCompression)+2, 1);
+            
+            for iJpg = 1:length(jpgCompression)
+                algorithmParametersN = algorithmParametersOrig;
+                algorithmParametersN.useMatlabForAll = false;
+                algorithmParametersN.extractionFunctionName = sprintf('c_with_refinement_nathanJpg%d', jpgCompression(iJpg));
+                algorithmParametersN.imageCompression = {'nathanJpg', jpgCompression(iJpg)};
+                
+                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
+                
+                percentMarkersCorrect_nathanJpg(iJpg) = 100 * curResults.percentMarkersCorrect;
+                compressionPercent_nathanJpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
+                
+                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+            end % for iJpg = 1:length(jpgCompression)
+            
+            if showJpgResults
+                figure();
+                percentMarkersCorrect_nathanJpg((length(jpgCompression)+1):end) = 100 * resultsData.('c_with_refinement').percentMarkersCorrect;
+                compressionPercent_nathanJpg(length(jpgCompression)+1) = 100 * resultsData.('c_with_refinement').compressedFileSizeTotal / resultsData.('c_with_refinement').uncompressedFileSizeTotal;
+                compressionPercent_nathanJpg(end) = 100;
+                
+                hold off
+                plot(compressionPercent_jpg, percentMarkersCorrect_jpg, 'b', 'LineWidth', 1); % You have to run "c_with_refinement_jpg" first, or else comment out this line
+                
+                hold on
+                plot(compressionPercent_nathanJpg, percentMarkersCorrect_nathanJpg, 'g+', 'LineWidth', 1);
+                
+                axis([0,100,0,100]);
+                xlabel('File size (percent)')
+                ylabel('Markers detected (percent)')
+                title('Accuracy of fiducial detection with different amounts of nathanJpg compression')
+                disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_nathanJpg), ']'])
+                disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_nathanJpg), ']'])
+            end % showJpgResults            
             
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
             isSimpleTest = false;

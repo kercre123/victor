@@ -541,6 +541,8 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
+      _waitToVerifyTime = -1.f;
+      
       Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
@@ -670,6 +672,11 @@ namespace Anki {
       
       if(compoundResult != ActionResult::SUCCESS) {
         return compoundResult;
+      }
+
+      // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+      if (robot.IsHeadMoving()) {
+        _waitToVerifyTime = -1;
       }
 
       const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -1070,6 +1077,11 @@ namespace Anki {
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+        if (robot.IsHeadMoving()) {
+          _waitToVerifyTime = -1;
+        }
         
         // Set the verification time if not already set
         if(_waitToVerifyTime < 0.f) {

@@ -22,6 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 //#define SHOW_DRAWN_COMPONENTS
+//#define SEND_COMPONENTS_TO_MATLAB
 
 namespace Anki
 {
@@ -227,6 +228,44 @@ namespace Anki
       }
 #endif
 
+#ifdef SEND_COMPONENTS_TO_MATLAB
+      {
+        Anki::Embedded::Matlab matlab(false);
+
+        const s32 numComponents = extractedComponents.get_size();
+
+        std::shared_ptr<s16> xStart(new s16[numComponents]);
+        std::shared_ptr<s16> xEnd(new s16[numComponents]);
+        std::shared_ptr<s16> y(new s16[numComponents]);
+
+        s16 * restrict pXStart = xStart.get();
+        s16 * restrict pXEnd = xEnd.get();
+        s16 * restrict pY = y.get();
+
+        if(maxConnectedComponentSegments <= u16_MAX) {
+          const ConnectedComponentSegment<u16> * restrict pComponents = extractedComponents.get_componentsU16()->Pointer(0);
+
+          std::shared_ptr<u16> id(new u16[numComponents]);
+          
+          u16 * restrict pId = id.get();
+
+          for(s32 i=0; i<numComponents; i++) {
+            pXStart[i] = pComponents[i].xStart;
+            pXEnd[i] = pComponents[i].xEnd;
+            pY[i] = pComponents[i].y;
+            pId[i] = pComponents[i].id;
+          }
+
+          matlab.Put<s16>(pXStart, numComponents, "xStart");
+          matlab.Put<s16>(pXEnd, numComponents, "xEnd");
+          matlab.Put<s16>(pY, numComponents, "y");
+          matlab.Put<u16>(pId, numComponents, "id");
+        } else {
+          //TODO: implement
+        }      
+      }
+#endif
+
       // 4. Compute candidate quadrilaterals from the connected components
       {
         BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
@@ -236,6 +275,8 @@ namespace Anki
           return lastResult;
 
         markers.set_size(extractedQuads.get_size());
+
+        //printf("quads %d\n", extractedQuads.get_size());
 
         EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 

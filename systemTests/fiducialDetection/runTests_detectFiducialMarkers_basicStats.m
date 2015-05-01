@@ -44,11 +44,34 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
             
             % Note: Matlab's jpeg writer is not as good as ImageMagick's at low bitrates            
-            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});            
+            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
             
             image = imread(tmpFilename);
             
             fileInfo = dir(tmpFilename);
+        elseif strcmp(algorithmParameters.imageCompression{1}, 'nathanJpg') || strcmp(algorithmParameters.imageCompression{1}, 'nathanJpeg')
+            nathanJpegExecutableFilename = '~/Documents/Anki/products-cozmo/systemTests/enjpeg-test'; % If this doesn't exist, compile it with: gcc enjpeg.cpp enjpeg-test.cpp -o enjpeg-test
+            
+            tmpBmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.bmp'];
+            tmpRawFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.gray'];
+            tmpJpgFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
+                        
+            imwrite(image, tmpBmpFilename, 'bmp');
+            
+            system(sprintf('/usr/local/bin/convert %s %s', tmpBmpFilename, tmpRawFilename));
+            
+            quality = algorithmParameters.imageCompression{2};
+            if quality < 1
+                quality = 1;
+            elseif quality > 100
+                quality = 100;
+            end
+                        
+            system(sprintf('%s %s %s %dx%d %d', nathanJpegExecutableFilename, tmpRawFilename, tmpJpgFilename, size(image,2), size(image,1), quality));
+                        
+            image = imread(tmpJpgFilename);
+            
+            fileInfo = dir(tmpJpgFilename);
         else
             assert(false);
         end

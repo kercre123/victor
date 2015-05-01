@@ -4047,6 +4047,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
   image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
 
+  //Array<u8> image = Array<u8>::LoadImage("c:/Anki/products-cozmo-large-files/systemTestsData//trackingImages/tracking_00000_cozmo1_img_545642.jpg", scratchOffchip);
+
   //image.Show("image", true);
 
   // TODO: Check that the image loaded correctly
@@ -4100,7 +4102,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   //markers.Print("markers");
   //markers[0].Print();
-
+  
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
     // auto-generated header file
@@ -5784,7 +5786,7 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers);
-  CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
+  //CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark);
 
 #if defined(RUN_HIGH_MEMORY_TESTS)
   CALL_GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640);
