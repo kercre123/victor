@@ -299,7 +299,7 @@ function(create_clad_target TARGET_NAME
         set(GENERATED_FILES ${GENERATED_FILES} ${CURRENT})
     endif()
     
-    message("GENERATED_FILES: ${GENERATED_FILES}")
+    #message("GENERATED_FILES: ${GENERATED_FILES}")
     
     if(GENERATED_FILES)
         add_custom_target(
