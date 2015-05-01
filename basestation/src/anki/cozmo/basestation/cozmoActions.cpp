@@ -1368,6 +1368,9 @@ namespace Anki {
                 new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV),
                 new VisuallyVerifyObjectAction(_carryObjectID)
               });
+              
+              // Disable completion signals since this is inside another action
+              _placementVerifyAction->SetIsPartOfCompoundAction(true);
             }
             
             result = _placementVerifyAction->Update(robot);
@@ -1379,28 +1382,40 @@ namespace Anki {
               _placementVerifyAction = nullptr;
               
               if(result != ActionResult::SUCCESS) {
-                PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
-                                  "Robot thinks it placed the object, but verification of "
-                                  "placement failed. Not sure where carry object %d is, so deleting it.\n",
-                                  robot.GetCarryingObject().GetValue());
-                robot.GetBlockWorld().ClearObject(robot.GetCarryingObject());
+                if(_dockAction == DA_PLACE_LOW) {
+                  PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                    "Robot thinks it placed the object low, but verification of placement "
+                                    "failed. Not sure where carry object %d is, so deleting it.\n",
+                                    _carryObjectID.GetValue());
+                  
+                  robot.GetBlockWorld().ClearObject(_carryObjectID);
+                } else {
+                  assert(_dockAction == DA_PLACE_HIGH);
+                  PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                    "Robot thinks it placed the object high, but verification of placement "
+                                    "failed. Assuming we are still carying object %d.\n",
+                                    _carryObjectID.GetValue());
+                  
+                  robot.SetObjectAsAttachedToLift(_carryObjectID, _carryObjectMarker);
+                }
+
               }
-              else if(_dockAction == DA_PLACE_HIGH) {
+              else if(_dockAction == DA_PLACE_HIGH && !_verifyComplete) {
                 
                 // If we are placing high and verification succeeded, lower the lift
-                if(!_verifyComplete) {
-                  _verifyComplete = true;
+                _verifyComplete = true;
+                
+                if(result == ActionResult::SUCCESS) {
+                  // Visual verification succeeded, drop lift (otherwise, just
+                  // leave it up, since we are assuming we are still carrying the object)
+                  _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
                   
-                  // We still need to
-                  MoveLiftToHeightAction::Preset finalHeight = MoveLiftToHeightAction::Preset::CARRY;
-                  if(result == ActionResult::SUCCESS) {
-                    // Visual verification succeeded, drop lift
-                    finalHeight = MoveLiftToHeightAction::Preset::LOW_DOCK;
-                  }
-                  _placementVerifyAction = new MoveLiftToHeightAction(finalHeight);
+                  // Disable completion signals since this is inside another action
+                  _placementVerifyAction->SetIsPartOfCompoundAction(true);
+                  
                   result = ActionResult::RUNNING;
-                  
                 }
+
               }
             } // if(result != ActionResult::RUNNING)
             
