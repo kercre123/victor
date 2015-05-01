@@ -105,10 +105,24 @@ public class CozmoVision_AutoSelect : CozmoVision
 		}
 
 		RefreshFade();
-		if(robot.selectedObjects.Count > 0 && !robot.isBusy) {
+
+		bool allDisabled = true;
+
+		for( int i = 0; i < ActionPanel.instance.actionButtons.Length; ++i )
+		{
+			if( ActionPanel.instance.actionButtons[i].mode != ActionButton.Mode.DISABLED )
+			{
+				allDisabled = false;
+				break;
+			}
+		}
+
+		if( !allDisabled && !robot.isBusy )
+		{
 			FadeIn();
 		}
-		else {
+		else
+		{
 			FadeOut();
 		}
 
