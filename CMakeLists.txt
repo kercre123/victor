@@ -33,7 +33,7 @@ target_link_libraries(Cozmo_Game
   Cozmo_Basestation 
   CoreTech_Messaging_Basestation
   CoreTech_Common_Basestation
-  ${CLAD_CPP_LIBRARY_NAME}
+  Clad_Support_Cpp
 )
 
 add_dependencies(Cozmo_Game
