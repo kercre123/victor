@@ -322,24 +322,10 @@ namespace Anki {
 
       void ProcessDockWithObjectMessage(const DockWithObject& msg)
       {
-        if (msg.pixel_radius < u8_MAX) {
-          Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
-
-          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
-                                              static_cast<Vision::MarkerType>(msg.markerType2),
-                                              msg.markerWidth_mm,
-                                              markerCenter,
-                                              msg.pixel_radius,
-                                              msg.useManualSpeed,
+          PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
+        
+          PickAndPlaceController::DockToBlock(msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
-        } else {
-
-          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
-                                              static_cast<Vision::MarkerType>(msg.markerType2),
-                                              msg.markerWidth_mm,
-                                              msg.useManualSpeed,
-                                              static_cast<DockAction_t>(msg.dockAction));
-        }
       }
 
       void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)

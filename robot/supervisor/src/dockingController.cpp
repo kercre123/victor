@@ -78,9 +78,6 @@ namespace Anki {
         
         // Whether or not the robot is currently past point of no return
         bool pastPointOfNoReturn_ = false;
-        
-        // Code of the VisionMarker we are trying to dock to
-        Vision::MarkerType dockMarker_;
 
         Mode mode_ = IDLE;
         
@@ -794,34 +791,11 @@ namespace Anki {
       }
       
       
-      void StartDocking(const Vision::MarkerType& dockingMarker,
-                        const f32 markerWidth_mm,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool checkAngleX,
+      void StartDocking(const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM)
       {
-        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX, useManualSpeed, pointOfNoReturnDistMM);
-      }
-
-      void StartDocking(const Vision::MarkerType& dockingMarker,
-                        const f32 markerWidth_mm,
-                        const Embedded::Point2f &markerCenter, const u8 pixel_radius,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool checkAngleX,
-                        const bool useManualSpeed,
-                        const u32 pointOfNoReturnDistMM)
-      {
-        AnkiAssert(markerWidth_mm > 0.f);
-        
-        dockMarker_      = dockingMarker;
         dockOffsetDistX_ = dockOffsetDistX;
-        
-        if (pixel_radius == u8_MAX) {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, checkAngleX);
-        } else {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, markerCenter, static_cast<f32>(pixel_radius), checkAngleX);
-        }
         
         useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
@@ -872,21 +846,6 @@ namespace Anki {
         markerOutOfFOV_ = false;
         doHighDockLiftTracking_ = false;
         success_ = false;
-      }
-      
-      
-      void StartTrackingOnly(const Vision::MarkerType& trackingMarker,
-                             const f32 markerWidth_mm)
-      {
-        dockMarker_ = trackingMarker;
-        VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, false);
-        trackingOnly_ = true;
-        lastMarkerDistX_ = 0.f;
-        lastMarkerDistY_ = 0.f;
-        lastMarkerAng_ = 0.f;
-        
-        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-        mode_ = LOOKING_FOR_BLOCK;
       }
       
       bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle)

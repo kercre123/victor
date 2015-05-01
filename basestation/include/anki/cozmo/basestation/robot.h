@@ -733,12 +733,7 @@ namespace Anki {
       Result SendTransitionToStateAnimation(const char *transitionAnimName,
                                             const char *stateAnimName);
       
-      Result SendDockWithObject(const Vision::KnownMarker* marker,
-                                const Vision::KnownMarker* marker2,
-                                const DockAction_t dockAction,
-                                const u16 image_pixel_x,
-                                const u16 image_pixel_y,
-                                const u8 pixel_radius,
+      Result SendDockWithObject(const DockAction_t dockAction,
                                 const bool useManualSpeed);
       
       Result SendStartFaceTracking(const u8 timeout_sec);
