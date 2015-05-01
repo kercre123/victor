@@ -10,7 +10,7 @@
 #include "espconn.h"
 
 /** Packet buffer size */
-#define PKT_BUFFER_SIZE 1500
+#define PKT_BUFFER_SIZE 1472
 
 typedef enum
 {
