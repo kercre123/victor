@@ -885,7 +885,7 @@ GTEST_TEST(CoreTech_Vision, VisionMarkerImages)
 
 GTEST_TEST(CoreTech_Vision, LookupMarkerType)
 {
-  const s32 numNames = 24;
+  const s32 numNames = 18;
 
   const char *inputNames[numNames] = {
     "MARKER_0",
@@ -894,12 +894,6 @@ GTEST_TEST(CoreTech_Vision, LookupMarkerType)
     "0",
     "c:\\path\\0.png",
     "~/path/0.png",
-    "MARKER_INVERTED_ANKILOGOWITHBITS005",
-    "INVERTED_ANKILOGOWITHBITS005",
-    "inverted_ankilogowithbits005",
-    "INVeRTed_ANkiLOGOWITHBITS005",
-    "c:\\INVeRTed_ANkiLOGOWITHBITS005",
-    "~/INVeRTed_ANkiLOGOWITHBITS005",
     "MARKER_Y",
     "MarKER_Y",
     "Y",
@@ -920,12 +914,6 @@ GTEST_TEST(CoreTech_Vision, LookupMarkerType)
     Anki::Vision::MARKER_0,
     Anki::Vision::MARKER_0,
     Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
-    Anki::Vision::MARKER_INVERTED_ANKILOGOWITHBITS005,
     Anki::Vision::MARKER_Y,
     Anki::Vision::MARKER_Y,
     Anki::Vision::MARKER_Y,

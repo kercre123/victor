@@ -59,17 +59,17 @@ namespace Anki {
         length = 212.f;
         markerSize = 30.f;
         
-        leftMarkerType   = Vision::MARKER_BRIDGESUNLEFT;
-        rightMarkerType  = Vision::MARKER_BRIDGESUNRIGHT;
-        middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
+//        leftMarkerType   = Vision::MARKER_BRIDGESUNLEFT;
+//        rightMarkerType  = Vision::MARKER_BRIDGESUNRIGHT;
+//        middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
       }
       else if(Type::SHORT_BRIDGE == type) {
         length = 112.f;
         markerSize = 30.f;
         
-        leftMarkerType   = Vision::MARKER_BRIDGEMOONLEFT;
-        rightMarkerType  = Vision::MARKER_BRIDGEMOONRIGHT;
-        middleMarkerType = Vision::MARKER_BRIDGEMOONMIDDLE;
+//        leftMarkerType   = Vision::MARKER_BRIDGEMOONLEFT;
+//        rightMarkerType  = Vision::MARKER_BRIDGEMOONRIGHT;
+//        middleMarkerType = Vision::MARKER_BRIDGEMOONMIDDLE;
       }
       else {
         PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.\n");

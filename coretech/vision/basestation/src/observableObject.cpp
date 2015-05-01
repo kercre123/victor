@@ -32,6 +32,7 @@ namespace Anki {
     
     ObservableObject::ObservableObject()
     : _lastObservedTime(0)
+    , _numTimesObserved(0)
     {
       
     }

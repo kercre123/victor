@@ -187,7 +187,6 @@ namespace Anki {
       }
       
       // Make sure the projected corners are within the camera's field of view
-      // TODO: add some border padding?
       if(not camera.IsWithinFieldOfView(imgCorners[TopLeft], xBorderPad, yBorderPad)    ||
          not camera.IsWithinFieldOfView(imgCorners[TopRight], xBorderPad, yBorderPad)   ||
          not camera.IsWithinFieldOfView(imgCorners[BottomLeft], xBorderPad, yBorderPad) ||

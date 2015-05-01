@@ -52,7 +52,7 @@ namespace Anki {
       } else if(Type::LAVA_PLAYTEST == _type) {
 #         include "anki/cozmo/basestation/Mat_LavaPlayTest.def"
       } else if(Type::ANKI_LOGO_8BIT) {
-#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
+//#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
       } else {
           PRINT_NAMED_ERROR("FlatMat.UnrecognizedType", "Unknown FlatMat type specified at construction.\n");
           assert(false);
