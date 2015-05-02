@@ -100,8 +100,10 @@ namespace Anki {
       // Resets the receipt of init message
       void ResetInit();
       
+#     ifdef SIMULATOR
       // Send out a chunked up JPEG-compressed image
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime);
+#     endif 
       
     } // namespace Messages
   } // namespace Cozmo

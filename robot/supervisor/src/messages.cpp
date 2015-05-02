@@ -1002,6 +1002,8 @@ namespace Anki {
         imageSendResolution_ = Vision::CAMERA_RES_QVGA;
       }
 
+      
+#     ifdef SIMULATOR
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
       {
         Messages::ImageChunk m;
@@ -1072,6 +1074,8 @@ namespace Anki {
         
         return RESULT_OK;
       } // CompressAndSendImage()
+      
+#     endif // SIMULATOR
       
       
     } // namespace Messages
