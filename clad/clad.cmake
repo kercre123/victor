@@ -11,23 +11,6 @@ set(COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 get_filename_component(CLAD_DIR "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/../tools/message-buffers" ABSOLUTE)
 
 
-# Only needed internally.
-# Every time any clad python file changes, we want to rerun clad
-# Make sure these are absolute
-file(GLOB CLAD_DEPENDENCIES
-    "${CLAD_DIR}/clad/*.py"
-    "${CLAD_DIR}/emitters/*.py"
-    "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/emitters/*.py")
-# Detect any change in support libraries. (Ignore hidden files.)
-file(GLOB_RECURSE CLAD_SUPPORT_DEPENDENCIES
-    "${CLAD_DIR}/support/*.h"
-    "${CLAD_DIR}/support/*.c"
-    "${CLAD_DIR}/support/*.cpp"
-    "${CLAD_DIR}/support/*.cs"
-    "${CLAD_DIR}/support/*.py")
-set(CLAD_DEPENDENCIES "${CLAD_DEPENDENCIES}" "${CLAD_SUPPORT_DEPENDENCIES}")
-
-
 # Sets a variable to a relative version of a path or lists of paths after normalizing.
 #
 # make_relative(VARIABLE_NAME DIRECTORY PATH_LIST)
@@ -78,6 +61,24 @@ function(make_absolute VARIABLE_NAME PATH_LIST)
     # PARENT_SCOPE makes changes the caller's scope
     set("${VARIABLE_NAME}" "${RESULT_LIST}" PARENT_SCOPE)
 endfunction(make_absolute)
+
+
+# Only needed internally.
+# Every time any clad python file changes, we want to rerun clad
+# Make sure these are absolute
+file(GLOB CLAD_DEPENDENCIES
+    "${CLAD_DIR}/clad/*.py"
+    "${CLAD_DIR}/emitters/*.py"
+    "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/emitters/*.py")
+# Detect any change in support libraries. (Ignore hidden files.)
+file(GLOB_RECURSE CLAD_SUPPORT_DEPENDENCIES
+    "${CLAD_DIR}/support/*.h"
+    "${CLAD_DIR}/support/*.c"
+    "${CLAD_DIR}/support/*.cpp"
+    "${CLAD_DIR}/support/*.cs"
+    "${CLAD_DIR}/support/*.py")
+set(CLAD_DEPENDENCIES ${CLAD_DEPENDENCIES} ${CLAD_SUPPORT_DEPENDENCIES})
+make_absolute("CLAD_DEPENDENCIES" "${CLAD_DEPENDENCIES}")
 
 
 # Runs CLAD generation for a certain language on a certain file
@@ -135,7 +136,8 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
     if(INCLUDE_DIRECTORY_LIST)
         set(COMMON_COMMAND_LINE ${COMMON_COMMAND_LINE} -I "${INCLUDE_DIRECTORY_LIST}")
     endif()
-
+    
+    set(ALL_GENERATED_FILES "")
     foreach(INPUT ${INPUT_FILE_LIST})
         # Compute current clad INPUT file without extension
         GET_FILENAME_COMPONENT(INPUT_NAME "${INPUT}" NAME)
@@ -249,9 +251,10 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             message(FATAL_ERROR "Unknown CLAD emitter type \"${EMITTER}\"")
         endif()
         
+        set(ALL_GENERATED_FILES ${ALL_GENERATED_FILES} ${GENERATED_FILES})
     endforeach()
     
-    set("${GENERATED_FILES_VARIABLE_NAME}" "${GENERATED_FILES}" PARENT_SCOPE)
+    set("${GENERATED_FILES_VARIABLE_NAME}" "${ALL_GENERATED_FILES}" PARENT_SCOPE)
 endfunction(run_clad)
 
 
