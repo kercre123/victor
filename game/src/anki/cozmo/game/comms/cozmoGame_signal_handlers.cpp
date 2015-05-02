@@ -403,8 +403,8 @@ namespace Cozmo {
     G2U::RobotCompletedAction msg;
   
     msg.robotID = robotID;
-    msg.actionType = (s32)actionType;
-    msg.result = (s32)result;
+    msg.actionType = actionType;
+    msg.result = result;
     
     msg.objectIDs[0] = objectID0;
     msg.objectIDs[1] = objectID1;

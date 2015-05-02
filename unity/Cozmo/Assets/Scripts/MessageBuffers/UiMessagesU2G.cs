@@ -3877,10 +3877,10 @@ public class AbortAll
 
 public class CancelAction
 {
-	private int _actionType; // int_32
+	private Anki.Cozmo.RobotActionType _actionType; // RobotActionType
 	private byte _robotID; // uint_8
 
-	public int actionType { get { return _actionType; } set { _actionType = value; } }
+	public Anki.Cozmo.RobotActionType actionType { get { return _actionType; } set { _actionType = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
 
@@ -3891,7 +3891,7 @@ public class CancelAction
 	{
 	}
 
-	public CancelAction(int actionType,
+	public CancelAction(Anki.Cozmo.RobotActionType actionType,
 		byte robotID)
 	{
 		this.actionType = actionType;
@@ -3916,7 +3916,7 @@ public class CancelAction
 
 	public void Unpack(System.IO.BinaryReader reader)
 	{
-		_actionType = reader.ReadInt32();
+		_actionType = (Anki.Cozmo.RobotActionType)reader.ReadInt32();
 		_robotID = reader.ReadByte();
 	}
 

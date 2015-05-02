@@ -341,7 +341,7 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
-	public void CancelAction( int actionType = -1 )
+	public void CancelAction( RobotActionType actionType = RobotActionType.UNKNOWN )
 	{
 		U2G.CancelAction message = new U2G.CancelAction();
 		message.robotID = ID;

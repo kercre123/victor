@@ -416,7 +416,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )
 	{
-		bool success = message.result == 0; // NOTE: SUCCESS == 0 in ActionResult enum
+		bool success = (message.result == ActionResult.SUCCESS);
 		RobotActionType action_type = (RobotActionType)message.actionType;
 		Debug.Log("Action completed " + success);
 		

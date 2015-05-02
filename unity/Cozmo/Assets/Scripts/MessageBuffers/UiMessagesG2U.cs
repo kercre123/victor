@@ -1920,16 +1920,16 @@ public class DeviceDetectedVisionMarker
 public class RobotCompletedAction
 {
 	private uint _robotID; // uint_32
-	private int _actionType; // int_32
-	private int _result; // int_32
+	private Anki.Cozmo.RobotActionType _actionType; // RobotActionType
+	private Anki.Cozmo.ActionResult _result; // ActionResult
 	private int[] _objectIDs; // int_32[5]
 	private byte _numObjects; // uint_8
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
-	public int actionType { get { return _actionType; } set { _actionType = value; } }
+	public Anki.Cozmo.RobotActionType actionType { get { return _actionType; } set { _actionType = value; } }
 
-	public int result { get { return _result; } set { _result = value; } }
+	public Anki.Cozmo.ActionResult result { get { return _result; } set { _result = value; } }
 
 	public int[] objectIDs
 	{
@@ -1958,8 +1958,8 @@ public class RobotCompletedAction
 	}
 
 	public RobotCompletedAction(uint robotID,
-		int actionType,
-		int result,
+		Anki.Cozmo.RobotActionType actionType,
+		Anki.Cozmo.ActionResult result,
 		int[] objectIDs,
 		byte numObjects)
 	{
@@ -1989,8 +1989,8 @@ public class RobotCompletedAction
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_robotID = reader.ReadUInt32();
-		_actionType = reader.ReadInt32();
-		_result = reader.ReadInt32();
+		_actionType = (Anki.Cozmo.RobotActionType)reader.ReadInt32();
+		_result = (Anki.Cozmo.ActionResult)reader.ReadInt32();
 		_objectIDs = new int[5];
 		for (int i = 0; i < 5; ++i) {
 			_objectIDs[i] = reader.ReadInt32();

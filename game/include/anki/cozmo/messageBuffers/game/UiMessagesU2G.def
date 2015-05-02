@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/messageBuffers/game/UiMessagesU2GTag.def"
 
+#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+
 namespace Anki {
 
 namespace Cozmo {
@@ -1255,7 +1257,7 @@ struct AbortAll
 // MESSAGE CancelAction
 struct CancelAction
 {
-	int32_t actionType;
+	Anki::Cozmo::RobotActionType actionType;
 	uint8_t robotID;
 	
 	/**** Constructors ****/
@@ -1266,7 +1268,7 @@ struct CancelAction
 	CancelAction& operator=(const CancelAction& other) = default;
 	CancelAction& operator=(CancelAction&& other) noexcept = default;
 	
-	explicit CancelAction(int32_t actionType
+	explicit CancelAction(Anki::Cozmo::RobotActionType actionType
 		,uint8_t robotID)
 	:actionType(actionType)
 	,robotID(robotID)
