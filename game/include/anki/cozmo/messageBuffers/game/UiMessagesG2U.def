@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/messageBuffers/game/UiMessagesG2UTag.def"
 
+#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+
 namespace Anki {
 
 namespace Cozmo {
@@ -594,8 +596,8 @@ struct DeviceDetectedVisionMarker
 struct RobotCompletedAction
 {
 	uint32_t robotID;
-	int32_t actionType;
-	int32_t result;
+	Anki::Cozmo::RobotActionType actionType;
+	Anki::Cozmo::ActionResult result;
 	std::array<int32_t, 5> objectIDs;
 	uint8_t numObjects;
 	
@@ -608,8 +610,8 @@ struct RobotCompletedAction
 	RobotCompletedAction& operator=(RobotCompletedAction&& other) noexcept = default;
 	
 	explicit RobotCompletedAction(uint32_t robotID
-		,int32_t actionType
-		,int32_t result
+		,Anki::Cozmo::RobotActionType actionType
+		,Anki::Cozmo::ActionResult result
 		,const std::array<int32_t, 5>& objectIDs
 		,uint8_t numObjects)
 	:robotID(robotID)

@@ -2245,7 +2245,7 @@ size_t CancelAction::Size() const
 {
 	size_t result = 0;
 	//actionType
-	result += 4; // = int_32
+	result += 4; // = RobotActionType
 	//robotID
 	result += 1; // = uint_8
 	return result;

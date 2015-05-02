@@ -1052,9 +1052,9 @@ size_t RobotCompletedAction::Size() const
 	//robotID
 	result += 4; // = uint_32
 	//actionType
-	result += 4; // = int_32
+	result += 4; // = RobotActionType
 	//result
-	result += 4; // = int_32
+	result += 4; // = ActionResult
 	//objectIDs
 	result += 4 * 5; // = int_32 * 5
 	//numObjects

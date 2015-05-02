@@ -37,4 +37,5 @@ target_link_libraries(Cozmo_Game
 )
 
 add_dependencies(Cozmo_Game
-    Cozmo_Game_Clad)
+    Cozmo_Game_Clad
+    Cozmo_Engine_Clad_CS)
