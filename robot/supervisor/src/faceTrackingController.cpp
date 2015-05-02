@@ -18,13 +18,14 @@
 
 #include "anki/common/robot/errorHandling.h"
 
+#include "anki/cozmo/robot/hal.h"
+
 #include "faceTrackingController.h"
 #include "headController.h"
 #include "localization.h"
 #include "messages.h"
 #include "steeringController.h"
-#include "visionParameters.h"
-#include "visionSystem.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -69,12 +70,12 @@ namespace Anki {
       } // "private" namespace
       
       
-      Result Init(const VisionSystem::FaceDetectionParameters& params)
+      Result Init(const int faceDetectionWidth, const int faceDetectionHeight)
       {
-        AnkiConditionalErrorAndReturnValue(params.isInitialized, RESULT_FAIL, "FaceTrackingController.Init.UninitializedParameters", "FaceDetectionParameters should be initialized when passed to FaceTrackingController::Init().\n");
+        //AnkiConditionalErrorAndReturnValue(params.isInitialized, RESULT_FAIL, "FaceTrackingController.Init.UninitializedParameters", "FaceDetectionParameters should be initialized when passed to FaceTrackingController::Init().\n");
         
-        _xImageCenter = params.faceDetectionWidth/2;
-        _yImageCenter = params.faceDetectionHeight/2;
+        _xImageCenter = faceDetectionWidth/2;
+        _yImageCenter = faceDetectionHeight/2;
         
         _selectionMethod = LARGEST;
         
@@ -86,7 +87,7 @@ namespace Anki {
                                            "FaceTrackingController.Init.NullCamInfo", "Got null pointer from HAL for camera info.\n");
         
         // Get scaled focal length for the resolution we're actually doing detection
-        const f32 adjFactor = static_cast<f32>(params.faceDetectionHeight) / static_cast<f32>(camInfo->nrows);
+        const f32 adjFactor = static_cast<f32>(faceDetectionHeight) / static_cast<f32>(camInfo->nrows);
         _focalLength_pix = camInfo->focalLength_y * adjFactor;
         
         _isInitialized = true;
@@ -254,7 +255,7 @@ namespace Anki {
             */
           } else if(_isTracking && HAL::GetMicroCounter() > _currentFace.timeoutTime_usec) {
             PRINT("FaceTrackingController timed out. Stopping tracking.\n");
-            VisionSystem::StopTracking();
+            //VisionSystem::StopTracking();
             _isStarted  = false;
             _isTracking = false;
           }

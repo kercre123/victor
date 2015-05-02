@@ -38,7 +38,7 @@ namespace Anki {
         CENTERED
       };
       
-      Result Init(const VisionSystem::FaceDetectionParameters& params);
+      Result Init(const int faceDetectionWidth, const int faceDetectionHeight);
 
       Result StartTracking(FaceSelectionMethod method, u32 timeout_sec);
       

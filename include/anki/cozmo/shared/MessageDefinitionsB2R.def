@@ -144,14 +144,7 @@ END_MESSAGE_DEFINITION(ExecutePath)
 // DockWithObject
 START_MESSAGE_DEFINITION(DockWithObject, 1)
 ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking object. Don't know if this will work yet.
-ADD_MESSAGE_MEMBER(f32, markerWidth_mm)
-ADD_MESSAGE_MEMBER(u16, image_pixel_x)
-ADD_MESSAGE_MEMBER(u16, image_pixel_y)
-ADD_MESSAGE_MEMBER(u8, pixel_radius)  // Marker must be found within this many pixels of specified coordinates,
-                                      // unless pixel_radius == u8_MAX in which case marker may be located anywhere.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
-ADD_MESSAGE_MEMBER(u8, markerType)
-ADD_MESSAGE_MEMBER(u8, markerType2) // End marker (for bridge crossing only)
 ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(DockWithObject)
 
@@ -264,6 +257,7 @@ ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
 ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
+// TODO: Remove this message (keeping for now to avoid changing ID ordering for python)
 // SetVisionSystemParams
 START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
 ADD_MESSAGE_MEMBER(s32, autoexposureOn)
@@ -285,6 +279,7 @@ ADD_MESSAGE_MEMBER(u16, height)
 ADD_MESSAGE_MEMBER(u8, visualize)
 END_MESSAGE_DEFINITION(FaceDetection)
 
+// TODO: Remove this message (keeping for now to avoid changing ID ordering for python)
 // SetFaceDetectParams
 START_MESSAGE_DEFINITION(SetFaceDetectParams, 1)
 ADD_MESSAGE_MEMBER(f32, scaleFactor)

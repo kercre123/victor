@@ -3,9 +3,10 @@
 
 #include "anki/common/shared/mailbox_impl.h"
 
+#include "anki/common/robot/array2d.h"
+
 #include "messages.h"
 #include "localization.h"
-#include "visionSystem.h"
 #include "animationController.h"
 #include "pathFollower.h"
 #include "faceTrackingController.h"
@@ -60,7 +61,8 @@ namespace Anki {
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
 
-        MultiMailbox<Messages::FaceDetection,VisionSystem::FaceDetectionParameters::MAX_FACE_DETECTIONS> faceDetectMailbox_;
+        const u32 MAX_FACE_DETECTIONS = 16;
+        MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
         static RobotState robotState_;
 
@@ -73,6 +75,11 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+
+        ImageSendMode_t imageSendMode_;
+        Vision::CameraResolution imageSendResolution_;
+        
+        const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 80; // 0 to 100
 
       } // private namespace
 
@@ -322,24 +329,10 @@ namespace Anki {
 
       void ProcessDockWithObjectMessage(const DockWithObject& msg)
       {
-        if (msg.pixel_radius < u8_MAX) {
-          Embedded::Point2f markerCenter(static_cast<f32>(msg.image_pixel_x), static_cast<f32>(msg.image_pixel_y));
-
-          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
-                                              static_cast<Vision::MarkerType>(msg.markerType2),
-                                              msg.markerWidth_mm,
-                                              markerCenter,
-                                              msg.pixel_radius,
-                                              msg.useManualSpeed,
+          PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
+        
+          PickAndPlaceController::DockToBlock(msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
-        } else {
-
-          PickAndPlaceController::DockToBlock(static_cast<Vision::MarkerType>(msg.markerType),
-                                              static_cast<Vision::MarkerType>(msg.markerType2),
-                                              msg.markerWidth_mm,
-                                              msg.useManualSpeed,
-                                              static_cast<DockAction_t>(msg.dockAction));
-        }
       }
 
       void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)
@@ -420,7 +413,9 @@ namespace Anki {
       void ProcessImageRequestMessage(const ImageRequest& msg)
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
-        VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
+
+        imageSendMode_ = static_cast<ImageSendMode_t>(msg.imageSendMode);
+        imageSendResolution_ = static_cast<Vision::CameraResolution>(msg.resolution);
         
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
@@ -512,21 +507,11 @@ namespace Anki {
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
-        VisionSystem::SetParams(msg.autoexposureOn,
-                                msg.exposureTime,
-                                msg.integerCountsIncrement,
-                                msg.minExposureTime,
-                                msg.maxExposureTime,
-                                msg.highValue,
-                                msg.percentileToMakeHigh,
-                                msg.limitFramerate);
+        PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
 
       void ProcessSetFaceDetectParamsMessage(const SetFaceDetectParams& msg) {
-        VisionSystem::SetFaceDetectParams(msg.scaleFactor,
-                                          msg.minNeighbors,
-                                          msg.minObjectHeight, msg.minObjectWidth,
-                                          msg.maxObjectHeight, msg.maxObjectWidth);
+        PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
 
       void ProcessIMURequestMessage(const IMURequest& msg) {
@@ -1003,6 +988,7 @@ namespace Anki {
 
       bool ReceivedInit()
       {
+  
         return initReceived_;
       }
 
@@ -1011,8 +997,87 @@ namespace Anki {
       {
         initReceived_ = false;
         lastPingTime_ = 0;
+        
+        imageSendMode_ = ISM_STREAM;
+        imageSendResolution_ = Vision::CAMERA_RES_QVGA;
       }
 
+      
+#     ifdef SIMULATOR
+      Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
+      {
+        Messages::ImageChunk m;
+        
+        switch(img.get_size(0)) {
+          case 240:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_QVGA;
+            break;
+            
+          case 480:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_VGA;
+            break;
+            
+          default:
+            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            return RESULT_FAIL;
+        }
+
+        static u32 imgID = 0;
+        const cv::vector<int> compressionParams = {
+          CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
+        };
+        
+        cv::Mat cvImg;
+        cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
+        cvtColor(cvImg, cvImg, CV_BGR2RGB);
+        
+        cv::vector<u8> compressedBuffer;
+        cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
+        
+        const u32 numTotalBytes = compressedBuffer.size();
+
+        //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
+        
+        m.frameTimeStamp = captureTime;
+        m.imageId = ++imgID;
+        m.chunkId = 0;
+        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
+        m.imageEncoding = Vision::IE_JPEG_COLOR;
+        
+        u32 totalByteCnt = 0;
+        u32 chunkByteCnt = 0;
+        
+        for(s32 i=0; i<numTotalBytes; ++i)
+        {
+          m.data[chunkByteCnt] = compressedBuffer[i];
+          
+          ++chunkByteCnt;
+          ++totalByteCnt;
+          
+          if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
+            //PRINT("Sending image chunk %d\n", m.chunkId);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            ++m.chunkId;
+            chunkByteCnt = 0;
+          } else if (totalByteCnt == numTotalBytes) {
+            // This should be the last message!
+            //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+            m.chunkSize = chunkByteCnt;
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+          }
+        } // for each byte in the compressed buffer
+        
+        return RESULT_OK;
+      } // CompressAndSendImage()
+      
+#     endif // SIMULATOR
+      
+      
     } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki

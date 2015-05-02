@@ -15,8 +15,7 @@
 
 #include "anki/vision/robot/fiducialDetection.h" // just for FIDUCIAL_SQUARE_WIDTH_FRACTION
 
-#include "visionParameters.h"
-#include "visionSystem.h"
+#include "anki/cozmo/basestation/visionParameters.h"
 
 namespace Anki {
   namespace Cozmo {

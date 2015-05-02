@@ -22,7 +22,7 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/basestation/actionTypes.h"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
 
 namespace Anki {
   
@@ -286,7 +286,7 @@ namespace Anki {
       // order to define the parameters of docking and how to verify success.
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) = 0;
       virtual PreActionPose::ActionType GetPreActionType() = 0;
-      virtual ActionResult Verify(Robot& robot) const = 0;
+      virtual ActionResult Verify(Robot& robot) = 0;
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
@@ -312,6 +312,7 @@ namespace Anki {
     {
     public:
       PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
+      virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -329,7 +330,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -339,7 +340,10 @@ namespace Anki {
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
       
-    }; // class DockWithObjectAction
+      IActionRunner*             _placementVerifyAction;
+      bool                       _verifyComplete; // used in PLACE modes
+      
+    }; // class PickAndPlaceObjectAction
 
     
     // Common compound action for driving to an object, visually verifying we
@@ -373,6 +377,7 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction();
+      virtual ~PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -387,6 +392,7 @@ namespace Anki {
       
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
+      VisuallyVerifyObjectAction* _verifyAction;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -420,7 +426,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       // Crossing a bridge _does_ require the second dockMarker,
       // so override the virtual method for setting it
@@ -442,7 +448,7 @@ namespace Anki {
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
-      virtual ActionResult Verify(Robot& robot) const override;
+      virtual ActionResult Verify(Robot& robot) override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
       

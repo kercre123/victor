@@ -22,7 +22,7 @@ file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h")
 
 include_directories(.)
 
-add_library(Cozmo_Basestation 
+add_library(Cozmo_Basestation
   ${SOURCE_FILES} 
   ${PRIVATE_HEADER_FILES}
   ${PUBLIC_HEADER_FILES}
@@ -41,6 +41,9 @@ target_link_libraries(Cozmo_Basestation
   CoreTech_Vision_Robot  # TODO: Remove once we do basestation implementation of vision
   CoreTech_Common_Robot  # TODO: Remove once we do basestation implementation of vision
   
+  Clad_Support_Cpp
   ${ZLIB_LIBRARY}
 )
 
+add_dependencies(Cozmo_Basestation
+  Cozmo_Engine_Clad)
