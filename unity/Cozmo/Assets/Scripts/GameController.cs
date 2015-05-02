@@ -391,9 +391,11 @@ public class GameController : MonoBehaviour {
 	{
 		if (notificationAudio != null) 
 		{
-			notificationAudio.Stop ();
-			Debug.Log ("Should be playing " + clip.name);
-			notificationAudio.PlayOneShot (clip);
+			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
+			notificationAudio.Stop (); 
+			Debug.LogWarning ("Should be playing " + clip.name);
+			notificationAudio.Play (); // playoneshot creates a new AudioSource, making isPlaying false for the AudioSource
 		}
 	}
+
 }
