@@ -11,7 +11,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "speedController.h"
 #include "steeringController.h"
-#include "visionSystem.h"
 
 
 #define DEBUG_PAP_CONTROLLER 0
@@ -293,7 +292,6 @@ namespace Anki {
                 // TODO: Send BTLE message notifying failure
                 
                 PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
-                VisionSystem::StopTracking();
                 
                 // Send failed pickup or place message
                 switch(action_)

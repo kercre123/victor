@@ -16,7 +16,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "visionSystem.h"
 #include "animationController.h"
 
 #include "anki/common/robot/trig_fast.h"

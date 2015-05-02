@@ -19,7 +19,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-//#include "visionSystem.h"
 #include "animationController.h"
 #include "proxSensors.h"
 #include "backpackLightController.h"
@@ -181,6 +180,10 @@ namespace Anki {
          }
          */
 
+        lastResult = DockingController::Init();;
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "DockingController init failed.\n");
+        
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -437,6 +440,8 @@ namespace Anki {
       } // Robot::step_MainExecution()
 
 
+
+      
       // Long Execution now just captures image
       Result step_LongExecution()
       {

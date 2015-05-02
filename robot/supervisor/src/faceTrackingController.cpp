@@ -18,13 +18,14 @@
 
 #include "anki/common/robot/errorHandling.h"
 
+#include "anki/cozmo/robot/hal.h"
+
 #include "faceTrackingController.h"
 #include "headController.h"
 #include "localization.h"
 #include "messages.h"
 #include "steeringController.h"
-#include "visionParameters.h"
-#include "visionSystem.h"
+
 
 namespace Anki {
   namespace Cozmo {

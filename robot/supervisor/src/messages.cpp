@@ -7,7 +7,6 @@
 
 #include "messages.h"
 #include "localization.h"
-#include "visionSystem.h"
 #include "animationController.h"
 #include "pathFollower.h"
 #include "faceTrackingController.h"
@@ -62,7 +61,8 @@ namespace Anki {
         //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
         Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
 
-        MultiMailbox<Messages::FaceDetection,VisionSystem::FaceDetectionParameters::MAX_FACE_DETECTIONS> faceDetectMailbox_;
+        const u32 MAX_FACE_DETECTIONS = 16;
+        MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
         static RobotState robotState_;
 
@@ -75,6 +75,11 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+
+        ImageSendMode_t imageSendMode_;
+        Vision::CameraResolution imageSendResolution_;
+        
+        const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 80; // 0 to 100
 
       } // private namespace
 
@@ -408,7 +413,9 @@ namespace Anki {
       void ProcessImageRequestMessage(const ImageRequest& msg)
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
-        VisionSystem::SetImageSendMode((ImageSendMode_t)msg.imageSendMode, (Vision::CameraResolution)msg.resolution);
+
+        imageSendMode_ = static_cast<ImageSendMode_t>(msg.imageSendMode);
+        imageSendResolution_ = static_cast<Vision::CameraResolution>(msg.resolution);
         
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
@@ -500,21 +507,11 @@ namespace Anki {
       }
 
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
-        VisionSystem::SetParams(msg.autoexposureOn,
-                                msg.exposureTime,
-                                msg.integerCountsIncrement,
-                                msg.minExposureTime,
-                                msg.maxExposureTime,
-                                msg.highValue,
-                                msg.percentileToMakeHigh,
-                                msg.limitFramerate);
+        PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
 
       void ProcessSetFaceDetectParamsMessage(const SetFaceDetectParams& msg) {
-        VisionSystem::SetFaceDetectParams(msg.scaleFactor,
-                                          msg.minNeighbors,
-                                          msg.minObjectHeight, msg.minObjectWidth,
-                                          msg.maxObjectHeight, msg.maxObjectWidth);
+        PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
 
       void ProcessIMURequestMessage(const IMURequest& msg) {
@@ -991,6 +988,7 @@ namespace Anki {
 
       bool ReceivedInit()
       {
+  
         return initReceived_;
       }
 
@@ -999,6 +997,9 @@ namespace Anki {
       {
         initReceived_ = false;
         lastPingTime_ = 0;
+        
+        imageSendMode_ = ISM_STREAM;
+        imageSendResolution_ = Vision::CAMERA_RES_QVGA;
       }
 
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
@@ -1007,19 +1008,19 @@ namespace Anki {
         
         switch(img.get_size(0)) {
           case 240:
-            AnkiConditionalErrorAndReturnValue(img.get_size(1)==320, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_QVGA;
             break;
             
           case 480:
-            AnkiConditionalErrorAndReturnValue(img.get_size(1)==640, RESULT_FAIL, "CompressAndSendImage",
-                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_VGA;
             break;
             
           default:
-            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1), img.get_size(0));
+            AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             return RESULT_FAIL;
         }
 

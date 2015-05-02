@@ -159,12 +159,14 @@ namespace Anki {
         return RESULT_OK;
       }
       
+      /*
       Result SendTrackInit(const Array<u8> &image,
                                const VisionSystem::Tracker& tracker,
                                MemoryStack scratch)
       {
         return SendTrackInit(image, tracker.get_transformation().get_transformedCorners(scratch));
       }
+      */
       
       Result SendTrack(const Array<u8>& image,
                            const Quadrilateral<f32>& quad,
@@ -213,7 +215,7 @@ namespace Anki {
         
         return RESULT_OK;
       }
-      
+      /*
       Result SendTrack(const Array<u8>& image,
                            const VisionSystem::Tracker& tracker,
                            const bool converged,
@@ -225,6 +227,7 @@ namespace Anki {
         return RESULT_OK;
 #endif        
       }
+      */
       
       void SendTrackerPrediction_Helper(s32 subplotNum, const char *titleStr)
       {

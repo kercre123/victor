@@ -9,7 +9,6 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "localization.h"
-#include "visionSystem.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "pathFollower.h"
@@ -148,6 +147,14 @@ namespace Anki {
         // If the marker is out of field of view, we will continue
         // to traverse the path that was generated from that last good error signal.
         bool markerOutOfFOV_ = false;
+        
+        Embedded::Array<f32> RcamWrtRobot_;
+        f32 headCamFOV_ver_;
+        f32 headCamFOV_hor_;
+        const int BUFFER_SIZE = 256;
+        u8 buffer[BUFFER_SIZE];
+        Embedded::MemoryStack scratch_(buffer, BUFFER_SIZE);
+        
       } // "private" namespace
       
       bool IsBusy()
@@ -160,6 +167,75 @@ namespace Anki {
         return success_;
       }
       
+      f32 GetVerticalFOV() {
+        return headCamFOV_ver_;
+      }
+      
+      f32 GetHorizontalFOV() {
+        return headCamFOV_hor_;
+      }
+      
+      template<typename PRECISION>
+      static Result GetCamPoseWrtRobot(Embedded::Array<PRECISION>& RcamWrtRobot,
+                                       Embedded::Point3<PRECISION>& TcamWrtRobot)
+      {
+        AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
+                                           RcamWrtRobot.get_size(1)==3,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "VisionSystem::GetCamPoseWrtRobot",
+                                           "Rotation matrix must already be 3x3.");
+        
+        const f32 headAngle = HeadController::GetAngleRad();
+        const f32 cosH = cosf(headAngle);
+        const f32 sinH = sinf(headAngle);
+        
+        RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
+        RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
+        RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
+        
+        TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
+        TcamWrtRobot.y = 0;
+        TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+        
+        return RESULT_OK;
+      }
+      
+      static Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
+                                   Embedded::Point3<f32>&       pointWrtRobot)
+      {
+        Embedded::Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+      
+      static Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
+                                   const Embedded::Point3<f32>& translationWrtCamera,
+                                   Embedded::Array<f32>&        rotationWrtRobot,
+                                   Embedded::Point3<f32>&       translationWrtRobot)
+      {
+        Embedded::Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        if((lastResult = Embedded::Matrix::Multiply(RcamWrtRobot_, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        translationWrtRobot = RcamWrtRobot_*translationWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+
       
       // Returns true if the last known pose of the marker is fully within
       // the horizontal field of view of the camera.
@@ -167,7 +243,7 @@ namespace Anki {
       {
         // Half fov of camera at center horizontal.
         // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
-        const f32 HALF_FOV = MIN(0.5*VisionSystem::GetHorizontalFOV(), 0.36);
+        const f32 HALF_FOV = MIN(0.5*GetHorizontalFOV(), 0.36);
         
         const f32 markerCenterX = markerPose.GetX();
         const f32 markerCenterY = markerPose.GetY();
@@ -251,7 +327,7 @@ namespace Anki {
  
         // Compute the angle of the line extending from the camera that represents
         // the lower bound of its field of view
-        f32 lowerCamFOVangle = angle - 0.45f * VisionSystem::GetVerticalFOV();
+        f32 lowerCamFOVangle = angle - 0.45f * GetVerticalFOV();
         
         // Compute the lift height required to raise the cross bar to be at
         // the height of that line.
@@ -309,6 +385,36 @@ namespace Anki {
       }
       
       
+      Result Init()
+      {
+        scratch_ = Embedded::MemoryStack(buffer, BUFFER_SIZE);
+        
+        AnkiConditionalErrorAndReturnValue(scratch_.IsValid(), RESULT_FAIL_MEMORY,
+                                           "DockingController::Init()",
+                                           "Failed to create %d-sized memory stack.\n", BUFFER_SIZE);
+        
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+
+        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT,
+                                           "DockingController::Init()",
+                                           "NULL head cam info!\n");
+        
+        RcamWrtRobot_ = Embedded::Array<f32>(3,3, scratch_);
+
+        AnkiConditionalErrorAndReturnValue(RcamWrtRobot_.IsValid(), RESULT_FAIL_MEMORY,
+                                           "DockingController::Init()",
+                                           "Failed to allocate 3x3 rotation matrix.\n");
+        
+        // Compute FOV from focal length (currently used for tracker prediciton)
+        headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
+                                      (2.f * headCamInfo->focalLength_y));
+        headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo->ncols) /
+                                      (2.f * headCamInfo->focalLength_x));
+
+        return RESULT_OK;
+      }
+      
+      
       Result Update()
       {
         
@@ -346,7 +452,7 @@ namespace Anki {
             }
             else {
               Embedded::Point3<f32> tempPoint;
-              VisionSystem::GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
+              GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
                                                   tempPoint);
               
               dockMsg.x_distErr = tempPoint.x;
@@ -419,7 +525,7 @@ namespace Anki {
                 
                 // Compute angle the head needs to face such that the bottom of the marker
                 // is at the bottom of the image.
-                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
                 
                 // Compute the angle the head needs to face such that it is looking
                 // directly at the center of the marker
@@ -837,8 +943,6 @@ namespace Anki {
         lastMarkerDistY_ = 0.f;
         lastMarkerAng_ = 0.f;
         */
-        // Command VisionSystem to stop processing images
-        VisionSystem::StopTracking();
 
         pointOfNoReturnDistMM_ = 0;
         pastPointOfNoReturn_ = false;
