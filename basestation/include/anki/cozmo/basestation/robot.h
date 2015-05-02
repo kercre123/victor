@@ -293,6 +293,8 @@ namespace Anki {
       // Set how to save incoming robot images to file
       void SetSaveImageMode(const SaveMode_t mode);
       
+      TimeStamp_t GetLastImageTimeStamp() const { return _lastImgTimeStamp; }
+      
       // =========== Actions Commands =============
       
       // Return a reference to the robot's action list for directly adding things

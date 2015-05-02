@@ -341,9 +341,19 @@ namespace Anki
 
             observedObject->SetPose( objSeen->GetPose() );
             
-            // Update lastObserved times of this object
-            observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
-            observedObject->UpdateMarkerObservationTimes(*objSeen);
+            // If we are matching based solely on type to an existing object that
+            // has only been seen once, don't update the observed time (so that we
+            // also don't update the number of times observed), since the poses
+            // don't actually match and we really want to increment the number of
+            // times of observed only if we re-see an object in the same place.
+            // (If we are here, we didn't see it in the same place; we are only
+            // updating it because we are assuming it's the same object based on
+            // type.)
+            if(observedObject->GetNumTimesObserved() > 1) {
+              // Update lastObserved times of this object
+              observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+              observedObject->UpdateMarkerObservationTimes(*objSeen);
+            }
             
             // Project this existing object into the robot's camera, using its new pose
             _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
@@ -1435,7 +1445,7 @@ namespace Anki
         // Even if there were no markers observed, check to see if there are
         // any previously-observed objects that are partially visible (some part
         // of them projects into the image even if none of their markers fully do)
-        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastMsgTimestamp());
+        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
       }
       
       if(numObjectsObserved == 0) {
