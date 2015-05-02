@@ -1185,6 +1185,8 @@ MonoBehaviour:
   placeEnergyScanner: {fileID: 8300000, guid: bbdb2145356c949a2a768cde032c37a1, type: 3}
   findEnergy: {fileID: 8300000, guid: d1c99f5c9d69b4fdf8b9e3f28deddc9b, type: 3}
   dropEnergy: {fileID: 8300000, guid: e11ce7364ac694bdc92be00a12c87c32, type: 3}
+  extractingEnergy: {fileID: 8300000, guid: c669aeb46c81049d390b1fe49e29e5e0, type: 3}
+  depositingEnergy: {fileID: 8300000, guid: 645ab08be048940768a81b5b9bbfad23, type: 3}
   timeUp: {fileID: 8300000, guid: 588d9e8829ac64e99868d70a6aabe550, type: 3}
   timeExtension: {fileID: 8300000, guid: 72cb5b89fd63249b98d1ea8d93c2eb23, type: 3}
   extractButton: {fileID: 11425380}

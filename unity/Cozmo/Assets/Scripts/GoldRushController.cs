@@ -16,6 +16,8 @@ public class GoldRushController : GameController {
 	[SerializeField] protected AudioClip placeEnergyScanner;
 	[SerializeField] protected AudioClip findEnergy;
 	[SerializeField] protected AudioClip dropEnergy;
+	[SerializeField] protected AudioClip extractingEnergy;
+	[SerializeField] protected AudioClip depositingEnergy;
 	[SerializeField] protected AudioClip timeUp;
 
 	[SerializeField] protected AudioClip timeExtension;
@@ -424,6 +426,9 @@ public class GoldRushController : GameController {
 			}
 			hintMessage.ShowMessage("Deposit the energy!", Color.black);
 			break;
+		case PlayState.DEPOSITING:
+			StartCoroutine(AwardPoints());
+			break;
 		default:
 			break;
 		}
@@ -605,7 +610,6 @@ public class GoldRushController : GameController {
 	public void BeginDepositing()
 	{
 		EnterPlayState (PlayState.DEPOSITING);
-		StartCoroutine(AwardPoints());
 	}
 
 #region IEnumerator
@@ -627,10 +631,11 @@ public class GoldRushController : GameController {
 	IEnumerator StartExtracting()
 	{
 		uint color = EXTRACTOR_COLOR;
+		PlayNotificationAudio(extractingEnergy);
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(extractionTime/2.0f);
+		yield return new WaitForSeconds(extractingEnergy.length/2.0f);
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xFF);
-		yield return new WaitForSeconds(extractionTime/2.0f);
+		yield return new WaitForSeconds(extractingEnergy.length/2.0f);
 		EnterPlayState (PlayState.RETURNING);
 	}
 
@@ -638,8 +643,9 @@ public class GoldRushController : GameController {
 	{
 		// will end up doing active block light stuff here
 		uint color = EXTRACTOR_COLOR;
+		PlayNotificationAudio(depositingEnergy);
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(rewardTime);
+		yield return new WaitForSeconds(depositingEnergy.length - 0.05f);
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (0);
 		PlayNotificationAudio (collectedSound);
 		// award points
