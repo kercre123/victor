@@ -712,7 +712,7 @@ namespace Anki
 
       enoughContrast = true;
 
-      //const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
+      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
 
       u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
@@ -773,7 +773,6 @@ namespace Anki
           }
         } // FOR each probe point
 
-        /*
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -781,7 +780,6 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
-         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
@@ -903,7 +901,7 @@ namespace Anki
       bool verified = false;
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
-#    if USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
       
       s32 label=-1;
       s32 distance = grayvalueThreshold;
@@ -920,8 +918,8 @@ namespace Anki
         selectedLabel = static_cast<OrientedMarkerLabel>(label);
       }
       
-#    else
-        AnkiAssert(NUM_TREES <= u8_MAX);
+#     else
+      AnkiAssert(NUM_TREES <= u8_MAX);
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         predictedLabelsHist[iLabel] = 0;

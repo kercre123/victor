@@ -118,7 +118,8 @@ namespace Anki
         UNVERIFIED = 2,
         UNKNOWN = 3,
         WEIRD_SHAPE = 4,
-        NUMERICAL_FAILURE = 5
+        NUMERICAL_FAILURE = 5,
+        REFINEMENT_FAILURE = 6
       };
 
       //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)

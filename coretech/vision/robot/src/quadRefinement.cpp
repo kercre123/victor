@@ -794,18 +794,6 @@ namespace Anki {
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
 
-      // Check to make sure the refined quad isn't too different from the intitial one.
-      // If it is, restore the original.
-      if(!restoreOriginal) {
-        const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
-        if(finalCornerChange > maxCornerChange) {
-#         if DEBUG_QUAD_REFINEMENT
-          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
-#         endif
-          restoreOriginal = true;
-        }
-      }
-
       // If corner change check or numerical failure triggered a restoreOriginal
       // do so now.
       if(restoreOriginal) {
@@ -814,11 +802,21 @@ namespace Anki {
 #       endif
         refinedQuad = initialQuadF32;
         refinedHomography.Set(initialHomography);
+      } else {
+        // Check to make sure the refined quad isn't too different from the intitial one.
+        // If it is, restore the original.
+        const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
+        if(finalCornerChange > maxCornerChange) {
+#         if DEBUG_QUAD_REFINEMENT
+          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
+#         endif
+          lastResult = RESULT_FAIL;
+        }
       }
 
       EndBenchmark("vme_quadrefine_finalize");
 
-      return RESULT_OK;
+      return lastResult;
     } // RefineQuadrilateral
   }
 }
