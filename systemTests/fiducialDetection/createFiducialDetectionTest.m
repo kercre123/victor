@@ -110,7 +110,9 @@
 
 % tests 94-99 are from the auto-generated tests from C:\Anki\products-cozmo\basestation\test\blockWorldTests on 2014-07-21
 
-% tests 100-107 are from the iphone5s front camera pictures
+% tests 100-123 are from the iphone5s front camera pictures
+
+% tests 124-125 are from challenging simulator images captured by Kevin
 
 function createFiducialDetectionTest(outputFilename, imageCopyPath, inputDirectory, inputFilenameRange, distance, angle, light)
 
