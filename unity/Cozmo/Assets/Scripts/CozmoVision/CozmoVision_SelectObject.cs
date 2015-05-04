@@ -19,6 +19,13 @@ public class CozmoVision_SelectObject : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		if(GameActions.instance == null) {
+			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+			return;
+		}
+		
+		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+
 		UnselectNonObservedObjects();
 		Dings();
 		GameActions.instance.SetActionButtons();
