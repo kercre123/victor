@@ -66,12 +66,12 @@ public class GameActions : MonoBehaviour
 
 		ActionPanel.instance.DisableButtons();
 		
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
-		
-		robot = RobotEngineManager.instance.current;
-		buttons = ActionPanel.instance.actionButtons;
+		robot = null;
+		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null ) robot = RobotEngineManager.instance.current;
 
-		if( robot.isBusy ) return;
+		if( robot == null || robot.isBusy ) return;
+
+		buttons = ActionPanel.instance.actionButtons;
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{

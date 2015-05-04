@@ -70,8 +70,8 @@ public class GoldRushController : GameController {
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
 
 
-	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
-	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
+	public bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
+	public bool inDepositRange { get { return playState == PlayState.RETURNED; } }
 
 	enum BuildState
 	{

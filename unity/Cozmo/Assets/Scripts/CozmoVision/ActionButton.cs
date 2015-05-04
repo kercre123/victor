@@ -51,8 +51,13 @@ public class ActionButton : MonoBehaviour
 		action = null;
 		mode = m;
 		selectedObject = selected;
-		
-		if( mode == Mode.DISABLED || GameActions.instance == null )
+
+		if( RobotEngineManager.instance.current.isBusy )
+		{
+			mode = Mode.DISABLED;
+		}
+
+		if( mode == Mode.DISABLED || GameActions.instance == null ) 
 		{
 			if( button != null ) button.gameObject.SetActive( false );
 			image.gameObject.SetActive( false );

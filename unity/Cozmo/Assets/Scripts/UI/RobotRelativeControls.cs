@@ -89,10 +89,21 @@ public class RobotRelativeControls : MonoBehaviour {
 	}
 
 	void Update() {
-
 		robot = null;
-		if(RobotEngineManager.instance != null) robot = RobotEngineManager.instance.current;
-		if(robot == null) return;
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) robot = RobotEngineManager.instance.current;
+
+		if(robot == null || robot.isBusy) {
+			if(verticalStick != null) verticalStick.gameObject.SetActive(false);
+			if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
+			if(headAngleStick != null) headAngleStick.gameObject.SetActive(false);
+
+			return;
+		}
+		else {
+			if(verticalStick != null) verticalStick.gameObject.SetActive(true);
+			if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
+			if(headAngleStick != null) headAngleStick.gameObject.SetActive(true);
+		}
 
 		robotFacing = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
 
@@ -149,7 +160,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(inputs.y != 0) {
 				if(headAngleStick == null || !robot.searching) {
-					if(robot.selectedObjects.Count == 0 && !robot.isBusy) {
+					if(robot.selectedObjects.Count == 0) {
 						robot.SetHeadAngle();
 					}
 				}

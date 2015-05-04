@@ -43,7 +43,7 @@ public class GameController : MonoBehaviour {
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
 
-	internal GameState state = GameState.BUILDING;
+	[System.NonSerialized] public GameState state = GameState.BUILDING;
 	protected float stateTimer = 0f;
 	protected bool countdownAnnounced = false;
 	protected float lastPlayTime = 0;
@@ -92,7 +92,6 @@ public class GameController : MonoBehaviour {
 
 	void Update () {
 		stateTimer += Time.deltaTime;
-
 
 		//force our initial state to enter in case there is set up code there
 		if(firstFrame) {

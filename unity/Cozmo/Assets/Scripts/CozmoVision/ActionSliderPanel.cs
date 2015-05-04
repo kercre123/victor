@@ -54,7 +54,8 @@ public class ActionSlider {
 
 public class ActionSliderPanel : ActionPanel
 {
-	[SerializeField] public ActionSlider actionSlider = null;
+	[SerializeField] public ActionSlider actionSlider;
+	[SerializeField] protected DynamicSliderFrame dynamicSliderFrame;
 	[SerializeField] protected AudioClip slideInSound;
 	[SerializeField] protected AudioClip slideOutSound;
 
@@ -81,11 +82,17 @@ public class ActionSliderPanel : ActionPanel
 
 		if(actionSlider != null) actionSlider.SetHints();
 
-		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+		robot = null;
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) robot = RobotEngineManager.instance.current;
+		
+		if(robot == null || robot.isBusy) {
+			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
+			
 			return;
 		}
-		
-		robot = RobotEngineManager.instance.current;
+		else {
+			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = true;
+		}
 
 		if(!actionSlider.Pressed) {
 			if(!upLastFrame) actionSlider.currentAction.OnRelease();
