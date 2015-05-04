@@ -268,7 +268,7 @@ namespace Cozmo {
         PRINT_NAMED_WARNING("CozmoGameImpl.Update",
                             "No ping from UI in %.2f seconds, but NOT ressetting.\n",
                             timeSinceLastUiPing);
-        _lastPingCounterFromUI = -1.f;
+        _lastPingTimeFromUI_sec = -1.f;
       }
     }
     
@@ -460,6 +460,10 @@ namespace Cozmo {
                 G2U::Message message;
                 message.Set_RobotState(msg);
                 _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+              } else {
+                PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
+                                    "Not sending robot %d state (none available).\n",
+                                    robotID);
               }
             }
           }

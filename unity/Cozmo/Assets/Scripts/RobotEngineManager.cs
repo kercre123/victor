@@ -10,31 +10,6 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
-public enum ActionCompleted
-{
-	COMPOUND = -2,
-	UNKNOWN = -1,
-	DRIVE_TO_POSE = 0,
-	DRIVE_TO_OBJECT,
-	DRIVE_TO_PLACE_CARRIED_OBJECT,
-	TURN_IN_PLACE,
-	MOVE_HEAD_TO_ANGLE,
-	PICKUP_OBJECT_LOW,
-	PICKUP_OBJECT_HIGH,
-	PLACE_OBJECT_LOW,
-	PLACE_OBJECT_HIGH,
-	PICK_AND_PLACE_INCOMPLETE, 
-	CROSS_BRIDGE,
-	ASCEND_OR_DESCEND_RAMP,
-	TRAVERSE_OBJECT,
-	DRIVE_TO_AND_TRAVERSE_OBJECT,
-	FACE_OBJECT,
-	VISUALLY_VERIFY_OBJECT,
-	PLAY_ANIMATION,
-	PLAY_SOUND,
-	WAIT
-}
-
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
@@ -59,7 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
 	public event Action<Texture2D> RobotImage;
-	public event Action<bool,ActionCompleted> SuccessOrFailure;
+	public event Action<bool,RobotActionType> SuccessOrFailure;
 
 	public ChannelBase channel { get; private set; }
 	private float lastRobotStateMessage = 0;
@@ -441,8 +416,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )
 	{
-		bool success = message.result == 0; // NOTE: SUCCESS == 0 in ActionResult enum
-		ActionCompleted action_type = (ActionCompleted)message.actionType;
+		bool success = (message.result == ActionResult.SUCCESS);
+		RobotActionType action_type = (RobotActionType)message.actionType;
 		Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();

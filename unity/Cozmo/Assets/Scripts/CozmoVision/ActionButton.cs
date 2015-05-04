@@ -48,7 +48,7 @@ public class ActionButton : MonoBehaviour
 	
 	public void SetMode( Mode m, ObservedObject selected, string append = null )
 	{
-		action = DefaultAction;
+		action = null;
 		mode = m;
 		selectedObject = selected;
 		
@@ -66,6 +66,8 @@ public class ActionButton : MonoBehaviour
 		
 		if( append != null ) text.text += append;
 
+		action += DefaultAction;
+
 		switch( mode )
 		{
 			case Mode.TARGET:
@@ -78,7 +80,7 @@ public class ActionButton : MonoBehaviour
 				action += gameActions.Drop;
 				break;
 			case Mode.STACK:
-				action = gameActions.Stack;
+				action += gameActions.Stack;
 				break;
 			case Mode.ROLL:
 				action += gameActions.Roll;

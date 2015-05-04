@@ -64,7 +64,7 @@ public class ActionSliderPanel : ActionPanel
 
 	//public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	protected bool upLastFrame = false;
+	protected bool upLastFrame = true;
 	protected bool downLastFrame = false;
 	protected ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 

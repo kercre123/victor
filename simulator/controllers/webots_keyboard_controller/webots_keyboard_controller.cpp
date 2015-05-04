@@ -31,7 +31,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/actionTypes.h"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
 
 #include <stdio.h>
 #include <string.h>
@@ -1049,7 +1049,7 @@ namespace Anki {
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // ALT + Q: Cancel action
                   U2G::CancelAction msg;
-                  msg.actionType = -1;
+                  msg.actionType = RobotActionType::UNKNOWN;
                   msg.robotID = 1;
                   
                   U2G::Message msgWrapper;

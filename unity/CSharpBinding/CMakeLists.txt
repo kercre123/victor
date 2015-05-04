@@ -19,15 +19,10 @@ if(ANKI_IOS_BUILD)
   # Enable ARC
   #add_compile_options(-fobjc-arc)
 
-  set(PUBLIC_HEADER_FILES
-    ${PUBLIC_HEADER_FILES_ROOT}
-  )
-
 
   add_library(CSharpBinding
     ${SOURCE_FILES} 
     ${PRIVATE_HEADER_FILES}
-    ${PUBLIC_HEADER_FILES}
   )
 
   target_link_libraries(CSharpBinding

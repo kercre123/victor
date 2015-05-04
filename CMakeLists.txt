@@ -13,6 +13,7 @@ set(COZMO_ENGINE_DIR ${PROJECT_SOURCE_DIR}/lib/anki/cozmo-engine)
 set(CORETECH_ROOT_DIR ${COZMO_ENGINE_DIR}/coretech)
 
 include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
+include("${COZMO_ENGINE_DIR}/clad/clad.cmake")
 
 if(NOT DEFINED ANKI_IOS_BUILD)
   set(ANKI_IOS_BUILD 0)
@@ -37,8 +38,6 @@ else()
     
 endif(ANKI_IOS_BUILD)
 
-
-set(CLAD_DIR "${CMAKE_SOURCE_DIR}/lib/anki/cozmo-engine/tools/message-buffers")
 
 # Defining this will make Webots controller and plugins targets in cozmo-engine 
 # get copied to cozmo-game/simulator
