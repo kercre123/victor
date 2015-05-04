@@ -92,7 +92,7 @@ public class ActionSliderPanel : ActionPanel
 		robot = null;
 		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) robot = RobotEngineManager.instance.current;
 		
-		if(robot == null || robot.isBusy) {
+		if(robot == null || robot.isBusy || GameActions.instance == null || GameActions.instance.allButtonsDisabled) {
 			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
 			upLastFrame = true;
 			downLastFrame = false;

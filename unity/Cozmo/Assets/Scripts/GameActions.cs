@@ -19,11 +19,26 @@ public class GameActions : MonoBehaviour
 	protected virtual string TOP { get { return " TOP"; } }
 	protected virtual string BOTTOM { get { return " BOTTOM"; } }
 
-
 	protected Robot robot;
 	protected ActionButton[] buttons;
 
 	public static GameActions instance = null;
+
+	public bool allButtonsDisabled
+	{
+		get
+		{
+			if( buttons != null )
+			{
+				for( int i = 0; i < buttons.Length; ++i )
+				{
+					if( buttons[i].mode != ActionButton.Mode.DISABLED ) return false;
+				}
+			}
+
+			return true;
+		}
+	}
 
 	protected virtual void Awake()
 	{
@@ -70,7 +85,6 @@ public class GameActions : MonoBehaviour
 				{
 					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
 				}
-
 			}
 
 			bool stack = false;
