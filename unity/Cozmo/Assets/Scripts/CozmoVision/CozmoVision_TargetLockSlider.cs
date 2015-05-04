@@ -97,10 +97,11 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	{
 		bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.carryingObject != null && 
 			robot.selectedObjects.Find(x => x == robot.carryingObject) != null;
-		bool alreadyHasTarget = robot.selectedObjects.Count > 0 && robot.targetLockedObject != null && 
-			robot.selectedObjects.Find(x => x == robot.targetLockedObject) != null;
+		bool alreadyHasTarget = robot.pertinentObjects.Count > 0 && robot.targetLockedObject != null && 
+			robot.pertinentObjects.Find(x => x == robot.targetLockedObject) != null;
 		
 		if(targetingPropInHand || !alreadyHasTarget) {
+			//Debug.Log("AcquireTarget targetingPropInHand("+targetingPropInHand+") alreadyHasTarget("+alreadyHasTarget+")");
 			robot.selectedObjects.Clear();
 			robot.targetLockedObject = null;
 		}
@@ -141,7 +142,8 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				if(bestDistFromCoz < dist1 * 0.5f) best = nearest;
 			}*/
 		}
-		
+
+		//Debug.Log("frame("+Time.frameCount+") AcquireTarget robot.selectedObjects.Clear();" );
 		robot.selectedObjects.Clear();
 		
 		if(best != null) robot.selectedObjects.Add(best);

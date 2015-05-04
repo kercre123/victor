@@ -30,7 +30,18 @@ public class Robot
 	public List<ObservedObject> lastSelectedObjects { get; private set; }
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-	public ObservedObject targetLockedObject = null;
+
+
+	private ObservedObject _targetLockedObject = null;
+	public ObservedObject targetLockedObject {
+		get { return _targetLockedObject; }
+		set {
+
+			//Debug.Log("Robot targetLockedObject = " + (value != null ? value.RobotID.ToString() : "null") );
+
+			_targetLockedObject = value;
+		}
+	}
 
 	public RobotActionType lastActionRequested;
 	public bool searching;

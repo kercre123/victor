@@ -618,53 +618,57 @@ public class GameLayoutTracker : MonoBehaviour {
 		return angle;
 	}
 
+	//we are dropping an object and want to know which blocks are already on the ground and valid
+	//	so we can then do distance checks if necessaril to validate the placement of the drop
+	bool IsValidGroundBlock(BuildInstructionsCube block) {
+		if(!block.Validated) return false;
+		if(block.cubeBelow != null) return false;
+		
+		return true;
+	}
+
+	//we are dropping an object and want to know which layout block it might be an apt match for
+	bool IsUnvalidatedMatchingGroundBlock(BuildInstructionsCube block, ObservedObject objectToMatch) {
+		if(block.Validated) return false;
+		if(block.cubeBelow != null) return false;
+		if(block.objectFamily != objectToMatch.Family) return false;
+		if(block.objectFamily == 3 && objectToMatch.activeBlockType != block.activeBlockType) return false;
+		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		return true;
+	}
+
 	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 posToDrop, out string error) {
 		error = "";
 
 		if(objectToDrop == null) return false;
 
-		List<BuildInstructionsCube> validatedGroundBlocks = currentLayout.blocks.FindAll(x => 
-			{
-				if(!x.Validated) return false;
-				if(x.cubeBelow != null) return false;
 
-				return true;
-			} );
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
 
-
-		List<BuildInstructionsCube> unvalidatedMatchingGroundBlocks = currentLayout.blocks.FindAll(x => 
-		    {
-				if(x.Validated) return false;
-				if(x.cubeBelow != null) return false;
-				if(x.objectFamily != objectToDrop.Family) return false;
-				if(x.objectFamily == 3 && objectToDrop.activeBlockType != x.activeBlockType) return false;
-				if(x.objectFamily != 3 && objectToDrop.ObjectType != x.objectType) return false;
-				return true;
-			} );
-
-		if(unvalidatedMatchingGroundBlocks == null || unvalidatedMatchingGroundBlocks.Count == 0) {
+		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			error = "No block of this type should be placed here.";
 			return false;
 		}
 
-		if(validatedGroundBlocks == null || validatedGroundBlocks.Count == 0) {
+		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
+
+		if(priorBlocks == null || priorBlocks.Count == 0) {
 			//if this will be our first ground block to validate, automatically valid location
 			return true;
 		}
 
-		bool valid = false;
-
-
+		bool failDistanceCheck = false;
 
 		//go through each not yet validated layout block this object could work for and see if it a legal position
 			// where legal positon is determined by a fudgey distance check to all prior validated ground blocks
-		for(int unvalidatedIndex=0; unvalidatedIndex < unvalidatedMatchingGroundBlocks.Count; unvalidatedIndex++) {
+		for(int newIndex=0; newIndex < newBlocks.Count; newIndex++) {
 
-			BuildInstructionsCube block = unvalidatedMatchingGroundBlocks[unvalidatedIndex];
+			BuildInstructionsCube block = newBlocks[newIndex];
 
-			for(int validatedIndex=0; validatedIndex < validatedGroundBlocks.Count; validatedIndex++) {
-				BuildInstructionsCube priorBlock = validatedGroundBlocks[validatedIndex];
+			for(int priorIndex=0; priorIndex < priorBlocks.Count; priorIndex++) {
+
+				BuildInstructionsCube priorBlock = priorBlocks[priorIndex];
 
 				Vector3 idealOffset = (block.transform.position - priorBlock.transform.position) / block.Size;
 				float up = idealOffset.y;
@@ -678,6 +682,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				//are we basically on the same plane and roughly the correct distance away?
 				if(Mathf.Abs(realOffset.z) > coplanarFudge) {
 					error = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
+					failDistanceCheck = true;
 					break;
 				}
 				
@@ -687,17 +692,16 @@ public class GameLayoutTracker : MonoBehaviour {
 				float distanceError = realDistance - idealDistance;
 				if(Mathf.Abs(distanceError) > distanceFudge) {
 					error = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
+					failDistanceCheck = true;
 					break;
 				}
-
-				valid = true;
-				break;
 			}
 
-			if(valid) break;
+			//we only need to satisfy one potential new block's placement for this to be a valid drop
+			if(!failDistanceCheck) break;
 		}
 
-		return valid;
+		return !failDistanceCheck;
 	}
 
 	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string error) {

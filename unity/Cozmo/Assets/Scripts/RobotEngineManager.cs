@@ -192,6 +192,11 @@ public class RobotEngineManager : MonoBehaviour {
 	 
 	private void Update()
 	{
+
+		if(Input.GetKeyDown(KeyCode.Mouse3))
+			Debug.Break();
+
+
 		if (channel != null) {
 			channel.Update ();
 		}
@@ -221,6 +226,7 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 			}
 		}
+
 	}
 	
 	public void Connect(string engineIP)
