@@ -712,7 +712,7 @@ namespace Anki
 
       enoughContrast = true;
 
-      //const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
+      const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
 
       u32 totalDarkAccumulator = 0, totalBrightAccumulator = 0; // for all pairs
       for(s32 i_probe=0; i_probe<NUM_THRESHOLD_PROBES; ++i_probe) {
@@ -773,7 +773,6 @@ namespace Anki
           }
         } // FOR each probe point
 
-        /*
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -781,7 +780,6 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
-         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
