@@ -714,21 +714,6 @@
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionDebugStream.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>visionParameters.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\supervisor\src\visionParameters.h</FilePath>
-            </File>
-            <File>
-              <FileName>visionParameters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -767,11 +752,6 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>offboardVisionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>
@@ -1784,21 +1764,6 @@
               <FilePath>.\supervisor\src\testModeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>visionDebugStream.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionDebugStream.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>visionParameters.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\supervisor\src\visionParameters.h</FilePath>
-            </File>
-            <File>
-              <FileName>visionParameters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\visionParameters.cpp</FilePath>
-            </File>
-            <File>
               <FileName>wheelController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\wheelController.cpp</FilePath>
@@ -1837,11 +1802,6 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>offboardVisionSystem.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\offboardVisionSystem.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>

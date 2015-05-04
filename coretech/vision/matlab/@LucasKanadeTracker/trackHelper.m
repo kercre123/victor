@@ -270,7 +270,7 @@ while iteration < this.maxIterations
     %change = err;
     %change = abs(update - prevUpdate) ./ (abs(prevUpdate)+eps);
     
-    if this.debugDisplay
+    if false && this.debugDisplay
         edata = [get(this.h_errPlot, 'YData') change];
         xdata = 1:(length(edata));
         set(this.h_errPlot, 'XData', xdata, 'YData', edata);

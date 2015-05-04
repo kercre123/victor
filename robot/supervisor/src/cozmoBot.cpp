@@ -19,7 +19,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "visionSystem.h"
 #include "animationController.h"
 #include "proxSensors.h"
 #include "backpackLightController.h"
@@ -138,10 +137,12 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Localization System init failed.\n");
 
+        /*
         lastResult = VisionSystem::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Vision System init failed.\n");
-
+         */
+        
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
@@ -179,6 +180,10 @@ namespace Anki {
          }
          */
 
+        lastResult = DockingController::Init();;
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "DockingController init failed.\n");
+        
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -192,7 +197,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
 
-        lastResult = FaceTrackingController::Init(VisionSystem::GetFaceDetectionParams());
+        // TODO: Where to get face detection height/width
+        const int faceDetectionHeight = 240;
+        const int faceDetectionWidth  = 320;
+        lastResult = FaceTrackingController::Init(faceDetectionWidth, faceDetectionHeight);
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "FaceTrackingController init failed.\n");
 
@@ -432,16 +440,61 @@ namespace Anki {
       } // Robot::step_MainExecution()
 
 
-      // For the "long execution" thread, i.e. the vision code, which
-      // will be slower
+
+      
+      // Long Execution now just captures image
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
 
-        // IMPORTANT: The static robot state message is being passed in here
-        //   *by value*, NOT by reference.  This is because step_LongExecution()
-        //   can be interupted by step_MainExecution().
-        retVal = VisionSystem::Update(Messages::GetRobotStateMsg());
+#       ifdef SIMULATOR
+        
+        TimeStamp_t currentTime = HAL::GetTimeStamp();
+        
+        // This computation is based on Cyberbotics support's explaination for how to compute
+        // the actual capture time of the current available image from the simulated
+        // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
+        // (The available frame is still one frame behind? I.e. we are just *about* to capture
+        //  the next one?)
+        TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
+        
+        // Keep up with the capture time of the last image we sent
+        static TimeStamp_t lastImageSentTime = 0;
+        
+        // Have we already sent the currently-available image?
+        if(lastImageSentTime != currentImageTime)
+        {
+          // TODO: Provide a way to update this from message
+          Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_QVGA;
+          
+          // Nope, so get the (new) available frame from the camera:
+          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
+          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
+          
+          static const int bufferSize = 1000000;
+          static u8 buffer[bufferSize];
+          Embedded::MemoryStack scratch(buffer, bufferSize);
+          Embedded::Array<u8> image(captureHeight, captureWidth,
+                                    scratch, Embedded::Flags::Buffer(false,false,false));
+          
+          HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
+                              captureResolution_, false);
+          if(!image.IsValid()) {
+            retVal = RESULT_FAIL;
+          } else {
+            
+            // Send the image, with its actual capture time (not the current system time)
+            Messages::CompressAndSendImage(image, currentImageTime);
+            
+            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
+            //      robotState.timestamp, currentImageTime);
+            
+            // Mark that we've already sent the image for the current time
+            lastImageSentTime = currentImageTime;
+          }
+        } // if(lastImageSentTime != currentImageTime)
+        
+#       endif // ifdef SIMULATOR
 
         return retVal;
 

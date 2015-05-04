@@ -63,6 +63,7 @@ target_link_libraries(visionUnitTestController
   CoreTech_Common_Basestation
   #CoreTech_Common_Robot # for matlab interface?
   CoreTech_Vision_Basestation
+  CoreTech_Vision_Robot  # needed for marker detection, until that moves to basestation
   #CoreTech_Messaging_Shared
   # mx 
   # eng

@@ -49,6 +49,10 @@ namespace Anki {
       
     }
 
+    MatPiece::~MatPiece()
+    {
+      EraseVisualization();
+    }
     
     Point3f MatPiece::GetSameDistanceTolerance() const
     {

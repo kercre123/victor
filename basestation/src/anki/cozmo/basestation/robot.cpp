@@ -507,7 +507,7 @@ namespace Anki {
         }
 
         const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 135.f;
-        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 90.f;
+        const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
         
         assert(t_prev < t);
         assert(t_next > t);
@@ -731,11 +731,17 @@ namespace Anki {
       if(_lastStateMsgTime_sec > 0.f) {
         const double timeDiff_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStateMsgTime_sec;
         if(timeDiff_sec > R2B_STATE_MESSAGE_TIMEOUT_SEC) {
+          /*
           PRINT_NAMED_ERROR("Robot.Update", "No state message received from robot %d in %.1f seconds!\n",
                             GetID(), timeDiff_sec);
           
           _lastStateMsgTime_sec = -1.f;
           return RESULT_FAIL_IO_TIMEOUT;
+           */
+          
+          PRINT_NAMED_WARNING("Robot.Update", "No state message received from robot %d in %.1f seconds!\n",
+                              GetID(), timeDiff_sec);
+          _lastStateMsgTime_sec = -1.f;
         }
       }
       
@@ -1704,7 +1710,22 @@ namespace Anki {
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       
-      return SendDockWithObject(marker, marker2, dockAction, image_pixel_x, image_pixel_y, pixel_radius, useManualSpeed);
+      Result sendResult = SendDockWithObject(dockAction, useManualSpeed);
+      
+      if(sendResult == RESULT_OK) {
+        
+        // When we are "docking" with a ramp or crossing a bridge, we
+        // don't want to worry about the X angle being large (since we
+        // _expect_ it to be large, since the markers are facing upward).
+        const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
+                                   dockAction == DA_RAMP_DESCEND ||
+                                   dockAction == DA_CROSS_BRIDGE);
+        
+        // Tell the VisionSystem to start tracking this marker:
+        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+      }
+      
+      return sendResult;
     }
     
     
@@ -1713,61 +1734,16 @@ namespace Anki {
     // the marker can be seen anywhere in the image (same as above function), otherwise the
     // marker's center must be seen at the specified image coordinates
     // with pixel_radius pixels.
-    Result Robot::SendDockWithObject(const Vision::KnownMarker* marker,
-                                     const Vision::KnownMarker* marker2,
-                                     const DockAction_t dockAction,
-                                     const u16 image_pixel_x,
-                                     const u16 image_pixel_y,
-                                     const u8 pixel_radius,
+    Result Robot::SendDockWithObject(const DockAction_t dockAction,
                                      const bool useManualSpeed)
     {
-      const Vision::Marker::Code code1 = marker->GetCode();
-      Vision::Marker::Code       code2 = code1;
-      
-      if(DA_CROSS_BRIDGE == dockAction) {
-        if(marker2 == nullptr) {
-          PRINT_NAMED_ERROR("Robot.SendDockWithObject.CrossBridgeNeedsTwoMarkers",
-                            "CrossBridge action specified but without specifying second "
-                            "marker for docking.\n");
-          return RESULT_FAIL;
-        }
-        code2 = marker2->GetCode();
-      }
-      else if(marker2 != nullptr) {
-        PRINT_NAMED_WARNING("Robot.SendDockWithObject.UnusedSecondMarker",
-                            "A second marker was provided with an action other than "
-                            "CrossBridge and will be ignored.\n");
-      }
-      
-      CORETECH_ASSERT(code1 <= u8_MAX);
-      CORETECH_ASSERT(code2 <= u8_MAX);
-      
       // Create message to send to physical robot
       MessageDockWithObject msg;
-      msg.markerWidth_mm = marker->GetSize();
-      msg.markerType     = static_cast<u8>(code1);
-      msg.markerType2    = static_cast<u8>(code2);
       msg.useManualSpeed = useManualSpeed;
       msg.dockAction     = dockAction;
-      msg.image_pixel_x  = image_pixel_x;
-      msg.image_pixel_y  = image_pixel_y;
-      msg.pixel_radius   = pixel_radius;
-    
-      // When we are "docking" with a ramp or crossing a bridge, we
-      // don't want to worry about the X angle being large (since we
-      // _expect_ it to be large, since the markers are facing upward).
-      const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
-                                 dockAction == DA_RAMP_DESCEND ||
-                                 dockAction == DA_CROSS_BRIDGE);
       
-      Result sendResult = _msgHandler->SendMessage(_ID, msg);
-    
-      if(sendResult == RESULT_OK) {
-        // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(code1, marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
-      }
       
-      return sendResult;
+      return _msgHandler->SendMessage(_ID, msg);
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
