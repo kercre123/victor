@@ -40,11 +40,18 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(GameActions.instance == null) {
 			targetLockReticle.gameObject.SetActive(false);
-			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+			if(actionPanel != null && actionPanel.gameObject.activeSelf) {
+				//Debug.Log("frame("+Time.frameCount+") actionPanel deactivated because GameActions.instance == null" );
+				actionPanel.gameObject.SetActive(false);
+			}
 			return;
 		}
 
-		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+		if(actionPanel != null && !actionPanel.gameObject.activeSelf) {
+			//Debug.Log("frame("+Time.frameCount+") actionPanel activated because GameActions.instance != null" );
+			actionPanel.gameObject.SetActive(true);
+		}
+		
 
 		ShowObservedObjects();
 		RefreshFade();

@@ -11,10 +11,12 @@ public class BuildActions : GameActions {
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if(tracker != null) {
-			Vector3 pos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM;
+			//drop location is one block forward and half a block up from robot's location
+			//  cozmo space up being Vector3.forward in unity
+			Vector3 pos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 			string error;
-			if(!tracker.PredictDropValidation(selectedObject, pos, out error)) {
-				Debug.Log("PredictDropValidation failed for selectedObject("+selectedObject+") error("+error+")");
+			if(!tracker.PredictDropValidation(robot.carryingObject, pos, out error)) {
+				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 
 				//play error sound
 

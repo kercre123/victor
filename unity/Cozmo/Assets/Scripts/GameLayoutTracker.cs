@@ -618,69 +618,86 @@ public class GameLayoutTracker : MonoBehaviour {
 		return angle;
 	}
 
-	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 pos, out string error) {
+	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 posToDrop, out string error) {
 		error = "";
 
-		List<BuildInstructionsCube> matchingLayoutBlocks = currentLayout.blocks.FindAll(x => 
-	    {
-			if(x.objectFamily != objectToDrop.Family) return false;
-			if(x.objectFamily == 3 && objectToDrop.activeBlockType != x.activeBlockType) return false;
-			if(x.objectFamily != 3 && objectToDrop.ObjectType != x.objectType) return false;
-			return true;
-		} );
+		if(objectToDrop == null) return false;
 
-		if(matchingLayoutBlocks == null || matchingLayoutBlocks.Count == 0) {
+		List<BuildInstructionsCube> validatedGroundBlocks = currentLayout.blocks.FindAll(x => 
+			{
+				if(!x.Validated) return false;
+				if(x.cubeBelow != null) return false;
+
+				return true;
+			} );
+
+
+		List<BuildInstructionsCube> unvalidatedMatchingGroundBlocks = currentLayout.blocks.FindAll(x => 
+		    {
+				if(x.Validated) return false;
+				if(x.cubeBelow != null) return false;
+				if(x.objectFamily != objectToDrop.Family) return false;
+				if(x.objectFamily == 3 && objectToDrop.activeBlockType != x.activeBlockType) return false;
+				if(x.objectFamily != 3 && objectToDrop.ObjectType != x.objectType) return false;
+				return true;
+			} );
+
+		if(unvalidatedMatchingGroundBlocks == null || unvalidatedMatchingGroundBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			error = "No block of this type should be placed here.";
 			return false;
 		}
 
-//		bool valid = true;
-//		
-//		for(int validatedIndex=0;validatedIndex < validated.Count;validatedIndex++) {
-//			//let's just compared distances from unstacked blocks
-//			if(validated[validatedIndex].cubeBelow != null) continue;
-//			
-//			Vector3 idealOffset = (block.transform.position - validated[validatedIndex].transform.position) / block.Size;
-//			float up = idealOffset.y;
-//			float forward = idealOffset.z;
-//			idealOffset.y = forward;
-//			idealOffset.z = up;
-//			
-//			ObservedObject priorObject = robot.knownObjects.Find( x => x == validated[validatedIndex].AssignedObjectID);
-//			Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
-//			
-//			//are we basically on the same plane and roughly the correct distance away?
-//			if(Mathf.Abs(realOffset.z) > coplanarFudge) {
-//				if(!invalidated) error = "Whoops. That block needs to be placed on the ground.";
-//				invalidated = true;
-//				valid = false;
-//				if(debug) Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
-//				PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
-//				break;
-//			}
-//			
-//			float idealDistance = ((Vector2)idealOffset).magnitude;
-//			float realDistance = ((Vector2)realOffset).magnitude;
-//			
-//			float distanceError = Mathf.Abs(realDistance - idealDistance);
-//			if( distanceError > distanceFudge ) {
-//				if(!invalidated) error = "Whoops. That block was placed " + distanceError.ToString("N") + " block lengths too " + (realDistance > idealDistance ? "far from" : "close to" ) + " the " + CozmoPalette.instance.GetNameForObjectType(validated[validatedIndex].objectType) + " block.";
-//				invalidated = true;
-//				valid = false;
-//				if(debug) Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
-//				PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
-//				break;
-//			}
-//			
-//		}
-//		
-//		if(valid) {
-//			ValidateBlock(layoutBlockIndex, newObject);
-//			if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
-//		}
+		if(validatedGroundBlocks == null || validatedGroundBlocks.Count == 0) {
+			//if this will be our first ground block to validate, automatically valid location
+			return true;
+		}
 
-		return true;
+		bool valid = false;
+
+
+
+		//go through each not yet validated layout block this object could work for and see if it a legal position
+			// where legal positon is determined by a fudgey distance check to all prior validated ground blocks
+		for(int unvalidatedIndex=0; unvalidatedIndex < unvalidatedMatchingGroundBlocks.Count; unvalidatedIndex++) {
+
+			BuildInstructionsCube block = unvalidatedMatchingGroundBlocks[unvalidatedIndex];
+
+			for(int validatedIndex=0; validatedIndex < validatedGroundBlocks.Count; validatedIndex++) {
+				BuildInstructionsCube priorBlock = validatedGroundBlocks[validatedIndex];
+
+				Vector3 idealOffset = (block.transform.position - priorBlock.transform.position) / block.Size;
+				float up = idealOffset.y;
+				float forward = idealOffset.z;
+				idealOffset.y = forward;
+				idealOffset.z = up;
+				
+				ObservedObject priorObject = robot.knownObjects.Find(x => x == priorBlock.AssignedObjectID);
+				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+				
+				//are we basically on the same plane and roughly the correct distance away?
+				if(Mathf.Abs(realOffset.z) > coplanarFudge) {
+					error = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
+					break;
+				}
+				
+				float idealDistance = ((Vector2)idealOffset).magnitude;
+				float realDistance = ((Vector2)realOffset).magnitude;
+				
+				float distanceError = realDistance - idealDistance;
+				if(Mathf.Abs(distanceError) > distanceFudge) {
+					error = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
+					break;
+				}
+
+				valid = true;
+				break;
+			}
+
+			if(valid) break;
+		}
+
+		return valid;
 	}
 
 	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string error) {
