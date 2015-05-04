@@ -23,7 +23,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 
-
 		if(actionPanel != null) {
 			actionSliderPanel = actionPanel as ActionSliderPanel;
 		}
@@ -59,7 +58,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		GameActions.instance.SetActionButtons( true );
 
 		if(!robot.searching) {
-
 			targetLockTimer = 0f;
 			//Debug.Log("frame("+Time.frameCount+") robot.selectedObjects.Clear();" );
 			robot.selectedObjects.Clear();
