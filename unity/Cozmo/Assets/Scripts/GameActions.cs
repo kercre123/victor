@@ -32,12 +32,16 @@ public class GameActions : MonoBehaviour
 
 	protected virtual void OnEnable()
 	{
+		//Debug.Log(gameObject.name + " GameActions OnEnable instance = this;");
 		instance = this;
 	}
 
 	public virtual void OnDisable()
 	{
-		if( instance == this ) instance = null;
+		if(instance == this) {
+			//Debug.Log(gameObject.name + " GameActions OnDisable instance = null;");
+			instance = null;
+		}
 	}
 
 	public Sprite GetActionSprite( ActionButton.Mode mode )

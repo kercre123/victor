@@ -23,7 +23,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 
-
 		if(actionPanel != null) {
 			actionSliderPanel = actionPanel as ActionSliderPanel;
 		}
@@ -40,11 +39,18 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		if(GameActions.instance == null) {
 			targetLockReticle.gameObject.SetActive(false);
-			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+			if(actionPanel != null && actionPanel.gameObject.activeSelf) {
+				//Debug.Log("frame("+Time.frameCount+") actionPanel deactivated because GameActions.instance == null" );
+				actionPanel.gameObject.SetActive(false);
+			}
 			return;
 		}
 
-		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+		if(actionPanel != null && !actionPanel.gameObject.activeSelf) {
+			//Debug.Log("frame("+Time.frameCount+") actionPanel activated because GameActions.instance != null" );
+			actionPanel.gameObject.SetActive(true);
+		}
+		
 
 		ShowObservedObjects();
 		RefreshFade();
@@ -52,7 +58,6 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		GameActions.instance.SetActionButtons( true );
 
 		if(!robot.searching) {
-
 			targetLockTimer = 0f;
 			//Debug.Log("frame("+Time.frameCount+") robot.selectedObjects.Clear();" );
 			robot.selectedObjects.Clear();

@@ -85,8 +85,10 @@ public class GoldRushController : GameController {
 
 	private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
-	void Awake()
+	protected override void Awake()
 	{
+		base.Awake();
+
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
 		extractButton.gameObject.SetActive (false);
 	}

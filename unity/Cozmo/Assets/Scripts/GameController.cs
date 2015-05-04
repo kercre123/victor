@@ -77,6 +77,14 @@ public class GameController : MonoBehaviour {
 	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
 
+	protected virtual void Awake()
+	{
+		for(int i=0; i<stateActions.Length; i++) {
+			if(stateActions[i] == null) continue;
+			stateActions[i].gameObject.SetActive(false);
+		}
+	}
+
 	protected virtual void OnEnable () {
 		state = GameState.BUILDING;
 		stateTimer = 0f;
@@ -114,11 +122,7 @@ public class GameController : MonoBehaviour {
 
 		}
 
-		GameActions currentActions = stateActions[(int)state];
-
-		for(int i=0;i<stateActions.Length;i++) {
-			if(stateActions[i] != null) stateActions[i].gameObject.SetActive(currentActions == stateActions[i]);
-		}
+		RefreshGameActionsForState();
 
 		RefreshHUD();
 		firstFrame = false;
@@ -185,10 +189,19 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
+	void RefreshGameActionsForState() {
+		GameActions currentActions = stateActions[(int)state];
+		
+		for(int i=0;i<stateActions.Length;i++) {
+			if(stateActions[i] != null && currentActions != stateActions[i]) stateActions[i].gameObject.SetActive(false);
+		}
+		
+		if(currentActions != null) currentActions.gameObject.SetActive(true);
+	}
+
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
 			textScore.text = "score: " + scores[0].ToString();
-
 		}
 
 		if(textState != null) {
@@ -263,7 +276,7 @@ public class GameController : MonoBehaviour {
 		if(countdownToStart > 0f) {
 
 			if(coundownTimer == 0f) {
-				Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
+				//Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
 				if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
 				lastTimerSeconds = 0;
 				countdownAnnounced = true;
@@ -275,7 +288,7 @@ public class GameController : MonoBehaviour {
 
 				int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - gameStartingInDelay - coundownTimer, 0f, countdownToStart) );
 
-				Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
+				//Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
 				PlayCountdownAudio(remaining);
 				
 				if(countdownText != null) {
