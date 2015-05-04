@@ -136,7 +136,7 @@ public class Robot
 		IS_PERFORMING_ACTION    = 0x80
 	};
 
-	internal float localBusyTimer = 0f;
+	[System.NonSerialized] public float localBusyTimer = 0f;
 	public bool isBusy
 	{
 		get

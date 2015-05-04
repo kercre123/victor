@@ -55,7 +55,7 @@ public class ComboBoxItem
 
 	public Action OnSelect;
 
-	internal Action OnUpdate;
+	[System.NonSerialized] public Action OnUpdate;
 
 	public ComboBoxItem(string caption)
 	{

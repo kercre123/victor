@@ -422,10 +422,7 @@ public class CozmoVision : MonoBehaviour
 
 	protected virtual void Dings()
 	{
-		if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 )
-		{
-			return;
-		}
+		if( robot == null || robot.isBusy || robot.selectedObjects.Count > 0 ) return;
 			
 		if( robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/ )
 		{

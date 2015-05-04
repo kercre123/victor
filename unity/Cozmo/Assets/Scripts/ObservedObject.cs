@@ -11,11 +11,11 @@ public enum ActiveBlockType {
 	Off,
 	White,
 	Red,
-	Orange,
 	Yellow,
 	Green,
+	Cyan,
 	Blue,
-	Purple,
+	Magenta,
 	NumTypes
 }
 

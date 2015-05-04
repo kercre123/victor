@@ -72,8 +72,8 @@ public class GoldRushController : GameController {
 	float totalActiveTime = 0; // only increments when the robot is searching for or returing gold
 
 
-	internal bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
-	internal bool inDepositRange { get { return playState == PlayState.RETURNED; } }
+	public bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
+	public bool inDepositRange { get { return playState == PlayState.RETURNED; } }
 
 	enum BuildState
 	{
@@ -257,7 +257,7 @@ public class GoldRushController : GameController {
 
 	void RefreshGameProps() {
 		if(robot == null) return;
-		Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		//Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
 		for(int i=0;i<robot.knownObjects.Count;i++)
 		{
 			ObservedObject obj = robot.knownObjects[i];
