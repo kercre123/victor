@@ -87,7 +87,9 @@ public class ActionSliderPanel : ActionPanel
 		
 		if(robot == null || robot.isBusy) {
 			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
-			
+			upLastFrame = true;
+			downLastFrame = false;
+
 			return;
 		}
 		else {
