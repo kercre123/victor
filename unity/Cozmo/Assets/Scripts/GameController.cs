@@ -9,7 +9,8 @@ public class GameController : MonoBehaviour {
 		BUILDING,
 		PRE_GAME,
 		PLAYING,
-		RESULTS
+		RESULTS,
+		NUM_STATES
 	}
 
 	[Serializable]
@@ -39,6 +40,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] protected AudioClip playingLoopSound;
 	[SerializeField] protected AudioClip gameOverSound;
+	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.NUM_STATES];
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -110,6 +112,10 @@ public class GameController : MonoBehaviour {
 				UpdateState();
 			}
 
+		}
+
+		for(int i=0;i<stateActions.Length;i++) {
+			if(stateActions[i] != null) stateActions[i].gameObject.SetActive((int)state == i);
 		}
 
 		RefreshHUD();
