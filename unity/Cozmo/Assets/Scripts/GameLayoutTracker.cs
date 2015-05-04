@@ -427,7 +427,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
-					if(debug) Debug.Log("skip active block of the wrong color");
+					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockType+") newObject("+newObject+"):color("+newObject.activeBlockType+")");
 					continue;
 				}
 

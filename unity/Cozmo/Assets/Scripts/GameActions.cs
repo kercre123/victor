@@ -298,8 +298,12 @@ public class GameActions : MonoBehaviour
 
 		if( robot != null && robot.carryingObject != null && robot.carryingObject.Family == 3)
 		{
+
 			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
 			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
+
+			Debug.Log("Changed active block id("+robot.carryingObject+") from " + robot.carryingObject.activeBlockType + " to " + (ActiveBlockType)typeIndex );
+
 			robot.carryingObject.activeBlockType = (ActiveBlockType)typeIndex;
 			robot.carryingObject.SetActiveObjectLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
 		}
