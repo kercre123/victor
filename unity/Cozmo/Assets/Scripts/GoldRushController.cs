@@ -406,6 +406,7 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.EXTRACTING:
 			StartCoroutine(StartExtracting());
+			robot.isBusy = true;
 			break;
 		case PlayState.READY_TO_RETURN:
 			hintMessage.ShowMessage("Find the energy!", Color.black);
@@ -444,7 +445,11 @@ public class GoldRushController : GameController {
 			if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs(0);
 			break;
 		case PlayState.EXTRACTING:
+			robot.isBusy = false;
 			hintMessage.KillMessage();
+			break;
+		case PlayState.DEPOSITING:
+			robot.isBusy = false;
 			break;
 		case PlayState.READY_TO_RETURN:
 			hintMessage.KillMessage();
@@ -642,6 +647,7 @@ public class GoldRushController : GameController {
 	IEnumerator AwardPoints()
 	{
 		// will end up doing active block light stuff here
+		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
 		PlayNotificationAudio(depositingEnergy);
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
@@ -669,6 +675,7 @@ public class GoldRushController : GameController {
 			SetEnergyBars(num_drops_this_run, 0xff0000ff);
 		}
 		yield return new WaitForSeconds (collectedSound.length);
+		robot.isBusy = false;
 		EnterPlayState(PlayState.IDLE);
 		if (num_drops_this_run == 0) 
 		{

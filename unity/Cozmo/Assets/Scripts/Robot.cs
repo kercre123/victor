@@ -146,6 +146,11 @@ public class Robot
 				|| Status( StatusFlag.IS_ANIMATING ) 
 				|| Status( StatusFlag.IS_PICKED_UP );
 		}
+
+		set
+		{
+			localBusyTimer = value ? float.MaxValue : 0;
+		}
 	}
 
 	public bool Status( StatusFlag s )
