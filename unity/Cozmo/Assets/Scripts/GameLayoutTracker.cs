@@ -618,4 +618,120 @@ public class GameLayoutTracker : MonoBehaviour {
 		return angle;
 	}
 
+	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 pos, out string error) {
+		error = "";
+
+		List<BuildInstructionsCube> matchingLayoutBlocks = currentLayout.blocks.FindAll(x => 
+	    {
+			if(x.objectFamily != objectToDrop.Family) return false;
+			if(x.objectFamily == 3 && objectToDrop.activeBlockType != x.activeBlockType) return false;
+			if(x.objectFamily != 3 && objectToDrop.ObjectType != x.objectType) return false;
+			return true;
+		} );
+
+		if(matchingLayoutBlocks == null || matchingLayoutBlocks.Count == 0) {
+			//this is probably ok?  may need to do more processing to see if its ok
+			error = "No block of this type should be placed here.";
+			return false;
+		}
+
+//		bool valid = true;
+//		
+//		for(int validatedIndex=0;validatedIndex < validated.Count;validatedIndex++) {
+//			//let's just compared distances from unstacked blocks
+//			if(validated[validatedIndex].cubeBelow != null) continue;
+//			
+//			Vector3 idealOffset = (block.transform.position - validated[validatedIndex].transform.position) / block.Size;
+//			float up = idealOffset.y;
+//			float forward = idealOffset.z;
+//			idealOffset.y = forward;
+//			idealOffset.z = up;
+//			
+//			ObservedObject priorObject = robot.knownObjects.Find( x => x == validated[validatedIndex].AssignedObjectID);
+//			Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+//			
+//			//are we basically on the same plane and roughly the correct distance away?
+//			if(Mathf.Abs(realOffset.z) > coplanarFudge) {
+//				if(!invalidated) error = "Whoops. That block needs to be placed on the ground.";
+//				invalidated = true;
+//				valid = false;
+//				if(debug) Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
+//				PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
+//				break;
+//			}
+//			
+//			float idealDistance = ((Vector2)idealOffset).magnitude;
+//			float realDistance = ((Vector2)realOffset).magnitude;
+//			
+//			float distanceError = Mathf.Abs(realDistance - idealDistance);
+//			if( distanceError > distanceFudge ) {
+//				if(!invalidated) error = "Whoops. That block was placed " + distanceError.ToString("N") + " block lengths too " + (realDistance > idealDistance ? "far from" : "close to" ) + " the " + CozmoPalette.instance.GetNameForObjectType(validated[validatedIndex].objectType) + " block.";
+//				invalidated = true;
+//				valid = false;
+//				if(debug) Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
+//				PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
+//				break;
+//			}
+//			
+//		}
+//		
+//		if(valid) {
+//			ValidateBlock(layoutBlockIndex, newObject);
+//			if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
+//		}
+
+		return true;
+	}
+
+	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string error) {
+
+		error = "";
+
+		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObjectID == objectToStackUpon);
+		if(layoutBlockToStackUpon == null) {
+			//this is probably ok?  may need to do more processing to see if its ok
+			error = "You are attempting to stack upon an unvalidated block.";
+			return false;
+		}
+
+		BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find(x => x.cubeBelow == layoutBlockToStackUpon);
+		if(layoutBlockToStack == null) {
+			error = "You are attempting to stack upon the wrong block.";
+			return false;
+		}
+
+		if(layoutBlockToStack.Validated) {
+			error = "A valid block is already stacked there.";
+			return false;
+		}
+
+		if(layoutBlockToStack.objectFamily == 3) {
+
+			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
+				error = "You are attempting to stack a non active block where an active block belongs.";
+				return false;
+			}
+
+			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType) {
+				error = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
+				return false;
+			}
+		}
+
+		if(layoutBlockToStack.objectFamily != 3) {
+
+			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
+				error = "You are attempting to stack an active block where an standard block belongs.";
+				return false;
+			}
+
+			if(objectToStack.ObjectType != layoutBlockToStack.objectType) {
+				error = "You are attempting to stack a " +CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType)+ " block where a "+CozmoPalette.instance.GetNameForObjectType(layoutBlockToStack.objectType)+" block belongs.";
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 }
