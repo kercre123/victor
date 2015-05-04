@@ -427,7 +427,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
-					if(debug) Debug.Log("skip active block of the wrong color");
+					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockType+") newObject("+newObject+"):color("+newObject.activeBlockType+")");
 					continue;
 				}
 
@@ -565,7 +565,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		int count = 0;
 
-		Debug.Log("GetKnownObjectCountForBlock robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		//Debug.Log("GetKnownObjectCountForBlock robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
 		for(int i=0;i<robot.knownObjects.Count;i++) {
 

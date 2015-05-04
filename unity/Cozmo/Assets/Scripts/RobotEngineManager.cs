@@ -200,7 +200,7 @@ public class RobotEngineManager : MonoBehaviour {
 			robotList[i].CooldownTimers(Time.deltaTime);
 		}
 
-		float robotStateTimeout = 3.0f;
+		float robotStateTimeout = 20f;
 		if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
 			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
 			Disconnect ();

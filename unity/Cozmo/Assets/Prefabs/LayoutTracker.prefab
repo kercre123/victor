@@ -17177,9 +17177,9 @@ MonoBehaviour:
   meshCube: {fileID: 2309586}
   objectType: 4
   objectFamily: 3
-  activeBlockType: 4
+  activeBlockType: 3
   baseColor: {r: 1, g: 1, b: 1, a: 1}
-  cubeBelow: {fileID: 0}
+  cubeBelow: {fileID: 11409700}
   symbols:
   - {fileID: 21209608}
   - {fileID: 21209574}
@@ -18044,9 +18044,9 @@ MonoBehaviour:
   meshCube: {fileID: 2309724}
   objectType: 4
   objectFamily: 3
-  activeBlockType: 4
+  activeBlockType: 3
   baseColor: {r: 1, g: 1, b: 1, a: 1}
-  cubeBelow: {fileID: 0}
+  cubeBelow: {fileID: 11483378}
   symbols:
   - {fileID: 21209582}
   - {fileID: 21209710}

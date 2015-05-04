@@ -255,7 +255,7 @@ public class GoldRushController : GameController {
 
 	void RefreshGameProps() {
 		if(robot == null) return;
-		Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		//Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
 		for(int i=0;i<robot.knownObjects.Count;i++)
 		{
 			ObservedObject obj = robot.knownObjects[i];

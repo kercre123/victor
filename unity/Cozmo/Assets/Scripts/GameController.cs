@@ -64,7 +64,7 @@ public class GameController : MonoBehaviour {
 	public float gameStartingInDelay {
 		get {
 			float duration = gameStartingIn != null ? gameStartingIn.length : 0f;
-			Debug.Log("gameStartingInDelay: " + duration);
+			//Debug.Log("gameStartingInDelay: " + duration);
 			return duration;
 		}
 	}
@@ -242,7 +242,7 @@ public class GameController : MonoBehaviour {
 			countdownText.gameObject.SetActive(false);
 		}
 
-		coundownTimer = countdownToStart;
+		coundownTimer = 0f;
 		countdownAnnounced = false;
 	}
 
@@ -254,18 +254,20 @@ public class GameController : MonoBehaviour {
 
 		if(countdownToStart > 0f) {
 
-			if(!countdownAnnounced) {
+			if(coundownTimer == 0f) {
+				Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
 				if(gameStartingIn != null && audio != null) audio.PlayOneShot(gameStartingIn);
 				lastTimerSeconds = 0;
 				countdownAnnounced = true;
 			}
 
-			if(stateTimer >= gameStartingInDelay) {
+			coundownTimer += Time.deltaTime;
 
-				int remaining = Mathf.CeilToInt( Mathf.Clamp(coundownTimer, 0f, countdownToStart) );
+			if(coundownTimer >= gameStartingInDelay) {
 
-				coundownTimer -= Time.deltaTime;
+				int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - gameStartingInDelay - coundownTimer, 0f, countdownToStart) );
 
+				Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
 				PlayCountdownAudio(remaining);
 				
 				if(countdownText != null) {
@@ -339,7 +341,7 @@ public class GameController : MonoBehaviour {
 		//add game specific gating in an override of this method
 		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
 		//	or if this game has a count-down before start, handle that check here
-		if(countdownToStart > 0f && coundownTimer > 0f) return false;
+		if(countdownToStart > 0f && (countdownToStart - gameStartingInDelay - coundownTimer) > 0f) return false;
 
 		return true;
 	}
