@@ -321,35 +321,46 @@ namespace Anki
 
         if(currentMarker.validity == VisionMarker::UNKNOWN) {
           // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
-          if((lastResult = currentMarker.RefineCorners(
-            image,
-            currentHomography,
-            decode_minContrastRatio,
-            refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
-            quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-            refinedHomography, meanGrayvalueThreshold,
-            scratchOnchip)) != RESULT_OK)
-          {
-            return lastResult;
-          }
+          lastResult = currentMarker.RefineCorners(image,
+                                                   currentHomography,
+                                                   decode_minContrastRatio,
+                                                   refine_quadRefinementIterations,
+                                                   refine_numRefinementSamples,
+                                                   refine_quadRefinementMaxCornerChange,
+                                                   refine_quadRefinementMinCornerChange,
+                                                   quads_minQuadArea,
+                                                   quads_quadSymmetryThreshold,
+                                                   quads_minDistanceFromImageEdge,
+                                                   refinedHomography,
+                                                   meanGrayvalueThreshold,
+                                                   scratchOnchip);
 
-          if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
-            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+          if(lastResult == RESULT_OK) {
+            // Refinement succeeded...
+            if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
+              // ... but there wasn't enough contrast to use the marker
+              currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+            } else {
+              // ... and there was enough contrast, so proceed with with decoding
+              // the marker
+              lastResult = currentMarker.Extract(image,
+                                                 refinedHomography,
+#                                                if USE_NEAREST_NEIGHBOR_RECOGNITION
+                                                 NEAREST_NEIGHBOR_DISTANCE_THRESHOLD,
+#                                                else
+                                                 meanGrayvalueThreshold,
+#                                                endif
+                                                 decode_minContrastRatio,
+                                                 scratchOnchip);
+              
+              AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
+                                  "Marker extraction for quad %d of %d failed.\n",
+                                  iMarker, markers.get_size());
+              
+            }
           } else {
-            lastResult = currentMarker.Extract(image,
-                                               refinedHomography,
-#                                              if USE_NEAREST_NEIGHBOR_RECOGNITION
-                                               NEAREST_NEIGHBOR_DISTANCE_THRESHOLD,
-#                                              else
-                                               meanGrayvalueThreshold,
-#                                              endif
-                                               decode_minContrastRatio,
-                                               scratchOnchip);
-            
-            AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
-                                "Marker extraction for quad %d of %d failed.\n",
-                                iMarker, markers.get_size());
-
+            currentMarker.validity = VisionMarker::REFINEMENT_FAILURE;
+            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
           }
         } // if(currentMarker.validity == VisionMarker::UNKNOWN)
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)

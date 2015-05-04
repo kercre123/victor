@@ -901,7 +901,7 @@ namespace Anki
       bool verified = false;
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
-#    if USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
       
       s32 label=-1;
       s32 distance = grayvalueThreshold;
@@ -918,8 +918,8 @@ namespace Anki
         selectedLabel = static_cast<OrientedMarkerLabel>(label);
       }
       
-#    else
-        AnkiAssert(NUM_TREES <= u8_MAX);
+#     else
+      AnkiAssert(NUM_TREES <= u8_MAX);
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         predictedLabelsHist[iLabel] = 0;
