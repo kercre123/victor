@@ -68,7 +68,6 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 
   udpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
   ets_memset( udpServer, 0, sizeof( struct espconn ) );
-  espconn_create( udpServer );
   udpServer->type = ESPCONN_UDP;
   udpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
   udpServer->proto.udp->local_port = 5551;
