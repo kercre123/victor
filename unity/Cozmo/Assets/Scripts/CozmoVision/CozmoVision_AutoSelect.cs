@@ -34,6 +34,13 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 		robot = RobotEngineManager.instance.current;
 
+		if(GameActions.instance == null) {
+			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+			return;
+		}
+		
+		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+
 		ShowObservedObjects();
 
 		if( !robot.isBusy )

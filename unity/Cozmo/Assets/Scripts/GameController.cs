@@ -114,8 +114,10 @@ public class GameController : MonoBehaviour {
 
 		}
 
+		GameActions currentActions = stateActions[(int)state];
+
 		for(int i=0;i<stateActions.Length;i++) {
-			if(stateActions[i] != null) stateActions[i].gameObject.SetActive((int)state == i);
+			if(stateActions[i] != null) stateActions[i].gameObject.SetActive(currentActions == stateActions[i]);
 		}
 
 		RefreshHUD();

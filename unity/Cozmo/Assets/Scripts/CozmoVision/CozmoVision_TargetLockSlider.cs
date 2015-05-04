@@ -38,6 +38,14 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		robot = RobotEngineManager.instance.current;
 
+		if(GameActions.instance == null) {
+			targetLockReticle.gameObject.SetActive(false);
+			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+			return;
+		}
+
+		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+
 		ShowObservedObjects();
 		RefreshFade();
 		AcquireTarget();
