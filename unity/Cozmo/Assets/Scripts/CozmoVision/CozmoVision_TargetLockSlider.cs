@@ -12,8 +12,8 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	ActionSliderPanel actionSliderPanel = null;
 	float targetLockTimer = 0f;
 
-	protected override void Reset( DisconnectionReason reason = DisconnectionReason.None ) {
-		base.Reset( reason );
+	protected override void Reset(DisconnectionReason reason = DisconnectionReason.None) {
+		base.Reset(reason);
 
 		targetLockTimer = 0f;
 	}
@@ -50,12 +50,11 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			//Debug.Log("frame("+Time.frameCount+") actionPanel activated because GameActions.instance != null" );
 			actionPanel.gameObject.SetActive(true);
 		}
-		
 
 		ShowObservedObjects();
 		RefreshFade();
 		AcquireTarget();
-		GameActions.instance.SetActionButtons( true );
+		GameActions.instance.SetActionButtons(true);
 
 		if(!robot.searching) {
 			targetLockTimer = 0f;
