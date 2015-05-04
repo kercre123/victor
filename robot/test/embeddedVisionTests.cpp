@@ -4103,6 +4103,19 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   //markers.Print("markers");
   //markers[0].Print();
   
+  // Send stuff to Matlab
+  /*{
+    Anki::Embedded::Matlab matlab(false);
+
+    matlab.EvalStringEcho("markers = zeros(4,2,0);");
+    for(s32 i=0; i<markers.get_size(); i++) {
+      matlab.EvalStringEcho("markers(:,:,end+1) = [%f,%f;%f,%f;%f,%f;%f,%f];", markers[i].corners[0].x, markers[i].corners[0].y, markers[i].corners[1].x, markers[i].corners[1].y, markers[i].corners[2].x, markers[i].corners[2].y, markers[i].corners[3].x, markers[i].corners[3].y);
+    }
+
+    matlab.PutArray(image, "image");
+  } // Send stuff to Matlab
+  */
+  
   if(scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
     // auto-generated header file
