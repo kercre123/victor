@@ -55,19 +55,19 @@ public class ActionSlider {
 public class ActionSliderPanel : ActionPanel
 {
 	[SerializeField] public ActionSlider actionSlider;
-	[SerializeField] protected DynamicSliderFrame dynamicSliderFrame;
-	[SerializeField] protected AudioClip slideInSound;
-	[SerializeField] protected AudioClip slideOutSound;
+	[SerializeField] private DynamicSliderFrame dynamicSliderFrame;
+	[SerializeField] private AudioClip slideInSound;
+	[SerializeField] private AudioClip slideOutSound;
 
-	protected ActionButton bottomAction { get { return actionButtons[0]; } }
-	protected ActionButton topAction { get { return actionButtons[1]; } }
-	protected ActionButton centerAction { get { return actionButtons[2]; } }
+	private ActionButton bottomAction { get { return actionButtons[0]; } }
+	private ActionButton topAction { get { return actionButtons[1]; } }
+	private ActionButton centerAction { get { return actionButtons[2]; } }
 
 	//public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
 
-	protected bool upLastFrame = true;
-	protected bool downLastFrame = false;
-	protected ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
+	public bool upLastFrame { get; private set; }
+	public bool downLastFrame { get; private set; }
+	private ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
 	protected override void Awake() {
 		base.Awake();
@@ -103,6 +103,7 @@ public class ActionSliderPanel : ActionPanel
 			upLastFrame = true;
 			downLastFrame = false;
 
+			RefreshSliderMode();
 			return;
 		}
 		else {
@@ -179,13 +180,13 @@ public class ActionSliderPanel : ActionPanel
 		}
 	}*/
 
-	public void SlideInSound()
+	private void SlideInSound()
 	{
 		audio.volume = 1f;
 		audio.PlayOneShot( slideInSound, 1f );
 	}
 	
-	public void SlideOutSound()
+	private void SlideOutSound()
 	{
 		audio.volume = 1f;
 		audio.PlayOneShot( slideOutSound, 1f );
