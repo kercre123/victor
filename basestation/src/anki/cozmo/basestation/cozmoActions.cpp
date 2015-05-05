@@ -315,9 +315,10 @@ namespace Anki {
         f32 closestPoseDist = std::numeric_limits<f32>::max();
         Radians closestPoseAngle = M_PI;
         
-        const Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, object,
+        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, object,
                                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
 
+        preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
         for(auto & preActionPose : possiblePreActionPoses)
         {
           Pose3d possiblePose;

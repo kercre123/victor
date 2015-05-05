@@ -84,6 +84,10 @@ namespace Anki {
     
     // Default distance from marker for predock pose
     const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
+    
+    // Maximum difference along Z-axis between robot and predock pose for it
+    // to be able to reach predock pose.
+    const f32 REACHABLE_PREDOCK_POSE_Z_THRESH_MM = 2*44;
 
     
   } // namespace Cozmo
