@@ -1000,7 +1000,7 @@ namespace Anki
       if (pathSegmentIdx < 0) {
         for (u8 i=0; i< numPathSegments_; ++i) {
           if (!CheckSegmentContinuity(tolerance_distance_squared, i)) {
-            CoreTechPrint("ERROR: Continuity check failed on segment %d\n", i);
+            CoreTechPrint("ERROR: Continuity check failed on segment %d of %d\n", i, GetNumSegments());
             return false;
           }
         }
