@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public class SlalomController : GameController {
 	public static SlalomController instance = null;
 
+	[SerializeField] Text text_finalTime;
+
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
 	[SerializeField] bool trackWithCornerTriggers = false;
@@ -262,22 +264,31 @@ public class SlalomController : GameController {
 			textProgress.text = "index("+currentObstacleIndex+") angle("+totalAngleFromObstacleTraversed+")";
 		}
 
-		int remaining = Mathf.CeilToInt( Mathf.Clamp(maxPlayTime - stateTimer, 0, maxPlayTime) );
+		if(maxPlayTime > 0f) {
+			int remaining = Mathf.CeilToInt(Mathf.Clamp(maxPlayTime - stateTimer, 0, maxPlayTime));
 
-		if(remaining <= 30f) {
+			if(remaining <= 30f) {
 
-			PlayCountdownAudio(remaining);
-			
-			if(countdownText != null) {
+				PlayCountdownAudio(remaining);
 				
-				countdownText.text = remaining.ToString();
-				countdownText.gameObject.SetActive(true);
+				if(countdownText != null) {
+					
+					countdownText.text = remaining.ToString();
+					countdownText.gameObject.SetActive(true);
+				}
+			}
+			else
+			if(countdownText != null) {
+				countdownText.gameObject.SetActive(false);
 			}
 		}
-		else if(countdownText != null) {
-			countdownText.gameObject.SetActive(false);
-		}
 
+	}
+
+	protected override void Exit_PLAYING() {
+		base.Exit_PLAYING();
+
+		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
 	}
 
 	protected override bool IsGameReady() {

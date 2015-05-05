@@ -265,6 +265,10 @@ public class GameController : MonoBehaviour {
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
+
+		for(int i=0;i<scores.Length;i++) {
+			scores[i] = 0;
+		}
 	}
 
 	protected virtual void Update_PRE_GAME() {
@@ -286,9 +290,9 @@ public class GameController : MonoBehaviour {
 
 			if(coundownTimer >= gameStartingInDelay) {
 
-				int remaining = Mathf.CeilToInt( Mathf.Clamp(countdownToStart - gameStartingInDelay - coundownTimer, 0f, countdownToStart) );
+				int remaining = Mathf.CeilToInt( Mathf.Clamp((countdownToStart + gameStartingInDelay) - coundownTimer, 0f, countdownToStart) );
 
-				//Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
+				Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
 				PlayCountdownAudio(remaining);
 				
 				if(countdownText != null) {
@@ -318,7 +322,9 @@ public class GameController : MonoBehaviour {
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
 
-
+		for(int i=0;i<scores.Length;i++) {
+			scores[i] = 0;
+		}
 	}
 
 	protected virtual void Update_PLAYING() {
@@ -362,7 +368,7 @@ public class GameController : MonoBehaviour {
 		//add game specific gating in an override of this method
 		// for instance, if this game requires a certain action to start: 'pick up X to begin!'
 		//	or if this game has a count-down before start, handle that check here
-		if(countdownToStart > 0f && (countdownToStart - gameStartingInDelay - coundownTimer) > 0f) return false;
+		if(countdownToStart > 0f && ((countdownToStart + gameStartingInDelay) - coundownTimer) > 0f) return false;
 
 		return true;
 	}
