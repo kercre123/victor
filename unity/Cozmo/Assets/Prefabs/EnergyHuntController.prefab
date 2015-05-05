@@ -1408,6 +1408,8 @@ MonoBehaviour:
   bonusTimeDecay: .666666687
   resultsScore: {fileID: 11413718}
   testpitch: 1
+  extractTrimTime: 1.14999998
+  depositTrimTime: .25
 --- !u!114 &11425404
 MonoBehaviour:
   m_ObjectHideFlags: 1
