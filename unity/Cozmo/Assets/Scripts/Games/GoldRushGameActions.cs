@@ -66,7 +66,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( buttons.Length > 2 && isSlider )
 				{
-					buttons[2].SetMode( ActionButton.Mode.DROP, null );
+					buttons[2].SetMode( ActionButton.Mode.DROP, null, null, true );
 				}
 				else if( buttons.Length > 0 )
 				{
@@ -80,7 +80,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( robot.selectedObjects.Count == 1 && robot.selectedObjects[0].Family == 3 )
 				{
-					buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
+					buttons[2].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0], " Extractor", true );
 				}
 				else
 				{
@@ -88,7 +88,7 @@ public class GoldRushGameActions : GameActions {
 					{
 						if( robot.selectedObjects[i].Family == 3 )
 						{
-							buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
+							buttons[2].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], " Extractor", true );
 						}
 					}
 				}
@@ -99,7 +99,7 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				//buttons[2].SetMode( ActionButton.Mode.TARGET, null );
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{

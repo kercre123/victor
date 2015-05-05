@@ -16,6 +16,7 @@ public class RobotStateText : MonoBehaviour {
 	[SerializeField] Text text_carryingObjectID;
 	[SerializeField] Text text_headTracking;
 	[SerializeField] Text text_knownObjects;
+	[SerializeField] Text text_searching;
 
 	const string prefix_ID = "ID: ";
 	const string prefix_headAngle = "HeadAngle: ";
@@ -29,6 +30,7 @@ public class RobotStateText : MonoBehaviour {
 	const string prefix_carryingObjectID = "Carrying: ";
 	const string prefix_headTracking = "HeadTracking: ";
 	const string prefix_text_knownObjects = "KnownObjects: ";
+	const string prefix_text_searching = "Searching: ";
 
 	void Update() {
 		if(RobotEngineManager.instance == null) return;
@@ -48,5 +50,6 @@ public class RobotStateText : MonoBehaviour {
 		if(text_carryingObjectID != null) 	text_carryingObjectID.text 	= prefix_carryingObjectID + bot.carryingObject;
 		if(text_headTracking != null) 		text_headTracking.text 		= prefix_headTracking + bot.headTrackingObject;
 		if(text_knownObjects != null) 		text_knownObjects.text 		= prefix_text_knownObjects + bot.knownObjects.Count.ToString();
+		if(text_searching != null) 			text_searching.text 		= prefix_text_searching + bot.searching.ToString();
 	}
 }

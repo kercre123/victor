@@ -7,10 +7,12 @@ public class SliderText : MonoBehaviour
 	[SerializeField] private Text text_pressed;
 	[SerializeField] private Text text_upLastFrame;
 	[SerializeField] private Text text_downLastFrame;
+	[SerializeField] private Text text_currentAction;
 
 	private const string prefix_pressed = "Pressed: ";
 	private const string prefix_upLastFrame = "UpLastFrame: ";
 	private const string prefix_downLastFrame = "DownLastFrame: ";
+	private const string prefix_currentAction = "Current: ";
 
 	private ActionSliderPanel actionSliderPanel;
 
@@ -44,5 +46,6 @@ public class SliderText : MonoBehaviour
 		text_pressed.text = prefix_pressed + actionSliderPanel.actionSlider.Pressed;
 		text_upLastFrame.text = prefix_upLastFrame + actionSliderPanel.upLastFrame;
 		text_downLastFrame.text = prefix_downLastFrame + actionSliderPanel.downLastFrame;
+		text_currentAction.text = prefix_currentAction + actionSliderPanel.actionSlider.currentAction.mode;
 	}
 }
