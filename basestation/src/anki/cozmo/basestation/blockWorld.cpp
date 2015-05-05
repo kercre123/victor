@@ -676,7 +676,8 @@ namespace Anki
                                     (_robot->GetPose().GetTranslation() -
                                     unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
           
-          // Check any of the markers should be visible.
+          // Check any of the markers should be visible and that the reason for
+          // them not being visible is not occlusion.
           // For now just ignore the left and right 22.5% of the image blocked by the lift,
           // *iff* we are using VGA images, which have a wide enough FOV to be occluded
           // by the lift. (I.e., assume QVGA is a cropped, narrower FOV)
@@ -696,9 +697,26 @@ namespace Anki
                                   "Unexpeted camera calibration ncols=%d.\n",
                                   camera.GetCalibration().GetNcols());
           }
-          const bool markersShouldBeVisible = unobserved.object->IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad);
           
-          if(seenRecently && closeEnough && !markersShouldBeVisible)
+          Vision::KnownMarker::NotVisibleReason reason;
+          bool markersShouldBeVisible = false;
+          bool markerIsOccluded = false;
+          for(auto & marker : unobserved.object->GetMarkers()) {
+            if(marker.IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
+              // As soon as one marker is visible, we can stop
+              markersShouldBeVisible = true;
+              break;
+            } else if(reason == Vision::KnownMarker::NotVisibleReason::OCCLUDED) {
+              // Flag that any of the markers was not visible because it was occluded
+              // If this is the case, then we don't want to signal this object as
+              // partially visible.
+              markerIsOccluded = true;
+            }
+            // This should never be true because we set requireSomethingBehind to false in IsVisibleFrom() above.
+            assert(reason != Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND);
+          }
+
+          if(seenRecently && closeEnough && !markersShouldBeVisible && !markerIsOccluded)
           {
             // First three checks for object passed, now see if any of the object's
             // corners are in our FOV
