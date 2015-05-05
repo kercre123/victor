@@ -13176,10 +13176,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .128440857
-    y: .0904574767
-    width: .743118286
-    height: .862996459
+    x: .304364026
+    y: .214264557
+    width: .391271949
+    height: .67548275
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -23116,7 +23116,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 15
+  m_SortingOrder: 16
 --- !u!223 &22309758
 Canvas:
   m_ObjectHideFlags: 1

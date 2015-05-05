@@ -20,6 +20,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		COMPLETE
 	}
 
+	public enum LayoutErrorType {
+		NONE,
+		TOO_CLOSE,
+		TOO_FAR,
+		TOO_HIGH,
+		TOO_LOW,
+		WRONG_BLOCK,
+		WRONG_STACK,
+		WRONG_COLOR
+	}
+
 	[SerializeField] bool debug = false;
 	[SerializeField] List<GameLayout> layouts;
 
@@ -637,8 +648,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
-	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 posToDrop, out string error) {
-		error = "";
+	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 posToDrop, out string errorText, out LayoutErrorType errorType) {
+
+		errorText = "";
+		errorType = LayoutErrorType.NONE;
 
 		if(objectToDrop == null) return false;
 
@@ -681,7 +694,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				
 				//are we basically on the same plane and roughly the correct distance away?
 				if(Mathf.Abs(realOffset.z) > coplanarFudge) {
-					error = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
+					errorText = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
+					errorType = realOffset.z > 0f ? LayoutErrorType.TOO_HIGH : LayoutErrorType.TOO_LOW;
 					failDistanceCheck = true;
 					break;
 				}
@@ -691,7 +705,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				
 				float distanceError = realDistance - idealDistance;
 				if(Mathf.Abs(distanceError) > distanceFudge) {
-					error = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
+					errorText = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
+					errorType = distanceError > 0f? LayoutErrorType.TOO_FAR : LayoutErrorType.TOO_CLOSE;
 					failDistanceCheck = true;
 					break;
 				}
@@ -704,9 +719,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		return !failDistanceCheck;
 	}
 
-	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string error) {
+	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string errorText, out LayoutErrorType errorType) {
 
-		error = "";
+		errorText = "";
+		errorType = LayoutErrorType.NONE;
 
 		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObjectID == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
@@ -714,31 +730,36 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 			if(layoutBlockToStackUpon == null) {
 				//this is probably ok?  may need to do more processing to see if its ok
-				error = "You are attempting to stack upon an unvalidated block.";
+				errorText = "You are attempting to stack upon the wrong block.";
+				errorType = LayoutErrorType.WRONG_STACK;
 				return false;
 			}
 		}
 
 		BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find(x => x.cubeBelow == layoutBlockToStackUpon);
 		if(layoutBlockToStack == null) {
-			error = "You are attempting to stack upon the wrong block.";
+			errorText = "You are attempting to stack upon the wrong block.";
+			errorType = LayoutErrorType.WRONG_STACK;
 			return false;
 		}
 
 		if(layoutBlockToStack.Validated) {
-			error = "A valid block is already stacked there.";
+			errorText = "A valid block is already stacked there.";
+			errorType = LayoutErrorType.WRONG_STACK;
 			return false;
 		}
 
 		if(layoutBlockToStack.objectFamily == 3) {
 
 			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
-				error = "You are attempting to stack a non active block where an active block belongs.";
+				errorText = "You are attempting to stack a non active block where an active block belongs.";
+				errorType = LayoutErrorType.WRONG_BLOCK;
 				return false;
 			}
 
 			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType) {
-				error = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
+				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
+				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;
 			}
 		}
@@ -746,17 +767,25 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(layoutBlockToStack.objectFamily != 3) {
 
 			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
-				error = "You are attempting to stack an active block where an standard block belongs.";
+				errorText = "You are attempting to stack an active block where an standard block belongs.";
+				errorType = LayoutErrorType.WRONG_BLOCK;
 				return false;
 			}
 
 			if(objectToStack.ObjectType != layoutBlockToStack.objectType) {
-				error = "You are attempting to stack a " +CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType)+ " block where a "+CozmoPalette.instance.GetNameForObjectType(layoutBlockToStack.objectType)+" block belongs.";
+				errorText = "You are attempting to stack a " +CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType)+ " block where a "+CozmoPalette.instance.GetNameForObjectType(layoutBlockToStack.objectType)+" block belongs.";
+				errorType = LayoutErrorType.WRONG_BLOCK;
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	public void SetMessage(string message, Color color) {
+
+		screenMessage.ShowMessage(message, color);
+
 	}
 
 }

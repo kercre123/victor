@@ -3,6 +3,17 @@ using System.Collections;
 
 public class BuildActions : GameActions {
 
+
+	[SerializeField] AudioClip actionDeniedSound;
+
+	[SerializeField] AudioClip tooCloseVO;
+	[SerializeField] AudioClip tooFarVO;
+	[SerializeField] AudioClip tooHighVO;
+	[SerializeField] AudioClip tooLowVO;
+	[SerializeField] AudioClip wrongBlockVO;
+	[SerializeField] AudioClip wrongStackVO;
+	[SerializeField] AudioClip wrongColorVO;
+
 	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
 		if( robot == null || !onRelease ) return;
@@ -15,15 +26,14 @@ public class BuildActions : GameActions {
 			//  cozmo space up being Vector3.forward in unity
 			Vector3 pos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 			string error;
-			if(!tracker.PredictDropValidation(robot.carryingObject, pos, out error)) {
+			GameLayoutTracker.LayoutErrorType errorType;
+			if(!tracker.PredictDropValidation(robot.carryingObject, pos, out error, out errorType)) {
 				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 
-				//play error sound
-
 				//set error text message
+				tracker.SetMessage(error, Color.red);
 
-				//play VO for 'too close' or 'too far'
-
+				PlaySoundsForErrorType(errorType);
 
 				return;
 			}
@@ -42,14 +52,13 @@ public class BuildActions : GameActions {
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if(tracker != null) {
 			string error;
-			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error)) {
+			GameLayoutTracker.LayoutErrorType errorType;
+			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType)) {
 				Debug.Log("PredictStackValidation failed for robot.carryingObject("+robot.carryingObject+") upon selectedObject("+selectedObject+") error("+error+")");
-				
-				//play error sound
-				
 				//set error text message
-				
-				//play VO for 'stack attempted on wrong block' or 'block is wrong color'
+				tracker.SetMessage(error, Color.red);
+
+				PlaySoundsForErrorType(errorType);
 
 				return;
 			}
@@ -57,6 +66,50 @@ public class BuildActions : GameActions {
 
 		ActionButtonClick();
 		base.Stack(onRelease, selectedObject);
+	}
+
+	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
+	
+		//play denied sound
+		if(actionDeniedSound != null) audio.PlayOneShot(actionDeniedSound);
+
+		AudioClip clip = null;
+		switch(errorType) {
+			case GameLayoutTracker.LayoutErrorType.NONE:
+				break;
+			case GameLayoutTracker.LayoutErrorType.TOO_CLOSE:
+				clip = tooCloseVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.TOO_FAR:
+				clip = tooFarVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.TOO_HIGH:
+				clip = tooHighVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.TOO_LOW:
+				clip = tooLowVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.WRONG_BLOCK:
+				clip = wrongBlockVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.WRONG_STACK:
+				clip = wrongStackVO;
+				break;
+			case GameLayoutTracker.LayoutErrorType.WRONG_COLOR:
+				clip = wrongColorVO;
+				break;
+		}
+
+		if(clip == null) return;
+
+		//play VO for 'stack attempted on wrong block' or 'block is wrong color'
+		StartCoroutine(PlaySoundAfterDelay(clip, actionDeniedSound != null ? actionDeniedSound.length : 0f));
+	}
+
+
+	IEnumerator PlaySoundAfterDelay (AudioClip clip, float delay) {
+		yield return new WaitForSeconds(delay);
+		if(clip != null) audio.PlayOneShot(clip);
 	}
 
 }
