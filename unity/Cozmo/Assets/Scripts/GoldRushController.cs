@@ -1,4 +1,4 @@
-﻿#define RUSH_DEBUG
+﻿//#define RUSH_DEBUG
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +10,7 @@ public class GoldRushController : GameController {
 
 	public const uint EXTRACTOR_COLOR = 0xFF0000FF;
 
+	[SerializeField] protected AudioClip locatorBeep;
 	[SerializeField] protected AudioClip foundBeep;
 	[SerializeField] protected AudioClip collectedSound;
 	[SerializeField] protected AudioClip pickupEnergyScanner;
@@ -31,6 +32,7 @@ public class GoldRushController : GameController {
 
 	[SerializeField] float hideRadius;	//radius around origin's initial position in which its gold will be buried
 	[SerializeField] float findRadius;	//dropping cube within find radius will trigger transmutation/score
+	[SerializeField] float lostRadius;	//leaving lost radius will put you back in searching mode
 	[SerializeField] float returnRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float detectRadius; //pulsing will accelerate from detect to find ranges
 	[SerializeField] float extractionTime = 1.5f; //time it takes to extract
@@ -153,6 +155,21 @@ public class GoldRushController : GameController {
 		else if( Input.GetKeyDown(KeyCode.Keypad2) )
 		{
 			StartCoroutine(StartExtracting());
+		}
+		else if( Input.GetKeyDown(KeyCode.Keypad3) )
+		{
+			playStateTimer = 0;
+			EnterPlayState(PlayState.CAN_EXTRACT);
+		}
+		else if( Input.GetKeyDown(KeyCode.Keypad4) )
+		{
+			EnterPlayState(PlayState.IDLE);
+		}
+
+		if(playState == PlayState.CAN_EXTRACT)
+		{
+			UpdateCanExtract();
+			playStateTimer += Time.deltaTime;
 		}
 #endif
 	}
@@ -403,13 +420,16 @@ public class GoldRushController : GameController {
 			if (timeSinceLast >= current_rate) 
 			{
 				audio.Stop();
+				audio.clip = locatorBeep;
 				gameObject.audio.Play();
 
 				lastPlayTime = Time.realtimeSinceStartup;
 			}
 		}
 	}
-	public float testpitch = 1.0f;
+	[SerializeField]
+	public int testRate = 300;
+	int num_taps = 0;
 	void EnterPlayState(PlayState new_state)
 	{
 		ExitPlayState (playState);
@@ -438,10 +458,13 @@ public class GoldRushController : GameController {
 		case PlayState.CAN_EXTRACT:
 			if ( goldExtractingObject != null )
 			{
-				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150);
+				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
 				audio.Stop();
+				audio.clip = foundBeep;
 				audio.loop = true;
-				gameObject.audio.PlayOneShot(foundBeep);
+				audio.pitch = .3f;
+				gameObject.audio.Play();
+				num_taps = 0;
 			}
 			break;
 		case PlayState.EXTRACTING:
@@ -481,7 +504,6 @@ public class GoldRushController : GameController {
 		case PlayState.IDLE:
 			break;
 		case PlayState.SEARCHING:
-			if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs(0);
 			break;
 		case PlayState.EXTRACTING:
 
@@ -499,6 +521,9 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNED:
 			//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 			hintMessage.KillMessage();
+			break;
+		case PlayState.CAN_EXTRACT:
+			audio.pitch = 1;
 			break;
 		default:
 			break;
@@ -631,17 +656,21 @@ public class GoldRushController : GameController {
 	void UpdateCanExtract()
 	{
 		Vector2 buriedLocation;
+
 		if(buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) 
-		{
-			UpdateDirectionLights(buriedLocation);
-			
+		{	
 			float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
 
-			if( distance > findRadius )
+			if( distance > lostRadius )
 			{
 				// go back to searching
 				EnterPlayState(PlayState.SEARCHING);
 			}
+		}
+
+		if( Input.GetKeyDown(KeyCode.Space) )
+		{
+			num_taps++;
 		}
 	}
 
@@ -667,7 +696,7 @@ public class GoldRushController : GameController {
 	IEnumerator CountdownToPlay()
 	{
 		PlayNotificationAudio (gameStartingIn);
-		yield return new WaitForSeconds (gameStartingInDelay);
+		yield return new WaitForSeconds (gameStartingIn.length + .5f);
 		int timer_index = timerSounds.Length - 3;
 		while( timer_index < timerSounds.Length )
 		{

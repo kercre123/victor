@@ -1383,7 +1383,8 @@ MonoBehaviour:
   - {fileID: 11411886}
   - {fileID: 11411886}
   - {fileID: 0}
-  foundBeep: {fileID: 8300000, guid: b9f433ee03eb049c095862f7e0d093b1, type: 3}
+  locatorBeep: {fileID: 8300000, guid: 3a92989e3fa2e409796d5978fe2e138f, type: 3}
+  foundBeep: {fileID: 8300000, guid: bad1754a058044af8add36bdd4c9181b, type: 3}
   collectedSound: {fileID: 8300000, guid: 56c69feea6a654597bb3cb73eeb184fa, type: 3}
   pickupEnergyScanner: {fileID: 8300000, guid: fe2f808a1b7b34efd982a9559af7b64d, type: 3}
   placeEnergyScanner: {fileID: 8300000, guid: bbdb2145356c949a2a768cde032c37a1, type: 3}
@@ -1399,6 +1400,7 @@ MonoBehaviour:
   light_messaging_delay: .5
   hideRadius: 300
   findRadius: 50
+  lostRadius: 100
   returnRadius: 75
   detectRadius: 300
   extractionTime: 1.5
