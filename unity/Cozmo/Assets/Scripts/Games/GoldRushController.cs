@@ -20,6 +20,7 @@ public class GoldRushController : GameController {
 	[SerializeField] protected AudioClip extractingEnergy;
 	[SerializeField] protected AudioClip depositingEnergy;
 	[SerializeField] protected AudioClip timeUp;
+	[SerializeField] protected AudioClip newHighScore;
 
 	[SerializeField] protected AudioClip timeExtension;
 	public float detectRangeDelayFar = 2.0f;
@@ -42,6 +43,7 @@ public class GoldRushController : GameController {
 	[SerializeField] float bonusTimeDecay = 2f / 3f;
 
 	[SerializeField] Text resultsScore; //for the results screen
+	[SerializeField] Text resultsHighScore; //for the results screen
 
 	//List<ObservedObject> goldCubes = new List<ObservedObject>();
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
@@ -50,10 +52,12 @@ public class GoldRushController : GameController {
 	[System.NonSerialized] public ObservedObject goldExtractingObject = null;
 	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
 	int baseObjectId = -1;
-	ScreenMessage hintMessage;
+	//ScreenMessage //hintMessage;
 	private bool audioLocatorEnabled = true;
 	byte last_leds = 0xFF;
 	bool sent = false;
+	private bool setHighScore = false;
+	private int oldHighScore = 0;
 
 	enum PlayState
 	{
@@ -90,7 +94,7 @@ public class GoldRushController : GameController {
 	{
 		base.Awake();
 
-		hintMessage = GetComponentInChildren<ScreenMessage> ();
+		//hintMessage = GetComponentInChildren<ScreenMessage> ();
 	}
 
 	protected override void OnEnable()
@@ -183,6 +187,10 @@ public class GoldRushController : GameController {
 
 		//CozmoVision.EnableDing(false); // just in case we were in searching mode
 		SetEnergyBars (0, 0);
+		setHighScore = false;
+		oldHighScore = PlayerPrefs.GetInt("EnergyHunt_HighScore", 0);
+		Debug.Log("oldHighScore: " + oldHighScore);
+
 	}
 
 	protected override void Exit_PLAYING()
@@ -193,6 +201,15 @@ public class GoldRushController : GameController {
 		StopAllCoroutines();
 		PlayNotificationAudio (timeUp);
 		resultsScore.text = "Score: " + scores [0];
+		if( setHighScore )
+		{
+			PlayerPrefs.SetInt("EnergyHunt_HighScore", scores[0]);
+			resultsHighScore.text = "New High Score!";
+		}
+		else
+		{
+			resultsHighScore.text = "High Score: " + oldHighScore.ToString();
+		}
 		CozmoVision.EnableDing(); // just in case we were in searching mode
 		//ActionButton.DROP = null;
 		//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
@@ -269,7 +286,7 @@ public class GoldRushController : GameController {
 
 		RefreshGameProps();
 
-		hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
+		//hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
 		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
 		{
 			PlayNotificationAudio (pickupEnergyScanner);
@@ -279,7 +296,7 @@ public class GoldRushController : GameController {
 	protected override void Exit_PRE_GAME () 
 	{
 		Debug.Log("Exit_PRE_GAME");
-		hintMessage.KillMessage ();
+		//hintMessage.KillMessage ();
 		base.Exit_PRE_GAME ();
 	}
 
@@ -344,7 +361,7 @@ public class GoldRushController : GameController {
 					goldExtractingObject = robot.carryingObject;
 					//UpdateDetectorLights (1);
 					goldExtractingObject.SetActiveObjectLEDs(0); 
-					hintMessage.ShowMessage("Place the scanner on the transformer", Color.black);
+					//hintMessage.ShowMessage("Place the scanner on the transformer", Color.black);
 					PlayNotificationAudio(placeEnergyScanner);
 				}
 				break;
@@ -354,7 +371,7 @@ public class GoldRushController : GameController {
 					// stacked our detector block
 					buildState = BuildState.WAITING_FOR_PLAY;
 					PlayNotificationAudio(pickupEnergyScanner);
-					hintMessage.ShowMessage("Pick up the scanner to begin play", Color.black);
+					//hintMessage.ShowMessage("Pick up the scanner to begin play", Color.black);
 				}
 				break;
 			case BuildState.WAITING_FOR_PLAY:
@@ -363,7 +380,7 @@ public class GoldRushController : GameController {
 					// start the game
 					StartCoroutine(CountdownToPlay());
 					//PlayRequested();
-					hintMessage.KillMessage();
+					//hintMessage.KillMessage();
 				}
 				break;
 			default:
@@ -437,17 +454,18 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.SEARCHING:
 			robot.SetHeadAngle();
-			PlayNotificationAudio(findEnergy);
+			PlayNotificationAudioDeferred(findEnergy);
 			foundItems.Clear();
 			buriedLocations.Clear();
-			Vector2 randomSpot = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value); 
+
+			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
 			randomSpot *= hideRadius;
 			Vector2 depositSpot = (Vector2)goldCollectingObject.WorldPosition ;
 
-			while( Vector2.Distance(randomSpot, depositSpot) < hideRadius )
+			while( Vector2.Distance(randomSpot, depositSpot) < returnRadius )
 			{
 				//keep searching until we find a spot far enough away from the deposit spot
-				randomSpot = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value); 
+				randomSpot = UnityEngine.Random.insideUnitCircle;
 				randomSpot *= hideRadius;
 			}
 			buriedLocations[robot.carryingObject] = randomSpot;
@@ -467,12 +485,12 @@ public class GoldRushController : GameController {
 			StartCoroutine(StartExtracting());
 			break;
 		case PlayState.READY_TO_RETURN:
-			hintMessage.ShowMessage("Find the energy!", Color.black);
+			//hintMessage.ShowMessage("Find the energy!", Color.black);
 			break;
 		case PlayState.RETURNING:
 			robot.SetHeadAngle();
 			PlayNotificationAudio(dropEnergy);
-			hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
+			//hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
 			robot.SetHeadAngle();
@@ -488,7 +506,7 @@ public class GoldRushController : GameController {
 				audio.pitch = .3f;
 				gameObject.audio.Play();
 			}
-			hintMessage.ShowMessage("Deposit the energy!", Color.black);
+			//hintMessage.ShowMessage("Deposit the energy!", Color.black);
 			break;
 		case PlayState.DEPOSITING:
 			StartCoroutine(AwardPoints());
@@ -508,20 +526,20 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.EXTRACTING:
 
-			hintMessage.KillMessage();
+			//hintMessage.KillMessage();
 			break;
 		case PlayState.DEPOSITING:
 			robot.isBusy = false;
 			break;
 		case PlayState.READY_TO_RETURN:
-			hintMessage.KillMessage();
+			//hintMessage.KillMessage();
 			break;
 		case PlayState.RETURNING:
 			//ActionButton.DROP = null;
 			break;
 		case PlayState.RETURNED:
 			//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
-			hintMessage.KillMessage();
+			//hintMessage.KillMessage();
 			audio.Stop();
 			audio.pitch = 1;
 			break;
@@ -578,7 +596,7 @@ public class GoldRushController : GameController {
 						UpdateLocatorSound(current_rate);
 						//UpdateDetectorLights(1-dist_percent);
 
-						hintMessage.KillMessage();
+						//hintMessage.KillMessage();
 					}
 				}
 				else if(distance <= findRadius)
@@ -590,7 +608,7 @@ public class GoldRushController : GameController {
 				{
 					// remove it from our found list if we exit the find radius without dropping it
 					foundItems.Remove(robot.carryingObject);
-					hintMessage.KillMessage();
+					//hintMessage.KillMessage();
 				}
 			}
 			
@@ -609,7 +627,7 @@ public class GoldRushController : GameController {
 
 	void UpdateExtracting()
 	{
-		hintMessage.ShowMessage ("Extracting: " + ((int)(100 * (playStateTimer / extractionTime))).ToString () + "%", Color.black);
+		//hintMessage.ShowMessage ("Extracting: " + ((int)(100 * (playStateTimer / extractionTime))).ToString () + "%", Color.black);
 	}
 
 	void UpdateReadyToReturn()
@@ -681,7 +699,7 @@ public class GoldRushController : GameController {
 		foundItems.Remove(lastCarriedObjectId);
 		//goldExtractingObjectId = lastCarriedObjectId;
 		lastCarriedObjectId = -1;
-		hintMessage.KillMessage();
+		//hintMessage.KillMessage();
 		EnterPlayState(PlayState.EXTRACTING);
 	}
 
@@ -739,6 +757,18 @@ public class GoldRushController : GameController {
 		numDrops++;
 		scores[0]+= 10 * numDrops;
 
+		robot.isBusy = false;
+		yield return new WaitForSeconds(depositTrimTime);
+
+		if( scores[0] > oldHighScore && !setHighScore )
+		{
+			setHighScore = true;
+			PlayNotificationAudio(newHighScore);
+
+			yield return new WaitForSeconds(newHighScore.length);
+		}
+
+
 		int num_drops_this_run = numDrops % numDropsForBonusTime;
 		if (num_drops_this_run == 0) 
 		{
@@ -753,15 +783,20 @@ public class GoldRushController : GameController {
 		else
 		{
 			// set the robot lights
-			SetEnergyBars(num_drops_this_run, 0xff0000ff);
+			SetEnergyBars(num_drops_this_run, color);
 		}
-		robot.isBusy = false;
-		yield return new WaitForSeconds(depositTrimTime);
-		EnterPlayState(PlayState.IDLE);
+
+
 		if (num_drops_this_run == 0) 
 		{
-			yield return new WaitForSeconds(depositTrimTime);
 			PlayNotificationAudio(timeExtension);
+			EnterPlayState(PlayState.IDLE);
+			yield return new WaitForSeconds(timeExtension.length/2);
+			SetEnergyBars(0,0);
+		}
+		else
+		{
+			EnterPlayState(PlayState.IDLE);
 		}
 
 	}
@@ -839,7 +874,7 @@ public class GoldRushController : GameController {
 		msg.robotID = robot.ID;
 		for(int i=0; i<5; ++i)
 		{
-			if( i < num_bars )
+			if( i < num_bars || (i == 3 && num_bars == 3) ) // hack to get around two off the lights being tied together
 			{
 				msg.onColor[i] = color;
 			}
@@ -852,6 +887,7 @@ public class GoldRushController : GameController {
 			msg.offPeriod_ms[i] = 0;
 			msg.transitionOnPeriod_ms[i] = 0;
 			msg.transitionOffPeriod_ms[i] = 0;
+
 		}
 		
 		Anki.Cozmo.U2G.Message msgWrapper = new Anki.Cozmo.U2G.Message{SetBackpackLEDs = msg};
