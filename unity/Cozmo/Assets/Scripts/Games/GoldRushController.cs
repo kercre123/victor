@@ -22,7 +22,6 @@ public class GoldRushController : GameController {
 	[SerializeField] protected AudioClip timeUp;
 
 	[SerializeField] protected AudioClip timeExtension;
-	[SerializeField] protected Button extractButton = null;
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
 	public float light_messaging_delay = .05f;
@@ -92,7 +91,6 @@ public class GoldRushController : GameController {
 		base.Awake();
 
 		hintMessage = GetComponentInChildren<ScreenMessage> ();
-		extractButton.gameObject.SetActive (false);
 	}
 
 	protected override void OnEnable()
