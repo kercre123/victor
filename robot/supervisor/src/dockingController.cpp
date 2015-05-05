@@ -134,19 +134,20 @@ namespace Anki {
         // Whether or not to raise lift in prep for high docking
         bool doHighDockLiftTracking_ = false;
         
-        // Indicates when we're only tracking a marker but not trying to dock to it
-        bool trackingOnly_ = false;
+        // Last received docking error
         f32 lastMarkerDistX_ = 0.f;
         f32 lastMarkerDistY_ = 0.f;
         f32 lastMarkerAng_ = 0.f;
 
         // Remember the last marker pose that was fully within the
         // field of view of the camera.
+        bool lastMarkerPoseObservedIsSet_ = false;
         Anki::Embedded::Pose2d lastMarkerPoseObservedInValidFOV_;
         
         // If the marker is out of field of view, we will continue
         // to traverse the path that was generated from that last good error signal.
         bool markerOutOfFOV_ = false;
+        const f32 MARKER_WIDTH = 25.f;
         
         Embedded::Array<f32> RcamWrtRobot_;
         f32 headCamFOV_ver_;
@@ -504,11 +505,6 @@ namespace Anki {
               // Update time that last good error signal was received
               lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
               
-              // No more to do if we're just tracking a marker, but not docking to it.
-              if (trackingOnly_) {
-                continue;
-              }
-              
               // Set relative block pose to start/continue docking
               SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr, dockMsg.timestamp);
 
@@ -568,7 +564,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if ((!trackingOnly_) && (!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
+          if ((!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -586,13 +582,30 @@ namespace Anki {
         if (markerOutOfFOV_) {
           // Marker has been outside field of view.
           // Check if it should be visible again.
-          if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, 25.f)) {
-            PRINT("Marker should be in FOV\n");
+          if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH)) {
+            PRINT("Marker should be INSIDE FOV\n");
             // Fake the error signal received timestamp to reset the timeout
             lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
             markerOutOfFOV_ = false;
           }
+        } else {
+          // Marker has been in field of view.
+          // Check if we expect it to no longer be in view.
+          if (lastMarkerPoseObservedIsSet_) {
+            
+            // Get distance between marker and current robot pose
+            Embedded::Pose2d currPose = Localization::GetCurrPose();
+            f32 distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
+            
+            if (PathFollower::IsTraversingPath() &&
+                !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
+                distToMarker > FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM) {
+              PRINT("Marker should be OUTSIDE FOV\n");
+              markerOutOfFOV_ = true;
+            }
+          }
         }
+
         
         
         Result retVal = RESULT_OK;
@@ -758,25 +771,19 @@ namespace Anki {
 
         
         // Field of view check
-        if (!markerOutOfFOV_) {
-          // Marker has been in field of view.
-          // If it escapes, remember the last known pose of the marker.
-          if (PathFollower::IsTraversingPath() && !IsMarkerInFOV(blockPose_, 25.f)) {
-            PRINT("Marker signal is OUTSIDE FOV\n");
-            markerOutOfFOV_ = true;
-            lastMarkerPoseObservedInValidFOV_ = blockPose_;
-            return;
-          }
-        } else {
+        if (markerOutOfFOV_) {
           // Marker has been outside field of view,
           // but the latest error signal may indicate that it is back in.
-          if (IsMarkerInFOV(blockPose_, 25.f)) {
+          if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
             PRINT("Marker signal is INSIDE FOV\n");
             markerOutOfFOV_ = false;
+          } else {
+            //PRINT("Marker is expected to be out of FOV. Ignoring error signal\n");
+            return;
           }
-          //PRINT("Marker is expected to be out of FOV. Ignoring error signal\n");
-          return;
         }
+        lastMarkerPoseObservedIsSet_ = true;
+        lastMarkerPoseObservedInValidFOV_ = blockPose_;
 
         
 #if(RESET_LOC_ON_BLOCK_UPDATE)
@@ -928,16 +935,13 @@ namespace Anki {
 
       void ResetDocker() {
         
-        if (!trackingOnly_) {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          PathFollower::ClearPath();
-          SteeringController::ExecuteDirectDrive(0,0);
-        }
+
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        PathFollower::ClearPath();
+        SteeringController::ExecuteDirectDrive(0,0);
         mode_ = IDLE;
         
-        // Reset trackingOnly vars
-        trackingOnly_ = false;
-        /* Don't reset these so we can query them after docking fails 
+        /* Don't reset these so we can query them after docking fails
          (e.g. to compute backout distance)
         lastMarkerDistX_ = 0.f;
         lastMarkerDistY_ = 0.f;
@@ -948,6 +952,7 @@ namespace Anki {
         pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
         markerOutOfFOV_ = false;
+        lastMarkerPoseObservedIsSet_ = false;
         doHighDockLiftTracking_ = false;
         success_ = false;
       }
