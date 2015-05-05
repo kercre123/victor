@@ -162,7 +162,7 @@ public class ActionSliderPanel : ActionPanel
 			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 		
-		if(currentButton.mode != lastMode && currentButton.mode != ActionButton.Mode.TARGET) {
+		if(currentButton.mode != lastMode && currentButton != centerAction) {
 			SlideInSound();
 		}
 		else if(currentButton.mode != lastMode) {
@@ -180,15 +180,13 @@ public class ActionSliderPanel : ActionPanel
 		}
 	}*/
 
-	private void SlideInSound()
-	{
+	private void SlideInSound() {
 		audio.volume = 1f;
-		audio.PlayOneShot( slideInSound, 1f );
+		audio.PlayOneShot(slideInSound, 1f);
 	}
 	
-	private void SlideOutSound()
-	{
+	private void SlideOutSound() {
 		audio.volume = 1f;
-		audio.PlayOneShot( slideOutSound, 1f );
+		audio.PlayOneShot(slideOutSound, 1f);
 	}
 }
