@@ -1,17 +1,17 @@
 % function allCompiledResults = runTests_tracking()
 
 % On PC
-% allCompiledResults = runTests_tracking('C:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
+% allCompiledResults = runTests_tracking('C:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
 
 % On Mac
-% allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
 
 function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads.basics = 3;
+    numComputeThreads.basics = 1;
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
@@ -51,6 +51,9 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.track_convergenceTolerance_angle    = 0.05 * 180 / pi;
     algorithmParameters.track_convergenceTolerance_distance = 0.05;
     algorithmParameters.track_verify_maxPixelDifference     = 30;
+    
+    algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
+    algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
 %     algorithmParameters.track_ = ;
 %     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
@@ -126,17 +129,17 @@ function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory,
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     
-    [workQueue_basics, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, thisFileChangeTime);
+    [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perPoseStats_current, workQueue_perPoseStats_all] = computeWorkQueues(resultsDirectory, allTestData, algorithmParameters.extractionFunctionName, thisFileChangeTime);
     
-    disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basics), length(workQueue_perPoseStats)));
+    disp(sprintf('%s: workQueue_basics has %d elements and workQueue_perPoseStats has %d elements', algorithmParameters.extractionFunctionName, length(workQueue_basicStats_current), length(workQueue_perPoseStats_current)));
     
-    slashIndexes = strfind(workQueue_all{1}.basicStats_filename, '/');
+    slashIndexes = strfind(workQueue_perPoseStats_all{1}.basicStats_filename, '/');
     lastSlashIndex = slashIndexes(end);
-    temporaryDirectory = workQueue_all{1}.basicStats_filename(1:lastSlashIndex);
+    temporaryDirectory = workQueue_perPoseStats_all{1}.basicStats_filename(1:lastSlashIndex);
     
-    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basics, workQueue_all, temporaryDirectory, allTestData, rotationList, algorithmParameters);
+    resultsData_basics = run_recompileBasics(numComputeThreads.basics, workQueue_basicStats_current, workQueue_basicStats_all, temporaryDirectory, allTestData, rotationList, algorithmParameters);
     
-    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats, workQueue_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, algorithmParameters.showImageDetections, algorithmParameters.showImageDetectionWidth);
+    resultsData_perPose = run_recompilePerPoseStats(numComputeThreads.perPose, workQueue_perPoseStats_current, workQueue_perPoseStats_all, temporaryDirectory, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, algorithmParameters.showImageDetections, algorithmParameters.showImageDetectionWidth);
     
     resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots);
     
@@ -174,7 +177,7 @@ function resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisF
     
 end % function resultsDirectory_curTime = makeResultsDirectory()
 
-function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, thisFileChangeTime)
+function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perPoseStats_current, workQueue_perPoseStats_all] = computeWorkQueues(resultsDirectory, allTestData, extractionFunctionName, thisFileChangeTime)
     
     resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, false);
     
@@ -186,80 +189,117 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
     
-    workQueue_basicStats = {};
-    workQueue_perPoseStats = {};
-    workQueue_all = {};
-    
+    workQueue_basicStats_all = {};
+    workQueue_basicStats_current = {};
+    workQueue_perPoseStats_current = {};
+    workQueue_perPoseStats_all = {};
+        
     for iTest = 1:size(allTestData, 1)
-        for iPose = 1:length(allTestData{iTest}.jsonData.Poses)
-            basicStats_filename = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
-            perPoseStats_dataFilename = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
-            perPoseStats_imageFilename = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_%s.png', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+        numPoses = length(allTestData{iTest}.jsonData.Poses);
+        
+        basicStats_filenames = cell(numPoses,1);
+        perPoseStats_dataFilenames = cell(numPoses,1);
+        perPoseStats_imageFilenames = cell(numPoses,1);
+        for iPose = 1:numPoses
+            basicStats_filenames{iPose} = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_dataFilenames{iPose} = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_imageFilenames{iPose} = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_%s.png', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
             
-            basicStats_filename = strrep(strrep(basicStats_filename, '\', '/'), '//', '/');
-            perPoseStats_dataFilename = strrep(strrep(perPoseStats_dataFilename, '\', '/'), '//', '/');
-            perPoseStats_imageFilename = strrep(strrep(perPoseStats_imageFilename, '\', '/'), '//', '/');
-            
-            newWorkItem.iTest = iTest;
-            newWorkItem.iPose = iPose;
-            newWorkItem.basicStats_filename = basicStats_filename;
-            newWorkItem.perPoseStats_dataFilename = perPoseStats_dataFilename;
-            newWorkItem.perPoseStats_imageFilename = perPoseStats_imageFilename;
-            newWorkItem.extractionFunctionName = extractionFunctionName;
-            
-            workQueue_all{end+1} = newWorkItem; %#ok<AGROW>
-            
-            %
-            % Basic stats
-            %
-            
+            basicStats_filenames{iPose} = strrep(strrep(basicStats_filenames{iPose}, '\', '/'), '//', '/');
+            perPoseStats_dataFilenames{iPose} = strrep(strrep(perPoseStats_dataFilenames{iPose}, '\', '/'), '//', '/');
+            perPoseStats_imageFilenames{iPose} = strrep(strrep(perPoseStats_imageFilenames{iPose}, '\', '/'), '//', '/');
+        end
+        
+        clear iPose
+
+        % Both basics and perPose share some fields
+        newWorkItemBoth.iTest = iTest;
+        newWorkItemBoth.extractionFunctionName = extractionFunctionName;
+        
+        % Basics stores all filenames and poses for the given test
+        newWorkItemBasics = newWorkItemBoth;
+        newWorkItemBasics.iPoses = 1:length(allTestData{iTest}.jsonData.Poses);
+        newWorkItemBasics.basicStats_filenames = basicStats_filenames;
+        newWorkItemBasics.perPoseStats_dataFilenames = perPoseStats_dataFilenames;
+        newWorkItemBasics.perPoseStats_imageFilenames = perPoseStats_imageFilenames;
+        
+        newWorkItemBasics.CameraCalibration = allTestData{iTest}.jsonData.CameraCalibration;
+        
+        newWorkItemBasics.templateWidth_mm = allTestData{iTest}.jsonData.Blocks{1}.templateWidth_mm;
+                                
+        workQueue_basicStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
+
+        %
+        % Basic stats
+        %
+
+        rerunBasics = false;
+        
+        % If any of the basics filenames are missing, rerun the whole basics sequence.
+        for iPose = 1:numPoses
             % If the basic stats results don't exist
-            if ~exist(basicStats_filename, 'file')
-                workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
-                continue;
+            if ~exist(basicStats_filenames{iPose}, 'file')
+                rerunBasics = true;
+                break;
             end
-            
+
             % If the basic stats results are older than the test json
-            modificationTime_basicStatsResults = dir(basicStats_filename);
+            modificationTime_basicStatsResults = dir(basicStats_filenames{iPose});
             modificationTime_basicStatsResults = modificationTime_basicStatsResults(1).datenum;
             modificationTime_test = dir([allTestData{iTest}.testPath, allTestData{iTest}.testFilename]);
             modificationTime_test = modificationTime_test(1).datenum;
             if modificationTime_basicStatsResults < modificationTime_test
-                workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
-                continue;
+                rerunBasics = true;
+                break;
             end
-            
+
             % If the basic stats results are older than the input image file
             modificationTime_inputImage = dir([allTestData{iTest}.testPath, allTestData{iTest}.jsonData.Poses{iPose}.ImageFile]);
             modificationTime_inputImage = modificationTime_inputImage(1).datenum;
             if modificationTime_basicStatsResults < modificationTime_inputImage
-                workQueue_basicStats{end+1} = newWorkItem; %#ok<AGROW>
-                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
-                continue;
+                rerunBasics = true;
+                break;
             end
-            
-            %
-            % Per-pose stats
-            %
-            
-            % If the per-pose results don't exist
-            if ~exist(perPoseStats_dataFilename, 'file') || ~exist(perPoseStats_imageFilename, 'file')
-                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
-                continue;
+        end
+        
+        if rerunBasics
+            workQueue_basicStats_current{end+1} = newWorkItemBasics; %#ok<AGROW>
+        end
+
+        %
+        % Per-pose stats
+        %
+
+        for iPose = 1:numPoses  
+            if rerunBasics
+                addToPerPoseWorkQueue = true;
+            elseif ~exist(perPoseStats_dataFilenames{iFile}, 'file') || ~exist(perPoseStats_imageFilenames{iFile}, 'file')
+                % If the per-pose results don't exist
+                addToPerPoseWorkQueue = true;
+            else
+                % If the per-pose results are older than the basic stats results
+                modificationTime_perPoseData = dir(perPoseStats_dataFilenames{iFile});
+                modificationTime_perPoseData = modificationTime_perPoseData(1).datenum;
+                modificationTime_perPoseImage = dir(perPoseStats_dataFilenames{iFile});
+                modificationTime_perPoseImage = modificationTime_perPoseImage(1).datenum;
+                if modificationTime_perPoseImage < modificationTime_basicStatsResults || modificationTime_perPoseData < modificationTime_basicStatsResults
+                    addToPerPoseWorkQueue = true;
+                end
             end
+
+            % PerPose stores just the current filename and pose
+            newWorkItemBasics = newWorkItemBoth;                
+            newWorkItemBasics.iPoses = iPose;
+            newWorkItemBasics.basicStats_filename = basicStats_filenames{iPose};
+            newWorkItemBasics.perPoseStats_dataFilename = perPoseStats_dataFilenames{iPose};
+            newWorkItemBasics.perPoseStats_imageFilename = perPoseStats_imageFilenames{iPose};
+
+            workQueue_perPoseStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
             
-            % If the per-pose results are older than the basic stats results
-            modificationTime_perPoseData = dir(perPoseStats_dataFilename);
-            modificationTime_perPoseData = modificationTime_perPoseData(1).datenum;
-            modificationTime_perPoseImage = dir(perPoseStats_dataFilename);
-            modificationTime_perPoseImage = modificationTime_perPoseImage(1).datenum;
-            if modificationTime_perPoseImage < modificationTime_basicStatsResults || modificationTime_perPoseData < modificationTime_basicStatsResults
-                workQueue_perPoseStats{end+1} = newWorkItem; %#ok<AGROW>
-                continue;
+            if addToPerPoseWorkQueue
+                workQueue_perPoseStats_current{end+1} = newWorkItemBasics; %#ok<AGROW>
             end
-        end % for iPose = 1:length(allTestData{iTest}.Poses)
+        end % for iPose = 1:numPoses
     end % for iTest = 1:size(allTestData, 1)
 end % computeWorkQueues
 
@@ -334,7 +374,7 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
             
             save(allInputFilename, 'allTestData', 'resultsData_basics', 'maxMatchDistance_pixels', 'maxMatchDistance_percent', 'showImageDetections', 'showImageDetectionWidth');
             
-            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_tracking_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
+            matlabCommandString = ['disp(''Loading input...''); load(''', allInputFilename, '''); disp(''Input loaded''); ' , 'runTests_detectFiducialMarkers_compilePerPoseStats(localWorkQueue, allTestData, resultsData_basics, maxMatchDistance_pixels, maxMatchDistance_percent, showImageDetections, showImageDetectionWidth);'];
             
             runParallelProcesses(numComputeThreads, workQueue_todo, temporaryDirectory, matlabCommandString, true);
             
@@ -360,5 +400,5 @@ function resultsData_perPose = run_recompilePerPoseStats(numComputeThreads, work
 end % run_recompileperPoseStats()
 
 function resultsData_overall = run_compileOverallStats(resultsData_perPose, showPlots)
-    resultsData_overall = runTests_tracking_compileOverallStats(resultsData_perPose, showPlots);
+    resultsData_overall = runTests_detectFiducialMarkers_compileOverallStats(resultsData_perPose, showPlots);
 end % run_compileOverallStats()

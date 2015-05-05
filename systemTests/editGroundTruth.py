@@ -563,7 +563,7 @@ def trackTemplate():
     startPoseIndex = g_curPoseIndex
     startMarkerIndex = g_curMarkerIndex
 
-    for iPose in range(startPoseIndex+1, g_maxPoseIndex):
+    for iPose in range(startPoseIndex+1, g_maxPoseIndex+1):
         imageFilename = g_data['testPath'] + '/' + g_data['jsonData']['Poses'][iPose]['ImageFile']
 
         curImage = cv2.imread(imageFilename, 0)
