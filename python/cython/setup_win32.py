@@ -60,6 +60,7 @@ extensions = [
         "../../coretech/vision/robot/src/lucasKanade_SampledPlanar6dof.cpp",
         "../../coretech/vision/robot/src/lucasKanade_SampledProjective.cpp",
         "../../coretech/vision/robot/src/lucasKanade_Slow.cpp",
+        "../../coretech/vision/robot/src/nearestNeighborLibrary.cpp",        
         "../../coretech/vision/robot/src/opencvLight_vision.cpp",
         "../../coretech/vision/robot/src/perspectivePoseEstimation.cpp",
         "../../coretech/vision/robot/src/quadRefinement.cpp",

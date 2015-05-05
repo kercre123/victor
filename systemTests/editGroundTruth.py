@@ -25,7 +25,7 @@ global g_mainWindow
 if os.name == 'nt':
     g_startJsonDirectory = 'c:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
 else:
-    g_startJsonDirectory = '~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/'
+    g_startJsonDirectory = os.path.expanduser('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/')
 
 g_startJsonFilename = 'tracking_00000_all.json'
 g_data = None
