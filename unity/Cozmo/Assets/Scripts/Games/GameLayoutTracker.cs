@@ -248,15 +248,15 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 
 			case LayoutTrackerPhase.BUILDING:
-				if(validCount == 0 && !string.IsNullOrEmpty(currentLayout.initialInstruction)) {
-					instructionsProgress.text = currentLayout.initialInstruction;
-				}
-				else if(validCount == 1 && !string.IsNullOrEmpty(currentLayout.secondInstruction)) {
-					instructionsProgress.text = currentLayout.secondInstruction;
-				}
-				else {
+//				if(validCount == 0 && !string.IsNullOrEmpty(currentLayout.initialInstruction)) {
+//					instructionsProgress.text = currentLayout.initialInstruction;
+//				}
+//				else if(validCount == 1 && !string.IsNullOrEmpty(currentLayout.secondInstruction)) {
+//					instructionsProgress.text = currentLayout.secondInstruction;
+//				}
+//				else {
 					instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
-				}
+				//}
 
 				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
