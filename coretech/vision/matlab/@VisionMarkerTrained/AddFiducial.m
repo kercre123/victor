@@ -2,6 +2,7 @@ function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
 
 CropImage = true;
 InvertImage = false;
+RotateImage = 0;
 OutputSize = 512;
 PadOutside = false;
 FiducialColor = [0 0 0];
@@ -28,6 +29,11 @@ if size(img,3)==1
     img = repmat(img,[1 1 3]);
 end
 %img = mean(im2double(img),3);
+
+if RotateImage ~= 0
+  img = imrotate(img, RotateImage);
+  AlphaChannel = imrotate(AlphaChannel, RotateImage);
+end
 
 if CropImage
     black = any(img<0.5,3) & AlphaChannel > 0;   
