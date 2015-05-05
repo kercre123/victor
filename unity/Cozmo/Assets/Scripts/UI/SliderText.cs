@@ -2,8 +2,8 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class SliderText : MonoBehaviour {
-
+public class SliderText : MonoBehaviour
+{
 	[SerializeField] private Text text_pressed;
 	[SerializeField] private Text text_upLastFrame;
 	[SerializeField] private Text text_downLastFrame;
