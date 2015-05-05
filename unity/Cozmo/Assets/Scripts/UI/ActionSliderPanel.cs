@@ -72,22 +72,24 @@ public class ActionSliderPanel : ActionPanel
 	protected override void Awake() {
 		base.Awake();
 		
-		//actionSlider.ClaimOwnership(this);
-		actionSlider.slider.value = 0f;
-		actionSlider.SetMode(centerAction, false);
-	}
-
-	protected override void OnEnable() {
-		base.OnEnable();
-
-		upLastFrame = true;
-		downLastFrame = false;
+		SetDefaults();
 	}
 
 	protected override void OnDisable() {
 		base.OnDisable();
 
-		if(actionSlider != null) actionSlider.SetMode(centerAction, false);
+		SetDefaults();
+	}
+
+	private void SetDefaults()
+	{
+		if(actionSlider != null) {
+			actionSlider.slider.value = 0f;
+			actionSlider.SetMode(centerAction, false);
+		}
+		
+		upLastFrame = true;
+		downLastFrame = false;
 	}
 
 	protected void Update() {
