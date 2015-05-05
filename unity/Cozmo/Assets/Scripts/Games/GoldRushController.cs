@@ -429,7 +429,6 @@ public class GoldRushController : GameController {
 	}
 	[SerializeField]
 	public int testRate = 300;
-	int num_taps = 0;
 	void EnterPlayState(PlayState new_state)
 	{
 		ExitPlayState (playState);
@@ -464,7 +463,6 @@ public class GoldRushController : GameController {
 				audio.loop = true;
 				audio.pitch = .3f;
 				gameObject.audio.Play();
-				num_taps = 0;
 			}
 			break;
 		case PlayState.EXTRACTING:
@@ -485,7 +483,12 @@ public class GoldRushController : GameController {
 
 			if ( goldExtractingObject != null )
 			{
-				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
+				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
+				audio.Stop();
+				audio.clip = foundBeep;
+				audio.loop = true;
+				audio.pitch = .3f;
+				gameObject.audio.Play();
 			}
 			hintMessage.ShowMessage("Deposit the energy!", Color.black);
 			break;
@@ -521,8 +524,11 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNED:
 			//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 			hintMessage.KillMessage();
+			audio.Stop();
+			audio.pitch = 1;
 			break;
 		case PlayState.CAN_EXTRACT:
+			audio.Stop();
 			audio.pitch = 1;
 			break;
 		default:
@@ -666,11 +672,6 @@ public class GoldRushController : GameController {
 				// go back to searching
 				EnterPlayState(PlayState.SEARCHING);
 			}
-		}
-
-		if( Input.GetKeyDown(KeyCode.Space) )
-		{
-			num_taps++;
 		}
 	}
 
