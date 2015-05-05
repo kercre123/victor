@@ -306,13 +306,19 @@ namespace Anki
         }
         
         std::vector<Point2f> projectedCorners;
-        f32 observationDistance;
+        f32 observationDistance = 0;
         Vision::ObservableObject* observedObject = nullptr;
 
         if(matchingObject == nullptr) {
           
 #         if ONLY_ALLOW_ONE_OBJECT_PER_TYPE > 0
           
+          // See if there are any existing objects in the world with the same type
+          // as the one we're seeing. Also make sure that they have not already
+          // been seen in this same frame (to prevent signaling multiple objects
+          // of the same type being seen simultaneously). Finally, only do this
+          // if it's a physical robot, dependning on the ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+          // setting.
           ObjectsMapByID_t objectsWithType = GetExistingObjectsByType(objSeen->GetType());
           if(!objectsWithType.empty()
 #            if ONLY_ALLOW_ONE_OBJECT_PER_TYPE == 1
@@ -322,47 +328,56 @@ namespace Anki
           {
             // We already know about an object of this type. Assume the one we
             // are seeing is that one. Just update it to be in the pose of the
-            // observed object. (Only for physical robots)
+            // observed object.
             
             // By definition, we can't have more than one object of this type
             assert(objectsWithType.size() == 1);
             
             observedObject = objectsWithType.begin()->second;
             
-            assert(observedObject->GetType() == objSeen->GetType());
-            
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
-                                "Did not match observed object to existing %s object "
-                                "by pose, but assuming there's only one that must match "
-                                "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
-                                objSeen->GetType().GetName().c_str(),
-                                observedObject->GetID().GetValue(),
-                                ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
-
-            observedObject->SetPose( objSeen->GetPose() );
-            
-            // If we are matching based solely on type to an existing object that
-            // has only been seen once, don't update the observed time (so that we
-            // also don't update the number of times observed), since the poses
-            // don't actually match and we really want to increment the number of
-            // times of observed only if we re-see an object in the same place.
-            // (If we are here, we didn't see it in the same place; we are only
-            // updating it because we are assuming it's the same object based on
-            // type.)
-            if(observedObject->GetNumTimesObserved() > 1) {
-              // Update lastObserved times of this object
-              observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
-              observedObject->UpdateMarkerObservationTimes(*objSeen);
-            }
-            
-            // Project this existing object into the robot's camera, using its new pose
-            _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
-            
-            // If the object is being carried, uncarry it
-            if (_robot->GetCarryingObject() == observedObject->GetID()) {
-              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
-                               "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
-              _robot->UnSetCarryingObject();
+            if(observedObject->GetLastObservedTime() < objSeen->GetLastObservedTime()) {
+              
+              assert(observedObject->GetType() == objSeen->GetType());
+              
+              PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
+                                  "Did not match observed object to existing %s object "
+                                  "by pose, but assuming there's only one that must match "
+                                  "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
+                                  objSeen->GetType().GetName().c_str(),
+                                  observedObject->GetID().GetValue(),
+                                  ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
+              
+              observedObject->SetPose( objSeen->GetPose() );
+              
+              // If we are matching based solely on type to an existing object that
+              // has only been seen once, don't update the observed time (so that we
+              // also don't update the number of times observed), since the poses
+              // don't actually match and we really want to increment the number of
+              // times of observed only if we re-see an object in the same place.
+              // (If we are here, we didn't see it in the same place; we are only
+              // updating it because we are assuming it's the same object based on
+              // type.)
+              if(observedObject->GetNumTimesObserved() > 1) {
+                // Update lastObserved times of this object
+                observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+                observedObject->UpdateMarkerObservationTimes(*objSeen);
+              }
+              
+              // Project this existing object into the robot's camera, using its new pose
+              _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+              
+              // If the object is being carried, uncarry it
+              if (_robot->GetCarryingObject() == observedObject->GetID()) {
+                PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
+                                 "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
+                _robot->UnSetCarryingObject();
+              }
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
+                                  "Ignoring the second simultaneously-seen %s object "
+                                  "(since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
+                                  objSeen->GetType().GetName().c_str(),
+                                  ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
             }
             
             // Now that we've merged in objSeen, we can delete it because we
@@ -621,10 +636,12 @@ namespace Anki
                 //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
                 unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second);
                 ++objectIter;
+                
               }
-            } else { // if object was not observed
+            } else {
+              // Object _was_ observed
               ++objectIter;
-            }
+            } // if/else object was not observed
             
           } // for object IDs of this type
         } // for each object type
