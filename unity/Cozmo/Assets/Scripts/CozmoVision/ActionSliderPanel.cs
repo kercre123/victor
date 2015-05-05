@@ -84,6 +84,12 @@ public class ActionSliderPanel : ActionPanel
 		downLastFrame = false;
 	}
 
+	protected override void OnDisable() {
+		base.OnDisable();
+
+		if(actionSlider != null) actionSlider.SetMode(centerAction, false);
+	}
+
 	protected void Update() {
 		lastMode = actionSlider.currentAction.mode;
 

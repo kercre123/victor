@@ -647,8 +647,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
-			error = "No block of this type should be placed here.";
-			return false;
+			//error = "No block of this type should be placed here.";
+			return true;
 		}
 
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
@@ -710,9 +710,13 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObjectID == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
-			//this is probably ok?  may need to do more processing to see if its ok
-			error = "You are attempting to stack upon an unvalidated block.";
-			return false;
+			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon) );
+		
+			if(layoutBlockToStackUpon == null) {
+				//this is probably ok?  may need to do more processing to see if its ok
+				error = "You are attempting to stack upon an unvalidated block.";
+				return false;
+			}
 		}
 
 		BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find(x => x.cubeBelow == layoutBlockToStackUpon);

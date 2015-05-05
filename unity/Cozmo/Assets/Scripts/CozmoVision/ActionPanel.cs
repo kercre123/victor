@@ -102,7 +102,7 @@ public class ActionPanel : MonoBehaviour
 		
 	}
 
-	public virtual void OnDisable()
+	protected virtual void OnDisable()
 	{
 		if(instance == this) instance = null;
 	}
