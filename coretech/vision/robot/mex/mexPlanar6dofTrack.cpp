@@ -287,7 +287,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "\t\t maxSamplesAtBaseLevel,\n"
       "\t\t numSamplingRegions,\n"
       "\t\t numFiducialSquareSamples,\n"
-      "\t\t fiducialSquareWidthFraction,\n
+      "\t\t fiducialSquareWidthFraction,\n"
       "\t\t normalizeImage);\n"
       "\n"
       "Track with: \n"
@@ -307,7 +307,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "\t\t maxIterations,\n"
       "\t\t convergenceTolerance_angle,\n"
       "\t\t convergenceTolerance_distance,\n"
-      "\t\t verify_maxPixelDifference,\n
+      "\t\t verify_maxPixelDifference,\n"
       "\t\t normalizeImage);\n\n");
 
     //mexErrMsgTxt("Unrecognized inputs.");
