@@ -143,10 +143,9 @@ public class SlalomController : GameController {
 		base.Enter_PRE_GAME();
 
 		robot = RobotEngineManager.instance.current;
-
-		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout();
-		float rad = GameLayoutTracker.instance.GetStartingAngleFromLayout();
-
+		float rad;
+		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad);
+		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		robot.GotoPose(pos.x, pos.y, rad);
 
 	}
