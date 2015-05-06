@@ -32,10 +32,9 @@ public class RobotStateText : MonoBehaviour {
 	const string prefix_text_knownObjects = "KnownObjects: ";
 	const string prefix_text_searching = "Searching: ";
 
-	void Update() {
-		if(RobotEngineManager.instance == null) return;
+	Robot bot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-		Robot bot = RobotEngineManager.instance.current;
+	void Update() {
 		if(bot == null) return;
 
 		if(text_ID != null) 				text_ID.text 				= prefix_ID + bot.ID.ToString();

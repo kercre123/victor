@@ -11,13 +11,11 @@ public class CozmoVision_SelectObject : CozmoVision
 	{
 		if( actionPanel == null ) return;
 
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || GameActions.instance == null )
+		if( robot == null || GameActions.instance == null )
 		{
 			actionPanel.DisableButtons();
 			return;
 		}
-
-		robot = RobotEngineManager.instance.current;
 
 		if(GameActions.instance == null) {
 			if(actionPanel != null) actionPanel.gameObject.SetActive(false);

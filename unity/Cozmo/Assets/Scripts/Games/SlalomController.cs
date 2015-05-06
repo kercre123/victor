@@ -136,25 +136,18 @@ public class SlalomController : GameController {
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
 		}
-
 	}
 
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
-		robot = RobotEngineManager.instance.current;
-
 		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout();
 		float rad = GameLayoutTracker.instance.GetStartingAngleFromLayout();
 
 		robot.GotoPose(pos.x, pos.y, rad);
-
 	}
 
 	protected override void Update_PRE_GAME() {
-
-		robot = RobotEngineManager.instance.current;
-
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
 		if(robot.isBusy) return;
@@ -164,9 +157,6 @@ public class SlalomController : GameController {
 
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
-
-		//game specific start conditions...
-		robot = RobotEngineManager.instance.current;
 		
 		obstacles.Clear();
 		for(int i=0;i<robot.knownObjects.Count;i++) {

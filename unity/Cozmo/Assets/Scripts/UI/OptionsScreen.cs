@@ -37,6 +37,8 @@ public class OptionsScreen : MonoBehaviour {
 		}
 	}
 
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	void Awake () {
 		if(instance != null) {
 			Debug.Log("OptionsScreen destroying self, because instance already exists.");
@@ -191,7 +193,7 @@ public class OptionsScreen : MonoBehaviour {
 
 	void ObjectPertinence(int value) {
 		PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), value);
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.RefreshObjectPertinence();
+		if(robot != null) robot.RefreshObjectPertinence();
 	}
 
 	void ObjectPertinenceRange(string value) {
@@ -201,7 +203,7 @@ public class OptionsScreen : MonoBehaviour {
 			PlayerPrefs.SetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), range);
 		}
 
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.RefreshObjectPertinence();
+		if(robot != null) robot.RefreshObjectPertinence();
 	}
 
 	void MaxTurnSpeedChanged(float val) {

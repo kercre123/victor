@@ -31,8 +31,8 @@ public class PlayerRelativeControls : MonoBehaviour {
 		Input.compass.enabled = true;
 
 		moveCommandLastFrame = false;
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			robotStartHeading = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+		if(robot != null) {
+			robotStartHeading = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
 				//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 		}
 
@@ -40,13 +40,12 @@ public class PlayerRelativeControls : MonoBehaviour {
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
 	}
 
-	Robot robot;
-	void Update() {
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-		robot = RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null;
+	void Update() {
 		if(robot == null) return;
 
-		robotFacing = MathUtil.ClampAngle(RobotEngineManager.instance.current.poseAngle_rad * Mathf.Rad2Deg);
+		robotFacing = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
 			//robotFacingStale = false;
 			//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 
@@ -89,8 +88,8 @@ public class PlayerRelativeControls : MonoBehaviour {
 		//clean up this controls test if needed
 		Debug.Log("RobotRelativeControls OnDisable");
 		
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
+		if(robot != null && RobotEngineManager.instance.IsConnected) {
+			robot.DriveWheels(0f, 0f);
 		}
 	}
 

@@ -31,12 +31,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
 	{
 		base.Update();
 		
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null )
-		{
-			return;
-		}
-		
-		robot = RobotEngineManager.instance.current;
+		if( robot == null ) return;
 		
 		ConnectButtonsToBoxes();
 	}

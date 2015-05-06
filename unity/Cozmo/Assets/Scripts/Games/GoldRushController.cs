@@ -133,11 +133,6 @@ public class GoldRushController : GameController {
 	{
 		base.Update_BUILDING ();
 #if RUSH_DEBUG
-		if( robot == null )
-		{
-			robot = RobotEngineManager.instance.current;
-		}
-
 		if( robot != null )
 		{
 			for(int i=0;i<robot.knownObjects.Count;i++)
@@ -274,17 +269,14 @@ public class GoldRushController : GameController {
 
 	protected override void Enter_PRE_GAME ()
 	{
-
 		Debug.Log("Enter_PRE_GAME");
 		base.Enter_PRE_GAME ();
 
-		if(RobotEngineManager.instance == null) return;
+		if(robot == null) return;
 
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
 		goldCollectingObject = null;
-
-		robot = RobotEngineManager.instance.current;
 
 		RefreshGameProps();
 

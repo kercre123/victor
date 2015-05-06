@@ -26,13 +26,11 @@ public class CozmoVision_AutoSelect : CozmoVision
 	{
 		if( actionPanel == null ) return;
 
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null || GameActions.instance == null )
+		if( robot == null || GameActions.instance == null )
 		{
 			actionPanel.DisableButtons();
 			return;
 		}
-
-		robot = RobotEngineManager.instance.current;
 
 		if(GameActions.instance == null) {
 			if(actionPanel != null) actionPanel.gameObject.SetActive(false);
@@ -88,7 +86,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 					
 					if( observedObjects.Count == 1 )
 					{
-						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+						robot.TrackHeadToObject( robot.selectedObjects[0] );
 					}
 				}
 				
@@ -104,7 +102,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 					
 					if( observedObjects.Count == 1 )
 					{
-						RobotEngineManager.instance.current.TrackHeadToObject( robot.selectedObjects[0] );
+						robot.TrackHeadToObject( robot.selectedObjects[0] );
 					}
 				}
 				
@@ -113,18 +111,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 
 		RefreshFade();
 
-		bool allDisabled = true;
-
-		for( int i = 0; i < ActionPanel.instance.actionButtons.Length; ++i )
-		{
-			if( ActionPanel.instance.actionButtons[i].mode != ActionButton.Mode.DISABLED )
-			{
-				allDisabled = false;
-				break;
-			}
-		}
-
-		if( !allDisabled && !robot.isBusy )
+		if( !actionPanel.allDisabled )
 		{
 			FadeIn();
 		}

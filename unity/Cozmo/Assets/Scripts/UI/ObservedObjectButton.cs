@@ -6,13 +6,15 @@ public class ObservedObjectButton : ObservedObjectBox
 {
 	[SerializeField] protected AudioClip select;
 
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public virtual void Selection()
 	{
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( robot != null )
 		{
-			RobotEngineManager.instance.current.selectedObjects.Clear();
-			RobotEngineManager.instance.current.selectedObjects.Add(observedObject);
-			RobotEngineManager.instance.current.TrackHeadToObject(observedObject);
+			robot.selectedObjects.Clear();
+			robot.selectedObjects.Add(observedObject);
+			robot.TrackHeadToObject(observedObject);
 		}
 
 		if( audio != null ) audio.PlayOneShot( select );
