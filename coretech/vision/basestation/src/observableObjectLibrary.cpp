@@ -166,9 +166,15 @@ namespace Anki {
           // Set the markers in the object corresponding to those from the pose
           // cluster from which it was computed as "observed"
           for(auto & match : poseCluster.GetMatches()) {
-            const KnownMarker& marker = match.second;
-            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
-                                                     observedTime);
+            // Set the observed markers based on their position in the image,
+            // not based on their code, since an object can have multiple markers
+            // with the same code.
+            //const KnownMarker& marker = match.second;
+            //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
+            //                                         observedTime);
+            
+            objectsSeen.back()->SetMarkerAsObserved(match.first, observedTime, 5.f);
+            
           }
           
           objectsSeen.back()->SetLastObservedTime(observedTime);
