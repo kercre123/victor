@@ -618,6 +618,17 @@ namespace Cozmo {
       robot->SetLiftControllerGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
     }
   }
+
+  void CozmoGameImpl::Process_SetSteeringControllerGains(U2G::SetSteeringControllerGains const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      robot->SetSteeringControllerGains(msg.k1, msg.k2);
+    }
+  }
   
   void CozmoGameImpl::Process_SelectNextSoundScheme(U2G::SelectNextSoundScheme const& msg)
   {

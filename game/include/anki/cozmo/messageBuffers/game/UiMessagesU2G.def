@@ -1497,6 +1497,43 @@ struct SetLiftControllerGains
 	bool operator!=(const SetLiftControllerGains& other) const;
 };
 
+// MESSAGE SetSteeringControllerGains
+struct SetSteeringControllerGains
+{
+	float k1;
+	float k2;
+	
+	/**** Constructors ****/
+	SetSteeringControllerGains() = default;
+	SetSteeringControllerGains(const SetSteeringControllerGains& other) = default;
+	SetSteeringControllerGains(SetSteeringControllerGains& other) = default;
+	SetSteeringControllerGains(SetSteeringControllerGains&& other) noexcept = default;
+	SetSteeringControllerGains& operator=(const SetSteeringControllerGains& other) = default;
+	SetSteeringControllerGains& operator=(SetSteeringControllerGains&& other) noexcept = default;
+	
+	explicit SetSteeringControllerGains(float k1
+		,float k2)
+	:k1(k1)
+	,k2(k2)
+	{}
+
+	explicit SetSteeringControllerGains(const uint8_t* buff, size_t len);
+	explicit SetSteeringControllerGains(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const SetSteeringControllerGains& other) const;
+	bool operator!=(const SetSteeringControllerGains& other) const;
+};
+
 // MESSAGE SelectNextSoundScheme
 struct SelectNextSoundScheme
 {
@@ -2400,6 +2437,11 @@ public:
 	void Set_SetLiftControllerGains(const Anki::Cozmo::U2G::SetLiftControllerGains& new_SetLiftControllerGains);
 	void Set_SetLiftControllerGains(Anki::Cozmo::U2G::SetLiftControllerGains&& new_SetLiftControllerGains);
 
+	/** SetSteeringControllerGains **/
+	const Anki::Cozmo::U2G::SetSteeringControllerGains& Get_SetSteeringControllerGains() const;
+	void Set_SetSteeringControllerGains(const Anki::Cozmo::U2G::SetSteeringControllerGains& new_SetSteeringControllerGains);
+	void Set_SetSteeringControllerGains(Anki::Cozmo::U2G::SetSteeringControllerGains&& new_SetSteeringControllerGains);
+
 	/** SelectNextSoundScheme **/
 	const Anki::Cozmo::U2G::SelectNextSoundScheme& Get_SelectNextSoundScheme() const;
 	void Set_SelectNextSoundScheme(const Anki::Cozmo::U2G::SelectNextSoundScheme& new_SelectNextSoundScheme);
@@ -2534,6 +2576,7 @@ private:
 		Anki::Cozmo::U2G::SetWheelControllerGains _SetWheelControllerGains;
 		Anki::Cozmo::U2G::SetHeadControllerGains _SetHeadControllerGains;
 		Anki::Cozmo::U2G::SetLiftControllerGains _SetLiftControllerGains;
+		Anki::Cozmo::U2G::SetSteeringControllerGains _SetSteeringControllerGains;
 		Anki::Cozmo::U2G::SelectNextSoundScheme _SelectNextSoundScheme;
 		Anki::Cozmo::U2G::StartTestMode _StartTestMode;
 		Anki::Cozmo::U2G::IMURequest _IMURequest;
