@@ -426,4 +426,16 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
+	// doesn't play if the audio source is currently playing a clip
+	protected void PlayNotificationAudioDeferred(AudioClip clip)
+	{
+		if (notificationAudio != null && !notificationAudio.isPlaying) 
+		{
+			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
+			notificationAudio.Stop (); 
+			Debug.LogWarning ("Should be playing " + clip.name);
+			notificationAudio.Play (); // playoneshot creates a new AudioSource, making isPlaying false for the AudioSource
+		}
+	}
+
 }

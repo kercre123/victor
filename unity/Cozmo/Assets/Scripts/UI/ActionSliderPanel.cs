@@ -8,18 +8,24 @@ using System.Collections.Generic;
 
 [System.Serializable]
 public class ActionSlider {
+
+	[System.Serializable]
+	public class Hint {
+		public Image image;
+		public Text text;
+	}
+
 	public Slider slider;
+
 	[SerializeField] private GameObject highlight;
 	[SerializeField] private Text text;
 	[SerializeField] private Image image;
-	[SerializeField] private Image[] hints;
 	
 	public bool Pressed { get; private set; }
 	
 	public ActionButton currentAction { get; private set; }
 
 	public void SetMode(ActionButton button, bool down) {
-		//Debug.Log("ActionSlider.SetMode("+mode+", "+down+") modes("+(modes != null ? modes.Count.ToString() : "null")+") index("+selectedIndex+")");
 		if( button == null ) {
 			Debug.LogError( "Slider was given a current action of null" );
 			return;
@@ -36,17 +42,19 @@ public class ActionSlider {
 		text.text = currentAction.text.text;
 		image.sprite = currentAction.image.sprite;
 
-		SetHints();
+		if(button.hint.image != null) {
+			button.hint.image.gameObject.SetActive(!Pressed && button.mode != ActionButton.Mode.DISABLED);
+		}
 	}
 
 	public void SetHints()
 	{
-		for(int i = 0; i < hints.Length && ActionSliderPanel.instance != null && i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
-			if(hints[i] != null) {
-				if(hints[i].sprite != ActionSliderPanel.instance.actionButtons[i].image.sprite) {
-					hints[i].sprite = ActionSliderPanel.instance.actionButtons[i].image.sprite;
+		if(ActionSliderPanel.instance != null) {
+			for(int i = 0; i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
+				ActionButton button = ActionSliderPanel.instance.actionButtons[i];
+				if(button.hint.image != null) {
+					button.hint.image.gameObject.SetActive(!Pressed && button.mode != ActionButton.Mode.DISABLED);
 				}
-				hints[i].gameObject.SetActive(!Pressed && ActionSliderPanel.instance.actionButtons[i].mode != ActionButton.Mode.DISABLED);
 			}
 		}
 	}
@@ -54,7 +62,8 @@ public class ActionSlider {
 
 public class ActionSliderPanel : ActionPanel
 {
-	[SerializeField] public ActionSlider actionSlider;
+	public ActionSlider actionSlider;
+
 	[SerializeField] private DynamicSliderFrame dynamicSliderFrame;
 	[SerializeField] private AudioClip slideInSound;
 	[SerializeField] private AudioClip slideOutSound;
@@ -63,10 +72,9 @@ public class ActionSliderPanel : ActionPanel
 	private ActionButton topAction { get { return actionButtons[1]; } }
 	private ActionButton centerAction { get { return actionButtons[2]; } }
 
-	//public bool Engaged { get { return actionSlider != null ? actionSlider.Pressed : false; } }
-
 	public bool upLastFrame { get; private set; }
 	public bool downLastFrame { get; private set; }
+
 	private ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
 	protected override void Awake() {
@@ -129,12 +137,13 @@ public class ActionSliderPanel : ActionPanel
 	}
 
 	public void ToggleInteract(bool val) {
-		actionSlider.SetMode(actionSlider.currentAction, val);
-		
 		if(!val) {
 			actionSlider.slider.value = 0f;
+			actionSlider.SetMode(actionSlider.currentAction, val);
 		}
-		
+		else {
+			actionSlider.SetMode(centerAction, val);
+		}
 		//Debug.Log("ToggleInteract("+val+")");
 	}
 
@@ -160,8 +169,6 @@ public class ActionSliderPanel : ActionPanel
 				maxZ = robot.selectedObjects[i].WorldPosition.z;
 				robot.targetLockedObject = robot.selectedObjects[i];
 			}
-			
-			//Debug.Log("RefreshSliderMode index = index2("+index2+")");
 		}
 		
 		if(currentButton.mode != lastMode && currentButton != centerAction) {
@@ -173,14 +180,6 @@ public class ActionSliderPanel : ActionPanel
 		//Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
 		actionSlider.SetMode(currentButton, actionSlider.Pressed);
 	}
-	
-	/*private void InitiateAssistedInteraction() {
-		switch(actionSlider.ActionButton.Mode) {
-			case ActionButton.Mode.TARGET:
-				//do auto-targeting here!
-				break;
-		}
-	}*/
 
 	private void SlideInSound() {
 		audio.volume = 1f;

@@ -21,7 +21,35 @@ public class ActionButton : MonoBehaviour
 		NUM_MODES
 	}
 
+	[System.Serializable]
+	public struct Hint
+	{
+		public Image image;
+		public Text text;
+
+		private Color _ghost;
+		public Color ghost
+		{
+			get
+			{
+				if( _ghost == Color.clear && image != null ) _ghost = image.color;
+				return _ghost;
+			}
+		}
+
+		public Color solid
+		{
+			get
+			{ 
+				if( _ghost == Color.clear && image != null ) _ghost = image.color;
+				return Color.white;
+			}
+		}
+	}
+
 	[SerializeField] private Button button;
+
+	public Hint hint;
 	public Image image;
 	public Text text;
 
@@ -45,8 +73,8 @@ public class ActionButton : MonoBehaviour
 			action( false, selectedObject );
 		}
 	}
-	
-	public void SetMode( Mode m, ObservedObject selected, string append = null )
+
+	public void SetMode( Mode m, ObservedObject selected, string append = null, bool solidHint = false )
 	{
 		action = null;
 		mode = m;
@@ -60,16 +88,38 @@ public class ActionButton : MonoBehaviour
 		if( mode == Mode.DISABLED || GameActions.instance == null ) 
 		{
 			if( button != null ) button.gameObject.SetActive( false );
+			if( hint.text != null ) hint.text.gameObject.SetActive( false );
 			image.gameObject.SetActive( false );
 			return;
 		}
-		
+
 		GameActions gameActions = GameActions.instance;
 		
 		image.sprite = ActionButton.GetModeSprite( mode );
 		text.text = ActionButton.GetModeName( mode );
 		
 		if( append != null ) text.text += append;
+
+		if( hint.image != null )
+		{
+			if( hint.image.sprite != image.sprite ) hint.image.sprite = image.sprite;
+
+			if( solidHint )
+			{
+				hint.image.color = hint.solid;
+			}
+			else
+			{
+				hint.image.color = hint.ghost;
+			}
+		}
+
+		if( hint.text != null )
+		{
+			if( hint.text.text != text.text ) hint.text.text = text.text;
+
+			hint.text.gameObject.SetActive( solidHint );
+		}
 
 		action += DefaultAction;
 
