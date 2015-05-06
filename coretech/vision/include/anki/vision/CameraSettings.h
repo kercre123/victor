@@ -62,7 +62,7 @@ namespace Anki {
       IE_JPEG_GRAY,
       IE_JPEG_COLOR,
       IE_JPEG_CHW, // Color half width
-      IE_WEBP
+      IE_MINIPEG_GRAY   // Minimized grayscale JPEG - no header, no footer, no byte stuffing
     } ImageEncoding_t;
 
   } // namespace Vision

@@ -5,7 +5,6 @@
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
-#include "faceTrackingController.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
@@ -197,13 +196,6 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "AnimationController init failed.\n");
 
-        // TODO: Where to get face detection height/width
-        const int faceDetectionHeight = 240;
-        const int faceDetectionWidth  = 320;
-        lastResult = FaceTrackingController::Init(faceDetectionWidth, faceDetectionHeight);
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "FaceTrackingController init failed.\n");
-
         // Start calibration
         StartMotorCalibrationRoutine();
 
@@ -324,7 +316,6 @@ namespace Anki {
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
-        FaceTrackingController::Update();
         BackpackLightController::Update();
 
         //////////////////////////////////////////////////////////////
