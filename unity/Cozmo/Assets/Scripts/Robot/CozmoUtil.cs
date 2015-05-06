@@ -13,6 +13,26 @@ public static class CozmoUtil {
 	public const float MAX_LIFT_HEIGHT_MM 	= 95f;
 	public const float MIN_LIFT_HEIGHT_MM 	= 23f;
 
+	public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector) {
+		float forward = vector.z;
+		float up = vector.y;
+
+		vector.y = forward;
+		vector.z = up;
+
+		return vector;
+	}
+
+	public static Vector3 Vector3CozmoToUnitySpace(Vector3 vector) {
+		float forward = vector.y;
+		float up = vector.z;
+
+		vector.z = forward;
+		vector.y = up;
+
+		return vector;
+	}
+
 	public static void CalcWheelSpeedsForTwoAxisInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
 		
 		leftWheelSpeed = 0f;

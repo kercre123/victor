@@ -375,7 +375,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			layout.blocks[i].Hidden = false;
 			layout.blocks[i].Highlighted = false;
 			layout.blocks[i].Validated = true;
-			layout.blocks[i].AssignedObjectID = -1;
+			layout.blocks[i].AssignedObject = null;
 		}
 	}
 
@@ -404,7 +404,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			block.Hidden = false;
 			block.Highlighted = true;
 			block.Validated = false;
-			block.AssignedObjectID = -1;
+			block.AssignedObject = null;
 		}
 
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
@@ -439,7 +439,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				//skip objects already assigned to a layout block
-				if(layout.blocks.Find( x => x.AssignedObjectID == newObject) != null) continue;
+				if(layout.blocks.Find( x => x.AssignedObject == newObject) != null) continue;
 
 				if(validated.Count == 0) {
 					ValidateBlock(layoutBlockIndex, newObject);
@@ -448,7 +448,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				//if this ideal block needs to get stacked on one we already know about...
 				else if(block.cubeBelow != null) {
 
-					ObservedObject objectToStackUpon = robot.knownObjects.Find( x => x == block.cubeBelow.AssignedObjectID);
+					ObservedObject objectToStackUpon = block.cubeBelow.AssignedObject;
 
 					Vector3 real = (newObject.WorldPosition - objectToStackUpon.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 					float dist = ((Vector2)real).magnitude;
@@ -476,13 +476,9 @@ public class GameLayoutTracker : MonoBehaviour {
 						//let's just compared distances from unstacked blocks
 						if(validated[validatedIndex].cubeBelow != null) continue;
 
-						Vector3 idealOffset = (block.transform.position - validated[validatedIndex].transform.position) / block.Size;
-						float up = idealOffset.y;
-						float forward = idealOffset.z;
-						idealOffset.y = forward;
-						idealOffset.z = up;
-						
-						ObservedObject priorObject = robot.knownObjects.Find( x => x == validated[validatedIndex].AssignedObjectID);
+						Vector3 idealOffset = CozmoUtil.Vector3UnityToCozmoSpace((block.transform.position - validated[validatedIndex].transform.position) / block.Size);
+
+						ObservedObject priorObject = validated[validatedIndex].AssignedObject;
 						Vector3 realOffset = (newObject.WorldPosition - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 						
 						//are we basically on the same plane and roughly the correct distance away?
@@ -525,10 +521,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		return error;
 	}
 
-	void ValidateBlock(int layoutBlockIndex, int newObject) {
+	void ValidateBlock(int layoutBlockIndex, ObservedObject newObject) {
 		BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
 		validated.Add(block);
-		block.AssignedObjectID = newObject;
+		block.AssignedObject = newObject;
 		block.Validated = true;
 		block.Highlighted = false;
 	}
@@ -598,31 +594,60 @@ public class GameLayoutTracker : MonoBehaviour {
 		ValidateBlocks();
 	}
 
-	public Vector3 GetStartingPositionFromLayout() {
+	public Vector3 GetStartingPositionFromLayout(out float facingAngle) {
+		facingAngle = 0f;
+
 		if(currentLayout == null) return Vector3.zero;
 		if(currentLayout.startPositionMarker == null) return Vector3.zero;
-	
-		//ObservedObject firstObj = null;
-		//ObservedObject secondObj = null;
-		//Vector3 layoutRight = currentLayout.blocks[1].AssignedObjectID
 
+		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.blocks.FindAll(x => x.cubeBelow == null);
 
-		Vector3 pos = currentLayout.startPositionMarker.position;
-		float forward = pos.z;
-		float up = pos.y;
-		pos.y = forward;
-		pos.z = up;
+		BuildInstructionsCube layoutBlock1 = layoutBlocksOnGround[0];
 
-		return pos;
-	}
+		float scaleToCozmo = CozmoUtil.BLOCK_LENGTH_MM / layoutBlock1.Size;
 
-	public float GetStartingAngleFromLayout() {
-		if(currentLayout == null) return 0f;
-		if(currentLayout.startPositionMarker == null) return 0f;
-		
-		float angle = currentLayout.startPositionMarker.eulerAngles.y * Mathf.Deg2Rad;
+		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
+		offsetFromFirstBlock.z = 0f;
+		facingAngle = (currentLayout.startPositionMarker.eulerAngles.y + 90f) * Mathf.Deg2Rad;
 
-		return angle;
+		//if layout has only one block for some reason, just use default rotation
+		if(layoutBlocksOnGround.Count == 1) {
+			//Debug.Log("GetStartingPositionFromLayout layoutBlocksOnGround.Count == 1 use default rotation.");
+			return offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
+		}
+
+		BuildInstructionsCube layoutBlock2 = layoutBlocksOnGround[1];
+
+		Vector3 layoutFirstToSecond = CozmoUtil.Vector3UnityToCozmoSpace(layoutBlock2.transform.position - layoutBlock1.transform.position) * scaleToCozmo;
+		layoutFirstToSecond.z = 0f;
+
+		if(layoutFirstToSecond.magnitude > CozmoUtil.BLOCK_LENGTH_MM * 0.25f) {
+
+			Vector3 observedFirstToSecond = layoutBlock2.AssignedObject.WorldPosition - layoutBlock1.AssignedObject.WorldPosition;
+			observedFirstToSecond.z = 0f;
+
+			float offsetAngle = Vector3.Angle(layoutFirstToSecond, observedFirstToSecond);
+			Vector3 axis = Vector3.Cross(layoutFirstToSecond.normalized, observedFirstToSecond.normalized);
+
+			//float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,axis));
+			//offsetAngle *= sign;
+
+			Quaternion observedRotation = Quaternion.AngleAxis(offsetAngle, axis);
+
+			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
+
+			float signedAngleOffsetRad = (axis.z < 0f ? offsetAngle : -offsetAngle) * Mathf.Deg2Rad;
+
+			//Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+")");
+			facingAngle += signedAngleOffsetRad;
+
+			//Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
+
+		}
+
+		Vector3 startPosition = offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
+
+		return startPosition;
 	}
 
 	//we are dropping an object and want to know which blocks are already on the ground and valid
@@ -679,13 +704,9 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				BuildInstructionsCube priorBlock = priorBlocks[priorIndex];
 
-				Vector3 idealOffset = (block.transform.position - priorBlock.transform.position) / block.Size;
-				float up = idealOffset.y;
-				float forward = idealOffset.z;
-				idealOffset.y = forward;
-				idealOffset.z = up;
-				
-				ObservedObject priorObject = robot.knownObjects.Find(x => x == priorBlock.AssignedObjectID);
+				Vector3 idealOffset = CozmoUtil.Vector3UnityToCozmoSpace((block.transform.position - priorBlock.transform.position) / block.Size);
+
+				ObservedObject priorObject = priorBlock.AssignedObject;
 				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 				
 				//are we basically on the same plane and roughly the correct distance away?
@@ -720,7 +741,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 
-		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObjectID == objectToStackUpon);
+		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObject == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
 			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon) );
 		

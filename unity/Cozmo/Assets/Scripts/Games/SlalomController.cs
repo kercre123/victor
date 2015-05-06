@@ -136,15 +136,17 @@ public class SlalomController : GameController {
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
 		}
+
 	}
 
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
-		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout();
-		float rad = GameLayoutTracker.instance.GetStartingAngleFromLayout();
-
+		float rad;
+		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad);
+		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		robot.GotoPose(pos.x, pos.y, rad);
+
 	}
 
 	protected override void Update_PRE_GAME() {
@@ -157,7 +159,7 @@ public class SlalomController : GameController {
 
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
-		
+
 		obstacles.Clear();
 		for(int i=0;i<robot.knownObjects.Count;i++) {
 			if(robot.knownObjects[i].Family == 3) {
