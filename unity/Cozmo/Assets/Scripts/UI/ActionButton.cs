@@ -57,7 +57,9 @@ public class ActionButton : MonoBehaviour
 	private ObservedObject selectedObject;
 	
 	public Mode mode { get; private set; }
-	
+
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public void OnRelease()
 	{
 		if( action != null )
@@ -80,7 +82,7 @@ public class ActionButton : MonoBehaviour
 		mode = m;
 		selectedObject = selected;
 
-		if( RobotEngineManager.instance.current.isBusy )
+		if( robot.isBusy )
 		{
 			mode = Mode.DISABLED;
 		}
@@ -197,9 +199,9 @@ public class ActionButton : MonoBehaviour
 
 	private void DefaultAction( bool onRelease, ObservedObject selectedObject )
 	{
-		if( onRelease && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( onRelease && robot != null )
 		{
-			RobotEngineManager.instance.current.searching = false;
+			robot.searching = false;
 			//Debug.Log( "On Release" );
 		}
 	}

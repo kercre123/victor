@@ -161,6 +161,10 @@ public class Robot
 		set
 		{
 			localBusyTimer = value ? float.MaxValue : 0;
+			if( value )
+			{
+				DriveWheels(0,0); 
+			}
 		}
 	}
 

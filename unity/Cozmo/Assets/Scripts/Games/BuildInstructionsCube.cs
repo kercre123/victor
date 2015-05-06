@@ -38,7 +38,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	public bool Validated = false;
 	public bool Highlighted = false;
 	public bool Hidden = false;
-	public int AssignedObjectID = 0;
+	public ObservedObject AssignedObject = null;
 	public float Size = 1f;
 
 	Material clonedBlockMaterial = null;

@@ -18,8 +18,6 @@ public class CozmoVision_Manual : CozmoVision
 	protected override void OnEnable() {
 		base.OnEnable();
 
-		robot = RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null;
-
 		//reset our lifter to our current height
 		if(robot != null && manualLiftSliderPanel != null) {
 			manualLiftSliderPanel.slider.onValueChanged.RemoveListener(LiftSliderChanged);
@@ -29,9 +27,7 @@ public class CozmoVision_Manual : CozmoVision
 	}
 
 	void LiftSliderChanged(float val) {
-		if(RobotEngineManager.instance == null) return;
-		if(RobotEngineManager.instance.current == null) return;
-		robot = RobotEngineManager.instance.current;
+		if(robot == null) return;
 
 		float liftHeight = Mathf.Lerp(CozmoUtil.MIN_LIFT_HEIGHT_MM, CozmoUtil.MAX_LIFT_HEIGHT_MM, val);
 		robot.SetLiftHeight(liftHeight);

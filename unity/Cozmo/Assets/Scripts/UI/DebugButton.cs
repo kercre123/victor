@@ -3,19 +3,21 @@ using System.Collections;
 
 public class DebugButton : MonoBehaviour
 {
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public void ForceDropBox()
 	{
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( robot != null )
 		{
-			RobotEngineManager.instance.current.SetRobotCarryingObject();
+			robot.SetRobotCarryingObject();
 		}
 	}
 	
 	public void ForceClearAll()
 	{
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null )
+		if( robot != null )
 		{
-			RobotEngineManager.instance.current.ClearAllBlocks();
+			robot.ClearAllBlocks();
 		}
 	}
 }
