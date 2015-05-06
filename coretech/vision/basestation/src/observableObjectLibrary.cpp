@@ -278,8 +278,7 @@ namespace Anki {
     void ObservableObjectLibrary::PoseCluster::RecomputePose()
     {
       if(GetSize() > 1) {
-        fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n",
-                GetSize());
+        //fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n", GetSize());
         
         std::vector<Point2f> imgPoints;
         std::vector<Point3f> objPoints;
