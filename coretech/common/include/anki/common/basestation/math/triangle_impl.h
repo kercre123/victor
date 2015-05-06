@@ -51,7 +51,7 @@ namespace Anki {
     const T x2 = (*this)[2].x() - (*this)[0].x();
     const T y2 = (*this)[2].y() - (*this)[0].y();
     
-    const T area = (x1*y2 - x2*y1) / T(2);
+    const T area = std::abs(x1*y2 - x2*y1) / T(2);
     
     return area;
   }
