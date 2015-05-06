@@ -20,11 +20,12 @@ public class SlalomController : GameController {
 	int currentObstacleIndex = 0;
 	bool lastPassCrossUp = true;
 	bool forward = true;
-	//Vector2 lastRobotPos;
 	float lastAngleFromObstacle;
 	float totalAngleFromObstacleTraversed;
 	bool courseCompleted = false;
 	int tapesCrossed = 0;
+
+	ObservedObject previousObstacle = null;
 
 	ObservedObject currentObstacle { 
 		get {
@@ -39,29 +40,7 @@ public class SlalomController : GameController {
 		get { 
 			if(obstacles == null) return null;
 
-			int nextIndex = 0;
-			if(forward) {
-				nextIndex = currentObstacleIndex + 1;
-				if(nextIndex >= obstacles.Count) {
-					if(thereAndBackAgain) {
-						nextIndex = obstacles.Count-2;
-					}
-					else {//loop
-						nextIndex = 0;
-					}
-				}
-			}
-			else {
-				nextIndex = currentObstacleIndex - 1;
-				if(nextIndex < 0) {
-					if(thereAndBackAgain) {
-						nextIndex = 1;
-					}
-					else {//loop
-						nextIndex = obstacles.Count-1;
-					}
-				}
-			}
+			int nextIndex = GetNextIndex();
 
 			if(nextIndex < 0) return null;
 			if(nextIndex >= obstacles.Count) return null;
@@ -72,55 +51,84 @@ public class SlalomController : GameController {
 
 	Vector2 currentObstaclePos { 
 		get {
-			if(obstaclePositions == null) return Vector2.zero;
-			if(currentObstacleIndex < 0) return Vector2.zero;
-			if(currentObstacleIndex >= obstaclePositions.Count) return Vector2.zero;
-			
-			return obstaclePositions[currentObstacleIndex];
-		}
-	}
-	Vector2 nextObstaclePos { 
-		get { 
-			if(obstaclePositions == null) return Vector2.zero;
-			if(obstaclePositions.Count == 0) return Vector2.zero;
-			if(obstaclePositions.Count == 1) return currentObstaclePos;
-			
-			int nextIndex = 0;
-			if(forward) {
-				nextIndex = currentObstacleIndex + 1;
-				if(nextIndex >= obstaclePositions.Count) {
-					if(thereAndBackAgain) {
-						nextIndex = obstaclePositions.Count-2;
-					}
-					else {//loop
-						nextIndex = 0;
-					}
-				}
-			}
-			else {
-				nextIndex = currentObstacleIndex - 1;
-				if(nextIndex < 0) {
-					if(thereAndBackAgain) {
-						nextIndex = 1;
-					}
-					else {//loop
-						nextIndex = obstaclePositions.Count-1;
-					}
-				}
-			}
-			
-			if(nextIndex < 0) return Vector2.zero;
-			if(nextIndex >= obstaclePositions.Count) return Vector2.zero;
-			
-			return obstaclePositions[nextIndex];
+			return currentObstacle.WorldPosition;
 		}
 	}
 
+	Vector2 nextObstaclePos { 
+		get { 
+			return nextObstacle.WorldPosition;
+		}
+	}
+
+	int GetNextIndex() {
+		int nextIndex = 0;
+		if(forward) {
+			nextIndex = currentObstacleIndex + 1;
+			if(nextIndex >= obstaclePositions.Count) {
+				if(thereAndBackAgain) {
+					nextIndex = obstaclePositions.Count - 2;
+				}
+				else {//loop
+					nextIndex = 0;
+				}
+			}
+		}
+		else {
+			nextIndex = currentObstacleIndex - 1;
+			if(nextIndex < 0) {
+				if(thereAndBackAgain) {
+					nextIndex = 1;
+				}
+				else {//loop
+					nextIndex = obstaclePositions.Count - 1;
+				}
+			}
+		}
+	
+		return nextIndex;
+	}
+
+	int GetPreviousIndex() {
+		int nextIndex = 0;
+		if(!forward) {
+			nextIndex = currentObstacleIndex + 1;
+			if(nextIndex >= obstaclePositions.Count) {
+				if(thereAndBackAgain) {
+					nextIndex = obstaclePositions.Count - 2;
+				}
+				else {//loop
+					nextIndex = 0;
+				}
+			}
+		}
+		else {
+			nextIndex = currentObstacleIndex - 1;
+			if(nextIndex < 0) {
+				if(thereAndBackAgain) {
+					nextIndex = 1;
+				}
+				else {//loop
+					nextIndex = obstaclePositions.Count - 1;
+				}
+			}
+		}
+		
+		return nextIndex;
+	}
+
+	uint nextColor_uint;
+	uint currentColor_unit;
 	protected override void OnEnable()
 	{
 		base.OnEnable();
 		
 		instance = this;
+
+		if(CozmoPalette.instance != null) {
+			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlockType.White);
+			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlockType.Cyan);
+		}
 	}
 	
 	protected override void OnDisable()
@@ -168,10 +176,13 @@ public class SlalomController : GameController {
 		robot = RobotEngineManager.instance.current;
 		
 		obstacles.Clear();
-		for(int i=0;i<robot.knownObjects.Count;i++) {
-			if(robot.knownObjects[i].Family == 3) {
+		obstacles.AddRange(GameLayoutTracker.instance.GetTrackedObjectsInOrder());
+
+		//cull the inactive blocks
+		for(int i=0;i<obstacles.Count;i++) {
+			if(obstacles[i].Family != 3) {
 				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
-				obstacles.Add(robot.knownObjects[i]);
+				obstacles.Remove(obstacles[i]);
 			}
 		}
 		
@@ -184,19 +195,14 @@ public class SlalomController : GameController {
 		currentObstacleIndex = 0;
 
 		//design query: how to order our obstacles?  by distance from coz at game start?
-		obstacles.Sort( 
-			delegate(ObservedObject obj1, ObservedObject obj2) {
-				float d1 = (obj1.WorldPosition - robot.WorldPosition).sqrMagnitude;
-				float d2 = (obj2.WorldPosition - robot.WorldPosition).sqrMagnitude;
-
-				return d1.CompareTo(d2);   
-			}
-		);
-
-		obstaclePositions.Clear();
-		foreach(ObservedObject obj in obstacles) {
-			obstaclePositions.Add(obj.WorldPosition);
-		}
+//		obstacles.Sort( 
+//			delegate(ObservedObject obj1, ObservedObject obj2) {
+//				float d1 = (obj1.WorldPosition - robot.WorldPosition).sqrMagnitude;
+//				float d2 = (obj2.WorldPosition - robot.WorldPosition).sqrMagnitude;
+//
+//				return d1.CompareTo(d2);   
+//			}
+//		);
 
 		if(trackWithCornerTriggers) {
 			//activate corners on first cube
@@ -206,6 +212,15 @@ public class SlalomController : GameController {
 		totalAngleFromObstacleTraversed = 0f;
 		Vector2 currentObstacleToRobot = (Vector2)robot.WorldPosition - currentObstaclePos;
 		lastAngleFromObstacle = Vector2.Angle(Vector2.up, currentObstacleToRobot) * (currentObstacleToRobot.x >= 0 ? 1f : -1f);
+
+		if(thereAndBackAgain) {
+			previousObstacle = nextObstacle;
+		}
+		else {
+			int index = currentObstacleIndex-1;
+			if(index < 0) index = obstacles.Count-1;
+			previousObstacle = obstacles[index];
+		}
 	}
 
 	protected override void Update_PLAYING() {
@@ -226,6 +241,8 @@ public class SlalomController : GameController {
 		//need object rotation angle to do this properly
 		//use lastPassClockwise to determine if we are orbiting in the right dir
 		// not sure how the orbiting behavior works in classic slalom runs (ie, zig zags instead of the figure eights of our default case)
+
+		UpdateLights();
 
 		if(trackWithCornerTriggers) {
 			//if coz is crossed over active corner angle since last frame, NextCorner();
@@ -321,6 +338,8 @@ public class SlalomController : GameController {
 
 		scores[0] = tapesCrossed;
 
+		previousObstacle = currentObstacle;
+
 		//design query: reset lights on current cube now or when we've completed a circuit?
 		if(forward) {
 			currentObstacleIndex++;
@@ -362,50 +381,158 @@ public class SlalomController : GameController {
 		Debug.Log("NextObstacle scores("+scores[0]+") currentObstacleIndex("+currentObstacleIndex+") lastPassCrossUp("+lastPassCrossUp+")");
 	}
 
+	class AngularLightCommandInfo {
+		public ObservedObject block = null;
+		public float angle = 0f;
+		public Vector2 lastTape = Vector2.up;
+	}
+
+	float[] anglesToShowLightsFrom = { 45f, 135f, 225f, 315f };
+
+	AngularLightCommandInfo currentLightInfo = new AngularLightCommandInfo();
+	AngularLightCommandInfo nextLightInfo = new AngularLightCommandInfo();
+
 	public void UpdateLights()
 	{
-		if( CozmoPalette.instance != null && currentObstacle != null && currentObstacle.Family == 3 && 
-		   nextObstacle != null && nextObstacle.Family == 3 )
-		{
-			uint yellow = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Yellow );
-			uint red = CozmoPalette.instance.GetUIntColorForActiveBlockType( ActiveBlockType.Red );
+		if(robot == null) return;
+		if(currentObstacle == null) return;
+		if(currentObstacle.Family != 3) return;
+		if(nextObstacle == null) return;
+		if(nextObstacle.Family != 3) return;
 
-			float distanceFromRobot = Vector2.Distance( robot.WorldPosition, nextObstacle.WorldPosition );
-			float distanceFromCurrentObstacle = Vector2.Distance( currentObstacle.WorldPosition, nextObstacle.WorldPosition );
+		Vector2 currentToLast = previousObstacle.WorldPosition - currentObstacle.WorldPosition;
+		Vector2 currentToNext = nextObstacle.WorldPosition - currentObstacle.WorldPosition;
 
-			currentObstacle.relativeMode = 1;
-			currentObstacle.relativeToX = robot.WorldPosition.x;
-			currentObstacle.relativeToY = robot.WorldPosition.y;
-			
-			for( int i = 0; i < 8; ++i )
-			{
-				currentObstacle.lights[i].onColor = 0;
-				currentObstacle.lights[i].offColor = 0;
-				currentObstacle.lights[i].onPeriod_ms = 1000;
-				currentObstacle.lights[i].offPeriod_ms = 0;
-				currentObstacle.lights[i].transitionOnPeriod_ms = 0;
-				currentObstacle.lights[i].transitionOffPeriod_ms = 0;
-				
-				if( i == 0 || i == 2 )
-				{
-					currentObstacle.lights[i].onColor = yellow;
-				}
-				else if( i == 1 || i == 3 )
-				{
-					if( distanceFromRobot > distanceFromCurrentObstacle )
-					{
-						currentObstacle.lights[i].onColor = red;
-						currentObstacle.lights[i].onPeriod_ms = 125;
-						currentObstacle.lights[i].offPeriod_ms = 125;
-					}
-					else
-					{
-						nextObstacle.lights[i].onColor = red;
-						nextObstacle.lights[i].onPeriod_ms = 125;
-						nextObstacle.lights[i].offPeriod_ms = 125;
-					}
-				}
+		float totalAngleToTraverseOnThisLeg = Vector3.Angle(currentToLast, currentToNext);
+
+		float finalLightAngleForCurrentObstacle = 315f;
+		for(int i=anglesToShowLightsFrom.Length-1; i>=0; i--) {
+			if(totalAngleToTraverseOnThisLeg < anglesToShowLightsFrom[i]) continue;
+
+			finalLightAngleForCurrentObstacle = anglesToShowLightsFrom[i];
+			break;
+		}
+
+		if(totalAngleFromObstacleTraversed > finalLightAngleForCurrentObstacle) {
+			currentLightInfo.block = nextObstacle;
+			currentLightInfo.angle = anglesToShowLightsFrom[0];
+			currentLightInfo.lastTape = currentToLast;
+			nextLightInfo.block = nextObstacle;
+			nextLightInfo.angle = anglesToShowLightsFrom[1];
+			nextLightInfo.lastTape = currentToNext;
+		}
+		else if(totalAngleFromObstacleTraversed > anglesToShowLightsFrom[2]) {
+			currentLightInfo.block = currentObstacle;
+			currentLightInfo.angle = anglesToShowLightsFrom[3];
+			currentLightInfo.lastTape = currentToLast;
+			nextLightInfo.block = nextObstacle;
+			nextLightInfo.angle = anglesToShowLightsFrom[0];
+			nextLightInfo.lastTape = currentToNext;
+		}
+		else if(totalAngleFromObstacleTraversed > anglesToShowLightsFrom[1]) {
+			currentLightInfo.block = currentObstacle;
+			currentLightInfo.angle = anglesToShowLightsFrom[2];
+
+			if(finalLightAngleForCurrentObstacle >= anglesToShowLightsFrom[3]) {
+				nextLightInfo.block = currentObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[3];
+				nextLightInfo.lastTape = currentToLast;
 			}
+			else {
+				nextLightInfo.block = nextObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[0];
+				nextLightInfo.lastTape = currentToNext;
+			}
+		}
+		else if(totalAngleFromObstacleTraversed > anglesToShowLightsFrom[0]) {
+			currentLightInfo.block = currentObstacle;
+			currentLightInfo.angle = anglesToShowLightsFrom[1];
+			
+			if(finalLightAngleForCurrentObstacle >= anglesToShowLightsFrom[2]) {
+				nextLightInfo.block = currentObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[2];
+				nextLightInfo.lastTape = currentToLast;
+			}
+			else {
+				nextLightInfo.block = nextObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[0];
+				nextLightInfo.lastTape = currentToNext;
+			}
+		}
+		else {
+			currentLightInfo.block = currentObstacle;
+			currentLightInfo.angle = anglesToShowLightsFrom[0];
+			
+			if(finalLightAngleForCurrentObstacle >= anglesToShowLightsFrom[1]) {
+				nextLightInfo.block = currentObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[1];
+				nextLightInfo.lastTape = currentToLast;
+			}
+			else {
+				nextLightInfo.block = nextObstacle;
+				nextLightInfo.angle = anglesToShowLightsFrom[0];
+				nextLightInfo.lastTape = currentToNext;
+			}
+		}
+
+		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			ObservedObject obstacle = obstacles[obstacleIndex];
+
+			int currentTopLightIndex = -1;
+			int currentBottomLightIndex = -1;
+			int nextTopLightIndex = -1;
+			int nextTopBottomIndex = -1;
+
+			Vector2 obstacleNorth = obstacle.TopNorth;
+
+			if(obstacle == currentLightInfo.block) {
+				bool clockwise = lastPassCrossUp ^ obstacle == currentObstacle;
+				Vector3 lightVector = Quaternion.AngleAxis(clockwise ? -currentLightInfo.angle : currentLightInfo.angle, Vector3.forward) * currentLightInfo.lastTape.normalized;
+				float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, lightVector, Vector3.forward);
+
+				currentTopLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
+				currentBottomLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
+
+				Debug.Log("currentLightInfo.block("+obstacleIndex+") currentLightInfo.angle("+currentLightInfo.angle+") angleFromNorth("+angleFromNorth+")");
+			}
+
+			if(obstacle == nextLightInfo.block) {
+				bool clockwise = lastPassCrossUp ^ obstacle == currentObstacle;
+				Vector3 lightVector = Quaternion.AngleAxis(clockwise ? -nextLightInfo.angle : nextLightInfo.angle, Vector3.forward) * nextLightInfo.lastTape.normalized;
+				float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, lightVector, Vector3.forward);
+				
+				nextTopLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
+				nextTopBottomIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
+
+				Debug.Log("nextLightInfo.block("+obstacleIndex+") nextLightInfo.angle("+nextLightInfo.angle+") angleFromNorth("+angleFromNorth+")");
+			}
+
+			//refresh light settings
+			for(int i = 0; i < 8; ++i) {
+
+				obstacle.relativeMode = 0;
+
+				if(i == currentTopLightIndex || i == currentBottomLightIndex) {
+					obstacle.lights[i].onColor = currentColor_unit;
+					obstacle.lights[i].onPeriod_ms = 125;
+					obstacle.lights[i].offPeriod_ms = 125;
+				}
+				else if(i == nextTopLightIndex || i == nextTopBottomIndex) {
+					obstacle.lights[i].onColor = nextColor_uint;
+					obstacle.lights[i].onPeriod_ms = 125;
+					obstacle.lights[i].offPeriod_ms = 125;
+				}
+				else {
+					obstacle.lights[i].onColor = 0;
+					obstacle.lights[i].onPeriod_ms = 1000;
+					obstacle.lights[i].offPeriod_ms = 0;
+				}
+
+				obstacle.lights[i].offColor = 0;
+				obstacle.lights[i].transitionOnPeriod_ms = 0;
+				obstacle.lights[i].transitionOffPeriod_ms = 0;
+			}
+
 		}
 	}
 }

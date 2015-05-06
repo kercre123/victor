@@ -13176,10 +13176,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .345923394
-    y: .243502632
-    width: .308153182
-    height: .631199896
+    x: .258298129
+    y: .181847021
+    width: .483403713
+    height: .724581122
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -17211,7 +17211,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409676
 MonoBehaviour:
@@ -17301,7 +17300,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409682
 MonoBehaviour:
@@ -17431,7 +17429,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409692
 MonoBehaviour:
@@ -17554,7 +17551,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409702
 MonoBehaviour:
@@ -17658,7 +17654,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409710
 MonoBehaviour:
@@ -17723,7 +17718,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409714
 MonoBehaviour:
@@ -17985,7 +17979,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409734
 MonoBehaviour:
@@ -18078,7 +18071,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409742
 MonoBehaviour:
@@ -18200,7 +18192,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11409752
 MonoBehaviour:
@@ -18346,7 +18337,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 11483380}
-        m_MethodName: ValidateBuild
+        m_MethodName: DebugQuickValidate
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -18529,7 +18520,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11483348
 MonoBehaviour:
@@ -18674,7 +18664,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11483358
 MonoBehaviour:
@@ -18860,7 +18849,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11483370
 MonoBehaviour:
@@ -18972,7 +18960,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11483380
 MonoBehaviour:
@@ -19133,7 +19120,6 @@ MonoBehaviour:
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!114 &11483394
 MonoBehaviour:

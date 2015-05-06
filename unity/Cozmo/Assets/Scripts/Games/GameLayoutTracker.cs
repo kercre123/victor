@@ -79,6 +79,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	bool hidden = false;
 
+	bool ignoreActiveColor = false;
+
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
 
 	void OnEnable () {
@@ -168,7 +170,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			foreach(LayoutBlock2d prior in blocks2d) {
 				if(prior.Block.objectFamily != block.objectFamily) continue;
 				if(prior.Block.objectFamily != 3 && prior.Block.objectType != block.objectType) continue;
-				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType) continue;
+				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType && !ignoreActiveColor) continue;
 				num++;
 			}
 			
@@ -437,7 +439,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
+				if(!ignoreActiveColor && block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
 					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockType+") newObject("+newObject+"):color("+newObject.activeBlockType+")");
 					continue;
 				}
@@ -588,6 +590,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		return count;
 	}
 
+
+	public void DebugQuickValidate() {
+		ignoreActiveColor = true;
+		ValidateBlocks();
+		ValidateBuild();
+	}
+
 	public void ValidateBuild() {
 		Validated = true;
 		Phase = LayoutTrackerPhase.DISABLED;
@@ -668,7 +677,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(block.Validated) return false;
 		if(block.cubeBelow != null) return false;
 		if(block.objectFamily != objectToMatch.Family) return false;
-		if(block.objectFamily == 3 && objectToMatch.activeBlockType != block.activeBlockType) return false;
+		if(!ignoreActiveColor && block.objectFamily == 3 && objectToMatch.activeBlockType != block.activeBlockType) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
 	}
@@ -778,7 +787,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				return false;
 			}
 
-			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType) {
+			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType && !ignoreActiveColor) {
 				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;
@@ -807,6 +816,20 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		screenMessage.ShowMessage(message, color);
 
+	}
+
+	public List<ObservedObject> GetTrackedObjectsInOrder() {
+		List<ObservedObject> objects = new List<ObservedObject>();
+
+		if(currentLayout != null) {
+			for(int i=0;i<currentLayout.blocks.Count;i++) {
+				if(!currentLayout.blocks[i].Validated) continue;
+				if(currentLayout.blocks[i].AssignedObject == null) continue;
+				objects.Add(currentLayout.blocks[i].AssignedObject);
+			}
+		}
+
+		return objects;
 	}
 
 }
