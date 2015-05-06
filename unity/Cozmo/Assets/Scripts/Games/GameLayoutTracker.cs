@@ -54,8 +54,9 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	[SerializeField] AudioClip blockValidatedSound = null;
 	[SerializeField] AudioClip layoutValidatedSound = null;
-	
-	Robot robot = null;
+
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	bool blocksInitialized = false;
 	BuildInstructionsCube ghostBlock;
 
@@ -232,8 +233,6 @@ public class GameLayoutTracker : MonoBehaviour {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
-		robot = RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null;
-
 		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.INVENTORY);
 
 		switch(Phase) {
@@ -387,9 +386,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		string error = "";
 		validCount = 0;
 
-		if(RobotEngineManager.instance == null) return error;
-
-		robot = RobotEngineManager.instance.current;
 		if(robot == null) return error;
 
 		bool invalidated = false;

@@ -19,8 +19,8 @@ public class GameActions : MonoBehaviour
 	protected virtual string TOP { get { return " TOP"; } }
 	protected virtual string BOTTOM { get { return " BOTTOM"; } }
 
-	protected Robot robot;
-	protected ActionButton[] buttons;
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
 	public static GameActions instance = null;
 
@@ -69,13 +69,8 @@ public class GameActions : MonoBehaviour
 		if( ActionPanel.instance == null ) return;
 
 		ActionPanel.instance.DisableButtons();
-		
-		robot = null;
-		if( RobotEngineManager.instance != null && RobotEngineManager.instance.current != null ) robot = RobotEngineManager.instance.current;
 
 		if( robot == null || robot.isBusy ) return;
-
-		buttons = ActionPanel.instance.actionButtons;
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{

@@ -20,11 +20,37 @@ public class ActionPanel : MonoBehaviour
 	protected CanvasScaler canvasScaler;
 	protected float screenScaleFactor = 1f;
 	protected Rect rect;
-	protected Robot robot;
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	protected int selectedObjectIndex;
 
 	public bool IsSmallScreen { get; protected set; }
+
+	public bool actionAvailable
+	{
+		get
+		{
+			for( int i = 0; i < actionButtons.Length; ++i )
+			{
+				if( actionButtons[i].mode != ActionButton.Mode.DISABLED && actionButtons[i].mode != ActionButton.Mode.TARGET ) return true;
+			}
+
+			return false;
+		}
+	}
+
+	public bool allDisabled
+	{
+		get
+		{
+			for( int i = 0; i < actionButtons.Length; ++i )
+			{
+				if( actionButtons[i].mode != ActionButton.Mode.DISABLED ) return false;
+			}
+			
+			return true;
+		}
+	}
 
 	public static ActionPanel instance = null;
 
@@ -47,7 +73,7 @@ public class ActionPanel : MonoBehaviour
 	}
 
 //	protected virtual void Update() {
-//		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
+//		if(robot == null) {
 //			DisableButtons();
 //			return;
 //		}

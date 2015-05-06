@@ -7,9 +7,10 @@ public class CozmoBusyPanel : MonoBehaviour {
 	[SerializeField] Text text_actionDescription;
 	[SerializeField] GameObject panel;
 
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public static CozmoBusyPanel instance = null;
-
-
+	
 	void Awake() {
 		//enforce singleton
 		if(instance != null && instance != this) {
@@ -22,18 +23,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		if(RobotEngineManager.instance == null) {
-			panel.SetActive(false);
-			return;
-		}
-
-		Robot robot = RobotEngineManager.instance.current;
-		if(robot == null) {
-			panel.SetActive(false);
-			return;
-		}
-
-		if(!robot.isBusy) {
+		if(robot == null || !robot.isBusy) {
 			panel.SetActive(false);
 			return;
 		}
@@ -43,18 +33,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 
 
 	public void CancelCurrentActions() {
-		if(RobotEngineManager.instance == null) {
-			panel.SetActive(false);
-			return;
-		}
-		
-		Robot robot = RobotEngineManager.instance.current;
-		if(robot == null) {
-			panel.SetActive(false);
-			return;
-		}
-		
-		if(!robot.isBusy) {
+		if(robot == null || !robot.isBusy) {
 			panel.SetActive(false);
 			return;
 		}

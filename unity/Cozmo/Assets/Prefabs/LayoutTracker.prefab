@@ -17177,7 +17177,7 @@ MonoBehaviour:
   meshCube: {fileID: 2309586}
   objectType: 4
   objectFamily: 3
-  activeBlockType: 2
+  activeBlockType: 5
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   cubeBelow: {fileID: 0}
   symbols:

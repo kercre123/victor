@@ -48,12 +48,7 @@ public class GoldRushGameActions : GameActions {
 		
 		ActionPanel.instance.DisableButtons();
 		
-		if( RobotEngineManager.instance == null || RobotEngineManager.instance.current == null ) return;
-		
-		robot = RobotEngineManager.instance.current;
-		buttons = ActionPanel.instance.actionButtons;
-		
-		if( robot.isBusy ) return;
+		if( robot == null || robot.isBusy ) return;
 
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{

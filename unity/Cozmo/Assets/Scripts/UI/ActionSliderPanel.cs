@@ -104,9 +104,6 @@ public class ActionSliderPanel : ActionPanel
 		lastMode = actionSlider.currentAction.mode;
 
 		if(actionSlider != null) actionSlider.SetHints();
-
-		robot = null;
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) robot = RobotEngineManager.instance.current;
 		
 		if(robot == null || robot.isBusy || GameActions.instance == null || GameActions.instance.allButtonsDisabled) {
 			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
