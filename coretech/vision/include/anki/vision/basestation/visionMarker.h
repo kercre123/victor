@@ -100,6 +100,28 @@ namespace Anki {
                          const u16     xBorderPad = 0,
                          const u16     yBorderPad = 0) const;
       
+      // Same as above, but also returns a reason code for why they marker was
+      // not visible. Note that these are ordered, meaning if a given code is
+      // returned, then none of the earlier ones are true. 
+      enum class NotVisibleReason : u8 {
+        IS_VISIBLE, // if IsVisibleFrom() == true
+        POSE_PROBLEM,
+        BEHIND_CAMERA,
+        NORMAL_NOT_ALIGNED,
+        TOO_SMALL,
+        OUTSIDE_FOV,
+        OCCLUDED,
+        NOTHING_BEHIND
+      };
+      
+      bool IsVisibleFrom(const Camera& camera,
+                         const f32     maxAngleRad,
+                         const f32     minImageSize,
+                         const bool    requireSomethingBehind,
+                         const u16     xBorderPad,
+                         const u16     yBorderPad,
+                         NotVisibleReason& reason) const;
+      
       // Accessors
       Quad3f const& Get3dCorners() const; // at current pose
       Pose3d const& GetPose()      const;
@@ -167,6 +189,17 @@ namespace Anki {
     
     inline TimeStamp_t KnownMarker::GetLastObservedTime() const {
       return _lastObservedTime;
+    }
+
+    inline bool KnownMarker::IsVisibleFrom(const Camera& camera,
+                                           const f32     maxAngleRad,
+                                           const f32     minImageSize,
+                                           const bool    requireSomethingBehind,
+                                           const u16     xBorderPad,
+                                           const u16     yBorderPad) const
+    {
+      NotVisibleReason dummy;
+      return IsVisibleFrom(camera, maxAngleRad, minImageSize, requireSomethingBehind, xBorderPad, yBorderPad, dummy);
     }
 
   } // namespace Vision

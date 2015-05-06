@@ -75,7 +75,8 @@ if numDetections > 0
     for i = 1:numDetections
       
       if isstruct(detections)
-        plot(detections(i).corners([1 2 4 3 1],1), detections(i).corners([1 2 4 3 1],2), 'r', 'Tag', 'BlockMarker2D');
+        plot(detections(i).corners([1 2 4 3 1],1)+1, detections(i).corners([1 2 4 3 1],2)+1, 'r', ...
+          'Tag', 'BlockMarker2D', 'Parent', h_axes, 'LineWidth', 2);
       else
         switch(class(detections{i}))
           case 'VisionMarker'

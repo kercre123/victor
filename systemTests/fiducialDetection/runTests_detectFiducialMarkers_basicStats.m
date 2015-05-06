@@ -32,52 +32,14 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
             fprintf('Starting basicStats %d ', lastTestId);
         end
         
-        image = imread([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
-        
-        if ~isempty(algorithmParameters.preprocessingFunction)
-            image = algorithmParameters.preprocessingFunction(image);
-        end
-        
-        if strcmp(algorithmParameters.imageCompression{1}, 'none') || strcmp(algorithmParameters.imageCompression{1}, 'png')            
-            fileInfo = dir([curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile]);
-        elseif strcmp(algorithmParameters.imageCompression{1}, 'jpg') || strcmp(algorithmParameters.imageCompression{1}, 'jpeg')
-            tmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
-            
-            % Note: Matlab's jpeg writer is not as good as ImageMagick's at low bitrates            
-            imwrite(image, tmpFilename, 'jpg', 'Quality', algorithmParameters.imageCompression{2});
-            
-            image = imread(tmpFilename);
-            
-            fileInfo = dir(tmpFilename);
-        elseif strcmp(algorithmParameters.imageCompression{1}, 'nathanJpg') || strcmp(algorithmParameters.imageCompression{1}, 'nathanJpeg')
-            nathanJpegExecutableFilename = '~/Documents/Anki/products-cozmo/systemTests/enjpeg-test'; % If this doesn't exist, compile it with: gcc enjpeg.cpp enjpeg-test.cpp -o enjpeg-test
-            
-            tmpBmpFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.bmp'];
-            tmpRawFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.gray'];
-            tmpJpgFilename = [workQueue{iWork}.basicStats_filename, 'tmpImage.jpg'];
-                        
-            imwrite(image, tmpBmpFilename, 'bmp');
-            
-            system(sprintf('/usr/local/bin/convert %s %s', tmpBmpFilename, tmpRawFilename));
-            
-            quality = algorithmParameters.imageCompression{2};
-            if quality < 1
-                quality = 1;
-            elseif quality > 100
-                quality = 100;
-            end
-                        
-            system(sprintf('%s %s %s %dx%d %d', nathanJpegExecutableFilename, tmpRawFilename, tmpJpgFilename, size(image,2), size(image,1), quality));
-                        
-            image = imread(tmpJpgFilename);
-            
-            fileInfo = dir(tmpJpgFilename);
-        else
-            assert(false);
-        end
-        
+        [image, fileInfo] = testUtilities_loadImage(...
+            [curTestData.testPath, jsonData.Poses{workQueue{iWork}.iPose}.ImageFile],...
+            algorithmParameters.imageCompression,...
+            algorithmParameters.preprocessingFunction,...
+            workQueue{iWork}.basicStats_filename);
+
         if ~isfield(jsonData.Poses{workQueue{iWork}.iPose}, 'VisionMarkers')
-            assert(false);
+            keyboard;
             continue;
         end
         
@@ -85,7 +47,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         
         curTestData.ImageFile = jsonData.Poses{workQueue{iWork}.iPose}.ImageFile;
         
-        groundTruthQuads = jsonToQuad(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);
+        groundTruthQuads = testUtilities_jsonToQuad(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);
         
         groundTruthQuads = makeCellArray(groundTruthQuads);
         
@@ -96,7 +58,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         
         [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
         
-        detectedMarkerQuads = makeCellArray(markersToQuad(detectedMarkers));
+        detectedMarkerQuads = makeCellArray(testUtilities_markersToQuad(detectedMarkers));
         
         visionMarkers_groundTruth = makeCellArray(jsonData.Poses{workQueue{iWork}.iPose}.VisionMarkers);
         
@@ -142,6 +104,7 @@ function runTests_detectFiducialMarkers_basicStats(workQueue, allTestData, rotat
         fprintf('.');
         pause(.01);
     end % for iWork = 1:length(workQueue)
+end % runTests_detectFiducialMarkers_basicStats()    
     
 function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads, markerNames_groundTruth)
     global g_rotationList;
@@ -213,25 +176,4 @@ function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrec
             end % for iRotation = 0:3
         end % for iQuery = 1:length(queryQuads)
     end % for iGroundTruth = 1:length(groundTruthQuads)
-    
-function quads = jsonToQuad(jsonQuads)
-    jsonQuads = makeCellArray(jsonQuads);
-    
-    quads = cell(length(jsonQuads), 1);
-    
-    for iQuad = 1:length(jsonQuads)
-        quads{iQuad} = [...
-            jsonQuads{iQuad}.x_imgUpperLeft, jsonQuads{iQuad}.y_imgUpperLeft;
-            jsonQuads{iQuad}.x_imgLowerLeft, jsonQuads{iQuad}.y_imgLowerLeft;
-            jsonQuads{iQuad}.x_imgUpperRight, jsonQuads{iQuad}.y_imgUpperRight;
-            jsonQuads{iQuad}.x_imgLowerRight, jsonQuads{iQuad}.y_imgLowerRight];
-    end
-    
-function quads = markersToQuad(markers)
-    markers = makeCellArray(markers);
-    
-    quads = cell(length(markers), 1);
-    
-    for iQuad = 1:length(markers)
-        quads{iQuad} = markers{iQuad}.corners;
-    end
+end % findClosestMatches()
