@@ -357,7 +357,7 @@ namespace Anki
               // (If we are here, we didn't see it in the same place; we are only
               // updating it because we are assuming it's the same object based on
               // type.)
-              if(observedObject->GetNumTimesObserved() > 1) {
+              if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
                 // Update lastObserved times of this object
                 observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
                 observedObject->UpdateMarkerObservationTimes(*objSeen);
@@ -403,8 +403,10 @@ namespace Anki
                            objSeen->GetPose().GetTranslation().z(),
                            parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
           
-          // Project this new object into the robot's camera:
-          _robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
+          // Don't add as an occluder the very first time we see the object; wait
+          // until we've seen it MIN_TIMES_TO_OBSERVE_OBJECT times.
+          // // Project this new object into the robot's camera:
+          // //_robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           observedObject = objSeen;
             
@@ -442,16 +444,19 @@ namespace Anki
           // Project this existing object into the robot's camera, using its new pose
           _robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
+          // Add all observed markers of this object as occluders:
+          std::vector<const Vision::KnownMarker *> observedMarkers;
+          observedObject->GetObservedMarkers(observedMarkers);
+          for(auto marker : observedMarkers) {
+            _robot->GetCamera().AddOccluder(*marker);
+          }
+          
           // Now that we've merged in objSeen, we can delete it because we
           // will no longer be using it.  Otherwise, we'd leak.
           delete objSeen;
           
         } // if/else overlapping existing objects found
      
-        // Use the projected corners to add an occluder and to keep track of the
-        // bounding quads of all the observed objects in this Update
-        _robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
-        
         CORETECH_ASSERT(observedObject != nullptr);
         
         // If this is an active object and has not been identified yet, identify
@@ -487,6 +492,10 @@ namespace Anki
         
         if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         {
+          // Use the projected corners to add an occluder and to keep track of the
+          // bounding quads of all the observed objects in this Update
+          //_robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
+          
           Rectangle<f32> boundingBox(projectedCorners);
           //_obsProjectedObjects.emplace_back(obsID, boundingBox);
           _currentObservedObjectIDs.push_back(obsID);
