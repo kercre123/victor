@@ -142,7 +142,6 @@ public class SlalomController : GameController {
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
-		robot = RobotEngineManager.instance.current;
 		float rad;
 		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
@@ -151,9 +150,6 @@ public class SlalomController : GameController {
 	}
 
 	protected override void Update_PRE_GAME() {
-
-		robot = RobotEngineManager.instance.current;
-
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
 		if(robot.isBusy) return;
@@ -164,9 +160,6 @@ public class SlalomController : GameController {
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
 
-		//game specific start conditions...
-		robot = RobotEngineManager.instance.current;
-		
 		obstacles.Clear();
 		for(int i=0;i<robot.knownObjects.Count;i++) {
 			if(robot.knownObjects[i].Family == 3) {

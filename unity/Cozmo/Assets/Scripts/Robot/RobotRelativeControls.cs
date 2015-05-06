@@ -40,7 +40,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	float maxTurnFactor = 1f;
 	bool reverseLikeACar = true;
 	//bool targetLockSelectedObject = true;
-	Robot robot = null;
+	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	bool driveForwardOnlyMode = false;
 	bool driveReverseOnlyMode = false;
 	bool turnInPlaceOnlyMode = false;
@@ -89,9 +89,6 @@ public class RobotRelativeControls : MonoBehaviour {
 	}
 
 	void Update() {
-		robot = null;
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) robot = RobotEngineManager.instance.current;
-
 		if(robot == null || robot.isBusy) {
 			if(verticalStick != null) verticalStick.gameObject.SetActive(false);
 			if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
@@ -221,8 +218,8 @@ public class RobotRelativeControls : MonoBehaviour {
 		//clean up this controls test if needed
 		//Debug.Log("RobotRelativeControls OnDisable");
 
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.current.DriveWheels(0f, 0f);
+		if(robot != null && RobotEngineManager.instance.IsConnected) {
+			robot.DriveWheels(0f, 0f);
 		}
 
 //		if(recorder != null) {
@@ -494,9 +491,9 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void CheckSwapTargetLock(Vector2 direction) {
 		if(direction.sqrMagnitude == 0f) return; 
-		if(RobotEngineManager.instance != null && RobotEngineManager.instance.current != null && RobotEngineManager.instance.current.pertinentObjects.Count <= 1) return;
+		if(robot != null && robot.pertinentObjects.Count <= 1) return;
 
-		List<ObservedObject> pertinentObjects = RobotEngineManager.instance.current.pertinentObjects;
+		List<ObservedObject> pertinentObjects = robot.pertinentObjects;
 		ObservedObject oldLock = robot.targetLockedObject;
 		Vector3 targetPos = oldLock.WorldPosition;
 		Vector3 atTarget = (targetPos - robot.WorldPosition).normalized;

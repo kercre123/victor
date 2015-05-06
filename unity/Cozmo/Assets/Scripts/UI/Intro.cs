@@ -16,6 +16,8 @@ public class Intro : MonoBehaviour {
 
 	public const int CurrentRobotID = 1;
 
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	private string lastEngineIp
 	{
 		get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
@@ -57,17 +59,16 @@ public class Intro : MonoBehaviour {
 		simIP.text = lastSimIp;
 		visualizerIP.text = lastVisualizerIp;
 
-		/*if (RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
+		/*if (robot != null) {
 			Debug.Log("knownObjects cleared!");
-			RobotEngineManager.instance.current.knownObjects.Clear();
+			robot.knownObjects.Clear();
 		}*/
 
 	}
 
 	private void Start()
 	{
-
-		if(RobotEngineManager.instance != null &&RobotEngineManager.instance.IsConnected) RobotEngineManager.instance.Disconnect ();
+		if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) RobotEngineManager.instance.Disconnect();
 
 		if (RobotEngineManager.instance != null) {
 			RobotEngineManager.instance.ConnectedToClient += Connected;
@@ -157,8 +158,8 @@ public class Intro : MonoBehaviour {
 			return;
 		}
 
-		if(simulated && RobotEngineManager.instance != null && RobotEngineManager.instance.current != null) {
-			RobotEngineManager.instance.current.VisionWhileMoving(true);				
+		if(simulated && robot != null) {
+			robot.VisionWhileMoving(true);				
 		}
 
 		error.text = "";

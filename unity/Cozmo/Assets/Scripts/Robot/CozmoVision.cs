@@ -30,7 +30,6 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
 
-
 	protected ActionPanel actionPanel;
 
 	protected RectTransform rTrans;
@@ -39,7 +38,6 @@ public class CozmoVision : MonoBehaviour
 	protected CanvasScaler canvasScaler;
 	protected float screenScaleFactor = 1f;
 	protected Rect rect;
-	protected Robot robot;
 	protected readonly Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	protected List<ObservedObjectBox> observedObjectBoxes = new List<ObservedObjectBox>();
 	protected GameObject observedObjectCanvas;
@@ -58,14 +56,15 @@ public class CozmoVision : MonoBehaviour
 	public bool IsSmallScreen { get; protected set; }
 	protected static readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
 
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	protected virtual void Reset( DisconnectionReason reason = DisconnectionReason.None )
 	{
 		for( int i = 0; i < dingTimes.Length; ++i )
 		{
 			dingTimes[i] = 0f;
 		}
-		
-		robot = null;
+
 		imageRequested = false;
 	}
 
@@ -179,11 +178,11 @@ public class CozmoVision : MonoBehaviour
 	
 	private void RequestImage()
 	{
-		if( !imageRequested && RobotEngineManager.instance != null )
+		if( !imageRequested && robot != null )
 		{
-			RobotEngineManager.instance.current.RequestImage( RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM );
-			RobotEngineManager.instance.current.SetHeadAngle();
-			RobotEngineManager.instance.current.SetLiftHeight( 0f );
+			robot.RequestImage( RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM );
+			robot.SetHeadAngle();
+			robot.SetLiftHeight( 0f );
 			imageRequested = true;
 		}
 	}
@@ -195,7 +194,7 @@ public class CozmoVision : MonoBehaviour
 			RobotEngineManager.instance.RobotImage += RobotImage;
 			RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
-			if(RobotEngineManager.instance.current != null) RobotEngineManager.instance.current.selectedObjects.Clear();
+			if(robot != null) robot.selectedObjects.Clear();
 		}
 		
 		RequestImage();
@@ -376,9 +375,10 @@ public class CozmoVision : MonoBehaviour
 		if(loopAudioSource != null) loopAudioSource.Stop();
 	}
 	
-	private void PlayVisionActivateSound()
+	protected  void PlayVisionActivateSound()
 	{
-		if(loopAudioSource == null || visionActivateSound == null || loopAudioSource.clip == visionActiveLoop) return;
+		if(loopAudioSource == null || visionActivateSound == null || loopAudioSource.clip == visionActiveLoop || 
+		   actionPanel == null || !actionPanel.actionAvailable) return;
 
 		audio.volume = maxVisionStartVol;
 		audio.PlayOneShot(visionActivateSound, maxVisionStartVol);
@@ -499,8 +499,8 @@ public class CozmoVision : MonoBehaviour
 		if( robot != null )
 		{
 			robot.selectedObjects.Clear();
-			RobotEngineManager.instance.current.selectedObjects.Add(obj);
-			RobotEngineManager.instance.current.TrackHeadToObject(obj);
+			robot.selectedObjects.Add(obj);
+			robot.TrackHeadToObject(obj);
 		}
 		
 		if( audio != null ) audio.PlayOneShot( selectSound );

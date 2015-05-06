@@ -59,7 +59,7 @@ public class GameController : MonoBehaviour {
 
 	protected float errorMsgTimer = 0f;
 
-	protected Robot robot;
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	//public float gameStartingInDelay = 1.3f;
 
@@ -353,16 +353,14 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual bool IsGameReady() {
-		if(RobotEngineManager.instance == null) return false;
-		if(RobotEngineManager.instance.current == null) return false;
+		if(robot == null) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
 		return GameLayoutTracker.instance.Validated;
 	}
 
 	protected virtual bool IsPreGameCompleted() {
-		if(RobotEngineManager.instance == null) return false;
-		if(RobotEngineManager.instance.current == null) return false;
+		if(robot == null) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
 		//add game specific gating in an override of this method

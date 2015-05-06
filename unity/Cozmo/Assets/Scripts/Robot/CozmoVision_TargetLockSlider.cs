@@ -31,11 +31,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 	protected void Update() {
 		if(targetLockTimer > 0) targetLockTimer -= Time.deltaTime;
 
-		if(RobotEngineManager.instance == null || RobotEngineManager.instance.current == null) {
-			return;
-		}
-
-		robot = RobotEngineManager.instance.current;
+		if(robot == null) return;
 
 		if(GameActions.instance == null) {
 			targetLockReticle.gameObject.SetActive(false);
