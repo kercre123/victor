@@ -15,7 +15,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-    %     makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     % Run everything
@@ -38,8 +38,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
 
     runWhichAlgorithms = {...
         'c_with_refinement',...
-        'c_with_refinement_jpg',...
-        'c_with_refinement_nathanJpg',...
+        %'c_with_refinement_jpg',...
+        %'c_with_refinement_nathanJpg',...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -151,7 +151,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
                 compressionPercent_jpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                 
-                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
@@ -189,7 +189,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
                 compressionPercent_jpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                 
-                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
@@ -228,7 +228,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 percentMarkersCorrect_nathanJpg(iJpg) = 100 * curResults.percentMarkersCorrect;
                 compressionPercent_nathanJpg(iJpg) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                 
-                disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
             if showJpgResults
@@ -287,7 +287,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                     percentMarkersCorrect_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
                     compressionPercent_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal;
                     
-                    disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d,%d',iJpg,iPreprocess), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+                    disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d,%d',iJpg,iPreprocess), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
                 end % for iPreprocess = 1:length(preprocessingFunctions)
             end % for iJpg = 1:length(jpgCompression)
             
@@ -326,7 +326,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         if isSimpleTest
             curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
             resultsData.(runWhichAlgorithms{iAlgorithm}) = curResults;
-            disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+            disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
         end
     end % for iAlgorithm = 1:length(runWhichAlgorithms)
     

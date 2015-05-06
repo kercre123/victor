@@ -9,6 +9,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/fiducialDetection.h"
 
+//#define SEND_BOUNDARIES_TO_MATLAB
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+#include "anki/common/robot/matlabInterface.h"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -138,6 +143,11 @@ namespace Anki
 
       //printf("components.get_maximumId() = %d\n", components.get_maximumId());
 
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+      Anki::Embedded::Matlab matlab(false);     
+      matlab.EvalStringEcho("boundaries = {};");
+#endif // #ifdef SEND_BOUNDARIES_TO_MATLAB
+
       // Go throught the list of components, and for each id, extract a quadrilateral. If the
       // quadrilateral looks reasonable, add it to the list extractedQuads.
       for(s32 iComponent=0; iComponent<components.get_maximumId(); iComponent++) {
@@ -151,6 +161,21 @@ namespace Anki
         //EndBenchmark("TraceNextExteriorBoundary");
 
         //printf("extractedBoundary.size = %d\n", extractedBoundary.get_size());
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+        {
+          std::shared_ptr<s16> xs(new s16[extractedBoundary.get_size()]);
+          std::shared_ptr<s16> ys(new s16[extractedBoundary.get_size()]);
+
+          for(s32 i=0; i<extractedBoundary.get_size(); i++) {
+            xs.get()[i] = extractedBoundary[i].x;
+            ys.get()[i] = extractedBoundary[i].y;
+          }
+
+          matlab.Put(xs.get(), extractedBoundary.get_size(), "xs");
+          matlab.Put(ys.get(), extractedBoundary.get_size(), "ys");
+          matlab.EvalStringEcho("boundaries{end+1} = [xs, ys]; clear('xs'); clear('ys');");
+        }
+#endif // #ifdef SEND_BOUNDARIES_TO_MATLAB
 
         startComponentIndex = endComponentIndex + 1;
 

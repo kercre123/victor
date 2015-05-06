@@ -65,7 +65,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   // TODO: Make this a passed-in parameter
   const f32 filterWidthFraction = 0.5f;
 
-  if(nrhs == 13 && (nlhs ==0 || nlhs == 1 || nlhs == 7)) {
+  if(nrhs == 14 && (nlhs ==0 || nlhs == 1 || nlhs == 7)) {
     //
     // Tracker Init
     //
@@ -106,8 +106,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       Point2f(quadX[3], quadY[3]));
     ++argIndex;
 
-    NormalizeImage(grayscaleImage, templateQuad, filterWidthFraction, offchipMemory);
-
     // Get Calibration Data
     f32 focalLength_x = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     f32 focalLength_y = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
@@ -123,6 +121,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const s32 numSamplingRegions          = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     const s32 numFiducialSquareSamples    = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
     const f32 fiducialSquareWidthFraction = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+    const bool normalizeImage             = static_cast<bool>(mxGetScalar(prhs[argIndex++]));
+
+    if(normalizeImage) {
+      NormalizeImage(grayscaleImage, templateQuad, filterWidthFraction, offchipMemory);
+    }
 
     tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(
       grayscaleImage,
@@ -181,7 +184,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     mexPrintf("Tracker initialized.\n");
   }
-  else if(nrhs == 5 && nlhs == 12) {
+  else if(nrhs == 6 && nlhs == 12) {
     //
     // Track
     //
@@ -198,13 +201,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const f32 convergenceTol_angle = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     const f32 convergenceTol_dist  = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
     const f32 verify_maxPixelDiff  = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+    const bool normalizeImage      = static_cast<bool>(mxGetScalar(prhs[argIndex++]));
 
     // Outputs
     bool converged = false;
     s32 verify_meanAbsDiff, verify_numInBounds, verify_numSimilarPixels;
 
     Quadrilateral<f32> currentQuad = tracker.get_transformation().get_transformedCorners(onchipMemory);
-    NormalizeImage(grayscaleImage, currentQuad, filterWidthFraction, offchipMemory);
+  
+    if(normalizeImage) {
+      NormalizeImage(grayscaleImage, currentQuad, filterWidthFraction, offchipMemory);
+    }
 
     // Update tracker
     const Anki::Result trackerResult = tracker.UpdateTrack(grayscaleImage,
@@ -276,11 +283,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "\t\t camCenter_y,\n"
       "\t\t templateWidth_mm, %% (i.e. trackingMarkerWidth_mm)\n"
       "\t\t scaleTemplateRegionPercent, \n"
-      "\t\t numPyramidLevels, \n"
-      "\t\t maxSamplesAtBaseLevel, \n"
-      "\t\t numSamplingRegions, \n"
-      "\t\t numFiducialSquareSamples, \n"
-      "\t\t fiducialSquareWidthFraction)\n"
+      "\t\t numPyramidLevels,\n"
+      "\t\t maxSamplesAtBaseLevel,\n"
+      "\t\t numSamplingRegions,\n"
+      "\t\t numFiducialSquareSamples,\n"
+      "\t\t fiducialSquareWidthFraction,\n"
+      "\t\t normalizeImage);\n"
       "\n"
       "Track with: \n"
       "\t [verify_converged,\n"
@@ -299,7 +307,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "\t\t maxIterations,\n"
       "\t\t convergenceTolerance_angle,\n"
       "\t\t convergenceTolerance_distance,\n"
-      "\t\t verify_maxPixelDifference)\n\n");
+      "\t\t verify_maxPixelDifference,\n"
+      "\t\t normalizeImage);\n\n");
 
     //mexErrMsgTxt("Unrecognized inputs.");
   }
