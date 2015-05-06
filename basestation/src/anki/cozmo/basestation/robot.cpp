@@ -521,20 +521,20 @@ namespace Anki {
         if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
            turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
         {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-                              "Ignoring vision marker seen while turning with angular "
-                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+          //                              "Ignoring vision marker seen while turning with angular "
+          //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+          //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+          //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
         } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
                   headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
         {
-          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
-                              "Ignoring vision marker seen while head moving with angular "
-                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+          //          PRINT_NAMED_WARNING("Robot.QueueObservedMarker",
+          //                              "Ignoring vision marker seen while head moving with angular "
+          //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+          //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+          //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
           return RESULT_OK;
         }
         

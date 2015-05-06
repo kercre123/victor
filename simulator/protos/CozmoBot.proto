@@ -629,19 +629,20 @@ Supervisor {
 					LED {
 					  name "%{=led_name}%"
 					  children [
-						DEF BACKPACK_HEALTH_LED_SHAPE Group {
-						  children [
-							Shape {
-							  appearance Appearance {
-								material Material {
-								}
-							  }
-							  geometry Box {
-								size 0.005 0.007 0.005
-							  }
-							}
-						  ]
-						}
+              DEF BACKPACK_HEALTH_LED_SHAPE Group {
+                children [
+                  Shape {
+                    appearance Appearance {
+                      material Material {
+                       diffuseColor 0.3 0.3 0.3
+                      }
+                    }
+                    geometry Box {
+                      size 0.005 0.007 0.005
+                    }
+                  }
+                ]
+              }
 					  ]
 					  translation 0 %{=ypos}% 0
 					  color []

@@ -72,6 +72,9 @@ namespace Anki {
       // desired.
       void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                               const TimeStamp_t sinceTime) const;
+      
+      // Same as above, but uses GetLastObservedTime() as "sinceTime"
+      void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const;
 
       // Updates the observation times of this object's markers with the newer
       // of the current times and the times of the corresponding markers on the
@@ -97,6 +100,14 @@ namespace Anki {
       // at the given time
       void SetMarkersAsObserved(const Marker::Code& withCode,
                                 const TimeStamp_t atTime);
+      
+      // Set the marker whose centroid projects closest to the observed marker's
+      // centroid (within threshold distance and within areaRatio threshold)
+      // to have the given observed time.
+      void SetMarkerAsObserved(const ObservedMarker* nearestTo,
+                               const TimeStamp_t     atTime,
+                               const f32             centroidDistThreshold = 5.f, // in pixels
+                               const f32             areaRatioThreshold = 0.1f);  // i.e., 1 - abs(obsArea/knownArea) < threshold
       
       // Return true if any of the object's markers is visible from the given
       // camera. See also KnownMarker::IsVisibleFrom().
@@ -293,6 +304,10 @@ namespace Anki {
     inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
       _lastObservedTime = t;
       ++_numTimesObserved;
+    }
+    
+    inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
+      GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
     /*
