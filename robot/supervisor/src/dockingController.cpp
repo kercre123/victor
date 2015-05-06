@@ -650,6 +650,11 @@ namespace Anki {
 #endif
               ResetDocker();
               success_ = true;
+              
+              // If we successfully reached end of path, set lastMarkerDistX to reflect that.
+              lastMarkerDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM; // This depends on what action we were doing, but it's good enough for all of them.
+              lastMarkerDistY_ = 0;
+              
               break;
             }
             
