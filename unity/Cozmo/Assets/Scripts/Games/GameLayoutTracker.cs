@@ -612,11 +612,11 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
-		facingAngle = currentLayout.startPositionMarker.eulerAngles.y * Mathf.Deg2Rad;
+		facingAngle = (currentLayout.startPositionMarker.eulerAngles.y + 90f) * Mathf.Deg2Rad;
 
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
-			Debug.Log("GetStartingPositionFromLayout layoutBlocksOnGround.Count == 1 use default rotation.");
+			//Debug.Log("GetStartingPositionFromLayout layoutBlocksOnGround.Count == 1 use default rotation.");
 			return offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
 		}
 
@@ -642,10 +642,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 			float signedAngleOffsetRad = (axis.z < 0f ? offsetAngle : -offsetAngle) * Mathf.Deg2Rad;
 
-			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+")");
+			//Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+")");
 			facingAngle += signedAngleOffsetRad;
 
-			Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
+			//Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
 
 		}
 
