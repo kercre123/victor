@@ -247,6 +247,12 @@ ADD_MESSAGE_MEMBER(f32, ki)
 ADD_MESSAGE_MEMBER(f32, maxIntegralError)
 END_MESSAGE_DEFINITION(SetLiftControllerGains)
 
+// SetSteeringControllerGains
+START_MESSAGE_DEFINITION(SetSteeringControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, k1)
+ADD_MESSAGE_MEMBER(f32, k2)
+END_MESSAGE_DEFINITION(SetSteeringControllerGains)
+
 // DockingErrorSignal
 START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
 ADD_MESSAGE_MEMBER(f32, x_distErr)

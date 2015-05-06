@@ -506,6 +506,10 @@ namespace Anki {
         LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
+      void ProcessSetSteeringControllerGainsMessage(const SetSteeringControllerGains& msg) {
+        SteeringController::SetGains(msg.k1, msg.k2);
+      }
+      
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
         PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
