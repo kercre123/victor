@@ -204,10 +204,12 @@ public class GoldRushController : GameController {
 		if( setHighScore )
 		{
 			PlayerPrefs.SetInt("EnergyHunt_HighScore", scores[0]);
+			resultsHighScore.color = Color.red;
 			resultsHighScore.text = "New High Score!";
 		}
 		else
 		{
+			resultsHighScore.color = resultsScore.color;
 			resultsHighScore.text = "High Score: " + oldHighScore.ToString();
 		}
 		CozmoVision.EnableDing(); // just in case we were in searching mode
