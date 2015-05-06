@@ -1,4 +1,4 @@
-﻿//#define RUSH_DEBUG
+﻿#define RUSH_DEBUG
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -101,7 +101,7 @@ public class GoldRushController : GameController {
 	{
 		base.OnEnable();
 
-		MessageDelay = .05f;
+		MessageDelay = .1f;
 	}
 
 	protected override void OnDisable()
@@ -743,8 +743,12 @@ public class GoldRushController : GameController {
 		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
 		PlayNotificationAudio(depositingEnergy);
+		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xFF);
+		yield return new WaitForSeconds(depositingEnergy.length/2);
+
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(depositingEnergy.length - depositTrimTime);
+		yield return new WaitForSeconds(depositingEnergy.length/2 - depositTrimTime);
+
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (0);
 		// PlayNotificationAudio (collectedSound);
 		// award points

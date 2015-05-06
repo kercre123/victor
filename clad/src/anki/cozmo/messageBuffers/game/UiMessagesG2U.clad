@@ -185,7 +185,7 @@ message StopSound {
 }
 
 // keep empty to generate an auto-union that includes all messages in this file
-// if you do not want to include messages in this union, use the keyword "struct" instead of "message"
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union Message { }
 
 } // namespace G2U

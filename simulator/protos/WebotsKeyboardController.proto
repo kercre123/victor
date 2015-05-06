@@ -38,6 +38,9 @@ PROTO WebotsKeyboardController [
   field SFFloat liftKd 250
   field SFFloat liftMaxErrorSum 5
 
+  field SFFloat steerK1 0.1
+  field SFFloat steerK2 12
+
   # Vision system params
   field SFString streamResolution "QVGA"
   field SFInt32 camera_autoexposureOn 1

@@ -4638,6 +4638,132 @@ public class SetLiftControllerGains
 	}
 }
 
+public class SetSteeringControllerGains
+{
+	private float _k1; // float_32
+	private float _k2; // float_32
+
+	public float k1 { get { return _k1; } set { _k1 = value; } }
+
+	public float k2 { get { return _k2; } set { _k2 = value; } }
+
+
+	/**** Constructors ****/
+
+	public SetSteeringControllerGains()
+	{
+	}
+
+	public SetSteeringControllerGains(float k1,
+		float k2)
+	{
+		this.k1 = k1;
+		this.k2 = k2;
+	}
+
+	public SetSteeringControllerGains(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public SetSteeringControllerGains(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_k1 = reader.ReadSingle();
+		_k2 = reader.ReadSingle();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((float)_k1);
+		writer.Write((float)_k2);
+	}
+
+	public int Size 
+	{
+		get {
+			return 8;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(SetSteeringControllerGains a, SetSteeringControllerGains b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetSteeringControllerGains a, SetSteeringControllerGains b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as SetSteeringControllerGains);
+	}
+
+	public bool Equals(SetSteeringControllerGains p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._k1.Equals(p._k1)
+			&& this._k2.Equals(p._k2);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._k1.GetHashCode();
+			hash = hash * 23 + this._k2.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class SelectNextSoundScheme
 {
 	/**** Constructors ****/
@@ -6949,22 +7075,23 @@ public class Message {
 		SetWheelControllerGains,	//38
 		SetHeadControllerGains,	//39
 		SetLiftControllerGains,	//40
-		SelectNextSoundScheme,	//41
-		StartTestMode,	//42
-		IMURequest,	//43
-		PlayAnimation,	//44
-		ReadAnimationFile,	//45
-		StartFaceTracking,	//46
-		StopFaceTracking,	//47
-		StartLookingForMarkers,	//48
-		StopLookingForMarkers,	//49
-		SetVisionSystemParams,	//50
-		SetFaceDetectParams,	//51
-		SetActiveObjectLEDs,	//52
-		SetAllActiveObjectLEDs,	//53
-		SetBackpackLEDs,	//54
-		VisualizeQuad,	//55
-		EraseQuad,	//56
+		SetSteeringControllerGains,	//41
+		SelectNextSoundScheme,	//42
+		StartTestMode,	//43
+		IMURequest,	//44
+		PlayAnimation,	//45
+		ReadAnimationFile,	//46
+		StartFaceTracking,	//47
+		StopFaceTracking,	//48
+		StartLookingForMarkers,	//49
+		StopLookingForMarkers,	//50
+		SetVisionSystemParams,	//51
+		SetFaceDetectParams,	//52
+		SetActiveObjectLEDs,	//53
+		SetAllActiveObjectLEDs,	//54
+		SetBackpackLEDs,	//55
+		VisualizeQuad,	//56
+		EraseQuad,	//57
 		INVALID
 	};
 
@@ -7671,6 +7798,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.SetSteeringControllerGains SetSteeringControllerGains
+	{
+		get {
+			if (_tag != Tag.SetSteeringControllerGains) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetSteeringControllerGains\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.SetSteeringControllerGains)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetSteeringControllerGains : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G.SelectNextSoundScheme SelectNextSoundScheme
 	{
 		get {
@@ -8092,6 +8236,9 @@ public class Message {
 		case Tag.SetLiftControllerGains:
 			SetLiftControllerGains = new Anki.Cozmo.U2G.SetLiftControllerGains(reader);
 			break;
+		case Tag.SetSteeringControllerGains:
+			SetSteeringControllerGains = new Anki.Cozmo.U2G.SetSteeringControllerGains(reader);
+			break;
 		case Tag.SelectNextSoundScheme:
 			SelectNextSoundScheme = new Anki.Cozmo.U2G.SelectNextSoundScheme(reader);
 			break;
@@ -8402,6 +8549,12 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			SetLiftControllerGains.Pack(writer);
+			break;
+		case Tag.SetSteeringControllerGains:
+			if (SetSteeringControllerGains == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			SetSteeringControllerGains.Pack(writer);
 			break;
 		case Tag.SelectNextSoundScheme:
 			if (SelectNextSoundScheme == null) {
@@ -8754,6 +8907,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += SetLiftControllerGains.Size;
+				break;
+			case Tag.SetSteeringControllerGains:
+				if (SetSteeringControllerGains == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += SetSteeringControllerGains.Size;
 				break;
 			case Tag.SelectNextSoundScheme:
 				if (SelectNextSoundScheme == null) {
