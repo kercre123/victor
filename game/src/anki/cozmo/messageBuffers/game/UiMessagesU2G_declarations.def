@@ -43,6 +43,7 @@ void Process_ErasePoseMarker(const Anki::Cozmo::U2G::ErasePoseMarker& msg);
 void Process_SetWheelControllerGains(const Anki::Cozmo::U2G::SetWheelControllerGains& msg);
 void Process_SetHeadControllerGains(const Anki::Cozmo::U2G::SetHeadControllerGains& msg);
 void Process_SetLiftControllerGains(const Anki::Cozmo::U2G::SetLiftControllerGains& msg);
+void Process_SetSteeringControllerGains(const Anki::Cozmo::U2G::SetSteeringControllerGains& msg);
 void Process_SelectNextSoundScheme(const Anki::Cozmo::U2G::SelectNextSoundScheme& msg);
 void Process_StartTestMode(const Anki::Cozmo::U2G::StartTestMode& msg);
 void Process_IMURequest(const Anki::Cozmo::U2G::IMURequest& msg);

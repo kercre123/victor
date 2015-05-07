@@ -269,6 +269,12 @@ message SetLiftControllerGains {
     float_32 maxIntegralError
 }
 
+// SetSteeringControllerGains
+message SetSteeringControllerGains {
+  float_32 k1,
+  float_32 k2
+}
+
 // SelectNextSoundScheme
 message SelectNextSoundScheme {
 }
@@ -409,7 +415,7 @@ message EraseQuad {
 }
 
 // keep empty to generate an auto-union that includes all messages in this file
-// if you do not want to include messages in this union, use the keyword "struct" instead of "message"
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union Message { }
 
 } // namespace U2G

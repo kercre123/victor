@@ -231,6 +231,7 @@ namespace Anki {
                                     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
+      void SendSteeringControllerGains(const f32 k1, const f32 k2);
       void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
@@ -375,7 +376,7 @@ namespace Anki {
       // Sends complete images to VizManager for visualization (and possible saving).
       void HandleImageChunk(G2U::ImageChunk const& msg)
       {
-        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
+        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
         
         
         if(isImageReady)
@@ -1067,30 +1068,39 @@ namespace Anki {
               case (s32)'K':
               {
                 if (root_) {
-                  // Wheel gains
-                  f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
-                  f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
-                  f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
-                  f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
-                  f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
-                  f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
-                  printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
-                  SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
                   
-                  // Head and lift gains
-                  f32 kp = root_->getField("headKp")->getSFFloat();
-                  f32 ki = root_->getField("headKi")->getSFFloat();
-                  f32 kd = root_->getField("headKd")->getSFFloat();
-                  f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
-                  printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                  SendHeadControllerGains(kp, ki, kd, maxErrorSum);
-                  
-                  kp = root_->getField("liftKp")->getSFFloat();
-                  ki = root_->getField("liftKi")->getSFFloat();
-                  kd = root_->getField("liftKd")->getSFFloat();
-                  maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
-                  printf("New lift gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
-                  SendLiftControllerGains(kp, ki, kd, maxErrorSum);
+                  if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                    f32 steer_k1 = root_->getField("steerK1")->getSFFloat();
+                    f32 steer_k2 = root_->getField("steerK2")->getSFFloat();
+                    printf("New steering gains: k1 %f, k2 %f\n", steer_k1, steer_k2);
+                    SendSteeringControllerGains(steer_k1, steer_k2);
+                  } else {
+                    
+                    // Wheel gains
+                    f32 kpLeft = root_->getField("lWheelKp")->getSFFloat();
+                    f32 kiLeft = root_->getField("lWheelKi")->getSFFloat();
+                    f32 maxErrorSumLeft = root_->getField("lWheelMaxErrorSum")->getSFFloat();
+                    f32 kpRight = root_->getField("rWheelKp")->getSFFloat();
+                    f32 kiRight = root_->getField("rWheelKi")->getSFFloat();
+                    f32 maxErrorSumRight = root_->getField("rWheelMaxErrorSum")->getSFFloat();
+                    printf("New wheel gains: left %f %f %f, right %f %f %f\n", kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                    SendWheelControllerGains(kpLeft, kiLeft, maxErrorSumLeft, kpRight, kiRight, maxErrorSumRight);
+                    
+                    // Head and lift gains
+                    f32 kp = root_->getField("headKp")->getSFFloat();
+                    f32 ki = root_->getField("headKi")->getSFFloat();
+                    f32 kd = root_->getField("headKd")->getSFFloat();
+                    f32 maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
+                    printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                    SendHeadControllerGains(kp, ki, kd, maxErrorSum);
+                    
+                    kp = root_->getField("liftKp")->getSFFloat();
+                    ki = root_->getField("liftKi")->getSFFloat();
+                    kd = root_->getField("liftKd")->getSFFloat();
+                    maxErrorSum = root_->getField("liftMaxErrorSum")->getSFFloat();
+                    printf("New lift gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
+                    SendLiftControllerGains(kp, ki, kd, maxErrorSum);
+                  }
                 } else {
                   printf("No WebotsKeyboardController was found in world\n");
                 }
@@ -2088,6 +2098,17 @@ namespace Anki {
         message.Set_SetLiftControllerGains(m);
         SendMessage(message);
       }
+      
+      void SendSteeringControllerGains(const f32 k1, const f32 k2)
+      {
+        U2G::SetSteeringControllerGains m;
+        m.k1 = k1;
+        m.k2 = k2;
+        U2G::Message message;
+        message.Set_SetSteeringControllerGains(m);
+        SendMessage(message);
+      }
+      
       
       void SendSelectNextSoundScheme()
       {

@@ -1,4 +1,4 @@
-﻿//#define RUSH_DEBUG
+﻿#define RUSH_DEBUG
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -101,7 +101,7 @@ public class GoldRushController : GameController {
 	{
 		base.OnEnable();
 
-		MessageDelay = .05f;
+		MessageDelay = .1f;
 	}
 
 	protected override void OnDisable()
@@ -445,24 +445,15 @@ public class GoldRushController : GameController {
 		playState = new_state;
 		switch (playState) {
 		case PlayState.IDLE:
+			BuryTreasure();
 			break;
 		case PlayState.SEARCHING:
+			if( !buriedLocations.ContainsKey(robot.carryingObject) )
+			{
+				BuryTreasure();
+			}
 			robot.SetHeadAngle();
 			PlayNotificationAudioDeferred(findEnergy);
-			foundItems.Clear();
-			buriedLocations.Clear();
-
-			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
-			randomSpot *= hideRadius;
-			Vector2 depositSpot = (Vector2)goldCollectingObject.WorldPosition ;
-
-			while( Vector2.Distance(randomSpot, depositSpot) < returnRadius )
-			{
-				//keep searching until we find a spot far enough away from the deposit spot
-				randomSpot = UnityEngine.Random.insideUnitCircle;
-				randomSpot *= hideRadius;
-			}
-			buriedLocations[robot.carryingObject] = randomSpot;
 			break;
 		case PlayState.CAN_EXTRACT:
 			if ( goldExtractingObject != null )
@@ -701,6 +692,25 @@ public class GoldRushController : GameController {
 	{
 		EnterPlayState (PlayState.DEPOSITING);
 	}
+#region helpers
+	void BuryTreasure()
+	{
+		foundItems.Clear();
+		buriedLocations.Clear();
+		
+		Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
+		randomSpot *= hideRadius;
+		Vector2 depositSpot = (Vector2)goldCollectingObject.WorldPosition ;
+		
+		while( Vector2.Distance(randomSpot, depositSpot) < returnRadius )
+		{
+			//keep searching until we find a spot far enough away from the deposit spot
+			randomSpot = UnityEngine.Random.insideUnitCircle;
+			randomSpot *= hideRadius;
+		}
+		buriedLocations[robot.carryingObject] = randomSpot;
+	}
+#endregion
 
 #region IEnumerator
 
@@ -743,8 +753,12 @@ public class GoldRushController : GameController {
 		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
 		PlayNotificationAudio(depositingEnergy);
+		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xFF);
+		yield return new WaitForSeconds(depositingEnergy.length/2);
+
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(depositingEnergy.length - depositTrimTime);
+		yield return new WaitForSeconds(depositingEnergy.length/2 - depositTrimTime);
+
 		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (0);
 		// PlayNotificationAudio (collectedSound);
 		// award points

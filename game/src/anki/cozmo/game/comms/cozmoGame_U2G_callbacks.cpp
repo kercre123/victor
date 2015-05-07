@@ -471,7 +471,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      const u8 numRetries = 0;
+      const u8 numRetries = 1;
       
       ObjectID selectedObjectID;
       if(msg.objectID < 0) {
@@ -616,6 +616,17 @@ namespace Cozmo {
     
     if(robot != nullptr) {
       robot->SetLiftControllerGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
+    }
+  }
+
+  void CozmoGameImpl::Process_SetSteeringControllerGains(U2G::SetSteeringControllerGains const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      robot->SetSteeringControllerGains(msg.k1, msg.k2);
     }
   }
   

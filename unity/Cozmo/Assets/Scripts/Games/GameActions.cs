@@ -5,6 +5,7 @@ public class GameActions : MonoBehaviour
 {
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
+	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.NUM_MODES];
 	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
 	
 	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
@@ -64,13 +65,36 @@ public class GameActions : MonoBehaviour
 		return actionSprites[(int)mode];
 	}
 
-	public virtual void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
+	public AudioClip GetActionEnabledSound( ActionButton.Mode mode )
+	{
+		return actionEnabledSounds[(int)mode];
+	}
+
+	private void CheckChangedButtons()
+	{
+		for( int i = 0; i < buttons.Length; ++i )
+		{
+			if( buttons[i].changed ) OnModeEnabled( buttons[i] );
+		}
+	}
+
+	public void SetActionButtons( bool isSlider = false )
 	{
 		if( ActionPanel.instance == null ) return;
-
+		
+		ActionPanel.instance.SetLastButtons();
 		ActionPanel.instance.DisableButtons();
 
-		if( robot == null || robot.isBusy ) return;
+		if( robot == null ) return;
+
+		_SetActionButtons( isSlider );
+
+		CheckChangedButtons();
+	}
+
+	protected virtual void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
+	{
+		if( robot.isBusy ) return;
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
@@ -120,6 +144,18 @@ public class GameActions : MonoBehaviour
 			{
 				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
 			}
+		}
+	}
+
+	public virtual void OnModeEnabled( ActionButton button )
+	{
+		AudioClip onEnabledSound = GetActionEnabledSound( button.mode );
+		
+		if( onEnabledSound != null && audio != null && ( audio.clip != onEnabledSound || !audio.isPlaying ) )
+		{
+			audio.volume = 1f;
+			audio.clip = onEnabledSound;
+			audio.Play();
 		}
 	}
 

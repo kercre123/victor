@@ -2629,6 +2629,71 @@ bool SetLiftControllerGains::operator!=(const SetLiftControllerGains& other) con
 }
 
 
+// MESSAGE SetSteeringControllerGains
+
+SetSteeringControllerGains::SetSteeringControllerGains(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+SetSteeringControllerGains::SetSteeringControllerGains(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t SetSteeringControllerGains::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t SetSteeringControllerGains::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->k1);
+	buffer.Write(this->k2);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t SetSteeringControllerGains::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t SetSteeringControllerGains::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->k1);
+	buffer.Read(this->k2);
+	return buffer.GetBytesRead();
+}
+
+size_t SetSteeringControllerGains::Size() const
+{
+	size_t result = 0;
+	//k1
+	result += 4; // = float_32
+	//k2
+	result += 4; // = float_32
+	return result;
+}
+
+bool SetSteeringControllerGains::operator==(const SetSteeringControllerGains& other) const
+{
+	if (k1 != other.k1
+	|| k2 != other.k2) {
+		return false;
+	}
+	return true;
+}
+
+bool SetSteeringControllerGains::operator!=(const SetSteeringControllerGains& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE SelectNextSoundScheme
 
 SelectNextSoundScheme::SelectNextSoundScheme(const uint8_t* buff, size_t len)
@@ -3926,6 +3991,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetHeadControllerGains";
 	case MessageTag::SetLiftControllerGains:
 		return "SetLiftControllerGains";
+	case MessageTag::SetSteeringControllerGains:
+		return "SetSteeringControllerGains";
 	case MessageTag::SelectNextSoundScheme:
 		return "SelectNextSoundScheme";
 	case MessageTag::StartTestMode:
@@ -5163,6 +5230,35 @@ void Message::Set_SetLiftControllerGains(Anki::Cozmo::U2G::SetLiftControllerGain
 }
 
 
+const Anki::Cozmo::U2G::SetSteeringControllerGains& Message::Get_SetSteeringControllerGains() const
+{
+	assert(_tag == Tag::SetSteeringControllerGains);
+	return _SetSteeringControllerGains;
+}
+void Message::Set_SetSteeringControllerGains(const Anki::Cozmo::U2G::SetSteeringControllerGains& new_SetSteeringControllerGains)
+{
+	if(this->_tag == Tag::SetSteeringControllerGains) {
+		_SetSteeringControllerGains = new_SetSteeringControllerGains;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetSteeringControllerGains) Anki::Cozmo::U2G::SetSteeringControllerGains{new_SetSteeringControllerGains};
+		_tag = Tag::SetSteeringControllerGains;
+	}
+}
+void Message::Set_SetSteeringControllerGains(Anki::Cozmo::U2G::SetSteeringControllerGains&& new_SetSteeringControllerGains)
+{
+	if(this->_tag == Tag::SetSteeringControllerGains) {
+		_SetSteeringControllerGains = std::move(new_SetSteeringControllerGains);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetSteeringControllerGains) Anki::Cozmo::U2G::SetSteeringControllerGains{std::move(new_SetSteeringControllerGains)};
+		_tag = Tag::SetSteeringControllerGains;
+	}
+}
+
+
 const Anki::Cozmo::U2G::SelectNextSoundScheme& Message::Get_SelectNextSoundScheme() const
 {
 	assert(_tag == Tag::SelectNextSoundScheme);
@@ -5970,6 +6066,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetLiftControllerGains.Unpack(buffer);
 		}
 		break;
+	case Tag::SetSteeringControllerGains:
+		if (newTag != oldTag) {
+			new(&(this->_SetSteeringControllerGains)) Anki::Cozmo::U2G::SetSteeringControllerGains(buffer);
+		}
+		else {
+			this->_SetSteeringControllerGains.Unpack(buffer);
+		}
+		break;
 	case Tag::SelectNextSoundScheme:
 		if (newTag != oldTag) {
 			new(&(this->_SelectNextSoundScheme)) Anki::Cozmo::U2G::SelectNextSoundScheme(buffer);
@@ -6238,6 +6342,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::SetLiftControllerGains:
 		this->_SetLiftControllerGains.Pack(buffer);
 		break;
+	case Tag::SetSteeringControllerGains:
+		this->_SetSteeringControllerGains.Pack(buffer);
+		break;
 	case Tag::SelectNextSoundScheme:
 		this->_SelectNextSoundScheme.Pack(buffer);
 		break;
@@ -6420,6 +6527,9 @@ size_t Message::Size() const
 	case Tag::SetLiftControllerGains:
 		result += _SetLiftControllerGains.Size();
 		break;
+	case Tag::SetSteeringControllerGains:
+		result += _SetSteeringControllerGains.Size();
+		break;
 	case Tag::SelectNextSoundScheme:
 		result += _SelectNextSoundScheme.Size();
 		break;
@@ -6600,6 +6710,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::SetLiftControllerGains:
 		_SetLiftControllerGains.~SetLiftControllerGains();
+		break;
+	case Tag::SetSteeringControllerGains:
+		_SetSteeringControllerGains.~SetSteeringControllerGains();
 		break;
 	case Tag::SelectNextSoundScheme:
 		_SelectNextSoundScheme.~SelectNextSoundScheme();
