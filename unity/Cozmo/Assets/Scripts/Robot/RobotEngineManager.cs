@@ -558,7 +558,6 @@ public class RobotEngineManager : MonoBehaviour {
 			{
 				// Allocate enough space for worst case expansion
 				jpegArray = new byte[ length ];
-				Array.Copy( header, jpegArray, header.Length );
 			}
 
 			currentImageIndex = 0;
@@ -604,6 +603,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void MiniGrayToJpeg( byte[] inArray, ref byte[] outArray )
 	{
 		int off = header.Length;
+		Array.Copy( header, outArray, off );
 		
 		// Fetch quality
 		int qual = inArray[0];
