@@ -471,7 +471,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      const u8 numRetries = 0;
+      const u8 numRetries = 1;
       
       ObjectID selectedObjectID;
       if(msg.objectID < 0) {
