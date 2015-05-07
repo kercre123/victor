@@ -306,6 +306,8 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual ActionResult Verify(Robot& robot) = 0;
       
+      virtual void Reset() override;
+      
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
@@ -349,6 +351,8 @@ namespace Anki {
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -404,6 +408,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }

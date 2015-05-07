@@ -1024,6 +1024,15 @@ namespace Anki {
       }
     }
     
+    void IDockAction::Reset()
+    {
+      IAction::Reset();
+      if(_visuallyVerifyAction != nullptr) {
+        delete _visuallyVerifyAction;
+        _visuallyVerifyAction = nullptr;
+      }
+    }
+    
     void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
     {
       _preActionPoseAngleTolerance = angleTolerance;
@@ -1230,6 +1239,16 @@ namespace Anki {
     {
       if(_placementVerifyAction != nullptr) {
         delete _placementVerifyAction;
+      }
+    }
+    
+    void PickAndPlaceObjectAction::Reset()
+    {
+      IDockAction::Reset();
+      
+      if(_placementVerifyAction != nullptr) {
+        delete _placementVerifyAction;
+        _placementVerifyAction = nullptr;
       }
     }
     
@@ -1548,6 +1567,16 @@ namespace Anki {
     {
       if(_verifyAction != nullptr) {
         delete _verifyAction;
+      }
+    }
+    
+    void PlaceObjectOnGroundAction::Reset()
+    {
+      IAction::Reset();
+      
+      if(_verifyAction != nullptr) {
+        delete _verifyAction;
+        _verifyAction = nullptr;
       }
     }
     
