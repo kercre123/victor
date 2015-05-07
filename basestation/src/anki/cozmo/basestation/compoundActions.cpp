@@ -113,13 +113,17 @@ namespace Anki {
     
 #pragma mark ---- CompoundActionSequential ----
     
+    CompoundActionSequential::CompoundActionSequential()
+    : CompoundActionSequential({})
+    {
+      
+    }
+    
     CompoundActionSequential::CompoundActionSequential(std::initializer_list<IActionRunner*> actions)
     : ICompoundAction(actions)
     , _delayBetweenActionsInSeconds(0)
-    , _waitUntilTime(-1.f)
-    , _currentActionPair(_actions.begin())
     {
-      
+      Reset();
     }
     
     void CompoundActionSequential::Reset()
@@ -127,11 +131,18 @@ namespace Anki {
       ICompoundAction::Reset();
       _waitUntilTime = -1.f;
       _currentActionPair = _actions.begin();
+      _wasJustReset = true;
     }
     
     ActionResult CompoundActionSequential::UpdateInternal(Robot& robot)
     {
       SetStatus(GetName());
+      
+      if(_wasJustReset) {
+        // In case actions were added after construction/reset
+        _currentActionPair = _actions.begin();
+        _wasJustReset = false;
+      }
       
       if(_currentActionPair != _actions.end())
       {
@@ -208,6 +219,12 @@ namespace Anki {
 
     
 #pragma mark ---- CompoundActionParallel ----
+    
+    CompoundActionParallel::CompoundActionParallel()
+    : CompoundActionParallel({})
+    {
+      
+    }
     
     CompoundActionParallel::CompoundActionParallel(std::initializer_list<IActionRunner*> actions)
     : ICompoundAction(actions)
