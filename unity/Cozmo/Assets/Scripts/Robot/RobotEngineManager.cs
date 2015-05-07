@@ -228,6 +228,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 
 	}
+
+	public void LateUpdate()
+	{
+		foreach( Robot bot in robots.Values )
+		{
+			bot.UpdateLightMessages();
+		}
+
+	}
 	
 	public void Connect(string engineIP)
 	{
