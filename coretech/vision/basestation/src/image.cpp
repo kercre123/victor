@@ -254,6 +254,8 @@ namespace Vision {
     
     bufferOut[off++] = 0xFF;
     bufferOut[off++] = 0xD9;
+    
+    bufferOut.resize(off);
   
   } // miniGrayToJpeg()
   
@@ -368,10 +370,10 @@ namespace Vision {
   
   bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
                                    ImageEncoding_t encoding, u8 totalChunkCount,
-                                   u8 chunkId, const std::array<u8, CHUNK_SIZE>& data)
+                                   u8 chunkId, const std::array<u8, CHUNK_SIZE>& data, u32 chunkSize)
   {
     return AppendChunk(newImageId, frameTimeStamp, nrows, ncols, encoding, totalChunkCount,
-                       chunkId, &(data[0]), ImageDeChunker::CHUNK_SIZE);
+                       chunkId, &(data[0]), chunkSize);
   } // AppendChunk()
   
   /*
