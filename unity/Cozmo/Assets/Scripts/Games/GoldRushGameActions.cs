@@ -6,22 +6,18 @@ public class GoldRushGameActions : GameActions {
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
 	public override string DROP { get { return goldController.inExtractRange ? "Extract" : "Deposit"; } }
-	public override string STACK { get { return "Place Scanner"; } }
+	//public override string STACK { get { return "Place Scanner"; } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
 	//public override string CHANGE { get { return "Change"; } }
 	//public override string CANCEL { get { return "Cancel"; } }
-	
-	//protected override string TOP { get { return " TOP"; } }
-	//protected override string BOTTOM { get { return " BOTTOM"; } }
-	// Use this for initialization
+
 	[SerializeField] GoldRushController goldController;
 
 	protected override void Awake()
 	{
 		base.Awake();
 	}
-
 
 	/*
 	protected override void OnEnable ()
