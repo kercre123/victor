@@ -4,7 +4,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 
-#define NUM_RTX_BUFS 4;
+#define NUM_RTX_BUFS 4
 static UDPPacket rtxbs[NUM_RTX_BUFS];
 
 /// Store everything relivant to a block connection
@@ -19,29 +19,40 @@ static BlockConnection* blocks;
 
 #define BLOCK_PORT 6002
 
+#define DEBUG_BR
+
 static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  espconn* socket = (espconn*)arg;
+  struct espconn* socket = (struct espconn*)arg;
+  UDPPacket* clientPkt;
 
-  UDPPacket* clientPkt = clientGetBuffer();
+#ifdef DEBUG_BR
+  os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
+#endif
+
+  clientPkt = clientGetBuffer();
+
   if (clientPkt != NULL)
   {
-    os_memcpy(clientPkt->data, userdata, len);
+    os_memcpy(clientPkt->data, usrdata, len);
     clientQueuePacket(clientPkt);
   }
   else
   {
-    os_printf("Block relay couldn't get client buffer to forward packet, dropping %d[%d]\r\n", userdata[0], len);
+    os_printf("Block relay couldn't get client buffer to forward packet, dropping %d[%d]\r\n", usrdata[0], len);
   }
 }
 
-satic void blockSentCB(void *arg)
+static void ICACHE_FLASH_ATTR blockSentCB(void *arg)
 {
   BlockConnection* block = (BlockConnection*)arg;
+#ifdef DEBUG_BR
+  os_printf("BR sent CB %08x\r\n", arg);
+#endif
 
   if (block->queuedPacket != NULL) // Reset the packet so it may be used
   {
-    UDPPacket* next = block->queuedPacke->next;
+    UDPPacket* next = block->queuedPacket->next;
     block->queuedPacket->next = NULL;
     block->queuedPacket->len = 0;
     block->queuedPacket->state = PKT_BUF_AVAILABLE;
@@ -78,12 +89,12 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
       os_printf("\tCould not allocate memory for UDP socket parameters\r\n");
       return -101;
     }
-    blocks[i].socket.proto.udp.local_port = espconn_port();
-    blocks[i].socket.proto.udp.remote_port = BLOCK_PORT;
-    blocks[i].socket.proto.udp.remote_ip[0] = 172;
-    blocks[i].socket.proto.udp.remote_ip[1] = 31;
-    blocks[i].socket.proto.udp.remote_ip[2] = 1;
-    blocks[i].socket.proto.udp.remote_ip[3] = i + 10;
+    blocks[i].socket.proto.udp->local_port = espconn_port();
+    blocks[i].socket.proto.udp->remote_port = BLOCK_PORT;
+    blocks[i].socket.proto.udp->remote_ip[0] = 172;
+    blocks[i].socket.proto.udp->remote_ip[1] = 31;
+    blocks[i].socket.proto.udp->remote_ip[2] = 1;
+    blocks[i].socket.proto.udp->remote_ip[3] = i + 10;
     err = espconn_regist_recvcb(&blocks[i].socket, blockRecvCB);
     if (err != 0)
     {
@@ -107,8 +118,12 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
   }
 }
 
-sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
+sint8 ICACHE_FLASH_ATTR blockRelayCheckMessage(uint8* data, unsigned short len)
 {
+#if 0
+  os_printf("BR check message %d[%d]\r\n", data[0], len);
+#endif
+
   switch (data[0])
   {
     case 62:
@@ -117,28 +132,33 @@ sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
     }
     case 63:
     {
-      if (len == 26)
+      if (len == 194)
       {
-        return data[25];
+        return data[193];
       }
       else
       {
-        os_printf("Got SetBlockLights (%d), expected %d bytes, but got %d\r\n", data[0], 26, len);
+        os_printf("Got SetBlockLights (%d), expected %d bytes, but got %d\r\n", data[0], 194, len);
         return NO_BLOCK;
       }
       break;
     }
-    default
+    default:
     {
       return NO_BLOCK;
     }
   }
 }
 
-bool blockRelaySendPacket(sint8 block, uint8* data, unsigned short len)
+bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned short len)
 {
   sint8 i;
   bool success;
+
+#ifdef DEBUG_BR
+  os_printf("BR send packet %d -> %d[%d]\r\n", block, data[0], len);
+#endif
+
   if (block == NO_BLOCK)
   {
     os_printf("Block relay send packet called with NO_BLOCK\r\n");
@@ -166,7 +186,10 @@ bool blockRelaySendPacket(sint8 block, uint8* data, unsigned short len)
         rtxbs[i].state = PKT_BUF_RESERVED;
         os_memcpy(rtxbs[i].data, data, len);
         rtxbs[i].len = len;
-        err = espconn_sent(blocks[block].socket, rtxbs[i].data, rtxbs[i].len);
+#ifdef DEBUG_BR
+        os_printf("Sending to block on %08x\r\n", &blocks[block].socket);
+#endif
+        err = espconn_sent(&blocks[block].socket, rtxbs[i].data, rtxbs[i].len);
         if (err >= 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
         {
           rtxbs[i].state = PKT_BUF_QUEUED;

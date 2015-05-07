@@ -48,9 +48,15 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
   os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
 #endif
 
-
-
-  uartQueuePacket(usrdata, len);
+  block = blockRelayCheckMessage(usrdata, len); // Check if the message is for a block
+  if (block != NO_BLOCK) // This is a block message
+  {
+    blockRelaySendPacket(block, usrdata, len); // Relay it
+  }
+  else // Not a block message
+  {
+    uartQueuePacket(usrdata, len); // Pass to M4
+  }
 }
 
 

@@ -58,13 +58,13 @@ user_init()
       os_printf("Error getting wifi softap config\r\n");
     }
 
-    os_strcpy(ap_config.ssid, "AnkiEspressif");
+    os_strcpy(ap_config.ssid, "AnkiTorpedo");
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
-    ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
+    ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems for stations later
     ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
     // Setup ESP module to AP mode and apply settings
@@ -83,6 +83,9 @@ user_init()
 
     // Start DHCP server
     wifi_softap_dhcps_start();
+
+    // Set up the block relay
+    blockRelayInit();
 
     // Setup Basestation client
     clientInit();
