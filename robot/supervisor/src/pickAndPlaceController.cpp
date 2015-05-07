@@ -163,7 +163,7 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
-            LiftController::SetMaxSpeedAndAccel(5, 10);
+            LiftController::SetMaxSpeedAndAccel(2, 10);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);

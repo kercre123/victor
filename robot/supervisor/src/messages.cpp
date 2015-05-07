@@ -9,7 +9,6 @@
 #include "localization.h"
 #include "animationController.h"
 #include "pathFollower.h"
-#include "faceTrackingController.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -506,6 +505,10 @@ namespace Anki {
         LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
 
+      void ProcessSetSteeringControllerGainsMessage(const SetSteeringControllerGains& msg) {
+        SteeringController::SetGains(msg.k1, msg.k2);
+      }
+      
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
         PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
@@ -521,13 +524,6 @@ namespace Anki {
 
       void ProcessFaceTrackingMessage(const FaceTracking& msg)
       {
-        if(msg.enabled) {
-          PRINT("Starting face tracking with timeout = %dsec.\n", msg.timeout_sec);
-          FaceTrackingController::StartTracking(FaceTrackingController::LARGEST, msg.timeout_sec);
-        } else {
-          PRINT("Stopping face tracking.\n");
-          FaceTrackingController::Reset();
-        }
       }
 
       void ProcessPingMessage(const Ping& msg)

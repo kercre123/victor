@@ -774,6 +774,12 @@ namespace Anki {
         angle = orientation_;
       } // GetCurrentMatPose()
 
+      Embedded::Pose2d GetCurrPose()
+      {
+        Embedded::Pose2d p(x_, y_, orientation_);
+        return p;
+      }
+      
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle)
       {
         x = driveCenter_x_;

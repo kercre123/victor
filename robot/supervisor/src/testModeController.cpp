@@ -1162,7 +1162,7 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      
+/*      
       Result FaceTrackTestInit()
       {
         HeadController::SetDesiredAngle(0.1f);
@@ -1173,7 +1173,7 @@ namespace Anki {
       {
         return RESULT_OK;
       }
-      
+*/      
       
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
@@ -1243,10 +1243,6 @@ namespace Anki {
           case TM_MAX_POWER_TEST:
             ret = MaxPowerTestInit();
             updateFunc = MaxPowerTestUpdate;
-            break;
-          case TM_FACE_TRACKING:
-            ret = FaceTrackTestInit();
-            updateFunc = FaceTrackTestUpdate;
             break;
           default:
             PRINT("ERROR (TestModeController): Undefined mode %d\n", testMode_);
