@@ -106,7 +106,7 @@ public class GameActions : MonoBehaviour
 				}
 			}
 
-			if( robot.selectedObjects[0].canBeStackedOn )
+			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
 				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
