@@ -3,9 +3,9 @@ FW_FILE_1:=0x00000.bin
 FW_FILE_2:=0x40000.bin
 
 TARGET_OUT:=image.elf
-OBJS:=user/user_main.o user/client.o driver/uart.o
+OBJS:=user/user_main.o user/client.o user/block_relay.o driver/uart.o
 
-SRCS:=user/user_main.c user/client.c driver/uart.c
+SRCS:=user/user_main.c user/client.c user/block_relay.c driver/uart.c
 
 CWD := $(shell pwd)
 GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106

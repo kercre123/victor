@@ -6,6 +6,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
+#include "block_relay.h"
 #include "driver/uart.h"
 
 //#define DEBUG_CLIENT
@@ -41,10 +42,14 @@ static void udpServerSentCB(void * arg)
 
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
+  sint8 block = NO_BLOCK;
   haveClient = true;
 #ifdef DEBUG_CLIENT
   os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
 #endif
+
+
+
   uartQueuePacket(usrdata, len);
 }
 
