@@ -63,19 +63,19 @@ public class Light
 		return PositionFlag.NONE;
 	}
 
-	public static int GetIndexForCornerClosestToAngle(float angleFromNorth, bool top=true) {
+	public static int GetIndexForCornerClosestToAngle(float angleFromEast, bool top=true) {
 
 		//north west
-		if(angleFromNorth < 0f && angleFromNorth >= -90f) return top ? 0 : 2;
+		if(angleFromEast >= 0f && angleFromEast < 90f) return top ? 0 : 2;
 
 		//south west
-		if(angleFromNorth < -90f && angleFromNorth >= -180f) return top ? 1 : 3;
+		if(angleFromEast >= 90f && angleFromEast < 180f) return top ? 1 : 3;
 
 		//north east
-		if(angleFromNorth >= 0f && angleFromNorth < 90f) return top ? 4 : 6;
+		if(angleFromEast < 0f && angleFromEast > -90f) return top ? 4 : 6;
 
 		//south east
-		if(angleFromNorth >= 90f && angleFromNorth < 180f) return top ? 5 : 7;
+		if(angleFromEast < -90f && angleFromEast > -180f) return top ? 5 : 7;
 
 		return 0;
 	}
@@ -274,7 +274,7 @@ public class ObservedObject
 		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );
 		Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
 
-		TopFaceNorthAngle = message.topFaceOrientation_rad;
+		TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}

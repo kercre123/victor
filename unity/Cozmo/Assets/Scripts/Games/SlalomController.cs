@@ -144,10 +144,11 @@ public class SlalomController : GameController {
 		base.Enter_PRE_GAME();
 
 		float rad;
-		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad);
+		Vector3 facing;
+		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out facing);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		robot.GotoPose(pos.x, pos.y, rad);
-		PrepareGameForPlay();
+		PrepareGameForPlay(pos, facing);
 	}
 
 	protected override void Update_PRE_GAME() {
@@ -158,8 +159,10 @@ public class SlalomController : GameController {
 		base.Update_PRE_GAME();
 	}
 
-	void PrepareGameForPlay() {
-		
+	void PrepareGameForPlay(Vector3 startingPos, Vector3 startingFacing) {
+
+
+
 		obstacles.Clear();
 		obstacles.AddRange(GameLayoutTracker.instance.GetTrackedObjectsInOrder());
 		
@@ -182,12 +185,30 @@ public class SlalomController : GameController {
 			if(index < 0) index = obstacles.Count - 1;
 			previousObstacle = obstacles[index];
 		}
+
+		//Debug.Log("PrepareGameForPlay currentCorner("+currentCorner+") nextCorner("+nextCorner+") onNextObstacle("+onNextObstacle+")");
+
+		Vector2 startToFirst = currentObstacle.WorldPosition - startingPos;
+		Vector3 cross = Vector3.Cross(startingFacing, Vector3.forward);
 		
+		clockwise = Vector3.Dot(startToFirst, cross) > 0f;
+
+//		//shift this up so we can see better
+//		startingPos += Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM;
+//
+//		Vector3 facingLocation = startingPos + startingFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+//		RobotEngineManager.instance.VisualizeQuad(11, CozmoPalette.ColorToUInt(Color.blue), startingPos, startingPos, facingLocation, facingLocation);
+//
+//		Vector3 crossLocation = startingPos + (Vector3)cross * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+//
+//		RobotEngineManager.instance.VisualizeQuad(12, CozmoPalette.ColorToUInt(Color.green), startingPos, startingPos, crossLocation, crossLocation);
+//
+//		RobotEngineManager.instance.VisualizeQuad(13, CozmoPalette.ColorToUInt(Color.yellow), startingPos, startingPos, currentObstacle.WorldPosition, currentObstacle.WorldPosition);
+
 		currentCorner = 0;
 		bool onNextObstacle;
 		int nextCorner = GetNextCorner(out onNextObstacle);
-		Debug.Log("PrepareGameForPlay currentCorner("+currentCorner+") nextCorner("+nextCorner+") onNextObstacle("+onNextObstacle+")");
-		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle, true);
+		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle);
 
 		lastRobotPos = robot.WorldPosition;
 	}
@@ -195,7 +216,6 @@ public class SlalomController : GameController {
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
 	}
-
 
 	protected override void Update_PLAYING() {
 		base.Update_PLAYING();
@@ -207,13 +227,19 @@ public class SlalomController : GameController {
 
 		//TestLights();
 
-		Vector3 cornerVector = GetCornerVector(currentObstacle, currentCorner, clockwise, previousObstacle, true);
+		Vector3 cornerVector = GetCornerVector(currentObstacle, currentCorner, clockwise, previousObstacle);
 
+		float newAngle = Vector3.Angle(cornerVector, obstacleToRobotPos.normalized);
 		float lastAngleFromCorner = MathUtil.SignedVectorAngle(cornerVector, obstacleToLastRobotPos.normalized, Vector3.forward);
 		float newAngleFromCorner = MathUtil.SignedVectorAngle(cornerVector, obstacleToRobotPos.normalized, Vector3.forward);
 
-		if( (clockwise && lastAngleFromCorner < 0f && newAngleFromCorner >= 0f) || (!clockwise && lastAngleFromCorner >= 0f && newAngleFromCorner < 0f) ) {
-			Debug.Log("Update_PLAYING AdvanceCorner because clockwise("+clockwise+") lastAngleFromCorner("+lastAngleFromCorner+") newAngleFromCorner("+newAngleFromCorner+")");
+//		if( (clockwise && lastAngleFromCorner < 0f && newAngleFromCorner >= 0f) || (!clockwise && lastAngleFromCorner >= 0f && newAngleFromCorner < 0f) ) {
+//			Debug.Log("Update_PLAYING AdvanceCorner because clockwise("+clockwise+") lastAngleFromCorner("+lastAngleFromCorner+") newAngleFromCorner("+newAngleFromCorner+")");
+//			AdvanceCorner();
+//		}
+
+		if( newAngle < 5f ) {
+			//Debug.Log("Update_PLAYING AdvanceCorner because clockwise("+clockwise+") newAngle("+newAngle+") cornerVector("+cornerVector+")");
 			AdvanceCorner();
 		}
 
@@ -232,6 +258,7 @@ public class SlalomController : GameController {
 		base.Exit_PLAYING();
 
 		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
+		ClearLights();
 	}
 
 	protected override bool IsGameReady() {
@@ -251,13 +278,13 @@ public class SlalomController : GameController {
 
 	Vector2 GetCornerVector(ObservedObject obstacle, int cornerIndex, bool clock, ObservedObject previous, bool debug=false) {
 
-		float angle = idealCornerAngles[cornerIndex];
+		float angle = idealCornerAngles[cornerIndex] * (clock ? -1f : 1f);
 
 		Vector2 corner = Vector3.up;
 
 		Vector2 currentToLast = previous.WorldPosition - obstacle.WorldPosition;
 
-		Vector2 idealCorner = Quaternion.AngleAxis(angle * (clock ? 1f : -1f), Vector3.forward) * currentToLast.normalized;
+		Vector2 idealCorner = Quaternion.AngleAxis(angle, Vector3.forward) * currentToLast.normalized;
 
 		Vector2[] corners = { obstacle.TopNorthEast, obstacle.TopSouthEast, obstacle.TopSouthWest, obstacle.TopNorthWest };
 
@@ -272,7 +299,7 @@ public class SlalomController : GameController {
 		}
 
 
-		if(debug) Debug.Log("GetCornerVector obstacle("+obstacle+") cornerIndex("+cornerIndex+") clock("+clock+") previous("+previous+") angle("+(angle * (clock ? 1f : -1f))+") idealCorner("+idealCorner+") corner("+corner+") currentToLast("+currentToLast.normalized+")");
+		if(debug) Debug.Log("GetCornerVector obstacle("+obstacle+") cornerIndex("+cornerIndex+") clock("+clock+") previous("+previous+") angle("+angle+") idealCorner("+idealCorner+") corner("+corner+") currentToLast("+currentToLast.normalized+")");
 
 		return corner;
 	}
@@ -294,7 +321,7 @@ public class SlalomController : GameController {
 		scores[0]++;
 		audio.PlayOneShot(playerScoreSound);
 
-		Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
+		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
 	}
@@ -389,6 +416,24 @@ public class SlalomController : GameController {
 		}
 
 	}
+
+	public void ClearLights()
+	{
+
+		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			ObservedObject obstacle = obstacles[obstacleIndex];
+			obstacle.relativeMode = 0;
+			for(int i = 0; i < 8; ++i) {
+				obstacle.lights[i].onColor = 0;
+				obstacle.lights[i].onPeriod_ms = 1000;
+				obstacle.lights[i].offPeriod_ms = 0;
+				obstacle.lights[i].offColor = 0;
+				obstacle.lights[i].transitionOnPeriod_ms = 0;
+				obstacle.lights[i].transitionOffPeriod_ms = 0;
+			}
+		}
+	}
+
 
 	public int testLightIndex = 0;
 	public void TestLights()

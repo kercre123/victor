@@ -605,8 +605,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		ValidateBlocks();
 	}
 
-	public Vector3 GetStartingPositionFromLayout(out float facingAngle) {
+	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
 		facingAngle = 0f;
+		facingVector = Vector3.zero;
 
 		if(currentLayout == null) return Vector3.zero;
 		if(currentLayout.startPositionMarker == null) return Vector3.zero;
@@ -619,8 +620,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
-		Vector3 startingForward = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.forward).normalized;
-		facingAngle = Vector3.Angle(Vector3.right, startingForward) * (Vector3.Dot(startingForward, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
+		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.forward).normalized;
+		facingAngle = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
@@ -647,9 +648,9 @@ public class GameLayoutTracker : MonoBehaviour {
 			Quaternion observedRotation = Quaternion.AngleAxis(offsetAngle, axis);
 
 			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
-			startingForward = observedRotation * startingForward;
+			facingVector = observedRotation * facingVector;
 
-			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, startingForward) * (Vector3.Dot(startingForward, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
+			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
 			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+") axis.z("+axis.z+")");
 			facingAngle = signedAngleOffsetRad;
@@ -723,7 +724,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 				
 				//are we basically on the same plane and roughly the correct distance away?
-				if(Mathf.Abs(realOffset.z) > coplanarFudge) {
+				if(Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
 					errorType = realOffset.z > 0f ? LayoutErrorType.TOO_HIGH : LayoutErrorType.TOO_LOW;
 					failDistanceCheck = true;
@@ -734,7 +735,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				float realDistance = ((Vector2)realOffset).magnitude;
 				
 				float distanceError = realDistance - idealDistance;
-				if(Mathf.Abs(distanceError) > distanceFudge) {
+				if(Mathf.Abs(distanceError) > ( distanceFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
 					errorType = distanceError > 0f? LayoutErrorType.TOO_FAR : LayoutErrorType.TOO_CLOSE;
 					failDistanceCheck = true;
