@@ -27,12 +27,12 @@ public class Light
 		NONE              = 0,
 		TOP_NORTH_WEST    = 0x01,
 		TOP_NORTH_EAST    = 0x10,
-		TOP_SOUTH_EAST    = 0x02,
-		TOP_SOUTH_WEST    = 0x20,
+		TOP_SOUTH_WEST    = 0x02,
+		TOP_SOUTH_EAST    = 0x20,
 		BOTTOM_NORTH_WEST = 0x04,
 		BOTTOM_NORTH_EAST = 0x40,
-		BOTTOM_SOUTH_EAST = 0x08,
-		BOTTOM_SOUTH_WEST = 0x80,
+		BOTTOM_SOUTH_WEST = 0x08,
+		BOTTOM_SOUTH_EAST = 0x80,
 		ALL = 0xff
 	};
 
@@ -43,19 +43,19 @@ public class Light
 			case 0:
 				return PositionFlag.TOP_NORTH_WEST;
 			case 1:
-				return PositionFlag.TOP_SOUTH_EAST;
+				return PositionFlag.TOP_SOUTH_WEST;
 			case 2:
 				return PositionFlag.BOTTOM_NORTH_WEST;
 			case 3:
-				return PositionFlag.BOTTOM_SOUTH_EAST;
+				return PositionFlag.BOTTOM_SOUTH_WEST;
 			case 4:
 				return PositionFlag.TOP_NORTH_EAST;
 			case 5:
-				return PositionFlag.TOP_SOUTH_WEST;
+				return PositionFlag.TOP_SOUTH_EAST;
 			case 6:
 				return PositionFlag.BOTTOM_NORTH_EAST;
 			case 7:
-				return PositionFlag.BOTTOM_SOUTH_WEST;
+				return PositionFlag.BOTTOM_SOUTH_EAST;
 			case 8:
 				return PositionFlag.ALL;
 		}
@@ -66,16 +66,16 @@ public class Light
 	public static int GetIndexForCornerClosestToAngle(float angleFromNorth, bool top=true) {
 
 		//north west
-		if(angleFromNorth >= 0f && angleFromNorth < 90f) return top ? 0 : 2;
+		if(angleFromNorth < 0f && angleFromNorth >= -90f) return top ? 0 : 2;
 
 		//south west
-		if(angleFromNorth >= 90f && angleFromNorth < 180f) return top ? 0 : 2;
+		if(angleFromNorth < -90f && angleFromNorth >= -180f) return top ? 1 : 3;
 
 		//north east
-		if(angleFromNorth < 0f && angleFromNorth >= -90f) return top ? 4 : 6;
+		if(angleFromNorth >= 0f && angleFromNorth < 90f) return top ? 4 : 6;
 
 		//south east
-		if(angleFromNorth < -90f && angleFromNorth >= -180f) return top ? 1 : 3;
+		if(angleFromNorth >= 90f && angleFromNorth < 180f) return top ? 5 : 7;
 
 		return 0;
 	}
@@ -142,6 +142,26 @@ public class ObservedObject
 	public Vector3 TopEast {
 		get {
 			return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * -Vector2.up;
+		}
+	}
+	public Vector3 TopNorthEast {
+		get {
+			return (TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthEast {
+		get {
+			return (-TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthWest {
+		get {
+			return (-TopNorth - TopEast).normalized;
+		}
+	}
+	public Vector3 TopNorthWest {
+		get {
+			return (TopNorth - TopEast).normalized;
 		}
 	}
 

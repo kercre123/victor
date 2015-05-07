@@ -1422,9 +1422,10 @@ MonoBehaviour:
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
   endless: 1
-  trackWithCornerTriggers: 0
+  trackWithCornerTriggers: 1
   textObservedCount: {fileID: 11475734}
   textProgress: {fileID: 11475692}
+  testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:
   m_ObjectHideFlags: 1

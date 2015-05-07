@@ -591,6 +591,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		ignoreActiveColor = true;
 		ValidateBlocks();
 		ValidateBuild();
+
+		Debug.Log("DebugQuickValidate validated("+validated.Count+")");
 	}
 
 	public void ValidateBuild() {
@@ -617,7 +619,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
-		facingAngle = (currentLayout.startPositionMarker.eulerAngles.y + 90f) * Mathf.Deg2Rad;
+		Vector3 startingForward = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.forward).normalized;
+		facingAngle = Vector3.Angle(Vector3.right, startingForward) * (Vector3.Dot(startingForward, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
@@ -644,11 +647,12 @@ public class GameLayoutTracker : MonoBehaviour {
 			Quaternion observedRotation = Quaternion.AngleAxis(offsetAngle, axis);
 
 			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
+			startingForward = observedRotation * startingForward;
 
-			float signedAngleOffsetRad = (axis.z < 0f ? offsetAngle : -offsetAngle) * Mathf.Deg2Rad;
+			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, startingForward) * (Vector3.Dot(startingForward, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
-			//Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+")");
-			facingAngle += signedAngleOffsetRad;
+			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+") axis.z("+axis.z+")");
+			facingAngle = signedAngleOffsetRad;
 
 			//Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
 
@@ -825,6 +829,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 		}
 
+		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
 		return objects;
 	}
 
