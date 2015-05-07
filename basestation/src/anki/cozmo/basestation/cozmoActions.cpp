@@ -321,6 +321,11 @@ namespace Anki {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
+    void DriveToObjectAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
     
     const std::string& DriveToObjectAction::GetName() const
     {
@@ -618,6 +623,12 @@ namespace Anki {
     , _headTrackWhenDone(headTrackWhenDone)
     {
 
+    }
+    
+    void FaceObjectAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
     }
     
     ActionResult FaceObjectAction::Init(Robot &robot)

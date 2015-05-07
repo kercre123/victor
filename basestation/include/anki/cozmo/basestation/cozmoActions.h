@@ -104,7 +104,9 @@ namespace Anki {
       ActionResult GetPossiblePoses(const Robot& robot, ActionableObject* object,
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
-
+      
+      virtual void Reset() override;
+      
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
       
@@ -228,6 +230,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
       
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }

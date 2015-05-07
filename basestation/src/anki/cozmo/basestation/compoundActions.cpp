@@ -64,6 +64,12 @@ namespace Anki {
       _name += "]";
     }
     
+    void ICompoundAction::ClearActions()
+    {
+      _actions.clear();
+      Reset();
+    }
+    
     bool ICompoundAction::ShouldLockHead() const
     {
       auto actionIter = _actions.begin();

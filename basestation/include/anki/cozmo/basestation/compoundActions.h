@@ -27,6 +27,8 @@ namespace Anki {
       
       void AddAction(IActionRunner* action);
       
+      void ClearActions();
+      
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
