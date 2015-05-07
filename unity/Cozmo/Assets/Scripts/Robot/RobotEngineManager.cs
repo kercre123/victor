@@ -657,6 +657,31 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
+	public void VisualizeQuad( uint ID, uint color, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerRight, Vector3 lowerLeft )
+	{
+		U2G.VisualizeQuad message = new U2G.VisualizeQuad();
+
+		message.color = color;
+		message.quadID = ID;
+
+		message.xUpperLeft = upperLeft.x;
+		message.xUpperRight = upperRight.x;
+		message.xLowerLeft = lowerLeft.x;
+		message.xLowerRight = lowerRight.x;
+
+		message.yUpperLeft = upperLeft.y;
+		message.yUpperRight = upperRight.y;
+		message.yLowerLeft = lowerLeft.y;
+		message.yLowerRight = lowerRight.y;
+
+		message.zUpperLeft = upperLeft.z;
+		message.zUpperRight = upperRight.z;
+		message.zLowerLeft = lowerLeft.z;
+		message.zLowerRight = lowerRight.z;
+
+		RobotEngineManager.instance.channel.Send( new U2G.Message{ VisualizeQuad = message } );
+	}
+
 	public void StartEngine(string vizHostIP)
 	{
 		U2G.StartEngine message = new U2G.StartEngine ();

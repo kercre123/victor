@@ -28,7 +28,7 @@ create_clad_target("Cozmo_Game_Clad"
 
 # keep in sync with other versions in cozmo-engine
 file(GLOB_RECURSE CLAD_ENGINE_INPUT_FILE_LIST
-    "${COZMO_ENGINE_DIR}/clad/src/*.clad")
+    "${COZMO_ENGINE_DIR}/clad/src/anki/cozmo/messageBuffers/shared/*.clad")
     
 create_clad_target("Cozmo_Engine_Clad_CS"
     # Input files for all, specialized C++
