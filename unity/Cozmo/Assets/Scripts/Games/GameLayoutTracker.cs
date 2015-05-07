@@ -80,6 +80,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	bool hidden = false;
 
+	bool ignoreActiveColor = false;
+
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
 
 	void OnEnable () {
@@ -169,7 +171,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			foreach(LayoutBlock2d prior in blocks2d) {
 				if(prior.Block.objectFamily != block.objectFamily) continue;
 				if(prior.Block.objectFamily != 3 && prior.Block.objectType != block.objectType) continue;
-				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType) continue;
+				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType && !ignoreActiveColor) continue;
 				num++;
 			}
 			
@@ -433,7 +435,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
+				if(!ignoreActiveColor && block.objectFamily == 3 && block.activeBlockType != newObject.activeBlockType) { //active block
 					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockType+") newObject("+newObject+"):color("+newObject.activeBlockType+")");
 					continue;
 				}
@@ -584,6 +586,15 @@ public class GameLayoutTracker : MonoBehaviour {
 		return count;
 	}
 
+
+	public void DebugQuickValidate() {
+		ignoreActiveColor = true;
+		ValidateBlocks();
+		ValidateBuild();
+
+		Debug.Log("DebugQuickValidate validated("+validated.Count+")");
+	}
+
 	public void ValidateBuild() {
 		Validated = true;
 		Phase = LayoutTrackerPhase.DISABLED;
@@ -594,8 +605,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		ValidateBlocks();
 	}
 
-	public Vector3 GetStartingPositionFromLayout(out float facingAngle) {
+	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
 		facingAngle = 0f;
+		facingVector = Vector3.zero;
 
 		if(currentLayout == null) return Vector3.zero;
 		if(currentLayout.startPositionMarker == null) return Vector3.zero;
@@ -608,7 +620,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
-		facingAngle = (currentLayout.startPositionMarker.eulerAngles.y + 90f) * Mathf.Deg2Rad;
+		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.forward).normalized;
+		facingAngle = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
@@ -635,11 +648,12 @@ public class GameLayoutTracker : MonoBehaviour {
 			Quaternion observedRotation = Quaternion.AngleAxis(offsetAngle, axis);
 
 			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
+			facingVector = observedRotation * facingVector;
 
-			float signedAngleOffsetRad = (axis.z < 0f ? offsetAngle : -offsetAngle) * Mathf.Deg2Rad;
+			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
 
-			//Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+")");
-			facingAngle += signedAngleOffsetRad;
+			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+") axis.z("+axis.z+")");
+			facingAngle = signedAngleOffsetRad;
 
 			//Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
 
@@ -664,7 +678,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(block.Validated) return false;
 		if(block.cubeBelow != null) return false;
 		if(block.objectFamily != objectToMatch.Family) return false;
-		if(block.objectFamily == 3 && objectToMatch.activeBlockType != block.activeBlockType) return false;
+		if(!ignoreActiveColor && block.objectFamily == 3 && objectToMatch.activeBlockType != block.activeBlockType) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
 	}
@@ -710,7 +724,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 				
 				//are we basically on the same plane and roughly the correct distance away?
-				if(Mathf.Abs(realOffset.z) > coplanarFudge) {
+				if(Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
 					errorType = realOffset.z > 0f ? LayoutErrorType.TOO_HIGH : LayoutErrorType.TOO_LOW;
 					failDistanceCheck = true;
@@ -721,7 +735,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				float realDistance = ((Vector2)realOffset).magnitude;
 				
 				float distanceError = realDistance - idealDistance;
-				if(Mathf.Abs(distanceError) > distanceFudge) {
+				if(Mathf.Abs(distanceError) > ( distanceFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
 					errorType = distanceError > 0f? LayoutErrorType.TOO_FAR : LayoutErrorType.TOO_CLOSE;
 					failDistanceCheck = true;
@@ -774,7 +788,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				return false;
 			}
 
-			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType) {
+			if(objectToStack.activeBlockType != layoutBlockToStack.activeBlockType && !ignoreActiveColor) {
 				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;
@@ -803,6 +817,21 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		screenMessage.ShowMessage(message, color);
 
+	}
+
+	public List<ObservedObject> GetTrackedObjectsInOrder() {
+		List<ObservedObject> objects = new List<ObservedObject>();
+
+		if(currentLayout != null) {
+			for(int i=0;i<currentLayout.blocks.Count;i++) {
+				if(!currentLayout.blocks[i].Validated) continue;
+				if(currentLayout.blocks[i].AssignedObject == null) continue;
+				objects.Add(currentLayout.blocks[i].AssignedObject);
+			}
+		}
+
+		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
+		return objects;
 	}
 
 }

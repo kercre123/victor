@@ -27,12 +27,12 @@ public class Light
 		NONE              = 0,
 		TOP_NORTH_WEST    = 0x01,
 		TOP_NORTH_EAST    = 0x10,
-		TOP_SOUTH_EAST    = 0x02,
-		TOP_SOUTH_WEST    = 0x20,
+		TOP_SOUTH_WEST    = 0x02,
+		TOP_SOUTH_EAST    = 0x20,
 		BOTTOM_NORTH_WEST = 0x04,
 		BOTTOM_NORTH_EAST = 0x40,
-		BOTTOM_SOUTH_EAST = 0x08,
-		BOTTOM_SOUTH_WEST = 0x80,
+		BOTTOM_SOUTH_WEST = 0x08,
+		BOTTOM_SOUTH_EAST = 0x80,
 		ALL = 0xff
 	};
 
@@ -43,24 +43,41 @@ public class Light
 			case 0:
 				return PositionFlag.TOP_NORTH_WEST;
 			case 1:
-				return PositionFlag.TOP_SOUTH_EAST;
+				return PositionFlag.TOP_SOUTH_WEST;
 			case 2:
 				return PositionFlag.BOTTOM_NORTH_WEST;
 			case 3:
-				return PositionFlag.BOTTOM_SOUTH_EAST;
+				return PositionFlag.BOTTOM_SOUTH_WEST;
 			case 4:
 				return PositionFlag.TOP_NORTH_EAST;
 			case 5:
-				return PositionFlag.TOP_SOUTH_WEST;
+				return PositionFlag.TOP_SOUTH_EAST;
 			case 6:
 				return PositionFlag.BOTTOM_NORTH_EAST;
 			case 7:
-				return PositionFlag.BOTTOM_SOUTH_WEST;
+				return PositionFlag.BOTTOM_SOUTH_EAST;
 			case 8:
 				return PositionFlag.ALL;
 		}
 
 		return PositionFlag.NONE;
+	}
+
+	public static int GetIndexForCornerClosestToAngle(float angleFromEast, bool top=true) {
+
+		//north west
+		if(angleFromEast >= 0f && angleFromEast < 90f) return top ? 0 : 2;
+
+		//south west
+		if(angleFromEast >= 90f && angleFromEast < 180f) return top ? 1 : 3;
+
+		//north east
+		if(angleFromEast < 0f && angleFromEast > -90f) return top ? 4 : 6;
+
+		//south east
+		if(angleFromEast < -90f && angleFromEast > -180f) return top ? 5 : 7;
+
+		return 0;
 	}
 
 	private ObservedObject observedObject;
@@ -126,6 +143,38 @@ public class ObservedObject
 	public Quaternion Rotation { get; private set; }
 	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
+	public Vector3 TopNorth {
+		get {
+			return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * Vector2.right;
+		}
+	}
+	public Vector3 TopEast {
+		get {
+			return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * -Vector2.up;
+		}
+	}
+	public Vector3 TopNorthEast {
+		get {
+			return (TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthEast {
+		get {
+			return (-TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthWest {
+		get {
+			return (-TopNorth - TopEast).normalized;
+		}
+	}
+	public Vector3 TopNorthWest {
+		get {
+			return (TopNorth - TopEast).normalized;
+		}
+	}
+
+	public float TopFaceNorthAngle { get; private set; }
 
 	public Vector3 Size { get; private set; }
 	public float TimeLastSeen { get; private set; }
@@ -239,6 +288,8 @@ public class ObservedObject
 		WorldPosition = new Vector3( message.world_x, message.world_y, message.world_z );
 		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );
 		Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
+
+		TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}

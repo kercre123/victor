@@ -13176,10 +13176,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .345923394
-    y: .243502632
-    width: .308153182
-    height: .631199896
+    x: .258298129
+    y: .181847021
+    width: .483403713
+    height: .724581122
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -18337,7 +18337,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 11483380}
-        m_MethodName: ValidateBuild
+        m_MethodName: DebugQuickValidate
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
