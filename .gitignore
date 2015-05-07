@@ -66,6 +66,8 @@ DerivedData
 *.mexmaci64
 *.ipch
 *.asv
+tools/**/bin
+tools/**/obj
 matlab/profiling/*
 build/msvc*
 build/xcode*

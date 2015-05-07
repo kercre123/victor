@@ -151,7 +151,27 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
         # 3) Make sure OUTPUTs are each listed separately, not in a list variable.
         
         if("${EMITTER}" STREQUAL "C")
-            message(FATAL_ERROR "C emitter not yet implemented.")
+            
+            set(H_OUTPUT "${MAIN_OUTPUT_DIRECTORY}/${INPUT_BASE}.h")
+            
+            set(GENERATED_FILES
+                "${CMAKE_CURRENT_SOURCE_DIR}/${H_OUTPUT}")
+            make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
+            
+            add_custom_command(
+                OUTPUT ${GENERATED_FILES}
+                
+                COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${EMITTER_PATH}/C_emitter.py"
+                    ${COMMON_COMMAND_LINE}
+                    -o "${MAIN_OUTPUT_DIRECTORY}"
+                    "${INPUT}"
+        
+                MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
+                DEPENDS ${CLAD_DEPENDENCIES}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                VERBATIM
+            )
+            
         elseif("${EMITTER}" STREQUAL "CPP")
             
             # HACK: use .def because xcode doesn't like generated headers
@@ -196,7 +216,7 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
             
             add_custom_command(
-                OUTPUT ${GENERATED_FILES}
+                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
         
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${CUSTOM_EMITTER_PATH}/cozmo_CPP_declarations_emitter.py"
                     ${COMMON_COMMAND_LINE}

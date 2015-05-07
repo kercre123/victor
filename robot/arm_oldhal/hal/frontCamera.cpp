@@ -188,9 +188,15 @@ namespace Anki
       bool m_enableVignettingCorrection;
 
       // DMA is limited to 256KB - 1
-      const u32 BUFFER_SIZE = 320 * 240 * 2;
-      OFFCHIP u8 m_buffer[BUFFER_SIZE];
-
+      const int TOTAL_COLS = 320, TOTAL_ROWS = 240, BUFFER_ROWS = 8, BYTES_PER_PIX = 2;
+      const int BUFFER_SIZE = TOTAL_COLS * BUFFER_ROWS * BYTES_PER_PIX;  // 8 rows of YUYV (2 bytes each)
+      ONCHIP u8 m_buffer[2][BUFFER_SIZE];   // Double buffer
+      volatile int m_readyBuffer = 1, m_readyRow = -8;
+     
+      // Get raw data from the camera
+      u8* CamGetRaw() { return m_buffer[m_readyBuffer]; }
+      int CamGetReadyRow() { return m_readyRow; }
+        
       // This delay helps miss a race condition in Omnivision-supplied configuration scripts
       // Omnivision is aware of this problem but could not suggest a workaround
       const u32 I2C_WAIT = 8;   // 8uS between clock edges - or 62.5KHz I2C
@@ -388,7 +394,7 @@ namespace Anki
         DMA_InitTypeDef DMA_InitStructure;
         DMA_InitStructure.DMA_Channel = DMA_Channel_1;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&DCMI->DR;
-        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer;
+        DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_buffer[0];
         DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
         DMA_InitStructure.DMA_BufferSize = BUFFER_SIZE / 4;  // numBytes / sizeof(word)
         DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -402,6 +408,10 @@ namespace Anki
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA2_Stream1, &DMA_InitStructure);
+        
+        // Set up double buffering
+        DMA_DoubleBufferModeConfig(DMA2_Stream1, (u32)m_buffer[1], DMA_Memory_0);
+        DMA_DoubleBufferModeCmd(DMA2_Stream1, ENABLE);
 
         // Enable the DMA interrupt for transfer complete to give enough time
         // between frames to do some extra work
@@ -464,7 +474,8 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
 
-        TIM_TimeBaseStructure.TIM_Period = 15;  // clockFrequency = 180MHz / (period+1)
+        // XXX-NDM:  I screwed up the duty cycle here to get 12MHz/15fps, so shoot me
+        TIM_TimeBaseStructure.TIM_Period = 14;  // clockFrequency = 180MHz / (period+1)
         TIM_OCInitStructure.TIM_Pulse = 8;     // pulse = (period+1) / 2
 
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
@@ -583,70 +594,14 @@ namespace Anki
 
       void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
       {
-        Anki::Embedded::BeginBenchmark("CameraGetFrame");
-
-        Anki::Embedded::BeginBenchmark("CameraGetFrame_wait");
-
         m_isEOF = false;
 
         // Wait until the frame has completed (based on DMA_FLAG_TCIF1)
         while (!m_isEOF)
         {  
         }
-
-        Anki::Embedded::EndBenchmark("CameraGetFrame_wait");
-
-        Anki::Embedded::BeginBenchmark("CameraGetFrame_convert");
-
-        // TODO: Change this to DMA mem-to-mem when we have a different camera
-        // and we support resolution changes in the actual hardware
-
-        // Copy the Y-channel into frame
-
-        u32 xRes = Vision::CameraResInfo[res].width;
-        u32 yRes = Vision::CameraResInfo[res].height;
-
-        u32 xSkip = 320 / xRes;
-        u32 ySkip = 240 / yRes;
-
-        if(xSkip == 1 && ySkip == 1) {
-          // Fastest (64 -> 32) (two loads and one store per 4 output pixels)
-          const u32 numPixels4 = (320*240) >> 2;
-
-          const u64 * restrict pMBufferU64 = reinterpret_cast<u64*>(m_buffer);
-          u32 * restrict pFrameU32 = reinterpret_cast<u32*>(frame);
-
-          for(u32 iPixel=0; iPixel<numPixels4; iPixel+=4) {
-            const u64 in01 = pMBufferU64[iPixel];
-            const u64 in23 = pMBufferU64[iPixel+1];
-            const u64 in45 = pMBufferU64[iPixel+2];
-            const u64 in67 = pMBufferU64[iPixel+3];
-
-            const u32 out01 = (in01 & 0xFF) | ((in01 & 0xFF0000) >> 8) | ((in01 & 0xFF00000000)>>16) | ((in01 & 0xFF000000000000) >> 24);
-            const u32 out23 = (in23 & 0xFF) | ((in23 & 0xFF0000) >> 8) | ((in23 & 0xFF00000000)>>16) | ((in23 & 0xFF000000000000) >> 24);
-            const u32 out45 = (in45 & 0xFF) | ((in45 & 0xFF0000) >> 8) | ((in45 & 0xFF00000000)>>16) | ((in45 & 0xFF000000000000) >> 24);
-            const u32 out67 = (in67 & 0xFF) | ((in67 & 0xFF0000) >> 8) | ((in67 & 0xFF00000000)>>16) | ((in67 & 0xFF000000000000) >> 24);
-
-            pFrameU32[iPixel] = out01;
-            pFrameU32[iPixel+1] = out23;
-            pFrameU32[iPixel+2] = out45;
-            pFrameU32[iPixel+3] = out67;
-          }
-        } else {
-          u32 dataY = 0;
-          for (u32 y = 0; y < 240; y += ySkip, dataY++)
-          {
-            u32 dataX = 0;
-            for (u32 x = 0; x < 320; x += xSkip, dataX++)
-            {
-              frame[dataY * xRes + dataX] = m_buffer[y * 320 * 2 + x * 2];
-            }
-          }
-        }
-
-        Anki::Embedded::EndBenchmark("CameraGetFrame_convert");
-
-        Anki::Embedded::EndBenchmark("CameraGetFrame");
+        
+        return;
       }
 
       const CameraInfo* GetHeadCamInfo(void)
@@ -676,7 +631,10 @@ void DMA2_Stream1_IRQHandler(void)
   //DMA_ClearFlag(DMA2_Stream1, DMA_FLAG_TCIF1);
   DMA2->LIFCR = DMA_FLAG_TCIF1 & 0x0F7D0F7D;  // Direct version of call above
 
-  m_isEOF = true;
+  m_readyBuffer = !m_readyBuffer;   // Other buffer is now the ready one
+  m_readyRow += BUFFER_ROWS;        // A new row is now ready
+  if (m_readyRow >= TOTAL_ROWS)
+    m_readyRow = 0;
 }
 
 /*extern "C"
