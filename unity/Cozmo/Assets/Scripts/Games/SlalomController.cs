@@ -26,7 +26,6 @@ public class SlalomController : GameController {
 
 	float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
-	Vector2 lastRobotPos;
 	ObservedObject previousObstacle = null;
 
 	ObservedObject currentObstacle { 
@@ -209,8 +208,6 @@ public class SlalomController : GameController {
 		bool onNextObstacle;
 		int nextCorner = GetNextCorner(out onNextObstacle);
 		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle);
-
-		lastRobotPos = robot.WorldPosition;
 	}
 
 	protected override void Enter_PLAYING() {
@@ -223,22 +220,13 @@ public class SlalomController : GameController {
 		Vector2 robotPos = robot.WorldPosition;
 
 		Vector2 obstacleToRobotPos = robotPos - (Vector2)currentObstacle.WorldPosition;
-		Vector2 obstacleToLastRobotPos = lastRobotPos - (Vector2)currentObstacle.WorldPosition;
 
 		//TestLights();
 
 		Vector3 cornerVector = GetCornerVector(currentObstacle, currentCorner, clockwise, previousObstacle);
-
 		float newAngle = Vector3.Angle(cornerVector, obstacleToRobotPos.normalized);
-		float lastAngleFromCorner = MathUtil.SignedVectorAngle(cornerVector, obstacleToLastRobotPos.normalized, Vector3.forward);
-		float newAngleFromCorner = MathUtil.SignedVectorAngle(cornerVector, obstacleToRobotPos.normalized, Vector3.forward);
 
-//		if( (clockwise && lastAngleFromCorner < 0f && newAngleFromCorner >= 0f) || (!clockwise && lastAngleFromCorner >= 0f && newAngleFromCorner < 0f) ) {
-//			Debug.Log("Update_PLAYING AdvanceCorner because clockwise("+clockwise+") lastAngleFromCorner("+lastAngleFromCorner+") newAngleFromCorner("+newAngleFromCorner+")");
-//			AdvanceCorner();
-//		}
-
-		if( newAngle < 5f ) {
+		if( newAngle < 10f ) {
 			//Debug.Log("Update_PLAYING AdvanceCorner because clockwise("+clockwise+") newAngle("+newAngle+") cornerVector("+cornerVector+")");
 			AdvanceCorner();
 		}
@@ -250,8 +238,6 @@ public class SlalomController : GameController {
 		if(textProgress != null) {
 			textProgress.text = "index("+currentObstacleIndex+") corner("+currentCorner+")";
 		}
-
-		lastRobotPos = robotPos;
 	}
 
 	protected override void Exit_PLAYING() {

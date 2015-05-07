@@ -55,6 +55,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip blockValidatedSound = null;
 	[SerializeField] AudioClip layoutValidatedSound = null;
 
+	[SerializeField] Image[] checkMarks = null;
+
+	Dictionary<Image, BuildInstructionsCube> checkedBlockDictionary = new Dictionary<Image, BuildInstructionsCube>();
+
 	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	bool blocksInitialized = false;
@@ -147,6 +151,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
 		hidden = false;
+
+		if(checkMarks != null) {
+			for(int i=0;i<checkMarks.Length;i++) {
+				checkMarks[i].gameObject.SetActive(false);
+			}
+		}
 	}
 
 	void SetUpInventory() {
@@ -400,6 +410,12 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		validated.Clear();
 
+		if(checkMarks != null) {
+			for(int i=0;i<checkMarks.Length;i++) {
+				checkMarks[i].gameObject.SetActive(false);
+			}
+		}
+
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
@@ -529,6 +545,19 @@ public class GameLayoutTracker : MonoBehaviour {
 		block.AssignedObject = newObject;
 		block.Validated = true;
 		block.Highlighted = false;
+
+//		if(checkMarks != null) {
+//			for(int i=0;i<checkMarks.Length;i++) {
+//				if(checkMarks[i].gameObject.activeSelf) continue;
+//
+//				Vector3 screenPos = Camera.main.WorldToScreenPoint(block.transform.position);
+//				Vector2 anchorPos;
+//				RectTransformUtility.ScreenPointToLocalPointInRectangle(checkMarks[i].rectTransform, screenPos, Camera.main, out anchorPos);
+//				checkMarks[i].rectTransform.anchoredPosition = anchorPos;
+//
+//				break;
+//			}
+//		}
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
