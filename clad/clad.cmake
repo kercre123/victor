@@ -216,20 +216,12 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
             make_absolute("GENERATED_FILES" "${GENERATED_FILES}")
             
             add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_DECLARATIONS_OUTPUT}"
-        
+                OUTPUT ${GENERATED_FILES}
+                        
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${CUSTOM_EMITTER_PATH}/cozmo_CPP_declarations_emitter.py"
                     ${COMMON_COMMAND_LINE}
                     -o "${MAIN_OUTPUT_DIRECTORY}"
                     "${INPUT}"
-        
-                MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_DIRECTORY}/${INPUT}"
-                DEPENDS ${CLAD_DEPENDENCIES}
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-                VERBATIM
-            )
-            add_custom_command(
-                OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${CPP_SWITCH_OUTPUT}"
         
                 COMMAND "${PYTHON}" "${PYTHONFLAGS}" "${CUSTOM_EMITTER_PATH}/cozmo_CPP_switch_emitter.py"
                     ${COMMON_COMMAND_LINE}
