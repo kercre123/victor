@@ -66,18 +66,18 @@ public class Light
 	private ObservedObject observedObject;
 	private PositionFlag position;
 
-	private uint _onColor;
-	public uint onColor { get { return _onColor; } set { Set( value, ref _onColor ); } }
-	private uint _offColor;
-	public uint offColor { get { return _offColor; } set { Set( value, ref _offColor ); } }
-	private uint _onPeriod_ms;
-	public uint onPeriod_ms { get { return _onPeriod_ms; } set { Set( value, ref _onPeriod_ms ); } }
-	private uint _offPeriod_ms;
-	public uint offPeriod_ms { get { return _offPeriod_ms; } set { Set( value, ref _offPeriod_ms ); } }
-	private uint _transitionOnPeriod_ms;
-	public uint transitionOnPeriod_ms { get { return _transitionOnPeriod_ms; } set { Set( value, ref _transitionOnPeriod_ms ); } }
-	private uint _transitionOffPeriod_ms;
-	public uint transitionOffPeriod_ms { get { return _transitionOffPeriod_ms; } set { Set( value, ref _transitionOffPeriod_ms ); } }
+	private uint lastOnColor;
+	public uint onColor;
+	private uint lastOffColor;
+	public uint offColor;
+	private uint lastOnPeriod_ms;
+	public uint onPeriod_ms;
+	private uint lastOffPeriod_ms;
+	public uint offPeriod_ms;
+	private uint lastTransitionOnPeriod_ms;
+	public uint transitionOnPeriod_ms;
+	private uint lastTransitionOffPeriod_ms;
+	public uint transitionOffPeriod_ms;
 
 	public Light( ObservedObject observedObject, int position )
 	{
@@ -85,19 +85,28 @@ public class Light
 		this.position = IndexToPosition( position );
 	}
 
-	private void Set( uint newValue, ref uint oldValue )
-	{
-		if( newValue != oldValue )
-		{
-			oldValue = newValue;
-
-			observedObject.lightsChanged = true;
-		}
-	}
-
 	public bool Position( PositionFlag s )
 	{
 		return (position | s) == s;
+	}
+
+	public void SetLastInfo()
+	{
+		lastOnColor = onColor;
+		lastOffColor = offColor;
+		lastOnPeriod_ms = onPeriod_ms;
+		lastOffPeriod_ms = offPeriod_ms;
+		lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
+		lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
+	}
+
+	public bool changed
+	{
+		get
+		{
+			return lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
+				lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
+		}
 	}
 }
 
@@ -125,35 +134,29 @@ public class ObservedObject
 	public uint Color { get; private set; }
 
 	public Light[] lights { get; private set; }
-	public bool lightsChanged;
 
-	private byte _relativeMode;
-	public byte relativeMode { get { return _relativeMode; } set { Set( value, ref _relativeMode ); } }
-
-	private float _relativeToX;
-	public float relativeToX { get { return _relativeToX; } set { Set( value, ref _relativeToX ); } }
-	private float _relativeToY;
-	public float relativeToY { get { return _relativeToY; } set { Set( value, ref _relativeToY ); } }
-
-	private void Set( byte newValue, ref byte oldValue )
+	public bool lightsChanged
 	{
-		if( newValue != oldValue )
+		get
 		{
-			oldValue = newValue;
-			
-			lightsChanged = true;
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
+
+			for( int i = 0; i < lights.Length; ++i )
+			{
+				if( lights[i].changed ) return true;
+			}
+
+			return false;
 		}
 	}
 
-	private void Set( float newValue, ref float oldValue )
-	{
-		if( newValue != oldValue )
-		{
-			oldValue = newValue;
-			
-			lightsChanged = true;
-		}
-	}
+	private byte lastRelativeMode;
+	public byte relativeMode;
+
+	private float lastRelativeToX;
+	public float relativeToX;
+	private float lastRelativeToY;
+	public float relativeToY;
 
 	public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 
@@ -227,8 +230,6 @@ public class ObservedObject
 
 	public void SetAllActiveObjectLEDs() // should only be called from update loop
 	{
-		lightsChanged = false;
-
 		if( Family != 3 )
 		{
 			Debug.LogWarning( "Cannot send light message for non active block " + ID );
@@ -252,9 +253,23 @@ public class ObservedObject
 		message.relativeToX = relativeToX;
 		message.relativeToY = relativeToY;
 
-		Debug.Log( "SetAllActiveObjectLEDs for " + ID );
+		Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetAllActiveObjectLEDs = message } );
+
+		SetLastActiveObjectLEDs();
+	}
+
+	private void SetLastActiveObjectLEDs()
+	{
+		lastRelativeMode = relativeMode;
+		lastRelativeToX = relativeToX;
+		lastRelativeToY = relativeToY;
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i].SetLastInfo();
+		}
 	}
 
 	public void SetActiveObjectLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
