@@ -1194,8 +1194,8 @@ MonoBehaviour:
   timeUp: {fileID: 8300000, guid: 588d9e8829ac64e99868d70a6aabe550, type: 3}
   newHighScore: {fileID: 8300000, guid: 603a00990d2934bf387c43566baa582d, type: 3}
   timeExtension: {fileID: 8300000, guid: 72cb5b89fd63249b98d1ea8d93c2eb23, type: 3}
-  detectRangeDelayFar: 2
-  detectRangeDelayClose: .200000003
+  detectRangeDelayFar: 3
+  detectRangeDelayClose: .100000001
   light_messaging_delay: .5
   hideRadius: 300
   findRadius: 50
@@ -1211,7 +1211,7 @@ MonoBehaviour:
   resultsHighScore: {fileID: 11413718}
   testRate: 300
   extractTrimTime: 1.14999998
-  depositTrimTime: .25
+  depositTrimTime: .349999994
 --- !u!114 &11425404
 MonoBehaviour:
   m_ObjectHideFlags: 1

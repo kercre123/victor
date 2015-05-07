@@ -445,24 +445,15 @@ public class GoldRushController : GameController {
 		playState = new_state;
 		switch (playState) {
 		case PlayState.IDLE:
+			BuryTreasure();
 			break;
 		case PlayState.SEARCHING:
+			if( !buriedLocations.ContainsKey(robot.carryingObject) )
+			{
+				BuryTreasure();
+			}
 			robot.SetHeadAngle();
 			PlayNotificationAudioDeferred(findEnergy);
-			foundItems.Clear();
-			buriedLocations.Clear();
-
-			Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
-			randomSpot *= hideRadius;
-			Vector2 depositSpot = (Vector2)goldCollectingObject.WorldPosition ;
-
-			while( Vector2.Distance(randomSpot, depositSpot) < returnRadius )
-			{
-				//keep searching until we find a spot far enough away from the deposit spot
-				randomSpot = UnityEngine.Random.insideUnitCircle;
-				randomSpot *= hideRadius;
-			}
-			buriedLocations[robot.carryingObject] = randomSpot;
 			break;
 		case PlayState.CAN_EXTRACT:
 			if ( goldExtractingObject != null )
@@ -701,6 +692,25 @@ public class GoldRushController : GameController {
 	{
 		EnterPlayState (PlayState.DEPOSITING);
 	}
+#region helpers
+	void BuryTreasure()
+	{
+		foundItems.Clear();
+		buriedLocations.Clear();
+		
+		Vector2 randomSpot = UnityEngine.Random.insideUnitCircle;
+		randomSpot *= hideRadius;
+		Vector2 depositSpot = (Vector2)goldCollectingObject.WorldPosition ;
+		
+		while( Vector2.Distance(randomSpot, depositSpot) < returnRadius )
+		{
+			//keep searching until we find a spot far enough away from the deposit spot
+			randomSpot = UnityEngine.Random.insideUnitCircle;
+			randomSpot *= hideRadius;
+		}
+		buriedLocations[robot.carryingObject] = randomSpot;
+	}
+#endregion
 
 #region IEnumerator
 
