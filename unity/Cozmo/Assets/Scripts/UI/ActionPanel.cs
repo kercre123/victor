@@ -65,6 +65,10 @@ public class ActionPanel : MonoBehaviour
 		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButton.Mode.DISABLED, null);
 	}
 
+	public void SetLastButtons() {
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetLastMode();
+	}
+
 	protected virtual void OnEnable()
 	{
 		instance = this;

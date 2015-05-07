@@ -54,11 +54,16 @@ public class ActionButton : MonoBehaviour
 	public Text text;
 
 	private event Action<bool, ObservedObject> action;
-	private ObservedObject selectedObject;
+
+	public ObservedObject selectedObject { get; private set; }
+	private ObservedObject lastSelectedObject;
 	
 	public Mode mode { get; private set; }
+	private Mode lastMode;
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
+	public bool changed { get { return lastMode != mode || lastSelectedObject != selectedObject; } }
 
 	public void OnRelease()
 	{
@@ -76,29 +81,35 @@ public class ActionButton : MonoBehaviour
 		}
 	}
 
+	public void SetLastMode()
+	{
+		lastMode = mode;
+		lastSelectedObject = selectedObject;
+	}
+
 	public void SetMode( Mode m, ObservedObject selected, string append = null, bool solidHint = false )
 	{
+		GameActions gameActions = GameActions.instance;
+
+		if( robot == null || robot.isBusy || gameActions == null )
+		{
+			m = Mode.DISABLED;
+		}
+
 		action = null;
 		mode = m;
 		selectedObject = selected;
 
-		if( robot.isBusy )
-		{
-			mode = Mode.DISABLED;
-		}
-
-		if( mode == Mode.DISABLED || GameActions.instance == null ) 
+		if( mode == Mode.DISABLED ) 
 		{
 			if( button != null ) button.gameObject.SetActive( false );
 			if( hint.text != null ) hint.text.gameObject.SetActive( false );
 			image.gameObject.SetActive( false );
 			return;
 		}
-
-		GameActions gameActions = GameActions.instance;
 		
-		image.sprite = ActionButton.GetModeSprite( mode );
-		text.text = ActionButton.GetModeName( mode );
+		image.sprite = GetModeSprite( mode );
+		text.text = GetModeName( mode );
 		
 		if( append != null ) text.text += append;
 
@@ -156,8 +167,8 @@ public class ActionButton : MonoBehaviour
 		if( button != null ) button.gameObject.SetActive( true );
 		image.gameObject.SetActive( true );
 	}
-	
-	public static Sprite GetModeSprite( Mode mode )
+
+	private static Sprite GetModeSprite( Mode mode )
 	{
 		if( GameActions.instance != null )
 		{
@@ -177,7 +188,7 @@ public class ActionButton : MonoBehaviour
 		return null;
 	}
 	
-	public static string GetModeName( Mode mode )
+	private static string GetModeName( Mode mode )
 	{
 		if( GameActions.instance != null )
 		{
