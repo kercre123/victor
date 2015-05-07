@@ -55,7 +55,6 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private string imageBasePath;
 	private AsyncCallback EndSave_callback;
-
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -90,31 +89,6 @@ public class RobotEngineManager : MonoBehaviour {
 			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
 			if (result != CozmoResult.OK) {
 				Debug.LogError("cozmo_engine_destroy error: " + result.ToString(), this);
-			}
-		}
-	}
-	
-	// should be update; but this makes it easier to split up
-	private void LateUpdate()
-	{
-		if (logBuilder == null) {
-			logBuilder = new StringBuilder (1024);
-		}
-		
-		int length;
-		while (CozmoBinding.cozmo_has_log(out length)) {
-			if (logBuilder.Capacity < length) {
-				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
-			}
-			
-			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
-			Debug.LogError (logBuilder.ToString (), this);
-		}
-		
-		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
-			if (result != CozmoResult.OK) {
-				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
 		}
 	}
@@ -226,7 +200,28 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 			}
 		}
-
+#if !UNITY_EDITOR
+		if (logBuilder == null) {
+			logBuilder = new StringBuilder (1024);
+		}
+		
+		int length;
+		while (CozmoBinding.cozmo_has_log(out length)) {
+			if (logBuilder.Capacity < length) {
+				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
+			}
+			
+			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
+			Debug.LogError (logBuilder.ToString (), this);
+		}
+		
+		if (engineHostInitialized) {
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
+			if (result != CozmoResult.OK) {
+				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
+			}
+		}
+#endif
 	}
 
 	public void LateUpdate()
