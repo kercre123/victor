@@ -17,8 +17,8 @@ public class GameActions : MonoBehaviour
 	public virtual string CHANGE { get { return "Change"; } }
 	public virtual string CANCEL { get { return "Cancel"; } }
 
-	protected virtual string TOP { get { return " TOP"; } }
-	protected virtual string BOTTOM { get { return " BOTTOM"; } }
+	protected const string TOP = " TOP";
+	protected const string BOTTOM = " BOTTOM";
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
@@ -100,24 +100,20 @@ public class GameActions : MonoBehaviour
 		{
 			if( buttons.Length > 1 )
 			{
-				if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
+				if( robot.carryingObject != -1 && robot.carryingObject.Family == 3 )
 				{
 					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
 				}
 			}
 
-			bool stack = false;
-
-			if( robot.selectedObjects.Count > 0 )
+			if( robot.selectedObjects[0].canBeStackedOn )
 			{
-				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
-				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f) {
-					buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
-					stack = true;
-				}
+				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
-
-			if(!stack) buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			else
+			{
+				buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			}
 		}
 		else
 		{

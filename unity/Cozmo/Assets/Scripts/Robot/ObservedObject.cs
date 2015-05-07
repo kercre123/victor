@@ -131,6 +131,8 @@ public class ObservedObject
 	public float TimeLastSeen { get; private set; }
 	public float TimeCreated { get; private set; }
 
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public uint Color { get; private set; }
 
 	public Light[] lights { get; private set; }
@@ -147,6 +149,19 @@ public class ObservedObject
 			}
 
 			return false;
+		}
+	}
+
+	public bool canBeStackedOn
+	{
+		get
+		{
+			if( robot.selectedObjects.Count > 1 ) return false; // if blocks stacked on each other
+
+			float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
+			float height = Mathf.Abs( WorldPosition.z - robot.WorldPosition.z );
+		
+			return distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f && height < CozmoUtil.BLOCK_LENGTH_MM;
 		}
 	}
 

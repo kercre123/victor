@@ -606,7 +606,7 @@ public class RobotEngineManager : MonoBehaviour {
 		Array.Copy( header, outArray, off );
 		
 		// Fetch quality
-		int qual = inArray[0];
+		//int qual = inArray[0];
 		
 		// Add byte stuffing - one 0 after each 0xff
 		for( int i = 1; i < inArray.Length; ++i )
