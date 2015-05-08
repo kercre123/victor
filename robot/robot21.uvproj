@@ -459,11 +459,6 @@
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
             </File>
             <File>
-              <FileName>sharp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_oldhal\hal\sharp.cpp</FilePath>
-            </File>
-            <File>
               <FileName>blocks.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
@@ -795,11 +790,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
@@ -880,11 +870,6 @@
               <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
             </File>
             <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
               <FileName>opencvLight.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
@@ -933,6 +918,11 @@
               <FileName>matlabConverters.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1488,11 +1478,6 @@
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
             </File>
             <File>
-              <FileName>sharp.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_oldhal\hal\sharp.cpp</FilePath>
-            </File>
-            <File>
               <FileName>blocks.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
@@ -1840,11 +1825,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
@@ -1925,11 +1905,6 @@
               <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
             </File>
             <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
               <FileName>opencvLight.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
@@ -1978,6 +1953,11 @@
               <FileName>matlabConverters.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -19,7 +19,6 @@
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
-#include "proxSensors.h"
 #include "backpackLightController.h"
 
 namespace Anki {
@@ -156,7 +155,7 @@ namespace Anki {
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
         
-        ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
+        //ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
 
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
@@ -175,8 +174,8 @@ namespace Anki {
         robotState_.status |= (PickAndPlaceController::IsCarryingBlock() ? IS_CARRYING_BLOCK : 0);
         robotState_.status |= (PickAndPlaceController::IsBusy() ? IS_PICKING_OR_PLACING : 0);
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
-        robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
-        robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
+        //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
+        //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
         robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);

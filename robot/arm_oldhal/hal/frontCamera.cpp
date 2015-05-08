@@ -115,23 +115,23 @@ namespace Anki
         //,0x3a1e,0x2d // AEC CONTROL 1E
         //,0x3a11,0x90 // AEC CONTROL 11
         //,0x3a1f,0x10 // AEC CONTROL 1F
-        ,0x5000,0x07 // ISP CTRL00
-        //,0x5481,0x0a // GAMMA YST1
-        //,0x5482,0x13 // GAMMA YST2
-        //,0x5483,0x23 // GAMMA YST3
-        //,0x5484,0x40 // GAMMA YST4
-        //,0x5485,0x4d // GAMMA YST5
-        //,0x5486,0x58 // GAMMA YST6
-        //,0x5487,0x64 // GAMMA YST7
-        //,0x5488,0x6e // GAMMA YST8
-        //,0x5489,0x78 // GAMMA YST9
-        //,0x548a,0x81 // GAMMA YST10
-        //,0x548b,0x92 // GAMMA YST11
-        //,0x548c,0xa1 // GAMMA YST12
-        //,0x548d,0xbb // GAMMA YST13
-        //,0x548e,0xcf // GAMMA YST14
-        //,0x548f,0xe3 // GAMMA YST15
-        //,0x5490,0x26 // GAMMA YSLP15 
+        ,0x5000,0x47 // ISP CTRL00 + 0x40 for Gamma
+        ,0x5481,0x0a // GAMMA YST1
+        ,0x5482,0x13 // GAMMA YST2
+        ,0x5483,0x23 // GAMMA YST3
+        ,0x5484,0x40 // GAMMA YST4
+        ,0x5485,0x4d // GAMMA YST5
+        ,0x5486,0x58 // GAMMA YST6
+        ,0x5487,0x64 // GAMMA YST7
+        ,0x5488,0x6e // GAMMA YST8
+        ,0x5489,0x78 // GAMMA YST9
+        ,0x548a,0x81 // GAMMA YST10
+        ,0x548b,0x92 // GAMMA YST11
+        ,0x548c,0xa1 // GAMMA YST12
+        ,0x548d,0xbb // GAMMA YST13
+        ,0x548e,0xcf // GAMMA YST14
+        ,0x548f,0xe3 // GAMMA YST15
+        ,0x5490,0x26 // GAMMA YSLP15 
         //,0x5380,0x47 // CMX COEFFICIENT11 
         //,0x5381,0x3c // CMX COEFFICIENT12
         //,0x5382,0x06 // CMX COEFFICIENT13
@@ -173,7 +173,7 @@ namespace Anki
         ,0x4002,0x45 // BLC CTRL02
         ,0x4008,0x10 // BLC CTRL08
         ,0x3500,0x00 // 16.4 exposure time msb (4 bits) [19:16]
-        ,0x3501,0x0f // 16.4 exposure time middle (8 bits) [15:8]
+        ,0x3501,0x04 // 16.4 exposure time middle (8 bits) [15:8]
         ,0x3502,0x00 // 16.4 exposure time lsb (4.4 bits) [7:0]
         ,0x3503,0x03 // AEC MANUAL
         ,0,0
