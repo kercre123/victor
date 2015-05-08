@@ -17,6 +17,7 @@ namespace MSP_Input {
 		public float gyroPitchAmplifier = 1f;
 		//
 		private Quaternion rotation = Quaternion.identity;
+		private Transform _transform = null;
 		private float heading;
 		private float pitch;
 		private float roll;
@@ -58,6 +59,7 @@ namespace MSP_Input {
 			_pitchOffsetMaximum = pitchOffsetMaximum;
 			_gyroHeadingAmplifier = gyroHeadingAmplifier;
 			_gyroPitchAmplifier = gyroPitchAmplifier;
+			_transform = transform;
 		}
 
 		//================================================================================
@@ -87,7 +89,7 @@ namespace MSP_Input {
 			_headingOffset = headingOffset;
 			_pitchOffset = pitchOffset;
 			//
-			transform.rotation = GetRotation();
+			_transform.rotation = GetRotation();
 		}
 
 		//================================================================================
@@ -153,12 +155,13 @@ namespace MSP_Input {
 		
 		//================================================================================
 
+		private static AnimationCurve devicePitchAdjustmentCurve = new AnimationCurve(new Keyframe(-90f, 0f), new Keyframe(0, 0), new Keyframe(90f, 0f));
 		void UpdateAccelerometerOrientation() {
 			float devicePitch;
 			float deviceRoll;
 			GetDevicePitchAndRollFromGravityVector(out devicePitch, out deviceRoll);
 			//
-			AnimationCurve devicePitchAdjustmentCurve = new AnimationCurve(new Keyframe(-90f, 0f), new Keyframe(pitchOffset, -pitchOffset), new Keyframe(90f, 0f));
+			devicePitchAdjustmentCurve.MoveKey(1, new Keyframe(pitchOffset, -pitchOffset));
 			Quaternion accelQuat = Quaternion.identity;
 			accelQuat = GetQuaternionFromHeadingPitchRoll(headingOffset, devicePitch+devicePitchAdjustmentCurve.Evaluate(devicePitch), deviceRoll);
 			// Smooth gyro quaternion
@@ -172,6 +175,7 @@ namespace MSP_Input {
 
 		//================================================================================
 
+		static private AnimationCurve rollAdjustmentCurve = new AnimationCurve(new Keyframe(-90f,0f), new Keyframe(-80f,1f), new Keyframe( 80f, 1f), new Keyframe( 90f, 0f));
 		static public void GetDevicePitchAndRollFromGravityVector(out float devicePitch, out float deviceRoll) {
 			// Vector holding the direction of gravity
 			Vector3 gravity = SystemInfo.supportsGyroscope ? Input.gyro.gravity : Input.acceleration;
@@ -181,7 +185,6 @@ namespace MSP_Input {
 			devicePitch = Vector3.Angle(gravity,Vector3.forward) - 90;
 			// calculate the roll = rotation around z-axis ("steer left/right")
 			deviceRoll = Vector3.Angle(gravityProjectedOnXYplane,-Vector3.up) * Mathf.Sign(Vector3.Cross(gravityProjectedOnXYplane,Vector3.down).z);
-			AnimationCurve rollAdjustmentCurve = new AnimationCurve(new Keyframe(-90f,0f), new Keyframe(-80f,1f), new Keyframe( 80f, 1f), new Keyframe( 90f, 0f));
 			deviceRoll *= rollAdjustmentCurve.Evaluate(devicePitch);
 		}
 

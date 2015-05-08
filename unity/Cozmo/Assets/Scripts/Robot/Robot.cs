@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -91,15 +92,22 @@ public class Robot
 	protected ActionPanel actionPanel;
 	
 	private List<ObservedObject> _pertinentObjects = new List<ObservedObject>(); 
-	private int pertinenceStamp = -1; 
+	private int pertinenceStamp = -1;
+
+	private readonly Predicate<ObservedObject> IsNotInRange_callback;
+	private readonly Predicate<ObservedObject> IsNotInZRange_callback;
+	private readonly Comparison<ObservedObject> SortByDistance_callback;
+	private const float Z_RANGE_LIMIT = 2f * CozmoUtil.BLOCK_LENGTH_MM;
+	
+	// Note: Instantiating delegates and List<T>.FindAll both allocate memory.
+	// May want to change before releasing in production.
+	// It's fine for prototyping.
 	public List<ObservedObject> pertinentObjects
 	{
 		get
 		{
 			if(pertinenceStamp == Time.frameCount) return _pertinentObjects;
 			pertinenceStamp = Time.frameCount;
-			
-			float tooHigh = 2f * CozmoUtil.BLOCK_LENGTH_MM;
 			
 			_pertinentObjects.Clear();
 			
@@ -114,18 +122,13 @@ public class Robot
 					_pertinentObjects.AddRange(knownObjects);
 					break;
 				case ObservedObjectListType.KNOWN_IN_RANGE: 
-					_pertinentObjects.AddRange( knownObjects.FindAll( x=> ((Vector2)x.WorldPosition - (Vector2)WorldPosition).magnitude <= objectPertinenceRange ));
+					_pertinentObjects.AddRange (knownObjects);
+					_pertinentObjects.RemoveAll (IsNotInRange_callback);
 					break;
 			}
 
-			_pertinentObjects = _pertinentObjects.FindAll( x => Mathf.Abs( x.WorldPosition.z - WorldPosition.z ) < tooHigh );
-			
-			_pertinentObjects.Sort( ( obj1 ,obj2 ) => {
-				float d1 = ( (Vector2)obj1.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
-				float d2 = ( (Vector2)obj2.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
-				return d1.CompareTo(d2);   
-			} );
-			
+			_pertinentObjects.RemoveAll (IsNotInZRange_callback);
+			_pertinentObjects.Sort (SortByDistance_callback);
 			return _pertinentObjects;
 		}
 	}
@@ -173,16 +176,25 @@ public class Robot
 		return (status & s) == s;
 	}
 
+	private Robot()
+	{
+		IsNotInRange_callback = IsNotInRange;
+		IsNotInZRange_callback = IsNotInZRange;
+		SortByDistance_callback = SortByDistance;
+	}
+
 	public Robot( byte robotID )
+		: this()
 	{
 		ID = robotID;
-		selectedObjects = new List<ObservedObject>();
-		lastSelectedObjects = new List<ObservedObject>();
-		observedObjects = new List<ObservedObject>();
-		lastObservedObjects = new List<ObservedObject>();
-		markersVisibleObjects = new List<ObservedObject>();
-		lastMarkersVisibleObjects = new List<ObservedObject>();
-		knownObjects = new List<ObservedObject>();
+		const int initialSize = 64;
+		selectedObjects = new List<ObservedObject>(initialSize);
+		lastSelectedObjects = new List<ObservedObject>(initialSize);
+		observedObjects = new List<ObservedObject>(initialSize);
+		lastObservedObjects = new List<ObservedObject>(initialSize);
+		markersVisibleObjects = new List<ObservedObject>(initialSize);
+		lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
+		knownObjects = new List<ObservedObject>(initialSize);
 
 		ClearData();
 
@@ -577,5 +589,22 @@ public class Robot
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ TraverseObject = message } );
 
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+	private bool IsNotInRange(ObservedObject obj)
+	{
+		return !((obj.WorldPosition - WorldPosition).sqrMagnitude <= objectPertinenceRange * objectPertinenceRange);
+	}
+	
+	private bool IsNotInZRange(ObservedObject obj)
+	{
+		return !(obj.WorldPosition.z - WorldPosition.z <= Z_RANGE_LIMIT);
+	}
+	
+	private int SortByDistance(ObservedObject a, ObservedObject b)
+	{
+		float d1 = ( (Vector2)a.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+		float d2 = ( (Vector2)b.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
+		return d1.CompareTo(d2);
 	}
 }

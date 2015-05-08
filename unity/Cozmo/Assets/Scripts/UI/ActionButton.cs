@@ -53,27 +53,31 @@ public class ActionButton : MonoBehaviour
 	public Image image;
 	public Text text;
 
-	private event Action<bool, ObservedObject> action;
+	private Action<bool, ObservedObject> action;
 	private ObservedObject selectedObject;
+	private Mode previousMode = Mode.NUM_MODES;
+	private string previousAppend = null;
 	
 	public Mode mode { get; private set; }
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
+	private void InvokeActions(bool released, ObservedObject manipulatedObject)
+	{
+		DefaultAction (released, manipulatedObject);
+		if (action != null) {
+			action(released, manipulatedObject);
+		}
+	}
+
 	public void OnRelease()
 	{
-		if( action != null )
-		{
-			action( true, selectedObject );
-		}
+		InvokeActions (true, selectedObject);
 	}
 	
 	public void OnPress()
 	{
-		if( action != null )
-		{
-			action( false, selectedObject );
-		}
+		InvokeActions (false, selectedObject);
 	}
 
 	public void SetMode( Mode m, ObservedObject selected, string append = null, bool solidHint = false )
@@ -96,11 +100,14 @@ public class ActionButton : MonoBehaviour
 		}
 
 		GameActions gameActions = GameActions.instance;
-		
+
 		image.sprite = ActionButton.GetModeSprite( mode );
-		text.text = ActionButton.GetModeName( mode );
-		
-		if( append != null ) text.text += append;
+
+		if (mode != previousMode || previousAppend != append) {
+			text.text = ActionButton.GetModeName(mode) + append;
+			previousMode = mode;
+			previousAppend = append;
+		}
 
 		if( hint.image != null )
 		{
@@ -123,33 +130,31 @@ public class ActionButton : MonoBehaviour
 			hint.text.gameObject.SetActive( solidHint );
 		}
 
-		action += DefaultAction;
-
 		switch( mode )
 		{
 			case Mode.TARGET:
-				action += gameActions.Target;
+				action = gameActions.Target;
 				break;
 			case Mode.PICK_UP:
-				action += gameActions.PickUp;
+				action = gameActions.PickUp;
 				break;
 			case Mode.DROP:
-				action += gameActions.Drop;
+				action = gameActions.Drop;
 				break;
 			case Mode.STACK:
-				action += gameActions.Stack;
+				action = gameActions.Stack;
 				break;
 			case Mode.ROLL:
-				action += gameActions.Roll;
+				action = gameActions.Roll;
 				break;
 			case Mode.ALIGN:
-				action += gameActions.Align;
+				action = gameActions.Align;
 				break;
 			case Mode.CHANGE:
-				action += gameActions.Change;
+				action = gameActions.Change;
 				break;
 			case Mode.CANCEL:
-				action += gameActions.Cancel;
+				action = gameActions.Cancel;
 				break;
 		}
 
