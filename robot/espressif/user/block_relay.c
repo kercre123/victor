@@ -95,18 +95,18 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
     blocks[i].socket.proto.udp->remote_ip[1] = 31;
     blocks[i].socket.proto.udp->remote_ip[2] = 1;
     blocks[i].socket.proto.udp->remote_ip[3] = i + 10;
-    err = espconn_regist_recvcb(&blocks[i].socket, blockRecvCB);
+    err = espconn_regist_recvcb(&(blocks[i].socket), blockRecvCB);
     if (err != 0)
     {
       os_printf("\tError registering receive callback for block %d: %d\r\n", i, err);
       return err;
     }
-    err = espconn_regist_sentcb(&blocks[i].socket, blockSentCB);
+    err = espconn_regist_sentcb(&(blocks[i].socket), blockSentCB);
     if (err != 0)
     {
       os_printf("\tError registering sent callback for block %d: %d", i, err);
     }
-    err = espconn_create(&blocks[i].socket);
+    err = espconn_create(&(blocks[i].socket));
     if (err != 0)
     {
       os_printf("\tError creating socket for block %d: %d\r\n", i, err);
@@ -187,9 +187,9 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned s
         os_memcpy(rtxbs[i].data, data, len);
         rtxbs[i].len = len;
 #ifdef DEBUG_BR
-        os_printf("Sending to block on %08x\r\n", &blocks[block].socket);
+        os_printf("Sending to block on %08x\r\n", &(blocks[block].socket));
 #endif
-        err = espconn_sent(&blocks[block].socket, rtxbs[i].data, rtxbs[i].len);
+        err = espconn_sent(&(blocks[block].socket), rtxbs[i].data, rtxbs[i].len);
         if (err >= 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
         {
           rtxbs[i].state = PKT_BUF_QUEUED;
