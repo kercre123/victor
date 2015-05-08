@@ -775,8 +775,17 @@ public class GoldRushController : GameController {
 
 		yield return new WaitForSeconds(depositTrimTime);
 
-		PlayNotificationAudio(scoreSounds[numDrops]);
-		yield return new WaitForSeconds(scoreSounds[numDrops].length+.05f);
+
+		if( numDrops < scoreSounds.Length )
+		{
+			PlayNotificationAudio(scoreSounds[numDrops]);
+			yield return new WaitForSeconds(scoreSounds[numDrops].length+.05f);
+		}
+		else
+		{
+			PlayNotificationAudio(scoreSounds[scoreSounds.Length-1]);
+			yield return new WaitForSeconds(scoreSounds[scoreSounds.Length-1].length+.05f);
+		}
 
 		numDrops++;
 		scores[0]+= 10 * numDrops;
