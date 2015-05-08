@@ -21,7 +21,7 @@ PROTO CozmoBot [
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
-  field SFFloat headAngle_highLimit 0.6981 # 40 degrees up
+  field SFFloat headAngle_highLimit 0.6108 # 35 degrees up
   
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
