@@ -11,8 +11,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads.basics = 1;
-    numComputeThreads.perPose = 1;
+    numComputeThreads.basics = 3;
+    numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
 %     makeNewResultsDirectory = true;
