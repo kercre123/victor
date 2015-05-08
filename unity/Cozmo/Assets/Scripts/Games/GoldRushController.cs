@@ -473,7 +473,9 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.RETURNING:
 			robot.SetHeadAngle();
+			goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF); 
 			PlayNotificationAudio(dropEnergy);
+
 			//hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
 		case PlayState.RETURNED:
@@ -637,8 +639,14 @@ public class GoldRushController : GameController {
 		{
 			EnterPlayState(PlayState.RETURNED);
 		}
-
-
+		else
+		{
+			float dist_percent = 1 - ((detectRadius-returnRadius)-(distance-returnRadius))/(detectRadius-returnRadius);
+			float current_rate = Mathf.Lerp(detectRangeDelayClose, detectRangeDelayFar, dist_percent);
+			UpdateLocatorSound(current_rate);
+		}
+		
+		
 		totalActiveTime += Time.deltaTime;
 	}
 
@@ -650,7 +658,6 @@ public class GoldRushController : GameController {
 			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
-		// todo: add code to make sure the player doen't leave the box before dropping it off
 		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
 		Debug.Log ("distance: " + distance);
 		if (distance > returnRadius) 
