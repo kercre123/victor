@@ -5,6 +5,7 @@ public class GameActions : MonoBehaviour
 {
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
+	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.NUM_MODES];
 	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
 	
 	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
@@ -16,29 +17,13 @@ public class GameActions : MonoBehaviour
 	public virtual string CHANGE { get { return "Change"; } }
 	public virtual string CANCEL { get { return "Cancel"; } }
 
-	protected virtual string TOP { get { return " TOP"; } }
-	protected virtual string BOTTOM { get { return " BOTTOM"; } }
+	protected const string TOP = " TOP";
+	protected const string BOTTOM = " BOTTOM";
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
 	public static GameActions instance = null;
-
-	public bool allButtonsDisabled
-	{
-		get
-		{
-			if( buttons != null )
-			{
-				for( int i = 0; i < buttons.Length; ++i )
-				{
-					if( buttons[i].mode != ActionButton.Mode.DISABLED ) return false;
-				}
-			}
-
-			return true;
-		}
-	}
 
 	protected virtual void Awake()
 	{
@@ -64,36 +49,55 @@ public class GameActions : MonoBehaviour
 		return actionSprites[(int)mode];
 	}
 
-	public virtual void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
+	public AudioClip GetActionEnabledSound( ActionButton.Mode mode )
+	{
+		return actionEnabledSounds[(int)mode];
+	}
+
+	private void CheckChangedButtons()
+	{
+		for( int i = 0; i < buttons.Length; ++i )
+		{
+			if( buttons[i].changed ) OnModeEnabled( buttons[i] );
+		}
+	}
+
+	public void SetActionButtons( bool isSlider = false )
 	{
 		if( ActionPanel.instance == null ) return;
-
+		
+		ActionPanel.instance.SetLastButtons();
 		ActionPanel.instance.DisableButtons();
 
-		if( robot == null || robot.isBusy ) return;
+		if( robot == null ) return;
+
+		_SetActionButtons( isSlider );
+
+		CheckChangedButtons();
+	}
+
+	protected virtual void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
+	{
+		if( robot.isBusy ) return;
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
 			if( buttons.Length > 1 )
 			{
-				if(robot.carryingObject >= 0 && robot.carryingObject.Family == 3)
+				if( robot.carryingObject != -1 && robot.carryingObject.Family == 3 )
 				{
 					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
 				}
 			}
 
-			bool stack = false;
-
-			if( robot.selectedObjects.Count > 0 )
+			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
-				float distance = ((Vector2)robot.selectedObjects[0].WorldPosition - (Vector2)robot.WorldPosition).magnitude;
-				if(distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f) {
-					buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
-					stack = true;
-				}
+				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
-
-			if(!stack) buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			else
+			{
+				buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			}
 		}
 		else
 		{
@@ -114,12 +118,24 @@ public class GameActions : MonoBehaviour
 		{
 			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null, null, true );
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{
 				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
 			}
+		}
+	}
+
+	public virtual void OnModeEnabled( ActionButton button )
+	{
+		AudioClip onEnabledSound = GetActionEnabledSound( button.mode );
+		
+		if( onEnabledSound != null && audio != null && ( audio.clip != onEnabledSound || !audio.isPlaying ) )
+		{
+			audio.volume = 1f;
+			audio.clip = onEnabledSound;
+			audio.Play();
 		}
 	}
 

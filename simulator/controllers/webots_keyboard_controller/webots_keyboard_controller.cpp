@@ -376,7 +376,7 @@ namespace Anki {
       // Sends complete images to VizManager for visualization (and possible saving).
       void HandleImageChunk(G2U::ImageChunk const& msg)
       {
-        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
+        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
         
         
         if(isImageReady)

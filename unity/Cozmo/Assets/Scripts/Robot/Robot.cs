@@ -294,6 +294,10 @@ public class Robot
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
 
+	}
+
+	public void UpdateLightMessages()
+	{
 		if( Time.time > ObservedObject.messageDelay )
 		{
 			for( int i = 0; i < knownObjects.Count; ++i )
@@ -303,7 +307,6 @@ public class Robot
 					knownObjects[i].SetAllActiveObjectLEDs();
 				}
 			}
-
 			ObservedObject.messageDelay = Time.time + GameController.MessageDelay;
 		}
 	}

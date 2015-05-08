@@ -378,7 +378,7 @@ public class CozmoVision : MonoBehaviour
 	protected void PlayVisionActivateSound()
 	{
 		if(loopAudioSource == null || visionActivateSound == null || loopAudioSource.clip == visionActiveLoop || 
-		   actionPanel == null || !actionPanel.actionAvailable || robot == null || robot.selectedObjects.Count == 0) return;
+		   actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0) return;
 
 		audio.volume = maxVisionStartVol;
 		audio.PlayOneShot(visionActivateSound, maxVisionStartVol);
