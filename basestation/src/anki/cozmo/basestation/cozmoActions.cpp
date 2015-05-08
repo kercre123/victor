@@ -87,16 +87,22 @@ namespace Anki {
       SetGoal(pose);
     }
     
+    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed)
+    : DriveToPoseAction(useManualSpeed)
+    {
+      SetGoals(poses);
+    }
+    
     Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
     {
-      _goalPose = pose;
+      _goalPoses = {pose};
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
                        "Setting pose goal to (%.1f,%.1f,%.1f) @ %.1fdeg\n",
-                       _goalPose.GetTranslation().x(),
-                       _goalPose.GetTranslation().y(),
-                       _goalPose.GetTranslation().z(),
-                       RAD_TO_DEG(_goalPose.GetRotationAngle<'Z'>().ToFloat()));
+                       _goalPoses.back().GetTranslation().x(),
+                       _goalPoses.back().GetTranslation().y(),
+                       _goalPoses.back().GetTranslation().z(),
+                       RAD_TO_DEG(_goalPoses.back().GetRotationAngle<'Z'>().ToFloat()));
       
       _isGoalSet = true;
       
@@ -111,6 +117,29 @@ namespace Anki {
       _goalAngleThreshold = angleThreshold;
       
       return SetGoal(pose);
+    }
+    
+    Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses,
+                                       const Point3f& distThreshold,
+                                       const Radians& angleThreshold)
+    {
+      _goalDistanceThreshold = distThreshold;
+      _goalAngleThreshold    = angleThreshold;
+      
+      return SetGoals(poses);
+    }
+    
+    Result DriveToPoseAction::SetGoals(const std::vector<Pose3d>& poses)
+    {
+      _goalPoses = poses;
+      
+      PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
+                       "Setting %lu possible goal options.\n",
+                       _goalPoses.size());
+      
+      _isGoalSet = true;
+      
+      return RESULT_OK;
     }
     
     const std::string& DriveToPoseAction::GetName() const
@@ -131,14 +160,18 @@ namespace Anki {
         result = ActionResult::FAILURE_ABORT;
       }
       else {
-        Planning::Path p;
         
-        // TODO: Make it possible to set the speed/accel somewhere?
-        if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
-          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
-          result = ActionResult::FAILURE_ABORT;
+        Planning::Path p;
+        Result planningResult = RESULT_OK;
+        
+        if(_goalPoses.size() == 1) {
+          planningResult = robot.GetPathToPose(_goalPoses.back(), p);
+          _selectedGoalIndex = 0;
+        } else {
+          planningResult = robot.GetPathToPose(_goalPoses, _selectedGoalIndex, p);
         }
-        else if(robot.GetPathToPose(_goalPose, p) != RESULT_OK) {
+        
+        if(planningResult != RESULT_OK) {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to get path to goal pose.\n");
           result = ActionResult::FAILURE_ABORT;
         }
@@ -150,10 +183,20 @@ namespace Anki {
           PRINT_NAMED_INFO("DriveToPoseAction.Init", "Faking startedTraversingPath because path is empty.");
           _startedTraversingPath = true;
         }
-      }
-      
+        
+        if(result == ActionResult::SUCCESS) {
+          // So far so good. Now put the head at the right angle for following paths
+          // TODO: Make it possible to set the speed/accel somewhere?
+          if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+            PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
+            result = ActionResult::FAILURE_ABORT;
+          }
+        }
+        
+      } // if/else isGoalSet
+    
       return result;
-    }
+    } // Init()
     
     ActionResult DriveToPoseAction::CheckIfDone(Robot& robot)
     {
@@ -230,7 +273,7 @@ namespace Anki {
                                           _goalDistanceThreshold.y(),
                                           robot.GetHeight());
           
-          if(robot.GetPose().IsSameAs(_goalPose, distanceThreshold, _goalAngleThreshold, Tdiff))
+          if(robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
                              "Robot %d successfully finished following path (Tdiff=%.1fmm).\n",
@@ -271,14 +314,18 @@ namespace Anki {
 #pragma mark ---- DriveToObjectAction ----
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed)
-    : DriveToPoseAction(useManualSpeed)
-    , _objectID(objectID)
+    : _objectID(objectID)
     , _actionType(actionType)
-    , _alreadyAtGoal(false)
+    , _useManualSpeed(useManualSpeed)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
+    void DriveToObjectAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
     
     const std::string& DriveToObjectAction::GetName() const
     {
@@ -286,10 +333,14 @@ namespace Anki {
       return name;
     }
     
-    
-    ActionResult DriveToObjectAction::InitHelper(Robot& robot, ActionableObject* object)
+    ActionResult DriveToObjectAction::GetPossiblePoses(const Robot& robot, ActionableObject* object,
+                                                       std::vector<Pose3d>& possiblePoses,
+                                                       bool& alreadyInPosition)
     {
-      ActionResult result = ActionResult::RUNNING;
+      ActionResult result = ActionResult::SUCCESS;
+      
+      alreadyInPosition = false;
+      possiblePoses.clear();
       
       std::vector<PreActionPose> possiblePreActionPoses;
       object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
@@ -299,10 +350,9 @@ namespace Anki {
                           "ActionableObject %d did not return any pre-action poses with action type %d.\n",
                           _objectID.GetValue(), _actionType);
         
-        result = ActionResult::FAILURE_ABORT;
+        return ActionResult::FAILURE_ABORT;
         
       } else {
-        size_t selectedIndex = 0;
         
         // Check to see if we already close enough to a pre-action pose that we can
         // just skip path planning. In case multiple pre-action poses are close
@@ -310,14 +360,13 @@ namespace Anki {
         // Also make a vector of just poses (not preaction poses) for call to
         // Robot::ExecutePathToPose() below
         // TODO: Prettier way to handling making the separate vector of Pose3ds?
-        std::vector<Pose3d> possiblePoses;
         const PreActionPose* closestPreActionPose = nullptr;
         f32 closestPoseDist = std::numeric_limits<f32>::max();
         Radians closestPoseAngle = M_PI;
         
         Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, object,
-                                                                              DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
-
+                                                                            DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+        
         preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
         for(auto & preActionPose : possiblePreActionPoses)
         {
@@ -360,33 +409,43 @@ namespace Anki {
           PRINT_NAMED_INFO("DriveToObjectAction.InitHelper",
                            "Robot's current pose is close enough to a pre-action pose. "
                            "Just using current pose as the goal.\n");
-          _alreadyAtGoal = true;
+          
+          alreadyInPosition = true;
           result = ActionResult::SUCCESS;
         }
-        else {
-          Planning::Path p;
-          if(robot.GetPathToPose(possiblePoses, selectedIndex, p) != RESULT_OK) {
-            result = ActionResult::FAILURE_ABORT;
-          }
-          else if(robot.ExecutePath(p, IsUsingManualSpeed()) != RESULT_OK) {
-            result = ActionResult::FAILURE_ABORT;
-          }
-          else if(p.GetNumSegments() == 0) {
-            PRINT_NAMED_WARNING("DriveToObjectAction.InitHelper.EmptyPath",
-                             "Empty path. If start pose == end pose, alreadyAtGoal should have been set");
-            _alreadyAtGoal = true;
-            result = ActionResult::SUCCESS;
-          }
-          else if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 6.f) != RESULT_OK) {
-            result = ActionResult::FAILURE_ABORT;
-          } else {
-            //SetGoal(possiblePoses[selectedIndex]);
-            SetGoal(possiblePoses[selectedIndex], preActionPoseDistThresh,
-                    DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
-            
-            result = ActionResult::SUCCESS;
+      }
+      
+      return result;
+    } // GetPossiblePoses()
+    
+    ActionResult DriveToObjectAction::InitHelper(Robot& robot, ActionableObject* object)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      std::vector<PreActionPose> possiblePreActionPoses;
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
+      
+      if(possiblePreActionPoses.empty()) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
+                          "ActionableObject %d did not return any pre-action poses with action type %d.\n",
+                          _objectID.GetValue(), _actionType);
+        
+        result = ActionResult::FAILURE_ABORT;
+        
+      } else {
+        
+        std::vector<Pose3d> possiblePoses;
+        bool alreadyInPosition = false;
+        result = GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition);
+        
+        if(result == ActionResult::SUCCESS) {
+          if(!alreadyInPosition) {
+            _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, _useManualSpeed));
           }
         }
+
+        _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        _compoundAction.SetIsPartOfCompoundAction(true);
         
       } // if/else possiblePreActionPoses.empty()
       
@@ -408,6 +467,7 @@ namespace Anki {
         result = ActionResult::FAILURE_ABORT;
       } else {
       
+        // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(robot, object);
         
       } // if/else object==nullptr
@@ -418,10 +478,35 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::CheckIfDone(Robot& robot)
     {
-      ActionResult result = ActionResult::SUCCESS;
+      ActionResult result = _compoundAction.Update(robot);
       
-      if(!_alreadyAtGoal) {
-        result = DriveToPoseAction::CheckIfDone(robot);
+      if(result == ActionResult::SUCCESS) {
+        // We completed driving to the pose and visually verifying the object
+        // is still there. This could have updated the object's pose (hopefully
+        // to a more accurate one), meaning the pre-action pose we selected at
+        // Initialization has now moved and we may not be in position, even if
+        // we completed the planned path successfully. If that's the case, we
+        // want to retry.
+        
+        ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_objectID));
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("DriveToObjectAction.CheckIfDone.NoObjectWithID",
+                            "Robot %d's block world does not have an ActionableObject with ID=%d.\n",
+                            robot.GetID(), _objectID.GetValue());
+          
+          result = ActionResult::FAILURE_ABORT;
+        } else {
+          
+          std::vector<Pose3d> possiblePoses; // don't really need these
+          bool inPosition = false;
+          result = GetPossiblePoses(robot, object, possiblePoses, inPosition);
+          
+          if(!inPosition) {
+            PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.\n");
+            result = ActionResult::FAILURE_RETRY;
+          }
+        }
+        
       }
 
       return result;
@@ -538,6 +623,12 @@ namespace Anki {
     , _headTrackWhenDone(headTrackWhenDone)
     {
 
+    }
+    
+    void FaceObjectAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
     }
     
     ActionResult FaceObjectAction::Init(Robot &robot)
@@ -933,6 +1024,15 @@ namespace Anki {
       }
     }
     
+    void IDockAction::Reset()
+    {
+      IAction::Reset();
+      if(_visuallyVerifyAction != nullptr) {
+        delete _visuallyVerifyAction;
+        _visuallyVerifyAction = nullptr;
+      }
+    }
+    
     void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
     {
       _preActionPoseAngleTolerance = angleTolerance;
@@ -1139,6 +1239,16 @@ namespace Anki {
     {
       if(_placementVerifyAction != nullptr) {
         delete _placementVerifyAction;
+      }
+    }
+    
+    void PickAndPlaceObjectAction::Reset()
+    {
+      IDockAction::Reset();
+      
+      if(_placementVerifyAction != nullptr) {
+        delete _placementVerifyAction;
+        _placementVerifyAction = nullptr;
       }
     }
     
@@ -1457,6 +1567,16 @@ namespace Anki {
     {
       if(_verifyAction != nullptr) {
         delete _verifyAction;
+      }
+    }
+    
+    void PlaceObjectOnGroundAction::Reset()
+    {
+      IAction::Reset();
+      
+      if(_verifyAction != nullptr) {
+        delete _verifyAction;
+        _verifyAction = nullptr;
       }
     }
     

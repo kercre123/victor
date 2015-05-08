@@ -73,7 +73,13 @@ namespace Anki {
       // representing this action's type. This will be reported in any
       // completion signal that is emitted.
       virtual RobotActionType GetType() const = 0;
-        
+      
+      // Override this to take care of anything that needs to be done on Retry.
+      // This should take care of anything that might otherwise be done by the
+      // constructor (i.e. before Init() is ever called.) For example, if your
+      // action allocates a new IAction[Runner] as a member as part of Init()
+      // but only deletes it upon destruction, you probably want to delete it
+      // in Reset() as well.
       virtual void Reset() = 0;
       
       // Get last status message
@@ -162,8 +168,6 @@ namespace Anki {
       // Derived Actions should implement these.
       virtual ActionResult  Init(Robot& robot) { return ActionResult::SUCCESS; } // Optional: default is no preconditions to meet
       virtual ActionResult  CheckIfDone(Robot& robot) = 0;
-      
-
       
       //
       // Timing delays:

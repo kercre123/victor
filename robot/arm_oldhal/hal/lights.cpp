@@ -100,8 +100,8 @@ namespace Anki
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
-        if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
-          m_channels[HW_CHANNELS[led_id]] = color;
+        //if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
+        //  m_channels[HW_CHANNELS[led_id]] = color;
       }      
       
       // Turn headlights on (true) and off (false)

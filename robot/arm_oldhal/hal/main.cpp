@@ -4,11 +4,7 @@
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
 
-//#define SEND_IMAGE_ONLY_TEST_BASESTATION
-
-#ifdef SEND_IMAGE_ONLY_TEST_BASESTATION
-OFFCHIP u8 buffer[320*240 + 5]; // +5 for beeffoodfd
-#endif
+#include "messages.h"
 
 namespace Anki
 {
@@ -43,6 +39,10 @@ namespace Anki
       //bool RadioIsConnected(){ return false; }
       static IDCard m_idCard;
       IDCard* GetIDCard() { return &m_idCard; }
+
+      // XXX
+      u8* CamGetRaw();
+      int CamGetReadyRow();
 
       static void GetId()
       {
@@ -88,6 +88,90 @@ static void MemTest()
     if (*pp != ((int)pp)*11917)
       UARTPutString("error");  
   UARTPutString("Done\r\n");
+}
+
+int JPEGStart(u8* out, int width, int height, int quality);
+int JPEGCompress(u8* out, u8* in);
+int JPEGEnd(u8* out);
+void JPEGInit();
+
+// This function streams JPEG video in LongExecution
+void StreamJPEG()
+{
+  using namespace Anki::Cozmo;
+  
+  const int FRAMESKIP = 1;  // Skip every other frame
+  const int WIDTH = 320, HEIGHT = 240, QUALITY = 50;
+ 
+  // Stack-allocate enough space for two whole image chunks, to handle overflow
+  u8 buffer[IMAGE_CHUNK_SIZE*2];
+  // Point message buffer +2 bytes ahead, to round 14 byte header up to 16 bytes for buffer alignment
+  Anki::Cozmo::Messages::ImageChunk* m = (Anki::Cozmo::Messages::ImageChunk*)(buffer + 2);
+  
+  // Initialize the encoder
+  JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
+  
+  m->resolution = Anki::Vision::CAMERA_RES_QVGA;
+  m->imageEncoding = Anki::Vision::IE_MINIPEG_GRAY;
+  m->imageId = 0;
+  
+  while (1)
+  {    
+    // Skip frames (to prevent choking the Espressif)
+    for (int i = 0; i < FRAMESKIP; i++)
+    {
+      while (HAL::CamGetReadyRow() != 0)
+        ;
+      while (HAL::CamGetReadyRow() == 0)
+        ;
+    }
+    
+    // Synchronize the timestamp with camera - wait for first row to arrive
+    while (HAL::CamGetReadyRow() != 0)
+      ;
+    
+    // Setup image header
+    m->frameTimeStamp = HAL::GetTimeStamp() - 33;   // XXX: 30 FPS
+    m->imageId++;
+    m->chunkId = 0;
+
+    // Convert JPEG while writing it out
+    int datalen = 0;
+    for (int row = 0; row < HEIGHT; row += 8)
+    {
+      // Wait for data to be valid before compressing it
+      while (HAL::CamGetReadyRow() != row)
+        ;
+      datalen += JPEGCompress(m->data + datalen, HAL::CamGetRaw());
+      
+      // At EOF, finish frame
+      int eof = (row == HEIGHT-8);
+      if (eof)
+        datalen += JPEGEnd(m->data + datalen);
+      
+      // Write out any full chunks, or at EOF, anything left
+      while (datalen >= IMAGE_CHUNK_SIZE || (eof && datalen))
+      {
+        // Leave imageChunkCount at 255 until the final chunk
+        m->imageChunkCount = (eof && datalen <= IMAGE_CHUNK_SIZE) ? m->chunkId+1 : 255;
+        m->chunkSize = MIN(datalen, IMAGE_CHUNK_SIZE);
+        
+        // On the first chunk, write the quality into the image (cheesy hack)
+        if (0 == m->chunkId)
+          m->data[0] = QUALITY;
+        
+        // Keep trying to send this message, even if it means a frame tear
+        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m))
+          ;
+        
+        // Copy anything left at end to front of buffer
+        datalen -= m->chunkSize;
+        if (datalen)
+          memcpy(m->data, m->data + IMAGE_CHUNK_SIZE, datalen);
+        m->chunkId++;
+      }
+    }
+  }
 }
 
 int main(void)
@@ -158,39 +242,18 @@ int main(void)
   
 #else
   
-#ifndef SEND_IMAGE_ONLY_TEST_BASESTATION
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
-  printf("init complete!\r\n");
-   
-  while (Anki::Cozmo::Robot::step_LongExecution() == Anki::RESULT_OK)
-  {
-  }
-#else
-  while(true)
-  {
-    CameraGetFrame(buffer, Anki::Vision::CAMERA_RES_QVGA, false);
-    
-    if (UARTGetFreeSpace() < (1024 * 1024 * 4) - (320*240+5))
-      continue;
-    
-    UARTPutChar(0xbe);
-    UARTPutChar(0xef);
-    UARTPutChar(0xf0);
-    UARTPutChar(0xff);
-    UARTPutChar(0xbd);
-    
-    for (int y = 0; y < 240; y++)
-    {
-      for (int x = 0; x < 320; x++)
-      {
-        //buffer[y*320 + x ] = (buffer[y*320 + x] * ((x & 255) ^ y)) >> 8;
-        UARTPutChar(buffer[y*320 + x]); // + buffer[y*320 + x+320] + buffer[y*320 + x+1] + buffer[y*320 + x+321])/4);
-      }
-    }
-  }
-#endif // #ifdef SEND_IMAGE_ONLY_TEST_BASESTATION  
+  //printf("init complete!\r\n");
+  
+  // Give time for sync before video starts
+  MicroWait(500000);
+  StreamJPEG();
 #endif
+
+  // Never return from this function
+  while(1)
+  {}
 }
 
 extern "C"

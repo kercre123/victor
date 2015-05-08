@@ -12,7 +12,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     maxMatchDistance_percent = 0.2;
     
     numComputeThreads.basics = 1;
-    numComputeThreads.perPose = 3;
+    numComputeThreads.perPose = 1;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
 %     makeNewResultsDirectory = true;
@@ -52,6 +52,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.track_convergenceTolerance_distance = 0.05;
     algorithmParameters.track_verify_maxPixelDifference     = 30;
     
+    algorithmParameters.showImageDetectionWidth = 640;
+    algorithmParameters.showImageDetections = false;
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
@@ -85,7 +87,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         if isSimpleTest
             curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
             resultsData.(runWhichAlgorithms{iAlgorithm}) = curResults;
-            disp(sprintf('Results for %s = %f %f %d fileSizePercent = %f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
+            disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
         end
     end % for iAlgorithm = 1:length(runWhichAlgorithms)
     
@@ -270,17 +272,18 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         % Per-pose stats
         %
 
-        for iPose = 1:numPoses  
+        for iPose = 1:numPoses
+            addToPerPoseWorkQueue = false;
             if rerunBasics
                 addToPerPoseWorkQueue = true;
-            elseif ~exist(perPoseStats_dataFilenames{iFile}, 'file') || ~exist(perPoseStats_imageFilenames{iFile}, 'file')
+            elseif ~exist(perPoseStats_dataFilenames{iPose}, 'file') || ~exist(perPoseStats_imageFilenames{iPose}, 'file')
                 % If the per-pose results don't exist
                 addToPerPoseWorkQueue = true;
             else
                 % If the per-pose results are older than the basic stats results
-                modificationTime_perPoseData = dir(perPoseStats_dataFilenames{iFile});
+                modificationTime_perPoseData = dir(perPoseStats_dataFilenames{iPose});
                 modificationTime_perPoseData = modificationTime_perPoseData(1).datenum;
-                modificationTime_perPoseImage = dir(perPoseStats_dataFilenames{iFile});
+                modificationTime_perPoseImage = dir(perPoseStats_dataFilenames{iPose});
                 modificationTime_perPoseImage = modificationTime_perPoseImage(1).datenum;
                 if modificationTime_perPoseImage < modificationTime_basicStatsResults || modificationTime_perPoseData < modificationTime_basicStatsResults
                     addToPerPoseWorkQueue = true;
@@ -289,7 +292,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
 
             % PerPose stores just the current filename and pose
             newWorkItemBasics = newWorkItemBoth;                
-            newWorkItemBasics.iPoses = iPose;
+            newWorkItemBasics.iPose = iPose;
             newWorkItemBasics.basicStats_filename = basicStats_filenames{iPose};
             newWorkItemBasics.perPoseStats_dataFilename = perPoseStats_dataFilenames{iPose};
             newWorkItemBasics.perPoseStats_imageFilename = perPoseStats_imageFilenames{iPose};
@@ -307,7 +310,7 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
     recompileBasicsTic = tic();
     
     if isempty(workQueue_todo)
-        load(workQueue_all{1}.basicStats_filename, 'resultsData_basics');
+        load(workQueue_all{1}.basicStats_filenames{1}, 'resultsData_basics');
     end
     
     numResultsData = 0;
@@ -337,13 +340,15 @@ function resultsData_basics = run_recompileBasics(numComputeThreads, workQueue_t
         end
         
         for iWork = 1:length(workQueue_all)
-            load(workQueue_all{iWork}.basicStats_filename, 'curResultsData_basics');
-            resultsData_basics{workQueue_all{iWork}.iTest}{workQueue_all{iWork}.iPose} = curResultsData_basics;
+            for iPose = workQueue_all{iWork}.iPoses
+                load(workQueue_all{iWork}.basicStats_filenames{iPose}, 'curResultsData_basics');
+                resultsData_basics{workQueue_all{iWork}.iTest}{iPose} = curResultsData_basics;
+            end
         end % for iWork = 1:length(workQueue_all)
         
         % resave all results in the data for the first work element
-        load(workQueue_all{1}.basicStats_filename, 'curResultsData_basics');
-        save(workQueue_all{1}.basicStats_filename, 'curResultsData_basics', 'resultsData_basics');
+        load(workQueue_all{1}.basicStats_filenames{1}, 'curResultsData_basics');
+        save(workQueue_all{1}.basicStats_filenames{1}, 'curResultsData_basics', 'resultsData_basics');
     end
     
     disp(sprintf('Basic stat computation took %f seconds', toc(recompileBasicsTic)));

@@ -23,7 +23,7 @@ namespace Anki
       volatile ONCHIP GlobalDataToBody g_dataToBody;
       
       // Set to true when it is safe to call MainExecution
-      u8 g_halInitComplete = 0;
+      volatile u8 g_halInitComplete = 0, g_deferMainExec = 0, g_mainExecDeferred = 0;
       
       #define BAUDRATE 350000
 
@@ -127,6 +127,9 @@ namespace Anki
 
         // Set up first "hello" message to body
         g_dataToBody.common.source = SPI_SOURCE_HEAD;
+        g_dataToBody.common.SYNC[0] = 0xfa;
+        g_dataToBody.common.SYNC[1] = 0xf3;
+        g_dataToBody.common.SYNC[2] = 0x20;
         memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
         
         // Configure DMA For transmitting
@@ -233,7 +236,7 @@ void DMA_HANDLER_RX(void)
   {
     if (++s_failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
     {
-      NVIC_SystemReset();
+      //NVIC_SystemReset();
     }
   }
   
@@ -242,8 +245,12 @@ void DMA_HANDLER_RX(void)
 	// Hack to allow timing events longer than about 50ms
 	GetMicroCounter();
 	
-  // Run MainExecution if init is done
-  if (g_halInitComplete)
+  // Run MainExecution if not deferred and init is done
+  if (g_deferMainExec)
+  {
+    g_mainExecDeferred = 1;
+  }
+  else if (g_halInitComplete)
   {
     Anki::Cozmo::Robot::step_MainExecution();
   }
