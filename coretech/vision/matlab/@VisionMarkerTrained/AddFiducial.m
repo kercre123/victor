@@ -154,7 +154,7 @@ else
   end
   
 end % IF cornerRadius_pix==0
-;
+
 imgNew = imresize(imgNew, OutputSize*[1 1], 'nearest');
 AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1], 'nearest');
 
@@ -176,6 +176,10 @@ if InvertImage
 end
 
 if ~isempty(OutputFile)
+    outPath = fileparts(OutputFile);
+    if ~isdir(outPath)
+      mkdir(outPath);
+    end
     imwrite(imgNew, OutputFile, 'Alpha', AlphaChannel);
 end
 
