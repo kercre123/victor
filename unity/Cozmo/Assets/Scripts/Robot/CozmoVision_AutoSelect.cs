@@ -37,7 +37,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 			return;
 		}
 		
-		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+		actionPanel.gameObject.SetActive(true);
 
 		ShowObservedObjects();
 

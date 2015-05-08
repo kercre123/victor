@@ -27,21 +27,40 @@ public class ActionButton : MonoBehaviour
 		public Image image;
 		public Text text;
 
-		private Color _ghost;
-		public Color ghost
+		private Color _ghostText;
+		public Color ghostText
 		{
 			get
 			{
-				if( _ghost == Color.clear && image != null ) _ghost = image.color;
-				return _ghost;
+				if( _ghostText == Color.clear && text != null ) _ghostText = text.color;
+				return _ghostText;
 			}
 		}
-
-		public Color solid
+		
+		public Color solidText
 		{
 			get
 			{ 
-				if( _ghost == Color.clear && image != null ) _ghost = image.color;
+				if( _ghostText == Color.clear && text != null ) _ghostText = text.color;
+				return Color.white;
+			}
+		}
+
+		private Color _ghostImage;
+		public Color ghostImage
+		{
+			get
+			{
+				if( _ghostImage == Color.clear && image != null ) _ghostImage = image.color;
+				return _ghostImage;
+			}
+		}
+
+		public Color solidImage
+		{
+			get
+			{ 
+				if( _ghostImage == Color.clear && image != null ) _ghostImage = image.color;
 				return Color.white;
 			}
 		}
@@ -119,11 +138,11 @@ public class ActionButton : MonoBehaviour
 
 			if( solidHint )
 			{
-				hint.image.color = hint.solid;
+				hint.image.color = hint.solidImage;
 			}
 			else
 			{
-				hint.image.color = hint.ghost;
+				hint.image.color = hint.ghostImage;
 			}
 		}
 
@@ -131,7 +150,16 @@ public class ActionButton : MonoBehaviour
 		{
 			if( hint.text.text != text.text ) hint.text.text = text.text;
 
-			hint.text.gameObject.SetActive( solidHint );
+			hint.text.gameObject.SetActive( true/*solidHint*/ );
+
+			if( solidHint )
+			{
+				hint.text.color = hint.solidText;
+			}
+			else
+			{
+				hint.text.color = hint.ghostText;
+			}
 		}
 
 		action += DefaultAction;

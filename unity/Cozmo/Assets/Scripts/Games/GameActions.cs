@@ -25,22 +25,6 @@ public class GameActions : MonoBehaviour
 
 	public static GameActions instance = null;
 
-	public bool allButtonsDisabled
-	{
-		get
-		{
-			if( buttons != null )
-			{
-				for( int i = 0; i < buttons.Length; ++i )
-				{
-					if( buttons[i].mode != ActionButton.Mode.DISABLED ) return false;
-				}
-			}
-
-			return true;
-		}
-	}
-
 	protected virtual void Awake()
 	{
 
@@ -134,7 +118,7 @@ public class GameActions : MonoBehaviour
 		{
 			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null, null, true );
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{
