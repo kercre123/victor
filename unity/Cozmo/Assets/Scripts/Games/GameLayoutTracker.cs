@@ -37,6 +37,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject layoutPreviewPanel = null;
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
+	[SerializeField] Button letsBuildButton;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
 	[SerializeField] Camera layoutInstructionsCamera = null;
@@ -55,9 +56,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip blockValidatedSound = null;
 	[SerializeField] AudioClip layoutValidatedSound = null;
 
-	[SerializeField] Image[] checkMarks = null;
 
-	Dictionary<Image, BuildInstructionsCube> checkedBlockDictionary = new Dictionary<Image, BuildInstructionsCube>();
+	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 
 	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
@@ -129,7 +129,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		SetUpInventory();
 
-		currentLayout.previewCamera.gameObject.SetActive(true);
 		string fullName = currentGameName + " #" + currentLevelNumber;
 		previewTitle.text = fullName;
 		instructionsTitle.text = fullName;
@@ -151,12 +150,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
 		hidden = false;
-
-		if(checkMarks != null) {
-			for(int i=0;i<checkMarks.Length;i++) {
-				checkMarks[i].gameObject.SetActive(false);
-			}
-		}
 	}
 
 	void SetUpInventory() {
@@ -243,8 +236,6 @@ public class GameLayoutTracker : MonoBehaviour {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
-		currentLayout.previewCamera.gameObject.SetActive(Phase == LayoutTrackerPhase.INVENTORY);
-
 		switch(Phase) {
 			case LayoutTrackerPhase.DISABLED:
 				layoutInstructionsPanel.SetActive(false);
@@ -262,10 +253,16 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(robot != null) robot.SetHeadAngle();
 
+				bool inventoryComplete = true;
+
 				for(int i=0;i<blocks2d.Count;i++) {
 					int known = GetKnownObjectCountForBlock(blocks2d[i].Block);
-					blocks2d[i].Validate(known >= blocks2d[i].Dupe);
+					bool validated = known >= blocks2d[i].Dupe;
+					blocks2d[i].Validate(validated);
+					inventoryComplete &= validated;
 				}
+
+				if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(inventoryComplete);
 
 				break;
 
@@ -346,7 +343,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				else {
 					screenMessage.KillMessage();
 				}
-				
+				validate = true;
 				break;
 			case RobotActionType.PLACE_OBJECT_LOW:
 			case RobotActionType.PLACE_OBJECT_HIGH:
@@ -391,7 +388,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
-	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 	string ValidateBlocks() {
 		string error = "";
 		validCount = 0;
@@ -409,12 +405,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(layout == null) return error;
 
 		validated.Clear();
-
-		if(checkMarks != null) {
-			for(int i=0;i<checkMarks.Length;i++) {
-				checkMarks[i].gameObject.SetActive(false);
-			}
-		}
 
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
@@ -440,6 +430,11 @@ public class GameLayoutTracker : MonoBehaviour {
 			for(int knownObjectIndex=0; knownObjectIndex<robot.knownObjects.Count && validated.Count < layout.blocks.Count; knownObjectIndex++) {
 
 				ObservedObject newObject = robot.knownObjects[knownObjectIndex];
+
+				//cannot validate block in hand
+				if(newObject == robot.carryingObject) {
+					continue;
+				}
 
 				if(block.objectFamily != (int)newObject.Family) {
 					continue;
@@ -545,19 +540,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		block.AssignedObject = newObject;
 		block.Validated = true;
 		block.Highlighted = false;
-
-//		if(checkMarks != null) {
-//			for(int i=0;i<checkMarks.Length;i++) {
-//				if(checkMarks[i].gameObject.activeSelf) continue;
-//
-//				Vector3 screenPos = Camera.main.WorldToScreenPoint(block.transform.position);
-//				Vector2 anchorPos;
-//				RectTransformUtility.ScreenPointToLocalPointInRectangle(checkMarks[i].rectTransform, screenPos, Camera.main, out anchorPos);
-//				checkMarks[i].rectTransform.anchoredPosition = anchorPos;
-//
-//				break;
-//			}
-//		}
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
