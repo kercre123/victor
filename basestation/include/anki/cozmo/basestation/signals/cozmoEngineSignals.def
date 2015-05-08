@@ -72,5 +72,12 @@ DEF_SIGNAL(RobotCompletedAction,
            uint8_t numObjects)           // Optional
 
 
+DEF_SIGNAL(ActiveObjectMoved,
+           uint8_t  robotID,
+           uint32_t objectID,
+           float    xAccel,
+           float    yAccel,
+           float    zAccel,
+           uint8_t  upAxis);
 
 
