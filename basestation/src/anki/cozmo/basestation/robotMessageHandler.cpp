@@ -325,7 +325,7 @@ namespace Anki {
                                                             height, width,
                                                             (Vision::ImageEncoding_t)msg.imageEncoding,
                                                             msg.imageChunkCount,
-                                                            msg.chunkId, msg.data);
+                                                            msg.chunkId, msg.data, msg.chunkSize );
 
       CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);

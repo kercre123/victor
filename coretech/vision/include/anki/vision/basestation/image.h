@@ -138,7 +138,7 @@ namespace Vision {
     // Return true if image just completed and is available, false otherwise.
     bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
                      ImageEncoding_t encoding, u8 totalChunkCount,
-                     u8 chunkId, const std::array<u8, CHUNK_SIZE>& data);
+                     u8 chunkId, const std::array<u8, CHUNK_SIZE>& data, u32 chunkSize);
     
     bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
                      ImageEncoding_t encoding, u8 totalChunkCount,
