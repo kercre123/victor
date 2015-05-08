@@ -29,6 +29,7 @@ enum class MessageTag : uint8_t {
 	RobotCompletedAction,	// 12
 	PlaySound,	// 13
 	StopSound,	// 14
+	ActiveObjectMoved,	// 15
 	INVALID
 };
 
