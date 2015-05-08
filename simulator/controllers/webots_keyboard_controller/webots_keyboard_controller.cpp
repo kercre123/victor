@@ -376,7 +376,7 @@ namespace Anki {
       // Sends complete images to VizManager for visualization (and possible saving).
       void HandleImageChunk(G2U::ImageChunk const& msg)
       {
-        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data);
+        const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
         
         
         if(isImageReady)
@@ -427,6 +427,13 @@ namespace Anki {
 
       } // HandleImageChunk()
       
+      
+      void HandleActiveObjectMoved(G2U::ActiveObjectMoved const& msg)
+      {
+       PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%d\n",
+                        msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+      }
+      
       // ===== End of message handler callbacks ====
       
       
@@ -469,6 +476,9 @@ namespace Anki {
               break;
             case G2U::Message::Tag::RobotCompletedAction:
               HandleRobotCompletedAction(message.Get_RobotCompletedAction());
+              break;
+            case G2U::Message::Tag::ActiveObjectMoved:
+              HandleActiveObjectMoved(message.Get_ActiveObjectMoved());
               break;
             default:
               // ignore

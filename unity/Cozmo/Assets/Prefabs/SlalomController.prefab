@@ -797,6 +797,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  actionEnabledSounds:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   actionSprites:
   - {fileID: 0}
   - {fileID: 21300000, guid: ea50afe86c2ce4fa6b5f6a6d37ed2357, type: 3}
@@ -839,6 +849,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actionButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
+  actionEnabledSounds:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   actionSprites:
   - {fileID: 0}
   - {fileID: 21300000, guid: ea50afe86c2ce4fa6b5f6a6d37ed2357, type: 3}
@@ -1400,7 +1420,7 @@ MonoBehaviour:
     sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
   notificationAudio: {fileID: 8292068}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
-  scoreToWin: 6
+  scoreToWin: 30
   numPlayers: 1
   textScore: {fileID: 11473936}
   textError: {fileID: 0}
@@ -1422,9 +1442,9 @@ MonoBehaviour:
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
   endless: 1
-  trackWithCornerTriggers: 0
   textObservedCount: {fileID: 11475734}
   textProgress: {fileID: 11475692}
+  testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:
   m_ObjectHideFlags: 1

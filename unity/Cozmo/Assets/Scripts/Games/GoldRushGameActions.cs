@@ -6,22 +6,18 @@ public class GoldRushGameActions : GameActions {
 	//public override string TARGET { get { return "Search"; } }
 	//public override string PICK_UP { get { return "Pick Up"; } }
 	public override string DROP { get { return goldController.inExtractRange ? "Extract" : "Deposit"; } }
-	public override string STACK { get { return "Place Scanner"; } }
+	//public override string STACK { get { return "Place Scanner"; } }
 	//public override string ROLL { get { return "Roll"; } }
 	//public override string ALIGN { get { return "Align"; } }
 	//public override string CHANGE { get { return "Change"; } }
 	//public override string CANCEL { get { return "Cancel"; } }
-	
-	//protected override string TOP { get { return " TOP"; } }
-	//protected override string BOTTOM { get { return " BOTTOM"; } }
-	// Use this for initialization
+
 	[SerializeField] GoldRushController goldController;
 
 	protected override void Awake()
 	{
 		base.Awake();
 	}
-
 
 	/*
 	protected override void OnEnable ()
@@ -36,19 +32,15 @@ public class GoldRushGameActions : GameActions {
 	}
 	*/
 	
-	public override void SetActionButtons( bool isSlider = false ) // 0 is bottom button, 1 is top button, 2 is center button
+	protected override void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
 		if( goldController.state == GameController.GameState.BUILDING )
 		{
 			base.SetActionButtons( isSlider );
 			return;
 		}
-
-		if( ActionPanel.instance == null ) return;
 		
-		ActionPanel.instance.DisableButtons();
-		
-		if( robot == null || robot.isBusy ) return;
+		if( robot.isBusy ) return;
 
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{

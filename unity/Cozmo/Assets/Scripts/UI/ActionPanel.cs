@@ -26,7 +26,24 @@ public class ActionPanel : MonoBehaviour
 
 	public bool IsSmallScreen { get; protected set; }
 
-	public bool actionAvailable
+	public bool secondaryActionsAvailabe
+	{
+		get
+		{
+			for( int i = 0, count = 0; i < actionButtons.Length; ++i )
+			{
+				if( actionButtons[i].mode != ActionButton.Mode.DISABLED )
+				{
+					++count;
+					if( count > 1 ) return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
+	public bool nonSearchActionAvailable
 	{
 		get
 		{
@@ -63,6 +80,10 @@ public class ActionPanel : MonoBehaviour
 
 	public void DisableButtons() {
 		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetMode(ActionButton.Mode.DISABLED, null);
+	}
+
+	public void SetLastButtons() {
+		for(int i=0; i<actionButtons.Length; i++) actionButtons[i].SetLastMode();
 	}
 
 	protected virtual void OnEnable()

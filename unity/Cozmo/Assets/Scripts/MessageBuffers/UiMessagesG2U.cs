@@ -2293,6 +2293,168 @@ public class StopSound
 
 }
 
+public class ActiveObjectMoved
+{
+	private uint _objectID; // uint_32
+	private float _xAccel; // float_32
+	private float _yAccel; // float_32
+	private float _zAccel; // float_32
+	private byte _robotID; // uint_8
+	private byte _upAxis; // uint_8
+
+	public uint objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public float xAccel { get { return _xAccel; } set { _xAccel = value; } }
+
+	public float yAccel { get { return _yAccel; } set { _yAccel = value; } }
+
+	public float zAccel { get { return _zAccel; } set { _zAccel = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public byte upAxis { get { return _upAxis; } set { _upAxis = value; } }
+
+
+	/**** Constructors ****/
+
+	public ActiveObjectMoved()
+	{
+	}
+
+	public ActiveObjectMoved(uint objectID,
+		float xAccel,
+		float yAccel,
+		float zAccel,
+		byte robotID,
+		byte upAxis)
+	{
+		this.objectID = objectID;
+		this.xAccel = xAccel;
+		this.yAccel = yAccel;
+		this.zAccel = zAccel;
+		this.robotID = robotID;
+		this.upAxis = upAxis;
+	}
+
+	public ActiveObjectMoved(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public ActiveObjectMoved(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadUInt32();
+		_xAccel = reader.ReadSingle();
+		_yAccel = reader.ReadSingle();
+		_zAccel = reader.ReadSingle();
+		_robotID = reader.ReadByte();
+		_upAxis = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_objectID);
+		writer.Write((float)_xAccel);
+		writer.Write((float)_yAccel);
+		writer.Write((float)_zAccel);
+		writer.Write((byte)_robotID);
+		writer.Write((byte)_upAxis);
+	}
+
+	public int Size 
+	{
+		get {
+			return 18;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ActiveObjectMoved a, ActiveObjectMoved b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ActiveObjectMoved a, ActiveObjectMoved b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ActiveObjectMoved);
+	}
+
+	public bool Equals(ActiveObjectMoved p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._objectID.Equals(p._objectID)
+			&& this._xAccel.Equals(p._xAccel)
+			&& this._yAccel.Equals(p._yAccel)
+			&& this._zAccel.Equals(p._zAccel)
+			&& this._robotID.Equals(p._robotID)
+			&& this._upAxis.Equals(p._upAxis);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._objectID.GetHashCode();
+			hash = hash * 23 + this._xAccel.GetHashCode();
+			hash = hash * 23 + this._yAccel.GetHashCode();
+			hash = hash * 23 + this._zAccel.GetHashCode();
+			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._upAxis.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class Message {
 	public enum Tag {
 		Ping,	//0
@@ -2310,6 +2472,7 @@ public class Message {
 		RobotCompletedAction,	//12
 		PlaySound,	//13
 		StopSound,	//14
+		ActiveObjectMoved,	//15
 		INVALID
 	};
 
@@ -2574,6 +2737,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.G2U.ActiveObjectMoved ActiveObjectMoved
+	{
+		get {
+			if (_tag != Tag.ActiveObjectMoved) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"ActiveObjectMoved\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.G2U.ActiveObjectMoved)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.ActiveObjectMoved : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	/**** Constructors ****/
 
 	public Message()
@@ -2644,6 +2824,9 @@ public class Message {
 			break;
 		case Tag.StopSound:
 			StopSound = new Anki.Cozmo.G2U.StopSound(reader);
+			break;
+		case Tag.ActiveObjectMoved:
+			ActiveObjectMoved = new Anki.Cozmo.G2U.ActiveObjectMoved(reader);
 			break;
 		default:
 			break;
@@ -2752,6 +2935,12 @@ public class Message {
 			}
 			StopSound.Pack(writer);
 			break;
+		case Tag.ActiveObjectMoved:
+			if (ActiveObjectMoved == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			ActiveObjectMoved.Pack(writer);
+			break;
 		default:
 			break;
 		}
@@ -2851,6 +3040,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += StopSound.Size;
+				break;
+			case Tag.ActiveObjectMoved:
+				if (ActiveObjectMoved == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += ActiveObjectMoved.Size;
 				break;
 			default:
 				// Just tag size

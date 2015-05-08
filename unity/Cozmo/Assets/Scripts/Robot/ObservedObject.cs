@@ -27,12 +27,12 @@ public class Light
 		NONE              = 0,
 		TOP_NORTH_WEST    = 0x01,
 		TOP_NORTH_EAST    = 0x10,
-		TOP_SOUTH_EAST    = 0x02,
-		TOP_SOUTH_WEST    = 0x20,
+		TOP_SOUTH_WEST    = 0x02,
+		TOP_SOUTH_EAST    = 0x20,
 		BOTTOM_NORTH_WEST = 0x04,
 		BOTTOM_NORTH_EAST = 0x40,
-		BOTTOM_SOUTH_EAST = 0x08,
-		BOTTOM_SOUTH_WEST = 0x80,
+		BOTTOM_SOUTH_WEST = 0x08,
+		BOTTOM_SOUTH_EAST = 0x80,
 		ALL = 0xff
 	};
 
@@ -43,19 +43,19 @@ public class Light
 			case 0:
 				return PositionFlag.TOP_NORTH_WEST;
 			case 1:
-				return PositionFlag.TOP_SOUTH_EAST;
+				return PositionFlag.TOP_SOUTH_WEST;
 			case 2:
 				return PositionFlag.BOTTOM_NORTH_WEST;
 			case 3:
-				return PositionFlag.BOTTOM_SOUTH_EAST;
+				return PositionFlag.BOTTOM_SOUTH_WEST;
 			case 4:
 				return PositionFlag.TOP_NORTH_EAST;
 			case 5:
-				return PositionFlag.TOP_SOUTH_WEST;
+				return PositionFlag.TOP_SOUTH_EAST;
 			case 6:
 				return PositionFlag.BOTTOM_NORTH_EAST;
 			case 7:
-				return PositionFlag.BOTTOM_SOUTH_WEST;
+				return PositionFlag.BOTTOM_SOUTH_EAST;
 			case 8:
 				return PositionFlag.ALL;
 		}
@@ -63,21 +63,38 @@ public class Light
 		return PositionFlag.NONE;
 	}
 
+	public static int GetIndexForCornerClosestToAngle(float angleFromEast, bool top=true) {
+
+		//north west
+		if(angleFromEast >= 0f && angleFromEast < 90f) return top ? 0 : 2;
+
+		//south west
+		if(angleFromEast >= 90f && angleFromEast < 180f) return top ? 1 : 3;
+
+		//north east
+		if(angleFromEast < 0f && angleFromEast > -90f) return top ? 4 : 6;
+
+		//south east
+		if(angleFromEast < -90f && angleFromEast > -180f) return top ? 5 : 7;
+
+		return 0;
+	}
+
 	private ObservedObject observedObject;
 	private PositionFlag position;
 
-	private uint _onColor;
-	public uint onColor { get { return _onColor; } set { Set( value, ref _onColor ); } }
-	private uint _offColor;
-	public uint offColor { get { return _offColor; } set { Set( value, ref _offColor ); } }
-	private uint _onPeriod_ms;
-	public uint onPeriod_ms { get { return _onPeriod_ms; } set { Set( value, ref _onPeriod_ms ); } }
-	private uint _offPeriod_ms;
-	public uint offPeriod_ms { get { return _offPeriod_ms; } set { Set( value, ref _offPeriod_ms ); } }
-	private uint _transitionOnPeriod_ms;
-	public uint transitionOnPeriod_ms { get { return _transitionOnPeriod_ms; } set { Set( value, ref _transitionOnPeriod_ms ); } }
-	private uint _transitionOffPeriod_ms;
-	public uint transitionOffPeriod_ms { get { return _transitionOffPeriod_ms; } set { Set( value, ref _transitionOffPeriod_ms ); } }
+	private uint lastOnColor;
+	public uint onColor;
+	private uint lastOffColor;
+	public uint offColor;
+	private uint lastOnPeriod_ms;
+	public uint onPeriod_ms;
+	private uint lastOffPeriod_ms;
+	public uint offPeriod_ms;
+	private uint lastTransitionOnPeriod_ms;
+	public uint transitionOnPeriod_ms;
+	private uint lastTransitionOffPeriod_ms;
+	public uint transitionOffPeriod_ms;
 
 	public Light( ObservedObject observedObject, int position )
 	{
@@ -85,19 +102,28 @@ public class Light
 		this.position = IndexToPosition( position );
 	}
 
-	private void Set( uint newValue, ref uint oldValue )
-	{
-		if( newValue != oldValue )
-		{
-			oldValue = newValue;
-
-			observedObject.lightsChanged = true;
-		}
-	}
-
 	public bool Position( PositionFlag s )
 	{
 		return (position | s) == s;
+	}
+
+	public void SetLastInfo()
+	{
+		lastOnColor = onColor;
+		lastOffColor = offColor;
+		lastOnPeriod_ms = onPeriod_ms;
+		lastOffPeriod_ms = offPeriod_ms;
+		lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
+		lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
+	}
+
+	public bool changed
+	{
+		get
+		{
+			return lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
+				lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
+		}
 	}
 }
 
@@ -117,43 +143,84 @@ public class ObservedObject
 	public Quaternion Rotation { get; private set; }
 	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
+	public Vector3 TopNorth {
+		get {
+			return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * Vector2.right;
+		}
+	}
+	public Vector3 TopEast {
+		get {
+			return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * -Vector2.up;
+		}
+	}
+	public Vector3 TopNorthEast {
+		get {
+			return (TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthEast {
+		get {
+			return (-TopNorth + TopEast).normalized;
+		}
+	}
+	public Vector3 TopSouthWest {
+		get {
+			return (-TopNorth - TopEast).normalized;
+		}
+	}
+	public Vector3 TopNorthWest {
+		get {
+			return (TopNorth - TopEast).normalized;
+		}
+	}
+
+	public float TopFaceNorthAngle { get; private set; }
 
 	public Vector3 Size { get; private set; }
 	public float TimeLastSeen { get; private set; }
 	public float TimeCreated { get; private set; }
 
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public uint Color { get; private set; }
 
 	public Light[] lights { get; private set; }
-	public bool lightsChanged;
 
-	private byte _relativeMode;
-	public byte relativeMode { get { return _relativeMode; } set { Set( value, ref _relativeMode ); } }
-
-	private float _relativeToX;
-	public float relativeToX { get { return _relativeToX; } set { Set( value, ref _relativeToX ); } }
-	private float _relativeToY;
-	public float relativeToY { get { return _relativeToY; } set { Set( value, ref _relativeToY ); } }
-
-	private void Set( byte newValue, ref byte oldValue )
+	public bool lightsChanged
 	{
-		if( newValue != oldValue )
+		get
 		{
-			oldValue = newValue;
-			
-			lightsChanged = true;
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
+
+			for( int i = 0; i < lights.Length; ++i )
+			{
+				if( lights[i].changed ) return true;
+			}
+
+			return false;
 		}
 	}
 
-	private void Set( float newValue, ref float oldValue )
+	public bool canBeStackedOn
 	{
-		if( newValue != oldValue )
+		get
 		{
-			oldValue = newValue;
-			
-			lightsChanged = true;
+			if( robot.selectedObjects.Count > 1 ) return false; // if blocks stacked on each other
+
+			float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
+			float height = Mathf.Abs( WorldPosition.z - robot.WorldPosition.z );
+		
+			return distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f && height < CozmoUtil.BLOCK_LENGTH_MM;
 		}
 	}
+
+	private byte lastRelativeMode;
+	public byte relativeMode;
+
+	private float lastRelativeToX;
+	public float relativeToX;
+	private float lastRelativeToY;
+	public float relativeToY;
 
 	public ActiveBlockType activeBlockType = ActiveBlockType.Off;
 
@@ -222,13 +289,13 @@ public class ObservedObject
 		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );
 		Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
 
+		TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
+
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
 
 	public void SetAllActiveObjectLEDs() // should only be called from update loop
 	{
-		lightsChanged = false;
-
 		if( Family != 3 )
 		{
 			Debug.LogWarning( "Cannot send light message for non active block " + ID );
@@ -252,9 +319,23 @@ public class ObservedObject
 		message.relativeToX = relativeToX;
 		message.relativeToY = relativeToY;
 
-		Debug.Log( "SetAllActiveObjectLEDs for " + ID );
+		Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
 		
 		RobotEngineManager.instance.channel.Send( new U2G.Message{ SetAllActiveObjectLEDs = message } );
+
+		SetLastActiveObjectLEDs();
+	}
+
+	private void SetLastActiveObjectLEDs()
+	{
+		lastRelativeMode = relativeMode;
+		lastRelativeToX = relativeToX;
+		lastRelativeToY = relativeToY;
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i].SetLastInfo();
+		}
 	}
 
 	public void SetActiveObjectLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 

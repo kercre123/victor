@@ -55,7 +55,6 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private string imageBasePath;
 	private AsyncCallback EndSave_callback;
-
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -90,31 +89,6 @@ public class RobotEngineManager : MonoBehaviour {
 			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
 			if (result != CozmoResult.OK) {
 				Debug.LogError("cozmo_engine_destroy error: " + result.ToString(), this);
-			}
-		}
-	}
-	
-	// should be update; but this makes it easier to split up
-	private void LateUpdate()
-	{
-		if (logBuilder == null) {
-			logBuilder = new StringBuilder (1024);
-		}
-		
-		int length;
-		while (CozmoBinding.cozmo_has_log(out length)) {
-			if (logBuilder.Capacity < length) {
-				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
-			}
-			
-			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
-			Debug.LogError (logBuilder.ToString (), this);
-		}
-		
-		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
-			if (result != CozmoResult.OK) {
-				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
 		}
 	}
@@ -226,7 +200,35 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 			}
 		}
+#if !UNITY_EDITOR
+		if (logBuilder == null) {
+			logBuilder = new StringBuilder (1024);
+		}
+		
+		int length;
+		while (CozmoBinding.cozmo_has_log(out length)) {
+			if (logBuilder.Capacity < length) {
+				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
+			}
+			
+			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
+			Debug.LogError (logBuilder.ToString (), this);
+		}
+		
+		if (engineHostInitialized) {
+			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
+			if (result != CozmoResult.OK) {
+				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
+			}
+		}
+#endif
+	}
 
+	public void LateUpdate()
+	{
+		if( current == null ) return;
+
+		current.UpdateLightMessages();
 	}
 	
 	public void Connect(string engineIP)
@@ -489,9 +491,34 @@ public class RobotEngineManager : MonoBehaviour {
 	private int currentChunkIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
 	private UInt32 currentImageFrameTimeStamp = UInt32.MaxValue;
-	private Color32[] grayArray;
-	private byte[] colorArray;
-	
+	private Color32[] color32Array;
+	private byte[] jpegArray;
+	private byte[] minipegArray;
+	private readonly byte[] header = new byte[]
+	{
+		0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 
+		0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x10, 0x0B, 0x0C, 0x0E, 0x0C, 0x0A, 0x10, // 0x19 = QTable
+		0x0E, 0x0D, 0x0E, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28, 0x1A, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 
+		0x25, 0x1D, 0x28, 0x3A, 0x33, 0x3D, 0x3C, 0x39, 0x33, 0x38, 0x37, 0x40, 0x48, 0x5C, 0x4E, 0x40, 
+		0x44, 0x57, 0x45, 0x37, 0x38, 0x50, 0x6D, 0x51, 0x57, 0x5F, 0x62, 0x67, 0x68, 0x67, 0x3E, 0x4D, 
+		0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0xF0, // 0x5E = Height x Width
+		0x01, 0x40, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 
+		0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 
+		0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 
+		0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 
+		0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07, 0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08, 
+		0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0, 0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16, 
+		0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 
+		0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 
+		0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 
+		0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 
+		0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 
+		0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 
+		0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 
+		0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 
+		0x00, 0x00, 0x3F, 0x00
+	};
+ 
 	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
 		switch( (ImageEncoding_t)message.imageEncoding )
@@ -502,30 +529,114 @@ public class RobotEngineManager : MonoBehaviour {
 			case ImageEncoding_t.IE_RAW_GRAY:
 				GrayRaw( message );
 				break;
+			case ImageEncoding_t.IE_MINIPEG_GRAY:
+				MinipegGray( message );
+				break;
 			default:
 				Debug.LogWarning( (ImageEncoding_t)message.imageEncoding + " is not supported", this );
 				break;
 		}
 	}
 
+	private void MinipegGray( G2U.ImageChunk message )
+	{
+		if( minipegArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		{
+			currentImageID = message.imageId;
+			currentImageFrameTimeStamp = message.frameTimeStamp;
+			
+			int length = message.chunkSize * message.imageChunkCount;
+			
+			if( minipegArray == null || minipegArray.Length < length )
+			{
+				minipegArray = new byte[ length ];
+			}
+
+			length = minipegArray.Length * 2 + header.Length;
+			
+			if( jpegArray == null || jpegArray.Length < length )
+			{
+				// Allocate enough space for worst case expansion
+				jpegArray = new byte[ length ];
+			}
+
+			currentImageIndex = 0;
+			currentChunkIndex = 0;
+		}
+		
+		for( int messageIndex = 0; currentImageIndex < minipegArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		{
+			minipegArray[ currentImageIndex ] = message.data[ messageIndex ];
+		}
+		
+		if( ++currentChunkIndex == message.imageChunkCount )
+		{
+			int width = message.ncols;
+			int height = message.nrows;
+			
+			if( texture == null || texture.width != width || texture.height != height )
+			{
+				if( texture != null )
+				{
+					Destroy( texture );
+					texture = null;
+				}
+				
+				texture = new Texture2D( width, height, TextureFormat.RGB24, false );
+			}
+
+			MiniGrayToJpeg( minipegArray, ref jpegArray );
+
+			texture.LoadImage( jpegArray );
+			
+			if( RobotImage != null )
+			{
+				RobotImage( texture );
+				
+				current.ClearObservedObjects();
+			}
+			
+			SaveJpeg( jpegArray, currentImageIndex );
+		}
+	}
+
+	private void MiniGrayToJpeg( byte[] inArray, ref byte[] outArray )
+	{
+		int off = header.Length;
+		Array.Copy( header, outArray, off );
+		
+		// Fetch quality
+		//int qual = inArray[0];
+		
+		// Add byte stuffing - one 0 after each 0xff
+		for( int i = 1; i < inArray.Length; ++i )
+		{
+			outArray[off++] = inArray[i];
+			if( inArray[i] == 0xff ) outArray[off++] = 0;
+		}
+		
+		outArray[off++] = 0xFF;
+		outArray[off++] = 0xD9;
+	}
+
 	private void GrayRaw( G2U.ImageChunk message )
 	{
-		if( grayArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		if( color32Array == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 			
 			int length = message.ncols * message.nrows;
 			
-			if( grayArray == null || grayArray.Length < length )
+			if( color32Array == null || color32Array.Length < length )
 			{
-				grayArray = new Color32[ length ];
+				color32Array = new Color32[ length ];
 			}
 			
 			currentImageIndex = 0;
 		}
 		
-		for( int messageIndex = 0; currentImageIndex < grayArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		for( int messageIndex = 0; currentImageIndex < color32Array.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
 			byte gray = message.data[ messageIndex ];
 			
@@ -533,10 +644,10 @@ public class RobotEngineManager : MonoBehaviour {
 			int y = currentImageIndex / message.ncols;
 			int index = message.ncols * ( message.nrows - y - 1 ) + x;
 			
-			grayArray[ index ] = new Color32( gray, gray, gray, 255 );
+			color32Array[ index ] = new Color32( gray, gray, gray, 255 );
 		}
 		
-		if( currentImageIndex == grayArray.Length )
+		if( currentImageIndex == color32Array.Length )
 		{
 			int width = message.ncols;
 			int height = message.nrows;
@@ -552,7 +663,7 @@ public class RobotEngineManager : MonoBehaviour {
 				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
 			}
 			
-			texture.SetPixels32( grayArray );
+			texture.SetPixels32( color32Array );
 			texture.Apply( false );
 			
 			if( RobotImage != null )
@@ -566,25 +677,25 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ColorJpeg( G2U.ImageChunk message )
 	{
-		if( colorArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
+		if( jpegArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp )
 		{
 			currentImageID = message.imageId;
 			currentImageFrameTimeStamp = message.frameTimeStamp;
 
 			int length = message.chunkSize * message.imageChunkCount;
 			
-			if( colorArray == null || colorArray.Length < length )
+			if( jpegArray == null || jpegArray.Length < length )
 			{
-				colorArray = new byte[ length ];
+				jpegArray = new byte[ length ];
 			}
 			
 			currentImageIndex = 0;
 			currentChunkIndex = 0;
 		}
 		
-		for( int messageIndex = 0; currentImageIndex < colorArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
+		for( int messageIndex = 0; currentImageIndex < jpegArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
 		{
-			colorArray[ currentImageIndex ] = message.data[ messageIndex ];
+			jpegArray[ currentImageIndex ] = message.data[ messageIndex ];
 		}
 
 		if( ++currentChunkIndex == message.imageChunkCount )
@@ -603,7 +714,7 @@ public class RobotEngineManager : MonoBehaviour {
 				texture = new Texture2D( width, height, TextureFormat.RGB24, false );
 			}
 
-			texture.LoadImage( colorArray );
+			texture.LoadImage( jpegArray );
 			
 			if( RobotImage != null )
 			{
@@ -612,7 +723,7 @@ public class RobotEngineManager : MonoBehaviour {
 				current.ClearObservedObjects();
 			}
 
-			SaveJpeg(colorArray, currentImageIndex);
+			SaveJpeg( jpegArray, currentImageIndex );
 		}
 	}
 
@@ -762,6 +873,7 @@ public class RobotEngineManager : MonoBehaviour {
 		IE_BAYER,
 		IE_JPEG_GRAY,
 		IE_JPEG_COLOR,
-		IE_WEBP
+		IE_JPEG_CHW, // Color half width
+		IE_MINIPEG_GRAY   // Minimized grayscale JPEG - no header, no footer, no byte stuffing
 	}
 }

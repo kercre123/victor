@@ -54,6 +54,10 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		if(hint != null) hint.gameObject.SetActive(dynamic);
 	}
 
+	void OnDisable() {
+		if(dynamic) slider.gameObject.SetActive(false);
+	}
+
 	public void OnPointerDown(PointerEventData eventData) {
 		if(dynamic) {
 			Vector2 pointerPos = eventData.position * screenScaleFactor;
