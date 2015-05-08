@@ -216,8 +216,6 @@ public class GoldRushController : GameController {
 		SetEnergyBars (0, 0);
 	}
 
-
-	
 	protected override void Update_PLAYING() 
 	{
 		base.Update_PLAYING();
@@ -283,7 +281,8 @@ public class GoldRushController : GameController {
 		//hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
 		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
 		{
-			PlayNotificationAudio (pickupEnergyScanner);
+			//PlayNotificationAudio (pickupEnergyScanner);
+			robot.PickAndPlaceObject(goldExtractingObject);
 		}
 	}
 	
