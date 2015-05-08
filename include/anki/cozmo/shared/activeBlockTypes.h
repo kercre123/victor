@@ -77,6 +77,18 @@ namespace Cozmo {
   // This must be larger than the flash pattern duration on the block!
   const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;
   
+    
+  typedef enum {
+    UP_AXIS_UNKNOWN = -1,
+    UP_AXIS_Xneg = 0,
+    UP_AXIS_Xpos,
+    UP_AXIS_Yneg,
+    UP_AXIS_Ypos,
+    UP_AXIS_Zneg,
+    UP_AXIS_Zpos,
+    NUM_UP_AXES
+  } UpAxis;
+    
 } // namespace Cozmo
 } // namespace Anki
 

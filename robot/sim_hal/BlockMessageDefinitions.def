@@ -44,4 +44,5 @@ ADD_MESSAGE_MEMBER(s32, blockID)
 ADD_MESSAGE_MEMBER(f32, xAccel)
 ADD_MESSAGE_MEMBER(f32, yAccel)
 ADD_MESSAGE_MEMBER(f32, zAccel)
+ADD_MESSAGE_MEMBER(u8,  upAxis) // See UpAxis type in ActiveBlockTypes.h
 END_MESSAGE_DEFINITION(BlockMoved)
