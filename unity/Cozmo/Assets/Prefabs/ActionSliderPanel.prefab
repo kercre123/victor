@@ -908,7 +908,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .443137258, g: .741176486, b: .862745106, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: .196078435}
   m_FontData:
     m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 20
@@ -1253,6 +1253,7 @@ MonoBehaviour:
   dynamicSliderFrame: {fileID: 11477794}
   slideInSound: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   slideOutSound: {fileID: 8300000, guid: 56872f4de5dba4c4b97de279c2fe42b2, type: 3}
+  background: {fileID: 177792}
 --- !u!114 &11479264
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1307,7 +1308,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .443137258, g: .741176486, b: .862745106, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: .196078435}
   m_FontData:
     m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 20
@@ -1333,7 +1334,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .443137258, g: .741176486, b: .862745106, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: .196078435}
   m_FontData:
     m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
     m_FontSize: 20

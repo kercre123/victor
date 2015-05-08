@@ -67,6 +67,7 @@ public class ActionSliderPanel : ActionPanel
 	[SerializeField] private DynamicSliderFrame dynamicSliderFrame;
 	[SerializeField] private AudioClip slideInSound;
 	[SerializeField] private AudioClip slideOutSound;
+	[SerializeField] private GameObject background;
 
 	private ActionButton bottomAction { get { return actionButtons[0]; } }
 	private ActionButton topAction { get { return actionButtons[1]; } }
@@ -105,7 +106,7 @@ public class ActionSliderPanel : ActionPanel
 
 		if(actionSlider != null) actionSlider.SetHints();
 		
-		if(robot == null || robot.isBusy || GameActions.instance == null || GameActions.instance.allButtonsDisabled) {
+		if(robot == null || robot.isBusy || allDisabled) {
 			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
 			upLastFrame = true;
 			downLastFrame = false;
@@ -113,8 +114,15 @@ public class ActionSliderPanel : ActionPanel
 			RefreshSliderMode();
 			return;
 		}
+
+		if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = true;
+
+		if(!secondaryActionsAvailabe) {
+			if(background != null) background.SetActive(false);
+			actionSlider.slider.value = 0f;
+		}
 		else {
-			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = true;
+			if(background != null) background.SetActive(true);
 		}
 
 		if(!actionSlider.Pressed) {
