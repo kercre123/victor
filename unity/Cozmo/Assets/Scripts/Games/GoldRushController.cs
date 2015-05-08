@@ -781,7 +781,7 @@ public class GoldRushController : GameController {
 		numDrops++;
 		scores[0]+= 10 * numDrops;
 
-		if( scores < 2760 )
+		if( scores[0] < 2760 )
 		{
 			PlayNotificationAudio(points);
 			yield return new WaitForSeconds(points.length+.05f);
