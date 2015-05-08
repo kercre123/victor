@@ -706,6 +706,55 @@ struct StopSound
 	bool operator!=(const StopSound& other) const;
 };
 
+// MESSAGE ActiveObjectMoved
+struct ActiveObjectMoved
+{
+	uint32_t objectID;
+	float xAccel;
+	float yAccel;
+	float zAccel;
+	uint8_t robotID;
+	uint8_t upAxis;
+	
+	/**** Constructors ****/
+	ActiveObjectMoved() = default;
+	ActiveObjectMoved(const ActiveObjectMoved& other) = default;
+	ActiveObjectMoved(ActiveObjectMoved& other) = default;
+	ActiveObjectMoved(ActiveObjectMoved&& other) noexcept = default;
+	ActiveObjectMoved& operator=(const ActiveObjectMoved& other) = default;
+	ActiveObjectMoved& operator=(ActiveObjectMoved&& other) noexcept = default;
+	
+	explicit ActiveObjectMoved(uint32_t objectID
+		,float xAccel
+		,float yAccel
+		,float zAccel
+		,uint8_t robotID
+		,uint8_t upAxis)
+	:objectID(objectID)
+	,xAccel(xAccel)
+	,yAccel(yAccel)
+	,zAccel(zAccel)
+	,robotID(robotID)
+	,upAxis(upAxis)
+	{}
+
+	explicit ActiveObjectMoved(const uint8_t* buff, size_t len);
+	explicit ActiveObjectMoved(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ActiveObjectMoved& other) const;
+	bool operator!=(const ActiveObjectMoved& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -794,6 +843,11 @@ public:
 	void Set_StopSound(const Anki::Cozmo::G2U::StopSound& new_StopSound);
 	void Set_StopSound(Anki::Cozmo::G2U::StopSound&& new_StopSound);
 
+	/** ActiveObjectMoved **/
+	const Anki::Cozmo::G2U::ActiveObjectMoved& Get_ActiveObjectMoved() const;
+	void Set_ActiveObjectMoved(const Anki::Cozmo::G2U::ActiveObjectMoved& new_ActiveObjectMoved);
+	void Set_ActiveObjectMoved(Anki::Cozmo::G2U::ActiveObjectMoved&& new_ActiveObjectMoved);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -822,6 +876,7 @@ private:
 		Anki::Cozmo::G2U::RobotCompletedAction _RobotCompletedAction;
 		Anki::Cozmo::G2U::PlaySound _PlaySound;
 		Anki::Cozmo::G2U::StopSound _StopSound;
+		Anki::Cozmo::G2U::ActiveObjectMoved _ActiveObjectMoved;
 	};
 };
 

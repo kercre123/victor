@@ -1204,6 +1204,91 @@ bool StopSound::operator!=(const StopSound& other) const
 }
 
 
+// MESSAGE ActiveObjectMoved
+
+ActiveObjectMoved::ActiveObjectMoved(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ActiveObjectMoved::ActiveObjectMoved(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ActiveObjectMoved::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ActiveObjectMoved::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->xAccel);
+	buffer.Write(this->yAccel);
+	buffer.Write(this->zAccel);
+	buffer.Write(this->robotID);
+	buffer.Write(this->upAxis);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ActiveObjectMoved::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ActiveObjectMoved::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->xAccel);
+	buffer.Read(this->yAccel);
+	buffer.Read(this->zAccel);
+	buffer.Read(this->robotID);
+	buffer.Read(this->upAxis);
+	return buffer.GetBytesRead();
+}
+
+size_t ActiveObjectMoved::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//xAccel
+	result += 4; // = float_32
+	//yAccel
+	result += 4; // = float_32
+	//zAccel
+	result += 4; // = float_32
+	//robotID
+	result += 1; // = uint_8
+	//upAxis
+	result += 1; // = uint_8
+	return result;
+}
+
+bool ActiveObjectMoved::operator==(const ActiveObjectMoved& other) const
+{
+	if (objectID != other.objectID
+	|| xAccel != other.xAccel
+	|| yAccel != other.yAccel
+	|| zAccel != other.zAccel
+	|| robotID != other.robotID
+	|| upAxis != other.upAxis) {
+		return false;
+	}
+	return true;
+}
+
+bool ActiveObjectMoved::operator!=(const ActiveObjectMoved& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -1238,6 +1323,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "PlaySound";
 	case MessageTag::StopSound:
 		return "StopSound";
+	case MessageTag::ActiveObjectMoved:
+		return "ActiveObjectMoved";
 	default:
 		return "INVALID";
 	}
@@ -1689,6 +1776,35 @@ void Message::Set_StopSound(Anki::Cozmo::G2U::StopSound&& new_StopSound)
 }
 
 
+const Anki::Cozmo::G2U::ActiveObjectMoved& Message::Get_ActiveObjectMoved() const
+{
+	assert(_tag == Tag::ActiveObjectMoved);
+	return _ActiveObjectMoved;
+}
+void Message::Set_ActiveObjectMoved(const Anki::Cozmo::G2U::ActiveObjectMoved& new_ActiveObjectMoved)
+{
+	if(this->_tag == Tag::ActiveObjectMoved) {
+		_ActiveObjectMoved = new_ActiveObjectMoved;
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectMoved) Anki::Cozmo::G2U::ActiveObjectMoved{new_ActiveObjectMoved};
+		_tag = Tag::ActiveObjectMoved;
+	}
+}
+void Message::Set_ActiveObjectMoved(Anki::Cozmo::G2U::ActiveObjectMoved&& new_ActiveObjectMoved)
+{
+	if(this->_tag == Tag::ActiveObjectMoved) {
+		_ActiveObjectMoved = std::move(new_ActiveObjectMoved);
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectMoved) Anki::Cozmo::G2U::ActiveObjectMoved{std::move(new_ActiveObjectMoved)};
+		_tag = Tag::ActiveObjectMoved;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -1824,6 +1940,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_StopSound.Unpack(buffer);
 		}
 		break;
+	case Tag::ActiveObjectMoved:
+		if (newTag != oldTag) {
+			new(&(this->_ActiveObjectMoved)) Anki::Cozmo::G2U::ActiveObjectMoved(buffer);
+		}
+		else {
+			this->_ActiveObjectMoved.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -1886,6 +2010,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::StopSound:
 		this->_StopSound.Pack(buffer);
 		break;
+	case Tag::ActiveObjectMoved:
+		this->_ActiveObjectMoved.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -1942,6 +2069,9 @@ size_t Message::Size() const
 	case Tag::StopSound:
 		result += _StopSound.Size();
 		break;
+	case Tag::ActiveObjectMoved:
+		result += _ActiveObjectMoved.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -1996,6 +2126,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::StopSound:
 		_StopSound.~StopSound();
+		break;
+	case Tag::ActiveObjectMoved:
+		_ActiveObjectMoved.~ActiveObjectMoved();
 		break;
 	default:
 		break;
