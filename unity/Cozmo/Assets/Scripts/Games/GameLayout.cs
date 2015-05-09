@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class GameLayout : MonoBehaviour {
 
-	[SerializeField] public Camera previewCamera;
 	[SerializeField] public string gameName = "Unknown";
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();

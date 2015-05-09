@@ -1,2 +1,1 @@
-/nologo:"@ symbol means include, relative to the asset file"
 @Assets/smcs.rsp

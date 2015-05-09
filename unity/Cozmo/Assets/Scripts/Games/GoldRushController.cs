@@ -23,6 +23,8 @@ public class GoldRushController : GameController {
 	[SerializeField] protected AudioClip newHighScore;
 
 	[SerializeField] protected AudioClip timeExtension;
+	[SerializeField] protected AudioClip[] scoreSounds;
+	[SerializeField] protected AudioClip points;
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
 	public float light_messaging_delay = .05f;
@@ -763,11 +765,31 @@ public class GoldRushController : GameController {
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
 		// PlayNotificationAudio (collectedSound);
 		// award points
+
+		robot.isBusy = false;
+
+		yield return new WaitForSeconds(depositTrimTime);
+
+
+		if( numDrops < scoreSounds.Length )
+		{
+			PlayNotificationAudio(scoreSounds[numDrops]);
+			yield return new WaitForSeconds(scoreSounds[numDrops].length+.05f);
+		}
+		else
+		{
+			PlayNotificationAudio(scoreSounds[scoreSounds.Length-1]);
+			yield return new WaitForSeconds(scoreSounds[scoreSounds.Length-1].length+.05f);
+		}
+
 		numDrops++;
 		scores[0]+= 10 * numDrops;
 
-		robot.isBusy = false;
-		yield return new WaitForSeconds(depositTrimTime);
+		if( scores[0] < 2760 )
+		{
+			PlayNotificationAudio(points);
+			yield return new WaitForSeconds(points.length+.05f);
+		}
 
 		if( scores[0] > oldHighScore && !setHighScore )
 		{
