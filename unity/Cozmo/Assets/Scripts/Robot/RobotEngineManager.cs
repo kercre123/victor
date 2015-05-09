@@ -33,7 +33,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<string> ConnectedToClient;
 	public event Action<DisconnectionReason> DisconnectedFromClient;
 	public event Action<int> RobotConnected;
-	public event Action<Texture2D> RobotImage;
+	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
 
 	public ChannelBase channel { get; private set; }
@@ -487,6 +487,9 @@ public class RobotEngineManager : MonoBehaviour {
 	}
 	
 	private Texture2D texture;
+	private TextureFormat textureFormat;
+	private Sprite sprite;
+	private Vector2 spritePivot = new Vector2 (.5f, .5f);
 	private int currentImageIndex;
 	private int currentChunkIndex;
 	private UInt32 currentImageID = UInt32.MaxValue;
@@ -518,6 +521,26 @@ public class RobotEngineManager : MonoBehaviour {
 		0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 
 		0x00, 0x00, 0x3F, 0x00
 	};
+
+	private void ResetTexture(int width, int height, TextureFormat format)
+	{
+		if( texture == null || sprite == null || texture.width != width || texture.height != height )
+		{
+			if( texture != null )
+			{
+				Destroy( texture );
+				texture = null;
+			}
+			
+			if (sprite != null) {
+				Destroy (sprite);
+				sprite = null;
+			}
+			
+			texture = new Texture2D( width, height, format, false );
+			sprite = Sprite.Create (texture, new Rect(0, 0, width, height), spritePivot);
+		}
+	}
  
 	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
@@ -564,26 +587,13 @@ public class RobotEngineManager : MonoBehaviour {
 			currentChunkIndex = 0;
 		}
 		
-		for( int messageIndex = 0; currentImageIndex < minipegArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
-		{
-			minipegArray[ currentImageIndex ] = message.data[ messageIndex ];
-		}
+		int chunkLength = Math.Min (minipegArray.Length - currentImageIndex, message.chunkSize);
+		Array.Copy (message.data, 0, minipegArray, currentImageIndex, chunkLength);
+		currentImageIndex += chunkLength;
 		
 		if( ++currentChunkIndex == message.imageChunkCount )
 		{
-			int width = message.ncols;
-			int height = message.nrows;
-			
-			if( texture == null || texture.width != width || texture.height != height )
-			{
-				if( texture != null )
-				{
-					Destroy( texture );
-					texture = null;
-				}
-				
-				texture = new Texture2D( width, height, TextureFormat.RGB24, false );
-			}
+			ResetTexture (message.ncols, message.nrows, TextureFormat.RGB24);
 
 			MiniGrayToJpeg( minipegArray, ref jpegArray );
 
@@ -591,7 +601,7 @@ public class RobotEngineManager : MonoBehaviour {
 			
 			if( RobotImage != null )
 			{
-				RobotImage( texture );
+				RobotImage( sprite );
 				
 				current.ClearObservedObjects();
 			}
@@ -649,26 +659,14 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		if( currentImageIndex == color32Array.Length )
 		{
-			int width = message.ncols;
-			int height = message.nrows;
-			
-			if( texture == null || texture.width != width || texture.height != height )
-			{
-				if( texture != null )
-				{
-					Destroy( texture );
-					texture = null;
-				}
-				
-				texture = new Texture2D( width, height, TextureFormat.ARGB32, false );
-			}
-			
+			ResetTexture (message.ncols, message.nrows, TextureFormat.ARGB32);
+
 			texture.SetPixels32( color32Array );
 			texture.Apply( false );
 			
 			if( RobotImage != null )
 			{
-				RobotImage( texture );
+				RobotImage( sprite );
 				
 				current.ClearObservedObjects();
 			}
@@ -692,33 +690,20 @@ public class RobotEngineManager : MonoBehaviour {
 			currentImageIndex = 0;
 			currentChunkIndex = 0;
 		}
-		
-		for( int messageIndex = 0; currentImageIndex < jpegArray.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex )
-		{
-			jpegArray[ currentImageIndex ] = message.data[ messageIndex ];
-		}
+
+		int chunkLength = Math.Min (jpegArray.Length - currentImageIndex, message.chunkSize);
+		Array.Copy (message.data, 0, jpegArray, currentImageIndex, chunkLength);
+		currentImageIndex += chunkLength;
 
 		if( ++currentChunkIndex == message.imageChunkCount )
 		{
-			int width = message.ncols;
-			int height = message.nrows;
-			
-			if( texture == null || texture.width != width || texture.height != height )
-			{
-				if( texture != null )
-				{
-					Destroy( texture );
-					texture = null;
-				}
-				
-				texture = new Texture2D( width, height, TextureFormat.RGB24, false );
-			}
+			ResetTexture (message.ncols, message.nrows, TextureFormat.RGB24);
 
 			texture.LoadImage( jpegArray );
 			
 			if( RobotImage != null )
 			{
-				RobotImage( texture );
+				RobotImage( sprite );
 				
 				current.ClearObservedObjects();
 			}

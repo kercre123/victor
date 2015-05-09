@@ -230,12 +230,18 @@ public class ObservedObject
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
+	public string InfoString { get; private set; }
+	public string SelectInfoString { get; private set; }
+
 	public ObservedObject( int objectID, uint objectFamily, uint objectType )
 	{
 		TimeCreated = Time.time;
 		Family = objectFamily;
 		ObjectType = objectType;
 		ID = objectID;
+
+		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
 		if( Family == 3 )
 		{

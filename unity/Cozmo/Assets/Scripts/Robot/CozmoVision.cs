@@ -110,12 +110,12 @@ public class CozmoVision : MonoBehaviour
 		if( robot.selectedObjects.Find( x => x == observedObject ) != null )
 		{
 			box.SetColor( selected );
-			box.text.text = "ID: " + observedObject + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
+			box.text.text = observedObject.InfoString;
 		}
 		else
 		{
 			box.SetColor( select );
-			box.text.text = "Select ID: " + observedObject + " Family: " + observedObject.Family + " Type: " + observedObject.ObjectType;
+			box.text.text = observedObject.SelectInfoString;
 			box.observedObject = observedObject;
 		}
 		
@@ -159,14 +159,9 @@ public class CozmoVision : MonoBehaviour
 
 	}
 
-	private void RobotImage( Texture2D texture )
+	private void RobotImage( Sprite sprite )
 	{
-		if( rect.height != texture.height || rect.width != texture.width )
-		{
-			rect = new Rect( 0, 0, texture.width, texture.height );
-		}
-		
-		image.sprite = Sprite.Create( texture, rect, pivot );
+		image.sprite = sprite;
 		
 		if( text.gameObject.activeSelf )
 		{
