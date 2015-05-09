@@ -6,6 +6,9 @@
 
 #include <array>
 
+#define USE_EARLY_EXIT_DISTANCE_COMPUTATION 1
+#define USE_WEIGHTS 0
+
 namespace Anki {
 namespace Embedded {
   
@@ -81,7 +84,12 @@ namespace Embedded {
 
   {
     // Set these return values up front, in case of failure
+#   if USE_EARLY_EXIT_DISTANCE_COMPUTATION
     closestDistance = distThreshold;
+#   else
+    closestDistance = std::numeric_limits<s32>::max();
+#   endif
+    
     label = -1;
     
     Result lastResult = GetProbeValues(image, homography);
@@ -91,8 +99,8 @@ namespace Embedded {
                                        "GetProbeValues() failed.\n");
     
     // Visualize probe values
-    //cv::Mat_<u8> temp(32,32,_probeValues.data);
-    //cv::imshow("ProbeValues", temp);
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    cv::imshow("ProbeValues", temp);
     
     if(_useHoG) {
       GetProbeHoG();
@@ -141,8 +149,10 @@ namespace Embedded {
         
       } else {
         
+#       if USE_WEIGHTS
         const u8* currentWeight  = _weights[iExample];
         const s32 currentTotalWeight = _totalWeight(iExample, 0);
+#       endif
         
         // Visualize current example
         //cv::Mat_<u8> temp(32, 32, const_cast<u8*>(currentExample));
@@ -150,22 +160,91 @@ namespace Embedded {
         //cv::imshow("CurrentExample", temp);
         //cv::waitKey();
         
-        // The distance threshold for this example depends on the total weight
-        const s32 currentDistThreshold = currentTotalWeight * closestDistance;
-        while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
-        {
-          const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
-          currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
-          ++iProbe;
-        }
+#       if USE_EARLY_EXIT_DISTANCE_COMPUTATION
         
-        if(currentDistance < currentDistThreshold) {
-          currentDistance /= currentTotalWeight;
-          if(currentDistance < closestDistance) {
-            closestIndex = iExample;
-            closestDistance = currentDistance;
+#         if USE_WEIGHTS
+          {
+            // The distance threshold for this example depends on the total weight
+            const s32 currentDistThreshold = currentTotalWeight * closestDistance;
+            
+            while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
+            {
+              const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+              currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
+              ++iProbe;
+            }
+            
+            if(currentDistance < currentDistThreshold) {
+              currentDistance /= currentTotalWeight;
+              if(currentDistance < closestDistance) {
+                closestIndex = iExample;
+                closestDistance = currentDistance;
+              }
+            }
           }
-        }
+#         else // don't use weights
+          {
+            const s32 currentDistThreshold = _dataDimension * closestDistance;
+            while(iProbe < _dataDimension && currentDistance < currentDistThreshold)
+            {
+              const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+              currentDistance += std::abs(diff);
+              ++iProbe;
+            }
+            
+            if(currentDistance < currentDistThreshold) {
+              currentDistance /= _dataDimension;
+              if(currentDistance < closestDistance) {
+                 closestIndex = iExample;
+                closestDistance = currentDistance;
+              }
+            }
+          }
+#         endif // USE_WEIGHTS
+        
+        
+#       else // don't use early exit distance computation
+        
+#         if USE_WEIGHTS
+          {
+            for(s32 iProbe=0; iProbe < _dataDimension; ++iProbe) {
+              const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+              currentDistance += static_cast<s32>(currentWeight[iProbe]) * std::abs(diff);
+            }
+            
+            currentDistance /= currentTotalWeight;
+            
+            if(currentDistance < closestDistance) {
+              closestDistance = currentDistance;
+              if(currentDistance < distThreshold) {
+                closestDistance = currentDistance;
+                closestIndex = iExample;
+              }
+            }
+          }
+#         else // don't use weights
+          {
+            for(s32 iProbe=0; iProbe < _dataDimension; ++iProbe) {
+              const s32 diff = static_cast<s32>(pProbeData[iProbe]) - static_cast<s32>(currentExample[iProbe]);
+              currentDistance += std::abs(diff);
+            }
+            
+            currentDistance /= _dataDimension;
+            
+            //printf("dist[%d] = %d\n", iExample, currentDistance);
+            
+            if(currentDistance < closestDistance) {
+              closestDistance = currentDistance;
+              if(currentDistance < distThreshold) {
+                closestDistance = currentDistance;
+                closestIndex = iExample;
+              }
+            }
+          }
+#         endif // USE_WEIGHTS
+        
+#       endif // USE_EARLY_EXIT_DISTANCE_COMPUTATION
+        
       } // if(_useHoG)
       
     } // for each example
@@ -251,15 +330,17 @@ namespace Embedded {
       
       pProbeData[iProbe] = static_cast<u8>(accumulator / numProbeOffsets);
       
+      /*
       // Keep track of min/max for normalization below
       if(pProbeData[iProbe] < minValue) {
         minValue = pProbeData[iProbe];
       } else if(pProbeData[iProbe] > maxValue) {
         maxValue = pProbeData[iProbe];
       }
-      
+      */
     } // for each probe
     
+    /*
     // Normalization to scale between 0 and 255:
     AnkiConditionalErrorAndReturnValue(maxValue > minValue, RESULT_FAIL,
                                        "NearestNeighborLibrary.GetProbeValues",
@@ -269,6 +350,22 @@ namespace Embedded {
     for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
       pProbeData[iProbe] = (255*static_cast<s32>(pProbeData[iProbe] - minValue)) / divisor;
     }
+     */
+    
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    
+    cv::imshow("Original ProbeValues", temp);
+    
+    // TODO: Would it be faster to box filter and subtract it from the original?
+    static cv::Mat_<s32> kernel;
+    if(kernel.empty()) {
+      kernel = cv::Mat_<s32>::ones(16,16);
+      kernel *= -1;
+      kernel(7,7) = 255;
+    }
+    cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
+    //cv::imshow("ProbeFiltering", _probeFiltering);
+    cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
     
     return RESULT_OK;
   } // NearestNeighborLibrary::GetProbeValues()

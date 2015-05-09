@@ -1,7 +1,7 @@
 function detectAndDisplay(img, h_axes, h_img, varargin)
 
 markerLibrary = [];
-useMexDetector = false;
+useMexDetector = true;
 
 simpleDetectorArgs = parseVarargin(varargin{:});
 
@@ -16,7 +16,9 @@ if ~useMexDetector
   detections = simpleDetector(img, simpleDetectorArgs{:});
   
 else
-  img = rgb2gray(img);
+  if size(img,3) > 1
+    img = rgb2gray(img);
+  end
   imageSize = size(img);
   useIntegralImageFiltering = true;
   scaleImage_thresholdMultiplier = 1.0;
