@@ -27,6 +27,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] Material originalBlockMaterial = null;
 	[SerializeField] Material originalCornerMaterial = null;
 
+	[SerializeField] GameObject checkMarkPrefab = null;
+
+	GameObject checkMark = null;
+
 	int lastPropType = 0;
 	int lastFamilyType = 0;
 	bool lastValidated = false;
@@ -45,6 +49,13 @@ public class BuildInstructionsCube : MonoBehaviour {
 	Material clonedCornerMaterial = null;
 
 	bool initialized = false;
+
+	void Awake() {
+		if(Application.isPlaying) {
+			checkMark = (GameObject)GameObject.Instantiate(checkMarkPrefab);
+			checkMark.transform.SetParent(transform, false);
+		}
+	}
 
 	void OnEnable() {
 		if(!Application.isPlaying) Initialize();
@@ -85,6 +96,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 	void Update () {
 		if(!initialized) return;
 		if(Dirty()) Refresh();
+
+		if(checkMark != null) {
+			checkMark.SetActive(Validated);
+		}
 	}
 
 	bool Dirty() {

@@ -1159,10 +1159,10 @@ MonoBehaviour:
     type: 2}
   originalCornerMaterial: {fileID: 2100000, guid: 12096e7ce7884459798d4798fba09a80,
     type: 2}
+  checkMarkPrefab: {fileID: 164004, guid: c57260e0d93524bd9941746a173a980d, type: 2}
   Validated: 0
   Highlighted: 0
   Hidden: 0
-  AssignedObjectID: 0
   Size: 1
 --- !u!212 &21287162
 SpriteRenderer:
