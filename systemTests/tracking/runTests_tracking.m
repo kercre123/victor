@@ -19,7 +19,9 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
-        'c',...
+%         'c',...
+%         'c_variableTimes',...
+        'c_variableTimes',...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -78,6 +80,54 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         
         if strcmp(runWhichAlgorithms{iAlgorithm}, 'c')
             % Default parameters
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_variableTimes')
+            isSimpleTest = false;
+            
+            temporalFrameFractions = [1, 2, 4, 10];
+                        
+            percentMarkersCorrect_window = cell(length(temporalFrameFractions), 1);
+%             percentMarkersCorrectImages_window = cell(length(temporalFrameFractions), 1);
+            
+            % Note: figuring out change time is tricky, so this reruns everything every time
+            for iMaxFraction = 1:length(temporalFrameFractions)
+                maxFraction = temporalFrameFractions(iMaxFraction);
+                
+                percentMarkersCorrect_window{iMaxFraction} = zeros(length(allTestData), maxFraction);
+                
+                for iPiece = 1:maxFraction
+                    for iTest = 1:length(allTestData)
+                        numPoses = length(allTestData{iTest}.jsonData.Poses);
+                        frameIndexes = round(linspace(0, numPoses, maxFraction+1));
+                        startIndexes = 1 + frameIndexes(1:(end-1));
+                        endIndexes = frameIndexes(2:end);
+
+                        curAllTestData = allTestData(iTest);
+                        curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
+
+                        algorithmParametersN = algorithmParametersOrig;
+                        algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/fraction%d_piece%d/test%d', maxFraction, iPiece, iTest);
+
+                        if length(curAllTestData{1}.jsonData.Poses) > 10
+                            curMaxThreads = 3;
+                        else
+                            curMaxThreads = 1;
+                        end
+                        
+                        localNumComputeThreads.basics = min(curMaxThreads, numComputeThreads.basics);
+                        localNumComputeThreads.perPose = min(curMaxThreads, numComputeThreads.perPose);
+                        
+                        curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+
+                        percentMarkersCorrect_window{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
+                    end % for iTest = 1:length(allTestData)
+                end % for iPiece = 1:maxFraction
+            end % for iMaxFraction = 1:length(temporalFrameFractions)
+            
+            markersCorrectImage = zeros(length(allTestData), sum(temporalFrameFractions) + 1);
+            
+            % TODO: create markersCorrectImage, with a black spacing between each set of maxFractions
+            
+            keyboard
         else
             % Unknown runWhichAlgorithms{iAlgorithm}
             assert(false);
