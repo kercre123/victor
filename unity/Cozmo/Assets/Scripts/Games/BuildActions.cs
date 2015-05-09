@@ -24,10 +24,9 @@ public class BuildActions : GameActions {
 		if(tracker != null) {
 			//drop location is one block forward and half a block up from robot's location
 			//  cozmo space up being Vector3.forward in unity
-			Vector3 pos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 			string error;
 			GameLayoutTracker.LayoutErrorType errorType;
-			if(!tracker.PredictDropValidation(robot.carryingObject, pos, out error, out errorType)) {
+			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType)) {
 				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 
 				//set error text message

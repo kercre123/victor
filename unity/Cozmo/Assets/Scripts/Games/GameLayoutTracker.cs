@@ -55,6 +55,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	[SerializeField] AudioClip blockValidatedSound = null;
 	[SerializeField] AudioClip layoutValidatedSound = null;
+	[SerializeField] AudioClip validPredictedDropSound = null;
+	[SerializeField] AudioClip invalidPredictedDropSound = null;
 
 
 	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
@@ -87,6 +89,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool ignoreActiveColor = false;
 
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
+
+	
+	bool lastValidPredictedDrop = false;
 
 	void OnEnable () {
 		Phase = LayoutTrackerPhase.INVENTORY;
@@ -150,6 +155,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
 		hidden = false;
+		lastValidPredictedDrop = false;
 	}
 
 	void SetUpInventory() {
@@ -203,6 +209,42 @@ public class GameLayoutTracker : MonoBehaviour {
 		RefreshLayout();
 
 		lastValidCount = validCount;
+
+		bool validPredictedDrop = false;
+
+		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
+			string error;
+			GameLayoutTracker.LayoutErrorType errorType;
+			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, false);
+
+			if(lastValidPredictedDrop != validPredictedDrop) {
+				audio.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
+			}
+		}
+
+		if(lastValidPredictedDrop != validPredictedDrop) {
+			SetBackpackLEDs(validPredictedDrop ? Color.green : Color.clear);
+		}
+
+		lastValidPredictedDrop = validPredictedDrop;
+	}
+
+
+	void SetBackpackLEDs(Color color) {
+		
+		Anki.Cozmo.U2G.SetBackpackLEDs msg = new Anki.Cozmo.U2G.SetBackpackLEDs();
+		msg.robotID = robot.ID;
+		for(int i=0; i<5; ++i) {
+			msg.onColor[i] = CozmoPalette.ColorToUInt(color);
+			msg.offColor[i] = 0;
+			msg.onPeriod_ms[i] = 1000;
+			msg.offPeriod_ms[i] = 0;
+			msg.transitionOnPeriod_ms[i] = 0;
+			msg.transitionOffPeriod_ms[i] = 0;
+		}
+		
+		Anki.Cozmo.U2G.Message msgWrapper = new Anki.Cozmo.U2G.Message{SetBackpackLEDs = msg};
+		RobotEngineManager.instance.channel.Send(msgWrapper);
 	}
 
 	void OnDisable() {
@@ -597,7 +639,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		return count;
 	}
 
-
 	public void DebugQuickValidate() {
 		ignoreActiveColor = true;
 		ValidateBlocks();
@@ -694,20 +735,21 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
-	public bool PredictDropValidation( ObservedObject objectToDrop, Vector3 posToDrop, out string errorText, out LayoutErrorType errorType) {
-
+	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 
+		if(robot == null) return false;
 		if(objectToDrop == null) return false;
 
+		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 
 		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
 
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			//error = "No block of this type should be placed here.";
-			return true;
+			return approveUnecessaryDropping;
 		}
 
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));

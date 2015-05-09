@@ -8,21 +8,23 @@ public class SlalomController : GameController {
 
 	[SerializeField] Text text_finalTime;
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
-	[SerializeField] bool endless = true; //if not endless, then its basically a timed slalom trial
+	[SerializeField] int pointsPerLap = 100;
 	[SerializeField] Text textObservedCount = null;
 	[SerializeField] Text textProgress = null;
 
-	List<ObservedObject> obstacles = new List<ObservedObject>();
+	[SerializeField] AudioClip cornerTriggeredSound = null;
 
+	List<ObservedObject> obstacles = new List<ObservedObject>();
 
 	int currentCorner = 0;
 	int currentObstacleIndex = 0;
 	bool clockwise = false;
 	bool forward = true;
-	bool courseCompleted = false;
-	
+
 	uint nextColor_uint;
 	uint currentColor_unit;
+
+	int currentLap = 1;
 
 	float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
@@ -50,7 +52,10 @@ public class SlalomController : GameController {
 		}
 	}
 
+
+
 	int GetNextIndex(bool actual=false) {
+
 		int nextIndex = 0;
 		if(forward) {
 			nextIndex = currentObstacleIndex + 1;
@@ -61,7 +66,9 @@ public class SlalomController : GameController {
 				}
 				else {//loop
 					nextIndex = 0;
-					if(actual && !endless) courseCompleted = true;
+					if(actual) {
+						currentLap++;
+					}
 				}
 			}
 		}
@@ -70,17 +77,27 @@ public class SlalomController : GameController {
 			if(nextIndex < 0) {
 				if(thereAndBackAgain) {
 					nextIndex = 1;
-					if(actual) forward = true;
+					if(actual) {
+						forward = true;
+					}
 				}
 				else {//loop
 					nextIndex = obstacles.Count - 1;
 				}
+			}
 
-				if(actual && !endless) courseCompleted = true;
+			if(actual && nextIndex == 0) {
+				Debug.Log("currentLap++");
+				currentLap++;
 			}
 		}
 
 		return nextIndex;
+	}
+
+	void LapComplete() {
+		scores[0] += pointsPerLap;
+		audio.PlayOneShot(playerScoreSound);
 	}
 
 	int GetPreviousIndex() {
@@ -160,8 +177,6 @@ public class SlalomController : GameController {
 
 	void PrepareGameForPlay(Vector3 startingPos, Vector3 startingFacing) {
 
-
-
 		obstacles.Clear();
 		obstacles.AddRange(GameLayoutTracker.instance.GetTrackedObjectsInOrder());
 		
@@ -173,7 +188,8 @@ public class SlalomController : GameController {
 			}
 		}
 
-		courseCompleted = false;
+		lastLapCount = 1;
+		currentLap = 1;
 		currentObstacleIndex = 0;
 
 		if(thereAndBackAgain) {
@@ -257,8 +273,6 @@ public class SlalomController : GameController {
 
 		//game specific end conditions...
 
-		if(courseCompleted) return true;
-
 		return false;
 	}
 
@@ -290,7 +304,16 @@ public class SlalomController : GameController {
 		return corner;
 	}
 
+	int lastLapCount = 1;
+
 	void AdvanceCorner() {
+
+		//trigger lap score and sound when we cross our first corner again
+		if(currentCorner == 0 && lastLapCount != currentLap) {
+			LapComplete();
+		}
+
+		lastLapCount = currentLap;
 
 		bool obstacleAdvanced;
 		currentCorner = GetNextCorner(out obstacleAdvanced);
@@ -304,8 +327,7 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
-		scores[0]++;
-		audio.PlayOneShot(playerScoreSound);
+		audio.PlayOneShot(cornerTriggeredSound);
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 

@@ -1420,7 +1420,7 @@ MonoBehaviour:
     sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
   notificationAudio: {fileID: 8292068}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
-  scoreToWin: 30
+  scoreToWin: 300
   numPlayers: 1
   textScore: {fileID: 11473936}
   textError: {fileID: 0}
@@ -1441,9 +1441,11 @@ MonoBehaviour:
   - {fileID: 0}
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
-  endless: 1
+  pointsPerLap: 100
   textObservedCount: {fileID: 11475734}
   textProgress: {fileID: 11475692}
+  cornerTriggeredSound: {fileID: 8300000, guid: 68a0eccfd709a45ceb9c422dfdd6d145,
+    type: 3}
   testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:
