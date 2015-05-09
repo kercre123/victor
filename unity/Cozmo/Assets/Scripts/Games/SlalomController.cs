@@ -114,12 +114,12 @@ public class SlalomController : GameController {
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		
+
 		instance = this;
 
 		if(CozmoPalette.instance != null) {
-			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlockType.White);
-			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlockType.Cyan);
+			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Type.White);
+			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Type.Cyan);
 		}
 	}
 	
@@ -350,7 +350,7 @@ public class SlalomController : GameController {
 		}
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ObservedObject obstacle = obstacles[obstacleIndex];
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 
 			int currentTopLightIndex = -1;
@@ -362,15 +362,15 @@ public class SlalomController : GameController {
 
 			if(obstacle == currentObstacle) {
 				float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, cornerVector, Vector3.forward);
-				currentTopLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
-				currentBottomLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
+				currentTopLightIndex = ActiveBlock.Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
+				currentBottomLightIndex = ActiveBlock.Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
 				if(debug) Debug.Log("obstacle("+obstacle+") angleFromNorth("+angleFromNorth+") index("+currentTopLightIndex+") currentObstacle("+currentObstacle+") nextObstacle("+nextObstacle+")");
 			}
 
 			if(obstacle == (nextCornerOnNextObstacle ? nextObstacle : currentObstacle)) {
 				float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, nextCornerVector, Vector3.forward);
-				nextTopLightIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
-				nextTopBottomIndex = Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
+				nextTopLightIndex = ActiveBlock.Light.GetIndexForCornerClosestToAngle(angleFromNorth, true);
+				nextTopBottomIndex = ActiveBlock.Light.GetIndexForCornerClosestToAngle(angleFromNorth, false);
 
 				if(debug) Debug.Log("obstacle("+obstacle+") angleFromNorth("+angleFromNorth+") index("+nextTopLightIndex+") currentObstacle("+currentObstacle+") nextObstacle("+nextObstacle+")");
 			}
@@ -407,7 +407,7 @@ public class SlalomController : GameController {
 	{
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ObservedObject obstacle = obstacles[obstacleIndex];
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 			for(int i = 0; i < 8; ++i) {
 				obstacle.lights[i].onColor = 0;
@@ -425,7 +425,7 @@ public class SlalomController : GameController {
 	public void TestLights()
 	{
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ObservedObject obstacle = obstacles[obstacleIndex];
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 
 			for(int i = 0; i < 8; ++i) {

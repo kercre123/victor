@@ -49,7 +49,7 @@ public class GoldRushController : GameController {
 	Dictionary<int, Vector2> buriedLocations = new Dictionary<int, Vector2>();
 	List<int> foundItems = new List<int>();
 	int lastCarriedObjectId = -1;
-	[System.NonSerialized] public ObservedObject goldExtractingObject = null;
+	[System.NonSerialized] public ActiveBlock goldExtractingObject = null;
 	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
 	int baseObjectId = -1;
 	//ScreenMessage //hintMessage;
@@ -135,13 +135,9 @@ public class GoldRushController : GameController {
 #if RUSH_DEBUG
 		if( robot != null )
 		{
-			for(int i=0;i<robot.knownObjects.Count;i++)
+			foreach( ActiveBlock activeBlock in robot.activeBlocks.Values )
 			{
-				ObservedObject obj = robot.knownObjects[i];
-				if( obj.Family == 3 )
-				{
-					goldExtractingObject = obj;
-				}
+				goldExtractingObject = activeBlock;
 			}
 		}
 
@@ -328,8 +324,8 @@ public class GoldRushController : GameController {
 			ObservedObject obj = robot.knownObjects[i];
 			if( obj.Family == 3 && goldExtractingObject == null )
 			{
-				goldExtractingObject = obj;
-				//goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
+				goldExtractingObject = robot.activeBlocks[obj];
+				//goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
 			}
 			else if( obj.Family != 3 )
 			{
@@ -337,7 +333,6 @@ public class GoldRushController : GameController {
 			}
 		}
 	}
-
 
 	void CheckForStackSuccess(bool success, RobotActionType action_type)
 	{
@@ -351,9 +346,9 @@ public class GoldRushController : GameController {
 				{
 					// picked up our detector block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
-					goldExtractingObject = robot.carryingObject;
+					goldExtractingObject = robot.activeBlocks[robot.carryingObject];
 					//UpdateDetectorLights (1);
-					goldExtractingObject.SetActiveObjectLEDs(0); 
+					goldExtractingObject.SetLEDs(0); 
 					//hintMessage.ShowMessage("Place the scanner on the transformer", Color.black);
 					PlayNotificationAudio(placeEnergyScanner);
 				}
@@ -457,7 +452,7 @@ public class GoldRushController : GameController {
 		case PlayState.CAN_EXTRACT:
 			if ( goldExtractingObject != null )
 			{
-				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
+				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
 				audio.Stop();
 				audio.clip = foundBeep;
 				audio.loop = true;
@@ -473,7 +468,7 @@ public class GoldRushController : GameController {
 			break;
 		case PlayState.RETURNING:
 			robot.SetHeadAngle();
-			goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF); 
+			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF); 
 			PlayNotificationAudio(dropEnergy);
 
 			//hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
@@ -485,7 +480,7 @@ public class GoldRushController : GameController {
 
 			if ( goldExtractingObject != null )
 			{
-				goldExtractingObject.SetActiveObjectLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
+				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
 				audio.Stop();
 				audio.clip = foundBeep;
 				audio.loop = true;
@@ -741,9 +736,9 @@ public class GoldRushController : GameController {
 		uint color = EXTRACTOR_COLOR;
 		PlayNotificationAudio(extractingEnergy);
 		robot.isBusy = true;
-		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
 		yield return new WaitForSeconds(extractingEnergy.length -extractTrimTime);
-		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xFF);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
 		robot.isBusy = false;
 		yield return new WaitForSeconds(extractTrimTime);
 
@@ -759,13 +754,13 @@ public class GoldRushController : GameController {
 		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
 		PlayNotificationAudio(depositingEnergy);
-		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xFF);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
 		yield return new WaitForSeconds(depositingEnergy.length/2);
 
-		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (color, 0, 0xCC);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
 		yield return new WaitForSeconds(depositingEnergy.length/2 - depositTrimTime);
 
-		if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs (0);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
 		// PlayNotificationAudio (collectedSound);
 		// award points
 		numDrops++;
@@ -829,7 +824,7 @@ public class GoldRushController : GameController {
 			float g = 255 * light_intensity;
 			
 			uint color = ((uint)r << 24 | (uint)g << 16 ) | 0x00FF;
-			if( goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDs(color, 0, 0x33);
+			if( goldExtractingObject != null ) goldExtractingObject.SetLEDs(color, 0, 0x33);
 		}
 	}
 
@@ -864,7 +859,7 @@ public class GoldRushController : GameController {
 
 		
 		uint color =  EXTRACTOR_COLOR;
-		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetActiveObjectLEDsRelative(target_position, color, 0, which_leds, relative_mode);
+		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetLEDsRelative(target_position, color, 0, which_leds, relative_mode);
 		last_leds = which_leds;
 	}
 

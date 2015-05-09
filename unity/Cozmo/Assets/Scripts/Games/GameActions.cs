@@ -312,17 +312,18 @@ public class GameActions : MonoBehaviour
 
 		if( robot != null && robot.carryingObject != null && robot.carryingObject.Family == 3)
 		{
+			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
 
-			int typeIndex = (int)robot.carryingObject.activeBlockType + 1;
-			if(typeIndex >= (int)ActiveBlockType.NumTypes) typeIndex = 0;
+			int typeIndex = (int)activeBlock.type + 1;
+			if(typeIndex >= (int)ActiveBlock.Type.NumTypes) typeIndex = 0;
 
-			Debug.Log("Changed active block id("+robot.carryingObject+") from " + robot.carryingObject.activeBlockType + " to " + (ActiveBlockType)typeIndex );
+			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Type)typeIndex );
 
-			robot.carryingObject.activeBlockType = (ActiveBlockType)typeIndex;
-			robot.carryingObject.SetActiveObjectLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( robot.carryingObject.activeBlockType ) );
+			activeBlock.type = (ActiveBlock.Type)typeIndex;
+			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.type ) );
 		}
 	}
-	
+
 	public virtual void Cancel( bool onRelease, ObservedObject selectedObject )
 	{
 		if( !onRelease ) return;

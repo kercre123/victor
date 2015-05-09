@@ -1,0 +1,337 @@
+﻿using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Anki.Cozmo;
+using G2U = Anki.Cozmo.G2U;
+using U2G = Anki.Cozmo.U2G;
+
+public class ActiveBlock : ObservedObject
+{
+	public class Light
+	{
+		[System.FlagsAttribute]
+		public enum PositionFlag
+		{
+			NONE              = 0,
+			TOP_NORTH_WEST    = 0x01,
+			TOP_NORTH_EAST    = 0x10,
+			TOP_SOUTH_WEST    = 0x02,
+			TOP_SOUTH_EAST    = 0x20,
+			BOTTOM_NORTH_WEST = 0x04,
+			BOTTOM_NORTH_EAST = 0x40,
+			BOTTOM_SOUTH_WEST = 0x08,
+			BOTTOM_SOUTH_EAST = 0x80,
+			ALL = 0xff
+		};
+		
+		private static PositionFlag IndexToPosition( int i )
+		{
+			switch( i )
+			{
+				case 0:
+					return PositionFlag.TOP_NORTH_WEST;
+				case 1:
+					return PositionFlag.TOP_SOUTH_WEST;
+				case 2:
+					return PositionFlag.BOTTOM_NORTH_WEST;
+				case 3:
+					return PositionFlag.BOTTOM_SOUTH_WEST;
+				case 4:
+					return PositionFlag.TOP_NORTH_EAST;
+				case 5:
+					return PositionFlag.TOP_SOUTH_EAST;
+				case 6:
+					return PositionFlag.BOTTOM_NORTH_EAST;
+				case 7:
+					return PositionFlag.BOTTOM_SOUTH_EAST;
+				case 8:
+					return PositionFlag.ALL;
+			}
+			
+			return PositionFlag.NONE;
+		}
+		
+		public static int GetIndexForCornerClosestToAngle(float angleFromEast, bool top=true)
+		{
+			//north west
+			if(angleFromEast >= 0f && angleFromEast < 90f) return top ? 0 : 2;
+			
+			//south west
+			if(angleFromEast >= 90f && angleFromEast < 180f) return top ? 1 : 3;
+			
+			//north east
+			if(angleFromEast < 0f && angleFromEast > -90f) return top ? 4 : 6;
+			
+			//south east
+			if(angleFromEast < -90f && angleFromEast > -180f) return top ? 5 : 7;
+			
+			return 0;
+		}
+		
+		private ObservedObject observedObject;
+		private PositionFlag position;
+		
+		private uint lastOnColor;
+		public uint onColor;
+		private uint lastOffColor;
+		public uint offColor;
+		private uint lastOnPeriod_ms;
+		public uint onPeriod_ms;
+		private uint lastOffPeriod_ms;
+		public uint offPeriod_ms;
+		private uint lastTransitionOnPeriod_ms;
+		public uint transitionOnPeriod_ms;
+		private uint lastTransitionOffPeriod_ms;
+		public uint transitionOffPeriod_ms;
+		
+		public Light( ObservedObject observedObject, int position )
+		{
+			this.observedObject = observedObject;
+			this.position = IndexToPosition( position );
+		}
+		
+		public bool Position( PositionFlag s )
+		{
+			return (position | s) == s;
+		}
+		
+		public void SetLastInfo()
+		{
+			lastOnColor = onColor;
+			lastOffColor = offColor;
+			lastOnPeriod_ms = onPeriod_ms;
+			lastOffPeriod_ms = offPeriod_ms;
+			lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
+			lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
+		}
+		
+		public bool changed
+		{
+			get
+			{
+				return lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
+					lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
+			}
+		}
+	}
+
+	public enum Type
+	{
+		Off,
+		White,
+		Red,
+		Yellow,
+		Green,
+		Cyan,
+		Blue,
+		Magenta,
+		NumTypes
+	}
+
+	private byte lastUpAxis;
+	public byte upAxis { get; private set; }
+	public float xAccel { get; private set; }
+	public float yAccel { get; private set; }
+	public float zAccel { get; private set; }
+	
+	private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
+
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
+	public uint Color { get; private set; }
+
+	public Light[] lights { get; private set; }
+
+	public bool lightsChanged
+	{
+		get
+		{
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
+
+			for( int i = 0; i < lights.Length; ++i )
+			{
+				if( lights[i].changed ) return true;
+			}
+
+			return false;
+		}
+	}
+
+	private byte lastRelativeMode;
+	public byte relativeMode;
+
+	private float lastRelativeToX;
+	public float relativeToX;
+	private float lastRelativeToY;
+	public float relativeToY;
+
+	public Type type = Type.Off;
+
+	public static float messageDelay { get; private set; }
+	public event Action<ActiveBlock> OnAxisChange;
+
+	public ActiveBlock( int objectID, uint objectFamily, uint objectType )
+	{
+		TimeCreated = Time.time;
+		Family = objectFamily;
+		ObjectType = objectType;
+		ID = objectID;
+
+		upAxis = byte.MaxValue;
+
+		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
+
+		lights = new Light[8];
+
+		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
+		SetAllActiveObjectLEDsMessage.onPeriod_ms = new uint[lights.Length];
+		SetAllActiveObjectLEDsMessage.offPeriod_ms = new uint[lights.Length];
+		SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms = new uint[lights.Length];
+		SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms = new uint[lights.Length];
+		SetAllActiveObjectLEDsMessage.onColor = new uint[lights.Length];
+		SetAllActiveObjectLEDsMessage.offColor = new uint[lights.Length];
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i] = new Light( this, i );
+		}
+	}
+
+	public void UpdateInfo( G2U.ActiveObjectMoved message )
+	{
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot receive ActiveObjectMoved message for non active block " + ID );
+			return;
+		}
+
+		if( lastUpAxis == byte.MaxValue ) lastUpAxis = message.upAxis; 
+
+		upAxis = message.upAxis;
+		xAccel = message.xAccel;
+		yAccel = message.yAccel;
+		zAccel = message.zAccel;
+
+		if( lastUpAxis != upAxis )
+		{
+			if( OnAxisChange != null ) OnAxisChange( this );
+			lastUpAxis = message.upAxis;
+			Debug.Log( "Active Block " + ID + "'s axis has changed" );
+		}
+
+		lastUpAxis = upAxis;
+	}
+
+	public void SetAllLEDs() // should only be called from update loop
+	{
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
+
+		SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
+		SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
+			SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
+			SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
+			SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
+			SetAllActiveObjectLEDsMessage.onColor[i] = lights[i].onColor;
+			SetAllActiveObjectLEDsMessage.offColor[i] = lights[i].offColor;
+		}
+
+		SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
+		SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
+		SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
+
+		Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
+
+		RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
+		RobotEngineManager.instance.channel.Send( RobotEngineManager.instance.Message );
+
+		SetLastLEDs();
+		messageDelay = Time.time + GameController.MessageDelay;
+	}
+
+	private void SetLastLEDs()
+	{
+		lastRelativeMode = relativeMode;
+		lastRelativeToX = relativeToX;
+		lastRelativeToY = relativeToY;
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i].SetLastInfo();
+		}
+	}
+
+	public void SetLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
+	                             uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
+	                             byte turnOffUnspecifiedLEDs = 1 )
+	{
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
+
+		this.Color = onColor;
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			if( lights[i].Position( (Light.PositionFlag)whichLEDs ) )
+			{
+				lights[i].onColor = onColor;
+				lights[i].offColor = offColor;
+				lights[i].onPeriod_ms = onPeriod_ms;
+				lights[i].offPeriod_ms = offPeriod_ms;
+				lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+				lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
+			}
+			else if( turnOffUnspecifiedLEDs > 0 )
+			{
+				lights[i].onColor = 0;
+				lights[i].offColor = 0;
+				lights[i].onPeriod_ms = 0;
+				lights[i].offPeriod_ms = 0;
+				lights[i].transitionOnPeriod_ms = 0;
+				lights[i].transitionOffPeriod_ms = 0;
+			}
+		}
+
+		relativeMode = 0;
+		relativeToX = 0;
+		relativeToY = 0;
+	}
+
+	public void SetLEDsRelative( Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+	                                        uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                                        uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
+	                                        byte turnOffUnspecifiedLEDs = 1 )
+	{	
+		SetLEDsRelative( relativeTo.x, relativeTo.y, onColor, offColor, whichLEDs, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs );
+	}
+
+	public void SetLEDsRelative( float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+	                                     uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
+	                                     byte turnOffUnspecifiedLEDs = 1 )
+	{
+		if( Family != 3 )
+		{
+			Debug.LogWarning( "Cannot send light message for non active block " + ID );
+			return;
+		}
+
+		SetLEDs( onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs );
+
+		this.relativeMode = relativeMode;
+		this.relativeToX = relativeToX;
+		this.relativeToY = relativeToY;
+	}
+}

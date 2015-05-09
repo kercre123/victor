@@ -1,6 +1,5 @@
 
 using UnityEngine;
-using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,6 +54,14 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private string imageBasePath;
 	private AsyncCallback EndSave_callback;
+
+	public U2G.Message Message { get; private set; }
+
+	private U2G.VisualizeQuad VisualizeQuadMessage = new U2G.VisualizeQuad();
+	private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
+	private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
+	private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
+	private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
 #if !UNITY_EDITOR
 	private bool engineHostInitialized = false;
 	
@@ -96,6 +103,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private void Awake()
 	{
 		EndSave_callback = EndSave;
+		Message = new U2G.Message();
 	}
 
 	public void ToggleVisionRecording(bool on) {
@@ -166,10 +174,7 @@ public class RobotEngineManager : MonoBehaviour {
 	 
 	private void Update()
 	{
-
-		if(Input.GetKeyDown(KeyCode.Mouse3))
-			Debug.Break();
-
+		if(Input.GetKeyDown(KeyCode.Mouse3)) Debug.Break();
 
 		if (channel != null) {
 			channel.Update ();
@@ -329,6 +334,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U.Message.Tag.RobotDeletedObject:
 			ReceivedSpecificMessage(message.RobotDeletedObject);
 			break;
+		case G2U.Message.Tag.ActiveObjectMoved:
+			ReceivedSpecificMessage(message.ActiveObjectMoved);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
@@ -337,18 +345,18 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void ReceivedSpecificMessage(G2U.RobotAvailable message)
 	{
-		U2G.ConnectToRobot response = new U2G.ConnectToRobot();
-		response.robotID = (byte)message.robotID;
-		
-		channel.Send (new U2G.Message{ConnectToRobot=response});
+		ConnectToRobotMessage.robotID = (byte)message.robotID;
+
+		Message.ConnectToRobot = ConnectToRobotMessage;
+		channel.Send( Message );
 	}
 	
 	private void ReceivedSpecificMessage(G2U.UiDeviceAvailable message)
 	{
-		U2G.ConnectToUiDevice response = new U2G.ConnectToUiDevice ();
-		response.deviceID = (byte)message.deviceID;
-		
-		channel.Send (new U2G.Message{ConnectToUiDevice=response});
+		ConnectToUiDeviceMessage.deviceID = (byte)message.deviceID;
+
+		Message.ConnectToUiDevice = ConnectToUiDeviceMessage;
+		channel.Send( Message );
 	}
 	
 	private void ReceivedSpecificMessage(G2U.RobotConnected message)
@@ -370,7 +378,14 @@ public class RobotEngineManager : MonoBehaviour {
 		Disconnect ();
 		Disconnected (DisconnectionReason.RobotDisconnected);
 	}
-	
+
+	private void ReceivedSpecificMessage( G2U.ActiveObjectMoved message )
+	{
+		ActiveBlock activeBlock = current.activeBlocks[(int)message.objectID];
+
+		activeBlock.UpdateInfo( message );
+	}
+
 	private void ReceivedSpecificMessage(G2U.RobotObservedObject message)
 	{
 		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
@@ -419,6 +434,11 @@ public class RobotEngineManager : MonoBehaviour {
 		if( deleted != null )
 		{
 			current.markersVisibleObjects.Remove( deleted );
+		}
+
+		if( current.activeBlocks.ContainsKey( (int)message.objectID ) )
+		{
+			current.activeBlocks.Remove( (int)message.objectID );
 		}
 	}
 
@@ -770,44 +790,44 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void VisualizeQuad( uint ID, uint color, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerRight, Vector3 lowerLeft )
 	{
-		U2G.VisualizeQuad message = new U2G.VisualizeQuad();
 
-		message.color = color;
-		message.quadID = ID;
+		VisualizeQuadMessage.color = color;
+		VisualizeQuadMessage.quadID = ID;
 
-		message.xUpperLeft = upperLeft.x;
-		message.xUpperRight = upperRight.x;
-		message.xLowerLeft = lowerLeft.x;
-		message.xLowerRight = lowerRight.x;
+		VisualizeQuadMessage.xUpperLeft = upperLeft.x;
+		VisualizeQuadMessage.xUpperRight = upperRight.x;
+		VisualizeQuadMessage.xLowerLeft = lowerLeft.x;
+		VisualizeQuadMessage.xLowerRight = lowerRight.x;
 
-		message.yUpperLeft = upperLeft.y;
-		message.yUpperRight = upperRight.y;
-		message.yLowerLeft = lowerLeft.y;
-		message.yLowerRight = lowerRight.y;
+		VisualizeQuadMessage.yUpperLeft = upperLeft.y;
+		VisualizeQuadMessage.yUpperRight = upperRight.y;
+		VisualizeQuadMessage.yLowerLeft = lowerLeft.y;
+		VisualizeQuadMessage.yLowerRight = lowerRight.y;
 
-		message.zUpperLeft = upperLeft.z;
-		message.zUpperRight = upperRight.z;
-		message.zLowerLeft = lowerLeft.z;
-		message.zLowerRight = lowerRight.z;
+		VisualizeQuadMessage.zUpperLeft = upperLeft.z;
+		VisualizeQuadMessage.zUpperRight = upperRight.z;
+		VisualizeQuadMessage.zLowerLeft = lowerLeft.z;
+		VisualizeQuadMessage.zLowerRight = lowerRight.z;
 
-		RobotEngineManager.instance.channel.Send( new U2G.Message{ VisualizeQuad = message } );
+		Message.VisualizeQuad = VisualizeQuadMessage;
+		channel.Send( Message );
 	}
 
 	public void StartEngine(string vizHostIP)
 	{
-		U2G.StartEngine message = new U2G.StartEngine ();
-		message.asHost = 1;
+		StartEngineMessage.asHost = 1;
 		int length = 0;
 		if (!string.IsNullOrEmpty (vizHostIP)) {
 			length = Encoding.UTF8.GetByteCount(vizHostIP);
-			if (length + 1 > message.vizHostIP.Length) {
-				throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + message.vizHostIP.Length + ".)");
+			if (length + 1 > StartEngineMessage.vizHostIP.Length) {
+				throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + StartEngineMessage.vizHostIP.Length + ".)");
 			}
-			Encoding.UTF8.GetBytes (vizHostIP, 0, vizHostIP.Length, message.vizHostIP, 0);
+			Encoding.UTF8.GetBytes (vizHostIP, 0, vizHostIP.Length, StartEngineMessage.vizHostIP, 0);
 		}
-		message.vizHostIP [length] = 0;
-		
-		channel.Send (new U2G.Message{StartEngine=message});
+		StartEngineMessage.vizHostIP [length] = 0;
+
+		Message.StartEngine = StartEngineMessage;
+		channel.Send( Message );
 	}
 	
 	/// <summary>
@@ -825,18 +845,18 @@ public class RobotEngineManager : MonoBehaviour {
 		if (string.IsNullOrEmpty (robotIP)) {
 			throw new ArgumentNullException("robotIP");
 		}
-		
-		U2G.ForceAddRobot message = new U2G.ForceAddRobot ();
-		if (Encoding.UTF8.GetByteCount (robotIP) + 1 > message.ipAddress.Length) {
+
+		if (Encoding.UTF8.GetByteCount (robotIP) + 1 > ForceAddRobotMessage.ipAddress.Length) {
 			throw new ArgumentException("IP address too long.", "robotIP");
 		}
-		int length = Encoding.UTF8.GetBytes (robotIP, 0, robotIP.Length, message.ipAddress, 0);
-		message.ipAddress [length] = 0;
+		int length = Encoding.UTF8.GetBytes (robotIP, 0, robotIP.Length, ForceAddRobotMessage.ipAddress, 0);
+		ForceAddRobotMessage.ipAddress [length] = 0;
 		
-		message.robotID = (byte)robotID;
-		message.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
-		
-		channel.Send (new U2G.Message{ForceAddRobot=message});
+		ForceAddRobotMessage.robotID = (byte)robotID;
+		ForceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+
+		Message.ForceAddRobot = ForceAddRobotMessage;
+		channel.Send( Message );
 	}
 	
 	public enum ImageSendMode_t
