@@ -105,7 +105,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                         curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
 
                         algorithmParametersN = algorithmParametersOrig;
-                        algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/fraction%d_piece%d/test%d', maxFraction, iPiece, iTest);
+                        algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/fraction%d/piece%d', iTest, maxFraction, iPiece);
 
                         if length(curAllTestData{1}.jsonData.Poses) > 10
                             curMaxThreads = 3;
@@ -233,10 +233,32 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     
     resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, false);
     
-    curExtractFunction_intermediateDirectory = [resultsDirectory_curTime, 'intermediate/', extractionFunctionName, '/'];
-    curExtractFunction_dataDirectory = [resultsDirectory_curTime, 'data/', extractionFunctionName, '/'];
-    curExtractFunction_imageDirectory = [resultsDirectory_curTime, 'images/', extractionFunctionName, '/'];
+    extractionFunctionName = strrep(strrep(extractionFunctionName, '\', '/'), '//', '/');
     
+    curExtractFunction_intermediatePrefix = [resultsDirectory_curTime, 'intermediate/', extractionFunctionName];
+    curExtractFunction_dataPrefix = [resultsDirectory_curTime, 'data/', extractionFunctionName];
+    curExtractFunction_imagePrefix = [resultsDirectory_curTime, 'images/', extractionFunctionName];
+    
+    % if extractionFunctionName has / characters for directories, don't add more    
+    if isempty(strfind(extractionFunctionName, '/'))
+        curExtractFunction_intermediatePrefix = [curExtractFunction_intermediatePrefix, '/'];
+        curExtractFunction_dataPrefix = [curExtractFunction_dataPrefix, '/'];
+        curExtractFunction_imagePrefix = [curExtractFunction_imagePrefix, '/'];
+    else
+        curExtractFunction_intermediatePrefix = [curExtractFunction_intermediatePrefix, '_'];
+        curExtractFunction_dataPrefix = [curExtractFunction_dataPrefix, '_'];
+        curExtractFunction_imagePrefix = [curExtractFunction_imagePrefix, '_'];
+    end
+    
+    slashInds = strfind(curExtractFunction_intermediatePrefix, '/');
+    curExtractFunction_intermediateDirectory = curExtractFunction_intermediatePrefix(1:slashInds(end));
+
+    slashInds = strfind(curExtractFunction_dataPrefix, '/');
+    curExtractFunction_dataDirectory = curExtractFunction_dataPrefix(1:slashInds(end));
+    
+    slashInds = strfind(curExtractFunction_imagePrefix, '/');
+    curExtractFunction_imageDirectory = curExtractFunction_imagePrefix(1:slashInds(end));
+         
     [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
@@ -253,9 +275,9 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         perPoseStats_dataFilenames = cell(numPoses,1);
         perPoseStats_imageFilenames = cell(numPoses,1);
         for iPose = 1:numPoses
-            basicStats_filenames{iPose} = [curExtractFunction_intermediateDirectory, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
-            perPoseStats_dataFilenames{iPose} = [curExtractFunction_dataDirectory, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
-            perPoseStats_imageFilenames{iPose} = [curExtractFunction_imageDirectory, allTestData{iTest}.testFilename, sprintf('_pose%05d_%s.png', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            basicStats_filenames{iPose} = [curExtractFunction_intermediatePrefix, allTestData{iTest}.testFilename, sprintf('_basicStats_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_dataFilenames{iPose} = [curExtractFunction_dataPrefix, allTestData{iTest}.testFilename, sprintf('_perPose_pose%05d_%s.mat', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
+            perPoseStats_imageFilenames{iPose} = [curExtractFunction_imagePrefix, allTestData{iTest}.testFilename, sprintf('_pose%05d_%s.png', iPose - 1, strrep(extractionFunctionName, '/', '_'))];
             
             basicStats_filenames{iPose} = strrep(strrep(basicStats_filenames{iPose}, '\', '/'), '//', '/');
             perPoseStats_dataFilenames{iPose} = strrep(strrep(perPoseStats_dataFilenames{iPose}, '\', '/'), '//', '/');
