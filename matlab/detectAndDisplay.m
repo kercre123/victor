@@ -1,7 +1,7 @@
 function detectAndDisplay(img, h_axes, h_img, varargin)
 
 markerLibrary = [];
-useMexDetector = false;
+useMexDetector = true;
 
 simpleDetectorArgs = parseVarargin(varargin{:});
 
@@ -16,7 +16,18 @@ if ~useMexDetector
   detections = simpleDetector(img, simpleDetectorArgs{:});
   
 else
-  img = rgb2gray(img);
+  if size(img,3) > 1
+    img = rgb2gray(img);
+  end
+%   
+%   % DEBUG!!!
+%   kernel = -ones(16);
+%   kernel(8,8) = 255;
+%   img = imfilter(double(img), kernel, 'replicate');
+%   minVal = min(img(:));
+%   maxVal = max(img(:));
+%   img = im2uint8((img-minVal)/(maxVal-minVal));
+
   imageSize = size(img);
   useIntegralImageFiltering = true;
   scaleImage_thresholdMultiplier = 1.0;
@@ -77,6 +88,10 @@ if numDetections > 0
       if isstruct(detections)
         plot(detections(i).corners([1 2 4 3 1],1)+1, detections(i).corners([1 2 4 3 1],2)+1, 'r', ...
           'Tag', 'BlockMarker2D', 'Parent', h_axes, 'LineWidth', 2);
+        mid = mean(detections(i).corners,1);
+        text(mid(1), mid(2), strrep(detections(i).markerName, 'MARKER_', ''), ...
+          'FontSize', 14, 'Color', 'r', 'FontWeight', 'b', 'Hor', 'c', ...
+          'Tag', 'BlockMarker2D', 'Parent', h_axes);
       else
         switch(class(detections{i}))
           case 'VisionMarker'

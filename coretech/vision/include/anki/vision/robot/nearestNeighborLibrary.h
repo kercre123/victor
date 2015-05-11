@@ -78,6 +78,8 @@ namespace Embedded {
     s32 _numHogOrientations;
     
     cv::Mat_<u8> _probeValues;
+    cv::Mat_<s32>_probeFiltering;
+    
     cv::Mat_<u8> _probeHoG;
     cv::Mat_<f32> _probeHoG_F32;
     

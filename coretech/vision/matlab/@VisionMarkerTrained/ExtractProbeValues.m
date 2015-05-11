@@ -22,7 +22,7 @@ perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 computeGradMag = false;
 computeGradMagWeights = false;
 saveTree = true;
-
+boxFilterWidth = 16; % for illumination normalizatio for NearestNeighbor
 probeRegion = VisionMarkerTrained.ProbeRegion;
 
 % Now using unpadded images to train
@@ -394,6 +394,21 @@ assert(size(probeValues,2) == length(labels));
 
 %numLabels = numImages;
 numImages = length(labels);
+
+% Normalize by removing local variation
+if boxFilterWidth > 0
+  kernel = -ones(boxFilterWidth);
+  mid = floor(boxFilterWidth/2);
+  kernel(mid,mid) = boxFilterWidth^2 - 1;
+  
+  probeValues = imfilter(im2double(reshape(single(probeValues),workingResolution,workingResolution,[])), kernel, 'replicate');
+  probeValues = reshape(probeValues,workingResolution^2,[]);
+
+  mins = min(probeValues,[],1);
+  maxes = max(probeValues,[],1);
+  probeValues = im2uint8((probeValues - mins(ones(workingResolution^2,1),:))./(ones(workingResolution^2,1)*(maxes-mins)));
+end
+
 
 if false && DEBUG_DISPLAY
     namedFigure('Average Perturbed Images'); clf
