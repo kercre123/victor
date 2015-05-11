@@ -27,6 +27,8 @@ namespace Anki {
       
       void AddAction(IActionRunner* action);
       
+      void ClearActions();
+      
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
@@ -58,7 +60,7 @@ namespace Anki {
     class CompoundActionSequential : public ICompoundAction
     {
     public:
-      
+      CompoundActionSequential();
       CompoundActionSequential(std::initializer_list<IActionRunner*> actions);
       
       // Add a delay, in seconds, between running each action in the group.
@@ -73,6 +75,8 @@ namespace Anki {
       f32 _delayBetweenActionsInSeconds;
       f32 _waitUntilTime;
       std::list<std::pair<bool,IActionRunner*> >::iterator _currentActionPair;
+      bool _wasJustReset;
+      
     }; // class CompoundActionSequential
     
     inline void CompoundActionSequential::SetDelayBetweenActions(f32 seconds) {
@@ -83,7 +87,7 @@ namespace Anki {
     class CompoundActionParallel : public ICompoundAction
     {
     public:
-      
+      CompoundActionParallel();
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
     protected:

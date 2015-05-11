@@ -11,7 +11,7 @@ namespace Anki {
 
       Result Init();
       
-      //Embedded::Pose2d GetCurrMatPose();
+      Embedded::Pose2d GetCurrPose();
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);

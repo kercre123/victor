@@ -1,8 +1,10 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"
 
-#define BAUDRATE 2000000
+#define BAUDRATE 5000000
+//#define BAUDRATE 3000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOC
 #define RCC_DMA         RCC_AHB1Periph_DMA1
@@ -43,10 +45,12 @@ namespace Anki
       s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
       
       // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 1024 * 4;
+      int BUFFER_WRITE_SIZE = 1024 * 32;
       int BUFFER_READ_SIZE = 1024;
-      OFFCHIP u8 m_bufferWrite[1024 * 1024 * 4];
-      OFFCHIP u8 m_bufferRead[1024];
+      ONCHIP u8 m_bufferWrite[1024 * 32];
+      ONCHIP u8 m_bufferRead[1024];
+      
+      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
       
       static void UARTStartTransfer()
       {
@@ -111,9 +115,10 @@ namespace Anki
         // Configure the UART for the appropriate baudrate
         USART_InitTypeDef USART_InitStructure;
         USART_Cmd(UART, DISABLE);
+        USART_OverSampling8Cmd(UART, ENABLE);
         USART_InitStructure.USART_BaudRate = BAUDRATE;
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_StopBits = USART_StopBits_2;
         USART_InitStructure.USART_Parity = USART_Parity_No;
         USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
@@ -187,12 +192,8 @@ namespace Anki
       
       void UARTInit()
       {
-        // Try to configure wifi
-        if (WifiInit())   // On success, return
-          return;
-        
-        // Otherwise, configure the UART - and light up purple to indicate UART
-        SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
+        // Configure the UART - and light up purple to indicate UART
+        //SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
         UARTConfigure();
       }
 
@@ -236,7 +237,10 @@ namespace Anki
       {
         bool result = false;
         
+        // This poor-man's mutex prevents longExec and mainExec from trampling each other's packets
+        // The only reason it works is because mainExec is an interrupt, not a thread
         __disable_irq();
+        g_deferMainExec = 1;
         int bytesLeft = UARTGetFreeSpace();
         
         // Leave one guard byte + header
@@ -283,7 +287,15 @@ namespace Anki
             StartTransfer();
           }
         }
+        g_deferMainExec = 0;
         __enable_irq();
+        
+        // Wrap up main exec
+        if (g_mainExecDeferred)
+        {
+          g_mainExecDeferred = 0;
+          Anki::Cozmo::Robot::step_MainExecution();
+        }
         
         return result;
       }

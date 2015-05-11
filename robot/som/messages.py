@@ -117,7 +117,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 75
+    ID = 76
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -169,7 +169,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 64
+    ID = 65
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -246,7 +246,7 @@ class RobotState(MessageBase):
         return struct.unpack('I', buffer[1:5])(0)
 
 class PrintText(MessageBase):
-    ID = 74
+    ID = 75
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 

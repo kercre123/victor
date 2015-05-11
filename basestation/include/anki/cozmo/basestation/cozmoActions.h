@@ -41,6 +41,7 @@ namespace Anki {
     public:
       DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed = false);
       DriveToPoseAction(const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
+      DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed = false);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -55,6 +56,10 @@ namespace Anki {
       Result SetGoal(const Pose3d& pose);
       Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
       
+      // Set possible goal options
+      Result SetGoals(const std::vector<Pose3d>& poses);
+      Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
+      
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
       // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
@@ -62,7 +67,10 @@ namespace Anki {
       
     private:
       bool     _isGoalSet;
-      Pose3d   _goalPose;
+      
+      std::vector<Pose3d> _goalPoses;
+      size_t              _selectedGoalIndex;
+      
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
@@ -76,7 +84,7 @@ namespace Anki {
     // specified action type. Drives there using a DriveToPoseAction. Then
     // moves the robot's head to the angle indicated by the pre-action pose
     // (which may be different from the angle used for path following).
-    class DriveToObjectAction : public DriveToPoseAction
+    class DriveToObjectAction : public IAction //: public DriveToPoseAction
     {
     public:
       DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
@@ -93,10 +101,19 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
       ActionResult InitHelper(Robot& robot, ActionableObject* object);
+      ActionResult GetPossiblePoses(const Robot& robot, ActionableObject* object,
+                                    std::vector<Pose3d>& possiblePoses,
+                                    bool& alreadyInPosition);
       
+      virtual void Reset() override;
+      
+      // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
+      
+    private:
       PreActionPose::ActionType  _actionType;
-      bool                       _alreadyAtGoal;
+      bool                       _useManualSpeed;
+      CompoundActionSequential   _compoundAction;
       
     }; // DriveToObjectAction
     
@@ -213,6 +230,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
       
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
@@ -288,6 +306,8 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual ActionResult Verify(Robot& robot) = 0;
       
+      virtual void Reset() override;
+      
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
@@ -331,6 +351,8 @@ namespace Anki {
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
       
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
@@ -386,6 +408,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }

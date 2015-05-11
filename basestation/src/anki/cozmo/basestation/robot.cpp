@@ -2406,6 +2406,14 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
     
+    Result Robot::SetSteeringControllerGains(const f32 k1, const f32 k2)
+    {
+      MessageSetSteeringControllerGains m;
+      m.k1 = k1;
+      m.k2 = k2;
+      return _msgHandler->SendMessage(_ID, m);
+    }
+      
     Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
     {
       MessageSetVisionSystemParams m;

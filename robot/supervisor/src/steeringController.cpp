@@ -92,6 +92,7 @@ namespace Anki {
     //sets the steering controller constants
     void SetGains(float k1, float k2)
     {
+      PRINT("New Steering gains: k1 %f, k2 %f\n", k1, k2);
       K1_ = k1;
       K2_ = k2;
     }

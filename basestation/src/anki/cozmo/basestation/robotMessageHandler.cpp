@@ -325,7 +325,7 @@ namespace Anki {
                                                             height, width,
                                                             (Vision::ImageEncoding_t)msg.imageEncoding,
                                                             msg.imageChunkCount,
-                                                            msg.chunkId, msg.data);
+                                                            msg.chunkId, msg.data, msg.chunkSize );
 
       CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
@@ -588,6 +588,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectMoved const& msg)
     {
+      
+      // The message from the robot has the active object ID in it, so we need
+      // to find the object in blockworld (which has its own bookkeeping ID) that
+      // has the matching active ID
+     
       const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
       
       for(auto objectsByID : activeBlocksByType) {
@@ -598,6 +603,9 @@ namespace Anki {
             // TODO: Mark object as de-localized
             printf("Received message that Object %d (Active ID %d) moved.\n",
                    objectWithID.first.GetValue(), msg.objectID);
+            
+            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+            
             return RESULT_OK;
           }
         }
