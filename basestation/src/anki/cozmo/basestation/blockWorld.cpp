@@ -1299,6 +1299,35 @@ namespace Anki
         std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
         GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
         
+        // Remove markers enclosed within other markers:
+        for(auto markerIter1 = obsMarkersListAtTimestamp.begin(); markerIter1 != obsMarkersListAtTimestamp.end(); ++markerIter1)
+        {
+          for(auto markerIter2 = obsMarkersListAtTimestamp.begin(); markerIter2 != obsMarkersListAtTimestamp.end(); )
+          {
+            if(markerIter1 != markerIter2) {
+              bool marker2isInsideMarker1 = true;
+              for(auto & corner : (*markerIter2)->GetImageCorners()) {
+                if((*markerIter1)->GetImageCorners().Contains(corner) == false) {
+                  marker2isInsideMarker1 = false;
+                  break;
+                }
+              }
+              
+              if(marker2isInsideMarker1) {
+                PRINT_INFO("Removing %s marker completely contained within %s marker.\n",
+                           Vision::MarkerTypeStrings[(*markerIter2)->GetCode()],
+                           Vision::MarkerTypeStrings[(*markerIter1)->GetCode()]);
+
+                markerIter2 = obsMarkersListAtTimestamp.erase(markerIter2);
+              } else {
+                ++markerIter2;
+              }
+            } else {
+              ++markerIter2;
+            }
+          }
+        }
+        
         objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen);
         
         // Remove used markers from map
