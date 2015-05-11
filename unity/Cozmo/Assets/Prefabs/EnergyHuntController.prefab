@@ -1246,6 +1246,7 @@ MonoBehaviour:
   resultsHighScore: {fileID: 11413718}
   testRate: 300
   extractTrimTime: 1.14999998
+  accelStabilizationTime: .200000003
   depositTrimTime: .349999994
 --- !u!114 &11425404
 MonoBehaviour:
