@@ -228,28 +228,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(lastValidPredictedDrop != validPredictedDrop) {
-			SetBackpackLEDs(validPredictedDrop ? Color.green : Color.clear);
+			robot.SetBackpackLEDs(validPredictedDrop ? Color.green : Color.clear, Color.clear);
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
-	}
-
-
-	void SetBackpackLEDs(Color color) {
-		
-		Anki.Cozmo.U2G.SetBackpackLEDs msg = new Anki.Cozmo.U2G.SetBackpackLEDs();
-		msg.robotID = robot.ID;
-		for(int i=0; i<5; ++i) {
-			msg.onColor[i] = CozmoPalette.ColorToUInt(color);
-			msg.offColor[i] = 0;
-			msg.onPeriod_ms[i] = 1000;
-			msg.offPeriod_ms[i] = 0;
-			msg.transitionOnPeriod_ms[i] = 0;
-			msg.transitionOffPeriod_ms[i] = 0;
-		}
-		
-		Anki.Cozmo.U2G.Message msgWrapper = new Anki.Cozmo.U2G.Message{SetBackpackLEDs = msg};
-		RobotEngineManager.instance.channel.Send(msgWrapper);
 	}
 
 	void OnDisable() {

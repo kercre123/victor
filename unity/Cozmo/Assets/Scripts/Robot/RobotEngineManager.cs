@@ -35,7 +35,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
 
-	public ChannelBase channel { get; private set; }
+	private ChannelBase channel = null;
 	private float lastRobotStateMessage = 0;
 	private bool isRobotConnected = false;
 
@@ -287,6 +287,11 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 	}
 
+	public void SendMessage()
+	{
+		channel.Send( Message );
+	}
+
 	private void ReceivedMessage(G2U.Message message)
 	{
 		switch (message.GetTag ()) {
@@ -348,7 +353,7 @@ public class RobotEngineManager : MonoBehaviour {
 		ConnectToRobotMessage.robotID = (byte)message.robotID;
 
 		Message.ConnectToRobot = ConnectToRobotMessage;
-		channel.Send( Message );
+		SendMessage();
 	}
 	
 	private void ReceivedSpecificMessage(G2U.UiDeviceAvailable message)
@@ -356,7 +361,7 @@ public class RobotEngineManager : MonoBehaviour {
 		ConnectToUiDeviceMessage.deviceID = (byte)message.deviceID;
 
 		Message.ConnectToUiDevice = ConnectToUiDeviceMessage;
-		channel.Send( Message );
+		SendMessage();
 	}
 	
 	private void ReceivedSpecificMessage(G2U.RobotConnected message)
@@ -800,7 +805,7 @@ public class RobotEngineManager : MonoBehaviour {
 		VisualizeQuadMessage.zLowerRight = lowerRight.z;
 
 		Message.VisualizeQuad = VisualizeQuadMessage;
-		channel.Send( Message );
+		SendMessage();
 	}
 
 	public void StartEngine(string vizHostIP)
@@ -817,7 +822,7 @@ public class RobotEngineManager : MonoBehaviour {
 		StartEngineMessage.vizHostIP [length] = 0;
 
 		Message.StartEngine = StartEngineMessage;
-		channel.Send( Message );
+		SendMessage();
 	}
 	
 	/// <summary>
@@ -846,7 +851,7 @@ public class RobotEngineManager : MonoBehaviour {
 		ForceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 
 		Message.ForceAddRobot = ForceAddRobotMessage;
-		channel.Send( Message );
+		SendMessage();
 	}
 	
 	public enum ImageSendMode_t
