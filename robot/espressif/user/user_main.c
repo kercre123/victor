@@ -65,7 +65,7 @@ user_init()
     ap_config.authmode = AUTH_WPA2_PSK;
     ap_config.max_connection = 4;
     ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
-    ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
+    ap_config.beacon_interval = 25; // Must be 50 or lower for iOS devices to connect
 
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
@@ -74,7 +74,7 @@ user_init()
 
     // Create ip config
     struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr("172.31.1.1");
+    ipinfo.gw.addr = ipaddr_addr("0.0.0.0");
     ipinfo.ip.addr = ipaddr_addr("172.31.1.1");
     ipinfo.netmask.addr = ipaddr_addr("255.255.255.0");
 
