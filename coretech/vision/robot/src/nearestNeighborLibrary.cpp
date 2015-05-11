@@ -99,8 +99,8 @@ namespace Embedded {
                                        "GetProbeValues() failed.\n");
     
     // Visualize probe values
-    cv::Mat_<u8> temp(32,32,_probeValues.data);
-    cv::imshow("ProbeValues", temp);
+    //cv::Mat_<u8> temp(32,32,_probeValues.data);
+    //cv::imshow("ProbeValues", temp);
     
     if(_useHoG) {
       GetProbeHoG();
@@ -352,6 +352,7 @@ namespace Embedded {
     }
      */
     
+    /*
     cv::Mat_<u8> temp(32,32,_probeValues.data);
     
     cv::imshow("Original ProbeValues", temp);
@@ -366,7 +367,7 @@ namespace Embedded {
     cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
     //cv::imshow("ProbeFiltering", _probeFiltering);
     cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
-    
+    */
     return RESULT_OK;
   } // NearestNeighborLibrary::GetProbeValues()
   
