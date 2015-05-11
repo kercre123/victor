@@ -18,7 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 
 #if USE_NEAREST_NEIGHBOR_RECOGNITION
-#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 30 // TODO: Make this a VisionParameter and pass it in dynamically
+#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically
 #endif
 
 //#define SHOW_DRAWN_COMPONENTS
