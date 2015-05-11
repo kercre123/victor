@@ -66,13 +66,6 @@ sint8 ICACHE_FLASH_ATTR clientInit()
     return err;
   }
 
-  err = espconn_regist_sentcb(udpServer, udpServerSentCB);
-  if (err != 0)
-  {
-    os_printf("\tError registering sent callback %d\r\n", err);
-    return err;
-  }
-
   err = espconn_create(udpServer);
   if (err != 0)
   {
@@ -128,7 +121,7 @@ void clientQueuePacket(UDPPacket* pkt)
   }
   else
   {
-    err = espconn_sent(client, pkt->data, pkt->len);
+    err = espconn_sent(udpServer, pkt->data, pkt->len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       os_printf("Failed to queue UDP packet %d\n", err);

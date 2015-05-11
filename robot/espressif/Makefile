@@ -11,8 +11,8 @@ CWD := $(shell pwd)
 GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106
 ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
 FW_TOOL:= $(CWD)/../../../coretech-external/espressif/other/esptool/esptool
-SDK:= ../../../coretech-external/espressif/iot_sdk
-PORT:=com11
+SDK:= ../.. /../coretech-external/espressif/iot_sdk
+PORT:=com7
 BAUD:=230400
 
 XTLIB:=$(SDK)/lib

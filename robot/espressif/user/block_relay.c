@@ -4,9 +4,6 @@
 #include "ets_sys.h"
 #include "osapi.h"
 
-#define NUM_RTX_BUFS 4
-static UDPPacket rtxbs[NUM_RTX_BUFS];
-
 /// Store everything relivant to a block connection
 typedef struct BlockConnection
 {
@@ -43,34 +40,11 @@ static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned sho
   }
 }
 
-static void ICACHE_FLASH_ATTR blockSentCB(void *arg)
-{
-  BlockConnection* block = (BlockConnection*)arg;
-#ifdef DEBUG_BR
-  os_printf("BR sent CB %08x\r\n", arg);
-#endif
-
-  if (block->queuedPacket != NULL) // Reset the packet so it may be used
-  {
-    UDPPacket* next = block->queuedPacket->next;
-    block->queuedPacket->next = NULL;
-    block->queuedPacket->len = 0;
-    block->queuedPacket->state = PKT_BUF_AVAILABLE;
-    block->queuedPacket = next;
-  }
-  else
-  {
-    os_printf("WARN: block sent callback with no packet queued\r\n");
-  }
-}
-
 sint8 ICACHE_FLASH_ATTR blockRelayInit()
 {
   sint8 err, i;
 
   os_printf("Block Relay Init\r\n");
-
-  os_memset(rtxbs, 0, sizeof(UDPPacket)*NUM_RTX_BUFS);
 
   blocks = (BlockConnection*)os_zalloc(sizeof(BlockConnection)*NUM_BLOCKS); // Allocate block array
   if (blocks == NULL)
@@ -100,11 +74,6 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
     {
       os_printf("\tError registering receive callback for block %d: %d\r\n", i, err);
       return err;
-    }
-    err = espconn_regist_sentcb(&(blocks[i].socket), blockSentCB);
-    if (err != 0)
-    {
-      os_printf("\tError registering sent callback for block %d: %d", i, err);
     }
     err = espconn_create(&(blocks[i].socket));
     if (err != 0)
@@ -178,42 +147,20 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned s
   }
   else if(block < NUM_BLOCKS)
   {
-    for (i=0; i<NUM_RTX_BUFS; ++i)
-    {
-      if (rtxbs[i].state == PKT_BUF_AVAILABLE)
-      {
-        int8 err;
-        rtxbs[i].state = PKT_BUF_RESERVED;
-        os_memcpy(rtxbs[i].data, data, len);
-        rtxbs[i].len = len;
+    int8 err;
 #ifdef DEBUG_BR
-        os_printf("Sending to block on %08x\r\n", &(blocks[block].socket));
+    os_printf("Sending to block on %08x\r\n", &(blocks[block].socket));
 #endif
-        err = espconn_sent(&(blocks[block].socket), rtxbs[i].data, rtxbs[i].len);
-        if (err >= 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
-        {
-          rtxbs[i].state = PKT_BUF_QUEUED;
-          if (blocks[block].queuedPacket == NULL)
-          {
-            blocks[block].queuedPacket = &rtxbs[i];
-          }
-          else
-          {
-            UDPPacket* n = blocks[block].queuedPacket;
-            while (n->next != NULL) n = n->next;
-            n->next = &rtxbs[i];
-          }
-          return true;
-        }
-        else
-        {
-          os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
-          return false;
-        }
-      }
+    err = espconn_sent(&(blocks[block].socket), data, len);
+    if (err < 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
+    {
+      os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
+      return false;
     }
-    os_printf("Block relay no transmit buffer availalbe to relay %d[%d] to %d\r\n", data[0], len, block);
-    return false;
+    else
+    {
+      return true;
+    }
   }
   else
   {
