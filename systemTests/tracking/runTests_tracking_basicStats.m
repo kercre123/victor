@@ -34,11 +34,22 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
         templateQuad = templateQuad{1};
         
         for iPose = workQueue{iWork}.iPoses
+            if iPose == 1
+                pixelShift = [0, 0];
+            elseif strcmp(algorithmParameters.shaking{1}, 'horizontal')
+                if mod(iPose, 2) == 0
+                    pixelShift = [algorithmParameters.shaking{2}, 0];
+                else
+                    pixelShift = [-algorithmParameters.shaking{2}, 0];
+                end
+            end
+            
             [image, fileInfo] = testUtilities_loadImage(...
                 [curTestData.testPath, jsonData.Poses{iPose}.ImageFile],...
                 algorithmParameters.imageCompression,...
                 algorithmParameters.preprocessingFunction,...
-                workQueue{iWork}.basicStats_filenames{iPose});
+                workQueue{iWork}.basicStats_filenames{iPose},...
+                'pixelShift', pixelShift);
             
             if size(image,1) ~= jsonData.CameraCalibration.nrows || size(image,2) ~= jsonData.CameraCalibration.ncols
                 disp(sprintf('Size mismatch %dx%d != %dx%d', size(image,2), size(image,1), jsonData.CameraCalibration.ncols, jsonData.CameraCalibration.nrows));
@@ -103,13 +114,17 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
             
             groundTruthQuads = makeCellArray(groundTruthQuads);
             
-            detectedQuads = {currentQuad};
+            currentQuadShifted = currentQuad;
+            currentQuadShifted(:,1) = currentQuadShifted(:,1) - pixelShift(1);
+            currentQuadShifted(:,2) = currentQuadShifted(:,2) - pixelShift(2);
+            
+            detectedQuads = {currentQuadShifted};
             detectedQuadValidity = int32([1]);
             detectedMarkers = {};
             detectedMarkers{1}.name = jsonData.Poses{1}.VisionMarkers{1}.markerType;
-            detectedMarkers{1}.corners = currentQuad;
             detectedMarkers{1}.isValid = 1;
-            
+            detectedMarkers{1}.corners = currentQuadShifted;
+                                    
             %check if the quads are in the right places
             
             [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);

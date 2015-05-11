@@ -11,7 +11,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads.basics = 1;
+    numComputeThreads.basics = 3;
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
@@ -58,6 +58,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
+    algorithmParameters.shaking = {'none', 0};
+    
     %     algorithmParameters.track_ = ;
     %     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
@@ -82,63 +84,74 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'tracking_c_variableTimes')
             isSimpleTest = false;
             
-            temporalFrameFractions = [1, 2, 4, 10];
+            numShakingPixels = [0, 1, 2, 4, 8];
             
-            percentMarkersCorrect_window = cell(length(temporalFrameFractions), 1);
-            %             percentMarkersCorrectImages_window = cell(length(temporalFrameFractions), 1);
+            temporalFrameFractions = [1, 10];
             
-            % Note: figuring out change time is tricky, so this reruns everything every time
-            for iMaxFraction = 1:length(temporalFrameFractions)
-                maxFraction = temporalFrameFractions(iMaxFraction);
+            percentMarkersCorrect_window = cell(length(numShakingPixels), length(temporalFrameFractions), 1);
+            
+            for iShake = 1:length(numShakingPixels)
+
+                % Note: figuring out change time is tricky, so this reruns everything every time
+                for iMaxFraction = 1:length(temporalFrameFractions)
+                    maxFraction = temporalFrameFractions(iMaxFraction);
+
+                    percentMarkersCorrect_window{iShake}{iMaxFraction} = zeros(length(allTestData), maxFraction);
+
+                    for iPiece = 1:maxFraction
+                        for iTest = 1:length(allTestData)
+                            numPoses = length(allTestData{iTest}.jsonData.Poses);
+                            frameIndexes = round(linspace(0, numPoses, maxFraction+1));
+                            startIndexes = 1 + frameIndexes(1:(end-1));
+                            endIndexes = frameIndexes(2:end);
+
+                            curAllTestData = allTestData(iTest);
+                            curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
+
+                            algorithmParametersN = algorithmParametersOrig;
+                            algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/shake%d/fraction%d/piece%d', iTest, numShakingPixels(iShake), maxFraction, iPiece);
+                            algorithmParametersN.shaking = {'horizontal', numShakingPixels(iShake)};
+
+                            if length(curAllTestData{1}.jsonData.Poses) > 10
+                                localNumComputeThreads.basics = numComputeThreads.basics;
+                                localNumComputeThreads.perPose = numComputeThreads.perPose;
+                            else
+                                localNumComputeThreads.basics = 1;
+                                localNumComputeThreads.perPose = 1;
+                            end
+
+                            curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+
+                            percentMarkersCorrect_window{iShake}{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
+                        end % for iTest = 1:length(allTestData)
+                    end % for iPiece = 1:maxFraction
+                end % for iMaxFraction = 1:length(temporalFrameFractions)
+
+                markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
+                markersCorrectImage(:,:,1) = 255;
+
+                cx = 1;
+                for iMaxFraction = 1:length(temporalFrameFractions)
+                    curResults = percentMarkersCorrect_window{iShake}{iMaxFraction};
+
+                    markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
+
+                    cx = cx + size(curResults,2) + 1;
+                end
+
+                newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
+                markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
+
+                %figureHandle = figure(10 + iShake);
+                %set(figureHandle, 'Name', sprintf('Shake%d', numShakingPixels(iShake)));
                 
-                percentMarkersCorrect_window{iMaxFraction} = zeros(length(allTestData), maxFraction);
-                
-                for iPiece = 1:maxFraction
-                    for iTest = 1:length(allTestData)
-                        numPoses = length(allTestData{iTest}.jsonData.Poses);
-                        frameIndexes = round(linspace(0, numPoses, maxFraction+1));
-                        startIndexes = 1 + frameIndexes(1:(end-1));
-                        endIndexes = frameIndexes(2:end);
-                        
-                        curAllTestData = allTestData(iTest);
-                        curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
-                        
-                        algorithmParametersN = algorithmParametersOrig;
-                        algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/fraction%d/piece%d', iTest, maxFraction, iPiece);
-                        
-                        if length(curAllTestData{1}.jsonData.Poses) > 10
-                            curMaxThreads = 3;
-                        else
-                            curMaxThreads = 1;
-                        end
-                        
-                        localNumComputeThreads.basics = min(curMaxThreads, numComputeThreads.basics);
-                        localNumComputeThreads.perPose = min(curMaxThreads, numComputeThreads.perPose);
-                        
-                        curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
-                        
-                        percentMarkersCorrect_window{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
-                    end % for iTest = 1:length(allTestData)
-                end % for iPiece = 1:maxFraction
-            end % for iMaxFraction = 1:length(temporalFrameFractions)
-            
-            markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
-            markersCorrectImage(:,:,1) = 255;
-            
-            cx = 1;
-            for iMaxFraction = 1:length(temporalFrameFractions)
-                curResults = percentMarkersCorrect_window{iMaxFraction};
-                
-                markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
-                
-                cx = cx + size(curResults,2) + 1;
-            end
-            
-            newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
-            markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
-            
-            figure(10);
-            imshow(markersCorrectImageToShow);
+                figure(10);
+                numX = ceil(sqrt(length(numShakingPixels)));
+                numY = ceil(length(numShakingPixels) / numX);
+                subplot(numY, numX, iShake);
+                imshow(markersCorrectImageToShow);
+                title(sprintf('Shake%d', numShakingPixels(iShake)));
+            end % for iShake = 1:length(numShakingPixels)
         else
             % Unknown runWhichAlgorithms{iAlgorithm}
             keyboard
