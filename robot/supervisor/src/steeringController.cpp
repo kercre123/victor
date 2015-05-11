@@ -525,6 +525,14 @@ namespace Anki {
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currAngularVel_ / PI = arcVel / (PI * R)
       s16 arcVel = (s16)(currAngularVel_ * WHEEL_DIST_HALF_MM); // mm/s
+
+
+      // PID control for maintaining heading
+      f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
+      const f32 pointTurnKp_ = 100;
+      //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
+      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
+
       
       // Compute the wheel velocities
       s16 wleft = -arcVel;
