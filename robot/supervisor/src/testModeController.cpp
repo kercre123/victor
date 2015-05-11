@@ -444,6 +444,20 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
+
+          /*
+          // Small circle drive test
+          PathFollower::ClearPath();
+          Localization::SetDriveCenterPose(0, 0, PIDIV2_F);
+          f32 speed = 20;
+          f32 radius = WHEEL_DIST_HALF_MM;
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, 0,    PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, PI_F, PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+
+          PathFollower::StartPathTraversal();
+          pathStarted_ = true;
+          return RESULT_OK;
+          */
           
           // Create a path and follow it
           PathFollower::ClearPath();

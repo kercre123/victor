@@ -374,7 +374,7 @@ namespace Embedded {
   
   Result NearestNeighborLibrary::GetProbeHoG()
   {
-    static const s32 gridSize = static_cast<s32>(sqrt(_dataDimension));
+    static const s32 gridSize = static_cast<s32>(sqrt(static_cast<f64>(_dataDimension)));
     static cv::Mat_<u8> whichHist(gridSize, gridSize);
     static bool whichHistInitialized = false;
     if(!whichHistInitialized) {

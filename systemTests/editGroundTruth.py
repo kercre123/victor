@@ -144,6 +144,8 @@ def saveTestFile():
 def loadTestFile():
     global g_mainWindow
     global g_data
+    global g_curPoseIndex
+    global g_curMarkerIndex
 
     # TODO: cache in more efficient format?
 
@@ -176,6 +178,9 @@ def loadTestFile():
         'testFilename':testFilename,
         'testPath':testPath,
         'testFileModificationTime':modificationTime_json}
+
+    g_curPoseIndex = 0
+    g_curMarkerIndex = 0
 
     poseChanged(True)
 
