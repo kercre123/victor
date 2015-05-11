@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo;
 
 public class SlalomController : GameController {
 	public static SlalomController instance = null;
@@ -15,6 +16,8 @@ public class SlalomController : GameController {
 	[SerializeField] AudioClip cornerTriggeredSound = null;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
+
+	bool atYourMark = false;
 
 	int currentCorner = 0;
 	int currentObstacleIndex = 0;
@@ -54,7 +57,7 @@ public class SlalomController : GameController {
 
 	int GetNextIndex(bool actual=false) {
 
-		if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
+		//if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
 
 		int nextIndex = 0;
 		if(forward) {
@@ -89,7 +92,7 @@ public class SlalomController : GameController {
 			}
 		}
 
-		if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
+		//if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
 
 		return nextIndex;
 	}
@@ -142,7 +145,7 @@ public class SlalomController : GameController {
 	
 	protected override void OnDisable()
 	{
-		base.OnEnable();
+		base.OnDisable();
 		
 		if( instance == this ) instance = null;
 	}
@@ -165,18 +168,40 @@ public class SlalomController : GameController {
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		robot.GotoPose(pos.x, pos.y, rad);
 		PrepareGameForPlay(pos, facing);
+		atYourMark = false;
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += CheckForGotoPoseCompletion;
+		robot.isBusy = true;
+	}
+
+	void CheckForGotoPoseCompletion(bool success, RobotActionType action_type) {
+
+		switch(action_type) {
+			case RobotActionType.DRIVE_TO_POSE:
+				if(success) {
+					atYourMark = true;
+					if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoPoseCompletion;
+				}
+				else { //try again or fail outright?
+					float rad;
+					Vector3 facing;
+					Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out facing);
+					CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
+					robot.GotoPose(pos.x, pos.y, rad);
+				}
+				break;
+		}
 	}
 
 	protected override void Update_PRE_GAME() {
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
-		if(robot.isBusy) return;
+		if(!atYourMark) return;
 
 		base.Update_PRE_GAME();
 	}
 
 	protected override void Exit_PRE_GAME() {
-
+		robot.isBusy = false;
 		base.Exit_PRE_GAME();
 	}
 
