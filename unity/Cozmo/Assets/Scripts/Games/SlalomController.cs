@@ -14,7 +14,7 @@ public class SlalomController : GameController {
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
 
-	List<ObservedObject> obstacles = new List<ObservedObject>();
+	List<ActiveBlock> obstacles = new List<ObservedObject>();
 
 	int currentCorner = 0;
 	int currentObstacleIndex = 0;
@@ -56,6 +56,8 @@ public class SlalomController : GameController {
 
 	int GetNextIndex(bool actual=false) {
 
+		if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
+
 		int nextIndex = 0;
 		if(forward) {
 			nextIndex = currentObstacleIndex + 1;
@@ -66,9 +68,11 @@ public class SlalomController : GameController {
 				}
 				else {//loop
 					nextIndex = 0;
-					if(actual) {
-						currentLap++;
-					}
+				}
+
+				if(actual) {
+					currentLap++;
+					Debug.Log("currentLap("+currentLap+")");
 				}
 			}
 		}
@@ -85,18 +89,16 @@ public class SlalomController : GameController {
 					nextIndex = obstacles.Count - 1;
 				}
 			}
-
-			if(actual && nextIndex == 0) {
-				Debug.Log("currentLap++");
-				currentLap++;
-			}
 		}
+
+		if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
 
 		return nextIndex;
 	}
 
 	void LapComplete() {
 		scores[0] += pointsPerLap;
+		Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		audio.PlayOneShot(playerScoreSound);
 	}
 
@@ -329,7 +331,7 @@ public class SlalomController : GameController {
 
 		audio.PlayOneShot(cornerTriggeredSound);
 
-		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
+		Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
 	}
@@ -372,7 +374,7 @@ public class SlalomController : GameController {
 		}
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
+			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
 
 			int currentTopLightIndex = -1;
