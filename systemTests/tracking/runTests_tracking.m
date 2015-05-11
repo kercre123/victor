@@ -11,17 +11,16 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
     
-    numComputeThreads.basics = 3;
+    numComputeThreads.basics = 1;
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
-%         'c',...
-%         'c_variableTimes',...
-        'c_variableTimes',...
+        %         'tracking_c',...
+        'tracking_c_variableTimes',...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -39,7 +38,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     allTestData = getTestData(testJsonPattern);
     fprintf('Loaded\n');
     
-    % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters   
+    % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     algorithmParameters.normalizeImage = false;
     
     algorithmParameters.init_scaleTemplateRegionPercent  = 0.9;
@@ -59,8 +58,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
-%     algorithmParameters.track_ = ;
-%     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    %     algorithmParameters.track_ = ;
+    %     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
     algorithmParametersOrig = algorithmParameters;
     
@@ -78,15 +77,15 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         algorithmParametersN.extractionFunctionName = runWhichAlgorithms{iAlgorithm};
         isSimpleTest = true;
         
-        if strcmp(runWhichAlgorithms{iAlgorithm}, 'c')
+        if strcmp(runWhichAlgorithms{iAlgorithm}, 'tracking_c')
             % Default parameters
-        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_variableTimes')
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'tracking_c_variableTimes')
             isSimpleTest = false;
             
             temporalFrameFractions = [1, 2, 4, 10];
-                        
+            
             percentMarkersCorrect_window = cell(length(temporalFrameFractions), 1);
-%             percentMarkersCorrectImages_window = cell(length(temporalFrameFractions), 1);
+            %             percentMarkersCorrectImages_window = cell(length(temporalFrameFractions), 1);
             
             % Note: figuring out change time is tricky, so this reruns everything every time
             for iMaxFraction = 1:length(temporalFrameFractions)
@@ -100,13 +99,13 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                         frameIndexes = round(linspace(0, numPoses, maxFraction+1));
                         startIndexes = 1 + frameIndexes(1:(end-1));
                         endIndexes = frameIndexes(2:end);
-
+                        
                         curAllTestData = allTestData(iTest);
                         curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
-
+                        
                         algorithmParametersN = algorithmParametersOrig;
                         algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/fraction%d/piece%d', iTest, maxFraction, iPiece);
-
+                        
                         if length(curAllTestData{1}.jsonData.Poses) > 10
                             curMaxThreads = 3;
                         else
@@ -117,7 +116,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                         localNumComputeThreads.perPose = min(curMaxThreads, numComputeThreads.perPose);
                         
                         curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
-
+                        
                         percentMarkersCorrect_window{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
                     end % for iTest = 1:length(allTestData)
                 end % for iPiece = 1:maxFraction
@@ -138,10 +137,11 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
             newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
             markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
             
-            figure(10); 
+            figure(10);
             imshow(markersCorrectImageToShow);
         else
             % Unknown runWhichAlgorithms{iAlgorithm}
+            keyboard
             assert(false);
         end
         
@@ -251,7 +251,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     curExtractFunction_dataPrefix = [resultsDirectory_curTime, 'data/', extractionFunctionName];
     curExtractFunction_imagePrefix = [resultsDirectory_curTime, 'images/', extractionFunctionName];
     
-    % if extractionFunctionName has / characters for directories, don't add more    
+    % if extractionFunctionName has / characters for directories, don't add more
     if isempty(strfind(extractionFunctionName, '/'))
         curExtractFunction_intermediatePrefix = [curExtractFunction_intermediatePrefix, '/'];
         curExtractFunction_dataPrefix = [curExtractFunction_dataPrefix, '/'];
@@ -264,13 +264,13 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     
     slashInds = strfind(curExtractFunction_intermediatePrefix, '/');
     curExtractFunction_intermediateDirectory = curExtractFunction_intermediatePrefix(1:slashInds(end));
-
+    
     slashInds = strfind(curExtractFunction_dataPrefix, '/');
     curExtractFunction_dataDirectory = curExtractFunction_dataPrefix(1:slashInds(end));
     
     slashInds = strfind(curExtractFunction_imagePrefix, '/');
     curExtractFunction_imageDirectory = curExtractFunction_imagePrefix(1:slashInds(end));
-         
+    
     [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
@@ -279,7 +279,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     workQueue_basicStats_current = {};
     workQueue_perPoseStats_current = {};
     workQueue_perPoseStats_all = {};
-        
+    
     for iTest = 1:size(allTestData, 1)
         numPoses = length(allTestData{iTest}.jsonData.Poses);
         
@@ -297,7 +297,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         end
         
         clear iPose
-
+        
         % Both basics and perPose share some fields
         newWorkItemBoth.iTest = iTest;
         newWorkItemBoth.extractionFunctionName = extractionFunctionName;
@@ -312,13 +312,13 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         newWorkItemBasics.CameraCalibration = allTestData{iTest}.jsonData.CameraCalibration;
         
         newWorkItemBasics.templateWidth_mm = allTestData{iTest}.jsonData.Blocks{1}.templateWidth_mm;
-                                
+        
         workQueue_basicStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
-
+        
         %
         % Basic stats
         %
-
+        
         rerunBasics = false;
         
         % If any of the basics filenames are missing, rerun the whole basics sequence.
@@ -328,7 +328,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                 rerunBasics = true;
                 break;
             end
-
+            
             % If the basic stats results are older than the test json
             modificationTime_basicStatsResults = dir(basicStats_filenames{iPose});
             modificationTime_basicStatsResults = modificationTime_basicStatsResults(1).datenum;
@@ -338,7 +338,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                 rerunBasics = true;
                 break;
             end
-
+            
             % If the basic stats results are older than the input image file
             modificationTime_inputImage = dir([allTestData{iTest}.testPath, allTestData{iTest}.jsonData.Poses{iPose}.ImageFile]);
             modificationTime_inputImage = modificationTime_inputImage(1).datenum;
@@ -351,11 +351,11 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         if rerunBasics
             workQueue_basicStats_current{end+1} = newWorkItemBasics; %#ok<AGROW>
         end
-
+        
         %
         % Per-pose stats
         %
-
+        
         for iPose = 1:numPoses
             addToPerPoseWorkQueue = false;
             if rerunBasics
@@ -373,14 +373,14 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                     addToPerPoseWorkQueue = true;
                 end
             end
-
+            
             % PerPose stores just the current filename and pose
-            newWorkItemBasics = newWorkItemBoth;                
+            newWorkItemBasics = newWorkItemBoth;
             newWorkItemBasics.iPose = iPose;
             newWorkItemBasics.basicStats_filename = basicStats_filenames{iPose};
             newWorkItemBasics.perPoseStats_dataFilename = perPoseStats_dataFilenames{iPose};
             newWorkItemBasics.perPoseStats_imageFilename = perPoseStats_imageFilenames{iPose};
-
+            
             workQueue_perPoseStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
             
             if addToPerPoseWorkQueue

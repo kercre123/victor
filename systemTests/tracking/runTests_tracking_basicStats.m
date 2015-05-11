@@ -6,7 +6,7 @@
 
 function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algorithmParameters)
     global g_rotationList;
-        
+    
     g_rotationList = rotationList;
     
     lastTestId = -1;
@@ -32,7 +32,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
         
         templateQuad = testUtilities_jsonToQuad(jsonData.Poses{1}.VisionMarkers{1});
         templateQuad = templateQuad{1};
-                
+        
         for iPose = workQueue{iWork}.iPoses
             [image, fileInfo] = testUtilities_loadImage(...
                 [curTestData.testPath, jsonData.Poses{iPose}.ImageFile],...
@@ -70,7 +70,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                 
                 currentQuad = templateQuad;
             else
-                 [verify_converged,...
+                [verify_converged,...
                     verify_meanAbsoluteDifference,...
                     verify_numInBounds,...
                     verify_numSimilarPixels,...
@@ -94,15 +94,15 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                 keyboard;
                 continue;
             end
-
+            
             curTestData.Scene = jsonData.Poses{iPose}.Scene;
-
+            
             curTestData.ImageFile = jsonData.Poses{iPose}.ImageFile;
-
+            
             groundTruthQuads = testUtilities_jsonToQuad(jsonData.Poses{iPose}.VisionMarkers);
-
+            
             groundTruthQuads = makeCellArray(groundTruthQuads);
-
+            
             detectedQuads = {currentQuad};
             detectedQuadValidity = int32([1]);
             detectedMarkers = {};
@@ -111,13 +111,13 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
             detectedMarkers{1}.isValid = 1;
             
             %check if the quads are in the right places
-
+            
             [justQuads_bestDistances_mean, justQuads_bestDistances_max, justQuads_bestIndexes, ~] = findClosestMatches(groundTruthQuads, detectedQuads, []);
-
+            
             detectedMarkerQuads = makeCellArray(testUtilities_markersToQuad(detectedMarkers));
-
+            
             visionMarkers_groundTruth = makeCellArray(jsonData.Poses{iPose}.VisionMarkers);
-
+            
             [markers_bestDistances_mean, markers_bestDistances_max, markers_bestIndexes, markers_areRotationsCorrect] = findClosestMatches(groundTruthQuads, detectedMarkerQuads, visionMarkers_groundTruth);
             
             % TODO: fix rotations check
@@ -125,20 +125,20 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
             
             markerNames_groundTruth = cell(length(groundTruthQuads), 1);
             fiducialSizes_groundTruth = zeros(length(groundTruthQuads), 2);
-
+            
             for iMarker = 1:length(groundTruthQuads)
                 markerNames_groundTruth{iMarker,1} = visionMarkers_groundTruth{iMarker}.markerType;
-
+                
                 fiducialSizes_groundTruth(iMarker,:) = [...
                     max(groundTruthQuads{iMarker}(:,1)) - min(groundTruthQuads{iMarker}(:,1)),...
                     max(groundTruthQuads{iMarker}(:,2)) - min(groundTruthQuads{iMarker}(:,2))];
             end
-
+            
             markerNames_detected = cell(length(detectedMarkers), 1);
             for iMarker = 1:length(detectedMarkers)
                 markerNames_detected{iMarker} = detectedMarkers{iMarker}.name;
             end
-
+            
             curResultsData_basics.justQuads_bestDistances_mean = justQuads_bestDistances_mean;
             curResultsData_basics.justQuads_bestDistances_max = justQuads_bestDistances_max;
             curResultsData_basics.justQuads_bestIndexes = justQuads_bestIndexes;
@@ -149,17 +149,17 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
             curResultsData_basics.fiducialSizes_groundTruth = fiducialSizes_groundTruth;
             curResultsData_basics.markerNames_groundTruth = makeCellArray(markerNames_groundTruth);
             curResultsData_basics.markerLocations_groundTruth = makeCellArray(groundTruthQuads);
-
+            
             curResultsData_basics.markerNames_detected = makeCellArray(markerNames_detected);
             curResultsData_basics.detectedQuads = makeCellArray(detectedQuads);
             curResultsData_basics.detectedQuadValidity = detectedQuadValidity;
             curResultsData_basics.detectedMarkers = makeCellArray(detectedMarkers);
-
+            
             curResultsData_basics.uncompressedFileSize = numel(image);
             curResultsData_basics.compressedFileSize = fileInfo.bytes;
-
+            
             save(workQueue{iWork}.basicStats_filenames{iPose}, 'curResultsData_basics', 'curTestData');
-
+            
             if mod(iPose,10) == 0
                 fprintf('x');
             else
@@ -170,7 +170,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
         end % for iPose = workQueue{iWork}.iPoses
     end % for iWork = 1:length(workQueue)
 end % runTests_tracking_basicStats()
-    
+
 function [bestDistances_mean, bestDistances_max, bestIndexes, areRotationsCorrect] = findClosestMatches(groundTruthQuads, queryQuads, markerNames_groundTruth)
     global g_rotationList;
     

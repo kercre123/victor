@@ -15,7 +15,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     % Run everything
@@ -30,12 +30,12 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     %         'matlab_with_refinement_jpg'};
     
     % Run just the tests you want
-%     runWhichAlgorithms = {...
-%         'matlab_with_refinement',...
-%         'matlab_with_refinement_jpg',...
-%         'matlab_with_refinement_jpg_preprocess',...
-%         };
-
+    %     runWhichAlgorithms = {...
+    %         'matlab_with_refinement',...
+    %         'matlab_with_refinement_jpg',...
+    %         'matlab_with_refinement_jpg_preprocess',...
+    %         };
+    
     runWhichAlgorithms = {...
         'c_with_refinement',...
         %'c_with_refinement_jpg',...
@@ -135,7 +135,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             showJpgResults = true;
             
             jpgCompression = round(linspace(0,100,10));
-%             jpgCompression = jpgCompression(end:-1:1);
+            %             jpgCompression = jpgCompression(end:-1:1);
             percentMarkersCorrect_jpg = zeros(length(jpgCompression)+2, 1);
             compressionPercent_jpg = zeros(length(jpgCompression)+2, 1);
             
@@ -173,7 +173,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             showJpgResults = true;
             
             jpgCompression = round(linspace(0,100,10));
-%             jpgCompression = jpgCompression(end:-1:1);
+            %             jpgCompression = jpgCompression(end:-1:1);
             percentMarkersCorrect_jpg = zeros(length(jpgCompression)+2, 1);
             compressionPercent_jpg = zeros(length(jpgCompression)+2, 1);
             
@@ -212,7 +212,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             showJpgResults = true;
             
             jpgCompression = round(linspace(0,100,10));
-%             jpgCompression = jpgCompression(end:-1:1);
+            %             jpgCompression = jpgCompression(end:-1:1);
             percentMarkersCorrect_nathanJpg = zeros(length(jpgCompression)+2, 1);
             compressionPercent_nathanJpg = zeros(length(jpgCompression)+2, 1);
             
@@ -249,7 +249,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 title('Accuracy of fiducial detection with different amounts of nathanJpg compression')
                 disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_nathanJpg), ']'])
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_nathanJpg), ']'])
-            end % showJpgResults            
+            end % showJpgResults
             
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
             isSimpleTest = false;
@@ -269,7 +269,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 };
             
             jpgCompression = round(linspace(0,100,10));
-%             jpgCompression = jpgCompression(end:-1:1);
+            %             jpgCompression = jpgCompression(end:-1:1);
             percentMarkersCorrect_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
             compressionPercent_jpgPreprocess = zeros(length(jpgCompression), length(preprocessingFunctions));
             
@@ -294,7 +294,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
             if showJpgResults
                 figure();
                 
-                % Add the non-preprocessed results to the beginning;                
+                % Add the non-preprocessed results to the beginning;
                 percentMarkersCorrect_jpgPreprocess = [percentMarkersCorrect_jpg(1:(end-2)), percentMarkersCorrect_jpgPreprocess]; %#ok<AGROW>
                 compressionPercent_jpgPreprocess = [compressionPercent_jpg(1:(end-2)), compressionPercent_jpgPreprocess]; %#ok<AGROW>
                 
@@ -428,7 +428,7 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     curExtractFunction_dataPrefix = [resultsDirectory_curTime, 'data/', extractionFunctionName];
     curExtractFunction_imagePrefix = [resultsDirectory_curTime, 'images/', extractionFunctionName];
     
-    % if extractionFunctionName has / characters for directories, don't add more    
+    % if extractionFunctionName has / characters for directories, don't add more
     if isempty(strfind(extractionFunctionName, '/'))
         curExtractFunction_intermediatePrefix = [curExtractFunction_intermediatePrefix, '/'];
         curExtractFunction_dataPrefix = [curExtractFunction_dataPrefix, '/'];
@@ -441,13 +441,13 @@ function [workQueue_basicStats, workQueue_perPoseStats, workQueue_all] = compute
     
     slashInds = strfind(curExtractFunction_intermediatePrefix, '/');
     curExtractFunction_intermediateDirectory = curExtractFunction_intermediatePrefix(1:slashInds(end));
-
+    
     slashInds = strfind(curExtractFunction_dataPrefix, '/');
     curExtractFunction_dataDirectory = curExtractFunction_dataPrefix(1:slashInds(end));
     
     slashInds = strfind(curExtractFunction_imagePrefix, '/');
     curExtractFunction_imageDirectory = curExtractFunction_imagePrefix(1:slashInds(end));
-         
+    
     [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
