@@ -182,7 +182,7 @@ public class SlalomController : GameController {
 		
 		//cull the inactive blocks
 		for(int i=obstacles.Count-1; i>=0; i--) {
-			if(obstacles[i].Family != 3) {
+			if(!obstacles[i].isActive) {
 				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
 				obstacles.RemoveAt(i);
 			}
