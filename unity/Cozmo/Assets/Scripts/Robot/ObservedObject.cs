@@ -20,12 +20,12 @@ public class ObservedObject
 	public Quaternion Rotation { get; private set; }
 	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
-	public Vector3 TopNorth { get { return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * Vector2.right; } }
-	public Vector3 TopEast { get { return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * -Vector2.up; } }
-	public Vector3 TopNorthEast { get { return (TopNorth + TopEast).normalized; } }
-	public Vector3 TopSouthEast { get { return (-TopNorth + TopEast).normalized; } }
-	public Vector3 TopSouthWest { get { return (-TopNorth - TopEast).normalized; } }
-	public Vector3 TopNorthWest { get { return (TopNorth - TopEast).normalized; } }
+	public Vector3 TopNorth { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * Vector2.right; } }
+	public Vector3 TopEast { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * -Vector2.up; } }
+	public Vector3 TopNorthEast { get { return ( TopNorth + TopEast ).normalized; } }
+	public Vector3 TopSouthEast { get { return ( -TopNorth + TopEast ).normalized; } }
+	public Vector3 TopSouthWest { get { return ( -TopNorth - TopEast ).normalized; } }
+	public Vector3 TopNorthWest { get { return ( TopNorth - TopEast ).normalized; } }
 
 	public float TopFaceNorthAngle { get; private set; }
 

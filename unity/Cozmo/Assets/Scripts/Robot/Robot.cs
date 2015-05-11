@@ -282,8 +282,8 @@ public class Robot
 	{
 		ID = robotID;
 		const int initialSize = 64;
-		selectedObjects = new List<ObservedObject>(initialSize);
-		lastSelectedObjects = new List<ObservedObject>(initialSize);
+		selectedObjects = new List<ObservedObject>(3);
+		lastSelectedObjects = new List<ObservedObject>(3);
 		observedObjects = new List<ObservedObject>(initialSize);
 		lastObservedObjects = new List<ObservedObject>(initialSize);
 		markersVisibleObjects = new List<ObservedObject>(initialSize);
@@ -310,6 +310,11 @@ public class Robot
 		TraverseObjectMessage = new U2G.TraverseObject();
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
+
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i] = new Light();
+		}
 
 		ClearData();
 

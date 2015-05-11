@@ -72,19 +72,19 @@ public class ActionButton : MonoBehaviour
 	public Image image;
 	public Text text;
 
+	private string lastText;
+
 	private Action<bool, ObservedObject> action;
 
 	public ObservedObject selectedObject { get; private set; }
 	private ObservedObject lastSelectedObject;
-	private Mode previousMode = Mode.NUM_MODES;
-	private string previousAppend = null;
 	
 	public Mode mode { get; private set; }
 	private Mode lastMode;
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-	public bool changed { get { return lastMode != mode || lastSelectedObject != selectedObject; } }
+	public bool changed { get { return lastMode != mode || lastSelectedObject != selectedObject || lastText != text.text; } }
 
 	private void InvokeActions(bool released, ObservedObject manipulatedObject)
 	{
@@ -108,6 +108,7 @@ public class ActionButton : MonoBehaviour
 	{
 		lastMode = mode;
 		lastSelectedObject = selectedObject;
+		lastText = text.text;
 	}
 
 	public void SetMode( Mode m, ObservedObject selected, string append = null, bool solidHint = false )
@@ -132,12 +133,7 @@ public class ActionButton : MonoBehaviour
 		}
 
 		image.sprite = GetModeSprite( mode );
-
-		if (mode != previousMode || previousAppend != append) {
-			text.text = GetModeName( mode ) + append;
-			previousMode = mode;
-			previousAppend = append;
-		}
+		text.text = GetModeName( mode ) + append;
 
 		if( hint.image != null )
 		{
