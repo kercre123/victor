@@ -278,6 +278,10 @@ public class GoldRushController : GameController {
 		{
 			//PlayNotificationAudio (pickupEnergyScanner);
 			robot.PickAndPlaceObject(goldExtractingObject);
+			if(CozmoBusyPanel.instance != null)	{
+				string desc = "Cozmo is attempting to pick-up\n the extractor.";
+				CozmoBusyPanel.instance.SetDescription(desc);
+			}
 		}
 	}
 	
@@ -449,7 +453,12 @@ public class GoldRushController : GameController {
 			PlayNotificationAudioDeferred(findEnergy);
 			break;
 		case PlayState.CAN_EXTRACT:
-			if ( goldExtractingObject != null )
+			if ( PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1 )
+			{
+				// auto extract
+				EnterPlayState(PlayState.EXTRACTING);
+			}
+			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
 				audio.Stop();
@@ -477,7 +486,12 @@ public class GoldRushController : GameController {
 			//ActionButton.DROP = "COLLECT";
 			//RobotEngineManager.instance.SuccessOrFailure += CheckForGoldDropOff;
 
-			if ( goldExtractingObject != null )
+			if ( PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1 )
+			{
+				// auto deposit
+				EnterPlayState(PlayState.DEPOSITING);
+			}
+			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
 				audio.Stop();

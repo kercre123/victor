@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using Anki.Cozmo;
 
 public class SlalomController : GameController {
 	public static SlalomController instance = null;
@@ -15,9 +14,7 @@ public class SlalomController : GameController {
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
 
-	List<ActiveBlock> obstacles = new List<ActiveBlock>();
-
-	bool atYourMark = false;
+	List<ActiveBlock> obstacles = new List<ObservedObject>();
 
 	int currentCorner = 0;
 	int currentObstacleIndex = 0;
@@ -31,9 +28,9 @@ public class SlalomController : GameController {
 
 	float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
-	ActiveBlock previousObstacle = null;
+	ObservedObject previousObstacle = null;
 
-	ActiveBlock currentObstacle { 
+	ObservedObject currentObstacle { 
 		get {
 			if(obstacles == null) return null;
 			if(currentObstacleIndex < 0) return null;
@@ -42,7 +39,7 @@ public class SlalomController : GameController {
 			return obstacles[currentObstacleIndex];
 		}
 	}
-	ActiveBlock nextObstacle { 
+	ObservedObject nextObstacle { 
 		get { 
 			if(obstacles == null) return null;
 
@@ -55,9 +52,11 @@ public class SlalomController : GameController {
 		}
 	}
 
+
+
 	int GetNextIndex(bool actual=false) {
 
-		//if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
+		if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
 
 		int nextIndex = 0;
 		if(forward) {
@@ -73,7 +72,7 @@ public class SlalomController : GameController {
 
 				if(actual) {
 					currentLap++;
-					//Debug.Log("currentLap("+currentLap+")");
+					Debug.Log("currentLap("+currentLap+")");
 				}
 			}
 		}
@@ -92,14 +91,14 @@ public class SlalomController : GameController {
 			}
 		}
 
-		//if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
+		if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
 
 		return nextIndex;
 	}
 
 	void LapComplete() {
 		scores[0] += pointsPerLap;
-		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
+		Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		audio.PlayOneShot(playerScoreSound);
 	}
 
@@ -145,7 +144,7 @@ public class SlalomController : GameController {
 	
 	protected override void OnDisable()
 	{
-		base.OnDisable();
+		base.OnEnable();
 		
 		if( instance == this ) instance = null;
 	}
@@ -168,48 +167,28 @@ public class SlalomController : GameController {
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		robot.GotoPose(pos.x, pos.y, rad);
 		PrepareGameForPlay(pos, facing);
-		atYourMark = false;
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += CheckForGotoPoseCompletion;
-		robot.isBusy = true;
-	}
-
-	void CheckForGotoPoseCompletion(bool success, RobotActionType action_type) {
-
-		switch(action_type) {
-			case RobotActionType.DRIVE_TO_POSE:
-				if(success) {
-					atYourMark = true;
-					if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoPoseCompletion;
-				}
-				else { //try again or fail outright?
-					float rad;
-					Vector3 facing;
-					Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out facing);
-					CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
-					robot.GotoPose(pos.x, pos.y, rad);
-				}
-				break;
-		}
 	}
 
 	protected override void Update_PRE_GAME() {
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
-		if(!atYourMark) return;
+		if(robot.isBusy) return;
 
 		base.Update_PRE_GAME();
-	}
-
-	protected override void Exit_PRE_GAME() {
-		robot.isBusy = false;
-		base.Exit_PRE_GAME();
 	}
 
 	void PrepareGameForPlay(Vector3 startingPos, Vector3 startingFacing) {
 
 		obstacles.Clear();
-		List<ObservedObject> observedObjects = GameLayoutTracker.instance.GetTrackedObjectsInOrder().FindAll( x => x.isActive );
-		foreach(ObservedObject obj in observedObjects) obstacles.Add(obj as ActiveBlock);
+		obstacles.AddRange(GameLayoutTracker.instance.GetTrackedObjectsInOrder());
+		
+		//cull the inactive blocks
+		for(int i=obstacles.Count-1; i>=0; i--) {
+			if(!obstacles[i].isActive) {
+				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
+				obstacles.RemoveAt(i);
+			}
+		}
 
 		lastLapCount = 1;
 		currentLap = 1;
@@ -299,7 +278,7 @@ public class SlalomController : GameController {
 		return false;
 	}
 
-	Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
+	Vector2 GetCornerVector(ObservedObject obstacle, int cornerIndex, bool clock, ObservedObject previous, bool debug=false) {
 
 		float angle = idealCornerAngles[cornerIndex] * (clock ? -1f : 1f);
 
@@ -352,7 +331,7 @@ public class SlalomController : GameController {
 
 		audio.PlayOneShot(cornerTriggeredSound);
 
-		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
+		Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
 	}
@@ -395,7 +374,13 @@ public class SlalomController : GameController {
 		}
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+<<<<<<< HEAD
 			ActiveBlock obstacle = obstacles[obstacleIndex];
+=======
+			if(!obstacles[obstacleIndex].isActive) continue;
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
+
+>>>>>>> master
 			obstacle.relativeMode = 0;
 
 			int currentTopLightIndex = -1;
@@ -452,7 +437,8 @@ public class SlalomController : GameController {
 	{
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ActiveBlock obstacle = obstacles[obstacleIndex];
+			if(!obstacles[obstacleIndex].isActive) continue;
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 			for(int i = 0; i < 8; ++i) {
 				obstacle.lights[i].onColor = 0;
@@ -470,7 +456,8 @@ public class SlalomController : GameController {
 	public void TestLights()
 	{
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ActiveBlock obstacle = obstacles[obstacleIndex];
+			if(!obstacles[obstacleIndex].isActive) continue;
+			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 
 			for(int i = 0; i < 8; ++i) {

@@ -14,6 +14,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_visionFade;
 	[SerializeField] Toggle toggle_visionRecording;
 	[SerializeField] Toggle toggle_userTestMode;
+	[SerializeField] Toggle toggle_autoCollect;
 
 	[SerializeField] ComboBox pertinent_objects;
 	[SerializeField] InputField pertinent_object_range;
@@ -87,6 +88,10 @@ public class OptionsScreen : MonoBehaviour {
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
 		}
 
+		if(toggle_autoCollect != null) {
+			toggle_autoCollect.isOn = PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1;
+		}
+
 		if(toggle_visionRecording != null) {
 			toggle_visionRecording.isOn = RobotEngineManager.instance != null ? RobotEngineManager.instance.AllowImageSaving : false;
 		}
@@ -149,6 +154,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_userTestMode != null) {
 			toggle_userTestMode.onValueChanged.AddListener(ToggleUserTestMode);
+		}
+
+		if(toggle_autoCollect != null) {
+			toggle_autoCollect.onValueChanged.AddListener(ToggleEnergyHuntAutoCollect);
 		}
 	}
 
@@ -250,6 +259,11 @@ public class OptionsScreen : MonoBehaviour {
 	void ToggleVisionRecording(bool val) {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.ToggleVisionRecording(val);
 	}
+	
+	void ToggleEnergyHuntAutoCollect(bool val) {
+		PlayerPrefs.SetInt("EnergyHuntAutoCollect", val ? 1 : 0);
+		//Debug.Log("ToggleUserTestMode("+val+")");
+	}
 
 	public void ResetToDefaultSettings() {
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
@@ -258,6 +272,7 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("VisionSchemeIndex");
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 		PlayerPrefs.DeleteKey("ToggleUserTestMode");
+		PlayerPrefs.DeleteKey("EnergyHuntAutoCollect");
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());

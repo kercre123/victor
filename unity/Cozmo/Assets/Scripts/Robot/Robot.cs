@@ -240,11 +240,13 @@ public class Robot
 	};
 
 	[System.NonSerialized] public float localBusyTimer = 0f;
+	[System.NonSerialized] public bool localBusyOverride = false;
 	public bool isBusy
 	{
 		get
 		{
-			return localBusyTimer > 0f 
+			return localBusyOverride
+				|| localBusyTimer > 0f 
 				|| Status( StatusFlag.IS_PERFORMING_ACTION )
 				|| Status( StatusFlag.IS_ANIMATING ) 
 				|| Status( StatusFlag.IS_PICKED_UP );
@@ -252,11 +254,14 @@ public class Robot
 
 		set
 		{
-			localBusyTimer = value ? float.MaxValue : 0;
+			localBusyOverride = value;
+
 			if( value )
 			{
 				DriveWheels(0,0); 
 			}
+
+			Debug.Log("isBusy = " + value);
 		}
 	}
 

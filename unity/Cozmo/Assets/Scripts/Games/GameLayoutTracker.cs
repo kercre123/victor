@@ -205,10 +205,11 @@ public class GameLayoutTracker : MonoBehaviour {
 			audio.PlayOneShot(blockValidatedSound);
 		}
 
-
 		RefreshLayout();
 
 		lastValidCount = validCount;
+
+		if(Phase == LayoutTrackerPhase.DISABLED) return;
 
 		bool validPredictedDrop = false;
 
