@@ -200,12 +200,6 @@ public class ActiveBlock : ObservedObject
 
 	public void UpdateInfo( G2U.ActiveObjectMoved message )
 	{
-		if( Family != 3 )
-		{
-			Debug.LogWarning( "Cannot receive ActiveObjectMoved message for non active block " + ID );
-			return;
-		}
-
 		if( lastUpAxis == byte.MaxValue ) lastUpAxis = message.upAxis; 
 
 		upAxis = message.upAxis;
@@ -225,12 +219,6 @@ public class ActiveBlock : ObservedObject
 
 	public void SetAllLEDs() // should only be called from update loop
 	{
-		if( Family != 3 )
-		{
-			Debug.LogWarning( "Cannot send light message for non active block " + ID );
-			return;
-		}
-
 		SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
 		SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
@@ -274,12 +262,6 @@ public class ActiveBlock : ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
 	{
-		if( Family != 3 )
-		{
-			Debug.LogWarning( "Cannot send light message for non active block " + ID );
-			return;
-		}
-
 		this.Color = onColor;
 
 		for( int i = 0; i < lights.Length; ++i )
@@ -322,12 +304,6 @@ public class ActiveBlock : ObservedObject
 	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                                     byte turnOffUnspecifiedLEDs = 1 )
 	{
-		if( Family != 3 )
-		{
-			Debug.LogWarning( "Cannot send light message for non active block " + ID );
-			return;
-		}
-
 		SetLEDs( onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs );
 
 		this.relativeMode = relativeMode;

@@ -362,8 +362,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				BuildInstructionsCube layoutCubeMatchingCarried = null;
 				if(robot.carryingObject >= 0) {
 					for(int i=0;i<currentLayout.blocks.Count;i++) {
-						if(robot.carryingObject.Family == 3 && currentLayout.blocks[i].objectFamily != 3) continue;
-						if(robot.carryingObject.Family != 3 && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
+						if(robot.carryingObject.isActive && currentLayout.blocks[i].objectFamily != 3) continue;
+						if(!robot.carryingObject.isActive && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
 						layoutCubeMatchingCarried = currentLayout.blocks[i];
 						break;
 					}
@@ -630,7 +630,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			ObservedObject obj = robot.knownObjects[i];
 
 			if(obj.Family != block.objectFamily) continue;
-			if(obj.Family != 3 && obj.ObjectType != block.objectType) continue;
+			if(!obj.isActive && obj.ObjectType != block.objectType) continue;
 			//if(obj.Family == 3 && obj.activeBlockType != block.activeBlockType) continue;
 
 			count++;

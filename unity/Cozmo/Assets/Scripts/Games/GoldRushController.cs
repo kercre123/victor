@@ -228,10 +228,7 @@ public class GoldRushController : GameController {
 			for(int i=0;i<robot.knownObjects.Count;i++)
 			{
 				ObservedObject obj = robot.knownObjects[i];
-				if( obj.Family != 3 )
-				{
-					goldCollectingObject = obj;
-				}
+				if(!obj.isActive) goldCollectingObject = obj;
 			}
 		}
 
@@ -324,12 +321,12 @@ public class GoldRushController : GameController {
 		for(int i=0;i<robot.knownObjects.Count;i++)
 		{
 			ObservedObject obj = robot.knownObjects[i];
-			if( obj.Family == 3 && goldExtractingObject == null )
+			if( obj.isActive && goldExtractingObject == null )
 			{
 				goldExtractingObject = robot.activeBlocks[obj];
 				//goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
 			}
-			else if( obj.Family != 3 )
+			else if( !obj.isActive )
 			{
 				goldCollectingObject = obj;
 			}

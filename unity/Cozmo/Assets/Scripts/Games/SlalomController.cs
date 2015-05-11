@@ -372,7 +372,9 @@ public class SlalomController : GameController {
 		}
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			if(!obstacles[obstacleIndex].isActive) continue;
 			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
+
 			obstacle.relativeMode = 0;
 
 			int currentTopLightIndex = -1;
@@ -429,6 +431,7 @@ public class SlalomController : GameController {
 	{
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			if(!obstacles[obstacleIndex].isActive) continue;
 			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 			for(int i = 0; i < 8; ++i) {
@@ -447,6 +450,7 @@ public class SlalomController : GameController {
 	public void TestLights()
 	{
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			if(!obstacles[obstacleIndex].isActive) continue;
 			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 

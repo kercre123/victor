@@ -35,6 +35,8 @@ public class ObservedObject
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
+	public bool isActive { get { return robot != null && robot.activeBlocks.ContainsKey( ID ); } }
+
 	public bool canBeStackedOn
 	{
 		get
