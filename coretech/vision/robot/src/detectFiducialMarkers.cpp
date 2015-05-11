@@ -54,6 +54,66 @@ namespace Anki
       return DetectFiducialMarkers(image, markers, homographies, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, maxConnectedComponentSegments, maxExtractedQuads, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers, scratchCcm, scratchOnchip, scratchOffChip);
     }
 
+    
+    static Result IlluminationNormalization(const Quadrilateral<f32>& corners,
+                                            cv::Mat_<u8>& cvImage, // filters this in place
+                                            cv::Mat_<u8>& cvImageROI, // returns the ROI for the corners
+                                            cv::Mat_<u8>& cvImageROI_orig)  // stores a copy of the original data inside the ROI
+    {
+      // Get a slightly-dilated bounding box of the current marker's corners,
+      // and store as an OpenCV rectangle
+      Rectangle<s32> roi = corners.ComputeBoundingRectangle<s32>();
+      cv::Rect cvRoi;
+      
+      roi.left   = MAX(0, roi.left-5);
+      roi.top    = MAX(0, roi.top-5);
+      roi.bottom = MIN(cvImage.rows-1, roi.bottom+5);
+      roi.right  = MIN(cvImage.cols-1, roi.right+5);
+      
+      cvRoi.x = roi.left;
+      cvRoi.y = roi.top;
+      cvRoi.width = roi.get_width();
+      cvRoi.height = roi.get_height();
+      
+      // Extract the ROI for processing
+      cvImageROI = cvImage(cvRoi);
+      AnkiConditionalErrorAndReturnValue(cvImageROI.empty() == false, RESULT_FAIL_INVALID_SIZE,
+                                         "IlluminationNormalization", "Got empty ROI for given corners.\n");
+      
+      // Hang on to a copy of the original pixel values so we can restore them
+      // after filtering, to avoid screwing up the supposedly-const input image
+      // for later processing
+      cvImageROI.copyTo(cvImageROI_orig);
+      
+      // Filter with a kernel sized for this ROI:
+      // (The kernel is a bunch of -1's surrounding a single positive value
+      //  at the center equal to the sum of all the -1's)
+      cv::Mat_<s16> cvImageROI_filtered;
+      
+      // Kernel size should be half the size of the image inside the fiducial
+      // since this filtering should also match the illumination normalization
+      // done to the nearest neighbor library.
+      //  So we take the average diagonal of the quad (0.5 times the sum of the
+      //  two diagonals), divide that by sqrt(2), and then
+      //  use 0.6 of that because that's the size of the marker image, and then we
+      //  use half of that. I.e., 0.5*sqrt(2)*0.6*0.5 = .1061
+      const s32 kernelSize = 0.1061f*((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
+                                      (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length());
+      
+      cv::Mat_<s16> kernel = cv::Mat_<s16>::ones(kernelSize, kernelSize);
+      kernel *= -1;
+      kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
+      cv::filter2D(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), kernel);
+      //cv::imshow("Filtered ROI", cvImageROI_filtered);
+      
+      // Normalize to be between 0 and 255
+      cv::normalize(cvImageROI_filtered, cvImageROI, 255, 0, CV_MINMAX);
+      //cv::imshow("Normalized Filtered ROI", cvImageROI);
+      
+      return RESULT_OK;
+    } // IlluminationNormalization()
+    
+    
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
@@ -325,58 +385,12 @@ namespace Anki
         const Array<f32> &currentHomography = homographies[iMarker];
         VisionMarker &currentMarker = markers[iMarker];
         
-        // Get a slightly-dilated bounding box of the current marker's corners,
-        // and store as an OpenCV rectangle
-        Rectangle<s32> roi = currentMarker.corners.ComputeBoundingRectangle<s32>();
-        cv::Rect cvRoi;
-
-        roi.left   = MAX(0, roi.left-5);
-        roi.top    = MAX(0, roi.top-5);
-        roi.bottom = MIN(cvImage.rows-1, roi.bottom+5);
-        roi.right  = MIN(cvImage.cols-1, roi.right+5);
-        
-        cvRoi.x = roi.left;
-        cvRoi.y = roi.top;
-        cvRoi.width = roi.get_width();
-        cvRoi.height = roi.get_height();
-        
-        // Extract the ROI for processing
-        cv::Mat_<u8> cvImageROI = cvImage(cvRoi);
-        if(cvImageROI.empty()) {
-          AnkiWarn("DetectFiducialMarkers", "Got empty ROI for possible marker.\n");
+        cv::Mat_<u8> cvImageROI, cvImageROI_orig;
+        lastResult = IlluminationNormalization(currentMarker.corners, cvImage, cvImageROI, cvImageROI_orig);
+        if(lastResult != RESULT_OK) {
+          AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
           continue;
         }
-        
-        // Hang on to a copy of the original pixel values so we can restore them
-        // after filtering, to avoid screwing up the supposedly-const input image
-        // for later processing
-        cv::Mat_<u8> cvImageROI_orig;
-        cvImageROI.copyTo(cvImageROI_orig);
-        
-        // Filter with a kernel sized for this ROI:
-        // (The kernel is a bunch of -1's surrounding a single positive value
-        //  at the center equal to the sum of all the -1's)
-        cv::Mat_<s16> cvImageROI_filtered;
-        
-        // Kernel size should be half the size of the image inside the fiducial
-        // since this filtering should also match the illumination normalization
-        // done to the nearest neighbor library.
-        //  So we take the average diagonal of the quad (0.5 times the sum of the
-        //  two diagonals), divide that by sqrt(2), and then
-        //  use 0.6 of that because that's the size of the marker image, and then we
-        //  use half of that. I.e., 0.5*sqrt(2)*0.6*0.5 = .1061
-        const s32 kernelSize = 0.1061f*((currentMarker.corners[Quadrilateral<f32>::TopLeft] - currentMarker.corners[Quadrilateral<f32>::BottomRight]).Length() +
-                                        (currentMarker.corners[Quadrilateral<f32>::TopRight] - currentMarker.corners[Quadrilateral<f32>::BottomLeft]).Length());
-        
-        cv::Mat_<s16> kernel = cv::Mat_<s16>::ones(kernelSize, kernelSize);
-        kernel *= -1;
-        kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
-        cv::filter2D(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), kernel);
-        //cv::imshow("Filtered ROI", cvImageROI_filtered);
-        
-        // Normalize to be between 0 and 255
-        cv::normalize(cvImageROI_filtered, cvImageROI, 255, 0, CV_MINMAX);
-        //cv::imshow("Normalized Filtered ROI", cvImageROI);
         
         if(currentMarker.validity == VisionMarker::UNKNOWN) {
           // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
@@ -423,7 +437,7 @@ namespace Anki
           }
         } // if(currentMarker.validity == VisionMarker::UNKNOWN)
         
-        // Put back the original pixel values within the ROI
+        // Put back the original (non-illumination-normalized) pixel values within the ROI
         cvImageROI_orig.copyTo(cvImageROI);
         
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
@@ -443,7 +457,7 @@ namespace Anki
           }
         }
       } // if(!returnInvalidMarkers)
-
+      
       EndBenchmark("ExtractVisionMarker");
 
       EndBenchmark("DetectFiducialMarkers");

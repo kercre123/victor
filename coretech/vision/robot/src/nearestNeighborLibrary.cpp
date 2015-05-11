@@ -30,8 +30,10 @@ namespace Embedded {
                                                  const s16* probePoints_X, const s16* probePoints_Y,
                                                  const s32 numProbePoints, const s32 numFractionalBits)
   : _data(numDataPoints, dataDim, const_cast<u8*>(data))
+# if USE_WEIGHTS
   , _weights(numDataPoints, dataDim, const_cast<u8*>(weights))
   , _totalWeight(numDataPoints, 1)
+# endif
   , _numDataPoints(numDataPoints)
   , _dataDimension(dataDim)
   , _labels(labels)
@@ -44,8 +46,10 @@ namespace Embedded {
   , _useHoG(false)
   , _probeValues(1, _dataDimension)
   {
+#   if USE_WEIGHTS
     // Sum all the weights for each example in the library along the columns:
     cv::reduce(_weights, _totalWeight, 1, CV_REDUCE_SUM);
+#   endif
   }
   
   
@@ -296,8 +300,8 @@ namespace Embedded {
       probeYOffsetsF32[iOffset] = static_cast<f32>(_probeYOffsets[iOffset]) * fixedPointDivider;
     }
     
-    u8 minValue = u8_MAX;
-    u8 maxValue = 0;
+    //u8 minValue = u8_MAX;
+    //u8 maxValue = 0;
     
     for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
     {
@@ -352,7 +356,9 @@ namespace Embedded {
     }
      */
     
-    /*
+    /* Some illumination normalization code, now superceded by the same thing being
+       done before quad extraction
+     
     cv::Mat_<u8> temp(32,32,_probeValues.data);
     
     cv::imshow("Original ProbeValues", temp);
