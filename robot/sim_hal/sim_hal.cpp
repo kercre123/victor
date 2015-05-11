@@ -706,6 +706,10 @@ namespace Anki {
             BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
             Messages::ActiveObjectMoved msgOut;
             msgOut.objectID = msgIn->blockID;
+            msgOut.xAccel   = msgIn->xAccel;
+            msgOut.yAccel   = msgIn->yAccel;
+            msgOut.zAccel   = msgIn->zAccel;
+            msgOut.upAxis   = msgIn->upAxis;
             HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
           } else {
             printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);

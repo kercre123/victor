@@ -44,17 +44,6 @@ namespace Anki {
         webots::LED* led_[NUM_BLOCK_LEDS];
         LEDParams_t ledParams_[NUM_BLOCK_LEDS];
         
-        typedef enum {
-          UNKNOWN = -1,
-          Xneg = 0,
-          Xpos,
-          Yneg,
-          Ypos,
-          Zneg,
-          Zpos,
-          NUM_UP_AXES
-        } UpAxis;
-        
         UpAxis currentUpAxis_;
         
         // Lookup table for which four LEDs are on top, given the current up axis
@@ -212,7 +201,7 @@ namespace Anki {
         const double* accelVals = accel_->getValues();
 
         // Determine the axis with the largest absolute acceleration
-        UpAxis retVal = UNKNOWN;
+        UpAxis retVal = UP_AXIS_UNKNOWN;
         double maxAbsAccel = -1;
         double absAccel[3];
 
@@ -233,21 +222,21 @@ namespace Anki {
         switch(whichAxis)
         {
           case X:
-            retVal = (accelVals[X] < 0 ? Xneg : Xpos);
+            retVal = (accelVals[X] < 0 ? UP_AXIS_Xneg : UP_AXIS_Xpos);
             isMoving = (absAccel[X] > 9.81f + movementAccelThresh ||
                         absAccel[X] < 9.81f - movementAccelThresh ||
                         absAccel[Y] > movementAccelThresh ||
                         absAccel[Z] > movementAccelThresh);
             break;
           case Y:
-            retVal = (accelVals[Y] < 0 ? Yneg : Ypos);
+            retVal = (accelVals[Y] < 0 ? UP_AXIS_Yneg : UP_AXIS_Ypos);
             isMoving = (absAccel[Y] > 9.81f + movementAccelThresh ||
                         absAccel[Y] < 9.81f - movementAccelThresh ||
                         absAccel[X] > movementAccelThresh ||
                         absAccel[Z] > movementAccelThresh);
             break;
           case Z:
-            retVal = (accelVals[Z] < 0 ? Zneg : Zpos);
+            retVal = (accelVals[Z] < 0 ? UP_AXIS_Zneg : UP_AXIS_Zpos);
             isMoving = (absAccel[Z] > 9.81f + movementAccelThresh ||
                         absAccel[Z] < 9.81f - movementAccelThresh ||
                         absAccel[Y] > movementAccelThresh ||
@@ -390,7 +379,7 @@ namespace Anki {
             msg.xAccel = accelVals[0];
             msg.yAccel = accelVals[1];
             msg.zAccel = accelVals[2];
-            
+            msg.upAxis = currentUpAxis_;
             emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
           }
           
