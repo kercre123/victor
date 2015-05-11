@@ -123,11 +123,23 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                 end % for iPiece = 1:maxFraction
             end % for iMaxFraction = 1:length(temporalFrameFractions)
             
-            markersCorrectImage = zeros(length(allTestData), sum(temporalFrameFractions) + 1);
+            markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
+            markersCorrectImage(:,:,1) = 255;
             
-            % TODO: create markersCorrectImage, with a black spacing between each set of maxFractions
+            cx = 1;
+            for iMaxFraction = 1:length(temporalFrameFractions)
+                curResults = percentMarkersCorrect_window{iMaxFraction};
+                
+                markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
+                
+                cx = cx + size(curResults,2) + 1;
+            end
             
-            keyboard
+            newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
+            markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
+            
+            figure(10); 
+            imshow(markersCorrectImageToShow);
         else
             % Unknown runWhichAlgorithms{iAlgorithm}
             assert(false);
