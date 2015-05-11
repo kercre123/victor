@@ -311,6 +311,11 @@ public class Robot
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i] = new Light();
+		}
+
 		ClearData();
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
