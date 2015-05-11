@@ -8,7 +8,7 @@ using U2G = Anki.Cozmo.U2G;
 
 public class ActiveBlock : ObservedObject
 {
-	public class Light
+	public class Light : Robot.Light
 	{
 		[System.FlagsAttribute]
 		public enum PositionFlag
@@ -68,26 +68,11 @@ public class ActiveBlock : ObservedObject
 			
 			return 0;
 		}
-		
-		private ObservedObject observedObject;
+
 		private PositionFlag position;
 		
-		private uint lastOnColor;
-		public uint onColor;
-		private uint lastOffColor;
-		public uint offColor;
-		private uint lastOnPeriod_ms;
-		public uint onPeriod_ms;
-		private uint lastOffPeriod_ms;
-		public uint offPeriod_ms;
-		private uint lastTransitionOnPeriod_ms;
-		public uint transitionOnPeriod_ms;
-		private uint lastTransitionOffPeriod_ms;
-		public uint transitionOffPeriod_ms;
-		
-		public Light( ObservedObject observedObject, int position )
+		public Light( int position )
 		{
-			this.observedObject = observedObject;
 			this.position = IndexToPosition( position );
 		}
 		
@@ -95,24 +80,14 @@ public class ActiveBlock : ObservedObject
 		{
 			return (position | s) == s;
 		}
-		
-		public void SetLastInfo()
+
+		public static new float messageDelay = 0f;
+
+		public override void ClearData()
 		{
-			lastOnColor = onColor;
-			lastOffColor = offColor;
-			lastOnPeriod_ms = onPeriod_ms;
-			lastOffPeriod_ms = offPeriod_ms;
-			lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
-			lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
-		}
-		
-		public bool changed
-		{
-			get
-			{
-				return lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
-					lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
-			}
+			base.ClearData();
+			
+			messageDelay = 0f;
 		}
 	}
 
@@ -167,8 +142,7 @@ public class ActiveBlock : ObservedObject
 	public float relativeToY;
 
 	public Type type = Type.Off;
-
-	public static float messageDelay { get; private set; }
+	
 	public event Action<ActiveBlock> OnAxisChange;
 
 	public ActiveBlock( int objectID, uint objectFamily, uint objectType )
@@ -194,7 +168,7 @@ public class ActiveBlock : ObservedObject
 
 		for( int i = 0; i < lights.Length; ++i )
 		{
-			lights[i] = new Light( this, i );
+			lights[i] = new Light( i );
 		}
 	}
 
@@ -239,10 +213,10 @@ public class ActiveBlock : ObservedObject
 		Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
 
 		RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
-		RobotEngineManager.instance.channel.Send( RobotEngineManager.instance.Message );
+		RobotEngineManager.instance.SendMessage();
 
 		SetLastLEDs();
-		messageDelay = Time.time + GameController.MessageDelay;
+		Light.messageDelay = Time.time + GameController.MessageDelay;
 	}
 
 	private void SetLastLEDs()

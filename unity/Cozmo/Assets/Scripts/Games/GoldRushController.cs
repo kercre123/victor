@@ -884,29 +884,22 @@ public class GoldRushController : GameController {
 
 	void SetEnergyBars(int num_bars, uint color = 0)
 	{
-
-		Anki.Cozmo.U2G.SetBackpackLEDs msg = new Anki.Cozmo.U2G.SetBackpackLEDs ();
-		msg.robotID = robot.ID;
-		for(int i=0; i<5; ++i)
+		for(int i=0; i<robot.lights.Length; ++i)
 		{
 			if( i < num_bars || (i == 3 && num_bars == 3) ) // hack to get around two off the lights being tied together
 			{
-				msg.onColor[i] = color;
+				robot.lights[i].onColor = color;
 			}
 			else
 			{
-				msg.onColor[i] = 0;
+				robot.lights[i].onColor = 0;
 			}
-			msg.offColor[i] = 0;
-			msg.onPeriod_ms[i] = 1000;
-			msg.offPeriod_ms[i] = 0;
-			msg.transitionOnPeriod_ms[i] = 0;
-			msg.transitionOffPeriod_ms[i] = 0;
-
+			robot.lights[i].offColor = 0;
+			robot.lights[i].onPeriod_ms = 1000;
+			robot.lights[i].offPeriod_ms = 0;
+			robot.lights[i].transitionOnPeriod_ms = 0;
+			robot.lights[i].transitionOffPeriod_ms = 0;
 		}
-		
-		Anki.Cozmo.U2G.Message msgWrapper = new Anki.Cozmo.U2G.Message{SetBackpackLEDs = msg};
-		RobotEngineManager.instance.channel.Send (msgWrapper);
 	}
 	#endregion
 }
