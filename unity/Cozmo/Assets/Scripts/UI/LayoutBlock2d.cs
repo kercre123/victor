@@ -4,6 +4,7 @@ using System.Collections;
 
 public class LayoutBlock2d : MonoBehaviour {
 
+	[SerializeField] AudioClip validatedSound;
 	[SerializeField] Image image_Block;
 	[SerializeField] Image image_Symbol;
 	[SerializeField] Image[] images_LED;
@@ -12,6 +13,7 @@ public class LayoutBlock2d : MonoBehaviour {
 	public BuildInstructionsCube Block { get; private set; }
 	public int Dupe { get; private set; }
 
+	private bool validated = false;
 
 	public void Initialize(BuildInstructionsCube block, int dupe) {
 		Block = block;
@@ -34,10 +36,15 @@ public class LayoutBlock2d : MonoBehaviour {
 		}
 
 		image_check.gameObject.SetActive(false);
+		validated = false;
 	}
 
 	public void Validate(bool valid=true) {
+		if(valid && !validated) {
+			if(audio != null && validatedSound != null) audio.PlayOneShot(validatedSound);
+		}
 		image_check.gameObject.SetActive(valid);
+		validated = valid;
 	}
 
 }

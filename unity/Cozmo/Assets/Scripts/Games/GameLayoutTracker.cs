@@ -53,6 +53,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] float coplanarFudge = 0.5f;
 	[SerializeField] float distanceFudge = 0.5f;
 
+	[SerializeField] AudioClip inventoryCompleteSound = null;
+
 	[SerializeField] AudioClip blockValidatedSound = null;
 	[SerializeField] AudioClip layoutValidatedSound = null;
 	[SerializeField] AudioClip validPredictedDropSound = null;
@@ -137,6 +139,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		string fullName = currentGameName + " #" + currentLevelNumber;
 		previewTitle.text = fullName;
 		instructionsTitle.text = fullName;
+
+		if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(false);
 
 		RefreshLayout();
 
@@ -287,7 +291,12 @@ public class GameLayoutTracker : MonoBehaviour {
 					inventoryComplete &= validated;
 				}
 
-				if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(inventoryComplete);
+				if(letsBuildButton != null) {
+					if(!letsBuildButton.gameObject.activeSelf && inventoryComplete) {
+						audio.PlayOneShot(inventoryCompleteSound);
+					}
+					letsBuildButton.gameObject.SetActive(inventoryComplete);
+				}
 
 				break;
 
