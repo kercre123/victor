@@ -8,14 +8,14 @@
 
 function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
-    maxMatchDistance_pixels = 10;
-    maxMatchDistance_percent = 0.2;
+    maxMatchDistance_pixels = 5;
+    maxMatchDistance_percent = 0.06;
     
     numComputeThreads.basics = 3;
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
-    %     makeNewResultsDirectory = true;
+%     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
