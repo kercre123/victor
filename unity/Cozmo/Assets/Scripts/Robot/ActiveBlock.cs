@@ -156,15 +156,7 @@ public class ActiveBlock : ObservedObject
 
 		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
-		lights = new Light[8];
-
-		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
-		SetAllActiveObjectLEDsMessage.onPeriod_ms = new uint[lights.Length];
-		SetAllActiveObjectLEDsMessage.offPeriod_ms = new uint[lights.Length];
-		SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms = new uint[lights.Length];
-		SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms = new uint[lights.Length];
-		SetAllActiveObjectLEDsMessage.onColor = new uint[lights.Length];
-		SetAllActiveObjectLEDsMessage.offColor = new uint[lights.Length];
+		lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
 
 		for( int i = 0; i < lights.Length; ++i )
 		{
@@ -184,11 +176,9 @@ public class ActiveBlock : ObservedObject
 		if( lastUpAxis != upAxis )
 		{
 			if( OnAxisChange != null ) OnAxisChange( this );
-			lastUpAxis = message.upAxis;
-			Debug.Log( "Active Block " + ID + "'s axis has changed" );
+			Debug.Log( "Active Block " + ID + "'s axis has changed from " + lastUpAxis + " to " + upAxis );
+			lastUpAxis = upAxis;
 		}
-
-		lastUpAxis = upAxis;
 	}
 
 	public void SetAllLEDs() // should only be called from update loop
