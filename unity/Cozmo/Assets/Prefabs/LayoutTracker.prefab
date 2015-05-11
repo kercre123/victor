@@ -16831,7 +16831,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 3
   m_audioClip: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -18746,8 +18746,10 @@ MonoBehaviour:
   screenMessage: {fileID: 11409694}
   coplanarFudge: .5
   distanceFudge: .699999988
-  blockValidatedSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
-  layoutValidatedSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
+  inventoryCompleteSound: {fileID: 8300000, guid: e744a06c7d6a64380a0aef7e4eb680c9,
+    type: 3}
+  blockValidatedSound: {fileID: 8300000, guid: e6baf04d1b390410f9ce57f5401835db, type: 3}
+  layoutValidatedSound: {fileID: 8300000, guid: 62c2e68323b314555a10269a2e956f92,
     type: 3}
   validPredictedDropSound: {fileID: 8300000, guid: 56872f4de5dba4c4b97de279c2fe42b2,
     type: 3}
