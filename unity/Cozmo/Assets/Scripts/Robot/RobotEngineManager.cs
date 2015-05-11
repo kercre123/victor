@@ -381,9 +381,14 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.ActiveObjectMoved message )
 	{
-		ActiveBlock activeBlock = current.activeBlocks[(int)message.objectID];
+		int ID = (int)message.objectID;
 
-		activeBlock.UpdateInfo( message );
+		if( current.activeBlocks.ContainsKey( ID ) )
+		{
+			ActiveBlock activeBlock = current.activeBlocks[ID];
+
+			activeBlock.UpdateInfo( message );
+		}
 	}
 
 	private void ReceivedSpecificMessage(G2U.RobotObservedObject message)

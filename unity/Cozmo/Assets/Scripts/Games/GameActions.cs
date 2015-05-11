@@ -84,7 +84,7 @@ public class GameActions : MonoBehaviour
 		{
 			if( buttons.Length > 1 )
 			{
-				if( robot.carryingObject != -1 && robot.carryingObject.Family == 3 )
+				if( robot.carryingObject != null && robot.carryingObject.isActive )
 				{
 					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
 				}
@@ -173,7 +173,7 @@ public class GameActions : MonoBehaviour
 				if(obj != null) {
 					string desc = "Cozmo is attempting to pick-up\n";
 
-					if(obj.Family == 3) {
+					if(obj.isActive) {
 						desc += "an Active Block.";
 					}
 					else {
@@ -209,7 +209,7 @@ public class GameActions : MonoBehaviour
 				if(obj != null) {
 					string desc = "Cozmo is attempting to drop\n";
 					
-					if(obj.Family == 3) {
+					if(obj.isActive) {
 						desc += "an Active Block.";
 					}
 					else {
@@ -244,7 +244,7 @@ public class GameActions : MonoBehaviour
 				if(obj != null) {
 					string desc = "Cozmo is attempting to stack\n";
 					
-					if(obj.Family == 3) {
+					if(obj.isActive) {
 						desc += "an Active Block";
 					}
 					else {
@@ -262,7 +262,7 @@ public class GameActions : MonoBehaviour
 						
 						desc += "\n on top of ";
 
-						if(target.Family == 3) {
+						if(target.isActive) {
 							desc += "an Active Block";
 						}
 						else {
@@ -310,7 +310,7 @@ public class GameActions : MonoBehaviour
 
 		Debug.Log( "Change" );
 
-		if( robot != null && robot.carryingObject != null && robot.carryingObject.Family == 3)
+		if( robot != null && robot.carryingObject != null && robot.carryingObject.isActive )
 		{
 			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
 

@@ -73,7 +73,7 @@ public class GoldRushGameActions : GameActions {
 				{
 					for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
 					{
-						if( robot.selectedObjects[i].Family == 3 )
+						if( robot.selectedObjects[i].isActive )
 						{
 							buttons[2].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], " Extractor", true );
 						}

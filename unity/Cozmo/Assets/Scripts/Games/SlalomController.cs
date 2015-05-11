@@ -184,7 +184,7 @@ public class SlalomController : GameController {
 		
 		//cull the inactive blocks
 		for(int i=obstacles.Count-1; i>=0; i--) {
-			if(obstacles[i].Family != 3) {
+			if(!obstacles[i].isActive) {
 				//Debug.Log(gameObject.name + " IsGameReady adding a gold block to obstacles." );
 				obstacles.RemoveAt(i);
 			}
@@ -431,6 +431,7 @@ public class SlalomController : GameController {
 	{
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			if(!obstacles[obstacleIndex].isActive) continue;
 			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 			for(int i = 0; i < 8; ++i) {
@@ -449,6 +450,7 @@ public class SlalomController : GameController {
 	public void TestLights()
 	{
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
+			if(!obstacles[obstacleIndex].isActive) continue;
 			ActiveBlock obstacle = robot.activeBlocks[obstacles[obstacleIndex]];
 			obstacle.relativeMode = 0;
 
