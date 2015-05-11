@@ -22,7 +22,6 @@ namespace Anki
       void FrontCameraInit();
       void IMUInit();
       void LightsInit();
-      void SharpInit();
 
       void PrintCrap();
 
@@ -196,7 +195,6 @@ int main(void)
   SPIInit();  
   printf("spine..");
   
-  SharpInit();
   printf("sharp..");
   
 #if 0 

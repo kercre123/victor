@@ -24,7 +24,6 @@ typedef enum
  */
 typedef struct UDPPacket
 {
-  struct UDPPacket* next; ///< Used internally to this module @warning to not modify
   uint16 len; ///< Length of data
   uint8 data[PKT_BUFFER_SIZE]; ///< Packet data
   UDPPacketState state; ///< Used internally to this module @warning do not modify

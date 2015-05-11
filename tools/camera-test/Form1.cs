@@ -56,10 +56,8 @@ namespace BlueCode
         private const bool MULTIFRAME = false;
 
         // Based on fixed size chunks of 1414 (+1 message type) bytes
-        //private static readonly byte [] HEADER = { 0xBE, 0xEF, 0x87, 0x05, 0x00, 0x00, 0x4B };
-        //private const int WAITING = -7;
-        private static readonly byte[] HEADER = { 0x4C };
-        private const int WAITING = -1;
+        private static readonly byte [] HEADER = { 0xBE, 0xEF, 0x87, 0x05, 0x00, 0x00, 0x4B };
+        private const int WAITING = -7;
         private const int HEADERLEN = 14, CHUNKLEN = 1400, PACKETLEN = HEADERLEN + CHUNKLEN;
 
         private const int MAX_CHUNKS = 16;
@@ -86,17 +84,24 @@ namespace BlueCode
             byte[] buf = new byte[count];
             serialPort1.Read(buf, 0, count);
 
-            receive(buf, count);
+            receive(buf, count, false);
         }
 
         private Object m_receiveLock = new Object();
         private bool m_eof;
-        private void receive(byte[] buf, int count)
+        private void receive(byte[] buf, int count, bool skipheader)
         {
             int idx = 0;
 
             lock (m_receiveLock)
             {
+                if (skipheader)
+                {
+                    m_recvstate = 0;
+                    idx = 1;
+                    count--;
+                }
+
                 while (count-- > 0)
                 {
                     byte c = buf[idx++];
@@ -315,7 +320,7 @@ namespace BlueCode
                 m_udp = new UdpClient("172.31.1.1", 5551);
                 m_ep = new IPEndPoint(IPAddress.Any, 5550);
                 m_udp.Send(new byte[] { (byte)'0' }, 1);
-                m_udp.Send(new byte[] { 18,  0, 0, 0, 0,  0, 0, 0, 0 }, 9);
+                //m_udp.Send(new byte[] { 18,  0, 0, 0, 0,  0, 0, 0, 0 }, 9);
                 m_udp.BeginReceive(new AsyncCallback(UdpReceive), null);
             }
             catch (Exception x)
@@ -326,20 +331,26 @@ namespace BlueCode
 
         private void UdpReceive(IAsyncResult ar)
         {
-            Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
+            try
+            {
+                Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
 
+                if (buf.Length == 1415)
+                {
+                    receive(buf, buf.Length, true);
+                }
+                else
+                    ; // Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
+
+                if (buf.Length > 1415)
+                    Console.WriteLine("WTF buffer is " + buf.Length);
+            }
+            catch (Exception x)
+            {
+                Console.WriteLine("Oops");
+            }
             // Prepare for the next receive
             m_udp.BeginReceive(new AsyncCallback(UdpReceive), null);
-
-            if (buf.Length == 1415)
-            {
-                receive(buf, buf.Length);
-            } 
-            else
-                Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
-
-            if (buf.Length > 1415)
-                Console.WriteLine("WTF buffer is " + buf.Length);
 
             /*
             this.scanPicBox.BeginInvoke(

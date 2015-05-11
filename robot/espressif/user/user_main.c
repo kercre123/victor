@@ -46,7 +46,7 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_init(BIT_RATE_3686400, BIT_RATE_74880);
+    uart_init(BIT_RATE_5000000, BIT_RATE_74880);
 
     os_printf("Espressif booting up...\r\n");
 
@@ -58,7 +58,15 @@ user_init()
       os_printf("Error getting wifi softap config\r\n");
     }
 
-    os_strcpy(ap_config.ssid, "AnkiEspressif");
+    // Get the mac address
+    uint8 macaddr[6];
+    err = wifi_get_macaddr(SOFTAP_IF, macaddr);
+    if (err == false)
+    {
+      os_printf("Error getting mac address info\r\n");
+    }
+
+    os_sprintf(ap_config.ssid, "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
     os_strcpy(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
@@ -74,7 +82,7 @@ user_init()
 
     // Create ip config
     struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr("172.31.1.1");
+    ipinfo.gw.addr = ipaddr_addr("0.0.0.0");
     ipinfo.ip.addr = ipaddr_addr("172.31.1.1");
     ipinfo.netmask.addr = ipaddr_addr("255.255.255.0");
 
