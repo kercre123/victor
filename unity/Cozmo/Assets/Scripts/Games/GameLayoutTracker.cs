@@ -184,7 +184,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			foreach(LayoutBlock2d prior in blocks2d) {
 				if(prior.Block.objectFamily != block.objectFamily) continue;
 				if(prior.Block.objectFamily != 3 && prior.Block.objectType != block.objectType) continue;
-				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockType != block.activeBlockType && !ignoreActiveColor) continue;
+				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockMode != block.activeBlockMode && !ignoreActiveColor) continue;
 				num++;
 			}
 			
@@ -359,8 +359,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						layoutCubeMatchingCarried = currentLayout.blocks[i];
 						break;
 					}
-					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockType) {
-						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockType.ToString()+".", Color.white);
+					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockMode) {
+						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockMode.ToString()+".", Color.white);
 					}
 					else if(layoutCubeMatchingCarried.cubeBelow == null) {
 						if(validCount == 0) {
@@ -480,8 +480,8 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(!ignoreActiveColor && block.objectFamily == 3 && block.activeBlockType != robot.activeBlocks[newObject].mode) { //active block
-					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockType+") newObject("+newObject+"):color("+robot.activeBlocks[newObject].mode+")");
+				if(!ignoreActiveColor && block.objectFamily == 3 && block.activeBlockMode != robot.activeBlocks[newObject].mode) { //active block
+					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockMode+") newObject("+newObject+"):color("+robot.activeBlocks[newObject].mode+")");
 					continue;
 				}
 
@@ -722,7 +722,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(block.Validated) return false;
 		if(block.cubeBelow != null) return false;
 		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockType) return false;
+		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
 	}
@@ -833,8 +833,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				return false;
 			}
 
-			if(robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockType && !ignoreActiveColor) {
-				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockType+" before it is stacked.";
+			if(robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode && !ignoreActiveColor) {
+				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockMode+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;
 			}

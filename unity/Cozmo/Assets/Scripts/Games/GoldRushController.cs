@@ -906,7 +906,7 @@ public class GoldRushController : GameController {
 		heading = heading.normalized;
 		Vector2 to_target = target_position - new Vector2 (robot.WorldPosition.x, robot.WorldPosition.y);
 		to_target = to_target.normalized;
-		float dot_product = Vector2.Dot(heading, to_target);
+		//float dot_product = Vector2.Dot(heading, to_target);
 		float angle_between = MathUtil.DotProductAngle(heading, to_target);
 		
 		//Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
