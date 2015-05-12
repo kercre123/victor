@@ -434,6 +434,12 @@ namespace Anki {
                         msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
       }
       
+      void HandleActiveObjectStoppedMoving(G2U::ActiveObjectStoppedMoving const& msg)
+      {
+        PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%d\n",
+                         msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
+      }
+      
       // ===== End of message handler callbacks ====
       
       
@@ -479,6 +485,9 @@ namespace Anki {
               break;
             case G2U::Message::Tag::ActiveObjectMoved:
               HandleActiveObjectMoved(message.Get_ActiveObjectMoved());
+              break;
+            case G2U::Message::Tag::ActiveObjectStoppedMoving:
+              HandleActiveObjectStoppedMoving(message.Get_ActiveObjectStoppedMoving());
               break;
             default:
               // ignore
