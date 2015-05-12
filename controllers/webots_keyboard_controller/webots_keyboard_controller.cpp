@@ -38,7 +38,10 @@
 
 // Webots includes
 #include <webots/Supervisor.hpp>
-
+#include <webots/ImageRef.hpp>
+#include <webots/Display.hpp>
+#include <webots/GPS.hpp>
+#include <webots/Compass.hpp>
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
@@ -366,8 +369,8 @@ namespace Anki {
             break;
 
           default:
-            printf("Robot %d completed action with type=%d and %s.\n",
-                   msg.robotID, msg.actionType, (success ? "SUCCEEDED" : "FAILED"));
+            printf("Robot %d completed action with type=%d: %s.\n",
+                   msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
         }
         
       }
@@ -434,6 +437,12 @@ namespace Anki {
                         msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
       }
       
+      void HandleActiveObjectStoppedMoving(G2U::ActiveObjectStoppedMoving const& msg)
+      {
+        PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%d\n",
+                         msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
+      }
+      
       // ===== End of message handler callbacks ====
       
       
@@ -479,6 +488,9 @@ namespace Anki {
               break;
             case G2U::Message::Tag::ActiveObjectMoved:
               HandleActiveObjectMoved(message.Get_ActiveObjectMoved());
+              break;
+            case G2U::Message::Tag::ActiveObjectStoppedMoving:
+              HandleActiveObjectStoppedMoving(message.Get_ActiveObjectStoppedMoving());
               break;
             default:
               // ignore
