@@ -123,9 +123,7 @@ namespace Cozmo {
                                                 float x_lowerRight, float y_lowerRight);
     void HandleRobotCompletedAction(uint8_t robotID, RobotActionType actionType,
                                     ActionResult result,
-                                    int32_t objectID0, int32_t objectID1,
-                                    int32_t objectID2, int32_t objectID3,
-                                    int32_t objectID4, uint8_t numObjects);
+                                    std::array<int32_t,5> objectIDs, uint8_t numObjects);
     void HandleActiveObjectMoved(uint8_t robotID, uint32_t objectID,
                                  float xAccel, float yAccel, float zAccel,
                                  uint8_t upAxis);

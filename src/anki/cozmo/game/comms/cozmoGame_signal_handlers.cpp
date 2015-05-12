@@ -123,14 +123,9 @@ namespace Cozmo {
     auto cbRobotCompletedAction = [this](RobotID_t robotID,
                                          RobotActionType actionType,
                                          ActionResult result,
-                                         int32_t objectID0,
-                                         int32_t objectID1,
-                                         int32_t objectID2,
-                                         int32_t objectID3,
-                                         int32_t objectID4,
+                                         std::array<int32_t,5> objectIDs,
                                          uint8_t numObjects) {
-      this->HandleRobotCompletedAction(robotID, actionType, result, objectID0, objectID1, objectID2,
-                                       objectID3, objectID4, numObjects);
+      this->HandleRobotCompletedAction(robotID, actionType, result, objectIDs, numObjects);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
@@ -410,9 +405,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, RobotActionType actionType,
                                                  ActionResult result,
-                                                 int32_t objectID0, int32_t objectID1,
-                                                 int32_t objectID2, int32_t objectID3,
-                                                 int32_t objectID4, uint8_t numObjects)
+                                                 std::array<int32_t,5> objectIDs, uint8_t numObjects)
   {
     G2U::RobotCompletedAction msg;
   
@@ -420,11 +413,7 @@ namespace Cozmo {
     msg.actionType = actionType;
     msg.result = result;
     
-    msg.objectIDs[0] = objectID0;
-    msg.objectIDs[1] = objectID1;
-    msg.objectIDs[2] = objectID2;
-    msg.objectIDs[3] = objectID3;
-    msg.objectIDs[4] = objectID4;
+    msg.objectIDs  = objectIDs;
     msg.numObjects = numObjects;
     
     G2U::Message message;
