@@ -197,6 +197,13 @@ message ActiveObjectMoved {
     uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
 }
 
+message ActiveObjectStoppedMoving {
+    uint_32  objectID,
+    uint_8   robotID,
+    uint_8   upAxis,
+    bool     rolled
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union Message { }

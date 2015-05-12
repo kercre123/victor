@@ -1289,6 +1289,81 @@ bool ActiveObjectMoved::operator!=(const ActiveObjectMoved& other) const
 }
 
 
+// MESSAGE ActiveObjectStoppedMoving
+
+ActiveObjectStoppedMoving::ActiveObjectStoppedMoving(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ActiveObjectStoppedMoving::ActiveObjectStoppedMoving(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ActiveObjectStoppedMoving::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ActiveObjectStoppedMoving::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->robotID);
+	buffer.Write(this->upAxis);
+	buffer.Write(this->rolled);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ActiveObjectStoppedMoving::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ActiveObjectStoppedMoving::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->robotID);
+	buffer.Read(this->upAxis);
+	buffer.Read(this->rolled);
+	return buffer.GetBytesRead();
+}
+
+size_t ActiveObjectStoppedMoving::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//robotID
+	result += 1; // = uint_8
+	//upAxis
+	result += 1; // = uint_8
+	//rolled
+	result += 1; // = bool
+	return result;
+}
+
+bool ActiveObjectStoppedMoving::operator==(const ActiveObjectStoppedMoving& other) const
+{
+	if (objectID != other.objectID
+	|| robotID != other.robotID
+	|| upAxis != other.upAxis
+	|| rolled != other.rolled) {
+		return false;
+	}
+	return true;
+}
+
+bool ActiveObjectStoppedMoving::operator!=(const ActiveObjectStoppedMoving& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -1325,6 +1400,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "StopSound";
 	case MessageTag::ActiveObjectMoved:
 		return "ActiveObjectMoved";
+	case MessageTag::ActiveObjectStoppedMoving:
+		return "ActiveObjectStoppedMoving";
 	default:
 		return "INVALID";
 	}
@@ -1805,6 +1882,35 @@ void Message::Set_ActiveObjectMoved(Anki::Cozmo::G2U::ActiveObjectMoved&& new_Ac
 }
 
 
+const Anki::Cozmo::G2U::ActiveObjectStoppedMoving& Message::Get_ActiveObjectStoppedMoving() const
+{
+	assert(_tag == Tag::ActiveObjectStoppedMoving);
+	return _ActiveObjectStoppedMoving;
+}
+void Message::Set_ActiveObjectStoppedMoving(const Anki::Cozmo::G2U::ActiveObjectStoppedMoving& new_ActiveObjectStoppedMoving)
+{
+	if(this->_tag == Tag::ActiveObjectStoppedMoving) {
+		_ActiveObjectStoppedMoving = new_ActiveObjectStoppedMoving;
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectStoppedMoving) Anki::Cozmo::G2U::ActiveObjectStoppedMoving{new_ActiveObjectStoppedMoving};
+		_tag = Tag::ActiveObjectStoppedMoving;
+	}
+}
+void Message::Set_ActiveObjectStoppedMoving(Anki::Cozmo::G2U::ActiveObjectStoppedMoving&& new_ActiveObjectStoppedMoving)
+{
+	if(this->_tag == Tag::ActiveObjectStoppedMoving) {
+		_ActiveObjectStoppedMoving = std::move(new_ActiveObjectStoppedMoving);
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectStoppedMoving) Anki::Cozmo::G2U::ActiveObjectStoppedMoving{std::move(new_ActiveObjectStoppedMoving)};
+		_tag = Tag::ActiveObjectStoppedMoving;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -1948,6 +2054,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_ActiveObjectMoved.Unpack(buffer);
 		}
 		break;
+	case Tag::ActiveObjectStoppedMoving:
+		if (newTag != oldTag) {
+			new(&(this->_ActiveObjectStoppedMoving)) Anki::Cozmo::G2U::ActiveObjectStoppedMoving(buffer);
+		}
+		else {
+			this->_ActiveObjectStoppedMoving.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -2013,6 +2127,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::ActiveObjectMoved:
 		this->_ActiveObjectMoved.Pack(buffer);
 		break;
+	case Tag::ActiveObjectStoppedMoving:
+		this->_ActiveObjectStoppedMoving.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -2072,6 +2189,9 @@ size_t Message::Size() const
 	case Tag::ActiveObjectMoved:
 		result += _ActiveObjectMoved.Size();
 		break;
+	case Tag::ActiveObjectStoppedMoving:
+		result += _ActiveObjectStoppedMoving.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -2129,6 +2249,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::ActiveObjectMoved:
 		_ActiveObjectMoved.~ActiveObjectMoved();
+		break;
+	case Tag::ActiveObjectStoppedMoving:
+		_ActiveObjectStoppedMoving.~ActiveObjectStoppedMoving();
 		break;
 	default:
 		break;
