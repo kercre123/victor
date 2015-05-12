@@ -91,7 +91,7 @@ public class ActiveBlock : ObservedObject
 		}
 	}
 
-	public enum Type
+	public enum ActiveBlockMode
 	{
 		Off,
 		White,
@@ -141,7 +141,7 @@ public class ActiveBlock : ObservedObject
 	private float lastRelativeToY;
 	public float relativeToY;
 
-	public Type type = Type.Off;
+	public ActiveBlockMode mode = ActiveBlockMode.Off;
 	
 	public event Action<ActiveBlock> OnAxisChange;
 

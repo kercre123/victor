@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections;
@@ -15,7 +15,7 @@ public class ObjectkSymbolInfo {
 [ExecuteInEditMode]
 public class CozmoPalette : MonoBehaviour {
 
-	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.Type.NumTypes];
+	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.ActiveBlockMode.NumTypes];
 	[SerializeField] List<ObjectkSymbolInfo> objectSymbolInfos = new List<ObjectkSymbolInfo>();
 	[SerializeField] Sprite[] digitSprites;
 
@@ -38,11 +38,11 @@ public class CozmoPalette : MonoBehaviour {
 		return (uint)(((uint)(255f * color.r) << 24) | ((uint)(255f * color.g) << 16) | ((uint)(255f * color.b) << 8)  | ((uint)(255f * color.a) << 0));
 	}
 
-	public uint GetUIntColorForActiveBlockType(ActiveBlock.Type activeType) {
+	public uint GetUIntColorForActiveBlockType(ActiveBlock.ActiveBlockMode activeType) {
 		return ColorToUInt(activeBlockColors[(int)activeType]);
 	}
 
-	public Color GetColorForActiveBlockType(ActiveBlock.Type activeType) {
+	public Color GetColorForActiveBlockMode(ActiveBlock.ActiveBlockMode activeType) {
 		return activeBlockColors[(int)activeType];
 	}
 

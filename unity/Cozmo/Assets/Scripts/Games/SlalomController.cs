@@ -138,8 +138,8 @@ public class SlalomController : GameController {
 		instance = this;
 
 		if(CozmoPalette.instance != null) {
-			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Type.White);
-			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Type.Cyan);
+			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.ActiveBlockMode.White);
+			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.ActiveBlockMode.Cyan);
 		}
 	}
 	

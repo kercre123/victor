@@ -8,4 +8,8 @@ public class PlayerPrefSetter : MonoBehaviour {
 	public void SetPlayerPref (int val) {
 		PlayerPrefs.SetInt(pref, val);
 	}
+
+	public void SetPlayerPref (string val) {
+		PlayerPrefs.SetString(pref, val);
+	}
 }

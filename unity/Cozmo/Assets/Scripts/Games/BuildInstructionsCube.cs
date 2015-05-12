@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using Vectrosity;
@@ -13,7 +13,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	
 	[SerializeField] public int objectType = 0;
 	[SerializeField] public int objectFamily = 0;
-	[SerializeField] public ActiveBlock.Type activeBlockType = ActiveBlock.Type.Off;
+	[SerializeField] public ActiveBlock.ActiveBlockMode activeBlockType = ActiveBlock.ActiveBlockMode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
@@ -36,7 +36,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
-	ActiveBlock.Type lastActiveBlockType = ActiveBlock.Type.Off;
+	ActiveBlock.ActiveBlockMode lastActiveBlockType = ActiveBlock.ActiveBlockMode.Off;
 	Color lastBaseColor = Color.blue;
 
 	public bool Validated = false;
@@ -193,7 +193,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			if(activeCorners != null) {
 				if(objectFamily == 3) {
 					Color activeColor = Color.white;
-					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockType(activeBlockType);
+					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockType);
 					for(int i=0;i<activeCorners.Length;i++) {
 						activeColor.a = alpha;
 						clonedCornerMaterial.color = activeColor;
