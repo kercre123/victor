@@ -95,11 +95,11 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
     }
     else if(block < NUM_BLOCKS)
     {
-      /*blockServer->proto.udp->remote_port = BLOCK_PORT;
+      blockServer->proto.udp->remote_port = BLOCK_PORT;
       blockServer->proto.udp->remote_ip[0] = 172;
       blockServer->proto.udp->remote_ip[1] = 31;
       blockServer->proto.udp->remote_ip[2] = 1;
-      blockServer->proto.udp->remote_ip[3] = 10+block; // Set the block address*/
+      blockServer->proto.udp->remote_ip[3] = 10+block; // Set the block address
 #ifdef DEBUG_BR
       os_printf("\tSending to %d bytes to block %d @ %d.%d.%d.%d:%d\r\n", event->par, block, blockServer->proto.udp->remote_ip[0], blockServer->proto.udp->remote_ip[1], blockServer->proto.udp->remote_ip[2], blockServer->proto.udp->remote_ip[3], blockServer->proto.udp->remote_port);
 #endif

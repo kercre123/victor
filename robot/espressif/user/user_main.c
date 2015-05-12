@@ -50,7 +50,7 @@ static void ICACHE_FLASH_ATTR system_init_done()
 
   // Setup user task
   system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
-  system_os_post(userTaskPrio, 0, 0); // Post user task
+  //system_os_post(userTaskPrio, 0, 0); // Post user task
 
   os_printf("user initalization complete\r\n");
 }
