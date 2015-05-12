@@ -342,6 +342,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U.Message.Tag.ActiveObjectMoved:
 			ReceivedSpecificMessage(message.ActiveObjectMoved);
 			break;
+		case G2U.Message.Tag.ActiveObjectStoppedMoving:
+			ReceivedSpecificMessage(message.ActiveObjectStoppedMoving);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
@@ -392,7 +395,19 @@ public class RobotEngineManager : MonoBehaviour {
 		{
 			ActiveBlock activeBlock = current.activeBlocks[ID];
 
-			activeBlock.UpdateInfo( message );
+			activeBlock.Moving( message );
+		}
+	}
+
+	private void ReceivedSpecificMessage( G2U.ActiveObjectStoppedMoving message )
+	{
+		int ID = (int)message.objectID;
+		
+		if( current.activeBlocks.ContainsKey( ID ) )
+		{
+			ActiveBlock activeBlock = current.activeBlocks[ID];
+			
+			activeBlock.StoppedMoving( message );
 		}
 	}
 
@@ -422,6 +437,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 		if( deleted != null )
 		{
+			deleted.Delete();
 			current.knownObjects.Remove( deleted );
 		}
 

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -36,6 +37,8 @@ public class ObservedObject
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	public bool isActive { get { return robot != null && robot.activeBlocks.ContainsKey( ID ); } }
+
+	public event Action<ObservedObject> OnDelete;
 
 	public bool canBeStackedOn
 	{
@@ -105,5 +108,10 @@ public class ObservedObject
 		TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
+	}
+
+	public void Delete()
+	{
+		if( OnDelete != null ) OnDelete( this );
 	}
 }

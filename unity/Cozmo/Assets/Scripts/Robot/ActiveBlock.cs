@@ -104,12 +104,12 @@ public class ActiveBlock : ObservedObject
 		NumTypes
 	}
 
-	private byte lastUpAxis;
+	private bool isMoving;
 	public byte upAxis { get; private set; }
 	public float xAccel { get; private set; }
 	public float yAccel { get; private set; }
 	public float zAccel { get; private set; }
-	
+
 	private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
@@ -153,6 +153,10 @@ public class ActiveBlock : ObservedObject
 		ID = objectID;
 
 		upAxis = byte.MaxValue;
+		xAccel = byte.MaxValue;
+		yAccel = byte.MaxValue;
+		zAccel = byte.MaxValue;
+		isMoving = false;
 
 		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
@@ -164,20 +168,27 @@ public class ActiveBlock : ObservedObject
 		}
 	}
 
-	public void UpdateInfo( G2U.ActiveObjectMoved message )
+	public void Moving( G2U.ActiveObjectMoved message )
 	{
-		if( lastUpAxis == byte.MaxValue ) lastUpAxis = message.upAxis; 
+		if( isMoving ) return;
+
+		isMoving = true;
 
 		upAxis = message.upAxis;
 		xAccel = message.xAccel;
 		yAccel = message.yAccel;
 		zAccel = message.zAccel;
+	}
 
-		if( lastUpAxis != upAxis )
+	public void StoppedMoving( G2U.ActiveObjectStoppedMoving message )
+	{
+		if( !isMoving ) return;
+
+		isMoving = false;
+
+		if( message.rolled )
 		{
 			if( OnAxisChange != null ) OnAxisChange( this );
-			Debug.Log( "Active Block " + ID + "'s axis has changed from " + lastUpAxis + " to " + upAxis );
-			lastUpAxis = upAxis;
 		}
 	}
 
