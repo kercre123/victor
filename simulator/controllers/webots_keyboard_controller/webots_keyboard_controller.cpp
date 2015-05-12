@@ -38,7 +38,10 @@
 
 // Webots includes
 #include <webots/Supervisor.hpp>
-
+#include <webots/ImageRef.hpp>
+#include <webots/Display.hpp>
+#include <webots/GPS.hpp>
+#include <webots/Compass.hpp>
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
