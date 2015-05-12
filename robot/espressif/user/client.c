@@ -23,10 +23,16 @@ static uint8 nextReserve; /// Index of next buffer to reserve
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   sint8 block = NO_BLOCK;
-  haveClient = true;
+
 #ifdef DEBUG_CLIENT
-  os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+  //os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+  if (haveClient == false)
+  {
+    os_printf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
+  }
 #endif
+
+  haveClient = true;
 
   block = blockRelayCheckMessage(usrdata, len); // Check if the message is for a block
   if (block != NO_BLOCK) // This is a block message

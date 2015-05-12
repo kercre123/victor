@@ -32,6 +32,28 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
   system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
+/** Callback after all the chip system initalization is done.
+ * We shouldn't do any networking until after this is done.
+ */
+static void ICACHE_FLASH_ATTR system_init_done()
+{
+  // Setup the block relay
+  blockRelayInit();
+
+  // Setup Basestation client
+  clientInit();
+
+  // Enable UART0 RX interrupt
+  // Only after clientInit
+  uart_rx_intr_enable(UART0);
+
+  // Setup user task
+  system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
+  //system_os_post(userTaskPrio, 0, 0); // Post user task
+
+  os_printf("user initalization complete\r\n");
+}
+
 /** User initialization function
  * This function is responsible for setting all the wireless parameters and
  * Setting up any user application code to run on the espressif.
@@ -46,7 +68,7 @@ user_init()
     REG_SET_BIT(0x3ff00014, BIT(0));
     os_update_cpu_frequency(160);
 
-    uart_init(BIT_RATE_5000000, BIT_RATE_74880);
+    uart_init(BIT_RATE_5000000, BIT_RATE_115200);
 
     os_printf("Espressif booting up...\r\n");
 
@@ -92,17 +114,6 @@ user_init()
     // Start DHCP server
     wifi_softap_dhcps_start();
 
-    // Setup Basestation client
-    clientInit();
-
-    // Enable UART0 RX interrupt
-    // Only after clientInit
-    uart_rx_intr_enable(UART0);
-
-    // Setup user task
-    system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
-    //system_os_post(userTaskPrio, 0, 0); // Post user task
-
-    os_printf("user initalization complete\r\n");
-
+    // Register callback
+    system_init_done_cb(&system_init_done);
 }

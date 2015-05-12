@@ -11,6 +11,9 @@
 /// Block ID for broadcast to all blocks
 #define ALL_BLOCKS 127
 
+/// USER_TASK_PRIO_2 is the highest allowed user task priority USER_TASK_PRIO_0 is the lowest
+#define blockTaskPrio USER_TASK_PRIO_1
+
 /// Initalize the block relay module
 sint8 blockRelayInit();
 
