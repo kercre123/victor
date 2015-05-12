@@ -299,17 +299,18 @@ namespace Anki {
         }
       }
       
-      // If we are not running anymore, for any reason, clear the path and its
-      // visualization
-      if(result != ActionResult::RUNNING) {
-        robot.ClearPath(); // clear path and indicate that we are not replanning
-        VizManager::getInstance()->ErasePath(robot.GetID());
-        VizManager::getInstance()->EraseAllPlannerObstacles(true);
-        VizManager::getInstance()->EraseAllPlannerObstacles(false);
-      }
-      
       return result;
     } // CheckIfDone()
+    
+    void DriveToPoseAction::Cleanup(Robot &robot)
+    {
+      // If we are not running anymore, for any reason, clear the path and its
+      // visualization
+      robot.ClearPath();
+      VizManager::getInstance()->ErasePath(robot.GetID());
+      VizManager::getInstance()->EraseAllPlannerObstacles(true);
+      VizManager::getInstance()->EraseAllPlannerObstacles(false);
+    }
     
 #pragma mark ---- DriveToObjectAction ----
     

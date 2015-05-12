@@ -52,7 +52,8 @@ namespace Anki {
 
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-
+      virtual void Cleanup(Robot &robot) override;
+      
       Result SetGoal(const Pose3d& pose);
       Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
       

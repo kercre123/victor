@@ -80,4 +80,10 @@ DEF_SIGNAL(ActiveObjectMoved,
            float    zAccel,
            uint8_t  upAxis);
 
+DEF_SIGNAL(ActiveObjectStoppedMoving,
+           uint8_t  robotID,
+           uint32_t objectID,
+           uint8_t  upAxis,
+           uint8_t  rolled);
+
 
