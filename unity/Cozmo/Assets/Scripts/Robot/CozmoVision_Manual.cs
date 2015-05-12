@@ -29,8 +29,7 @@ public class CozmoVision_Manual : CozmoVision
 	void LiftSliderChanged(float val) {
 		if(robot == null) return;
 
-		float liftHeight = Mathf.Lerp(CozmoUtil.MIN_LIFT_HEIGHT_MM, CozmoUtil.MAX_LIFT_HEIGHT_MM, val);
-		robot.SetLiftHeight(liftHeight);
+		robot.SetLiftHeight(val);
 	}
 
 }

@@ -91,7 +91,7 @@ public class ActiveBlock : ObservedObject
 		}
 	}
 
-	public enum Type
+	public enum Mode
 	{
 		Off,
 		White,
@@ -101,7 +101,7 @@ public class ActiveBlock : ObservedObject
 		Cyan,
 		Blue,
 		Magenta,
-		NumTypes
+		Count
 	}
 
 	private byte lastUpAxis;
@@ -141,7 +141,7 @@ public class ActiveBlock : ObservedObject
 	private float lastRelativeToY;
 	public float relativeToY;
 
-	public Type type = Type.Off;
+	public Mode mode = Mode.Off;
 	
 	public event Action<ActiveBlock> OnAxisChange;
 

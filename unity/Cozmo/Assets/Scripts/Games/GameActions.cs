@@ -314,13 +314,13 @@ public class GameActions : MonoBehaviour
 		{
 			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
 
-			int typeIndex = (int)activeBlock.type + 1;
-			if(typeIndex >= (int)ActiveBlock.Type.NumTypes) typeIndex = 0;
+			int typeIndex = (int)activeBlock.mode + 1;
+			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
 
-			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Type)typeIndex );
+			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Mode)typeIndex );
 
-			activeBlock.type = (ActiveBlock.Type)typeIndex;
-			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.type ) );
+			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
+			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockMode( activeBlock.mode ) );
 		}
 	}
 

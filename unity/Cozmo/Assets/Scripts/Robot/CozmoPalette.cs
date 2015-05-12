@@ -15,7 +15,7 @@ public class ObjectkSymbolInfo {
 [ExecuteInEditMode]
 public class CozmoPalette : MonoBehaviour {
 
-	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.Type.NumTypes];
+	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.Mode.Count];
 	[SerializeField] List<ObjectkSymbolInfo> objectSymbolInfos = new List<ObjectkSymbolInfo>();
 	[SerializeField] Sprite[] digitSprites;
 
@@ -38,12 +38,12 @@ public class CozmoPalette : MonoBehaviour {
 		return (uint)(((uint)(255f * color.r) << 24) | ((uint)(255f * color.g) << 16) | ((uint)(255f * color.b) << 8)  | ((uint)(255f * color.a) << 0));
 	}
 
-	public uint GetUIntColorForActiveBlockType(ActiveBlock.Type activeType) {
-		return ColorToUInt(activeBlockColors[(int)activeType]);
+	public uint GetUIntColorForActiveBlockMode(ActiveBlock.Mode activeMode) {
+		return ColorToUInt(activeBlockColors[(int)activeMode]);
 	}
 
-	public Color GetColorForActiveBlockType(ActiveBlock.Type activeType) {
-		return activeBlockColors[(int)activeType];
+	public Color GetColorForActiveBlockMode(ActiveBlock.Mode activeMode) {
+		return activeBlockColors[(int)activeMode];
 	}
 
 	public Sprite GetSpriteForObjectType(int objType) {
