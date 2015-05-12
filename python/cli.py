@@ -37,7 +37,7 @@ class Pinger(threading.Thread, socket.socket):
                 continue
             else:
                 t = time.time()
-                sys.stdout.write("%02d[%04d]\r\n" % (ord(msg[0]), len(msg)))
+                sys.stdout.write("%02d[%04d]\r\n" % (msg[0], len(msg)))
                 if PrintText.isa(msg):
                     printMsg = PrintText(buffer=msg)
                     sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)

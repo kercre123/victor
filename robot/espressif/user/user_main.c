@@ -45,11 +45,12 @@ static void ICACHE_FLASH_ATTR system_init_done()
 
   // Enable UART0 RX interrupt
   // Only after clientInit
+  ETS_UART_INTR_ENABLE();
   uart_rx_intr_enable(UART0);
 
   // Setup user task
   system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
-  //system_os_post(userTaskPrio, 0, 0); // Post user task
+  system_os_post(userTaskPrio, 0, 0); // Post user task
 
   os_printf("user initalization complete\r\n");
 }
@@ -69,6 +70,7 @@ user_init()
     os_update_cpu_frequency(160);
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
+    ETS_UART_INTR_DISABLE();
 
     os_printf("Espressif booting up...\r\n");
 

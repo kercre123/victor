@@ -36,6 +36,10 @@ static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned sho
   os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
 #endif
 
+  //os_memcpy(blockPkt, usrdata, len);
+  //system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK, len);
+
+
   if (clientPkt != NULL)
   {
     os_printf("Block relay couldn't forward packet from block because queue full\r\n");
@@ -57,6 +61,8 @@ static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned sho
 
 LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
 {
+  int8 err = 0;
+
   if (event->sig & BR_SIG_TO_CLIENT) // Have a packet to send
   {
     if (clientPkt == NULL)
@@ -89,7 +95,6 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
     }
     else if(block < NUM_BLOCKS)
     {
-      int8 err;
       /*blockServer->proto.udp->remote_port = BLOCK_PORT;
       blockServer->proto.udp->remote_ip[0] = 172;
       blockServer->proto.udp->remote_ip[1] = 31;
@@ -103,12 +108,6 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
       {
         os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
       }
-      else
-      {
-#ifdef DEBUG_BR
-        os_printf("\tsent\r\n");
-#endif
-      }
       blockPktQueued = false;
     }
     else
@@ -121,6 +120,9 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
   {
     os_printf("ERROR: blockTask with unknown signal %08x\r\n", event->sig);
   }
+#ifdef DEBUG_BR
+  os_printf("BReot %d %d %d\r\n", event->sig, event->par, err);
+#endif
 }
 
 
@@ -149,7 +151,7 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
     os_printf("\tCould not allocate memory for block connection %d\r\n", i);
     return -100;
   }
-  os_memset(blockServer, sizeof(struct espconn));
+  ets_memset(blockServer, 0, sizeof(struct espconn));
   blockServer->state = ESPCONN_NONE;
   blockServer->type  = ESPCONN_UDP;
   blockServer->proto.udp = (esp_udp*)os_zalloc(sizeof(esp_udp));
