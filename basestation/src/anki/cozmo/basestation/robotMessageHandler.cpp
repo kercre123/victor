@@ -217,7 +217,7 @@ namespace Anki {
                                       msg.center_y,
                                       msg.skew);
       
-#if 1 // DEV HACK!
+#     if 0 // DEV HACK!
       if(msg.isPhysicalRobot)
       {
         if(msg.ncols == 640) {
@@ -238,7 +238,7 @@ namespace Anki {
         }
         PRINT_NAMED_WARNING("RobotMessageHandler.ProcessMessage", "Using hard-coded %dx%d camera calibration data on basestation.\n", msg.ncols, msg.nrows);
       }
-#endif
+#     endif
       
       robot->SetCameraCalibration(calib);
       robot->SetPhysicalRobot(msg.isPhysicalRobot);
