@@ -27,7 +27,7 @@ public class LayoutBlock2d : MonoBehaviour {
 		if(block.objectFamily == 3) {
 			image_Symbol.sprite = CozmoPalette.instance.GetDigitSprite(Random.Range(1,6));
 			foreach(Image led in images_LED) {
-				//led.color = CozmoPalette.instance.GetColorForActiveBlockType(block.activeBlockType);
+				//led.color = CozmoPalette.instance.GetColorForactiveBlockMode(block.activeBlockMode);
 				led.gameObject.SetActive(true);
 			}
 		}

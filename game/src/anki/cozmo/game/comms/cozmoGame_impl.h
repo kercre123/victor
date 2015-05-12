@@ -129,6 +129,7 @@ namespace Cozmo {
     void HandleActiveObjectMoved(uint8_t robotID, uint32_t objectID,
                                  float xAccel, float yAccel, float zAccel,
                                  uint8_t upAxis);
+    void HandleActiveObjectStoppedMoving(uint8_t robotID, uint32_t objectID, uint8_t upAxis, bool rolled);
     //
     // U2G Message Handling
     //

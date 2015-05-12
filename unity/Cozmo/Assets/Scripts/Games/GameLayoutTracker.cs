@@ -602,7 +602,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
 		ghostBlock.objectType = failingLayoutBlock.objectType;
 		ghostBlock.objectFamily = failingLayoutBlock.objectFamily;
-		ghostBlock.activeBlockType = failingLayoutBlock.activeBlockType;
+		ghostBlock.activeBlockMode = failingLayoutBlock.activeBlockMode;
 		ghostBlock.baseColor = failingLayoutBlock.baseColor;
 		ghostBlock.Hidden = true;
 		ghostBlock.Highlighted = true;
@@ -623,7 +623,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 			if(obj.Family != block.objectFamily) continue;
 			if(!obj.isActive && obj.ObjectType != block.objectType) continue;
-			//if(obj.Family == 3 && obj.activeBlockType != block.activeBlockType) continue;
+			//if(obj.Family == 3 && obj.activeBlockMode != block.activeBlockMode) continue;
 
 			count++;
 		}
