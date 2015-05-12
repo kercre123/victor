@@ -236,10 +236,16 @@ END_MESSAGE_DEFINITION(BlockIDFlashStarted)
 
 // ActiveObjectMoved
 START_MESSAGE_DEFINITION(ActiveObjectMoved, 1)
-ADD_MESSAGE_MEMBER(s32, objectID)
+ADD_MESSAGE_MEMBER(u32, objectID)
 ADD_MESSAGE_MEMBER(f32, xAccel)
 ADD_MESSAGE_MEMBER(f32, yAccel)
 ADD_MESSAGE_MEMBER(f32, zAccel)
 ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
 END_MESSAGE_DEFINITION(ActiveObjectMoved)
+
+START_MESSAGE_DEFINITION(ActiveObjectStoppedMoving, 1)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
+ADD_MESSAGE_MEMBER(u8,  rolled)  // Whether the up orientation changed during movement
+END_MESSAGE_DEFINITION(ActiveObjectStoppedMoving)
 
