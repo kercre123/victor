@@ -25,12 +25,12 @@ Supervisor {
 
   %{
     # Set some dimensions
-    hWidth = fields.width/2
+    hWidth = fields.width.value/2
     ledWidth = 0.007
     ledHWidth = ledWidth/2
   }%
 
-  %{ if fields.active then }%
+  %{ if fields.active.value then }%
     controller "block_controller"
   %{ end }%
 
@@ -45,7 +45,7 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 -1.5708
 			translation %{=-hWidth}% 0 0
-			%{ if fields.markerImg_front ~= "" then }%
+			%{ if fields.markerImg_front.value ~= "" then }%
 			  image IS markerImg_front
 			%{ else }%
 			  image IS markerImg
@@ -58,7 +58,7 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 1.5708
 			translation %{=hWidth}% 0 0
-			%{ if fields.markerImg_back ~= "" then }%
+			%{ if fields.markerImg_back.value ~= "" then }%
 			  image IS markerImg_back
 			%{ else }%
 			  image IS markerImg
@@ -71,7 +71,7 @@ Supervisor {
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation 0 0 %{=-hWidth}%
-			%{ if fields.markerImg_bottom ~= "" then }%
+			%{ if fields.markerImg_bottom.value ~= "" then }%
 			  image IS markerImg_bottom
 			%{ else }%
 			  image IS markerImg
@@ -84,7 +84,7 @@ Supervisor {
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation 0 0 %{=hWidth}%
-			%{ if fields.markerImg_top ~= "" then }%
+			%{ if fields.markerImg_top.value ~= "" then }%
 			  image IS markerImg_top
 			%{ else }%
 			  image IS markerImg
@@ -97,7 +97,7 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 3.1415
 			translation 0 %{=hWidth}% 0
-			%{ if fields.markerImg_left ~= "" then }%
+			%{ if fields.markerImg_left.value ~= "" then }%
 			  image IS markerImg_left
 			%{ else }%
 			  image IS markerImg
@@ -110,7 +110,7 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 0
 			translation 0 %{=-hWidth}% 0
-			%{ if fields.markerImg_right ~= "" then }%
+			%{ if fields.markerImg_right.value ~= "" then }%
 			  image IS markerImg_right
 			%{ else }%
 			  image IS markerImg
@@ -126,12 +126,12 @@ Supervisor {
         }
       }
       geometry Box {
-        size %{=fields.width}% %{=fields.width}% %{=fields.width}%
+        size %{=fields.width.value}% %{=fields.width.value}% %{=fields.width.value}%
       }
     }
     
     %{ 
-    if fields.active then
+    if fields.active.value then
       # Index array of LED positions
       idx = {}
       idx[1] = {-1, 1, 1}

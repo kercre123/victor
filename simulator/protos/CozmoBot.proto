@@ -45,7 +45,7 @@ Supervisor {
   rotation IS rotation
   name IS name
 
-  %{ if not fields.vizMode then }%
+  %{ if not fields.vizMode.value then }%
   controller IS controller
   controllerArgs IS controllerArgs
   %{ else }%
@@ -53,7 +53,7 @@ Supervisor {
   controllerArgs ""
   %{ end }%
   
-  %{ if not fields.vizMode then }%
+  %{ if not fields.vizMode.value then }%
   physics Physics {
     density 0.1
     #mass 0.17 # about 6 ounces
@@ -137,7 +137,7 @@ Supervisor {
 					] # BODY_SHAPE Group children
 				} # BODY_SHAPE Group
 		  ] # BODY Solid children
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
 			 density 3000
@@ -156,7 +156,7 @@ Supervisor {
 					minStop IS headAngle_lowLimit
 					axis 0 -1 0
 			  }
-			  %{ if not fields.vizMode then }%
+			  %{ if not fields.vizMode.value then }%
 			  device [
 			    RotationalMotor {
 					name "HeadMotor"
@@ -370,16 +370,16 @@ Supervisor {
 						near 0.018
 						antiAliasing TRUE
 						
-						%{ if fields.vizMode or fields.hideCameraDisplay then }%
+						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%
               pixelSize 0
 						%{ else }%
-              %{ if fields.cameraWidth == 640 then }%
+              %{ if fields.cameraWidth.value == 640 then }%
                 pixelSize 0.5
-              %{ elseif fields.cameraWidth == 320 then }%
+              %{ elseif fields.cameraWidth.value == 320 then }%
                 pixelSize 1
-              %{ elseif fields.cameraWidth == 160 then }%
+              %{ elseif fields.cameraWidth.value == 160 then }%
                 pixelSize 2
-              %{ elseif fields.cameraWidth == 80 then }%
+              %{ elseif fields.cameraWidth.value == 80 then }%
                 pixelSize 4
               %{ end }%      
 						%{ end }%
@@ -482,7 +482,7 @@ Supervisor {
 				]
 				name "head"
 
-				%{ if not fields.vizMode then }%
+				%{ if not fields.vizMode.value then }%
 				boundingObject USE HEAD_SPHERE
 				physics Physics {
 					density 100
@@ -656,7 +656,7 @@ Supervisor {
 		                     
 		  ] # BACKPACK Solid children
 
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
 			density 300
@@ -682,7 +682,7 @@ Supervisor {
 		  ]
 		  contactMaterial "nofriction"
 
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE CASTER_SHAPE
 		  physics Physics {
 			 density 5000
@@ -756,7 +756,7 @@ Supervisor {
 			]
 			contactMaterial "highfriction"
 
-			%{ if not fields.vizMode then }%
+			%{ if not fields.vizMode.value then }%
 			boundingObject USE DRIVE_TIRE
 			physics DEF FRONT_WHEEL_PHYSICS Physics {
 			  density 5000 # Make heavier than rear wheels to simulate weights in front
@@ -791,7 +791,7 @@ Supervisor {
 				]
 				contactMaterial "highfriction"
 
-				%{ if not fields.vizMode then }%
+				%{ if not fields.vizMode.value then }%
 				boundingObject USE DRIVE_TIRE
 				physics USE FRONT_WHEEL_PHYSICS
 				%{ end }%
@@ -837,7 +837,7 @@ Supervisor {
 						]
 						contactMaterial "nofriction"
 
-						%{ if not fields.vizMode then }%
+						%{ if not fields.vizMode.value then }%
 						boundingObject USE REAR_TIRE
 						physics DEF REAR_WHEEL_PHYSICS Physics {
 						  density 10
@@ -862,7 +862,7 @@ Supervisor {
 						]
 						contactMaterial "nofriction"
 
-						%{ if not fields.vizMode then }%
+						%{ if not fields.vizMode.value then }%
 						boundingObject USE REAR_TIRE
 						physics USE REAR_WHEEL_PHYSICS
 						%{ end }%
@@ -896,7 +896,7 @@ Supervisor {
 						minStop IS liftAngle_lowLimit
 						maxStop IS liftAngle_highLimit
 					}
-					%{ if not fields.vizMode then }%
+					%{ if not fields.vizMode.value then }%
 					device [
 					  RotationalMotor {
 						name "LiftMotor"
@@ -1158,7 +1158,7 @@ Supervisor {
 
 								] # SmallFingerGripper Children
 
-								%{ if not fields.vizMode then }%
+								%{ if not fields.vizMode.value then }%
 								boundingObject USE LIFTER_SHAPE
 								physics Physics {
 									density 100
@@ -1253,7 +1253,7 @@ Supervisor {
 					
 					] # endPoint Solid children
 
-					%{ if not fields.vizMode then }%
+					%{ if not fields.vizMode.value then }%
 					boundingObject Group {
 						children [
 							# Right arm
@@ -1374,7 +1374,7 @@ Supervisor {
 								] # endPoint Solid Children (lower)
 
 
-								%{ if not fields.vizMode then }%
+								%{ if not fields.vizMode.value then }%
 								boundingObject Group {
 									children [
 										# Right arm
