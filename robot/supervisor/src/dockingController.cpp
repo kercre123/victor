@@ -457,7 +457,7 @@ namespace Anki {
                                                   tempPoint);
               
               dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y + ( (HAL::GetIDCard()->esn == 2) ? COZMO2_CAM_LATERAL_POSITION_HACK : 0 );
+              dockMsg.y_horErr  = tempPoint.y;
               dockMsg.z_height  = tempPoint.z;
             }
             
