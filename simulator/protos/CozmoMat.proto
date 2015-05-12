@@ -22,7 +22,7 @@ Solid {
       }
     }
     
-%{ if fields.showMarkers then }%
+%{ if fields.showMarkers.value then }%
 
     Solid {
 	    translation -0.2000 -0.2000 0.0025
