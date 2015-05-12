@@ -366,8 +366,8 @@ namespace Anki {
             break;
 
           default:
-            printf("Robot %d completed action with type=%d and %s.\n",
-                   msg.robotID, msg.actionType, (success ? "SUCCEEDED" : "FAILED"));
+            printf("Robot %d completed action with type=%d: %s.\n",
+                   msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
         }
         
       }
