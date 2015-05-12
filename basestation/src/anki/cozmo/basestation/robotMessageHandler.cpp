@@ -604,7 +604,7 @@ namespace Anki {
             printf("Received message that Object %d (Active ID %d) moved.\n",
                    objectWithID.first.GetValue(), msg.objectID);
             
-            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
             
             return RESULT_OK;
           }
@@ -625,17 +625,17 @@ namespace Anki {
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
-            printf("Received message that Object %d (Active ID %d) stopped moving.\n",
-                   objectWithID.first.GetValue(), msg.objectID);
+            PRINT_INFO("Received message that Object %d (Active ID %d) stopped moving.\n",
+                       objectWithID.first.GetValue(), msg.objectID);
             
-            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), msg.objectID, msg.upAxis, msg.rolled);
+            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled);
             
             return RESULT_OK;
           }
         }
       }
       
-      printf("Could not find match for active object ID %d\n", msg.objectID);
+      PRINT_INFO("Could not find match for active object ID %d\n", msg.objectID);
       return RESULT_FAIL;
     }
     
