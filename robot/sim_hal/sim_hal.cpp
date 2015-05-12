@@ -695,14 +695,16 @@ namespace Anki {
           }
         }
         
+        // Pass along block-moved messages to basestation
         // TODO: Make block comms receiver checking into a HAL function at some point
         //   and call it from the main execution loop
         while(blockCommsReceiver_->getQueueLength() > 0) {
           int dataSize = blockCommsReceiver_->getDataSize();
-          
+          u8* data = (u8*)blockCommsReceiver_->getData();
+
+          // TODO: Use a message ID to switch here instead of depending on size to differentiate message type
+
           if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
-            // Pass along block-moved messages to basestation
-            u8* data = (u8*)blockCommsReceiver_->getData();
             BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
             Messages::ActiveObjectMoved msgOut;
             msgOut.objectID = msgIn->blockID;
@@ -711,6 +713,13 @@ namespace Anki {
             msgOut.zAccel   = msgIn->zAccel;
             msgOut.upAxis   = msgIn->upAxis;
             HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
+          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID)) {
+            BlockMessages::BlockStoppedMoving* msgIn = reinterpret_cast<BlockMessages::BlockStoppedMoving*>(data);
+            Messages::ActiveObjectStoppedMoving msgOut;
+            msgOut.objectID = msgIn->blockID;
+            msgOut.upAxis   = msgIn->upAxis;
+            msgOut.rolled   = msgIn->rolled;
+            HAL::RadioSendMessage(Messages::ActiveObjectStoppedMoving_ID, &msgOut);
           } else {
             printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
           }

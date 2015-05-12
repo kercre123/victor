@@ -27,6 +27,9 @@ namespace Anki {
 
       namespace {
       
+        // once we start moving, we have to stop for this long to send StoppedMoving message
+        const double STOPPED_MOVING_TIME_SEC = 0.5f;
+        
         webots::Receiver* receiver_;
         webots::Emitter*  emitter_;
         
@@ -45,6 +48,10 @@ namespace Anki {
         LEDParams_t ledParams_[NUM_BLOCK_LEDS];
         
         UpAxis currentUpAxis_;
+        
+        bool wasMoving_;
+        double wasLastMovingTime_sec_;
+        UpAxis startingUpAxis_;
         
         // Lookup table for which four LEDs are on top, given the current up axis
         // (in the order upper left, upper right, lower left, lower right)
@@ -175,6 +182,9 @@ namespace Anki {
         assert(accel_ != nullptr);
         accel_->enable(TIMESTEP);
         
+        wasMoving_ = false;
+        wasLastMovingTime_sec_ = 0.0;
+        startingUpAxis_ = UP_AXIS_UNKNOWN;
         
         // Register callbacks
         RegisterCallbackForMessageFlashID(ProcessFlashIDMessage);
@@ -365,14 +375,16 @@ namespace Anki {
             receiver_->nextPacket();
           }
           
-          double currTime = block_controller.getTime();
-          
+          // TODO: Time probably won't be in seconds on the real blocks...
+          const double currTime_sec = block_controller.getTime();
+
           bool isMoving = false;
           currentUpAxis_ = GetCurrentUpAxis(isMoving);
           
           if(isMoving) {
-            printf("Block %d appears to have moved.\n", blockID_);
-            
+            printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+          
+            // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
             BlockMessages::BlockMoved msg;
             msg.blockID = blockID_;
             const double* accelVals = accel_->getValues();
@@ -381,22 +393,44 @@ namespace Anki {
             msg.zAccel = accelVals[2];
             msg.upAxis = currentUpAxis_;
             emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
+            
+            if(!wasMoving_) {
+              // Store the Up axis when we first start movement
+              startingUpAxis_ = currentUpAxis_;
+            }
+            
+            wasLastMovingTime_sec_ = currTime_sec;
+            wasMoving_ = true;
+            
+          } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
+            
+            printf("Block %d stopped moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+            
+            // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
+            BlockMessages::BlockStoppedMoving msg;
+            msg.blockID = blockID_;
+            msg.upAxis  = currentUpAxis_;
+            msg.rolled  = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
+            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID));
+            
+            wasMoving_ = false;
+            startingUpAxis_ = UP_AXIS_UNKNOWN;
           }
           
           // Run FSM
           switch(state_) {
             case NORMAL:
               // Apply ledParams
-              ApplyLEDParams(static_cast<TimeStamp_t>(currTime*1000));
+              ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
               break;
             case FLASHING_ID:
-              if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
+              if (currTime_sec >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
                 state_ = NORMAL;
-              } else if (currTime >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on) {
+              } else if (currTime_sec >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on) {
                 SetAllLEDs(0);
-              } else if (currTime >= flashIDStartTime_ + flashID_t1_off) {
+              } else if (currTime_sec >= flashIDStartTime_ + flashID_t1_off) {
                 SetAllLEDs(0xff0000);
-              } else if (currTime >= flashIDStartTime_) {
+              } else if (currTime_sec >= flashIDStartTime_) {
                 SetAllLEDs(0);
               }
               break;

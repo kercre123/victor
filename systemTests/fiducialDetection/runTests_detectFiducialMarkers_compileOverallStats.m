@@ -58,6 +58,8 @@ function resultsData_overall = runTests_detectFiducialMarkers_compileOverallStat
     
     resultsData_overall.percentMarkersCorrect = sum(sum(sum(sum(markerDetection_events(:,:,:,:,1))))) / sum(sum(sum(sum(groundTruth_events(:,:,:,:)))));
     
+    resultsData_overall.numMarkersCorrect = sum(sum(sum(sum(markerDetection_events(:,:,:,:,1)))));
+    
     % Number of spurrios detections, plus 
     % number of detections with the correct position, minus number totally correct
     resultsData_overall.numMarkerErrors = ...

@@ -178,33 +178,45 @@ classdef VisionMarkerTrained
                   % probes.
                   
                  probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
-                 probeValues = (probeValues - dark)/(bright-dark);
+                 %probeValues = (probeValues - dark)/(bright-dark);
+                 
+                 %probeValues = 255*imfilter(probeValues, [0 1 0; 1 -4 1; 0 1 0], 'replicate');
+                 
+                 %probeValues = probeValues - imfilter(probeValues, ones(16)/256, 'replicate');
+                 kernel = -ones(16);
+                 kernel(8,8) = 255;
+                 probeValues = imfilter(probeValues, kernel, 'replicate');
+                 minVal = min(probeValues(:));
+                 maxVal = max(probeValues(:));
+                 probeValues = (probeValues - minVal)/(maxVal-minVal);
+                 
                  probeValues = im2uint8(probeValues(:));
                  
-                 if isfield(NearestNeighborLibrary, 'gradMagWeights')
-                   d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
-                   d = sum(NearestNeighborLibrary.gradMagWeights.*single(d),1) ./ sum(NearestNeighborLibrary.gradMagWeights,1);
-                 elseif isfield(NearestNeighborLibrary, 'gradMagValues')
-                   %Ix = abs(image_right(probeValues) - image_left(probeValues));
-                   %Iy = abs(image_down(probeValues) - image_up(probeValues));
-                   %probeWeights = max(0,min(1,single(column(1 - max(Ix,Iy)))));
-                   
-                   libraryWeights = im2single(NearestNeighborLibrary.gradMagValues);
-                   minVal = min(libraryWeights(:));
-                   maxVal = max(libraryWeights(:));
-                   w = 1 - (libraryWeights-minVal)/(maxVal-minVal);
-                   
-                   d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
-                   %w = min(probeWeights(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), libraryWeights);
-                   d = sum(w.*single(d),1) ./ sum(w,1);
-                 else
+%                  if isfield(NearestNeighborLibrary, 'gradMagWeights')
+%                    d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+%                    d = sum(NearestNeighborLibrary.gradMagWeights.*single(d),1) ./ sum(NearestNeighborLibrary.gradMagWeights,1);
+%                  elseif isfield(NearestNeighborLibrary, 'gradMagValues')
+%                    %Ix = abs(image_right(probeValues) - image_left(probeValues));
+%                    %Iy = abs(image_down(probeValues) - image_up(probeValues));
+%                    %probeWeights = max(0,min(1,single(column(1 - max(Ix,Iy)))));
+%                    
+%                    libraryWeights = im2single(NearestNeighborLibrary.gradMagValues);
+%                    minVal = min(libraryWeights(:));
+%                    maxVal = max(libraryWeights(:));
+%                    w = 1 - (libraryWeights-minVal)/(maxVal-minVal);
+%                    
+%                    d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+%                    %w = min(probeWeights(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), libraryWeights);
+%                    d = sum(w.*single(d),1) ./ sum(w,1);
+%                  else
                    d = mean(imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues),1);
-                 end
+%                  end
                  [minDist, index] = min(d);
+                 %fprintf('Min NN dist = %f\n', minDist);
                  
                  this.codeID = NearestNeighborLibrary.labels(index);
                  this.codeName = NearestNeighborLibrary.labelNames{this.codeID};
-                 this.isValid = minDist < 25;
+                 this.isValid = minDist < 30;
                  
                 elseif iscell(VisionMarkerTrained.ProbeTree)
                   VerifyLabel = false;

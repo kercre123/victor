@@ -421,7 +421,7 @@ PyObject* DetectFiducialMarkers_numpy(
 
   PyObject* outputList = PyList_New(5);
 
-  printf("Outputting %d markers\n", numMarkers);
+  //printf("Outputting %d markers\n", numMarkers);
 
   if(numMarkers != 0) {
     // Output quads
