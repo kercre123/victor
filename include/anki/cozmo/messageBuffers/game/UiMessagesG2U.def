@@ -755,6 +755,49 @@ struct ActiveObjectMoved
 	bool operator!=(const ActiveObjectMoved& other) const;
 };
 
+// MESSAGE ActiveObjectStoppedMoving
+struct ActiveObjectStoppedMoving
+{
+	uint32_t objectID;
+	uint8_t robotID;
+	uint8_t upAxis;
+	bool rolled;
+	
+	/**** Constructors ****/
+	ActiveObjectStoppedMoving() = default;
+	ActiveObjectStoppedMoving(const ActiveObjectStoppedMoving& other) = default;
+	ActiveObjectStoppedMoving(ActiveObjectStoppedMoving& other) = default;
+	ActiveObjectStoppedMoving(ActiveObjectStoppedMoving&& other) noexcept = default;
+	ActiveObjectStoppedMoving& operator=(const ActiveObjectStoppedMoving& other) = default;
+	ActiveObjectStoppedMoving& operator=(ActiveObjectStoppedMoving&& other) noexcept = default;
+	
+	explicit ActiveObjectStoppedMoving(uint32_t objectID
+		,uint8_t robotID
+		,uint8_t upAxis
+		,bool rolled)
+	:objectID(objectID)
+	,robotID(robotID)
+	,upAxis(upAxis)
+	,rolled(rolled)
+	{}
+
+	explicit ActiveObjectStoppedMoving(const uint8_t* buff, size_t len);
+	explicit ActiveObjectStoppedMoving(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ActiveObjectStoppedMoving& other) const;
+	bool operator!=(const ActiveObjectStoppedMoving& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -848,6 +891,11 @@ public:
 	void Set_ActiveObjectMoved(const Anki::Cozmo::G2U::ActiveObjectMoved& new_ActiveObjectMoved);
 	void Set_ActiveObjectMoved(Anki::Cozmo::G2U::ActiveObjectMoved&& new_ActiveObjectMoved);
 
+	/** ActiveObjectStoppedMoving **/
+	const Anki::Cozmo::G2U::ActiveObjectStoppedMoving& Get_ActiveObjectStoppedMoving() const;
+	void Set_ActiveObjectStoppedMoving(const Anki::Cozmo::G2U::ActiveObjectStoppedMoving& new_ActiveObjectStoppedMoving);
+	void Set_ActiveObjectStoppedMoving(Anki::Cozmo::G2U::ActiveObjectStoppedMoving&& new_ActiveObjectStoppedMoving);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -877,6 +925,7 @@ private:
 		Anki::Cozmo::G2U::PlaySound _PlaySound;
 		Anki::Cozmo::G2U::StopSound _StopSound;
 		Anki::Cozmo::G2U::ActiveObjectMoved _ActiveObjectMoved;
+		Anki::Cozmo::G2U::ActiveObjectStoppedMoving _ActiveObjectStoppedMoving;
 	};
 };
 
