@@ -70,6 +70,7 @@ public class Robot
 	public float leftWheelSpeed_mmps { get; private set; }
 	public float rightWheelSpeed_mmps { get; private set; }
 	public float liftHeight_mm { get; private set; }
+	public float liftHeight_factor { get { return ( liftHeight_mm - CozmoUtil.MIN_LIFT_HEIGHT_MM ) / ( CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM ); } }
 
 	public Vector3 WorldPosition { get; private set; }
 	public Vector3 LastWorldPosition { get; private set; }
@@ -651,23 +652,18 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
-	public void SetLiftHeight( float height )
+	public void SetLiftHeight( float height_factor )
 	{
-		if(Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height == liftHeightRequested) return;
+		if( ( Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height_factor == liftHeightRequested ) || liftHeight_factor == height_factor ) return;
 
-		if( liftHeight_mm == height )
-		{
-			return;
-		}
-
-		liftHeightRequested = height;
+		liftHeightRequested = height_factor;
 		lastLiftHeightRequestTime = Time.time;
 
-		//Debug.Log( "Set Lift Height " + height );
+		//Debug.Log( "Set Lift Height " + height_factor );
 
 		SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
 		SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
-		SetLiftHeightMessage.height_mm = height;
+		SetLiftHeightMessage.height_mm = ( height_factor * ( CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM ) ) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
 
 		RobotEngineManager.instance.Message.SetLiftHeight = SetLiftHeightMessage;
 		RobotEngineManager.instance.SendMessage();

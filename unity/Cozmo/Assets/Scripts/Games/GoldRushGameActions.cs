@@ -39,7 +39,7 @@ public class GoldRushGameActions : GameActions {
 			base.SetActionButtons( isSlider );
 			return;
 		}
-		
+
 		if( robot.isBusy ) return;
 
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
@@ -53,7 +53,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( buttons.Length > 2 && isSlider )
 				{
-					buttons[2].SetMode( ActionButton.Mode.DROP, null, null, true );
+					buttons[0].SetMode( ActionButton.Mode.DROP, null, null, true );
 				}
 				else if( buttons.Length > 0 )
 				{
@@ -82,11 +82,15 @@ public class GoldRushGameActions : GameActions {
 			}
 		}
 		
-		if( goldController.state == GameController.GameState.PRE_GAME && buttons.Length > 2 )
+		if( (goldController.state == GameController.GameState.PRE_GAME || goldController.state == GameController.GameState.PLAYING) && buttons.Length > 2 )
 		{
 			if( isSlider )
 			{
-				//buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				if( goldController.isReturning )
+				{
+					buttons[0].SetMode( ActionButton.Mode.DROP, null, null, true );
+				}
 			}
 			else if( robot.selectedObjects.Count > 0 )
 			{
@@ -109,6 +113,10 @@ public class GoldRushGameActions : GameActions {
 		else if (goldController.inDepositRange)
 		{
 			goldController.BeginDepositing();
+		}
+		else if (goldController.isReturning)
+		{
+			goldController.BeginAutoDepositing();
 		}
 	}
 

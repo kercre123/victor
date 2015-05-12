@@ -69,6 +69,7 @@ public class GoldRushController : GameController {
 		EXTRACTING,
 		READY_TO_RETURN,
 		RETURNING,
+		AUTO_DEPOSITING,
 		RETURNED,
 		DEPOSITING,
 		NUMSTATES
@@ -81,6 +82,7 @@ public class GoldRushController : GameController {
 
 	public bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
 	public bool inDepositRange { get { return playState == PlayState.RETURNED; } }
+	public bool isReturning { get { return playState == PlayState.RETURNING; } }
 
 	enum BuildState
 	{
@@ -505,6 +507,9 @@ public class GoldRushController : GameController {
 		case PlayState.DEPOSITING:
 			StartCoroutine(AwardPoints());
 			break;
+		case PlayState.AUTO_DEPOSITING:
+			StartCoroutine(AutoDeposit());
+			break;
 		default:
 			break;
 		}
@@ -642,7 +647,7 @@ public class GoldRushController : GameController {
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
 		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
-		Debug.Log ("distance: " + distance);
+		//Debug.Log ("distance: " + distance);
 		if (distance < returnRadius) 
 		{
 			EnterPlayState(PlayState.RETURNED);
@@ -705,6 +710,11 @@ public class GoldRushController : GameController {
 	public void BeginDepositing()
 	{
 		EnterPlayState (PlayState.DEPOSITING);
+	}
+
+	public void BeginAutoDepositing()
+	{
+		EnterPlayState (PlayState.AUTO_DEPOSITING);
 	}
 #region helpers
 	void BuryTreasure()
@@ -847,6 +857,28 @@ public class GoldRushController : GameController {
 		}
 
 	}
+
+	IEnumerator AutoDeposit()
+	{
+		// first need to get in range
+		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
+		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
+		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
+		float signed_angle = angle * sign;
+
+		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*3*(returnRadius/4));
+
+		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
+
+		while(!inDepositRange)
+		{
+			UpdateReturning();
+			yield return 0;
+		}
+		//robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
+		EnterPlayState(PlayState.DEPOSITING);
+
+	}
 #endregion
 
 	#region Active Block IFC
@@ -877,7 +909,7 @@ public class GoldRushController : GameController {
 		float dot_product = Vector2.Dot(heading, to_target);
 		float angle_between = MathUtil.DotProductAngle(heading, to_target);
 		
-		Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
+		//Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
 		
 
 		byte which_leds = 1; // front face, right side
