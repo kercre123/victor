@@ -13,7 +13,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	
 	[SerializeField] public int objectType = 0;
 	[SerializeField] public int objectFamily = 0;
-	[SerializeField] public ActiveBlock.Type activeBlockType = ActiveBlock.Type.Off;
+	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
@@ -36,7 +36,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
-	ActiveBlock.Type lastActiveBlockType = ActiveBlock.Type.Off;
+	ActiveBlock.Mode lastActiveBlockMode = ActiveBlock.Mode.Off;
 	Color lastBaseColor = Color.blue;
 
 	public bool Validated = false;
@@ -80,7 +80,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
-		lastActiveBlockType = activeBlockType;
+		lastActiveBlockMode = activeBlockMode;
 		lastBaseColor = baseColor;
 
 		meshCube.material = clonedBlockMaterial;
@@ -108,7 +108,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
-		if(lastActiveBlockType != activeBlockType) return true;
+		if(lastActiveBlockMode != activeBlockMode) return true;
 		if(lastBaseColor != baseColor) return true;
 
 		return false;
@@ -193,7 +193,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			if(activeCorners != null) {
 				if(objectFamily == 3) {
 					Color activeColor = Color.white;
-					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockType(activeBlockType);
+					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
 					for(int i=0;i<activeCorners.Length;i++) {
 						activeColor.a = alpha;
 						clonedCornerMaterial.color = activeColor;
@@ -213,7 +213,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
-		lastActiveBlockType = activeBlockType;
+		lastActiveBlockMode = activeBlockMode;
 		lastBaseColor = baseColor;
 	}
 
