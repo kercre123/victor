@@ -71,7 +71,7 @@ namespace Anki {
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
         const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 40.f;
         
         U2G::Ping _pingMsg;
         
@@ -643,7 +643,7 @@ namespace Anki {
           if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
             liftSpeed *= 0.4;
-            headSpeed *= 0.5;
+            headSpeed *= 0.55;
           } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
@@ -674,7 +674,7 @@ namespace Anki {
                   //p2 = 5;
                   //p3 = 20;
                   p1 = root_->getField("driveTest_flags")->getSFInt32();
-                  p2 = 5;
+                  p2 = 10;
                   p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
                 case TM_LIFT:
