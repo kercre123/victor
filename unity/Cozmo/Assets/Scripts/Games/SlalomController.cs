@@ -463,7 +463,6 @@ public class SlalomController : GameController {
 
 	private void ClearLights()
 	{
-
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
