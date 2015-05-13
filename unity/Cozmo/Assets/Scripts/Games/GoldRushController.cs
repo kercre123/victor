@@ -62,6 +62,8 @@ public class GoldRushController : GameController {
 	private int oldHighScore = 0;
 	GameObject successOrFailureGameObject = null;
 
+	private const float carryingObjectForwardOffset = 30.0f;
+
 	enum PlayState
 	{
 		IDLE,
@@ -590,8 +592,9 @@ public class GoldRushController : GameController {
 			if(buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) 
 			{
 				UpdateDirectionLights(buriedLocation);
-
-				float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
+				Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
+				float distance = (buriedLocation - collector_pos).magnitude;
+				//Debug.Log ("distance: "+ distance +", robot.carryingObject.WorldPosition: " + robot.carryingObject.WorldPosition);
 				if( !foundItems.Contains(robot.carryingObject) ) 
 				{
 					if(distance <= findRadius) 
@@ -665,7 +668,8 @@ public class GoldRushController : GameController {
 			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
-		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
+		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
+		float distance = (home_base_pos - collector_pos).magnitude;
 		//Debug.Log ("distance: " + distance);
 		if (distance < returnRadius) 
 		{
@@ -690,8 +694,9 @@ public class GoldRushController : GameController {
 			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
 			Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
-		float distance = (home_base_pos - (Vector2)robot.WorldPosition).magnitude;
-		Debug.Log ("distance: " + distance);
+		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
+		float distance = (home_base_pos - collector_pos).magnitude;
+		//Debug.Log ("distance: " + distance);
 		if (distance > returnRadius) 
 		{
 			EnterPlayState(PlayState.RETURNING);
@@ -704,7 +709,8 @@ public class GoldRushController : GameController {
 
 		if(buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) 
 		{	
-			float distance = (buriedLocation - (Vector2)robot.WorldPosition).magnitude;
+			Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
+			float distance = (buriedLocation - collector_pos).magnitude;
 
 			if( distance > lostRadius )
 			{
