@@ -25,7 +25,10 @@ public class ShadowText : Text {
 			child = new GameObject("frontText", typeof(RectTransform));
 			child.layer = gameObject.layer;
 			child.AddComponent<CanvasRenderer>();
-			frontText = child.AddComponent<Text>();;
+			frontText = child.AddComponent<Text>();
+			CanvasGroup group = child.AddComponent<CanvasGroup>();
+			group.interactable = false;
+			group.blocksRaycasts = false;
 
 			CozmoUtil.GetCopyOf<Text>(frontText, GetComponent<Text>());
 			CozmoUtil.GetCopyOf<RectTransform>(frontText.rectTransform, rectTransform);

@@ -82,22 +82,21 @@ public class GameActions : MonoBehaviour
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( buttons.Length > 1 )
-			{
-				if( robot.carryingObject != null && robot.carryingObject.isActive )
-				{
-					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
-				}
-			}
+//			if( buttons.Length > 1 )
+//			{
+//				if( robot.carryingObject != null && robot.carryingObject.isActive )
+//				{
+//					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
+//				}
+//			}
 
 			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
-				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
+				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
-			else
-			{
-				buttons[0].SetMode( ActionButton.Mode.DROP, null );
-			}
+
+			buttons[0].SetMode( ActionButton.Mode.DROP, null );
+
 		}
 		else
 		{

@@ -648,8 +648,9 @@ GameObject:
   - 224: {fileID: 22430460}
   - 223: {fileID: 22330388}
   - 114: {fileID: 11430466}
+  - 114: {fileID: 11464560}
   m_Layer: 5
-  m_Name: ScreenCanvas
+  m_Name: ScreenCanvas_VisionControls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -902,7 +903,7 @@ Camera:
   field of view: 60
   orthographic: 1
   orthographic size: 5
-  m_Depth: 5
+  m_Depth: 10
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 32
@@ -2611,6 +2612,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11464560
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 130462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depth: 2
 --- !u!222 &22230388
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -2849,7 +2862,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 10
 --- !u!224 &22430388
 RectTransform:
   m_ObjectHideFlags: 1

@@ -6,8 +6,27 @@ public class CozmoStatus : MonoBehaviour {
 
 	[SerializeField] LayoutBlock2d carriedBlock2d;
 	[SerializeField] ChangeCubeModeButton button_change;
+	[SerializeField] CanvasGroup statusFrameCanvasGroup;
+
+	public static CozmoStatus instance = null;
 
 	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
+	float fadeTimer = 0f;
+	float startingAlpha = 0f;
+	bool fadeIn = true;
+
+	void OnEnable() {
+		if(instance != null && instance != this) {
+			GameObject.Destroy(gameObject);
+			return;
+		}
+		instance = this;
+	}
+
+	void OnDisable() {
+		if(instance == this) instance = null;
+	}
 
 	void Update () {
 		if(robot == null) return;
@@ -21,5 +40,31 @@ public class CozmoStatus : MonoBehaviour {
 			carriedBlock2d.gameObject.SetActive(true);
 			button_change.gameObject.SetActive(robot.carryingObject.isActive);
 		}
+
+		if(fadeTimer > 0f) {
+			fadeTimer = Mathf.Max( 0f, fadeTimer - Time.deltaTime);
+
+			if(fadeIn) {
+				statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 1f, 1f - fadeTimer);
+			}
+			else {
+				statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 0.25f, 1f - fadeTimer);
+			}
+		}
+
+	}
+
+	public void FadeIn() {
+		if(fadeTimer > 0f && fadeIn) return;
+		fadeTimer = 1f;
+		fadeIn = true;
+		startingAlpha = statusFrameCanvasGroup.alpha;
+	}
+
+	public void FadeOut() {
+		if(fadeTimer > 0f && !fadeIn) return;
+		fadeTimer = 1f;
+		fadeIn = false;
+		startingAlpha = statusFrameCanvasGroup.alpha;
 	}
 }

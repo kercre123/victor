@@ -726,7 +726,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		if(clearVertical) {
 			throwVector.y = 0f;
 		}
-		
+
 		stick.anchoredPosition = throwVector;
 		
 		IsPressed = false;

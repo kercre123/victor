@@ -38,6 +38,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
 	[SerializeField] Button letsBuildButton;
+	[SerializeField] GameObject hideWhenInventoryComplete;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
 	[SerializeField] Camera layoutInstructionsCamera = null;
@@ -47,7 +48,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] RectTransform block2dAnchor = null;
 
 	[SerializeField] Text instructionsTitle;
-	[SerializeField] Text instructionsProgress;
+	[SerializeField] Text textProgress;
 	[SerializeField] Button buttonStartPlaying;
 	[SerializeField] ScreenMessage screenMessage = null;
 	[SerializeField] float coplanarFudge = 0.5f;
@@ -129,7 +130,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		//no apt layout found?  then just disable
 		if(currentLayout == null) {
 			layoutPreviewPanel.SetActive(false);
-			hideDuringPreview.SetActive(true);
+			if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 			Phase = LayoutTrackerPhase.DISABLED;
 			return;
 		}
@@ -141,6 +142,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		instructionsTitle.text = fullName;
 
 		if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(false);
+		if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(true);
 
 		RefreshLayout();
 
@@ -269,7 +271,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			case LayoutTrackerPhase.DISABLED:
 				layoutInstructionsPanel.SetActive(false);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(false);
 				break;
 
@@ -277,7 +279,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				ShowAllBlocks();
 				layoutInstructionsPanel.SetActive(false);
 				layoutPreviewPanel.SetActive(!hidden);
-				hideDuringPreview.SetActive(false);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
 
 				if(robot != null) robot.SetHeadAngle();
@@ -298,30 +300,25 @@ public class GameLayoutTracker : MonoBehaviour {
 					letsBuildButton.gameObject.SetActive(inventoryComplete);
 				}
 
+				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);
+
 				break;
 
 			case LayoutTrackerPhase.BUILDING:
-//				if(validCount == 0 && !string.IsNullOrEmpty(currentLayout.initialInstruction)) {
-//					instructionsProgress.text = currentLayout.initialInstruction;
-//				}
-//				else if(validCount == 1 && !string.IsNullOrEmpty(currentLayout.secondInstruction)) {
-//					instructionsProgress.text = currentLayout.secondInstruction;
-//				}
-//				else {
-					instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
-				//}
+
+				textProgress.text = validCount + " / " + currentLayout.blocks.Count;
 
 				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
-				instructionsProgress.text = "Layout completed!";
+				textProgress.text = "Layout completed!";
 				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
 				break;

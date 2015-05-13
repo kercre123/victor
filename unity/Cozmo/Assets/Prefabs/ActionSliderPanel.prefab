@@ -427,6 +427,7 @@ GameObject:
   - 223: {fileID: 22377822}
   - 114: {fileID: 11477820}
   - 114: {fileID: 11477818}
+  - 114: {fileID: 11472198}
   m_Layer: 5
   m_Name: ActionSliderPanel
   m_TagString: Untagged
@@ -699,6 +700,18 @@ MonoBehaviour:
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: Pick Up Bottom
+--- !u!114 &11472198
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 177822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depth: 6
 --- !u!114 &11475268
 MonoBehaviour:
   m_ObjectHideFlags: 1

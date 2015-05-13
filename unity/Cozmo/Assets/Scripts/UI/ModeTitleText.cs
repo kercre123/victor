@@ -10,7 +10,12 @@ public class ModeTitleText : MonoBehaviour {
 	}
 
 	void OnEnable() {
-		string game = PlayerPrefs.GetString("CurrentGame", "Slalom");
-		text.text = game + " #" + PlayerPrefs.GetInt(game + "_CurrentLevel", 1);
+		string modeTitle = PlayerPrefs.GetString("CurrentGame", "Slalom").ToUpper();
+
+		if(modeTitle != "FREE PLAY") {
+			modeTitle += " #" + PlayerPrefs.GetInt(modeTitle + "_CurrentLevel", 1);
+		}
+
+		text.text = modeTitle;
 	}
 }
