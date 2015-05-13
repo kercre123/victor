@@ -62,9 +62,9 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 60;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 80;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 120;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Lateral tolerance at dock pose
