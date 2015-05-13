@@ -579,6 +579,9 @@ public class Robot
 	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
 	public void SetHeadAngle( float angleFactor = 0f, bool useExactAngle=false )
 	{
+
+		//Debug.Log("SetHeadAngle("+angleFactor+")");
+
 		float radians = angleFactor;
 
 		if(!useExactAngle) {
@@ -586,7 +589,7 @@ public class Robot
 				radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
 			}
 			else {
-				radians = Mathf.Lerp( 0f, CozmoUtil.MIN_HEAD_ANGLE, -angleFactor);
+				radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
 			}
 		}
 

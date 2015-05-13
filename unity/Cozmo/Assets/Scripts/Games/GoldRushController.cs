@@ -126,7 +126,7 @@ public class GoldRushController : GameController {
 
 		if (textScore != null && scores != null && scores.Length > 0 && state == GameState.PLAYING) 
 		{
-			textScore.text = "score: " + scores [0].ToString ();	
+			textScore.text = scores [0].ToString ();	
 		} 
 		else 
 		{
