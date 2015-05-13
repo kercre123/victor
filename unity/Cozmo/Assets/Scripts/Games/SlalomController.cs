@@ -14,6 +14,8 @@ public class SlalomController : GameController {
 	[SerializeField] Text textProgress = null;
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
+	[SerializeField] AudioClip[] lapsRemainingSound = null;
+	[SerializeField] AudioClip[] numberSounds = null;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -100,7 +102,19 @@ public class SlalomController : GameController {
 	void LapComplete() {
 		scores[0] += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-		audio.PlayOneShot(playerScoreSound);
+		//audio.PlayOneShot(playerScoreSound);
+		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap + 1;
+		if(lapsRemaining == 1) {
+			if(lapsRemaining < numberSounds.Length) PlayDelayed(numberSounds[lapsRemaining], cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			Debug.Log("final lap");
+		}
+		else {
+			if(lapsRemainingSound.Length > 0 && numberSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < numberSounds.Length) {
+				lapsRemainingSound[0] = numberSounds[lapsRemaining];
+				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			}
+			Debug.Log(lapsRemaining + " laps remaining");
+		}
 	}
 
 	int GetPreviousIndex() {
@@ -282,8 +296,7 @@ public class SlalomController : GameController {
 		base.Exit_PLAYING();
 
 		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
-		//ClearLights();
-		CelebrationLights();
+		ClearLights();
 	}
 
 	protected override bool IsGameReady() {
@@ -448,9 +461,8 @@ public class SlalomController : GameController {
 
 	}
 
-	/*private void ClearLights()
+	private void ClearLights()
 	{
-
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
@@ -463,7 +475,7 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
-	}*/
+	}
 
 	public int testLightIndex = 0;
 	public void TestLights()
@@ -490,6 +502,12 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
+	}
+
+	protected override void Enter_RESULTS() {
+		base.Enter_RESULTS();
+
+		CelebrationLights();
 	}
 
 	private void CelebrationLights()
