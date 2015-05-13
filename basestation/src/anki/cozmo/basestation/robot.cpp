@@ -1307,13 +1307,15 @@ namespace Anki {
         Radians rotAngle;
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
-        const float dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
-        const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
-        if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
-          PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.RobotNotOnHorizontalPlane",
-                              "Robot's Z axis is not well aligned with the world Z axis. "
+
+        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(10))) {
+          PRINT_NAMED_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
+                              "Refusing to localize to %s because "
+                              "Robot %d's Z axis would not be well aligned with the world Z axis. "
                               "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              existingMatPiece->GetType().GetName().c_str(), GetID(),
                               rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+          return RESULT_FAIL;
         }
         
         // Snap to purely horizontal rotation and surface of the mat
