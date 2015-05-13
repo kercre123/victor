@@ -1300,8 +1300,7 @@ namespace Anki {
             
             // TODO: Be able to fill in add'l objects carried in signal
             CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                                  carryObject,
-                                                                  carryObjectOnTop, -1, -1, -1,
+                                                                  {{carryObject, carryObjectOnTop, -1, -1, -1}},
                                                                   numObjects);
             return;
           }
@@ -1328,11 +1327,7 @@ namespace Anki {
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
             CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                                  objectStack[0],
-                                                                  objectStack[1],
-                                                                  objectStack[2],
-                                                                  objectStack[3],
-                                                                  objectStack[4],
+                                                                  objectStack,
                                                                   numObjects);
             return;
           }

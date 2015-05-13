@@ -356,24 +356,23 @@ namespace Embedded {
     }
      */
     
-    /* Some illumination normalization code, now superceded by the same thing being
-       done before quad extraction
-     
-    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    // Illumination normalization code (assuming we are not using the same filtering used
+    // by the fiducial detector to improve quad refinment precision)
     
-    cv::imshow("Original ProbeValues", temp);
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    //cv::imshow("Original ProbeValues", temp);
     
     // TODO: Would it be faster to box filter and subtract it from the original?
-    static cv::Mat_<s32> kernel;
+    static cv::Mat_<s16> kernel;
     if(kernel.empty()) {
-      kernel = cv::Mat_<s32>::ones(16,16);
-      kernel *= -1;
+      kernel = cv::Mat_<s16>(16,16);
+      kernel = -1;
       kernel(7,7) = 255;
     }
     cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
     //cv::imshow("ProbeFiltering", _probeFiltering);
     cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
-    */
+    
     return RESULT_OK;
   } // NearestNeighborLibrary::GetProbeValues()
   

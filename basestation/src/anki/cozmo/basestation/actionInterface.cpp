@@ -83,7 +83,7 @@ namespace Anki {
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
     {
       CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                            -1, -1, -1, -1, -1, 0);
+                                                            {{-1, -1, -1, -1, -1}}, 0);
     }
     
     bool IActionRunner::RetriesRemain()

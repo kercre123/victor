@@ -90,6 +90,7 @@ namespace Anki
       //  at the center equal to the sum of all the -1's)
       cv::Mat_<s16> cvImageROI_filtered;
       
+      /*
       // Kernel size should be half the size of the image inside the fiducial
       // since this filtering should also match the illumination normalization
       // done to the nearest neighbor library.
@@ -99,10 +100,20 @@ namespace Anki
       //  use half of that. I.e., 0.5*sqrt(2)*0.6*0.5 = .1061
       const s32 kernelSize = 0.1061f*((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
                                       (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length());
-      
-      cv::Mat_<s16> kernel = cv::Mat_<s16>::ones(kernelSize, kernelSize);
-      kernel *= -1;
+      */
+
+      // Kernel size should be twice the thickness of the fiducial. We use the average
+      // diagonal/sqrt(2) to estimate the fiducial width, and since the thickness is
+      // 10% of the width, we use 0.2/sqrt(2)=0.14 as the multiplier.
+      // This kernel size assumes we RE-filter the extracted probe values inside the nearest
+      // neighbor code.
+      const s32 kernelSize = std::round(0.14f*((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
+                                               (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
+
+      cv::Mat_<s16> kernel(kernelSize, kernelSize);
+      kernel = -1;
       kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
+      
       cv::filter2D(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), kernel);
       //cv::imshow("Filtered ROI", cvImageROI_filtered);
       
@@ -408,6 +419,9 @@ namespace Anki
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
 
+          // Put back the original (non-illumination-normalized) pixel values within the ROI
+          cvImageROI_orig.copyTo(cvImageROI);
+          
           if(lastResult == RESULT_OK) {
             // Refinement succeeded...
             if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
@@ -435,10 +449,11 @@ namespace Anki
             currentMarker.validity = VisionMarker::REFINEMENT_FAILURE;
             currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
           }
-        } // if(currentMarker.validity == VisionMarker::UNKNOWN)
-        
-        // Put back the original (non-illumination-normalized) pixel values within the ROI
-        cvImageROI_orig.copyTo(cvImageROI);
+        } else { // if(currentMarker.validity == VisionMarker::UNKNOWN)
+          // Put back the original (non-illumination-normalized) pixel values within the ROI
+          cvImageROI_orig.copyTo(cvImageROI);
+        }
+
         
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
 
