@@ -407,6 +407,7 @@ namespace Cozmo {
                                                 parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
                                                 parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
                                                 parameters.component_minHollowRatio,
+                                                parameters.minLaplacianPeakRatio,
                                                 parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
                                                 parameters.decode_minContrastRatio,
                                                 parameters.maxConnectedComponentSegments,
