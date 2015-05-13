@@ -115,6 +115,11 @@ namespace Cozmo {
    
   Result CannedAnimationContainer::Send(RobotID_t robotID, IRobotMessageHandler* msgHandler)
   {
+    // TODO: Skipping loading of animations because wifi issues are currently aggravated
+    //        by the barrage of messages on connection.
+    return RESULT_OK;
+    
+    
     Result lastResult = RESULT_OK;
     
     PRINT_NAMED_INFO("CannedAnimationContainer.Send",
