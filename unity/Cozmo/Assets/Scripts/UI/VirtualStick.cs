@@ -169,9 +169,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		canvasScalar = canvas.gameObject.GetComponent<CanvasScaler>();
 		rTrans = transform as RectTransform;
 		canvasCamera = canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-	//}
 
-	//void OnEnable() {
 		ResizeToScreen();
 		if(!Application.isPlaying) return;
 		//Debug.Log ("Joystick Awake startPosition(" + startPosition + ") stick.position("+stick.position+") stick.anchoredPosition("+stick.anchoredPosition+")");
