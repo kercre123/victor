@@ -1344,6 +1344,7 @@ MonoBehaviour:
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
   playingLoopSound: {fileID: 0}
   gameOverSound: {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
+  resultsLoopSound: {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   stateActions:
   - {fileID: 11428886}
   - {fileID: 0}
@@ -1356,6 +1357,21 @@ MonoBehaviour:
   textProgress: {fileID: 11475692}
   cornerTriggeredSound: {fileID: 8300000, guid: 68a0eccfd709a45ceb9c422dfdd6d145,
     type: 3}
+  finalLapSound: {fileID: 0}
+  lapsRemainingSound:
+  - {fileID: 0}
+  - {fileID: 8300000, guid: cf0c9e474172c48168f6e6acf48df154, type: 3}
+  numberSounds:
+  - {fileID: 0}
+  - {fileID: 8300000, guid: 5cb604773e21245808f4e243aaa7223a, type: 3}
+  - {fileID: 8300000, guid: a0908384ad42448e9bd10e92845c880c, type: 3}
+  - {fileID: 8300000, guid: 98afbf8ab2ffb4fdeab921230480c0c7, type: 3}
+  - {fileID: 8300000, guid: c717550ae88044674ad09b7a5b15e8fb, type: 3}
+  - {fileID: 8300000, guid: e198a00397231488c916bf8ce43459a3, type: 3}
+  - {fileID: 8300000, guid: e159736d8d7d34f608899ab3fec88bb1, type: 3}
+  - {fileID: 8300000, guid: a1203dfaa110b42da820daff691cc13b, type: 3}
+  - {fileID: 8300000, guid: 55f2d99baeb994a388a631dfe8c0671a, type: 3}
+  - {fileID: 8300000, guid: d7419bf6cf89f466391b0537316ea2a4, type: 3}
   testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:

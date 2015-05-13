@@ -40,6 +40,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] protected AudioClip playingLoopSound;
 	[SerializeField] protected AudioClip gameOverSound;
+	[SerializeField] protected AudioClip resultsLoopSound;
 	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.NUM_STATES];
 
 	protected bool playRequested = false;
@@ -345,7 +346,23 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
+		if(resultsLoopSound != null && audio != null) {
+			PlayDelayed(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, true );
+		}
 	}
+
+	protected void PlayDelayed(AudioClip clip, float delay, bool loop = false) {
+		StartCoroutine(_PlayDelayed(clip, delay, loop));
+	}
+
+	private IEnumerator _PlayDelayed(AudioClip clip, float delay, bool loop = false) {
+		yield return new WaitForSeconds(delay);
+
+		audio.loop = loop;
+		audio.clip = clip;
+		audio.Play();
+	}
+
 	protected virtual void Update_RESULTS() {
 		//Debug.Log(gameObject.name + " Update_RESULTS");
 	}
@@ -354,6 +371,7 @@ public class GameController : MonoBehaviour {
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
+		if(audio != null && audio.isPlaying && audio.clip == resultsLoopSound) audio.Stop();
 	}
 
 	protected virtual bool IsGameReady() {
@@ -396,6 +414,16 @@ public class GameController : MonoBehaviour {
 
 	public void BuildRequested() {
 		buildRequested = true;
+	}
+
+	protected void PlayAudioClips(AudioClip[] clips, float initalDelay = 0f, float additionalDelay = 0.05f) {
+		if(clips.Length > 0) {
+			PlayDelayed(clips[0], initalDelay);
+
+			for(int i = 1; i < clips.Length; ++i) {
+				PlayDelayed(clips[i], clips[i-1].length + additionalDelay);
+			}
+		}
 	}
 
 	protected void PlayCountdownAudio(int secondsLeft) {

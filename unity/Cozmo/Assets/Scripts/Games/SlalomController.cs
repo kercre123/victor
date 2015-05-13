@@ -14,6 +14,8 @@ public class SlalomController : GameController {
 	[SerializeField] Text textProgress = null;
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
+	[SerializeField] AudioClip[] lapsRemainingSound = null;
+	[SerializeField] AudioClip[] numberSounds = null;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -100,7 +102,19 @@ public class SlalomController : GameController {
 	void LapComplete() {
 		scores[0] += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-		audio.PlayOneShot(playerScoreSound);
+		//audio.PlayOneShot(playerScoreSound);
+		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap + 1;
+		if(lapsRemaining == 1) {
+			if(lapsRemaining < numberSounds.Length) PlayDelayed(numberSounds[lapsRemaining], cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			Debug.Log("final lap");
+		}
+		else {
+			if(lapsRemainingSound.Length > 0 && numberSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < numberSounds.Length) {
+				lapsRemainingSound[0] = numberSounds[lapsRemaining];
+				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			}
+			Debug.Log(lapsRemaining + " laps remaining");
+		}
 	}
 
 	int GetPreviousIndex() {
@@ -156,7 +170,6 @@ public class SlalomController : GameController {
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
 		}
-
 	}
 
 	protected override void Enter_PRE_GAME() {
@@ -299,7 +312,7 @@ public class SlalomController : GameController {
 		return false;
 	}
 
-	Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
+	private Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
 
 		float angle = idealCornerAngles[cornerIndex] * (clock ? -1f : 1f);
 
@@ -329,7 +342,7 @@ public class SlalomController : GameController {
 
 	int lastLapCount = 1;
 
-	void AdvanceCorner() {
+	private void AdvanceCorner() {
 
 		//trigger lap score and sound when we cross our first corner again
 		if(currentCorner == 0 && lastLapCount != currentLap) {
@@ -378,7 +391,7 @@ public class SlalomController : GameController {
 		return corner;
 	}
 
-	public void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
+	private void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
 	{
 		if(robot == null) return;
 		if(currentObstacle == null) return;
@@ -421,7 +434,7 @@ public class SlalomController : GameController {
 			}
 
 			//refresh light settings
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 
 				if(i == currentTopLightIndex || i == currentBottomLightIndex) {
 					obstacle.lights[i].onColor = currentColor_unit;
@@ -448,13 +461,12 @@ public class SlalomController : GameController {
 
 	}
 
-	public void ClearLights()
+	private void ClearLights()
 	{
-
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				obstacle.lights[i].onColor = 0;
 				obstacle.lights[i].onPeriod_ms = 1000;
 				obstacle.lights[i].offPeriod_ms = 0;
@@ -465,7 +477,6 @@ public class SlalomController : GameController {
 		}
 	}
 
-
 	public int testLightIndex = 0;
 	public void TestLights()
 	{
@@ -473,7 +484,7 @@ public class SlalomController : GameController {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
 
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				
 				if(i == testLightIndex) {
 					obstacle.lights[i].onColor = currentColor_unit;
@@ -491,5 +502,33 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
+	}
+
+	protected override void Enter_RESULTS() {
+		base.Enter_RESULTS();
+
+		CelebrationLights();
+	}
+
+	private void CelebrationLights()
+	{
+		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
+			ActiveBlock obstacle = obstacles[obstacleIndex];
+			obstacle.relativeMode = 0;
+			
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
+				obstacle.lights[i].onColor = CycleColors(i);
+				obstacle.lights[i].onPeriod_ms = 125;
+				obstacle.lights[i].offPeriod_ms = 125;
+				obstacle.lights[i].offColor =  CycleColors(i + 3);
+				obstacle.lights[i].transitionOnPeriod_ms = 0;
+				obstacle.lights[i].transitionOffPeriod_ms = 0;
+			}
+		}
+	}
+
+	private uint CycleColors(int i) // cycle through all colors, but don't use black
+	{
+		return CozmoPalette.instance.GetUIntColorForActiveBlockMode(++i < (int)ActiveBlock.Mode.Count? (ActiveBlock.Mode)i : (ActiveBlock.Mode)(i+1 - (int)ActiveBlock.Mode.Count));
 	}
 }

@@ -104,7 +104,7 @@ public class ActiveBlock : ObservedObject
 		NumTypes
 	}
 
-	private bool isMoving;
+	public bool isMoving { get; private set; }
 	public byte upAxis { get; private set; }
 	public float xAccel { get; private set; }
 	public float yAccel { get; private set; }
