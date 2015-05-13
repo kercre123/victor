@@ -103,8 +103,9 @@ namespace Embedded {
                                        "GetProbeValues() failed.\n");
     
     // Visualize probe values
-    //cv::Mat_<u8> temp(32,32,_probeValues.data);
-    //cv::imshow("ProbeValues", temp);
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    cv::imshow("ProbeValues", temp);
+    cv::waitKey(10);
     
     if(_useHoG) {
       GetProbeHoG();
