@@ -163,6 +163,9 @@ for i_label = 1:numLabels
             % an inverted code name
             underscoreIndex(1) = [];
         end
+        if length(underscoreIndex) > 1
+          underscoreIndex = underscoreIndex(end);
+        end
     end
     if isempty(underscoreIndex) 
        enumName_oriented = [enumName_oriented '_000'];  %#ok<AGROW>

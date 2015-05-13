@@ -662,6 +662,7 @@ namespace Anki {
       switch(_markers.front().GetCode())
       {
         case Vision::MARKER_1:
+        case Vision::MARKER_LIGHTCUBE_01:
           _activeID = 1;
           break;
           
