@@ -791,6 +791,29 @@ namespace Anki {
       }
 #     endif
 
+      // DEBUG: Visualize initial and final quad:
+      /*
+      cv::Mat temp;
+      ArrayToCvMat(image, &temp);
+      cv::cvtColor(temp, temp, CV_GRAY2BGR);
+      cv::vector<cv::Point> initPoly = {
+        initialQuad[Quadrilateral<f32>::TopLeft].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::BottomLeft].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::BottomRight].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::TopRight].get_CvPoint_(),
+      };
+      cv::vector<cv::Point> finalPoly = {
+        refinedQuad[Quadrilateral<f32>::TopLeft].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::BottomLeft].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::BottomRight].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::TopRight].get_CvPoint_(),
+      };
+      cv::polylines(temp, initPoly, true, cv::Scalar(0,0,255));
+      cv::polylines(temp, finalPoly, true, cv::Scalar(0,255,0));
+      cv::imshow("Initial & Final Quad", temp);
+      cv::waitKey(5);
+      */
+      
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
 

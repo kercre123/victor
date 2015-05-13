@@ -1079,7 +1079,9 @@ namespace Anki
 
         MatPiece* existingMatPiece = nullptr;
         
-        if(matToLocalizeTo != nullptr) {
+        // If we found a suitable mat to localize to, and we've seen it enough
+        // times, then use it for localizing
+        if(matToLocalizeTo != nullptr && matToLocalizeTo->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
           
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
@@ -1299,35 +1301,6 @@ namespace Anki
         std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
         GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
         
-        // Remove markers enclosed within other markers:
-        for(auto markerIter1 = obsMarkersListAtTimestamp.begin(); markerIter1 != obsMarkersListAtTimestamp.end(); ++markerIter1)
-        {
-          for(auto markerIter2 = obsMarkersListAtTimestamp.begin(); markerIter2 != obsMarkersListAtTimestamp.end(); )
-          {
-            if(markerIter1 != markerIter2) {
-              bool marker2isInsideMarker1 = true;
-              for(auto & corner : (*markerIter2)->GetImageCorners()) {
-                if((*markerIter1)->GetImageCorners().Contains(corner) == false) {
-                  marker2isInsideMarker1 = false;
-                  break;
-                }
-              }
-              
-              if(marker2isInsideMarker1) {
-                PRINT_INFO("Removing %s marker completely contained within %s marker.\n",
-                           Vision::MarkerTypeStrings[(*markerIter2)->GetCode()],
-                           Vision::MarkerTypeStrings[(*markerIter1)->GetCode()]);
-
-                markerIter2 = obsMarkersListAtTimestamp.erase(markerIter2);
-              } else {
-                ++markerIter2;
-              }
-            } else {
-              ++markerIter2;
-            }
-          }
-        }
-        
         objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen);
         
         // Remove used markers from map
@@ -1472,6 +1445,46 @@ namespace Anki
             ++poseKeyMarkerPair;
           }
         }
+        
+        // Remove markers enclosed within other markers:
+        for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
+        {
+          const Vision::ObservedMarker& marker1    = markerIter1->second;
+          const TimeStamp_t             timestamp1 = markerIter1->first;
+          
+          for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
+          {
+            const Vision::ObservedMarker& marker2    = markerIter2->second;
+            const TimeStamp_t             timestamp2 = markerIter2->first;
+            
+            // These two markers must be different and observed at the same time
+            if(markerIter1 != markerIter2 && timestamp1 == timestamp2) {
+              
+              // See if #2 is inside #1
+              bool marker2isInsideMarker1 = true;
+              for(auto & corner : marker2.GetImageCorners()) {
+                if(marker1.GetImageCorners().Contains(corner) == false) {
+                  marker2isInsideMarker1 = false;
+                  break;
+                }
+              }
+              
+              if(marker2isInsideMarker1) {
+                PRINT_NAMED_INFO("BlockWorld.Update", "Removing %s marker completely contained within %s marker.\n",
+                                 Vision::MarkerTypeStrings[marker2.GetCode()],
+                                 Vision::MarkerTypeStrings[marker1.GetCode()]);
+                // Note: erase does increment of iterator for us
+                markerIter2 = currentObsMarkers.erase(markerIter2);
+              } else {
+                // Need to iterate marker2
+                ++markerIter2;
+              } // if/else marker2isInsideMarker1
+            } else {
+              // Need to iterate marker2
+              ++markerIter2;
+            } // if/else marker1 != marker2 && time1 != time2
+          } // for markerIter2
+        } // for markerIter1
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
