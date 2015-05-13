@@ -3,6 +3,7 @@
 #include "spi.h"
 #include "uart.h"
 #include "timer.h"
+#include "lights.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "anki/cozmo/robot/spineData.h"
@@ -95,8 +96,6 @@ void TestMode(void)
   }   
 }
 
-const u8 PIN_LED1 = 18;
-const u8 PIN_LED2 = 19;
 
 void encoderAnalyzer(void);
 int main(void)
@@ -129,16 +128,16 @@ int main(void)
   g_dataToHead.tail = 0x84;
   
   // Status LED hack
-  nrf_gpio_cfg_output(PIN_LED1);
-  nrf_gpio_cfg_output(PIN_LED2);
+//  nrf_gpio_cfg_output(PIN_LED1);
+//  nrf_gpio_cfg_output(PIN_LED2);
   // LED1 set means on, LED1 clear means off
-  nrf_gpio_pin_clear(PIN_LED2);
-  nrf_gpio_pin_set(PIN_LED1);
+//  nrf_gpio_pin_clear(PIN_LED2);
+//  nrf_gpio_pin_set(PIN_LED1);
   
 #if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
-  nrf_gpio_pin_clear(PIN_LED1);
-  nrf_gpio_pin_set(PIN_LED2);
+//  nrf_gpio_pin_clear(PIN_LED1);
+//  nrf_gpio_pin_set(PIN_LED2);
 	MicroWait(2000000);
   while (1)
   {
@@ -233,8 +232,8 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
-      nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
-      nrf_gpio_pin_clear(PIN_LED2);   // Force LED on to indicate problems
+//      nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
+//      nrf_gpio_pin_clear(PIN_LED2);   // Force LED on to indicate problems
       // TODO: Remove 0. For now, needed to do head debugging
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -254,10 +253,10 @@ int main(void)
       }
       
       static u8 s_blink = 0;
-      nrf_gpio_pin_clear(PIN_LED1);
-      nrf_gpio_pin_clear(PIN_LED2);
+//      nrf_gpio_pin_clear(PIN_LED1);
+//      nrf_gpio_pin_clear(PIN_LED2);
       if (++s_blink > 40) {
-        nrf_gpio_pin_set(PIN_LED2);      
+//        nrf_gpio_pin_set(PIN_LED2);      
         s_blink = 0;
       }
     }
@@ -265,7 +264,8 @@ int main(void)
     // Only call every loop through - not all the time
     MotorsUpdate();
     BatteryUpdate();
-    
+    ManageLights(g_dataToBody.backpackColors);
+		
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)
