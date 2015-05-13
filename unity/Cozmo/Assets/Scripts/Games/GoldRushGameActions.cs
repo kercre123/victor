@@ -53,7 +53,7 @@ public class GoldRushGameActions : GameActions {
 			{
 				if( buttons.Length > 2 && isSlider )
 				{
-					buttons[0].SetMode( ActionButton.Mode.DROP, null, null, true );
+					buttons[2].SetMode( ActionButton.Mode.DROP, null, null, true );
 				}
 				else if( buttons.Length > 0 )
 				{
@@ -86,10 +86,10 @@ public class GoldRushGameActions : GameActions {
 		{
 			if( isSlider )
 			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET, null );
+				//buttons[2].SetMode( ActionButton.Mode.TARGET, null );
 				if( goldController.isReturning )
 				{
-					buttons[0].SetMode( ActionButton.Mode.DROP, null, null, true );
+					buttons[2].SetMode( ActionButton.Mode.DROP, null, null, true );
 				}
 			}
 			else if( robot.selectedObjects.Count > 0 )

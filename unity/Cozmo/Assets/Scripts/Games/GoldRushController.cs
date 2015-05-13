@@ -60,6 +60,7 @@ public class GoldRushController : GameController {
 	bool sent = false;
 	private bool setHighScore = false;
 	private int oldHighScore = 0;
+	GameObject successOrFailureGameObject = null;
 
 	enum PlayState
 	{
@@ -184,8 +185,22 @@ public class GoldRushController : GameController {
 		SetEnergyBars (0, 0);
 		setHighScore = false;
 		oldHighScore = PlayerPrefs.GetInt("EnergyHunt_HighScore", 0);
-		Debug.Log("oldHighScore: " + oldHighScore);
+		//Debug.Log("oldHighScore: " + oldHighScore);
 
+		SuccessOrFailureText text = FindObjectOfType<SuccessOrFailureText>();
+		if( text != null )
+		{
+			successOrFailureGameObject = text.gameObject;
+		}
+		else
+		{
+			Debug.LogError("unable to find object of type SuccessOrFailureText");
+		}
+
+		if( successOrFailureGameObject != null )
+		{
+			successOrFailureGameObject.SetActive(false);
+		}
 	}
 
 	protected override void Exit_PLAYING()
@@ -214,6 +229,10 @@ public class GoldRushController : GameController {
 		UpdateDetectorLights (0);
 		audio.Stop ();
 		SetEnergyBars (0, 0);
+		if( successOrFailureGameObject != null )
+		{
+			successOrFailureGameObject.SetActive(true);
+		}
 	}
 
 	protected override void Update_PLAYING() 
@@ -865,8 +884,11 @@ public class GoldRushController : GameController {
 		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
 		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
 		float signed_angle = angle * sign;
+		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
 
 		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*3*(returnRadius/4));
+
+		signed_angle = Mathf.Deg2Rad*signed_angle;
 
 		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
 
@@ -875,7 +897,7 @@ public class GoldRushController : GameController {
 			UpdateReturning();
 			yield return 0;
 		}
-		//robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
+		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
 		EnterPlayState(PlayState.DEPOSITING);
 
 	}
