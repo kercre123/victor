@@ -1753,7 +1753,7 @@ namespace Anki
               // Find the point at bottom middle of the object we're checking to be on top
               Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
               Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-              bottomOfCandidateObject.z() -= 0.5f*rotatedTopSize.z();
+              bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
               
               // If the top of the bottom object and the bottom the candidate top object are
               // close enough together, return this as the object on top
