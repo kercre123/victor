@@ -1081,7 +1081,7 @@ namespace Anki
         
         // If we found a suitable mat to localize to, and we've seen it enough
         // times, then use it for localizing
-        if(matToLocalizeTo != nullptr && matToLocalizeTo->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+        if(matToLocalizeTo != nullptr) {
           
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
@@ -1148,10 +1148,12 @@ namespace Anki
           existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
           existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
           
-          // Now localize to that mat
-          //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
-          if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
-            wasPoseUpdated = true;
+          if(existingMatPiece->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+            // Now localize to that mat
+            //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
+            if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
+              wasPoseUpdated = true;
+            }
           }
           
         } // if(matToLocalizeTo != nullptr)
@@ -1165,6 +1167,22 @@ namespace Anki
             
             // TODO: Make this w.r.t. whatever the robot is currently localized to?
             Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
+            
+            // Does this mat pose make sense? I.e., is the top surface flat enough
+            // that we could drive on it?
+            Vec3f rotAxis;
+            Radians rotAngle;
+            poseWrtOrigin.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+            if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
+               !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
+            {
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                               "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                               matSeen->GetType().GetName().c_str(),
+                               rotAngle.getDegrees(),
+                               rotAxis.x(), rotAxis.y(), rotAxis.z());
+              continue;
+            }
             
             // Store pointers to any existing objects that overlap with this one
             std::vector<Vision::ObservableObject*> overlappingObjects;
