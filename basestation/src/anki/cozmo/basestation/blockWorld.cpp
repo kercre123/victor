@@ -1079,7 +1079,9 @@ namespace Anki
 
         MatPiece* existingMatPiece = nullptr;
         
-        if(matToLocalizeTo != nullptr) {
+        // If we found a suitable mat to localize to, and we've seen it enough
+        // times, then use it for localizing
+        if(matToLocalizeTo != nullptr && matToLocalizeTo->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
           
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
