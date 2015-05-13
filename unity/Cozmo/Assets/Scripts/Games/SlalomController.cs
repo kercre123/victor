@@ -282,8 +282,7 @@ public class SlalomController : GameController {
 		base.Exit_PLAYING();
 
 		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
-		//ClearLights();
-		CelebrationLights();
+		ClearLights();
 	}
 
 	protected override bool IsGameReady() {
@@ -448,7 +447,7 @@ public class SlalomController : GameController {
 
 	}
 
-	/*private void ClearLights()
+	private void ClearLights()
 	{
 
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
@@ -463,7 +462,7 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
-	}*/
+	}
 
 	public int testLightIndex = 0;
 	public void TestLights()
@@ -490,6 +489,12 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
+	}
+
+	protected override void Enter_RESULTS() {
+		base.Enter_RESULTS();
+
+		CelebrationLights();
 	}
 
 	private void CelebrationLights()
