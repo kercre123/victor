@@ -14,6 +14,8 @@ public class SlalomController : GameController {
 	[SerializeField] Text textProgress = null;
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
+	[SerializeField] AudioClip[] lapsRemainingSound = null;
+	[SerializeField] AudioClip[] numberSounds = null;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -100,7 +102,19 @@ public class SlalomController : GameController {
 	void LapComplete() {
 		scores[0] += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-		audio.PlayOneShot(playerScoreSound);
+		//audio.PlayOneShot(playerScoreSound);
+		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap + 1;
+		if(lapsRemaining == 1) {
+			if(lapsRemaining < numberSounds.Length) PlayDelayed(numberSounds[lapsRemaining], cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			Debug.Log("final lap");
+		}
+		else {
+			if(lapsRemainingSound.Length > 0 && numberSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < numberSounds.Length) {
+				lapsRemainingSound[0] = numberSounds[lapsRemaining];
+				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			}
+			Debug.Log(lapsRemaining + " laps remaining");
+		}
 	}
 
 	int GetPreviousIndex() {

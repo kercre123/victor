@@ -413,6 +413,16 @@ public class GameController : MonoBehaviour {
 		buildRequested = true;
 	}
 
+	protected void PlayAudioClips(AudioClip[] clips, float initalDelay = 0f, float additionalDelay = 0.05f) {
+		if(clips.Length > 0) {
+			PlayDelayed(clips[0], initalDelay);
+
+			for(int i = 1; i < clips.Length; ++i) {
+				PlayDelayed(clips[i], clips[i-1].length + additionalDelay);
+			}
+		}
+	}
+
 	protected void PlayCountdownAudio(int secondsLeft) {
 		bool played = false;
 
