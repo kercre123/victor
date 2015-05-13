@@ -18,7 +18,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, const s32 minPeakRatio, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       //BeginBenchmark("elp_part1");
 
@@ -217,8 +217,7 @@ namespace Anki
       // Ratio of last of the 4 peaks to the next (fifth) peak should be fairly large
       // if there are 4 distinct corners.
       //printf("Ratio of 4th to 5th local maxima: %f\n", ((f32)maximaValues[3])/((f32)maximaValues[4]));
-      const s32 minPeakRatioThreshold = 5; // TODO: Expose this parameter
-      if(maximaValues[3] < minPeakRatioThreshold * maximaValues[4]) {
+      if(maximaValues[3] < minPeakRatio * maximaValues[4]) {
         // Just return no peaks, which will skip this quad
         return RESULT_OK;
       }
