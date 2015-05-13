@@ -344,9 +344,11 @@ classdef VisionMarkerTrained
                 end
 
                 if ~isempty(underscoreIndex)
-                    assert(length(underscoreIndex) == 1, ...
-                        'There should be no more than 1 underscore in the code name: "%s".', this.codeName{iName});
-
+                    if length(underscoreIndex) > 1
+                      % If more than one underscore, use last
+                      underscoreIndex = underscoreIndex(end);
+                    end
+                    
                     angleStr = this.codeName{iName}((underscoreIndex+1):end);
                     this.codeName{iName} = this.codeName{iName}(1:(underscoreIndex-1));
 
