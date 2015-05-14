@@ -91,8 +91,8 @@ public class CozmoVision : MonoBehaviour
 		if(actionPanelPrefab != null) {
 			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
 			actionPanel = actionPanelObject.GetComponentInChildren<ActionPanel>();
-			Canvas actionCanvas = actionPanelObject.GetComponent<Canvas>();
-			actionCanvas.sortingOrder = 10;
+			//Canvas actionCanvas = actionPanelObject.GetComponent<Canvas>();
+			//actionCanvas.sortingOrder = 10;
 			actionPanel.gameObject.SetActive(false);
 		}
 	}
@@ -337,6 +337,10 @@ public class CozmoVision : MonoBehaviour
 		if(GameLayoutTracker.instance != null) {
 			GameLayoutTracker.instance.Hide();
 		}
+
+		if(CozmoStatus.instance != null) {
+			CozmoStatus.instance.FadeOut();
+		}
 	}
 
 	protected void FadeOut()
@@ -362,6 +366,10 @@ public class CozmoVision : MonoBehaviour
 
 		if(GameLayoutTracker.instance != null) {
 			GameLayoutTracker.instance.Show();
+		}
+
+		if(CozmoStatus.instance != null) {
+			CozmoStatus.instance.FadeIn();
 		}
 	}
 
@@ -486,6 +494,10 @@ public class CozmoVision : MonoBehaviour
 		if(actionPanel != null) actionPanel.gameObject.SetActive(false);
 		if(GameLayoutTracker.instance != null) {
 			GameLayoutTracker.instance.Show();
+		}
+
+		if(CozmoStatus.instance != null) {
+			CozmoStatus.instance.FadeIn();
 		}
 	}
 

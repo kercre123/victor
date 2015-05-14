@@ -12,7 +12,7 @@ public class SliderText : MonoBehaviour
 	private const string prefix_pressed = "Pressed: ";
 	private const string prefix_upLastFrame = "UpLastFrame: ";
 	private const string prefix_downLastFrame = "DownLastFrame: ";
-	private const string prefix_currentAction = "Current: ";
+	private const string prefix_currentAction = "Action: ";
 
 	private ActionSliderPanel actionSliderPanel;
 

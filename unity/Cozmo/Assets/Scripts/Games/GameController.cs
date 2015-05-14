@@ -99,6 +99,9 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
+		if(countdownText != null) countdownText.gameObject.SetActive(false);
+		if(textScore != null) textScore.gameObject.SetActive(false);
+
 	}
 
 	void Update () {
@@ -203,7 +206,7 @@ public class GameController : MonoBehaviour {
 
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
-			textScore.text = "score: " + scores[0].ToString();
+			textScore.text = scores[0].ToString();
 		}
 
 		if(textState != null) {

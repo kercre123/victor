@@ -82,22 +82,21 @@ public class GameActions : MonoBehaviour
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( buttons.Length > 1 )
-			{
-				if( robot.carryingObject != null && robot.carryingObject.isActive )
-				{
-					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
-				}
-			}
+//			if( buttons.Length > 1 )
+//			{
+//				if( robot.carryingObject != null && robot.carryingObject.isActive )
+//				{
+//					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
+//				}
+//			}
 
 			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
-				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
+				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
-			else
-			{
-				buttons[0].SetMode( ActionButton.Mode.DROP, null );
-			}
+
+			buttons[0].SetMode( ActionButton.Mode.DROP, null );
+
 		}
 		else
 		{
@@ -315,12 +314,12 @@ public class GameActions : MonoBehaviour
 			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
 
 			int typeIndex = (int)activeBlock.mode + 1;
-			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
+			if(typeIndex >= (int)ActiveBlock.ActiveBlockMode.NumTypes) typeIndex = 0;
 
-			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Mode)typeIndex );
+			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.ActiveBlockMode)typeIndex );
 
-			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
-			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockMode( activeBlock.mode ) );
+			activeBlock.mode = (ActiveBlock.ActiveBlockMode)typeIndex;
+			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
 		}
 	}
 

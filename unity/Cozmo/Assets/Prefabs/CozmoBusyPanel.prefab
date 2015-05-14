@@ -11,8 +11,9 @@ GameObject:
   - 223: {fileID: 22341328}
   - 114: {fileID: 11441330}
   - 114: {fileID: 11441328}
+  - 114: {fileID: 11431730}
   m_Layer: 5
-  m_Name: OverlayCanvas
+  m_Name: OverlayCanvas_BusyPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -152,6 +153,18 @@ Transform:
   - {fileID: 22441328}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11431730
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 141328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depth: 7
 --- !u!114 &11441328
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -201,10 +214,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .337254912, g: .745098054, b: .854901969, a: 1}
+  m_Color: {r: .752941191, g: .752941191, b: .752941191, a: 1}
   m_FontData:
     m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
-    m_FontSize: 28
+    m_FontSize: 20
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -253,7 +266,7 @@ MonoBehaviour:
   gradientDir: 0
   overwriteAllColor: 0
   colors:
-  - {r: .337254912, g: .745098054, b: .854901969, a: 1}
+  - {r: .384313732, g: .427450985, b: .458823532, a: 1}
   - {r: 0, g: 0, b: 0, a: 1}
   targetGraphic: {fileID: 11441334}
 --- !u!114 &11441338
@@ -345,7 +358,7 @@ MonoBehaviour:
   m_Color: {r: .572549045, g: .572549045, b: .572549045, a: 1}
   m_FontData:
     m_Font: {fileID: 12800000, guid: f2aeae03ee3a64952992f9b54c046420, type: 3}
-    m_FontSize: 24
+    m_FontSize: 20
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -393,7 +406,7 @@ MonoBehaviour:
   overwriteAllColor: 0
   colors:
   - {r: 0, g: 0, b: 0, a: 1}
-  - {r: .337254912, g: .337254912, b: .337254912, a: 1}
+  - {r: 0, g: 0, b: 0, a: 0}
   targetGraphic: {fileID: 11469750}
 --- !u!114 &11469750
 MonoBehaviour:
@@ -481,7 +494,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 15
 --- !u!224 &22441328
 RectTransform:
   m_ObjectHideFlags: 1
@@ -512,11 +525,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22469752}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
-  m_SizeDelta: {x: -40, y: 128}
-  m_Pivot: {x: .5, y: 1}
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 180, y: 200}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22441332
 RectTransform:
   m_ObjectHideFlags: 1
@@ -531,8 +544,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 38}
+  m_SizeDelta: {x: 0, y: -76}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22441334
 RectTransform:
@@ -550,8 +563,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: .5, y: 0}
   m_AnchorMax: {x: .5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 20}
-  m_SizeDelta: {x: 240, y: 80}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 218, y: 80}
   m_Pivot: {x: .5, y: 0}
 --- !u!224 &22469748
 RectTransform:
@@ -602,11 +615,11 @@ RectTransform:
   - {fileID: 22441334}
   m_Father: {fileID: 22441328}
   m_RootOrder: 0
-  m_AnchorMin: {x: .5, y: 0}
-  m_AnchorMax: {x: .5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 640, y: 256}
-  m_Pivot: {x: .5, y: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 0, y: 150}
+  m_SizeDelta: {x: 218, y: 300}
+  m_Pivot: {x: 1, y: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

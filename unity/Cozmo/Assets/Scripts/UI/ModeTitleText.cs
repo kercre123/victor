@@ -3,10 +3,19 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class ModeTitleText : MonoBehaviour {
-	[SerializeField] Text title;
+	Text text;
+
+	void Awake() {
+		text = GetComponent<Text>();
+	}
 
 	void OnEnable() {
-		string game = PlayerPrefs.GetString("CurrentGame", "Slalom");
-		title.text = game + " #" + PlayerPrefs.GetInt(game + "_CurrentLevel", 1);
+		string modeTitle = PlayerPrefs.GetString("CurrentGame", "Slalom").ToUpper();
+
+		if(modeTitle != "FREE PLAY") {
+			modeTitle += " #" + PlayerPrefs.GetInt(modeTitle + "_CurrentLevel", 1);
+		}
+
+		text.text = modeTitle;
 	}
 }

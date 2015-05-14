@@ -91,7 +91,7 @@ public class ActiveBlock : ObservedObject
 		}
 	}
 
-	public enum Mode
+	public enum ActiveBlockMode
 	{
 		Off,
 		White,
@@ -101,7 +101,7 @@ public class ActiveBlock : ObservedObject
 		Cyan,
 		Blue,
 		Magenta,
-		Count
+		NumTypes
 	}
 
 	public bool isMoving { get; private set; }
@@ -141,7 +141,7 @@ public class ActiveBlock : ObservedObject
 	private float lastRelativeToY;
 	public float relativeToY;
 
-	public Mode mode = Mode.Off;
+	public ActiveBlockMode mode = ActiveBlockMode.Off;
 	
 	public event Action<ActiveBlock> OnAxisChange;
 
