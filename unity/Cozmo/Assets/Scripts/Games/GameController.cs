@@ -204,6 +204,8 @@ public class GameController : MonoBehaviour {
 		if(currentActions != null) currentActions.gameObject.SetActive(true);
 	}
 
+	protected const string suffix_seconds = "s";
+
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
 			textScore.text = scores[0].ToString();
@@ -215,9 +217,9 @@ public class GameController : MonoBehaviour {
 
 		if (textTime != null && state == GameState.PLAYING) {
 			if (maxPlayTime > 0f) {
-				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString () + suffix_seconds;
 			} else {
-				textTime.text = Mathf.CeilToInt (stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (stateTimer).ToString () + suffix_seconds;
 			}
 		} else {
 			textTime.text = string.Empty;

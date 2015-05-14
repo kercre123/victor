@@ -121,7 +121,7 @@ public class GoldRushController : GameController {
 		// need timer to reflect our games unique use of it
 		if (textTime != null && state == GameState.PLAYING) 
 		{
-			textTime.text = Mathf.FloorToInt (maxPlayTime+bonusTime - totalActiveTime).ToString ();
+			textTime.text = Mathf.FloorToInt (maxPlayTime+bonusTime - totalActiveTime).ToString () + suffix_seconds;
 		}
 
 		if (textScore != null && scores != null && scores.Length > 0 && state == GameState.PLAYING) 
