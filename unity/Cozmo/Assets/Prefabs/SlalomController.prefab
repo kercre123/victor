@@ -793,6 +793,15 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  activeBlockModeSounds:
+  - {fileID: 0}
+  - {fileID: 8300000, guid: 988d0ea2e281f4c3f96137d430930c75, type: 3}
+  - {fileID: 8300000, guid: 6a49590a2a07c4896a6bfe1c03eeeea2, type: 3}
+  - {fileID: 8300000, guid: 1e76d86c13da146dbb6a6005d3c5cfd1, type: 3}
+  - {fileID: 8300000, guid: 5a2c4f9448d0d439fb8a53104fa4ef8d, type: 3}
+  - {fileID: 8300000, guid: 2d886e47052284076b6ffa6f15f11023, type: 3}
+  - {fileID: 8300000, guid: 882e7664f49704cbbb5d2618b170ea57, type: 3}
+  - {fileID: 8300000, guid: fb4173a1c34e14ae0a8fbe054924144d, type: 3}
   actionSprites:
   - {fileID: 0}
   - {fileID: 21300000, guid: ea50afe86c2ce4fa6b5f6a6d37ed2357, type: 3}
@@ -837,6 +846,15 @@ MonoBehaviour:
   cancelButtonSound: {fileID: 8300000, guid: 9844baf937a444a5ebc92d9662aab2b0, type: 3}
   actionEnabledSounds:
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  activeBlockModeSounds:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -1362,7 +1380,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: cf0c9e474172c48168f6e6acf48df154, type: 3}
   numberSounds:
   - {fileID: 0}
-  - {fileID: 8300000, guid: 5cb604773e21245808f4e243aaa7223a, type: 3}
+  - {fileID: 8300000, guid: 40fb7a64c6a214852ad7dbe03e03983e, type: 3}
   - {fileID: 8300000, guid: a0908384ad42448e9bd10e92845c880c, type: 3}
   - {fileID: 8300000, guid: 98afbf8ab2ffb4fdeab921230480c0c7, type: 3}
   - {fileID: 8300000, guid: c717550ae88044674ad09b7a5b15e8fb, type: 3}
