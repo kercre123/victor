@@ -42,6 +42,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #undef SHOW_EXHAUSTIVE_STEPS
 #endif
 
+#define DEBUG_BRIGHT_DARK_PAIRS 0
+
 namespace Anki
 {
   namespace Embedded
@@ -776,6 +778,41 @@ namespace Anki
         probePointsY_F32[i_pt] = static_cast<f32>(ProbePoints_Y[i_pt]) * fixedPointDivider;
       }
 
+#     if DEBUG_BRIGHT_DARK_PAIRS
+      cv::Mat brightDarkPairsImage;
+      ArrayToCvMat(image, &brightDarkPairsImage);
+      cv::cvtColor(brightDarkPairsImage, brightDarkPairsImage, CV_GRAY2BGR);
+      {
+        static const Quadrilateral<f32> outsideQuad(Point<f32>(0,0), Point<f32>(0,1), Point<f32>(1,1), Point<f32>(1,0));
+        static const Quadrilateral<f32> insideQuad(Point<f32>(0.2,0.2), Point<f32>(0.2,.8), Point<f32>(.8,.8), Point<f32>(0.8,0.2));
+        static const Quadrilateral<f32> middleQuad(Point<f32>(0.1,0.1), Point<f32>(0.1,.9), Point<f32>(.9,.9), Point<f32>(0.9,0.1));
+        static const Quadrilateral<f32>* quads[3] = {&outsideQuad, &insideQuad, &middleQuad};
+        
+        cv::Mat_<u8> mask = cv::Mat_<u8>::zeros(imageHeight, imageWidth);
+        
+        for(s32 iQuad=0; iQuad<3; ++iQuad) {
+          const Quadrilateral<f32>& quad = *(quads[iQuad]);
+          cv::vector<cv::Point> cvQuad(4);
+          
+          for(s32 i=0; i<4; ++i) {
+            
+            const f32 x = quad[i].x;
+            const f32 y = quad[i].y;
+            
+            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+            
+            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
+            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
+            
+            cvQuad[i].x = Round<s32>(warpedXf);
+            cvQuad[i].y = Round<s32>(warpedYf);
+            
+          }
+          cv::polylines(brightDarkPairsImage, cvQuad, true, cv::Scalar(0,0,255));
+        }
+      }
+#     endif
+      
       enoughContrast = true;
 
       const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
@@ -813,6 +850,12 @@ namespace Anki
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
             darkAccumulator += imageValue;
+            
+#           if DEBUG_BRIGHT_DARK_PAIRS
+            if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
+              cv::circle(brightDarkPairsImage, cv::Point(warpedX,warpedY), 2, cv::Scalar(0,255,255), -1);
+            }
+#           endif
           }
 
           { // Bright points
@@ -836,10 +879,21 @@ namespace Anki
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
             brightAccumulator += imageValue;
+            
+#           if DEBUG_BRIGHT_DARK_PAIRS
+            if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
+              cv::circle(brightDarkPairsImage, cv::Point(warpedX,warpedY), 2, cv::Scalar(255,0,0), -1);
+            }
+#           endif
           }
         } // FOR each probe point
 
         /*
+#       if DEBUG_BRIGHT_DARK_PAIRS
+        cv::imshow("Bright/Dark Probes", brightDarkPairsImage);
+        cv::waitKey(5);
+#       endif
+        
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
