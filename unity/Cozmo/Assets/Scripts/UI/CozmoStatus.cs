@@ -48,7 +48,7 @@ public class CozmoStatus : MonoBehaviour {
 				statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 1f, 1f - fadeTimer);
 			}
 			else {
-				statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 0.25f, 1f - fadeTimer);
+				statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 0.4f, 1f - fadeTimer);
 			}
 		}
 

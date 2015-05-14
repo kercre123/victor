@@ -61,6 +61,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip validPredictedDropSound = null;
 	[SerializeField] AudioClip invalidPredictedDropSound = null;
 
+	[SerializeField] LayoutBlock2d carriedBlock2d;
+	[SerializeField] ChangeCubeModeButton button_change;
+	//dmd todo add vector lines from carried button to layout cubes it could satisfy?
+
 
 	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
 
@@ -93,7 +97,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
 
-	
 	bool lastValidPredictedDrop = false;
 
 	void OnEnable () {
@@ -234,6 +237,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
+
+		if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
+
+
+
+		}
 	}
 
 	void OnDisable() {
@@ -273,6 +282,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(false);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 				break;
 
 			case LayoutTrackerPhase.INVENTORY:
@@ -281,6 +292,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(!hidden);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 
 				if(robot != null) robot.SetHeadAngle();
 
@@ -308,10 +321,29 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				textProgress.text = validCount + " / " + currentLayout.blocks.Count;
 
-				layoutInstructionsPanel.SetActive(!hidden);
+				bool hideNow = hidden;
+
+				if(!hideNow && robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
+					hideNow = !IsActiveBlockCorrectColor(robot.carryingObject as ActiveBlock);
+				}
+
+				layoutInstructionsPanel.SetActive(!hideNow);
 				layoutPreviewPanel.SetActive(false);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(!hidden);
+				layoutInstructionsCamera.gameObject.SetActive(!hideNow);
+
+				if(robot != null) {
+					//if(robot.carryingObject == null) {
+						carriedBlock2d.gameObject.SetActive(false);
+						button_change.gameObject.SetActive(false);
+					//}
+					//else {
+					//	carriedBlock2d.Initialize(robot.carryingObject);
+					//	carriedBlock2d.gameObject.SetActive(true);
+					//	button_change.gameObject.SetActive(robot.carryingObject.isActive);
+					//}
+				}
+
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
@@ -320,6 +352,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(false);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(!hidden);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 
 				break;
 
@@ -722,6 +756,18 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
+	}
+
+	bool IsActiveBlockCorrectColor(ActiveBlock activeBlockToMatch) {
+
+		for(int i=0; i<currentLayout.blocks.Count; i++) {
+			BuildInstructionsCube block = currentLayout.blocks[i];
+			if(block.Validated) continue;
+			if(block.objectFamily != 3) continue;
+			if(activeBlockToMatch.mode == block.activeBlockMode) return true;
+		}
+
+		return false;
 	}
 
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
