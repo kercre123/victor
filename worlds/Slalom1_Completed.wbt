@@ -134,21 +134,21 @@ DEF Blue Block1x1 {
   name "AngryFace_01"
   translation 0.15 0.22 0.0219969
   rotation 0 1 0 0
-  blockColor 0 0 1
+  blockColor 0 0 0
   markerImg "symbols/kitty.png"
 }
 DEF Blue Block1x1 {
   name "AngryFace_01"
   translation 0.15 -0.22 0.0219969
   rotation 0 1 0 0
-  blockColor 0 0 1
+  blockColor 0 0 0
   markerImg "symbols/bee.png"
 }
 DEF ActiveBlock Block1x1 {
   name "ActiveBlock"
   translation 0.15 0.22 0.0659907
   rotation 0 1 0 0
-  blockColor 0.5 0.85 0.5
+  blockColor 0.5 0.5 0.5
   active TRUE
   markerImg_front "letters/1.png"
   markerImg_back "letters/2.png"
@@ -161,7 +161,7 @@ DEF ActiveBlock2 Block1x1 {
   name "ActiveBlock"
   translation 0.15 -0.22 0.0659907
   rotation 0 1 0 0
-  blockColor 0.5 0.85 0.5
+  blockColor 0.5 0.5 0.5
   active TRUE
   activeID 2
   markerImg_front "letters/inverted/1.png"
