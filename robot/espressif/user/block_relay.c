@@ -13,6 +13,8 @@ static struct espconn* blockServer;
 #define RELAY_PORT 6001
 #define BLOCK_PORT 6002
 
+#define MESSAGE_START 6
+
 #define    blockTaskQueueLen    10
 os_event_t blockTaskQueue[blockTaskQueueLen];
 
@@ -50,7 +52,7 @@ static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned sho
 
   if (clientPkt != NULL)
   {
-    os_memcpy(clientPkt->data, usrdata, len);
+    os_memcpy(clientPkt->data, usrdata + MESSAGE_START, len-MESSAGE_START);
     system_os_post(blockTaskPrio, BR_SIG_TO_CLIENT, len);
   }
   else
@@ -103,6 +105,7 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
 #ifdef DEBUG_BR
       os_printf("\tSending to %d bytes to block %d @ %d.%d.%d.%d:%d\r\n", event->par, block, blockServer->proto.udp->remote_ip[0], blockServer->proto.udp->remote_ip[1], blockServer->proto.udp->remote_ip[2], blockServer->proto.udp->remote_ip[3], blockServer->proto.udp->remote_port);
 #endif
+      *((uint32*)blockPkt + 2) = event->par; // Fill length into serial header
       err = espconn_sent(blockServer, blockPkt, event->par);
       if (err < 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
       {
@@ -121,7 +124,7 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
     os_printf("ERROR: blockTask with unknown signal %08x\r\n", event->sig);
   }
 #ifdef DEBUG_BR
-  os_printf("BReot %d %d %d\r\n", event->sig, event->par, err);
+  os_printf("BReot %04x %04x %d %d\r\n", (uint16)(event->sig >> 16), (uint16)(event->sig & 0xff), event->par, err);
 #endif
 }
 
@@ -136,6 +139,13 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
   system_os_task(blockTask, blockTaskPrio, blockTaskQueue, blockTaskQueueLen); // Setup task queue for handling UART
 
   clientPkt = NULL;
+  blockPkt[0] = 0xbe;
+  blockPkt[1] = 0xef;
+  blockPkt[2] = 0x00;
+  blockPkt[3] = 0x00;
+  blockPkt[4] = 0x00;
+  blockPkt[5] = 0x00;
+
   blockPktQueued = false;
 
   err = wifi_get_ip_info(SOFTAP_IF, &ipconfig);
@@ -226,7 +236,7 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned s
   }
   else
   {
-    os_memcpy(blockPkt, data, len);
+    os_memcpy(blockPkt + MESSAGE_START, data, len);
     system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (block << 16), len);
     return true;
   }
