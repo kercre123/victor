@@ -1,7 +1,7 @@
 function detectAndDisplay(img, h_axes, h_img, varargin)
 
 markerLibrary = [];
-useMexDetector = false;
+useMexDetector = true;
 
 simpleDetectorArgs = parseVarargin(varargin{:});
 
@@ -16,7 +16,18 @@ if ~useMexDetector
   detections = simpleDetector(img, simpleDetectorArgs{:});
   
 else
-  img = rgb2gray(img);
+  if size(img,3) > 1
+    img = rgb2gray(img);
+  end
+%   
+%   % DEBUG!!!
+%   kernel = -ones(16);
+%   kernel(8,8) = 255;
+%   img = imfilter(double(img), kernel, 'replicate');
+%   minVal = min(img(:));
+%   maxVal = max(img(:));
+%   img = im2uint8((img-minVal)/(maxVal-minVal));
+
   imageSize = size(img);
   useIntegralImageFiltering = true;
   scaleImage_thresholdMultiplier = 1.0;
@@ -30,16 +41,17 @@ else
   component_sparseMultiplyThreshold = 1000.0;
   component_solidMultiplyThreshold = 2.0;
   component_minHollowRatio = 1.0;
+  minLaplacianPeakRatio = 5;
   quads_minQuadArea = 100 / 4;
   quads_quadSymmetryThreshold = 2.0;
   quads_minDistanceFromImageEdge = 2;
   decode_minContrastRatio = 1.25;
-  quadRefinementIterations = 5;
+  quadRefinementIterations = 25;
   numRefinementSamples = 100;
   quadRefinementMaxCornerChange = 5;
   quadRefinementMinCornerChange = .005;
   returnInvalidMarkers = 0;
-  [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(img, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
+  [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(img, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers);
   
   detections = struct('corners', quads, ...
     'markerType', markerTypes,  ...
@@ -75,8 +87,14 @@ if numDetections > 0
     for i = 1:numDetections
       
       if isstruct(detections)
-        plot(detections(i).corners([1 2 4 3 1],1)+1, detections(i).corners([1 2 4 3 1],2)+1, 'r', ...
+        plot(detections(i).corners([1 2 4 3],1)+1, detections(i).corners([1 2 4 3],2)+1, 'r', ...
           'Tag', 'BlockMarker2D', 'Parent', h_axes, 'LineWidth', 2);
+        plot(detections(i).corners([1 3],1)+1, detections(i).corners([1 3],2)+1,'g', ...
+          'Tag', 'BlockMarker2D', 'Parent', h_axes, 'LineWidth', 3);
+        mid = mean(detections(i).corners,1);
+        text(mid(1), mid(2), strrep(detections(i).markerName, 'MARKER_', ''), ...
+          'FontSize', 18, 'Color', 'r', 'FontWeight', 'b', 'Hor', 'c', ...
+          'Interpreter', 'none', 'Tag', 'BlockMarker2D', 'Parent', h_axes);
       else
         switch(class(detections{i}))
           case 'VisionMarker'

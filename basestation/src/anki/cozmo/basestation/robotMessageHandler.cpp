@@ -217,7 +217,7 @@ namespace Anki {
                                       msg.center_y,
                                       msg.skew);
       
-#if 1 // DEV HACK!
+#     if 0 // DEV HACK!
       if(msg.isPhysicalRobot)
       {
         if(msg.ncols == 640) {
@@ -238,7 +238,7 @@ namespace Anki {
         }
         PRINT_NAMED_WARNING("RobotMessageHandler.ProcessMessage", "Using hard-coded %dx%d camera calibration data on basestation.\n", msg.ncols, msg.nrows);
       }
-#endif
+#     endif
       
       robot->SetCameraCalibration(calib);
       robot->SetPhysicalRobot(msg.isPhysicalRobot);
@@ -604,7 +604,7 @@ namespace Anki {
             printf("Received message that Object %d (Active ID %d) moved.\n",
                    objectWithID.first.GetValue(), msg.objectID);
             
-            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
             
             return RESULT_OK;
           }
@@ -614,5 +614,30 @@ namespace Anki {
       printf("Could not find match for active object ID %d\n", msg.objectID);
       return RESULT_FAIL;
     }
+    
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectStoppedMoving const& msg)
+    {
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      for(auto objectsByID : activeBlocksByType) {
+        for(auto objectWithID : objectsByID.second) {
+          Vision::ObservableObject* object = objectWithID.second;
+          assert(object->IsActive());
+          if(object->GetActiveID() == msg.objectID) {
+            // TODO: Mark object as de-localized
+            PRINT_INFO("Received message that Object %d (Active ID %d) stopped moving.\n",
+                       objectWithID.first.GetValue(), msg.objectID);
+            
+            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled);
+            
+            return RESULT_OK;
+          }
+        }
+      }
+      
+      PRINT_INFO("Could not find match for active object ID %d\n", msg.objectID);
+      return RESULT_FAIL;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

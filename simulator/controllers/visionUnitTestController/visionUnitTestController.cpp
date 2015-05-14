@@ -18,6 +18,9 @@
 #include <array>
 #include <fstream>
 #include <webots/Supervisor.hpp>
+#include <webots/Camera.hpp>
+#include <webots/PositionSensor.hpp>
+#include <webots/Motor.hpp>
 
 #include "json/json.h"
 

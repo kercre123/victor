@@ -44,9 +44,9 @@ namespace Anki {
     
     // Distance between the robot origin and the distance along the robot's x-axis
     // to the lift when it is in the low docking position.
-    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 17.f;
+    const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 15.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
-    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 13.f;
+    const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 15.f;
 
 
     // The distance to the bridge ground marker that the robot must
@@ -119,21 +119,35 @@ namespace Anki {
      **************************************************************************/
     
     const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
-
-    // From Calibration on Mar. 4, 2015, Cozmo Proto 3, #2,  Wide lens with QVGA crop
+/*
+    // From Calibration on May 7, 2015, Cozmo Proto 3.2, #1,  Wide lens with QVGA crop
     const u16 HEAD_CAM_CALIB_WIDTH  = 320;
     const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 374.98139f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 371.84817f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 155.83712f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 117.87848f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 327.76450f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 329.90353f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 154.45148f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 124.75227f;
     const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.02865f,
-      0.14764f,
-      -0.00074f,
-      0.00046f
+      0.04985f,
+      -0.00000f,
+      0.00155f,
+      0.00689f
     };
-
+*/
+    
+    // From Calibration on May 12, 2015, Cozmo Proto 3.2, #2,  Wide lens with QVGA crop
+    const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 259.58064f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 261.03465f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 138.78821f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 137.96933f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.05442f,
+      -0.12389f,
+      0.00157f,
+      0.00203f
+    };
 
     /***************************************************************************
      *
@@ -148,17 +162,6 @@ namespace Anki {
     // Timeout for how long the robot is willing to wait before receiving a ping
     // (or any message) from basestatin
     const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000;
-
-    
-    /***************************************************************************
-     *
-     *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~
-     *
-     ***************************************************************************/
-    // Cozmo #2 seems to always dock to the right of the marker by a few mm.
-    // There could be any number of factors contributing to this so for now we just adjust the y-offset of the
-    // docking error signal by this much.
-    const f32 COZMO2_CAM_LATERAL_POSITION_HACK = 0.f;
 
     
   } // namespace Cozmo
