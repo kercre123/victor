@@ -152,8 +152,8 @@ public class SlalomController : GameController {
 		instance = this;
 
 		if(CozmoPalette.instance != null) {
-			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.ActiveBlockMode.White);
-			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.ActiveBlockMode.Cyan);
+			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Mode.White);
+			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Mode.Cyan);
 		}
 	}
 	
@@ -529,6 +529,7 @@ public class SlalomController : GameController {
 
 	private uint CycleColors(int i) // cycle through all colors, but don't use black
 	{
-		return CozmoPalette.instance.GetUIntColorForActiveBlockType(++i < (int)ActiveBlock.ActiveBlockMode.NumTypes ? (ActiveBlock.ActiveBlockMode)i : (ActiveBlock.ActiveBlockMode)(i+1 - (int)ActiveBlock.ActiveBlockMode.NumTypes));
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType(++i < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)i : 
+		                                                            (ActiveBlock.Mode)(i+1 - (int)ActiveBlock.Mode.Count));
 	}
 }
