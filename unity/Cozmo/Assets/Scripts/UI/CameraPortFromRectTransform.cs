@@ -9,10 +9,8 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 
 	Camera cam;
 	Canvas canvas;
-	CanvasScaler canvasScaler;
 
 	bool initialized = false;
-	//int activeFrames = 0;
 
 	void OnEnable() {
 		initialized = false;
@@ -32,24 +30,9 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 			if(canvas == null) return;
 		}
 
-		if(canvasScaler == null) {
-			canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
-			if(canvasScaler == null) return;
-		}
-
 		if(!rectTransform.gameObject.activeInHierarchy) return;
 
-		//activeFrames++;
-
-		//if(activeFrames < 3) return;
-
 		initialized = true;
-
-		//float refH = canvasScaler.referenceResolution.y;
-		//float actualAspect = (float)Screen.width / (float)Screen.height;
-
-		//float wScale = (1 / refH) / actualAspect;
-		//float hScale = 1 / refH;
 
 		Vector3[] corners = new Vector3[4];
 		rectTransform.GetWorldCorners(corners);
@@ -61,16 +44,12 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 			corners[i].y /= Screen.height;
 		}
 
-
 		float xMin = float.MaxValue;
 		float xMax = 0f;
 		float yMin = float.MaxValue;
 		float yMax = 0f;
 
 		for(int i=0; i<4; i++) {
-			//corners[i].x *= wScale;
-			//corners[i].y *= hScale;
-			//Debug.Log("corners["+i+"]("+corners[i]+") wScale("+wScale+") hScale("+hScale+")");
 			xMin = Mathf.Min(corners[i].x, xMin);
 			xMax = Mathf.Max(corners[i].x, xMax);
 			yMin = Mathf.Min(corners[i].y, yMin);
@@ -79,11 +58,9 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 
 		Rect rect = new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
 
-		//rect.center += rectTransform.pivot;
-
 		cam.rect = rect; 
 
-		Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
+		//Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
 
 	}
 }

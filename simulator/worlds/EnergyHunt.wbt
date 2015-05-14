@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.3 utf8
+#VRML_SIM V8.0.5 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.597132 -0.334392 -0.72912 1.30989
-  position -1.10073 -0.595175 1.15883
+  orientation 0.626517 -0.395229 -0.671767 1.13077
+  position -0.568048 -0.471405 0.741713
 }
 Background {
   skyColor [
@@ -131,8 +131,9 @@ CozmoMat {
 }
 DEF ActiveBlock Block1x1 {
   name "ActiveBlock"
-  translation 0.15 0 0.0219957
-  blockColor 0.5 0.85 0.5
+  translation 0.20667 -0.053271 0.0219957
+  rotation 0 0 1 1.5708
+  blockColor 0.5 0.5 0.5
   active TRUE
   markerImg_front "letters/1.png"
   markerImg_back "letters/2.png"
@@ -143,9 +144,9 @@ DEF ActiveBlock Block1x1 {
 }
 DEF BullsEyeBlock Block1x1 {
   name "AngryFace_01"
-  translation 0.3 0 0.0219957
+  translation 0.209134 0.0160995 0.0219957
   rotation 0.302681 0.572133 -0.762265 1.25592e-05
-  blockColor 0.5 0.5 0.85
+  blockColor 0 0 0
   markerImg "symbols/bullsEye2.png"
 }
 BlockWorldComms {
