@@ -90,8 +90,8 @@ user_init()
       os_printf("Error getting mac address info\r\n");
     }
 
-    os_sprintf(ap_config.ssid, "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
-    os_strcpy(ap_config.password, "2manysecrets");
+    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
+    os_sprintf(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
