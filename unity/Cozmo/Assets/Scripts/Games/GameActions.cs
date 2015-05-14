@@ -5,8 +5,9 @@ public class GameActions : MonoBehaviour
 {
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.NUM_MODES];
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
+	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.Count];
+	[SerializeField] protected AudioClip[] activeBlockModeSounds = new AudioClip[(int)ActiveBlock.Mode.Count];
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.Count];
 	
 	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
 	public virtual string PICK_UP { get { return "Pick Up"; } }
@@ -52,6 +53,11 @@ public class GameActions : MonoBehaviour
 	public AudioClip GetActionEnabledSound( ActionButton.Mode mode )
 	{
 		return actionEnabledSounds[(int)mode];
+	}
+
+	public AudioClip GetActiveBlockModeSound( ActiveBlock.Mode mode )
+	{
+		return activeBlockModeSounds[(int)mode];
 	}
 
 	private void CheckChangedButtons()
@@ -314,12 +320,13 @@ public class GameActions : MonoBehaviour
 			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
 
 			int typeIndex = (int)activeBlock.mode + 1;
-			if(typeIndex >= (int)ActiveBlock.ActiveBlockMode.NumTypes) typeIndex = 0;
+			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
 
-			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.ActiveBlockMode)typeIndex );
+			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Mode)typeIndex );
 
-			activeBlock.mode = (ActiveBlock.ActiveBlockMode)typeIndex;
+			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
 			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+			if( audio != null ) PlayDelayed( GetActiveBlockModeSound( activeBlock.mode ), actionButtonSound != null ? actionButtonSound.length: 0f );
 		}
 	}
 
@@ -348,5 +355,20 @@ public class GameActions : MonoBehaviour
 			robot.searching = true;
 			//Debug.Log( "On Press" );
 		}
+	}
+
+	protected void PlayDelayed( AudioClip clip, float delay, bool loop = false )
+	{
+		StartCoroutine( _PlayDelayed( clip, delay, loop ) );
+	}
+	
+	private IEnumerator _PlayDelayed( AudioClip clip, float delay, bool loop = false )
+	{
+		yield return new WaitForSeconds( delay );
+
+		audio.volume = 1f;
+		audio.loop = loop;
+		audio.clip = clip;
+		audio.Play();
 	}
 }

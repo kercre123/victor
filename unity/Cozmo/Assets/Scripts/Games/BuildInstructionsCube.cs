@@ -13,7 +13,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	
 	[SerializeField] public int objectType = 0;
 	[SerializeField] public int objectFamily = 0;
-	[SerializeField] public ActiveBlock.ActiveBlockMode activeBlockMode = ActiveBlock.ActiveBlockMode.Off;
+	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
@@ -36,7 +36,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
-	ActiveBlock.ActiveBlockMode lastActiveBlockMode = ActiveBlock.ActiveBlockMode.Off;
+	ActiveBlock.Mode lastActiveBlockMode = ActiveBlock.Mode.Off;
 	Color lastBaseColor = Color.blue;
 
 	public bool Validated = false;

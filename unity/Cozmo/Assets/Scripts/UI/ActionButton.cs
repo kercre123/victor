@@ -18,7 +18,7 @@ public class ActionButton : MonoBehaviour
 		ALIGN,
 		CHANGE,
 		CANCEL,
-		NUM_MODES
+		Count
 	}
 
 	[System.Serializable]
