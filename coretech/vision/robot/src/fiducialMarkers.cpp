@@ -888,7 +888,6 @@ namespace Anki
           }
         } // FOR each probe point
 
-        /*
 #       if DEBUG_BRIGHT_DARK_PAIRS
         cv::imshow("Bright/Dark Probes", brightDarkPairsImage);
         cv::waitKey(5);
@@ -901,7 +900,6 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
-         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;

@@ -12,7 +12,7 @@ switch(probeType)
     
     case 'dark'
         midBarWidth = VisionMarkerTrained.SquareWidthFraction/2;
-        shift = 0.5;
+        shift = 0.25; % shifts the position towards the outer edge, to help with eroded fiducial due to over-exposure
         
     case 'bright'
         midBarWidth = VisionMarkerTrained.SquareWidthFraction + VisionMarkerTrained.FiducialPaddingFraction/2;
