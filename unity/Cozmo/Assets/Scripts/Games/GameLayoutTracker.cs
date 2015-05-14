@@ -61,6 +61,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip validPredictedDropSound = null;
 	[SerializeField] AudioClip invalidPredictedDropSound = null;
 
+	[SerializeField] Image image_cozmoTD;
 	[SerializeField] LayoutBlock2d carriedBlock2d;
 	[SerializeField] ChangeCubeModeButton button_change;
 	//dmd todo add vector lines from carried button to layout cubes it could satisfy?
@@ -282,6 +283,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(false);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+
+				image_cozmoTD.gameObject.SetActive(false);
 				carriedBlock2d.gameObject.SetActive(false);
 				button_change.gameObject.SetActive(false);
 				break;
@@ -292,6 +295,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutPreviewPanel.SetActive(!hidden);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+				image_cozmoTD.gameObject.SetActive(false);
 				carriedBlock2d.gameObject.SetActive(false);
 				button_change.gameObject.SetActive(false);
 
@@ -323,9 +327,9 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				bool hideNow = hidden;
 
-				if(!hideNow && robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
-					hideNow = !IsActiveBlockCorrectColor(robot.carryingObject as ActiveBlock);
-				}
+//				if(!hideNow && robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
+//					hideNow = !IsActiveBlockCorrectColor(robot.carryingObject as ActiveBlock);
+//				}
 
 				layoutInstructionsPanel.SetActive(!hideNow);
 				layoutPreviewPanel.SetActive(false);
@@ -333,15 +337,17 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutInstructionsCamera.gameObject.SetActive(!hideNow);
 
 				if(robot != null) {
-					//if(robot.carryingObject == null) {
+					if(robot.carryingObject == null) {
+						image_cozmoTD.gameObject.SetActive(false);
 						carriedBlock2d.gameObject.SetActive(false);
 						button_change.gameObject.SetActive(false);
-					//}
-					//else {
-					//	carriedBlock2d.Initialize(robot.carryingObject);
-					//	carriedBlock2d.gameObject.SetActive(true);
-					//	button_change.gameObject.SetActive(robot.carryingObject.isActive);
-					//}
+					}
+					else {
+						image_cozmoTD.gameObject.SetActive(robot.carryingObject.isActive);
+						carriedBlock2d.Initialize(robot.carryingObject);
+						carriedBlock2d.gameObject.SetActive(robot.carryingObject.isActive);
+						button_change.gameObject.SetActive(robot.carryingObject.isActive);
+					}
 				}
 
 				break;

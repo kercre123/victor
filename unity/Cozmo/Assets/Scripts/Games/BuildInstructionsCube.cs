@@ -192,7 +192,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 			if(activeCorners != null) {
 				if(objectFamily == 3) {
-					Color activeColor = Color.white;
+					Color activeColor = Color.black;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
 					for(int i=0;i<activeCorners.Length;i++) {
 						activeColor.a = alpha;

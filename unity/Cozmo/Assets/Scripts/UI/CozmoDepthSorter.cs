@@ -11,8 +11,8 @@ public enum CozmoCanvasDepth {
 	
 	Overlay_Status,
 	Overlay_Game,
-	Overlay_Controls,
 	Overlay_Building,
+	Overlay_Controls,
 	Overlay_Inventory,
 	Overlay_BackButton,
 	Overlay_Debug,
@@ -36,8 +36,8 @@ public class CozmoDepthSorter : MonoBehaviour {
 
 			case CozmoCanvasDepth.Overlay_Status: 		return 2;
 			case CozmoCanvasDepth.Overlay_Game: 		return 5;
-			case CozmoCanvasDepth.Overlay_Controls: 	return 10;
-			case CozmoCanvasDepth.Overlay_Building: 	return 15;
+			case CozmoCanvasDepth.Overlay_Building: 	return 10;
+			case CozmoCanvasDepth.Overlay_Controls: 	return 15;
 			case CozmoCanvasDepth.Overlay_Inventory: 	return 20;
 			case CozmoCanvasDepth.Overlay_BackButton: 	return 25;
 			case CozmoCanvasDepth.Overlay_Debug: 		return 30;
@@ -57,8 +57,8 @@ public class CozmoDepthSorter : MonoBehaviour {
 				
 			case CozmoCanvasDepth.Overlay_Status:
 			case CozmoCanvasDepth.Overlay_Game:
-			case CozmoCanvasDepth.Overlay_Controls:
 			case CozmoCanvasDepth.Overlay_Building:
+			case CozmoCanvasDepth.Overlay_Controls:
 			case CozmoCanvasDepth.Overlay_Inventory:
 			case CozmoCanvasDepth.Overlay_BackButton:
 			case CozmoCanvasDepth.Overlay_Debug:
