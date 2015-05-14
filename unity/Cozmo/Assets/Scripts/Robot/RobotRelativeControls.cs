@@ -179,7 +179,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			robot.TrackHeadToObject( targetLock );
 		}
 
-		if(gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive(gyroSleepTimer <= 0f);
+		if (gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive (false); //gyroSleepTimer <= 0f);
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -396,7 +396,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //			gyroSleepTimer -= Time.deltaTime;
 //		}
 
-		bool wakeGyro = Input.touchCount > 0;
+		//bool wakeGyro = Input.touchCount > 0;
 		//if(wakeGyro) {
 		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
 		//}
@@ -415,21 +415,21 @@ public class RobotRelativeControls : MonoBehaviour {
 //			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
 //		}
 
-		if(!wakeGyro) wakeGyro = Application.isEditor;
+		//if(!wakeGyro) wakeGyro = Application.isEditor;
 
 		//lastAttitude = attitude;
 
-		if(wakeGyro) {
-			gyroSleepTimer = gyroSleepTime;
-		}
+		//if(wakeGyro) {
+		//	gyroSleepTimer = gyroSleepTime;
+		//}
 
-		if(gyroSleepTimer <= 0f) return;
+		//if(gyroSleepTimer <= 0f) return;
 			
 		float h = gyroInputs.Horizontal;
 
-		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
-			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
-		}
+//		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
+//			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
+//		}
 
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
