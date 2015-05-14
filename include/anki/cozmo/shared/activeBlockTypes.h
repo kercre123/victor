@@ -79,14 +79,14 @@ namespace Cozmo {
   
     
   typedef enum {
-    UP_AXIS_UNKNOWN = -1,
     UP_AXIS_Xneg = 0,
     UP_AXIS_Xpos,
     UP_AXIS_Yneg,
     UP_AXIS_Ypos,
     UP_AXIS_Zneg,
     UP_AXIS_Zpos,
-    NUM_UP_AXES
+    NUM_UP_AXES,
+    UP_AXIS_UNKNOWN = NUM_UP_AXES + 1,
   } UpAxis;
     
 } // namespace Cozmo
