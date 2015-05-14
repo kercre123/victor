@@ -18,8 +18,8 @@ public class GameActions : MonoBehaviour
 	public virtual string CHANGE { get { return "Change"; } }
 	public virtual string CANCEL { get { return "Cancel"; } }
 
-	protected const string TOP = " TOP";
-	protected const string BOTTOM = " BOTTOM";
+	protected const string TOP = " Top";
+	protected const string BOTTOM = " Bottom";
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
