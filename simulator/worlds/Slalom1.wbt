@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.3 utf8
+#VRML_SIM V8.1.0 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -103,7 +103,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.684038 0.346516 0.641887 4.94695
-  position -0.856634 -0.666532 0.848104
+  position -1.26107 -0.963278 1.17731
 }
 Background {
   skyColor [
