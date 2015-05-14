@@ -146,17 +146,6 @@ namespace Anki {
     // (or any message) from basestatin
     const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 5000; // Longer for simulator because we don't control network
 
-    
-    /***************************************************************************
-     *
-     *                  ~ ~ ~ ~ ~ MAGIC NUMBERS ~ ~ ~ ~
-     *
-     ***************************************************************************/
-    // Cozmo #2 seems to always dock to the right of the marker by a few mm.
-    // There could be any number of factors contributing to this so for now we just adjust the y-offset of the
-    // docking error signal by this much.
-    const f32 COZMO2_CAM_LATERAL_POSITION_HACK = 0.f;
-
 
   } // namespace Cozmo
 } // namespace Anki

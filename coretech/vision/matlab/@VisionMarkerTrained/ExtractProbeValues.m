@@ -22,7 +22,7 @@ perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 computeGradMag = false;
 computeGradMagWeights = false;
 saveTree = true;
-boxFilterWidth = 16; % for illumination normalizatio for NearestNeighbor
+boxFilterWidth = round(workingResolution/2); % for illumination normalizatio for NearestNeighbor
 probeRegion = VisionMarkerTrained.ProbeRegion;
 
 % Now using unpadded images to train

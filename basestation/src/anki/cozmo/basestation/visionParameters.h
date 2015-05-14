@@ -85,6 +85,7 @@ namespace Anki {
         s32 component_sparseMultiplyThreshold;
         s32 component_solidMultiplyThreshold;
         f32 component_minHollowRatio;
+        s32 minLaplacianPeakRatio;
         s32 maxExtractedQuads;
         s32 quads_minQuadArea;
         s32 quads_quadSymmetryThreshold;

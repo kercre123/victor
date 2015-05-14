@@ -16,13 +16,9 @@ PROTO VisionMarker [
 ]
 {
   %{
-    imageURL = ""
-    if fields.markerImg ~= "" then
-      imageURL = "textures/" .. fields.image
-    end 
-    
+    imageURL = "textures/" .. fields.image.value
     if fields.useWhiteBackground then 
-      whiteFaceSize = fields.markerWidth+2*fields.padding
+      whiteFaceSize = fields.markerWidth.value+2*fields.padding.value
     end 
   }%  
  
@@ -36,11 +32,11 @@ PROTO VisionMarker [
           Shape {
             appearance Appearance {
               texture ImageTexture {
-                url [ "%{= imageURL }%" ]
+                url [ "%{=imageURL}%" ]
               }
             }
             geometry DEF MARKER_BOX Box {
-              size %{= fields.markerWidth }% 0.0001 %{= fields.markerWidth }%
+              size %{= fields.markerWidth.value }% 0.0001 %{= fields.markerWidth.value }%
             }
           }
           %{ if fields.useWhiteBackground then }%
@@ -65,7 +61,7 @@ PROTO VisionMarker [
           Connector {
             rotation IS connectorRotation
             translation IS translation
-            #name "%{=fields.translation.x}%  %{=fields.translation.y}% %{=fields.translation.z}%"
+            #name "%{=fields.translation.value.x}%  %{=fields.translation.value.y}% %{=fields.translation.value.z}%"
             name IS connectorName
             model "magnetic"
             type "passive"

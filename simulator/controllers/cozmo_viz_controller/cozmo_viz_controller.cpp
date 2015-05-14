@@ -10,7 +10,10 @@
 
 #include <cstdio>
 #include <string>
+
 #include <webots/Supervisor.hpp>
+#include <webots/ImageRef.hpp>
+#include <webots/Display.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

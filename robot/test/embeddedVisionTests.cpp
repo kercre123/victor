@@ -4524,6 +4524,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageHeight = 480;
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
+  const s32 minLaplacianPeakRatio = 5;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -4565,7 +4566,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   components.SortConnectedComponentSegments();
 
-  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip);
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, minLaplacianPeakRatio, imageHeight, imageWidth, extractedQuads, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   // extractedQuads.Print("extractedQuads");
@@ -4611,6 +4612,8 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
+  const s32 minLaplacianPeakRatio = 5;
+  
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -4629,7 +4632,7 @@ GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 
   FixedLengthList<Point<s16> > peaks(4, scratchOnchip);
 
-  const Result result = ExtractLaplacianPeaks(boundary, peaks, scratchOnchip);
+  const Result result = ExtractLaplacianPeaks(boundary, minLaplacianPeakRatio, peaks, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   //boundary.Print("boundary");

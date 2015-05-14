@@ -33,9 +33,9 @@ function helper
 gridSize = sqrt(size(nnLibrary.probeValues,1));
 for i = 1:length(iSame)
   subplot 121, imagesc(reshape(nnLibrary.probeValues(:,iSame(i)), gridSize, gridSize)), axis image 
-  title(sprintf('%d of %d', i, length(iSame)))
+  title(sprintf('%d of %d: %s', i, length(iSame), nnLibrary.labelNames{nnLibrary.labels(iSame(i))}), 'Interp', 'none')
   subplot 122, imagesc(reshape(nnLibrary.probeValues(:,jSame(i)), gridSize, gridSize)), axis image
-  title(d(iSame(i),jSame(i)))
+  title(sprintf('d=%f: %s', d(iSame(i),jSame(i)), nnLibrary.labelNames{nnLibrary.labels(jSame(i))}), 'Interp', 'none')
   pause
 end
 

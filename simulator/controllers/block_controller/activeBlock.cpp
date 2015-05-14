@@ -15,6 +15,10 @@
 #include <assert.h>
 
 #include <webots/Supervisor.hpp>
+#include <webots/Receiver.hpp>
+#include <webots/Emitter.hpp>
+#include <webots/Accelerometer.hpp>
+#include <webots/LED.hpp>
 
 #define TIMESTEP 10  //ms
 

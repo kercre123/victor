@@ -19,6 +19,18 @@
 // Webots Includes
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
+#include <webots/PositionSensor.hpp>
+#include <webots/Emitter.hpp>
+#include <webots/Motor.hpp>
+#include <webots/GPS.hpp>
+#include <webots/Compass.hpp>
+#include <webots/Camera.hpp>
+#include <webots/Gyro.hpp>
+#include <webots/DistanceSensor.hpp>
+#include <webots/Accelerometer.hpp>
+#include <webots/Receiver.hpp>
+#include <webots/Connector.hpp>
+#include <webots/LED.hpp>
 
 #define BLUR_CAPTURED_IMAGES 1
 
