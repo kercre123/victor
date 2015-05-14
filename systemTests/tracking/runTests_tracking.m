@@ -19,8 +19,9 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
-        %         'tracking_c',...
-        'tracking_c_variableTimes',...
+        %         {'tracking_c'},...
+        {'tracking_c_variableTimes','withoutSnap'},...
+        {'tracking_c_variableTimes','withSnap'},...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -41,6 +42,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     algorithmParameters.normalizeImage = false;
     
+    % Initialize the track
     algorithmParameters.init_scaleTemplateRegionPercent  = 0.9;
     algorithmParameters.init_numPyramidLevels            = 3;
     algorithmParameters.init_maxSamplesAtBaseLevel       = 500;
@@ -48,27 +50,59 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.init_numFiducialSquareSamples    = 500;
     algorithmParameters.init_fiducialSquareWidthFraction = 0.1;
     
+    % Update the track with a new image
     algorithmParameters.track_maxIterations                 = 50;
     algorithmParameters.track_convergenceTolerance_angle    = 0.05 * 180 / pi;
     algorithmParameters.track_convergenceTolerance_distance = 0.05;
     algorithmParameters.track_verify_maxPixelDifference     = 30;
+    algorithmParameters.track_maxSnapToClosestQuadDistance  = 0; % If >-, snap to the closest quad, and re-initialize
     
+    % Only for track_snapToClosestQuad == true
+    minSideLength = round(0.01*max(240,320));
+    maxSideLength = round(0.97*min(240,320));
+    algorithmParameters.detection.useIntegralImageFiltering = true;
+    algorithmParameters.detection.scaleImage_thresholdMultiplier = 1.0;
+    algorithmParameters.detection.scaleImage_numPyramidLevels = 3;
+    algorithmParameters.detection.component1d_minComponentWidth = 0;
+    algorithmParameters.detection.component1d_maxSkipDistance = 0;
+    algorithmParameters.detection.component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+    algorithmParameters.detection.component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+    algorithmParameters.detection.component_sparseMultiplyThreshold = 1000.0;
+    algorithmParameters.detection.component_solidMultiplyThreshold = 2.0;
+    algorithmParameters.detection.component_minHollowRatio = 1.0;
+    algorithmParameters.detection.quads_minQuadArea = 100 / 4;
+    algorithmParameters.detection.quads_quadSymmetryThreshold = 2.0;
+    algorithmParameters.detection.quads_minDistanceFromImageEdge = 2;
+    algorithmParameters.detection.decode_minContrastRatio = 0; % EVERYTHING has contrast >= 1, by definition
+    algorithmParameters.detection.refine_quadRefinementMinCornerChange = 0.005;
+    algorithmParameters.detection.refine_quadRefinementMaxCornerChange = 2;
+    algorithmParameters.detection.refine_numRefinementSamples = 100;
+    algorithmParameters.detection.refine_quadRefinementIterations = 25;
+    algorithmParameters.detection.useMatlabForAll = false;
+    algorithmParameters.detection.useMatlabForQuadExtraction = false;
+    algorithmParameters.detection.matlab_embeddedConversions = EmbeddedConversionsManager();
+    algorithmParameters.detection.showImageDetectionWidth = 640;
+    algorithmParameters.detection.showImageDetections = false;
+    algorithmParameters.detection.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
+    algorithmParameters.detection.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    
+    % Display and compression options
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
+    % Shake the image horizontally, as it's being tracked
     algorithmParameters.shaking = {'none', 0};
     
     %     algorithmParameters.track_ = ;
-    %     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
     algorithmParametersOrig = algorithmParameters;
     
-    if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
-        disp('There is a repeat');
-        keyboard
-    end
+%     if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
+%         disp('There is a repeat');
+%         keyboard
+%     end
     
     resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, makeNewResultsDirectory);
     
@@ -79,9 +113,9 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         algorithmParametersN.extractionFunctionName = runWhichAlgorithms{iAlgorithm};
         isSimpleTest = true;
         
-        if strcmp(runWhichAlgorithms{iAlgorithm}, 'tracking_c')
+        if strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_c')
             % Default parameters
-        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'tracking_c_variableTimes')
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_c_variableTimes')
             isSimpleTest = false;
             
             numShakingPixels = [0, 1, 2, 4, 8];
@@ -89,6 +123,12 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
             temporalFrameFractions = [1, 10];
             
             percentMarkersCorrect_window = cell(length(numShakingPixels), length(temporalFrameFractions), 1);
+            
+            if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
+                snapSuffix = '_snapped';
+            else
+                snapSuffix = '';
+            end
             
             for iShake = 1:length(numShakingPixels)
 
@@ -109,8 +149,12 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                             curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
 
                             algorithmParametersN = algorithmParametersOrig;
-                            algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/shake%d/fraction%d/piece%d', iTest, numShakingPixels(iShake), maxFraction, iPiece);
+                            algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes%s/test%d/shake%d/fraction%d/piece%d', snapSuffix, iTest, numShakingPixels(iShake), maxFraction, iPiece);
                             algorithmParametersN.shaking = {'horizontal', numShakingPixels(iShake)};
+                            
+                            if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
+                                algorithmParametersN.track_maxSnapToClosestQuadDistance = 4*5;
+                            end
 
                             if length(curAllTestData{1}.jsonData.Poses) > 10
                                 localNumComputeThreads.basics = numComputeThreads.basics;
@@ -145,7 +189,12 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                 %figureHandle = figure(10 + iShake);
                 %set(figureHandle, 'Name', sprintf('Shake%d', numShakingPixels(iShake)));
                 
-                figure(10);
+                if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
+                    figure(11);
+                else
+                    figure(10);
+                end
+                
                 numX = ceil(sqrt(length(numShakingPixels)));
                 numY = ceil(length(numShakingPixels) / numX);
                 subplot(numY, numX, iShake);
