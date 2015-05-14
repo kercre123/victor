@@ -46,7 +46,7 @@ else
   quads_quadSymmetryThreshold = 2.0;
   quads_minDistanceFromImageEdge = 2;
   decode_minContrastRatio = 1.25;
-  quadRefinementIterations = 5;
+  quadRefinementIterations = 25;
   numRefinementSamples = 100;
   quadRefinementMaxCornerChange = 5;
   quadRefinementMinCornerChange = .005;
