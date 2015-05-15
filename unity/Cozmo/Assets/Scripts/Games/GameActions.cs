@@ -96,17 +96,17 @@ public class GameActions : MonoBehaviour
 //				}
 //			}
 
-			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
+			if( buttons.Length > 1 && robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
 				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
 
-			buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			if( buttons.Length > 0 ) buttons[0].SetMode( ActionButton.Mode.DROP, null );
 
 		}
 		else
 		{
-			if( robot.selectedObjects.Count == 1 )
+			if( buttons.Length > 1 && robot.selectedObjects.Count == 1 )
 			{
 				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
 			}
