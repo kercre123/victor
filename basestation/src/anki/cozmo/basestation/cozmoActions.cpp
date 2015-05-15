@@ -734,10 +734,9 @@ namespace Anki {
       //  just using neck joint height as an approximation for the camera's
       //  current height, since its actual height changes slightly as the head
       //  rotates around the neck.
-      const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
       const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      //const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
       //const Radians headAngle = std::atan2(heightDiff, distanceXY);
-      //_compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
       
       // TODO: Just commanding fixed head angle depending on height of object.
       //       Verify this is ok with the wide angle lens. If not, dynamically compute
@@ -749,8 +748,6 @@ namespace Anki {
       }
       _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
       
-
-      
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);
       
@@ -761,7 +758,7 @@ namespace Anki {
       _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
       
       return ActionResult::SUCCESS;
-    }
+    } // FaceObjectAction::Init()
     
     ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
     {
@@ -838,7 +835,7 @@ namespace Anki {
       }
       
       return ActionResult::SUCCESS;
-    } // CheckIfDone()
+    } // FaceObjectAction::CheckIfDone()
 
 
     const std::string& FaceObjectAction::GetName() const
