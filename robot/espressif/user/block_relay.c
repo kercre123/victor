@@ -13,7 +13,7 @@ static struct espconn* blockServer;
 #define RELAY_PORT 6001
 #define BLOCK_PORT 6002
 
-#define MESSAGE_START 6
+#define MESSAGE_START 8
 
 #define    blockTaskQueueLen    10
 os_event_t blockTaskQueue[blockTaskQueueLen];
@@ -142,12 +142,14 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
   system_os_task(blockTask, blockTaskPrio, blockTaskQueue, blockTaskQueueLen); // Setup task queue for handling UART
 
   clientPkt = NULL;
-  blockPkt[0] = 0xbe;
-  blockPkt[1] = 0xef;
-  blockPkt[2] = 0x00;
-  blockPkt[3] = 0x00;
+  blockPkt[0] = 0xaa;
+  blockPkt[1] = 0xaa;
+  blockPkt[2] = 0xbe;
+  blockPkt[3] = 0xef;
   blockPkt[4] = 0x00;
   blockPkt[5] = 0x00;
+  blockPkt[6] = 0x00;
+  blockPkt[7] = 0x00;
 
   blockPktQueued = false;
 
@@ -240,7 +242,7 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned s
   else
   {
     os_memcpy(blockPkt + MESSAGE_START, data, len + MESSAGE_START);
-    system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (block << 16), len);
+    system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (block << 16), len + MESSAGE_START);
     return true;
   }
 }
