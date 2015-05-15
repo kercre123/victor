@@ -8,10 +8,16 @@ import sys
 import textwrap
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(REPO_ROOT, 'tools', 'build-tools', 'tools'))
+sys.path.insert(0, os.path.join(REPO_ROOT, 'tools', 'anki-util', 'tools', 'build-tools', 'tools'))
 import ankibuild.cmake
 import ankibuild.util
 import ankibuild.xcode
+
+def unpack_libraries():
+	saved_cwd = ankibuild.util.File.pwd()
+	ankibuild.util.File.cd(os.path.join(REPO_ROOT, 'tools', 'anki-util', 'libs', 'packaged'))
+	ankibuild.util.File.execute('./unpackLibs.sh')
+	ankibuild.util.File.cd(saved_cwd)
 
 def parse_arguments():
     
@@ -144,6 +150,9 @@ class PlatformConfiguration(object):
 
 if __name__ == '__main__':
     options = parse_arguments()
+    
+    if options.command in ['generate', 'build']:
+        unpack_libraries()
     
     if len(options.platforms) != 1:
         platforms_text = 'platforms {{{0}}}'
