@@ -152,6 +152,9 @@ public class ActiveBlock : ObservedObject
 		ObjectType = objectType;
 		ID = objectID;
 
+		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+
 		upAxis = byte.MaxValue;
 		xAccel = byte.MaxValue;
 		yAccel = byte.MaxValue;
