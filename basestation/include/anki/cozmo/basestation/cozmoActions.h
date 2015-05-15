@@ -168,9 +168,15 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
+    private:
+      
+      bool IsHeadInPosition(const Robot& robot) const;
+      
       Radians     _headAngle;
       Radians     _angleTolerance;
       std::string _name;
+      bool        _inPosition;
+      
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign
@@ -196,13 +202,20 @@ namespace Anki {
     protected:
       
       static f32 GetPresetHeight(Preset preset);
+      static const std::string& GetPresetName(Preset preset);
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
+    private:
+      
+      bool IsLiftInPosition(const Robot& robot) const;
+      
       f32          _height_mm;
       f32          _heightTolerance;
       std::string  _name;
+      bool         _inPosition;
+      
     }; // class MoveLiftToHeightAction
     
     
@@ -239,12 +252,13 @@ namespace Anki {
       // Amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.1f; }
       
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
       CompoundActionParallel _compoundAction;
+      bool                   _compoundActionDone;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
