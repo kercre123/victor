@@ -336,19 +336,19 @@ public class GameLayoutTracker : MonoBehaviour {
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(!hideNow);
 
-				if(robot != null) {
-					if(robot.carryingObject == null) {
+//				if(robot != null) {
+//					if(robot.carryingObject == null) {
 						image_cozmoTD.gameObject.SetActive(false);
 						carriedBlock2d.gameObject.SetActive(false);
 						button_change.gameObject.SetActive(false);
-					}
-					else {
-						image_cozmoTD.gameObject.SetActive(robot.carryingObject.isActive);
-						carriedBlock2d.Initialize(robot.carryingObject);
-						carriedBlock2d.gameObject.SetActive(robot.carryingObject.isActive);
-						button_change.gameObject.SetActive(robot.carryingObject.isActive);
-					}
-				}
+//					}
+//					else {
+//						image_cozmoTD.gameObject.SetActive(robot.carryingObject.isActive);
+//						carriedBlock2d.Initialize(robot.carryingObject);
+//						carriedBlock2d.gameObject.SetActive(robot.carryingObject.isActive);
+//						button_change.gameObject.SetActive(robot.carryingObject.isActive);
+//					}
+//				}
 
 				break;
 
@@ -693,57 +693,71 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(currentLayout == null) return Vector3.zero;
 		if(currentLayout.startPositionMarker == null) return Vector3.zero;
 
-		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.blocks.FindAll(x => x.cubeBelow == null);
+		return GetPoseFromLayoutForTransform(currentLayout.startPositionMarker, out facingAngle, out facingVector, Vector3.zero);
+	}
 
+	public Vector3 GetPoseFromLayoutForTransform(Transform t, out float facingAngle, out Vector3 facingVector, Vector3 directionOverride) {
+		facingAngle = 0f;
+		facingVector = Vector3.zero;
+		
+		if(currentLayout == null) return Vector3.zero;
+		if(t == null) return Vector3.zero;
+		
+		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.blocks.FindAll(x => x.cubeBelow == null && x.Validated);
+		
 		BuildInstructionsCube layoutBlock1 = layoutBlocksOnGround[0];
-
+		
 		float scaleToCozmo = CozmoUtil.BLOCK_LENGTH_MM / layoutBlock1.Size;
-
-		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.position - layoutBlock1.transform.position) * scaleToCozmo;
+		
+		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(t.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
-		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(currentLayout.startPositionMarker.forward).normalized;
+		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(t.forward).normalized;
 		facingAngle = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
-
+		
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
 			//Debug.Log("GetStartingPositionFromLayout layoutBlocksOnGround.Count == 1 use default rotation.");
+			if(directionOverride.sqrMagnitude > 0f) {
+				offsetFromFirstBlock = offsetFromFirstBlock.magnitude * directionOverride.normalized;
+			}
 			return offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
 		}
-
+		
 		BuildInstructionsCube layoutBlock2 = layoutBlocksOnGround[1];
-
+		
 		Vector3 layoutFirstToSecond = CozmoUtil.Vector3UnityToCozmoSpace(layoutBlock2.transform.position - layoutBlock1.transform.position) * scaleToCozmo;
 		layoutFirstToSecond.z = 0f;
-
+		
 		if(layoutFirstToSecond.magnitude > CozmoUtil.BLOCK_LENGTH_MM * 0.25f) {
-
+			
 			Vector3 observedFirstToSecond = layoutBlock2.AssignedObject.WorldPosition - layoutBlock1.AssignedObject.WorldPosition;
 			observedFirstToSecond.z = 0f;
-
+			
 			float offsetAngle = Vector3.Angle(layoutFirstToSecond, observedFirstToSecond);
 			Vector3 axis = Vector3.Cross(layoutFirstToSecond.normalized, observedFirstToSecond.normalized);
-
+			
 			//float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,axis));
 			//offsetAngle *= sign;
-
+			
 			Quaternion observedRotation = Quaternion.AngleAxis(offsetAngle, axis);
-
+			
 			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
 			facingVector = observedRotation * facingVector;
-
+			
 			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
-
+			
 			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+") axis.z("+axis.z+")");
 			facingAngle = signedAngleOffsetRad;
-
+			
 			//Debug.Log("GetStartingPositionFromLayout rotating offset by offsetAngle("+offsetAngle+") axis("+axis+")");
-
+			
 		}
-
-		Vector3 startPosition = offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
-
-		return startPosition;
+		
+		Vector3 pose = offsetFromFirstBlock + layoutBlock1.AssignedObject.WorldPosition;
+		
+		return pose;
 	}
+
 
 	//we are dropping an object and want to know which blocks are already on the ground and valid
 	//	so we can then do distance checks if necessaril to validate the placement of the drop
@@ -774,6 +788,79 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		return false;
+	}
+
+	public bool AttemptAssistedDrop( ObservedObject objectToDrop, out Vector3 pos, out float facing_rad) {
+		pos = Vector3.zero;
+		facing_rad = 0f;
+
+		if(robot == null) return false;
+		if(objectToDrop == null) return false;
+		
+		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+
+		ignoreActiveColor = true;
+
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
+		
+		if(newBlocks == null || newBlocks.Count == 0) {
+			//this is probably ok?  may need to do more processing to see if its ok
+			Debug.Log ("No block of this type should be placed here.");
+			return false;
+		}
+
+		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
+		
+		if(priorBlocks == null || priorBlocks.Count == 0) {
+			//if this will be our first ground block to validate, automatically valid location
+			Debug.Log ("No prior Blocks.");
+			return false;
+		}
+
+		BuildInstructionsCube bestBlock = newBlocks[0];
+		float leastError = float.MaxValue;
+
+		//go through each not yet validated layout block this object could work for and see if it a legal position
+		// where legal positon is determined by a fudgey distance check to all prior validated ground blocks
+		for(int newIndex=0; newIndex < newBlocks.Count; newIndex++) {
+			
+			BuildInstructionsCube block = newBlocks[newIndex];
+			float totalDistanceError = 0;
+			for(int priorIndex=0; priorIndex < priorBlocks.Count; priorIndex++) {
+				
+				BuildInstructionsCube priorBlock = priorBlocks[priorIndex];
+				
+				Vector3 idealOffset = CozmoUtil.Vector3UnityToCozmoSpace((block.transform.position - priorBlock.transform.position) / block.Size);
+				
+				ObservedObject priorObject = priorBlock.AssignedObject;
+				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
+
+				float idealDistance = ((Vector2)idealOffset).magnitude;
+				float realDistance = ((Vector2)realOffset).magnitude;
+
+				totalDistanceError += Mathf.Abs(realDistance - idealDistance);
+			}
+
+			if(totalDistanceError < leastError) {
+				bestBlock = newBlocks[newIndex];
+				leastError = totalDistanceError;
+			}
+		}
+
+		Vector3 closestFace = priorBlocks [0].AssignedObject.GetBestFaceVector ((Vector3)(posToDrop - priorBlocks [0].AssignedObject.WorldPosition));
+
+		Vector3 facingVector;
+		pos = GetPoseFromLayoutForTransform(bestBlock.transform, out facing_rad, out facingVector, closestFace);
+
+		if (bestBlock.objectFamily == 3) {
+			ActiveBlock activeBlock = objectToDrop as ActiveBlock;
+			if(activeBlock.mode != bestBlock.activeBlockMode) {
+				activeBlock.mode = bestBlock.activeBlockMode;
+				activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+			}
+		}
+
+		return true;
 	}
 
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
