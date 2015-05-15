@@ -239,7 +239,7 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned s
   }
   else
   {
-    os_memcpy(blockPkt + MESSAGE_START, data, len);
+    os_memcpy(blockPkt + MESSAGE_START, data, len + MESSAGE_START);
     system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (block << 16), len);
     return true;
   }
