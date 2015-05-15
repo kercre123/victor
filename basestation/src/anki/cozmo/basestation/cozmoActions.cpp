@@ -445,7 +445,12 @@ namespace Anki {
           }
         }
 
-        _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        // Make sure we can see the object, unless we are carrying it (i.e. if we
+        // are doing a DriveToPlaceCarriedObject action)
+        if(!object->IsBeingCarried()) {
+          _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        }
+        
         _compoundAction.SetIsPartOfCompoundAction(true);
         
       } // if/else possiblePreActionPoses.empty()
