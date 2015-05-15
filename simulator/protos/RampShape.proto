@@ -15,46 +15,46 @@ Shape {
     coord Coordinate {
       point [
         # One Side
-        0       %{= fields.width/2}%   0       # 0
-        .032    %{= fields.width/2}%   0       # 1
-        .085    %{= fields.width/2}%   .020    # 2
-        .095    %{= fields.width/2}%   .015    # 3
-        .103    %{= fields.width/2}%   0       # 4
-        .137    %{= fields.width/2}%   0       # 5
-        .145    %{= fields.width/2}%   .023    # 6
-        .173    %{= fields.width/2}%   .036    # 7
-        .196    %{= fields.width/2}%   .023    # 8
-        .209    %{= fields.width/2}%   0       # 9
-        .221    %{= fields.width/2}%   0       # 10
-        .221    %{= fields.width/2}%   .041    # 11
-        .2255   %{= fields.width/2}%   .041    # 12
-        .2255   %{= fields.width/2}%   .0385   # 13
-        .228    %{= fields.width/2}%   .0385   # 14 
-        .228    %{= fields.width/2}%   .044    # 15
-        .173    %{= fields.width/2}%   .044    # 16
-        .137    %{= fields.width/2}%   .040    # 17
-        .103    %{= fields.width/2}%   .033    # 18
+        0       %{= fields.width.value/2}%   0       # 0
+        .032    %{= fields.width.value/2}%   0       # 1
+        .085    %{= fields.width.value/2}%   .020    # 2
+        .095    %{= fields.width.value/2}%   .015    # 3
+        .103    %{= fields.width.value/2}%   0       # 4
+        .137    %{= fields.width.value/2}%   0       # 5
+        .145    %{= fields.width.value/2}%   .023    # 6
+        .173    %{= fields.width.value/2}%   .036    # 7
+        .196    %{= fields.width.value/2}%   .023    # 8
+        .209    %{= fields.width.value/2}%   0       # 9
+        .221    %{= fields.width.value/2}%   0       # 10
+        .221    %{= fields.width.value/2}%   .041    # 11
+        .2255   %{= fields.width.value/2}%   .041    # 12
+        .2255   %{= fields.width.value/2}%   .0385   # 13
+        .228    %{= fields.width.value/2}%   .0385   # 14 
+        .228    %{= fields.width.value/2}%   .044    # 15
+        .173    %{= fields.width.value/2}%   .044    # 16
+        .137    %{= fields.width.value/2}%   .040    # 17
+        .103    %{= fields.width.value/2}%   .033    # 18
         
         # Other Side
-        0       %{=-fields.width/2}%   0       # 0 / 19
-        .032    %{=-fields.width/2}%   0       # 1 / 20 
-        .085    %{=-fields.width/2}%   .020    # 2 / 21
-        .095    %{=-fields.width/2}%   .015    # 3 / 22
-        .103    %{=-fields.width/2}%   0       # 4 / 23
-        .137    %{=-fields.width/2}%   0       # 5 / 24
-        .145    %{=-fields.width/2}%   .023    # 6 / 25
-        .173    %{=-fields.width/2}%   .036    # 7 / 26 
-        .196    %{=-fields.width/2}%   .023    # 8 / 27 
-        .209    %{=-fields.width/2}%   0       # 9 / 28 
-        .221    %{=-fields.width/2}%   0       # 10 / 29 
-        .221    %{=-fields.width/2}%   .041    # 11 / 30 
-        .2255   %{=-fields.width/2}%   .041    # 12 / 31 
-        .2255   %{=-fields.width/2}%   .0385   # 13 / 32
-        .228    %{=-fields.width/2}%   .0385   # 14 / 33
-        .228    %{=-fields.width/2}%   .044    # 15 / 34
-        .173    %{=-fields.width/2}%   .044    # 16 / 35
-        .137    %{=-fields.width/2}%   .040    # 17 / 36
-        .103    %{=-fields.width/2}%   .033    # 18 / 37
+        0       %{=-fields.width.value/2}%   0       # 0 / 19
+        .032    %{=-fields.width.value/2}%   0       # 1 / 20 
+        .085    %{=-fields.width.value/2}%   .020    # 2 / 21
+        .095    %{=-fields.width.value/2}%   .015    # 3 / 22
+        .103    %{=-fields.width.value/2}%   0       # 4 / 23
+        .137    %{=-fields.width.value/2}%   0       # 5 / 24
+        .145    %{=-fields.width.value/2}%   .023    # 6 / 25
+        .173    %{=-fields.width.value/2}%   .036    # 7 / 26 
+        .196    %{=-fields.width.value/2}%   .023    # 8 / 27 
+        .209    %{=-fields.width.value/2}%   0       # 9 / 28 
+        .221    %{=-fields.width.value/2}%   0       # 10 / 29 
+        .221    %{=-fields.width.value/2}%   .041    # 11 / 30 
+        .2255   %{=-fields.width.value/2}%   .041    # 12 / 31 
+        .2255   %{=-fields.width.value/2}%   .0385   # 13 / 32
+        .228    %{=-fields.width.value/2}%   .0385   # 14 / 33
+        .228    %{=-fields.width.value/2}%   .044    # 15 / 34
+        .173    %{=-fields.width.value/2}%   .044    # 16 / 35
+        .137    %{=-fields.width.value/2}%   .040    # 17 / 36
+        .103    %{=-fields.width.value/2}%   .033    # 18 / 37
     
       ]
     }
