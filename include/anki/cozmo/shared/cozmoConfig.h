@@ -1,6 +1,11 @@
 #ifndef COZMO_CONFIG_H
 #define COZMO_CONFIG_H
 
+#include "anki/common/constantsAndMacros.h"
+#include "anki/common/types.h"
+
+namespace Anki {
+namespace Cozmo {
 
 #ifdef SIMULATOR
     // Simulated robot
@@ -19,5 +24,7 @@
     
     #include "anki/cozmo/shared/cozmoConfig_common.h"
 
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // COZMO_CONFIG_H
