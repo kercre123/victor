@@ -47,19 +47,7 @@ namespace Anki {
     const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 15.f;
     const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 12.f;
     const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 15.f;
-
-
-    // The distance to the bridge ground marker that the robot must
-    // achieve before we can consider it aligned with the bridge enough
-    // to start driving straight. This should be the minimum distance that
-    // the robot can reliably "dock" to the marker.
-    const f32 BRIDGE_ALIGNED_MARKER_DISTANCE = 60.f;
-
-    // Distance between the marker at the end of the bridge
-    // and the desired pose of the robot when it is considered
-    // to be off the bridge.
-    const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
-
+    
     // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
     const f32 LIFT_ARM_LENGTH = 65.f;
 
