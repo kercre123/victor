@@ -544,27 +544,30 @@ public class SlalomController : GameController {
 
 	private void CelebrationLights()
 	{
+		int random;
+
 		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
-			
-			for(int i = 0, j = 0; i < obstacle.lights.Length; ++i, j = i, ++j) {
-				obstacle.lights[i].onColor = CycleColors(j);
-				j += Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+			random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
+				obstacle.lights[i].onColor = CycleColors(i);
 				obstacle.lights[i].onPeriod_ms = 125;
 				obstacle.lights[i].offPeriod_ms = 125;
-				obstacle.lights[i].offColor = CycleColors(j);
+				obstacle.lights[i].offColor = CycleColors(i + random);
 				obstacle.lights[i].transitionOnPeriod_ms = 0;
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
 
-		for(int i = 0, j = 0; i < robot.lights.Length; ++i, j = i, ++j) {
-			robot.lights[i].onColor = CycleColors(j);
-			j += Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+		random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+
+		for(int i = 0; i < robot.lights.Length; ++i) {
+			robot.lights[i].onColor = CycleColors(i);
 			robot.lights[i].onPeriod_ms = 125;
 			robot.lights[i].offPeriod_ms = 125;
-			robot.lights[i].offColor = CycleColors(j);
+			robot.lights[i].offColor = CycleColors(i + random);
 			robot.lights[i].transitionOnPeriod_ms = 0;
 			robot.lights[i].transitionOffPeriod_ms = 0;
 		}
