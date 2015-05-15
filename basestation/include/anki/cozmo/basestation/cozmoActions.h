@@ -110,8 +110,6 @@ namespace Anki {
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
-      
-    private:
       PreActionPose::ActionType  _actionType;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
@@ -130,7 +128,7 @@ namespace Anki {
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
-      
+      virtual ActionResult CheckIfDone(Robot& robot) override; // Simplified version from DriveToObjectAction
       Pose3d _placementPose;
       
     }; // DriveToPlaceCarriedObjectAction()

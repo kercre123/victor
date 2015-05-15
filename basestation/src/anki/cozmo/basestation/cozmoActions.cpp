@@ -572,8 +572,19 @@ namespace Anki {
       
       return result;
       
-    } // CheckPreconditions()
+    } // DriveToPlaceCarriedObjectAction::Init()
     
+    
+    ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = _compoundAction.Update(robot);
+      
+      // We completed driving to the pose. Unlike driving to an object for
+      // pickup, we can't re-verify the accuracy of our final position, so
+      // just proceed.
+      
+      return result;
+    } // DriveToPlaceCarriedObjectAction::CheckIfDone()
 
 #pragma mark ---- TurnInPlaceAction ----
     
