@@ -790,7 +790,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		return false;
 	}
 
-	public bool AttemptAssistedDrop( ObservedObject objectToDrop, out Vector3 pos, out float facing_rad) {
+	public bool AttemptAssistedPlacement( ObservedObject objectToDrop, out Vector3 pos, out float facing_rad) {
 		pos = Vector3.zero;
 		facing_rad = 0f;
 
