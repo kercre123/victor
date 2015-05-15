@@ -31,12 +31,13 @@ def parse_arguments():
         type=str.lower,
         nargs='?',
         default='generate',
-        choices=['generate', 'build', 'clean', 'delete'],
+        choices=['generate', 'build', 'clean', 'delete', 'wipeall!'],
         help=textwrap.dedent('''\
             generate (default) -- generate or regenerate projects
             build -- generate, then build the generated projects
             clean -- issue the clean command to projects
             delete -- delete all generated projects
+            wipeall! -- wipe all ignored files in the entire repo (including generated projects)
             '''))
     parser.add_argument(
         '-p',
@@ -83,6 +84,12 @@ def parse_arguments():
         action='store_const',
         const='debug',
         help='shortcut for --config Debug')
+    group.add_argument(
+        '-v',
+        '--verbose',
+        dest='verbose',
+        action='store_true',
+        help='echo all commands to the console')
     
     
     options = parser.parse_args()
@@ -147,9 +154,39 @@ class PlatformConfiguration(object):
     def delete(self):
         ankibuild.util.File.rm_rf(self.project_dir)
 
+def dialog(prompt):
+    result = None
+    while not result:
+        result = raw_input(prompt).strip().lower()
+    return result in ('y', 'yes')
+
+def wipe_all():
+	print('')
+	print('Checking what to remove:')
+	ankibuild.util.File.execute(['git', 'clean', '-Xdn'])
+	ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdn'])
+	if not dialog('Are you sure you want to wipe all ignored files from the entire repository?\n' +
+			'You will need to do a full reimport in Unity and rebuild everything from scratch.\n' +
+			'If Unity is open, it will also be closed without saving. (Y/N)'):
+		sys.exit('Operation cancelled.')
+	else:
+		print('')
+		print('Wiping all ignored files from the entire repository...')
+		old_dir = ankibuild.util.File.pwd()
+		ankibuild.util.File.cd(REPO_ROOT)
+		ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
+		ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
+		ankibuild.util.File.cd(old_dir)
+		ankibuild.util.File.execute(['killall', 'Unity'], ignore_result=True)
+		print('DONE command {0}'.format(options.command))
 
 if __name__ == '__main__':
     options = parse_arguments()
+    ankibuild.util.ECHO_ALL = options.verbose
+    
+    if options.command == 'wipeall!':
+    	wipe_all()
+    	sys.exit()
     
     if options.command in ['generate', 'build']:
         unpack_libraries()
@@ -167,8 +204,8 @@ if __name__ == '__main__':
         config.run()
         
     if options.command == 'delete':
+        print('')
+        print('Deleting generated folders (if empty)...')
         ankibuild.util.File.rmdir(options.output_dir)
     
     print('DONE command {0} on {1}'.format(options.command, platforms_text))
-
-
