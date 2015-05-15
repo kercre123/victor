@@ -8,7 +8,7 @@ OBJS:=user/user_main.o user/client.o user/block_relay.o driver/uart.o
 SRCS:=user/user_main.c user/client.c user/block_relay.c driver/uart.c
 
 CWD := $(shell pwd)
-GCC_FOLDER:=/home/dc/esp8266/xtensa-toolchain-build/build-lx106
+GCC_FOLDER:=../../../coretech-external/espressif/xtensa-toolchain-build/build-lx106
 ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
 FW_TOOL:= $(CWD)/../../../coretech-external/espressif/other/esptool/esptool
 SDK:= ../../../coretech-external/espressif/iot_sdk
