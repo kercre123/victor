@@ -5,8 +5,9 @@ public class GameActions : MonoBehaviour
 {
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
-	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.NUM_MODES];
-	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.NUM_MODES];
+	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.Count];
+	[SerializeField] protected AudioClip[] activeBlockModeSounds = new AudioClip[(int)ActiveBlock.Mode.Count];
+	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.Count];
 	
 	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
 	public virtual string PICK_UP { get { return "Pick Up"; } }
@@ -17,8 +18,8 @@ public class GameActions : MonoBehaviour
 	public virtual string CHANGE { get { return "Change"; } }
 	public virtual string CANCEL { get { return "Cancel"; } }
 
-	protected const string TOP = " TOP";
-	protected const string BOTTOM = " BOTTOM";
+	protected const string TOP = " Top";
+	protected const string BOTTOM = " Bottom";
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
@@ -54,6 +55,11 @@ public class GameActions : MonoBehaviour
 		return actionEnabledSounds[(int)mode];
 	}
 
+	public AudioClip GetActiveBlockModeSound( ActiveBlock.Mode mode )
+	{
+		return activeBlockModeSounds[(int)mode];
+	}
+
 	private void CheckChangedButtons()
 	{
 		for( int i = 0; i < buttons.Length; ++i )
@@ -82,22 +88,21 @@ public class GameActions : MonoBehaviour
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
-			if( buttons.Length > 1 )
-			{
-				if( robot.carryingObject != null && robot.carryingObject.isActive )
-				{
-					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
-				}
-			}
+//			if( buttons.Length > 1 )
+//			{
+//				if( robot.carryingObject != null && robot.carryingObject.isActive )
+//				{
+//					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
+//				}
+//			}
 
 			if( robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
 			{
-				buttons[0].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
+				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
 			}
-			else
-			{
-				buttons[0].SetMode( ActionButton.Mode.DROP, null );
-			}
+
+			buttons[0].SetMode( ActionButton.Mode.DROP, null );
+
 		}
 		else
 		{
@@ -320,7 +325,8 @@ public class GameActions : MonoBehaviour
 			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Mode)typeIndex );
 
 			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
-			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockMode( activeBlock.mode ) );
+			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+			if( audio != null ) PlayDelayed( GetActiveBlockModeSound( activeBlock.mode ), actionButtonSound != null ? actionButtonSound.length: 0f );
 		}
 	}
 
@@ -349,5 +355,20 @@ public class GameActions : MonoBehaviour
 			robot.searching = true;
 			//Debug.Log( "On Press" );
 		}
+	}
+
+	protected void PlayDelayed( AudioClip clip, float delay, bool loop = false )
+	{
+		StartCoroutine( _PlayDelayed( clip, delay, loop ) );
+	}
+	
+	private IEnumerator _PlayDelayed( AudioClip clip, float delay, bool loop = false )
+	{
+		yield return new WaitForSeconds( delay );
+
+		audio.volume = 1f;
+		audio.loop = loop;
+		audio.clip = clip;
+		audio.Play();
 	}
 }

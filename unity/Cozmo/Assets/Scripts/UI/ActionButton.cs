@@ -18,7 +18,7 @@ public class ActionButton : MonoBehaviour
 		ALIGN,
 		CHANGE,
 		CANCEL,
-		NUM_MODES
+		Count
 	}
 
 	[System.Serializable]
@@ -155,14 +155,14 @@ public class ActionButton : MonoBehaviour
 
 			hint.text.gameObject.SetActive( true/*solidHint*/ );
 
-			if( solidHint )
-			{
-				hint.text.color = hint.solidText;
-			}
-			else
-			{
-				hint.text.color = hint.ghostText;
-			}
+//			if( solidHint )
+//			{
+//				hint.text.color = hint.solidText;
+//			}
+//			else
+//			{
+//				hint.text.color = hint.ghostText;
+//			}
 		}
 
 		switch( mode )

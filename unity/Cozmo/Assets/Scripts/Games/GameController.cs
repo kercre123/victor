@@ -99,6 +99,9 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
+		if(countdownText != null) countdownText.gameObject.SetActive(false);
+		if(textScore != null) textScore.gameObject.SetActive(false);
+
 	}
 
 	void Update () {
@@ -201,9 +204,11 @@ public class GameController : MonoBehaviour {
 		if(currentActions != null) currentActions.gameObject.SetActive(true);
 	}
 
+	protected const string suffix_seconds = "s";
+
 	protected virtual void RefreshHUD() {
 		if(textScore != null && scores != null && scores.Length > 0) {
-			textScore.text = "score: " + scores[0].ToString();
+			textScore.text = scores[0].ToString();
 		}
 
 		if(textState != null) {
@@ -212,9 +217,9 @@ public class GameController : MonoBehaviour {
 
 		if (textTime != null && state == GameState.PLAYING) {
 			if (maxPlayTime > 0f) {
-				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString () + suffix_seconds;
 			} else {
-				textTime.text = Mathf.CeilToInt (stateTimer).ToString ();
+				textTime.text = Mathf.CeilToInt (stateTimer).ToString () + suffix_seconds;
 			}
 		} else {
 			textTime.text = string.Empty;

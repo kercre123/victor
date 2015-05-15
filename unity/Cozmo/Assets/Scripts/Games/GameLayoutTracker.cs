@@ -38,6 +38,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
 	[SerializeField] Button letsBuildButton;
+	[SerializeField] GameObject hideWhenInventoryComplete;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
 	[SerializeField] Camera layoutInstructionsCamera = null;
@@ -47,7 +48,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] RectTransform block2dAnchor = null;
 
 	[SerializeField] Text instructionsTitle;
-	[SerializeField] Text instructionsProgress;
+	[SerializeField] Text textProgress;
 	[SerializeField] Button buttonStartPlaying;
 	[SerializeField] ScreenMessage screenMessage = null;
 	[SerializeField] float coplanarFudge = 0.5f;
@@ -59,6 +60,11 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip layoutValidatedSound = null;
 	[SerializeField] AudioClip validPredictedDropSound = null;
 	[SerializeField] AudioClip invalidPredictedDropSound = null;
+
+	[SerializeField] Image image_cozmoTD;
+	[SerializeField] LayoutBlock2d carriedBlock2d;
+	[SerializeField] ChangeCubeModeButton button_change;
+	//dmd todo add vector lines from carried button to layout cubes it could satisfy?
 
 
 	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
@@ -92,7 +98,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
 
-	
 	bool lastValidPredictedDrop = false;
 
 	void OnEnable () {
@@ -129,7 +134,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		//no apt layout found?  then just disable
 		if(currentLayout == null) {
 			layoutPreviewPanel.SetActive(false);
-			hideDuringPreview.SetActive(true);
+			if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 			Phase = LayoutTrackerPhase.DISABLED;
 			return;
 		}
@@ -141,6 +146,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		instructionsTitle.text = fullName;
 
 		if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(false);
+		if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(true);
 
 		RefreshLayout();
 
@@ -232,6 +238,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
+
+		if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
+
+
+
+		}
 	}
 
 	void OnDisable() {
@@ -269,16 +281,23 @@ public class GameLayoutTracker : MonoBehaviour {
 			case LayoutTrackerPhase.DISABLED:
 				layoutInstructionsPanel.SetActive(false);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+
+				image_cozmoTD.gameObject.SetActive(false);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 				break;
 
 			case LayoutTrackerPhase.INVENTORY:
 				ShowAllBlocks();
 				layoutInstructionsPanel.SetActive(false);
 				layoutPreviewPanel.SetActive(!hidden);
-				hideDuringPreview.SetActive(false);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(false);
 				layoutInstructionsCamera.gameObject.SetActive(false);
+				image_cozmoTD.gameObject.SetActive(false);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 
 				if(robot != null) robot.SetHeadAngle();
 
@@ -298,31 +317,49 @@ public class GameLayoutTracker : MonoBehaviour {
 					letsBuildButton.gameObject.SetActive(inventoryComplete);
 				}
 
+				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);
+
 				break;
 
 			case LayoutTrackerPhase.BUILDING:
-//				if(validCount == 0 && !string.IsNullOrEmpty(currentLayout.initialInstruction)) {
-//					instructionsProgress.text = currentLayout.initialInstruction;
-//				}
-//				else if(validCount == 1 && !string.IsNullOrEmpty(currentLayout.secondInstruction)) {
-//					instructionsProgress.text = currentLayout.secondInstruction;
-//				}
-//				else {
-					instructionsProgress.text = "Cozmo's build progress: " + validCount + " / " + currentLayout.blocks.Count;
-				//}
 
-				layoutInstructionsPanel.SetActive(!hidden);
+				textProgress.text = validCount + " / " + currentLayout.blocks.Count;
+
+				bool hideNow = hidden;
+
+//				if(!hideNow && robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
+//					hideNow = !IsActiveBlockCorrectColor(robot.carryingObject as ActiveBlock);
+//				}
+
+				layoutInstructionsPanel.SetActive(!hideNow);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
-				layoutInstructionsCamera.gameObject.SetActive(!hidden);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
+				layoutInstructionsCamera.gameObject.SetActive(!hideNow);
+
+				if(robot != null) {
+					if(robot.carryingObject == null) {
+						image_cozmoTD.gameObject.SetActive(false);
+						carriedBlock2d.gameObject.SetActive(false);
+						button_change.gameObject.SetActive(false);
+					}
+					else {
+						image_cozmoTD.gameObject.SetActive(robot.carryingObject.isActive);
+						carriedBlock2d.Initialize(robot.carryingObject);
+						carriedBlock2d.gameObject.SetActive(robot.carryingObject.isActive);
+						button_change.gameObject.SetActive(robot.carryingObject.isActive);
+					}
+				}
+
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
-				instructionsProgress.text = "Layout completed!";
+				textProgress.text = "Layout completed!";
 				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
-				hideDuringPreview.SetActive(true);
+				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
 				layoutInstructionsCamera.gameObject.SetActive(!hidden);
+				carriedBlock2d.gameObject.SetActive(false);
+				button_change.gameObject.SetActive(false);
 
 				break;
 
@@ -725,6 +762,18 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
+	}
+
+	bool IsActiveBlockCorrectColor(ActiveBlock activeBlockToMatch) {
+
+		for(int i=0; i<currentLayout.blocks.Count; i++) {
+			BuildInstructionsCube block = currentLayout.blocks[i];
+			if(block.Validated) continue;
+			if(block.objectFamily != 3) continue;
+			if(activeBlockToMatch.mode == block.activeBlockMode) return true;
+		}
+
+		return false;
 	}
 
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {

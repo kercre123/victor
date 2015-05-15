@@ -553,27 +553,57 @@ public class Robot
 		RobotEngineManager.instance.SendMessage();
 	}
 
+	public float GetHeadAngleFactor() {
 
-	public void SetHeadAngle( float angle_rad = 0f )
+		float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
+
+		if(angle >= 0f) {
+			angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad) );
+		}
+		else {
+			angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad) );
+		}
+
+		return angle;
+	}
+
+
+	public bool IsHeadAngleRequestUnderway() {
+		return Time.time < lastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
+	}
+
+	/// <summary>
+	/// Sets the head angle.
+	/// </summary>
+	/// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
+	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
+	public void SetHeadAngle( float angleFactor = 0f, bool useExactAngle=false )
 	{
-		if( headTrackingObject == -1 ) // if not head tracking, don't send same message as last
-		{
-			if( Mathf.Abs( angle_rad - headAngle_rad ) < 0.001f || Mathf.Abs( headAngleRequested - angle_rad ) < 0.001f )
-			{
-				return;
+
+		//Debug.Log("SetHeadAngle("+angleFactor+")");
+
+		float radians = angleFactor;
+
+		if(!useExactAngle) {
+			if(angleFactor >= 0f) {
+				radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
+			}
+			else {
+				radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
 			}
 		}
-		else if( Time.time < lastHeadAngleRequestTime + CozmoUtil.LOCAL_BUSY_TIME ) // else, override head tracking after delay
-		{
-			return;
-		}
 
-		headAngleRequested = angle_rad;
+		if( IsHeadAngleRequestUnderway() && Mathf.Abs( headAngleRequested - radians ) < 0.001f ) return;
+		if( headTrackingObject == -1 && Mathf.Abs( radians - headAngle_rad ) < 0.001f) return;
+
+
+		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
 
-		Debug.Log( "Set Head Angle " + angle_rad );
+		Debug.Log( "Set Head Angle " + radians );
 
-		SetHeadAngleMessage.angle_rad = angle_rad;
+		SetHeadAngleMessage.angle_rad = radians;
+
 		SetHeadAngleMessage.accel_rad_per_sec2 = 2f;
 		SetHeadAngleMessage.max_speed_rad_per_sec = 5f;
 
@@ -652,9 +682,13 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public float GetLiftHeightFactor() {
+		return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
+	}
+
 	public void SetLiftHeight( float height_factor )
 	{
-		if( ( Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height_factor == liftHeightRequested ) || liftHeight_factor == height_factor ) return;
+		if( ( Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested ) || liftHeight_factor == height_factor ) return;
 
 		liftHeightRequested = height_factor;
 		lastLiftHeightRequestTime = Time.time;
