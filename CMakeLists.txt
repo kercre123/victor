@@ -13,7 +13,6 @@ set(COZMO_ENGINE_DIR ${PROJECT_SOURCE_DIR}/lib/anki/cozmo-engine)
 set(CORETECH_ROOT_DIR ${COZMO_ENGINE_DIR}/coretech)
 
 include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
-include("${COZMO_ENGINE_DIR}/clad/clad.cmake")
 
 if(NOT DEFINED ANKI_IOS_BUILD)
   set(ANKI_IOS_BUILD 0)
@@ -39,6 +38,9 @@ else()
 endif(ANKI_IOS_BUILD)
 
 
+include("${COZMO_ENGINE_DIR}/clad/clad.cmake")
+
+set(ANKI_UTIL_DIR "${COZMO_ENGINE_DIR}/tools/anki-util")
 # Defining this will make Webots controller and plugins targets in cozmo-engine 
 # get copied to cozmo-game/simulator
 set(COZMO_GAME_SIMULATOR_DIR ${PROJECT_SOURCE_DIR}/simulator)
@@ -58,20 +60,18 @@ include_directories(
   ${CORETECH_ROOT_DIR}/vision/include
   ${CORETECH_ROOT_DIR}/planning/include
   ${CLAD_DIR}/support/cpp/include
+  "${ANKI_UTIL_DIR}/source/3rd"
+  "${ANKI_UTIL_DIR}/source/3rd/jsoncpp"
+  "${ANKI_UTIL_DIR}/source/anki"
+  "${ANKI_UTIL_DIR}/libs/packaged/include"
 )
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(clad)
 add_subdirectory(lib/anki/cozmo-engine)
 add_subdirectory(game)
+add_subdirectory(unity/CSharpBinding)
 
-if(ANKI_IOS_BUILD)
-  add_subdirectory(unity/CSharpBinding)
-else()
+if(NOT ANKI_IOS_BUILD)
   add_subdirectory(simulator)
-
-  #if(APPLE)
-  #  add_subdirectory(tools/showVoxels)
-  #endif()
-
 endif()

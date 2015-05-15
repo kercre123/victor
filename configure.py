@@ -9,11 +9,18 @@ import sys
 import textwrap
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(REPO_ROOT, 'lib/anki/cozmo-engine/tools/build-tools/tools'))
+ENGINE_ROOT = os.path.join(REPO_ROOT, 'lib', 'anki', 'cozmo-engine')
+sys.path.insert(0, os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'tools', 'build-tools', 'tools'))
 import ankibuild.cmake
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
+
+def unpack_libraries():
+	saved_cwd = ankibuild.util.File.pwd()
+	ankibuild.util.File.cd(os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'libs', 'packaged'))
+	ankibuild.util.File.execute('./unpackLibs.sh')
+	ankibuild.util.File.cd(saved_cwd)
 
 def parse_arguments():
     
@@ -364,8 +371,12 @@ if __name__ == '__main__':
     
     if options.command == 'wipeall!':
         if not dialog('Are you sure you want to wipe all ignored files from the entire repository?\n' +
-                'You will need to do a full reimport in Unity and rebuild everything from scratch. (Y/N)'):
+                'You will need to do a full reimport in Unity and rebuild everything from scratch.\n' +
+                'If Unity is open, it will also be closed without saving. (Y/N)'):
             sys.exit('Operation cancelled.')
+    
+    if options.command in ['generate', 'build', 'install', 'run']:
+        unpack_libraries()
     
     if len(options.platforms) != 1:
         platforms_text = 'platforms {{{0}}}'
@@ -396,6 +407,7 @@ if __name__ == '__main__':
         ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
         ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
         ankibuild.util.File.cd(old_dir)
+        ankibuild.util.File.execute(['killall', 'Unity'], ignore_result=True)
     
     print('DONE command {0} on {1}'.format(options.command, platforms_text))
     

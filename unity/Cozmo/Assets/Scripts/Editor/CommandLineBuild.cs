@@ -13,7 +13,8 @@ public class CommandLineBuild {
     try {
       argv = System.Environment.GetCommandLineArgs();
       Debug.Log("args: " + System.Environment.CommandLine);
-      foreach (string arg in argv) {
+      for (int k = 0; k < argv.Length; ++k) {
+        string arg = argv[k];
         Debug.Log("arg => " + arg);
       }
     }
@@ -22,12 +23,13 @@ public class CommandLineBuild {
     }
 
     ProjectBuilder builder = new ProjectBuilder();
-	
     string result = builder.Build(argv);
-	if (!string.IsNullOrEmpty(result)) {
-		// nonempty string is an error
-		throw new Exception(result);
-	}
+    
+    if (!String.IsNullOrEmpty(result)) {
+      // If builder.Build returned a response, then there was an error.
+      // Throw an exception as an attempt to ensure that Unity exits with an error code.yep
+      throw new Exception(result);
+    }
   }
           
 }

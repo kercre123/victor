@@ -79,9 +79,9 @@ public class RobotEngineManager : MonoBehaviour {
 			return;
 		}
 		
-		CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_create (configuration.text);
+		AnkiResult result = (AnkiResult)CozmoBinding.cozmo_startup (configuration.text);
 		
-		if (result != CozmoResult.OK) {
+		if (result != AnkiResult.RESULT_OK) {
 			Debug.LogError("cozmo_engine_create error: " + result.ToString(), this);
 		} else {
 			engineHostInitialized = true;
@@ -93,8 +93,8 @@ public class RobotEngineManager : MonoBehaviour {
 		if (engineHostInitialized) {
 			engineHostInitialized = false;
 			
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_destroy();
-			if (result != CozmoResult.OK) {
+			AnkiResult result = (AnkiResult)CozmoBinding.cozmo_shutdown();
+			if (result != AnkiResult.RESULT_OK) {
 				Debug.LogError("cozmo_engine_destroy error: " + result.ToString(), this);
 			}
 		}
@@ -221,8 +221,8 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		if (engineHostInitialized) {
-			CozmoResult result = (CozmoResult)CozmoBinding.cozmo_game_update (Time.realtimeSinceStartup);
-			if (result != CozmoResult.OK) {
+			AnkiResult result = (AnkiResult)CozmoBinding.cozmo_update (Time.realtimeSinceStartup);
+			if (result != AnkiResult.RESULT_OK) {
 				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
 		}

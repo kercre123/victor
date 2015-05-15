@@ -87,6 +87,7 @@ public class ProjectBuilder {
     
     Debug.Log(String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, buildPath, enableDebugging));
     iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
+    ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 
     BuildTarget buildTarget = BuildTarget.StandaloneOSXIntel64;
     switch (platform) {
@@ -103,7 +104,11 @@ public class ProjectBuilder {
       }
     case "ios":
       {
+#if UNITY_4_6
         buildTarget = BuildTarget.iPhone;
+#else
+        buildTarget = BuildTarget.iOS;
+#endif
         if (sdk == "iphoneos") {
           PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
         }
@@ -120,14 +125,10 @@ public class ProjectBuilder {
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
 
+    ConfigurePlayerSettings(buildTarget, config);
+
     // Stop playing
     EditorApplication.isPlaying = false;
-	 
-	// Make sure Temp directory exists
-	string tempPath = System.IO.Path.Combine (System.IO.Path.GetDirectoryName (Application.dataPath), "Temp");
-	if (!System.IO.Directory.Exists (tempPath)) {
-		System.IO.Directory.CreateDirectory (tempPath);
-	}
 
     // Force-Reimport Assets
     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
@@ -137,6 +138,7 @@ public class ProjectBuilder {
 
     // restore player settings
     PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
+    PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
 
     return result;
   }
@@ -147,18 +149,54 @@ public class ProjectBuilder {
   /// </summary>
   public BuildOptions GetBuildOptions(BuildTarget target, string config, bool enableDebugging) {
     BuildOptions options = BuildOptions.AcceptExternalModificationsToPlayer;
-    if (target == BuildTarget.iPhone) {
+#if UNITY_4_6
+	if (target == BuildTarget.iPhone) {
+#else
+	if (target == BuildTarget.iOS) {
+#endif
       // Overwrite any existing xcodeproject files for iOS
       options = BuildOptions.None;
     }
     if (config == "debug") {
-      options = (options | BuildOptions.Development);
+      options |= BuildOptions.Development;
     }
     if (enableDebugging) {
-      options = (options | BuildOptions.AllowDebugging);
+      options |= BuildOptions.AllowDebugging;
     }
     return options;
   }
 
+  /// <summary>
+  /// Configures player settings for a target-config pairing.
+  /// In an ideal world, we would never have to change the player settings.
+  /// However, on iOS this is necessary to get appropriate debug symbols & C# exception behavior
+  /// for optimal debugging.
+  /// </summary>
+  /// <param name="target">Target build platform</param>
+  /// <param name="config">Target build config</param>
+  private void ConfigurePlayerSettings(BuildTarget target, string config) {
+    // We currently only need to set custom options for iOS
+#if UNITY_4_6
+	if (target != BuildTarget.iPhone) {
+#else
+	if (target != BuildTarget.iOS) {
+#endif
+      return;
+    }
+
+    switch (config) {
+    case "debug":
+      {
+        PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
+      }
+      break;
+    case "profile":
+    case "release":
+      {
+        PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.FastButNoExceptions;
+      }
+      break;
+    }
+  }
 
 }

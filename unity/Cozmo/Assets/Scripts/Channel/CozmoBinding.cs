@@ -6,19 +6,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 /// <summary>
-/// Result codes that can be returned from Cozmo functions.
+/// Result codes that can be returned from C functions.
 /// </summary>
-public enum CozmoResult {
-	OK = 0,
-	
-	// BindingResult
-	BINDING_OK = 0,
-	BINDING_ERROR_NOT_INITIALIZED = 0x8001,
-	BINDING_ERROR_ALREADY_INITIALIZED = 0x8002,
-	BINDING_ERROR_INVALID_CONFIGURATION = 0x8003,
-	BINDING_ERROR_FAILED_INITIALIZATION = 0x8005,
-	
-	// Anki::Result
+public enum AnkiResult {
+	RESULT_OK = 0,
 	RESULT_FAIL                      = 0x00000001,
 	RESULT_FAIL_MEMORY               = 0x01000000,
 	RESULT_FAIL_OUT_OF_MEMORY        = 0x01000001,
@@ -30,8 +21,6 @@ public enum CozmoResult {
 	RESULT_FAIL_INVALID_PARAMETER    = 0x03000000,
 	RESULT_FAIL_INVALID_OBJECT       = 0x04000000,
 	RESULT_FAIL_INVALID_SIZE         = 0x05000000,
-
-	CSHARP_NOT_AVAILABLE = 0x00040001,
 }
 
 public static class CozmoBinding {
@@ -43,12 +32,12 @@ public static class CozmoBinding {
 	public static extern void cozmo_pop_log(StringBuilder buffer, int max_length);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_game_create (string configurationData);
+	public static extern int cozmo_startup (string configuration_data);
 
 	[DllImport("__Internal")]
-	public static extern int cozmo_game_destroy();
+	public static extern int cozmo_shutdown();
 	
 	[DllImport("__Internal")]
-	public static extern int cozmo_game_update(float currentTime);
+	public static extern int cozmo_update(float current_time);
 }
 
