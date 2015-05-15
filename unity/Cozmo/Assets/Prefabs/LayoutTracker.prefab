@@ -2052,7 +2052,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &109562
 GameObject:
   m_ObjectHideFlags: 1
@@ -13253,10 +13253,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .217773438
-    y: .0729166642
-    width: .564453125
-    height: .85546875
+    x: .155401856
+    y: .0525037833
+    width: .689196348
+    height: .895930052
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -18166,7 +18166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .752941191, g: .752941191, b: .752941191, a: .125490203}
+  m_Color: {r: .501960814, g: .501960814, b: .501960814, a: .501960814}
   m_FontData:
     m_Font: {fileID: 12800000, guid: c0648979e7eeb4fa1890f7413ac3ca43, type: 3}
     m_FontSize: 18
@@ -18199,7 +18199,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_NormalColor: {r: .501960814, g: .501960814, b: .501960814, a: .501960814}
     m_HighlightedColor: {r: .960784316, g: .960784316, b: .960784316, a: 1}
     m_PressedColor: {r: .784313738, g: .784313738, b: .784313738, a: 1}
     m_DisabledColor: {r: .784313738, g: .784313738, b: .784313738, a: .501960814}
@@ -18245,7 +18245,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: .125490203}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Sprite: {fileID: 21300000, guid: 5fd4e44b1304444f393942b0e9794699, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -23865,7 +23865,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: .5}
-  m_SizeDelta: {x: -6, y: -111}
+  m_SizeDelta: {x: -2, y: -111}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22409730
 RectTransform:
@@ -24194,7 +24194,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 6, y: -60}
-  m_SizeDelta: {x: 180, y: 40}
+  m_SizeDelta: {x: 180, y: 30}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &22430128
 RectTransform:
