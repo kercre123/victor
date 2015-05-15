@@ -15,13 +15,15 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
-%     makeNewResultsDirectory = true;
+    %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
         %         {'tracking_c'},...
-        {'tracking_c_variableTimes','withoutSnap'},...
-        {'tracking_c_variableTimes','withSnap'},...
+        {'tracking_variableTimes','klt_withSnap'},...
+        {'tracking_variableTimes','klt_withoutSnap'},...
+        {'tracking_variableTimes','c_withoutSnap'},...
+        {'tracking_variableTimes','c_withSnap'},...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -41,6 +43,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     
     % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     algorithmParameters.normalizeImage = false;
+
+    algorithmParameters.whichAlgorithm = 'c_6dof';
     
     % Initialize the track
     algorithmParameters.init_scaleTemplateRegionPercent  = 0.9;
@@ -71,6 +75,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.detection.component_solidMultiplyThreshold = 2.0;
     algorithmParameters.detection.component_minHollowRatio = 1.0;
     algorithmParameters.detection.quads_minQuadArea = 100 / 4;
+    algorithmParameters.detection.quads_minLaplacianPeakRatio = 5;
     algorithmParameters.detection.quads_quadSymmetryThreshold = 2.0;
     algorithmParameters.detection.quads_minDistanceFromImageEdge = 2;
     algorithmParameters.detection.decode_minContrastRatio = 0; % EVERYTHING has contrast >= 1, by definition
@@ -99,10 +104,10 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     
     algorithmParametersOrig = algorithmParameters;
     
-%     if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
-%         disp('There is a repeat');
-%         keyboard
-%     end
+    %     if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
+    %         disp('There is a repeat');
+    %         keyboard
+    %     end
     
     resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, makeNewResultsDirectory);
     
@@ -115,47 +120,51 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         
         if strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_c')
             % Default parameters
-        elseif strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_c_variableTimes')
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_variableTimes')
             isSimpleTest = false;
             
-            numShakingPixels = [0, 1, 2, 4, 8];
+            numShakingPixels = [0, 1, 2, 4, 8, 16];
             
             temporalFrameFractions = [1, 10];
             
             percentMarkersCorrect_window = cell(length(numShakingPixels), length(temporalFrameFractions), 1);
             
-            if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
-                snapSuffix = '_snapped';
-            else
-                snapSuffix = '';
-            end
-            
             for iShake = 1:length(numShakingPixels)
-
+                
                 % Note: figuring out change time is tricky, so this reruns everything every time
                 for iMaxFraction = 1:length(temporalFrameFractions)
                     maxFraction = temporalFrameFractions(iMaxFraction);
-
+                    
                     percentMarkersCorrect_window{iShake}{iMaxFraction} = zeros(length(allTestData), maxFraction);
-
+                    
                     for iPiece = 1:maxFraction
                         for iTest = 1:length(allTestData)
                             numPoses = length(allTestData{iTest}.jsonData.Poses);
                             frameIndexes = round(linspace(0, numPoses, maxFraction+1));
                             startIndexes = 1 + frameIndexes(1:(end-1));
                             endIndexes = frameIndexes(2:end);
-
+                            
                             curAllTestData = allTestData(iTest);
                             curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
-
+                            
                             algorithmParametersN = algorithmParametersOrig;
-                            algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes%s/test%d/shake%d/fraction%d/piece%d', snapSuffix, iTest, numShakingPixels(iShake), maxFraction, iPiece);
+                            algorithmParametersN.extractionFunctionName = sprintf('tracking_variableTimes%s/test%d/shake%d/fraction%d/piece%d', runWhichAlgorithms{iAlgorithm}{2}, iTest, numShakingPixels(iShake), maxFraction, iPiece);
                             algorithmParametersN.shaking = {'horizontal', numShakingPixels(iShake)};
                             
-                            if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
+                            if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withoutSnap')
+                                % The rest of the parameters are defaults
+                            elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withSnap')
                                 algorithmParametersN.track_maxSnapToClosestQuadDistance = 4*5;
+                            elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withoutSnap')
+                                algorithmParametersN.whichAlgorithm = 'matlab_klt';
+                            elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withSnap')
+                                algorithmParametersN.whichAlgorithm = 'matlab_klt';
+                                algorithmParametersN.track_maxSnapToClosestQuadDistance = 4*5;
+                            else
+                                keyboard
+                                assert(false);
                             end
-
+                            
                             if length(curAllTestData{1}.jsonData.Poses) > 10
                                 localNumComputeThreads.basics = numComputeThreads.basics;
                                 localNumComputeThreads.perPose = numComputeThreads.perPose;
@@ -163,38 +172,42 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                                 localNumComputeThreads.basics = 1;
                                 localNumComputeThreads.perPose = 1;
                             end
-
+                            
                             curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
-
+                            
                             percentMarkersCorrect_window{iShake}{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
                         end % for iTest = 1:length(allTestData)
                     end % for iPiece = 1:maxFraction
                 end % for iMaxFraction = 1:length(temporalFrameFractions)
-
+                
                 markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
                 markersCorrectImage(:,:,1) = 255;
-
+                
                 cx = 1;
                 for iMaxFraction = 1:length(temporalFrameFractions)
                     curResults = percentMarkersCorrect_window{iShake}{iMaxFraction};
-
+                    
                     markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
-
+                    
                     cx = cx + size(curResults,2) + 1;
                 end
-
+                
                 newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
                 markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
-
+                
                 %figureHandle = figure(10 + iShake);
                 %set(figureHandle, 'Name', sprintf('Shake%d', numShakingPixels(iShake)));
                 
-                if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'withSnap')
-                    figure(11);
-                else
+                if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withoutSnap')
                     figure(10);
+                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withSnap')
+                    figure(11);
+                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withoutSnap')
+                    figure(12);
+                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withSnap')
+                    figure(13);
                 end
-                
+                                
                 numX = ceil(sqrt(length(numShakingPixels)));
                 numY = ceil(length(numShakingPixels) / numX);
                 subplot(numY, numX, iShake);
