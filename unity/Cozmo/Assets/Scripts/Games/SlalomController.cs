@@ -14,8 +14,8 @@ public class SlalomController : GameController {
 	[SerializeField] Text textProgress = null;
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
+	[SerializeField] AudioClip finalLapSound = null;
 	[SerializeField] AudioClip[] lapsRemainingSound = null;
-	[SerializeField] AudioClip[] numberSounds = null;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -103,17 +103,17 @@ public class SlalomController : GameController {
 		scores[0] += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		//audio.PlayOneShot(playerScoreSound);
-		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap + 1;
-		if(lapsRemaining == 1) {
-			if(lapsRemaining < numberSounds.Length) PlayDelayed(numberSounds[lapsRemaining], cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
+		if(lapsRemaining == 0) {
+			if(finalLapSound != null) PlayDelayed(finalLapSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
 			Debug.Log("final lap");
 		}
 		else {
-			if(lapsRemainingSound.Length > 0 && numberSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < numberSounds.Length) {
-				lapsRemainingSound[0] = numberSounds[lapsRemaining];
+			if(lapsRemainingSound.Length > 0 && timerSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < timerSounds.Length && timerSounds[lapsRemaining].sound != null) {
+				lapsRemainingSound[0] = timerSounds[lapsRemaining].sound;
 				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
 			}
-			Debug.Log(lapsRemaining + " laps remaining");
+			Debug.Log((lapsRemaining + 1) + " laps remaining");
 		}
 	}
 
