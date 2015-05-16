@@ -135,6 +135,7 @@ public class Robot
 	private U2G.TrackHeadToObject TrackHeadToObjectMessage;
 	private U2G.FaceObject FaceObjectMessage;
 	private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
+	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
 	private U2G.SetLiftHeight SetLiftHeightMessage;
 	private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
@@ -299,6 +300,8 @@ public class Robot
 		TrackHeadToObjectMessage = new U2G.TrackHeadToObject();
 		FaceObjectMessage = new U2G.FaceObject();
 		PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
+		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
+
 		GotoPoseMessage = new U2G.GotoPose();
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
@@ -654,7 +657,7 @@ public class Robot
 
 	public void PickAndPlaceObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		PickAndPlaceObjectMessage .objectID = selectedObject;
+		PickAndPlaceObjectMessage.objectID = selectedObject;
 		PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
@@ -663,6 +666,23 @@ public class Robot
 		RobotEngineManager.instance.Message.PickAndPlaceObject = PickAndPlaceObjectMessage;
 		RobotEngineManager.instance.SendMessage();
 
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+
+	public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false  )
+	{
+		PlaceObjectOnGroundMessage.x_mm = position.x;
+		PlaceObjectOnGroundMessage.y_mm = position.y;
+		PlaceObjectOnGroundMessage.rad = facing_rad;
+		PlaceObjectOnGroundMessage.level = System.Convert.ToByte( level );
+		PlaceObjectOnGroundMessage.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		
+		Debug.Log( "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed );
+		
+		RobotEngineManager.instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
+		RobotEngineManager.instance.SendMessage();
+		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
