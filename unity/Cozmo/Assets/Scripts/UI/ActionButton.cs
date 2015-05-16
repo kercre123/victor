@@ -128,7 +128,7 @@ public class ActionButton : MonoBehaviour
 		{
 			if( button != null ) button.gameObject.SetActive( false );
 			if( hint.text != null ) hint.text.gameObject.SetActive( false );
-			image.gameObject.SetActive( false );
+			gameObject.SetActive( false );
 			return;
 		}
 
@@ -194,7 +194,7 @@ public class ActionButton : MonoBehaviour
 		}
 
 		if( button != null ) button.gameObject.SetActive( true );
-		image.gameObject.SetActive( true );
+		gameObject.SetActive( true );
 	}
 
 	private static Sprite GetModeSprite( Mode mode )

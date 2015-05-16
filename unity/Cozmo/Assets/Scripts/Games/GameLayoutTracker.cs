@@ -353,7 +353,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
-				textProgress.text = "Layout completed!";
+				textProgress.text = currentLayout.blocks.Count + " / " + currentLayout.blocks.Count;
 				layoutInstructionsPanel.SetActive(!hidden);
 				layoutPreviewPanel.SetActive(false);
 				if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
@@ -778,6 +778,15 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
+	bool IsUnvalidatedMatchingStackedBlock(BuildInstructionsCube block, ObservedObject objectToMatch) {
+		if(block.Validated) return false;
+		if(block.cubeBelow == null) return false;
+		if(block.objectFamily != objectToMatch.Family) return false;
+		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
+		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		return true;
+	}
+
 	bool IsActiveBlockCorrectColor(ActiveBlock activeBlockToMatch) {
 
 		for(int i=0; i<currentLayout.blocks.Count; i++) {
@@ -790,25 +799,33 @@ public class GameLayoutTracker : MonoBehaviour {
 		return false;
 	}
 
-	public bool AttemptAssistedPlacement( ObservedObject objectToDrop, out Vector3 pos, out float facing_rad) {
+	public bool AttemptAssistedPlacement( ObservedObject objectToPlace, out Vector3 pos, out float facing_rad) {
 		pos = Vector3.zero;
 		facing_rad = 0f;
 
 		if(robot == null) return false;
-		if(objectToDrop == null) return false;
+		if(objectToPlace == null) return false;
 		
 		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 
 		ignoreActiveColor = true;
 
-		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace));
 		
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
-			Debug.Log ("No block of this type should be placed here.");
-			return false;
+
+			newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace));
+			if(newBlocks == null || newBlocks.Count == 0) {
+				Debug.Log ("This block is not required in this layout.");
+				return false;
+			}
+			else {
+				return AttemptAssistedStack(objectToPlace, newBlocks);
+			}
 		}
 
+		
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
 		
 		if(priorBlocks == null || priorBlocks.Count == 0) {
@@ -853,15 +870,107 @@ public class GameLayoutTracker : MonoBehaviour {
 		pos = GetPoseFromLayoutForTransform(bestBlock.transform, out facing_rad, out facingVector, closestFace);
 
 		if (bestBlock.objectFamily == 3) {
-			ActiveBlock activeBlock = objectToDrop as ActiveBlock;
+			ActiveBlock activeBlock = objectToPlace as ActiveBlock;
 			if(activeBlock.mode != bestBlock.activeBlockMode) {
 				activeBlock.mode = bestBlock.activeBlockMode;
 				activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
 			}
 		}
 
+		robot.DropObjectAtPose(pos, facing_rad);
+
 		return true;
 	}
+
+	public bool AttemptAssistedStack( ObservedObject objectToStack, List<BuildInstructionsCube> potentiallyStackable)  {
+
+		List<BuildInstructionsCube> potentiallyStackedUpon = currentLayout.blocks.FindAll (x => x.cubeBelow == null && x.cubeAbove != null && !x.cubeAbove.Validated); //newBlocks.Find ( y => y.cubeBelow == x ) != null );
+		
+		if(potentiallyStackedUpon == null || potentiallyStackedUpon.Count == 0) {
+			//if this will be our first ground block to validate, automatically valid location
+			Debug.Log ("No prior Blocks.");
+			return false;
+		}
+
+		float closestRange = float.MaxValue;
+
+		BuildInstructionsCube layoutBlockToStack = potentiallyStackable [0];
+		ObservedObject objectToStackUpon = potentiallyStackedUpon [0].AssignedObject;
+		if(objectToStackUpon == null) {
+			objectToStackUpon = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon [0], x) );
+		}
+
+		for(int i=0;i<potentiallyStackedUpon.Count;i++) {
+			ObservedObject obj = potentiallyStackedUpon[i].AssignedObject;
+			if(obj == null) {
+				obj = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[i], x) );
+			}
+			if(obj == null) continue;
+
+			float range = (obj.WorldPosition - robot.WorldPosition).magnitude;
+			if(range < closestRange) {
+				BuildInstructionsCube layoutBlock = potentiallyStackedUpon[i].cubeAbove;
+				if(layoutBlock != null) {
+					closestRange = range;
+					layoutBlockToStack = layoutBlock;
+				}
+			}
+		}
+
+		if(objectToStack.isActive) {
+			ActiveBlock activeBlock = objectToStack as ActiveBlock;
+			if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
+				activeBlock.mode = layoutBlockToStack.activeBlockMode;
+				activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+			}
+		}
+
+		robot.PickAndPlaceObject( objectToStackUpon );
+		if(CozmoBusyPanel.instance != null)	{
+			
+			if(objectToStack != null) {
+				string desc = "Cozmo is attempting to stack\n";
+				
+				if(objectToStack.isActive) {
+					desc += "an Active Block";
+				}
+				else {
+					desc += "a ";
+					
+					if(CozmoPalette.instance != null) {
+						desc += CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType) + " ";
+					}
+					
+					desc += "Block";
+				}
+				
+				if(objectToStackUpon != null) {
+					
+					desc += "\n on top of ";
+					
+					if(objectToStackUpon.isActive) {
+						desc += "an Active Block";
+					}
+					else {
+						desc += "a ";
+						
+						if(CozmoPalette.instance != null) {
+							desc += CozmoPalette.instance.GetNameForObjectType((int)objectToStackUpon.ObjectType) + " ";
+						}
+						
+						desc += "Block";
+					}
+				}
+				
+				desc += ".";
+				
+				CozmoBusyPanel.instance.SetDescription(desc);
+			}
+		}
+
+		return true;
+	}
+
 
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
 		errorText = "";

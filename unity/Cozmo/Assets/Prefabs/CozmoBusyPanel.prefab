@@ -81,6 +81,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 441328}
   - 114: {fileID: 11469752}
+  - 82: {fileID: 8227032}
   m_Layer: 0
   m_Name: CozmoBusyPanel
   m_TagString: Untagged
@@ -153,6 +154,64 @@ Transform:
   - {fileID: 22441328}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!82 &8227032
+AudioSource:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 169740}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
 --- !u!114 &11431730
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -164,7 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 7
+  depth: 8
 --- !u!114 &11441328
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -442,6 +501,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text_actionDescription: {fileID: 11441332}
   panel: {fileID: 169752}
+  affirmativeSound: {fileID: 8300000, guid: 9f5c6ecdec2714504a73d638d58b42ac, type: 3}
 --- !u!222 &22241328
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -494,7 +554,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 15
+  m_SortingOrder: 20
 --- !u!224 &22441328
 RectTransform:
   m_ObjectHideFlags: 1

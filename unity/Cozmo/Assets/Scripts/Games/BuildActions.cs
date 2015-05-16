@@ -101,7 +101,6 @@ public class BuildActions : GameActions {
 			float rad;
 			if(tracker.AttemptAssistedPlacement(robot.carryingObject, out pos, out rad)) {
 				ActionButtonClick();
-				robot.DropObjectAtPose(pos, rad);
 				return;
 			}
 
@@ -118,8 +117,8 @@ public class BuildActions : GameActions {
 //			}
 		}
 
-		ActionButtonClick();
-		base.Stack(onRelease, selectedObject);
+		//ActionButtonClick();
+		//base.Stack(onRelease, selectedObject);
 	}
 
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {

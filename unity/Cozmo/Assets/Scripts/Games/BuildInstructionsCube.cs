@@ -17,7 +17,8 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] public Color baseColor = Color.blue;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
-	[SerializeField] public BuildInstructionsCube cubeBelow = null;
+	public BuildInstructionsCube cubeBelow = null;
+	public BuildInstructionsCube cubeAbove = null;
 
 	[SerializeField] SpriteRenderer[] symbols;
 	[SerializeField] SpriteRenderer[] symbolFrames;
