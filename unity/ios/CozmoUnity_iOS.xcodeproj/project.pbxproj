@@ -56,7 +56,7 @@
 		83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2570A0E62FF8A00468741 /* QuartzCore.framework */; };
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
-		F88FB9101B06BD4400755437 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F88FB90F1B06BD4400755437 /* libjsoncpp.a */; };
+		DCA1B9D51B06CDE400173FF4 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DCA1B9D41B06CDE400173FF4 /* libjsoncpp.a */; };
 		F89985CF1B06BC8E005AA296 /* CrashReporter.mm in Sources */ = {isa = PBXBuildFile; fileRef = F89985791B06BC8E005AA296 /* CrashReporter.mm */; };
 		F89985D01B06BC8E005AA296 /* iPhone_OrientationSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = F899857C1B06BC8E005AA296 /* iPhone_OrientationSupport.mm */; };
 		F89985D11B06BC8E005AA296 /* iPhone_Profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F899857D1B06BC8E005AA296 /* iPhone_Profiler.cpp */; };
@@ -180,6 +180,7 @@
 		83B2574B0E63022200468741 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCA1B9D41B06CDE400173FF4 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = "../../generated/game-ios/obj.target/project/gyp/Debug/libjsoncpp.a"; sourceTree = "<group>"; };
 		F88FB90F1B06BD4400755437 /* libjsoncpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjsoncpp.a; path = "../../generated/game-ios/obj.target/project/gyp/Debug/libjsoncpp.a"; sourceTree = "<group>"; };
 		F89985781B06BC8E005AA296 /* CrashReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporter.h; sourceTree = "<group>"; };
 		F89985791B06BC8E005AA296 /* CrashReporter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CrashReporter.mm; sourceTree = "<group>"; };
@@ -291,8 +292,8 @@
 				462D5BB31B0567CC0027DC17 /* libCozmo_Basestation.a in Frameworks */,
 				462D5BB41B0567CC0027DC17 /* libCozmo_Game.a in Frameworks */,
 				462D5BBA1B0572380027DC17 /* libCSharpBinding.a in Frameworks */,
-				F88FB9101B06BD4400755437 /* libjsoncpp.a in Frameworks */,
 				462D5BB71B0567CC0027DC17 /* libkazmath.a in Frameworks */,
+				DCA1B9D51B06CDE400173FF4 /* libjsoncpp.a in Frameworks */,
 				462D5BB81B0567CC0027DC17 /* libutil.a in Frameworks */,
 				468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
@@ -352,6 +353,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DCA1B9D41B06CDE400173FF4 /* libjsoncpp.a */,
 				F88FB90F1B06BD4400755437 /* libjsoncpp.a */,
 				462D5BC31B0576230027DC17 /* libopencv_video.a */,
 				462D5BC41B0576230027DC17 /* libopencv_features2d.a */,
@@ -863,6 +865,7 @@
 					"/Users/gregnage/coretech-external/build/opencv-ios/multiArchLibs",
 					"/Users/adam.ruja/Documents/dev/cozmo-game/build/unity/ios/Debug-iphoneos/Libraries",
 					"/Users/adam.ruja/Documents/dev/cozmo-game/generated/game-ios/obj.target/project/gyp/Debug",
+					"/Users/donovandrane/cozmo-game/generated/game-ios/obj.target/project/gyp/Debug",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -913,6 +916,7 @@
 					"/Users/gregnage/coretech-external/build/opencv-ios/multiArchLibs",
 					"/Users/adam.ruja/Documents/dev/cozmo-game/build/unity/ios/Debug-iphoneos/Libraries",
 					"/Users/adam.ruja/Documents/dev/cozmo-game/generated/game-ios/obj.target/project/gyp/Debug",
+					"/Users/donovandrane/cozmo-game/generated/game-ios/obj.target/project/gyp/Debug",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
