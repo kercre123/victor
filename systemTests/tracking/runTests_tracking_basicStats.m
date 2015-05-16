@@ -51,6 +51,21 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                 workQueue{iWork}.basicStats_filenames{iPose},...
                 'pixelShift', pixelShift);
             
+            if strcmp(algorithmParameters.grayvalueShift{1}, 'uniformPercent')
+                % This is saturating addition/subtraction
+                image = double(image);
+                
+                if mod(iPose, 2) == 0
+                    image = image * (1.0 + algorithmParameters.grayvalueShift{2});
+                else
+                    image = image * (1.0 - algorithmParameters.grayvalueShift{2});
+                end
+                
+                image = uint8(image);
+%                 figure(10); imshow(image);
+%                 pause(.03);
+            end
+            
             if size(image,1) ~= jsonData.CameraCalibration.nrows || size(image,2) ~= jsonData.CameraCalibration.ncols
                 disp(sprintf('Size mismatch %dx%d != %dx%d', size(image,2), size(image,1), jsonData.CameraCalibration.ncols, jsonData.CameraCalibration.nrows));
                 keyboard

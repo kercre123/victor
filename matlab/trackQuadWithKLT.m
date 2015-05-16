@@ -41,14 +41,19 @@ function quad2 = trackQuadWithKLT(image1, quad1, image2, varargin)
     
     points0Good = points0(curStatus == 1);
     points1Good = points1(curStatus == 1);
-        
-    homography = cv.findHomography(points0Good, points1Good, 'Method', 'Ransac');
-    
-    quad1h = [quad1,ones(4,1)];    
-    quad2 = homography * quad1h';
-    quad2 = quad2(1:2,:) ./ repmat(quad2(3,:), [2,1]);
 
-    quad2 = quad2';
+    if numValidPoints >= 4
+    
+        homography = cv.findHomography(points0Good, points1Good, 'Method', 'Ransac');
+
+        quad1h = [quad1,ones(4,1)];    
+        quad2 = homography * quad1h';
+        quad2 = quad2(1:2,:) ./ repmat(quad2(3,:), [2,1]);
+
+        quad2 = quad2';
+    else
+        quad2 = quad1;
+    end
     
 %     keyboard
     
