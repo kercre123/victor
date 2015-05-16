@@ -59,6 +59,8 @@ namespace Anki {
         
         // Lookup table for which four LEDs are on top, given the current up axis
         // (in the order upper left, upper right, lower left, lower right)
+        // Note that these always assume the the orientation of the top side is
+        // such that the upper left corner of the marker is at position 0.
         const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
           // Xneg (Front Face on top)
