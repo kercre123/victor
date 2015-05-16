@@ -739,10 +739,15 @@ namespace Anki {
     {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
-      GetTopMarker(topMarkerPose);
+      const Vision::KnownMarker& topMarker = GetTopMarker(topMarkerPose);
       const Vec2f topMarkerCenter(topMarkerPose.GetTranslation());
       Vec2f v(xyPosition);
       v -= topMarkerCenter;
+      
+      PRINT_INFO("ActiveCube %d's TopMarker is = %s, angle = %.1fdeg\n",
+                 GetID().GetValue(),
+                 Vision::MarkerTypeStrings[topMarker.GetCode()],
+                 topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees());
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();

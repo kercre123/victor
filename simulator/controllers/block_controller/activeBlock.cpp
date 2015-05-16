@@ -62,16 +62,16 @@ namespace Anki {
         const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
           // Xneg (Front Face on top)
-          {2, 3, 6, 7, 0, 1, 4, 5},
+          {0, 2, 4, 6, 1, 3, 5, 7},
           
           // Xpos (Back Face on top)
-          {4, 5, 0, 1, 6, 7, 2, 3},
+          {5, 7, 1, 3, 4, 6, 0, 2},
           
           // Yneg (Right on top)
           {1, 3, 0, 2, 5, 7, 4, 6},
           
           // Ypos (Left Face on top)
-          {2, 0, 3, 1, 6, 4, 7, 5},
+          {4, 6, 5, 7, 0, 2, 1, 3},
           
           // Zneg (Bottom Face on top) -- NOTE: Flipped 180deg around X axis!!
           {3, 2, 1, 0, 7, 6, 5, 4},
