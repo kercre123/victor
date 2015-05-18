@@ -134,6 +134,18 @@ public class GoldRushController : GameController {
 		}
 	}
 
+	protected override void Enter_BUILDING ()
+	{
+		base.Enter_BUILDING ();
+		RobotEngineManager.instance.SuccessOrFailure += PickedUpActiveBlock;
+	}
+
+	protected override void Exit_BUILDING ()
+	{
+		base.Exit_BUILDING ();
+		RobotEngineManager.instance.SuccessOrFailure -= PickedUpActiveBlock;
+	}
+
 	protected override void Update_BUILDING ()
 	{
 		base.Update_BUILDING ();
@@ -570,14 +582,14 @@ public class GoldRushController : GameController {
 		}
 	}
 
-	void CheckForGoldDropOff(bool success, int action_type)
+	void PickedUpActiveBlock(bool success, RobotActionType action_type)
 	{
-		if( success )
+		if( success 
+		   && ( action_type == RobotActionType.PICKUP_OBJECT_HIGH || action_type == RobotActionType.PICKUP_OBJECT_LOW)
+		   && robot.carryingObject.isActive )
 		{
-			if( action_type == 8 )
-			{
-				StartCoroutine(AwardPoints());
-			}
+			// turn on  the block's lights
+			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR);
 		}
 	}
 
