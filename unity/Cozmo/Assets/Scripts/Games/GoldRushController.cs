@@ -37,8 +37,6 @@ public class GoldRushController : GameController {
 	[SerializeField] float lostRadius;	//leaving lost radius will put you back in searching mode
 	[SerializeField] float returnRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float detectRadius; //pulsing will accelerate from detect to find ranges
-	[SerializeField] float extractionTime = 1.5f; //time it takes to extract
-	[SerializeField] float rewardTime = 1.5f; //time it takes to reward
 	[SerializeField] int numDropsForBonusTime = 1;
 
 	[SerializeField] float baseTimeBonus = 30f;
