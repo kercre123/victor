@@ -15,6 +15,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "json/json.h"
+#include <iostream>
 #include <vector>
 
 

@@ -10,7 +10,6 @@ set(CORETECH_EXTERNAL_DIR $ENV{CORETECH_EXTERNAL_DIR})
 message("-- CORETECH_EXTERNAL_DIR = " ${CORETECH_EXTERNAL_DIR})
 
 include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
-include("${CMAKE_CURRENT_SOURCE_DIR}/clad/clad.cmake")
 
 if(NOT DEFINED ANKI_IOS_BUILD)
   set(ANKI_IOS_BUILD 0)
@@ -29,10 +28,6 @@ if(ANKI_IOS_BUILD)
   
   ankiProject(CozmoEngine_iOS)
   
-  # TODO: this is a weird place for this, but until we have an external iOS build, it's the only
-  #       thing we need from coretech-external for the iOS build, so i'm just doing it here for simplicity
-  add_subdirectory(${CORETECH_EXTERNAL_DIR}/jsoncpp "${CMAKE_CURRENT_BINARY_DIR}/jsoncpp")
-  
 else()
   
   ankiProject(CozmoEngine)
@@ -40,7 +35,9 @@ else()
 endif(ANKI_IOS_BUILD)
 
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/clad/clad.cmake")
 
+set(ANKI_UTIL_DIR "${PROJECT_SOURCE_DIR}/tools/anki-util")
 set(COZMO_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(COZMO_BASESTATION_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/basestation/include)
 file(GLOB COZMO_INCLUDE_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/shared/*.h")
@@ -58,12 +55,18 @@ include_directories(
   coretech/vision/include
   coretech/planning/include
   ${CLAD_DIR}/support/cpp/include
+  "${ANKI_UTIL_DIR}/source/3rd"
+  "${ANKI_UTIL_DIR}/source/3rd/jsoncpp"
+  "${ANKI_UTIL_DIR}/source/anki"
+  "${ANKI_UTIL_DIR}/libs/packaged/include"
 )
+
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(clad)
 add_subdirectory(basestation)
 add_subdirectory(coretech)
+add_subdirectory(tools/anki-util)
 
 
 # Don't build these if ANKI_IOS_BUILD is defined:

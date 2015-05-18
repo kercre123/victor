@@ -890,11 +890,12 @@ namespace Anki
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
                 if(useID)
                 {
-                  if(objectAndId.second == nullptr) {
+                  Vision::ObservableObject* object = objectAndId.second;
+                  if(object == nullptr) {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
                                         objectAndId.first.GetValue());
-                  } else {
+                  } else if(object->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
