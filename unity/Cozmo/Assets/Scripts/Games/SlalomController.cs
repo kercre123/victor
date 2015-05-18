@@ -365,31 +365,12 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
+		audio.pitch = currentCorner == 0 ? 1 : 5 - currentCorner;
 		audio.PlayOneShot(cornerTriggeredSound);
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
-		if(currentCorner == 0) {
-			for(int i = 0; i < robot.lights.Length; ++i) {
-				robot.lights[i].onColor = currentColor_unit;
-				robot.lights[i].offColor = 0;
-				robot.lights[i].onPeriod_ms = 125;
-				robot.lights[i].offPeriod_ms = 125;
-			}
-		}
-		else {
-			for(int i = 0; i < robot.lights.Length; ++i) {
-				if(i < currentCorner) {
-					robot.lights[i].onColor = currentColor_unit;
-				}
-				else {
-					robot.lights[i].onColor = 0;
-				}
-				robot.lights[i].onPeriod_ms = 1000;
-				robot.lights[i].offPeriod_ms = 0;
-			}
-		}
-
+		UpdateRobotLights(currentCorner);
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
 	}
 
@@ -412,6 +393,30 @@ public class SlalomController : GameController {
 		}
 
 		return corner;
+	}
+
+	private void UpdateRobotLights(int corner)
+	{
+		if(corner == 0) {
+			for(int i = 0; i < robot.lights.Length; ++i) {
+				robot.lights[i].onColor = currentColor_unit;
+				robot.lights[i].offColor = 0;
+				robot.lights[i].onPeriod_ms = 125;
+				robot.lights[i].offPeriod_ms = 125;
+			}
+		}
+		else {
+			for(int i = 0; i < robot.lights.Length; ++i) {
+				if(i < corner) {
+					robot.lights[i].onColor = currentColor_unit;
+				}
+				else {
+					robot.lights[i].onColor = 0;
+				}
+				robot.lights[i].onPeriod_ms = 1000;
+				robot.lights[i].offPeriod_ms = 0;
+			}
+		}
 	}
 
 	private void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
@@ -540,6 +545,12 @@ public class SlalomController : GameController {
 		base.Enter_RESULTS();
 
 		CelebrationLights();
+	}
+
+	protected override void Exit_RESULTS() {
+		base.Exit_RESULTS();
+
+		ClearLights();
 	}
 
 	private void CelebrationLights()

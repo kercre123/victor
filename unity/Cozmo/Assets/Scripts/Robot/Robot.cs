@@ -818,26 +818,24 @@ public class Robot
 	private void SetBackpackLEDs()
 	{
 		SetBackpackLEDsMessage.robotID = ID;
-		
-		for( int i = 0; i < lights.Length; ++i )
+
+		for( int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j )
 		{
-			if( i == 3 ) // HACK: index 2 and 3 are same lights
+			SetBackpackLEDsMessage.onColor[j] = lights[i].onColor;
+			SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
+			SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
+			SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
+			SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
+			SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
+
+			if( i == 2 && lights.Length > 3 ) // HACK: index 2 and 3 are same lights
 			{
-				SetBackpackLEDsMessage.onColor[i] = lights[i-1].onColor;
-				SetBackpackLEDsMessage.offColor[i] = lights[i-1].offColor;
-				SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i-1].onPeriod_ms;
-				SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i-1].offPeriod_ms;
-				SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i-1].transitionOnPeriod_ms;
-				SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i-1].transitionOffPeriod_ms;
-			}
-			else
-			{
-				SetBackpackLEDsMessage.onColor[i] = lights[i].onColor;
-				SetBackpackLEDsMessage.offColor[i] = lights[i].offColor;
-				SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
-				SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
-				SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
-				SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
+				SetBackpackLEDsMessage.onColor[++j] = lights[i].onColor;
+				SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
+				SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
+				SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
+				SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
+				SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
 			}
 		}
 		
