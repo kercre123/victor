@@ -445,7 +445,12 @@ namespace Anki {
           }
         }
 
-        _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        // Make sure we can see the object, unless we are carrying it (i.e. if we
+        // are doing a DriveToPlaceCarriedObject action)
+        if(!object->IsBeingCarried()) {
+          _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        }
+        
         _compoundAction.SetIsPartOfCompoundAction(true);
         
       } // if/else possiblePreActionPoses.empty()
@@ -567,8 +572,19 @@ namespace Anki {
       
       return result;
       
-    } // CheckPreconditions()
+    } // DriveToPlaceCarriedObjectAction::Init()
     
+    
+    ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = _compoundAction.Update(robot);
+      
+      // We completed driving to the pose. Unlike driving to an object for
+      // pickup, we can't re-verify the accuracy of our final position, so
+      // just proceed.
+      
+      return result;
+    } // DriveToPlaceCarriedObjectAction::CheckIfDone()
 
 #pragma mark ---- TurnInPlaceAction ----
     
@@ -616,6 +632,7 @@ namespace Anki {
                                        Radians turnAngleTol,
                                        Radians maxTurnAngle, bool headTrackWhenDone)
     : _compoundAction{}
+    , _compoundActionDone(false)
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _turnAngleTol(turnAngleTol.getAbsoluteVal())
@@ -630,6 +647,7 @@ namespace Anki {
     {
       IAction::Reset();
       _compoundAction.ClearActions();
+      _compoundActionDone = false;
     }
     
     ActionResult FaceObjectAction::Init(Robot &robot)
@@ -729,10 +747,9 @@ namespace Anki {
       //  just using neck joint height as an approximation for the camera's
       //  current height, since its actual height changes slightly as the head
       //  rotates around the neck.
-      const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
       const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      //const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
       //const Radians headAngle = std::atan2(heightDiff, distanceXY);
-      //_compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
       
       // TODO: Just commanding fixed head angle depending on height of object.
       //       Verify this is ok with the wide angle lens. If not, dynamically compute
@@ -744,8 +761,6 @@ namespace Anki {
       }
       _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
       
-
-      
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);
       
@@ -756,15 +771,19 @@ namespace Anki {
       _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
       
       return ActionResult::SUCCESS;
-    }
+    } // FaceObjectAction::Init()
     
     ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
     {
       // Tick the compound action until it completes
-      ActionResult compoundResult = _compoundAction.Update(robot);
-      
-      if(compoundResult != ActionResult::SUCCESS) {
-        return compoundResult;
+      if(!_compoundActionDone) {
+        ActionResult compoundResult = _compoundAction.Update(robot);
+        
+        if(compoundResult != ActionResult::SUCCESS) {
+          return compoundResult;
+        } else {
+          _compoundActionDone = true;
+        }
       }
 
       // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
@@ -833,7 +852,7 @@ namespace Anki {
       }
       
       return ActionResult::SUCCESS;
-    } // CheckIfDone()
+    } // FaceObjectAction::CheckIfDone()
 
 
     const std::string& FaceObjectAction::GetName() const
@@ -889,6 +908,7 @@ namespace Anki {
     : _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
+    , _inPosition(false)
     {
       if(_headAngle < MIN_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
@@ -903,26 +923,48 @@ namespace Anki {
       }
     }
     
+    bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
+    {
+      const bool inPosition = (!robot.IsHeadMoving() &&
+                               NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat()));
+      
+      return inPosition;
+    }
+    
+    
     ActionResult MoveHeadToAngleAction::Init(Robot &robot)
     {
-      // TODO: Add ability to specify speed/accel
-      if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 5, 10) != RESULT_OK) {
-        return ActionResult::FAILURE_ABORT;
-      } else {
-        return ActionResult::SUCCESS;
+      ActionResult result = ActionResult::SUCCESS;
+      
+      _inPosition = IsHeadInPosition(robot);
+      
+      if(!_inPosition) {
+        // TODO: Add ability to specify speed/accel
+        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 10, 20) != RESULT_OK) {
+          result = ActionResult::FAILURE_ABORT;
+        }
       }
+      
+      return result;
     }
     
     ActionResult MoveHeadToAngleAction::CheckIfDone(Robot &robot)
     {
       ActionResult result = ActionResult::RUNNING;
       
+      if(!_inPosition) {
+        _inPosition = IsHeadInPosition(robot);
+      }
+      
       // Wait to get a state message back from the physical robot saying its head
       // is in the commanded position
       // TODO: Is this really necessary in practice?
-      if(NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat()) ||
-         !robot.IsHeadMoving()) {
+      if(_inPosition) {
         result = ActionResult::SUCCESS;
+      } else {
+        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+                         "Waiting for head to get in position: %.1fdeg vs. %.1fdeg\n",
+                         RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees());
       }
       
       return result;
@@ -934,6 +976,7 @@ namespace Anki {
     : _height_mm(height_mm)
     , _heightTolerance(tolerance_mm)
     , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
+    , _inPosition(false)
     {
       
     }
@@ -941,7 +984,8 @@ namespace Anki {
     MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
     : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm)
     {
-      
+      _name = "MoveLiftTo";
+      _name += GetPresetName(preset);
     }
     
     
@@ -957,8 +1001,37 @@ namespace Anki {
       return LUT.at(preset);
     }
     
+    const std::string& MoveLiftToHeightAction::GetPresetName(Preset preset)
+    {
+      static const std::map<Preset, std::string> LUT = {
+        {Preset::LOW_DOCK,   "LowDock"},
+        {Preset::HIGH_DOCK,  "HighDock"},
+        {Preset::CARRY,      "HeightCarry"},
+        {Preset::OUT_OF_FOV, "OutOfFOV"},
+      };
+      
+      static const std::string unknown("UnknownPreset");
+      
+      auto iter = LUT.find(preset);
+      if(iter == LUT.end()) {
+        return unknown;
+      } else {
+        return iter->second;
+      }
+    }
+    
+    bool MoveLiftToHeightAction::IsLiftInPosition(const Robot& robot) const
+    {
+      const bool inPosition = (NEAR(_height_mm, robot.GetLiftHeight(), _heightTolerance) &&
+                               !robot.IsLiftMoving());
+      
+      return inPosition;
+    }
+    
     ActionResult MoveLiftToHeightAction::Init(Robot& robot)
     {
+      ActionResult result = ActionResult::SUCCESS;
+      
       if(_height_mm < 0.f) {
         // Choose whatever is closer to current height, LOW or CARRY:
         const f32 currentHeight = robot.GetLiftHeight();
@@ -973,17 +1046,25 @@ namespace Anki {
         }
       }
       
-      // TODO: Add ability to specify speed/accel
-      if(robot.MoveLiftToHeight(_height_mm, 5, 10) != RESULT_OK) {
-        return ActionResult::FAILURE_ABORT;
-      } else {
-        return ActionResult::SUCCESS;
+      _inPosition = IsLiftInPosition(robot);
+      
+      if(!_inPosition) {
+        // TODO: Add ability to specify speed/accel
+        if(robot.MoveLiftToHeight(_height_mm, 10, 20) != RESULT_OK) {
+          result = ActionResult::FAILURE_ABORT;
+        }
       }
+      
+      return result;
     }
     
     ActionResult MoveLiftToHeightAction::CheckIfDone(Robot& robot)
     {
       ActionResult result = ActionResult::RUNNING;
+      
+      if(!_inPosition) {
+        _inPosition = IsLiftInPosition(robot);
+      }
       
       // TODO: Somehow verify robot got command to move lift before declaring success
       /*
@@ -995,10 +1076,13 @@ namespace Anki {
       }
       else
        */
-      if(NEAR(_height_mm, robot.GetLiftHeight(), _heightTolerance) ||
-         !robot.IsLiftMoving())
-      {
+      
+      if(_inPosition) {
         result = ActionResult::SUCCESS;
+      } else {
+        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+                         "Waiting for lift to get in position: %.1fmm vs. %.1fmm\n",
+                         robot.GetLiftHeight(), _height_mm);
       }
       
       return result;
@@ -1606,6 +1690,7 @@ namespace Anki {
         }
         
         _verifyAction = new VisuallyVerifyObjectAction(_carryingObjectID, _carryObjectMarker->GetCode());
+        _verifyAction->SetIsPartOfCompoundAction(true);
         
       } // if/else IsCarryingObject()
       

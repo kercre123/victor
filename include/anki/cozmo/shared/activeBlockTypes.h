@@ -12,12 +12,15 @@ namespace Cozmo {
   // Note that the face labels are done such that they match the way Blocks'
   // faces are defined (imagine the robot is looking along the x axis, facing
   // the "Front" of the block, then it makes sense...)
+  // NOTE: In the orientation displayed below, the Top marker is rightside up on screen
+  //   and we are looking at the back side (i.e. inside) of the Bottom marker
+  //   which is upside down.
   //
   //         (Left)                             Y
   //        0 ----- 4         2 ----- 6        ^
-  //        |       |         |       |        |
+  //        |   ^   |         |       |        |
   // (Front)|  TOP  |(Back)   |  BTM  |        |
-  //        |       |         |       |        +----> X
+  //        |       |         |   \/  |        +----> X
   //        1 ----- 5         3 ----- 7
   //         (Right)
   //
@@ -79,14 +82,14 @@ namespace Cozmo {
   
     
   typedef enum {
-    UP_AXIS_UNKNOWN = -1,
     UP_AXIS_Xneg = 0,
     UP_AXIS_Xpos,
     UP_AXIS_Yneg,
     UP_AXIS_Ypos,
     UP_AXIS_Zneg,
     UP_AXIS_Zpos,
-    NUM_UP_AXES
+    NUM_UP_AXES,
+    UP_AXIS_UNKNOWN = NUM_UP_AXES + 1,
   } UpAxis;
     
 } // namespace Cozmo
