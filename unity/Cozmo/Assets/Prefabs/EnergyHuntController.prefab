@@ -936,11 +936,12 @@ MonoBehaviour:
   playButton: {fileID: 0}
   buildInstructionsLayoutFilter: 
   resultsPanel: {fileID: 11459702}
+  instructionsSound: {fileID: 0}
   gameStartSound: {fileID: 8300000, guid: 08703ad4536e54d47b9007f9d66b31b3, type: 3}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
   playingLoopSound: {fileID: 0}
   gameOverSound: {fileID: 0}
-  resultsLoopSound: {fileID: 0}
+  resultsLoopSound: {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   stateActions:
   - {fileID: 11499864}
   - {fileID: 11411886}
