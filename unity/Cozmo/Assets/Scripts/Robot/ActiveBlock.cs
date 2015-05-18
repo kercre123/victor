@@ -114,8 +114,6 @@ public class ActiveBlock : ObservedObject
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-	public uint Color { get; private set; }
-
 	public Light[] lights { get; private set; }
 
 	public bool lightsChanged
@@ -240,8 +238,6 @@ public class ActiveBlock : ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
 	{
-		this.Color = onColor;
-
 		for( int i = 0; i < lights.Length; ++i )
 		{
 			if( lights[i].Position( (Light.PositionFlag)whichLEDs ) )

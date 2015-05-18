@@ -670,7 +670,7 @@ public class Robot
 	}
 
 
-	public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false  )
+	public void DropObjectAtPose( Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false )
 	{
 		PlaceObjectOnGroundMessage.x_mm = position.x;
 		PlaceObjectOnGroundMessage.y_mm = position.y;
@@ -852,10 +852,10 @@ public class Robot
 		{
 			lights[i].onColor = CozmoPalette.ColorToUInt( onColor );
 			lights[i].offColor = CozmoPalette.ColorToUInt( offColor );
-			lights[i].onPeriod_ms = 1000;
-			lights[i].offPeriod_ms = 0;
-			lights[i].transitionOnPeriod_ms = 0;
-			lights[i].transitionOffPeriod_ms = 0;
+			lights[i].onPeriod_ms = onPeriod_ms;
+			lights[i].offPeriod_ms = offPeriod_ms;
+			lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+			lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
 		}
 	}
 }
