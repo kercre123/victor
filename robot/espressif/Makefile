@@ -21,6 +21,8 @@ FOLDERPREFIX:=$(GCC_FOLDER)/root/bin
 PREFIX:=$(FOLDERPREFIX)/xtensa-lx106-elf-
 CC:=$(PREFIX)gcc
 
+LX106:=../../../coretech-external/espressif/lx106
+
 CFLAGS:=-mlongcalls -I$(SDK)/include -Imyclib -Iinclude -Iuser -Os -I$(SDK)/include/
 
 LDFLAGS_CORE:=\
@@ -38,6 +40,7 @@ LDFLAGS_CORE:=\
 	$(SDK)/lib/libphy.a \
 	$(SDK)/lib/libmain.a \
 	$(SDK)/lib/libpp.a \
+	$(LX106)/lib/libc.a \
 	$(XTGCCLIB) \
 	-T $(SDK)/ld/eagle.app.v6.ld
 

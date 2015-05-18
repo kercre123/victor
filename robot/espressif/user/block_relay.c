@@ -106,8 +106,8 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
       os_printf("\tSending to %d bytes to block %d @ %d.%d.%d.%d:%d\r\n", event->par, block, blockServer->proto.udp->remote_ip[0], blockServer->proto.udp->remote_ip[1], blockServer->proto.udp->remote_ip[2], blockServer->proto.udp->remote_ip[3], blockServer->proto.udp->remote_port);
 #endif
       // Put the length into the serial header
-      blockPkt[4] = event->par & 0xff;
-      blockPkt[5] = (event->par >> 8) & 0xff;
+      blockPkt[4] = (event->par-MESSAGE_START)        & 0xff;
+      blockPkt[5] = ((event->par-MESSAGE_START) >> 8) & 0xff;
       // Send out the packet
       err = espconn_sent(blockServer, blockPkt, event->par);
       if (err < 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
@@ -200,7 +200,7 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
   return ESPCONN_OK;
 }
 
-sint8 ICACHE_FLASH_ATTR blockRelayCheckMessage(uint8* data, unsigned short len)
+sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
 {
 #if 0
   os_printf("BR check message %d[%d]\r\n", data[0], len);
