@@ -13253,10 +13253,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .155401856
-    y: .0525037833
-    width: .689196348
-    height: .895930052
+    x: .215928495
+    y: .0729166791
+    width: .56814301
+    height: .85546869
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -17314,7 +17314,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 1
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209608}
   - {fileID: 21209574}
@@ -17444,7 +17446,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209592}
   - {fileID: 21209566}
@@ -17566,7 +17570,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21283316}
   - {fileID: 21209662}
@@ -17869,7 +17875,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11483378}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209582}
   - {fileID: 21209710}
@@ -17990,7 +17998,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209694}
   - {fileID: 21283358}
@@ -18785,7 +18795,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11409750}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21283298}
   - {fileID: 21283380}
@@ -19081,7 +19093,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209748}
   - {fileID: 21209542}
@@ -19253,7 +19267,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11485186}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21209564}
   - {fileID: 21283304}
@@ -19347,7 +19363,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285064}
   - {fileID: 21285054}
@@ -19412,7 +19430,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285094}
   - {fileID: 21285128}
@@ -19477,7 +19497,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11485170}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285112}
   - {fileID: 21285134}
@@ -19566,7 +19588,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11485166}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285052}
   - {fileID: 21285114}
@@ -19617,7 +19641,9 @@ MonoBehaviour:
   objectFamily: 3
   activeBlockMode: 5
   baseColor: {r: .501960814, g: .501960814, b: .501960814, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 11485186}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285182}
   - {fileID: 21285152}
@@ -19682,7 +19708,9 @@ MonoBehaviour:
   objectFamily: 2
   activeBlockMode: 0
   baseColor: {r: 0, g: 0, b: 0, a: 1}
+  isHeld: 0
   cubeBelow: {fileID: 0}
+  cubeAbove: {fileID: 0}
   symbols:
   - {fileID: 21285176}
   - {fileID: 21285180}

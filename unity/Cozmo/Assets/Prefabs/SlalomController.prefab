@@ -1349,7 +1349,7 @@ MonoBehaviour:
   notificationAudio: {fileID: 8292068}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
   scoreToWin: 300
-  numPlayers: 1
+  starThresholds: 
   textScore: {fileID: 11418322}
   textError: {fileID: 0}
   textState: {fileID: 11475706}
@@ -1362,13 +1362,23 @@ MonoBehaviour:
   gameStartSound: {fileID: 8300000, guid: 9587b14d6089a468b880999908b95c92, type: 3}
   playerScoreSound: {fileID: 0}
   playingLoopSound: {fileID: 0}
-  gameOverSound: {fileID: 8300000, guid: f3616fed012c5425f80aa923cfa53032, type: 3}
-  resultsLoopSound: {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   stateActions:
   - {fileID: 11428886}
   - {fileID: 0}
   - {fileID: 11452074}
   - {fileID: 0}
+  winSounds:
+  - {fileID: 8300000, guid: f3616fed012c5425f80aa923cfa53032, type: 3}
+  - {fileID: 8300000, guid: f3616fed012c5425f80aa923cfa53032, type: 3}
+  - {fileID: 8300000, guid: f3616fed012c5425f80aa923cfa53032, type: 3}
+  - {fileID: 8300000, guid: f3616fed012c5425f80aa923cfa53032, type: 3}
+  winLoopSounds:
+  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  loseSound: {fileID: 8300000, guid: bd99a8cab7a494bdf8e1a5216144ea15, type: 3}
+  loseLoopSound: {fileID: 8300000, guid: af54c6f91462947c181e039a8893841f, type: 3}
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
   pointsPerLap: 100

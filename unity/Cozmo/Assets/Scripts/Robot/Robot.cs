@@ -10,6 +10,48 @@ public class Robot
 {
 	public class Light
 	{
+		[System.FlagsAttribute]
+		public enum PositionFlag
+		{
+			NONE   = 0,
+			ONE    = 0x01,
+			TWO    = 0x02,
+			THREE  = 0x04,
+			FOUR   = 0x08,
+			ALL    = 0xff
+		};
+
+		private PositionFlag IndexToPosition( int i )
+		{
+			switch( i )
+			{
+				case 0:
+					return PositionFlag.ONE;
+				case 1:
+					return PositionFlag.TWO;
+				case 2:
+					return PositionFlag.THREE;
+				case 3:
+					return PositionFlag.FOUR;
+			}
+			
+			return PositionFlag.NONE;
+		}
+
+		private PositionFlag position;
+
+		public Light() { }
+
+		public Light( int position )
+		{
+			this.position = IndexToPosition( position );
+		}
+		
+		public bool Position( PositionFlag s )
+		{
+			return (position | s) == s;
+		}
+
 		private uint lastOnColor;
 		public uint onColor;
 		private uint lastOffColor;
@@ -317,7 +359,7 @@ public class Robot
 
 		for( int i = 0; i < lights.Length; ++i )
 		{
-			lights[i] = new Light();
+			lights[i] = new Light( i );
 		}
 
 		ClearData();
@@ -466,7 +508,7 @@ public class Robot
 
 		if( Time.time > Light.messageDelay )
 		{
-			if( lightsChanged ) SetBackpackLEDs();
+			if( lightsChanged ) SetAllBackpackLEDs();
 		}
 	}
 
@@ -815,7 +857,35 @@ public class Robot
 		}
 	}
 
-	private void SetBackpackLEDs()
+	public void SetBackpackLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
+	                    uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
+	                    byte turnOffUnspecifiedLEDs = 1 )
+	{
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			if( lights[i].Position( (Light.PositionFlag)whichLEDs ) )
+			{
+				lights[i].onColor = onColor;
+				lights[i].offColor = offColor;
+				lights[i].onPeriod_ms = onPeriod_ms;
+				lights[i].offPeriod_ms = offPeriod_ms;
+				lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+				lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
+			}
+			else if( turnOffUnspecifiedLEDs > 0 )
+			{
+				lights[i].onColor = 0;
+				lights[i].offColor = 0;
+				lights[i].onPeriod_ms = 0;
+				lights[i].offPeriod_ms = 0;
+				lights[i].transitionOnPeriod_ms = 0;
+				lights[i].transitionOffPeriod_ms = 0;
+			}
+		}
+	}
+
+	private void SetAllBackpackLEDs() // should only be called from update loop
 	{
 		SetBackpackLEDsMessage.robotID = ID;
 
@@ -844,18 +914,5 @@ public class Robot
 
 		SetLastLEDs();
 		Light.messageDelay = Time.time + GameController.MessageDelay;
-	}
-
-	public void SetBackpackLEDs( Color onColor, Color offColor, uint onPeriod_ms = 1000, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0 )
-	{
-		for( int i = 0; i < lights.Length; ++i )
-		{
-			lights[i].onColor = CozmoPalette.ColorToUInt( onColor );
-			lights[i].offColor = CozmoPalette.ColorToUInt( offColor );
-			lights[i].onPeriod_ms = onPeriod_ms;
-			lights[i].offPeriod_ms = offPeriod_ms;
-			lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-			lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
-		}
 	}
 }

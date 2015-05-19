@@ -52,7 +52,7 @@ public class LayoutBlock2d : MonoBehaviour {
 			spriteIndex = Random.Range(1,6);
 		}
 
-		if(observedObject.Family == 3) {
+		if(observedObject.isActive) {
 			ActiveBlock activeBlock = observedObject as ActiveBlock;
 			image_Symbol.sprite = CozmoPalette.instance.GetDigitSprite(spriteIndex);
 			foreach(Image led in images_LED) {
