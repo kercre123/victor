@@ -49,7 +49,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip loseLoopSound;
 
 	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
-	private AudioClip resultsLoopSound {  get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
+	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;

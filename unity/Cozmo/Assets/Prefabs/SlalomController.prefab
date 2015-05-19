@@ -1378,7 +1378,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   loseSound: {fileID: 8300000, guid: bd99a8cab7a494bdf8e1a5216144ea15, type: 3}
-  loseLoopSound: {fileID: 0}
+  loseLoopSound: {fileID: 8300000, guid: af54c6f91462947c181e039a8893841f, type: 3}
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
   pointsPerLap: 100
