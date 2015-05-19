@@ -38,10 +38,6 @@ static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned sho
   os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
 #endif
 
-  //os_memcpy(blockPkt, usrdata, len);
-  //system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK, len);
-
-
   if (clientPkt != NULL)
   {
     os_printf("Block relay couldn't forward packet from block because queue full\r\n");

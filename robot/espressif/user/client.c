@@ -20,7 +20,7 @@ static bool haveClient = false;
 static UDPPacket* queuedPacket; /// Packet that is queued to send
 static uint8 nextReserve; /// Index of next buffer to reserve
 
-static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
+static void udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   sint8 block = NO_BLOCK;
 

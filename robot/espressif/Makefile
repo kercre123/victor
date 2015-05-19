@@ -10,9 +10,9 @@ SRCS:=user/user_main.c user/client.c user/block_relay.c driver/uart.c
 CWD := $(shell pwd)
 GCC_FOLDER:=../../../coretech-external/espressif/xtensa-toolchain-build/build-lx106
 ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
-FW_TOOL:= $(CWD)/../../../coretech-external/espressif/other/esptool/esptool
+FW_TOOL:= ../../../coretech-external/espressif/other/esptool/esptool
 SDK:= ../../../coretech-external/espressif/iot_sdk
-PORT:=com7
+PORT:=com8
 BAUD:=230400
 
 XTLIB:=$(SDK)/lib

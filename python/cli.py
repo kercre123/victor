@@ -37,10 +37,10 @@ class Pinger(threading.Thread, socket.socket):
                 continue
             else:
                 t = time.time()
-                sys.stdout.write("%02d[%04d]\r\n" % (msg[0], len(msg)))
-                if PrintText.isa(msg):
-                    printMsg = PrintText(buffer=msg)
-                    sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
+                #sys.stdout.write("%02d[%04d]\r\n" % (msg[0], len(msg)))
+                #if PrintText.isa(msg):
+                #    printMsg = PrintText(buffer=msg)
+                #      sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
                 #if ImageChunk.isa(msg):
                 #    ic = ImageChunk(buffer=msg)
                 #    sys.stdout.write("\rimgChunk %d[%02d] @ %fms: COZMO>>>" % (ic.imageId, ic.chunkId, t*1000.0))
