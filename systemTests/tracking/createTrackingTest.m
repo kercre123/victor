@@ -8,8 +8,13 @@
 % createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00004.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_1874447ms_996.jpg','cozmo1_1876287ms_1024.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
 % createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00005.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_1879697ms_1041.jpg','cozmo1_1887632ms_1162.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
 % createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00006.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_1889927ms_1163.jpg','cozmo1_1898392ms_1292.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
- 
-% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_0000.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'.jpg','.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00007.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_452362ms_12.jpg','cozmo1_457537ms_91.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00008.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_470832ms_112.jpg','cozmo1_474302ms_165.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00009.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_498997ms_190.jpg','cozmo1_503847ms_264.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00010.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_509612ms_283.jpg','cozmo1_514917ms_364.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_00011.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'cozmo1_517867ms_368.jpg','cozmo1_523562ms_455.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
+
+% createTrackingTest('/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_0001.json', '/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingImages', '/Users/pbarnum/Documents/Anki/cozmo-game/simulator/controllers/blockworld_controller/image_captures/', {'.jpg','.jpg'}, [155.83712, 117.87848, 374.98139, 371.84817, 320, 240, 25.0]);
 
 function createTrackingTest(outputFilename, imageCopyPath, inputDirectory, inputFilenameRange, physicalParameters)
     
@@ -80,7 +85,7 @@ function createTrackingTest(outputFilename, imageCopyPath, inputDirectory, input
     end
     
     % For speed, also save a copy with just the filenames
-    outputFilename_all = [outputFilename(1:(end-5)), '_all.json'];   
+    outputFilename_all = [outputFilename(1:(end-5)), '_all.json'];
     
     jsonTestData.CameraCalibration.center_x = physicalParameters(1);
     jsonTestData.CameraCalibration.center_y = physicalParameters(2);
@@ -88,7 +93,7 @@ function createTrackingTest(outputFilename, imageCopyPath, inputDirectory, input
     jsonTestData.CameraCalibration.focalLength_y = physicalParameters(4);
     jsonTestData.CameraCalibration.ncols = physicalParameters(5);
     jsonTestData.CameraCalibration.nrows = physicalParameters(6);
-
+    
     jsonTestData.Blocks{1}.templateWidth_mm = physicalParameters(7);
     
     disp(sprintf('Saving %s...', outputFilename_all));
