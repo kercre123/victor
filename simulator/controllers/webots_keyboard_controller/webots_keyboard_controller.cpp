@@ -1667,6 +1667,58 @@ namespace Anki {
       }
       
       
+      void TestLightCube()
+      {
+        static std::vector<ColorRGBA> colors = {{
+          NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+          NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
+        }};
+        static std::vector<WhichBlockLEDs> leds = {{
+          WhichBlockLEDs::TOP_UPPER_LEFT,
+          WhichBlockLEDs::TOP_UPPER_RIGHT,
+          WhichBlockLEDs::TOP_LOWER_LEFT,
+          WhichBlockLEDs::TOP_LOWER_RIGHT,
+          WhichBlockLEDs::BTM_UPPER_LEFT,
+          WhichBlockLEDs::BTM_UPPER_RIGHT,
+          WhichBlockLEDs::BTM_LOWER_LEFT, 
+          WhichBlockLEDs::BTM_LOWER_RIGHT
+        }};
+        
+        static auto colorIter = colors.begin();
+        static auto ledIter = leds.begin();
+        static s32 counter = 0;
+        
+        if(counter++ == 30) {
+          counter = 0;
+          
+          U2G::SetActiveObjectLEDs msg;
+          msg.objectID = currentlyObservedObject.id;
+          msg.robotID = 1;
+          msg.onPeriod_ms = 100;
+          msg.offPeriod_ms = 100;
+          msg.transitionOnPeriod_ms = 50;
+          msg.transitionOffPeriod_ms = 50;
+          msg.turnOffUnspecifiedLEDs = 1;
+          msg.onColor = *colorIter;
+          msg.offColor = 0;
+          msg.whichLEDs = static_cast<u8>(*ledIter);
+          msg.makeRelative = 0;
+          
+          ++ledIter;
+          if(ledIter==leds.end()) {
+            ledIter = leds.begin();
+            ++colorIter;
+            if(colorIter == colors.end()) {
+              colorIter = colors.begin();
+            }
+          }
+          
+          U2G::Message message;
+          message.Set_SetActiveObjectLEDs(msg);
+          SendMessage(message);
+        }
+      } // TestLightCube()
+      
       bool ForceAddRobotIfSpecified()
       {
         bool doForceAddRobot = false;
@@ -1796,13 +1848,17 @@ namespace Anki {
             ProcessJoystick();
             
             /*
-            // DEBUG!!!!!
-            U2G::SetRobotCarryingObject m;
-            m.objectID = 500;
-            m.robotID = 1;
-            message.Set_SetRobotCarryingObject(m);
-            SendMessage(message);
-            */
+             // DEBUG!!!!!
+             U2G::SetRobotCarryingObject m;
+             m.objectID = 500;
+             m.robotID = 1;
+             message.Set_SetRobotCarryingObject(m);
+             SendMessage(message);
+             */
+        
+            
+            //TestLightCube();
+            
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;
           }
