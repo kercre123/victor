@@ -6,6 +6,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
+#include "block_relay.h"
 #include "driver/uart.h"
 
 //#define DEBUG_CLIENT
@@ -14,20 +15,34 @@
 static UDPPacket rtxbs[NUM_RTX_BUFS];
 
 static struct espconn *udpServer;
-static struct espconn *client;
+static bool haveClient = false;
 
 static UDPPacket* queuedPacket; /// Packet that is queued to send
 static uint8 nextReserve; /// Index of next buffer to reserve
 
-static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
+static void udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  client = (struct espconn *)arg;
+  sint8 block = NO_BLOCK;
 
 #ifdef DEBUG_CLIENT
-  os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+  //os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+  if (haveClient == false)
+  {
+    os_printf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
+  }
 #endif
 
-  uartQueuePacket(usrdata, len);
+  haveClient = true;
+
+  block = blockRelayCheckMessage(usrdata, len); // Check if the message is for a block
+  if (block != NO_BLOCK) // This is a block message
+  {
+    blockRelaySendPacket(block, usrdata, len); // Relay it
+  }
+  else // Not a block message
+  {
+    uartQueuePacket(usrdata, len); // Pass to M4
+  }
 }
 
 
@@ -35,9 +50,9 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 {
   int8 err, i;
 
-  os_printf("clientInit\n");
+  os_printf("clientInit\r\n");
 
-  client = NULL;
+  haveClient = false;
 
   queuedPacket = NULL;
   nextReserve  = 0;
@@ -53,18 +68,18 @@ sint8 ICACHE_FLASH_ATTR clientInit()
   err = espconn_regist_recvcb(udpServer, udpServerRecvCB);
   if (err != 0)
   {
-    os_printf("\tError registering callback %d\n", err);
+    os_printf("\tError registering receive callback %d\r\n", err);
     return err;
   }
 
   err = espconn_create(udpServer);
   if (err != 0)
   {
-    os_printf("\tError creating server %d\n", err);
+    os_printf("\tError creating server %d\r\n", err);
     return err;
   }
 
-  os_printf("\tno error\n");
+  os_printf("\tno error\r\n");
   return ESPCONN_OK;
 }
 
@@ -76,7 +91,7 @@ UDPPacket* clientGetBuffer()
   os_printf("clientGetBuffer\n");
 #endif
 
-  if (client != NULL)
+  if (haveClient)
   {
     os_intr_lock();
     if (rtxbs[nextReserve].state == PKT_BUF_AVAILABLE)
@@ -112,7 +127,7 @@ void clientQueuePacket(UDPPacket* pkt)
   }
   else
   {
-    err = espconn_sent(client, pkt->data, pkt->len);
+    err = espconn_sent(udpServer, pkt->data, pkt->len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       os_printf("Failed to queue UDP packet %d\n", err);
