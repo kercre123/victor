@@ -17,7 +17,8 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] public Color baseColor = Color.blue;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
-	[SerializeField] public BuildInstructionsCube cubeBelow = null;
+	public BuildInstructionsCube cubeBelow = null;
+	public BuildInstructionsCube cubeAbove = null;
 
 	[SerializeField] SpriteRenderer[] symbols;
 	[SerializeField] SpriteRenderer[] symbolFrames;
@@ -192,7 +193,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 			if(activeCorners != null) {
 				if(objectFamily == 3) {
-					Color activeColor = Color.white;
+					Color activeColor = Color.black;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
 					for(int i=0;i<activeCorners.Length;i++) {
 						activeColor.a = alpha;

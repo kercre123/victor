@@ -8,7 +8,8 @@ public class RobotRelativeControls : MonoBehaviour {
 #region INSPECTOR FIELDS
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
-	[SerializeField] VirtualStick headAngleStick = null;
+	[SerializeField] Slider headAngleSlider = null;
+	[SerializeField] Slider liftSlider = null;
 	[SerializeField] GyroControls gyroInputs = null;
 	[SerializeField] RectTransform gyroSleepWarning = null;
 	[SerializeField] float gyroSleepTime = 3f;
@@ -53,6 +54,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	float lastHeadStickY = 0;
 	float lastDebugAxesX = 0f;
 	//Quaternion lastAttitude = Quaternion.identity;
+	bool headAngleSliderEngaged = false;
+	bool liftSliderEngaged = false;
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -83,23 +86,26 @@ public class RobotRelativeControls : MonoBehaviour {
 		//lastAttitude = Quaternion.identity;
 		gyroSleepTimer = gyroInputs != null ? -1f : gyroSleepTime;
 
-		if(verticalStick != null) verticalStick.gameObject.SetActive(true);
-		if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
-		if(headAngleStick != null) headAngleStick.gameObject.SetActive(true);
+		headAngleSliderEngaged = false;
+		RefreshHeadAngleSlider();
+
+		liftSliderEngaged = false;
+		RefreshLiftSlider();
+
+		ShowSticks();
 	}
 
 	void Update() {
-		if(robot == null || robot.isBusy) {
-			if(verticalStick != null) verticalStick.gameObject.SetActive(false);
-			if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
-			if(headAngleStick != null) headAngleStick.gameObject.SetActive(false);
 
+		bool controlsDisabled = robot == null || robot.isBusy;
+		controlsDisabled |= GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.INVENTORY;
+
+		if(controlsDisabled) {
+			ShowSticks(false);
 			return;
 		}
 		else {
-			if(verticalStick != null) verticalStick.gameObject.SetActive(true);
-			if(horizontalStick != null) horizontalStick.gameObject.SetActive(true);
-			if(headAngleStick != null) headAngleStick.gameObject.SetActive(true);
+			ShowSticks();
 		}
 
 		robotFacing = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
@@ -149,24 +155,21 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(!swipeTurning) swipeTurnIndex = 0;
 
+		if(!liftSliderEngaged) RefreshLiftSlider();
+		if(!headAngleSliderEngaged) RefreshHeadAngleSlider();
+
 		if(targetLock == null || targetLockTimer < 1f) {
-			CheckHeadAngleStick();
 			CheckHorizontalStickTurning();
 			CheckGyroTurning();
 			CheckDebugHorizontalAxesTurning();
 
-			if(inputs.y != 0) {
-				if(headAngleStick == null || !robot.searching) {
-					if(robot.selectedObjects.Count == 0) {
-						robot.SetHeadAngle();
-					}
-				}
+			if(inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0) {
+				robot.SetHeadAngle();
 			}
 		}
 		else {
 			gyroSleepTimer = gyroSleepTime;
 
-			targetSwapDirection += CheckHeadStickTargetSwap();
 			targetSwapDirection += CheckHorizontalStickTargetSwap();
 			targetSwapDirection += CheckGyroTargetSwap();
 			targetSwapDirection += CheckDebugAxesTargetSwap();
@@ -176,7 +179,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			robot.TrackHeadToObject( targetLock );
 		}
 
-		if(gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive(gyroSleepTimer <= 0f);
+		if (gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive (false); //gyroSleepTimer <= 0f);
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
@@ -226,14 +229,21 @@ public class RobotRelativeControls : MonoBehaviour {
 //			recorder.enabled = false;
 //		}
 
-		if(verticalStick != null) verticalStick.gameObject.SetActive(false);
-		if(horizontalStick != null) horizontalStick.gameObject.SetActive(false);
-		if(headAngleStick != null) headAngleStick.gameObject.SetActive(false);
+		ShowSticks(false);
 	}
 
 #endregion
 
 #region PRIVATE METHODS
+
+
+	void ShowSticks(bool show=true) {
+		if(verticalStick != null) verticalStick.gameObject.SetActive(show);
+		if(horizontalStick != null) horizontalStick.gameObject.SetActive(show);
+		if(headAngleSlider != null) headAngleSlider.gameObject.SetActive(show);
+		if(liftSlider != null) liftSlider.gameObject.SetActive(show);
+	}
+
 	bool AboutFace() {
 		if(!aboutFace) return false;
 
@@ -244,27 +254,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		robot.DriveWheels(0f, 0f);
 
 		return false;
-	}
-
-	void CheckHeadAngleStick() {
-		if(headAngleStick == null) return;
-		
-		float headInput = headAngleStick.Vertical;
-		if(headInput == 0f) return;
-
-		robot.SetHeadAngle(robot.headAngle_rad + headInput * Time.deltaTime * headAngleChangeRate);
-	}
-
-	Vector2 CheckHeadStickTargetSwap() {
-		if(headAngleStick == null) return Vector2.zero;
-		
-		float y = headAngleStick.Vertical;
-		bool swapTriggered = Mathf.Abs(lastHeadStickY) < targetLockStickSwapThreshHold && Mathf.Abs(y) >= targetLockStickSwapThreshHold;
-		
-		lastHeadStickY = y;
-		
-		if(swapTriggered) return y > 0f ? Vector2.up : -Vector2.up;
-		return Vector2.zero;
 	}
 
 	bool DebugOverride() {
@@ -407,7 +396,7 @@ public class RobotRelativeControls : MonoBehaviour {
 //			gyroSleepTimer -= Time.deltaTime;
 //		}
 
-		bool wakeGyro = Input.touchCount > 0;
+		//bool wakeGyro = Input.touchCount > 0;
 		//if(wakeGyro) {
 		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
 		//}
@@ -426,21 +415,21 @@ public class RobotRelativeControls : MonoBehaviour {
 //			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
 //		}
 
-		if(!wakeGyro) wakeGyro = Application.isEditor;
+		//if(!wakeGyro) wakeGyro = Application.isEditor;
 
 		//lastAttitude = attitude;
 
-		if(wakeGyro) {
-			gyroSleepTimer = gyroSleepTime;
-		}
+		//if(wakeGyro) {
+		//	gyroSleepTimer = gyroSleepTime;
+		//}
 
-		if(gyroSleepTimer <= 0f) return;
+		//if(gyroSleepTimer <= 0f) return;
 			
 		float h = gyroInputs.Horizontal;
 
-		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
-			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
-		}
+//		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
+//			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
+//		}
 
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
@@ -561,10 +550,43 @@ public class RobotRelativeControls : MonoBehaviour {
 		return Vector3.Dot(delta, direction) > 0f;
 	}
 
+	//reset our slider to our current head angle
+	void RefreshHeadAngleSlider() {
+		if(headAngleSlider == null) return;
+		
+		headAngleSlider.onValueChanged.RemoveListener(HeadAngleSliderChanged);
+		headAngleSlider.value = robot.GetHeadAngleFactor();
+		headAngleSlider.onValueChanged.AddListener(HeadAngleSliderChanged);
+	}
+	
+	void HeadAngleSliderChanged(float val) {
+		if(robot == null) return;
+		
+		robot.SetHeadAngle(val);
+	}
+
+	//reset our lifter to our current height
+	void RefreshLiftSlider() {
+		if(liftSlider == null) return;
+
+		liftSlider.onValueChanged.RemoveListener(LiftSliderChanged);
+		liftSlider.value = robot.GetLiftHeightFactor();
+		liftSlider.onValueChanged.AddListener(LiftSliderChanged);
+	}
+
+	void LiftSliderChanged(float val) {
+		if(robot == null) return;
+		
+		robot.SetLiftHeight(val);
+	}
+
 	void RefreshDebugText() {
 		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
 		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
 	}
+
+
+
 #endregion
 
 #region PUBLIC METHODS
@@ -618,8 +640,16 @@ public class RobotRelativeControls : MonoBehaviour {
 			return;
 
 		verticalStick.SetForceReverse(pressed);
-
 	}
+
+	public void LiftSliderEnaged(bool engaged) {
+		liftSliderEngaged = engaged;
+	}
+
+	public void HeadAngleSliderEnaged(bool engaged) {
+		headAngleSliderEngaged = engaged;
+	}
+
 
 #endregion
 

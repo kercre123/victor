@@ -135,6 +135,7 @@ public class Robot
 	private U2G.TrackHeadToObject TrackHeadToObjectMessage;
 	private U2G.FaceObject FaceObjectMessage;
 	private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
+	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
 	private U2G.SetLiftHeight SetLiftHeightMessage;
 	private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
@@ -299,6 +300,8 @@ public class Robot
 		TrackHeadToObjectMessage = new U2G.TrackHeadToObject();
 		FaceObjectMessage = new U2G.FaceObject();
 		PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
+		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
+
 		GotoPoseMessage = new U2G.GotoPose();
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
@@ -553,27 +556,57 @@ public class Robot
 		RobotEngineManager.instance.SendMessage();
 	}
 
+	public float GetHeadAngleFactor() {
 
-	public void SetHeadAngle( float angle_rad = 0f )
+		float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
+
+		if(angle >= 0f) {
+			angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad) );
+		}
+		else {
+			angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad) );
+		}
+
+		return angle;
+	}
+
+
+	public bool IsHeadAngleRequestUnderway() {
+		return Time.time < lastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
+	}
+
+	/// <summary>
+	/// Sets the head angle.
+	/// </summary>
+	/// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
+	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
+	public void SetHeadAngle( float angleFactor = 0f, bool useExactAngle=false )
 	{
-		if( headTrackingObject == -1 ) // if not head tracking, don't send same message as last
-		{
-			if( Mathf.Abs( angle_rad - headAngle_rad ) < 0.001f || Mathf.Abs( headAngleRequested - angle_rad ) < 0.001f )
-			{
-				return;
+
+		//Debug.Log("SetHeadAngle("+angleFactor+")");
+
+		float radians = angleFactor;
+
+		if(!useExactAngle) {
+			if(angleFactor >= 0f) {
+				radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
+			}
+			else {
+				radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
 			}
 		}
-		else if( Time.time < lastHeadAngleRequestTime + CozmoUtil.LOCAL_BUSY_TIME ) // else, override head tracking after delay
-		{
-			return;
-		}
 
-		headAngleRequested = angle_rad;
+		if( IsHeadAngleRequestUnderway() && Mathf.Abs( headAngleRequested - radians ) < 0.001f ) return;
+		if( headTrackingObject == -1 && Mathf.Abs( radians - headAngle_rad ) < 0.001f) return;
+
+
+		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
 
-		Debug.Log( "Set Head Angle " + angle_rad );
+		Debug.Log( "Set Head Angle " + radians );
 
-		SetHeadAngleMessage.angle_rad = angle_rad;
+		SetHeadAngleMessage.angle_rad = radians;
+
 		SetHeadAngleMessage.accel_rad_per_sec2 = 2f;
 		SetHeadAngleMessage.max_speed_rad_per_sec = 5f;
 
@@ -624,7 +657,7 @@ public class Robot
 
 	public void PickAndPlaceObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
 	{
-		PickAndPlaceObjectMessage .objectID = selectedObject;
+		PickAndPlaceObjectMessage.objectID = selectedObject;
 		PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte( usePreDockPose );
 		PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte( useManualSpeed );
 		
@@ -633,6 +666,23 @@ public class Robot
 		RobotEngineManager.instance.Message.PickAndPlaceObject = PickAndPlaceObjectMessage;
 		RobotEngineManager.instance.SendMessage();
 
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+
+	public void DropObjectAtPose( Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false )
+	{
+		PlaceObjectOnGroundMessage.x_mm = position.x;
+		PlaceObjectOnGroundMessage.y_mm = position.y;
+		PlaceObjectOnGroundMessage.rad = facing_rad;
+		PlaceObjectOnGroundMessage.level = System.Convert.ToByte( level );
+		PlaceObjectOnGroundMessage.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+		
+		Debug.Log( "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed );
+		
+		RobotEngineManager.instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
+		RobotEngineManager.instance.SendMessage();
+		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
@@ -652,9 +702,13 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public float GetLiftHeightFactor() {
+		return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
+	}
+
 	public void SetLiftHeight( float height_factor )
 	{
-		if( ( Time.time < lastLiftHeightRequestTime + CozmoUtil.LOCAL_BUSY_TIME && height_factor == liftHeightRequested ) || liftHeight_factor == height_factor ) return;
+		if( ( Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested ) || liftHeight_factor == height_factor ) return;
 
 		liftHeightRequested = height_factor;
 		lastLiftHeightRequestTime = Time.time;
@@ -764,15 +818,25 @@ public class Robot
 	private void SetBackpackLEDs()
 	{
 		SetBackpackLEDsMessage.robotID = ID;
-		
-		for( int i = 0; i < lights.Length; ++i )
+
+		for( int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j )
 		{
-			SetBackpackLEDsMessage.onColor[i] = lights[i].onColor;
-			SetBackpackLEDsMessage.offColor[i] = lights[i].offColor;
-			SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
-			SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
-			SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
-			SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
+			SetBackpackLEDsMessage.onColor[j] = lights[i].onColor;
+			SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
+			SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
+			SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
+			SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
+			SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
+
+			if( i == 2 && lights.Length > 3 ) // HACK: index 2 and 3 are same lights
+			{
+				SetBackpackLEDsMessage.onColor[++j] = lights[i].onColor;
+				SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
+				SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
+				SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
+				SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
+				SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
+			}
 		}
 		
 		RobotEngineManager.instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
@@ -788,10 +852,10 @@ public class Robot
 		{
 			lights[i].onColor = CozmoPalette.ColorToUInt( onColor );
 			lights[i].offColor = CozmoPalette.ColorToUInt( offColor );
-			lights[i].onPeriod_ms = 1000;
-			lights[i].offPeriod_ms = 0;
-			lights[i].transitionOnPeriod_ms = 0;
-			lights[i].transitionOffPeriod_ms = 0;
+			lights[i].onPeriod_ms = onPeriod_ms;
+			lights[i].offPeriod_ms = offPeriod_ms;
+			lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+			lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
 		}
 	}
 }

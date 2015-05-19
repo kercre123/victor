@@ -104,7 +104,7 @@ public class ActiveBlock : ObservedObject
 		Count
 	}
 
-	private bool isMoving;
+	public bool isMoving { get; private set; }
 	public byte upAxis { get; private set; }
 	public float xAccel { get; private set; }
 	public float yAccel { get; private set; }
@@ -113,8 +113,6 @@ public class ActiveBlock : ObservedObject
 	private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
-
-	public uint Color { get; private set; }
 
 	public Light[] lights { get; private set; }
 
@@ -151,6 +149,9 @@ public class ActiveBlock : ObservedObject
 		Family = objectFamily;
 		ObjectType = objectType;
 		ID = objectID;
+
+		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
 		upAxis = byte.MaxValue;
 		xAccel = byte.MaxValue;
@@ -237,8 +238,6 @@ public class ActiveBlock : ObservedObject
 	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                             byte turnOffUnspecifiedLEDs = 1 )
 	{
-		this.Color = onColor;
-
 		for( int i = 0; i < lights.Length; ++i )
 		{
 			if( lights[i].Position( (Light.PositionFlag)whichLEDs ) )

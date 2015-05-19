@@ -46,10 +46,10 @@ public class ObservedObject
 		{
 			if( robot.selectedObjects.Count > 1 ) return false; // if blocks stacked on each other
 
-			float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
+			//float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
 			float height = Mathf.Abs( WorldPosition.z - robot.WorldPosition.z );
 		
-			return distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f && height < CozmoUtil.BLOCK_LENGTH_MM;
+			return /*distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f &&*/ height < CozmoUtil.BLOCK_LENGTH_MM;
 		}
 	}
 	
@@ -57,8 +57,8 @@ public class ObservedObject
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
-	public string InfoString { get; private set; }
-	public string SelectInfoString { get; private set; }
+	public string InfoString { get; protected set; }
+	public string SelectInfoString { get; protected set; }
 	public ObservedObject() { }
 
 	public ObservedObject( int objectID, uint objectFamily, uint objectType )
@@ -113,5 +113,23 @@ public class ObservedObject
 	public void Delete()
 	{
 		if( OnDelete != null ) OnDelete( this );
+	}
+
+	public Vector2 GetBestFaceVector(Vector3 initialVector) {
+		
+		Vector2[] faces = { TopNorth, TopEast, -TopNorth, -TopEast };
+		Vector2 face = faces[0];
+		
+		float bestDot = -float.MaxValue;
+		
+		for(int i=0; i<4; i++) {
+			float dot = Vector2.Dot(initialVector, faces[i]);
+			if(dot > bestDot) {
+				bestDot = dot;
+				face = faces[i];
+			}
+		}
+		
+		return face;
 	}
 }

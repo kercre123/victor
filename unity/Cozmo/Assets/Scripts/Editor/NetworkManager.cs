@@ -15,10 +15,11 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Collections;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
+using System.Net.Sockets;
+using System.Net;
 using System.Threading;
+
   
 /// <summary>
 /// simple implementation of tcp server. listens for incomming connections and spawns a new worker thread for each connection
@@ -107,7 +108,8 @@ class NetworkManager {
   /// Cleanup!
   /// </summary>
   public void Close() {
-    foreach (Thread thread in _threads) {
+    for (int k = 0; k < _threads.Count; ++k) {
+      Thread thread = _threads[k];
       thread.Abort();
       thread.Join();
     }

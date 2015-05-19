@@ -17,12 +17,12 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Collections;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading;
+using System.Net.Sockets;
 using System.IO;
-
+using System.Net;
+using System.Threading;
+  
 /// <summary>
 /// Processes TCP connection and stores data in global queue
 /// </summary>
@@ -87,8 +87,6 @@ class ConnectionHandler {
         returnCode = 1;
         response = "[ERROR] build failed\n" + buildResult;
       }
-
-	  Debug.Log (response);
 
       // Encode the response to send back.
       // Format [ responseCode, ...message... ]

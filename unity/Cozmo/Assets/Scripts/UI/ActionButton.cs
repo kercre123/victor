@@ -18,7 +18,7 @@ public class ActionButton : MonoBehaviour
 		ALIGN,
 		CHANGE,
 		CANCEL,
-		NUM_MODES
+		Count
 	}
 
 	[System.Serializable]
@@ -128,7 +128,7 @@ public class ActionButton : MonoBehaviour
 		{
 			if( button != null ) button.gameObject.SetActive( false );
 			if( hint.text != null ) hint.text.gameObject.SetActive( false );
-			image.gameObject.SetActive( false );
+			gameObject.SetActive( false );
 			return;
 		}
 
@@ -155,14 +155,14 @@ public class ActionButton : MonoBehaviour
 
 			hint.text.gameObject.SetActive( true/*solidHint*/ );
 
-			if( solidHint )
-			{
-				hint.text.color = hint.solidText;
-			}
-			else
-			{
-				hint.text.color = hint.ghostText;
-			}
+//			if( solidHint )
+//			{
+//				hint.text.color = hint.solidText;
+//			}
+//			else
+//			{
+//				hint.text.color = hint.ghostText;
+//			}
 		}
 
 		switch( mode )
@@ -194,7 +194,7 @@ public class ActionButton : MonoBehaviour
 		}
 
 		if( button != null ) button.gameObject.SetActive( true );
-		image.gameObject.SetActive( true );
+		gameObject.SetActive( true );
 	}
 
 	private static Sprite GetModeSprite( Mode mode )

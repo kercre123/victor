@@ -14,6 +14,10 @@ public class SlalomController : GameController {
 	[SerializeField] Text textProgress = null;
 
 	[SerializeField] AudioClip cornerTriggeredSound = null;
+	[SerializeField] AudioClip finalLapSound = null;
+	[SerializeField] AudioClip[] lapsRemainingSound = null;
+	[SerializeField] ActiveBlock.Mode nextColor;
+	[SerializeField] ActiveBlock.Mode currentColor;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -100,7 +104,19 @@ public class SlalomController : GameController {
 	void LapComplete() {
 		scores[0] += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-		audio.PlayOneShot(playerScoreSound);
+		//audio.PlayOneShot(playerScoreSound);
+		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
+		if(lapsRemaining == 0) {
+			if(finalLapSound != null) PlayDelayed(finalLapSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			Debug.Log("final lap");
+		}
+		else {
+			if(lapsRemainingSound.Length > 0 && timerSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < timerSounds.Length && timerSounds[lapsRemaining].sound != null) {
+				lapsRemainingSound[0] = timerSounds[lapsRemaining].sound;
+				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			}
+			Debug.Log((lapsRemaining + 1) + " laps remaining");
+		}
 	}
 
 	int GetPreviousIndex() {
@@ -138,8 +154,8 @@ public class SlalomController : GameController {
 		instance = this;
 
 		if(CozmoPalette.instance != null) {
-			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockMode(ActiveBlock.Mode.White);
-			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockMode(ActiveBlock.Mode.Cyan);
+			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(nextColor);
+			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(currentColor);
 		}
 	}
 	
@@ -156,7 +172,6 @@ public class SlalomController : GameController {
 		if(textObservedCount != null) {
 			textObservedCount.text = "obstacles: " +obstacles.Count.ToString();
 		}
-
 	}
 
 	protected override void Enter_PRE_GAME() {
@@ -299,7 +314,7 @@ public class SlalomController : GameController {
 		return false;
 	}
 
-	Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
+	private Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
 
 		float angle = idealCornerAngles[cornerIndex] * (clock ? -1f : 1f);
 
@@ -329,7 +344,7 @@ public class SlalomController : GameController {
 
 	int lastLapCount = 1;
 
-	void AdvanceCorner() {
+	private void AdvanceCorner() {
 
 		//trigger lap score and sound when we cross our first corner again
 		if(currentCorner == 0 && lastLapCount != currentLap) {
@@ -350,10 +365,12 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
+		audio.pitch = currentCorner == 0 ? 1 : 5 - currentCorner;
 		audio.PlayOneShot(cornerTriggeredSound);
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
+		UpdateRobotLights(currentCorner);
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
 	}
 
@@ -378,7 +395,31 @@ public class SlalomController : GameController {
 		return corner;
 	}
 
-	public void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
+	private void UpdateRobotLights(int corner)
+	{
+		if(corner == 0) {
+			for(int i = 0; i < robot.lights.Length; ++i) {
+				robot.lights[i].onColor = currentColor_unit;
+				robot.lights[i].offColor = 0;
+				robot.lights[i].onPeriod_ms = 125;
+				robot.lights[i].offPeriod_ms = 125;
+			}
+		}
+		else {
+			for(int i = 0; i < robot.lights.Length; ++i) {
+				if(i < corner) {
+					robot.lights[i].onColor = currentColor_unit;
+				}
+				else {
+					robot.lights[i].onColor = 0;
+				}
+				robot.lights[i].onPeriod_ms = 1000;
+				robot.lights[i].offPeriod_ms = 0;
+			}
+		}
+	}
+
+	private void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
 	{
 		if(robot == null) return;
 		if(currentObstacle == null) return;
@@ -421,7 +462,7 @@ public class SlalomController : GameController {
 			}
 
 			//refresh light settings
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 
 				if(i == currentTopLightIndex || i == currentBottomLightIndex) {
 					obstacle.lights[i].onColor = currentColor_unit;
@@ -448,13 +489,12 @@ public class SlalomController : GameController {
 
 	}
 
-	public void ClearLights()
+	private void ClearLights()
 	{
-
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				obstacle.lights[i].onColor = 0;
 				obstacle.lights[i].onPeriod_ms = 1000;
 				obstacle.lights[i].offPeriod_ms = 0;
@@ -463,8 +503,16 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
-	}
 
+		for(int i = 0; i < robot.lights.Length; ++i) {
+			robot.lights[i].onColor = 0;
+			robot.lights[i].onPeriod_ms = 1000;
+			robot.lights[i].offPeriod_ms = 0;
+			robot.lights[i].offColor = 0;
+			robot.lights[i].transitionOnPeriod_ms = 0;
+			robot.lights[i].transitionOffPeriod_ms = 0;
+		}
+	}
 
 	public int testLightIndex = 0;
 	public void TestLights()
@@ -473,7 +521,7 @@ public class SlalomController : GameController {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
 
-			for(int i = 0; i < 8; ++i) {
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				
 				if(i == testLightIndex) {
 					obstacle.lights[i].onColor = currentColor_unit;
@@ -491,5 +539,55 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
 		}
+	}
+
+	protected override void Enter_RESULTS() {
+		base.Enter_RESULTS();
+
+		CelebrationLights();
+	}
+
+	protected override void Exit_RESULTS() {
+		base.Exit_RESULTS();
+
+		ClearLights();
+	}
+
+	private void CelebrationLights()
+	{
+		int random;
+
+		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
+			ActiveBlock obstacle = obstacles[obstacleIndex];
+			obstacle.relativeMode = 0;
+			random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
+				obstacle.lights[i].onColor = CycleColors(i);
+				obstacle.lights[i].onPeriod_ms = 125;
+				obstacle.lights[i].offPeriod_ms = 125;
+				obstacle.lights[i].offColor = CycleColors(i + random);
+				obstacle.lights[i].transitionOnPeriod_ms = 0;
+				obstacle.lights[i].transitionOffPeriod_ms = 0;
+			}
+		}
+
+		random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+
+		for(int i = 0; i < robot.lights.Length; ++i) {
+			robot.lights[i].onColor = CycleColors(i);
+			robot.lights[i].onPeriod_ms = 125;
+			robot.lights[i].offPeriod_ms = 125;
+			robot.lights[i].offColor = CycleColors(i + random);
+			robot.lights[i].transitionOnPeriod_ms = 0;
+			robot.lights[i].transitionOffPeriod_ms = 0;
+		}
+	}
+
+	private uint CycleColors(int i) // cycle through all colors, but don't use black
+	{
+		int index = (i % (int)ActiveBlock.Mode.Count) + 1;
+
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)1 );
 	}
 }

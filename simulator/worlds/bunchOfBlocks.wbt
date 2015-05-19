@@ -168,7 +168,7 @@ DEF AngryFaceBlock Block1x1 {
   translation 0.22 -8.81876e-08 0.0219929
   rotation 0 0 1 0.05
   blockColor 0.5 0.5 0.85
-  markerImg "symbols/angryFace.png"
+  markerImg "symbols/bullseye2.png"
 }
 DEF AngryFaceBlockOnPlatform Block1x1 {
   name "AngryFace_01"
