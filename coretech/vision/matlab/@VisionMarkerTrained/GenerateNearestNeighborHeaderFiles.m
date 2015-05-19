@@ -163,7 +163,9 @@ for i_label = 1:numLabels
             % an inverted code name
             underscoreIndex(1) = [];
         end
+        
         if length(underscoreIndex) > 1
+          % If more than one underscore, use last
           underscoreIndex = underscoreIndex(end);
         end
     end

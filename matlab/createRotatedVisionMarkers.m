@@ -1,5 +1,5 @@
-rootPath = '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials';
-fnames = getfnames(rootPath, 'bee.png');
+rootPath = '~/Box Sync/Cozmo SE/VisionMarkers/lightCubeD/withFiducials';
+fnames = getfnames(rootPath, '*.png');
 if ~isdir(fullfile(rootPath, 'rotated'))
     mkdir(fullfile(rootPath, 'rotated'))
 end
