@@ -1208,11 +1208,19 @@ namespace Anki {
                     }
                     
                   } else {
-                    printf("Cycling active block color\n");
+                    printf("Cycling active block %d color from (%d,%d,%d) to (%d,%d,%d)\n",
+                           msg.objectID,
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].r(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].g(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].b(),
+                           colorList[colorIndex].r(),
+                           colorList[colorIndex].g(),
+                           colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
                     msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE);
                     msg.makeRelative = 0;
+                    msg.turnOffUnspecifiedLEDs = 1;
                   }
                   
                   if(colorIndex == NUM_COLORS) {
