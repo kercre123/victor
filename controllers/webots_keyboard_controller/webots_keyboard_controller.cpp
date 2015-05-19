@@ -262,13 +262,19 @@ namespace Anki {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
         } else {
           // Draw a rectangle in red with the object ID as text in the center
-          cozmoCam_->setColor(0xff0000);          
-          cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
-                                   msg.img_width, msg.img_height);
+          cozmoCam_->setColor(0x000000);
+          
           //std::string dispStr(ObjectType::GetName(msg.objectType));
           //dispStr += " ";
           //dispStr += std::to_string(msg.objectID);
           std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
+          cozmoCam_->drawText(dispStr,
+                              msg.img_topLeft_x + msg.img_width/4 + 1,
+                              msg.img_topLeft_y + msg.img_height/2 + 1);
+          
+          cozmoCam_->setColor(0xff0000);          
+          cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
+                                   msg.img_width, msg.img_height);
           cozmoCam_->drawText(dispStr,
                               msg.img_topLeft_x + msg.img_width/4,
                               msg.img_topLeft_y + msg.img_height/2);
