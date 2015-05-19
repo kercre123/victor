@@ -71,7 +71,7 @@ namespace Anki {
         const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
         
         const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 10.f;
+        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 40.f;
         
         U2G::Ping _pingMsg;
         
@@ -643,7 +643,7 @@ namespace Anki {
           if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
             liftSpeed *= 0.4;
-            headSpeed *= 0.5;
+            headSpeed *= 0.55;
           } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
@@ -674,7 +674,7 @@ namespace Anki {
                   //p2 = 5;
                   //p3 = 20;
                   p1 = root_->getField("driveTest_flags")->getSFInt32();
-                  p2 = 5;
+                  p2 = 10;
                   p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
                 case TM_LIFT:
@@ -1208,11 +1208,19 @@ namespace Anki {
                     }
                     
                   } else {
-                    printf("Cycling active block color\n");
+                    printf("Cycling active block %d color from (%d,%d,%d) to (%d,%d,%d)\n",
+                           msg.objectID,
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].r(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].g(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].b(),
+                           colorList[colorIndex].r(),
+                           colorList[colorIndex].g(),
+                           colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
                     msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE);
                     msg.makeRelative = 0;
+                    msg.turnOffUnspecifiedLEDs = 1;
                   }
                   
                   if(colorIndex == NUM_COLORS) {
