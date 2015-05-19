@@ -11,8 +11,10 @@ public class RobotRelativeControls : MonoBehaviour {
 	[SerializeField] Slider headAngleSlider = null;
 	[SerializeField] Slider liftSlider = null;
 	[SerializeField] GyroControls gyroInputs = null;
-	[SerializeField] RectTransform gyroSleepWarning = null;
-	[SerializeField] float gyroSleepTime = 3f;
+	[SerializeField] float turnInPlaceRollMin = 15f;
+	[SerializeField] float turnInPlaceRollMax = 90f;
+	[SerializeField] float turnWhileDrivingRollMin = 5f;
+	[SerializeField] float turnWhileDrivingRollMax = 90f;
 	[SerializeField] Text text_x = null;
 	[SerializeField] Text text_y = null;
 	[SerializeField] float swipeTurnAngle = 0f;
@@ -37,10 +39,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	int swipeTurnIndex = 0;
 	bool swipeTurning = false;
 	bool aboutFace = false;
-	float gyroSleepTimer = 0f;
 	float maxTurnFactor = 1f;
 	bool reverseLikeACar = true;
-	//bool targetLockSelectedObject = true;
 	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	bool driveForwardOnlyMode = false;
 	bool driveReverseOnlyMode = false;
@@ -53,7 +53,6 @@ public class RobotRelativeControls : MonoBehaviour {
 	float lastHorStickX = 0;
 	float lastHeadStickY = 0;
 	float lastDebugAxesX = 0f;
-	//Quaternion lastAttitude = Quaternion.identity;
 	bool headAngleSliderEngaged = false;
 	bool liftSliderEngaged = false;
 #endregion
@@ -74,7 +73,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
 		reverseLikeACar = PlayerPrefs.GetInt("ReverseLikeACar", OptionsScreen.REVERSE_LIKE_A_CAR) == 1;
 		//Debug.Log(gameObject.name + " OnEnable reverseLikeACar("+reverseLikeACar+")");
-		//targetLockSelectedObject = PlayerPrefs.GetInt("VisionSchemeIndex", 0) == 0;
 		targetLock = null;
 		lastTargetLock = null;
 
@@ -82,9 +80,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastHorStickX = 0f;
 		lastHeadStickY = 0f;
 		lastDebugAxesX = 0f;
-
-		//lastAttitude = Quaternion.identity;
-		gyroSleepTimer = gyroInputs != null ? -1f : gyroSleepTime;
 
 		headAngleSliderEngaged = false;
 		RefreshHeadAngleSlider();
@@ -168,8 +163,6 @@ public class RobotRelativeControls : MonoBehaviour {
 			}
 		}
 		else {
-			gyroSleepTimer = gyroSleepTime;
-
 			targetSwapDirection += CheckHorizontalStickTargetSwap();
 			targetSwapDirection += CheckGyroTargetSwap();
 			targetSwapDirection += CheckDebugAxesTargetSwap();
@@ -179,8 +172,6 @@ public class RobotRelativeControls : MonoBehaviour {
 			robot.TrackHeadToObject( targetLock );
 		}
 
-		if (gyroSleepWarning != null) gyroSleepWarning.gameObject.SetActive (false); //gyroSleepTimer <= 0f);
-
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
 		if(!stopped) {
 			Vector3 delta = inputs - lastInputs;
@@ -188,7 +179,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		}
 
 		lastInputs = inputs;
-		lastGyro = gyroInputs != null ? gyroInputs.Horizontal : 0f;
 
 		if(!reverseLikeACar && !driveForwardOnlyMode && (inputs.y < 0f || driveReverseOnlyMode)) {
 			inputs.x = -inputs.x;
@@ -384,52 +374,18 @@ public class RobotRelativeControls : MonoBehaviour {
 		return Vector2.zero;
 	}
 
-	float lastGyro = 0f;
-	float turnInPlaceGyroThreshold = 0.5f;
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
-
-//		if(gyroSleepTimer > 0f && gyroInputs.Horizontal != 0f) {
-//			gyroSleepTimer = gyroSleepTime;
-//		}
-//		else if(gyroSleepTimer > 0f) {
-//			gyroSleepTimer -= Time.deltaTime;
-//		}
-
-		//bool wakeGyro = Input.touchCount > 0;
-		//if(wakeGyro) {
-		//	Debug.Log("wakeGyro: Input.touchCount(" + Input.touchCount + ")");
-		//}
-
-		//if(!wakeGyro) {
-		//	wakeGyro = robot.status != Robot.StatusFlag.NONE && robot.status != Robot.StatusFlag.IS_MOVING;
-			//if(wakeGyro) Debug.Log("wakeGyro: robot.status(" + robot.status.ToString() + ")");
-		//}
-		//wakeGyro |= Input.gyro.userAcceleration.sqrMagnitude > 0.01f;
-
-//		Quaternion attitude = Input.gyro.attitude;
-//
-//		if(!wakeGyro) {
-//			float attitudeDelta = Quaternion.Angle(lastAttitude, attitude);
-//			wakeGyro = attitudeDelta > 0.5f;
-//			//if(wakeGyro) Debug.Log("wakeGyro: attitudeDelta("+attitudeDelta+")");
-//		}
-
-		//if(!wakeGyro) wakeGyro = Application.isEditor;
-
-		//lastAttitude = attitude;
-
-		//if(wakeGyro) {
-		//	gyroSleepTimer = gyroSleepTime;
-		//}
-
-		//if(gyroSleepTimer <= 0f) return;
 			
-		float h = gyroInputs.Horizontal;
+		float minRoll = turnInPlaceRollMin;
+		float maxRoll = turnInPlaceRollMax;
 
-//		if(lastGyro == 0f && verticalStick != null && !verticalStick.IsPressed) {
-//			if(Mathf.Abs(h) < turnInPlaceGyroThreshold) h = 0f;
-//		}
+		if(verticalStick != null && verticalStick.IsPressed) {
+			minRoll = turnWhileDrivingRollMin;
+			maxRoll = turnWhileDrivingRollMax;
+		}
+
+		float h = gyroInputs.GetHorizontal(minRoll, maxRoll);
 
 		inputs.x += h;
 		inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
@@ -440,40 +396,45 @@ public class RobotRelativeControls : MonoBehaviour {
 	Vector2 CheckGyroTargetSwap() {
 		if(gyroInputs == null) return Vector2.zero;
 		
-		float x = gyroInputs.Horizontal;
-		bool swapTriggered = Mathf.Abs(lastGyroX) < targetLockGyroSwapThreshHold && Mathf.Abs(x) >= targetLockGyroSwapThreshHold;
+		float minRoll = turnInPlaceRollMin;
+		float maxRoll = turnInPlaceRollMax;
+		
+		if(verticalStick != null && verticalStick.IsPressed) {
+			minRoll = turnWhileDrivingRollMin;
+			maxRoll = turnWhileDrivingRollMax;
+		}
+		
+		float h = gyroInputs.GetHorizontal(minRoll, maxRoll);
 
-		lastGyroX = x;
+		bool swapTriggered = Mathf.Abs(lastGyroX) < targetLockGyroSwapThreshHold && Mathf.Abs(h) >= targetLockGyroSwapThreshHold;
 
-		if(swapTriggered) return x > 0f ? Vector2.right : -Vector2.right;
+		lastGyroX = h;
+
+		if(swapTriggered) return h > 0f ? Vector2.right : -Vector2.right;
 		return Vector2.zero;
 	}
 
 	void CheckVerticalDebugAxis() {
 		if(inputs.y == 0f) {
-			inputs.y = Input.GetAxis("Vertical");
+			inputs.y = Input.GetKey(KeyCode.W) ? 1f : Input.GetKey(KeyCode.S) ? -1f : 0f;
 		}
 	}
 
 	void CheckDebugHorizontalAxesTurning() {
 		if(inputs.x == 0f) {
-			inputs.x = Input.GetAxis("Horizontal");
+			inputs.x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
 		}
 	}
 
 	Vector2 CheckDebugAxesTargetSwap() {
-		float x = Input.GetAxis("Horizontal");
-		//float y = Input.GetAxis("Vertical");
+		float x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
 
 		bool horSwapTriggered = Mathf.Abs(lastDebugAxesX) < targetLockStickSwapThreshHold && Mathf.Abs(x) >= targetLockStickSwapThreshHold;
-		//bool verSwapTriggered = Mathf.Abs(lastHeadStickY) < targetLockStickSwapThreshHold && Mathf.Abs(y) >= targetLockStickSwapThreshHold;
 
 		lastDebugAxesX = x;
-		//lastHeadStickY = y;
 
 		Vector2 ret = Vector2.zero;
 		if(horSwapTriggered) ret += x > 0f ? Vector2.right : -Vector2.right;
-		//if(verSwapTriggered) ret += y > 0f ? Vector2.up : -Vector2.up;
 
 		return ret;
 	}
@@ -553,6 +514,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	//reset our slider to our current head angle
 	void RefreshHeadAngleSlider() {
 		if(headAngleSlider == null) return;
+		if(robot == null) return;
 		
 		headAngleSlider.onValueChanged.RemoveListener(HeadAngleSliderChanged);
 		headAngleSlider.value = robot.GetHeadAngleFactor();
