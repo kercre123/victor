@@ -882,6 +882,13 @@ namespace Anki {
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 
+      
+      void ProcessSetBlockBeingCarriedMessage(const SetBlockBeingCarried& msg)
+      {
+        // TODO: need to add this hal.h and implement
+        // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
+      }
+      
 // ----------- Send messages -----------------
 
 
