@@ -47,6 +47,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
 	[SerializeField] private AudioClip loseSound;
 	[SerializeField] private AudioClip loseLoopSound;
+	[SerializeField] private Image[] starImages = new Image[STAR_COUNT];
 
 	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
 	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
@@ -363,6 +364,9 @@ public class GameController : MonoBehaviour {
 
 	protected virtual void Enter_RESULTS() {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
+		for(int i = 0; i < starImages.Length; ++i) {
+			if(starImages[i] != null) starImages[i].gameObject.SetActive(win && i < stars);
+		}
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null && audio != null) {

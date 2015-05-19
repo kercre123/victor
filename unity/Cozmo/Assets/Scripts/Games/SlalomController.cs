@@ -305,6 +305,11 @@ public class SlalomController : GameController {
 	protected override void Exit_PLAYING() {
 		base.Exit_PLAYING();
 
+		stars = 0;
+		for(int i = 0; i < starThresholds.Length; ++i) {
+			if(stateTimer <= starThresholds[i]) stars = i + 1;
+		}
+
 		for(int i = 0; i < obstacles.Count; ++i) {
 			obstacles[i].OnAxisChange -= OnActiveBlockRolled;
 			obstacles[i].OnDelete -= OnActiveBlockDeleted;
