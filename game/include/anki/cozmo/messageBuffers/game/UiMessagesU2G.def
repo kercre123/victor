@@ -1071,6 +1071,7 @@ struct SetRobotCarryingObject
 // MESSAGE ClearAllBlocks
 struct ClearAllBlocks
 {
+	uint8_t robotID;
 	
 	/**** Constructors ****/
 	ClearAllBlocks() = default;
@@ -1079,7 +1080,12 @@ struct ClearAllBlocks
 	ClearAllBlocks(ClearAllBlocks&& other) noexcept = default;
 	ClearAllBlocks& operator=(const ClearAllBlocks& other) = default;
 	ClearAllBlocks& operator=(ClearAllBlocks&& other) noexcept = default;
-		explicit ClearAllBlocks(const uint8_t* buff, size_t len);
+	
+	explicit ClearAllBlocks(uint8_t robotID)
+	:robotID(robotID)
+	{}
+
+	explicit ClearAllBlocks(const uint8_t* buff, size_t len);
 	explicit ClearAllBlocks(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
@@ -1094,6 +1100,40 @@ struct ClearAllBlocks
 
 	bool operator==(const ClearAllBlocks& other) const;
 	bool operator!=(const ClearAllBlocks& other) const;
+};
+
+// MESSAGE ClearAllObjects
+struct ClearAllObjects
+{
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	ClearAllObjects() = default;
+	ClearAllObjects(const ClearAllObjects& other) = default;
+	ClearAllObjects(ClearAllObjects& other) = default;
+	ClearAllObjects(ClearAllObjects&& other) noexcept = default;
+	ClearAllObjects& operator=(const ClearAllObjects& other) = default;
+	ClearAllObjects& operator=(ClearAllObjects&& other) noexcept = default;
+	
+	explicit ClearAllObjects(uint8_t robotID)
+	:robotID(robotID)
+	{}
+
+	explicit ClearAllObjects(const uint8_t* buff, size_t len);
+	explicit ClearAllObjects(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ClearAllObjects& other) const;
+	bool operator!=(const ClearAllObjects& other) const;
 };
 
 // MESSAGE VisionWhileMoving
@@ -2382,6 +2422,11 @@ public:
 	void Set_ClearAllBlocks(const Anki::Cozmo::U2G::ClearAllBlocks& new_ClearAllBlocks);
 	void Set_ClearAllBlocks(Anki::Cozmo::U2G::ClearAllBlocks&& new_ClearAllBlocks);
 
+	/** ClearAllObjects **/
+	const Anki::Cozmo::U2G::ClearAllObjects& Get_ClearAllObjects() const;
+	void Set_ClearAllObjects(const Anki::Cozmo::U2G::ClearAllObjects& new_ClearAllObjects);
+	void Set_ClearAllObjects(Anki::Cozmo::U2G::ClearAllObjects&& new_ClearAllObjects);
+
 	/** VisionWhileMoving **/
 	const Anki::Cozmo::U2G::VisionWhileMoving& Get_VisionWhileMoving() const;
 	void Set_VisionWhileMoving(const Anki::Cozmo::U2G::VisionWhileMoving& new_VisionWhileMoving);
@@ -2565,6 +2610,7 @@ private:
 		Anki::Cozmo::U2G::TraverseObject _TraverseObject;
 		Anki::Cozmo::U2G::SetRobotCarryingObject _SetRobotCarryingObject;
 		Anki::Cozmo::U2G::ClearAllBlocks _ClearAllBlocks;
+		Anki::Cozmo::U2G::ClearAllObjects _ClearAllObjects;
 		Anki::Cozmo::U2G::VisionWhileMoving _VisionWhileMoving;
 		Anki::Cozmo::U2G::ExecuteBehavior _ExecuteBehavior;
 		Anki::Cozmo::U2G::SetBehaviorState _SetBehaviorState;
