@@ -223,6 +223,7 @@ namespace Anki {
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
+      void SendClearAllObjects();
       void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
@@ -556,6 +557,7 @@ namespace Anki {
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
+        printf("         Clear all known objects:  Alt+c\n");
         printf("                      Creep mode:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
@@ -1013,7 +1015,11 @@ namespace Anki {
                   }
                   
                   SendExecuteBehavior(behaviorMode_);
-                } else {
+                }
+                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendClearAllObjects();
+                }
+                else {
                   // 'c' without SHIFT
                   SendClearAllBlocks();
                 }
@@ -2058,8 +2064,18 @@ namespace Anki {
       void SendClearAllBlocks()
       {
         U2G::ClearAllBlocks m;
+        m.robotID = 1;
         U2G::Message message;
         message.Set_ClearAllBlocks(m);
+        SendMessage(message);
+      }
+      
+      void SendClearAllObjects()
+      {
+        U2G::ClearAllObjects m;
+        m.robotID = 1;
+        U2G::Message message;
+        message.Set_ClearAllObjects(m);
         SendMessage(message);
       }
       
