@@ -684,6 +684,23 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void EndPreview() {
 		Phase = LayoutTrackerPhase.BUILDING;
 		ValidateBlocks();
+
+		GameLayout layout = currentLayout;
+		
+		if( layout != null )
+		{
+			bool isReady = true;
+			for(int i=0; i < layout.blocks.Count; i++)
+			{
+				BuildInstructionsCube cube = layout.blocks[i];
+				if( !cube.Validated && !cube.isHeld )
+				{
+					isReady = false;
+				}
+			}
+			
+			if( isReady ) DebugQuickValidate();
+		}
 	}
 
 	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {

@@ -15,6 +15,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] public int objectFamily = 0;
 	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
+	[SerializeField] public bool isHeld = false;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
 	public BuildInstructionsCube cubeBelow = null;
@@ -29,6 +30,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] Material originalCornerMaterial = null;
 
 	[SerializeField] GameObject checkMarkPrefab = null;
+
 
 	GameObject checkMark = null;
 
