@@ -10,6 +10,6 @@ for i = 1:length(fnames)
         [~,basename,~] = fileparts(fnames{i});
         imwrite(imrotate(img, angle), ...
            fullfile(rootPath, 'rotated', sprintf('%s_%.3d.png', basename, angle)), ...
-           'Alpha', imrotate(alpha, angle));
+           'Alpha', imrotate(alpha, angle, 'bilinear'));
     end
 end
