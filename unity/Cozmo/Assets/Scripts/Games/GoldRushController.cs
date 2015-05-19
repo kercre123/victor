@@ -124,9 +124,9 @@ public class GoldRushController : GameController {
 			textTime.text = Mathf.FloorToInt (maxPlayTime+bonusTime - totalActiveTime).ToString () + suffix_seconds;
 		}
 
-		if (textScore != null && scores != null && scores.Length > 0 && state == GameState.PLAYING) 
+		if (textScore != null && state == GameState.PLAYING) 
 		{
-			textScore.text = scores [0].ToString ();	
+			textScore.text = score.ToString ();	
 		} 
 		else 
 		{
@@ -190,7 +190,6 @@ public class GoldRushController : GameController {
 		playState = PlayState.IDLE;
 		playStateTimer = 0;
 		totalActiveTime = 0;
-		scores [0] = 0;
 		numDrops = 0;
 
 		//CozmoVision.EnableDing(false); // just in case we were in searching mode
@@ -222,10 +221,10 @@ public class GoldRushController : GameController {
 		audio.Stop();
 		StopAllCoroutines();
 		PlayNotificationAudio (timeUp);
-		resultsScore.text = "Score: " + scores [0];
+		resultsScore.text = "Score: " + score;
 		if( setHighScore )
 		{
-			PlayerPrefs.SetInt("EnergyHunt_HighScore", scores[0]);
+			PlayerPrefs.SetInt("EnergyHunt_HighScore", score);
 			resultsHighScore.color = Color.red;
 			resultsHighScore.text = "New High Score!";
 		}
@@ -402,7 +401,7 @@ public class GoldRushController : GameController {
 				if( (int)action_type == 6 )
 				{
 					// start the game
-					StartCoroutine(CountdownToPlay());
+					//StartCoroutine(CountdownToPlay());
 					//PlayRequested();
 					//hintMessage.KillMessage();
 				}
@@ -773,7 +772,7 @@ public class GoldRushController : GameController {
 
 #region IEnumerator
 
-	IEnumerator CountdownToPlay()
+	/*IEnumerator CountdownToPlay()
 	{
 		PlayNotificationAudio (gameStartingIn);
 		yield return new WaitForSeconds (gameStartingIn.length + .5f);
@@ -785,7 +784,7 @@ public class GoldRushController : GameController {
 			yield return new WaitForSeconds (1);
 		}
 		PlayRequested();
-	}
+	}*/
 
 	[SerializeField]
 	protected float extractTrimTime = 0.1f;
@@ -844,15 +843,15 @@ public class GoldRushController : GameController {
 		}
 
 		numDrops++;
-		scores[0]+= 10 * numDrops;
+		score += 10 * numDrops;
 
-		if( scores[0] < 2760 )
+		if( score < 2760 )
 		{
 			PlayNotificationAudio(points);
 			yield return new WaitForSeconds(points.length+.05f);
 		}
 
-		if( scores[0] > oldHighScore && !setHighScore )
+		if( score > oldHighScore && !setHighScore )
 		{
 			setHighScore = true;
 			PlayNotificationAudio(newHighScore);
@@ -966,7 +965,7 @@ public class GoldRushController : GameController {
 		}
 
 		
-		uint color =  EXTRACTOR_COLOR;
+		uint color = EXTRACTOR_COLOR;
 		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetLEDsRelative(target_position, color, 0, which_leds, relative_mode);
 		last_leds = which_leds;
 	}

@@ -234,7 +234,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(lastValidPredictedDrop != validPredictedDrop) {
-			robot.SetBackpackLEDs(validPredictedDrop ? Color.green : Color.clear, Color.clear);
+			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
