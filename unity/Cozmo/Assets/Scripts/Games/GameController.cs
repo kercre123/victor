@@ -19,6 +19,8 @@ public class GameController : MonoBehaviour {
 		public AudioClip sound;
 	}
 
+	private const int STAR_COUNT = 3;
+
 	[SerializeField] private Text countdownText = null;
 	[SerializeField] private float countdownToStart = 0f;
 	[SerializeField] private AudioClip countdownTickSound;
@@ -27,7 +29,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected AudioSource notificationAudio;
 	[SerializeField] private AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
-	[SerializeField] protected int[] starThresholds;
+	[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
@@ -41,8 +43,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] private AudioClip playingLoopSound;
 	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.Count];
-	[SerializeField] private AudioClip[] winSounds = new AudioClip[4];
-	[SerializeField] private AudioClip[] winLoopSounds = new AudioClip[4];
+	[SerializeField] private AudioClip[] winSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] private AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
 	[SerializeField] private AudioClip loseSound;
 	[SerializeField] private AudioClip loseLoopSound;
 
