@@ -104,6 +104,9 @@ user_init()
     wifi_softap_set_config(&ap_config);
     wifi_set_phy_mode(PHY_MODE_11G);
 
+    // Disable DHCP server before setting static IP info
+    wifi_softap_dhcps_stop();
+
     // Create ip config
     struct ip_info ipinfo;
     ipinfo.gw.addr = ipaddr_addr("0.0.0.0");

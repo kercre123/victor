@@ -253,7 +253,7 @@ LOCAL void handleUartRawRx(uint8 flag)
         outPkt = clientGetBuffer();
         if (outPkt == NULL)
         {
-          os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
+          //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
           phase = 0;
           break;
         }
