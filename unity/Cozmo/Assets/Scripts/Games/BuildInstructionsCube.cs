@@ -31,6 +31,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	[SerializeField] GameObject checkMarkPrefab = null;
 
+	public bool isActive { get { return objectFamily == 3; } }
 
 	GameObject checkMark = null;
 
@@ -160,7 +161,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			clonedBlockMaterial.color = color;
 		
 			if(symbols != null) {
-				if(objectFamily == 3) {
+				if(isActive) {
 					for(int i=0;i<symbols.Length;i++) {
 						Sprite sprite = null;
 						if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetDigitSprite(i+1);
@@ -194,7 +195,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			}
 
 			if(activeCorners != null) {
-				if(objectFamily == 3) {
+				if(isActive) {
 					Color activeColor = Color.black;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
 					for(int i=0;i<activeCorners.Length;i++) {

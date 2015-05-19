@@ -266,29 +266,29 @@ public class GoldRushController : GameController {
 
 		switch(playState)
 		{
-		case PlayState.IDLE:
-			UpdateIdle();
-			break;
-		case PlayState.SEARCHING:
-			UpdateSearching();
-			break;
-		case PlayState.EXTRACTING:
-			UpdateExtracting();
-			break;
-		case PlayState.RETURNING:
-			UpdateReturning();
-			break;
-		case PlayState.READY_TO_RETURN:
-			UpdateReadyToReturn();
-			break;
-		case PlayState.RETURNED:
-			UpdateReturned();
-			break;
-		case PlayState.CAN_EXTRACT:
-			UpdateCanExtract();
-			break;
-		default:
-			break;
+			case PlayState.IDLE:
+				UpdateIdle();
+				break;
+			case PlayState.SEARCHING:
+				UpdateSearching();
+				break;
+			case PlayState.EXTRACTING:
+				UpdateExtracting();
+				break;
+			case PlayState.RETURNING:
+				UpdateReturning();
+				break;
+			case PlayState.READY_TO_RETURN:
+				UpdateReadyToReturn();
+				break;
+			case PlayState.RETURNED:
+				UpdateReturned();
+				break;
+			case PlayState.CAN_EXTRACT:
+				UpdateCanExtract();
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -359,7 +359,7 @@ public class GoldRushController : GameController {
 			ObservedObject obj = robot.knownObjects[i];
 			if( obj.isActive && goldExtractingObject == null )
 			{
-				goldExtractingObject = robot.activeBlocks[obj];
+				goldExtractingObject = obj as ActiveBlock;
 				//goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
 			}
 			else if( !obj.isActive )
@@ -381,7 +381,7 @@ public class GoldRushController : GameController {
 				{
 					// picked up our detector block (will need to verify that it's an active block later)
 					buildState = BuildState.WAITING_FOR_STACK;
-					goldExtractingObject = robot.activeBlocks[robot.carryingObject];
+					goldExtractingObject = robot.carryingObject as ActiveBlock;
 					//UpdateDetectorLights (1);
 					goldExtractingObject.SetLEDs(0); 
 					//hintMessage.ShowMessage("Place the scanner on the transformer", Color.black);

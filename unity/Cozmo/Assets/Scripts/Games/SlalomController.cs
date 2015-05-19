@@ -34,7 +34,7 @@ public class SlalomController : GameController {
 
 	int currentLap = 1;
 
-	float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
+	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
 	ActiveBlock previousObstacle = null;
 
@@ -314,10 +314,6 @@ public class SlalomController : GameController {
 		ClearLights();
 	}
 
-	protected override bool IsGameReady() {
-		return base.IsGameReady();
-	}
-
 	protected override bool IsGameOver() {
 		//game specific end conditions...
 		if(activeBlockMovedorDeleted) return true;
@@ -325,14 +321,14 @@ public class SlalomController : GameController {
 		return base.IsGameOver();
 	}
 
-	private void OnActiveBlockRolled( ActiveBlock activeBlock )
+	private void OnActiveBlockRolled(ActiveBlock activeBlock)
 	{
 		activeBlockMovedorDeleted = true;
 	}
 
-	private void OnActiveBlockDeleted( ObservedObject activeBlock )
+	private void OnActiveBlockDeleted(ObservedObject observedObject)
 	{
-		activeBlockMovedorDeleted = true;
+		OnActiveBlockRolled(observedObject as ActiveBlock);
 	}
 
 	private Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
@@ -564,7 +560,12 @@ public class SlalomController : GameController {
 	protected override void Enter_RESULTS() {
 		base.Enter_RESULTS();
 
-		CelebrationLights();
+		if(win) {
+			CelebrationLights();
+		}
+		else {
+			DisqualifiedLights();
+		}
 	}
 
 	protected override void Exit_RESULTS() {
@@ -580,12 +581,12 @@ public class SlalomController : GameController {
 			obstacle.relativeMode = 0;
 			
 			for(int i = 0; i < obstacle.lights.Length; ++i) {
-				obstacle.SetLEDs( CozmoPalette.ColorToUInt( Color.red ) );
+				obstacle.SetLEDs(CozmoPalette.ColorToUInt(Color.red));
 			}
 		}
 		
 		for(int i = 0; i < robot.lights.Length; ++i) {
-			robot.SetBackpackLEDs( CozmoPalette.ColorToUInt( Color.red ) );
+			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.red));
 		}
 	}
 

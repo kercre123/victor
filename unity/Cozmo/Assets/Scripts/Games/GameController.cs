@@ -61,7 +61,7 @@ public class GameController : MonoBehaviour {
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
 
-	protected int score;
+	protected int score = 0;
 	protected int stars = 0;
 	protected bool win = false;
 	
@@ -93,7 +93,6 @@ public class GameController : MonoBehaviour {
 	protected virtual void OnEnable () {
 		state = GameState.BUILDING;
 		stateTimer = 0f;
-		score = 0;
 		errorMsgTimer = 0f;
 		firstFrame = true;
 		playRequested = false;
@@ -274,8 +273,6 @@ public class GameController : MonoBehaviour {
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
-
-		score = 0;
 	}
 
 	protected virtual void Update_PRE_GAME() {

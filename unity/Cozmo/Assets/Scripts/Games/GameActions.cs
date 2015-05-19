@@ -317,7 +317,7 @@ public class GameActions : MonoBehaviour
 
 		if( robot != null && robot.carryingObject != null && robot.carryingObject.isActive )
 		{
-			ActiveBlock activeBlock = robot.activeBlocks[robot.carryingObject];
+			ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
 
 			int typeIndex = (int)activeBlock.mode + 1;
 			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
