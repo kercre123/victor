@@ -61,6 +61,10 @@ namespace Anki {
         
         component_minHollowRatio = 1.0f;
         
+        // Ratio of 4th to 5th biggest Laplacian peak must be greater than this
+        // for a quad to be extracted from a connected component
+        minLaplacianPeakRatio = 5;
+        
         maxExtractedQuads = 1000/2;
         quads_minQuadArea = 100/4;
         quads_quadSymmetryThreshold = 512; // ANS: corresponds to 2.0, loosened from 384 (1.5), for large mat markers at extreme perspective distortion

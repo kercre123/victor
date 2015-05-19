@@ -68,17 +68,17 @@ Supervisor {
 		}
 		
 		# Bottom Face
-		VisionMarker {
-			rotation 1 0 0 1.5708
-			translation 0 0 %{=-hWidth}%
-			%{ if fields.markerImg_bottom.value ~= "" then }%
-			  image IS markerImg_bottom
-			%{ else }%
-			  image IS markerImg
-			%{ end }%
-			connectorName "connectorBottom"
-			connectorRotation 0 1 0 3.14159
-		}
+    VisionMarker {
+      rotation 1 0 0 -1.5708
+      translation 0 0 %{=-hWidth}%
+      %{ if fields.markerImg_bottom.value ~= "" then }%
+        image IS markerImg_bottom
+      %{ else }%
+        image IS markerImg
+      %{ end }%
+      connectorName "connectorBottom"
+      connectorRotation 0 1 0 3.14159
+    }
 		
 		# Top Face
 		VisionMarker {

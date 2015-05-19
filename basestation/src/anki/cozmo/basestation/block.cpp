@@ -142,7 +142,7 @@ namespace Anki {
       // relative to the face when we put down the block -- one for each
       // orientation of the block
       {
-        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM;
+        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM - DRIVE_CENTER_OFFSET;
         for(auto const& Rvec : preActionPoseRotations) {
           Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
           prePlacementPose.RotateBy(Rvec);
@@ -495,7 +495,7 @@ namespace Anki {
         } else if(turnOffUnspecifiedLEDs) {
           _ledState[iLED].onColor      = NamedColors::BLACK;
           _ledState[iLED].offColor     = NamedColors::BLACK;
-          _ledState[iLED].onPeriod_ms  = 0;
+          _ledState[iLED].onPeriod_ms  = 1000;
           _ledState[iLED].offPeriod_ms = 1000;
           _ledState[iLED].transitionOnPeriod_ms = 0;
           _ledState[iLED].transitionOffPeriod_ms = 0;
@@ -740,10 +740,15 @@ namespace Anki {
     {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
-      GetTopMarker(topMarkerPose);
+      const Vision::KnownMarker& topMarker = GetTopMarker(topMarkerPose);
       const Vec2f topMarkerCenter(topMarkerPose.GetTranslation());
       Vec2f v(xyPosition);
       v -= topMarkerCenter;
+      
+      PRINT_INFO("ActiveCube %d's TopMarker is = %s, angle = %.1fdeg\n",
+                 GetID().GetValue(),
+                 Vision::MarkerTypeStrings[topMarker.GetCode()],
+                 topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees());
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();

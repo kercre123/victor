@@ -3,6 +3,9 @@
 
 #include "portable.h"
 
+// Whether we have received any data from the head yet
+extern bool SPISpokenTo;
+
 // Initialize the SPI peripheral on the designated pins in the source file.
 void SPIInit();
 

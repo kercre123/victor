@@ -466,14 +466,14 @@ def trackQuadrilateral(startImage, startQuad, endImage, drawDebug=False):
     #quadShortWidth = min([xRange[0], yRange[0]])
     quadLongWidth = max([abs(xRange[1]-xRange[0]), abs(yRange[1]-yRange[0])])
 
-    winSize = max(3, int(round(quadLongWidth * 2 / numPointsPerDimension)))
+    windowSize = max(3, int(round(quadLongWidth * 2 / numPointsPerDimension)))
 
     #print('startQuad = ' + str(startQuad))
     #print('xRange = ' + str(xRange))
     #print('yRange = ' + str(yRange))
-    #print('winSize = ' + str(winSize))
+    #print('windowSize = ' + str(windowSize))
 
-    flow_lk_params = dict(winSize  = (winSize,winSize), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), minEigThreshold = 5e-3)
+    flow_lk_params = dict(winSize  = (windowSize,windowSize), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), minEigThreshold = 5e-3)
 
     points0 = []
     for y in np.linspace(yRange[0], yRange[1], numPointsPerDimension):

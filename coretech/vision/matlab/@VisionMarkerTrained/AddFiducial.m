@@ -31,8 +31,8 @@ end
 %img = mean(im2double(img),3);
 
 if RotateImage ~= 0
-  img = imrotate(img, RotateImage);
-  AlphaChannel = imrotate(AlphaChannel, RotateImage);
+  img = imrotate(img, RotateImage, 'bilinear');
+  AlphaChannel = imrotate(AlphaChannel, RotateImage, 'bilinear');
 end
 
 if CropImage

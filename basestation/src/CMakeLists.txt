@@ -42,6 +42,7 @@ target_link_libraries(Cozmo_Basestation
   CoreTech_Common_Robot  # TODO: Remove once we do basestation implementation of vision
   
   Clad_Support_Cpp
+  util
   ${ZLIB_LIBRARY}
 )
 

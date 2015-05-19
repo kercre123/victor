@@ -471,7 +471,7 @@ namespace Anki
               Array<u8> templateImageAtScale(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
                                             "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                            "Out of memory allocating templateImageAtScale.\n");
+                                            "Out of memory allocating templateImageAtScale. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
 
 #             if USE_BLURRING
               Array<u8> templateImageBoxFiltered(templateImage.get_size(0), templateImage.get_size(1), offchipScratch);
@@ -596,14 +596,14 @@ namespace Anki
                   Array<f32> magnitudeImage(numPointsY, numPointsX, offchipScratch);
                   AnkiConditionalErrorAndReturn(magnitudeImage.IsValid(),
                     "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                    "Out of memory allocating magnitudeImage.\n");
+                    "Out of memory allocating magnitudeImage. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
                   {
                     PUSH_MEMORY_STACK(offchipScratch);
 
                     Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(tmpMagnitude.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating tmpMagnitude.\n");
+                      "Out of memory allocating tmpMagnitude. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
 
                     Matrix::DotMultiply<f32,f32,f32>(templateImageXGradient, templateImageXGradient, tmpMagnitude);
                     Matrix::DotMultiply<f32,f32,f32>(templateImageYGradient, templateImageYGradient, magnitudeImage);
@@ -620,7 +620,7 @@ namespace Anki
                     Array<bool> magnitudeImageNLMS(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(magnitudeImageNLMS.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating magnitudeImageNLMS.\n");
+                      "Out of memory allocating magnitudeImageNLMS. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
                     magnitudeImageNLMS.SetZero();
                     s32 nonZeroCount = 0;
 #if SAMPLE_TOP_HALF_ONLY

@@ -165,3 +165,5 @@ robot/build
 robot/syscon/build
 ankic.cpp
 enjpeg-test
+build.old
+buildMakefile.old
