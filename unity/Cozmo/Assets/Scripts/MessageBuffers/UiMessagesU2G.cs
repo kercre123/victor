@@ -3397,10 +3397,20 @@ public class SetRobotCarryingObject
 
 public class ClearAllBlocks
 {
+	private byte _robotID; // uint_8
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
 	/**** Constructors ****/
 
 	public ClearAllBlocks()
 	{
+	}
+
+	public ClearAllBlocks(byte robotID)
+	{
+		this.robotID = robotID;
 	}
 
 	public ClearAllBlocks(System.IO.Stream stream)
@@ -3415,27 +3425,208 @@ public class ClearAllBlocks
 
 	public void Unpack(System.IO.Stream stream)
 	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
 	}
 
 	public void Unpack(System.IO.BinaryReader reader)
 	{
+		_robotID = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
 	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
 	}
 
 	public void Pack(System.IO.BinaryWriter writer)
 	{
+		writer.Write((byte)_robotID);
 	}
 
 	public int Size 
 	{
 		get {
-			return 0;
+			return 1;
 		}
 	}
 
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ClearAllBlocks a, ClearAllBlocks b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ClearAllBlocks a, ClearAllBlocks b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ClearAllBlocks);
+	}
+
+	public bool Equals(ClearAllBlocks p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class ClearAllObjects
+{
+	private byte _robotID; // uint_8
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public ClearAllObjects()
+	{
+	}
+
+	public ClearAllObjects(byte robotID)
+	{
+		this.robotID = robotID;
+	}
+
+	public ClearAllObjects(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public ClearAllObjects(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 1;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ClearAllObjects a, ClearAllObjects b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ClearAllObjects a, ClearAllObjects b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ClearAllObjects);
+	}
+
+	public bool Equals(ClearAllObjects p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
 }
 
 public class VisionWhileMoving
@@ -7064,34 +7255,35 @@ public class Message {
 		TraverseObject,	//27
 		SetRobotCarryingObject,	//28
 		ClearAllBlocks,	//29
-		VisionWhileMoving,	//30
-		ExecuteBehavior,	//31
-		SetBehaviorState,	//32
-		AbortPath,	//33
-		AbortAll,	//34
-		CancelAction,	//35
-		DrawPoseMarker,	//36
-		ErasePoseMarker,	//37
-		SetWheelControllerGains,	//38
-		SetHeadControllerGains,	//39
-		SetLiftControllerGains,	//40
-		SetSteeringControllerGains,	//41
-		SelectNextSoundScheme,	//42
-		StartTestMode,	//43
-		IMURequest,	//44
-		PlayAnimation,	//45
-		ReadAnimationFile,	//46
-		StartFaceTracking,	//47
-		StopFaceTracking,	//48
-		StartLookingForMarkers,	//49
-		StopLookingForMarkers,	//50
-		SetVisionSystemParams,	//51
-		SetFaceDetectParams,	//52
-		SetActiveObjectLEDs,	//53
-		SetAllActiveObjectLEDs,	//54
-		SetBackpackLEDs,	//55
-		VisualizeQuad,	//56
-		EraseQuad,	//57
+		ClearAllObjects,	//30
+		VisionWhileMoving,	//31
+		ExecuteBehavior,	//32
+		SetBehaviorState,	//33
+		AbortPath,	//34
+		AbortAll,	//35
+		CancelAction,	//36
+		DrawPoseMarker,	//37
+		ErasePoseMarker,	//38
+		SetWheelControllerGains,	//39
+		SetHeadControllerGains,	//40
+		SetLiftControllerGains,	//41
+		SetSteeringControllerGains,	//42
+		SelectNextSoundScheme,	//43
+		StartTestMode,	//44
+		IMURequest,	//45
+		PlayAnimation,	//46
+		ReadAnimationFile,	//47
+		StartFaceTracking,	//48
+		StopFaceTracking,	//49
+		StartLookingForMarkers,	//50
+		StopLookingForMarkers,	//51
+		SetVisionSystemParams,	//52
+		SetFaceDetectParams,	//53
+		SetActiveObjectLEDs,	//54
+		SetAllActiveObjectLEDs,	//55
+		SetBackpackLEDs,	//56
+		VisualizeQuad,	//57
+		EraseQuad,	//58
 		INVALID
 	};
 
@@ -7607,6 +7799,23 @@ public class Message {
 		
 		set {
 			_tag = (value != null) ? Tag.ClearAllBlocks : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.ClearAllObjects ClearAllObjects
+	{
+		get {
+			if (_tag != Tag.ClearAllObjects) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"ClearAllObjects\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.ClearAllObjects)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.ClearAllObjects : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -8203,6 +8412,9 @@ public class Message {
 		case Tag.ClearAllBlocks:
 			ClearAllBlocks = new Anki.Cozmo.U2G.ClearAllBlocks(reader);
 			break;
+		case Tag.ClearAllObjects:
+			ClearAllObjects = new Anki.Cozmo.U2G.ClearAllObjects(reader);
+			break;
 		case Tag.VisionWhileMoving:
 			VisionWhileMoving = new Anki.Cozmo.U2G.VisionWhileMoving(reader);
 			break;
@@ -8483,6 +8695,12 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			ClearAllBlocks.Pack(writer);
+			break;
+		case Tag.ClearAllObjects:
+			if (ClearAllObjects == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			ClearAllObjects.Pack(writer);
 			break;
 		case Tag.VisionWhileMoving:
 			if (VisionWhileMoving == null) {
@@ -8841,6 +9059,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += ClearAllBlocks.Size;
+				break;
+			case Tag.ClearAllObjects:
+				if (ClearAllObjects == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += ClearAllObjects.Size;
 				break;
 			case Tag.VisionWhileMoving:
 				if (VisionWhileMoving == null) {

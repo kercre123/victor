@@ -1883,6 +1883,7 @@ size_t ClearAllBlocks::Pack(uint8_t* buff, size_t len) const
 
 size_t ClearAllBlocks::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
+	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
@@ -1895,21 +1896,87 @@ size_t ClearAllBlocks::Unpack(const uint8_t* buff, const size_t len)
 
 size_t ClearAllBlocks::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
+	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
 }
 
 size_t ClearAllBlocks::Size() const
 {
 	size_t result = 0;
+	//robotID
+	result += 1; // = uint_8
 	return result;
 }
 
 bool ClearAllBlocks::operator==(const ClearAllBlocks& other) const
 {
+	if (robotID != other.robotID) {
+		return false;
+	}
 	return true;
 }
 
 bool ClearAllBlocks::operator!=(const ClearAllBlocks& other) const
+{
+	return !(operator==(other));
+}
+
+
+// MESSAGE ClearAllObjects
+
+ClearAllObjects::ClearAllObjects(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ClearAllObjects::ClearAllObjects(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ClearAllObjects::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ClearAllObjects::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->robotID);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ClearAllObjects::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ClearAllObjects::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->robotID);
+	return buffer.GetBytesRead();
+}
+
+size_t ClearAllObjects::Size() const
+{
+	size_t result = 0;
+	//robotID
+	result += 1; // = uint_8
+	return result;
+}
+
+bool ClearAllObjects::operator==(const ClearAllObjects& other) const
+{
+	if (robotID != other.robotID) {
+		return false;
+	}
+	return true;
+}
+
+bool ClearAllObjects::operator!=(const ClearAllObjects& other) const
 {
 	return !(operator==(other));
 }
@@ -3969,6 +4036,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetRobotCarryingObject";
 	case MessageTag::ClearAllBlocks:
 		return "ClearAllBlocks";
+	case MessageTag::ClearAllObjects:
+		return "ClearAllObjects";
 	case MessageTag::VisionWhileMoving:
 		return "VisionWhileMoving";
 	case MessageTag::ExecuteBehavior:
@@ -4907,6 +4976,35 @@ void Message::Set_ClearAllBlocks(Anki::Cozmo::U2G::ClearAllBlocks&& new_ClearAll
 		ClearCurrent();
 		new(&_ClearAllBlocks) Anki::Cozmo::U2G::ClearAllBlocks{std::move(new_ClearAllBlocks)};
 		_tag = Tag::ClearAllBlocks;
+	}
+}
+
+
+const Anki::Cozmo::U2G::ClearAllObjects& Message::Get_ClearAllObjects() const
+{
+	assert(_tag == Tag::ClearAllObjects);
+	return _ClearAllObjects;
+}
+void Message::Set_ClearAllObjects(const Anki::Cozmo::U2G::ClearAllObjects& new_ClearAllObjects)
+{
+	if(this->_tag == Tag::ClearAllObjects) {
+		_ClearAllObjects = new_ClearAllObjects;
+	}
+	else {
+		ClearCurrent();
+		new(&_ClearAllObjects) Anki::Cozmo::U2G::ClearAllObjects{new_ClearAllObjects};
+		_tag = Tag::ClearAllObjects;
+	}
+}
+void Message::Set_ClearAllObjects(Anki::Cozmo::U2G::ClearAllObjects&& new_ClearAllObjects)
+{
+	if(this->_tag == Tag::ClearAllObjects) {
+		_ClearAllObjects = std::move(new_ClearAllObjects);
+	}
+	else {
+		ClearCurrent();
+		new(&_ClearAllObjects) Anki::Cozmo::U2G::ClearAllObjects{std::move(new_ClearAllObjects)};
+		_tag = Tag::ClearAllObjects;
 	}
 }
 
@@ -5978,6 +6076,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_ClearAllBlocks.Unpack(buffer);
 		}
 		break;
+	case Tag::ClearAllObjects:
+		if (newTag != oldTag) {
+			new(&(this->_ClearAllObjects)) Anki::Cozmo::U2G::ClearAllObjects(buffer);
+		}
+		else {
+			this->_ClearAllObjects.Unpack(buffer);
+		}
+		break;
 	case Tag::VisionWhileMoving:
 		if (newTag != oldTag) {
 			new(&(this->_VisionWhileMoving)) Anki::Cozmo::U2G::VisionWhileMoving(buffer);
@@ -6309,6 +6415,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::ClearAllBlocks:
 		this->_ClearAllBlocks.Pack(buffer);
 		break;
+	case Tag::ClearAllObjects:
+		this->_ClearAllObjects.Pack(buffer);
+		break;
 	case Tag::VisionWhileMoving:
 		this->_VisionWhileMoving.Pack(buffer);
 		break;
@@ -6494,6 +6603,9 @@ size_t Message::Size() const
 	case Tag::ClearAllBlocks:
 		result += _ClearAllBlocks.Size();
 		break;
+	case Tag::ClearAllObjects:
+		result += _ClearAllObjects.Size();
+		break;
 	case Tag::VisionWhileMoving:
 		result += _VisionWhileMoving.Size();
 		break;
@@ -6677,6 +6789,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::ClearAllBlocks:
 		_ClearAllBlocks.~ClearAllBlocks();
+		break;
+	case Tag::ClearAllObjects:
+		_ClearAllObjects.~ClearAllObjects();
 		break;
 	case Tag::VisionWhileMoving:
 		_VisionWhileMoving.~VisionWhileMoving();
