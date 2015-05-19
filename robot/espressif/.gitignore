@@ -3,6 +3,7 @@
 *.ko
 *.obj
 *.elf
+*.bin
 
 # Precompiled Headers
 *.gch
@@ -27,5 +28,4 @@
 *.i*86
 *.x86_64
 *.hex
-*.bin
 **.pyc
