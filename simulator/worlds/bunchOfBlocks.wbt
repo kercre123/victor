@@ -187,12 +187,12 @@ DEF ActiveBlock1 Block1x1 {
   translation -0.100 0.120 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/OrbitalsA_000.png"
-  markerImg_back   "lightCubes/OrbitalsA_015.png"
-  markerImg_left   "lightCubes/OrbitalsA_030.png"
-  markerImg_right  "lightCubes/OrbitalsA_045.png"
-  markerImg_top    "lightCubes/OrbitalsA_060.png"
-  markerImg_bottom "lightCubes/OrbitalsA_075.png"        
+  markerImg_front  "lightCubes/LightBeamA_01.png"
+  markerImg_back   "lightCubes/LightBeamA_02.png"
+  markerImg_left   "lightCubes/LightBeamA_03.png"
+  markerImg_right  "lightCubes/LightBeamA_04.png"
+  markerImg_top    "lightCubes/LightBeamA_05.png"
+  markerImg_bottom "lightCubes/LightBeamA_06.png"        
 #   markerImg_front "letters/1.png"
 #   markerImg_back  "letters/2.png"
 #   markerImg_left  "letters/3.png"
@@ -207,14 +207,34 @@ DEF ActiveBlock2 Block1x1 {
   translation -0.120 0.070 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front "letters/inverted/1.png"
-  markerImg_back  "letters/inverted/2.png"
-  markerImg_left  "letters/inverted/3.png"
-  markerImg_right "letters/inverted/4.png"
-  markerImg_top   "letters/inverted/5.png"
-  markerImg_bottom "letters/inverted/6.png"
+  markerImg_front  "lightCubes/LightBeamB_01.png"
+  markerImg_back   "lightCubes/LightBeamB_02.png"
+  markerImg_left   "lightCubes/LightBeamB_03.png"
+  markerImg_right  "lightCubes/LightBeamB_04.png"
+  markerImg_top    "lightCubes/LightBeamB_05.png"
+  markerImg_bottom "lightCubes/LightBeamB_06.png"  
+#   markerImg_front "letters/inverted/1.png"
+#   markerImg_back  "letters/inverted/2.png"
+#   markerImg_left  "letters/inverted/3.png"
+#   markerImg_right "letters/inverted/4.png"
+#   markerImg_top   "letters/inverted/5.png"
+#   markerImg_bottom "letters/inverted/6.png"
   active TRUE 
   activeID 2
+}
+DEF ActiveBlock3 Block1x1 {
+  name "ActiveBlock"
+  translation -0.154 0.014 0.022
+  rotation 0 0 1 0.23
+  blockColor 0.5 0.85 0.5
+  markerImg_front  "lightCubes/LightBeamC_01.png"
+  markerImg_back   "lightCubes/LightBeamC_02.png"
+  markerImg_left   "lightCubes/LightBeamC_03.png"
+  markerImg_right  "lightCubes/LightBeamC_04.png"
+  markerImg_top    "lightCubes/LightBeamC_05.png"
+  markerImg_bottom "lightCubes/LightBeamC_06.png"  
+  active TRUE 
+  activeID 3
 }
 BlockWorldComms {
 }
