@@ -115,7 +115,7 @@ public class ActionButton : MonoBehaviour
 	{
 		GameActions gameActions = GameActions.instance;
 
-		if( robot == null || robot.isBusy || gameActions == null )
+		if( robot == null || gameActions == null )
 		{
 			m = Mode.DISABLED;
 		}

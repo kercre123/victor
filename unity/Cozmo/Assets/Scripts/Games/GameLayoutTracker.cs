@@ -803,6 +803,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		pos = Vector3.zero;
 		facing_rad = 0f;
 
+		ValidateBlocks ();
+
 		if(robot == null) return false;
 		if(objectToPlace == null) return false;
 		

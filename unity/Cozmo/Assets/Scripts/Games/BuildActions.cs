@@ -15,11 +15,20 @@ public class BuildActions : GameActions {
 	[SerializeField] AudioClip wrongColorVO;
 
 	public override string STACK { get { return "Place"; } }
+	public override string ALIGN { get { return "Play!"; } }
 
 	protected override void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
-		if( robot.isBusy ) return;
-		
+		if( robot.isBusy ) {
+			buttons[2].SetMode( ActionButton.Mode.CANCEL, null, null, true );
+			return;
+		}
+
+		if (GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.COMPLETE) {
+			buttons[2].SetMode( ActionButton.Mode.ALIGN, null, null, true );
+			return;
+		}
+
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
 			//stack is overwritten to be our assisted place command
@@ -119,6 +128,17 @@ public class BuildActions : GameActions {
 
 		//ActionButtonClick();
 		//base.Stack(onRelease, selectedObject);
+	}
+
+	public override void Align( bool onRelease, ObservedObject selectedObject )
+	{
+		if( robot == null || !onRelease ) return;
+
+		GameLayoutTracker tracker = GameLayoutTracker.instance;
+		if (tracker != null) {
+			tracker.ValidateBuild();
+		}
+
 	}
 
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
