@@ -32,7 +32,7 @@
 // The sensor value that must be met/exceeded in order to have detected an obstacle
 #define PROX_OBSTACLE_DETECT_THRESH   5
 
-// Make the (very restrictive) assumption that there is only every one of each
+// Make the (very restrictive) assumption that there is only ever one of each
 // type of object in the world at a time (e.g. a single "AngryFace" block or a
 // single "Fire" block). So if we see one, always match it to the one we've already
 // seen, if it exists.
@@ -357,7 +357,7 @@ namespace Anki
               // (If we are here, we didn't see it in the same place; we are only
               // updating it because we are assuming it's the same object based on
               // type.)
-              if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+              if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
                 // Update lastObserved times of this object
                 observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
                 observedObject->UpdateMarkerObservationTimes(*objSeen);
@@ -490,7 +490,7 @@ namespace Anki
                             "ID of new/re-observed object not set.\n");
         }
         
-        if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
+        if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
           // Use the projected corners to add an occluder and to keep track of the
           // bounding quads of all the observed objects in this Update
@@ -895,7 +895,7 @@ namespace Anki
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
                                         objectAndId.first.GetValue());
-                  } else if(object->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+                  } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
@@ -1149,7 +1149,7 @@ namespace Anki
           existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
           existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
           
-          if(existingMatPiece->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+          if(existingMatPiece->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
             // Now localize to that mat
             //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
             if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
@@ -1740,7 +1740,9 @@ namespace Anki
         }
         
         // Notify any listeners that this object is being deleted
-        CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
+        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+          CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
+        }
         
         // NOTE: The object should erase its own visualization upon destruction
         delete object;
