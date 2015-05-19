@@ -21,8 +21,8 @@ classdef VisionMarkerTrained
                 
         MinContrastRatio = 1.05; %1.25;  % bright/dark has to be at least this
         
-        SquareWidthFraction = 0.1;     % as a fraction of the fiducial width
-        FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
+        SquareWidthFraction = 0.08;     % as a fraction of the fiducial width
+        FiducialPaddingFraction = 0.08; % as a fraction of the fiducial width
         CornerRadiusFraction = 0;    % as a fraction of the fiducial width
         
         ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
