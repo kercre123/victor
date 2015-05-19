@@ -13,26 +13,28 @@ public class GyroControls : MonoBehaviour {
 	[SerializeField] RectTransform upIndicator = null;
 
 	float x = 0f;
-	public float Horizontal {
-		get {
-			if(!SystemInfo.supportsGyroscope) return 0f;
+	public float GetHorizontal(float min=-1f, float max=-1f) {
+		if (min < 0) min = rollAngleMin;
+		if (max < 0) min = rollAngleMax;
 
-			float roll = MathUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
-			x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
-			return x; 
-		}
+		if(!SystemInfo.supportsGyroscope) return 0f;
+
+		float roll = MathUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
+		x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
+		return x; 
 	}
 
 	float y = 0f;
-	public float Vertical {
-		get { 
-			if(!SystemInfo.supportsGyroscope) return 0f;
+	public float GetVertical(float min=-1f, float max=-1f) {
+		if(!SystemInfo.supportsGyroscope) return 0f;
 
-			float pitch = MSP_Input.GyroAccel.GetPitch();
-			y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * (pitch >= 0f ? -1f : 1f);
+		if (min < 0) min = pitchAngleMin;
+		if (max < 0) min = pitchAngleMax;
 
-			return y; 
-		}
+		float pitch = MSP_Input.GyroAccel.GetPitch();
+		y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * (pitch >= 0f ? -1f : 1f);
+
+		return y; 
 	}
 
 	void FixedUpdate() {

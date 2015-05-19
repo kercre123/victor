@@ -9,7 +9,6 @@ public class CozmoVision : MonoBehaviour
 {
 	[SerializeField] protected Image image;
 	[SerializeField] protected Text text;
-	[SerializeField] protected GameObject actionPanelPrefab;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
 	[SerializeField] protected AudioSource loopAudioSource;
@@ -30,7 +29,7 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Color selected;
 	[SerializeField] protected Color select;
 
-	protected ActionPanel actionPanel;
+	[SerializeField] protected ActionPanel actionPanel;
 
 	protected RectTransform rTrans;
 	protected RectTransform imageRectTrans;
@@ -72,7 +71,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		rTrans = transform as RectTransform;
 		imageRectTrans = image.gameObject.GetComponent<RectTransform>();
-		canvas = GetComponentInParent<Canvas>();
+		canvas = image.gameObject.GetComponentInParent<Canvas>();
 		canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
 		if(observedObjectCanvasPrefab != null) {
@@ -88,11 +87,7 @@ public class CozmoVision : MonoBehaviour
 
 		}
 
-		if(actionPanelPrefab != null) {
-			GameObject actionPanelObject = (GameObject)GameObject.Instantiate(actionPanelPrefab);
-			actionPanel = actionPanelObject.GetComponentInChildren<ActionPanel>();
-			//Canvas actionCanvas = actionPanelObject.GetComponent<Canvas>();
-			//actionCanvas.sortingOrder = 10;
+		if(actionPanel != null) {
 			actionPanel.gameObject.SetActive(false);
 		}
 	}
