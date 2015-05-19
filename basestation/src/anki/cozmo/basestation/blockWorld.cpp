@@ -134,8 +134,9 @@ namespace Anki
       // 1x1 Active Cubes
       //
       //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER_INVERTED));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE1));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE2));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE3));
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
