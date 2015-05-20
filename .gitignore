@@ -167,3 +167,4 @@ ankic.cpp
 enjpeg-test
 build.old
 buildMakefile.old
+include/anki/cozmo/shared/msgIDs.txt
