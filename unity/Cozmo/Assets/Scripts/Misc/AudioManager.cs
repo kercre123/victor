@@ -83,7 +83,7 @@ public class AudioManager : MonoBehaviour
 		else
 		{
 			audioSource.loop = false;
-			audioSource.PlayOneShot( clip );
+			audioSource.PlayOneShot( clip, volume );
 		}
 	}
 	

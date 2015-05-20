@@ -149,6 +149,7 @@ public class ActionSliderPanel : ActionPanel
 					sheenAnimation.Play ();
 				}
 				else {
+					sheenAnimation.Rewind();
 					sheenAnimation.Stop ();
 				}
 			}
@@ -164,10 +165,10 @@ public class ActionSliderPanel : ActionPanel
 		}
 
 		if (secondaryActionsAvailableLastFrame && !actionsAvailable) {
-			audio.PlayOneShot(actionsNotAvailableSound);
+			AudioManager.PlayOneShot(actionsNotAvailableSound, 0.25f);
 		}
 		else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
-			audio.PlayOneShot(actionsAvailableSound);
+			AudioManager.PlayOneShot(actionsAvailableSound, 0.25f);
 		}
 
 		secondaryActionsAvailableLastFrame = actionsAvailable;
