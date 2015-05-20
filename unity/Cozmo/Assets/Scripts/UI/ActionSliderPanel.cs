@@ -219,12 +219,10 @@ public class ActionSliderPanel : ActionPanel
 	}
 
 	private void SlideInSound() {
-		audio.volume = 1f;
-		audio.PlayOneShot(slideInSound, 1f);
+		AudioManager.PlayOneShot(slideInSound);
 	}
 	
 	private void SlideOutSound() {
-		audio.volume = 1f;
-		audio.PlayOneShot(slideOutSound, 1f);
+		AudioManager.PlayOneShot(slideOutSound);
 	}
 }

@@ -210,11 +210,11 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(validCount == currentLayout.blocks.Count) {
 			if(lastValidCount != currentLayout.blocks.Count) {
-				audio.PlayOneShot(layoutValidatedSound);
+				AudioManager.PlayOneShot(layoutValidatedSound);
 			}
 		}
 		else if(validCount > lastValidCount) {
-			audio.PlayOneShot(blockValidatedSound);
+			AudioManager.PlayOneShot(blockValidatedSound);
 		}
 
 		RefreshLayout();
@@ -231,7 +231,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, false);
 
 			if(lastValidPredictedDrop != validPredictedDrop) {
-				audio.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
+				AudioManager.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
 			}
 		}
 
@@ -314,7 +314,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(showWhenInventoryCompleted != null) {
 					if(!showWhenInventoryCompleted.activeSelf && inventoryComplete) {
-						audio.PlayOneShot(inventoryCompleteSound);
+						AudioManager.PlayOneShot(inventoryCompleteSound);
 					}
 					showWhenInventoryCompleted.SetActive(inventoryComplete);
 				}

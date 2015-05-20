@@ -63,7 +63,7 @@ public class ObservedObjectButton1 : ObservedObjectBox1
 	{
 		base.Selection();
 
-		if( box != null && box.audio != null ) box.audio.PlayOneShot( select );
+		AudioManager.PlayOneShot( select );
 	}
 
 	public override void SetColor( Color color )

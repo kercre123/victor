@@ -31,12 +31,12 @@ public class SuccessOrFailureText : ScreenMessage
 	{
 		if( s )
 		{
-			if(success != null) audio.PlayOneShot( success );
+			if(success != null) AudioManager.PlayOneShot( success );
 			ShowMessageForDuration( action_type + " SUCCEEDED", timeOnScreen, Color.green);
 		}
 		else
 		{
-			if(failure != null) audio.PlayOneShot( failure );
+			if(failure != null) AudioManager.PlayOneShot( failure );
 			ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
 		}
 	}

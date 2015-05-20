@@ -217,10 +217,9 @@ public class GoldRushController : GameController {
 	protected override void Exit_PLAYING()
 	{
 		base.Exit_PLAYING();
-		notificationAudio.Stop();
-		audio.Stop();
+		AudioManager.Stop(); // stop all audio
 		StopAllCoroutines();
-		PlayNotificationAudio (timeUp);
+		AudioManager.PlayAudioClip(timeUp, 0f, false, false, AudioManager.Source.Notification);
 		resultsScore.text = "Score: " + score;
 		if( setHighScore )
 		{
@@ -238,7 +237,7 @@ public class GoldRushController : GameController {
 		//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 		playState = PlayState.IDLE;
 		UpdateDetectorLights (0);
-		audio.Stop ();
+		AudioManager.Stop( AudioManager.Source.UI );
 		SetEnergyBars (0, 0);
 		if( successOrFailureGameObject != null )
 		{
@@ -385,7 +384,7 @@ public class GoldRushController : GameController {
 					//UpdateDetectorLights (1);
 					goldExtractingObject.SetLEDs(0); 
 					//hintMessage.ShowMessage("Place the scanner on the transformer", Color.black);
-					PlayNotificationAudio(placeEnergyScanner);
+					AudioManager.PlayAudioClip(placeEnergyScanner, 0f, false, false, AudioManager.Source.Notification);
 				}
 				break;
 			case BuildState.WAITING_FOR_STACK:
@@ -393,7 +392,7 @@ public class GoldRushController : GameController {
 				{
 					// stacked our detector block
 					buildState = BuildState.WAITING_FOR_PLAY;
-					PlayNotificationAudio(pickupEnergyScanner);
+					AudioManager.PlayAudioClip(pickupEnergyScanner, 0f, false, false, AudioManager.Source.Notification);
 					//hintMessage.ShowMessage("Pick up the scanner to begin play", Color.black);
 				}
 				break;
@@ -453,13 +452,10 @@ public class GoldRushController : GameController {
 		if( audioLocatorEnabled )
 		{
 			float timeSinceLast = Time.realtimeSinceStartup - lastPlayTime;
-			audio.loop = false;
 
 			if (timeSinceLast >= current_rate) 
 			{
-				audio.Stop();
-				audio.clip = locatorBeep;
-				gameObject.audio.Play();
+				AudioManager.PlayAudioClip(locatorBeep);
 
 				lastPlayTime = Time.realtimeSinceStartup;
 			}
@@ -482,7 +478,7 @@ public class GoldRushController : GameController {
 				BuryTreasure();
 			}
 			robot.SetHeadAngle();
-			PlayNotificationAudioDeferred(findEnergy);
+			AudioManager.PlayAudioClip(findEnergy, 0f, false, true, AudioManager.Source.Notification);
 			break;
 		case PlayState.CAN_EXTRACT:
 			if ( PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1 )
@@ -493,11 +489,7 @@ public class GoldRushController : GameController {
 			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
-				audio.Stop();
-				audio.clip = foundBeep;
-				audio.loop = true;
-				audio.pitch = .3f;
-				gameObject.audio.Play();
+				AudioManager.PlayAudioClip(foundBeep, 0f, true, false, AudioManager.Source.Gameplay, 0.3f);
 			}
 			break;
 		case PlayState.EXTRACTING:
@@ -509,7 +501,7 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNING:
 			robot.SetHeadAngle();
 			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF); 
-			PlayNotificationAudio(dropEnergy);
+			AudioManager.PlayAudioClip(dropEnergy, 0f, false, false, AudioManager.Source.Notification);
 
 			//hintMessage.ShowMessageForDuration("Drop the energy at the transformer", 3.0f, Color.black);
 			break;
@@ -526,11 +518,7 @@ public class GoldRushController : GameController {
 			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
-				audio.Stop();
-				audio.clip = foundBeep;
-				audio.loop = true;
-				audio.pitch = .3f;
-				gameObject.audio.Play();
+				AudioManager.PlayAudioClip(foundBeep, 0f, true, false, AudioManager.Source.Gameplay, 0.3f);
 			}
 			//hintMessage.ShowMessage("Deposit the energy!", Color.black);
 			break;
@@ -569,12 +557,10 @@ public class GoldRushController : GameController {
 		case PlayState.RETURNED:
 			//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 			//hintMessage.KillMessage();
-			audio.Stop();
-			audio.pitch = 1;
+			AudioManager.Stop(AudioManager.Source.Gameplay);
 			break;
 		case PlayState.CAN_EXTRACT:
-			audio.Stop();
-			audio.pitch = 1;
+			AudioManager.Stop(AudioManager.Source.Gameplay);
 			break;
 		default:
 			break;
@@ -732,8 +718,7 @@ public class GoldRushController : GameController {
 	public void BeginExtracting()
 	{
 		// start extracting
-		audio.loop = false;
-		audio.Stop();
+		AudioManager.Stop(AudioManager.Source.Gameplay);
 		foundItems.Remove(lastCarriedObjectId);
 		//goldExtractingObjectId = lastCarriedObjectId;
 		lastCarriedObjectId = -1;
@@ -797,7 +782,7 @@ public class GoldRushController : GameController {
 		robot.isBusy = true;
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
 		yield return new WaitForSeconds(accelStabilizationTime); // short delay to allow accelerometer data to calm down
-		PlayNotificationAudio(extractingEnergy);
+		AudioManager.PlayAudioClip(extractingEnergy, 0f, false, false, AudioManager.Source.Notification);
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
 		yield return new WaitForSeconds(extractingEnergy.length -extractTrimTime);
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
@@ -815,7 +800,7 @@ public class GoldRushController : GameController {
 		// will end up doing active block light stuff here
 		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
-		PlayNotificationAudio(depositingEnergy);
+		AudioManager.PlayAudioClip(depositingEnergy, 0f, false, false, AudioManager.Source.Notification);
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
 		yield return new WaitForSeconds(depositingEnergy.length/2);
 
@@ -833,12 +818,12 @@ public class GoldRushController : GameController {
 
 		if( numDrops < scoreSounds.Length )
 		{
-			PlayNotificationAudio(scoreSounds[numDrops]);
+			AudioManager.PlayAudioClip(scoreSounds[numDrops], 0f, false, false, AudioManager.Source.Notification);
 			yield return new WaitForSeconds(scoreSounds[numDrops].length+.05f);
 		}
 		else
 		{
-			PlayNotificationAudio(scoreSounds[scoreSounds.Length-1]);
+			AudioManager.PlayAudioClip(scoreSounds[scoreSounds.Length-1], 0f, false, false, AudioManager.Source.Notification);
 			yield return new WaitForSeconds(scoreSounds[scoreSounds.Length-1].length+.05f);
 		}
 
@@ -847,14 +832,14 @@ public class GoldRushController : GameController {
 
 		if( score < 2760 )
 		{
-			PlayNotificationAudio(points);
+			AudioManager.PlayAudioClip(points, 0f, false, false, AudioManager.Source.Notification);
 			yield return new WaitForSeconds(points.length+.05f);
 		}
 
 		if( score > oldHighScore && !setHighScore )
 		{
 			setHighScore = true;
-			PlayNotificationAudio(newHighScore);
+			AudioManager.PlayAudioClip(newHighScore, 0f, false, false, AudioManager.Source.Notification);
 
 			yield return new WaitForSeconds(newHighScore.length);
 		}
@@ -880,7 +865,7 @@ public class GoldRushController : GameController {
 
 		if (num_drops_this_run == 0) 
 		{
-			PlayNotificationAudio(timeExtension);
+			AudioManager.PlayAudioClip(timeExtension, 0f, false, false, AudioManager.Source.Notification);
 			EnterPlayState(PlayState.IDLE);
 			yield return new WaitForSeconds(timeExtension.length/2);
 			SetEnergyBars(0,0);

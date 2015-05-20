@@ -41,39 +41,40 @@ enum class MessageTag : uint8_t {
 	ExecuteTestPlan,	// 24
 	SelectNextObject,	// 25
 	PickAndPlaceObject,	// 26
-	TraverseObject,	// 27
-	SetRobotCarryingObject,	// 28
-	ClearAllBlocks,	// 29
-	ClearAllObjects,	// 30
-	SetObjectAdditionAndDeletion,	// 31
-	VisionWhileMoving,	// 32
-	ExecuteBehavior,	// 33
-	SetBehaviorState,	// 34
-	AbortPath,	// 35
-	AbortAll,	// 36
-	CancelAction,	// 37
-	DrawPoseMarker,	// 38
-	ErasePoseMarker,	// 39
-	SetWheelControllerGains,	// 40
-	SetHeadControllerGains,	// 41
-	SetLiftControllerGains,	// 42
-	SetSteeringControllerGains,	// 43
-	SelectNextSoundScheme,	// 44
-	StartTestMode,	// 45
-	IMURequest,	// 46
-	PlayAnimation,	// 47
-	ReadAnimationFile,	// 48
-	StartFaceTracking,	// 49
-	StopFaceTracking,	// 50
-	StartLookingForMarkers,	// 51
-	StopLookingForMarkers,	// 52
-	SetVisionSystemParams,	// 53
-	SetFaceDetectParams,	// 54
-	SetActiveObjectLEDs,	// 55
-	SetAllActiveObjectLEDs,	// 56
-	SetBackpackLEDs,	// 57
-	VisualizeQuad,	// 58
-	EraseQuad,	// 59
+	RollObject,	// 27
+	TraverseObject,	// 28
+	SetRobotCarryingObject,	// 29
+	ClearAllBlocks,	// 30
+	ClearAllObjects,	// 31
+	SetObjectAdditionAndDeletion,	// 32
+	VisionWhileMoving,	// 33
+	ExecuteBehavior,	// 34
+	SetBehaviorState,	// 35
+	AbortPath,	// 36
+	AbortAll,	// 37
+	CancelAction,	// 38
+	DrawPoseMarker,	// 39
+	ErasePoseMarker,	// 40
+	SetWheelControllerGains,	// 41
+	SetHeadControllerGains,	// 42
+	SetLiftControllerGains,	// 43
+	SetSteeringControllerGains,	// 44
+	SelectNextSoundScheme,	// 45
+	StartTestMode,	// 46
+	IMURequest,	// 47
+	PlayAnimation,	// 48
+	ReadAnimationFile,	// 49
+	StartFaceTracking,	// 50
+	StopFaceTracking,	// 51
+	StartLookingForMarkers,	// 52
+	StopLookingForMarkers,	// 53
+	SetVisionSystemParams,	// 54
+	SetFaceDetectParams,	// 55
+	SetActiveObjectLEDs,	// 56
+	SetAllActiveObjectLEDs,	// 57
+	SetBackpackLEDs,	// 58
+	VisualizeQuad,	// 59
+	EraseQuad,	// 60
 	INVALID
 };
 

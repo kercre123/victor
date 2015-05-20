@@ -3143,6 +3143,141 @@ public class PickAndPlaceObject
 	}
 }
 
+public class RollObject
+{
+	private int _objectID; // int_32
+	private byte _usePreDockPose; // uint_8
+	private byte _useManualSpeed; // uint_8
+
+	public int objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public byte usePreDockPose { get { return _usePreDockPose; } set { _usePreDockPose = value; } }
+
+	public byte useManualSpeed { get { return _useManualSpeed; } set { _useManualSpeed = value; } }
+
+
+	/**** Constructors ****/
+
+	public RollObject()
+	{
+	}
+
+	public RollObject(int objectID,
+		byte usePreDockPose,
+		byte useManualSpeed)
+	{
+		this.objectID = objectID;
+		this.usePreDockPose = usePreDockPose;
+		this.useManualSpeed = useManualSpeed;
+	}
+
+	public RollObject(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public RollObject(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadInt32();
+		_usePreDockPose = reader.ReadByte();
+		_useManualSpeed = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((int)_objectID);
+		writer.Write((byte)_usePreDockPose);
+		writer.Write((byte)_useManualSpeed);
+	}
+
+	public int Size 
+	{
+		get {
+			return 6;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(RollObject a, RollObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RollObject a, RollObject b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as RollObject);
+	}
+
+	public bool Equals(RollObject p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._objectID.Equals(p._objectID)
+			&& this._usePreDockPose.Equals(p._usePreDockPose)
+			&& this._useManualSpeed.Equals(p._useManualSpeed);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._objectID.GetHashCode();
+			hash = hash * 23 + this._usePreDockPose.GetHashCode();
+			hash = hash * 23 + this._useManualSpeed.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class TraverseObject
 {
 	private byte _usePreDockPose; // uint_8
@@ -7387,39 +7522,40 @@ public class Message {
 		ExecuteTestPlan,	//24
 		SelectNextObject,	//25
 		PickAndPlaceObject,	//26
-		TraverseObject,	//27
-		SetRobotCarryingObject,	//28
-		ClearAllBlocks,	//29
-		ClearAllObjects,	//30
-		SetObjectAdditionAndDeletion,	//31
-		VisionWhileMoving,	//32
-		ExecuteBehavior,	//33
-		SetBehaviorState,	//34
-		AbortPath,	//35
-		AbortAll,	//36
-		CancelAction,	//37
-		DrawPoseMarker,	//38
-		ErasePoseMarker,	//39
-		SetWheelControllerGains,	//40
-		SetHeadControllerGains,	//41
-		SetLiftControllerGains,	//42
-		SetSteeringControllerGains,	//43
-		SelectNextSoundScheme,	//44
-		StartTestMode,	//45
-		IMURequest,	//46
-		PlayAnimation,	//47
-		ReadAnimationFile,	//48
-		StartFaceTracking,	//49
-		StopFaceTracking,	//50
-		StartLookingForMarkers,	//51
-		StopLookingForMarkers,	//52
-		SetVisionSystemParams,	//53
-		SetFaceDetectParams,	//54
-		SetActiveObjectLEDs,	//55
-		SetAllActiveObjectLEDs,	//56
-		SetBackpackLEDs,	//57
-		VisualizeQuad,	//58
-		EraseQuad,	//59
+		RollObject,	//27
+		TraverseObject,	//28
+		SetRobotCarryingObject,	//29
+		ClearAllBlocks,	//30
+		ClearAllObjects,	//31
+		SetObjectAdditionAndDeletion,	//32
+		VisionWhileMoving,	//33
+		ExecuteBehavior,	//34
+		SetBehaviorState,	//35
+		AbortPath,	//36
+		AbortAll,	//37
+		CancelAction,	//38
+		DrawPoseMarker,	//39
+		ErasePoseMarker,	//40
+		SetWheelControllerGains,	//41
+		SetHeadControllerGains,	//42
+		SetLiftControllerGains,	//43
+		SetSteeringControllerGains,	//44
+		SelectNextSoundScheme,	//45
+		StartTestMode,	//46
+		IMURequest,	//47
+		PlayAnimation,	//48
+		ReadAnimationFile,	//49
+		StartFaceTracking,	//50
+		StopFaceTracking,	//51
+		StartLookingForMarkers,	//52
+		StopLookingForMarkers,	//53
+		SetVisionSystemParams,	//54
+		SetFaceDetectParams,	//55
+		SetActiveObjectLEDs,	//56
+		SetAllActiveObjectLEDs,	//57
+		SetBackpackLEDs,	//58
+		VisualizeQuad,	//59
+		EraseQuad,	//60
 		INVALID
 	};
 
@@ -7884,6 +8020,23 @@ public class Message {
 		
 		set {
 			_tag = (value != null) ? Tag.PickAndPlaceObject : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.RollObject RollObject
+	{
+		get {
+			if (_tag != Tag.RollObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RollObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.RollObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RollObject : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -8556,6 +8709,9 @@ public class Message {
 		case Tag.PickAndPlaceObject:
 			PickAndPlaceObject = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
 			break;
+		case Tag.RollObject:
+			RollObject = new Anki.Cozmo.U2G.RollObject(reader);
+			break;
 		case Tag.TraverseObject:
 			TraverseObject = new Anki.Cozmo.U2G.TraverseObject(reader);
 			break;
@@ -8833,6 +8989,12 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			PickAndPlaceObject.Pack(writer);
+			break;
+		case Tag.RollObject:
+			if (RollObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			RollObject.Pack(writer);
 			break;
 		case Tag.TraverseObject:
 			if (TraverseObject == null) {
@@ -9203,6 +9365,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += PickAndPlaceObject.Size;
+				break;
+			case Tag.RollObject:
+				if (RollObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += RollObject.Size;
 				break;
 			case Tag.TraverseObject:
 				if (TraverseObject == null) {
