@@ -94,7 +94,7 @@ user_init()
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
-    ap_config.max_connection = 4;
+    ap_config.max_connection = 8;
     ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
     ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
