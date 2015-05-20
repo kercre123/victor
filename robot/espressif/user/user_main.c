@@ -45,7 +45,6 @@ static void ICACHE_FLASH_ATTR system_init_done()
 
   // Enable UART0 RX interrupt
   // Only after clientInit
-  ETS_UART_INTR_ENABLE();
   uart_rx_intr_enable(UART0);
 
   // Setup user task
@@ -70,7 +69,7 @@ user_init()
     os_update_cpu_frequency(160);
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
-    ETS_UART_INTR_DISABLE();
+    uart_rx_intr_disable(UART0);
 
     os_printf("Espressif booting up...\r\n");
 
@@ -90,12 +89,12 @@ user_init()
       os_printf("Error getting mac address info\r\n");
     }
 
-    os_sprintf(ap_config.ssid,     "AnkiTorpedo");
+    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
     os_sprintf(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
-    ap_config.max_connection = 8;
+    ap_config.max_connection = 4;
     ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
     ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
