@@ -442,7 +442,6 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ClearAllBlocks(U2G::ClearAllBlocks const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
@@ -459,6 +458,16 @@ namespace Cozmo {
     if(robot != nullptr) {
       VizManager::getInstance()->EraseAllVizObjects();
       robot->GetBlockWorld().ClearAllExistingObjects();
+    }
+  }
+  
+  void CozmoGameImpl::Process_SetObjectAdditionAndDeletion(U2G::SetObjectAdditionAndDeletion const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->GetBlockWorld().EnableObjectAddition(msg.enableAddition);
+      robot->GetBlockWorld().EnableObjectDeletion(msg.enableDeletion);
     }
   }
   

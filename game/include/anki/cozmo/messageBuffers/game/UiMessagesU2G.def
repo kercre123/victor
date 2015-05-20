@@ -1136,6 +1136,46 @@ struct ClearAllObjects
 	bool operator!=(const ClearAllObjects& other) const;
 };
 
+// MESSAGE SetObjectAdditionAndDeletion
+struct SetObjectAdditionAndDeletion
+{
+	uint8_t robotID;
+	bool enableAddition;
+	bool enableDeletion;
+	
+	/**** Constructors ****/
+	SetObjectAdditionAndDeletion() = default;
+	SetObjectAdditionAndDeletion(const SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion(SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion(SetObjectAdditionAndDeletion&& other) noexcept = default;
+	SetObjectAdditionAndDeletion& operator=(const SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion& operator=(SetObjectAdditionAndDeletion&& other) noexcept = default;
+	
+	explicit SetObjectAdditionAndDeletion(uint8_t robotID
+		,bool enableAddition
+		,bool enableDeletion)
+	:robotID(robotID)
+	,enableAddition(enableAddition)
+	,enableDeletion(enableDeletion)
+	{}
+
+	explicit SetObjectAdditionAndDeletion(const uint8_t* buff, size_t len);
+	explicit SetObjectAdditionAndDeletion(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const SetObjectAdditionAndDeletion& other) const;
+	bool operator!=(const SetObjectAdditionAndDeletion& other) const;
+};
+
 // MESSAGE VisionWhileMoving
 struct VisionWhileMoving
 {
@@ -2427,6 +2467,11 @@ public:
 	void Set_ClearAllObjects(const Anki::Cozmo::U2G::ClearAllObjects& new_ClearAllObjects);
 	void Set_ClearAllObjects(Anki::Cozmo::U2G::ClearAllObjects&& new_ClearAllObjects);
 
+	/** SetObjectAdditionAndDeletion **/
+	const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& Get_SetObjectAdditionAndDeletion() const;
+	void Set_SetObjectAdditionAndDeletion(const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& new_SetObjectAdditionAndDeletion);
+	void Set_SetObjectAdditionAndDeletion(Anki::Cozmo::U2G::SetObjectAdditionAndDeletion&& new_SetObjectAdditionAndDeletion);
+
 	/** VisionWhileMoving **/
 	const Anki::Cozmo::U2G::VisionWhileMoving& Get_VisionWhileMoving() const;
 	void Set_VisionWhileMoving(const Anki::Cozmo::U2G::VisionWhileMoving& new_VisionWhileMoving);
@@ -2611,6 +2656,7 @@ private:
 		Anki::Cozmo::U2G::SetRobotCarryingObject _SetRobotCarryingObject;
 		Anki::Cozmo::U2G::ClearAllBlocks _ClearAllBlocks;
 		Anki::Cozmo::U2G::ClearAllObjects _ClearAllObjects;
+		Anki::Cozmo::U2G::SetObjectAdditionAndDeletion _SetObjectAdditionAndDeletion;
 		Anki::Cozmo::U2G::VisionWhileMoving _VisionWhileMoving;
 		Anki::Cozmo::U2G::ExecuteBehavior _ExecuteBehavior;
 		Anki::Cozmo::U2G::SetBehaviorState _SetBehaviorState;

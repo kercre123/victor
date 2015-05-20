@@ -11,7 +11,7 @@ public class ActiveBlock : ObservedObject
 	public class Light : Robot.Light
 	{
 		[System.FlagsAttribute]
-		public enum PositionFlag
+		public new enum PositionFlag
 		{
 			NONE              = 0,
 			TOP_NORTH_WEST    = 0x01,
@@ -25,7 +25,7 @@ public class ActiveBlock : ObservedObject
 			ALL = 0xff
 		};
 		
-		private static PositionFlag IndexToPosition( int i )
+		private PositionFlag IndexToPosition( int i )
 		{
 			switch( i )
 			{
@@ -45,8 +45,6 @@ public class ActiveBlock : ObservedObject
 					return PositionFlag.BOTTOM_NORTH_EAST;
 				case 7:
 					return PositionFlag.BOTTOM_SOUTH_EAST;
-				case 8:
-					return PositionFlag.ALL;
 			}
 			
 			return PositionFlag.NONE;

@@ -34,12 +34,6 @@ public class GoldRushGameActions : GameActions {
 	
 	protected override void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
-		if( goldController.state == GameController.GameState.BUILDING )
-		{
-			base.SetActionButtons( isSlider );
-			return;
-		}
-
 		if( robot.isBusy ) return;
 
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )

@@ -22,6 +22,7 @@ public class SlalomController : GameController {
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
 	bool atYourMark = false;
+	bool activeBlockMovedorDeleted = false;
 
 	int currentCorner = 0;
 	int currentObstacleIndex = 0;
@@ -33,7 +34,7 @@ public class SlalomController : GameController {
 
 	int currentLap = 1;
 
-	float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
+	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
 	ActiveBlock previousObstacle = null;
 
@@ -102,9 +103,9 @@ public class SlalomController : GameController {
 	}
 
 	void LapComplete() {
-		scores[0] += pointsPerLap;
+		score += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-		//audio.PlayOneShot(playerScoreSound);
+		//PlayOneShot(playerScoreSound);
 		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
 		if(lapsRemaining == 0) {
 			if(finalLapSound != null) PlayDelayed(finalLapSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
@@ -266,6 +267,13 @@ public class SlalomController : GameController {
 
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
+
+		activeBlockMovedorDeleted = false;
+
+		for(int i = 0; i < obstacles.Count; ++i) {
+			obstacles[i].OnAxisChange += OnActiveBlockRolled;
+			obstacles[i].OnDelete += OnActiveBlockDeleted;
+		}
 	}
 
 	protected override void Update_PLAYING() {
@@ -297,21 +305,35 @@ public class SlalomController : GameController {
 	protected override void Exit_PLAYING() {
 		base.Exit_PLAYING();
 
+		stars = 0;
+		for(int i = 0; i < starThresholds.Length; ++i) {
+			if(stateTimer <= starThresholds[i]) stars = i + 1;
+		}
+
+		for(int i = 0; i < obstacles.Count; ++i) {
+			obstacles[i].OnAxisChange -= OnActiveBlockRolled;
+			obstacles[i].OnDelete -= OnActiveBlockDeleted;
+		}
+
 		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
 		ClearLights();
 	}
 
-	protected override bool IsGameReady() {
-		if(!base.IsGameReady()) return false;
-		return true;
+	protected override bool IsGameOver() {
+		//game specific end conditions...
+		if(activeBlockMovedorDeleted) return true;
+
+		return base.IsGameOver();
 	}
 
-	protected override bool IsGameOver() {
-		if(base.IsGameOver()) return true;
+	private void OnActiveBlockRolled(ActiveBlock activeBlock)
+	{
+		activeBlockMovedorDeleted = true;
+	}
 
-		//game specific end conditions...
-
-		return false;
+	private void OnActiveBlockDeleted(ObservedObject observedObject)
+	{
+		OnActiveBlockRolled(observedObject as ActiveBlock);
 	}
 
 	private Vector2 GetCornerVector(ActiveBlock obstacle, int cornerIndex, bool clock, ActiveBlock previous, bool debug=false) {
@@ -365,8 +387,7 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
-		audio.pitch = currentCorner == 0 ? 1 : 5 - currentCorner;
-		audio.PlayOneShot(cornerTriggeredSound);
+		PlayOneShot(cornerTriggeredSound, currentCorner == 0 ? 1 : 5 - currentCorner);
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
@@ -544,13 +565,34 @@ public class SlalomController : GameController {
 	protected override void Enter_RESULTS() {
 		base.Enter_RESULTS();
 
-		CelebrationLights();
+		if(win) {
+			CelebrationLights();
+		}
+		else {
+			DisqualifiedLights();
+		}
 	}
 
 	protected override void Exit_RESULTS() {
 		base.Exit_RESULTS();
 
 		ClearLights();
+	}
+
+	private void DisqualifiedLights()
+	{
+		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
+			ActiveBlock obstacle = obstacles[obstacleIndex];
+			obstacle.relativeMode = 0;
+			
+			for(int i = 0; i < obstacle.lights.Length; ++i) {
+				obstacle.SetLEDs(CozmoPalette.ColorToUInt(Color.red));
+			}
+		}
+		
+		for(int i = 0; i < robot.lights.Length; ++i) {
+			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.red));
+		}
 	}
 
 	private void CelebrationLights()

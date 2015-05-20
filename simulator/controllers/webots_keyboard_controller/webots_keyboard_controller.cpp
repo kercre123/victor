@@ -553,6 +553,7 @@ namespace Anki {
         printf("     Toggle *robot* image stream:  Alt+Shift+i\n");
         printf("              Toggle save images:  e\n");
         printf("        Toggle VizObject display:  d\n");
+        printf("   Toggle addition/deletion mode:  Shift+d\n");
         printf("Goto/place object at pose marker:  g\n");
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
@@ -910,9 +911,34 @@ namespace Anki {
                 
               case (s32)'D':
               {
-                static bool showObjects = false;
-                SendEnableDisplay(showObjects);
-                showObjects = !showObjects;
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  
+                  static const std::array<std::pair<bool,bool>,4> enableModes = {{
+                    {false, false}, {false, true}, {true, false}, {true, true}
+                  }};
+                  static auto enableModeIter = enableModes.begin();
+                  
+                  printf("Setting addition/deletion mode to %s/%s.\n",
+                         enableModeIter->first ? "TRUE" : "FALSE",
+                         enableModeIter->second ? "TRUE" : "FALSE");
+                  U2G::SetObjectAdditionAndDeletion msg;
+                  msg.robotID = 1;
+                  msg.enableAddition = enableModeIter->first;
+                  msg.enableDeletion = enableModeIter->second;
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetObjectAdditionAndDeletion(msg);
+                  SendMessage(msgWrapper);
+                  
+                  ++enableModeIter;
+                  if(enableModeIter == enableModes.end()) {
+                    enableModeIter = enableModes.begin();
+                  }
+                  
+                } else {
+                  static bool showObjects = false;
+                  SendEnableDisplay(showObjects);
+                  showObjects = !showObjects;
+                }
                 break;
               }
                 

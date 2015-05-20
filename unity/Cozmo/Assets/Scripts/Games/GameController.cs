@@ -19,30 +19,38 @@ public class GameController : MonoBehaviour {
 		public AudioClip sound;
 	}
 
-	[SerializeField] protected Text countdownText = null;
-	[SerializeField] protected float countdownToStart = 0f;
-	[SerializeField] protected AudioClip countdownTickSound;
+	private const int STAR_COUNT = 3;
+
+	[SerializeField] private Text countdownText = null;
+	[SerializeField] private float countdownToStart = 0f;
+	[SerializeField] private AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected TimerAudio[] timerSounds;
 	[SerializeField] protected AudioSource notificationAudio;
-	[SerializeField] protected AudioClip gameStartingIn;
+	[SerializeField] private AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
-	[SerializeField] protected int numPlayers = 1;
+	[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
-	[SerializeField] protected bool autoPlay = false;
-	[SerializeField] protected Button playButton = null;
+	[SerializeField] private bool autoPlay = false;
+	[SerializeField] private Button playButton = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
-	[SerializeField] protected Image resultsPanel = null;
-	[SerializeField] protected AudioClip instructionsSound;
-	[SerializeField] protected AudioClip gameStartSound;
+	[SerializeField] private Image resultsPanel = null;
+	[SerializeField] private AudioClip instructionsSound;
+	[SerializeField] private AudioClip gameStartSound;
 	[SerializeField] protected AudioClip playerScoreSound;
-	[SerializeField] protected AudioClip playingLoopSound;
-	[SerializeField] protected AudioClip gameOverSound;
-	[SerializeField] protected AudioClip resultsLoopSound;
+	[SerializeField] private AudioClip playingLoopSound;
 	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.Count];
+	[SerializeField] private AudioClip[] winSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] private AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] private AudioClip loseSound;
+	[SerializeField] private AudioClip loseLoopSound;
+	[SerializeField] private Image[] starImages = new Image[STAR_COUNT];
+
+	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
+	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -54,9 +62,10 @@ public class GameController : MonoBehaviour {
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
 
-	protected int[] scores;
-
-	protected int winnerIndex;
+	protected int score = 0;
+	protected int stars = 0;
+	protected bool win = false;
+	
 	protected bool firstFrame = true;
 
 	protected float errorMsgTimer = 0f;
@@ -65,8 +74,8 @@ public class GameController : MonoBehaviour {
 
 	//public float gameStartingInDelay = 1.3f;
 
-	public float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length : 0f; } }
-	public float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
+	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length : 0f; } }
+	private float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
 
 	protected int lastTimerSeconds = 0;
 	protected float coundownTimer = 0f;
@@ -85,8 +94,6 @@ public class GameController : MonoBehaviour {
 	protected virtual void OnEnable () {
 		state = GameState.BUILDING;
 		stateTimer = 0f;
-		scores = new int[numPlayers];
-		winnerIndex = -1;
 		errorMsgTimer = 0f;
 		firstFrame = true;
 		playRequested = false;
@@ -203,8 +210,8 @@ public class GameController : MonoBehaviour {
 	protected const string suffix_seconds = "s";
 
 	protected virtual void RefreshHUD() {
-		if(textScore != null && scores != null && scores.Length > 0) {
-			textScore.text = scores[0].ToString();
+		if(textScore != null) {
+			textScore.text = score.ToString();
 		}
 
 		if(textState != null) {
@@ -245,7 +252,6 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_BUILDING() {
-		winnerIndex = -1;
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
@@ -268,10 +274,6 @@ public class GameController : MonoBehaviour {
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
-
-		for(int i=0;i<scores.Length;i++) {
-			scores[i] = 0;
-		}
 	}
 
 	protected virtual void Update_PRE_GAME() {
@@ -282,7 +284,7 @@ public class GameController : MonoBehaviour {
 		if(countdownToStart > 0f) {
 
 			if(coundownTimer == 0f) {
-				if(instructionsSound != null) audio.PlayOneShot(instructionsSound);
+				if(instructionsSound != null) PlayOneShot(instructionsSound);
 				//Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
 				if(audio != null) {
 					if(gameStartingIn != null) PlayDelayed(gameStartingIn, instructionsDelay);
@@ -321,28 +323,50 @@ public class GameController : MonoBehaviour {
 		bonusTime = 0;
 
 		Debug.Log(gameObject.name + " Enter_PLAYING");
-		if(gameStartSound != null && audio != null) audio.PlayOneShot(gameStartSound);
+		if(gameStartSound != null) PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
 
-		for(int i=0;i<scores.Length;i++) {
-			scores[i] = 0;
-		}
+		score = 0;
 	}
 
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
 	protected virtual void Exit_PLAYING() {
+		win = false;
+		
+		if(scoreToWin > 0) {
+			win = score >= scoreToWin;
+		}
+		else {
+			win = true;
+		}
+		
+		stars = 0;
+		for(int i = 0; i < starThresholds.Length; ++i) {
+			if(score >= starThresholds[i]) stars = i + 1;
+		}
+
 		Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
-		if(gameOverSound != null && audio != null) audio.PlayOneShot(gameOverSound);
+		if(gameOverSound != null) PlayOneShot(gameOverSound);
+	}
+
+	protected void PlayOneShot(AudioClip clip, float pitch = 1f) {
+		if(audio != null) {
+			audio.pitch = pitch;
+			audio.PlayOneShot(clip);
+		}
 	}
 
 	protected virtual void Enter_RESULTS() {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
+		for(int i = 0; i < starImages.Length; ++i) {
+			if(starImages[i] != null) starImages[i].gameObject.SetActive(win && i < stars);
+		}
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null && audio != null) {
@@ -350,13 +374,14 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected void PlayDelayed(AudioClip clip, float delay, bool loop = false) {
+	protected void PlayDelayed(AudioClip clip, float delay, bool loop = false, float pitch = 1f) {
 		StartCoroutine(_PlayDelayed(clip, delay, loop));
 	}
 
-	private IEnumerator _PlayDelayed(AudioClip clip, float delay, bool loop = false) {
+	private IEnumerator _PlayDelayed(AudioClip clip, float delay, bool loop = false, float pitch = 1f) {
 		yield return new WaitForSeconds(delay);
 
+		audio.pitch = pitch;
 		audio.loop = loop;
 		audio.clip = clip;
 		audio.Play();
@@ -396,11 +421,8 @@ public class GameController : MonoBehaviour {
 		
 		if(maxPlayTime > 0f && stateTimer >= maxPlayTime) return true;
 		if(scoreToWin > 0) {
-			for(int i=0;i<scores.Length;i++) {
-				if(scores[i] >= scoreToWin) {
-					winnerIndex = i;
-					return true;
-				}
+			if(score >= scoreToWin) {
+				return true;
 			}
 		}
 		
@@ -415,7 +437,8 @@ public class GameController : MonoBehaviour {
 		buildRequested = true;
 	}
 
-	protected void PlayAudioClips(AudioClip[] clips, float initalDelay = 0f, float additionalDelay = 0.05f) {
+	protected void PlayAudioClips(AudioClip[] clips, float initalDelay = 0f, float additionalDelay = 0.05f, float pitch = 1f) {
+		audio.pitch = pitch;
 		if(clips.Length > 0) {
 			PlayDelayed(clips[0], initalDelay);
 
@@ -425,13 +448,14 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected void PlayCountdownAudio(int secondsLeft) {
+	protected void PlayCountdownAudio(int secondsLeft, float pitch = 1f) {
 		bool played = false;
 
 		for(int i=0; i<timerSounds.Length; i++) {
 			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
 				// defer to other notifications
 				if( !notificationAudio.isPlaying ) {
+					notificationAudio.pitch = pitch;
 					notificationAudio.PlayOneShot(timerSounds[i].sound);
 				}
 				played = true;
@@ -439,15 +463,16 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
-		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null && audio != null) audio.PlayOneShot(countdownTickSound);
+		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null) PlayOneShot(countdownTickSound);
 		
 		lastTimerSeconds = secondsLeft;
 	}
 	
-	protected void PlayNotificationAudio(AudioClip clip)
+	protected void PlayNotificationAudio(AudioClip clip, float pitch = 1f)
 	{
 		if (notificationAudio != null) 
 		{
+			notificationAudio.pitch = pitch;
 			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
 			notificationAudio.Stop (); 
 			Debug.LogWarning ("Should be playing " + clip.name);
@@ -456,10 +481,11 @@ public class GameController : MonoBehaviour {
 	}
 
 	// doesn't play if the audio source is currently playing a clip
-	protected void PlayNotificationAudioDeferred(AudioClip clip)
+	protected void PlayNotificationAudioDeferred(AudioClip clip, float pitch = 1f)
 	{
 		if (notificationAudio != null && !notificationAudio.isPlaying) 
 		{
+			notificationAudio.pitch = pitch;
 			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
 			notificationAudio.Stop (); 
 			Debug.LogWarning ("Should be playing " + clip.name);

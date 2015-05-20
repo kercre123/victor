@@ -16,6 +16,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	public enum LayoutTrackerPhase {
 		DISABLED,
 		INVENTORY,
+		AUTO_BUILDING,
 		BUILDING,
 		COMPLETE
 	}
@@ -139,6 +140,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			return;
 		}
 
+		hidden = false;
+
 		SetUpInventory();
 
 		string fullName = currentGameName + " #" + currentLevelNumber;
@@ -164,7 +167,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
-		hidden = false;
 		lastValidPredictedDrop = false;
 	}
 
@@ -189,8 +191,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			int num = 1;
 			foreach(LayoutBlock2d prior in blocks2d) {
 				if(prior.Block.objectFamily != block.objectFamily) continue;
-				if(prior.Block.objectFamily != 3 && prior.Block.objectType != block.objectType) continue;
-				if(prior.Block.objectFamily == 3 && prior.Block.activeBlockMode != block.activeBlockMode && !ignoreActiveColor) continue;
+				if(!prior.Block.isActive && prior.Block.objectType != block.objectType) continue;
+				if(prior.Block.isActive && prior.Block.activeBlockMode != block.activeBlockMode && !ignoreActiveColor) continue;
 				num++;
 			}
 			
@@ -234,7 +236,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(lastValidPredictedDrop != validPredictedDrop) {
-			robot.SetBackpackLEDs(validPredictedDrop ? Color.green : Color.clear, Color.clear);
+			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
@@ -273,7 +275,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		bool completed = validCount == currentLayout.blocks.Count;
 
-		if(Phase == LayoutTrackerPhase.BUILDING && completed) {
+		if((Phase == LayoutTrackerPhase.BUILDING || Phase == LayoutTrackerPhase.AUTO_BUILDING) && completed) {
 			Phase = LayoutTrackerPhase.COMPLETE;
 		}
 
@@ -320,6 +322,39 @@ public class GameLayoutTracker : MonoBehaviour {
 				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);
 
 				break;
+
+		case LayoutTrackerPhase.AUTO_BUILDING:
+			
+			textProgress.text = validCount + " / " + currentLayout.blocks.Count;
+
+			layoutInstructionsPanel.SetActive(!hidden);
+			layoutPreviewPanel.SetActive(false);
+			if(hideDuringPreview!= null) hideDuringPreview.SetActive(true);
+			layoutInstructionsCamera.gameObject.SetActive(!hidden);
+			image_cozmoTD.gameObject.SetActive(false);
+			carriedBlock2d.gameObject.SetActive(false);
+			button_change.gameObject.SetActive(false);
+
+			if(robot != null) {
+
+				if(robot.isBusy) {
+					//coz is doing shit
+
+				}
+				else if(robot.carryingObject != null) {
+					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
+					AttemptAssistedPlacement();
+				}
+				else {
+					ObservedObject nextObject = GetObservedObjectForNextLayoutBlock();
+					if(nextObject != null) {
+						Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObject+")");
+						robot.PickAndPlaceObject(nextObject);
+					}
+				}
+			}
+
+			break;
 
 			case LayoutTrackerPhase.BUILDING:
 
@@ -369,7 +404,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void SuccessOrFailure(bool success, RobotActionType action_type) {
-		if(Phase != LayoutTrackerPhase.BUILDING) return;
+		if(Phase != LayoutTrackerPhase.BUILDING && Phase != LayoutTrackerPhase.AUTO_BUILDING) return;
 
 		bool validate = false;
 
@@ -381,6 +416,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			case RobotActionType.DRIVE_TO_OBJECT:
 				break;
 			case RobotActionType.DRIVE_TO_PLACE_CARRIED_OBJECT:
+				validate = true;
 				break;
 			case RobotActionType.TURN_IN_PLACE:
 				break;
@@ -388,32 +424,32 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 			case RobotActionType.PICKUP_OBJECT_LOW:
 			case RobotActionType.PICKUP_OBJECT_HIGH:
-				BuildInstructionsCube layoutCubeMatchingCarried = null;
-				if(robot.carryingObject >= 0) {
-					for(int i=0;i<currentLayout.blocks.Count;i++) {
-						if(robot.carryingObject.isActive && currentLayout.blocks[i].objectFamily != 3) continue;
-						if(!robot.carryingObject.isActive && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
-						layoutCubeMatchingCarried = currentLayout.blocks[i];
-						break;
-					}
-					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockMode) {
-						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockMode.ToString()+".", Color.white);
-					}
-					else if(layoutCubeMatchingCarried.cubeBelow == null) {
-						if(validCount == 0) {
-							screenMessage.ShowMessage("Good.  Now drop this block anywhere to start the build.", Color.white);
-						}
-						else {
-							screenMessage.ShowMessage("Good.  Now drop this block the correct distance from the first block.", Color.white);
-						}
-					}
-					else {
-						screenMessage.ShowMessage("Good.  Now stack this block on a correct block.", Color.white);
-					}
-				}
-				else {
-					screenMessage.KillMessage();
-				}
+//				BuildInstructionsCube layoutCubeMatchingCarried = null;
+//				if(robot.carryingObject >= 0) {
+//					for(int i=0;i<currentLayout.blocks.Count;i++) {
+//						if(robot.carryingObject.isActive && currentLayout.blocks[i].objectFamily != 3) continue;
+//						if(!robot.carryingObject.isActive && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
+//						layoutCubeMatchingCarried = currentLayout.blocks[i];
+//						break;
+//					}
+//					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockMode) {
+//						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockMode.ToString()+".", Color.white);
+//					}
+//					else if(layoutCubeMatchingCarried.cubeBelow == null) {
+//						if(validCount == 0) {
+//							screenMessage.ShowMessage("Good.  Now drop this block anywhere to start the build.", Color.white);
+//						}
+//						else {
+//							screenMessage.ShowMessage("Good.  Now drop this block the correct distance from the first block.", Color.white);
+//						}
+//					}
+//					else {
+//						screenMessage.ShowMessage("Good.  Now stack this block on a correct block.", Color.white);
+//					}
+//				}
+//				else {
+//					screenMessage.KillMessage();
+//				}
 				validate = true;
 				break;
 			case RobotActionType.PLACE_OBJECT_LOW:
@@ -436,14 +472,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(validate) {
-			string error = ValidateBlocks();
-			if(validCount <= lastValidCount) {
-				screenMessage.ShowMessage(error, Color.red);
-			}
-			else {
-				//Debug.Log("validation sucess.  lastValidCount("+lastValidCount+")->validCount("+validCount+")");
-				screenMessage.ShowMessage("Awesome!  Cozmo placed that block correctly.", Color.white);
-			}
+			ValidateBlocks();
+			Debug.Log("frame("+Time.frameCount+") SuccessOrFailure success("+success+") lastValidCount("+lastValidCount+")->validCount("+validCount+")");
+			//string error = 
+
+//			if(validCount <= lastValidCount) {
+//				screenMessage.ShowMessage(error, Color.red);
+//			}
+//			else {
+//				//Debug.Log("validation sucess.  lastValidCount("+lastValidCount+")->validCount("+validCount+")");
+//				screenMessage.ShowMessage("Awesome!  Cozmo placed that block correctly.", Color.white);
+//			}
 		}
 	}
 
@@ -459,6 +498,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
+	List<ObservedObject> potentialObservedObjects = new List<ObservedObject>();
 	string ValidateBlocks() {
 		string error = "";
 		validCount = 0;
@@ -486,6 +526,11 @@ public class GameLayoutTracker : MonoBehaviour {
 			block.AssignedObject = null;
 		}
 
+		potentialObservedObjects.Clear ();
+		potentialObservedObjects.AddRange (robot.knownObjects);
+
+		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
+
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
@@ -495,42 +540,58 @@ public class GameLayoutTracker : MonoBehaviour {
 			//cannot validate a block before the one it is stacked upon
 			//note: this requires that our ideal blocks be listed in order
 			//		which is necessary to get the highlight lines to draw correctly anyhow
-			if(block.cubeBelow != null && !block.cubeBelow.Validated) continue;
+			if(block.cubeBelow != null && !block.cubeBelow.Validated) {
+				if(debug) Debug.Log("block under this one is not yet validated");
+				continue;
+			}
 
 			//search through known objects for one that can be assigned
-			for(int knownObjectIndex=0; knownObjectIndex<robot.knownObjects.Count && validated.Count < layout.blocks.Count; knownObjectIndex++) {
+			for(int objectIndex=0; objectIndex<potentialObservedObjects.Count; objectIndex++) {
 
-				ObservedObject newObject = robot.knownObjects[knownObjectIndex];
+				ObservedObject newObject = potentialObservedObjects[objectIndex];
+
+				Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
 
 				//cannot validate block in hand
 				if(newObject == robot.carryingObject) {
+					if(debug) Debug.Log("cannot validate layout cube with carryingObject("+robot.carryingObject+")");
 					continue;
 				}
 
 				if(block.objectFamily != (int)newObject.Family) {
+					if(debug) Debug.Log("family mismatch");
 					continue;
 				}
 
 				//skip objects of the wrong type
 				if(block.objectFamily != 3 && block.objectType != (int)newObject.ObjectType) {
-					if(debug) Debug.Log("skip objects of the wrong type");
+					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType((int)newObject.ObjectType)+") because it isn't "+CozmoPalette.instance.GetNameForObjectType(block.objectType));
 					continue;
 				}
 
-				if(!ignoreActiveColor && block.objectFamily == 3 && block.activeBlockMode != robot.activeBlocks[newObject].mode) { //active block
-					if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockMode+") newObject("+newObject+"):color("+robot.activeBlocks[newObject].mode+")");
-					continue;
+				if(!ignoreActiveColor && block.objectFamily == 3) { //active block
+					ActiveBlock activeBlock = newObject as ActiveBlock;
+
+					if(block.activeBlockMode != activeBlock.mode) { //active block
+						if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockMode+") activeBlock("+activeBlock+"):color("+activeBlock.mode+")");
+						continue;
+					}
 				}
 
 				//skip objects already assigned to a layout block
-				if(layout.blocks.Find( x => x.AssignedObject == newObject) != null) continue;
+				if(layout.blocks.Find( x => x.AssignedObject == newObject) != null) {
+					if(debug) Debug.Log("object is already assigned to another validated layout cube");
+					continue;
+				}
 
 				if(validated.Count == 0) {
 					ValidateBlock(layoutBlockIndex, newObject);
 					if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because first block placed on ground.");
+					break;
 				}
+
 				//if this ideal block needs to get stacked on one we already know about...
-				else if(block.cubeBelow != null) {
+				if(block.cubeBelow != null) {
 
 					ObservedObject objectToStackUpon = block.cubeBelow.AssignedObject;
 
@@ -541,6 +602,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					if(valid) {
 						ValidateBlock(layoutBlockIndex, newObject);
 						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
+						break;
 					}
 					else {
 						if(!invalidated) error = "Whoops. That block needs to be stacked on the correct block.";
@@ -548,6 +610,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						if(debug) Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
 						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
 					}
+
 				}
 				//if we have some blocks validated so far, then we'll do distance checks to each
 				// and also confirm relative angles?
@@ -593,6 +656,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					if(valid) {
 						ValidateBlock(layoutBlockIndex, newObject);
 						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
+						break;
 					}
 				}
 
@@ -611,6 +675,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		block.AssignedObject = newObject;
 		block.Validated = true;
 		block.Highlighted = false;
+		potentialObservedObjects.Remove(newObject);
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
@@ -684,6 +749,49 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void EndPreview() {
 		Phase = LayoutTrackerPhase.BUILDING;
 		ValidateBlocks();
+
+		GameLayout layout = currentLayout;
+		
+		if( layout != null )
+		{
+			bool isReady = true;
+			for(int i=0; i < layout.blocks.Count; i++)
+			{
+				BuildInstructionsCube cube = layout.blocks[i];
+				if( !cube.Validated && !cube.isHeld )
+				{
+					isReady = false;
+				}
+			}
+			
+			if( isReady ) {
+				ValidateBuild();
+			}
+		}
+	}
+
+	public void StartAutoBuild() {
+		Phase = LayoutTrackerPhase.AUTO_BUILDING;
+		ValidateBlocks();
+		
+		GameLayout layout = currentLayout;
+		
+		if( layout != null )
+		{
+			bool isReady = true;
+			for(int i=0; i < layout.blocks.Count; i++)
+			{
+				BuildInstructionsCube cube = layout.blocks[i];
+				if( !cube.Validated && !cube.isHeld )
+				{
+					isReady = false;
+				}
+			}
+			
+			if( isReady ) {
+				ValidateBuild();
+			}
+		}
 	}
 
 	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
@@ -758,6 +866,27 @@ public class GameLayoutTracker : MonoBehaviour {
 		return pose;
 	}
 
+	List<ObservedObject> unplacedObjects = new List<ObservedObject>();
+	ObservedObject GetObservedObjectForNextLayoutBlock() {
+
+
+		BuildInstructionsCube layoutCube = currentLayout.blocks.Find ( x => !x.Validated );
+
+		if (layoutCube == null) return null;
+
+		unplacedObjects.Clear();
+		unplacedObjects.AddRange (robot.knownObjects);
+
+		for (int i=0; i<currentLayout.blocks.Count; i++) {
+			if(!currentLayout.blocks[i].Validated) continue;
+			unplacedObjects.Remove (currentLayout.blocks[i].AssignedObject);
+		}
+
+		//grab first observedObject that matches our layout cube
+		ObservedObject obj = unplacedObjects.Find ( x => IsMatchingBlock(layoutCube, x, true) );
+
+		return obj;
+	}
 
 	//we are dropping an object and want to know which blocks are already on the ground and valid
 	//	so we can then do distance checks if necessaril to validate the placement of the drop
@@ -768,21 +897,28 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
-	//we are dropping an object and want to know which layout block it might be an apt match for
-	bool IsUnvalidatedMatchingGroundBlock(BuildInstructionsCube block, ObservedObject objectToMatch) {
-		if(block.Validated) return false;
-		if(block.cubeBelow != null) return false;
+	bool IsMatchingBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
 		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
 	}
 
-	bool IsUnvalidatedMatchingStackedBlock(BuildInstructionsCube block, ObservedObject objectToMatch) {
+	//we are dropping an object and want to know which layout block it might be an apt match for
+	bool IsUnvalidatedMatchingGroundBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
+		if(block.Validated) return false;
+		if(block.cubeBelow != null) return false;
+		if(block.objectFamily != objectToMatch.Family) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
+		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		return true;
+	}
+
+	bool IsUnvalidatedMatchingStackedBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
 		if(block.Validated) return false;
 		if(block.cubeBelow == null) return false;
 		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
 		return true;
 	}
@@ -792,30 +928,31 @@ public class GameLayoutTracker : MonoBehaviour {
 		for(int i=0; i<currentLayout.blocks.Count; i++) {
 			BuildInstructionsCube block = currentLayout.blocks[i];
 			if(block.Validated) continue;
-			if(block.objectFamily != 3) continue;
+			if(!block.isActive) continue;
 			if(activeBlockToMatch.mode == block.activeBlockMode) return true;
 		}
 
 		return false;
 	}
 
-	public bool AttemptAssistedPlacement( ObservedObject objectToPlace, out Vector3 pos, out float facing_rad) {
-		pos = Vector3.zero;
-		facing_rad = 0f;
+	public bool AttemptAssistedPlacement() {
+		ObservedObject objectToPlace = robot.carryingObject;
+		Vector3 pos = Vector3.zero;
+		float facing_rad = 0f;
+
+		ValidateBlocks ();
 
 		if(robot == null) return false;
 		if(objectToPlace == null) return false;
 		
 		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 
-		ignoreActiveColor = true;
-
-		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace));
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace, true));
 		
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 
-			newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace));
+			newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace, true));
 			if(newBlocks == null || newBlocks.Count == 0) {
 				Debug.Log ("This block is not required in this layout.");
 				return false;
@@ -869,7 +1006,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		Vector3 facingVector;
 		pos = GetPoseFromLayoutForTransform(bestBlock.transform, out facing_rad, out facingVector, closestFace);
 
-		if (bestBlock.objectFamily == 3) {
+		if (bestBlock.isActive) {
 			ActiveBlock activeBlock = objectToPlace as ActiveBlock;
 			if(activeBlock.mode != bestBlock.activeBlockMode) {
 				activeBlock.mode = bestBlock.activeBlockMode;
@@ -884,7 +1021,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	public bool AttemptAssistedStack( ObservedObject objectToStack, List<BuildInstructionsCube> potentiallyStackable)  {
 
-		List<BuildInstructionsCube> potentiallyStackedUpon = currentLayout.blocks.FindAll (x => x.cubeBelow == null && x.cubeAbove != null && !x.cubeAbove.Validated); //newBlocks.Find ( y => y.cubeBelow == x ) != null );
+		List<BuildInstructionsCube> potentiallyStackedUpon = currentLayout.blocks.FindAll (x => x.cubeAbove != null && !x.cubeAbove.Validated); //newBlocks.Find ( y => y.cubeBelow == x ) != null );
 		
 		if(potentiallyStackedUpon == null || potentiallyStackedUpon.Count == 0) {
 			//if this will be our first ground block to validate, automatically valid location
@@ -897,13 +1034,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		BuildInstructionsCube layoutBlockToStack = potentiallyStackable [0];
 		ObservedObject objectToStackUpon = potentiallyStackedUpon [0].AssignedObject;
 		if(objectToStackUpon == null) {
-			objectToStackUpon = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon [0], x) );
+			objectToStackUpon = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon [0], x, true) );
 		}
 
 		for(int i=0;i<potentiallyStackedUpon.Count;i++) {
 			ObservedObject obj = potentiallyStackedUpon[i].AssignedObject;
 			if(obj == null) {
-				obj = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[i], x) );
+				obj = robot.knownObjects.Find ( x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[i], x, true) );
 			}
 			if(obj == null) continue;
 
@@ -1070,7 +1207,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			return false;
 		}
 
-		if(layoutBlockToStack.objectFamily == 3) {
+		if(layoutBlockToStack.isActive) {
 
 			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
 				errorText = "You are attempting to stack a non active block where an active block belongs.";
@@ -1085,7 +1222,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 		}
 
-		if(layoutBlockToStack.objectFamily != 3) {
+		if(!layoutBlockToStack.isActive) {
 
 			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
 				errorText = "You are attempting to stack an active block where an standard block belongs.";
@@ -1123,5 +1260,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
 		return objects;
 	}
+
+
 
 }
