@@ -38,7 +38,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject layoutPreviewPanel = null;
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
-	[SerializeField] Button letsBuildButton;
+	[SerializeField] GameObject showWhenInventoryCompleted;
 	[SerializeField] GameObject hideWhenInventoryComplete;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
@@ -148,7 +148,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		previewTitle.text = fullName;
 		instructionsTitle.text = fullName;
 
-		if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(false);
+		if(showWhenInventoryCompleted != null) showWhenInventoryCompleted.SetActive(false);
 		if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(true);
 
 		RefreshLayout();
@@ -312,11 +312,11 @@ public class GameLayoutTracker : MonoBehaviour {
 					inventoryComplete &= validated;
 				}
 
-				if(letsBuildButton != null) {
-					if(!letsBuildButton.gameObject.activeSelf && inventoryComplete) {
+				if(showWhenInventoryCompleted != null) {
+					if(!showWhenInventoryCompleted.activeSelf && inventoryComplete) {
 						audio.PlayOneShot(inventoryCompleteSound);
 					}
-					letsBuildButton.gameObject.SetActive(inventoryComplete);
+					showWhenInventoryCompleted.SetActive(inventoryComplete);
 				}
 
 				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);

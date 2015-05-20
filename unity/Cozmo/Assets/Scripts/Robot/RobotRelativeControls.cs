@@ -530,6 +530,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	//reset our lifter to our current height
 	void RefreshLiftSlider() {
 		if(liftSlider == null) return;
+		if(robot == null) return;
 
 		liftSlider.onValueChanged.RemoveListener(LiftSliderChanged);
 		liftSlider.value = robot.GetLiftHeightFactor();

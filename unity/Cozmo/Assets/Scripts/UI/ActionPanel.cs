@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using System;
@@ -26,7 +26,7 @@ public class ActionPanel : MonoBehaviour
 
 	public bool IsSmallScreen { get; protected set; }
 
-	public bool secondaryActionsAvailabe
+	public bool secondaryActionsAvailable
 	{
 		get
 		{
