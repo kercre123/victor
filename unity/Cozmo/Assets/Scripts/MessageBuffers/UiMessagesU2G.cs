@@ -3143,6 +3143,141 @@ public class PickAndPlaceObject
 	}
 }
 
+public class RollObject
+{
+	private int _objectID; // int_32
+	private byte _usePreDockPose; // uint_8
+	private byte _useManualSpeed; // uint_8
+
+	public int objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public byte usePreDockPose { get { return _usePreDockPose; } set { _usePreDockPose = value; } }
+
+	public byte useManualSpeed { get { return _useManualSpeed; } set { _useManualSpeed = value; } }
+
+
+	/**** Constructors ****/
+
+	public RollObject()
+	{
+	}
+
+	public RollObject(int objectID,
+		byte usePreDockPose,
+		byte useManualSpeed)
+	{
+		this.objectID = objectID;
+		this.usePreDockPose = usePreDockPose;
+		this.useManualSpeed = useManualSpeed;
+	}
+
+	public RollObject(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public RollObject(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadInt32();
+		_usePreDockPose = reader.ReadByte();
+		_useManualSpeed = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((int)_objectID);
+		writer.Write((byte)_usePreDockPose);
+		writer.Write((byte)_useManualSpeed);
+	}
+
+	public int Size 
+	{
+		get {
+			return 6;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(RollObject a, RollObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RollObject a, RollObject b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as RollObject);
+	}
+
+	public bool Equals(RollObject p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._objectID.Equals(p._objectID)
+			&& this._usePreDockPose.Equals(p._usePreDockPose)
+			&& this._useManualSpeed.Equals(p._useManualSpeed);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._objectID.GetHashCode();
+			hash = hash * 23 + this._usePreDockPose.GetHashCode();
+			hash = hash * 23 + this._useManualSpeed.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class TraverseObject
 {
 	private byte _usePreDockPose; // uint_8
@@ -3397,10 +3532,20 @@ public class SetRobotCarryingObject
 
 public class ClearAllBlocks
 {
+	private byte _robotID; // uint_8
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
 	/**** Constructors ****/
 
 	public ClearAllBlocks()
 	{
+	}
+
+	public ClearAllBlocks(byte robotID)
+	{
+		this.robotID = robotID;
 	}
 
 	public ClearAllBlocks(System.IO.Stream stream)
@@ -3415,27 +3560,343 @@ public class ClearAllBlocks
 
 	public void Unpack(System.IO.Stream stream)
 	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
 	}
 
 	public void Unpack(System.IO.BinaryReader reader)
 	{
+		_robotID = reader.ReadByte();
 	}
 
 	public void Pack(System.IO.Stream stream)
 	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
 	}
 
 	public void Pack(System.IO.BinaryWriter writer)
 	{
+		writer.Write((byte)_robotID);
 	}
 
 	public int Size 
 	{
 		get {
-			return 0;
+			return 1;
 		}
 	}
 
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ClearAllBlocks a, ClearAllBlocks b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ClearAllBlocks a, ClearAllBlocks b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ClearAllBlocks);
+	}
+
+	public bool Equals(ClearAllBlocks p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class ClearAllObjects
+{
+	private byte _robotID; // uint_8
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+
+	/**** Constructors ****/
+
+	public ClearAllObjects()
+	{
+	}
+
+	public ClearAllObjects(byte robotID)
+	{
+		this.robotID = robotID;
+	}
+
+	public ClearAllObjects(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public ClearAllObjects(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_robotID = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((byte)_robotID);
+	}
+
+	public int Size 
+	{
+		get {
+			return 1;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ClearAllObjects a, ClearAllObjects b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ClearAllObjects a, ClearAllObjects b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ClearAllObjects);
+	}
+
+	public bool Equals(ClearAllObjects p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class SetObjectAdditionAndDeletion
+{
+	private byte _robotID; // uint_8
+	private bool _enableAddition; // bool
+	private bool _enableDeletion; // bool
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public bool enableAddition { get { return _enableAddition; } set { _enableAddition = value; } }
+
+	public bool enableDeletion { get { return _enableDeletion; } set { _enableDeletion = value; } }
+
+
+	/**** Constructors ****/
+
+	public SetObjectAdditionAndDeletion()
+	{
+	}
+
+	public SetObjectAdditionAndDeletion(byte robotID,
+		bool enableAddition,
+		bool enableDeletion)
+	{
+		this.robotID = robotID;
+		this.enableAddition = enableAddition;
+		this.enableDeletion = enableDeletion;
+	}
+
+	public SetObjectAdditionAndDeletion(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public SetObjectAdditionAndDeletion(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_robotID = reader.ReadByte();
+		_enableAddition = reader.ReadBoolean();
+		_enableDeletion = reader.ReadBoolean();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((byte)_robotID);
+		writer.Write((bool)_enableAddition);
+		writer.Write((bool)_enableDeletion);
+	}
+
+	public int Size 
+	{
+		get {
+			return 3;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(SetObjectAdditionAndDeletion a, SetObjectAdditionAndDeletion b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(SetObjectAdditionAndDeletion a, SetObjectAdditionAndDeletion b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as SetObjectAdditionAndDeletion);
+	}
+
+	public bool Equals(SetObjectAdditionAndDeletion p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID)
+			&& this._enableAddition.Equals(p._enableAddition)
+			&& this._enableDeletion.Equals(p._enableDeletion);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._enableAddition.GetHashCode();
+			hash = hash * 23 + this._enableDeletion.GetHashCode();
+			return hash;
+		}
+	}
 }
 
 public class VisionWhileMoving
@@ -7061,37 +7522,40 @@ public class Message {
 		ExecuteTestPlan,	//24
 		SelectNextObject,	//25
 		PickAndPlaceObject,	//26
-		TraverseObject,	//27
-		SetRobotCarryingObject,	//28
-		ClearAllBlocks,	//29
-		VisionWhileMoving,	//30
-		ExecuteBehavior,	//31
-		SetBehaviorState,	//32
-		AbortPath,	//33
-		AbortAll,	//34
-		CancelAction,	//35
-		DrawPoseMarker,	//36
-		ErasePoseMarker,	//37
-		SetWheelControllerGains,	//38
-		SetHeadControllerGains,	//39
-		SetLiftControllerGains,	//40
-		SetSteeringControllerGains,	//41
-		SelectNextSoundScheme,	//42
-		StartTestMode,	//43
-		IMURequest,	//44
-		PlayAnimation,	//45
-		ReadAnimationFile,	//46
-		StartFaceTracking,	//47
-		StopFaceTracking,	//48
-		StartLookingForMarkers,	//49
-		StopLookingForMarkers,	//50
-		SetVisionSystemParams,	//51
-		SetFaceDetectParams,	//52
-		SetActiveObjectLEDs,	//53
-		SetAllActiveObjectLEDs,	//54
-		SetBackpackLEDs,	//55
-		VisualizeQuad,	//56
-		EraseQuad,	//57
+		RollObject,	//27
+		TraverseObject,	//28
+		SetRobotCarryingObject,	//29
+		ClearAllBlocks,	//30
+		ClearAllObjects,	//31
+		SetObjectAdditionAndDeletion,	//32
+		VisionWhileMoving,	//33
+		ExecuteBehavior,	//34
+		SetBehaviorState,	//35
+		AbortPath,	//36
+		AbortAll,	//37
+		CancelAction,	//38
+		DrawPoseMarker,	//39
+		ErasePoseMarker,	//40
+		SetWheelControllerGains,	//41
+		SetHeadControllerGains,	//42
+		SetLiftControllerGains,	//43
+		SetSteeringControllerGains,	//44
+		SelectNextSoundScheme,	//45
+		StartTestMode,	//46
+		IMURequest,	//47
+		PlayAnimation,	//48
+		ReadAnimationFile,	//49
+		StartFaceTracking,	//50
+		StopFaceTracking,	//51
+		StartLookingForMarkers,	//52
+		StopLookingForMarkers,	//53
+		SetVisionSystemParams,	//54
+		SetFaceDetectParams,	//55
+		SetActiveObjectLEDs,	//56
+		SetAllActiveObjectLEDs,	//57
+		SetBackpackLEDs,	//58
+		VisualizeQuad,	//59
+		EraseQuad,	//60
 		INVALID
 	};
 
@@ -7560,6 +8024,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.RollObject RollObject
+	{
+		get {
+			if (_tag != Tag.RollObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"RollObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.RollObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.RollObject : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G.TraverseObject TraverseObject
 	{
 		get {
@@ -7607,6 +8088,40 @@ public class Message {
 		
 		set {
 			_tag = (value != null) ? Tag.ClearAllBlocks : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.ClearAllObjects ClearAllObjects
+	{
+		get {
+			if (_tag != Tag.ClearAllObjects) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"ClearAllObjects\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.ClearAllObjects)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.ClearAllObjects : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletion
+	{
+		get {
+			if (_tag != Tag.SetObjectAdditionAndDeletion) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"SetObjectAdditionAndDeletion\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.SetObjectAdditionAndDeletion)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.SetObjectAdditionAndDeletion : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -8194,6 +8709,9 @@ public class Message {
 		case Tag.PickAndPlaceObject:
 			PickAndPlaceObject = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
 			break;
+		case Tag.RollObject:
+			RollObject = new Anki.Cozmo.U2G.RollObject(reader);
+			break;
 		case Tag.TraverseObject:
 			TraverseObject = new Anki.Cozmo.U2G.TraverseObject(reader);
 			break;
@@ -8202,6 +8720,12 @@ public class Message {
 			break;
 		case Tag.ClearAllBlocks:
 			ClearAllBlocks = new Anki.Cozmo.U2G.ClearAllBlocks(reader);
+			break;
+		case Tag.ClearAllObjects:
+			ClearAllObjects = new Anki.Cozmo.U2G.ClearAllObjects(reader);
+			break;
+		case Tag.SetObjectAdditionAndDeletion:
+			SetObjectAdditionAndDeletion = new Anki.Cozmo.U2G.SetObjectAdditionAndDeletion(reader);
 			break;
 		case Tag.VisionWhileMoving:
 			VisionWhileMoving = new Anki.Cozmo.U2G.VisionWhileMoving(reader);
@@ -8466,6 +8990,12 @@ public class Message {
 			}
 			PickAndPlaceObject.Pack(writer);
 			break;
+		case Tag.RollObject:
+			if (RollObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			RollObject.Pack(writer);
+			break;
 		case Tag.TraverseObject:
 			if (TraverseObject == null) {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
@@ -8483,6 +9013,18 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			ClearAllBlocks.Pack(writer);
+			break;
+		case Tag.ClearAllObjects:
+			if (ClearAllObjects == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			ClearAllObjects.Pack(writer);
+			break;
+		case Tag.SetObjectAdditionAndDeletion:
+			if (SetObjectAdditionAndDeletion == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			SetObjectAdditionAndDeletion.Pack(writer);
 			break;
 		case Tag.VisionWhileMoving:
 			if (VisionWhileMoving == null) {
@@ -8824,6 +9366,12 @@ public class Message {
 				}
 				result += PickAndPlaceObject.Size;
 				break;
+			case Tag.RollObject:
+				if (RollObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += RollObject.Size;
+				break;
 			case Tag.TraverseObject:
 				if (TraverseObject == null) {
 					throw new System.InvalidOperationException("Messages may not have null members.");
@@ -8841,6 +9389,18 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += ClearAllBlocks.Size;
+				break;
+			case Tag.ClearAllObjects:
+				if (ClearAllObjects == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += ClearAllObjects.Size;
+				break;
+			case Tag.SetObjectAdditionAndDeletion:
+				if (SetObjectAdditionAndDeletion == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += SetObjectAdditionAndDeletion.Size;
 				break;
 			case Tag.VisionWhileMoving:
 				if (VisionWhileMoving == null) {

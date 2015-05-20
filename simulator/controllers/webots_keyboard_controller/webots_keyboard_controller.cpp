@@ -220,9 +220,12 @@ namespace Anki {
       void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
       void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
       void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+      void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
+      void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
+      void SendClearAllObjects();
       void SendSelectNextObject();
       void SendExecuteBehavior(BehaviorManager::Mode mode);
       void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
@@ -262,13 +265,19 @@ namespace Anki {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
         } else {
           // Draw a rectangle in red with the object ID as text in the center
-          cozmoCam_->setColor(0xff0000);          
-          cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
-                                   msg.img_width, msg.img_height);
+          cozmoCam_->setColor(0x000000);
+          
           //std::string dispStr(ObjectType::GetName(msg.objectType));
           //dispStr += " ";
           //dispStr += std::to_string(msg.objectID);
           std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
+          cozmoCam_->drawText(dispStr,
+                              msg.img_topLeft_x + msg.img_width/4 + 1,
+                              msg.img_topLeft_y + msg.img_height/2 + 1);
+          
+          cozmoCam_->setColor(0xff0000);          
+          cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
+                                   msg.img_width, msg.img_height);
           cozmoCam_->drawText(dispStr,
                               msg.img_topLeft_x + msg.img_width/4,
                               msg.img_topLeft_y + msg.img_height/2);
@@ -546,10 +555,12 @@ namespace Anki {
         printf("     Toggle *robot* image stream:  Alt+Shift+i\n");
         printf("              Toggle save images:  e\n");
         printf("        Toggle VizObject display:  d\n");
+        printf("   Toggle addition/deletion mode:  Shift+d\n");
         printf("Goto/place object at pose marker:  g\n");
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
         printf("              Clear known blocks:  c\n");
+        printf("         Clear all known objects:  Alt+c\n");
         printf("                      Creep mode:  Shift+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
@@ -902,9 +913,34 @@ namespace Anki {
                 
               case (s32)'D':
               {
-                static bool showObjects = false;
-                SendEnableDisplay(showObjects);
-                showObjects = !showObjects;
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  
+                  static const std::array<std::pair<bool,bool>,4> enableModes = {{
+                    {false, false}, {false, true}, {true, false}, {true, true}
+                  }};
+                  static auto enableModeIter = enableModes.begin();
+                  
+                  printf("Setting addition/deletion mode to %s/%s.\n",
+                         enableModeIter->first ? "TRUE" : "FALSE",
+                         enableModeIter->second ? "TRUE" : "FALSE");
+                  U2G::SetObjectAdditionAndDeletion msg;
+                  msg.robotID = 1;
+                  msg.enableAddition = enableModeIter->first;
+                  msg.enableDeletion = enableModeIter->second;
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetObjectAdditionAndDeletion(msg);
+                  SendMessage(msgWrapper);
+                  
+                  ++enableModeIter;
+                  if(enableModeIter == enableModes.end()) {
+                    enableModeIter = enableModes.begin();
+                  }
+                  
+                } else {
+                  static bool showObjects = false;
+                  SendEnableDisplay(showObjects);
+                  showObjects = !showObjects;
+                }
                 break;
               }
                 
@@ -1007,7 +1043,11 @@ namespace Anki {
                   }
                   
                   SendExecuteBehavior(behaviorMode_);
-                } else {
+                }
+                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendClearAllObjects();
+                }
+                else {
                   // 'c' without SHIFT
                   SendClearAllBlocks();
                 }
@@ -1031,6 +1071,16 @@ namespace Anki {
                 SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
+                
+              case (s32)'W':
+              {
+                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                
+                SendRollSelectedObject(usePreDockPose, useManualSpeed);
+                break;
+              }
+
                 
               case (s32)'J':
               {
@@ -1208,11 +1258,19 @@ namespace Anki {
                     }
                     
                   } else {
-                    printf("Cycling active block color\n");
+                    printf("Cycling active block %d color from (%d,%d,%d) to (%d,%d,%d)\n",
+                           msg.objectID,
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].r(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].g(),
+                           colorList[colorIndex==0 ? NUM_COLORS-1 : colorIndex-1].b(),
+                           colorList[colorIndex].r(),
+                           colorList[colorIndex].g(),
+                           colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
                     msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE);
                     msg.makeRelative = 0;
+                    msg.turnOffUnspecifiedLEDs = 1;
                   }
                   
                   if(colorIndex == NUM_COLORS) {
@@ -1659,6 +1717,58 @@ namespace Anki {
       }
       
       
+      void TestLightCube()
+      {
+        static std::vector<ColorRGBA> colors = {{
+          NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+          NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
+        }};
+        static std::vector<WhichBlockLEDs> leds = {{
+          WhichBlockLEDs::TOP_UPPER_LEFT,
+          WhichBlockLEDs::TOP_UPPER_RIGHT,
+          WhichBlockLEDs::TOP_LOWER_LEFT,
+          WhichBlockLEDs::TOP_LOWER_RIGHT,
+          WhichBlockLEDs::BTM_UPPER_LEFT,
+          WhichBlockLEDs::BTM_UPPER_RIGHT,
+          WhichBlockLEDs::BTM_LOWER_LEFT, 
+          WhichBlockLEDs::BTM_LOWER_RIGHT
+        }};
+        
+        static auto colorIter = colors.begin();
+        static auto ledIter = leds.begin();
+        static s32 counter = 0;
+        
+        if(counter++ == 30) {
+          counter = 0;
+          
+          U2G::SetActiveObjectLEDs msg;
+          msg.objectID = currentlyObservedObject.id;
+          msg.robotID = 1;
+          msg.onPeriod_ms = 100;
+          msg.offPeriod_ms = 100;
+          msg.transitionOnPeriod_ms = 50;
+          msg.transitionOffPeriod_ms = 50;
+          msg.turnOffUnspecifiedLEDs = 1;
+          msg.onColor = *colorIter;
+          msg.offColor = 0;
+          msg.whichLEDs = static_cast<u8>(*ledIter);
+          msg.makeRelative = 0;
+          
+          ++ledIter;
+          if(ledIter==leds.end()) {
+            ledIter = leds.begin();
+            ++colorIter;
+            if(colorIter == colors.end()) {
+              colorIter = colors.begin();
+            }
+          }
+          
+          U2G::Message message;
+          message.Set_SetActiveObjectLEDs(msg);
+          SendMessage(message);
+        }
+      } // TestLightCube()
+      
       bool ForceAddRobotIfSpecified()
       {
         bool doForceAddRobot = false;
@@ -1788,13 +1898,17 @@ namespace Anki {
             ProcessJoystick();
             
             /*
-            // DEBUG!!!!!
-            U2G::SetRobotCarryingObject m;
-            m.objectID = 500;
-            m.robotID = 1;
-            message.Set_SetRobotCarryingObject(m);
-            SendMessage(message);
-            */
+             // DEBUG!!!!!
+             U2G::SetRobotCarryingObject m;
+             m.objectID = 500;
+             m.robotID = 1;
+             message.Set_SetRobotCarryingObject(m);
+             SendMessage(message);
+             */
+        
+            
+            //TestLightCube();
+            
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;
           }
@@ -1988,8 +2102,18 @@ namespace Anki {
       void SendClearAllBlocks()
       {
         U2G::ClearAllBlocks m;
+        m.robotID = 1;
         U2G::Message message;
         message.Set_ClearAllBlocks(m);
+        SendMessage(message);
+      }
+      
+      void SendClearAllObjects()
+      {
+        U2G::ClearAllObjects m;
+        m.robotID = 1;
+        U2G::Message message;
+        message.Set_ClearAllObjects(m);
         SendMessage(message);
       }
       
@@ -2016,6 +2140,23 @@ namespace Anki {
       {
         SendPickAndPlaceObject(-1, usePreDockPose, useManualSpeed);
       }
+
+      void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+      {
+        U2G::RollObject m;
+        m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
+        m.objectID = -1;
+        U2G::Message message;
+        message.Set_RollObject(m);
+        SendMessage(message);
+      }
+      
+      void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+      {
+        SendRollObject(-1, usePreDockPose, useManualSpeed);
+      }
+
       
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {

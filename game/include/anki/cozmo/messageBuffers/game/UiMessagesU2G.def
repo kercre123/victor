@@ -994,6 +994,46 @@ struct PickAndPlaceObject
 	bool operator!=(const PickAndPlaceObject& other) const;
 };
 
+// MESSAGE RollObject
+struct RollObject
+{
+	int32_t objectID;
+	uint8_t usePreDockPose;
+	uint8_t useManualSpeed;
+	
+	/**** Constructors ****/
+	RollObject() = default;
+	RollObject(const RollObject& other) = default;
+	RollObject(RollObject& other) = default;
+	RollObject(RollObject&& other) noexcept = default;
+	RollObject& operator=(const RollObject& other) = default;
+	RollObject& operator=(RollObject&& other) noexcept = default;
+	
+	explicit RollObject(int32_t objectID
+		,uint8_t usePreDockPose
+		,uint8_t useManualSpeed)
+	:objectID(objectID)
+	,usePreDockPose(usePreDockPose)
+	,useManualSpeed(useManualSpeed)
+	{}
+
+	explicit RollObject(const uint8_t* buff, size_t len);
+	explicit RollObject(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const RollObject& other) const;
+	bool operator!=(const RollObject& other) const;
+};
+
 // MESSAGE TraverseObject
 struct TraverseObject
 {
@@ -1071,6 +1111,7 @@ struct SetRobotCarryingObject
 // MESSAGE ClearAllBlocks
 struct ClearAllBlocks
 {
+	uint8_t robotID;
 	
 	/**** Constructors ****/
 	ClearAllBlocks() = default;
@@ -1079,7 +1120,12 @@ struct ClearAllBlocks
 	ClearAllBlocks(ClearAllBlocks&& other) noexcept = default;
 	ClearAllBlocks& operator=(const ClearAllBlocks& other) = default;
 	ClearAllBlocks& operator=(ClearAllBlocks&& other) noexcept = default;
-		explicit ClearAllBlocks(const uint8_t* buff, size_t len);
+	
+	explicit ClearAllBlocks(uint8_t robotID)
+	:robotID(robotID)
+	{}
+
+	explicit ClearAllBlocks(const uint8_t* buff, size_t len);
 	explicit ClearAllBlocks(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
@@ -1094,6 +1140,80 @@ struct ClearAllBlocks
 
 	bool operator==(const ClearAllBlocks& other) const;
 	bool operator!=(const ClearAllBlocks& other) const;
+};
+
+// MESSAGE ClearAllObjects
+struct ClearAllObjects
+{
+	uint8_t robotID;
+	
+	/**** Constructors ****/
+	ClearAllObjects() = default;
+	ClearAllObjects(const ClearAllObjects& other) = default;
+	ClearAllObjects(ClearAllObjects& other) = default;
+	ClearAllObjects(ClearAllObjects&& other) noexcept = default;
+	ClearAllObjects& operator=(const ClearAllObjects& other) = default;
+	ClearAllObjects& operator=(ClearAllObjects&& other) noexcept = default;
+	
+	explicit ClearAllObjects(uint8_t robotID)
+	:robotID(robotID)
+	{}
+
+	explicit ClearAllObjects(const uint8_t* buff, size_t len);
+	explicit ClearAllObjects(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ClearAllObjects& other) const;
+	bool operator!=(const ClearAllObjects& other) const;
+};
+
+// MESSAGE SetObjectAdditionAndDeletion
+struct SetObjectAdditionAndDeletion
+{
+	uint8_t robotID;
+	bool enableAddition;
+	bool enableDeletion;
+	
+	/**** Constructors ****/
+	SetObjectAdditionAndDeletion() = default;
+	SetObjectAdditionAndDeletion(const SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion(SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion(SetObjectAdditionAndDeletion&& other) noexcept = default;
+	SetObjectAdditionAndDeletion& operator=(const SetObjectAdditionAndDeletion& other) = default;
+	SetObjectAdditionAndDeletion& operator=(SetObjectAdditionAndDeletion&& other) noexcept = default;
+	
+	explicit SetObjectAdditionAndDeletion(uint8_t robotID
+		,bool enableAddition
+		,bool enableDeletion)
+	:robotID(robotID)
+	,enableAddition(enableAddition)
+	,enableDeletion(enableDeletion)
+	{}
+
+	explicit SetObjectAdditionAndDeletion(const uint8_t* buff, size_t len);
+	explicit SetObjectAdditionAndDeletion(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const SetObjectAdditionAndDeletion& other) const;
+	bool operator!=(const SetObjectAdditionAndDeletion& other) const;
 };
 
 // MESSAGE VisionWhileMoving
@@ -2367,6 +2487,11 @@ public:
 	void Set_PickAndPlaceObject(const Anki::Cozmo::U2G::PickAndPlaceObject& new_PickAndPlaceObject);
 	void Set_PickAndPlaceObject(Anki::Cozmo::U2G::PickAndPlaceObject&& new_PickAndPlaceObject);
 
+	/** RollObject **/
+	const Anki::Cozmo::U2G::RollObject& Get_RollObject() const;
+	void Set_RollObject(const Anki::Cozmo::U2G::RollObject& new_RollObject);
+	void Set_RollObject(Anki::Cozmo::U2G::RollObject&& new_RollObject);
+
 	/** TraverseObject **/
 	const Anki::Cozmo::U2G::TraverseObject& Get_TraverseObject() const;
 	void Set_TraverseObject(const Anki::Cozmo::U2G::TraverseObject& new_TraverseObject);
@@ -2381,6 +2506,16 @@ public:
 	const Anki::Cozmo::U2G::ClearAllBlocks& Get_ClearAllBlocks() const;
 	void Set_ClearAllBlocks(const Anki::Cozmo::U2G::ClearAllBlocks& new_ClearAllBlocks);
 	void Set_ClearAllBlocks(Anki::Cozmo::U2G::ClearAllBlocks&& new_ClearAllBlocks);
+
+	/** ClearAllObjects **/
+	const Anki::Cozmo::U2G::ClearAllObjects& Get_ClearAllObjects() const;
+	void Set_ClearAllObjects(const Anki::Cozmo::U2G::ClearAllObjects& new_ClearAllObjects);
+	void Set_ClearAllObjects(Anki::Cozmo::U2G::ClearAllObjects&& new_ClearAllObjects);
+
+	/** SetObjectAdditionAndDeletion **/
+	const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& Get_SetObjectAdditionAndDeletion() const;
+	void Set_SetObjectAdditionAndDeletion(const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& new_SetObjectAdditionAndDeletion);
+	void Set_SetObjectAdditionAndDeletion(Anki::Cozmo::U2G::SetObjectAdditionAndDeletion&& new_SetObjectAdditionAndDeletion);
 
 	/** VisionWhileMoving **/
 	const Anki::Cozmo::U2G::VisionWhileMoving& Get_VisionWhileMoving() const;
@@ -2562,9 +2697,12 @@ private:
 		Anki::Cozmo::U2G::ExecuteTestPlan _ExecuteTestPlan;
 		Anki::Cozmo::U2G::SelectNextObject _SelectNextObject;
 		Anki::Cozmo::U2G::PickAndPlaceObject _PickAndPlaceObject;
+		Anki::Cozmo::U2G::RollObject _RollObject;
 		Anki::Cozmo::U2G::TraverseObject _TraverseObject;
 		Anki::Cozmo::U2G::SetRobotCarryingObject _SetRobotCarryingObject;
 		Anki::Cozmo::U2G::ClearAllBlocks _ClearAllBlocks;
+		Anki::Cozmo::U2G::ClearAllObjects _ClearAllObjects;
+		Anki::Cozmo::U2G::SetObjectAdditionAndDeletion _SetObjectAdditionAndDeletion;
 		Anki::Cozmo::U2G::VisionWhileMoving _VisionWhileMoving;
 		Anki::Cozmo::U2G::ExecuteBehavior _ExecuteBehavior;
 		Anki::Cozmo::U2G::SetBehaviorState _SetBehaviorState;

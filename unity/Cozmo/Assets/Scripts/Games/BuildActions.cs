@@ -15,11 +15,20 @@ public class BuildActions : GameActions {
 	[SerializeField] AudioClip wrongColorVO;
 
 	public override string STACK { get { return "Place"; } }
+	public override string ALIGN { get { return "Play!"; } }
 
 	protected override void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
-		if( robot.isBusy ) return;
-		
+		if( robot.isBusy ) {
+			buttons[2].SetMode( ActionButton.Mode.CANCEL, null, null, true );
+			return;
+		}
+
+		if (GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.COMPLETE) {
+			buttons[2].SetMode( ActionButton.Mode.ALIGN, null, null, true );
+			return;
+		}
+
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
 			//stack is overwritten to be our assisted place command
@@ -96,29 +105,24 @@ public class BuildActions : GameActions {
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if(tracker != null) {
-				
-			Vector3 pos;
-			float rad;
-			if(tracker.AttemptAssistedPlacement(robot.carryingObject, out pos, out rad)) {
+
+			if(tracker.AttemptAssistedPlacement()) {
 				ActionButtonClick();
 				return;
 			}
 
-//			string error;
-//			GameLayoutTracker.LayoutErrorType errorType;
-//			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType)) {
-//				Debug.Log("PredictStackValidation failed for robot.carryingObject("+robot.carryingObject+") upon selectedObject("+selectedObject+") error("+error+")");
-//				//set error text message
-//				tracker.SetMessage(error, Color.red);
-//
-//				PlaySoundsForErrorType(errorType);
-//
-//				return;
-//			}
+		}
+	}
+
+	public override void Align( bool onRelease, ObservedObject selectedObject )
+	{
+		if( robot == null || !onRelease ) return;
+
+		GameLayoutTracker tracker = GameLayoutTracker.instance;
+		if (tracker != null) {
+			tracker.ValidateBuild();
 		}
 
-		//ActionButtonClick();
-		//base.Stack(onRelease, selectedObject);
 	}
 
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {

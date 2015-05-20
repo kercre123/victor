@@ -106,7 +106,7 @@ public class ActionSliderPanel : ActionPanel
 
 		if(actionSlider != null) actionSlider.SetHints();
 		
-		if(robot == null || robot.isBusy || allDisabled) {
+		if(robot == null || allDisabled) {
 			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
 			upLastFrame = true;
 			downLastFrame = false;

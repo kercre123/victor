@@ -87,6 +87,9 @@ case Anki::Cozmo::U2G::Message::Tag::SelectNextObject:
 case Anki::Cozmo::U2G::Message::Tag::PickAndPlaceObject:
 	Process_PickAndPlaceObject(msg.Get_PickAndPlaceObject());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::RollObject:
+	Process_RollObject(msg.Get_RollObject());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::TraverseObject:
 	Process_TraverseObject(msg.Get_TraverseObject());
 	break;
@@ -95,6 +98,12 @@ case Anki::Cozmo::U2G::Message::Tag::SetRobotCarryingObject:
 	break;
 case Anki::Cozmo::U2G::Message::Tag::ClearAllBlocks:
 	Process_ClearAllBlocks(msg.Get_ClearAllBlocks());
+	break;
+case Anki::Cozmo::U2G::Message::Tag::ClearAllObjects:
+	Process_ClearAllObjects(msg.Get_ClearAllObjects());
+	break;
+case Anki::Cozmo::U2G::Message::Tag::SetObjectAdditionAndDeletion:
+	Process_SetObjectAdditionAndDeletion(msg.Get_SetObjectAdditionAndDeletion());
 	break;
 case Anki::Cozmo::U2G::Message::Tag::VisionWhileMoving:
 	Process_VisionWhileMoving(msg.Get_VisionWhileMoving());

@@ -442,14 +442,32 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ClearAllBlocks(U2G::ClearAllBlocks const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
+    Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
       VizManager::getInstance()->EraseAllVizObjects();
       robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::RAMPS);
+      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+    }
+  }
+  
+  void CozmoGameImpl::Process_ClearAllObjects(U2G::ClearAllObjects const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      VizManager::getInstance()->EraseAllVizObjects();
+      robot->GetBlockWorld().ClearAllExistingObjects();
+    }
+  }
+  
+  void CozmoGameImpl::Process_SetObjectAdditionAndDeletion(U2G::SetObjectAdditionAndDeletion const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      robot->GetBlockWorld().EnableObjectAddition(msg.enableAddition);
+      robot->GetBlockWorld().EnableObjectDeletion(msg.enableDeletion);
     }
   }
   
@@ -484,6 +502,32 @@ namespace Cozmo {
         robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+        robot->GetActionList().AddAction(action, numRetries);
+      }
+    }
+  }
+
+  void CozmoGameImpl::Process_RollObject(U2G::RollObject const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      const u8 numRetries = 1;
+      
+      ObjectID selectedObjectID;
+      if(msg.objectID < 0) {
+        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        selectedObjectID = msg.objectID;
+      }
+      
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+      } else {
+        RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
         action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
         robot->GetActionList().AddAction(action, numRetries);
       }

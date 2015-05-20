@@ -16,7 +16,7 @@ public class GameActions : MonoBehaviour
 	public virtual string ROLL { get { return "Roll"; } }
 	public virtual string ALIGN { get { return "Align"; } }
 	public virtual string CHANGE { get { return "Change"; } }
-	public virtual string CANCEL { get { return "Cancel"; } }
+	public virtual string CANCEL { get { return "Cancel Action"; } }
 
 	protected const string TOP = " Top";
 	protected const string BOTTOM = " Bottom";
@@ -84,7 +84,10 @@ public class GameActions : MonoBehaviour
 
 	protected virtual void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
 	{
-		if( robot.isBusy ) return;
+		if( robot.isBusy ) {
+			buttons[2].SetMode( ActionButton.Mode.CANCEL, null, null, true );
+			return;
+		}
 		
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
@@ -327,9 +330,10 @@ public class GameActions : MonoBehaviour
 		
 		if( robot != null )
 		{
-			robot.selectedObjects.Clear();
-			robot.SetHeadAngle();
-			robot.targetLockedObject = null;
+			robot.CancelAction();
+			//robot.selectedObjects.Clear();
+			//robot.SetHeadAngle();
+			//robot.targetLockedObject = null;
 		}
 	}
 

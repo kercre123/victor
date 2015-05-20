@@ -29,9 +29,12 @@ void Process_PlaceObjectOnGroundHere(const Anki::Cozmo::U2G::PlaceObjectOnGround
 void Process_ExecuteTestPlan(const Anki::Cozmo::U2G::ExecuteTestPlan& msg);
 void Process_SelectNextObject(const Anki::Cozmo::U2G::SelectNextObject& msg);
 void Process_PickAndPlaceObject(const Anki::Cozmo::U2G::PickAndPlaceObject& msg);
+void Process_RollObject(const Anki::Cozmo::U2G::RollObject& msg);
 void Process_TraverseObject(const Anki::Cozmo::U2G::TraverseObject& msg);
 void Process_SetRobotCarryingObject(const Anki::Cozmo::U2G::SetRobotCarryingObject& msg);
 void Process_ClearAllBlocks(const Anki::Cozmo::U2G::ClearAllBlocks& msg);
+void Process_ClearAllObjects(const Anki::Cozmo::U2G::ClearAllObjects& msg);
+void Process_SetObjectAdditionAndDeletion(const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& msg);
 void Process_VisionWhileMoving(const Anki::Cozmo::U2G::VisionWhileMoving& msg);
 void Process_ExecuteBehavior(const Anki::Cozmo::U2G::ExecuteBehavior& msg);
 void Process_SetBehaviorState(const Anki::Cozmo::U2G::SetBehaviorState& msg);
