@@ -489,6 +489,32 @@ namespace Cozmo {
       }
     }
   }
+
+  void CozmoGameImpl::Process_RollObject(U2G::RollObject const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      const u8 numRetries = 1;
+      
+      ObjectID selectedObjectID;
+      if(msg.objectID < 0) {
+        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        selectedObjectID = msg.objectID;
+      }
+      
+      if(static_cast<bool>(msg.usePreDockPose)) {
+        robot->GetActionList().AddAction(new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+      } else {
+        RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+        robot->GetActionList().AddAction(action, numRetries);
+      }
+    }
+  }
   
   void CozmoGameImpl::Process_TraverseObject(U2G::TraverseObject const& msg)
   {
