@@ -52,6 +52,9 @@ namespace Anki {
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 20;
 
+        const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 2;
+        const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
+        
         Mode mode_ = IDLE;
         
         DockAction_t action_ = DA_PICKUP_LOW;
@@ -163,7 +166,7 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
-            LiftController::SetMaxSpeedAndAccel(2, 10);
+            LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
@@ -180,6 +183,10 @@ namespace Anki {
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
+                break;
+              case DA_ROLL_LOW:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -305,6 +312,7 @@ namespace Anki {
                     
                   case DA_PLACE_LOW:
                   case DA_PLACE_HIGH:
+                  case DA_ROLL_LOW:
                   {
                     SendBlockPlacedMessage(false);
                     break;
@@ -334,25 +342,29 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
 #endif
+            mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }
-                
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK - LIFT_PLACE_HIGH_SLOP);
-                mode_ = MOVING_LIFT_POSTDOCK;
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                break;
+              }
+              case DA_ROLL_LOW:
+              {
+                LiftController::SetMaxSpeedAndAccel(0.75, 100);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                mode_ = MOVING_LIFT_FOR_ROLL;
                 break;
               }
               default:
@@ -362,9 +374,18 @@ namespace Anki {
             }
             break;
           }
-            
+          case MOVING_LIFT_FOR_ROLL:
+          {
+            if (LiftController::GetHeightMM() <= LIFT_HEIGHT_LOW_ROLL) {
+              SteeringController::ExecuteDirectDrive(-60, -60);
+              mode_ = MOVING_LIFT_POSTDOCK;
+            }
+            break;
+          }
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
+              LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
+              
               // Backup after picking or placing,
               // and move the head to a position to admire our work
               
@@ -379,6 +400,7 @@ namespace Anki {
                 } // HIGH
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
+                case DA_ROLL_LOW:
                 {
                   HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
                   break;
@@ -401,6 +423,7 @@ namespace Anki {
 
                 case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
+                case DA_ROLL_LOW:
                 {
                   SendBlockPlacedMessage(true);
                   carryState_ = CARRY_NONE;
