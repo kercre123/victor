@@ -105,29 +105,13 @@ public class BuildActions : GameActions {
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if(tracker != null) {
-				
-			Vector3 pos;
-			float rad;
-			if(tracker.AttemptAssistedPlacement(robot.carryingObject, out pos, out rad)) {
+
+			if(tracker.AttemptAssistedPlacement()) {
 				ActionButtonClick();
 				return;
 			}
 
-//			string error;
-//			GameLayoutTracker.LayoutErrorType errorType;
-//			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType)) {
-//				Debug.Log("PredictStackValidation failed for robot.carryingObject("+robot.carryingObject+") upon selectedObject("+selectedObject+") error("+error+")");
-//				//set error text message
-//				tracker.SetMessage(error, Color.red);
-//
-//				PlaySoundsForErrorType(errorType);
-//
-//				return;
-//			}
 		}
-
-		//ActionButtonClick();
-		//base.Stack(onRelease, selectedObject);
 	}
 
 	public override void Align( bool onRelease, ObservedObject selectedObject )
