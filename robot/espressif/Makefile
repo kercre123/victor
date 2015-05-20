@@ -12,8 +12,9 @@ GCC_FOLDER:=../../../coretech-external/espressif/xtensa-toolchain-build/build-lx
 ESPTOOL_PY:=../../../coretech-external/espressif/esptool/esptool.py
 FW_TOOL:= ../../../coretech-external/espressif/other/esptool/esptool
 SDK:= ../../../coretech-external/espressif/iot_sdk
-PORT:=com8
+PORT:=com7
 BAUD:=230400
+FLASH_SIZE:=16m
 
 XTLIB:=$(SDK)/lib
 XTGCCLIB:=$(GCC_FOLDER)/gcc-4.9.1-elf/xtensa-lx106-elf/libgcc/libgcc.a
@@ -65,7 +66,7 @@ vm : $(SRCS)
 build : $(FW_FILE_1) $(FW_FILE_2)
 
 burn :
-	($(ESPTOOL_PY) --port $(PORT) --baud $(BAUD) write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
+	($(ESPTOOL_PY) --port $(PORT) --baud $(BAUD) write_flash --flash_size $(FLASH_SIZE) 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
 
 clean :
 	rm -rf user/*.o driver/*.o $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
