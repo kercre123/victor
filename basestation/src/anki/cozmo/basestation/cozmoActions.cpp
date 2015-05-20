@@ -1785,8 +1785,9 @@ namespace Anki {
               } else {
                 // TODO: Need to verify whether or not block is actually in the place and orientation
                 //       that is expected. Use _dockObjectOrigPose?
+                PRINT_NAMED_WARNING("RollObjectAction.Verify.Todo",
+                                    "TODO: Need to verify rolled block orientation is correct. Currently just visually verifying existence\n");
                 
-                // ...
               }
             } // if(result != ActionResult::RUNNING)
             
