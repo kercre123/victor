@@ -33,6 +33,7 @@ public class SlalomController : GameController {
 	uint currentColor_unit;
 
 	int currentLap = 1;
+	float timeSinceLastCorner = 0f;
 
 	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
@@ -271,6 +272,7 @@ public class SlalomController : GameController {
 		base.Enter_PLAYING();
 
 		activeBlockMovedorDeleted = false;
+		timeSinceLastCorner = Time.time;
 
 		for(int i = 0; i < obstacles.Count; ++i) {
 			obstacles[i].OnAxisChange += OnActiveBlockRolled;
@@ -280,6 +282,11 @@ public class SlalomController : GameController {
 
 	protected override void Update_PLAYING() {
 		base.Update_PLAYING();
+
+		if(Time.time > timeSinceLastCorner + 10) {
+			AudioManager.PlayAudioClip(instructionsSound, 0f, false, false, AudioManager.Source.Notification);
+			timeSinceLastCorner = Time.time;
+		}
 
 		Vector2 robotPos = robot.WorldPosition;
 
@@ -390,6 +397,8 @@ public class SlalomController : GameController {
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
 		AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 1 : 5 - currentCorner);
+
+		timeSinceLastCorner = Time.time;
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 

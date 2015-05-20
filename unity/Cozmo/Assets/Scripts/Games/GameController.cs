@@ -37,7 +37,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private Button playButton = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] private Image resultsPanel = null;
-	[SerializeField] private AudioClip instructionsSound;
+	[SerializeField] protected AudioClip instructionsSound;
 	[SerializeField] private AudioClip gameStartSound;
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] private AudioClip playingLoopSound;
