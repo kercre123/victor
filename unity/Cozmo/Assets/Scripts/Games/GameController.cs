@@ -416,8 +416,7 @@ public class GameController : MonoBehaviour {
 		bool played = false;
 		for(int i=0; i<timerSounds.Length; i++) {
 			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
-				// defer to other notifications
-				AudioManager.PlayAudioClip(timerSounds[i].sound, 0f, false, true, AudioManager.Source.Notification);
+				AudioManager.PlayOneShot(timerSounds[i].sound);
 				played = true;
 				break;
 			}
