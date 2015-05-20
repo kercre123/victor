@@ -5,8 +5,12 @@
 
 #include "anki/common/robot/array2d.h"
 
+extern "C"
+{
 #include "embedded/transport/IUnreliableTransport.h"
 #include "embedded/transport/IReceiver.h"
+#include "embedded/transport/reliableTransport.h"
+}
 
 #include "messages.h"
 #include "localization.h"
@@ -48,6 +52,7 @@ namespace Anki {
           {0, 0, 0} // Final dummy entry without comma at end
         };
 
+        u8 pktBuffer_[2048];
         u8 msgBuffer_[256];
 
         // For waiting for a particular message ID
@@ -72,7 +77,7 @@ namespace Anki {
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
 
-        TimeStamp_t lastPingTime_ = 0;
+        ReliableConnection connection;
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -86,6 +91,13 @@ namespace Anki {
 
 
 // #pragma mark --- Messages Method Implementations ---
+
+      Result Init()
+      {
+        ReliableTransport_Init();
+        ReliableConnection_Init(&connection, void); // We only have one connection so dest pointer is superfluous
+        return RESULT_OK;
+      }
 
       u16 GetSize(const ID msgID)
       {
@@ -276,26 +288,58 @@ namespace Anki {
 
       void ProcessBTLEMessages()
       {
+        u32 dataLen;
+        while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
+        {
+          if (ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen) == false)
+          {
+            PRINT("ERROR: ReliableTransport didn't accept message %d[%d]\n", pktBuffer_[0], dataLen);
+          }
+        }
+
+        if (ReliableTransport_Update(&connection) == false) // Connection has timed out
+        {
+          PRINT("WARN: Reliable transport has timed out\n");
+          ReliableTransport_Disconnect(&connection);
+          HAL::RadioUpdateState(0, 0);
+        }
+      }
+
+      Receiver_ReceiveData(uint8* buffer, uint16 bufferSize, ReliableConnection* connection)
+      {
         ID msgID;
 
-        while((msgID = HAL::RadioGetNextMessage(msgBuffer_)) != NO_MESSAGE_ID)
+        while((msgID = HAL::RadioGetNextMessage(buffer)) != NO_MESSAGE_ID)
         {
-          ProcessMessage(msgID, msgBuffer_);
+          ProcessMessage(msgID, buffer);
         }
+      }
 
-        // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
-        if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
-          /*
-          PRINT("WARN: Disconnecting radio due to ping timeout\n");
-          HAL::DisconnectRadio();
-          lastPingTime_ = 0;
-           */
-          PRINT("WARN: Robot last received ping from Basestation at %d. Current time = %d.\n",
-                lastPingTime_, HAL::GetTimeStamp());
-          lastPingTime_ = 0;
-        }
+      void Receiver_OnConnectionRequest(ReliableConnection* connection)
+      {
+        PRINT("ReliableTransport new connection\n")
+        ReliableConnection_Init(connection, void); // Re-initalize the connection
+        ReliableTransport_FinishConnection(connection); // Accept the connection
+        HAL::RadioUpdateState(1, 0);
+      }
 
-      } // ProcessBTLEMessages()
+      void Receiver_OnConnected(ReliableConnection* connection)
+      {
+        PRINT("ReliableTransport connection completed\n");
+        HAL::RadioUpdateState(1, 0);
+      }
+
+      void Receiver_OnDisconnect(ReliableConnection* connection)
+      {
+        PRINT("ReliableTransport disconnected\n");
+        HAL::RadioUpdateState(0, 0);
+      }
+
+      // Shim for reliable transport
+      bool UnreliableTransport_SendPacket(uint8* buffer, uint16 bufferSize)
+      {
+        return RadioSendPacket(buffer, bufferSize);
+      }
 
       void ProcessClearPathMessage(const ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -829,27 +873,6 @@ namespace Anki {
                                              turnVelocity, 5, -5, true);
 
 
-      }
-
-      // A little hacky, but this is technically not a message that supervisor level code needs to worry about
-      // since it comes from the torpedo rather than basestation.
-      void ProcessClientConnectionStatusMessage(const ClientConnectionStatus& msg) {
-        static bool firstConnectionUpdateSinceBoot = true;
-
-        HAL::RadioUpdateState(msg.wifiState, msg.bluetoothState);
-
-        // Simple startup animation so can tell he's ready
-        // TODO: Remove once we have other indicators? This is mostly for dev.
-        if (firstConnectionUpdateSinceBoot)
-        {
-          firstConnectionUpdateSinceBoot = false;
-          HeadController::StartNodding(DEG_TO_RAD(-15), DEG_TO_RAD(15),
-          400, 3, .25f, .25f);
-
-          //EyeController::SetEyeColor(LED_CYAN);
-          //EyeController::SetBlinkVariability(50);
-          //EyeController::StartBlinking(1000, 100);
-        }
       }
 
       void ProcessSetCarryStateMessage(const SetCarryState& msg)
