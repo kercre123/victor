@@ -1635,6 +1635,186 @@ namespace Anki {
     } // Verify()
        
     
+    
+#pragma mark ---- RollObjectAction ----
+    
+    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
+    , _rollVerifyAction(nullptr)
+    {
+      
+    }
+    
+    RollObjectAction::~RollObjectAction()
+    {
+      if(_rollVerifyAction != nullptr) {
+        delete _rollVerifyAction;
+      }
+    }
+    
+    void RollObjectAction::Reset()
+    {
+      IDockAction::Reset();
+      
+      if(_rollVerifyAction != nullptr) {
+        delete _rollVerifyAction;
+        _rollVerifyAction = nullptr;
+      }
+    }
+    
+    const std::string& RollObjectAction::GetName() const
+    {
+      static const std::string name("RollObjectAction");
+      return name;
+    }
+    
+    RobotActionType RollObjectAction::GetType() const
+    {
+      switch(_dockAction)
+      {
+        case DA_ROLL_LOW:
+          return RobotActionType::ROLL_OBJECT_LOW;
+          
+        default:
+          PRINT_NAMED_WARNING("RollObjectAction.GetType",
+                              "Dock action not set before determining action type.\n");
+          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
+      }
+    }
+    
+    void RollObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    {
+      switch(_dockAction)
+      {
+        case DA_ROLL_LOW:
+        {
+          if(robot.IsCarryingObject()) {
+            PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
+                              "Expecting robot to think it's not carrying object for roll action.\n");
+          } else {
+            const s32 rolledObject = _dockObjectID;
+            const u8 numObjects = 1;
+            
+            // TODO: Be able to fill in add'l objects carried in signal
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
+                                                                  {{rolledObject, -1, -1, -1, -1}},
+                                                                  numObjects);
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
+                            "Dock action not set before filling completion signal.\n");
+      }
+      
+      IDockAction::EmitCompletionSignal(robot, result);
+    }
+    
+    Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      // Record the object's original pose (before picking it up) so we can
+      // verify later whether we succeeded.
+      // Make it w.r.t. robot's parent so we can compare heights fairly.
+      if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+        PRINT_NAMED_ERROR("RollObjectAction.SelectDockAction.PoseWrtFailed",
+                          "Could not get pose of dock object w.r.t. robot parent.\n");
+        return RESULT_FAIL;
+      }
+      
+      // Choose docking action based on block's position and whether we are
+      // carrying a block
+      const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
+      _dockAction = DA_ROLL_LOW;
+      
+      // TODO: Stop using constant ROBOT_BOUNDING_Z for this
+      // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
+      //       Do them later.
+      if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+        PRINT_INFO("Object is too high to roll. Aborting.\n");
+        return RESULT_FAIL;
+      } else if (robot.IsCarryingObject()) {
+        PRINT_INFO("Can't roll while carrying an object.\n");
+        return RESULT_FAIL;
+      }
+      
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    
+    ActionResult RollObjectAction::Verify(Robot& robot)
+    {
+      ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      switch(_dockAction)
+      {
+        case DA_ROLL_LOW:
+        {
+          if(robot.GetLastPickOrPlaceSucceeded()) {
+            
+            if(robot.IsCarryingObject() == true) {
+              PRINT_NAMED_ERROR("RollObjectAction::Verify",
+                                "Expecting robot to think it's NOT carrying an object at this point.\n");
+              return ActionResult::FAILURE_ABORT;
+            }
+            
+            // If the physical robot thinks it succeeded, move the lift out of the
+            // way, and attempt to visually verify
+            if(_rollVerifyAction == nullptr) {
+              _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID);
+              
+              // Disable completion signals since this is inside another action
+              _rollVerifyAction->SetIsPartOfCompoundAction(true);
+            }
+            
+            result = _rollVerifyAction->Update(robot);
+            
+            if(result != ActionResult::RUNNING) {
+              
+              // Visual verification is done
+              delete _rollVerifyAction;
+              _rollVerifyAction = nullptr;
+              
+              if(result != ActionResult::SUCCESS) {
+                PRINT_NAMED_ERROR("RollObjectAction.Verify",
+                                  "Robot thinks it rolled the object, but verification failed. "
+                                  "Not sure where rolled object %d is, so deleting it.\n",
+                                  _dockObjectID.GetValue());
+                
+                robot.GetBlockWorld().ClearObject(_dockObjectID);
+              } else {
+                // TODO: Need to verify whether or not block is actually in the place and orientation
+                //       that is expected. Use _dockObjectOrigPose?
+                
+                // ...
+              }
+            } // if(result != ActionResult::RUNNING)
+            
+          } else {
+            // If the robot thinks it failed last pick-and-place, it is because it
+            // failed to dock/track.
+            PRINT_NAMED_ERROR("RollObjectAction.Verify",
+                              "Robot reported roll failure. Assuming docking failed\n");
+            result = ActionResult::FAILURE_RETRY;
+          }
+          
+          break;
+        } // ROLL_LOW
+
+          
+        default:
+          PRINT_NAMED_ERROR("RollObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %d.\n", _dockAction);
+          result = ActionResult::FAILURE_ABORT;
+          break;
+          
+      } // switch(_dockAction)
+      
+      return result;
+      
+    } // Verify()
+    
+    
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()

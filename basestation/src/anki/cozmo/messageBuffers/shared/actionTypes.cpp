@@ -22,6 +22,7 @@ const char* RobotActionTypeToString(const RobotActionType m)
 		case RobotActionType::PICKUP_OBJECT_HIGH: return "PICKUP_OBJECT_HIGH"; break;
 		case RobotActionType::PLACE_OBJECT_LOW: return "PLACE_OBJECT_LOW"; break;
 		case RobotActionType::PLACE_OBJECT_HIGH: return "PLACE_OBJECT_HIGH"; break;
+		case RobotActionType::ROLL_OBJECT_LOW: return "ROLL_OBJECT_LOW"; break;
 		case RobotActionType::PICK_AND_PLACE_INCOMPLETE: return "PICK_AND_PLACE_INCOMPLETE"; break;
 		case RobotActionType::CROSS_BRIDGE: return "CROSS_BRIDGE"; break;
 		case RobotActionType::ASCEND_OR_DESCEND_RAMP: return "ASCEND_OR_DESCEND_RAMP"; break;

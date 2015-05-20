@@ -29,12 +29,14 @@ const f32 DRIVE_CENTER_OFFSET = 0.f;
 const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
 const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
 const f32 LIFT_HEIGHT_CARRY    = 88.f;
+const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.
 const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
 const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;
 const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
+const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 14.f;
 
 const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
 
