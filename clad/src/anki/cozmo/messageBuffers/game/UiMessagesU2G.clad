@@ -178,6 +178,13 @@ message PickAndPlaceObject {
     uint_8 useManualSpeed
 }
 
+// RollObject
+message RollObject {
+  int_32 objectID, // negative value means "currently selected object"
+  uint_8 usePreDockPose,
+  uint_8 useManualSpeed
+}
+
 // TraverseObject
 message TraverseObject {
     uint_8 usePreDockPose,

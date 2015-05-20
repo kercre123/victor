@@ -220,6 +220,8 @@ namespace Anki {
       void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
       void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
       void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+      void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
+      void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
       void SendExecuteTestPlan();
       void SendClearAllBlocks();
@@ -1031,6 +1033,16 @@ namespace Anki {
                 SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
                 break;
               }
+                
+              case (s32)'W':
+              {
+                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                
+                SendRollSelectedObject(usePreDockPose, useManualSpeed);
+                break;
+              }
+
                 
               case (s32)'J':
               {
@@ -2016,6 +2028,23 @@ namespace Anki {
       {
         SendPickAndPlaceObject(-1, usePreDockPose, useManualSpeed);
       }
+
+      void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+      {
+        U2G::RollObject m;
+        m.usePreDockPose = static_cast<u8>(usePreDockPose);
+        m.useManualSpeed = static_cast<u8>(useManualSpeed);
+        m.objectID = -1;
+        U2G::Message message;
+        message.Set_RollObject(m);
+        SendMessage(message);
+      }
+      
+      void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+      {
+        SendRollObject(-1, usePreDockPose, useManualSpeed);
+      }
+
       
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {

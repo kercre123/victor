@@ -1732,6 +1732,76 @@ bool PickAndPlaceObject::operator!=(const PickAndPlaceObject& other) const
 }
 
 
+// MESSAGE RollObject
+
+RollObject::RollObject(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+RollObject::RollObject(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t RollObject::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t RollObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->usePreDockPose);
+	buffer.Write(this->useManualSpeed);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t RollObject::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t RollObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->usePreDockPose);
+	buffer.Read(this->useManualSpeed);
+	return buffer.GetBytesRead();
+}
+
+size_t RollObject::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = int_32
+	//usePreDockPose
+	result += 1; // = uint_8
+	//useManualSpeed
+	result += 1; // = uint_8
+	return result;
+}
+
+bool RollObject::operator==(const RollObject& other) const
+{
+	if (objectID != other.objectID
+	|| usePreDockPose != other.usePreDockPose
+	|| useManualSpeed != other.useManualSpeed) {
+		return false;
+	}
+	return true;
+}
+
+bool RollObject::operator!=(const RollObject& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE TraverseObject
 
 TraverseObject::TraverseObject(const uint8_t* buff, size_t len)
@@ -3963,6 +4033,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SelectNextObject";
 	case MessageTag::PickAndPlaceObject:
 		return "PickAndPlaceObject";
+	case MessageTag::RollObject:
+		return "RollObject";
 	case MessageTag::TraverseObject:
 		return "TraverseObject";
 	case MessageTag::SetRobotCarryingObject:
@@ -4820,6 +4892,35 @@ void Message::Set_PickAndPlaceObject(Anki::Cozmo::U2G::PickAndPlaceObject&& new_
 		ClearCurrent();
 		new(&_PickAndPlaceObject) Anki::Cozmo::U2G::PickAndPlaceObject{std::move(new_PickAndPlaceObject)};
 		_tag = Tag::PickAndPlaceObject;
+	}
+}
+
+
+const Anki::Cozmo::U2G::RollObject& Message::Get_RollObject() const
+{
+	assert(_tag == Tag::RollObject);
+	return _RollObject;
+}
+void Message::Set_RollObject(const Anki::Cozmo::U2G::RollObject& new_RollObject)
+{
+	if(this->_tag == Tag::RollObject) {
+		_RollObject = new_RollObject;
+	}
+	else {
+		ClearCurrent();
+		new(&_RollObject) Anki::Cozmo::U2G::RollObject{new_RollObject};
+		_tag = Tag::RollObject;
+	}
+}
+void Message::Set_RollObject(Anki::Cozmo::U2G::RollObject&& new_RollObject)
+{
+	if(this->_tag == Tag::RollObject) {
+		_RollObject = std::move(new_RollObject);
+	}
+	else {
+		ClearCurrent();
+		new(&_RollObject) Anki::Cozmo::U2G::RollObject{std::move(new_RollObject)};
+		_tag = Tag::RollObject;
 	}
 }
 
@@ -5954,6 +6055,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_PickAndPlaceObject.Unpack(buffer);
 		}
 		break;
+	case Tag::RollObject:
+		if (newTag != oldTag) {
+			new(&(this->_RollObject)) Anki::Cozmo::U2G::RollObject(buffer);
+		}
+		else {
+			this->_RollObject.Unpack(buffer);
+		}
+		break;
 	case Tag::TraverseObject:
 		if (newTag != oldTag) {
 			new(&(this->_TraverseObject)) Anki::Cozmo::U2G::TraverseObject(buffer);
@@ -6300,6 +6409,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::PickAndPlaceObject:
 		this->_PickAndPlaceObject.Pack(buffer);
 		break;
+	case Tag::RollObject:
+		this->_RollObject.Pack(buffer);
+		break;
 	case Tag::TraverseObject:
 		this->_TraverseObject.Pack(buffer);
 		break;
@@ -6485,6 +6597,9 @@ size_t Message::Size() const
 	case Tag::PickAndPlaceObject:
 		result += _PickAndPlaceObject.Size();
 		break;
+	case Tag::RollObject:
+		result += _RollObject.Size();
+		break;
 	case Tag::TraverseObject:
 		result += _TraverseObject.Size();
 		break;
@@ -6668,6 +6783,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::PickAndPlaceObject:
 		_PickAndPlaceObject.~PickAndPlaceObject();
+		break;
+	case Tag::RollObject:
+		_RollObject.~RollObject();
 		break;
 	case Tag::TraverseObject:
 		_TraverseObject.~TraverseObject();
