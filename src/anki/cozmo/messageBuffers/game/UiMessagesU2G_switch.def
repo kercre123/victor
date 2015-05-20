@@ -99,6 +99,9 @@ case Anki::Cozmo::U2G::Message::Tag::ClearAllBlocks:
 case Anki::Cozmo::U2G::Message::Tag::ClearAllObjects:
 	Process_ClearAllObjects(msg.Get_ClearAllObjects());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::SetObjectAdditionAndDeletion:
+	Process_SetObjectAdditionAndDeletion(msg.Get_SetObjectAdditionAndDeletion());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::VisionWhileMoving:
 	Process_VisionWhileMoving(msg.Get_VisionWhileMoving());
 	break;
