@@ -662,18 +662,24 @@ namespace Anki {
       switch(_markers.front().GetCode())
       {
         case Vision::MARKER_1:
-        case Vision::MARKER_LIGHTBEAMA_01:
+        case Vision::MARKER_LIGHTNINGBOLT_000:
           _activeID = 1;
           break;
           
         case Vision::MARKER_INVERTED_1:
-        case Vision::MARKER_LIGHTBEAMB_01:
+        case Vision::MARKER_LIGHTNINGBOLTHOLLOW_000:
           _activeID = 2;
           break;
           
-        case Vision::MARKER_LIGHTBEAMC_01:
+        case Vision::MARKER_LIGHTNINGBOLTMIRRORED_000:
           _activeID = 3;
           break;
+
+          /*
+        case Vision::MARKER_LIGHTNINGBOLTHOLLOWMIRRORED_000:
+          _activeID = 4;
+          break;
+          */
           
         default:
           _activeID = -1;
