@@ -71,17 +71,10 @@ namespace Anki {
     }
 
 #ifndef RUN_EMBEDDED_TESTS
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
+    bool HAL::RadioSendPacket(const void *buffer, u32 length)
     {
 #if(USING_UART_RADIO)
-
-        // Send the message header (0xBEEF + timestamp + robotID + msgID)
-        // For TCP comms, send timestamp immediately after the header.
-        // This is needed on the basestation side to properly order messages.
-
-        // Send header and message content - return false if message was discarded (full buffer)
-        const u32 size = Messages::GetSize(msgID);
-        return UARTPutMessage(msgID, (u8*)buffer, size);
+        return UARTPutPacket((u8*)buffer, length);
 #else
         return true;
 #endif
@@ -110,9 +103,9 @@ namespace Anki {
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
-    Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
+    u32 HAL::RadioGetNextPacket(u8 *buffer)
     {
-      Messages::ID retVal = Messages::NO_MESSAGE_ID;
+      u32 retVal = 0;
 
 #if(USING_UART_RADIO)
 //      if (server.HasClient()) {
@@ -162,17 +155,8 @@ namespace Anki {
 
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
 
-              // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
-              const u8 size = Messages::GetSize(msgID);
-              u32 msgLen = dataLen - 1;  // Doesn't include msgID
-
-              if (msgLen != size) {
-                PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
-              }
-
               // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
               retVal = msgID;
 
               // Shift recvBuf contents down
