@@ -1584,7 +1584,8 @@ namespace Anki
               }
               
               bool didErase = false;
-              if(object->GetLastObservedTime() < lastObsMarkerTime && !object->IsBeingCarried())
+              if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
+                 !object->IsBeingCarried())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
