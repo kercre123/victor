@@ -38,8 +38,6 @@ const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;
 const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 14.f;
 
-const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
-
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
 const f32 LIFT_ARM_LENGTH = 64.f;
 

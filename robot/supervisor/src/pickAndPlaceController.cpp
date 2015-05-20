@@ -357,7 +357,7 @@ namespace Anki {
               }
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK - LIFT_PLACE_HIGH_SLOP);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
                 break;
               }
               case DA_ROLL_LOW:

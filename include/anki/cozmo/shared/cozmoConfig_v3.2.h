@@ -30,7 +30,6 @@ const f32 DRIVE_CENTER_OFFSET = -15.f;
 const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
 const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
 const f32 LIFT_HEIGHT_CARRY    = 92.f;
-const f32 LIFT_PLACE_HIGH_SLOP = 0.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
 // Distance between the robot origin and the distance along the robot's x-axis
