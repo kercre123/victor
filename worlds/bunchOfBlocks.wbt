@@ -156,12 +156,12 @@ Block1x1 {
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
 }
-DEF FireBlock Block1x1 {
-  name "Fire_01"
+DEF FlagBlock Block1x1 {
+  name "Flag_01"
   translation 0.15 0.02 0.0219929
   rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
   blockColor 0.85 0.5 0.5
-  markerImg "symbols/fire.png"
+  markerImg "symbols/checkeredFlag.png"
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
@@ -187,18 +187,12 @@ DEF ActiveBlock1 Block1x1 {
   translation -0.100 0.120 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/LightBeamA_01.png"
-  markerImg_back   "lightCubes/LightBeamA_02.png"
-  markerImg_left   "lightCubes/LightBeamA_03.png"
-  markerImg_right  "lightCubes/LightBeamA_04.png"
-  markerImg_top    "lightCubes/LightBeamA_05.png"
-  markerImg_bottom "lightCubes/LightBeamA_06.png"        
-#   markerImg_front "letters/1.png"
-#   markerImg_back  "letters/2.png"
-#   markerImg_left  "letters/3.png"
-#   markerImg_right "letters/4.png"
-#   markerImg_top   "letters/5.png"
-#   markerImg_bottom "letters/6.png"
+  markerImg_front  "lightCubes/lightningBolt_000.png"
+  markerImg_back   "lightCubes/lightningBolt_015.png"
+  markerImg_left   "lightCubes/lightningBolt_030.png"
+  markerImg_right  "lightCubes/lightningBolt_045.png"
+  markerImg_top    "lightCubes/lightningBolt_060.png"
+  markerImg_bottom "lightCubes/lightningBolt_075.png"        
   active TRUE 
   activeID 1
 }
@@ -207,18 +201,12 @@ DEF ActiveBlock2 Block1x1 {
   translation -0.120 0.070 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/LightBeamB_01.png"
-  markerImg_back   "lightCubes/LightBeamB_02.png"
-  markerImg_left   "lightCubes/LightBeamB_03.png"
-  markerImg_right  "lightCubes/LightBeamB_04.png"
-  markerImg_top    "lightCubes/LightBeamB_05.png"
-  markerImg_bottom "lightCubes/LightBeamB_06.png"  
-#   markerImg_front "letters/inverted/1.png"
-#   markerImg_back  "letters/inverted/2.png"
-#   markerImg_left  "letters/inverted/3.png"
-#   markerImg_right "letters/inverted/4.png"
-#   markerImg_top   "letters/inverted/5.png"
-#   markerImg_bottom "letters/inverted/6.png"
+  markerImg_front  "lightCubes/lightningBoltHollow_000.png"
+  markerImg_back   "lightCubes/lightningBoltHollow_015.png"
+  markerImg_left   "lightCubes/lightningBoltHollow_030.png"
+  markerImg_right  "lightCubes/lightningBoltHollow_045.png"
+  markerImg_top    "lightCubes/lightningBoltHollow_060.png"
+  markerImg_bottom "lightCubes/lightningBoltHollow_075.png"   
   active TRUE 
   activeID 2
 }
@@ -227,12 +215,12 @@ DEF ActiveBlock3 Block1x1 {
   translation -0.154 0.014 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/LightBeamC_01.png"
-  markerImg_back   "lightCubes/LightBeamC_02.png"
-  markerImg_left   "lightCubes/LightBeamC_03.png"
-  markerImg_right  "lightCubes/LightBeamC_04.png"
-  markerImg_top    "lightCubes/LightBeamC_05.png"
-  markerImg_bottom "lightCubes/LightBeamC_06.png"  
+  markerImg_front  "lightCubes/lightningBoltMirrored_000.png"
+  markerImg_back   "lightCubes/lightningBoltMirrored_015.png"
+  markerImg_left   "lightCubes/lightningBoltMirrored_030.png"
+  markerImg_right  "lightCubes/lightningBoltMirrored_045.png"
+  markerImg_top    "lightCubes/lightningBoltMirrored_060.png"
+  markerImg_bottom "lightCubes/lightningBoltMirrored_075.png"   
   active TRUE 
   activeID 3
 }
