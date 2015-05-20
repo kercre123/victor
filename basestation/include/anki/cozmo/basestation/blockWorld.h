@@ -191,6 +191,9 @@ namespace Anki
       // object ID is found and the object is successfully selected.
       bool SelectObject(const ObjectID objectID);
       
+      void EnableObjectDeletion(bool enable);
+      void EnableObjectAddition(bool enable);
+      
       //
       // Visualization
       //
@@ -314,6 +317,8 @@ namespace Anki
       //std::array<ObjectsMap_t*, 3> allExistingObjects_;
       
       bool _didObjectsChange;
+      bool _canDeleteObjects;
+      bool _canAddObjects;
       
       ObjectID _selectedObject;
                   
@@ -418,6 +423,14 @@ namespace Anki
      */
     inline const std::vector<ObjectID>& BlockWorld::GetObservedObjectIDs() const {
       return _currentObservedObjectIDs;
+    }
+    
+    inline void BlockWorld::EnableObjectAddition(bool enable) {
+      _canAddObjects = enable;
+    }
+    
+    inline void BlockWorld::EnableObjectDeletion(bool enable) {
+      _canDeleteObjects = enable;
     }
     
   } // namespace Cozmo

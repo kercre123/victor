@@ -87,6 +87,8 @@ namespace Anki
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
+    , _canDeleteObjects(true)
+    , _canAddObjects(true)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -387,8 +389,20 @@ namespace Anki
             
           } else {
             // Otherwise, add a new object
-            
 #         endif // ONLY_ALLOW_ONE_OBJECT_PER_TYPE
+            
+          if(!_canAddObjects) {
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
+                                "Saw a new %s%s object, but adding objects is disabled.\n",
+                                objSeen->IsActive() ? "active " : "",
+                                objSeen->GetType().GetName().c_str());
+            
+            // Delete this object since we're not going to add it or merge it
+            delete objSeen;
+            
+            // Keep looking through objects we saw
+            continue;
+          }
             
           // no existing objects overlapped with the objects we saw, so add it
           // as a new object
@@ -1585,7 +1599,8 @@ namespace Anki
               }
               
               bool didErase = false;
-              if(object->GetLastObservedTime() < lastObsMarkerTime && !object->IsBeingCarried())
+              if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
+                 !object->IsBeingCarried())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
@@ -1866,54 +1881,74 @@ namespace Anki
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
-      ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
-      if(objectsWithFamily != _existingObjects.end()) {
-        for(auto & objectsByType : objectsWithFamily->second) {
-          for(auto & objectsByID : objectsByType.second) {
-            ClearObjectHelper(objectsByID.second);
+      if(_canDeleteObjects) {
+        ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
+        if(objectsWithFamily != _existingObjects.end()) {
+          for(auto & objectsByType : objectsWithFamily->second) {
+            for(auto & objectsByID : objectsByType.second) {
+              ClearObjectHelper(objectsByID.second);
+            }
           }
+          
+          _existingObjects.erase(family);
         }
-        
-        _existingObjects.erase(family);
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily",
+                            "Will not delete family %d objects because object deletion is disabled.\n",
+                            family.GetValue());
       }
     }
     
     void BlockWorld::ClearObjectsByType(const ObjectType type)
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
-        if(objectsWithType != objectsByFamily.second.end()) {
-          for(auto & objectsByID : objectsWithType->second) {
-            ClearObjectHelper(objectsByID.second);
+      if(_canDeleteObjects) {
+        for(auto & objectsByFamily : _existingObjects) {
+          ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
+          if(objectsWithType != objectsByFamily.second.end()) {
+            for(auto & objectsByID : objectsWithType->second) {
+              ClearObjectHelper(objectsByID.second);
+            }
+            
+            objectsByFamily.second.erase(objectsWithType);
+            
+            // Types are unique.  No need to keep looking
+            return;
           }
-        
-          objectsByFamily.second.erase(objectsWithType);
-          
-          // Types are unique.  No need to keep looking
-          return;
         }
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType",
+                            "Will not delete %s objects because object deletion is disabled.\n",
+                            type.GetName().c_str());
+
       }
-      
     } // ClearBlocksByType()
     
 
     bool BlockWorld::ClearObject(const ObjectID withID)
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          auto objectWithIdIter = objectsByType.second.find(withID);
-          if(objectWithIdIter != objectsByType.second.end()) {
-            
-            // Remove the object from the world
-            ClearObjectHelper(objectWithIdIter->second);
-            objectsByType.second.erase(objectWithIdIter);
-            
-            // IDs are unique, so we can return as soon as the ID is found and cleared
-            return true;
+      if(_canDeleteObjects) {
+        for(auto & objectsByFamily : _existingObjects) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            auto objectWithIdIter = objectsByType.second.find(withID);
+            if(objectWithIdIter != objectsByType.second.end()) {
+              
+              // Remove the object from the world
+              ClearObjectHelper(objectWithIdIter->second);
+              objectsByType.second.erase(objectWithIdIter);
+              
+              // IDs are unique, so we can return as soon as the ID is found and cleared
+              return true;
+            }
           }
         }
+        
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
+                            "Will not delete object %d because object deletion is disabled.\n",
+                            withID.GetValue());
+
       }
-     
+      
       // Never found the specified ID
       return false;
     } // ClearObject()
@@ -1925,22 +1960,36 @@ namespace Anki
                                                                    const ObjectFamily& fromFamily)
     {
       Vision::ObservableObject* object = objIter->second;
-     
-      ClearObjectHelper(object);
-
-      return _existingObjects[fromFamily][withType].erase(objIter);
+      
+      if(_canDeleteObjects) {
+        ClearObjectHelper(object);
+        
+        return _existingObjects[fromFamily][withType].erase(objIter);
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
+                            "Will not delete object %d because object deletion is disabled.\n",
+                            object->GetID().GetValue());
+        return ++objIter;
+      }
+      
     }
     
     void BlockWorld::ClearObject(Vision::ObservableObject* object,
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      ObjectID objID = object->GetID();
-      ClearObjectHelper(object);
-      
-      // Actually erase the object from blockWorld's container of
-      // existing objects
-      _existingObjects[fromFamily][withType].erase(objID);
+      if(_canDeleteObjects) {
+        ObjectID objID = object->GetID();
+        ClearObjectHelper(object);
+        
+        // Actually erase the object from blockWorld's container of
+        // existing objects
+        _existingObjects[fromFamily][withType].erase(objID);
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
+                            "Will not delete object %d because object deletion is disabled.\n",
+                            object->GetID().GetValue());
+      }
     }
     
     
