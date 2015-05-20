@@ -133,7 +133,7 @@ public class AudioManager : MonoBehaviour
 			return;
 		}
 
-		if( (int)source < instance.audioSources.Length )
+		if( (int)source != (int)Source.Count && (int)source < instance.audioSources.Length )
 		{
 			instance.audioSources[(int)source].Stop();
 			instance.audioSources[(int)source].volume = 0f;
