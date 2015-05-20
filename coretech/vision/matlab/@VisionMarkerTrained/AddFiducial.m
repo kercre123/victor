@@ -31,12 +31,16 @@ end
 %img = mean(im2double(img),3);
 
 if RotateImage ~= 0
-  img = imrotate(img, RotateImage, 'bilinear');
-  AlphaChannel = imrotate(AlphaChannel, RotateImage, 'bilinear');
+  bbox = 'loose';
+  if ~CropImage
+    bbox = 'crop';
+  end
+  img = imrotate(img, RotateImage, 'bilinear', bbox);
+  AlphaChannel = imrotate(AlphaChannel, RotateImage, 'bilinear', bbox);
 end
 
 if CropImage
-    black = any(img<0.5,3) & AlphaChannel > 0;   
+    black = any(img<0.5,3) & AlphaChannel > 0.5;   
     
     row = any(black,1); 
     xmin = find(row, 1, 'first');
