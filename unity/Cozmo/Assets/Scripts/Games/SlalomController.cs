@@ -36,6 +36,8 @@ public class SlalomController : GameController {
 
 	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
+	float cornerTriggeredDelay { get { return cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f; } }
+
 	ActiveBlock previousObstacle = null;
 
 	ActiveBlock currentObstacle { 
@@ -108,13 +110,13 @@ public class SlalomController : GameController {
 		//PlayOneShot(playerScoreSound);
 		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
 		if(lapsRemaining == 0) {
-			if(finalLapSound != null) PlayDelayed(finalLapSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, false, false, AudioManager.Source.Notification);
 			Debug.Log("final lap");
 		}
 		else {
-			if(lapsRemainingSound.Length > 0 && timerSounds.Length > 0 && lapsRemaining > 0 && lapsRemaining < timerSounds.Length && timerSounds[lapsRemaining].sound != null) {
+			if(lapsRemainingSound.Length > 0 && lapsRemaining > 0 && lapsRemaining < timerSounds.Length && timerSounds[lapsRemaining].sound != null) {
 				lapsRemainingSound[0] = timerSounds[lapsRemaining].sound;
-				PlayAudioClips(lapsRemainingSound, cornerTriggeredSound != null ? cornerTriggeredSound.length : 0f);
+				AudioManager.PlayAudioClips(lapsRemainingSound, cornerTriggeredDelay, 0.05f, false, false, AudioManager.Source.Notification);
 			}
 			Debug.Log((lapsRemaining + 1) + " laps remaining");
 		}
@@ -387,7 +389,7 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
-		PlayOneShot(cornerTriggeredSound, currentCorner == 0 ? 1 : 5 - currentCorner);
+		AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 1 : 5 - currentCorner);
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 

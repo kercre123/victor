@@ -26,7 +26,6 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip countdownTickSound;
 	[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected TimerAudio[] timerSounds;
-	[SerializeField] protected AudioSource notificationAudio;
 	[SerializeField] private AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
@@ -284,11 +283,9 @@ public class GameController : MonoBehaviour {
 		if(countdownToStart > 0f) {
 
 			if(coundownTimer == 0f) {
-				if(instructionsSound != null) PlayOneShot(instructionsSound);
+				if(instructionsSound != null) AudioManager.PlayOneShot(instructionsSound);
 				//Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
-				if(audio != null) {
-					if(gameStartingIn != null) PlayDelayed(gameStartingIn, instructionsDelay);
-				}
+				if(gameStartingIn != null) AudioManager.PlayAudioClip(gameStartingIn, instructionsDelay, false, false, AudioManager.Source.Notification);
 				lastTimerSeconds = 0;
 				countdownAnnounced = true;
 			}
@@ -323,7 +320,7 @@ public class GameController : MonoBehaviour {
 		bonusTime = 0;
 
 		Debug.Log(gameObject.name + " Enter_PLAYING");
-		if(gameStartSound != null) PlayOneShot(gameStartSound);
+		if(gameStartSound != null) AudioManager.PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(textError != null) textError.gameObject.SetActive(false);
@@ -352,14 +349,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
-		if(gameOverSound != null) PlayOneShot(gameOverSound);
-	}
-
-	protected void PlayOneShot(AudioClip clip, float pitch = 1f) {
-		if(audio != null) {
-			audio.pitch = pitch;
-			audio.PlayOneShot(clip);
-		}
+		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
 	}
 
 	protected virtual void Enter_RESULTS() {
@@ -369,22 +359,7 @@ public class GameController : MonoBehaviour {
 		}
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
-		if(resultsLoopSound != null && audio != null) {
-			PlayDelayed(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, true );
-		}
-	}
-
-	protected void PlayDelayed(AudioClip clip, float delay, bool loop = false, float pitch = 1f) {
-		StartCoroutine(_PlayDelayed(clip, delay, loop));
-	}
-
-	private IEnumerator _PlayDelayed(AudioClip clip, float delay, bool loop = false, float pitch = 1f) {
-		yield return new WaitForSeconds(delay);
-
-		audio.pitch = pitch;
-		audio.loop = loop;
-		audio.clip = clip;
-		audio.Play();
+		if(resultsLoopSound != null) AudioManager.PlayAudioClip(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, true);
 	}
 
 	protected virtual void Update_RESULTS() {
@@ -395,7 +370,7 @@ public class GameController : MonoBehaviour {
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
-		if(audio != null && audio.isPlaying && audio.clip == resultsLoopSound) audio.Stop();
+		AudioManager.Stop(AudioManager.Source.UI);
 	}
 
 	protected virtual bool IsGameReady() {
@@ -437,60 +412,19 @@ public class GameController : MonoBehaviour {
 		buildRequested = true;
 	}
 
-	protected void PlayAudioClips(AudioClip[] clips, float initalDelay = 0f, float additionalDelay = 0.05f, float pitch = 1f) {
-		audio.pitch = pitch;
-		if(clips.Length > 0) {
-			PlayDelayed(clips[0], initalDelay);
-
-			for(int i = 1; i < clips.Length; ++i) {
-				PlayDelayed(clips[i], clips[i-1].length + additionalDelay);
-			}
-		}
-	}
-
-	protected void PlayCountdownAudio(int secondsLeft, float pitch = 1f) {
+	protected void PlayCountdownAudio(int secondsLeft) {
 		bool played = false;
-
 		for(int i=0; i<timerSounds.Length; i++) {
 			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
 				// defer to other notifications
-				if( !notificationAudio.isPlaying ) {
-					notificationAudio.pitch = pitch;
-					notificationAudio.PlayOneShot(timerSounds[i].sound);
-				}
+				AudioManager.PlayAudioClip(timerSounds[i].sound, 0f, false, true, AudioManager.Source.Notification);
 				played = true;
 				break;
 			}
 		}
 
-		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null) PlayOneShot(countdownTickSound);
+		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null) AudioManager.PlayOneShot(countdownTickSound);
 		
 		lastTimerSeconds = secondsLeft;
 	}
-	
-	protected void PlayNotificationAudio(AudioClip clip, float pitch = 1f)
-	{
-		if (notificationAudio != null) 
-		{
-			notificationAudio.pitch = pitch;
-			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
-			notificationAudio.Stop (); 
-			Debug.LogWarning ("Should be playing " + clip.name);
-			notificationAudio.Play (); // playoneshot creates a new AudioSource, making isPlaying false for the AudioSource
-		}
-	}
-
-	// doesn't play if the audio source is currently playing a clip
-	protected void PlayNotificationAudioDeferred(AudioClip clip, float pitch = 1f)
-	{
-		if (notificationAudio != null && !notificationAudio.isPlaying) 
-		{
-			notificationAudio.pitch = pitch;
-			notificationAudio.clip = clip; // sets clip to be the audio source's default so isPlaying works properly
-			notificationAudio.Stop (); 
-			Debug.LogWarning ("Should be playing " + clip.name);
-			notificationAudio.Play (); // playoneshot creates a new AudioSource, making isPlaying false for the AudioSource
-		}
-	}
-
 }

@@ -124,7 +124,7 @@ public class BuildActions : GameActions {
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
 	
 		//play denied sound
-		if(actionDeniedSound != null) audio.PlayOneShot(actionDeniedSound);
+		if(actionDeniedSound != null) AudioManager.PlayAudioClip(actionDeniedSound, 0f, true);
 
 		AudioClip clip = null;
 		switch(errorType) {
@@ -156,13 +156,6 @@ public class BuildActions : GameActions {
 		if(clip == null) return;
 
 		//play VO for 'stack attempted on wrong block' or 'block is wrong color'
-		StartCoroutine(PlaySoundAfterDelay(clip, actionDeniedSound != null ? actionDeniedSound.length : 0f));
+		AudioManager.PlayAudioClip(clip, actionDeniedSound != null ? actionDeniedSound.length : 0f);
 	}
-
-
-	IEnumerator PlaySoundAfterDelay (AudioClip clip, float delay) {
-		yield return new WaitForSeconds(delay);
-		if(clip != null) audio.PlayOneShot(clip);
-	}
-
 }
