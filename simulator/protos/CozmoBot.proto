@@ -725,11 +725,11 @@ Supervisor {
 		  boundingObject DEF TRACK_BO Group {
 			children [
 			  Transform {
-				translation -0.024 0 0
+				translation -0.024 0.00375 0
 				rotation 1 0 0 -1.5707963     
 				children [
 				  Box {
-					size 0.048 0.01 0.029
+					size 0.048 0.01 0.0215
 				  }
 				]
 			  }
