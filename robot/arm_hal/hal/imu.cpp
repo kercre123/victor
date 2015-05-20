@@ -1,9 +1,11 @@
+
+// XXX TODO: PORT THIS CODE TO I2C
+
 /**
 * File: imu.cpp
 *
 * Author: Bryan Hood
 * Created: 4/8/2014
-*
 *
 * Description:
 *
@@ -199,102 +201,19 @@ namespace Anki
     namespace HAL
     {
       // Define SPI pins with macros
-      // Updated for 3.0
-      GPIO_PIN_SOURCE(IMU_SCK, GPIOB, 13);
-      GPIO_PIN_SOURCE(IMU_MISO, GPIOB, 14);
-      GPIO_PIN_SOURCE(IMU_MOSI, GPIOB, 15);
-      GPIO_PIN_SOURCE(IMU_CS_ACC, GPIOA, 10);
-      GPIO_PIN_SOURCE(IMU_CS_GYRO, GPIOA, 8);
-      GPIO_PIN_SOURCE(IMU_INT, GPIOA, 9);
+      GPIO_PIN_SOURCE(IMU_SCL, GPIOE, 3);
+      GPIO_PIN_SOURCE(IMU_SDA, GPIOE, 5);
+      GPIO_PIN_SOURCE(IMU_INT, GPIOE, 12);
       
-      // SPI2 Read/Write routine
-      // Pipelined SPI interface
-      // If no value is passed in, we assume we're at the end of the pipeline,
-      //    so we only read the last value, and reset begin_pipeline to 1
-      static uint8_t IMUWriteReadPipelined(int16_t value = -1)
-      {
-        static bool begin_pipeline = 1;
-        
-        // Just send data the first time through
-        if(begin_pipeline)
-        {
-            SPI_I2S_SendData(SPI2, value);
-            begin_pipeline = 0;
-            return 0xAA;
-        }
-        
-        // If value is -1 (default), skip transmit, and reset begin_pipeline variable
-        if(value != -1)
-        {
-          // Wait until TXE = 1 (wait until transmit buffer is empty)
-          while(!(SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_TXE)))
-          {
-          }
-          // Send Data, TXE = 0
-          SPI_I2S_SendData(SPI2, value);
-        }
-        else
-        {
-          begin_pipeline = 1;
-        }
-        
-        // Wait until RXNE = 1 (wait for receive buffer to have data)
-        while(!SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_RXNE))
-        {
-        }
-        
-        // Receive data
-        return SPI_I2S_ReceiveData(SPI2);
-      }
-          
-      
-      // Deselect accelerometer and gyro SPI
-      static void IMUDeselectAll()
-      {
-        // Wait for data transfer to finish
-        while(SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_BSY))
-        {
-        }
-        // deselect accelerometer and gyro      
-        GPIO_SET(GPIO_IMU_CS_ACC, PIN_IMU_CS_ACC);
-        GPIO_SET(GPIO_IMU_CS_GYRO, PIN_IMU_CS_GYRO);
-        MicroWait(1);
-      }
-      
-      
-      // Select accelerometer or gyro
-      static void IMUSelectDevice(IMU_DEVICE device)
-      {
-        // Deselect all
-        IMUDeselectAll();
-
-        // Select device
-        if(device == IMU_GYRO)  // Select gyro
-        {
-          GPIO_RESET(GPIO_IMU_CS_GYRO, PIN_IMU_CS_GYRO);
-        }
-        else if(device == IMU_ACC)  // Select accelerometer
-        {
-          GPIO_RESET(GPIO_IMU_CS_ACC, PIN_IMU_CS_ACC);
-        }
-        MicroWait(1);
-      }
-
-
       // Initialize spi
-      static void InitSPI()
+      static void InitI2C()
       {
         // Enable peripheral clock
-        RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
         
-        // Enable SCK, MOSI, MISO and NSS GPIO clocks
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+        // Enable GPIO clocks
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 
         // Peripherals alternate function
-        GPIO_PinAFConfig(GPIO_IMU_SCK, SOURCE_IMU_SCK, GPIO_AF_SPI2);
-        GPIO_PinAFConfig(GPIO_IMU_MISO, SOURCE_IMU_MISO, GPIO_AF_SPI2);
-        GPIO_PinAFConfig(GPIO_IMU_MOSI, SOURCE_IMU_MOSI, GPIO_AF_SPI2);
 
         // Initalize Pins
         GPIO_InitTypeDef GPIO_InitStructure;
@@ -302,27 +221,6 @@ namespace Anki
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
-        // Set SPI alternate function pins
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_MISO;
-        GPIO_Init(GPIO_IMU_MISO, &GPIO_InitStructure);
-        
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        //GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_SCK;
-        GPIO_Init(GPIO_IMU_SCK, &GPIO_InitStructure);
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_MOSI;
-        GPIO_Init(GPIO_IMU_MOSI, &GPIO_InitStructure);
-        
-        // Set CS output pins
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-        GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-        
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_CS_GYRO;
-        GPIO_Init(GPIO_IMU_CS_GYRO, &GPIO_InitStructure);
-        GPIO_InitStructure.GPIO_Pin = PIN_IMU_CS_ACC; 
-        GPIO_Init(GPIO_IMU_CS_ACC, &GPIO_InitStructure);
 
         // Set Interupt input pin
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
@@ -330,25 +228,7 @@ namespace Anki
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_Init(GPIO_IMU_INT, &GPIO_InitStructure); 
               
-        // Program the Polarity, Phase, First Data, Baud Rate Prescaler, Slave Management,
-        // Peripheral Mode and CRC Polynomial values using the SPI_Init() function.
-        SPI_InitTypeDef SPI_InitStructure;
-        
-        SPI_InitStructure.SPI_Direction             =      SPI_Direction_2Lines_FullDuplex;
-        SPI_InitStructure.SPI_Mode                  =      SPI_Mode_Master;
-        SPI_InitStructure.SPI_DataSize              =      SPI_DataSize_8b;
-        SPI_InitStructure.SPI_CPOL                  =      SPI_CPOL_Low;
-        SPI_InitStructure.SPI_CPHA                  =      SPI_CPHA_1Edge;
-        SPI_InitStructure.SPI_NSS                   =      SPI_NSS_Soft;
-        SPI_InitStructure.SPI_BaudRatePrescaler     =      SPI_BaudRatePrescaler_16;  
-                                                              // 5.7 MHz ( Limit is 10 MHz )
-        SPI_InitStructure.SPI_FirstBit              =      SPI_FirstBit_MSB;
-        SPI_InitStructure.SPI_CRCPolynomial         =      0;
-        
-        SPI_Init(SPI2, &SPI_InitStructure);
-        
-        // Enable the SPI
-        SPI_Cmd(SPI2, ENABLE);
+        // Enable I2C peripheral
       }
 
 
@@ -360,46 +240,33 @@ namespace Anki
         // Select accelerometer
         while (data != ACC_CHIPID)
         {
-        IMUSelectDevice(IMU_ACC);
         // Get chip id
-        IMUWriteReadPipelined(IMU_READ | ACC_BGW_CHIPID);  // read data lags two IMUWriteReadPipelined calls
-        IMUWriteReadPipelined(0x00);
-        data = IMUWriteReadPipelined();
+        //IMUWriteReadPipelined(IMU_READ | ACC_BGW_CHIPID);  // read data lags two IMUWriteReadPipelined calls
+        //data = IMUWriteReadPipelined();
         }
         // Assert that chipid is correct
         assert(data == ACC_CHIPID);
 
         // Configure accelerometer
         // Select accelerometer
-        IMUSelectDevice(IMU_ACC);  // Deselect and reselect      
-        IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_RANGE);
-        IMUWriteReadPipelined(RANGE_2G);
+        //IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_RANGE);
+        //IMUWriteReadPipelined(RANGE_2G);
         MicroWait(POST_WRITE_DELAY_US);
-        IMUSelectDevice(IMU_ACC);  // Deselect and reselect              
-        IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_BW); 
-        IMUWriteReadPipelined(BW_250);
+        //IMUWriteReadPipelined(IMU_WRITE | ACC_PMU_BW); 
+        //IMUWriteReadPipelined(BW_250);
         MicroWait(POST_WRITE_DELAY_US);
-        IMUSelectDevice(IMU_ACC);  // Deselect and reselect              
-        IMUWriteReadPipelined(IMU_WRITE | ACC_INT_OUT_CTRL);  // Set all I/O to open drain
-        IMUWriteReadPipelined(ACC_INT_OPEN_DRAIN);
+        //IMUWriteReadPipelined(IMU_WRITE | ACC_INT_OUT_CTRL);  // Set all I/O to open drain
+        //IMUWriteReadPipelined(ACC_INT_OPEN_DRAIN);
         MicroWait(POST_WRITE_DELAY_US);
 
         // Verify everything that was just written
-        IMUSelectDevice(IMU_ACC);  // Deselect and reselect 
-        IMUWriteReadPipelined(IMU_READ | ACC_PMU_RANGE);
-        IMUWriteReadPipelined(0x00);
-        data = IMUWriteReadPipelined();
+        //IMUWriteReadPipelined(IMU_READ | ACC_PMU_RANGE);
+        //data = IMUWriteReadPipelined();
         assert(data == RANGE_2G);
         
-        IMUSelectDevice(IMU_ACC);  // Deselect and reselect 
-        IMUWriteReadPipelined(IMU_READ | ACC_PMU_BW);
-        IMUWriteReadPipelined(0x00);
-        data = IMUWriteReadPipelined();
+        //IMUWriteReadPipelined(IMU_READ | ACC_PMU_BW);
+        //data = IMUWriteReadPipelined();
         assert(data == BW_250);
-
-        
-        // Deselect accelerometer      
-        IMUDeselectAll();
       }
       
       
@@ -408,44 +275,33 @@ namespace Anki
       {
         uint8_t data;
         // Do a communication test
-        // Select gyro
-        IMUSelectDevice(IMU_GYRO);
-        IMUWriteReadPipelined(IMU_READ | GYRO_CHIP_ID);
-        IMUWriteReadPipelined(0x00);
-        data = IMUWriteReadPipelined();
-        // Deselect gyro
-        IMUDeselectAll();
+        //IMUWriteReadPipelined(IMU_READ | GYRO_CHIP_ID);
+        //IMUWriteReadPipelined(0x00);
+        //data = IMUWriteReadPipelined();
         assert(data == GYRO_CHIPID);
         
         // Configure gyro
-        // Select gyro
-        IMUSelectDevice(IMU_GYRO);
         // Set +/- 500 deg/sec range 
-        IMUWriteReadPipelined(IMU_WRITE | GYRO_RANGE);
-        IMUWriteReadPipelined(RANGE_500DPS);
+        //IMUWriteReadPipelined(IMU_WRITE | GYRO_RANGE);
+        //IMUWriteReadPipelined(RANGE_500DPS);
         MicroWait(2);  // 2 us delay required after write
         
         // TODO: Add lowpass filter on gyro? Pete isn't certain this is actually useful. Good. I'm a big dope, says pete.
         
         // Verify everything that was just written
-        IMUSelectDevice(IMU_GYRO);  // Deselect and reselect 
-        IMUWriteReadPipelined(IMU_READ | GYRO_RANGE);
-        IMUWriteReadPipelined(0x00);
-        data = IMUWriteReadPipelined();
+        //IMUWriteReadPipelined(IMU_READ | GYRO_RANGE);
+        //data = IMUWriteReadPipelined();
         assert(data == RANGE_500DPS);
-
-        // Deselect gyro
-        IMUDeselectAll();
       }
       
 
-      // Initialize SPI2, set up accelerometer and gyro
+      // Initialize I2C, set up accelerometer and gyro
       void IMUInit()
       {  
-        // Initialize CS pin values
-        IMUDeselectAll();
-        // Enable CS pins and SPI
-        InitSPI();
+        
+        return;
+        
+        InitI2C();
         InitAcc();
         InitGyro();
       }
@@ -457,16 +313,12 @@ namespace Anki
       {
         static uint8_t temp_data_msb, temp_data_lsb;
         static s16 temp_data;
-        
-        // select accelerometer
-        IMUSelectDevice(IMU_ACC);
-        
+
         // Accelerometer x values
         // Get data
-        IMUWriteReadPipelined(IMU_READ | ACC_ACCD_X_LSB);  // ACC_ACCD_X_LSB
-        IMUWriteReadPipelined(0x00);  // ACC_ACCD_X_MSB
-        temp_data_lsb = IMUWriteReadPipelined(0x00); // ACC_ACCD_Y_LSB
-        temp_data_msb = IMUWriteReadPipelined(0x00);  //ACC_ACCD_Y_MSB
+        //IMUWriteReadPipelined(IMU_READ | ACC_ACCD_X_LSB);  // ACC_ACCD_X_LSB
+        //temp_data_lsb = IMUWriteReadPipelined(0x00); // ACC_ACCD_Y_LSB
+        //temp_data_msb = IMUWriteReadPipelined(0x00);  //ACC_ACCD_Y_MSB
 
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
@@ -481,8 +333,8 @@ namespace Anki
         IMUData.acc_y  = RANGE_CONST_2G * temp_data;  // m/s^2    
 #endif
         
-        temp_data_lsb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_LSB
-        temp_data_msb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_MSB
+        //temp_data_lsb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_LSB
+        //temp_data_msb = IMUWriteReadPipelined(0x00);  // ACC_ACCD_Z_MSB
         
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
@@ -497,8 +349,8 @@ namespace Anki
         IMUData.acc_z  = RANGE_CONST_2G * temp_data;      // m/s^2   
 #endif
 
-        temp_data_lsb = IMUWriteReadPipelined(0x00);    
-        temp_data_msb = IMUWriteReadPipelined();
+        //temp_data_lsb = IMUWriteReadPipelined(0x00);    
+        //temp_data_msb = IMUWriteReadPipelined();
         
         // Combine and convert to signed
         temp_data = (temp_data_msb << 8) | (temp_data_lsb & ACC_LSB_MASK);
@@ -512,16 +364,13 @@ namespace Anki
 #else
         IMUData.acc_x  = RANGE_CONST_2G * temp_data;  // m/s^2    
 #endif
-        
-        // Select gyro (accelerometer automatically deselected)
-        IMUSelectDevice(IMU_GYRO);
-        
+         
         // Gyro x values
         // Get data
-        IMUWriteReadPipelined(IMU_READ | GYRO_RATE_X_LSB);  // GYRO_RATE_X_LSB
-        IMUWriteReadPipelined(0x00);  // GYRO_RATE_X_MSB
-        temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Y_LSB
-        temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Y_MSB
+        //IMUWriteReadPipelined(IMU_READ | GYRO_RATE_X_LSB);  // GYRO_RATE_X_LSB
+        //IMUWriteReadPipelined(0x00);  // GYRO_RATE_X_MSB
+        //temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Y_LSB
+        //temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Y_MSB
         
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
@@ -535,8 +384,8 @@ namespace Anki
         IMUData.rate_y  = RANGE_CONST_500D * temp_data;  // rad/s    
 #endif
         
-        temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_LSB
-        temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_MSB
+        //temp_data_lsb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_LSB
+        //temp_data_msb = IMUWriteReadPipelined(0x00);  // GYRO_RATE_Z_MSB
 
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
@@ -550,8 +399,8 @@ namespace Anki
         IMUData.rate_z  = RANGE_CONST_500D * temp_data;  // rad/s    
 #endif
   
-        temp_data_lsb = IMUWriteReadPipelined(0x00);    
-        temp_data_msb = IMUWriteReadPipelined();
+        //temp_data_lsb = IMUWriteReadPipelined(0x00);    
+        //temp_data_msb = IMUWriteReadPipelined();
 
         // Combine
         temp_data = (temp_data_msb << 8) | (temp_data_lsb ); 
@@ -564,9 +413,6 @@ namespace Anki
 #else
         IMUData.rate_x  = RANGE_CONST_500D * temp_data;  // rad/s    
 #endif
-                  
-        // Deselect gyro
-        IMUDeselectAll();
       }
     }         
   }

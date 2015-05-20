@@ -12,13 +12,13 @@
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F401RC</Device>
+          <Device>STM32F429IG</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <Cpu>IRAM(0x20000000-0x2000FFFF) IROM(0x08000000-0x0803FFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
+          <Cpu>IRAM(0x20000000-0x2002FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f40xx.s" ("STM32F40xx Startup Code")</StartupFile>
-          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_256 -FS08000000 -FL040000)</FlashDriverDll>
-          <DeviceId>7383</DeviceId>
+          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f429x.s" ("STM32F429 Startup Code")</StartupFile>
+          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000)</FlashDriverDll>
+          <DeviceId>7030</DeviceId>
           <RegisterFile>stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -26,10 +26,10 @@
           <Linker></Linker>
           <OHString></OHString>
           <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc>-DSTM32F40XX</SLE66CMisc>
+          <SLE66CMisc>-DSTM32F429X</SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>SFD\ST\STM32F4xx\STM32F40x.SFR</SFDFile>
+          <SFDFile>SFD\ST\STM32F4xx\STM32F439x.SFR</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -169,7 +169,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -215,7 +215,7 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
-            <hadIRAM2>0</hadIRAM2>
+            <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
             <useUlib>0</useUlib>
@@ -274,12 +274,12 @@
               <IRAM>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x10000</Size>
+                <Size>0x30000</Size>
               </IRAM>
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x40000</Size>
+                <Size>0x100000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -304,7 +304,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x100000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -328,13 +328,13 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20004100</StartAddress>
-                <Size>0x1bf00</Size>
+                <StartAddress>0x20000000</StartAddress>
+                <Size>0x30000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x0</Size>
+                <StartAddress>0x10000000</StartAddress>
+                <Size>0x10000</Size>
               </OCR_RVCT10>
             </OnChipMemories>
             <RvctStartVector></RvctStartVector>
@@ -355,7 +355,7 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F411xE,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V32</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V32</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
@@ -377,7 +377,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -398,11 +398,6 @@
         <Group>
           <GroupName>hal</GroupName>
           <Files>
-            <File>
-              <FileName>hal.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
-            </File>
             <File>
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
@@ -467,6 +462,16 @@
               <FileName>battery.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>enjpeg.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\enjpeg.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -729,11 +734,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
               <FileName>faceTrackingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
@@ -768,16 +768,6 @@
         <Group>
           <GroupName>coretech-common</GroupName>
           <Files>
-            <File>
-              <FileName>array2d.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
             <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
@@ -887,16 +877,6 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabConverters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>perspectivePoseEstimation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1392,11 +1372,6 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>hal.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\include\anki\cozmo\robot\hal.h</FilePath>
-            </File>
-            <File>
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
@@ -1460,6 +1435,16 @@
               <FileName>battery.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>enjpeg.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\enjpeg.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1779,11 +1764,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>proxSensors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
-            </File>
-            <File>
               <FileName>faceTrackingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
@@ -1818,16 +1798,6 @@
         <Group>
           <GroupName>coretech-common</GroupName>
           <Files>
-            <File>
-              <FileName>array2d.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\array2d.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>benchmarking.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\benchmarking.cpp</FilePath>
-            </File>
             <File>
               <FileName>comparisons.cpp</FileName>
               <FileType>8</FileType>
@@ -1937,16 +1907,6 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabConverters.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>perspectivePoseEstimation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\vision\robot\src\perspectivePoseEstimation.cpp</FilePath>
             </File>
           </Files>
         </Group>
