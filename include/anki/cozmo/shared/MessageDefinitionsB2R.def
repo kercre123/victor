@@ -594,8 +594,6 @@ END_MESSAGE_DEFINITION(FlashBlockIDs)
 
 // SetBlockBeingCarried
 START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
-ADD_MESSAGE_MEMBER(u32, blockID)
-ADD_MESSAGE_MEMBER(u8,  isBeingCarried)
+ADD_MESSAGE_MEMBER(u8, blockID)
+ADD_MESSAGE_MEMBER(u8, isBeingCarried)
 END_MESSAGE_DEFINITION(SetBlockBeingCarried)
-
-
