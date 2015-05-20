@@ -20,12 +20,12 @@ GlobalDataToBody g_dataToBody;
 extern void MotorsPrintRaw();
 
 extern "C"
-void SystemInit(void) 
+void SystemInit(void)
 {
   /* If desired, switch off the unused RAM to lower consumption by the use of RAMON register */
 
   /* Prepare the peripherals for use as indicated by the PAN 25 "System: Manual setup is required
-     to enable the use of peripherals" found at Product Anomaly document version 1.2 found at 
+     to enable the use of peripherals" found at Product Anomaly document version 1.2 found at
      https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/PAN-028. */
   //if ((((*(uint32_t *)0xF0000FE8) >> 4) & 0x0000000F) == 1)
   {
@@ -39,7 +39,7 @@ void TestRun(u8 cmd, s16 arg)
 {
   const u8 REPSTART = 0xFC, REPEND = 0xFD;
   UARTPutChar(REPSTART);
-  
+
   // Execute motor setpower commands (0-3)
   if (cmd <= 4)
   {
@@ -54,7 +54,7 @@ void TestRun(u8 cmd, s16 arg)
   if (4 == cmd)
   {
   }
-  
+
   UARTPutChar(REPEND);
 }
 
@@ -67,34 +67,34 @@ void TestMode(void)
 {
   const int REQLEN = 5; // Requests are 5 bytes long
   const u8 REQSTART = 0xFA, REQEND = 0xFB;
-  
+
   UARTInit();
-  
+
   u8 req[REQLEN]; // Current request
   u8 reqLen = 0;  // Number of request bytes received
-   
-  // Read requests byte by byte and dispatch them    
+
+  // Read requests byte by byte and dispatch them
   while (1)
   {
     int c = UARTGetChar();
-    
+
     // Wait for a character to arrive
     if (-1 == c)
       continue;
-    
+
     req[reqLen++] = c;
-    
+
     // First byte must be REQSTART, else reset the request
     if (1 == reqLen && REQSTART != c) {
       reqLen = 0;
-      
+
     // If last byte is REQEND, dispatch the request
     } else if (REQLEN == reqLen) {
       reqLen = 0;
       if (REQEND == c)
         TestRun(req[1], req[2] | (req[3] << 8));
     }
-  }   
+  }
 }
 
 
@@ -104,7 +104,7 @@ int main(void)
 #ifndef DO_MOTOR_TESTING
   u32 failedTransferCount = 0;
 #endif
-  
+
   // Initialize the hardware peripherals
   BatteryInit();
   TimerInit();
@@ -123,18 +123,18 @@ int main(void)
 #ifndef DO_MOTOR_TESTING
   SPIInit();
 #endif
-  PowerOn(); 
+  PowerOn();
 
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
-  
+
   // Status LED hack
 //  nrf_gpio_cfg_output(PIN_LED1);
 //  nrf_gpio_cfg_output(PIN_LED2);
   // LED1 set means on, LED1 clear means off
 //  nrf_gpio_pin_clear(PIN_LED2);
 //  nrf_gpio_pin_set(PIN_LED1);
-  
+
 #if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
 //  nrf_gpio_pin_clear(PIN_LED1);
@@ -147,7 +147,7 @@ int main(void)
 			while(DebugWheelsGetTicks(0) <= 3987) // go 0.25m
 			{
 				MotorsSetPower(0, 0x2000);
-				MotorsSetPower(1, 0x2000);    
+				MotorsSetPower(1, 0x2000);
 				MotorsUpdate();
 				MicroWait(5000);
 				MotorsUpdate();
@@ -157,12 +157,12 @@ int main(void)
 			MotorsUpdate();
 			MicroWait(5000);
 			MotorsUpdate();
-			
+
 			MicroWait(3000000);
 			while(DebugWheelsGetTicks(0) >= 0) // go back 0.25m
 			{
 				MotorsSetPower(0, -0x2000);
-				MotorsSetPower(1, -0x2000);    
+				MotorsSetPower(1, -0x2000);
 				MotorsUpdate();
 				MicroWait(5000);
 				MotorsUpdate();
@@ -173,27 +173,27 @@ int main(void)
 			MicroWait(5000);
 			MotorsUpdate();
 		#endif
-		
+
     UARTPutString("\r\nForward ends with...");
     #ifndef DO_GEAR_RATIO_TESTING
 			for (int i = 0; i < 2; i++)
-				MotorsSetPower(i, 0x2000);   
+				MotorsSetPower(i, 0x2000);
 			for (int i = 2; i < 4; i++)
-				MotorsSetPower(i, 0x6800); 
-		#endif 
+				MotorsSetPower(i, 0x6800);
+		#endif
     MotorsUpdate();
     MicroWait(5000);
     MotorsUpdate();
 
     MicroWait(500000);
     MotorsPrintEncodersRaw();
-    
+
     UARTPutString("\r\nBackward ends with...");
     #ifndef DO_GEAR_RATIO_TESTING
-			for (int i = 0; i < 2; i++)    
+			for (int i = 0; i < 2; i++)
 				MotorsSetPower(i, -0x2000);
 			for (int i = 2; i < 4; i++)
-				MotorsSetPower(i, -0x6800); 
+				MotorsSetPower(i, -0x6800);
     #endif
 		MotorsUpdate();
     MicroWait(5000);
@@ -201,10 +201,10 @@ int main(void)
 
     MicroWait(500000);
     MotorsPrintEncodersRaw();
-    
+
     BatteryUpdate();
   }
-	
+
 #else
 #ifdef DO_LIGHTS_TESTING	
 	int j = 0;
@@ -224,10 +224,10 @@ int main(void)
 	}
 #endif	
   while (1)
-  {    
+  {
     u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
-    
+
     // If we're not on the charge contacts, exchange data with the head board
     if (!IsOnContacts())
     {
@@ -236,7 +236,11 @@ int main(void)
         (const u8*)&g_dataToHead,
         (u8*)&g_dataToBody);
     }
-        
+    else // If not, reset the spine system
+    {
+      SPISpokenTo = false;
+    }
+
 #if 0
     u8* d = (u8*)&g_dataToBody;
     for (int i = 0; i < 0x10; i++)
@@ -246,7 +250,7 @@ int main(void)
     }
     UARTPutChar('\n');
 #endif
-        
+
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
@@ -257,7 +261,7 @@ int main(void)
       {
         // Perform a full system reset in order to reinitialize the head board
         //NVIC_SystemReset();
-        
+
         // Stop all motors
         for (int i = 0; i < MOTOR_COUNT; i++)
           MotorsSetPower(i, 0);
@@ -269,21 +273,21 @@ int main(void)
       {
         MotorsSetPower(i, g_dataToBody.motorPWM[i]);
       }
-      
-      static u8 s_blink = 0;
+
+//      static u8 s_blink = 0;
 //      nrf_gpio_pin_clear(PIN_LED1);
 //      nrf_gpio_pin_clear(PIN_LED2);
-      if (++s_blink > 40) {
+//      if (++s_blink > 40) {
 //        nrf_gpio_pin_set(PIN_LED2);      
-        s_blink = 0;
-      }
+//        s_blink = 0;
+ //     }
     }
-         
+
     // Only call every loop through - not all the time
     MotorsUpdate();
     BatteryUpdate();
     ManageLights(g_dataToBody.backpackColors);
-		
+
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)

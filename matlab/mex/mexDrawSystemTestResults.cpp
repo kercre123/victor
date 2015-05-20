@@ -372,7 +372,7 @@ ToShowResults ParseToShowResults(const mxArray * in)
   results.numCorrect_position = saturate_cast<s32>( mxGetScalar(GetCell(in, 9)) );
   results.numQuadsDetected = saturate_cast<s32>( mxGetScalar(GetCell(in, 10)) );
   results.numQuadsNotIgnored = saturate_cast<s32>( mxGetScalar(GetCell(in, 11)) );
-  results.numSpurriousDetections = saturate_cast<s32>( mxGetScalar(GetCell(in, 11)) );
+  results.numSpurriousDetections = saturate_cast<s32>( mxGetScalar(GetCell(in, 12)) );
 
   return results;
 }

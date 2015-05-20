@@ -36,7 +36,7 @@ namespace Anki {
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
         const f32 BACKOUT_DISTANCE_MM = 75.f;
-        const f32 BACKOUT_SPEED_MMPS = 40;
+        const f32 BACKOUT_SPEED_MMPS = 60;
         
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;

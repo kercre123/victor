@@ -59,19 +59,21 @@ namespace Anki {
         
         // Lookup table for which four LEDs are on top, given the current up axis
         // (in the order upper left, upper right, lower left, lower right)
+        // Note that these always assume the the orientation of the top side is
+        // such that the upper left corner of the marker is at position 0.
         const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
           // Xneg (Front Face on top)
-          {2, 3, 6, 7, 0, 1, 4, 5},
+          {0, 2, 4, 6, 1, 3, 5, 7},
           
           // Xpos (Back Face on top)
-          {4, 5, 0, 1, 6, 7, 2, 3},
+          {5, 7, 1, 3, 4, 6, 0, 2},
           
           // Yneg (Right on top)
           {1, 3, 0, 2, 5, 7, 4, 6},
           
           // Ypos (Left Face on top)
-          {2, 0, 3, 1, 6, 4, 7, 5},
+          {4, 6, 5, 7, 0, 2, 1, 3},
           
           // Zneg (Bottom Face on top) -- NOTE: Flipped 180deg around X axis!!
           {3, 2, 1, 0, 7, 6, 5, 4},
@@ -207,7 +209,7 @@ namespace Anki {
       }
       
       
-      UpAxis GetCurrentUpAxis(bool& isMoving)
+      UpAxis GetCurrentUpAxis()
       {
 #       define X 0
 #       define Y 1
@@ -228,7 +230,6 @@ namespace Anki {
           }
         }
 
-        static const f32 movementAccelThresh = 1.f;
 //        printf("Block %d acceleration: (%.3f, %.3f, %.3f)\n", blockID_,
 //               accelVals[X], accelVals[Y], accelVals[Z]);
         
@@ -237,25 +238,16 @@ namespace Anki {
         {
           case X:
             retVal = (accelVals[X] < 0 ? UP_AXIS_Xneg : UP_AXIS_Xpos);
-            isMoving = (absAccel[X] > 9.81f + movementAccelThresh ||
-                        absAccel[X] < 9.81f - movementAccelThresh ||
-                        absAccel[Y] > movementAccelThresh ||
-                        absAccel[Z] > movementAccelThresh);
             break;
+            
           case Y:
             retVal = (accelVals[Y] < 0 ? UP_AXIS_Yneg : UP_AXIS_Ypos);
-            isMoving = (absAccel[Y] > 9.81f + movementAccelThresh ||
-                        absAccel[Y] < 9.81f - movementAccelThresh ||
-                        absAccel[X] > movementAccelThresh ||
-                        absAccel[Z] > movementAccelThresh);
             break;
+
           case Z:
             retVal = (accelVals[Z] < 0 ? UP_AXIS_Zneg : UP_AXIS_Zpos);
-            isMoving = (absAccel[Z] > 9.81f + movementAccelThresh ||
-                        absAccel[Z] < 9.81f - movementAccelThresh ||
-                        absAccel[Y] > movementAccelThresh ||
-                        absAccel[X] > movementAccelThresh);
             break;
+            
           default:
             printf("Unexpected whichAxis = %d\n", whichAxis);
         }
@@ -382,8 +374,15 @@ namespace Anki {
           // TODO: Time probably won't be in seconds on the real blocks...
           const double currTime_sec = block_controller.getTime();
 
-          bool isMoving = false;
-          currentUpAxis_ = GetCurrentUpAxis(isMoving);
+          // Determine if block is moving by seeing if the magnitude of the
+          // acceleration vector is different from gravity
+          const double* accelVals = accel_->getValues();
+          const double accelMagSq = accelVals[0]*accelVals[0] + accelVals[1]*accelVals[1] + accelVals[2]*accelVals[2];
+          const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
+          
+          if(!isMoving) {
+            currentUpAxis_ = GetCurrentUpAxis();
+          }
           
           if(isMoving) {
             printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
@@ -391,7 +390,6 @@ namespace Anki {
             // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
             BlockMessages::BlockMoved msg;
             msg.blockID = blockID_;
-            const double* accelVals = accel_->getValues();
             msg.xAccel = accelVals[0];
             msg.yAccel = accelVals[1];
             msg.zAccel = accelVals[2];

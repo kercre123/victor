@@ -8,8 +8,8 @@
 
 function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, boxSyncDirectory)
     % To be a match, all corners of a quad must be within these thresholds
-    maxMatchDistance_pixels = 10;
-    maxMatchDistance_percent = 0.2;
+    maxMatchDistance_pixels = 5;
+    maxMatchDistance_percent = 0.06;
     
     numComputeThreads.basics = 3;
     numComputeThreads.perPose = 3;
@@ -19,9 +19,11 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     makeNewResultsDirectory = false;
     
     runWhichAlgorithms = {...
-%         'c',...
-%         'c_variableTimes',...
-        'c_variableTimes',...
+        %         {'tracking_c'},...
+        {'tracking_variableTimes','klt_withSnap'},...
+        {'tracking_variableTimes','klt_withoutSnap'},...
+        {'tracking_variableTimes','c_withoutSnap'},...
+        {'tracking_variableTimes','c_withSnap'},...
         };
     
     assert(exist('testJsonPattern', 'var') == 1);
@@ -39,9 +41,12 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     allTestData = getTestData(testJsonPattern);
     fprintf('Loaded\n');
     
-    % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters   
+    % Compute the accuracy for each test type (matlab-with-refinement, c-with-matlab-quads, etc.), and each set of parameters
     algorithmParameters.normalizeImage = false;
+
+    algorithmParameters.whichAlgorithm = 'c_6dof';
     
+    % Initialize the track
     algorithmParameters.init_scaleTemplateRegionPercent  = 0.9;
     algorithmParameters.init_numPyramidLevels            = 3;
     algorithmParameters.init_maxSamplesAtBaseLevel       = 500;
@@ -49,25 +54,63 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.init_numFiducialSquareSamples    = 500;
     algorithmParameters.init_fiducialSquareWidthFraction = 0.1;
     
+    % Update the track with a new image
     algorithmParameters.track_maxIterations                 = 50;
     algorithmParameters.track_convergenceTolerance_angle    = 0.05 * 180 / pi;
     algorithmParameters.track_convergenceTolerance_distance = 0.05;
     algorithmParameters.track_verify_maxPixelDifference     = 30;
+    algorithmParameters.track_maxSnapToClosestQuadDistance  = 0; % If >0, snap to the closest quad, and re-initialize
     
+    % Only for track_snapToClosestQuad == true
+    minSideLength = round(0.01*max(240,320));
+    maxSideLength = round(0.97*min(240,320));
+    algorithmParameters.detection.useIntegralImageFiltering = true;
+    algorithmParameters.detection.scaleImage_thresholdMultiplier = 1.0;
+    algorithmParameters.detection.scaleImage_numPyramidLevels = 3;
+    algorithmParameters.detection.component1d_minComponentWidth = 0;
+    algorithmParameters.detection.component1d_maxSkipDistance = 0;
+    algorithmParameters.detection.component_minimumNumPixels = round(minSideLength*minSideLength - (0.8*minSideLength)*(0.8*minSideLength));
+    algorithmParameters.detection.component_maximumNumPixels = round(maxSideLength*maxSideLength - (0.8*maxSideLength)*(0.8*maxSideLength));
+    algorithmParameters.detection.component_sparseMultiplyThreshold = 1000.0;
+    algorithmParameters.detection.component_solidMultiplyThreshold = 2.0;
+    algorithmParameters.detection.component_minHollowRatio = 1.0;
+    algorithmParameters.detection.quads_minQuadArea = 100 / 4;
+    algorithmParameters.detection.quads_minLaplacianPeakRatio = 5;
+    algorithmParameters.detection.quads_quadSymmetryThreshold = 2.0;
+    algorithmParameters.detection.quads_minDistanceFromImageEdge = 2;
+    algorithmParameters.detection.decode_minContrastRatio = 0; % EVERYTHING has contrast >= 1, by definition
+    algorithmParameters.detection.refine_quadRefinementMinCornerChange = 0.005;
+    algorithmParameters.detection.refine_quadRefinementMaxCornerChange = 2;
+    algorithmParameters.detection.refine_numRefinementSamples = 100;
+    algorithmParameters.detection.refine_quadRefinementIterations = 25;
+    algorithmParameters.detection.useMatlabForAll = false;
+    algorithmParameters.detection.useMatlabForQuadExtraction = false;
+    algorithmParameters.detection.matlab_embeddedConversions = EmbeddedConversionsManager();
+    algorithmParameters.detection.showImageDetectionWidth = 640;
+    algorithmParameters.detection.showImageDetections = false;
+    algorithmParameters.detection.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
+    algorithmParameters.detection.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    
+    % Display and compression options
     algorithmParameters.showImageDetectionWidth = 640;
     algorithmParameters.showImageDetections = false;
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
     
-%     algorithmParameters.track_ = ;
-%     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    % Shake the image horizontally, as it's being tracked
+    algorithmParameters.shaking = {'none', 0};
+    
+    % Change the grayvalue of all pixels + or - this percent
+    algorithmParameters.grayvalueShift = {'none', 0};
+    
+    %     algorithmParameters.track_ = ;
     
     algorithmParametersOrig = algorithmParameters;
     
-    if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
-        disp('There is a repeat');
-        keyboard
-    end
+    %     if length(runWhichAlgorithms) ~= length(unique(runWhichAlgorithms))
+    %         disp('There is a repeat');
+    %         keyboard
+    %     end
     
     resultsDirectory_curTime = makeResultsDirectory(resultsDirectory, thisFileChangeTime, makeNewResultsDirectory);
     
@@ -78,70 +121,114 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         algorithmParametersN.extractionFunctionName = runWhichAlgorithms{iAlgorithm};
         isSimpleTest = true;
         
-        if strcmp(runWhichAlgorithms{iAlgorithm}, 'c')
+        if strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_c')
             % Default parameters
-        elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_variableTimes')
+        elseif strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_variableTimes')
             isSimpleTest = false;
             
-            temporalFrameFractions = [1, 2, 4, 10];
-                        
-            percentMarkersCorrect_window = cell(length(temporalFrameFractions), 1);
-%             percentMarkersCorrectImages_window = cell(length(temporalFrameFractions), 1);
+            numShakingPixels = [0, 2, 8, 12];
+%             pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3, 0.4]; % 0.4 causes a klt crash?
+            pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3];
             
-            % Note: figuring out change time is tricky, so this reruns everything every time
-            for iMaxFraction = 1:length(temporalFrameFractions)
-                maxFraction = temporalFrameFractions(iMaxFraction);
-                
-                percentMarkersCorrect_window{iMaxFraction} = zeros(length(allTestData), maxFraction);
-                
-                for iPiece = 1:maxFraction
-                    for iTest = 1:length(allTestData)
-                        numPoses = length(allTestData{iTest}.jsonData.Poses);
-                        frameIndexes = round(linspace(0, numPoses, maxFraction+1));
-                        startIndexes = 1 + frameIndexes(1:(end-1));
-                        endIndexes = frameIndexes(2:end);
+            temporalFrameFractions = [1, 10];
+            
+            percentMarkersCorrect_window = cell(length(numShakingPixels), length(pixelGravaluePercentDifferences), length(temporalFrameFractions), 1);
+            
+            for iShake = 1:length(numShakingPixels)
+                for iGrayvaluePercent = 1:length(pixelGravaluePercentDifferences)
+                    % Note: figuring out change time is tricky, so this reruns everything every time
+                    for iMaxFraction = 1:length(temporalFrameFractions)
+                        maxFraction = temporalFrameFractions(iMaxFraction);
 
-                        curAllTestData = allTestData(iTest);
-                        curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
+                        percentMarkersCorrect_window{iShake}{iGrayvaluePercent}{iMaxFraction} = zeros(length(allTestData), maxFraction);
 
-                        algorithmParametersN = algorithmParametersOrig;
-                        algorithmParametersN.extractionFunctionName = sprintf('c_variableTimes/test%d/fraction%d/piece%d', iTest, maxFraction, iPiece);
+                        for iPiece = 1:maxFraction
+                            for iTest = 1:length(allTestData)
+                                numPoses = length(allTestData{iTest}.jsonData.Poses);
+                                frameIndexes = round(linspace(0, numPoses, maxFraction+1));
+                                startIndexes = 1 + frameIndexes(1:(end-1));
+                                endIndexes = frameIndexes(2:end);
 
-                        if length(curAllTestData{1}.jsonData.Poses) > 10
-                            curMaxThreads = 3;
-                        else
-                            curMaxThreads = 1;
-                        end
-                        
-                        localNumComputeThreads.basics = min(curMaxThreads, numComputeThreads.basics);
-                        localNumComputeThreads.perPose = min(curMaxThreads, numComputeThreads.perPose);
-                        
-                        curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                                curAllTestData = allTestData(iTest);
+                                curAllTestData{1}.jsonData.Poses = allTestData{iTest}.jsonData.Poses(startIndexes(iPiece):endIndexes(iPiece));
 
-                        percentMarkersCorrect_window{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
-                    end % for iTest = 1:length(allTestData)
-                end % for iPiece = 1:maxFraction
-            end % for iMaxFraction = 1:length(temporalFrameFractions)
-            
-            markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
-            markersCorrectImage(:,:,1) = 255;
-            
-            cx = 1;
-            for iMaxFraction = 1:length(temporalFrameFractions)
-                curResults = percentMarkersCorrect_window{iMaxFraction};
-                
-                markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
-                
-                cx = cx + size(curResults,2) + 1;
-            end
-            
-            newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
-            markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
-            
-            figure(10); 
-            imshow(markersCorrectImageToShow);
+                                algorithmParametersN = algorithmParametersOrig;
+                                algorithmParametersN.extractionFunctionName = sprintf('tracking_variableTimes%s/test%d/grayvalue%0.2f/shake%d/fraction%d/piece%d', runWhichAlgorithms{iAlgorithm}{2}, iTest, pixelGravaluePercentDifferences(iGrayvaluePercent), numShakingPixels(iShake), maxFraction, iPiece);
+                                algorithmParametersN.shaking = {'horizontal', numShakingPixels(iShake)};
+                                algorithmParametersN.grayvalueShift = {'uniformPercent', pixelGravaluePercentDifferences(iGrayvaluePercent)};
+
+                                if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withoutSnap')
+                                    % The rest of the parameters are defaults
+                                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withSnap')
+                                    algorithmParametersN.track_maxSnapToClosestQuadDistance = 4*5;
+                                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withoutSnap')
+                                    algorithmParametersN.whichAlgorithm = 'matlab_klt';
+                                elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withSnap')
+                                    algorithmParametersN.whichAlgorithm = 'matlab_klt';
+                                    algorithmParametersN.track_maxSnapToClosestQuadDistance = 4*5;
+                                else
+                                    keyboard
+                                    assert(false);
+                                end
+
+                                if length(curAllTestData{1}.jsonData.Poses) > 10
+                                    localNumComputeThreads.basics = numComputeThreads.basics;
+                                    localNumComputeThreads.perPose = numComputeThreads.perPose;
+                                else
+                                    localNumComputeThreads.basics = 1;
+                                    localNumComputeThreads.perPose = 1;
+                                end
+
+                                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+
+                                percentMarkersCorrect_window{iShake}{iGrayvaluePercent}{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
+                            end % for iTest = 1:length(allTestData)
+                        end % for iPiece = 1:maxFraction
+                    end % for iMaxFraction = 1:length(temporalFrameFractions)
+                    
+                    markersCorrectImage = zeros(length(allTestData), length(temporalFrameFractions) - 1 + sum(temporalFrameFractions), 3);
+                    markersCorrectImage(:,:,1) = 255;
+
+                    cx = 1;
+                    for iMaxFraction = 1:length(temporalFrameFractions)
+                        curResults = percentMarkersCorrect_window{iShake}{iGrayvaluePercent}{iMaxFraction};
+
+                        markersCorrectImage(:, (cx):(cx+size(curResults,2)-1), :) = repmat(curResults, [1,1,3]);
+
+                        cx = cx + size(curResults,2) + 1;
+                    end
+
+                    newSize = round([120, size(markersCorrectImage,2)*120/size(markersCorrectImage,1)]);
+                    markersCorrectImageToShow = imresize(markersCorrectImage, newSize, 'nearest');
+
+                    %figureHandle = figure(10 + iShake);
+                    %set(figureHandle, 'Name', sprintf('Shake%d', numShakingPixels(iShake)));
+
+                    if strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withoutSnap')
+                        figureHandle = figure(100);
+                    elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'c_withSnap')
+                        figureHandle = figure(110);
+                    elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withoutSnap')
+                        figureHandle = figure(120);
+                    elseif strcmp(runWhichAlgorithms{iAlgorithm}{2}, 'klt_withSnap')
+                        figureHandle = figure(130);
+                    end
+                    
+                    set(figureHandle, 'Name', runWhichAlgorithms{iAlgorithm}{2});
+
+                    %numX = ceil(sqrt(length(numShakingPixels)));
+                    %numY = ceil(length(numShakingPixels) / numX);
+                    
+                    numX = length(pixelGravaluePercentDifferences);
+                    numY = length(numShakingPixels);
+                    subplot(numY, numX, (iGrayvaluePercent-1) + numX*(iShake-1) + 1);
+                    imshow(markersCorrectImageToShow);
+                    title(sprintf('Shake%d Gray%0.2f', numShakingPixels(iShake), pixelGravaluePercentDifferences(iGrayvaluePercent)));
+                end % for iGrayvaluePercent = 1:length(pixelGravaluePercentDifferences)
+            end % for iShake = 1:length(numShakingPixels)
         else
             % Unknown runWhichAlgorithms{iAlgorithm}
+            keyboard
             assert(false);
         end
         
@@ -251,7 +338,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     curExtractFunction_dataPrefix = [resultsDirectory_curTime, 'data/', extractionFunctionName];
     curExtractFunction_imagePrefix = [resultsDirectory_curTime, 'images/', extractionFunctionName];
     
-    % if extractionFunctionName has / characters for directories, don't add more    
+    % if extractionFunctionName has / characters for directories, don't add more
     if isempty(strfind(extractionFunctionName, '/'))
         curExtractFunction_intermediatePrefix = [curExtractFunction_intermediatePrefix, '/'];
         curExtractFunction_dataPrefix = [curExtractFunction_dataPrefix, '/'];
@@ -264,13 +351,13 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     
     slashInds = strfind(curExtractFunction_intermediatePrefix, '/');
     curExtractFunction_intermediateDirectory = curExtractFunction_intermediatePrefix(1:slashInds(end));
-
+    
     slashInds = strfind(curExtractFunction_dataPrefix, '/');
     curExtractFunction_dataDirectory = curExtractFunction_dataPrefix(1:slashInds(end));
     
     slashInds = strfind(curExtractFunction_imagePrefix, '/');
     curExtractFunction_imageDirectory = curExtractFunction_imagePrefix(1:slashInds(end));
-         
+    
     [~, ~, ~] = mkdir(curExtractFunction_intermediateDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_dataDirectory);
     [~, ~, ~] = mkdir(curExtractFunction_imageDirectory);
@@ -279,7 +366,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
     workQueue_basicStats_current = {};
     workQueue_perPoseStats_current = {};
     workQueue_perPoseStats_all = {};
-        
+    
     for iTest = 1:size(allTestData, 1)
         numPoses = length(allTestData{iTest}.jsonData.Poses);
         
@@ -297,7 +384,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         end
         
         clear iPose
-
+        
         % Both basics and perPose share some fields
         newWorkItemBoth.iTest = iTest;
         newWorkItemBoth.extractionFunctionName = extractionFunctionName;
@@ -312,13 +399,13 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         newWorkItemBasics.CameraCalibration = allTestData{iTest}.jsonData.CameraCalibration;
         
         newWorkItemBasics.templateWidth_mm = allTestData{iTest}.jsonData.Blocks{1}.templateWidth_mm;
-                                
+        
         workQueue_basicStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
-
+        
         %
         % Basic stats
         %
-
+        
         rerunBasics = false;
         
         % If any of the basics filenames are missing, rerun the whole basics sequence.
@@ -328,7 +415,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                 rerunBasics = true;
                 break;
             end
-
+            
             % If the basic stats results are older than the test json
             modificationTime_basicStatsResults = dir(basicStats_filenames{iPose});
             modificationTime_basicStatsResults = modificationTime_basicStatsResults(1).datenum;
@@ -338,7 +425,7 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                 rerunBasics = true;
                 break;
             end
-
+            
             % If the basic stats results are older than the input image file
             modificationTime_inputImage = dir([allTestData{iTest}.testPath, allTestData{iTest}.jsonData.Poses{iPose}.ImageFile]);
             modificationTime_inputImage = modificationTime_inputImage(1).datenum;
@@ -351,11 +438,11 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
         if rerunBasics
             workQueue_basicStats_current{end+1} = newWorkItemBasics; %#ok<AGROW>
         end
-
+        
         %
         % Per-pose stats
         %
-
+        
         for iPose = 1:numPoses
             addToPerPoseWorkQueue = false;
             if rerunBasics
@@ -373,14 +460,14 @@ function [workQueue_basicStats_current, workQueue_basicStats_all, workQueue_perP
                     addToPerPoseWorkQueue = true;
                 end
             end
-
+            
             % PerPose stores just the current filename and pose
-            newWorkItemBasics = newWorkItemBoth;                
+            newWorkItemBasics = newWorkItemBoth;
             newWorkItemBasics.iPose = iPose;
             newWorkItemBasics.basicStats_filename = basicStats_filenames{iPose};
             newWorkItemBasics.perPoseStats_dataFilename = perPoseStats_dataFilenames{iPose};
             newWorkItemBasics.perPoseStats_imageFilename = perPoseStats_imageFilenames{iPose};
-
+            
             workQueue_perPoseStats_all{end+1} = newWorkItemBasics; %#ok<AGROW>
             
             if addToPerPoseWorkQueue

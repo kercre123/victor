@@ -18,7 +18,7 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, const s32 minPeakRatio, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       //BeginBenchmark("elp_part1");
 
@@ -188,19 +188,19 @@ namespace Anki
 
       //localMaxima.Print("localMaxima");
 
-      // Select the index of the top 4 local maxima
+      // Select the index of the top 5 local maxima (we will be keeping 4, but
+      // use the ratio of the 4th to 5th as a filter for bad quads below)
       // TODO: make efficient
-      // TODO: make work for numbers of peaks other than 4
       s32 * restrict pLocalMaxima = localMaxima.Pointer(0);
-      s32 maximaValues[4];
-      s32 maximaIndexes[4];
-      for(s32 i=0; i<4; i++) {
+      s32 maximaValues[5];
+      s32 maximaIndexes[5];
+      for(s32 i=0; i<5; i++) {
         maximaValues[i] = s32_MIN;
         maximaIndexes[i] = -1;
       }
 
       const s32 numLocalMaxima = localMaxima.get_size();
-      for(s32 iMax=0; iMax<4; iMax++) {
+      for(s32 iMax=0; iMax<5; iMax++) {
         for(s32 i=0; i<numLocalMaxima; i++) {
           const s32 localMaximaIndex = pLocalMaxima[i];
           if(pConstBoundaryFilteredAndCombined[localMaximaIndex] > maximaValues[iMax]) {
@@ -211,10 +211,19 @@ namespace Anki
         //CoreTechPrint("Maxima %d/%d is #%d %d\n", iMax, 4, maximaIndexes[iMax], maximaValues[iMax]);
         pBoundaryFilteredAndCombined[maximaIndexes[iMax]] = s32_MIN;
       }
+      
+      peaks.Clear();
+      
+      // Ratio of last of the 4 peaks to the next (fifth) peak should be fairly large
+      // if there are 4 distinct corners.
+      //printf("Ratio of 4th to 5th local maxima: %f\n", ((f32)maximaValues[3])/((f32)maximaValues[4]));
+      if(maximaValues[3] < minPeakRatio * maximaValues[4]) {
+        // Just return no peaks, which will skip this quad
+        return RESULT_OK;
+      }
 
       // Copy the maxima to the output peaks, ordered by their original index order, so they are
       // still in clockwise or counterclockwise order
-      peaks.Clear();
 
       bool whichUsed[4];
       for(s32 i=0; i<4; i++) {

@@ -17,7 +17,7 @@ PROTO VisionMarker [
 {
   %{
     imageURL = "textures/" .. fields.image.value
-    if fields.useWhiteBackground then 
+    if fields.useWhiteBackground.value then 
       whiteFaceSize = fields.markerWidth.value+2*fields.padding.value
     end 
   }%  
@@ -54,7 +54,7 @@ PROTO VisionMarker [
         ] # Transform children
       } # Transform 
       
-      %{ if fields.connectorName ~= "" then }%
+      %{ if fields.connectorName.value ~= "" then }%
       #Transform {
         
        # children [

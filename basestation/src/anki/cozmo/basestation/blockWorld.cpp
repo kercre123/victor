@@ -890,11 +890,12 @@ namespace Anki
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
                 if(useID)
                 {
-                  if(objectAndId.second == nullptr) {
+                  Vision::ObservableObject* object = objectAndId.second;
+                  if(object == nullptr) {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
                                         objectAndId.first.GetValue());
-                  } else {
+                  } else if(object->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
@@ -1079,6 +1080,8 @@ namespace Anki
 
         MatPiece* existingMatPiece = nullptr;
         
+        // If we found a suitable mat to localize to, and we've seen it enough
+        // times, then use it for localizing
         if(matToLocalizeTo != nullptr) {
           
           if(existingMatPieces.empty()) {
@@ -1146,10 +1149,12 @@ namespace Anki
           existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
           existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
           
-          // Now localize to that mat
-          //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
-          if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
-            wasPoseUpdated = true;
+          if(existingMatPiece->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT) {
+            // Now localize to that mat
+            //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
+            if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece) == RESULT_OK) {
+              wasPoseUpdated = true;
+            }
           }
           
         } // if(matToLocalizeTo != nullptr)
@@ -1163,6 +1168,22 @@ namespace Anki
             
             // TODO: Make this w.r.t. whatever the robot is currently localized to?
             Pose3d poseWrtOrigin = matSeen->GetPose().GetWithRespectToOrigin();
+            
+            // Does this mat pose make sense? I.e., is the top surface flat enough
+            // that we could drive on it?
+            Vec3f rotAxis;
+            Radians rotAngle;
+            poseWrtOrigin.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+            if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
+               !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
+            {
+              PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                               "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                               matSeen->GetType().GetName().c_str(),
+                               rotAngle.getDegrees(),
+                               rotAxis.x(), rotAxis.y(), rotAxis.z());
+              continue;
+            }
             
             // Store pointers to any existing objects that overlap with this one
             std::vector<Vision::ObservableObject*> overlappingObjects;
@@ -1298,35 +1319,6 @@ namespace Anki
         // Extract only observed markers from obsMarkersAtTimestamp
         std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
         GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
-        
-        // Remove markers enclosed within other markers:
-        for(auto markerIter1 = obsMarkersListAtTimestamp.begin(); markerIter1 != obsMarkersListAtTimestamp.end(); ++markerIter1)
-        {
-          for(auto markerIter2 = obsMarkersListAtTimestamp.begin(); markerIter2 != obsMarkersListAtTimestamp.end(); )
-          {
-            if(markerIter1 != markerIter2) {
-              bool marker2isInsideMarker1 = true;
-              for(auto & corner : (*markerIter2)->GetImageCorners()) {
-                if((*markerIter1)->GetImageCorners().Contains(corner) == false) {
-                  marker2isInsideMarker1 = false;
-                  break;
-                }
-              }
-              
-              if(marker2isInsideMarker1) {
-                PRINT_INFO("Removing %s marker completely contained within %s marker.\n",
-                           Vision::MarkerTypeStrings[(*markerIter2)->GetCode()],
-                           Vision::MarkerTypeStrings[(*markerIter1)->GetCode()]);
-
-                markerIter2 = obsMarkersListAtTimestamp.erase(markerIter2);
-              } else {
-                ++markerIter2;
-              }
-            } else {
-              ++markerIter2;
-            }
-          }
-        }
         
         objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen);
         
@@ -1472,6 +1464,46 @@ namespace Anki
             ++poseKeyMarkerPair;
           }
         }
+        
+        // Remove markers enclosed within other markers:
+        for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
+        {
+          const Vision::ObservedMarker& marker1    = markerIter1->second;
+          const TimeStamp_t             timestamp1 = markerIter1->first;
+          
+          for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
+          {
+            const Vision::ObservedMarker& marker2    = markerIter2->second;
+            const TimeStamp_t             timestamp2 = markerIter2->first;
+            
+            // These two markers must be different and observed at the same time
+            if(markerIter1 != markerIter2 && timestamp1 == timestamp2) {
+              
+              // See if #2 is inside #1
+              bool marker2isInsideMarker1 = true;
+              for(auto & corner : marker2.GetImageCorners()) {
+                if(marker1.GetImageCorners().Contains(corner) == false) {
+                  marker2isInsideMarker1 = false;
+                  break;
+                }
+              }
+              
+              if(marker2isInsideMarker1) {
+                PRINT_NAMED_INFO("BlockWorld.Update", "Removing %s marker completely contained within %s marker.\n",
+                                 Vision::MarkerTypeStrings[marker2.GetCode()],
+                                 Vision::MarkerTypeStrings[marker1.GetCode()]);
+                // Note: erase does increment of iterator for us
+                markerIter2 = currentObsMarkers.erase(markerIter2);
+              } else {
+                // Need to iterate marker2
+                ++markerIter2;
+              } // if/else marker2isInsideMarker1
+            } else {
+              // Need to iterate marker2
+              ++markerIter2;
+            } // if/else marker1 != marker2 && time1 != time2
+          } // for markerIter2
+        } // for markerIter1
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
@@ -1740,7 +1772,7 @@ namespace Anki
               // Find the point at bottom middle of the object we're checking to be on top
               Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
               Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-              bottomOfCandidateObject.z() -= 0.5f*rotatedTopSize.z();
+              bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
               
               // If the top of the bottom object and the bottom the candidate top object are
               // close enough together, return this as the object on top

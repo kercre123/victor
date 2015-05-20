@@ -508,29 +508,48 @@ class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
     ID = 63
-    FORMAT = [("%dI" % NUM_LIGHTS), # color
+    FORMAT = [("%dI" % NUM_LIGHTS), # on color
+              ("%dI" % NUM_LIGHTS), # off color
+              ("%dI" % NUM_LIGHTS), # on period ms
+              ("%dI" % NUM_LIGHTS), # off period ms
+              ("%dI" % NUM_LIGHTS), # on transition ms
+              ("%dI" % NUM_LIGHTS), # off transition ms
               "u8",  # blockID
              ]
 
     def __init__(self, buffer=None, blockID=0, lights=None):
         MessageBase.__init__(self)
         self.blockID = blockID
+        self.onColor       = [0] * self.NUM_LIGHTS
+        self.offColor      = [0] * self.NUM_LIGHTS
+        self.onPeriod      = [0] * self.NUM_LIGHTS
+        self.offPeriod     = [0] * self.NUM_LIGHTS
+        self.onTransition  = [0] * self.NUM_LIGHTS
+        self.offTransition = [0] * self.NUM_LIGHTS
         if lights is not None:
             if len(lights) != self.NUM_LIGHTS:
                 raise ValueError("SetBlockLights, lights argument must have exactly %d elements, given %d" % (self.NUM_LIGHTS, len(lights)))
             else:
-                self.lights = lights
-        else:
-            self.lights = [0] * self.NUM_LIGHTS
+
+                for i, l in enumerate(lights):
+                    if len(l) != 6:
+                        raise ValueError("SetBlockLights each light must be a 6-tuple, argument %d given %s" % (i, repr(l)))
+                    else:
+                        self.onColor[i], self.offColor[i], self.onPeriod[i], self.offPeriod[i], self.onTransition[i], self.offTransition[i] = l
         if buffer is not None:
             self.deserialize(buffer)
 
     def __repr__(self):
-        return "SetBlockLights(blockID=%d, lights=%s)" % (self.blockID, repr(self.lights))
+        return "SetBlockLights(blockID=%d, ...)" % (self.blockID)
 
     def _getMembers(self):
-        return self.lights + [self.blockID]
+        return self.onColor + self.offColor + self.onPeriod + self.offPeriod + self.onTransition + self.offTransition + [self.blockID]
 
     def _setMembers(self, *members):
-        self.lights = list(members[:self.NUM_LIGHTS])
+        self.onColor       = list(members[self.NUM_LIGHTS*0:self.NUM_LIGHTS*1])
+        self.offColor      = list(members[self.NUM_LIGHTS*1:self.NUM_LIGHTS*2])
+        self.onPeriod      = list(members[self.NUM_LIGHTS*2:self.NUM_LIGHTS*3])
+        self.offPeriod     = list(members[self.NUM_LIGHTS*3:self.NUM_LIGHTS*4])
+        self.onTransition  = list(members[self.NUM_LIGHTS*4:self.NUM_LIGHTS*5])
+        self.offTransition = list(members[self.NUM_LIGHTS*5:self.NUM_LIGHTS*6])
         self.blockID = members[self.NUM_LIGHTS]
