@@ -11,6 +11,7 @@
 //#define DO_MOTOR_TESTING
 //#define DO_GEAR_RATIO_TESTING
 //#define DO_FIXED_DISTANCE_TESTING
+#define DO_LIGHTS_TESTING
 
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
@@ -205,6 +206,23 @@ int main(void)
   }
 	
 #else
+#ifdef DO_LIGHTS_TESTING	
+	int j = 0;
+	while(1)
+	{
+		for(int i = 0; i < 200; i++)
+		{
+			u32 timerStart = GetCounter();
+			g_dataToBody.backpackColors[(j % 4)] = 0x00FF0000;
+			g_dataToBody.backpackColors[(j+1) % 4] = 0x0000FF00;
+			g_dataToBody.backpackColors[(j+2) % 4] = 0x000000FF;
+			g_dataToBody.backpackColors[(j+3) % 4] = 0x00FF00FF;
+			ManageLights(g_dataToBody.backpackColors);
+			while ((GetCounter() - timerStart) < 41666)	;
+		}
+		j++;
+	}
+#endif	
   while (1)
   {    
     u32 timerStart = GetCounter();
