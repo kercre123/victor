@@ -203,6 +203,13 @@ message ClearAllBlocks {
 message ClearAllObjects {
     uint_8 robotID
 }
+
+message SetObjectAdditionAndDeletion {
+    uint_8 robotID,
+    bool   enableAddition,
+    bool   enableDeletion
+}
+
 // VisionWhileMoving
 // For development, enable/disable robots' ability to use VisionMarkers while moving
 // May be necessary to have this disabled while we have frame sync issues.

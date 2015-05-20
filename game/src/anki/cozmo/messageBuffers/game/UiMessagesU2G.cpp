@@ -1982,6 +1982,76 @@ bool ClearAllObjects::operator!=(const ClearAllObjects& other) const
 }
 
 
+// MESSAGE SetObjectAdditionAndDeletion
+
+SetObjectAdditionAndDeletion::SetObjectAdditionAndDeletion(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+SetObjectAdditionAndDeletion::SetObjectAdditionAndDeletion(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t SetObjectAdditionAndDeletion::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t SetObjectAdditionAndDeletion::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->robotID);
+	buffer.Write(this->enableAddition);
+	buffer.Write(this->enableDeletion);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t SetObjectAdditionAndDeletion::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t SetObjectAdditionAndDeletion::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->robotID);
+	buffer.Read(this->enableAddition);
+	buffer.Read(this->enableDeletion);
+	return buffer.GetBytesRead();
+}
+
+size_t SetObjectAdditionAndDeletion::Size() const
+{
+	size_t result = 0;
+	//robotID
+	result += 1; // = uint_8
+	//enableAddition
+	result += 1; // = bool
+	//enableDeletion
+	result += 1; // = bool
+	return result;
+}
+
+bool SetObjectAdditionAndDeletion::operator==(const SetObjectAdditionAndDeletion& other) const
+{
+	if (robotID != other.robotID
+	|| enableAddition != other.enableAddition
+	|| enableDeletion != other.enableDeletion) {
+		return false;
+	}
+	return true;
+}
+
+bool SetObjectAdditionAndDeletion::operator!=(const SetObjectAdditionAndDeletion& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE VisionWhileMoving
 
 VisionWhileMoving::VisionWhileMoving(const uint8_t* buff, size_t len)
@@ -4038,6 +4108,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "ClearAllBlocks";
 	case MessageTag::ClearAllObjects:
 		return "ClearAllObjects";
+	case MessageTag::SetObjectAdditionAndDeletion:
+		return "SetObjectAdditionAndDeletion";
 	case MessageTag::VisionWhileMoving:
 		return "VisionWhileMoving";
 	case MessageTag::ExecuteBehavior:
@@ -5005,6 +5077,35 @@ void Message::Set_ClearAllObjects(Anki::Cozmo::U2G::ClearAllObjects&& new_ClearA
 		ClearCurrent();
 		new(&_ClearAllObjects) Anki::Cozmo::U2G::ClearAllObjects{std::move(new_ClearAllObjects)};
 		_tag = Tag::ClearAllObjects;
+	}
+}
+
+
+const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& Message::Get_SetObjectAdditionAndDeletion() const
+{
+	assert(_tag == Tag::SetObjectAdditionAndDeletion);
+	return _SetObjectAdditionAndDeletion;
+}
+void Message::Set_SetObjectAdditionAndDeletion(const Anki::Cozmo::U2G::SetObjectAdditionAndDeletion& new_SetObjectAdditionAndDeletion)
+{
+	if(this->_tag == Tag::SetObjectAdditionAndDeletion) {
+		_SetObjectAdditionAndDeletion = new_SetObjectAdditionAndDeletion;
+	}
+	else {
+		ClearCurrent();
+		new(&_SetObjectAdditionAndDeletion) Anki::Cozmo::U2G::SetObjectAdditionAndDeletion{new_SetObjectAdditionAndDeletion};
+		_tag = Tag::SetObjectAdditionAndDeletion;
+	}
+}
+void Message::Set_SetObjectAdditionAndDeletion(Anki::Cozmo::U2G::SetObjectAdditionAndDeletion&& new_SetObjectAdditionAndDeletion)
+{
+	if(this->_tag == Tag::SetObjectAdditionAndDeletion) {
+		_SetObjectAdditionAndDeletion = std::move(new_SetObjectAdditionAndDeletion);
+	}
+	else {
+		ClearCurrent();
+		new(&_SetObjectAdditionAndDeletion) Anki::Cozmo::U2G::SetObjectAdditionAndDeletion{std::move(new_SetObjectAdditionAndDeletion)};
+		_tag = Tag::SetObjectAdditionAndDeletion;
 	}
 }
 
@@ -6084,6 +6185,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_ClearAllObjects.Unpack(buffer);
 		}
 		break;
+	case Tag::SetObjectAdditionAndDeletion:
+		if (newTag != oldTag) {
+			new(&(this->_SetObjectAdditionAndDeletion)) Anki::Cozmo::U2G::SetObjectAdditionAndDeletion(buffer);
+		}
+		else {
+			this->_SetObjectAdditionAndDeletion.Unpack(buffer);
+		}
+		break;
 	case Tag::VisionWhileMoving:
 		if (newTag != oldTag) {
 			new(&(this->_VisionWhileMoving)) Anki::Cozmo::U2G::VisionWhileMoving(buffer);
@@ -6418,6 +6527,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::ClearAllObjects:
 		this->_ClearAllObjects.Pack(buffer);
 		break;
+	case Tag::SetObjectAdditionAndDeletion:
+		this->_SetObjectAdditionAndDeletion.Pack(buffer);
+		break;
 	case Tag::VisionWhileMoving:
 		this->_VisionWhileMoving.Pack(buffer);
 		break;
@@ -6606,6 +6718,9 @@ size_t Message::Size() const
 	case Tag::ClearAllObjects:
 		result += _ClearAllObjects.Size();
 		break;
+	case Tag::SetObjectAdditionAndDeletion:
+		result += _SetObjectAdditionAndDeletion.Size();
+		break;
 	case Tag::VisionWhileMoving:
 		result += _VisionWhileMoving.Size();
 		break;
@@ -6792,6 +6907,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::ClearAllObjects:
 		_ClearAllObjects.~ClearAllObjects();
+		break;
+	case Tag::SetObjectAdditionAndDeletion:
+		_SetObjectAdditionAndDeletion.~SetObjectAdditionAndDeletion();
 		break;
 	case Tag::VisionWhileMoving:
 		_VisionWhileMoving.~VisionWhileMoving();
