@@ -24,11 +24,13 @@ namespace Anki {
     const FlatMat::Type FlatMat::Type::LETTERS_4x4("LETTERS_4x4");
     const FlatMat::Type FlatMat::Type::ANKI_LOGO_8BIT("ANKI_LOGO_8BIT");
     const FlatMat::Type FlatMat::Type::LAVA_PLAYTEST("LAVA_PLAYTEST");
+    const FlatMat::Type FlatMat::Type::GEARS_4x4("GEARS_4x4");
     
     static const Point3f& GetSizeByType(FlatMat::Type type)
     {
       static const std::map<FlatMat::Type, Point3f> Sizes = {
         {FlatMat::Type::LETTERS_4x4, {1000.f, 1000.f, 2.5f}},
+        {FlatMat::Type::GEARS_4x4,   {1000.f, 1000.f, 2.5f}},
       };
       
       auto iter = Sizes.find(type);
@@ -51,8 +53,10 @@ namespace Anki {
 #         include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
       } else if(Type::LAVA_PLAYTEST == _type) {
 #         include "anki/cozmo/basestation/Mat_LavaPlayTest.def"
-      } else if(Type::ANKI_LOGO_8BIT) {
+      } else if(Type::ANKI_LOGO_8BIT == _type) {
 //#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
+      } else if(Type::GEARS_4x4 == _type) {
+#         include "anki/cozmo/basestation/Mat_Gears_30mm_4x4.def"
       } else {
           PRINT_NAMED_ERROR("FlatMat.UnrecognizedType", "Unknown FlatMat type specified at construction.\n");
           assert(false);

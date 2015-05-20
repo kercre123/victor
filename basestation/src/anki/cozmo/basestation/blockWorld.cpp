@@ -156,6 +156,7 @@ namespace Anki
       
       // Webots mat:
       _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
+      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::GEARS_4x4));
       
       // Platform piece:
       _objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
