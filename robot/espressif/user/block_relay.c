@@ -204,10 +204,6 @@ sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
 
   switch (data[0])
   {
-    case 62:
-    {
-      return ALL_BLOCKS; // Broadcast
-    }
     case 63:
     {
       if (len == 194)
@@ -219,7 +215,22 @@ sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
         os_printf("Got SetBlockLights (%d), expected %d bytes, but got %d\r\n", data[0], 194, len);
         return NO_BLOCK;
       }
-      break;
+    }
+    case 64:
+    {
+      return ALL_BLOCKS; // Broadcast
+    }
+    case 65:
+    {
+      if (len == 3) // Message ID, Block ID, state
+      {
+        return data[1];
+      }
+      else
+      {
+        os_printf("Got SetBlockBeingCarried (%d), expected %d bytes but got %d\r\n", data[0], 3, len);
+        return NO_BLOCK;
+      }
     }
     default:
     {
