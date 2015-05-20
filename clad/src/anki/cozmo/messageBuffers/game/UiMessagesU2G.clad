@@ -200,7 +200,21 @@ message SetRobotCarryingObject {
 }
 
 // ClearAllBlocks
+//   Clears just blocks (active and passive)
 message ClearAllBlocks {
+    uint_8 robotID
+}
+
+// ClearAllObjects
+//   Clears all objects the robot knows about (blocks, ramps, mats, etc)
+message ClearAllObjects {
+    uint_8 robotID
+}
+
+message SetObjectAdditionAndDeletion {
+    uint_8 robotID,
+    bool   enableAddition,
+    bool   enableDeletion
 }
 
 // VisionWhileMoving

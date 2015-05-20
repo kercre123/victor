@@ -45,34 +45,36 @@ enum class MessageTag : uint8_t {
 	TraverseObject,	// 28
 	SetRobotCarryingObject,	// 29
 	ClearAllBlocks,	// 30
-	VisionWhileMoving,	// 31
-	ExecuteBehavior,	// 32
-	SetBehaviorState,	// 33
-	AbortPath,	// 34
-	AbortAll,	// 35
-	CancelAction,	// 36
-	DrawPoseMarker,	// 37
-	ErasePoseMarker,	// 38
-	SetWheelControllerGains,	// 39
-	SetHeadControllerGains,	// 40
-	SetLiftControllerGains,	// 41
-	SetSteeringControllerGains,	// 42
-	SelectNextSoundScheme,	// 43
-	StartTestMode,	// 44
-	IMURequest,	// 45
-	PlayAnimation,	// 46
-	ReadAnimationFile,	// 47
-	StartFaceTracking,	// 48
-	StopFaceTracking,	// 49
-	StartLookingForMarkers,	// 50
-	StopLookingForMarkers,	// 51
-	SetVisionSystemParams,	// 52
-	SetFaceDetectParams,	// 53
-	SetActiveObjectLEDs,	// 54
-	SetAllActiveObjectLEDs,	// 55
-	SetBackpackLEDs,	// 56
-	VisualizeQuad,	// 57
-	EraseQuad,	// 58
+	ClearAllObjects,	// 31
+	SetObjectAdditionAndDeletion,	// 32
+	VisionWhileMoving,	// 33
+	ExecuteBehavior,	// 34
+	SetBehaviorState,	// 35
+	AbortPath,	// 36
+	AbortAll,	// 37
+	CancelAction,	// 38
+	DrawPoseMarker,	// 39
+	ErasePoseMarker,	// 40
+	SetWheelControllerGains,	// 41
+	SetHeadControllerGains,	// 42
+	SetLiftControllerGains,	// 43
+	SetSteeringControllerGains,	// 44
+	SelectNextSoundScheme,	// 45
+	StartTestMode,	// 46
+	IMURequest,	// 47
+	PlayAnimation,	// 48
+	ReadAnimationFile,	// 49
+	StartFaceTracking,	// 50
+	StopFaceTracking,	// 51
+	StartLookingForMarkers,	// 52
+	StopLookingForMarkers,	// 53
+	SetVisionSystemParams,	// 54
+	SetFaceDetectParams,	// 55
+	SetActiveObjectLEDs,	// 56
+	SetAllActiveObjectLEDs,	// 57
+	SetBackpackLEDs,	// 58
+	VisualizeQuad,	// 59
+	EraseQuad,	// 60
 	INVALID
 };
 
