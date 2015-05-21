@@ -35,17 +35,6 @@ public class AudioManager : MonoBehaviour
 		if( instance == this ) instance = null;
 	}
 
-	public static void PlayOneShot( AudioClip clip, float delay = 0f, float pitch = 1f, float volume = 1f )
-	{
-		if( instance == null )
-		{
-			Debug.LogWarning( "AudioManager is null" );
-			return;
-		}
-
-		instance.StartCoroutine( instance._PlayAudioClip( clip, delay, true, false, false, OneShot, pitch, volume ) );
-	}
-
 	private static void PlayAudioClip( AudioClip clip, float delay, bool oneShot, bool loop, bool deferred, Source source, float pitch, float volume )
 	{
 		if( instance == null )
@@ -55,24 +44,21 @@ public class AudioManager : MonoBehaviour
 		}
 		
 		AudioSource audio = instance.audioSources[(int)source];
-		
+
+		if( oneShot ) audio = OneShot;
+
 		if( audio == null || ( deferred && audio.isPlaying ) || ( audio.clip == clip && audio.isPlaying ) ) return;
 		
-		instance.StartCoroutine( instance._PlayAudioClip( clip, delay, false, loop, deferred, audio, pitch, volume ) );
+		instance.StartCoroutine( instance._PlayAudioClip( clip, delay, oneShot, loop, deferred, audio, pitch, volume ) );
 	}
 
-	public static void PlayAudioClip( AudioClip clip, float delay = 0f, bool loop = false, bool deferred = false, Source source = Source.UI, float pitch = 1f, float volume = 1f )
-	{
-		PlayAudioClip( clip, delay, false, loop, deferred, source, pitch, volume );
-	}
-	
 	private IEnumerator _PlayAudioClip( AudioClip clip, float delay, bool oneShot, bool loop, bool deferred, AudioSource audioSource, float pitch, float volume )
 	{
 		yield return new WaitForSeconds( delay );
-
+		
 		audioSource.pitch = pitch;
 		audioSource.volume = volume;
-
+		
 		if( !oneShot )
 		{
 			audioSource.loop = loop;
@@ -86,16 +72,30 @@ public class AudioManager : MonoBehaviour
 			audioSource.PlayOneShot( clip, volume );
 		}
 	}
+
+	public static void PlayOneShot( AudioClip clip, float delay = 0f, float pitch = 1f, float volume = 1f )
+	{
+		PlayAudioClip( clip, delay, true, false, false, Source.UI, pitch, volume );
+	}
+
+	public static void PlayAudioClipLooping( AudioClip clip, float delay = 0f, Source source = Source.UI, float pitch = 1f, float volume = 1f )
+	{
+		PlayAudioClip( clip, delay, false, true, false, source, pitch, volume );
+	}
+
+	public static void PlayAudioClipDeferred( AudioClip clip, float delay = 0f, Source source = Source.UI, float pitch = 1f, float volume = 1f )
+	{
+		PlayAudioClip( clip, delay, false, false, true, source, pitch, volume );
+	}
+
+	public static void PlayAudioClip( AudioClip clip, float delay = 0f, Source source = Source.UI, float pitch = 1f, float volume = 1f )
+	{
+		PlayAudioClip( clip, delay, false, false, false, source, pitch, volume );
+	}
 	
 	public static void PlayAudioClips( AudioClip[] clips, float initalDelay = 0f, float delayBetweenClips = 0.05f, bool oneShot = false, bool deferred = false, 
 	                                  Source source = Source.UI, float pitch = 1f, float volume = 1f )
 	{
-		if( instance == null )
-		{
-			Debug.LogWarning( "AudioManager is null" );
-			return;
-		}
-
 		if( clips.Length > 0 )
 		{
 			PlayAudioClip( clips[0], initalDelay, oneShot, false, deferred, source, pitch, volume );

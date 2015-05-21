@@ -152,7 +152,7 @@ public class BuildActions : GameActions {
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
 	
 		//play denied sound
-		if(actionDeniedSound != null) AudioManager.PlayAudioClip(actionDeniedSound, 0f, true);
+		if(actionDeniedSound != null) AudioManager.PlayAudioClip(actionDeniedSound);
 
 		AudioClip clip = null;
 		switch(errorType) {

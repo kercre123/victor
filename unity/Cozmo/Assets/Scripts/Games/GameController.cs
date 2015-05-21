@@ -287,7 +287,7 @@ public class GameController : MonoBehaviour {
 			if(coundownTimer == 0f) {
 				if(instructionsSound != null) AudioManager.PlayOneShot(instructionsSound);
 				//Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
-				if(gameStartingIn != null) AudioManager.PlayAudioClip(gameStartingIn, instructionsDelay, false, false, AudioManager.Source.Notification);
+				if(gameStartingIn != null) AudioManager.PlayAudioClip(gameStartingIn, instructionsDelay, AudioManager.Source.Notification);
 				lastTimerSeconds = 0;
 				countdownAnnounced = true;
 			}
@@ -363,7 +363,7 @@ public class GameController : MonoBehaviour {
 		}
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
-		if(resultsLoopSound != null) AudioManager.PlayAudioClip(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, true);
+		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f);
 	}
 
 	protected virtual void Update_RESULTS() {

@@ -111,7 +111,7 @@ public class SlalomController : GameController {
 		//PlayOneShot(playerScoreSound);
 		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
 		if(lapsRemaining == 0) {
-			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, false, false, AudioManager.Source.Notification);
+			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, AudioManager.Source.Notification);
 			Debug.Log("final lap");
 		}
 		else {
@@ -289,7 +289,7 @@ public class SlalomController : GameController {
 		base.Update_PLAYING();
 
 		if(Time.time > timeSinceLastCorner + 10) {
-			AudioManager.PlayAudioClip(instructionsSound, 0f, false, false, AudioManager.Source.Notification);
+			AudioManager.PlayAudioClip(instructionsSound, 0f, AudioManager.Source.Notification);
 			timeSinceLastCorner = Time.time;
 		}
 
@@ -407,8 +407,8 @@ public class SlalomController : GameController {
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
-		UpdateRobotLights(currentCorner);
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
+		UpdateRobotLights(currentCorner);
 	}
 
 	int GetNextCorner(out bool onNextObstacle) {

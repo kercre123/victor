@@ -173,7 +173,7 @@ public class ActionSliderPanel : ActionPanel
 			AudioManager.Stop(actionsAvailableSound);
 		}
 		else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
-			AudioManager.PlayAudioClip(actionsAvailableSound, 0f, true, false, AudioManager.Source.Robot, 1f, 0.25f);
+			AudioManager.PlayAudioClipLooping(actionsAvailableSound, 0f, AudioManager.Source.Robot, 1f, 0.25f);
 		}
 		
 		secondaryActionsAvailableLastFrame = actionsAvailable;
