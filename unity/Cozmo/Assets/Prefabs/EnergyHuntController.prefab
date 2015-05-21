@@ -1052,7 +1052,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
   - {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
   winLoopSounds:
-  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  - {fileID: 8300000, guid: af54c6f91462947c181e039a8893841f, type: 3}
   - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
   - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
