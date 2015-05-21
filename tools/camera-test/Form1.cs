@@ -144,6 +144,7 @@ namespace BlueCode
                                 {
                                     scanPicBox.Refresh();
                                 });
+                                System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
                             }
 
                             int len = m_header[8] + (m_header[9] << 8);
@@ -172,7 +173,6 @@ namespace BlueCode
                         if (m_skipped > 0)
                             System.Console.WriteLine("Skipped " + m_skipped + " frame " + m_frame);
                         m_skipped = 0;
-                        // System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
                         m_recvstate = WAITING;
                     }
                 }
@@ -180,7 +180,7 @@ namespace BlueCode
         }
 
         // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
-        private byte[] miniGrayToJpeg(byte[] bin)
+        private byte[] miniGrayToJpeg(byte[] bin, int len)
         {
             // Pre-baked JPEG header for grayscale
             byte[] header = new byte[] {
@@ -189,8 +189,8 @@ namespace BlueCode
 	            0x0E, 0x0D, 0x0E, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28, 0x1A, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 
 	            0x25, 0x1D, 0x28, 0x3A, 0x33, 0x3D, 0x3C, 0x39, 0x33, 0x38, 0x37, 0x40, 0x48, 0x5C, 0x4E, 0x40, 
 	            0x44, 0x57, 0x45, 0x37, 0x38, 0x50, 0x6D, 0x51, 0x57, 0x5F, 0x62, 0x67, 0x68, 0x67, 0x3E, 0x4D, 
-	            0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0xF0, // 0x5E = Height x Width
-	            0x01, 0x40, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 
+	            0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x01, 0x28, // 0x5E = Height x Width
+	            0x01, 0x90, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 
 	            0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 
 	            0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 
 	            0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 
@@ -208,7 +208,7 @@ namespace BlueCode
             };
 
             // Allocate enough space for worst case expansion
-            byte[] bout = new byte[bin.Length * 2 + HEADER.Length];
+            byte[] bout = new byte[len * 2 + HEADER.Length];
 
             int off = header.Length;
             Array.Copy(header, bout, off);
@@ -217,7 +217,7 @@ namespace BlueCode
             int qual = bin[0];
 
             // Add byte stuffing - one 0 after each 0xff
-            for (int i = 1; i < bin.Length; i++)
+            for (int i = 1; i < len; i++)
             {
                 bout[off++] = bin[i];
                 if (bin[i] == 0xff)
@@ -238,8 +238,9 @@ namespace BlueCode
             try
             {
                 byte[] image = m_readyImage;
-
-                byte[] image2 = miniGrayToJpeg(image);
+                int len = m_readyLen;
+                
+                byte[] image2 = miniGrayToJpeg(image, len);
                 MemoryStream ms = new MemoryStream(image2, 0, image2.Length);
                 scanPicBox.Image = Image.FromStream(ms);
                 //m_udp.Send(new byte[] { 18, 0, 0, 0, 0, m_header[4], m_header[5], m_header[6], m_header[7] }, 9);

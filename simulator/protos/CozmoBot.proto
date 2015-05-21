@@ -37,6 +37,9 @@ PROTO CozmoBot [
 
   # Set to TRUE if you just want to use the model for visualization.
   field SFBool vizMode FALSE
+  
+  # Set to TRUE to use treads
+  field SFBool useTreads TRUE
 ]
 {
 
@@ -664,6 +667,168 @@ Supervisor {
 		  %{ end }%
 		} # BACKPACK Solid
 
+
+					
+		%{ if fields.useTreads.value then }%
+
+		Track {
+		  translation 0 0.023 0
+		  rotation 1 0 0 -1.5707963
+		  children [
+			Transform {  
+			  rotation 1 0 0 1.5707963
+			  children [
+			  
+				DEF WHEELS Group {    
+				children [
+					Transform {
+						children [
+					    Shape {
+							appearance DEF WHEEL_MATERIAL Appearance {
+							  material Material {
+							    diffuseColor 0.7 0.7 0.7
+							  }
+							}
+							geometry Cylinder {
+							  height 0.01
+							  radius 0.0145
+							  subdivision 14
+							}
+					    }
+					  ]
+					}
+					Transform {
+					    translation -0.048 0 -0.00375
+						children [
+						Shape {
+							appearance USE WHEEL_MATERIAL
+							geometry Cylinder {
+							  height 0.01
+							  radius 0.01075
+							  subdivision 14
+							}
+					    }
+					    ]
+				  } 
+				  ] # children
+				} # WHEELS Group
+			  ]  # children
+			} # Transform
+		
+		  ]
+		  name "left track"
+		  contactMaterial "highfriction"
+		  
+		  # The boundingObject is the thing that actually determines the physical shape 
+		  # of the track
+		  %{ if not fields.vizMode.value then }%
+		  boundingObject DEF TRACK_BO Group {
+			children [
+			  Transform {
+				translation -0.024 0.00375 0
+				rotation 1 0 0 -1.5707963     
+				children [
+				  Box {
+					size 0.048 0.01 0.0215
+				  }
+				]
+			  }
+			  Transform {
+				translation 0 0 0
+				rotation 1 0 0 -1.5707963
+				children [
+				  DEF FRONT_WHEEL_BO Cylinder {
+					height 0.01
+					radius 0.0145
+					subdivision 14
+				  }
+				]
+			  }
+			  Transform {
+				translation -0.048 0.00375 0
+				rotation 1 0 0 -1.5707963
+				children [
+				  DEF FRONT_WHEEL_BO Cylinder {
+					height 0.01
+					radius 0.01075
+					subdivision 14
+				  }
+				]
+			  }
+			]
+		  }
+		  physics Physics {
+		  }
+		  %{ end }%
+		  motor LinearMotor {
+			name "LeftWheelMotor"
+		  }
+		  
+		  # Shape of tread studs
+		  animatedGeometry DEF ANIMATED_SHAPE Shape {
+			appearance Appearance {
+			  material Material {
+				diffuseColor 0.141176 0.141176 0.141176
+			  }
+			}
+			geometry Box {
+			  size 0.002 0.001 0.01
+			}
+		  }
+		  geometriesCount 40
+		  wheelsCenter [
+			0 0.0      
+			-0.048 0.00375
+		  ]
+		  wheelsRadius [
+			0.0145, 0.01075
+		  ]
+		  wheelsStatus [
+			1, 1
+		  ]
+		}
+		Track {
+		  translation 0 -0.023 0
+		  rotation 1 0 0 -1.5707963       
+		  children [
+			Transform {
+			  rotation 1 0 0 1.5707963     
+			  children [
+				USE WHEELS
+			  ]
+			}
+		  ]
+		  name "right track"
+		  contactMaterial "highfriction"
+
+		  %{ if not fields.vizMode.value then }%      
+		  boundingObject USE TRACK_BO
+		  physics Physics {
+		  }
+		  %{ end }%
+		  motor LinearMotor {
+			name "RightWheelMotor"
+		  }
+		  animatedGeometry USE ANIMATED_SHAPE
+		  geometriesCount 40
+		  wheelsCenter [
+			0 0.0      
+			-0.048 0.00375
+		  ]
+		  wheelsRadius [
+			0.0145, 0.01075
+		  ]
+		  wheelsStatus [
+			1, 1
+		  ]
+		}
+
+
+
+        # else if not useTreads
+		%{ else }%
+	
+	
 		DEF CASTER Solid {
 		  translation -0.03 0 -0.009575
 		  children [
@@ -870,6 +1035,11 @@ Supervisor {
 				}
 		  ] # Transform children
 		} # REAR_AXLE Transform
+
+	
+        # end if useTreads
+		%{ end }%
+	
 	
 		DEF LIFT Transform {
 		  translation -0.04 0 0.0295

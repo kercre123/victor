@@ -17,12 +17,37 @@ static UDPPacket rtxbs[NUM_RTX_BUFS];
 static struct espconn *udpServer;
 static bool haveClient = false;
 
-static UDPPacket* queuedPacket; /// Packet that is queued to send
-static uint8 nextReserve; /// Index of next buffer to reserve
+static volatile UDPPacket* queuedPacket; /// Packet that is queued to send
+static volatile uint8 nextReserve; /// Index of next buffer to reserve
+static volatile uint8 queuedPacketCount; /// Number of packets which have been queued but not sent yet
 
-static void udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
+static void udpServerSentCB(void * arg)
+{
+
+#ifdef DEBUG_CLIENT
+  os_printf("cl scb qpc=%d\n", queuedPacketCount);
+#endif
+  os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with clientQueuePacket
+  if (queuedPacketCount > 0)
+  {
+    queuedPacketCount -= 1;
+  }
+  else
+  {
+    os_printf("WARN: udp sent callback with no packet queued\n");
+  }
+  os_intr_unlock();
+
+}
+
+static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   sint8 block = NO_BLOCK;
+
+  if (arg != (void*)udpServer)
+  {
+    os_printf("Client receive unexpected arg %08x\r\n", arg);
+  }
 
 #ifdef DEBUG_CLIENT
   //os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
@@ -56,6 +81,7 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 
   queuedPacket = NULL;
   nextReserve  = 0;
+  queuedPacketCount = 0;
 
   os_memset(rtxbs, 0, sizeof(UDPPacket)*NUM_RTX_BUFS);
 
@@ -63,12 +89,19 @@ sint8 ICACHE_FLASH_ATTR clientInit()
   ets_memset( udpServer, 0, sizeof( struct espconn ) );
   udpServer->type = ESPCONN_UDP;
   udpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
+  ets_memset(udpServer->proto.udp, 0, sizeof(esp_udp));
   udpServer->proto.udp->local_port = 5551;
 
   err = espconn_regist_recvcb(udpServer, udpServerRecvCB);
   if (err != 0)
   {
     os_printf("\tError registering receive callback %d\r\n", err);
+    return err;
+  }
+  err = espconn_regist_sentcb(udpServer, udpServerSentCB);
+  if (err != 0)
+  {
+    os_printf("\tError registering sent callback %d\r\n", err);
     return err;
   }
 
@@ -101,13 +134,13 @@ UDPPacket* clientGetBuffer()
       nextReserve = (nextReserve + 1) % NUM_RTX_BUFS;
     }
     os_intr_unlock();
-  }
 #ifdef DEBUG_CLIENT
-  if (ret == NULL)
-  {
-    os_printf("\tfailed to reserve packet. nr=%d, [0]%x, [1]%x, [2]%x, [3]%x, qp=%x\n", nextReserve, rtxbs[0].state, rtxbs[1].state, rtxbs[2].state, rtxbs[3].state, queuedPacket);
-  }
+    if (ret == NULL)
+    {
+      os_printf("\tfailed to reserve packet. nr=%d, [0]%x, [1]%x, [2]%x, [3]%x, qp=%x\n", nextReserve, rtxbs[0].state, rtxbs[1].state, rtxbs[2].state, rtxbs[3].state, queuedPacket);
+    }
 #endif
+  }
 
   return ret;
 }
@@ -125,12 +158,20 @@ void clientQueuePacket(UDPPacket* pkt)
   {
     os_printf("Invalid pkt to queue. %d[%d] state=%d at %08x\r\n", pkt->data[0], pkt->len, pkt->state, pkt);
   }
+  else if (queuedPacketCount >= 16) {
+    os_printf("cl %d too many pkts Qed\r\n", queuedPacketCount);
+    pkt->state = PKT_BUF_AVAILABLE;
+  }
   else
   {
     err = espconn_sent(udpServer, pkt->data, pkt->len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       os_printf("Failed to queue UDP packet %d\n", err);
+    }
+    else
+    {
+      queuedPacketCount += 1;
     }
     pkt->state = PKT_BUF_AVAILABLE;
   }

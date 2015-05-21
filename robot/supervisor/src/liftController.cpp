@@ -301,8 +301,8 @@ namespace Anki {
       
       void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
       {
-        maxSpeedRad_ = Height2Rad(max_speed_mm_per_sec);
-        accelRad_    = Height2Rad(accel_mm_per_sec2);
+        maxSpeedRad_ = max_speed_mm_per_sec / LIFT_ARM_LENGTH;
+        accelRad_    = accel_mm_per_sec2 / LIFT_ARM_LENGTH;
       }
       
       void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
