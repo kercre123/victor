@@ -4,6 +4,7 @@ PROTO FlagCube [
   field SFString   name         "FlagCube"
   field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
+  field SFBool     useInverted  false
 ]
 {
   Block1x1 {
@@ -12,8 +13,11 @@ PROTO FlagCube [
     rotation IS rotation
     blockColor 0.5 0.5 0.5
 
-    markerImg  "symbols/checkeredFlag.png"
-    markerWidth .023
+    %{ if fields.useInverted.value then }% 
+      markerImg  "symbols/inverted/checkeredFlag.png"
+    %{ else }%
+      markerImg  "symbols/checkeredFlag.png"
+    %{ end }%
     
     active FALSE 
   }

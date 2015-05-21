@@ -104,6 +104,7 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2_INVERTED));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
       
@@ -113,7 +114,7 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::STAR5));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
       /*
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
@@ -128,6 +129,7 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG_INVERTED));
       
       // For CREEP Test
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
@@ -135,13 +137,14 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
       
       //////////////////////////////////////////////////////////////////////////
-      // 1x1 Active Cubes
+      // 1x1 Light Cubes
       //
-      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
+
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE1));
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE2));
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE3));
       //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE4));
+
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -154,15 +157,15 @@ namespace Anki
       // Mat Pieces
       //
       
-      // Webots mat:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
+      // Flag mats:
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
       _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::GEARS_4x4));
       
       // Platform piece:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
       
       // Long Bridge
-      _objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
       
       // Short Bridge
       // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
@@ -172,7 +175,7 @@ namespace Anki
       //////////////////////////////////////////////////////////////////////////
       // Ramps
       //
-      _objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
+      //_objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
       
     } // BlockWorld() Constructor
     
