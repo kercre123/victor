@@ -396,7 +396,7 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
-		AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 1 : 5 - currentCorner);
+		AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 4 : currentCorner);
 
 		timeSinceLastCorner = Time.time;
 
@@ -433,8 +433,8 @@ public class SlalomController : GameController {
 			for(int i = 0; i < robot.lights.Length; ++i) {
 				robot.lights[i].onColor = currentColor_unit;
 				robot.lights[i].offColor = 0;
-				robot.lights[i].onPeriod_ms = 125;
-				robot.lights[i].offPeriod_ms = 125;
+				robot.lights[i].onPeriod_ms = 500;
+				robot.lights[i].offPeriod_ms = 1000000;
 			}
 		}
 		else {
