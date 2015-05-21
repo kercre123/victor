@@ -19,6 +19,8 @@ PROTO FlagCube [
       markerImg  "symbols/checkeredFlag.png"
     %{ end }%
     
+    markerWidth .023
+    
     active FALSE 
   }
 }
