@@ -156,19 +156,15 @@ Block1x1 {
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
 }
-DEF FireBlock Block1x1 {
-  name "Fire_01"
+FlagCube {
+  name "Flag"
   translation 0.15 0.02 0.0219929
   rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
-  blockColor 0.85 0.5 0.5
-  markerImg "symbols/fire.png"
 }
-DEF AngryFaceBlock Block1x1 {
-  name "AngryFace_01"
+TargetCube {
+  name "Target"
   translation 0.22 -8.81876e-08 0.0219929
   rotation 0 0 1 0.05
-  blockColor 0.5 0.5 0.85
-  markerImg "symbols/bullseye2.png"
 }
 DEF AngryFaceBlockOnPlatform Block1x1 {
   name "AngryFace_01"
@@ -182,33 +178,20 @@ DEF ArrowBlock Block1x1 {
   rotation 0 1 0 -1.57
   markerImg "symbols/arrow.png"
 }
-DEF ActiveBlock1 Block1x1 {
-  name "ActiveBlock"
+LightCube {
   translation -0.100 0.120 0.022
   rotation 0 0 1 0.23
-  blockColor 0.5 0.85 0.5
-  markerImg_front "letters/1.png"
-  markerImg_back  "letters/2.png"
-  markerImg_left  "letters/3.png"
-  markerImg_right "letters/4.png"
-  markerImg_top   "letters/5.png"
-  markerImg_bottom "letters/6.png"
-  active TRUE 
-  activeID 1
+  ID 1
 }
-DEF ActiveBlock2 Block1x1 {
-  name "ActiveBlock"
+LightCube {
   translation -0.120 0.070 0.022
   rotation 0 0 1 0.23
-  blockColor 0.5 0.85 0.5
-  markerImg_front "letters/inverted/1.png"
-  markerImg_back  "letters/inverted/2.png"
-  markerImg_left  "letters/inverted/3.png"
-  markerImg_right "letters/inverted/4.png"
-  markerImg_top   "letters/inverted/5.png"
-  markerImg_bottom "letters/inverted/6.png"
-  active TRUE 
-  activeID 2
+  ID 2
+}
+LightCube {
+  translation -0.154 0.014 0.022
+  rotation 0 0 1 0.23
+  ID 3
 }
 BlockWorldComms {
 }
