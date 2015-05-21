@@ -11,8 +11,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] VectrosityCube vCube;
 	[SerializeField] MeshRenderer meshCube;
 	
-	[SerializeField] public int objectType = 0;
-	[SerializeField] public int objectFamily = 0;
+	[SerializeField] public CubeType cubeType = 0;
 	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 	[SerializeField] public bool isHeld = false;
@@ -31,12 +30,11 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	[SerializeField] GameObject checkMarkPrefab = null;
 
-	public bool isActive { get { return objectFamily == 3; } }
+	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
 	GameObject checkMark = null;
 
-	int lastPropType = 0;
-	int lastFamilyType = 0;
+	CubeType lastCubeType = CubeType.BULLS_EYE;
 	bool lastValidated = false;
 	bool lastHighlighted = false;
 	bool lastHidden = false;
@@ -79,8 +77,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			clonedCornerMaterial = new Material(originalCornerMaterial);
 		}
 
-		lastPropType = 0;
-		lastFamilyType = 0;
+		lastCubeType = CubeType.BULLS_EYE;
 		lastValidated = false;
 		lastHighlighted = false;
 		lastHidden = false;
@@ -107,8 +104,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	bool Dirty() {
-		if(lastPropType != objectType) return true;
-		if(lastFamilyType != objectFamily) return true;
+		if(lastCubeType != cubeType) return true;
 		if(lastValidated != Validated) return true;
 		if(lastHighlighted != Highlighted) return true;
 		if(lastHidden != Hidden) return true;
@@ -161,27 +157,15 @@ public class BuildInstructionsCube : MonoBehaviour {
 			clonedBlockMaterial.color = color;
 		
 			if(symbols != null) {
-				if(isActive) {
-					for(int i=0;i<symbols.Length;i++) {
-						Sprite sprite = null;
-						if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetDigitSprite(i+1);
-						symbols[i].sprite = sprite;
-						color = symbols[i].color;
-						color.a = alpha;
-						symbols[i].color = color;
-						symbols[i].gameObject.SetActive(true);
-					}
-				}
-				else {
-					Sprite sprite = null;
-					if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetSpriteForObjectType(objectType);
-					for(int i=0;i<symbols.Length;i++) {
-						symbols[i].sprite = sprite;
-						color = symbols[i].color;
-						color.a = alpha;
-						symbols[i].color = color;
-						symbols[i].gameObject.SetActive(true);
-					}
+
+				Sprite sprite = null;
+				if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetSpriteForObjectType(cubeType);
+				for(int i=0;i<symbols.Length;i++) {
+					symbols[i].sprite = sprite;
+					color = symbols[i].color;
+					color.a = alpha;
+					symbols[i].color = color;
+					symbols[i].gameObject.SetActive(true);
 				}
 			}
 
@@ -212,35 +196,12 @@ public class BuildInstructionsCube : MonoBehaviour {
 			}
 		}
 
-		lastPropType = objectType;
-		lastFamilyType = objectFamily;
+		lastCubeType = cubeType;
 		lastValidated = Validated;
 		lastHighlighted = Highlighted;
 		lastHidden = Hidden;
 		lastActiveBlockMode = activeBlockMode;
 		lastBaseColor = baseColor;
-	}
-
-	public string GetPropTypeName() {
-
-		switch(objectType) {
-			case 0: return "Basic";
-			case 1: return "Bomb";
-			case 2: return "Green";
-			case 3: return "Blue";
-			case 4: return "Cyan";
-			case 5: return "Gold";
-			case 6: return "Pink";
-			case 7: return "Purple";
-			case 8: return "Orange";
-			case 9: return "White";
-		}
-
-		return "Basic";
-	}
-
-	public string GetPropFamilyName() {
-		return "Cube";
 	}
 
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -24,18 +24,10 @@ public class LayoutBlock2d : MonoBehaviour {
 
 		image_Block.color = block.baseColor;
 
-		if(block.isActive) {
-			image_Symbol.sprite = CozmoPalette.instance.GetDigitSprite(Random.Range(1,6));
-			foreach(Image led in images_LED) {
-				//led.color = CozmoPalette.instance.GetColorForactiveBlockMode(block.activeBlockMode);
-				led.gameObject.SetActive(true);
-			}
-		}
-		else {
-			image_Symbol.sprite = CozmoPalette.instance.GetSpriteForObjectType(block.objectType);
-			foreach(Image led in images_LED) {
-				led.gameObject.SetActive(false);
-			}
+		image_Symbol.sprite = CozmoPalette.instance.GetSpriteForObjectType(block.cubeType);
+		foreach(Image led in images_LED) {
+			//led.color = CozmoPalette.instance.GetColorForactiveBlockMode(block.activeBlockMode);
+			led.gameObject.SetActive(block.isActive);
 		}
 
 		image_check.gameObject.SetActive(false);
@@ -54,14 +46,14 @@ public class LayoutBlock2d : MonoBehaviour {
 
 		if(observedObject.isActive) {
 			ActiveBlock activeBlock = observedObject as ActiveBlock;
-			image_Symbol.sprite = CozmoPalette.instance.GetDigitSprite(spriteIndex);
+			image_Symbol.sprite = CozmoPalette.instance.GetSpriteForObjectType(observedObject.cubeType);
 			foreach(Image led in images_LED) {
 				led.color = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlock.mode);
 				led.gameObject.SetActive(true);
 			}
 		}
 		else {
-			image_Symbol.sprite = CozmoPalette.instance.GetSpriteForObjectType((int)observedObject.ObjectType);
+			image_Symbol.sprite = CozmoPalette.instance.GetSpriteForObjectType(observedObject.cubeType);
 			foreach(Image led in images_LED) {
 				led.gameObject.SetActive(false);
 			}

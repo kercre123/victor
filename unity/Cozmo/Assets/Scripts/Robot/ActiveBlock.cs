@@ -165,6 +165,10 @@ public class ActiveBlock : ObservedObject
 		{
 			lights[i] = new Light( i );
 		}
+
+		cubeType = CubeType.LIGHT_CUBE;
+
+		//Debug.Log ("ActiveBlock cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )

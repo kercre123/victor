@@ -498,7 +498,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		robot.selectedObjects.Insert(0, potential[0]);*/
 		robot.targetLockedObject = potential[0];
 		targetLock = potential[0];
-		Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock+") newLock("+targetLock+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
+		//Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock+") newLock("+targetLock+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
 	}
 
 	bool TargetIsInDirectionFromTargetLock(ObservedObject obj, ObservedObject locked, Vector3 direction) {

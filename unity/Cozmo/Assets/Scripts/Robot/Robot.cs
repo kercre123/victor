@@ -519,6 +519,8 @@ public class Robot
 
 	public void UpdateObservedObjectInfo( G2U.RobotObservedObject message )
 	{
+		//Debug.Log( "UpdateObservedObjectInfo received message about ObservedObject with objectFamily("+message.objectFamily+") objectID("+message.objectID+")" );
+
 		if( message.objectFamily == 0 )
 		{
 			Debug.LogWarning( "UpdateObservedObjectInfo received message about the Mat!" );
@@ -539,6 +541,8 @@ public class Robot
 
 	private void AddActiveBlock( ActiveBlock activeBlock, G2U.RobotObservedObject message )
 	{
+		//Debug.Log( "AddActiveBlock" );
+
 		if( activeBlock == null )
 		{
 			activeBlock = new ActiveBlock( message.objectID, message.objectFamily, message.objectType );

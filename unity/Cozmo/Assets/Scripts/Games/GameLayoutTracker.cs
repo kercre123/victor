@@ -190,9 +190,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			//count any duplicates so this one knows when to be validated
 			int num = 1;
 			foreach(LayoutBlock2d prior in blocks2d) {
-				if(prior.Block.objectFamily != block.objectFamily) continue;
-				if(!prior.Block.isActive && prior.Block.objectType != block.objectType) continue;
-				if(prior.Block.isActive && prior.Block.activeBlockMode != block.activeBlockMode && !ignoreActiveColor) continue;
+				if(prior.Block.cubeType != block.cubeType) continue;
+				if(!ignoreActiveColor && prior.Block.isActive && prior.Block.activeBlockMode != block.activeBlockMode) continue;
 				num++;
 			}
 			
@@ -428,7 +427,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(robot.carryingObject.isActive) {
 					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
-					BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find (x => !x.Validated && x.cubeBelow != null && x.objectFamily == 3);
+					BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find (x => !x.Validated && x.cubeBelow != null && x.isActive);
 					if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
 						activeBlock.mode = layoutBlockToStack.activeBlockMode;
 						activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
@@ -520,7 +519,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
 
-			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.objectType+")");
+			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.cubeType+")");
 
 			//cannot validate a block before the one it is stacked upon
 			//note: this requires that our ideal blocks be listed in order
@@ -543,18 +542,13 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(block.objectFamily != (int)newObject.Family) {
-					if(debug) Debug.Log("family mismatch");
-					continue;
-				}
-
 				//skip objects of the wrong type
-				if(block.objectFamily != 3 && block.objectType != (int)newObject.ObjectType) {
-					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType((int)newObject.ObjectType)+") because it isn't "+CozmoPalette.instance.GetNameForObjectType(block.objectType));
+				if(block.cubeType != newObject.cubeType) {
+					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it isn't "+CozmoPalette.instance.GetNameForObjectType(block.cubeType));
 					continue;
 				}
 
-				if(!ignoreActiveColor && block.objectFamily == 3) { //active block
+				if(!ignoreActiveColor && block.isActive) { //active block
 					ActiveBlock activeBlock = newObject as ActiveBlock;
 
 					if(block.activeBlockMode != activeBlock.mode) { //active block
@@ -571,7 +565,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(validated.Count == 0) {
 					ValidateBlock(layoutBlockIndex, newObject);
-					if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because first block placed on ground.");
+					if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.cubeType+") because first block placed on ground.");
 					break;
 				}
 
@@ -586,13 +580,13 @@ public class GameLayoutTracker : MonoBehaviour {
 
 					if(valid) {
 						ValidateBlock(layoutBlockIndex, newObject);
-						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because stacked on apt block.");
+						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.cubeType+") because stacked on apt block.");
 						break;
 					}
 					else {
 						if(!invalidated) error = "Whoops. That block needs to be stacked on the correct block.";
 						invalidated = true;
-						if(debug) Debug.Log("stack test failed for blockType("+block.objectType+") on blockType("+block.cubeBelow.objectType+") dist("+dist+") real.z("+real.z+")");
+						if(debug) Debug.Log("stack test failed for blockType("+block.cubeType+") on blockType("+block.cubeBelow.cubeType+") dist("+dist+") real.z("+real.z+")");
 						PlaceGhostForObservedObject(newObject, block, objectToStackUpon, block.cubeBelow);
 					}
 
@@ -618,7 +612,7 @@ public class GameLayoutTracker : MonoBehaviour {
 							if(!invalidated) error = "Whoops. That block needs to be placed on the ground.";
 							invalidated = true;
 							valid = false;
-							if(debug) Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.objectType+") is on same plane as previously validated block of type("+validated[validatedIndex].objectType+")");
+							if(debug) Debug.Log("zOffset("+realOffset.z+") invalidated that block of type("+block.cubeType+") is on same plane as previously validated block of type("+validated[validatedIndex].cubeType+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							break;
 						}
@@ -628,10 +622,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 						float distanceError = Mathf.Abs(realDistance - idealDistance);
 						if( distanceError > distanceFudge ) {
-							if(!invalidated) error = "Whoops. That block was placed " + distanceError.ToString("N") + " block lengths too " + (realDistance > idealDistance ? "far from" : "close to" ) + " the " + CozmoPalette.instance.GetNameForObjectType(validated[validatedIndex].objectType) + " block.";
+							if(!invalidated) error = "Whoops. That block was placed " + distanceError.ToString("N") + " block lengths too " + (realDistance > idealDistance ? "far from" : "close to" ) + " the " + CozmoPalette.instance.GetNameForObjectType(validated[validatedIndex].cubeType) + ".";
 							invalidated = true;
 							valid = false;
-							if(debug) Debug.Log("error("+distanceError+") invalidated that block of type("+block.objectType+") is the correct distance from previously validated block of type("+validated[validatedIndex].objectType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
+							if(debug) Debug.Log("error("+distanceError+") invalidated that block of type("+block.cubeType+") is the correct distance from previously validated block of type("+validated[validatedIndex].cubeType+") idealDistance("+idealDistance+") realDistance("+realDistance+")");
 							PlaceGhostForObservedObject(newObject, block, priorObject, validated[validatedIndex]);
 							break;
 						}
@@ -640,7 +634,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 					if(valid) {
 						ValidateBlock(layoutBlockIndex, newObject);
-						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.objectType+") family("+block.objectFamily+") because correct distance on ground from valid blocks.");
+						if(debug) Debug.Log("validated block("+block.gameObject.name+") of type("+block.cubeType+") because correct distance on ground from valid blocks.");
 						break;
 					}
 				}
@@ -687,8 +681,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		//ghostBlock.gameObject.SetActive(true);
 		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
-		ghostBlock.objectType = failingLayoutBlock.objectType;
-		ghostBlock.objectFamily = failingLayoutBlock.objectFamily;
+		ghostBlock.cubeType = failingLayoutBlock.cubeType;
 		ghostBlock.activeBlockMode = failingLayoutBlock.activeBlockMode;
 		ghostBlock.baseColor = failingLayoutBlock.baseColor;
 		ghostBlock.Hidden = true;
@@ -708,9 +701,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 			ObservedObject obj = robot.knownObjects[i];
 
-			if(obj.Family != block.objectFamily) continue;
-			if(!obj.isActive && obj.ObjectType != block.objectType) continue;
-			//if(obj.Family == 3 && obj.activeBlockMode != block.activeBlockMode) continue;
+			if(obj.cubeType != block.cubeType) continue;
 
 			count++;
 		}
@@ -888,9 +879,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	bool IsMatchingBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
-		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
-		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		if(block.cubeType != objectToMatch.cubeType) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.isActive && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		return true;
 	}
 
@@ -898,18 +888,16 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool IsUnvalidatedMatchingGroundBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
 		if(block.Validated) return false;
 		if(block.cubeBelow != null) return false;
-		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
-		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		if(block.cubeType != objectToMatch.cubeType) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.isActive && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		return true;
 	}
 
 	bool IsUnvalidatedMatchingStackedBlock(BuildInstructionsCube block, ObservedObject objectToMatch, bool ignoreColorOverride=false) {
 		if(block.Validated) return false;
 		if(block.cubeBelow == null) return false;
-		if(block.objectFamily != objectToMatch.Family) return false;
-		if(!ignoreActiveColor && !ignoreColorOverride && block.objectFamily == 3 && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
-		if(block.objectFamily != 3 && objectToMatch.ObjectType != block.objectType) return false;
+		if(block.cubeType != objectToMatch.cubeType) return false;
+		if(!ignoreActiveColor && !ignoreColorOverride && block.isActive && robot.activeBlocks[objectToMatch].mode != block.activeBlockMode) return false;
 		return true;
 	}
 
@@ -1065,10 +1053,8 @@ public class GameLayoutTracker : MonoBehaviour {
 					desc += "a ";
 					
 					if(CozmoPalette.instance != null) {
-						desc += CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType) + " ";
+						desc += CozmoPalette.instance.GetNameForObjectType(objectToStack.cubeType) + " ";
 					}
-					
-					desc += "Block";
 				}
 				
 				if(objectToStackUpon != null) {
@@ -1082,10 +1068,8 @@ public class GameLayoutTracker : MonoBehaviour {
 						desc += "a ";
 						
 						if(CozmoPalette.instance != null) {
-							desc += CozmoPalette.instance.GetNameForObjectType((int)objectToStackUpon.ObjectType) + " ";
+							desc += CozmoPalette.instance.GetNameForObjectType(objectToStackUpon.cubeType) + " ";
 						}
-						
-						desc += "Block";
 					}
 				}
 				
@@ -1199,32 +1183,16 @@ public class GameLayoutTracker : MonoBehaviour {
 			return false;
 		}
 
+		if(layoutBlockToStack.cubeType != objectToStack.cubeType) {
+			errorText = "You are attempting to stack the wrong type of cube.";
+			errorType = LayoutErrorType.WRONG_BLOCK;
+			return false;
+		}
+
 		if(layoutBlockToStack.isActive) {
-
-			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
-				errorText = "You are attempting to stack a non active block where an active block belongs.";
-				errorType = LayoutErrorType.WRONG_BLOCK;
-				return false;
-			}
-
 			if(!ignoreColor && !ignoreActiveColor && robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode) {
 				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockMode+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
-				return false;
-			}
-		}
-
-		if(!layoutBlockToStack.isActive) {
-
-			if(layoutBlockToStack.objectFamily != objectToStack.Family) {
-				errorText = "You are attempting to stack an active block where an standard block belongs.";
-				errorType = LayoutErrorType.WRONG_BLOCK;
-				return false;
-			}
-
-			if(objectToStack.ObjectType != layoutBlockToStack.objectType) {
-				errorText = "You are attempting to stack a " +CozmoPalette.instance.GetNameForObjectType((int)objectToStack.ObjectType)+ " block where a "+CozmoPalette.instance.GetNameForObjectType(layoutBlockToStack.objectType)+" block belongs.";
-				errorType = LayoutErrorType.WRONG_BLOCK;
 				return false;
 			}
 		}

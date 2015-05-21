@@ -8,7 +8,6 @@ using System.Collections.Generic;
 [Serializable]
 public class ObjectkSymbolInfo {
 	public string Name = "Kitty";
-	public int ObjectType = 1;
 	public Sprite sprite = null;
 }
 
@@ -16,8 +15,7 @@ public class ObjectkSymbolInfo {
 public class CozmoPalette : MonoBehaviour {
 
 	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.Mode.Count];
-	[SerializeField] List<ObjectkSymbolInfo> objectSymbolInfos = new List<ObjectkSymbolInfo>();
-	[SerializeField] Sprite[] digitSprites;
+	[SerializeField] ObjectkSymbolInfo[] objectSymbolInfos = new ObjectkSymbolInfo[3];
 
 	public static CozmoPalette instance = null;
 
@@ -46,22 +44,12 @@ public class CozmoPalette : MonoBehaviour {
 		return activeBlockColors[(int)activeType];
 	}
 
-	public Sprite GetSpriteForObjectType(int objType) {
-		ObjectkSymbolInfo info = objectSymbolInfos.Find(x => x.ObjectType == objType);
-		
-		return info != null ? info.sprite : null;
+	public Sprite GetSpriteForObjectType(CubeType objType) {
+		return objectSymbolInfos [(int)objType].sprite;
 	}
 
-	public string GetNameForObjectType(int objType) {
-		ObjectkSymbolInfo info = objectSymbolInfos.Find(x => x.ObjectType == objType);
-		
-		return info != null ? info.Name : "Unknown";
+	public string GetNameForObjectType(CubeType objType) {
+		return objectSymbolInfos [(int)objType].Name;
 	}
-
-	public Sprite GetDigitSprite(int digit) {
-		digit = Mathf.Clamp(digit, 1, 6);
-		return digitSprites[digit-1];
-	}
-
 
 }

@@ -291,7 +291,7 @@ public class GameActions : MonoBehaviour
 		}
 		else
 		{
-			description += "a " + CozmoPalette.instance.GetNameForObjectType( (int)selectedObject.ObjectType ) + " Block" + period;
+			description += "a " + CozmoPalette.instance.GetNameForObjectType( selectedObject.cubeType ) + period;
 		}
 	}
 }
