@@ -1902,8 +1902,8 @@ namespace Anki {
     Result Robot::SetCarriedObjectAsUnattached()
     {
       if(IsCarryingObject() == false) {
-        PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
-                            "Robot not carrying object, but told to place one.\n");
+        PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
+                            "Robot not carrying object, but told to place one. (Possibly actually rolling.\n");
         return RESULT_FAIL;
       }
       
@@ -1912,20 +1912,20 @@ namespace Anki {
       if(object == nullptr)
       {
         // This really should not happen.  How can a object being carried get deleted?
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.CarryingObjectDoesNotExist",
+        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.CarryingObjectDoesNotExist",
                           "Carrying object with ID=%d no longer exists.\n", _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
      
       Pose3d placedPose;
       if(object->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                           "Could not get carrying object's pose relative to robot's origin.\n");
         return RESULT_FAIL;
       }
       object->SetPose(placedPose);
       
-      PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
+      PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
                        _ID, object->GetID().GetValue(),
                        object->GetPose().GetTranslation().x(),
@@ -1948,7 +1948,7 @@ namespace Anki {
         
         Pose3d placedPoseOnTop;
         if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
-          PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                             "Could not get carrying object's pose relative to robot's origin.\n");
           return RESULT_FAIL;
           
@@ -1956,7 +1956,7 @@ namespace Anki {
         objectOnTop->SetPose(placedPoseOnTop);
         objectOnTop->SetBeingCarried(false);
         _carryingObjectOnTopID.UnSet();
-        PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
+        PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.\n",
                          objectOnTop->GetID().GetValue());
       }
       
