@@ -59,6 +59,11 @@ size_t CommsRecorder::Send(const Comms::MsgPacket &msg)
 {
   return realComms_->Send(msg);
 }
+
+bool CommsRecorder::IsConnected(s32 connectionId)
+{
+  return realComms_->IsConnected(connectionId);
+}
   
 /*
 Recorded comms message layout:
@@ -95,8 +100,6 @@ bool CommsRecorder::GetNextMsgPacket(Comms::MsgPacket &msg)
   }
   return false;
 }
-
-
 
 // Reads all data from buffer into provided data storage
 BaseStationTime_t CommsRecorder::ReadFromBuffer(unsigned char *buffer, unsigned int size, vector<CommsRecord> &data)
@@ -147,8 +150,8 @@ BaseStationTime_t CommsRecorder::ReadFromBuffer(unsigned char *buffer, unsigned 
   return timeLastMessageRecorded;
 }
   
-u32 CommsRecorder::GetNumMsgPacketsInSendQueue(int devID) {
-  return realComms_->GetNumMsgPacketsInSendQueue(devID);
+u32 CommsRecorder::GetNumMsgPacketsInSendQueue(s32 connectionId) {
+  return realComms_->GetNumMsgPacketsInSendQueue(connectionId);
 }
   
 void CommsRecorder::Update(bool send_queued_msgs) {

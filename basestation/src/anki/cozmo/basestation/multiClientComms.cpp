@@ -11,18 +11,251 @@
  *
  **/
 
+#include "anki/cozmo/basestation/multiClientComms.h"
+
 #include "anki/common/basestation/utils/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/basestation/multiClientComms.h"
+#include "anki/util/transport/iNetTransportDataReceiver.h"
+#include "anki/util/transport/srcBufferSet.h"
+#include "anki/util/transport/transportAddress.h"
+#include "anki/util/transport/reliableTransport.h"
+#include "anki/util/transport/udpTransport.h"
+
+
+#include <map>
+#include <tuple>
 
 #define DEBUG_COMMS 0
 
+
 namespace Anki {
 namespace Cozmo {
+  
+  class CommsChannel: public Anki::Comms::IComms, protected Anki::Util::INetTransportDataReceiver {
+  public:
+    
+    virtual ~CommsChannel() override { }
+    
+    virtual size_t Send(const Anki::Comms::MsgPacket &p) override = 0;
+      
+    virtual void Update(bool send_queued_msgs = true) override = 0;
+    
+    virtual bool IsInitialized() override
+    {
+      return true;
+    }
+    
+    virtual u32 GetNumPendingMsgPackets() override
+    {
+      return static_cast<u32>(_incomingQueue.size());
+    }
+    
+    virtual bool GetNextMsgPacket(Anki::Comms::MsgPacket &p)
+    {
+      if (!_incomingQueue.empty()) {
+        p = std::get<1>(_incomingQueue.front());
+        
+        // assign address if there is one
+        Anki::Util::TransportAddress sourceAddress = std::get<0>(_incomingQueue.front());
+        auto found = _addressLookup.find(sourceAddress);
+        if (found != _addressLookup.end()) {
+          p.sourceId = found->second;
+        }
+        
+        _incomingQueue.pop_front();
+        return true;
+      }
+      return false;
+    }
+    
+    virtual void ClearMsgPackets()
+    {
+      _incomingQueue.clear();
+    }
+    
+    virtual u32 GetNumMsgPacketsInSendQueue(int devID)
+    {
+      return 0;
+    }
+  
+  protected:
+    // adds both entries to the bidirectional mapping, removing any duplicates
+    // assumes a consistent state
+    void AddConnectionMapping(s32 connectionId, const Anki::Util::TransportAddress& address)
+    {
+      auto foundAddress = _addressLookup.find(address);
+      if (foundAddress != _addressLookup.end()) {
+        // already added; ignore
+        if (foundAddress->second == connectionId) {
+          return;
+        }
+        
+        std::string addressString = address.ToString();
+        PRINT_NAMED_WARNING("CommsChannel.AddConnection",
+                            "Already registered address %s with id %d; "
+                            "will overwrite with id %d.\n",
+                            addressString.c_str(), foundAddress->second, connectionId);
+        
+        _connectionIdLookup.erase(foundAddress->second);
+        foundAddress->second = connectionId;
+      }
+      else {
+        _addressLookup.emplace(address, connectionId);
+      }
+      
+      auto foundConnectionId = _connectionIdLookup.find(connectionId);
+      if (foundConnectionId != _connectionIdLookup.end()) {
+        std::string addressString = address.ToString();
+        std::string existingString = foundConnectionId->second.ToString();
+        PRINT_NAMED_WARNING("CommsChannel.AddConnection",
+                            "Already registered connection id %d with address %s; "
+                            "will overwrite with address %s.\n",
+                            connectionId, addressString.c_str(), existingString.c_str());
+        
+        _addressLookup.erase(foundConnectionId->second);
+        foundConnectionId->second = address;
+      }
+      else {
+        _connectionIdLookup.emplace(connectionId, address);
+      }
+    }
+    
+    void RemoveConnectionMapping(s32 connectionId)
+    {
+      auto found = _connectionIdLookup.find(connectionId);
+      if (found == _connectionIdLookup.end()) {
+        return;
+      }
+      _addressLookup.erase(found->second);
+      _connectionIdLookup.erase(found);
+    }
+    
+    bool GetConnectionId(s32& connectionId, const Anki::Util::TransportAddress& address)
+    {
+      auto found = _addressLookup.find(address);
+      if (found != _addressLookup.end()) {
+        connectionId = found->second;
+        return true;
+      }
+      return false;
+    }
+    
+    bool GetAddress(Anki::Util::TransportAddress& address, s32 connectionId)
+    {
+      auto found = _connectionIdLookup.find(connectionId);
+      if (found != _connectionIdLookup.end()) {
+        address = found->second;
+        return true;
+      }
+      return false;
+    }
+    
+    virtual void ReceiveData(const uint8_t *buffer, unsigned int size, const Anki::Util::TransportAddress& sourceAddress) override
+    {
+      f32 timestamp = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+      _incomingQueue.emplace_back(std::make_tuple(sourceAddress, Anki::Comms::MsgPacket(-1, -1, static_cast<u16>(size), buffer, timestamp, false, false)));
+    }
+    
+  private:
+    std::deque<std::tuple<Anki::Util::TransportAddress, Anki::Comms::MsgPacket>> _incomingQueue;
+    std::map<Anki::Util::TransportAddress, s32> _addressLookup;
+    std::map<s32, Anki::Util::TransportAddress> _connectionIdLookup;
+  };
+  
+  class UnreliableUDPChannel: public CommsChannel {
+  public:
+    
+    UnreliableUDPChannel()
+    {
+      // TODO ANDROID: SET IP RETRIEVER
+      //_unreliableTransport.SetIpRetriever(nullptr);
+      _unreliableTransport.SetDataReceiver(this);
+    }
+    virtual ~UnreliableUDPChannel() override { }
+    
+    void Start(const Anki::Util::TransportAddress& hostAddress)
+    {
+      // TODO: This check shouldn't be necessary
+      // but it's needed because StopClient doesn't actually do anything
+      if (!_unreliableTransport.IsConnected()) {
+        
+        // TODO: Bind to specific IP address
+        //_unreliableTransport.SetAddress(hostAddress.GetIPAddress());
+        _unreliableTransport.SetPort(hostAddress.GetIPPort());
+      }
+      
+      _unreliableTransport.StartClient();
+    }
+    
+    void Stop()
+    {
+      _unreliableTransport.StopClient();
+    }
+    
+    void AddConnection(s32 connectionId, const Anki::Util::TransportAddress& address)
+    {
+      AddConnectionMapping(connectionId, address);
+    }
+    
+    virtual bool IsInitialized() override
+    {
+      return _unreliableTransport.IsConnected();
+    }
+    
+    virtual size_t Send(const Anki::Comms::MsgPacket &p) override
+    {
+      Anki::Util::TransportAddress address;
+      if (!GetAddress(address, p.destId)) {
+        PRINT_NAMED_WARNING("UnreliableUDPChannel.Send",
+                            "Cannot determine address for connection id %d.\n",
+                            p.destId);
+        return 0;
+      }
+      
+      Anki::Util::SrcBufferSet srcBuffers;
+      srcBuffers.AddBuffer(Anki::Util::SizedSrcBuffer(p.data, p.dataLen));
+      _unreliableTransport.SendData(address, srcBuffers);
+      return p.dataLen;
+    }
+    
+    virtual void Update(bool send_queued_msgs = true) override
+    {
+      // unused argument
+      (void)send_queued_msgs;
+      
+      _unreliableTransport.Update();
+    }
+  protected:
+    Anki::Util::UDPTransport _unreliableTransport;
+  };
+  
+  class ReliableUDPChannel: public UnreliableUDPChannel {
+  public:
+    
+    ReliableUDPChannel()
+    // NOTE: Tricky ordering on _unreliableTransport->SetDataReceiver.
+    : _reliableTransport(&_unreliableTransport, this)
+    {
+    }
+    
+    void Connect(const TransportAddress& destAddress)
+    {
+      
+    }
+    
+    void Start(const Anki::Util::TransportAddress& hostAddress)
+    {
+      
+    }
+    
+  protected:
+    Anki::Util::ReliableTransport _reliableTransport;
+  };
+  
   
   const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
 

@@ -13,9 +13,6 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
-#include "anki/util/transport/srcBufferSet.h"
-#include "anki/util/transport/transportAddress.h"
-
 namespace Anki {
   namespace Comms {
 
@@ -23,59 +20,66 @@ namespace Anki {
     #define MAX_BLE_MSG_SIZE        20
     #define MIN_BLE_MSG_SIZE        2
 
+    enum ICommsSendErrorCode {
+      ICOMMS_GENERAL_ERROR = -1,
+      ICOMMS_NOCONNECTION_TO_VEHICLE_ERROR = -2,
+      ICOMMS_MESSAGE_TOO_LARGE_ERROR = -3,
+      ICOMMS_SEND_FAILED_ERROR = -4,
+    };
+
+      
+
     class MsgPacket {
     public:
-      static MsgPacket CreateSendPacket(const u8* data, u16 dataLen, s32 destId, bool reliable = true, bool hot = false)
-      {
-        return MsgPacket(data, dataLen, -1, destId, 0, reliable, hot);
-      }
-      
-      static MsgPacket CreateReceivePacket(const u8* data, u16 dataLen, s32 sourceId, BaseStationTime_t timeStamp = 0)
-      {
-        return MsgPacket(data, dataLen, sourceId, -1, timeStamp, false, false);
-      }
-      
-      MsgPacket() { }
-      MsgPacket(const u8* data, u16 dataLen, s32 sourceId, s32 destId, BaseStationTime_t timestamp, bool reliable, bool hot) :
+      MsgPacket(){};
+      MsgPacket(const s32 sourceId, const s32 destId, const u16 dataLen, const u8* data, const BaseStationTime_t timestamp = 0, bool reliable = true, bool hot = false) :
       dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp(timestamp), reliable(reliable), hot(hot)
       {
         CORETECH_ASSERT(dataLen <= MAX_SIZE);
         memcpy(this->data, data, dataLen);
       }
       
-      static const int MAX_SIZE = 2000;
+      static const int MAX_SIZE = 2048;
       u8 data[MAX_SIZE];   // TODO: Make this a vector?
       u16 dataLen = 0;
       s32 sourceId = -1;
       s32 destId = -1;
       BaseStationTime_t timeStamp = 0;
-      bool reliable = true;
-      bool hot = false;
+      bool reliable;
+      bool hot;
     };
       
     class IComms {
     public:
-      
+
       virtual ~IComms() {};
-      
-      // Returns true if the connection is currently active
-      virtual bool IsActive() = 0;
+
+      // Returns true if we are ready to use BLE
+      virtual bool IsInitialized() = 0;
       
       // Whether the connectionId is still valid to send to/receive from.
       // May either drop unprocessed packets when disconnected or wait to report
       // disconnection when the last packet is processed.
       // You should poll this.
       virtual bool IsConnected(s32 connectionId) = 0;
+
+      // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no
+      // messages are available.
+      virtual u32 GetNumPendingMsgPackets() = 0;
       
-      // Gets the next packet, returning false if there are none to get.
+      virtual size_t Send(const MsgPacket &p) = 0;
+      
       virtual bool GetNextMsgPacket(MsgPacket &p) = 0;
       
-      // Sends a packet to the packet's destId.
-      // Returns false if it cannot send for some reason.
-      // A true result does not ensure delivery.
-      virtual bool Send(const MsgPacket &p) = 0;
+      // virtual void SetCurrentTimestamp(BaseStationTime_t timestamp) = 0;
+
+      // when game is unpaused we need to dump old messages
+      virtual void ClearMsgPackets() = 0;
+
+      // Return the number of MsgPackets in the send queue that are bound for connectionId
+      virtual u32 GetNumMsgPacketsInSendQueue(s32 connectionId) = 0;
       
-      virtual void Update() = 0;
+      virtual void Update(bool send_queued_msgs = true) = 0;
     };
   }
 }

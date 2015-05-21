@@ -140,6 +140,13 @@ int UdpClient::Recv(char* data, int maxSize)
   if(bytes_received > std::numeric_limits<int>::max()) {
     DEBUG_UDP_CLIENT("UdpClient: Receive warning, num bytes received > max integer.\n");
   }
+
+  struct sockaddr_in sin;
+  socklen_t len = sizeof(sin);
+  if (getsockname(socketfd, (struct sockaddr *)&sin, &len) == -1)
+    perror("getsockname");
+  else
+    printf("port number %d\n", ntohs(sin.sin_port));
   
   return static_cast<int>(bytes_received);
 }
