@@ -2001,6 +2001,16 @@ namespace Anki {
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
         
+        
+        // Send client connection status message
+        // TODO: This message isn't supposed to be sent from the basestation
+        //       but it's the quickest way to let the robot know its radio is connected.
+        MessageClientConnectionStatus ccsMsg;
+        ccsMsg.wifiState = 1;
+        ccsMsg.bluetoothState = 0;
+        result = _msgHandler->SendMessage(_ID, ccsMsg);
+        
+        
         // Reset pose on connect
         PRINT_INFO("Setting pose to (0,0,0)\n");
         Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
