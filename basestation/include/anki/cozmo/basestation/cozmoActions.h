@@ -381,6 +381,41 @@ namespace Anki {
     }; // class PickAndPlaceObjectAction
 
     
+    // If not carrying anything, rolls the specified object.
+    // If carrying an object, fails.
+    class RollObjectAction : public IDockAction
+    {
+    public:
+      RollObjectAction(ObjectID objectID, const bool useManualSpeed);
+      virtual ~RollObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      // Override to determine type (low roll, or potentially other rolls) dynamically depending
+      // on what we were doing.
+      virtual RobotActionType GetType() const override;
+      
+      // Override completion signal to fill in information about rolled objects
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
+      
+    protected:
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+      // For verifying if we successfully rolled the object
+      Pose3d _dockObjectOrigPose;
+      
+      IActionRunner*             _rollVerifyAction;
+      
+    }; // class RollObjectAction
+    
+    
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then picking/placing it.
     class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
@@ -405,6 +440,32 @@ namespace Anki {
       }
       
     };
+    
+    
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then rolling it.
+    class DriveToRollObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new RollObjectAction(objectID, useManualSpeed)})
+      {
+        
+      }
+      
+      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use RollObjectAction's completion signal
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
+        return _actions.back().second->EmitCompletionSignal(robot, result);
+      }
+      
+    };
+
     
     
     class PlaceObjectOnGroundAction : public IAction

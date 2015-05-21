@@ -279,7 +279,7 @@ class PrintText(MessageBase):
 
 class PingMessage(MessageBase):
     "Just a ping with no payload"
-    ID = 57
+    ID = 58
     FORMAT = []
 
     def _getMembers(self):

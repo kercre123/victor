@@ -7,7 +7,7 @@
 #include <array>
 
 #define USE_EARLY_EXIT_DISTANCE_COMPUTATION 1
-#define USE_WEIGHTS 0
+#define USE_WEIGHTS 1
 
 namespace Anki {
 namespace Embedded {
@@ -103,8 +103,9 @@ namespace Embedded {
                                        "GetProbeValues() failed.\n");
     
     // Visualize probe values
-    //cv::Mat_<u8> temp(32,32,_probeValues.data);
-    //cv::imshow("ProbeValues", temp);
+    cv::Mat_<u8> temp(32,32,_probeValues.data);
+    cv::imshow("ProbeValues", temp);
+    cv::waitKey(10);
     
     if(_useHoG) {
       GetProbeHoG();

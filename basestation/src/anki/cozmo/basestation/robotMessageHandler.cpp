@@ -604,7 +604,12 @@ namespace Anki {
             printf("Received message that Object %d (Active ID %d) moved.\n",
                    objectWithID.first.GetValue(), msg.objectID);
             
-            CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+            // Don't notify game about moving objects that are being carried
+            ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
+            assert(actionObject != nullptr);
+            if(actionObject->IsBeingCarried() == false) {
+              CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+            }
             
             return RESULT_OK;
           }

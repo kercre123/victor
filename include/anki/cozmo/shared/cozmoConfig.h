@@ -10,9 +10,6 @@ namespace Cozmo {
 #ifdef SIMULATOR
     // Simulated robot
     #include "anki/cozmo/shared/cozmoConfig_sim.h"
-#elif defined(COZMO_ROBOT_V31)
-    // Physical robot (first robot with treads)
-    #include "anki/cozmo/shared/cozmoConfig_v3.1.h"
 #elif defined(COZMO_ROBOT_V32)
     // Physical robot (larger robot with treads)
     #include "anki/cozmo/shared/cozmoConfig_v3.2.h"

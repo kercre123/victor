@@ -39,6 +39,7 @@ namespace Anki {
         MOVING_LIFT_PREDOCK,
         DOCKING,
         SET_LIFT_POSTDOCK,
+        MOVING_LIFT_FOR_ROLL,
         MOVING_LIFT_POSTDOCK,
         BACKOUT,
         LOWER_LIFT,

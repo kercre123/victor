@@ -495,7 +495,7 @@ namespace Anki {
         } else if(turnOffUnspecifiedLEDs) {
           _ledState[iLED].onColor      = NamedColors::BLACK;
           _ledState[iLED].offColor     = NamedColors::BLACK;
-          _ledState[iLED].onPeriod_ms  = 0;
+          _ledState[iLED].onPeriod_ms  = 1000;
           _ledState[iLED].offPeriod_ms = 1000;
           _ledState[iLED].transitionOnPeriod_ms = 0;
           _ledState[iLED].transitionOffPeriod_ms = 0;
@@ -662,12 +662,24 @@ namespace Anki {
       switch(_markers.front().GetCode())
       {
         case Vision::MARKER_1:
-          _activeID = 1;
+        case Vision::MARKER_LIGHTNINGBOLT_01:
+          _activeID = 0;
           break;
           
         case Vision::MARKER_INVERTED_1:
+        case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
+          _activeID = 1;
+          break;
+          
+        case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
           _activeID = 2;
           break;
+
+          /*
+        case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_000:
+          _activeID = 3;
+          break;
+          */
           
         default:
           _activeID = -1;

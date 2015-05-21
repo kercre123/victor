@@ -76,6 +76,7 @@ namespace Anki {
       // Motors
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
+      bool usingTreads_ = false;
       
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
@@ -89,6 +90,9 @@ namespace Anki {
       webots::PositionSensor* liftPosSensor_;
       webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
       
+      // Commanded wheel speeds
+      f32 leftWheelSpeedCmd_ = 0;
+      f32 rightWheelSpeedCmd_ = 0;
       
       // Gripper
       webots::Connector* con_;
@@ -149,6 +153,11 @@ namespace Anki {
       {
         // Inverse of speed-power formula in WheelController
         float speed_mm_per_s = power / 0.005f;
+       
+        if (usingTreads_) {
+          // Return linear speed m/s when usingTreads
+          return -speed_mm_per_s / 1000;
+        }
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
@@ -170,7 +179,20 @@ namespace Anki {
         for(int i = 0; i < HAL::MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
-            f32 pos = motorPosSensors_[i]->getValue();
+            f32 pos;
+            
+            if (usingTreads_) {
+              if (i == HAL::MOTOR_LEFT_WHEEL) {
+                pos = motorPrevPositions_[i] - leftWheelSpeedCmd_ * TIME_STEP;  // leftWheelSpeedCmd is in m/s
+              } else if (i == HAL::MOTOR_RIGHT_WHEEL) {
+                pos = motorPrevPositions_[i] - rightWheelSpeedCmd_ * TIME_STEP; // rightWheelSpeedCmd is in m/s
+              } else{
+                pos = motorPosSensors_[i]->getValue();
+              }
+            } else {
+              pos = motorPosSensors_[i]->getValue();
+            }
+            
             posDelta = pos - motorPrevPositions_[i];
             
             // Update position
@@ -240,14 +262,20 @@ namespace Anki {
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
+      webots::Node* robotNode = webotRobot_.getSelf();
+      usingTreads_ = robotNode->getField("useTreads")->getSFBool();
+      
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
-      leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
-      rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
+      if (!usingTreads_) {
+        leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
+        rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
+      }
+      
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
       
@@ -326,8 +354,10 @@ namespace Anki {
       }
       
       // Enable position measurements on head, lift, and wheel motors
-      leftWheelPosSensor_->enable(TIME_STEP);
-      rightWheelPosSensor_->enable(TIME_STEP);
+      if (!usingTreads_) {
+        leftWheelPosSensor_->enable(TIME_STEP);
+        rightWheelPosSensor_->enable(TIME_STEP);
+      }
       headPosSensor_->enable(TIME_STEP);
       liftPosSensor_->enable(TIME_STEP);
       
@@ -380,12 +410,11 @@ namespace Anki {
 
         // Check for nodes that have a 'blockColor' and 'active' field
         webots::Node* nd = rootChildren->getMFNode(n);
-        webots::Field* blockColorField = nd->getField("blockColor");
-        webots::Field* activeField = nd->getField("active");
-        webots::Field* activeIdField = nd->getField("activeID");
-        if (blockColorField && activeField && activeIdField) {
-          if (activeField->getSFBool()) {
-            const s32 activeID = activeIdField->getSFInt32();
+        webots::Field* nameField = nd->getField("name");
+        webots::Field* IdField = nd->getField("ID");
+        if (nameField && IdField) {
+          if (nameField->getSFString() == "LightCube") {
+            const s32 activeID = IdField->getSFInt32();
             
             if(blockIDs_.count(activeID) > 0) {
               printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);
@@ -519,10 +548,12 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-          leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
+          leftWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
+          leftWheelMotor_->setVelocity(leftWheelSpeedCmd_);
           break;
         case MOTOR_RIGHT_WHEEL:
-          rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
+          rightWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
+          rightWheelMotor_->setVelocity(rightWheelSpeedCmd_);
           break;
         case MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
@@ -565,23 +596,15 @@ namespace Anki {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
         case MOTOR_RIGHT_WHEEL:
-        {
-          return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
-        }
-
+          if (!usingTreads_) {
+            return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
+          }
+          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // it is already stored in mm/s
+          
         case MOTOR_LIFT:
-        {
-          return motorSpeeds_[MOTOR_LIFT];
-        }
-          
-        //case MOTOR_GRIP:
-        //  // TODO
-        //  break;
-          
         case MOTOR_HEAD:
-        {
-          return motorSpeeds_[MOTOR_HEAD];
-        }
+          return motorSpeeds_[motor];
           
         default:
           PRINT("ERROR (HAL::MotorGetSpeed) - Undefined motor type %d\n", motor);
@@ -597,17 +620,22 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          return motorPositions_[motor] * WHEEL_RAD_TO_MM;
+          if (!usingTreads_) {
+            return motorPositions_[motor] * WHEEL_RAD_TO_MM;
+          }
+          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // it is already stored in mm
+          
         case MOTOR_LIFT:
         case MOTOR_HEAD:
           return motorPositions_[motor];
-          break;
+          
         default:
           PRINT("ERROR (HAL::MotorGetPosition) - Undefined motor type %d\n", motor);
           return 0;
       }
       
-      return motorPositions_[motor];
+      return 0;
     }
     
     

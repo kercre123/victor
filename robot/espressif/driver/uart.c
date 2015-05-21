@@ -20,6 +20,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
+#include "osapi.h"
 #include "driver/uart_register.h"
 #include "mem.h"
 #include "os_type.h"
@@ -107,8 +108,8 @@ uart_config(uint8 uart_no)
     if (uart_no == UART0){
         //set rx fifo trigger
         WRITE_PERI_REG(UART_CONF1(uart_no),
-        ((50   & UART_RXFIFO_FULL_THRHD)  << UART_RXFIFO_FULL_THRHD_S) |
-        ((0x10 & UART_TXFIFO_EMPTY_THRHD) << UART_TXFIFO_EMPTY_THRHD_S));
+        ((64   & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
+        ((0x10 & UART_TXFIFO_EMPTY_THRHD)<<UART_TXFIFO_EMPTY_THRHD_S));
         //SET_PERI_REG_MASK( UART_CONF0(uart_no),UART_TX_FLOW_EN);  //add this sentense to add a tx flow control via MTCK( CTS )
         SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_TOUT_INT_ENA |UART_FRM_ERR_INT_ENA);
     }else{
@@ -312,7 +313,7 @@ static uint16 txRind = 0;
 static uint8 txBuf[TX_BUF_LEN];
 
 // Queue a packet for writing out the serial port
-STATUS uartQueuePacket(uint8* data, uint16 len)
+STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
 {
   uint16 available = TX_BUF_LEN - ((txWind - txRind) & TX_BUF_LENMSK);
   uint16 writeOne;
