@@ -726,6 +726,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		Debug.Log("DebugQuickValidate validated("+validated.Count+")");
 	}
 
+	public void Rebuild() {
+		Validated = false;
+		EndPreview ();
+	}
+
 	public void ValidateBuild() {
 		Validated = true;
 		Phase = LayoutTrackerPhase.DISABLED;

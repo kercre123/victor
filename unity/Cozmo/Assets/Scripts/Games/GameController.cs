@@ -405,11 +405,16 @@ public class GameController : MonoBehaviour {
 	}
 
 	public void PlayRequested() {
+		Debug.Log ("PlayRequested");
 		playRequested = true;
 	}
 
 	public void BuildRequested() {
+		Debug.Log ("BuildRequested");
 		buildRequested = true;
+		if (GameLayoutTracker.instance != null) {
+			GameLayoutTracker.instance.Rebuild ();
+		}
 	}
 
 	protected void PlayCountdownAudio(int secondsLeft) {
