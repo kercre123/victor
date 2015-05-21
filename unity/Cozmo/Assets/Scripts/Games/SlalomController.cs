@@ -441,13 +441,13 @@ public class SlalomController : GameController {
 				robot.lights[i].onColor = nextColor_uint;
 				robot.lights[i].offColor = 0;
 				robot.lights[i].onPeriod_ms = 500;
-				robot.lights[i].offPeriod_ms = 1000000;
+				robot.lights[i].offPeriod_ms = Robot.Light.FOREVER;
 			}
 			for(int i = 0; i < previousObstacle.lights.Length; ++i) {
 				nextObstacle.lights[i].onColor = nextColor_uint;
 				nextObstacle.lights[i].offColor = 0;
 				nextObstacle.lights[i].onPeriod_ms = 500;
-				nextObstacle.lights[i].offPeriod_ms = 1000000;
+				nextObstacle.lights[i].offPeriod_ms = ActiveBlock.Light.FOREVER;
 			}
 		}
 		else {
@@ -458,7 +458,7 @@ public class SlalomController : GameController {
 				else {
 					robot.lights[i].onColor = 0;
 				}
-				robot.lights[i].onPeriod_ms = 1000;
+				robot.lights[i].onPeriod_ms = Robot.Light.FOREVER;
 				robot.lights[i].offPeriod_ms = 0;
 			}
 		}
@@ -521,7 +521,7 @@ public class SlalomController : GameController {
 				}
 				else {
 					obstacle.lights[i].onColor = 0;
-					obstacle.lights[i].onPeriod_ms = 1000;
+					obstacle.lights[i].onPeriod_ms = ActiveBlock.Light.FOREVER;
 					obstacle.lights[i].offPeriod_ms = 0;
 				}
 
