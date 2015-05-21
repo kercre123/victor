@@ -288,6 +288,8 @@ public class SlalomController : GameController {
 	protected override void Update_PLAYING() {
 		base.Update_PLAYING();
 
+		if(currentObstacle == null) return;
+
 		if(Time.time > timeSinceLastCorner + 10) {
 			AudioManager.PlayAudioClip(instructionsSound, 0f, AudioManager.Source.Notification);
 			timeSinceLastCorner = Time.time;

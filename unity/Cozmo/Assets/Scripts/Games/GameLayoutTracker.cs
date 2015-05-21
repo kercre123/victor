@@ -797,7 +797,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(t == null) return Vector3.zero;
 		
 		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.blocks.FindAll(x => x.cubeBelow == null && x.Validated);
-		
+
+		if(layoutBlocksOnGround.Count == 0)
+		{
+			Debug.LogWarning( "layoutBlocksOnGround's count is 0" );
+			return Vector3.zero;
+		}
+
 		BuildInstructionsCube layoutBlock1 = layoutBlocksOnGround[0];
 		
 		float scaleToCozmo = CozmoUtil.BLOCK_LENGTH_MM / layoutBlock1.Size;
