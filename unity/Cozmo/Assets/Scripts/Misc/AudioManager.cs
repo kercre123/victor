@@ -137,6 +137,7 @@ public class AudioManager : MonoBehaviour
 		{
 			instance.audioSources[(int)source].Stop();
 			instance.audioSources[(int)source].volume = 0f;
+			instance.audioSources[(int)source].clip = null;
 		}
 		else // stop all sounds
 		{
@@ -144,6 +145,7 @@ public class AudioManager : MonoBehaviour
 			{
 				instance.audioSources[i].Stop();
 				instance.audioSources[i].volume = 0f;
+				instance.audioSources[(int)source].clip = null;
 			}
 		}
 	}
