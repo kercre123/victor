@@ -109,9 +109,10 @@ public class GameActions : MonoBehaviour
 		}
 		else
 		{
-			if( buttons.Length > 1 && robot.selectedObjects.Count == 1 )
+			if( buttons.Length > 2 && robot.selectedObjects.Count == 1 )
 			{
 				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
+				buttons[0].SetMode( ActionButton.Mode.ROLL, robot.selectedObjects[0] );
 			}
 			else
 			{
@@ -154,143 +155,80 @@ public class GameActions : MonoBehaviour
 
 	public virtual void PickUp( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		ActionButtonClick();
 
 		Debug.Log( "PickUp" );
 
-		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObject );
-			if(CozmoBusyPanel.instance != null)	{
+		robot.PickAndPlaceObject( selectedObject );
 
-				ObservedObject obj = selectedObject;
-				if(obj != null) {
-					string desc = "Cozmo is attempting to pick-up\n";
-
-					if(obj.isActive) {
-						desc += "an Active Block.";
-					}
-					else {
-						desc += "a ";
-
-						if(CozmoPalette.instance != null) {
-							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
-						}
-
-						desc += "Block.";
-					}
-
-
-					CozmoBusyPanel.instance.SetDescription(desc);
-				}
-			}
+		if( CozmoBusyPanel.instance != null ) 
+		{
+			string desc = null;
+			Description( "pick-up\n", selectedObject, ref desc );
+			CozmoBusyPanel.instance.SetDescription( desc );
 		}
 	}
 	
 	public virtual void Drop( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		ActionButtonClick();
 
 		Debug.Log( "Drop" );
 
-		if( robot != null ) {
-			robot.PlaceObjectOnGroundHere();
-			if(CozmoBusyPanel.instance != null)	{
-				
-				ObservedObject obj = robot.carryingObject;
-				if(obj != null) {
-					string desc = "Cozmo is attempting to drop\n";
-					
-					if(obj.isActive) {
-						desc += "an Active Block.";
-					}
-					else {
-						desc += "a ";
-						
-						if(CozmoPalette.instance != null) {
-							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
-						}
-						
-						desc += "Block.";
-					}
-					
-					CozmoBusyPanel.instance.SetDescription(desc);
-				}
-			}
+		robot.PlaceObjectOnGroundHere();
+
+		if( CozmoBusyPanel.instance != null ) 
+		{
+			string desc = null;
+			Description( "drop\n", selectedObject, ref desc );
+			CozmoBusyPanel.instance.SetDescription( desc );
 		}
 	}
 	
 	public virtual void Stack( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		ActionButtonClick();
 
 		Debug.Log( "Stack" );
 
-		if( robot != null ) {
-			robot.PickAndPlaceObject( selectedObject );
-			if(CozmoBusyPanel.instance != null)	{
-				
-				ObservedObject obj = robot.carryingObject;
-				if(obj != null) {
-					string desc = "Cozmo is attempting to stack\n";
-					
-					if(obj.isActive) {
-						desc += "an Active Block";
-					}
-					else {
-						desc += "a ";
-						
-						if(CozmoPalette.instance != null) {
-							desc += CozmoPalette.instance.GetNameForObjectType((int)obj.ObjectType) + " ";
-						}
-						
-						desc += "Block";
-					}
+		robot.PickAndPlaceObject( selectedObject );
 
-					ObservedObject target = selectedObject;
-					if(target != null) {
-						
-						desc += "\n on top of ";
-
-						if(target.isActive) {
-							desc += "an Active Block";
-						}
-						else {
-							desc += "a ";
-							
-							if(CozmoPalette.instance != null) {
-								desc += CozmoPalette.instance.GetNameForObjectType((int)target.ObjectType) + " ";
-							}
-							
-							desc += "Block";
-						}
-					}
-
-					desc += ".";
-
-					CozmoBusyPanel.instance.SetDescription(desc);
-				}
-			}
+		if( CozmoBusyPanel.instance != null ) 
+		{
+			string desc = null;
+			Description( "stack\n", robot.carryingObject, ref desc, string.Empty );
+			Description( "\n on top of ", selectedObject, ref desc );
+			CozmoBusyPanel.instance.SetDescription( desc );
 		}
 	}
 	
 	public virtual void Roll( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		ActionButtonClick();
 
 		Debug.Log( "Roll" );
+
+		robot.RollObject( selectedObject );
+
+		if( CozmoBusyPanel.instance != null ) 
+		{
+			string desc = null;
+			Description( "roll\n", selectedObject, ref desc );
+			CozmoBusyPanel.instance.SetDescription( desc );
+		}
 	}
 	
 	public virtual void Align( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		ActionButtonClick();
 
@@ -305,9 +243,9 @@ public class GameActions : MonoBehaviour
 
 		Debug.Log( "Change" );
 
-		if( robot != null && robot.carryingObject != null && robot.carryingObject.isActive )
+		if( selectedObject != null && selectedObject.isActive )
 		{
-			ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
+			ActiveBlock activeBlock = selectedObject as ActiveBlock;
 
 			int typeIndex = (int)activeBlock.mode + 1;
 			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
@@ -322,29 +260,38 @@ public class GameActions : MonoBehaviour
 
 	public virtual void Cancel( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || robot == null ) return;
 
 		CancelButtonClick();
 
 		Debug.Log( "Cancel" );
 		
-		if( robot != null )
-		{
-			robot.CancelAction();
-			//robot.selectedObjects.Clear();
-			//robot.SetHeadAngle();
-			//robot.targetLockedObject = null;
-		}
+		robot.CancelAction();
 	}
 
 	public virtual void Target( bool onRelease, ObservedObject selectedObject )
 	{
-		if( onRelease ) return;
+		if( onRelease || robot == null ) return;
 
-		if( robot != null )
+		robot.searching = true;
+		//Debug.Log( "On Press" );
+	}
+
+	private void Description( string verb, ObservedObject selectedObject, ref string description, string period = "." )
+	{
+		if( selectedObject == null || CozmoPalette.instance == null ) return;
+
+		if( description == null || description == string.Empty ) description = "Cozmo is attempting to ";
+
+		description += verb;
+				
+		if( selectedObject.isActive )
 		{
-			robot.searching = true;
-			//Debug.Log( "On Press" );
+			description += "an Active Block";
+		}
+		else
+		{
+			description += "a " + CozmoPalette.instance.GetNameForObjectType( (int)selectedObject.ObjectType ) + " Block" + period;
 		}
 	}
 }

@@ -177,6 +177,7 @@ public class Robot
 	private U2G.TrackHeadToObject TrackHeadToObjectMessage;
 	private U2G.FaceObject FaceObjectMessage;
 	private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
+	private U2G.RollObject RollObjectMessage;
 	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
 	private U2G.SetLiftHeight SetLiftHeightMessage;
@@ -343,8 +344,8 @@ public class Robot
 		TrackHeadToObjectMessage = new U2G.TrackHeadToObject();
 		FaceObjectMessage = new U2G.FaceObject();
 		PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
+		RollObjectMessage = new U2G.RollObject();
 		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
-
 		GotoPoseMessage = new U2G.GotoPose();
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
@@ -357,6 +358,7 @@ public class Robot
 		TraverseObjectMessage = new U2G.TraverseObject();
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
 		SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
+
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
 		for( int i = 0; i < lights.Length; ++i )
@@ -714,6 +716,19 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public void RollObject( ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false )
+	{
+		RollObjectMessage.objectID = selectedObject;
+		RollObjectMessage.usePreDockPose = System.Convert.ToByte( usePreDockPose );
+		RollObjectMessage.useManualSpeed = System.Convert.ToByte( useManualSpeed );
+
+		Debug.Log( "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed );
+		
+		RobotEngineManager.instance.Message.RollObject = RollObjectMessage;
+		RobotEngineManager.instance.SendMessage();
+
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
 
 	public void DropObjectAtPose( Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false )
 	{
