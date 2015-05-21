@@ -17,7 +17,7 @@ switch(matType)
     %% 4x4 Letters:
     gridSize = 4;
     markerSize_mm = 30;
-    matMarkerPath = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-assets/VisionMarkers/letters/withFiducials');
+    matMarkerPath = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-large-files/VisionMarkers/letters/withFiducials');
     fnames = {'A', 'B', 'C', 'D';
       '7', 'F', 'G', 'J';
       'K', 'L', 'M', 'Q';
@@ -36,15 +36,15 @@ switch(matType)
     
     gridSize = 4;
     markerSize_mm = 30;
-    matMarkerPath = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-assets/VisionMarkers/matGears/withThinFiducials');
+    matMarkerPath = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-large-files/VisionMarkers/matGears/withThinFiducials');
     fnames = {'00', '01', '02', '03';
       '04', '05', '06', '07';
       '08', '09', '10', '11';
       '12', '13', '14', '15'};
     fnames = cellfun(@(name)fullfile(matMarkerPath, ['MatGear' name '.png']), fnames, 'UniformOutput', false);
-    fnames{2,2} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-assets/VisionMarkers/matGears/withThinFiducials/inverted/MatGear08.png');
-    fnames{4,2} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-assets/VisionMarkers/matGears/withThinFiducials/inverted/MatGear04.png');
-    fnames{4,3} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-assets/VisionMarkers/matGears/withThinFiducials/inverted/MatGear15.png');
+    fnames{2,2} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-large-files/VisionMarkers/matGears/withThinFiducials/inverted/MatGear08.png');
+    fnames{4,2} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-large-files/VisionMarkers/matGears/withThinFiducials/inverted/MatGear04.png');
+    fnames{4,3} = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'products-cozmo-large-files/VisionMarkers/matGears/withThinFiducials/inverted/MatGear15.png');
     
     angles = zeros(4);
     fidColors = zeros(1,3);

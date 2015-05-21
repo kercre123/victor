@@ -1,4 +1,4 @@
-rootPath = '~/Code/cozmo-game/lib/anki/products-cozmo-assets/VisionMarkers/symbols/withThinFiducials';
+rootPath = '~/Code/cozmo-game/lib/anki/products-cozmo-large-files/VisionMarkers/symbols/withThinFiducials';
 fnames = getfnames(rootPath, 'goalFlag.png');
 if ~isdir(fullfile(rootPath, 'rotated'))
     mkdir(fullfile(rootPath, 'rotated'))
