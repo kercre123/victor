@@ -2059,7 +2059,8 @@ namespace Anki
             for (auto const & objectsByID : objectsByType.second) {
               
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
+                 object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
               {
                 //PRINT_INFO("currID: %d\n", block.first);
                 if (currSelectedObjectFound) {
@@ -2099,7 +2100,8 @@ namespace Anki
           for (auto const & objectsByType : objectsByFamily.second) {
             for (auto const & objectsByID : objectsByType.second) {
               const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
+                object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
               {
                 firstObject = objectsByID.first;
                 break;
