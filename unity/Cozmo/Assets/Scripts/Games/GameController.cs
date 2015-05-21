@@ -29,6 +29,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip gameStartingIn;
 	[SerializeField] protected int scoreToWin = 0;
 	[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
+	[SerializeField] private AudioClip starPop;
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
@@ -47,6 +48,9 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip loseSound;
 	[SerializeField] private AudioClip loseLoopSound;
 	[SerializeField] private Image[] starImages = new Image[STAR_COUNT];
+	[SerializeField] private float starPopInTime = .5f;
+	[SerializeField] private float maxStarPop = 1.5f;
+	[SerializeField] private float minStarPop = 0.3f;
 
 	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
 	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
@@ -354,9 +358,7 @@ public class GameController : MonoBehaviour {
 
 	protected virtual void Enter_RESULTS() {
 		Debug.Log(gameObject.name + " Enter_RESULTS");
-		for(int i = 0; i < starImages.Length; ++i) {
-			if(starImages[i] != null) starImages[i].gameObject.SetActive(win && i < stars);
-		}
+		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null) AudioManager.PlayAudioClip(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, true);
@@ -426,4 +428,60 @@ public class GameController : MonoBehaviour {
 		
 		lastTimerSeconds = secondsLeft;
 	}
+
+	IEnumerator PopInStars()
+	{
+		int num_pops = 0;
+		float lastPopTime = -1;
+
+		for(int i = 0; i < starImages.Length; ++i) 
+		{
+			if(starImages[i] != null) starImages[i].gameObject.SetActive(false);
+		}
+
+		
+		while(num_pops < stars + 1)
+		{
+			if( lastPopTime + starPopInTime < Time.realtimeSinceStartup )
+			{
+				// time to pop in a star
+				if( num_pops < starImages.Length )
+				{
+					starImages[num_pops].gameObject.SetActive(win && num_pops < stars);
+					starImages[num_pops].transform.localScale = new Vector3(minStarPop, minStarPop, 0);
+					if( win && num_pops < stars )
+					{
+						AudioManager.PlayOneShot(starPop);
+					}
+				}
+				lastPopTime = Time.realtimeSinceStartup;
+				num_pops++;
+			}
+			else
+			{
+				// lerp it in three phases:
+				/// 1) from minStarPop to maxStarPop
+				/// 2) from maxStarPop back to 1
+				float pop_time = Time.realtimeSinceStartup - lastPopTime;
+				float scale = 1;
+				if( pop_time < starPopInTime/2 )
+				{
+					// first half
+					scale = Mathf.Lerp(minStarPop, maxStarPop, pop_time/(starPopInTime/2));
+				}
+				else
+				{
+					// second half
+					scale = Mathf.Lerp(maxStarPop, 1, (pop_time-(starPopInTime/2))/(starPopInTime/2));
+				}
+				starImages[num_pops-1].transform.localScale = new Vector3(scale,scale,0);
+
+			}
+			yield return 0;
+		}
+		
+		yield return 0;
+	}
+
+
 }
