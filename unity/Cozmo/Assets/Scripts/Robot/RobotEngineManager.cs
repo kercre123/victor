@@ -259,6 +259,7 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 #endif
 		}
+		AudioManager.Stop();
 	}
 
 	public DisconnectionReason GetLastDisconnectionReason()

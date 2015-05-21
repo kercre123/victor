@@ -130,46 +130,25 @@ CozmoMat {
   xSize 2
   ySize 1.5
 }
-DEF Blue Block1x1 {
-  name "AngryFace_01"
+FlagCube {
   translation 0.15 0.22 0.0219969
   rotation 0 1 0 0
-  blockColor 0 0 0
-  markerImg "symbols/kitty.png"
+  useInverted FALSE
 }
-DEF Blue Block1x1 {
-  name "AngryFace_01"
+FlagCube {
   translation 0.15 -0.22 0.0219969
   rotation 0 1 0 0
-  blockColor 0 0 0
-  markerImg "symbols/bee.png"
+  useInverted TRUE
 }
-DEF ActiveBlock Block1x1 {
-  name "ActiveBlock"
+LightCube {
   translation 0.15 0.22 0.0659907
   rotation 0 1 0 0
-  blockColor 0.5 0.5 0.5
-  active TRUE
-  markerImg_front "letters/1.png"
-  markerImg_back "letters/2.png"
-  markerImg_left "letters/3.png"
-  markerImg_right "letters/4.png"
-  markerImg_top "letters/5.png"
-  markerImg_bottom "letters/6.png"
+  ID 1
 }
-DEF ActiveBlock2 Block1x1 {
-  name "ActiveBlock"
+LightCube {
   translation 0.15 -0.22 0.0659907
   rotation 0 1 0 0
-  blockColor 0.5 0.5 0.5
-  active TRUE
-  activeID 2
-  markerImg_front "letters/inverted/1.png"
-  markerImg_back "letters/inverted/2.png"
-  markerImg_left "letters/inverted/3.png"
-  markerImg_right "letters/inverted/4.png"
-  markerImg_top "letters/inverted/5.png"
-  markerImg_bottom "letters/inverted/6.png"
+  ID 2
 }
 BlockWorldComms {
 }

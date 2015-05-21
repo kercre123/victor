@@ -1553,10 +1553,10 @@ MonoBehaviour:
     sound: {fileID: 8300000, guid: 11ba49c66df394d618a30d25d9e793d1, type: 3}
   - time: 80
     sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
-  notificationAudio: {fileID: 8292068}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
   scoreToWin: 300
   starThresholds: 780000005a0000003c000000
+  starPop: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   textScore: {fileID: 11418322}
   textError: {fileID: 0}
   textState: {fileID: 11475706}
@@ -1590,6 +1590,9 @@ MonoBehaviour:
   - {fileID: 11444678}
   - {fileID: 11466030}
   - {fileID: 11444676}
+  starPopInTime: .5
+  maxStarPop: 1.5
+  minStarPop: .300000012
   text_finalTime: {fileID: 11409586}
   thereAndBackAgain: 1
   pointsPerLap: 100

@@ -1029,6 +1029,7 @@ MonoBehaviour:
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
   scoreToWin: 0
   starThresholds: 640000006801000094020000
+  starPop: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   textScore: {fileID: 11459736}
   textError: {fileID: 0}
   textState: {fileID: 11459704}
@@ -1052,16 +1053,19 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
   - {fileID: 8300000, guid: 2dd7342a043ed48d1977696ab867924f, type: 3}
   winLoopSounds:
-  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
-  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
-  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
-  - {fileID: 8300000, guid: a891d21b352164b53b36fed91977f60c, type: 3}
+  - {fileID: 8300000, guid: af54c6f91462947c181e039a8893841f, type: 3}
+  - {fileID: 8300000, guid: 77912d49af9384325a192d2191ec515e, type: 3}
+  - {fileID: 8300000, guid: 77912d49af9384325a192d2191ec515e, type: 3}
+  - {fileID: 8300000, guid: 77912d49af9384325a192d2191ec515e, type: 3}
   loseSound: {fileID: 0}
   loseLoopSound: {fileID: 0}
   starImages:
   - {fileID: 11468052}
   - {fileID: 11468054}
   - {fileID: 11468056}
+  starPopInTime: .5
+  maxStarPop: 1.5
+  minStarPop: .300000012
   locatorBeep: {fileID: 8300000, guid: 3a92989e3fa2e409796d5978fe2e138f, type: 3}
   foundBeep: {fileID: 8300000, guid: bad1754a058044af8add36bdd4c9181b, type: 3}
   collectedSound: {fileID: 8300000, guid: 56c69feea6a654597bb3cb73eeb184fa, type: 3}
