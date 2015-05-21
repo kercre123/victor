@@ -7,7 +7,7 @@
 #include <array>
 
 #define USE_EARLY_EXIT_DISTANCE_COMPUTATION 1
-#define USE_WEIGHTS 0
+#define USE_WEIGHTS 1
 
 namespace Anki {
 namespace Embedded {
