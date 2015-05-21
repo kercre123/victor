@@ -502,6 +502,7 @@ public class Robot
 	{
 		if( Time.time > ActiveBlock.Light.messageDelay )
 		{
+			//todo get rid of foreaches
 			foreach( ActiveBlock activeBlock in activeBlocks.Values )
 			{
 				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
@@ -889,6 +890,8 @@ public class Robot
 
 	private void SetAllBackpackLEDs() // should only be called from update loop
 	{
+		//Debug.Log ("frame("+Time.frameCount+") SetAllBackpackLEDs " + lights[0].onColor);
+
 		SetBackpackLEDsMessage.robotID = ID;
 
 		for( int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j )

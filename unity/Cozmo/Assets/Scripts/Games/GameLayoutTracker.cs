@@ -236,16 +236,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(lastValidPredictedDrop != validPredictedDrop) {
+			//Debug.Log ("validPredictedDrop("+validPredictedDrop+")");
 			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
 
-		if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
-
-
-
-		}
 	}
 
 	void OnDisable() {
@@ -550,7 +546,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				ObservedObject newObject = potentialObservedObjects[objectIndex];
 
-				Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
+				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
 
 				//cannot validate block in hand
 				if(newObject == robot.carryingObject) {
@@ -1162,7 +1158,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				float realDistance = ((Vector2)realOffset).magnitude;
 				
 				float distanceError = realDistance - idealDistance;
-				if(Mathf.Abs(distanceError) > ( distanceFudge * 0.9f )) {
+				if(Mathf.Abs(distanceError) > ( distanceFudge * 2f )) {
 					errorText = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
 					errorType = distanceError > 0f? LayoutErrorType.TOO_FAR : LayoutErrorType.TOO_CLOSE;
 					failDistanceCheck = true;
@@ -1177,14 +1173,14 @@ public class GameLayoutTracker : MonoBehaviour {
 		return !failDistanceCheck;
 	}
 
-	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string errorText, out LayoutErrorType errorType) {
+	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string errorText, out LayoutErrorType errorType, bool ignoreColor) {
 
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 
 		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObject == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
-			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon) );
+			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon, ignoreColor) );
 		
 			if(layoutBlockToStackUpon == null) {
 				//this is probably ok?  may need to do more processing to see if its ok
@@ -1215,7 +1211,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				return false;
 			}
 
-			if(robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode && !ignoreActiveColor) {
+			if(!ignoreColor && !ignoreActiveColor && robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode) {
 				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockMode+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;

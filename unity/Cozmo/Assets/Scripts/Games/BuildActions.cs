@@ -14,7 +14,7 @@ public class BuildActions : GameActions {
 	[SerializeField] AudioClip wrongStackVO;
 	[SerializeField] AudioClip wrongColorVO;
 
-	public override string STACK { get { return "Place"; } }
+	public override string STACK { get { return "Stack"; } }
 	public override string ALIGN { get { return "Play!"; } }
 
 	protected override void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
@@ -32,7 +32,9 @@ public class BuildActions : GameActions {
 		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
 		{
 			//stack is overwritten to be our assisted place command
-			buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects.Count > 0 ? robot.selectedObjects[0] : null );
+			if(robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn) {
+				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
+			}
 
 			//still allow normal dropping
 			buttons[0].SetMode( ActionButton.Mode.DROP, null );
@@ -73,27 +75,31 @@ public class BuildActions : GameActions {
 
 		//run validation prediction
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
-//		GameLayoutTracker tracker = GameLayoutTracker.instance;
-//		if(tracker != null) {
+		GameLayoutTracker tracker = GameLayoutTracker.instance;
+		if(tracker != null) {
 
-//			//drop location is one block forward and half a block up from robot's location
-//			//  cozmo space up being Vector3.forward in unity
-//			string error;
-//			GameLayoutTracker.LayoutErrorType errorType;
-//			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType)) {
-//				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
-//
-//				//set error text message
-//				tracker.SetMessage(error, Color.red);
-//
-//				PlaySoundsForErrorType(errorType);
-//
-//				return;
-//			}
-//		}
+			//drop location is one block forward and half a block up from robot's location
+			//  cozmo space up being Vector3.forward in unity
+			string error;
+			GameLayoutTracker.LayoutErrorType errorType;
+			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType)) {
+				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 
-		ActionButtonClick();
-		base.Drop(onRelease, selectedObject);
+				//set error text message
+				tracker.SetMessage(error, Color.red);
+
+				PlaySoundsForErrorType(errorType);
+
+				return;
+			}
+
+			if(tracker.AttemptAssistedPlacement()) {
+				ActionButtonClick();
+				return;
+			}
+
+		}
+
 	}
 
 	public override void Stack( bool onRelease, ObservedObject selectedObject )
@@ -105,13 +111,28 @@ public class BuildActions : GameActions {
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if(tracker != null) {
+			
+			//drop location is one block forward and half a block up from robot's location
+			//  cozmo space up being Vector3.forward in unity
+			string error;
+			GameLayoutTracker.LayoutErrorType errorType;
+			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType, true)) {
+				Debug.Log("PredictStackValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
+				
+				//set error text message
+				tracker.SetMessage(error, Color.red);
+				
+				PlaySoundsForErrorType(errorType);
+				
+				return;
+			}
 
 			if(tracker.AttemptAssistedPlacement()) {
 				ActionButtonClick();
 				return;
 			}
-
 		}
+
 	}
 
 	public override void Align( bool onRelease, ObservedObject selectedObject )

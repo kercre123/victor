@@ -3379,10 +3379,9 @@ MonoBehaviour:
   slideOutSound: {fileID: 8300000, guid: 56872f4de5dba4c4b97de279c2fe42b2, type: 3}
   background: {fileID: 173438}
   sheenAnimation: {fileID: 11115274}
-  actionsAvailableSound: {fileID: 8300000, guid: b0984141d167a45d49f684e08045829a,
+  actionsAvailableSound: {fileID: 8300000, guid: 6e74fe46dc2024ac6b5244ce2b2e0b4c,
     type: 3}
-  actionsNotAvailableSound: {fileID: 8300000, guid: efbfa7d08cf4a49a78bd5bc8d6eaa04c,
-    type: 3}
+  actionsNotAvailableSound: {fileID: 0}
 --- !u!114 &11473540
 MonoBehaviour:
   m_ObjectHideFlags: 1

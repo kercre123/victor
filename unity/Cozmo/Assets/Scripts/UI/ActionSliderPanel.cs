@@ -99,6 +99,8 @@ public class ActionSliderPanel : ActionPanel
 		base.OnDisable();
 
 		SetDefaults();
+
+		AudioManager.Stop(actionsAvailableSound);
 	}
 
 	private void SetDefaults()
@@ -150,9 +152,11 @@ public class ActionSliderPanel : ActionPanel
 				}
 				else {
 					sheenAnimation.Rewind();
+					sheenAnimation.Sample();
 					sheenAnimation.Stop ();
 				}
 			}
+
 
 		}
 		else {
@@ -165,12 +169,13 @@ public class ActionSliderPanel : ActionPanel
 		}
 
 		if (secondaryActionsAvailableLastFrame && !actionsAvailable) {
-			AudioManager.PlayOneShot(actionsNotAvailableSound, 0.25f);
+			AudioManager.PlayOneShot(actionsNotAvailableSound, 0f, 1f, 0.25f);
+			AudioManager.Stop(actionsAvailableSound);
 		}
 		else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
-			AudioManager.PlayOneShot(actionsAvailableSound, 0.25f);
+			AudioManager.PlayAudioClip(actionsAvailableSound, 0f, true, false, AudioManager.Source.Robot, 1f, 0.25f);
 		}
-
+		
 		secondaryActionsAvailableLastFrame = actionsAvailable;
 	}
 
