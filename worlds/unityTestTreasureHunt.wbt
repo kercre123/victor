@@ -129,25 +129,13 @@ CozmoMat {
   xSize 2
   ySize 2
 }
-DEF ActiveBlock Block1x1 {
-  name "ActiveBlock"
+LightCube {
   translation 0.20667 -0.053271 0.0219957
   rotation 0 0 1 1.5708
-  blockColor 0.5 0.5 0.5
-  active TRUE
-  markerImg_front "letters/1.png"
-  markerImg_back "letters/2.png"
-  markerImg_left "letters/3.png"
-  markerImg_right "letters/4.png"
-  markerImg_top "letters/5.png"
-  markerImg_bottom "letters/6.png"
 }
-DEF BullsEyeBlock Block1x1 {
-  name "AngryFace_01"
+TargetCube {
   translation 0.209134 0.0160995 0.0219957
   rotation 0.302681 0.572133 -0.762265 1.25592e-05
-  blockColor 0 0 0
-  markerImg "symbols/bullsEye2.png"
 }
 BlockWorldComms {
 }
