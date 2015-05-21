@@ -663,21 +663,21 @@ namespace Anki {
       {
         case Vision::MARKER_1:
         case Vision::MARKER_LIGHTNINGBOLT_01:
-          _activeID = 1;
+          _activeID = 0;
           break;
           
         case Vision::MARKER_INVERTED_1:
         case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
-          _activeID = 2;
+          _activeID = 1;
           break;
           
         case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
-          _activeID = 3;
+          _activeID = 2;
           break;
 
           /*
         case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_000:
-          _activeID = 4;
+          _activeID = 3;
           break;
           */
           

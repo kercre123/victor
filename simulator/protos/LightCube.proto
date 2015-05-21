@@ -4,7 +4,7 @@ PROTO LightCube [
   field SFString   name         "LightCube"
   field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
-  field SFInt32    ID           1
+  field SFInt32    ID           0
 ]
 {
   Block1x1 {
@@ -12,21 +12,21 @@ PROTO LightCube [
     translation IS translation
     rotation IS rotation
     blockColor 0.5 0.5 0.5
-    %{ if fields.ID.value == 1 then }%
+    %{ if fields.ID.value == 0 then }%
       markerImg_front  "lightCubes/lightningBolt_01.png"
       markerImg_back   "lightCubes/lightningBolt_02.png"
       markerImg_left   "lightCubes/lightningBolt_03.png"
       markerImg_right  "lightCubes/lightningBolt_04.png"
       markerImg_top    "lightCubes/lightningBolt_05.png"
       markerImg_bottom "lightCubes/lightningBolt_06.png"        
-    %{ elseif fields.ID.value == 2 then }%
+    %{ elseif fields.ID.value == 1 then }%
       markerImg_front  "lightCubes/lightningBoltHollow_01.png"
       markerImg_back   "lightCubes/lightningBoltHollow_02.png"
       markerImg_left   "lightCubes/lightningBoltHollow_03.png"
       markerImg_right  "lightCubes/lightningBoltHollow_04.png"
       markerImg_top    "lightCubes/lightningBoltHollow_05.png"
       markerImg_bottom "lightCubes/lightningBoltHollow_06.png"
-    %{ elseif fields.ID.value == 3 then }%
+    %{ elseif fields.ID.value == 2 then }%
       markerImg_front  "lightCubes/inverted/lightningBolt_01.png"
       markerImg_back   "lightCubes/inverted/lightningBolt_02.png"
       markerImg_left   "lightCubes/inverted/lightningBolt_03.png"
