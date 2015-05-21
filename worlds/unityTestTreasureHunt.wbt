@@ -71,7 +71,7 @@ WorldInfo {
       material1 "cmat_block"
       material2 "cmat_block"
       coulombFriction [
-        5000
+        10
       ]
       bounce 0.001
     }
@@ -79,7 +79,7 @@ WorldInfo {
       material1 "cmat_ramp"
       material2 "cmat_block"
       coulombFriction [
-        5000
+        10
       ]
       bounce 0.001
     }
