@@ -28,7 +28,7 @@ const f32 DRIVE_CENTER_OFFSET = -15.f;
 // Cozmo v3.2, with clutch-less lift and stronger motor
 // These are heights of the wrist joint.
 const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
-const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
+const f32 LIFT_HEIGHT_HIGHDOCK = 76.5f;
 const f32 LIFT_HEIGHT_CARRY    = 92.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 

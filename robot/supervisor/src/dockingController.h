@@ -69,10 +69,6 @@ namespace Anki {
       // relative to the pose of the robot at the time "docking" started.
       // No vision markers are required as this is a "blind docking" maneuver.
       void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed = false);
-      
-      // Keep lift crossbar just below the camera's field of view.
-      // Required for docking to high blocks.
-      void TrackCamWithLift(bool on);
 
       // If a marker pose was received from VisionSystem,
       // returns true along with that pose.
