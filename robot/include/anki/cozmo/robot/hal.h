@@ -420,8 +420,16 @@ namespace Anki
        * @param length [in] The number of bytes to be sent
        * @return true if the packet was queued for transmission, false if it couldn't be queued.
        */
-      bool RadioSendPacket(const void *buffer, u32 length);
+      bool RadioSendPacket(const void *buffer, const u32 length);
 
+      /** Wrapper method for sending messages NOT PACKETS
+       * @param msgID The ID (tag) of the message to be sent
+       * @param buffer A pointer to the message to be sent
+       * @param reliable Specifify if the message should be transferred reliably. Default true.
+       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+       * @return True if sucessfully queued, false otherwise
+       */
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

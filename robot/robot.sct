@@ -20,8 +20,7 @@ LR_IROM1 0x08000000 0x00200000  {    ; load region size_region
   }
 
 ; Default for most variables/etc - not supporting DMA
-  RW_IRAM2_PROGRAM_SCRATCH 0x10000000 0x0000C800  {
+  RW_IRAM2_PROGRAM_SCRATCH 0x10000000 0x0000F800  {
     .ANY (+RW +ZI)
   }
 }
-

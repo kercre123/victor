@@ -157,7 +157,7 @@ namespace Anki {
 
               // Copy message contents to buffer
               std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
-              retVal = msgID;
+              retVal = dataLen;
 
               // Shift recvBuf contents down
               const u32 entireMsgSize = headerSize + 4 + dataLen;

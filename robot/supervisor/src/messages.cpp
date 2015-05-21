@@ -5,12 +5,9 @@
 
 #include "anki/common/robot/array2d.h"
 
-extern "C"
-{
 #include "embedded/transport/IUnreliableTransport.h"
 #include "embedded/transport/IReceiver.h"
 #include "embedded/transport/reliableTransport.h"
-}
 
 #include "messages.h"
 #include "localization.h"
@@ -53,7 +50,6 @@ namespace Anki {
         };
 
         u8 pktBuffer_[2048];
-        u8 msgBuffer_[256];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
@@ -95,7 +91,7 @@ namespace Anki {
       Result Init()
       {
         ReliableTransport_Init();
-        ReliableConnection_Init(&connection, void); // We only have one connection so dest pointer is superfluous
+        ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
         return RESULT_OK;
       }
 
@@ -107,13 +103,7 @@ namespace Anki {
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
-          //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
-
           (*LookupTable_[msgID].dispatchFcn)(buffer);
-
-          // Treat any message as a ping
-          lastPingTime_ = HAL::GetTimeStamp();
-          //PRINT("Received message, kicking ping time at %d\n", lastPingTime_);
         }
 
         if(lookForID_ != NO_MESSAGE_ID) {
@@ -305,20 +295,25 @@ namespace Anki {
         }
       }
 
-      Receiver_ReceiveData(uint8* buffer, uint16 bufferSize, ReliableConnection* connection)
+      void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
       {
-        ID msgID;
+        const ID msgID = static_cast<Messages::ID>(buffer[0]);
+        const u32 size = Messages::GetSize(msgID);
 
-        while((msgID = HAL::RadioGetNextMessage(buffer)) != NO_MESSAGE_ID)
+        if ((size + 1) == bufferSize)
         {
-          ProcessMessage(msgID, buffer);
+          ProcessMessage(msgID, buffer+1);
+        }
+        else
+        {
+          PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
         }
       }
 
       void Receiver_OnConnectionRequest(ReliableConnection* connection)
       {
-        PRINT("ReliableTransport new connection\n")
-        ReliableConnection_Init(connection, void); // Re-initalize the connection
+        PRINT("ReliableTransport new connection\n");
+        ReliableConnection_Init(connection, NULL); // Re-initalize the connection
         ReliableTransport_FinishConnection(connection); // Accept the connection
         HAL::RadioUpdateState(1, 0);
       }
@@ -336,9 +331,15 @@ namespace Anki {
       }
 
       // Shim for reliable transport
-      bool UnreliableTransport_SendPacket(uint8* buffer, uint16 bufferSize)
+      bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
       {
-        return RadioSendPacket(buffer, bufferSize);
+        return HAL::RadioSendPacket(buffer, bufferSize);
+      }
+
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      {
+        const u32 size = Messages::GetSize(msgID);
+        return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
       }
 
       void ProcessClearPathMessage(const ClearPath& msg) {
@@ -571,12 +572,6 @@ namespace Anki {
       void ProcessFaceTrackingMessage(const FaceTracking& msg)
       {
       }
-
-      void ProcessPingMessage(const Ping& msg)
-      {
-        lastPingTime_ = HAL::GetTimeStamp();
-      }
-
 
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
@@ -1024,7 +1019,6 @@ namespace Anki {
       void ResetInit()
       {
         initReceived_ = false;
-        lastPingTime_ = 0;
 
         imageSendMode_ = ISM_STREAM;
         imageSendResolution_ = Vision::CAMERA_RES_QVGA;
