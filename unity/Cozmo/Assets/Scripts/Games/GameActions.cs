@@ -287,7 +287,7 @@ public class GameActions : MonoBehaviour
 				
 		if( selectedObject.isActive )
 		{
-			description += "an Active Block";
+			description += "an Active Block" + period;
 		}
 		else
 		{
