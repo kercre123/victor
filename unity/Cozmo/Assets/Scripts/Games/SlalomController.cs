@@ -597,12 +597,12 @@ public class SlalomController : GameController {
 			obstacle.relativeMode = 0;
 			
 			for(int i = 0; i < obstacle.lights.Length; ++i) {
-				obstacle.SetLEDs(CozmoPalette.ColorToUInt(Color.red));
+				obstacle.SetLEDs(CozmoPalette.ColorToUInt(Color.red), 0, byte.MaxValue, 250, 250);
 			}
 		}
 		
 		for(int i = 0; i < robot.lights.Length; ++i) {
-			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.red));
+			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.red), 0, byte.MaxValue, 250, 250);
 		}
 	}
 

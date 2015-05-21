@@ -189,6 +189,7 @@ public class Robot
 	private U2G.TurnInPlace TurnInPlaceMessage;
 	private U2G.TraverseObject TraverseObjectMessage;
 	private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
+	private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
 
 	private ObservedObject _carryingObject;
 	public ObservedObject carryingObject
@@ -355,6 +356,7 @@ public class Robot
 		TurnInPlaceMessage = new U2G.TurnInPlace();
 		TraverseObjectMessage = new U2G.TraverseObject();
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
+		SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
 		for( int i = 0; i < lights.Length; ++i )
@@ -914,5 +916,15 @@ public class Robot
 
 		SetLastLEDs();
 		Light.messageDelay = Time.time + GameController.MessageDelay;
+	}
+
+	public void SetObjectAdditionAndDeletion( bool enableAddition, bool enableDeletion )
+	{
+		SetObjectAdditionAndDeletionMessage.robotID = ID;
+		SetObjectAdditionAndDeletionMessage.enableAddition = enableAddition;
+		SetObjectAdditionAndDeletionMessage.enableDeletion = enableDeletion;
+
+		RobotEngineManager.instance.Message.SetObjectAdditionAndDeletion = SetObjectAdditionAndDeletionMessage;
+		RobotEngineManager.instance.SendMessage();
 	}
 }
