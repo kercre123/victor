@@ -243,6 +243,11 @@ public class SlalomController : GameController {
 			previousObstacle = obstacles[index];
 		}
 
+		if(currentObstacle == null) {
+			Debug.LogError("currentObstacle is null");
+			return;
+		}
+
 		//Debug.Log("PrepareGameForPlay currentCorner("+currentCorner+") nextCorner("+nextCorner+") onNextObstacle("+onNextObstacle+")");
 
 		Vector2 startToFirst = currentObstacle.WorldPosition - startingPos;
@@ -431,10 +436,16 @@ public class SlalomController : GameController {
 	{
 		if(corner == 0) {
 			for(int i = 0; i < robot.lights.Length; ++i) {
-				robot.lights[i].onColor = currentColor_unit;
+				robot.lights[i].onColor = nextColor_uint;
 				robot.lights[i].offColor = 0;
 				robot.lights[i].onPeriod_ms = 500;
 				robot.lights[i].offPeriod_ms = 1000000;
+			}
+			for(int i = 0; i < previousObstacle.lights.Length; ++i) {
+				nextObstacle.lights[i].onColor = nextColor_uint;
+				nextObstacle.lights[i].offColor = 0;
+				nextObstacle.lights[i].onPeriod_ms = 500;
+				nextObstacle.lights[i].offPeriod_ms = 1000000;
 			}
 		}
 		else {

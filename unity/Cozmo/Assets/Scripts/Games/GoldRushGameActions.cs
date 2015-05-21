@@ -113,15 +113,4 @@ public class GoldRushGameActions : GameActions {
 			goldController.BeginAutoDepositing();
 		}
 	}
-
-	public override void Stack( bool onRelease, ObservedObject selectedObject )
-	{
-		if( robot == null || !onRelease ) return;
-
-		ActionButtonClick();
-
-		robot.PickAndPlaceObject( selectedObject );
-		goldController.goldCollectingObject = selectedObject;
-		Debug.Log ("gold collector id: " + goldController.goldCollectingObject);
-	}
 }
