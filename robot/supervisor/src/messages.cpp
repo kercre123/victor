@@ -27,6 +27,16 @@
 
 namespace Anki {
   namespace Cozmo {
+    ReliableConnection connection;
+
+    namespace HAL {
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      {
+        const u32 size = Messages::GetSize(msgID);
+        return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
+      }
+    }
+
     namespace Messages {
 
       namespace {
@@ -72,8 +82,6 @@ namespace Anki {
         // Used to avoid repeating a send.
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
-
-        ReliableConnection connection;
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -293,53 +301,6 @@ namespace Anki {
           ReliableTransport_Disconnect(&connection);
           HAL::RadioUpdateState(0, 0);
         }
-      }
-
-      void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
-      {
-        const ID msgID = static_cast<Messages::ID>(buffer[0]);
-        const u32 size = Messages::GetSize(msgID);
-
-        if ((size + 1) == bufferSize)
-        {
-          ProcessMessage(msgID, buffer+1);
-        }
-        else
-        {
-          PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
-        }
-      }
-
-      void Receiver_OnConnectionRequest(ReliableConnection* connection)
-      {
-        PRINT("ReliableTransport new connection\n");
-        ReliableConnection_Init(connection, NULL); // Re-initalize the connection
-        ReliableTransport_FinishConnection(connection); // Accept the connection
-        HAL::RadioUpdateState(1, 0);
-      }
-
-      void Receiver_OnConnected(ReliableConnection* connection)
-      {
-        PRINT("ReliableTransport connection completed\n");
-        HAL::RadioUpdateState(1, 0);
-      }
-
-      void Receiver_OnDisconnect(ReliableConnection* connection)
-      {
-        PRINT("ReliableTransport disconnected\n");
-        HAL::RadioUpdateState(0, 0);
-      }
-
-      // Shim for reliable transport
-      bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
-      {
-        return HAL::RadioSendPacket(buffer, bufferSize);
-      }
-
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
-      {
-        const u32 size = Messages::GetSize(msgID);
-        return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
       }
 
       void ProcessClearPathMessage(const ClearPath& msg) {
@@ -1103,3 +1064,44 @@ namespace Anki {
     } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki
+
+// Shim for reliable transport
+bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
+{
+  return Anki::Cozmo::HAL::RadioSendPacket(buffer, bufferSize);
+}
+
+void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
+{
+  const Anki::Cozmo::Messages::ID msgID = static_cast<Anki::Cozmo::Messages::ID>(buffer[0]);
+  const u32 size = Anki::Cozmo::Messages::GetSize(msgID);
+
+  if ((size + 1) == bufferSize)
+  {
+    Anki::Cozmo::Messages::ProcessMessage(msgID, buffer+1);
+  }
+  else
+  {
+    Anki::Cozmo::PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
+  }
+}
+
+void Receiver_OnConnectionRequest(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport new connection\n");
+  ReliableConnection_Init(connection, NULL); // Re-initalize the connection
+  ReliableTransport_FinishConnection(connection); // Accept the connection
+  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+}
+
+void Receiver_OnConnected(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
+  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+}
+
+void Receiver_OnDisconnect(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+  Anki::Cozmo::HAL::RadioUpdateState(0, 0);
+}
