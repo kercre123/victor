@@ -189,12 +189,12 @@ DEF ActiveBlock1 Block1x1 {
   translation -0.100 0.120 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/lightningBolt_000.png"
-  markerImg_back   "lightCubes/lightningBolt_015.png"
-  markerImg_left   "lightCubes/lightningBolt_030.png"
-  markerImg_right  "lightCubes/lightningBolt_045.png"
-  markerImg_top    "lightCubes/lightningBolt_060.png"
-  markerImg_bottom "lightCubes/lightningBolt_075.png"        
+  markerImg_front  "lightCubes/lightningBolt_01.png"
+  markerImg_back   "lightCubes/lightningBolt_02.png"
+  markerImg_left   "lightCubes/lightningBolt_03.png"
+  markerImg_right  "lightCubes/lightningBolt_04.png"
+  markerImg_top    "lightCubes/lightningBolt_05.png"
+  markerImg_bottom "lightCubes/lightningBolt_06.png"        
   active TRUE 
   activeID 1
 }
@@ -203,12 +203,12 @@ DEF ActiveBlock2 Block1x1 {
   translation -0.120 0.070 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/lightningBoltHollow_000.png"
-  markerImg_back   "lightCubes/lightningBoltHollow_015.png"
-  markerImg_left   "lightCubes/lightningBoltHollow_030.png"
-  markerImg_right  "lightCubes/lightningBoltHollow_045.png"
-  markerImg_top    "lightCubes/lightningBoltHollow_060.png"
-  markerImg_bottom "lightCubes/lightningBoltHollow_075.png"   
+  markerImg_front  "lightCubes/lightningBoltHollow_01.png"
+  markerImg_back   "lightCubes/lightningBoltHollow_02.png"
+  markerImg_left   "lightCubes/lightningBoltHollow_03.png"
+  markerImg_right  "lightCubes/lightningBoltHollow_04.png"
+  markerImg_top    "lightCubes/lightningBoltHollow_05.png"
+  markerImg_bottom "lightCubes/lightningBoltHollow_06.png"   
   active TRUE 
   activeID 2
 }
@@ -217,12 +217,12 @@ DEF ActiveBlock3 Block1x1 {
   translation -0.154 0.014 0.022
   rotation 0 0 1 0.23
   blockColor 0.5 0.85 0.5
-  markerImg_front  "lightCubes/lightningBoltMirrored_000.png"
-  markerImg_back   "lightCubes/lightningBoltMirrored_015.png"
-  markerImg_left   "lightCubes/lightningBoltMirrored_030.png"
-  markerImg_right  "lightCubes/lightningBoltMirrored_045.png"
-  markerImg_top    "lightCubes/lightningBoltMirrored_060.png"
-  markerImg_bottom "lightCubes/lightningBoltMirrored_075.png"   
+  markerImg_front  "lightCubes/inverted/lightningBolt_01.png"
+  markerImg_back   "lightCubes/inverted/lightningBolt_02.png"
+  markerImg_left   "lightCubes/inverted/lightningBolt_03.png"
+  markerImg_right  "lightCubes/inverted/lightningBolt_04.png"
+  markerImg_top    "lightCubes/inverted/lightningBolt_05.png"
+  markerImg_bottom "lightCubes/inverted/lightningBolt_06.png"   
   active TRUE 
   activeID 3
 }
