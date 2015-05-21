@@ -273,6 +273,8 @@ public class GameController : MonoBehaviour {
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
+
+		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 
 	protected virtual void Update_PRE_GAME() {
@@ -350,6 +352,8 @@ public class GameController : MonoBehaviour {
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
 		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
+
+		if(robot != null) robot.SetObjectAdditionAndDeletion(true, true);
 	}
 
 	protected virtual void Enter_RESULTS() {

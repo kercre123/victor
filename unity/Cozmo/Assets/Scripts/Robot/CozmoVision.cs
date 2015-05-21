@@ -172,7 +172,6 @@ public class CozmoVision : MonoBehaviour
 			robot.RequestImage( RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM );
 			robot.SetHeadAngle();
 			robot.SetLiftHeight( 0f );
-			robot.SetObjectAdditionAndDeletion( true, false );
 			imageRequested = true;
 		}
 	}
