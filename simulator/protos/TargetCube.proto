@@ -4,7 +4,7 @@ PROTO TargetCube [
   field SFString   name         "TargetCube"
   field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
-  field SFBool     useInverted  false
+  field SFBool     useInverted  FALSE
 ]
 {
   Block1x1 {
