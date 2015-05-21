@@ -44,7 +44,7 @@ namespace MSP_Input {
 			//
 			if (!SystemInfo.supportsGyroscope) {
 				forceAccelerometer = true;
-				Debug.Log("No gyroscope available: forcing accelerometer");
+				if(!Application.isEditor) Debug.Log("No gyroscope available: forcing accelerometer");
 			}
 			//
 			if (SystemInfo.supportsGyroscope && !forceAccelerometer) {

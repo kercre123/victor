@@ -306,7 +306,7 @@ public class Robot
 				DriveWheels(0,0); 
 			}
 
-			Debug.Log("isBusy = " + value);
+			//Debug.Log("isBusy = " + value);
 		}
 	}
 
@@ -401,14 +401,14 @@ public class Robot
 		if( objectPertinenceOverride >= 0 )
 		{
 			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
-			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
+			//Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
 		}
 
 		float objectPertinenceRangeOverride = OptionsScreen.GetObjectPertinenceRangeOverride();
 		if( objectPertinenceRangeOverride >= 0 )
 		{
 			objectPertinenceRange = objectPertinenceRangeOverride;
-			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
+			//Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
 		}
 	}
 

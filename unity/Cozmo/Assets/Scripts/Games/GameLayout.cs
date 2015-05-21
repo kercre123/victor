@@ -31,12 +31,12 @@ public class GameLayout : MonoBehaviour {
 				if( flat.magnitude > 0.1f) continue;
 
 				if(offset.y > 0.1f) {
-					Debug.Log ("GameLayout " + blocks[j].gameObject.name + " stacked on " + blocks[i].gameObject.name);
+					//Debug.Log ("GameLayout " + blocks[j].gameObject.name + " stacked on " + blocks[i].gameObject.name);
 					blocks[j].cubeBelow = blocks[i];
 					blocks[i].cubeAbove = blocks[j];
 				}
 				else if(offset.y < -0.1f) {
-					Debug.Log ("GameLayout " + blocks[i].gameObject.name + " stacked on " + blocks[j].gameObject.name);
+					//Debug.Log ("GameLayout " + blocks[i].gameObject.name + " stacked on " + blocks[j].gameObject.name);
 					blocks[j].cubeAbove = blocks[i];
 					blocks[i].cubeBelow = blocks[j];
 				}

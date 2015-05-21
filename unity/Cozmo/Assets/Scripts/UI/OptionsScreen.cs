@@ -42,7 +42,7 @@ public class OptionsScreen : MonoBehaviour {
 
 	void Awake () {
 		if(instance != null) {
-			Debug.Log("OptionsScreen destroying self, because instance already exists.");
+			//Debug.Log("OptionsScreen destroying self, because instance already exists.");
 			GameObject.Destroy(gameObject);
 			return;
 		}
