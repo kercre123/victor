@@ -224,18 +224,23 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(Phase == LayoutTrackerPhase.DISABLED) return;
 
 		bool validPredictedDrop = false;
+		bool shouldBeStackedInstedOfDropped = false;
 
 		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
 			string error;
 			GameLayoutTracker.LayoutErrorType errorType;
-			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, false);
 
-			if(lastValidPredictedDrop != validPredictedDrop) {
+			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
+			
+			if(!shouldBeStackedInstedOfDropped && lastValidPredictedDrop != validPredictedDrop) {
 				AudioManager.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
 			}
 		}
 
-		if(lastValidPredictedDrop != validPredictedDrop) {
+		if (shouldBeStackedInstedOfDropped && lastValidPredictedDrop) {
+			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.clear));
+		}
+		else if(lastValidPredictedDrop != validPredictedDrop) {
 			//Debug.Log ("validPredictedDrop("+validPredictedDrop+")");
 			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
 		}
@@ -420,32 +425,16 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 			case RobotActionType.PICKUP_OBJECT_LOW:
 			case RobotActionType.PICKUP_OBJECT_HIGH:
-//				BuildInstructionsCube layoutCubeMatchingCarried = null;
-//				if(robot.carryingObject >= 0) {
-//					for(int i=0;i<currentLayout.blocks.Count;i++) {
-//						if(robot.carryingObject.isActive && currentLayout.blocks[i].objectFamily != 3) continue;
-//						if(!robot.carryingObject.isActive && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
-//						layoutCubeMatchingCarried = currentLayout.blocks[i];
-//						break;
-//					}
-//					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockMode) {
-//						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockMode.ToString()+".", Color.white);
-//					}
-//					else if(layoutCubeMatchingCarried.cubeBelow == null) {
-//						if(validCount == 0) {
-//							screenMessage.ShowMessage("Good.  Now drop this block anywhere to start the build.", Color.white);
-//						}
-//						else {
-//							screenMessage.ShowMessage("Good.  Now drop this block the correct distance from the first block.", Color.white);
-//						}
-//					}
-//					else {
-//						screenMessage.ShowMessage("Good.  Now stack this block on a correct block.", Color.white);
-//					}
-//				}
-//				else {
-//					screenMessage.KillMessage();
-//				}
+
+				if(robot.carryingObject.isActive) {
+					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
+					BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find (x => !x.Validated && x.cubeBelow != null && x.objectFamily == 3);
+					if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
+						activeBlock.mode = layoutBlockToStack.activeBlockMode;
+						activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+					}
+				}
+
 				validate = true;
 				break;
 			case RobotActionType.PLACE_OBJECT_LOW:
@@ -1105,9 +1094,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 
-	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
+	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
+		approveStandardDrop = false;
 
 		if(robot == null) return false;
 		if(objectToDrop == null) return false;
@@ -1119,7 +1109,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			//error = "No block of this type should be placed here.";
-			return approveUnecessaryDropping;
+			approveStandardDrop = true;
+			return false;
 		}
 
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));

@@ -73,6 +73,7 @@ public class BuildActions : GameActions {
 	{
 		if( robot == null || !onRelease ) return;
 
+		bool approveStandardDrop = true;
 		//run validation prediction
 		// if it will fail layout contraints, abort here and throw audio and text about why its a bad drop
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
@@ -82,24 +83,29 @@ public class BuildActions : GameActions {
 			//  cozmo space up being Vector3.forward in unity
 			string error;
 			GameLayoutTracker.LayoutErrorType errorType;
-			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType)) {
+
+			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType, out approveStandardDrop)) {
 				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 
-				//set error text message
-				tracker.SetMessage(error, Color.red);
+				if(!approveStandardDrop) {
+					//set error text message
+					tracker.SetMessage(error, Color.red);
 
-				PlaySoundsForErrorType(errorType);
+					PlaySoundsForErrorType(errorType);
 
-				return;
+					return;
+				}
 			}
-
-			if(tracker.AttemptAssistedPlacement()) {
+			else if(tracker.AttemptAssistedPlacement()) {
 				ActionButtonClick();
 				return;
 			}
 
 		}
 
+		//this isn't a block that belongs on the ground, but we'll let the user drop it in case they want to switch to another block
+		ActionButtonClick();
+		base.Drop (onRelease, selectedObject);
 	}
 
 	public override void Stack( bool onRelease, ObservedObject selectedObject )
@@ -126,13 +132,10 @@ public class BuildActions : GameActions {
 				
 				return;
 			}
-
-			if(tracker.AttemptAssistedPlacement()) {
-				ActionButtonClick();
-				return;
-			}
 		}
 
+		ActionButtonClick();
+		base.Stack(onRelease, selectedObject);
 	}
 
 	public override void Align( bool onRelease, ObservedObject selectedObject )
