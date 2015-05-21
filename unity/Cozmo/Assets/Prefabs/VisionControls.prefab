@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &114530
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22414530}
+  m_Layer: 5
+  m_Name: Hints
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &130388
 GameObject:
   m_ObjectHideFlags: 0
@@ -949,6 +964,8 @@ GameObject:
   - 224: {fileID: 22473494}
   - 222: {fileID: 22273470}
   - 114: {fileID: 11473496}
+  - 114: {fileID: 11415274}
+  - 111: {fileID: 11115274}
   m_Layer: 5
   m_Name: Image_HintCenter
   m_TagString: Untagged
@@ -1095,7 +1112,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &173488
 GameObject:
   m_ObjectHideFlags: 1
@@ -1130,7 +1147,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &173492
 GameObject:
   m_ObjectHideFlags: 1
@@ -1196,7 +1213,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &173500
 GameObject:
   m_ObjectHideFlags: 1
@@ -1469,6 +1486,39 @@ AudioSource:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
+--- !u!111 &11115274
+Animation:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 173470}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Animation: {fileID: 7400000, guid: e81285a6b8ab24236aac247c68113800, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: e81285a6b8ab24236aac247c68113800, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 0
+  m_AnimatePhysics: 0
+  m_CullingType: 0
+--- !u!114 &11415274
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 173470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3a2ce1002a7443de84b126fd92f47bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uv: {x: 0, y: 0}
+  color: {r: 1, g: 1, b: 1, a: .501960814}
+  amount: .5
+  textureName: _FlashMaskTex
+  colorName: _FlashColor
+  amountName: _FlashAmount
+  sourceMaterial: {fileID: 2100000, guid: cf2c6021e9da84e7dade7bc512564f4f, type: 2}
 --- !u!114 &11430410
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3328,6 +3378,10 @@ MonoBehaviour:
   slideInSound: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   slideOutSound: {fileID: 8300000, guid: 56872f4de5dba4c4b97de279c2fe42b2, type: 3}
   background: {fileID: 173438}
+  sheenAnimation: {fileID: 11115274}
+  actionsAvailableSound: {fileID: 8300000, guid: 6e74fe46dc2024ac6b5244ce2b2e0b4c,
+    type: 3}
+  actionsNotAvailableSound: {fileID: 0}
 --- !u!114 &11473540
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3407,7 +3461,6 @@ MonoBehaviour:
     type: 3}
   objectObservedLostSound: {fileID: 8300000, guid: ed8bb1ba08b7549318fa76fe2c5f3ffa,
     type: 3}
-  loopAudioSource: {fileID: 8230396}
   visionActiveLoop: {fileID: 8300000, guid: 7ba55faf18300472aa15d40edd598c9a, type: 3}
   maxLoopingVol: .5
   visionActivateSound: {fileID: 8300000, guid: ff25ac74aff004684bcb97e1515b9789, type: 3}
@@ -3841,6 +3894,27 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
   m_SortingOrder: 15
+--- !u!224 &22414530
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 114530}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 22464866}
+  - {fileID: 22473496}
+  - {fileID: 22473494}
+  - {fileID: 22473492}
+  m_Father: {fileID: 22473500}
+  m_RootOrder: 1
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 50}
+  m_SizeDelta: {x: 220, y: 768}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22430406
 RectTransform:
   m_ObjectHideFlags: 1
@@ -3994,7 +4068,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22473500}
+  m_Father: {fileID: 22414530}
   m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
@@ -4603,7 +4677,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: .5}
   m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: -4, y: 2}
+  m_AnchoredPosition: {x: -8, y: 2}
   m_SizeDelta: {x: 128, y: 30}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22473454
@@ -4727,7 +4801,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: .5}
   m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: -4, y: 3}
+  m_AnchoredPosition: {x: -8, y: 2}
   m_SizeDelta: {x: 128, y: 30}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22473468
@@ -4766,7 +4840,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: .5}
   m_AnchorMax: {x: 0, y: .5}
-  m_AnchoredPosition: {x: -4, y: 2}
+  m_AnchoredPosition: {x: -8, y: 2}
   m_SizeDelta: {x: 128, y: 30}
   m_Pivot: {x: 1, y: .5}
 --- !u!224 &22473472
@@ -4960,10 +5034,10 @@ RectTransform:
   - {fileID: 22473482}
   - {fileID: 22473474}
   m_Father: {fileID: 22473500}
-  m_RootOrder: 5
+  m_RootOrder: 2
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 0, y: -50}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 128, y: 285}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22473492
@@ -4978,8 +5052,8 @@ RectTransform:
   m_Children:
   - {fileID: 22473472}
   - {fileID: 22473470}
-  m_Father: {fileID: 22473500}
-  m_RootOrder: 4
+  m_Father: {fileID: 22414530}
+  m_RootOrder: 3
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: -46, y: -195}
@@ -4997,8 +5071,8 @@ RectTransform:
   m_Children:
   - {fileID: 22473454}
   - {fileID: 22473452}
-  m_Father: {fileID: 22473500}
-  m_RootOrder: 3
+  m_Father: {fileID: 22414530}
+  m_RootOrder: 2
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: -46, y: -52}
@@ -5016,8 +5090,8 @@ RectTransform:
   m_Children:
   - {fileID: 22473468}
   - {fileID: 22473466}
-  m_Father: {fileID: 22473500}
-  m_RootOrder: 2
+  m_Father: {fileID: 22414530}
+  m_RootOrder: 1
   m_AnchorMin: {x: 1, y: .5}
   m_AnchorMax: {x: 1, y: .5}
   m_AnchoredPosition: {x: -46, y: 90}
@@ -5034,7 +5108,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22473500}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: .5, y: 0}
   m_AnchorMax: {x: .5, y: 0}
   m_AnchoredPosition: {x: 0, y: 60}
@@ -5050,11 +5124,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22464866}
   - {fileID: 22473498}
-  - {fileID: 22473496}
-  - {fileID: 22473494}
-  - {fileID: 22473492}
+  - {fileID: 22414530}
   - {fileID: 22473490}
   m_Father: {fileID: 22473502}
   m_RootOrder: 0

@@ -53,7 +53,7 @@ public class ActionSlider {
 			for(int i = 0; i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
 				ActionButton button = ActionSliderPanel.instance.actionButtons[i];
 				if(button.hint.image != null) {
-					button.hint.image.gameObject.SetActive(!Pressed && button.mode != ActionButton.Mode.DISABLED);
+					button.hint.image.gameObject.SetActive(!Pressed && i==2); //button.mode != ActionButton.Mode.DISABLED);
 				}
 			}
 		}
@@ -68,6 +68,9 @@ public class ActionSliderPanel : ActionPanel
 	[SerializeField] private AudioClip slideInSound;
 	[SerializeField] private AudioClip slideOutSound;
 	[SerializeField] private GameObject background;
+	[SerializeField] private Animation sheenAnimation;
+	[SerializeField] private AudioClip actionsAvailableSound;
+	[SerializeField] private AudioClip actionsNotAvailableSound;
 
 	private ActionButton bottomAction { get { return actionButtons[0]; } }
 	private ActionButton topAction { get { return actionButtons[1]; } }
@@ -78,16 +81,26 @@ public class ActionSliderPanel : ActionPanel
 
 	private ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
+	private bool secondaryActionsAvailableLastFrame = false;
+
 	protected override void Awake() {
 		base.Awake();
 		
 		SetDefaults();
 	}
 
+	protected override void OnEnable() {
+		base.OnEnable();
+		
+		secondaryActionsAvailableLastFrame = false;
+	}
+
 	protected override void OnDisable() {
 		base.OnDisable();
 
 		SetDefaults();
+
+		AudioManager.Stop(actionsAvailableSound);
 	}
 
 	private void SetDefaults()
@@ -117,7 +130,9 @@ public class ActionSliderPanel : ActionPanel
 
 		if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = true;
 
-		if(!secondaryActionsAvailabe) {
+		bool actionsAvailable = secondaryActionsAvailable;
+
+		if(!actionsAvailable) {
 			if(background != null) background.SetActive(false);
 			actionSlider.slider.value = 0f;
 		}
@@ -130,6 +145,19 @@ public class ActionSliderPanel : ActionPanel
 
 			upLastFrame = true;
 			downLastFrame = false;
+
+			if(sheenAnimation != null) {
+				if(actionsAvailable) {
+					sheenAnimation.Play ();
+				}
+				else {
+					sheenAnimation.Rewind();
+					sheenAnimation.Sample();
+					sheenAnimation.Stop ();
+				}
+			}
+
+
 		}
 		else {
 			if(!downLastFrame) actionSlider.currentAction.OnPress();
@@ -139,6 +167,16 @@ public class ActionSliderPanel : ActionPanel
 
 			RefreshSliderMode();
 		}
+
+		if (secondaryActionsAvailableLastFrame && !actionsAvailable) {
+			AudioManager.PlayOneShot(actionsNotAvailableSound, 0f, 1f, 0.25f);
+			AudioManager.Stop(actionsAvailableSound);
+		}
+		else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
+			AudioManager.PlayAudioClip(actionsAvailableSound, 0f, true, false, AudioManager.Source.Robot, 1f, 0.25f);
+		}
+		
+		secondaryActionsAvailableLastFrame = actionsAvailable;
 	}
 
 	public void ToggleInteract(bool val) {
@@ -187,12 +225,10 @@ public class ActionSliderPanel : ActionPanel
 	}
 
 	private void SlideInSound() {
-		audio.volume = 1f;
-		audio.PlayOneShot(slideInSound, 1f);
+		AudioManager.PlayOneShot(slideInSound);
 	}
 	
 	private void SlideOutSound() {
-		audio.volume = 1f;
-		audio.PlayOneShot(slideOutSound, 1f);
+		AudioManager.PlayOneShot(slideOutSound);
 	}
 }

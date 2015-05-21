@@ -87,6 +87,9 @@ case Anki::Cozmo::U2G::Message::Tag::SelectNextObject:
 case Anki::Cozmo::U2G::Message::Tag::PickAndPlaceObject:
 	Process_PickAndPlaceObject(msg.Get_PickAndPlaceObject());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::RollObject:
+	Process_RollObject(msg.Get_RollObject());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::TraverseObject:
 	Process_TraverseObject(msg.Get_TraverseObject());
 	break;

@@ -139,30 +139,17 @@ public class GameActions : MonoBehaviour
 	{
 		AudioClip onEnabledSound = GetActionEnabledSound( button.mode );
 		
-		if( onEnabledSound != null && audio != null && ( audio.clip != onEnabledSound || !audio.isPlaying ) )
-		{
-			audio.volume = 1f;
-			audio.clip = onEnabledSound;
-			audio.Play();
-		}
+		if( onEnabledSound != null ) AudioManager.PlayAudioClip( onEnabledSound );
 	}
 
 	public virtual void ActionButtonClick()
 	{
-		if( audio != null )
-		{
-			audio.volume = 1f;
-			audio.PlayOneShot( actionButtonSound, 1f );
-		}
+		AudioManager.PlayOneShot( actionButtonSound );
 	}
 	
 	public virtual void CancelButtonClick()
 	{
-		if( audio != null )
-		{
-			audio.volume = 1f;
-			audio.PlayOneShot( cancelButtonSound, 1f );
-		}
+		AudioManager.PlayOneShot( cancelButtonSound );
 	}
 
 	public virtual void PickUp( bool onRelease, ObservedObject selectedObject )
@@ -329,7 +316,7 @@ public class GameActions : MonoBehaviour
 
 			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
 			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
-			if( audio != null ) PlayDelayed( GetActiveBlockModeSound( activeBlock.mode ), actionButtonSound != null ? actionButtonSound.length: 0f );
+			AudioManager.PlayAudioClip( GetActiveBlockModeSound( activeBlock.mode ), actionButtonSound != null ? actionButtonSound.length: 0f );
 		}
 	}
 
@@ -359,20 +346,5 @@ public class GameActions : MonoBehaviour
 			robot.searching = true;
 			//Debug.Log( "On Press" );
 		}
-	}
-
-	protected void PlayDelayed( AudioClip clip, float delay, bool loop = false )
-	{
-		StartCoroutine( _PlayDelayed( clip, delay, loop ) );
-	}
-	
-	private IEnumerator _PlayDelayed( AudioClip clip, float delay, bool loop = false )
-	{
-		yield return new WaitForSeconds( delay );
-
-		audio.volume = 1f;
-		audio.loop = loop;
-		audio.clip = clip;
-		audio.Play();
 	}
 }

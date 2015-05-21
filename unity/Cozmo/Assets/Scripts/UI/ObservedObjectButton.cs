@@ -17,6 +17,6 @@ public class ObservedObjectButton : ObservedObjectBox
 			robot.TrackHeadToObject(observedObject);
 		}
 
-		if( audio != null ) audio.PlayOneShot( select );
+		AudioManager.PlayOneShot( select );
 	}
 }

@@ -38,7 +38,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject layoutPreviewPanel = null;
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
-	[SerializeField] Button letsBuildButton;
+	[SerializeField] GameObject showWhenInventoryCompleted;
 	[SerializeField] GameObject hideWhenInventoryComplete;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
@@ -148,7 +148,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		previewTitle.text = fullName;
 		instructionsTitle.text = fullName;
 
-		if(letsBuildButton != null) letsBuildButton.gameObject.SetActive(false);
+		if(showWhenInventoryCompleted != null) showWhenInventoryCompleted.SetActive(false);
 		if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(true);
 
 		RefreshLayout();
@@ -210,11 +210,11 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(validCount == currentLayout.blocks.Count) {
 			if(lastValidCount != currentLayout.blocks.Count) {
-				audio.PlayOneShot(layoutValidatedSound);
+				AudioManager.PlayOneShot(layoutValidatedSound);
 			}
 		}
 		else if(validCount > lastValidCount) {
-			audio.PlayOneShot(blockValidatedSound);
+			AudioManager.PlayOneShot(blockValidatedSound);
 		}
 
 		RefreshLayout();
@@ -224,28 +224,29 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(Phase == LayoutTrackerPhase.DISABLED) return;
 
 		bool validPredictedDrop = false;
+		bool shouldBeStackedInstedOfDropped = false;
 
 		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
 			string error;
 			GameLayoutTracker.LayoutErrorType errorType;
-			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, false);
 
-			if(lastValidPredictedDrop != validPredictedDrop) {
-				audio.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
+			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
+			
+			if(!shouldBeStackedInstedOfDropped && lastValidPredictedDrop != validPredictedDrop) {
+				AudioManager.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
 			}
 		}
 
-		if(lastValidPredictedDrop != validPredictedDrop) {
+		if (shouldBeStackedInstedOfDropped && lastValidPredictedDrop) {
+			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.clear));
+		}
+		else if(lastValidPredictedDrop != validPredictedDrop) {
+			//Debug.Log ("validPredictedDrop("+validPredictedDrop+")");
 			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
 
-		if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive) {
-
-
-
-		}
 	}
 
 	void OnDisable() {
@@ -312,11 +313,11 @@ public class GameLayoutTracker : MonoBehaviour {
 					inventoryComplete &= validated;
 				}
 
-				if(letsBuildButton != null) {
-					if(!letsBuildButton.gameObject.activeSelf && inventoryComplete) {
-						audio.PlayOneShot(inventoryCompleteSound);
+				if(showWhenInventoryCompleted != null) {
+					if(!showWhenInventoryCompleted.activeSelf && inventoryComplete) {
+						AudioManager.PlayOneShot(inventoryCompleteSound);
 					}
-					letsBuildButton.gameObject.SetActive(inventoryComplete);
+					showWhenInventoryCompleted.SetActive(inventoryComplete);
 				}
 
 				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);
@@ -424,32 +425,16 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 			case RobotActionType.PICKUP_OBJECT_LOW:
 			case RobotActionType.PICKUP_OBJECT_HIGH:
-//				BuildInstructionsCube layoutCubeMatchingCarried = null;
-//				if(robot.carryingObject >= 0) {
-//					for(int i=0;i<currentLayout.blocks.Count;i++) {
-//						if(robot.carryingObject.isActive && currentLayout.blocks[i].objectFamily != 3) continue;
-//						if(!robot.carryingObject.isActive && currentLayout.blocks[i].objectType != (int)robot.carryingObject.ObjectType) continue;
-//						layoutCubeMatchingCarried = currentLayout.blocks[i];
-//						break;
-//					}
-//					if(layoutCubeMatchingCarried.objectFamily == 3 && robot.activeBlocks[robot.carryingObject].mode != layoutCubeMatchingCarried.activeBlockMode) {
-//						screenMessage.ShowMessage("Cozmo can now CHANGE this block's color to "+layoutCubeMatchingCarried.activeBlockMode.ToString()+".", Color.white);
-//					}
-//					else if(layoutCubeMatchingCarried.cubeBelow == null) {
-//						if(validCount == 0) {
-//							screenMessage.ShowMessage("Good.  Now drop this block anywhere to start the build.", Color.white);
-//						}
-//						else {
-//							screenMessage.ShowMessage("Good.  Now drop this block the correct distance from the first block.", Color.white);
-//						}
-//					}
-//					else {
-//						screenMessage.ShowMessage("Good.  Now stack this block on a correct block.", Color.white);
-//					}
-//				}
-//				else {
-//					screenMessage.KillMessage();
-//				}
+
+				if(robot.carryingObject.isActive) {
+					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
+					BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find (x => !x.Validated && x.cubeBelow != null && x.objectFamily == 3);
+					if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
+						activeBlock.mode = layoutBlockToStack.activeBlockMode;
+						activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+					}
+				}
+
 				validate = true;
 				break;
 			case RobotActionType.PLACE_OBJECT_LOW:
@@ -550,7 +535,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				ObservedObject newObject = potentialObservedObjects[objectIndex];
 
-				Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
+				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
 
 				//cannot validate block in hand
 				if(newObject == robot.carryingObject) {
@@ -1109,9 +1094,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 
-	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, bool approveUnecessaryDropping=true) {
+	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
+		approveStandardDrop = false;
 
 		if(robot == null) return false;
 		if(objectToDrop == null) return false;
@@ -1123,7 +1109,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			//error = "No block of this type should be placed here.";
-			return approveUnecessaryDropping;
+			approveStandardDrop = true;
+			return false;
 		}
 
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
@@ -1162,7 +1149,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				float realDistance = ((Vector2)realOffset).magnitude;
 				
 				float distanceError = realDistance - idealDistance;
-				if(Mathf.Abs(distanceError) > ( distanceFudge * 0.9f )) {
+				if(Mathf.Abs(distanceError) > ( distanceFudge * 2f )) {
 					errorText = "Drop position is too " + ( distanceError > 0f ? "far" : "close" ) + ".";
 					errorType = distanceError > 0f? LayoutErrorType.TOO_FAR : LayoutErrorType.TOO_CLOSE;
 					failDistanceCheck = true;
@@ -1177,14 +1164,14 @@ public class GameLayoutTracker : MonoBehaviour {
 		return !failDistanceCheck;
 	}
 
-	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string errorText, out LayoutErrorType errorType) {
+	public bool PredictStackValidation( ObservedObject objectToStack, ObservedObject objectToStackUpon, out string errorText, out LayoutErrorType errorType, bool ignoreColor) {
 
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 
 		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObject == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
-			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon) );
+			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon, ignoreColor) );
 		
 			if(layoutBlockToStackUpon == null) {
 				//this is probably ok?  may need to do more processing to see if its ok
@@ -1215,7 +1202,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				return false;
 			}
 
-			if(robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode && !ignoreActiveColor) {
+			if(!ignoreColor && !ignoreActiveColor && robot.activeBlocks[objectToStack].mode != layoutBlockToStack.activeBlockMode) {
 				errorText = "This active block needs to be "+layoutBlockToStack.activeBlockMode+" before it is stacked.";
 				errorType = LayoutErrorType.WRONG_COLOR;
 				return false;

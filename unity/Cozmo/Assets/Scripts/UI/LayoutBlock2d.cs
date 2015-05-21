@@ -75,7 +75,7 @@ public class LayoutBlock2d : MonoBehaviour {
 
 	public void Validate(bool valid=true) {
 		if(valid && !validated) {
-			if(audio != null && validatedSound != null) audio.PlayOneShot(validatedSound);
+			if(validatedSound != null) AudioManager.PlayOneShot(validatedSound);
 		}
 		image_check.gameObject.SetActive(valid);
 		validated = valid;

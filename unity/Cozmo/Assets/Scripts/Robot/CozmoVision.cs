@@ -11,7 +11,6 @@ public class CozmoVision : MonoBehaviour
 	[SerializeField] protected Text text;
 	[SerializeField] protected AudioClip newObjectObservedSound;
 	[SerializeField] protected AudioClip objectObservedLostSound;
-	[SerializeField] protected AudioSource loopAudioSource;
 	[SerializeField] protected AudioClip visionActiveLoop;
 	[SerializeField] protected float maxLoopingVol = 0.5f;
 	[SerializeField] protected AudioClip visionActivateSound;
@@ -173,6 +172,7 @@ public class CozmoVision : MonoBehaviour
 			robot.RequestImage( RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM );
 			robot.SetHeadAngle();
 			robot.SetLiftHeight( 0f );
+			robot.SetObjectAdditionAndDeletion( true, false );
 			imageRequested = true;
 		}
 	}
@@ -370,50 +370,46 @@ public class CozmoVision : MonoBehaviour
 
 	protected void StopLoopingTargetSound()
 	{
-		if(loopAudioSource != null) loopAudioSource.Stop();
+		if(AudioManager.CozmoVisionLoop != null) AudioManager.CozmoVisionLoop.Stop();
 	}
 	
 	protected void PlayVisionActivateSound()
 	{
-		if(loopAudioSource == null || visionActivateSound == null || loopAudioSource.clip == visionActiveLoop || 
+		if(AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop || 
 		   actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0) return;
 
-		audio.volume = maxVisionStartVol;
-		audio.PlayOneShot(visionActivateSound, maxVisionStartVol);
+		AudioManager.PlayOneShot(visionActivateSound, 0f, 1f, maxVisionStartVol);
 
-		fromVol = loopAudioSource.volume;
-		loopAudioSource.loop = true;
-		loopAudioSource.clip = visionActiveLoop;
-		loopAudioSource.Play();
-		// Debug.Log("TargetSearchStartSound audio.volume("+audio.volume+")");
+		fromVol = AudioManager.CozmoVisionLoop.volume;
+		AudioManager.CozmoVisionLoop.loop = true;
+		AudioManager.CozmoVisionLoop.clip = visionActiveLoop;
+		AudioManager.CozmoVisionLoop.Play();
 	}
 	
 	private void PlayVisionDeactivateSound()
 	{
-		if(visionDeactivateSound == null || loopAudioSource == null || loopAudioSource.clip != visionActiveLoop) return;
+		if(visionDeactivateSound == null || AudioManager.CozmoVisionLoop == null || AudioManager.CozmoVisionLoop.clip != visionActiveLoop) return;
 
-		audio.volume = maxVisionStopVol;
-		audio.PlayOneShot(visionDeactivateSound, maxVisionStopVol);
+		AudioManager.PlayOneShot(visionDeactivateSound, 0f, 1f, maxVisionStopVol);
 
-		loopAudioSource.clip = null;
+		AudioManager.CozmoVisionLoop.clip = null;
 
-		fromVol = loopAudioSource.volume;
-		// Debug.Log("TargetSearchStopSound audio.volume("+audio.volume+")");
+		fromVol = AudioManager.CozmoVisionLoop.volume;
 	}
 	
 	protected void RefreshLoopingTargetSound(float factor)
 	{
-		if(loopAudioSource == null) return;
+		if(AudioManager.CozmoVisionLoop == null) return;
 
 		if(fadingIn) {
-			loopAudioSource.volume = Mathf.Lerp(fromVol, maxLoopingVol, factor);
+			AudioManager.CozmoVisionLoop.volume = Mathf.Lerp(fromVol, maxLoopingVol, factor);
 		}
 		else if(fadingOut) {
-			loopAudioSource.volume = Mathf.Lerp(fromVol, 0f, factor);
+			AudioManager.CozmoVisionLoop.volume = Mathf.Lerp(fromVol, 0f, factor);
 		}
 
 		if(factor >= 1f && fadingOut) {
-			loopAudioSource.Stop();
+			AudioManager.CozmoVisionLoop.Stop();
 		}
 
 	}
@@ -438,22 +434,12 @@ public class CozmoVision : MonoBehaviour
 
 		if (dingEnabled) {
 			if (found) {
-				if (!audio.isPlaying && dingTimes [0] + soundDelay < Time.time) {
-					audio.volume = 1f;
-					audio.PlayOneShot (newObjectObservedSound, 1f);
+				if (dingTimes [0] + soundDelay < Time.time) {
+					AudioManager.PlayOneShot (newObjectObservedSound);
 				
 					dingTimes [0] = Time.time;
 				}
 			}
-			/*else
-			{
-				if( !audio.isPlaying && dingTimes[1] + soundDelay < Time.time )
-				{
-					audio.PlayOneShot( objectObservedLostSound );
-					
-					dingTimes[1] = Time.time;
-				}
-			}*/
 		}
 	}
 
@@ -505,7 +491,7 @@ public class CozmoVision : MonoBehaviour
 			robot.TrackHeadToObject(obj);
 		}
 		
-		if( audio != null ) audio.PlayOneShot( selectSound );
+		AudioManager.PlayOneShot( selectSound );
 	}
 
 	public static void EnableDing(bool on = true)

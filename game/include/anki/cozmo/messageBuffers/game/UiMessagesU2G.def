@@ -994,6 +994,46 @@ struct PickAndPlaceObject
 	bool operator!=(const PickAndPlaceObject& other) const;
 };
 
+// MESSAGE RollObject
+struct RollObject
+{
+	int32_t objectID;
+	uint8_t usePreDockPose;
+	uint8_t useManualSpeed;
+	
+	/**** Constructors ****/
+	RollObject() = default;
+	RollObject(const RollObject& other) = default;
+	RollObject(RollObject& other) = default;
+	RollObject(RollObject&& other) noexcept = default;
+	RollObject& operator=(const RollObject& other) = default;
+	RollObject& operator=(RollObject&& other) noexcept = default;
+	
+	explicit RollObject(int32_t objectID
+		,uint8_t usePreDockPose
+		,uint8_t useManualSpeed)
+	:objectID(objectID)
+	,usePreDockPose(usePreDockPose)
+	,useManualSpeed(useManualSpeed)
+	{}
+
+	explicit RollObject(const uint8_t* buff, size_t len);
+	explicit RollObject(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const RollObject& other) const;
+	bool operator!=(const RollObject& other) const;
+};
+
 // MESSAGE TraverseObject
 struct TraverseObject
 {
@@ -2447,6 +2487,11 @@ public:
 	void Set_PickAndPlaceObject(const Anki::Cozmo::U2G::PickAndPlaceObject& new_PickAndPlaceObject);
 	void Set_PickAndPlaceObject(Anki::Cozmo::U2G::PickAndPlaceObject&& new_PickAndPlaceObject);
 
+	/** RollObject **/
+	const Anki::Cozmo::U2G::RollObject& Get_RollObject() const;
+	void Set_RollObject(const Anki::Cozmo::U2G::RollObject& new_RollObject);
+	void Set_RollObject(Anki::Cozmo::U2G::RollObject&& new_RollObject);
+
 	/** TraverseObject **/
 	const Anki::Cozmo::U2G::TraverseObject& Get_TraverseObject() const;
 	void Set_TraverseObject(const Anki::Cozmo::U2G::TraverseObject& new_TraverseObject);
@@ -2652,6 +2697,7 @@ private:
 		Anki::Cozmo::U2G::ExecuteTestPlan _ExecuteTestPlan;
 		Anki::Cozmo::U2G::SelectNextObject _SelectNextObject;
 		Anki::Cozmo::U2G::PickAndPlaceObject _PickAndPlaceObject;
+		Anki::Cozmo::U2G::RollObject _RollObject;
 		Anki::Cozmo::U2G::TraverseObject _TraverseObject;
 		Anki::Cozmo::U2G::SetRobotCarryingObject _SetRobotCarryingObject;
 		Anki::Cozmo::U2G::ClearAllBlocks _ClearAllBlocks;

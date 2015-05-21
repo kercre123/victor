@@ -189,6 +189,7 @@ public class Robot
 	private U2G.TurnInPlace TurnInPlaceMessage;
 	private U2G.TraverseObject TraverseObjectMessage;
 	private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
+	private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
 
 	private ObservedObject _carryingObject;
 	public ObservedObject carryingObject
@@ -305,7 +306,7 @@ public class Robot
 				DriveWheels(0,0); 
 			}
 
-			Debug.Log("isBusy = " + value);
+			//Debug.Log("isBusy = " + value);
 		}
 	}
 
@@ -355,6 +356,7 @@ public class Robot
 		TurnInPlaceMessage = new U2G.TurnInPlace();
 		TraverseObjectMessage = new U2G.TraverseObject();
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
+		SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
 		for( int i = 0; i < lights.Length; ++i )
@@ -399,14 +401,14 @@ public class Robot
 		if( objectPertinenceOverride >= 0 )
 		{
 			observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
-			Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
+			//Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
 		}
 
 		float objectPertinenceRangeOverride = OptionsScreen.GetObjectPertinenceRangeOverride();
 		if( objectPertinenceRangeOverride >= 0 )
 		{
 			objectPertinenceRange = objectPertinenceRangeOverride;
-			Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
+			//Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
 		}
 	}
 
@@ -500,6 +502,7 @@ public class Robot
 	{
 		if( Time.time > ActiveBlock.Light.messageDelay )
 		{
+			//todo get rid of foreaches
 			foreach( ActiveBlock activeBlock in activeBlocks.Values )
 			{
 				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
@@ -887,6 +890,8 @@ public class Robot
 
 	private void SetAllBackpackLEDs() // should only be called from update loop
 	{
+		//Debug.Log ("frame("+Time.frameCount+") SetAllBackpackLEDs " + lights[0].onColor);
+
 		SetBackpackLEDsMessage.robotID = ID;
 
 		for( int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j )
@@ -914,5 +919,15 @@ public class Robot
 
 		SetLastLEDs();
 		Light.messageDelay = Time.time + GameController.MessageDelay;
+	}
+
+	public void SetObjectAdditionAndDeletion( bool enableAddition, bool enableDeletion )
+	{
+		SetObjectAdditionAndDeletionMessage.robotID = ID;
+		SetObjectAdditionAndDeletionMessage.enableAddition = enableAddition;
+		SetObjectAdditionAndDeletionMessage.enableDeletion = enableDeletion;
+
+		RobotEngineManager.instance.Message.SetObjectAdditionAndDeletion = SetObjectAdditionAndDeletionMessage;
+		RobotEngineManager.instance.SendMessage();
 	}
 }

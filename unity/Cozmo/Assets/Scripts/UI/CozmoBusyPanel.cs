@@ -41,8 +41,8 @@ public class CozmoBusyPanel : MonoBehaviour {
 		if(timer > 0f) {
 			timer -= Time.deltaTime;
 
-			if(timer <= 0f && audio != null && affirmativeSound != null) {
-				audio.PlayOneShot(affirmativeSound);
+			if(timer <= 0f && affirmativeSound != null) {
+				AudioManager.PlayOneShot(affirmativeSound);
 			}
 		}
 
