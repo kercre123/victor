@@ -11,7 +11,7 @@
 //#define DO_MOTOR_TESTING
 //#define DO_GEAR_RATIO_TESTING
 //#define DO_FIXED_DISTANCE_TESTING
-#define DO_LIGHTS_TESTING
+//#define DO_LIGHTS_TESTING
 
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;

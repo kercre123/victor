@@ -86,8 +86,8 @@ void ManageLights(volatile uint32_t *colors)
 	SetLightPins(RGBLightPins[charlieChannel], colors[charlieChannel]);
 	
 	// Get next charlie channel
+	charlieChannel++;	
 	if(charlieChannel == numCharlieChannels)
 		charlieChannel = RGB1;
-	else
-		charlieChannel++;	
+
 }
