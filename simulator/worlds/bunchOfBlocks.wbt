@@ -162,6 +162,7 @@ DEF FlagBlock Block1x1 {
   rotation 1 1.28832e-12 -1.28131e-11 3.67408e-06
   blockColor 0.85 0.5 0.5
   markerImg "symbols/checkeredFlag.png"
+  markerWidth .023
 }
 DEF AngryFaceBlock Block1x1 {
   name "AngryFace_01"
@@ -169,6 +170,7 @@ DEF AngryFaceBlock Block1x1 {
   rotation 0 0 1 0.05
   blockColor 0.5 0.5 0.85
   markerImg "symbols/bullseye2.png"
+  markerWidth .023
 }
 DEF AngryFaceBlockOnPlatform Block1x1 {
   name "AngryFace_01"
