@@ -113,10 +113,34 @@ user_init()
     ipinfo.netmask.addr = ipaddr_addr("255.255.255.0");
 
     // Assign ip config
-    wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+    err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+    if (err == false)
+    {
+      os_printf("Couldn't set IP info\r\n");
+    }
+
+    // Configure DHCP range
+    struct dhcps_lease dhcpconf;
+    dhcpconf.start_ip.addr = ipaddr_addr("172.31.1.2");
+    dhcpconf.end_ip.addr   = ipaddr_addr("172.31.1.8");
+    err = wifi_softap_set_dhcps_lease(&dhcpconf);
+    if (err == false)
+    {
+      os_printf("Couldn't set DHCP server lease information\r\n");
+    }
+    uint8 dhcps_offer_mode = 1;
+    err = wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &dhcps_offer_mode);
+    if (err == false)
+    {
+      os_printf("Couldn't configure DHCPS offer mode\r\n");
+    }
 
     // Start DHCP server
-    wifi_softap_dhcps_start();
+    err = wifi_softap_dhcps_start();
+    if (err == false)
+    {
+      os_printf("Couldn't start DHCP server\r\n");
+    }
 
     // Register callback
     system_init_done_cb(&system_init_done);
