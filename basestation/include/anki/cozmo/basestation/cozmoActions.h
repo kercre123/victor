@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 
 #include "anki/common/types.h"
 
@@ -53,6 +54,7 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot &robot) override;
+      virtual void Reset() override;
       
       Result SetGoal(const Pose3d& pose);
       Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
@@ -77,6 +79,8 @@ namespace Anki {
       bool     _useManualSpeed;
       bool     _startedTraversingPath;
       bool     _forceReplanOnNextWorldChange;
+      
+      Signal::SmartHandle _signalHandle;
       
     }; // class DriveToPoseAction
     

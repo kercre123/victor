@@ -2547,6 +2547,8 @@ namespace Anki {
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
       
+      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
+      
       return RESULT_OK;
       
     } // UpdateWorldOrigin()
