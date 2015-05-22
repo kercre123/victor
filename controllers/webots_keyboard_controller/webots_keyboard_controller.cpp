@@ -1223,6 +1223,7 @@ namespace Anki {
                   jsonFile.close();
                   //U2G::SetActiveObjectLEDs msg(jsonMsg);
                   msg.robotID = 1;
+                  msg.makeRelative = RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
                   for(s32 iLED = 0; iLED<NUM_BLOCK_LEDS; ++iLED) {
                     msg.onColor[iLED]  = jsonMsg["onColor"][iLED].asUInt();
