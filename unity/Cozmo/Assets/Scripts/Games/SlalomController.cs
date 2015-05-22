@@ -44,6 +44,13 @@ public class SlalomController : GameController {
 
 	int currentLap = 1;
 	float timeOfLastCorner = 0f;
+	Vector3 startPosition = Vector3.zero;
+	Vector3 startFacing = Vector3.right;
+	bool wasAtMark = false;
+	int lastLapCount = 1;
+	public int testLightIndex = 0;
+
+
 
 	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
@@ -189,9 +196,6 @@ public class SlalomController : GameController {
 		}
 	}
 
-	Vector3 startPosition = Vector3.zero;
-	Vector3 startFacing = Vector3.right;
-
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
@@ -228,7 +232,6 @@ public class SlalomController : GameController {
 		}
 	}
 
-	bool wasAtMark = false;
 	protected override void Update_PRE_GAME() {
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
@@ -417,7 +420,7 @@ public class SlalomController : GameController {
 		return corner;
 	}
 
-	int lastLapCount = 1;
+
 
 	private void AdvanceCorner(bool preview=false) {
 
@@ -602,7 +605,7 @@ public class SlalomController : GameController {
 		}
 	}
 
-	public int testLightIndex = 0;
+
 	public void TestLights()
 	{
 		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
