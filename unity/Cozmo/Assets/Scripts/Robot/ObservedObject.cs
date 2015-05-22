@@ -14,15 +14,14 @@ public enum CubeType {
 
 public class ObservedObject
 {
-	public uint RobotID { get; protected set; }
-	public uint Family { get; protected set; }
-	public uint ObjectType { get; protected set; }
-
-	public CubeType cubeType = CubeType.BULLS_EYE;
+	public CubeType cubeType { get; private set; }
+	public uint RobotID { get; private set; }
+	public uint Family { get; private set; }
+	public uint ObjectType { get; private set; }
 
 	protected int ID;
 
-	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.5f; } }
+	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
 
 	public Rect VizRect { get; private set; }
 	public Vector3 WorldPosition { get; private set; }
@@ -40,7 +39,7 @@ public class ObservedObject
 
 	public Vector3 Size { get; private set; }
 	public float TimeLastSeen { get; private set; }
-	public float TimeCreated { get; protected set; }
+	public float TimeCreated { get; private set; }
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
@@ -65,17 +64,22 @@ public class ObservedObject
 
 	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
-	public string InfoString { get; protected set; }
-	public string SelectInfoString { get; protected set; }
+	public string InfoString { get; private set; }
+	public string SelectInfoString { get; private set; }
 	public ObservedObject() { }
 
 	public ObservedObject( int objectID, uint objectFamily, uint objectType )
+	{
+		Constructor( objectID, objectFamily, objectType );
+	}
+
+	protected void Constructor( int objectID, uint objectFamily, uint objectType )
 	{
 		TimeCreated = Time.time;
 		Family = objectFamily;
 		ObjectType = objectType;
 		ID = objectID;
-
+		
 		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 

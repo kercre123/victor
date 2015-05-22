@@ -265,7 +265,7 @@ public class SlalomController : GameController {
 
 		obstacles.Clear();
 		List<ObservedObject> observedObjects = GameLayoutTracker.instance.GetTrackedObjectsInOrder().FindAll( x => x.isActive );
-		foreach(ObservedObject obj in observedObjects) obstacles.Add(obj as ActiveBlock);
+		for(int i = 0; i < observedObjects.Count; ++i) obstacles.Add(observedObjects[i] as ActiveBlock);
 
 		lastLapCount = 1;
 		currentLap = 1;
@@ -478,13 +478,13 @@ public class SlalomController : GameController {
 				robot.lights[i].onColor = nextColor_uint;
 				robot.lights[i].offColor = 0;
 				robot.lights[i].onPeriod_ms = 500;
-				robot.lights[i].offPeriod_ms = 1000000;
+				robot.lights[i].offPeriod_ms = Robot.Light.FOREVER;
 			}
 			for(int i = 0; i < previousObstacle.lights.Length; ++i) {
 				nextObstacle.lights[i].onColor = nextColor_uint;
 				nextObstacle.lights[i].offColor = 0;
 				nextObstacle.lights[i].onPeriod_ms = 500;
-				nextObstacle.lights[i].offPeriod_ms = 1000000;
+				nextObstacle.lights[i].offPeriod_ms = ActiveBlock.Light.FOREVER;
 			}
 		}
 		else {
@@ -495,7 +495,7 @@ public class SlalomController : GameController {
 				else {
 					robot.lights[i].onColor = 0;
 				}
-				robot.lights[i].onPeriod_ms = 1000;
+				robot.lights[i].onPeriod_ms = Robot.Light.FOREVER;
 				robot.lights[i].offPeriod_ms = 0;
 			}
 		}
@@ -564,7 +564,7 @@ public class SlalomController : GameController {
 				}
 				else {
 					obstacle.lights[i].onColor = 0;
-					obstacle.lights[i].onPeriod_ms = 1000;
+					obstacle.lights[i].onPeriod_ms = ActiveBlock.Light.FOREVER;
 					obstacle.lights[i].offPeriod_ms = 0;
 				}
 
@@ -700,10 +700,10 @@ public class SlalomController : GameController {
 		}
 	}
 
-	private uint CycleColors(int i) // cycle through all colors, but don't use black
+	private uint CycleColors(int i) // cycle through all colors, but don't use black or white
 	{
-		int index = (i % (int)ActiveBlock.Mode.Count) + 1;
+		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
 
-		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)1 );
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2 );
 	}
 }

@@ -143,13 +143,7 @@ public class ActiveBlock : ObservedObject
 
 	public ActiveBlock( int objectID, uint objectFamily, uint objectType )
 	{
-		TimeCreated = Time.time;
-		Family = objectFamily;
-		ObjectType = objectType;
-		ID = objectID;
-
-		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
-		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+		Constructor( objectID, objectFamily, objectType );
 
 		upAxis = byte.MaxValue;
 		xAccel = byte.MaxValue;
@@ -165,10 +159,6 @@ public class ActiveBlock : ObservedObject
 		{
 			lights[i] = new Light( i );
 		}
-
-		cubeType = CubeType.LIGHT_CUBE;
-
-		//Debug.Log ("ActiveBlock cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )

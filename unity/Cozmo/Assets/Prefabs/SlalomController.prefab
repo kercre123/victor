@@ -1683,7 +1683,7 @@ MonoBehaviour:
   lapsRemainingSound:
   - {fileID: 0}
   - {fileID: 8300000, guid: cf0c9e474172c48168f6e6acf48df154, type: 3}
-  nextColor: 1
+  nextColor: 3
   currentColor: 5
   previewCourseLightsDelay: .100000001
   previewCourseLightsPause: 1

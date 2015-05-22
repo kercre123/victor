@@ -104,6 +104,8 @@ public class Robot
 		}
 
 		public static float messageDelay = 0f;
+
+		public const uint FOREVER = 2147483647;
 	}
 
 	public byte ID { get; private set; }
@@ -504,9 +506,12 @@ public class Robot
 	{
 		if( Time.time > ActiveBlock.Light.messageDelay )
 		{
-			//todo get rid of foreaches
-			foreach( ActiveBlock activeBlock in activeBlocks.Values )
+			var enumerator = activeBlocks.GetEnumerator();
+
+			while( enumerator.MoveNext() )
 			{
+				ActiveBlock activeBlock = enumerator.Current.Value;
+
 				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
 			}
 		}
@@ -880,7 +885,7 @@ public class Robot
 	}
 
 	public void SetBackpackLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
-	                    uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
+	                    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
 	                    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
 	                    byte turnOffUnspecifiedLEDs = 1 )
 	{
