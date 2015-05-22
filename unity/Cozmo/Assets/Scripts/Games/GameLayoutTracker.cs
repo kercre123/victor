@@ -168,6 +168,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
 		lastValidPredictedDrop = false;
+
+		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
+	}
+
+	void SignificantChangeDetectedInObservedObject() {
+		Debug.Log("SignificantChangeDetectedInObservedObject, revalidating!");
+		ValidateBlocks();
 	}
 
 	void SetUpInventory() {
@@ -258,6 +265,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(hideDuringPreview != null) hideDuringPreview.SetActive(true);
+
+		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
 	}
 
 	public void Show() {
@@ -1132,6 +1141,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
+	bool ignoreCoplanerContraintsOnDrop = true;
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
@@ -1176,7 +1186,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 				
 				//are we basically on the same plane and roughly the correct distance away?
-				if(Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
+				if(!ignoreCoplanerContraintsOnDrop && Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
 					errorType = realOffset.z > 0f ? LayoutErrorType.TOO_HIGH : LayoutErrorType.TOO_LOW;
 					failDistanceCheck = true;

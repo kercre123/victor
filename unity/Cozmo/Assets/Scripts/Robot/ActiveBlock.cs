@@ -159,6 +159,8 @@ public class ActiveBlock : ObservedObject
 		{
 			lights[i] = new Light( i );
 		}
+
+		if(SignificantChangeDetected != null) SignificantChangeDetected();
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )

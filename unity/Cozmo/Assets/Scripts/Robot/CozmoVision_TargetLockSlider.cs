@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class CozmoVision_TargetLockSlider : CozmoVision {
 
 	[SerializeField] RectTransform targetLockReticle = null;
+	[SerializeField] RectTransform targetLockAndMarkersVisibleReticle = null;
 	[SerializeField] float targetLockReticleScale = 1.1f;
 
 	ActionSliderPanel actionSliderPanel = null;
@@ -52,12 +53,14 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 		AcquireTarget();
 		GameActions.instance.SetActionButtons(true);
 
+		if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
+		if(targetLockAndMarkersVisibleReticle != null) targetLockAndMarkersVisibleReticle.gameObject.SetActive(false);
+
 		if(!robot.searching) {
 			targetLockTimer = 0f;
 			//Debug.Log("frame("+Time.frameCount+") robot.selectedObjects.Clear();" );
 			robot.selectedObjects.Clear();
 
-			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
 			robot.targetLockedObject = null;
 
 			FadeOut();
@@ -67,9 +70,12 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		FadeIn();
 
+		if(robot.headTrackingObject == null || !robot.headTrackingObject.MarkersVisible) robot.SetHeadAngle(0f);
+
 		if(robot.targetLockedObject != null) {
-			if(targetLockReticle != null) {
-				targetLockReticle.gameObject.SetActive(true);
+			RectTransform targetLockTransform = robot.targetLockedObject.MarkersVisible ? targetLockAndMarkersVisibleReticle : targetLockReticle; 
+			if(targetLockTransform != null) {
+				targetLockTransform.gameObject.SetActive(true);
 				float w = imageRectTrans.sizeDelta.x;
 				float h = imageRectTrans.sizeDelta.y;
 				ObservedObject lockedObject = robot.targetLockedObject;
@@ -79,13 +85,9 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float lockW = (lockedObject.VizRect.width / NativeResolution.x) * w;
 				float lockH = (lockedObject.VizRect.height / NativeResolution.y) * h;
 				
-				targetLockReticle.sizeDelta = new Vector2(lockW, lockH) * targetLockReticleScale;
-				targetLockReticle.anchoredPosition = new Vector2(lockX, -lockY);
+				targetLockTransform.sizeDelta = new Vector2(lockW, lockH) * targetLockReticleScale;
+				targetLockTransform.anchoredPosition = new Vector2(lockX, -lockY);
 			}
-		}
-		else {
-			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
-			robot.SetHeadAngle(0f);
 		}
 		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}
