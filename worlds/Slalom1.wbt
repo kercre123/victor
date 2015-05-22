@@ -126,14 +126,12 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
-  showMarkers FALSE
   xSize 2
   ySize 1.5
 }
 FlagCube {
   translation 0.3 0.2 0.0219969
   rotation 0 1 0 0
-  useInverted FALSE
 }
 FlagCube {
   translation 0.3 -0.2 0.0219969
