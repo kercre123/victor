@@ -23,6 +23,12 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
 
+#define SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG 0
+
+#if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+#  include <fstream>
+#endif
+
 namespace Anki {
   namespace Cozmo {
 
@@ -927,6 +933,18 @@ namespace Anki {
         m.transitionOnPeriod_ms[iLED]  = _ledState[iLED].transitionOnPeriod_ms;
         m.transitionOffPeriod_ms[iLED] = _ledState[iLED].transitionOffPeriod_ms;
       }
+      
+#     if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+      {
+        static int saveCtr=0;
+        Json::Value jsonMsg = m.CreateJson();
+        std::ofstream jsonFile("SetBlockLights_" + std::to_string(saveCtr++) + ".json", std::ofstream::out);
+        fprintf(stdout, "Writing SetBlockLights message to JSON file.\n");
+        jsonFile << jsonMsg.toStyledString();
+        jsonFile.close();
+      }
+#     endif 
+      
     }
     
   } // namespace Cozmo
