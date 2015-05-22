@@ -112,6 +112,12 @@ public class GoldRushController : GameController {
 	protected override void OnDisable()
 	{
 		base.OnDisable();
+
+		if(RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+			RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+			RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+		}
 	}
 
 	protected override void RefreshHUD ()
@@ -754,6 +760,15 @@ public class GoldRushController : GameController {
 			randomSpot *= hideRadius;
 		}
 		buriedLocations[robot.carryingObject] = randomSpot;
+
+		Vector3 spotZ = (Vector3)randomSpot + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+		Vector3 spotY1 = (Vector3)randomSpot - Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotY2 = (Vector3)randomSpot + Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX1 = (Vector3)randomSpot - Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX2 = (Vector3)randomSpot + Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), randomSpot, randomSpot, spotZ, spotZ);
+		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
+		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
 	}
 #endregion
 

@@ -419,7 +419,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log ("BuildRequested");
 		buildRequested = true;
 		if (GameLayoutTracker.instance != null) {
-			GameLayoutTracker.instance.Rebuild ();
+			GameLayoutTracker.instance.RestartManualBuild ();
 		}
 	}
 
