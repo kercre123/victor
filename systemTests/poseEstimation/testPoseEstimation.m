@@ -1,11 +1,13 @@
 
 % function testPoseEstimation()
 
-% testPoseEstimation('~/Documents/Anki/products-cozmo-large-files/systemTestsData/kitty.png');
+% badQuads = testPoseEstimation('~/Documents/Anki/products-cozmo-large-files/systemTestsData/kitty.png');
 
 % [angleX, angleY, angleZ, tX, tY, tZ] = 0.015088522806764  -0.015327397733927  -0.000901891326066  -7.035226345062256   8.196249008178711  72.933975219726562
 
-function testPoseEstimation(blockFilename)
+function badQuadsToReturn = testPoseEstimation(blockFilename)
+    
+    global badQuads;
     
     testImageSize = [240, 320];
     
@@ -116,11 +118,11 @@ function testPoseEstimation(blockFilename)
     expected.tY = 0;
     expected.tZ = cameraCalibration.focalLength_x / fiducialSize(2) * templateWidth_mm;
     
-%     [~, angleX, angleY, angleZ, tX, tY, tZ, trackerIsValid] = initTracker(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters);
-
+    %     [~, angleX, angleY, angleZ, tX, tY, tZ, trackerIsValid] = initTracker(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters);
+    
     numIterations = 10000;
     pixelsToJitter = [0,1,2,4,8,16];
-
+    
     distances = cell(length(pixelsToJitter),1);
     
     for iPixel = 1:length(pixelsToJitter)
@@ -130,14 +132,25 @@ function testPoseEstimation(blockFilename)
         disp(distances{iPixel});
     end
     
-%     round([angleX*180/pi, angleY*180/pi, angleZ*180/pi, tX, tY, tZ])
+    disp('badQuads:');
+    disp(badQuads);
+    
+    %     round([angleX*180/pi, angleY*180/pi, angleZ*180/pi, tX, tY, tZ])
+    
+    badQuadsToReturn = badQuads;
     
     keyboard
-    
-    
 end % function testPoseEstimation()
 
 function distance = computePermutedDistance(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters, expected, pixelsToJitter, numIterations)
+    global badQuads;
+    
+    useOpenCV = false;
+    
+    if isempty(badQuads) || iscell(badQuads)
+        badQuads = zeros(4,2,0);
+    end
+    
     distance.angleX = 0;
     distance.angleY = 0;
     distance.angleZ = 0;
@@ -145,9 +158,52 @@ function distance = computePermutedDistance(testImage, currentQuad, cameraCalibr
     distance.tY = 0;
     distance.tZ = 0;
     
+    if useOpenCV
+        cameraMatrix = [...
+            cameraCalibration.focalLength_x,0,cameraCalibration.center_x;
+            0,cameraCalibration.focalLength_y,cameraCalibration.center_y;
+            0,0,1];
+        
+        objectPoints = [...
+            -templateWidth_mm/2, -templateWidth_mm/2, 0;...
+            -templateWidth_mm/2, templateWidth_mm/2, 0;...
+            templateWidth_mm/2,  -templateWidth_mm/2, 0;...
+            templateWidth_mm/2,  templateWidth_mm/2, 0];
+    end
+    
+    progressbar = ProgressBar(sprintf('Computing Jitter %d',pixelsToJitter));
+    progressbar.set_increment(100/numIterations);
+    %     progressbar.showTimingInfo = true;
+    
+    numBadQuads = 0;
     for iteration = 1:numIterations
         jitteredQuad = currentQuad + rand(4,2) * pixelsToJitter;
-        [~, angleX, angleY, angleZ, tX, tY, tZ, ~] = initTracker(testImage, jitteredQuad, cameraCalibration, templateWidth_mm, algorithmParameters);
+        
+        if mod(iteration, 100) == 0
+            progressbar.increment();
+        end
+        
+        if useOpenCV
+            pnPvariant = 'P3P'; % Options are: {'Iterative', 'P3P', 'EPnP'}
+            [rvec, tvec] = cv.solvePnP(reshape(objectPoints,[1,4,3]), reshape(jitteredQuad, [1,4,2]), cameraMatrix, single([0,0,0,0,0]'), 'Flags', pnPvariant);
+            angleX = rvec(1);
+            angleY = rvec(2);
+            angleZ = rvec(3);
+            tX = tvec(1);
+            tY = tvec(2);
+            tZ = tvec(3);
+        else
+            [~, angleX, angleY, angleZ, tX, tY, tZ, ~] = initTracker(testImage, jitteredQuad, cameraCalibration, templateWidth_mm, algorithmParameters);
+            
+            if isempty(angleX)
+                disp(sprintf('initTracker failed on quad:'));
+                disp(jitteredQuad);
+                badQuads(:,:,end+1) = jitteredQuad; %#ok<AGROW>
+                numBadQuads = numBadQuads + 1;
+                continue;
+            end % if isempty(angleX)
+        end
+        
         distance.angleX = distance.angleX + abs(expected.angleX - angleX);
         distance.angleY = distance.angleY + abs(expected.angleY - angleY);
         distance.angleZ = distance.angleZ + abs(expected.angleZ - angleZ);
@@ -156,12 +212,14 @@ function distance = computePermutedDistance(testImage, currentQuad, cameraCalibr
         distance.tZ = distance.tZ + abs(expected.tZ - tZ);
     end % for iteration = 1:numIterations
     
-    distance.angleX = distance.angleX / numIterations;
-    distance.angleY = distance.angleY / numIterations;
-    distance.angleZ = distance.angleZ / numIterations;
-    distance.tX = distance.tX / numIterations;
-    distance.tY = distance.tY / numIterations;
-    distance.tZ = distance.tZ / numIterations;
+    distance.angleX = distance.angleX / (numIterations+numBadQuads);
+    distance.angleY = distance.angleY / (numIterations+numBadQuads);
+    distance.angleZ = distance.angleZ / (numIterations+numBadQuads);
+    distance.tX = distance.tX / (numIterations+numBadQuads);
+    distance.tY = distance.tY / (numIterations+numBadQuads);
+    distance.tZ = distance.tZ / (numIterations+numBadQuads);
+    
+    clear('progressbar');
 end
 
 function [samples,...
@@ -199,7 +257,14 @@ function [samples,...
         trackerIsValid = true;
     catch exception
         disp(getReport(exception));
+        samples = [];
+        angleX = [];
+        angleY = [];
+        angleZ = [];
+        tX = [];
+        tY = [];
+        tZ = [];
         trackerIsValid = false;
-        keyboard
+        %         keyboard
     end % try ... catch
 end % function initTracker()
