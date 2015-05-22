@@ -8,6 +8,10 @@ public class SlalomController : GameController {
 	public static SlalomController instance = null;
 
 	[SerializeField] Text text_finalTime;
+	[SerializeField] Text text_resultsTitle;
+	[SerializeField] Button button_PlayAgain;
+	[SerializeField] Button button_Rebuild;
+
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
 	[SerializeField] int pointsPerLap = 100;
 	[SerializeField] Text textObservedCount = null;
@@ -18,6 +22,12 @@ public class SlalomController : GameController {
 	[SerializeField] AudioClip[] lapsRemainingSound = null;
 	[SerializeField] ActiveBlock.Mode nextColor;
 	[SerializeField] ActiveBlock.Mode currentColor;
+
+	[SerializeField] float previewCourseLightsDelay = 0.1f;
+	[SerializeField] float previewCourseLightsPause = 1f;
+	[SerializeField] float previewCourseLightsTimer = 0f;
+
+
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -33,7 +43,7 @@ public class SlalomController : GameController {
 	uint currentColor_unit;
 
 	int currentLap = 1;
-	float timeSinceLastCorner = 0f;
+	float timeOfLastCorner = 0f;
 
 	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
@@ -161,6 +171,7 @@ public class SlalomController : GameController {
 			nextColor_uint = CozmoPalette.instance.GetUIntColorForActiveBlockType(nextColor);
 			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(currentColor);
 		}
+		MessageDelay = 0f;
 	}
 	
 	protected override void OnDisable()
@@ -178,18 +189,24 @@ public class SlalomController : GameController {
 		}
 	}
 
+	Vector3 startPosition = Vector3.zero;
+	Vector3 startFacing = Vector3.right;
+
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
 		float rad;
-		Vector3 facing;
-		Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out facing);
+
+		startPosition = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out startFacing);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
-		robot.GotoPose(pos.x, pos.y, rad);
-		PrepareGameForPlay(pos, facing);
+		robot.GotoPose(startPosition.x, startPosition.y, rad);
+		PrepareGameForPlay(startPosition, startFacing, true);
 		atYourMark = false;
+		wasAtMark = false;
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += CheckForGotoPoseCompletion;
 		robot.isBusy = true;
+
+		previewCourseLightsTimer = previewCourseLightsDelay;
 	}
 
 	void CheckForGotoPoseCompletion(bool success, RobotActionType action_type) {
@@ -211,10 +228,30 @@ public class SlalomController : GameController {
 		}
 	}
 
+	bool wasAtMark = false;
 	protected override void Update_PRE_GAME() {
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
-		if(!atYourMark) return;
+
+
+		if (!atYourMark) {
+			
+			if (previewCourseLightsTimer > 0f) {
+				previewCourseLightsTimer -= Time.deltaTime;
+				if (previewCourseLightsTimer <= 0f) {
+					AdvanceCorner(true);
+					previewCourseLightsTimer = (currentObstacleIndex == 0 && currentCorner == 0) ? previewCourseLightsPause : previewCourseLightsDelay;
+				}
+			}
+			return;
+		}
+
+		if (!wasAtMark) {
+			PrepareGameForPlay(startPosition, startFacing);
+		}
+
+		wasAtMark = true;
+
 
 		base.Update_PRE_GAME();
 	}
@@ -224,7 +261,7 @@ public class SlalomController : GameController {
 		base.Exit_PRE_GAME();
 	}
 
-	void PrepareGameForPlay(Vector3 startingPos, Vector3 startingFacing) {
+	void PrepareGameForPlay(Vector3 startingPos, Vector3 startingFacing, bool preview=false) {
 
 		obstacles.Clear();
 		List<ObservedObject> observedObjects = GameLayoutTracker.instance.GetTrackedObjectsInOrder().FindAll( x => x.isActive );
@@ -270,14 +307,14 @@ public class SlalomController : GameController {
 		currentCorner = 0;
 		bool onNextObstacle;
 		int nextCorner = GetNextCorner(out onNextObstacle);
-		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle);
+		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle, preview);
 	}
 
 	protected override void Enter_PLAYING() {
 		base.Enter_PLAYING();
 
 		activeBlockMovedorDeleted = false;
-		timeSinceLastCorner = Time.time;
+		timeOfLastCorner = Time.time;
 
 		for(int i = 0; i < obstacles.Count; ++i) {
 			obstacles[i].OnAxisChange += OnActiveBlockRolled;
@@ -290,9 +327,9 @@ public class SlalomController : GameController {
 
 		if(currentObstacle == null) return;
 
-		if(Time.time > timeSinceLastCorner + 10) {
+		if(Time.time > timeOfLastCorner + 10) {
 			AudioManager.PlayAudioClip(instructionsSound, 0f, AudioManager.Source.Notification);
-			timeSinceLastCorner = Time.time;
+			timeOfLastCorner = Time.time;
 		}
 
 		Vector2 robotPos = robot.WorldPosition;
@@ -382,10 +419,10 @@ public class SlalomController : GameController {
 
 	int lastLapCount = 1;
 
-	private void AdvanceCorner() {
+	private void AdvanceCorner(bool preview=false) {
 
 		//trigger lap score and sound when we cross our first corner again
-		if(currentCorner == 0 && lastLapCount != currentLap) {
+		if(!preview && currentCorner == 0 && lastLapCount != currentLap) {
 			LapComplete();
 		}
 
@@ -403,14 +440,14 @@ public class SlalomController : GameController {
 		bool nextCornerIsOnNextObstacle;
 		int nextCorner = GetNextCorner(out nextCornerIsOnNextObstacle);
 
-		AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 4 : currentCorner);
+		if(!preview) AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentCorner == 0 ? 4 : currentCorner);
 
-		timeSinceLastCorner = Time.time;
+		timeOfLastCorner = Time.time;
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
 		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
-		UpdateRobotLights(currentCorner);
+		if(!preview) UpdateRobotLights(currentCorner);
 	}
 
 	int GetNextCorner(out bool onNextObstacle) {
@@ -464,7 +501,7 @@ public class SlalomController : GameController {
 		}
 	}
 
-	private void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool debug=false)
+	private void UpdateCornerLights(int corner, int next, bool nextCornerOnNextObstacle, bool preview=false, bool debug=false)
 	{
 		if(robot == null) return;
 		if(currentObstacle == null) return;
@@ -511,10 +548,16 @@ public class SlalomController : GameController {
 
 				if(i == currentTopLightIndex || i == currentBottomLightIndex) {
 					obstacle.lights[i].onColor = currentColor_unit;
-					obstacle.lights[i].onPeriod_ms = 125;
-					obstacle.lights[i].offPeriod_ms = 125;
+					if(preview) {
+						obstacle.lights[i].onPeriod_ms = 1000;
+						obstacle.lights[i].offPeriod_ms = 0;
+					}
+					else {
+						obstacle.lights[i].onPeriod_ms = 125;
+						obstacle.lights[i].offPeriod_ms = 125;
+					}
 				}
-				else if(i == nextTopLightIndex || i == nextTopBottomIndex) {
+				else if(!preview && (i == nextTopLightIndex || i == nextTopBottomIndex)) {
 					obstacle.lights[i].onColor = nextColor_uint;
 					obstacle.lights[i].onPeriod_ms = 125;
 					obstacle.lights[i].offPeriod_ms = 125;
@@ -590,10 +633,17 @@ public class SlalomController : GameController {
 		base.Enter_RESULTS();
 
 		if(win) {
+			text_resultsTitle.text = "Slalom Completed!";
 			CelebrationLights();
+			button_PlayAgain.gameObject.SetActive(true);
+			button_Rebuild.gameObject.SetActive(false);
 		}
 		else {
+			text_resultsTitle.text = "Game Over";
 			DisqualifiedLights();
+
+			button_PlayAgain.gameObject.SetActive(false);
+			button_Rebuild.gameObject.SetActive(true);
 		}
 	}
 

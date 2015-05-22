@@ -5,7 +5,8 @@ using System.Collections;
 
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
-	[SerializeField] RectTransform hint;
+	[SerializeField] RectTransform hintsToHide;
+	[SerializeField] RectTransform hintsThatFollow;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
@@ -51,19 +52,32 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		}
 
 		sliderTrans.gameObject.SetActive(!dynamic);
-		if(hint != null) hint.gameObject.SetActive(dynamic);
+
+		if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
+	}
+
+
+	void OnEnable() {
+		if (hintsThatFollow != null) {
+			hintsThatFollow.anchoredPosition = Vector2.zero;
+			hintsThatFollow.gameObject.SetActive (true);
+		}
 	}
 
 	void OnDisable() {
 		if(dynamic) slider.gameObject.SetActive(false);
+		if (hintsThatFollow != null) hintsThatFollow.gameObject.SetActive (false);
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
 		if(dynamic) {
 			Vector2 pointerPos = eventData.position * screenScaleFactor;
 			sliderTrans.anchoredPosition = pointerPos - Center;
+			if(hintsThatFollow != null) hintsThatFollow.anchoredPosition = sliderTrans.anchoredPosition;
 			sliderTrans.gameObject.SetActive(true);
-			if(hint != null) hint.gameObject.SetActive(false);
+			if(hintsToHide != null) {
+				hintsToHide.gameObject.SetActive(false);
+			}
 			slider.OnPointerDown(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
 		}
@@ -79,7 +93,9 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			slider.OnPointerUp(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
 			sliderTrans.gameObject.SetActive(false);
-			if(hint != null) hint.gameObject.SetActive(true);
+
+			if(hintsThatFollow != null) hintsThatFollow.anchoredPosition = Vector2.zero;
+			if(hintsToHide != null) hintsToHide.gameObject.SetActive(true);
 		}
 		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
 			slider.OnPointerUp(eventData);

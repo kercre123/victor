@@ -6,11 +6,19 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
+public enum CubeType {
+	LIGHT_CUBE,
+	BULLS_EYE,
+	FLAG
+}
+
 public class ObservedObject
 {
 	public uint RobotID { get; protected set; }
 	public uint Family { get; protected set; }
 	public uint ObjectType { get; protected set; }
+
+	public CubeType cubeType = CubeType.BULLS_EYE;
 
 	protected int ID;
 
@@ -36,7 +44,7 @@ public class ObservedObject
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-	public bool isActive { get { return Family == 3; } }
+	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
 	public event Action<ObservedObject> OnDelete;
 
@@ -70,6 +78,17 @@ public class ObservedObject
 
 		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+
+		if (objectFamily == 3) {
+			cubeType = CubeType.LIGHT_CUBE;
+		} else if (objectType == 4 || objectType == 5) {
+			cubeType = CubeType.BULLS_EYE;
+		}
+		else if (objectType == 11 || objectType == 12) {
+			cubeType = CubeType.FLAG;
+		}
+
+		//Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
 	public static implicit operator uint( ObservedObject observedObject )

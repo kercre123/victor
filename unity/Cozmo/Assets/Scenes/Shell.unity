@@ -1986,7 +1986,7 @@ CanvasGroup:
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 177574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-  m_PrefabInternal: {fileID: 833065450}
+  m_PrefabInternal: {fileID: 518786473}
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 363863112}
@@ -2003,7 +2003,7 @@ MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 11477574, guid: 81605d85005224170a2a866101e203b0,
     type: 2}
-  m_PrefabInternal: {fileID: 833065450}
+  m_PrefabInternal: {fileID: 518786473}
   m_GameObject: {fileID: 363863110}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -2020,36 +2020,20 @@ MonoBehaviour:
   - {r: 0, g: 0, b: 1, a: 1}
   - {r: 1, g: 0, b: 1, a: 1}
   objectSymbolInfos:
-  - Name: Kitty
-    ObjectType: 1
-    sprite: {fileID: 21300000, guid: 8692c10537eec47c0871648d600d6f2d, type: 3}
-  - Name: Bee
-    ObjectType: 2
-    sprite: {fileID: 21300000, guid: dfb7795114f744d6eae28d510ff235c9, type: 3}
-  - Name: Spider
-    ObjectType: 3
-    sprite: {fileID: 21300000, guid: 6b44786b09cd44bfe983e43450aa6678, type: 3}
-  - Name: BullsEye
-    ObjectType: 4
+  - Name: Light Cube
+    cubeType: 0
+    sprite: {fileID: 21300000, guid: a6c028d67c0f543e79313b3fb93422a3, type: 3}
+  - Name: Target Cube
+    cubeType: 1
     sprite: {fileID: 21300000, guid: 031136385e7d143b08ed2fb7c03ae4fc, type: 3}
-  - Name: Fire
-    ObjectType: 5
-    sprite: {fileID: 21300000, guid: decf1808a9d0d454bb00f3bda0f5ab8b, type: 3}
-  - Name: Square
-    ObjectType: 6
-    sprite: {fileID: 21300000, guid: fa02f1d6c50a449308fd4f8d17b52b52, type: 3}
-  digitSprites:
-  - {fileID: 21300000, guid: b6daebd288b41421bbb406340bda8048, type: 3}
-  - {fileID: 21300000, guid: 3d70cea7566154298a142469183f6a4d, type: 3}
-  - {fileID: 21300000, guid: 5033c1231e98744db86b63d5d0cc13b6, type: 3}
-  - {fileID: 21300000, guid: 216dc45cf3a294f249b9412a47e7f3b3, type: 3}
-  - {fileID: 21300000, guid: 04dc101118e4a4df3b44c671f99df7ed, type: 3}
-  - {fileID: 21300000, guid: 0b0d8f6e8a6624789a33c730f3a91c01, type: 3}
+  - Name: Flag Cube
+    cubeType: 2
+    sprite: {fileID: 21300000, guid: 5bbd8d6b09bf74384b37acaa93eb8a4d, type: 3}
 --- !u!4 &363863112
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-  m_PrefabInternal: {fileID: 833065450}
+  m_PrefabInternal: {fileID: 518786473}
   m_GameObject: {fileID: 363863110}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -2519,6 +2503,50 @@ AudioSource:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
+--- !u!1001 &518786473
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 81605d85005224170a2a866101e203b0, type: 2}
+  m_RootGameObject: {fileID: 363863110}
+  m_IsPrefabParent: 0
+  m_IsExploded: 1
 --- !u!1 &523760287
 GameObject:
   m_ObjectHideFlags: 0
@@ -3899,50 +3927,6 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
---- !u!1001 &833065450
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 477574, guid: 81605d85005224170a2a866101e203b0, type: 2}
-      propertyPath: m_RootOrder
-      value: 4
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: 81605d85005224170a2a866101e203b0, type: 2}
-  m_RootGameObject: {fileID: 363863110}
-  m_IsPrefabParent: 0
-  m_IsExploded: 1
 --- !u!1 &858861251
 GameObject:
   m_ObjectHideFlags: 0

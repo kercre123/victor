@@ -49,31 +49,12 @@ MonoBehaviour:
   - {r: 0, g: 0, b: 1, a: 1}
   - {r: 1, g: 0, b: 1, a: 1}
   objectSymbolInfos:
-  - Name: Kitty
-    ObjectType: 1
-    sprite: {fileID: 21300000, guid: 8692c10537eec47c0871648d600d6f2d, type: 3}
-  - Name: Bee
-    ObjectType: 2
-    sprite: {fileID: 21300000, guid: dfb7795114f744d6eae28d510ff235c9, type: 3}
-  - Name: Spider
-    ObjectType: 3
-    sprite: {fileID: 21300000, guid: 6b44786b09cd44bfe983e43450aa6678, type: 3}
-  - Name: BullsEye
-    ObjectType: 4
+  - Name: Light Cube
+    sprite: {fileID: 21300000, guid: a6c028d67c0f543e79313b3fb93422a3, type: 3}
+  - Name: Target Cube
     sprite: {fileID: 21300000, guid: 031136385e7d143b08ed2fb7c03ae4fc, type: 3}
-  - Name: Fire
-    ObjectType: 5
-    sprite: {fileID: 21300000, guid: decf1808a9d0d454bb00f3bda0f5ab8b, type: 3}
-  - Name: Square
-    ObjectType: 6
-    sprite: {fileID: 21300000, guid: fa02f1d6c50a449308fd4f8d17b52b52, type: 3}
-  digitSprites:
-  - {fileID: 21300000, guid: b6daebd288b41421bbb406340bda8048, type: 3}
-  - {fileID: 21300000, guid: 3d70cea7566154298a142469183f6a4d, type: 3}
-  - {fileID: 21300000, guid: 5033c1231e98744db86b63d5d0cc13b6, type: 3}
-  - {fileID: 21300000, guid: 216dc45cf3a294f249b9412a47e7f3b3, type: 3}
-  - {fileID: 21300000, guid: 04dc101118e4a4df3b44c671f99df7ed, type: 3}
-  - {fileID: 21300000, guid: 0b0d8f6e8a6624789a33c730f3a91c01, type: 3}
+  - Name: Flag Cube
+    sprite: {fileID: 21300000, guid: 5bbd8d6b09bf74384b37acaa93eb8a4d, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
