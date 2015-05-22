@@ -4,7 +4,7 @@ WARN: This code is written and tested against Python 3
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, time, threading
+import sys, os, time, threading, serial, struct
 import reliableTransport, udpTransport
 
 class TestDataReceiver(reliableTransport.IDataReceiver):
@@ -32,6 +32,31 @@ class TestDataReceiver(reliableTransport.IDataReceiver):
 
     def __repr__(self):
         return threading.currentThread().name
+
+class SimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
+    "A simulated radio / unreliable transport link via serial"
+
+    MAX_MESSAGE_SIZE = 1472 # Match UDP
+    def __init__(self, port, printOther=True):
+        serial.Serial.__init__(self, port     = port,
+                                     baudrate = 5000000,
+                                     parity   = serial.PARITY_NONE,
+                                     stopbits = serial.STOPBITS_ONE,
+                                     bytesize = serial.EIGHTBITS,
+                                     timeoout = 0.001)
+        reliableTransport.IUnreliableTransport.__init__(self)
+        self.printOther = True
+        self.buffer = b""
+
+    def SendData(self, destAddress, message):
+        self.write(b"\xbe\xef%s%s%s" % (struct.pack("I", len(message)+len(self.PACKET_HEADER)), self.PACKET_HEADER, message))
+
+def robotSetup(host=("172.31.1.1", 5551)):
+    sock = udpTransport.UDPTransport()
+    sock.OpenSocket(("", 6551))
+    rcvr = TestDataReceiver(sock)
+    rcvr.transport.Connect(host)
+    return rcvr
 
 if __name__ == '__main__':
     localhost = "127.0.0.1"

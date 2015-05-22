@@ -19,6 +19,20 @@ class IDataReceiver:
     def ReceiveData(self, buffer, sourceAddress):
         raise Exception("IDataReceiver subclasses must implement their own ReceiveData callback")
 
+class IUnreliableTransport:
+    PACKET_HEADER = b'ANK\x03\x00\x00' # Using protocol 3 for cozmo and zeroed out CRC field
+
+    def OpenSocket(self, port, interface):
+        return True # Optional to implement
+    def CloseSocket(self):
+        return True # Optional to implement
+    def SendData(self, destAddress, message):
+        raise Exception("IUnreliableTransport subclasses must implement their own SendData method")
+    def ReceiveData(self):
+        raise Exception("IUnreliableTransport subclasses must implement their own ReceiveData method")
+    def __del__(self):
+        self.CloseSocket()
+
 class AnkiReliablePacketHeader(struct.Struct):
     "Header for reliable transport packets"
 

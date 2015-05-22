@@ -31,7 +31,7 @@ namespace Anki
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
 
       int UARTGetFreeSpace();
-      
+
       static IDCard m_idCard;
       IDCard* GetIDCard() { return &m_idCard; }
 
@@ -156,7 +156,7 @@ void StreamJPEG()
           m->data[0] = QUALITY;
 
         // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m))
+        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m, false, true))
           ;
 
         // Copy anything left at end to front of buffer

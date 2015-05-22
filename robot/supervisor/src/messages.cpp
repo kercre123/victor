@@ -33,7 +33,14 @@ namespace Anki {
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
       {
         const u32 size = Messages::GetSize(msgID);
-        return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
+        if (RadioIsConnected())
+        {
+          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
+        }
+        else
+        {
+          return false;
+        }
       }
     }
 
@@ -295,11 +302,14 @@ namespace Anki {
           }
         }
 
-        if (ReliableTransport_Update(&connection) == false) // Connection has timed out
+        if (HAL::RadioIsConnected())
         {
-          PRINT("WARN: Reliable transport has timed out\n");
-          ReliableTransport_Disconnect(&connection);
-          HAL::RadioUpdateState(0, 0);
+          if (ReliableTransport_Update(&connection) == false) // Connection has timed out
+          {
+            PRINT("WARN: Reliable transport has timed out\n");
+            ReliableTransport_Disconnect(&connection);
+            HAL::RadioUpdateState(0, 0);
+          }
         }
       }
 
@@ -895,7 +905,7 @@ namespace Anki {
           }
         }
 
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m) == true) {
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m, false, false) == true) {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;

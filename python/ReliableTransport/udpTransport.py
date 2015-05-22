@@ -5,11 +5,10 @@ This impementation uses an ANK3 header for Cozmo and does not calulate the CRC, 
 __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, socket, threading
+from reliableTransport import IUnreliableTransport
 
-class UDPTransport(socket.socket):
+class UDPTransport(socket.socket, IUnreliableTransport):
     "A thin wrapper around socket.socket setting Anki params and header"
-
-    PACKET_HEADER = b'ANK\x03\x00\x00' # Using protocol 3 for cozmo and zeroed out CRC field
 
     MTU = 1500
     MAX_MESSAGE_SIZE = 1472  # Assuming a an MTU of 1500, minus (20+8) for the underlying IP and UDP headers, this should be optimal for most networks/users
@@ -18,10 +17,8 @@ class UDPTransport(socket.socket):
 
     def __init__(self):
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+        IUnreliableTransport.__init__(self)
         self.settimeout(0) # Make the socket non-blocking
-
-    def __del__(self):
-        self.CloseSocket()
 
     def OpenSocket(self, port=DEFAULT_PORT, interface=''):
         "Bind the socket so we can receive data"
