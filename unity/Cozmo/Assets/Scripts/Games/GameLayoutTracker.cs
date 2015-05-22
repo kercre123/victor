@@ -325,6 +325,11 @@ public class GameLayoutTracker : MonoBehaviour {
 					if( inventory.Contains(inventoriedObject) != validated ) {
 
 						if(validated) {
+							if(inventoriedObject.isActive) {
+								ActiveBlock activeBlock = inventoriedObject as ActiveBlock;
+								activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType(ActiveBlock.Mode.White), 0, 255, 1000, ActiveBlock.Light.FOREVER);
+							}
+							
 							inventory.Add(inventoriedObject);
 						}  
 						else {
