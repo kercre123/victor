@@ -52,7 +52,7 @@ namespace Anki {
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 20;
 
-        const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 2;
+        const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
         const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
         
         Mode mode_ = IDLE;

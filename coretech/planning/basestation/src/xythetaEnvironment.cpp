@@ -36,7 +36,7 @@ namespace Planning {
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
-#define HACK_USE_FIXED_SPEED 40.0
+#define HACK_USE_FIXED_SPEED 60.0
 
 State::State(StateID sid)
   :
@@ -466,7 +466,7 @@ xythetaEnvironment::xythetaEnvironment()
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   // TODO:(bn) params!
   halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 50.0;
+  maxVelocity_mmps_ = 60.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
   maxReverseVelocity_mmps_ = 25.0;
 }
@@ -475,7 +475,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
 {
   Init(mprimFilename, mapFile);
   halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 50.0;
+  maxVelocity_mmps_ = 60.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
   maxReverseVelocity_mmps_ = 25.0;
 }
