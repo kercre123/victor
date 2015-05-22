@@ -90,6 +90,8 @@ function badQuadsToReturn = testPoseEstimation(blockFilename)
     
     templateWidth_mm = 25.0;
     
+    liftWidth_mm = 35.0;
+    
     %
     % Do the actual testing
     %
@@ -118,8 +120,6 @@ function badQuadsToReturn = testPoseEstimation(blockFilename)
     expected.tY = 0;
     expected.tZ = cameraCalibration.focalLength_x / fiducialSize(2) * templateWidth_mm;
     
-    %     [~, angleX, angleY, angleZ, tX, tY, tZ, trackerIsValid] = initTracker(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters);
-    
     numIterations = 10000;
     pixelsToJitter = [0,1,2,4,8,16];
     
@@ -127,7 +127,7 @@ function badQuadsToReturn = testPoseEstimation(blockFilename)
     
     for iPixel = 1:length(pixelsToJitter)
         tic
-        distances{iPixel} = computePermutedDistance(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters, expected, pixelsToJitter(iPixel), numIterations);
+        distances{iPixel} = computePermutedDistance(testImage, currentQuad, cameraCalibration, templateWidth_mm, liftWidth_mm, algorithmParameters, expected, pixelsToJitter(iPixel), numIterations);
         disp(sprintf('Jitter %0.2f pixels in %f seconds', pixelsToJitter(iPixel), toc()));
         disp(distances{iPixel});
     end
@@ -139,10 +139,15 @@ function badQuadsToReturn = testPoseEstimation(blockFilename)
     
     badQuadsToReturn = badQuads;
     
+    for iPixel = 1:length(pixelsToJitter)
+        disp(sprintf('Jitter %0.2f pixels in %f seconds', pixelsToJitter(iPixel), toc()));
+        disp(distances{iPixel});
+    end
+    
     keyboard
 end % function testPoseEstimation()
 
-function distance = computePermutedDistance(testImage, currentQuad, cameraCalibration, templateWidth_mm, algorithmParameters, expected, pixelsToJitter, numIterations)
+function distance = computePermutedDistance(testImage, currentQuad, cameraCalibration, templateWidth_mm, liftWidth_mm, algorithmParameters, expected, pixelsToJitter, numIterations)
     global badQuads;
     
     useOpenCV = false;
@@ -157,6 +162,7 @@ function distance = computePermutedDistance(testImage, currentQuad, cameraCalibr
     distance.tX = 0;
     distance.tY = 0;
     distance.tZ = 0;
+    distance.approximateZError = 0;
     
     if useOpenCV
         cameraMatrix = [...
@@ -218,6 +224,9 @@ function distance = computePermutedDistance(testImage, currentQuad, cameraCalibr
     distance.tX = distance.tX / (numIterations+numBadQuads);
     distance.tY = distance.tY / (numIterations+numBadQuads);
     distance.tZ = distance.tZ / (numIterations+numBadQuads);
+    
+    % TODO: is this approximate equation reasonable?
+    distance.approximateZError = distance.tZ + abs(liftWidth_mm/2 * sin(max([distance.angleX, distance.angleY, distance.angleZ])));
     
     clear('progressbar');
 end
