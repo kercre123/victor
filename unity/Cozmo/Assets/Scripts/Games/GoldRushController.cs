@@ -152,9 +152,11 @@ public class GoldRushController : GameController {
 #if RUSH_DEBUG
 		if( robot != null )
 		{
-			foreach( ActiveBlock activeBlock in robot.activeBlocks.Values )
+			var enumerator = robot.activeBlocks.GetEnumerator();
+
+			while( enumerator.MoveNext() )
 			{
-				goldExtractingObject = activeBlock;
+				goldExtractingObject = enumerator.Current.Value;
 			}
 		}
 

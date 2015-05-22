@@ -504,9 +504,12 @@ public class Robot
 	{
 		if( Time.time > ActiveBlock.Light.messageDelay )
 		{
-			//todo get rid of foreaches
-			foreach( ActiveBlock activeBlock in activeBlocks.Values )
+			var enumerator = activeBlocks.GetEnumerator();
+
+			while( enumerator.MoveNext() )
 			{
+				ActiveBlock activeBlock = enumerator.Current.Value;
+
 				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
 			}
 		}

@@ -265,7 +265,7 @@ public class SlalomController : GameController {
 
 		obstacles.Clear();
 		List<ObservedObject> observedObjects = GameLayoutTracker.instance.GetTrackedObjectsInOrder().FindAll( x => x.isActive );
-		foreach(ObservedObject obj in observedObjects) obstacles.Add(obj as ActiveBlock);
+		for(int i = 0; i < observedObjects.Count; ++i) obstacles.Add(observedObjects[i] as ActiveBlock);
 
 		lastLapCount = 1;
 		currentLap = 1;
