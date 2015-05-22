@@ -297,6 +297,13 @@ namespace Anki
                                                                              objSeen->GetSameDistanceTolerance(),
                                                                              objSeen->GetSameAngleTolerance());
         
+        // If this is the object we're carrying, do nothing and continue to the next observed object
+        if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+          delete objSeen;
+          continue;
+        }
+        
+        
         // As of now the object will be w.r.t. the robot's origin.  If we
         // observed it to be on a mat, however, make it relative to that mat.
         const f32 objectDiagonal = objSeen->GetSameDistanceTolerance().Length();
