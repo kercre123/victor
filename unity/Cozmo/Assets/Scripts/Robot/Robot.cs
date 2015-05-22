@@ -702,6 +702,8 @@ public class Robot
 	{
 		FaceObjectMessage.objectID = observedObject;
 		FaceObjectMessage.robotID = ID;
+		FaceObjectMessage.maxTurnAngle = float.MaxValue;
+		FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
 
 		Debug.Log( "Face Object " + FaceObjectMessage.objectID );
 

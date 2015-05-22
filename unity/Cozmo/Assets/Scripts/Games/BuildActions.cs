@@ -149,6 +149,16 @@ public class BuildActions : GameActions {
 
 	}
 
+	public override void Cancel( bool onRelease, ObservedObject selectedObject ) {
+
+		if (GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.AUTO_BUILDING) {
+			//cancel during auto build switches to manual build
+			GameLayoutTracker.instance.RestartManualBuild();
+		}
+
+		base.Cancel (onRelease, selectedObject);
+	}
+
 	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
 	
 		//play denied sound

@@ -171,7 +171,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void SetUpInventory() {
-	
+		inventory.Clear ();
 		blocks2d.Clear();
 		
 		int count = currentLayout.blocks.Count;
@@ -271,6 +271,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsCamera.gameObject.SetActive(false);
 	}
 
+	List<ObservedObject> inventory = new List<ObservedObject>();
+
 	void RefreshLayout () {
 
 		bool completed = validCount == currentLayout.blocks.Count;
@@ -301,17 +303,32 @@ public class GameLayoutTracker : MonoBehaviour {
 				carriedBlock2d.gameObject.SetActive(false);
 				button_change.gameObject.SetActive(false);
 
-				if(robot != null) robot.SetHeadAngle();
+				if(robot != null) robot.SetHeadAngle(0f);
 
 				bool inventoryComplete = true;
 
 				for(int i=0;i<blocks2d.Count;i++) {
-					int known = GetKnownObjectCountForBlock(blocks2d[i].Block);
-					bool validated = known >= blocks2d[i].Dupe;
+					ObservedObject inventoriedObject = GetKnownObjectForInventorySlot(blocks2d[i].Block, blocks2d[i].Dupe);
+					bool validated = inventoriedObject != null;
 					blocks2d[i].Validate(validated);
 					inventoryComplete &= validated;
-				}
 
+					if( inventory.Contains(inventoriedObject) != validated ) {
+
+						if(validated) {
+							inventory.Add(inventoriedObject);
+						}  
+						else {
+							inventory.Remove(inventoriedObject);
+						}
+					}
+				}
+	
+				if(inventory.Count > 0) {
+					//Debug.Log( "TrackHeadToObject " + inventory[inventory.Count-1] );
+					robot.TrackHeadToObject(inventory[inventory.Count-1],true);
+				}
+				                        
 				if(showWhenInventoryCompleted != null) {
 					if(!showWhenInventoryCompleted.activeSelf && inventoryComplete) {
 						AudioManager.PlayOneShot(inventoryCompleteSound);
@@ -453,6 +470,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(!success) {
 			screenMessage.ShowMessageForDuration("Cozmo ran into difficulty, let's try that again.", 5f, Color.yellow);
+			if(Phase == LayoutTrackerPhase.AUTO_BUILDING) {
+				autoBuildFails++;
+				if(autoBuildFails >= 3) RestartManualBuild();
+			}
 		}
 
 		if(validate) {
@@ -690,6 +711,27 @@ public class GameLayoutTracker : MonoBehaviour {
 		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
 	}
 
+	ObservedObject GetKnownObjectForInventorySlot(BuildInstructionsCube block, int dupe) {
+		if(robot == null) return null;
+		
+		int count = 0;
+		
+		//Debug.Log("GetKnownObjectForInventorySlot robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		
+		for(int i=0;i<robot.knownObjects.Count;i++) {
+			
+			ObservedObject obj = robot.knownObjects[i];
+			
+			if(obj.cubeType != block.cubeType) continue;
+			
+			count++;
+			if(count == dupe) return obj;
+		}
+		
+		return null;
+	}
+
+
 	int GetKnownObjectCountForBlock(BuildInstructionsCube block) {
 		if(robot == null) return 0;
 
@@ -717,7 +759,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		Debug.Log("DebugQuickValidate validated("+validated.Count+")");
 	}
 
-	public void Rebuild() {
+	public void RestartManualBuild() {
 		Validated = false;
 		EndPreview ();
 	}
@@ -751,8 +793,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
+	int autoBuildFails = 0;
 	public void StartAutoBuild() {
 		Phase = LayoutTrackerPhase.AUTO_BUILDING;
+		autoBuildFails = 0;
 		ValidateBlocks();
 		
 		GameLayout layout = currentLayout;
@@ -1087,7 +1131,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		return true;
 	}
-
 
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
 		errorText = "";
