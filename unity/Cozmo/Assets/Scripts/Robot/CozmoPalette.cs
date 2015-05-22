@@ -33,7 +33,9 @@ public class CozmoPalette : MonoBehaviour {
 	}
 
 	public static uint ColorToUInt(Color color) {
-		return (uint)(((uint)(255f * color.r) << 24) | ((uint)(255f * color.g) << 16) | ((uint)(255f * color.b) << 8)  | ((uint)(255f * color.a) << 0));
+		uint value = (uint)(((uint)(255f * color.r) << 24) | ((uint)(255f * color.g) << 16) | ((uint)(255f * color.b) << 8)  | ((uint)(255f * color.a) << 0));
+		//Debug.Log ("ColorToUInt("+color.ToString()+") return value("+value+") max("+uint.MaxValue+")");
+		return value;
 	}
 
 	public uint GetUIntColorForActiveBlockType(ActiveBlock.Mode activeType) {
@@ -45,11 +47,11 @@ public class CozmoPalette : MonoBehaviour {
 	}
 
 	public Sprite GetSpriteForObjectType(CubeType objType) {
-		return objectSymbolInfos [(int)objType].sprite;
+		return objectSymbolInfos[(int)objType].sprite;
 	}
 
 	public string GetNameForObjectType(CubeType objType) {
-		return objectSymbolInfos [(int)objType].Name;
+		return objectSymbolInfos[(int)objType].Name;
 	}
 
 }

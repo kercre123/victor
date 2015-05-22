@@ -132,7 +132,6 @@ CozmoMat {
 FlagCube {
   translation 0.15 0.22 0.0219969
   rotation 0 1 0 0
-  useInverted FALSE
 }
 FlagCube {
   translation 0.15 -0.22 0.0219969
