@@ -152,7 +152,7 @@ namespace Anki {
       float WheelPowerToAngSpeed(float power)
       {
         // Inverse of speed-power formula in WheelController
-        float speed_mm_per_s = power / 0.005f;
+        float speed_mm_per_s = power / 0.004f;
        
         if (usingTreads_) {
           // Return linear speed m/s when usingTreads
