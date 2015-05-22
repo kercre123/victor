@@ -62,7 +62,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 80;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 60;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -458,15 +458,10 @@ namespace Anki {
             
             
             // Check if we are beyond point of no return distance
-            if (pastPointOfNoReturn_ ||
-                ((pointOfNoReturnDistMM_ != 0) &&
-                (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
-                (mode_ == APPROACH_FOR_DOCK))) {
+            if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
 #endif
-              pastPointOfNoReturn_ = true;
-              
               break; // out of while
             }
             
@@ -547,6 +542,7 @@ namespace Anki {
         
         // Check if the pose of the marker that was in field of view should
         // again be in field of view.
+        f32 distToMarker = 1000000;
         if (markerOutOfFOV_) {
           // Marker has been outside field of view.
           // Check if it should be visible again.
@@ -563,7 +559,7 @@ namespace Anki {
             
             // Get distance between marker and current robot pose
             Embedded::Pose2d currPose = Localization::GetCurrPose();
-            f32 distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
+            distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
             
             if (PathFollower::IsTraversingPath() &&
                 !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
@@ -572,6 +568,16 @@ namespace Anki {
               markerOutOfFOV_ = true;
             }
           }
+        }
+
+        
+        // Check if we are beyond point of no return distance
+        if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
+#if(DEBUG_DOCK_CONTROLLER)
+          PRINT("DockingController: Point of no return (%f < %d)\n", distToMarker, pointOfNoReturnDistMM_);
+#endif
+          pastPointOfNoReturn_ = true;
+          mode_ = APPROACH_FOR_DOCK;
         }
 
         

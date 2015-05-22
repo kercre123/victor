@@ -115,7 +115,7 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = x * 0.005;
+      f32 out_ol = x * 0.004;
 #     else
 #ifdef COZMO_ROBOT_V32
       // Piecewise linear
@@ -148,7 +148,7 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = x * 0.005;
+      f32 out_ol = x * 0.004;
 #     else
 #ifdef COZMO_ROBOT_V32
       // Piecewise linear

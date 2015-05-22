@@ -60,7 +60,7 @@ const f32 LIFT_FINGER_HEIGHT = 3.8f;
 
 // TODO: convert to using these in degree form?
 const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 40.f);
+const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 34.f);
 
 // Head angle may exceed limits by this amount before
 // it is considered to be out of calibration.
@@ -79,17 +79,6 @@ const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // re
 
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
 
-
-
-// Motor speed / accel limits
-// TODO: These were plucked out of the sky.
-const f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
-const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 10000;
-const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
-const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
-
-// How fast (in mm/sec) can a wheel spin at max
-const f32 MAX_WHEEL_SPEED_MMPS = 170.f;
 
 /***************************************************************************
  *
@@ -112,17 +101,3 @@ const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 // Simulated camera's frame rate, specified by its period in milliseconds
 const s32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
 
-
-/***************************************************************************
- *
- *                          Communications
- *
- **************************************************************************/
-
-// Timeout for how long we are willing to wait to get a state message from
-// the robot to the basestation
-const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 5.0f; // Longer for simulator because we don't control network
-
-// Timeout for how long the robot is willing to wait before receiving a ping
-// (or any message) from basestatin
-const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 5000; // Longer for simulator because we don't control network
