@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
 
 // Webots includes
 #include <webots/Supervisor.hpp>
@@ -1200,7 +1201,43 @@ namespace Anki {
                 
               case (s32)'B':
               {
-                if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT &&
+                   modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
+                {
+                  U2G::SetAllActiveObjectLEDs msg;
+                  static int jsonMsgCtr = 0;
+                  Json::Value jsonMsg;
+                  Json::Reader reader;
+                  std::string jsonFilename("../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
+                  std::ifstream jsonFile(jsonFilename);
+                  
+                  if(jsonFile.fail()) {
+                    jsonMsgCtr = 0;
+                    jsonFilename = "../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
+                    jsonFile.open(jsonFilename);
+                  }
+                  
+                  printf("Sending message from: %s\n", jsonFilename.c_str());
+                  
+                  reader.parse(jsonFile, jsonMsg);
+                  jsonFile.close();
+                  //U2G::SetActiveObjectLEDs msg(jsonMsg);
+                  msg.robotID = 1;
+                  msg.objectID = jsonMsg["objectID"].asUInt();
+                  for(s32 iLED = 0; iLED<NUM_BLOCK_LEDS; ++iLED) {
+                    msg.onColor[iLED]  = jsonMsg["onColor"][iLED].asUInt();
+                    msg.offColor[iLED]  = jsonMsg["offColor"][iLED].asUInt();
+                    msg.onPeriod_ms[iLED]  = jsonMsg["onPeriod_ms"][iLED].asUInt();
+                    msg.offPeriod_ms[iLED]  = jsonMsg["offPeriod_ms"][iLED].asUInt();
+                    msg.transitionOnPeriod_ms[iLED]  = jsonMsg["transitionOnPeriod_ms"][iLED].asUInt();
+                    msg.transitionOffPeriod_ms[iLED]  = jsonMsg["transitionOffPeriod_ms"][iLED].asUInt();
+                  }
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetAllActiveObjectLEDs(msg);
+                  SendMessage(msgWrapper);
+                }
+                else if(currentlyObservedObject.id >= 0 && currentlyObservedObject.isActive)
                 {
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
@@ -1208,8 +1245,9 @@ namespace Anki {
                     NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
                     NamedColors::BLACK
                   };
+
                   static s32 colorIndex = 0;
-                  
+
                   U2G::SetActiveObjectLEDs msg;
                   msg.objectID = currentlyObservedObject.id;
                   msg.robotID = 1;
