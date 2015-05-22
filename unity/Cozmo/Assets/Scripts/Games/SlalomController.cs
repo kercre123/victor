@@ -700,10 +700,10 @@ public class SlalomController : GameController {
 		}
 	}
 
-	private uint CycleColors(int i) // cycle through all colors, but don't use black
+	private uint CycleColors(int i) // cycle through all colors, but don't use black or white
 	{
-		int index = (i % (int)ActiveBlock.Mode.Count) + 1;
+		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
 
-		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)1 );
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2 );
 	}
 }
