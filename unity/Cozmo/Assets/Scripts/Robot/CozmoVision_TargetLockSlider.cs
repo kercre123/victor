@@ -67,11 +67,9 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
 		FadeIn();
 
-		if(targetLockReticle != null) {
-			targetLockReticle.gameObject.SetActive(robot.targetLockedObject != null);
-
-			if(robot.targetLockedObject != null) {
-
+		if(robot.targetLockedObject != null) {
+			if(targetLockReticle != null) {
+				targetLockReticle.gameObject.SetActive(true);
 				float w = imageRectTrans.sizeDelta.x;
 				float h = imageRectTrans.sizeDelta.y;
 				ObservedObject lockedObject = robot.targetLockedObject;
@@ -81,9 +79,13 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				float lockW = (lockedObject.VizRect.width / NativeResolution.x) * w;
 				float lockH = (lockedObject.VizRect.height / NativeResolution.y) * h;
 				
-				targetLockReticle.sizeDelta = new Vector2( lockW, lockH ) * targetLockReticleScale;
-				targetLockReticle.anchoredPosition = new Vector2( lockX, -lockY );
+				targetLockReticle.sizeDelta = new Vector2(lockW, lockH) * targetLockReticleScale;
+				targetLockReticle.anchoredPosition = new Vector2(lockX, -lockY);
 			}
+		}
+		else {
+			if(targetLockReticle != null) targetLockReticle.gameObject.SetActive(false);
+			robot.SetHeadAngle(0f);
 		}
 		//Debug.Log("CozmoVision4.Update_2 selectedObjects("+robot.selectedObjects.Count+") isBusy("+robot.isBusy+")");
 	}

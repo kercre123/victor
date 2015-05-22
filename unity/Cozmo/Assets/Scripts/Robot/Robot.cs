@@ -636,9 +636,8 @@ public class Robot
 	/// </summary>
 	/// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
 	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-	public void SetHeadAngle( float angleFactor = 0f, bool useExactAngle=false )
+	public void SetHeadAngle( float angleFactor = -0.8f, bool useExactAngle = false )
 	{
-
 		//Debug.Log("SetHeadAngle("+angleFactor+")");
 
 		float radians = angleFactor;
@@ -653,8 +652,7 @@ public class Robot
 		}
 
 		if( IsHeadAngleRequestUnderway() && Mathf.Abs( headAngleRequested - radians ) < 0.001f ) return;
-		if( headTrackingObject == -1 && Mathf.Abs( radians - headAngle_rad ) < 0.001f) return;
-
+		if( headTrackingObject == -1 && Mathf.Abs( radians - headAngle_rad ) < 0.001f ) return;
 
 		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
