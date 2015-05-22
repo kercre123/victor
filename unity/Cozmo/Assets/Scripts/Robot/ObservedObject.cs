@@ -46,6 +46,7 @@ public class ObservedObject
 	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
 	public event Action<ObservedObject> OnDelete;
+	public static Action SignificantChangeDetected = null;
 
 	public bool canBeStackedOn
 	{
@@ -92,6 +93,7 @@ public class ObservedObject
 			cubeType = CubeType.FLAG;
 		}
 
+		if(SignificantChangeDetected != null) SignificantChangeDetected();
 		//Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
@@ -123,8 +125,15 @@ public class ObservedObject
 		RobotID = message.robotID;
 		VizRect = new Rect( message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height );
 
+		Vector3 newPos = new Vector3( message.world_x, message.world_y, message.world_z );
+
+		//detect if this object has moved to a degree significant enough to warrant reValidating the build
+		if( robot != null && robot.carryingObject != this && (newPos - WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM ){
+			if(SignificantChangeDetected != null) SignificantChangeDetected();
+		}
+
 		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
-		WorldPosition = new Vector3( message.world_x, message.world_y, message.world_z );
+		WorldPosition = newPos;
 		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );
 		Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
 
@@ -136,6 +145,7 @@ public class ObservedObject
 	public void Delete()
 	{
 		if( OnDelete != null ) OnDelete( this );
+		if(SignificantChangeDetected != null) SignificantChangeDetected();
 	}
 
 	public Vector2 GetBestFaceVector(Vector3 initialVector) {

@@ -168,6 +168,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
 
 		lastValidPredictedDrop = false;
+
+		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
+	}
+
+	void SignificantChangeDetectedInObservedObject() {
+		Debug.Log("SignificantChangeDetectedInObservedObject, revalidating!");
+		ValidateBlocks();
 	}
 
 	void SetUpInventory() {
@@ -258,6 +265,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(hideDuringPreview != null) hideDuringPreview.SetActive(true);
+
+		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
 	}
 
 	public void Show() {
