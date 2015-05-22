@@ -279,8 +279,11 @@ namespace Anki {
     }
     
     inline Point3f ObservableObject::GetSameDistanceTolerance() const {
-      Point3f distTol(GetPose().GetRotation() * (GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION));
-      return distTol.GetAbs();
+      // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
+      //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
+      //       and see if the the origin of the candidate object is within it.
+      Point3f distTol(GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION);
+      return distTol;
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
