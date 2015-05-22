@@ -1,4 +1,4 @@
-#VRML_SIM V8.0.3 utf8
+#VRML_SIM V8.1.0 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -126,7 +126,6 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
-  showMarkers FALSE
   xSize 2
   ySize 1.5
 }

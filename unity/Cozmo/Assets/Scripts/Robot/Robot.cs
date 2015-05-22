@@ -73,13 +73,14 @@ public class Robot
 			lastOffPeriod_ms = offPeriod_ms;
 			lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
 			lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
+			initialized = true;
 		}
 		
 		public bool changed
 		{
 			get
 			{
-				return lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
+				return !initialized || lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
 					lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
 			}
 		}
@@ -106,6 +107,7 @@ public class Robot
 		public static float messageDelay = 0f;
 
 		public const uint FOREVER = 2147483647;
+		private bool initialized = false;
 	}
 
 	public byte ID { get; private set; }
