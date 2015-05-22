@@ -231,7 +231,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void LateUpdate()
 	{
-		if( current == null ) return;
+		if( current == null || !isRobotConnected ) return;
 
 		current.UpdateLightMessages();
 	}

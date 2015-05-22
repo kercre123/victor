@@ -283,15 +283,9 @@ public class GameActions : MonoBehaviour
 
 		if( description == null || description == string.Empty ) description = "Cozmo is attempting to ";
 
-		description += verb;
-				
-		if( selectedObject.isActive )
-		{
-			description += "an Active Block" + period;
-		}
-		else
-		{
-			description += "a " + CozmoPalette.instance.GetNameForObjectType( selectedObject.cubeType ) + period;
-		}
+		string noun = CozmoPalette.instance.GetNameForObjectType( selectedObject.cubeType );
+		string article = "AEIOUaeiou".Contains( noun[0].ToString() ) ? "an " : "a ";
+
+		description += verb + article + noun + period;
 	}
 }
