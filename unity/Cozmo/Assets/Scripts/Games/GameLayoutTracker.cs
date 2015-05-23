@@ -170,6 +170,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		lastValidPredictedDrop = false;
 
 		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
+
+		forceLEDRefreshTimer = 1f;
 	}
 
 	void SignificantChangeDetectedInObservedObject() {
@@ -208,6 +210,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
+	float forceLEDRefreshTimer = 1f;
 	void Update () {
 
 		if(Input.GetKeyDown(KeyCode.V)) {
@@ -252,6 +255,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		lastValidPredictedDrop = validPredictedDrop;
+
 
 	}
 
@@ -416,6 +420,20 @@ public class GameLayoutTracker : MonoBehaviour {
 //					}
 //				}
 
+				
+				if(forceLEDRefreshTimer > 0f) {
+					forceLEDRefreshTimer -= Time.deltaTime;
+					
+					if(forceLEDRefreshTimer <= 0f) {
+						
+						if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive ) {
+							ForceLightCubeToCorrectColor(robot.carryingObject as ActiveBlock);
+						}
+						
+						forceLEDRefreshTimer = 1f;
+					}
+				}
+
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
@@ -458,11 +476,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(robot.carryingObject.isActive) {
 					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
-					BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find (x => !x.Validated && x.cubeBelow != null && x.isActive);
-					if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
-						activeBlock.mode = layoutBlockToStack.activeBlockMode;
-						activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
-					}
+					ForceLightCubeToCorrectColor(activeBlock);
 				}
 
 				validate = true;
@@ -975,6 +989,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		return false;
+	}
+
+	void ForceLightCubeToCorrectColor(ActiveBlock activeBlock) {
+		BuildInstructionsCube layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
+		activeBlock.mode = layoutActiveCube.activeBlockMode;
+		activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+		activeBlock.ForceLEDsRefresh();
 	}
 
 	public bool AttemptAssistedPlacement() {

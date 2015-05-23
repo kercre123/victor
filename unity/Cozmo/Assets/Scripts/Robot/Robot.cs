@@ -64,7 +64,9 @@ public class Robot
 		public uint transitionOnPeriod_ms;
 		private uint lastTransitionOffPeriod_ms;
 		public uint transitionOffPeriod_ms;
-		
+		public bool forceRefresh = false;		
+
+
 		public void SetLastInfo()
 		{
 			lastOnColor = onColor;
@@ -74,16 +76,19 @@ public class Robot
 			lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
 			lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
 			initialized = true;
+			forceRefresh = false;
 		}
 		
 		public bool changed
 		{
 			get
 			{
-				return !initialized || lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
+				return forceRefresh || !initialized || lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms || 
 					lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
 			}
 		}
+
+		public void ForceRefresh() { forceRefresh = true; }
 
 		public virtual void ClearData()
 		{
