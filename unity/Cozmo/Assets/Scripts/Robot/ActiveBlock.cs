@@ -278,4 +278,12 @@ public class ActiveBlock : ObservedObject
 		this.relativeToX = relativeToX;
 		this.relativeToY = relativeToY;
 	}
+
+	public void ForceLEDsRefresh() {
+		for( int i = 0; i < lights.Length; ++i )
+		{
+			lights[i].ForceRefresh();
+		}
+	}
+
 }
