@@ -146,7 +146,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       onchipMemory,
       offchipMemory);
 
-    mxAssert(tracker.IsValid(), "Failed to instantiate valid tracker!");
+    if(!tracker.IsValid()) {
+      mexErrMsgTxt("Failed to instantiate valid tracker!");
+    }
 
     /*
     // TODO: Set this elsewhere

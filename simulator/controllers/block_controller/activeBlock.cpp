@@ -154,11 +154,11 @@ namespace Anki {
       s32 GetBlockID() {
         webots::Node* selfNode = block_controller.getSelf();
         
-        webots::Field* activeIdField = selfNode->getField("activeID");
+        webots::Field* activeIdField = selfNode->getField("ID");
         if(activeIdField) {
           return activeIdField->getSFInt32();
         } else {
-          printf("Missing activeID field in active block.\n");
+          printf("Missing ID field in active block.\n");
           return -1;
         }
       }

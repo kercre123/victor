@@ -152,7 +152,7 @@ namespace Anki {
       float WheelPowerToAngSpeed(float power)
       {
         // Inverse of speed-power formula in WheelController
-        float speed_mm_per_s = power / 0.005f;
+        float speed_mm_per_s = power / 0.004f;
        
         if (usingTreads_) {
           // Return linear speed m/s when usingTreads
@@ -410,12 +410,11 @@ namespace Anki {
 
         // Check for nodes that have a 'blockColor' and 'active' field
         webots::Node* nd = rootChildren->getMFNode(n);
-        webots::Field* blockColorField = nd->getField("blockColor");
-        webots::Field* activeField = nd->getField("active");
-        webots::Field* activeIdField = nd->getField("activeID");
-        if (blockColorField && activeField && activeIdField) {
-          if (activeField->getSFBool()) {
-            const s32 activeID = activeIdField->getSFInt32();
+        webots::Field* nameField = nd->getField("name");
+        webots::Field* IdField = nd->getField("ID");
+        if (nameField && IdField) {
+          if (nameField->getSFString() == "LightCube") {
+            const s32 activeID = IdField->getSFInt32();
             
             if(blockIDs_.count(activeID) > 0) {
               printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);

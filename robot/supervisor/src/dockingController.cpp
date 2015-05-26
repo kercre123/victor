@@ -62,7 +62,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 80;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 60;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -119,17 +119,13 @@ namespace Anki {
         f32 approachPath_dist, approachPath_dtheta, approachPath_dOrientation;
 #endif
         
-        // Whether or not the lift should track the angle of the camera so that the
-        // lift crossbar is just out of the field of view of the camera.
-        bool trackCamWithLift_ = false;
-        
-        // If trackCamWithLift_ == true, start actually doing the tracking only when
+        // Start raising lift for high dock only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
-        const f32 START_LIFT_TRACKING_DIST_MM = 70.f;
+        const f32 START_LIFT_TRACKING_DIST_MM = 80.f;
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
-        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 17.f;
+        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 15.f;
 
         // Whether or not to raise lift in prep for high docking
         bool doHighDockLiftTracking_ = false;
@@ -311,12 +307,6 @@ namespace Anki {
         }
         return RESULT_FAIL;
       }
-
-      
-      void TrackCamWithLift(bool on)
-      {
-        trackCamWithLift_ = on;
-      }
       
       // Returns the height that the lift should be moved to such that the
       // lift crossbar is just out of the field of view of the camera.
@@ -468,23 +458,10 @@ namespace Anki {
             
             
             // Check if we are beyond point of no return distance
-            if (pastPointOfNoReturn_ ||
-                ((pointOfNoReturnDistMM_ != 0) &&
-                (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
-                (mode_ == APPROACH_FOR_DOCK))) {
+            if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
 #endif
-              pastPointOfNoReturn_ = true;
-              
-              // Since we're ignoring docking error signals from hereon, just set the lift to final height.
-              // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
-              //       Generalize?
-              if ((dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) && (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK)) {
-                PRINT("PointOfNoReturn: Lift to high dock\n");
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
-              }
-              
               break; // out of while
             }
             
@@ -534,20 +511,6 @@ namespace Anki {
                 //        Docking is smoother without it!
                 //HeadController::SetDesiredAngle(desiredHeadAngle);
                 //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
-                
-                // Track camera with lift.
-                // Do it only when it's a high block and we're within a certain distance of it.
-                // Don't lift higher than HIGHDOCK height.
-                if (trackCamWithLift_ &&
-                    dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
-                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  f32 liftHeight = GetCamFOVLowerHeight();
-                  if (liftHeight > LIFT_HEIGHT_HIGHDOCK) {
-                    liftHeight = LIFT_HEIGHT_HIGHDOCK;
-                  }
-                  //PRINT("TrackLiftHeight: %f\n", liftHeight);
-                  LiftController::SetDesiredHeight(liftHeight);
-                }
 
                 // If docking to a high block, assumes we're trying to pick it up!
                 if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
@@ -579,6 +542,7 @@ namespace Anki {
         
         // Check if the pose of the marker that was in field of view should
         // again be in field of view.
+        f32 distToMarker = 1000000;
         if (markerOutOfFOV_) {
           // Marker has been outside field of view.
           // Check if it should be visible again.
@@ -595,7 +559,7 @@ namespace Anki {
             
             // Get distance between marker and current robot pose
             Embedded::Pose2d currPose = Localization::GetCurrPose();
-            f32 distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
+            distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
             
             if (PathFollower::IsTraversingPath() &&
                 !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
@@ -604,6 +568,16 @@ namespace Anki {
               markerOutOfFOV_ = true;
             }
           }
+        }
+
+        
+        // Check if we are beyond point of no return distance
+        if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
+#if(DEBUG_DOCK_CONTROLLER)
+          PRINT("DockingController: Point of no return (%f < %d)\n", distToMarker, pointOfNoReturnDistMM_);
+#endif
+          pastPointOfNoReturn_ = true;
+          mode_ = APPROACH_FOR_DOCK;
         }
 
         

@@ -314,7 +314,7 @@ namespace Anki
         GPIO_Init(GPIO_IMU_SCK, &GPIO_InitStructure);  // GPIOG
         
         // Set CS output pins
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
         
