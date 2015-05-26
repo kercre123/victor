@@ -52,6 +52,7 @@ h_fig = figure('PaperUnits', 'centimeters', 'PaperPositionMode', 'manual', ...
 h_axes = axes('Pos', [0 0 1 1], 'Units', 'centimeters', 'Parent', h_fig);
 axis(h_axes, 'off');
 rectangle('Parent', h_axes, 'Pos', [0 0 MatSize MatSize]/10, 'LineStyle', '--');
+set(h_axes, 'Units', 'norm');
 hold(h_axes, 'on')
 
 C = onCleanup(@()fclose(fid));
