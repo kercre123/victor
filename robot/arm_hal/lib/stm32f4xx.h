@@ -78,7 +78,7 @@
                                        STM32F439ZG, STM32F439ZI, STM32F439BG, STM32F439BI, STM32F439NG, STM32F439NI,
                                        STM32F439IG and STM32F439II Devices */
                                     
-  /* #define STM32F401xx  */    /*!< STM32F401CB, STM32F401CC,  STM32F401RB, STM32F401RC, STM32F401VB, STM32F401VC  
+  /* #define STM32F401xx */     /*!< STM32F401CB, STM32F401CC,  STM32F401RB, STM32F401RC, STM32F401VB, STM32F401VC  
                                      STM32F401CD, STM32F401RD, STM32F401VD, STM32F401CExx, STM32F401RE, STM32F401VE Devices */  
   
 #endif

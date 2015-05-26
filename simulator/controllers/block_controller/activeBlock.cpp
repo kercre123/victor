@@ -20,17 +20,22 @@
 #include <webots/Accelerometer.hpp>
 #include <webots/LED.hpp>
 
-#define TIMESTEP 10  //ms
-
 webots::Supervisor block_controller;
 
 
 namespace Anki {
   namespace Cozmo {
+    
     namespace ActiveBlock {
 
       namespace {
-      
+
+        const s32 TIMESTEP = 10; // ms
+        
+        // how frequently (in terms of timesteps to send messages that the block is moving)
+        // (This is just to throttle movement messages a bit)
+        const s32 MOVEMENT_UPDATE_FREQUENCY = 10;
+        
         // once we start moving, we have to stop for this long to send StoppedMoving message
         const double STOPPED_MOVING_TIME_SEC = 0.5f;
         
@@ -41,7 +46,8 @@ namespace Anki {
         
         typedef enum {
           NORMAL = 0,
-          FLASHING_ID
+          FLASHING_ID,
+          BEING_CARRIED
         } BlockState;
         
         s32 blockID_ = -1;
@@ -134,6 +140,12 @@ namespace Anki {
         }
       }
       
+      void ProcessSetBlockBeingCarriedMessage(const BlockMessages::SetBlockBeingCarried& msg)
+      {
+        const bool isBeingCarried = static_cast<bool>(msg.isBeingCarried);
+        state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
+      }
+      
       // ================== End of callbacks ==================
       
       // Returns the ID of the block which is used as the
@@ -142,11 +154,11 @@ namespace Anki {
       s32 GetBlockID() {
         webots::Node* selfNode = block_controller.getSelf();
         
-        webots::Field* activeIdField = selfNode->getField("activeID");
+        webots::Field* activeIdField = selfNode->getField("ID");
         if(activeIdField) {
           return activeIdField->getSFInt32();
         } else {
-          printf("Missing activeID field in active block.\n");
+          printf("Missing ID field in active block.\n");
           return -1;
         }
       }
@@ -373,58 +385,79 @@ namespace Anki {
           
           // TODO: Time probably won't be in seconds on the real blocks...
           const double currTime_sec = block_controller.getTime();
-
-          // Determine if block is moving by seeing if the magnitude of the
-          // acceleration vector is different from gravity
-          const double* accelVals = accel_->getValues();
-          const double accelMagSq = accelVals[0]*accelVals[0] + accelVals[1]*accelVals[1] + accelVals[2]*accelVals[2];
-          const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
-          
-          if(!isMoving) {
-            currentUpAxis_ = GetCurrentUpAxis();
-          }
-          
-          if(isMoving) {
-            printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
-          
-            // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-            BlockMessages::BlockMoved msg;
-            msg.blockID = blockID_;
-            msg.xAccel = accelVals[0];
-            msg.yAccel = accelVals[1];
-            msg.zAccel = accelVals[2];
-            msg.upAxis = currentUpAxis_;
-            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
-            
-            if(!wasMoving_) {
-              // Store the Up axis when we first start movement
-              startingUpAxis_ = currentUpAxis_;
-            }
-            
-            wasLastMovingTime_sec_ = currTime_sec;
-            wasMoving_ = true;
-            
-          } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
-            
-            printf("Block %d stopped moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
-            
-            // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-            BlockMessages::BlockStoppedMoving msg;
-            msg.blockID = blockID_;
-            msg.upAxis  = currentUpAxis_;
-            msg.rolled  = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
-            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID));
-            
-            wasMoving_ = false;
-            startingUpAxis_ = UP_AXIS_UNKNOWN;
-          }
           
           // Run FSM
-          switch(state_) {
+          switch(state_)
+          {
             case NORMAL:
+            {
+              static s32 movingSendCtr = 0;
+              
+              if(movingSendCtr++ == MOVEMENT_UPDATE_FREQUENCY)
+              {
+                movingSendCtr = 0;
+                
+                // Determine if block is moving by seeing if the magnitude of the
+                // acceleration vector is different from gravity
+                const double* accelVals = accel_->getValues();
+                const double accelMagSq = accelVals[0]*accelVals[0] + accelVals[1]*accelVals[1] + accelVals[2]*accelVals[2];
+                const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
+                
+                if(!isMoving) {
+                  currentUpAxis_ = GetCurrentUpAxis();
+                }
+                
+                if(isMoving) {
+                  printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+                  
+                  // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
+                  BlockMessages::BlockMoved msg;
+                  msg.blockID = blockID_;
+                  msg.xAccel = accelVals[0];
+                  msg.yAccel = accelVals[1];
+                  msg.zAccel = accelVals[2];
+                  msg.upAxis = currentUpAxis_;
+                  emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
+                  
+                  if(!wasMoving_) {
+                    // Store the Up axis when we first start movement
+                    startingUpAxis_ = currentUpAxis_;
+                  }
+                  
+                  wasLastMovingTime_sec_ = currTime_sec;
+                  wasMoving_ = true;
+                  
+                } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
+                  
+                  printf("Block %d stopped moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
+                  
+                  // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
+                  BlockMessages::BlockStoppedMoving msg;
+                  msg.blockID = blockID_;
+                  msg.upAxis  = currentUpAxis_;
+                  msg.rolled  = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
+                  emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID));
+                  
+                  wasMoving_ = false;
+                  startingUpAxis_ = UP_AXIS_UNKNOWN;
+                }
+              } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
+              
               // Apply ledParams
               ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
+              
               break;
+            }
+              
+            case BEING_CARRIED:
+            {
+              // Just apply ledParams, don't check for movement since we're being carried
+              ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
+              
+              break;
+            }
+
+              
             case FLASHING_ID:
               if (currTime_sec >= flashIDStartTime_ + flashID_t1_off + flashID_t2_on + flashID_t3_off) {
                 state_ = NORMAL;

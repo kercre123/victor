@@ -9,7 +9,7 @@ namespace Anki {
   namespace Cozmo {
    
     // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
-    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
+    const bool SKIP_PHYS_ROBOT_LOCALIZATION = false;
     
     
     // Camera pose correction (APPLIES TO PHYSICAL ROBOT ONLY)

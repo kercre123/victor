@@ -38,11 +38,7 @@ namespace Anki {
       f32 Ki_ = DEFAULT_WHEEL_KI;
       
       
-#ifdef COZMO_ROBOT_V31
-      f32 Kp_l_ = 0.004f;
-#else
       f32 Kp_l_ = DEFAULT_WHEEL_KP;
-#endif
       f32 Ki_l_ = DEFAULT_WHEEL_KI;
       
       f32 Kp_r_ = DEFAULT_WHEEL_KP;
@@ -119,11 +115,9 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = x * 0.005;
+      f32 out_ol = x * 0.004;
 #     else
-#ifdef COZMO_ROBOT_V31
-        f32 out_ol = 8.4E-7 * x3 - 0.000166336 * x2 + 0.01343098 * x;    // Treaded robot with wonky left wheel
-#elif defined(COZMO_ROBOT_V32)
+#ifdef COZMO_ROBOT_V32
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {
@@ -154,11 +148,9 @@ namespace Anki {
       f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = x * 0.005;
+      f32 out_ol = x * 0.004;
 #     else
-#ifdef COZMO_ROBOT_V31
-        f32 out_ol = 4.824E-7 * x3 - 8.98123E-5 * x2 + 0.007008705 * x;   // Treaded robot with wonky left wheel
-#elif defined(COZMO_ROBOT_V32)
+#ifdef COZMO_ROBOT_V32
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {

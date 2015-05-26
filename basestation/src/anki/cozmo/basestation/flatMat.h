@@ -35,6 +35,7 @@ namespace Anki {
         static const Type LETTERS_4x4;
         static const Type ANKI_LOGO_8BIT;
         static const Type LAVA_PLAYTEST;
+        static const Type GEARS_4x4;
       };
       
       FlatMat(Type type);

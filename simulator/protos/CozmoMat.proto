@@ -21,8 +21,9 @@ Solid {
         size %{=fields.xSize.value}% %{=fields.ySize.value}% 0.005
       }
     }
-    
-%{ if fields.showMarkers.value then }%
+
+
+    %{ if fields.showMarkers.value then }%
 
     Solid {
 	    translation -0.2000 -0.2000 0.0025
@@ -264,12 +265,12 @@ Solid {
 		  }
 	    ]
     }
-    
+
+
 %{ end }% # hide markers or not
 
-    
 DEF WALL_1 Solid {
-  translation %{=fields.xSize.value/2+.01}% 0 0.025
+    translation %{=fields.xSize.value/2+.01}% 0 0.025
   children [
     DEF WALL_SHAPE_Y Shape {
       appearance Appearance {
@@ -285,10 +286,8 @@ DEF WALL_1 Solid {
   boundingObject USE WALL_SHAPE_Y
 }
 
-
-
 DEF WALL_2 Solid {
-  translation %{=-(fields.xSize.value/2+.01)}% 0 0.025
+    translation %{=-(fields.xSize.value/2+.01)}% 0 0.025
   children [
     USE WALL_SHAPE_Y
   ]
@@ -314,7 +313,7 @@ DEF WALL_3 Solid {
 }
 
 DEF WALL_4 Solid {
-  translation 0 %{=fields.ySize.value/2+.01}% 0.025
+    translation 0 %{=fields.ySize.value/2+.01}% 0.025
   rotation 0 0 1 1.5708
   children [
     USE WALL_SHAPE_X

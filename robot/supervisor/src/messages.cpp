@@ -282,11 +282,11 @@ namespace Anki {
 
         // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
         if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
-          /*
+          
           PRINT("WARN: Disconnecting radio due to ping timeout\n");
           HAL::DisconnectRadio();
           lastPingTime_ = 0;
-           */
+          
           PRINT("WARN: Robot last received ping from Basestation at %d. Current time = %d.\n",
                 lastPingTime_, HAL::GetTimeStamp());
           lastPingTime_ = 0;
@@ -834,7 +834,7 @@ namespace Anki {
         static bool firstConnectionUpdateSinceBoot = true;
 
         HAL::RadioUpdateState(msg.wifiState, msg.bluetoothState);
-
+/*
         // Simple startup animation so can tell he's ready
         // TODO: Remove once we have other indicators? This is mostly for dev.
         if (firstConnectionUpdateSinceBoot)
@@ -847,6 +847,7 @@ namespace Anki {
           //EyeController::SetBlinkVariability(50);
           //EyeController::StartBlinking(1000, 100);
         }
+*/
       }
 
       void ProcessSetCarryStateMessage(const SetCarryState& msg)
@@ -882,6 +883,13 @@ namespace Anki {
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 
+      
+      void ProcessSetBlockBeingCarriedMessage(const SetBlockBeingCarried& msg)
+      {
+        // TODO: need to add this hal.h and implement
+        // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
+      }
+      
 // ----------- Send messages -----------------
 
 

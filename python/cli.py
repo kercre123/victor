@@ -37,10 +37,10 @@ class Pinger(threading.Thread, socket.socket):
                 continue
             else:
                 t = time.time()
-                sys.stdout.write("%02d[%04d]\r\n" % (ord(msg[0]), len(msg)))
-                if PrintText.isa(msg):
-                    printMsg = PrintText(buffer=msg)
-                    sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
+                #sys.stdout.write("%02d[%04d]\r\n" % (msg[0], len(msg)))
+                #if PrintText.isa(msg):
+                #    printMsg = PrintText(buffer=msg)
+                #      sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
                 #if ImageChunk.isa(msg):
                 #    ic = ImageChunk(buffer=msg)
                 #    sys.stdout.write("\rimgChunk %d[%02d] @ %fms: COZMO>>>" % (ic.imageId, ic.chunkId, t*1000.0))
@@ -110,20 +110,21 @@ class CozmoCLI(socket.socket):
 
     def SetBlockLights(self, *args):
         "Sends a set block lights command. Args: <block ID> [LIGHT VALUE [LIGHT VALUE [...]]]"
-        if len(args) > 9:
-            sys.stderr.write("Too many arguments for SetBlockLights\n")
+        try:
+            blockId = int(eval(args[0]))
+            lights = eval(' '.join(args[1:]))
+        except:
+            sys.stderr.write("Couldn't evaluate arguments\n")
             return False
-        msg = SetBlockLights(blockID=eval(args[0]))
-        for i, a in enumerate(args[1:]):
+        else:
             try:
-                val = int(eval(a))
-            except:
-                sys.stderr.write("Couldn't interprate \"%s\" as an int\n" % a)
+                msg = SetBlockLights(blockID=blockId, lights=lights)
+            except Exception as e:
+                sys.stderr.write("Incorrect arguments:\r\n%s\n\n" % str(e))
                 return False
             else:
-                msg.lights[i] = val
-        self.sendto(msg.serialize(), self.robot)
-        return True
+                self.sendto(msg.serialize(), self.robot)
+                return lights
 
     def ImageRequest(self, *args):
         "Send an image request to the robot. Args: <command> <resolution>"

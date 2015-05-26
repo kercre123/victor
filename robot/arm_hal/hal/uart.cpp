@@ -1,15 +1,10 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"
 
-// Comment this out to use the Torpedo UART (currently broken on 3.0)
-#define DEBUG_UART
-
-//#define UART_NON_ISR_PUT_CHAR
-
-#ifdef DEBUG_UART
-// Use the head debug cable UART
-#define BAUDRATE 115200 // Ask for this to actually get 3e6
+#define BAUDRATE 5000000
+//#define BAUDRATE 3000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -17,33 +12,12 @@
 #define GPIO_AF         GPIO_AF_USART1
 #define UART            USART1
 
-#define DMA_STREAM_RX   DMA2_Stream5
+#define DMA_STREAM_RX   DMA2_Stream2
 #define DMA_CHANNEL_RX  DMA_Channel_4
 
 #define DMA_STREAM_TX   DMA2_Stream7
 #define DMA_CHANNEL_TX  DMA_Channel_4
 #define DMA_IRQ_TX      DMA2_Stream7_IRQn
-#define DMA_FLAG_TX     DMA_FLAG_TCIF7    // Stream 7
-#define DMA_HANDLER_TX  DMA2_Stream7_IRQHandler
-#else
-// Use the Torpedo UART
-#define BAUDRATE 1000000
-
-#define RCC_GPIO        RCC_AHB1Periph_GPIOA
-#define RCC_DMA         RCC_AHB1Periph_DMA1
-#define RCC_UART        RCC_APB2Periph_USART2
-#define GPIO_AF         GPIO_AF_USART2
-#define UART            USART2
-
-#define DMA_STREAM_RX   DMA1_Stream5
-#define DMA_CHANNEL_RX  DMA_Channel_4
-
-#define DMA_STREAM_TX   DMA1_Stream6
-#define DMA_CHANNEL_TX  DMA_Channel_4
-#define DMA_IRQ_TX      DMA1_Stream6_IRQn
-#define DMA_FLAG_TX     DMA_FLAG_TCIF6    // Stream 6
-#define DMA_HANDLER_TX  DMA1_Stream6_IRQHandler
-#endif
 
 namespace Anki
 {
@@ -71,25 +45,21 @@ namespace Anki
       s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
       
       // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 4;
+      int BUFFER_WRITE_SIZE = 1024 * 8;
       int BUFFER_READ_SIZE = 1024;
-      OFFCHIP u8 m_bufferWrite[1024 * 4];
-      OFFCHIP u8 m_bufferRead[1024];
+      ONCHIP u8 m_bufferWrite[1024 * 8];
+      ONCHIP u8 m_bufferRead[1024];
+      
+      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
       
       static void UARTStartTransfer()
       {
-#if defined(UART_NON_ISR_PUT_CHAR)
-        return;
-#else
         int tail = m_writeTail;
         int length = m_writeHead - tail;
         if (length < 0)
-        {
           length = sizeof(m_bufferWrite) - tail;
-        }
-        if (length > 25) {
-          length = 25;
-        }
+        if (length > 65535)
+          length = 65535;
         
         DMA_STREAM_TX->NDTR = length;                     // Buffer size
         DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[tail];  // Buffer address
@@ -98,7 +68,6 @@ namespace Anki
         m_isTransferring = true;
         
         DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
-#endif
       }
       
       int UARTGetFreeSpace()
@@ -118,14 +87,9 @@ namespace Anki
 
       void UARTConfigure()
       {
-        // Supporting 3.0
-      #ifdef DEBUG_UART
+        // Supporting 4.0
         GPIO_PIN_SOURCE(TX, GPIOB, 6);
         GPIO_PIN_SOURCE(RX, GPIOB, 7);
-      #else
-        GPIO_PIN_SOURCE(TX, GPIOA, 2);
-        GPIO_PIN_SOURCE(RX, GPIOA, 3);
-      #endif
         
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
@@ -151,6 +115,7 @@ namespace Anki
         // Configure the UART for the appropriate baudrate
         USART_InitTypeDef USART_InitStructure;
         USART_Cmd(UART, DISABLE);
+        USART_OverSampling8Cmd(UART, ENABLE);
         USART_InitStructure.USART_BaudRate = BAUDRATE;
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
         USART_InitStructure.USART_StopBits = USART_StopBits_2;
@@ -228,31 +193,28 @@ namespace Anki
       void UARTInit()
       {
         // Configure the UART - and light up purple to indicate UART
-        SetLED(LED_BACKPACK_LEFT, LED_PURPLE);
+        //SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
         UARTConfigure();
       }
 
       // Add one char to the buffer, wrapping around
       static void BufPutChar(u8 c)
       {
-#if defined(UART_NON_ISR_PUT_CHAR)
-        UART->DR = c;
-        while (!(UART->SR & USART_FLAG_TXE))
-          ;
-        return;
-#else
         m_bufferWrite[m_writeHead] = c;
         m_writeHead++;
         if (m_writeHead >= sizeof(m_bufferWrite))
         {
           m_writeHead = 0;
         }
-#endif
       }
       
       int UARTPutChar(int c)
       {
-       
+        //UART->DR = c;
+        //while (!(UART->SR & USART_FLAG_TXE))
+        //  ;
+        //return c;
+        
         // Leave one guard byte in the buffer
         while (UARTGetFreeSpace() <= 2)
           ;
@@ -275,7 +237,10 @@ namespace Anki
       {
         bool result = false;
         
+        // This poor-man's mutex prevents longExec and mainExec from trampling each other's packets
+        // The only reason it works is because mainExec is an interrupt, not a thread
         __disable_irq();
+        g_deferMainExec = 1;
         int bytesLeft = UARTGetFreeSpace();
         
         // Leave one guard byte + header
@@ -295,12 +260,6 @@ namespace Anki
 					
           BufPutChar(msgID);
           
-#if defined(UART_NON_ISR_PUT_CHAR)
-          for (int i=0; i<length; ++i)
-          {
-            BufPutChar(buffer[i]);
-          }
-#else          
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)
           {
@@ -327,10 +286,17 @@ namespace Anki
           {
             StartTransfer();
           }
-#endif
-
         }
+        g_deferMainExec = 0;
         __enable_irq();
+        
+        // Wrap up main exec
+        if (g_mainExecDeferred)
+        {
+          g_mainExecDeferred = 0;
+          Anki::Cozmo::Robot::step_MainExecution();
+        }
+        
         return result;
       }
 
@@ -398,12 +364,12 @@ int std::fgetc(FILE* f)
 extern "C"
 {
   // Used for UART transfer-complete
-  void DMA_HANDLER_TX()
+  void DMA2_Stream7_IRQHandler()
   {
     using namespace Anki::Cozmo::HAL;
     
     // Clear DMA Transfer Complete flag
-    DMA_ClearFlag(DMA_STREAM_TX, DMA_FLAG_TCIF7); // Stream 7
+    DMA_ClearFlag(DMA2_Stream7, DMA_FLAG_TCIF7);
     
     m_writeTail += m_writeLength;
     if (m_writeTail >= sizeof(m_bufferWrite))
@@ -412,7 +378,6 @@ extern "C"
     // Check if there's more data to be transferred
     if (m_writeHead != m_writeTail)
     {
-      MicroWait(1);
       StartTransfer();
     } else {
       m_isTransferring = false;

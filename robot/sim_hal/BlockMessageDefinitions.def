@@ -54,3 +54,9 @@ ADD_MESSAGE_MEMBER(u32, blockID)
 ADD_MESSAGE_MEMBER(u8,  upAxis)
 ADD_MESSAGE_MEMBER(u8,  rolled) // Whether up orientation changed between start and end of this movement
 END_MESSAGE_DEFINITION(BlockStoppedMoving)
+
+// SetBlockBeingCarried
+START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
+ADD_MESSAGE_MEMBER(u32, blockID)
+ADD_MESSAGE_MEMBER(u8,  isBeingCarried)
+END_MESSAGE_DEFINITION(SetBlockBeingCarried)
