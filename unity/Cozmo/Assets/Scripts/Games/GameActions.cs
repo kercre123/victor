@@ -277,7 +277,7 @@ public class GameActions : MonoBehaviour
 		//Debug.Log( "On Press" );
 	}
 
-	private void Description( string verb, ObservedObject selectedObject, ref string description, string period = "." )
+	protected void Description( string verb, ObservedObject selectedObject, ref string description, string period = "." )
 	{
 		if( selectedObject == null || CozmoPalette.instance == null ) return;
 
