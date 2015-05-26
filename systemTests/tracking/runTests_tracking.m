@@ -11,7 +11,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.06;
     
-    numComputeThreads.basics = 3;
+    numComputeThreads.basics = 1;
     numComputeThreads.perPose = 3;
     
     % If makeNewResultsDirectory is true, make a new directory if runTests_tracking.m is changed. Otherwise, use the last created directory.
@@ -127,8 +127,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
             isSimpleTest = false;
             
             numShakingPixels = [0, 2, 8, 12];
-%             pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3, 0.4]; % 0.4 causes a klt crash?
-            pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3];
+            pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5];
             
             temporalFrameFractions = [1, 10];
             
