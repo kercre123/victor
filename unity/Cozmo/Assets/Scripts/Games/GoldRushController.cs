@@ -143,13 +143,13 @@ public class GoldRushController : GameController {
 	protected override void Enter_BUILDING ()
 	{
 		base.Enter_BUILDING ();
-		RobotEngineManager.instance.SuccessOrFailure += PickedUpActiveBlock;
+		//RobotEngineManager.instance.SuccessOrFailure += PickedUpActiveBlock;
 	}
 
 	protected override void Exit_BUILDING ()
 	{
 		base.Exit_BUILDING ();
-		RobotEngineManager.instance.SuccessOrFailure -= PickedUpActiveBlock;
+		//RobotEngineManager.instance.SuccessOrFailure -= PickedUpActiveBlock;
 	}
 
 	protected override void Update_BUILDING ()
@@ -322,6 +322,8 @@ public class GoldRushController : GameController {
 				CozmoBusyPanel.instance.SetDescription(desc);
 			}
 		}
+
+		RobotEngineManager.instance.SuccessOrFailure += PickedUpActiveBlock;
 	}
 	
 	protected override void Exit_PRE_GAME () 
@@ -329,6 +331,8 @@ public class GoldRushController : GameController {
 		Debug.Log("Exit_PRE_GAME");
 		//hintMessage.KillMessage ();
 		base.Exit_PRE_GAME ();
+
+		RobotEngineManager.instance.SuccessOrFailure -= PickedUpActiveBlock;
 	}
 
 	protected override void Update_PRE_GAME ()
