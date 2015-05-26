@@ -474,7 +474,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			case RobotActionType.PICKUP_OBJECT_LOW:
 			case RobotActionType.PICKUP_OBJECT_HIGH:
 
-				if(robot.carryingObject.isActive) {
+				if(robot.carryingObject != null && robot.carryingObject.isActive) {
 					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
 					ForceLightCubeToCorrectColor(activeBlock);
 				}
