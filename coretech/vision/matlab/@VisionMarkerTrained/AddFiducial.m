@@ -174,7 +174,8 @@ AlphaChannel = max(0, min(1, AlphaChannel));
 
 if InvertImage
     [squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(OutputSize, 'WithUnpaddedFiducial');
-    interiorRegion = round(padding_pix*.75 + squareWidth_pix):round(OutputSize - (padding_pix*.75 + squareWidth_pix));
+    interiorRegion = round(padding_pix + squareWidth_pix):round(OutputSize - (padding_pix + squareWidth_pix));
+    
     imgNew(interiorRegion,interiorRegion,:) = 1 - imgNew(interiorRegion,interiorRegion,:);
     AlphaChannel(interiorRegion,interiorRegion) = 1 - AlphaChannel(interiorRegion,interiorRegion);
 end
