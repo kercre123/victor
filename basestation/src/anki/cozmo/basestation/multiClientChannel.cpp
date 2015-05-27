@@ -1,5 +1,5 @@
 /**
- * File: multiClientComms.cpp
+ * File: multiClientChannel.cpp
  *
  * Author: Kevin Yoon
  * Created: 1/22/2014
@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/multiClientComms.h"
+#include "anki/cozmo/basestation/multiClientChannel.h"
 
 #include "anki/util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
@@ -45,20 +45,20 @@ using namespace Anki::Cozmo;
 
 const Anki::Comms::ConnectionId ADVERTISING_CLIENT_CONNECTION_ID = 0;
 
-MultiClientComms::MultiClientComms()
+MultiClientChannel::MultiClientChannel()
 {
 }
 
-MultiClientComms::~MultiClientComms()
+MultiClientChannel::~MultiClientChannel()
 {
 }
 
-bool MultiClientComms::IsStarted() const
+bool MultiClientChannel::IsStarted() const
 {
   return _reliableChannel.IsStarted();
 }
 
-Anki::Util::TransportAddress MultiClientComms::GetAdvertisingAddress() const
+Anki::Util::TransportAddress MultiClientChannel::GetAdvertisingAddress() const
 {
   TransportAddress address;
   if (_advertisingChannel.GetAddress(address, ADVERTISING_CLIENT_CONNECTION_ID)) {
@@ -67,7 +67,7 @@ Anki::Util::TransportAddress MultiClientComms::GetAdvertisingAddress() const
   return address;
 }
 
-void MultiClientComms::Start(const TransportAddress& advertisingAddress)
+void MultiClientChannel::Start(const TransportAddress& advertisingAddress)
 {
   _advertisingChannel.StartClient();
   _reliableChannel.StartClient();
@@ -76,7 +76,7 @@ void MultiClientComms::Start(const TransportAddress& advertisingAddress)
   SendZeroPacket();
 }
 
-void MultiClientComms::Stop()
+void MultiClientChannel::Stop()
 {
   if (IsStarted()) {
     RemoveAllConnections();
@@ -86,7 +86,7 @@ void MultiClientComms::Stop()
   }
 }
 
-void MultiClientComms::Update()
+void MultiClientChannel::Update()
 {
   if (!IsStarted()) {
     return;
@@ -109,7 +109,7 @@ void MultiClientComms::Update()
         if (!_reliableChannel.IsConnectionActive(advertisementMessage.id)) {
           
           if (_advertisingInfo.count(advertisementMessage.id) == 0) {
-            PRINT_STREAM_DEBUG("MultiClientComms.Update",
+            PRINT_STREAM_DEBUG("MultiClientChannel.Update",
                                  "Detected advertising connection id " << advertisementMessage.id <<
                               " when hosting on host " << advertisementMessage.ip <<
                               " at port" << advertisementMessage.port << ".");
@@ -124,7 +124,7 @@ void MultiClientComms::Update()
   auto end = _advertisingInfo.end();
   while (iterator != end) {
     if (currentTime - iterator->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
-      PRINT_STREAM_DEBUG("MultiClientComms.Update",
+      PRINT_STREAM_DEBUG("MultiClientChannel.Update",
                          "Removing connection id " << iterator->first <<
                          " from advertising list. "
                          " (Last seen: " << iterator->second.lastSeenTime <<
@@ -165,13 +165,13 @@ void MultiClientComms::Update()
 //          
 //          if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + pQueue->front().second.dataLen > maxSentBytesPerTic_)) {
 //#if(DEBUG_COMMS)
-//            PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", pQueue->size() - 1);
+//            PRINT_NAMED_INFO("MultiClientChannel.MaxSendLimitReached", "%d messages left in queue to send later\n", pQueue->size() - 1);
 //#endif
 //            break;
 //          }
 //          bytesSentThisUpdateCycle_ += pQueue->front().second.dataLen;
 //          if (RealSend(pQueue->front().second) < 0) {
-//            PRINT_NAMED_WARNING("MultiClientComms.RealSendFail", "");
+//            PRINT_NAMED_WARNING("MultiClientChannel.RealSendFail", "");
 //          }
 //          pQueue->pop_front();
 //        } else {
@@ -191,7 +191,7 @@ void MultiClientComms::Update()
   }
 }
 
-bool MultiClientComms::Send(const Anki::Comms::OutgoingPacket &packet)
+bool MultiClientChannel::Send(const Anki::Comms::OutgoingPacket &packet)
 {
   return _reliableChannel.Send(packet);
 }
@@ -203,7 +203,7 @@ bool MultiClientComms::Send(const Anki::Comms::OutgoingPacket &packet)
 //  if (SIM_SEND_LATENCY_SEC == 0) {
 //    if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
 //      #if(DEBUG_COMMS)
-//      PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message\n");
+//      PRINT_NAMED_INFO("MultiClientChannel.MaxSendLimitReached", "queueing message\n");
 //      #endif
 //    } else {
 //      bytesSentThisUpdateCycle_ += p.dataLen;
@@ -221,7 +221,7 @@ bool MultiClientComms::Send(const Anki::Comms::OutgoingPacket &packet)
 //  return numBytesSent;
 //}
 //
-//int MultiClientComms::RealSend(const Comms::MsgPacket &p)
+//int MultiClientChannel::RealSend(const Comms::MsgPacket &p)
 //{
 //  #endif // #if(DO_SIM_COMMS_LATENCY)
 //  
@@ -261,7 +261,7 @@ bool MultiClientComms::Send(const Anki::Comms::OutgoingPacket &packet)
 //  
 //}
 
-bool MultiClientComms::PopIncomingPacket(IncomingPacket& packet)
+bool MultiClientChannel::PopIncomingPacket(IncomingPacket& packet)
 {
   // technically you really should modify packet if we're going to end up
   // returning false; this just costs some stack and copying
@@ -280,47 +280,47 @@ bool MultiClientComms::PopIncomingPacket(IncomingPacket& packet)
   return result;
 }
 
-bool MultiClientComms::IsConnectionAdvertising(ConnectionId connectionId) const
+bool MultiClientChannel::IsConnectionAdvertising(ConnectionId connectionId) const
 {
   return (_advertisingInfo.count(connectionId) != 0);
 }
 
-bool MultiClientComms::IsConnectionActive(ConnectionId connectionId) const
+bool MultiClientChannel::IsConnectionActive(ConnectionId connectionId) const
 {
   return _reliableChannel.IsConnectionActive(connectionId);
 }
 
-int32_t MultiClientComms::CountAdvertisingConnections() const
+int32_t MultiClientChannel::CountAdvertisingConnections() const
 {
   return static_cast<int32_t>(_advertisingInfo.size());
 }
 
-int32_t MultiClientComms::CountActiveConnections() const
+int32_t MultiClientChannel::CountActiveConnections() const
 {
   return static_cast<int32_t>(_advertisingInfo.size());
 }
 
-bool MultiClientComms::GetAdvertisingConnections(std::vector<ConnectionId>& connectionIds)
+bool MultiClientChannel::GetAdvertisingConnections(std::vector<ConnectionId>& connectionIds)
 {
   connectionIds.assign(make_get_iterator<0>(_advertisingInfo.begin()), make_get_iterator<0>(_advertisingInfo.end()));
   return !connectionIds.empty();
 }
 
-bool MultiClientComms::AcceptAdvertisingConnection(ConnectionId connectionId)
+bool MultiClientChannel::AcceptAdvertisingConnection(ConnectionId connectionId)
 {
   auto found = _advertisingInfo.find(connectionId);
   if (found != _advertisingInfo.end()) {
     return AcceptAdvertisingConnectionInternal(connectionId, found->second);
   }
   else {
-    PRINT_STREAM_WARNING("MultiClientComms.AcceptAdvertisingConnection",
+    PRINT_STREAM_WARNING("MultiClientChannel.AcceptAdvertisingConnection",
                          "Could not accept connection to id " << connectionId <<
                          " because it is not currently in the advertisement list.");
     return false;
   }
 }
 
-bool MultiClientComms::AcceptAllAdvertisingConnections()
+bool MultiClientChannel::AcceptAllAdvertisingConnections()
 {
   bool allAccepted = true;
   for (auto entry : _advertisingInfo) {
@@ -329,67 +329,67 @@ bool MultiClientComms::AcceptAllAdvertisingConnections()
   return allAccepted;
 }
 
-void MultiClientComms::AddConnection(ConnectionId connectionId, const TransportAddress& address)
+void MultiClientChannel::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   _reliableChannel.AddConnection(connectionId, address);
 }
 
-void MultiClientComms::RemoveAdvertisingConnection(ConnectionId connectionId)
+void MultiClientChannel::RemoveAdvertisingConnection(ConnectionId connectionId)
 {
   _advertisingInfo.erase(connectionId);
 }
 
-void MultiClientComms::RemoveConnection(ConnectionId connectionId)
+void MultiClientChannel::RemoveConnection(ConnectionId connectionId)
 {
   _reliableChannel.RemoveConnection(connectionId);
 }
 
-void MultiClientComms::RemoveAllAdvertisingConnections()
+void MultiClientChannel::RemoveAllAdvertisingConnections()
 {
   _advertisingInfo.clear();
 }
 
-void MultiClientComms::RemoveAllConnections()
+void MultiClientChannel::RemoveAllConnections()
 {
   _reliableChannel.RemoveAllConnections();
 }
 
-bool MultiClientComms::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
+bool MultiClientChannel::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
 {
   return _reliableChannel.GetConnectionId(connectionId, address);
 }
 
-bool MultiClientComms::GetAddress(TransportAddress& address, ConnectionId connectionId) const
+bool MultiClientChannel::GetAddress(TransportAddress& address, ConnectionId connectionId) const
 {
   return _reliableChannel.GetAddress(address, connectionId);
 }
 
-uint32_t MultiClientComms::GetMaxTotalBytesPerMessage() const
+uint32_t MultiClientChannel::GetMaxTotalBytesPerMessage() const
 {
   return _reliableChannel.GetMaxTotalBytesPerMessage();
 }
 
-void MultiClientComms::SendZeroPacket()
+void MultiClientChannel::SendZeroPacket()
 {
   const uint8_t zero = 0;
   OutgoingPacket packet(&zero, 1, ADVERTISING_CLIENT_CONNECTION_ID, false, true);
   _advertisingChannel.Send(packet);
 }
 
-bool MultiClientComms::AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info)
+bool MultiClientChannel::AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info)
 {
   const char *ipString = reinterpret_cast<const char *>(info.message.ip);
   uint32_t ipAddress = TransportAddress::IPAddressStringToU32(ipString);
   uint16_t port = info.message.port;
   // won't always happen; sometimes it'll half-parse and give you garbage
   if (ipAddress == 0) {
-    PRINT_STREAM_WARNING("MultiClientComms.AcceptAdvertisingConnectionInternal",
+    PRINT_STREAM_WARNING("MultiClientChannel.AcceptAdvertisingConnectionInternal",
                          "Could not accept connection to id " << connectionId <<
                          " because its IP address could not be parsed.");
     return false;
   }
   else if (port == 0) {
-    PRINT_STREAM_WARNING("MultiClientComms.AcceptAdvertisingConnectionInternal",
+    PRINT_STREAM_WARNING("MultiClientChannel.AcceptAdvertisingConnectionInternal",
                          "Could not accept connection to id " << connectionId <<
                          " because its IP address could not be parsed.");
     return false;
@@ -397,7 +397,7 @@ bool MultiClientComms::AcceptAdvertisingConnectionInternal(ConnectionId connecti
   else {
     TransportAddress address(ipAddress, port);
     
-    PRINT_STREAM_DEBUG("MultiClientComms.AcceptAdvertisingConnectionInternal",
+    PRINT_STREAM_DEBUG("MultiClientChannel.AcceptAdvertisingConnectionInternal",
                        "Accepting connection id " << connectionId <<
                        " to address " << address.ToString() << ".");
     

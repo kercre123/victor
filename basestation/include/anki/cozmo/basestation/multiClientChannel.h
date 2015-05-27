@@ -1,5 +1,5 @@
 /**
- * File: multiClientComms.h
+ * File: multiClientChannel.h
  *
  * Author: Kevin Yoon
  * Created: 1/22/2014
@@ -35,13 +35,13 @@
 namespace Anki {
 namespace Cozmo {
 
-  class MultiClientComms : public Comms::IChannel {
+  class MultiClientChannel : public Comms::IChannel {
   public:
     
-    MultiClientComms();
+    MultiClientChannel();
     
     // The destructor will automatically cleans up
-    virtual ~MultiClientComms() override;
+    virtual ~MultiClientChannel() override;
     
     // Determines whether the Start method has been called.
     bool IsStarted() const;

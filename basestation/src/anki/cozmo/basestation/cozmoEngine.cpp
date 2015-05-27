@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
+#include "anki/cozmo/basestation/multiClientChannel.h" // TODO: Remove?
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
@@ -78,7 +78,7 @@ namespace Cozmo {
     
     Json::Value               _config;
     
-    MultiClientComms          _robotComms;
+    MultiClientChannel        _robotComms;
     
     // TODO: Merge this into RobotManager
     // Each engine can potetnailly talk to multiple physical robots.
