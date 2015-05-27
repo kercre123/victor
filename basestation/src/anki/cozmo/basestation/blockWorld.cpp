@@ -2215,7 +2215,8 @@ namespace Anki
       }
       
       // (Re)Draw the selected object separately so we can get its pre-action poses
-      if(GetSelectedObject().IsSet()) {
+      if(GetSelectedObject().IsSet())
+      {
         ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",

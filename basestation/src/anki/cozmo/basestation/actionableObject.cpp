@@ -109,15 +109,24 @@ namespace Anki {
           //                                                            currentPoint+Point2f( 1.f, 1.f)),
           //                                                     1.f, NamedColors::BLUE);
           
+          // Technically, this quad is already in the list of obstacles, so we could
+          // find it rather than recomputing it...
+          const Quad2f boundingQuad = GetBoundingQuadXY();
+          
           for(auto & obstacle : obstacles) {
             
             // DEBUG VIZ
             //            VizManager::getInstance()->DrawGenericQuad(obstacle.second.GetValue(), obstacle.first, 1.f, NamedColors::ORANGE);
             
-            
-            if(obstacle.second != this->GetID() && obstacle.first.Contains(currentPoint)) {
-              pathClear = false;
-              break;
+            // Make sure this obstacle is not from this object (the one we are trying to interact with).
+            if(obstacle.second != this->GetID()) {
+              // Also make sure the obstacle is not part of a stack this one belongs to.
+              if(boundingQuad.Contains(obstacle.first.ComputeCentroid()) == false) {
+                if(obstacle.first.Contains(currentPoint)) {
+                  pathClear = false;
+                  break;
+                }
+              }
             }
           }
           // Take a step along the line
