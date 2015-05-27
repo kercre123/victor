@@ -1051,6 +1051,11 @@
               <FileType>8</FileType>
               <FilePath>..\tools\anki-util\source\anki\util\transport\reliableSequenceId.cpp</FilePath>
             </File>
+            <File>
+              <FileName>reliableMessageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -2114,6 +2119,11 @@
               <FileName>reliableSequenceId.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\tools\anki-util\source\anki\util\transport\reliableSequenceId.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>reliableMessageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
             </File>
           </Files>
         </Group>

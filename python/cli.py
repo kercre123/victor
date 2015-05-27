@@ -24,7 +24,7 @@ class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
 
     def __init__(self, unreliableTransport, robotAddress):
-        sys.stdout.write("Connecting to robot at: %s\n" % robotAddress)
+        sys.stdout.write("Connecting to robot at: %s\n" % repr(robotAddress))
         unreliableTransport.OpenSocket()
         self.transport = ReliableTransport(unreliableTransport, self)
         self.robot = robotAddress
@@ -39,13 +39,14 @@ class CozmoCLI(IDataReceiver):
         raise Exception("CozmoCLI wasn't expecing a connection request")
 
     def OnConnected(self, sourceAddress):
-        sys.stdout.write("Connected to robot at %s\r\n" % sourceAddress)
+        sys.stdout.write("Connected to robot at %s\r\n" % repr(sourceAddress))
 
     def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to robot at %s\r\n" % sourceAddress)
+        sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
 
     def ReceiveData(self, buffer, sourceAddress):
-        sys.stdout.write("RX %d: %s\r\n" % (buffer[0], buffer[1:].decode("ASCII", "ignore")))
+        #sys.stdout.write("RX %d: %s\r\n" % (buffer[0], buffer[1:].decode("ASCII", "ignore")))
+        pass
 
     def send(self, buffer):
         return self.transport.SendData(True, False, self.robot, buffer)
@@ -194,8 +195,9 @@ class CozmoCLI(IDataReceiver):
 
 if __name__ == '__main__':
     from ReliableTransport.testbench import UartSimRadio
-    transport = UartSimRadio("com4", 115200)
-    cli = CozmoCLI(transport, "com4")
+    transport = UDPTransport()
+    #transport = UartSimRadio("com4", 115200)
+    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT))
     cli.loop()
     cli.transport.KillThread()
 
