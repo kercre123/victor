@@ -11,6 +11,8 @@
  *
  **/
 
+#if 0
+
 //#include "basestation/version.h"
 #include "anki/messaging/basestation/IComms.h"
 #include "../comms/commsPlayback.h"
@@ -358,3 +360,5 @@ RecordingPlaybackStatus Playback::PostTickMessageProcess()
 
 } // namespace Cozmo
 } // namespace Anki
+
+#endif

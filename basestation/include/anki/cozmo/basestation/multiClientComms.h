@@ -14,20 +14,19 @@
 #ifndef BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
 #define BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
 
-#include <map>
+#include <unordered_map>
 #include <vector>
-#include <deque>
-#include <anki/messaging/basestation/IComms.h>
+#include <anki/messaging/basestation/IChannel.h>
+#include <anki/messaging/basestation/UnreliableUDPChannel.h>
+#include <anki/messaging/basestation/ReliableUDPChannel.h>
 #include "anki/messaging/basestation/advertisementService.h"
-#include "anki/messaging/shared/TcpClient.h"
-#include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 // Set to 1 to simulate a send/receive latencies
 // beyond the actual latency of TCP.
 // Note that the resolution of these latencies is currently equal to
 // the Basestation frequency since that's what defines how often Update() is called.
-#define DO_SIM_COMMS_LATENCY 1
+//#define DO_SIM_COMMS_LATENCY 1
 #define SIM_RECV_LATENCY_SEC 0 // 0.03
 #define SIM_SEND_LATENCY_SEC 0 // 0.03
 
@@ -36,121 +35,97 @@
 namespace Anki {
 namespace Cozmo {
 
-  typedef struct {
-    Comms::AdvertisementMsg devInfo;
-    f32 lastSeenTime;
-  } DeviceConnectionInfo_t;
-  
-  
-  class ConnectedDeviceInfo {
-  public:
-    static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
-    /*
-#if(USE_UDP_ROBOT_COMMS)
-    UdpClient* client;
-#else
-    TcpClient* client;
-#endif
-     */
-    void* client;
-    u8 protocol;
-    u8 recvBuf[MAX_RECV_BUF_SIZE];
-    int recvDataSize = 0;
-  };
-  
-  
-  
-  class MultiClientComms : public Comms::IComms {
+  class MultiClientComms : public Comms::IChannel {
   public:
     
     MultiClientComms();
     
-    // Init with the IP address to use as the advertising host
-    // and the maximum number of bytes that can be sent out per call to Update().
-    // If maxSentBytesPerTic == 0, then there is no limit.
-    Result Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic = 0);
-    
     // The destructor will automatically cleans up
-    virtual ~MultiClientComms();
+    virtual ~MultiClientComms() override;
     
-    // Returns true if we are ready to use TCP
-    virtual bool IsInitialized();
+    // Determines whether the Start method has been called.
+    bool IsStarted() const;
     
-    // Returns the number of messages ready for processing in the BLEVehicleMgr.
-    // Returns 0 if no messages are available.
-    virtual u32 GetNumPendingMsgPackets();
-  
-    virtual size_t Send(const Comms::MsgPacket &p);
+    TransportAddress GetAdvertisingAddress() const;
+    
+    void Start(const TransportAddress& advertisingAddress);
+    
+    void Stop();
+    
+    
+    virtual void Update() override;
+    
+    virtual bool Send(const Anki::Comms::OutgoingPacket& packet) override;
 
-    virtual bool GetNextMsgPacket(Comms::MsgPacket &p);
+    virtual bool PopIncomingPacket(IncomingPacket& packet) override;
+    
+    // true if we have recent advertisement data on the connection id
+    bool IsConnectionAdvertising(ConnectionId connectionId) const;
+    
+    // true if we are either trying to connect or currently sending/receiving with the connection
+    virtual bool IsConnectionActive(ConnectionId connectionId) const override;
+    
+    int32_t CountAdvertisingConnections() const;
+    
+    virtual int32_t CountActiveConnections() const override;
+    
+    bool GetAdvertisingConnections(std::vector<ConnectionId>& connectionIds);
+    
+    void AcceptAdvertisingConnection(ConnectionId connectionId);
+    
+    void AcceptAllAdvertisingConnections();
     
     
-    // when game is unpaused we need to dump old messages
-    virtual void ClearMsgPackets();
+    // Force add an unadvertised connection; connecting directly to that location
+    virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) override;
     
-    //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp);
+    // Removes the connection so it is not advertising
+    void RemoveAdvertisingConnection(ConnectionId connectionId);
+    
+    // Removes the connection so it is inactive
+    // Does not affect advertisement
+    virtual void RemoveConnection(ConnectionId connectionId) override;
+    
+    // Remove just the advertising connections
+    void RemoveAllAdvertisingConnections();
+    
+    // Removes just the active connections
+    virtual void RemoveAllConnections() override;
+    
+    
+    virtual bool GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const override;
+    
+    virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
+    
+    
+    virtual uint32_t GetMaxTotalBytesPerMessage() const override;
   
-    // Return the number of MsgPackets in the send queue that are bound for devID
-    virtual u32 GetNumMsgPacketsInSendQueue(int devID);
-    
-    // Updates the list of advertising devices
-    virtual void Update(bool send_queued_msgs = true);
-    
-    // Connect to a device.
-    // Returns true if successfully connected
-    bool ConnectToDeviceByID(int devID);
-    
-    // Disconnect from a device
-    void DisconnectDeviceByID(int devID);
-    
-    // Connect to all advertising devices.
-    // Returns the total number of devices that are connected.
-    u32 ConnectToAllDevices();
-    
-    // Disconnects from all devices.
-    void DisconnectAllDevices();
-    
-    u32 GetNumConnectedDevices() const { return (u32)connectedDevices_.size(); }
-    
-    u32 GetNumAdvertisingDevices() const { return (u32)advertisingDevices_.size(); }
-    
-    u32 GetAdvertisingDeviceIDs(std::vector<int> &robotIDs);
-    
-    const char* GetAdvertisingHostIP() const { return advertisingHostIP_; }
-    
-    // Clears the list of advertising devices.
-    void ClearAdvertisingDevices();
-
-    
   private:
     
-    bool isInitialized_;
+    struct AdvertisementConnectionInfo {
+      Comms::AdvertisementMsg message;
+      double lastSeenTime = 0;
+      
+      AdvertisementConnectionInfo()
+      {
+      }
+      AdvertisementConnectionInfo(const Comms::AdvertisementMsg& message, double lastSeenTime)
+      : message(message)
+      , lastSeenTime(lastSeenTime)
+      {
+      }
+    };
     
-    const char* advertisingHostIP_;
-    // Connects to "advertising" server to view available unconnected devices.
-    UdpClient advertisingChannelClient_;
+    void SendZeroPacket();
     
-    // The number of bytes that can be sent out per call to Update(),
-    // the assumption being Update() is called once per basestation tic.
-    unsigned int maxSentBytesPerTic_;
+    void AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info);
     
-    void ReadAllMsgPackets();
+    Anki::Comms::UnreliableUDPChannel _advertisingChannel;
     
-    void PrintRecvBuf(int robotID);
+    Anki::Comms::ReliableUDPChannel _reliableChannel;
     
     // Map of advertising robots (key: dev id)
-    using advertisingDevicesIt_t = std::map<int, DeviceConnectionInfo_t>::iterator;
-    std::map<int, DeviceConnectionInfo_t> advertisingDevices_;
-    
-    // Map of connected robots (key: dev id)
-    using connectedDevicesIt_t = std::map<int, ConnectedDeviceInfo>::iterator;
-    std::map<int, ConnectedDeviceInfo> connectedDevices_;
-    
-    // 'Queue' of received messages from all connected devices with their received times.
-    //std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
-    //std::deque<Comms::MsgPacket> recvdMsgPackets_;
-    using PacketQueue_t = std::deque< std::pair<f32, Comms::MsgPacket> >;
-    PacketQueue_t recvdMsgPackets_;
+    std::unordered_map<ConnectionId, AdvertisementConnectionInfo> _advertisingConnections;
     
 #if(DO_SIM_COMMS_LATENCY)
     // The number of messages that have been in recvdMsgPackets for at least

@@ -21,6 +21,24 @@ ReliableUDPChannel::~ReliableUDPChannel()
 {
 }
 
+bool ReliableUDPChannel::IsStarted() const
+{
+  std::lock_guard<std::mutex> guard(mutex);
+  return isStarted;
+}
+
+bool ReliableUDPChannel::IsHost() const
+{
+  std::lock_guard<std::mutex> guard(mutex);
+  return isHost;
+}
+
+Anki::Util::TransportAddress ReliableUDPChannel::GetHostingAddress() const
+{
+  std::lock_guard<std::mutex> guard(mutex);
+  return hostingAddress;
+}
+
 void ReliableUDPChannel::StartClient()
 {
   std::lock_guard<std::mutex> guard(mutex);
@@ -120,13 +138,19 @@ bool ReliableUDPChannel::PopIncomingPacket(IncomingPacket& packet)
   return result;
 }
 
-bool ReliableUDPChannel::IsConnectionActive(s32 connectionId) const
+bool ReliableUDPChannel::IsConnectionActive(ConnectionId connectionId) const
 {
   std::lock_guard<std::mutex> guard(mutex);
   return UnreliableUDPChannel::IsConnectionActive(connectionId);
 }
 
-void ReliableUDPChannel::AddConnection(s32 connectionId, const TransportAddress& address)
+int32_t ReliableUDPChannel::CountActiveConnections() const
+{
+  std::lock_guard<std::mutex> guard(mutex);
+  return UnreliableUDPChannel::CountActiveConnections();
+}
+
+void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   std::lock_guard<std::mutex> guard(mutex);
   
@@ -142,7 +166,7 @@ void ReliableUDPChannel::AddConnection(s32 connectionId, const TransportAddress&
 // Responds to the initial handshake, allowing the connection.
 // Only send in response to ConnectionRequest packets.
 // The alternative is RefuseIncomingConnection.
-void ReliableUDPChannel::AcceptIncomingConnection(s32 connectionId, const TransportAddress& address)
+void ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   std::lock_guard<std::mutex> guard(mutex);
   
@@ -195,7 +219,7 @@ void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& addres
   RemoveConnectionData(address, false);
 }
 
-void ReliableUDPChannel::RemoveConnection(s32 connectionId)
+void ReliableUDPChannel::RemoveConnection(ConnectionId connectionId)
 {
   std::lock_guard<std::mutex> guard(mutex);
   
@@ -224,21 +248,21 @@ void ReliableUDPChannel::RemoveAllConnections()
   }
 }
 
-bool ReliableUDPChannel::GetConnectionId(s32& connectionId, const TransportAddress& address) const
+bool ReliableUDPChannel::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
 {
   std::lock_guard<std::mutex> guard(mutex);
   
   return UnreliableUDPChannel::GetConnectionId(connectionId, address);
 }
 
-bool ReliableUDPChannel::GetAddress(TransportAddress& address, s32 connectionId) const
+bool ReliableUDPChannel::GetAddress(TransportAddress& address, ConnectionId connectionId) const
 {
   std::lock_guard<std::mutex> guard(mutex);
   
   return UnreliableUDPChannel::GetAddress(address, connectionId);
 }
 
-uint32_t ReliableUDPChannel::MaxTotalBytesPerMessage() const
+uint32_t ReliableUDPChannel::GetMaxTotalBytesPerMessage() const
 {
   std::lock_guard<std::mutex> guard(mutex);
   
@@ -383,7 +407,7 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
 }
 
 // Removes the connection without locking.
-void ReliableUDPChannel::RemoveConnectionForOverwrite(s32 connectionId)
+void ReliableUDPChannel::RemoveConnectionForOverwrite(ConnectionId connectionId)
 {
   TransportAddress address;
   if (!GetAddress(address, connectionId)) {

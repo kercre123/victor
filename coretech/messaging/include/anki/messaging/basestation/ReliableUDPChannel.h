@@ -28,6 +28,12 @@ namespace Anki {
       ReliableUDPChannel();
       virtual ~ReliableUDPChannel() override;
       
+      virtual bool IsStarted() const override;
+
+      virtual bool IsHost() const override;
+      
+      virtual TransportAddress GetHostingAddress() const override;
+
       virtual void StartClient() override;
       
       virtual void StartHost(const TransportAddress& bindAddress) override;
@@ -40,29 +46,31 @@ namespace Anki {
       
       virtual bool PopIncomingPacket(IncomingPacket& packet) override;
       
-      virtual bool IsConnectionActive(s32 connectionId) const override;
+      virtual bool IsConnectionActive(ConnectionId connectionId) const override;
       
-      virtual void AddConnection(s32 connectionId, const TransportAddress& address) override;
+      virtual int32_t CountActiveConnections() const override;
+      
+      virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) override;
       
       // Responds to the initial handshake, allowing the connection.
       // Only send in response to ConnectionRequest packets.
       // The alternative is RefuseIncomingConnection.
-      virtual void AcceptIncomingConnection(s32 connectionId, const TransportAddress& address);
+      virtual void AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address);
       
       // Responds to the initial handshake, disallowing the connection.
       // Only send in response to ConnectionRequest packets.
       // The alternative is AcceptIncomingConnection.
       virtual void RefuseIncomingConnection(const TransportAddress& address);
       
-      virtual void RemoveConnection(s32 connectionId) override;
+      virtual void RemoveConnection(ConnectionId connectionId) override;
       
       virtual void RemoveAllConnections() override;
       
-      virtual bool GetConnectionId(s32& connectionId, const TransportAddress& address) const override;
+      virtual bool GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const override;
       
-      virtual bool GetAddress(TransportAddress& address, s32 connectionId) const override;
+      virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
       
-      virtual uint32_t MaxTotalBytesPerMessage() const override;
+      virtual uint32_t GetMaxTotalBytesPerMessage() const override;
       
     protected:
       
@@ -110,7 +118,7 @@ namespace Anki {
       void PostProcessIncomingPacket(IncomingPacket& packet);
       
       // Removes the connection without locking.
-      virtual void RemoveConnectionForOverwrite(s32 connectionId) override;
+      virtual void RemoveConnectionForOverwrite(ConnectionId connectionId) override;
       
       // Removes the ConnectionData struct.
       // if full is set, it always wipes it and the current connection full

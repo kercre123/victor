@@ -33,6 +33,7 @@ set_target_properties(CoreTech_Common_Basestation PROPERTIES
 
 target_link_libraries(CoreTech_Common_Basestation
   jsoncpp
-  ${OPENCV_LIBS})
+  ${OPENCV_LIBS}
+  util)
 
 

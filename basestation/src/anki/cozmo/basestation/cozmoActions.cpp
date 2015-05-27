@@ -1472,7 +1472,7 @@ namespace Anki {
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
         if(robot.IsCarryingObject()) {
-          PRINT_INFO("Already carrying object. Can't dock to high object. Aborting.\n");
+          PRINT_STREAM_INFO("PickAndPlaceObjectAction.SelectDockAction", "Already carrying object. Can't dock to high object. Aborting.");
           return RESULT_FAIL;
           
         } else {

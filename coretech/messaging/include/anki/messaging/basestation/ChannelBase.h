@@ -1,5 +1,5 @@
 //
-//  CommsBase.h
+//  ChannelBase.h
 //  Cozmo
 //
 //  Created by Greg Nagel on 5/26/2015.
@@ -9,7 +9,7 @@
 #ifndef __CommsBase__
 #define __CommsBase__
 
-#include "anki/messaging/basestation/IComms.h"
+#include "anki/messaging/basestation/IChannel.h"
 
 #include "anki/util/transport/iNetTransportDataReceiver.h"
 
@@ -20,30 +20,34 @@
 namespace Anki {
   namespace Comms {
 
-    // Standard IComms base class that implements some basic connection features.
+    // Standard IChannel base class that implements some basic connection features.
     // Provides a protected implementation of INetTransportDataReceiver so implementers
     // can pass "this" to various callback setters.
-    class CommsBase: public IComms, protected Anki::Util::INetTransportDataReceiver {
+    class ChannelBase: public IChannel, protected Anki::Util::INetTransportDataReceiver {
     public:
       
-      CommsBase();
-      virtual ~CommsBase() override;
+      ChannelBase();
+      virtual ~ChannelBase() override;
       
       virtual bool PopIncomingPacket(IncomingPacket& packet) override;
       
+      virtual bool IsConnectionActive(ConnectionId connectionId) const override;
+      
+      virtual int32_t CountActiveConnections() const override;
+      
       // adds both entries to the bidirectional mapping, removing any duplicates
       // assumes a consistent state
-      virtual void AddConnection(s32 connectionId, const TransportAddress& address) override;
+      virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) override;
 
       // NOTE: Base class implementation does not actually do the disconnection part.
-      virtual void RemoveConnection(s32 connectionId) override;
+      virtual void RemoveConnection(ConnectionId connectionId) override;
 
       // NOTE: Base class implementation does not actually do the disconnection part.
       virtual void RemoveAllConnections() override;
 
-      virtual bool GetConnectionId(s32& connectionId, const TransportAddress& address) const override;
+      virtual bool GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const override;
       
-      virtual bool GetAddress(TransportAddress& address, s32 connectionId) const override;
+      virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
 
     protected:
       // no equality operator defined, so use less-than
@@ -67,14 +71,14 @@ namespace Anki {
       // Equivalent semantics to RemoveConnection,
       // except that it wipes out all packets that belong to the specified address.
       // This version is only called internally, when the connection is about to be reused.
-      virtual void RemoveConnectionForOverwrite(s32 connectionId);
+      virtual void RemoveConnectionForOverwrite(ConnectionId connectionId);
 
     private:
       // Removes the connection, but doesn't mess with packets
-      bool RemoveConnectionInternal(TransportAddress& address, s32 connectionId);
+      bool RemoveConnectionInternal(TransportAddress& address, ConnectionId connectionId);
 
-      std::map<TransportAddress, s32> _addressLookup;
-      std::unordered_map<s32, TransportAddress> _connectionIdLookup;
+      std::map<TransportAddress, ConnectionId> _addressLookup;
+      std::unordered_map<ConnectionId, TransportAddress> _connectionIdLookup;
       std::deque<IncomingPacket> _incomingPacketQueue;
     };
   }

@@ -1,26 +1,37 @@
 //
-//  CommsBase.cpp
+//  ChannelBase.cpp
 //  Cozmo
 //
 //  Created by Greg Nagel on 5/26/2015.
 //  Copyright (c) 2015 Anki, Inc. All rights reserved.
 //
 
-#include "anki/messaging/basestation/CommsBase.h"
+#include "anki/messaging/basestation/ChannelBase.h"
 
 #include "anki/util/logging/logging.h"
 
 using namespace Anki::Comms;
 
-CommsBase::CommsBase()
+ChannelBase::ChannelBase()
 {
 }
 
-CommsBase::~CommsBase()
+ChannelBase::~ChannelBase()
 {
+  RemoveAllConnections();
 }
 
-bool CommsBase::PopIncomingPacket(IncomingPacket& packet)
+bool ChannelBase::IsConnectionActive(ConnectionId connectionId) const
+{
+  return (_connectionIdLookup.count(connectionId) != 0);
+}
+
+int32_t ChannelBase::CountActiveConnections() const
+{
+  return static_cast<int32_t>(_connectionIdLookup.size());
+}
+
+bool ChannelBase::PopIncomingPacket(IncomingPacket& packet)
 {
   if (!_incomingPacketQueue.empty())
   {
@@ -28,8 +39,8 @@ bool CommsBase::PopIncomingPacket(IncomingPacket& packet)
     _incomingPacketQueue.pop_front();
     
     // assign address if there is one
-    // may return false and still leave it as -1
-    s32 sourceId = -1;
+    // may return false and still leave it as default
+    ConnectionId sourceId = DEFAULT_CONNECTION_ID;
     GetConnectionId(sourceId, packet.sourceAddress);
     packet.sourceId = sourceId;
     
@@ -38,7 +49,7 @@ bool CommsBase::PopIncomingPacket(IncomingPacket& packet)
   return false;
 }
 
-void CommsBase::AddConnection(s32 connectionId, const TransportAddress& address)
+void ChannelBase::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   auto foundAddress = _addressLookup.find(address);
   if (foundAddress != _addressLookup.end()) {
@@ -47,7 +58,7 @@ void CommsBase::AddConnection(s32 connectionId, const TransportAddress& address)
       return;
     }
     
-    PRINT_STREAM_WARNING("CommsBase.AddConnection",
+    PRINT_STREAM_WARNING("ChannelBase.AddConnection",
                          "Already registered address " << address.ToString() <<
                          " with existing id " << foundAddress->second <<
                          "; will disconnect existing id and overwrite with id " << connectionId << ".");
@@ -58,7 +69,7 @@ void CommsBase::AddConnection(s32 connectionId, const TransportAddress& address)
 
   auto foundConnectionId = _connectionIdLookup.find(connectionId);
   if (foundConnectionId != _connectionIdLookup.end()) {
-    PRINT_STREAM_WARNING("CommsBase.AddConnection",
+    PRINT_STREAM_WARNING("ChannelBase.AddConnection",
                          "Already registered connection id " << connectionId <<
                          " with existing address " << foundConnectionId->second.ToString() <<
                          "; will disconnect existing address and overwrite with address " << address.ToString() << ".");
@@ -71,7 +82,7 @@ void CommsBase::AddConnection(s32 connectionId, const TransportAddress& address)
   _connectionIdLookup.emplace(connectionId, address);
 }
 
-void CommsBase::RemoveConnection(s32 connectionId)
+void ChannelBase::RemoveConnection(ConnectionId connectionId)
 {
   TransportAddress address;
   if (RemoveConnectionInternal(address, connectionId)) {
@@ -79,14 +90,14 @@ void CommsBase::RemoveConnection(s32 connectionId)
   }
 }
 
-void CommsBase::RemoveAllConnections()
+void ChannelBase::RemoveAllConnections()
 {
   _addressLookup.clear();
   _connectionIdLookup.clear();
   _incomingPacketQueue.clear();
 }
 
-bool CommsBase::GetConnectionId(s32& connectionId, const TransportAddress& address) const
+bool ChannelBase::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
 {
   auto found = _addressLookup.find(address);
   if (found != _addressLookup.end()) {
@@ -96,7 +107,7 @@ bool CommsBase::GetConnectionId(s32& connectionId, const TransportAddress& addre
   return false;
 }
 
-bool CommsBase::GetAddress(TransportAddress& address, s32 connectionId) const
+bool ChannelBase::GetAddress(TransportAddress& address, ConnectionId connectionId) const
 {
   auto found = _connectionIdLookup.find(connectionId);
   if (found != _connectionIdLookup.end()) {
@@ -106,31 +117,30 @@ bool CommsBase::GetAddress(TransportAddress& address, s32 connectionId) const
   return false;
 }
 
-bool CommsBase::AddressEquals(const TransportAddress& a, const TransportAddress& b)
+bool ChannelBase::AddressEquals(const TransportAddress& a, const TransportAddress& b)
 {
   return !(a < b || b < a);
 }
 
-void CommsBase::PushIncomingPacket(const IncomingPacket& packet)
+void ChannelBase::PushIncomingPacket(const IncomingPacket& packet)
 {
   _incomingPacketQueue.push_back(packet);
 }
 
-void CommsBase::EmplaceIncomingPacket(const IncomingPacket&& packet)
+void ChannelBase::EmplaceIncomingPacket(const IncomingPacket&& packet)
 {
   _incomingPacketQueue.emplace_back(packet);
 }
 
-void CommsBase::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress)
+void ChannelBase::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress)
 {
   //f32 timestamp = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
 
   // will set sourceId on peek
-  const s32 PLACEHOLDER_SOURCE_ID = -1;
-  EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::NormalMessage, buffer, bufferSize, PLACEHOLDER_SOURCE_ID, sourceAddress));
+  EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::NormalMessage, buffer, bufferSize, DEFAULT_CONNECTION_ID, sourceAddress));
 }
 
-void CommsBase::ClearPacketsForAddress(const TransportAddress& address)
+void ChannelBase::ClearPacketsForAddress(const TransportAddress& address)
 {
   auto begin = _incomingPacketQueue.begin();
   auto end = _incomingPacketQueue.end();
@@ -142,7 +152,7 @@ void CommsBase::ClearPacketsForAddress(const TransportAddress& address)
   _incomingPacketQueue.erase(remove_from, end);
 }
 
-void CommsBase::ClearPacketsForAddressUntilNewestConnection(const TransportAddress& address)
+void ChannelBase::ClearPacketsForAddressUntilNewestConnection(const TransportAddress& address)
 {
   auto begin = _incomingPacketQueue.begin();
   auto end = _incomingPacketQueue.end();
@@ -180,7 +190,7 @@ void CommsBase::ClearPacketsForAddressUntilNewestConnection(const TransportAddre
   _incomingPacketQueue.erase(gap_start_location, past_last_disconnect);
 }
 
-void CommsBase::ClearPacketsForAddressAfterEarliestDisconnect(const TransportAddress& address)
+void ChannelBase::ClearPacketsForAddressAfterEarliestDisconnect(const TransportAddress& address)
 {
   auto begin = _incomingPacketQueue.begin();
   auto end = _incomingPacketQueue.end();
@@ -212,7 +222,7 @@ void CommsBase::ClearPacketsForAddressAfterEarliestDisconnect(const TransportAdd
   _incomingPacketQueue.erase(gap_start_location, end);
 }
 
-void CommsBase::RemoveConnectionForOverwrite(s32 connectionId)
+void ChannelBase::RemoveConnectionForOverwrite(ConnectionId connectionId)
 {
   TransportAddress address;
   if (RemoveConnectionInternal(address, connectionId)) {
@@ -220,7 +230,7 @@ void CommsBase::RemoveConnectionForOverwrite(s32 connectionId)
   }
 }
 
-bool CommsBase::RemoveConnectionInternal(TransportAddress& address, s32 connectionId)
+bool ChannelBase::RemoveConnectionInternal(TransportAddress& address, ConnectionId connectionId)
 {
   auto found = _connectionIdLookup.find(connectionId);
   if (found == _connectionIdLookup.end()) {

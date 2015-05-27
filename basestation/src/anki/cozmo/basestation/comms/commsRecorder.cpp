@@ -9,6 +9,8 @@
  * Copyright: Anki, Inc. 2012
  *
  **/
+#if 0
+
 #include <stdlib.h>
 
 #include "commsRecorder.h"
@@ -185,3 +187,5 @@ void CommsRecorder::ClearMsgPackets()
 
 } // end namespace Cozmo
 } // end namespace Anki
+
+#endif

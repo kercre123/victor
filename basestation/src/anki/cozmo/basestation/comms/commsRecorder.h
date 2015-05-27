@@ -10,6 +10,8 @@
  *
  **/
 
+#if 0
+
 #ifndef BASESTATION_COMMS_COMMSLOGWRITER_H_
 #define BASESTATION_COMMS_COMMSLOGWRITER_H_
 
@@ -94,3 +96,5 @@ protected:
 } // end namespace Anki
 
 #endif //BASESTATION_COMMS_COMMSLOGWRITER_H_
+
+#endif

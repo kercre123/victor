@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 #include <array>
 

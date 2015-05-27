@@ -1,13 +1,14 @@
 //
-//  IComms.h
+//  IChannel.h
 //  Cozmo
 //
-//  Created by Mark Pauley on 8/17/12.
-//  Copyright (c) 2012 Anki, Inc. All rights reserved.
+//  Created by Greg Nagel on 5/26/2015.
+//  Copyright (c) 2015 Anki, Inc. All rights reserved.
 //
 
-#ifndef __IComms__
-#define __IComms__
+
+#ifndef __IChannel__
+#define __IChannel__
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
@@ -21,6 +22,9 @@ namespace Anki {
     // The max size in one BLE packet
     #define MAX_BLE_MSG_SIZE        20
     #define MIN_BLE_MSG_SIZE        2
+    
+    typedef s32 ConnectionId;
+    const ConnectionId DEFAULT_CONNECTION_ID = -1;
     
     struct PacketBase {
       PacketBase() { }
@@ -46,13 +50,13 @@ namespace Anki {
       OutgoingPacket()
       {
       }
-      OutgoingPacket(const uint8_t *bufferData, unsigned int bufferDataSize, s32 destId, bool reliable = true, bool hot = false)
+      OutgoingPacket(const uint8_t *bufferData, unsigned int bufferDataSize, ConnectionId destId, bool reliable = true, bool hot = false)
       : PacketBase(bufferData, bufferDataSize), destId(destId), reliable(reliable), hot(hot)
       {
       }
       
       // The destination connection ID.
-      s32 destId = -1;
+      ConnectionId destId = DEFAULT_CONNECTION_ID;
       
       // Whether to send this reliable or not.
       bool reliable = true;
@@ -85,7 +89,7 @@ namespace Anki {
       , sourceAddress(sourceAddress)
       {
       }
-      IncomingPacket(Tag tag, const uint8_t *bufferData, unsigned int bufferDataSize, s32 sourceId, const TransportAddress& sourceAddress)
+      IncomingPacket(Tag tag, const uint8_t *bufferData, unsigned int bufferDataSize, ConnectionId sourceId, const TransportAddress& sourceAddress)
       : PacketBase(bufferData, bufferDataSize)
       , tag(tag)
       , sourceId(sourceId)
@@ -97,18 +101,23 @@ namespace Anki {
       Tag tag;
       
       // The source connection ID.
-      s32 sourceId = -1;
+      ConnectionId sourceId = DEFAULT_CONNECTION_ID;
       
       // The TransportAddress of the connection.
       TransportAddress sourceAddress;
     };
     
-    class IComms {
+    class IChannel {
     public:
       
+      // local definitions for convenience
+      using ConnectionId = Anki::Comms::ConnectionId;
+      const ConnectionId DEFAULT_CONNECTION_ID = Anki::Comms::DEFAULT_CONNECTION_ID;
+      using OutgoingPacket = Anki::Comms::OutgoingPacket;
+      using IncomingPacket = Anki::Comms::IncomingPacket;
       using TransportAddress = Anki::Util::TransportAddress;
       
-      virtual ~IComms() {};
+      virtual ~IChannel() {};
       
       virtual void Update() = 0;
       
@@ -124,32 +133,34 @@ namespace Anki {
       // Returns true if there is a connection with the specified id.
       // May not actually be connected, eg while connecting or for connectionless protocols.
       // On internal disconnect, will not change state until Disconnection packet is seen.
-      virtual bool IsConnectionActive(s32 connectionId) const = 0;
+      virtual bool IsConnectionActive(ConnectionId connectionId) const = 0;
+      
+      virtual int32_t CountActiveConnections() const = 0;
       
       // Manually adds a connection to a specified address.
       // Should warn, but allow, overriding an old connection.
-      // Some IComms implementations may have other ways of adding connections or auto-determining ids. This is sometimes just used for force-adding.
-      virtual void AddConnection(s32 connectionId, const TransportAddress& address) = 0;
+      // Some IChannel implementations may have other ways of adding connections or auto-determining ids. This is sometimes just used for force-adding.
+      virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) = 0;
       // Manually removes a connection, completely cleaning it up, including disconnecting.
       // Will already be removed if you get a disconnection notification.
       // It is OK to remove a non-existent connection. (Makes it easier to deal with disconnects.)
       // Removing the connection will discard all incoming packets for the specified connectionId.
-      virtual void RemoveConnection(s32 connectionId) = 0;
+      virtual void RemoveConnection(ConnectionId connectionId) = 0;
       // Manually remove all connections, completely cleaning them up, including disconnecting.
       // Clears all incoming packets as well, even those not associated with a connectionId.
       virtual void RemoveAllConnections() = 0;
       
       // Figures out the ConnectionId from a given TransportAddress.
-      virtual bool GetConnectionId(s32& connectionId, const TransportAddress& address) const = 0;
+      virtual bool GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const = 0;
       
       // Figures out the TransportAddress from a given ConnectionId.
-      virtual bool GetAddress(TransportAddress& address, s32 connectionId) const = 0;
+      virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const = 0;
       
       // The maximum number of bytes you can send.
       // May return 0, meaning limit unknown.
-      virtual uint32_t MaxTotalBytesPerMessage() const = 0;
+      virtual uint32_t GetMaxTotalBytesPerMessage() const = 0;
     };
   }
 }
 
-#endif /* defined(__IComms__) */
+#endif /* defined(__IChannel__) */

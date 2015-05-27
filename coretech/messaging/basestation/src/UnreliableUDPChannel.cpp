@@ -79,6 +79,11 @@ void UnreliableUDPChannel::Stop()
   }
 }
 
+Anki::Util::TransportAddress UnreliableUDPChannel::GetHostingAddress() const
+{
+  return hostingAddress;
+}
+
 void UnreliableUDPChannel::Update()
 {
   unreliableTransport.Update();
@@ -105,7 +110,7 @@ bool UnreliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
   return true;
 }
 
-uint32_t UnreliableUDPChannel::MaxTotalBytesPerMessage() const
+uint32_t UnreliableUDPChannel::GetMaxTotalBytesPerMessage() const
 {
   return unreliableTransport.MaxTotalBytesPerMessage();
 }
