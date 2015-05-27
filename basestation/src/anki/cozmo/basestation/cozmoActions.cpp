@@ -211,13 +211,14 @@ namespace Anki {
           
           // Create a callback to respond to a robot world origin change that resets
           // the action since the goal pose is likely now invalid.
-          auto cbRobotOriginChanged = [this,&robot](RobotID_t robotID) {
-            if(robotID == robot.GetID()) {
+          Robot* robotPtr = &robot;
+          auto cbRobotOriginChanged = [this,robotPtr](RobotID_t robotID) {
+            if(robotID == robotPtr->GetID()) {
               PRINT_NAMED_INFO("DriveToPoseAction",
                                "Received signal that robot %d's origin changed. Resetting action.\n",
                                robotID);
               this->Reset();
-              robot.ClearPath();
+              robotPtr->ClearPath();
             }
           };
           _signalHandle = CozmoEngineSignals::RobotWorldOriginChangedSignal().ScopedSubscribe(cbRobotOriginChanged);

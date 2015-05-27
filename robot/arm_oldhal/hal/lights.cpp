@@ -1,5 +1,6 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
 namespace Anki
@@ -7,7 +8,10 @@ namespace Anki
   namespace Cozmo
   {
     namespace HAL
-    {			                
+    {			       
+      extern volatile GlobalDataToBody g_dataToBody;
+      char const backpackLightLUT[5] = {0, 1, 2, 2, 3};
+      
       // All colors are on the same GPIO in 2.1, which simplifies the timer code
       #define GPIO_COLORS GPIOH
       GPIO_PIN_SOURCE(RED, GPIO_COLORS, 11);
@@ -100,8 +104,7 @@ namespace Anki
       // Light up one of the eye LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
-        //if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
-        //  m_channels[HW_CHANNELS[led_id]] = color;
+        g_dataToBody.backpackColors[ backpackLightLUT[led_id] ] = color;    
       }      
       
       // Turn headlights on (true) and off (false)

@@ -984,7 +984,20 @@ namespace Anki
           MatPiece* mat = dynamic_cast<MatPiece*>(object);
           CORETECH_ASSERT(mat != nullptr);
           
-          if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
+          // Does this mat pose make sense? I.e., is the top surface flat enough
+          // that we could drive on it?
+          Vec3f rotAxis;
+          Radians rotAngle;
+          mat->GetPose().GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+          if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
+             !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
+          {
+            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                             "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                             mat->GetType().GetName().c_str(),
+                             rotAngle.getDegrees(),
+                             rotAxis.x(), rotAxis.y(), rotAxis.z());
+          }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
                                   "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
