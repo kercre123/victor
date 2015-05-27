@@ -1782,6 +1782,13 @@ namespace Anki
           _robot->DisableTrackHeadToObject();
         }
         
+        if(object->IsActive()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
+                           "Sending message to turn off active object %d's lights because "
+                           "it is being deleted.\n", object->GetID().GetValue());
+          _robot->TurnOffObjectLights(object->GetID());
+        }
+        
         // Notify any listeners that this object is being deleted
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
           CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
