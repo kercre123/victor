@@ -12,20 +12,17 @@ public class RectTransformMultiSettingsEditor : Editor
 
 		RectTransformMultiSettings rectTransformBasedOnScreenSize = target as RectTransformMultiSettings;
 
-		EditorGUI.BeginChangeCheck();
-		DrawDefaultInspector();
+		//EditorGUI.BeginChangeCheck();
 
-//		if(GUILayout.Button("ToggleMode")) {
-//			rectTransformBasedOnScreenSize.ToggleMode();
-//		}
+		DrawDefaultInspector();
 
 		if(GUILayout.Button("Save Current Settings")) {
 			rectTransformBasedOnScreenSize.SaveCurrentSettings();
 		}
 
-		if (EditorGUI.EndChangeCheck())
-		{
-
-		}
+//		if (EditorGUI.EndChangeCheck())
+//		{
+//			Debug.Log(rectTransformBasedOnScreenSize.gameObject.name + " OnInspectorGUI EndChangeCheck true!");
+//		}
 	}
 }

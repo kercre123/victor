@@ -436,25 +436,10 @@ GameObject:
   - 222: {fileID: 22250398}
   - 114: {fileID: 11450392}
   - 114: {fileID: 11450394}
-  - 114: {fileID: 11450398}
   - 114: {fileID: 11432446}
+  - 114: {fileID: 11489316}
   m_Layer: 5
   m_Name: Button_OptionsLargeScreen
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &150398
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22450398}
-  m_Layer: 5
-  m_Name: Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2651,18 +2636,6 @@ MonoBehaviour:
         m_CallState: 2
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
---- !u!114 &11450398
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150396}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0647b5b1942b54415818c70c4a2115e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showOnLargeScreen: 1
 --- !u!114 &11451904
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4500,6 +4473,37 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!114 &11489316
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 150396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b7da07579bd474b88a194e3fa1ba99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debug: 0
+  screenSettings:
+  - anchoredPosition: {x: 4, y: 4}
+    anchoredPosition3D: {x: 4, y: 4, z: 0}
+    anchorMax: {x: 1, y: 1}
+    anchorMin: {x: 1, y: 1}
+    offsetMax: {x: 4, y: 4}
+    offsetMin: {x: -60, y: -60}
+    pivot: {x: 1, y: 1}
+    sizeDelta: {x: 64, y: 64}
+    localScale: {x: 1, y: 1, z: 1}
+  - anchoredPosition: {x: 310, y: 3}
+    anchoredPosition3D: {x: 310, y: 3, z: 0}
+    anchorMax: {x: .5, y: 1}
+    anchorMin: {x: .5, y: 1}
+    offsetMax: {x: 310, y: 3}
+    offsetMin: {x: 246, y: -61}
+    pivot: {x: 1, y: 1}
+    sizeDelta: {x: 64, y: 64}
+    localScale: {x: 1, y: 1, z: 1}
 --- !u!114 &11490296
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -5507,7 +5511,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22450398}
+  - {fileID: 22450396}
   m_Father: {fileID: 412362}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -5630,31 +5634,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22450398}
+  m_Father: {fileID: 22432448}
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 4, y: 4}
   m_SizeDelta: {x: 64, y: 64}
   m_Pivot: {x: 1, y: 1}
---- !u!224 &22450398
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150398}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 22450396}
-  m_Father: {fileID: 22432448}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22451900
 RectTransform:
   m_ObjectHideFlags: 1

@@ -597,7 +597,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(!ignoreActiveColor && block.isActive) { //active block
+				if(!ignoreActiveColor && block.isActive && newObject.isActive) { //active block
 					ActiveBlock activeBlock = newObject as ActiveBlock;
 
 					if(activeBlock == null) {

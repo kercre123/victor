@@ -14,53 +14,43 @@ public class RectTransformSettings {
 	public Vector2 offsetMin = new Vector2( 0f, 0f );
 	public Vector2 pivot = new Vector2( 0.5f, 0.5f );
 	public Vector2 sizeDelta = new Vector2( 100f, 100f );
+	public Vector3 localScale = new Vector3( 1f, 1f, 1f );
 }
 
 [ExecuteInEditMode]
 public class RectTransformMultiSettings : MonoBehaviour {
-	
+	[SerializeField] bool debug = false;
 	[SerializeField] List<RectTransformSettings> screenSettings = new List<RectTransformSettings>();
 
 	bool smallScreen = false;
 	RectTransform _rTrans;
 	RectTransform rTrans {
 		get {
-			if(_rTrans == null) _rTrans = transform as RectTransform;
+			if(_rTrans == null) {
+				_rTrans = transform as RectTransform;
+				if(debug) Debug.Log(gameObject.name + " _rTrans = transform as RectTransform;");
+			}
 			return _rTrans;
 		}
 	}
 
+	void Awake() {
+		if(debug) Debug.Log(gameObject.name + " Awake");
+	}
+
 	void OnEnable() {
-		RefreshToScreen();
+		if(debug) Debug.Log(gameObject.name + " OnEnable");
+		RefreshSettingsToScreen();
 		ScreenMultiSettingsDetector.ShareSettings += RefreshSettingsToScreen;
 	}
 
 	void OnDisable() {
+		if(debug) Debug.Log(gameObject.name + " OnDisable");
 		ScreenMultiSettingsDetector.ShareSettings -= RefreshSettingsToScreen;
 	}
 
-	void RefreshToScreen() {
-		float dpi = Screen.dpi;
-		
-		if(dpi == 0f) return;
-		
-		Vector2 screenSize = new Vector2(Screen.width, Screen.height);
-
-//		if(Application.isEditor) {
-//			screenSize = Handles.GetMainGameViewSize();
-//		}
-
-		float aspect = 1f;
-		if(screenSize.y > 0f) aspect = screenSize.x / screenSize.y;
-
-		smallScreen = aspect > (16f / 10.5f);
-
-		//float screenHeightInches = (float)Screen.height / (float)dpi;
-		//smallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-
-
-		Debug.Log(gameObject.name + " RefreshToScreen smallScreen("+smallScreen+") width("+Screen.width+") height("+Screen.height+") aspect("+aspect+")");
-		RefreshSettingsToScreen();
+	void OnDestroy() {
+		if(debug) Debug.Log(gameObject.name + " OnDestroy");
 	}
 
 	void RefreshSettingsToScreen() {
@@ -68,7 +58,7 @@ public class RectTransformMultiSettings : MonoBehaviour {
 		int index = ScreenMultiSettingsDetector.CurrentIndex;
 		while(screenSettings.Count <= index) {
 			RectTransformSettings newSettings = new RectTransformSettings();
-			SaveScreenSettings(newSettings);
+			SaveSettings(newSettings);
 			screenSettings.Add(newSettings);
 		}
 
@@ -76,6 +66,7 @@ public class RectTransformMultiSettings : MonoBehaviour {
 	}
 
 	void LoadSettings(RectTransformSettings settings) {
+		if(!SettingsAreDifferent(settings)) return;
 		rTrans.anchoredPosition = settings.anchoredPosition;
 		rTrans.anchoredPosition3D = settings.anchoredPosition3D;
 		rTrans.anchorMax = settings.anchorMax;
@@ -84,9 +75,13 @@ public class RectTransformMultiSettings : MonoBehaviour {
 		rTrans.offsetMin = settings.offsetMin;
 		rTrans.pivot = settings.pivot;
 		rTrans.sizeDelta = settings.sizeDelta;
+		rTrans.localScale = settings.localScale;
+		
+		if(debug) Debug.Log(gameObject.name + " LoadSettings for screenMode("+ScreenMultiSettingsDetector.CurrentIndex+")");
 	}
 	
-	void SaveScreenSettings(RectTransformSettings settings) {
+	void SaveSettings(RectTransformSettings settings) {
+		if(!SettingsAreDifferent(settings)) return;
 		settings.anchoredPosition = rTrans.anchoredPosition;
 		settings.anchoredPosition3D = rTrans.anchoredPosition3D;
 		settings.anchorMax = rTrans.anchorMax;
@@ -95,23 +90,35 @@ public class RectTransformMultiSettings : MonoBehaviour {
 		settings.offsetMin = rTrans.offsetMin;
 		settings.pivot = rTrans.pivot;
 		settings.sizeDelta = rTrans.sizeDelta;
+		settings.localScale = rTrans.localScale;
+		if(debug) Debug.Log(gameObject.name + " SaveSettings for screenMode("+ScreenMultiSettingsDetector.CurrentIndex+")");
 	}
 
-//	public void ToggleMode() {
-//		smallScreen = !smallScreen;
-//		LoadSettings();
-//	}
+	bool SettingsAreDifferent(RectTransformSettings settings) {
+		if(rTrans.anchoredPosition != settings.anchoredPosition) 		return true;
+		if(rTrans.anchoredPosition3D != settings.anchoredPosition3D) 	return true;
+		if(rTrans.anchorMax != settings.anchorMax) 						return true;
+		if(rTrans.anchorMin != settings.anchorMin) 						return true;
+		if(rTrans.offsetMax != settings.offsetMax) 						return true;
+		if(rTrans.offsetMin != settings.offsetMin) 						return true;
+		if(rTrans.pivot != settings.pivot) 								return true;
+		if(rTrans.sizeDelta != settings.sizeDelta) 						return true;
+		if(rTrans.localScale != settings.localScale) 					return true;
+
+		return false;
+	}
 
 	public void SaveCurrentSettings() {
-		
+		if(debug) Debug.Log(gameObject.name + " SaveCurrentSettings for screenMode("+ScreenMultiSettingsDetector.CurrentIndex+")");
+
 		int index = ScreenMultiSettingsDetector.CurrentIndex;
 		while(screenSettings.Count <= index) {
 			RectTransformSettings newSettings = new RectTransformSettings();
-			SaveScreenSettings(newSettings);
+			SaveSettings(newSettings);
 			screenSettings.Add(newSettings);
 		}
 		
-		SaveScreenSettings(screenSettings[index]);
+		SaveSettings(screenSettings[index]);
 	}
 
 }
