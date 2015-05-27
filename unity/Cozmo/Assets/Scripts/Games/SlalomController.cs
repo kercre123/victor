@@ -675,11 +675,12 @@ public class SlalomController : GameController {
 	private void CelebrationLights()
 	{
 		int random;
+		int max = (int)ActiveBlock.Mode.Count-3;
 
 		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
-			random = Random.Range(1, (int)ActiveBlock.Mode.Count - 3);
+			random = Random.Range(1, max);
 
 			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				obstacle.lights[i].onColor = CycleColors(i);
@@ -691,7 +692,7 @@ public class SlalomController : GameController {
 			}
 		}
 
-		random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+		random = Random.Range(1, max);
 
 		for(int i = 0; i < robot.lights.Length; ++i) {
 			robot.lights[i].onColor = CycleColors(i);

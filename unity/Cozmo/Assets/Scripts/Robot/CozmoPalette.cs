@@ -54,7 +54,7 @@ public class CozmoPalette : MonoBehaviour {
 
 	public string GetNameForObjectType(CubeType objType) {
 		int index = (int)objType;
-		if(index < 0 || index > objectSymbolInfos.Length - 1) return "Unknown";
+		if(index < 0 || index > objectSymbolInfos.Length - 1) return "Unknown Object";
 		return objectSymbolInfos[index].Name;
 	}
 
