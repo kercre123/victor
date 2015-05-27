@@ -597,8 +597,12 @@ public class GameLayoutTracker : MonoBehaviour {
 					continue;
 				}
 
-				if(!ignoreActiveColor && block.isActive) { //active block
+				if(!ignoreActiveColor && block.isActive && newObject.isActive) { //active block
 					ActiveBlock activeBlock = newObject as ActiveBlock;
+
+					if(activeBlock == null) {
+						Debug.LogError("isActive but not an ActiveBlock!?");
+					}
 
 					if(block.activeBlockMode != activeBlock.mode) { //active block
 						if(debug) Debug.Log("skip active block of the wrong color. goalColor("+block.activeBlockMode+") activeBlock("+activeBlock+"):color("+activeBlock.mode+")");

@@ -6,75 +6,51 @@ using System.Collections;
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
 	[SerializeField] RectTransform hintsToHide;
-	[SerializeField] RectTransform hintsThatFollow;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
 	EventTrigger sliderTrigger;
+
 	Canvas canvas;
-	CanvasScaler scaler;
-	float screenScaleFactor = 1f;
 
 	bool dynamic = true;
-
-	Vector2 Center {
-		get {
-			
-			Vector2 center = Vector2.zero;
-			
-			Vector3[] corners = new Vector3[4];
-			rTrans.GetWorldCorners(corners);
-
-			if(corners == null || corners.Length == 0) return center;
-			center = (corners[0] + corners[2]) * 0.5f;
-
-			return RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, center) * screenScaleFactor;
-		}
-	}
 
 	void Awake() {
 		rTrans = transform as RectTransform;
 		sliderTrans = slider.transform as RectTransform;
 		sliderTrigger = slider.gameObject.GetComponent<EventTrigger>();
 
-		screenScaleFactor = 1f;
-
 		canvas = GetComponentInParent<Canvas>();
-		scaler = canvas.gameObject.GetComponent<CanvasScaler>();
-
-		if(scaler != null) {
-			screenScaleFactor = scaler.referenceResolution.y / Screen.height;
-		}
-
-		if(Screen.dpi > 0f) {
-			float screenHeightInches = (float)Screen.height / (float)Screen.dpi;
-			dynamic = screenHeightInches > CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		}
-
-		sliderTrans.gameObject.SetActive(!dynamic);
-
-		if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
 	}
 
 
 	void OnEnable() {
-		if (hintsThatFollow != null) {
-			hintsThatFollow.anchoredPosition = Vector2.zero;
-			hintsThatFollow.gameObject.SetActive (true);
-		}
+
+		RefreshToScreenSettings();
+
+		ScreenMultiSettingsDetector.ShareSettings += RefreshToScreenSettings;
+
+		if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
+
+		sliderTrans.gameObject.SetActive(!dynamic);
 	}
 
 	void OnDisable() {
 		if(dynamic) slider.gameObject.SetActive(false);
-		if (hintsThatFollow != null) hintsThatFollow.gameObject.SetActive (false);
+		ScreenMultiSettingsDetector.ShareSettings -= RefreshToScreenSettings;
+
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {
 		if(dynamic) {
-			Vector2 pointerPos = eventData.position * screenScaleFactor;
-			sliderTrans.anchoredPosition = pointerPos - Center;
-			if(hintsThatFollow != null) hintsThatFollow.anchoredPosition = sliderTrans.anchoredPosition;
+			Vector2 localPointerPos;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, eventData.position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out localPointerPos);
 			sliderTrans.gameObject.SetActive(true);
+			localPointerPos.x += rTrans.sizeDelta.x * 0.5f;
+			localPointerPos.y -= rTrans.sizeDelta.y * 0.5f;
+			sliderTrans.anchoredPosition = localPointerPos;
+
+			//Debug.Log("DynamicSliderFrame sliderTrans.anchoredPosition("+sliderTrans.anchoredPosition+") eventData.position("+eventData.position+") localPointerPos("+localPointerPos+")");
 			if(hintsToHide != null) {
 				hintsToHide.gameObject.SetActive(false);
 			}
@@ -94,7 +70,6 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
 			sliderTrans.gameObject.SetActive(false);
 
-			if(hintsThatFollow != null) hintsThatFollow.anchoredPosition = Vector2.zero;
 			if(hintsToHide != null) hintsToHide.gameObject.SetActive(true);
 		}
 		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
@@ -112,5 +87,10 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			slider.OnDrag(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
 		}
+	}
+
+	void RefreshToScreenSettings() {
+		dynamic = ScreenMultiSettingsDetector.CurrentIndex == 0;
+		Debug.Log(gameObject.name + " RefreshToScreenSettings dynamic("+dynamic+")" );
 	}
 }

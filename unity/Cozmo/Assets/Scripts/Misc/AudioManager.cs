@@ -54,7 +54,10 @@ public class AudioManager : MonoBehaviour
 
 	private IEnumerator _PlayAudioClip( AudioClip clip, float delay, bool oneShot, bool loop, bool deferred, AudioSource audioSource, float pitch, float volume )
 	{
-		yield return new WaitForSeconds( delay );
+		if( delay > 0 )
+		{
+			yield return new WaitForSeconds( delay );
+		}
 		
 		audioSource.pitch = pitch;
 		audioSource.volume = volume;
@@ -71,6 +74,8 @@ public class AudioManager : MonoBehaviour
 			audioSource.loop = false;
 			audioSource.PlayOneShot( clip, volume );
 		}
+
+		yield return 0;
 	}
 
 	public static void PlayOneShot( AudioClip clip, float delay = 0f, float pitch = 1f, float volume = 1f )
