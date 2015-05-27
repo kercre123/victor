@@ -6,8 +6,8 @@ with embedded constraints and Cozmo's needs.
 __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, struct, ctypes, threading, select
-from reliableSequenceId import *
-from reliableConnection import ReliableConnection
+from ReliableTransport.reliableSequenceId import *
+from ReliableTransport.reliableConnection import ReliableConnection
 
 class IDataReceiver:
     def OnConnectionRequest(self, sourceAddress):
@@ -137,7 +137,6 @@ class ReliableTransport(threading.Thread):
 
     def SendMessage(self, hot, destAddress, buffer, messageType):
         "Send a message over UDP"
-        print("TX:", messageType)
         assert len(buffer) <= self.maxTotalBytesPerMessage # We don't support multi-part messages in this implementation
         # Find the connection associated with this destination, or make a new one
         connectionInfo = self.FindConnection(destAddress, True)
@@ -171,7 +170,6 @@ class ReliableTransport(threading.Thread):
 
     def HandleSubMessage(self, innerMessage, messageType, seqId, connectionInfo, sourceAddress):
         "Handle a single message from inside a multi-part message"
-        print("RX:", messageType)
         if messageType in RELIABLE_MESSAGE_TYPES:
             if connectionInfo.IsNextInSequenceId(seqId):
                 connectionInfo.AdvanceNextInSequenceId()

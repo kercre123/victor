@@ -68,6 +68,7 @@ namespace Anki {
         };
 
         u8 pktBuffer_[2048];
+        u8 msgBuff_[256];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
@@ -1089,7 +1090,8 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 
   if ((size + 1) == bufferSize)
   {
-    Anki::Cozmo::Messages::ProcessMessage(msgID, buffer+1);
+    memcpy(Anki::Cozmo::Messages::msgBuff_, buffer+1, bufferSize-1); // Copy message into aligned memory
+    Anki::Cozmo::Messages::ProcessMessage(msgID, Anki::Cozmo::Messages::msgBuff_);
   }
   else
   {

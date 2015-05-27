@@ -5,7 +5,7 @@ This impementation uses an ANK3 header for Cozmo and does not calulate the CRC, 
 __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, socket, threading
-from reliableTransport import IUnreliableTransport
+from ReliableTransport.reliableTransport import IUnreliableTransport
 
 class UDPTransport(socket.socket, IUnreliableTransport):
     "A thin wrapper around socket.socket setting Anki params and header"

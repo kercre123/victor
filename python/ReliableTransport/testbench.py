@@ -5,7 +5,7 @@ WARN: This code is written and tested against Python 3
 __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, threading, serial, struct
-import reliableTransport, udpTransport
+from ReliableTransport import reliableTransport, udpTransport
 
 class TestDataReceiver(reliableTransport.IDataReceiver):
     "A simple data receiver object implementing required callbacks"
@@ -59,11 +59,14 @@ class UartSimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
     def __del__(self):
         self.close()
 
+    def OpenSocket(self, *args):
+        assert len(args) == 0 or args[0] == self.port
+
     def SendData(self, destAddress, message):
         assert destAddress == self.port
         serPkt = b"".join([self.SERIAL_PREFIX, self.pktLenPacker.pack(len(message)+len(self.PACKET_HEADER)), self.PACKET_HEADER, message])
         if self.printAll:
-            sys.stdout.write("TX: %s\r\n" % serPkt.decode("ASCII", "replace"))
+            sys.stdout.write("TX: %s\r\n" % serPkt.decode("ASCII", "ignore"))
         self.write(serPkt)
 
     def ReceiveData(self):
@@ -71,12 +74,12 @@ class UartSimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
         pktStart = self.buffer.find(self.SERIAL_PREFIX)
         if pktStart < 0: # Header not found
             if self.printOther:
-                sys.stdout.write(self.buffer[:-len(self.SERIAL_PREFIX)].decode("ASCII", "replace"))
+                sys.stdout.write(self.buffer[:-len(self.SERIAL_PREFIX)].decode("ASCII", "ignore"))
             self.buffer = self.buffer[-len(self.SERIAL_PREFIX):]
             return None, None
         elif pktStart > 0: # bytes before header
             if self.printOther:
-                sys.stdout.write(self.buffer[:pktStart].decode("ASCII", "replace"))
+                sys.stdout.write(self.buffer[:pktStart].decode("ASCII", "ignore"))
             self.buffer = self.buffer[pktStart:]
         if len(self.buffer) < self.SERIAL_PACKET_HEADER_LEN: # Not enough bytes yet
             return None, None
@@ -92,11 +95,11 @@ class UartSimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
                 ret = self.buffer[self.SERIAL_PACKET_HEADER_LEN:self.SERIAL_PACKET_HEADER_LEN + pktLen]
                 self.buffer = self.buffer[self.SERIAL_PACKET_HEADER_LEN + pktLen:]
                 if self.printAll:
-                    sys.stdout.write("RX: %s\r\n" % ret.decode("ASCII", "replace"))
+                    sys.stdout.write("RX: %s\r\n" % ret.decode("ASCII", "ignore"))
                 if ret.startswith(self.PACKET_PREFIX):
                     return ret[len(self.PACKET_PREFIX):], self.port
                 else:
-                    sys.stderr.write("UartSimRadio got packet with incorrect header:\r\n\t%s\r\n" % ret.decode("ASCII", "replace"))
+                    sys.stderr.write("UartSimRadio got packet with incorrect header:\r\n\t%s\r\n" % ret.decode("ASCII", "ignore"))
                     return None, None
 
 
