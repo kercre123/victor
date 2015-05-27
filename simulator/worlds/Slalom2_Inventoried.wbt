@@ -103,7 +103,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.684038 0.346516 0.641887 4.94695
-  position -1.26107 -0.963278 1.17731
+  position -1.05885 -0.814904 1.01271
 }
 Background {
   skyColor [
@@ -133,16 +133,18 @@ FlagCube {
   translation 0.2 0 0.0219969
   rotation 0 1 0 0
 }
-TargetCube {
-  translation 0.2 -0.05 0.0219969
-}
 FlagCube {
-  translation 0.2 0 0.066
+  translation 0.2 0.05 0.022
   rotation 0 1 0 0
   useInverted TRUE
 }
+FlagCube {
+  translation 0.2 -0.05 0.022
+  rotation 0 1 0 0
+  swapCheckers TRUE
+}
 LightCube {
-  translation 0.2 0.05 0.0219969
+  translation 0.2 0 0.066
   rotation 0 1 0 0
   ID 1
 }

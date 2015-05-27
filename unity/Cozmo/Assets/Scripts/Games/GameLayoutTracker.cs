@@ -421,19 +421,6 @@ public class GameLayoutTracker : MonoBehaviour {
 //				}
 
 				
-				/*if(forceLEDRefreshTimer > 0f) {
-					forceLEDRefreshTimer -= Time.deltaTime;
-					
-					if(forceLEDRefreshTimer <= 0f) {
-						
-						if(robot != null && robot.carryingObject != null && robot.carryingObject.isActive ) {
-							ForceLightCubeToCorrectColor(robot.carryingObject as ActiveBlock);
-						}
-						
-						forceLEDRefreshTimer = 1f;
-					}
-				}*/
-
 				break;
 
 			case LayoutTrackerPhase.COMPLETE:
@@ -476,7 +463,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(robot.carryingObject != null && robot.carryingObject.isActive) {
 					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
-					ForceLightCubeToCorrectColor(activeBlock);
+					SetLightCubeToCorrectColor(activeBlock);
 				}
 
 				validate = true;
@@ -1002,8 +989,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		return false;
 	}
 
-	void ForceLightCubeToCorrectColor(ActiveBlock activeBlock) {
+	void SetLightCubeToCorrectColor(ActiveBlock activeBlock) {
 		BuildInstructionsCube layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
+		if(layoutActiveCube == null) return;
+		if(layoutActiveCube.activeBlockMode == activeBlock.mode) return;
 
 		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
 	}
@@ -1091,9 +1080,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if (bestBlock.isActive) {
 			ActiveBlock activeBlock = objectToPlace as ActiveBlock;
-			if(activeBlock.mode != bestBlock.activeBlockMode) {
-				activeBlock.SetMode(bestBlock.activeBlockMode);
-			}
+			SetLightCubeToCorrectColor(activeBlock);
 		}
 
 		robot.DropObjectAtPose(pos, facing_rad);
@@ -1138,9 +1125,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(objectToStack.isActive) {
 			ActiveBlock activeBlock = objectToStack as ActiveBlock;
-			if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
-				activeBlock.SetMode(layoutBlockToStack.activeBlockMode);
-			}
+			SetLightCubeToCorrectColor(activeBlock);
 		}
 
 		robot.PickAndPlaceObject( objectToStackUpon );

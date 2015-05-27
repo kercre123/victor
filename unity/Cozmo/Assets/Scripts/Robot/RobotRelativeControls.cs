@@ -157,11 +157,11 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		if(Input.touchCount > 0) {
 			timeSinceInput = 0f;
-			Debug.Log("Input.touchCount("+Input.touchCount+") timeSinceInput = 0f;");
+			//Debug.Log("Input.touchCount("+Input.touchCount+") timeSinceInput = 0f;");
 		}
 		if(Quaternion.Angle(Input.gyro.attitude, lastAttitude) >= 1f) {
 			timeSinceInput = 0f;
-			Debug.Log("attitude changed! timeSinceInput = 0f;");
+			//Debug.Log("attitude changed! timeSinceInput = 0f;");
 		}
 
 		lastAttitude = Input.gyro.attitude;
