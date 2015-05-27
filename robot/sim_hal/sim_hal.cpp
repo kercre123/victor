@@ -121,6 +121,9 @@ namespace Anki {
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
       
+      // Charge contact
+      webots::Connector* chargeContact_;
+      
       // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
       webots::Receiver *blockCommsReceiver_;
@@ -389,6 +392,11 @@ namespace Anki {
       proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
+      
+      // Charge contact
+      chargeContact_ = webotRobot_.getConnector("ChargeContact");
+      chargeContact_->enablePresence(TIME_STEP);
+      
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
@@ -998,12 +1006,14 @@ namespace Anki {
     
     bool HAL::BatteryIsCharging()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
     }
     
     bool HAL::BatteryIsOnCharger()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
     }
     
     void HAL::FlashBlockIDs() {
