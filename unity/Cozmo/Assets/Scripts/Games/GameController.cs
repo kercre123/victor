@@ -107,7 +107,7 @@ public class GameController : MonoBehaviour {
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(countdownText != null) countdownText.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
-
+		if(robot != null) robot.ClearData();
 	}
 
 	void Update () {
@@ -144,7 +144,8 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
-		if( robot != null ) robot.isBusy = false;
+		if(robot != null) robot.isBusy = false;
+		Exit_RESULTS();
 	}
 
 	GameState GetNextState() {
@@ -365,7 +366,7 @@ public class GameController : MonoBehaviour {
 		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
-		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f);
+		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, AudioManager.Source.Gameplay);
 	}
 
 	protected virtual void Update_RESULTS() {
@@ -376,7 +377,9 @@ public class GameController : MonoBehaviour {
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
-		AudioManager.Stop(AudioManager.Source.UI);
+
+		AudioManager.Stop(resultsLoopSound);
+		robot.TurnOffAllLights();
 	}
 
 	protected virtual bool IsGameReady() {

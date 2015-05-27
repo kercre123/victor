@@ -94,14 +94,14 @@ public class Robot
 		{
 			onColor = 0;
 			offColor = 0;
-			onPeriod_ms = 0;
+			onPeriod_ms = 1000;
 			offPeriod_ms = 0;
 			transitionOnPeriod_ms = 0;
 			transitionOffPeriod_ms = 0;
 
 			lastOnColor = 0;
 			lastOffColor = 0;
-			lastOnPeriod_ms = 0;
+			lastOnPeriod_ms = 1000;
 			lastOffPeriod_ms = 0;
 			lastTransitionOnPeriod_ms = 0;
 			lastTransitionOffPeriod_ms = 0;
@@ -132,6 +132,7 @@ public class Robot
 
 	public StatusFlag status { get; private set; }
 	public float batteryPercent { get; private set; }
+
 	public List<ObservedObject> markersVisibleObjects { get; private set; }
 	public List<ObservedObject> observedObjects { get; private set; }
 	public List<ObservedObject> knownObjects { get; private set; }
@@ -140,6 +141,8 @@ public class Robot
 	public List<ObservedObject> lastObservedObjects { get; private set; }
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
+
+	private List<ActiveBlock> toDelete { get; set; }
 
 	public Light[] lights { get; private set; }
 
@@ -345,6 +348,7 @@ public class Robot
 		lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
 		knownObjects = new List<ObservedObject>(initialSize);
 		activeBlocks = new Dictionary<int, ActiveBlock>();
+		toDelete = new List<ActiveBlock>();
 
 		DriveWheelsMessage = new U2G.DriveWheels();
 		PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
@@ -375,7 +379,7 @@ public class Robot
 			lights[i] = new Light( i );
 		}
 
-		ClearData();
+		ClearData( true );
 
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
@@ -428,7 +432,7 @@ public class Robot
 		ClearData();
 	}
 	
-	public void ClearData()
+	public void ClearData( bool initializing = false )
 	{
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
@@ -438,6 +442,7 @@ public class Robot
 		lastMarkersVisibleObjects.Clear();
 		knownObjects.Clear();
 		activeBlocks.Clear();
+		toDelete.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
 		Rotation = Quaternion.identity;
@@ -467,6 +472,8 @@ public class Robot
 		{
 			lights[i].ClearData();
 		}
+
+		if( !initializing ) Debug.Log( "Robot data cleared" );
 	}
 
 	public void ClearObservedObjects()
@@ -513,13 +520,24 @@ public class Robot
 	{
 		if( Time.time > ActiveBlock.Light.messageDelay )
 		{
+			toDelete.Clear();
 			var enumerator = activeBlocks.GetEnumerator();
 
 			while( enumerator.MoveNext() )
 			{
 				ActiveBlock activeBlock = enumerator.Current.Value;
 
-				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
+				if( activeBlock.lightsChanged )
+				{
+					activeBlock.SetAllLEDs();
+
+					if( activeBlock.delete ) toDelete.Add( activeBlock ); // send message to turn off lights before deleting
+				}
+			}
+
+			for( int i = 0; i < toDelete.Count; ++i )
+			{
+				activeBlocks.Remove( toDelete[i] );
 			}
 		}
 
@@ -664,7 +682,7 @@ public class Robot
 		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
 
-		Debug.Log( "Set Head Angle " + radians );
+		Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
 
 		SetHeadAngleMessage.angle_rad = radians;
 
@@ -891,10 +909,8 @@ public class Robot
 		}
 	}
 
-	public void SetBackpackLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
-	                    uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
-	                    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
-	                    byte turnOffUnspecifiedLEDs = 1 )
+	public void SetBackpackLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+	                            uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1 )
 	{
 		for( int i = 0; i < lights.Length; ++i )
 		{
@@ -960,5 +976,19 @@ public class Robot
 
 		RobotEngineManager.instance.Message.SetObjectAdditionAndDeletion = SetObjectAdditionAndDeletionMessage;
 		RobotEngineManager.instance.SendMessage();
+	}
+
+	public void TurnOffAllLights()
+	{
+		var enumerator = activeBlocks.GetEnumerator();
+		
+		while( enumerator.MoveNext() )
+		{
+			ActiveBlock activeBlock = enumerator.Current.Value;
+			
+			activeBlock.SetLEDs();
+		}
+
+		SetBackpackLEDs();
 	}
 }

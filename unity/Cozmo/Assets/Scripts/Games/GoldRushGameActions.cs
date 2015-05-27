@@ -102,14 +102,20 @@ public class GoldRushGameActions : GameActions {
 		//extract or deposit
 		if (goldController.inExtractRange) 
 		{
+			if (CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Extract\n the Energy");
+
 			goldController.BeginExtracting();
 		}
 		else if (goldController.inDepositRange)
 		{
+			if (CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
+
 			goldController.BeginDepositing();
 		}
 		else if (goldController.isReturning)
 		{
+			if (CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
+
 			goldController.BeginAutoDepositing();
 		}
 	}

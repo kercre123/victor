@@ -91,7 +91,7 @@ public class ActiveBlock : ObservedObject
 
 	public enum Mode
 	{
-		Off,
+		Off = 0,
 		White,
 		Red,
 		Yellow,
@@ -118,7 +118,7 @@ public class ActiveBlock : ObservedObject
 	{
 		get
 		{
-			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY || delete ) return true;
 
 			for( int i = 0; i < lights.Length; ++i )
 			{
@@ -138,6 +138,8 @@ public class ActiveBlock : ObservedObject
 	public float relativeToY;
 
 	public Mode mode = Mode.Off;
+
+	public bool delete { get; private set; }
 	
 	public event Action<ActiveBlock> OnAxisChange;
 
@@ -150,6 +152,7 @@ public class ActiveBlock : ObservedObject
 		yAccel = byte.MaxValue;
 		zAccel = byte.MaxValue;
 		isMoving = false;
+		delete = false;
 
 		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
@@ -160,7 +163,9 @@ public class ActiveBlock : ObservedObject
 			lights[i] = new Light( i );
 		}
 
-		if(SignificantChangeDetected != null) SignificantChangeDetected();
+		SetLEDs();
+
+		if( SignificantChangeDetected != null ) SignificantChangeDetected();
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )
@@ -189,6 +194,8 @@ public class ActiveBlock : ObservedObject
 
 	public void SetAllLEDs() // should only be called from update loop
 	{
+		if( delete ) SetLEDs(); // turn off LEDs if deleted
+
 		SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
 		SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
@@ -227,10 +234,8 @@ public class ActiveBlock : ObservedObject
 		}
 	}
 
-	public void SetLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, 
-	                             uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
-	                             uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
-	                             byte turnOffUnspecifiedLEDs = 1 )
+	public void SetLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+	                    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1 )
 	{
 		for( int i = 0; i < lights.Length; ++i )
 		{
@@ -247,7 +252,7 @@ public class ActiveBlock : ObservedObject
 			{
 				lights[i].onColor = 0;
 				lights[i].offColor = 0;
-				lights[i].onPeriod_ms = 0;
+				lights[i].onPeriod_ms = Light.FOREVER;
 				lights[i].offPeriod_ms = 0;
 				lights[i].transitionOnPeriod_ms = 0;
 				lights[i].transitionOffPeriod_ms = 0;
@@ -260,17 +265,13 @@ public class ActiveBlock : ObservedObject
 	}
 
 	public void SetLEDsRelative( Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
-	                                        uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
-	                                        uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
-	                                        byte turnOffUnspecifiedLEDs = 1 )
+	                            uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1 )
 	{	
 		SetLEDsRelative( relativeTo.x, relativeTo.y, onColor, offColor, whichLEDs, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs );
 	}
 
 	public void SetLEDsRelative( float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
-	                                     uint onPeriod_ms = 1000, uint offPeriod_ms = 0,
-	                                     uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0,
-	                                     byte turnOffUnspecifiedLEDs = 1 )
+	                            uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1 )
 	{
 		SetLEDs( onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs );
 
@@ -279,11 +280,18 @@ public class ActiveBlock : ObservedObject
 		this.relativeToY = relativeToY;
 	}
 
-	public void ForceLEDsRefresh() {
+	public void ForceLEDsRefresh()
+	{
 		for( int i = 0; i < lights.Length; ++i )
 		{
 			lights[i].ForceRefresh();
 		}
 	}
 
+	public override void Delete()
+	{
+		base.Delete();
+
+		delete = true;
+	}
 }
