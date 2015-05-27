@@ -431,9 +431,12 @@ public class Robot
 	
 	public void ClearData( bool initializing = false )
 	{
-		TurnOffAllLights( true );
-		SetObjectAdditionAndDeletion( true, true );
-		
+		if( !initializing )
+		{
+			TurnOffAllLights( true );
+			SetObjectAdditionAndDeletion( true, true );
+			Debug.Log( "Robot data cleared" );
+		}
 
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
@@ -472,8 +475,6 @@ public class Robot
 		{
 			lights[i].ClearData();
 		}
-
-		if( !initializing ) Debug.Log( "Robot data cleared" );
 	}
 
 	public void ClearObservedObjects()
