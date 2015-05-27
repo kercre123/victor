@@ -27,8 +27,6 @@ public class SlalomController : GameController {
 	[SerializeField] float previewCourseLightsPause = 1f;
 	[SerializeField] float previewCourseLightsTimer = 0f;
 
-
-
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
 	bool atYourMark = false;
@@ -49,8 +47,6 @@ public class SlalomController : GameController {
 	bool wasAtMark = false;
 	int lastLapCount = 1;
 	public int testLightIndex = 0;
-
-
 
 	readonly float[] idealCornerAngles = { 45f, 135f, 225f, 315f };
 
@@ -372,7 +368,8 @@ public class SlalomController : GameController {
 		}
 
 		text_finalTime.text = "Final Time: " + stateTimer.ToString("f2") + " seconds";
-		ClearLights();
+
+		if(robot != null) robot.TurnOffAllLights();
 	}
 
 	protected override bool IsGameOver() {
@@ -413,7 +410,6 @@ public class SlalomController : GameController {
 				corner = corners[i];
 			}
 		}
-
 
 		if(debug) Debug.Log("GetCornerVector obstacle("+obstacle+") cornerIndex("+cornerIndex+") clock("+clock+") previous("+previous+") angle("+angle+") idealCorner("+idealCorner+") corner("+corner+") currentToLast("+currentToLast.normalized+")");
 
@@ -575,36 +571,8 @@ public class SlalomController : GameController {
 				obstacle.lights[i].transitionOnPeriod_ms = 0;
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
-
-		}
-
-	}
-
-	private void ClearLights()
-	{
-		for(int obstacleIndex=0; obstacleIndex < obstacles.Count; obstacleIndex++) {
-			ActiveBlock obstacle = obstacles[obstacleIndex];
-			obstacle.relativeMode = 0;
-			for(int i = 0; i < obstacle.lights.Length; ++i) {
-				obstacle.lights[i].onColor = 0;
-				obstacle.lights[i].onPeriod_ms = 1000;
-				obstacle.lights[i].offPeriod_ms = 0;
-				obstacle.lights[i].offColor = 0;
-				obstacle.lights[i].transitionOnPeriod_ms = 0;
-				obstacle.lights[i].transitionOffPeriod_ms = 0;
-			}
-		}
-
-		for(int i = 0; i < robot.lights.Length; ++i) {
-			robot.lights[i].onColor = 0;
-			robot.lights[i].onPeriod_ms = 1000;
-			robot.lights[i].offPeriod_ms = 0;
-			robot.lights[i].offColor = 0;
-			robot.lights[i].transitionOnPeriod_ms = 0;
-			robot.lights[i].transitionOffPeriod_ms = 0;
 		}
 	}
-
 
 	public void TestLights()
 	{
@@ -648,12 +616,6 @@ public class SlalomController : GameController {
 			button_PlayAgain.gameObject.SetActive(false);
 			button_Rebuild.gameObject.SetActive(true);
 		}
-	}
-
-	protected override void Exit_RESULTS() {
-		base.Exit_RESULTS();
-
-		ClearLights();
 	}
 
 	private void DisqualifiedLights()
