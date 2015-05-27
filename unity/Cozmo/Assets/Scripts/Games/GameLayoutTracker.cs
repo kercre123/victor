@@ -500,7 +500,14 @@ public class GameLayoutTracker : MonoBehaviour {
 			screenMessage.ShowMessageForDuration("Cozmo ran into difficulty, let's try that again.", 5f, Color.yellow);
 			if(Phase == LayoutTrackerPhase.AUTO_BUILDING) {
 				autoBuildFails++;
-				if(autoBuildFails >= 3) RestartManualBuild();
+				if(autoBuildFails >= 3) {
+					if(!Application.isEditor) {
+						RestartManualBuild();
+					}
+					else {
+						Debug.Log("frame("+Time.frameCount+") SuccessOrFailure autoBuildFails("+autoBuildFails+")");
+					}
+				}
 			}
 		}
 
