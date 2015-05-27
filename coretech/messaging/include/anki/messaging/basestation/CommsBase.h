@@ -1,87 +1,83 @@
 //
-//  IComms.h
-//  RushHour
+//  CommsBase.h
+//  Cozmo
 //
-//  Created by Mark Pauley on 8/17/12.
-//  Copyright (c) 2012 Anki, Inc. All rights reserved.
+//  Created by Greg Nagel on 5/26/2015.
+//  Copyright (c) 2015 Anki, Inc. All rights reserved.
 //
 
-#ifndef __IComms__
-#define __IComms__
+#ifndef __CommsBase__
+#define __CommsBase__
 
-#include <string.h>
-#include "anki/common/types.h"
-#include "anki/common/basestation/exceptions.h"
+#include "anki/messaging/basestation/IComms.h"
+
+#include "anki/util/transport/iNetTransportDataReceiver.h"
+
+#include <deque>
+#include <map>
+#include <unordered_map>
 
 namespace Anki {
   namespace Comms {
 
-    // The max size in one BLE packet
-    #define MAX_BLE_MSG_SIZE        20
-    #define MIN_BLE_MSG_SIZE        2
-
-    enum ICommsSendErrorCode {
-      ICOMMS_GENERAL_ERROR = -1,
-      ICOMMS_NOCONNECTION_TO_VEHICLE_ERROR = -2,
-      ICOMMS_MESSAGE_TOO_LARGE_ERROR = -3,
-      ICOMMS_SEND_FAILED_ERROR = -4,
-    };
-
-      
-
-    class MsgPacket {
+    // Standard IComms base class that implements some basic connection features.
+    // Provides a protected implementation of INetTransportDataReceiver so implementers
+    // can pass "this" to various callback setters.
+    class CommsBase: public IComms, protected Anki::Util::INetTransportDataReceiver {
     public:
-      MsgPacket(){};
-      MsgPacket(const s32 sourceId, const s32 destId, const u16 dataLen, const u8* data, const BaseStationTime_t timestamp = 0, bool reliable = true, bool hot = false) :
-      dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp(timestamp), reliable(reliable), hot(hot)
-      {
-        CORETECH_ASSERT(dataLen <= MAX_SIZE);
-        memcpy(this->data, data, dataLen);
-      }
       
-      static const int MAX_SIZE = 2048;
-      u8 data[MAX_SIZE];   // TODO: Make this a vector?
-      u16 dataLen = 0;
-      s32 sourceId = -1;
-      s32 destId = -1;
-      BaseStationTime_t timeStamp = 0;
-      bool reliable;
-      bool hot;
-    };
+      CommsBase();
+      virtual ~CommsBase() override;
       
-    class IComms {
-    public:
+      virtual bool PopIncomingPacket(IncomingPacket& packet) override;
+      
+      // adds both entries to the bidirectional mapping, removing any duplicates
+      // assumes a consistent state
+      virtual void AddConnection(s32 connectionId, const TransportAddress& address) override;
 
-      virtual ~IComms() {};
+      // NOTE: Base class implementation does not actually do the disconnection part.
+      virtual void RemoveConnection(s32 connectionId) override;
 
-      // Returns true if we are ready to use BLE
-      virtual bool IsInitialized() = 0;
-      
-      // Whether the connectionId is still valid to send to/receive from.
-      // May either drop unprocessed packets when disconnected or wait to report
-      // disconnection when the last packet is processed.
-      // You should poll this.
-      virtual bool IsConnected(s32 connectionId) = 0;
+      // NOTE: Base class implementation does not actually do the disconnection part.
+      virtual void RemoveAllConnections() override;
 
-      // Returns the number of messages ready for processing in the BLEVehicleMgr. Returns 0 if no
-      // messages are available.
-      virtual u32 GetNumPendingMsgPackets() = 0;
+      virtual bool GetConnectionId(s32& connectionId, const TransportAddress& address) const override;
       
-      virtual size_t Send(const MsgPacket &p) = 0;
-      
-      virtual bool GetNextMsgPacket(MsgPacket &p) = 0;
-      
-      // virtual void SetCurrentTimestamp(BaseStationTime_t timestamp) = 0;
+      virtual bool GetAddress(TransportAddress& address, s32 connectionId) const override;
 
-      // when game is unpaused we need to dump old messages
-      virtual void ClearMsgPackets() = 0;
+    protected:
+      // no equality operator defined, so use less-than
+      static bool AddressEquals(const TransportAddress& a, const TransportAddress& b);
 
-      // Return the number of MsgPackets in the send queue that are bound for connectionId
-      virtual u32 GetNumMsgPacketsInSendQueue(s32 connectionId) = 0;
-      
-      virtual void Update(bool send_queued_msgs = true) = 0;
+      void PushIncomingPacket(const IncomingPacket& packet);
+
+      void EmplaceIncomingPacket(const IncomingPacket&& packet);
+
+      // You should override this if you need any special handling for say, disconnects.
+      virtual void ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress) override;
+
+      void ClearPacketsForAddress(const TransportAddress& address);
+
+      // Clears packets in the queue until just after the last disconnect
+      // This is so we can queue an incoming connection
+      void ClearPacketsForAddressUntilNewestConnection(const TransportAddress& address);
+
+      void ClearPacketsForAddressAfterEarliestDisconnect(const TransportAddress& address);
+
+      // Equivalent semantics to RemoveConnection,
+      // except that it wipes out all packets that belong to the specified address.
+      // This version is only called internally, when the connection is about to be reused.
+      virtual void RemoveConnectionForOverwrite(s32 connectionId);
+
+    private:
+      // Removes the connection, but doesn't mess with packets
+      bool RemoveConnectionInternal(TransportAddress& address, s32 connectionId);
+
+      std::map<TransportAddress, s32> _addressLookup;
+      std::unordered_map<s32, TransportAddress> _connectionIdLookup;
+      std::deque<IncomingPacket> _incomingPacketQueue;
     };
   }
 }
 
-#endif /* defined(__IComms__) */
+#endif /* defined(__CommsBase__) */
