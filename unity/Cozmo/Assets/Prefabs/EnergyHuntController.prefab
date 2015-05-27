@@ -1107,11 +1107,12 @@ MonoBehaviour:
   detectRangeDelayClose: .100000001
   light_messaging_delay: .5
   hideRadius: 300
-  findRadius: 50
-  lostRadius: 60
+  findRadius: 75
+  lostRadius: 75
   returnRadius: 75
+  autoReturnRadius: 25
   detectRadius: 300
-  numDropsForBonusTime: 3
+  numDropsForBonusTime: 4
   baseTimeBonus: 30
   bonusTimeDecay: .666666687
   resultsScore: {fileID: 11459718}
