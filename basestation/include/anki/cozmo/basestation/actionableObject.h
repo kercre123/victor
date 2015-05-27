@@ -137,6 +137,10 @@ namespace Anki {
     
     inline void ActionableObject::SetBeingCarried(const bool tf) {
       _isBeingCarried = tf;
+      if(_isBeingCarried) {
+        // Don't visualize pre-action poses for objects while they are being carried
+        ActionableObject::EraseVisualization();
+      }
     }
     
     inline bool ActionableObject::IsSelected() const {
