@@ -55,7 +55,7 @@ namespace Anki {
       // Responds to the initial handshake, allowing the connection.
       // Only send in response to ConnectionRequest packets.
       // The alternative is RefuseIncomingConnection.
-      virtual void AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address);
+      virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address);
       
       // Responds to the initial handshake, disallowing the connection.
       // Only send in response to ConnectionRequest packets.
@@ -127,7 +127,7 @@ namespace Anki {
       
       void QueueDisconnectionIfActuallyConnected(const TransportAddress& sourceAddress, bool makeActive);
       
-      std::map<TransportAddress, ConnectionData> _connectionDataMapping;
+      std::unordered_map<TransportAddress, ConnectionData> _connectionDataMapping;
     };
   }
 }

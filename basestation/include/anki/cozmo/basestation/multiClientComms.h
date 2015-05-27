@@ -71,9 +71,9 @@ namespace Cozmo {
     
     bool GetAdvertisingConnections(std::vector<ConnectionId>& connectionIds);
     
-    void AcceptAdvertisingConnection(ConnectionId connectionId);
+    bool AcceptAdvertisingConnection(ConnectionId connectionId);
     
-    void AcceptAllAdvertisingConnections();
+    bool AcceptAllAdvertisingConnections();
     
     
     // Force add an unadvertised connection; connecting directly to that location
@@ -118,30 +118,30 @@ namespace Cozmo {
     
     void SendZeroPacket();
     
-    void AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info);
+    bool AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info);
     
     Anki::Comms::UnreliableUDPChannel _advertisingChannel;
     
     Anki::Comms::ReliableUDPChannel _reliableChannel;
     
     // Map of advertising robots (key: dev id)
-    std::unordered_map<ConnectionId, AdvertisementConnectionInfo> _advertisingConnections;
+    std::unordered_map<ConnectionId, AdvertisementConnectionInfo> _advertisingInfo;
     
-#if(DO_SIM_COMMS_LATENCY)
-    // The number of messages that have been in recvdMsgPackets for at least
-    // SIM_RECV_LATENCY_SEC and are now available for reading.
-    u32 numRecvRdyMsgs_;
-    
-    // Queue of messages to be sent with the times they should be sent at
-    // (key: dev id)
-    std::map<int, PacketQueue_t> sendMsgPackets_;
-
-    // The actual function that does the sending when we're simulating latency
-    int RealSend(const Comms::MsgPacket &p);
-    
-    // Outgoing bytes sent since last call to Update()
-    int bytesSentThisUpdateCycle_;
-#endif
+//#if(DO_SIM_COMMS_LATENCY)
+//    // The number of messages that have been in recvdMsgPackets for at least
+//    // SIM_RECV_LATENCY_SEC and are now available for reading.
+//    u32 numRecvRdyMsgs_;
+//    
+//    // Queue of messages to be sent with the times they should be sent at
+//    // (key: dev id)
+//    std::map<int, PacketQueue_t> sendMsgPackets_;
+//
+//    // The actual function that does the sending when we're simulating latency
+//    int RealSend(const Comms::MsgPacket &p);
+//    
+//    // Outgoing bytes sent since last call to Update()
+//    int bytesSentThisUpdateCycle_;
+//#endif
     
   };
 

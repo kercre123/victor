@@ -103,7 +103,7 @@ namespace Cozmo {
     
     // Handle robot disconnection:
     auto cbRobotDisconnected = [this](RobotID_t robotID) {
-      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.\n", robotID);
+      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.", robotID);
       this->DisconnectFromRobot(robotID);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));
@@ -117,52 +117,52 @@ namespace Cozmo {
   Result CozmoEngineImpl::Init(const Json::Value& config)
   {
     if(_isInitialized) {
-      PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.\n");
+      PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
     }
     
     _config = config;
     
     if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.");
       return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.");
       return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.");
       return RESULT_FAIL;
     }
     
     Vision::CameraCalibration deviceCamCalib;
     if(!_config.isMember(AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION)) {
       PRINT_NAMED_WARNING("CozmoEngine.Init",
-                          "No DeviceCameraCalibration defined in Json config. Using bogus settings.\n");
+                          "No DeviceCameraCalibration defined in Json config. Using bogus settings.");
     } else {
       deviceCamCalib.Set(_config[AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION]);
     }
     
     Result lastResult = RESULT_OK;
     const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-    int ipAddress = Anki::Util::TransportAddress::IPAddressStringToU32(ipString);
     int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
+    if (port < 0 || port >= 0x10000) {
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms; bad port.");
+      return RESULT_FAIL;
+    }
+    Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
     
-    Anki::Util::TransportAddress address(ipAddress, static_cast<uint16_t>(port));
-    
-    lastResult = _robotComms.Start(,
-                                  ,
-                                  MAX_SENT_BYTES_PER_TIC_TO_ROBOT);
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.\n");
-      return lastResult;
+    _robotComms.Start(address);
+    if(!_robotComms.IsStarted()) {
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.");
+      return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
       PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
-                          "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
+                          "No VizHostIP member in JSON config file. Not initializing VizManager.");
     } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].empty()){
       VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
       
@@ -176,7 +176,7 @@ namespace Cozmo {
     
     lastResult = InitInternal();
     if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
+      PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.");
       return lastResult;
     }
     
@@ -203,8 +203,9 @@ namespace Cozmo {
   
   bool CozmoEngineImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
-    const bool success = _robotComms.ConnectToDeviceByID(whichRobot);
-    if(success) {
+    Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
+    bool success = _robotComms.AcceptAdvertisingConnection(id);
+    if (success) {
       _connectedRobots[whichRobot];
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
@@ -215,7 +216,8 @@ namespace Cozmo {
   }
   
   void CozmoEngineImpl::DisconnectFromRobot(RobotID_t whichRobot) {
-    _robotComms.DisconnectDeviceByID(whichRobot);
+    Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
+    _robotComms.RemoveConnection(id);
     auto connectedRobotIter = _connectedRobots.find(whichRobot);
     if(connectedRobotIter != _connectedRobots.end()) {
       _connectedRobots.erase(connectedRobotIter);
@@ -246,9 +248,9 @@ namespace Cozmo {
     
     
     // Notify any listeners that robots are advertising
-    std::vector<int> advertisingRobots;
-    _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
-    for(auto & robot : advertisingRobots) {
+    std::vector<Comms::ConnectionId> advertisingRobots;
+    _robotComms.GetAdvertisingConnections(advertisingRobots);
+    for(auto robot : advertisingRobots) {
       CozmoEngineSignals::RobotAvailableSignal().emit(robot);
     }
   
@@ -379,9 +381,11 @@ namespace Cozmo {
     
     std::map<AdvertisingRobot, bool> _forceAddedRobots;
     
+#if COZMO_RECORDING_PLAYBACK
     // TODO: Make use of these for playback/recording
     IRecordingPlaybackModule *recordingPlaybackModule_;
     IRecordingPlaybackModule *uiRecordingPlaybackModule_;
+#endif
     
   }; // class CozmoEngineHostImpl
   
@@ -599,10 +603,7 @@ namespace Cozmo {
   {
      
     // Update robot comms
-    if(_robotComms.IsInitialized()) {
-      // Receive messages but don't send queued messages
-      _robotComms.Update(false);
-    }
+    _robotComms.Update();
     
     if(_isListeningForRobots) {
       _robotAdvertisementService.Update();

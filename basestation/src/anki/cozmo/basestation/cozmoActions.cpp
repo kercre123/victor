@@ -1539,7 +1539,7 @@ namespace Anki {
                                                                carryObject->GetSameAngleTolerance(), true,
                                                                Tdiff, angleDiff))
             {
-              PRINT_STREAM_INFO("PickAndPlaceObjectAction::Verify", std::setprecision(3) << "Seeing object " << object.first.GetValue() << " in original pose. (Tdiff = (" << Tdiff.x() << "," << Tdiff.y() << "," << Tdiff.z() << "), AngleDiff=" << angleDiff.getDegrees() << "deg");
+              PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", std::setprecision(3) << "Seeing object " << object.first.GetValue() << " in original pose. (Tdiff = (" << Tdiff.x() << "," << Tdiff.y() << "," << Tdiff.z() << "), AngleDiff=" << angleDiff.getDegrees() << "deg");
               objectInOriginalPose = object.second;
               break;
             }
@@ -1552,18 +1552,18 @@ namespace Anki {
             // object I matched to it above, and then delete that object.
             // (This prevents a new object with different ID being created.)
             if(carryObject->GetID() != objectInOriginalPose->GetID()) {
-              PRINT_INFO("Moving carried object to object seen in original pose and clearing that object.\n");
+              PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", "Moving carried object to object seen in original pose and clearing that object.");
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.ClearObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObject();
             
-            PRINT_INFO("Object pick-up FAILED! (Still seeing object in same place.)\n");
+            PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
           } else {
             //_carryingObjectID = _dockObjectID;  // Already set?
             //_carryingMarker   = _dockMarker;   //   "
-            PRINT_INFO("Object pick-up SUCCEEDED!\n");
+            PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", "Object pick-up SUCCEEDED!");
             result = ActionResult::SUCCESS;
           }
           break;
@@ -1759,10 +1759,10 @@ namespace Anki {
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
       //       Do them later.
       if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
-        PRINT_INFO("Object is too high to roll. Aborting.\n");
+        PRINT_STREAM_INFO("RollObjectAction.SelectDockAction", "Object is too high to roll. Aborting.");
         return RESULT_FAIL;
       } else if (robot.IsCarryingObject()) {
-        PRINT_INFO("Can't roll while carrying an object.\n");
+        PRINT_STREAM_INFO("RollObjectAction.SelectDockAction", "Can't roll while carrying an object.");
         return RESULT_FAIL;
       }
       

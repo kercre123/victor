@@ -166,7 +166,7 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
 // Responds to the initial handshake, allowing the connection.
 // Only send in response to ConnectionRequest packets.
 // The alternative is RefuseIncomingConnection.
-void ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
+bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   std::lock_guard<std::mutex> guard(mutex);
   
@@ -175,22 +175,25 @@ void ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, con
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
                          "Cannot accept connection; cannot determine connection state for address " << address.ToString() << ".");
     
-    return;
+    return false;
   }
   
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
                          "Cannot accept connection; not in correct state to accept address " << address.ToString() << ".");
-    return;
+    return false;
   }
   
   // Will disconnect old uses of connectionId and address
   UnreliableUDPChannel::AddConnection(connectionId, address);
   
   data->state = ConnectionData::State::Connected;
-  if (data->isRealConnectionActive && !data->isDisconnectionQueued) {
+  if (!data->isDisconnectionQueued) {
+    assert(data->isRealConnectionActive);
     reliableTransport.FinishConnection(address);
   }
+  // fake that it worked if there's a disconnect queued
+  return true;
 }
 
 // Responds to the initial handshake, disallowing the connection.
@@ -202,7 +205,7 @@ void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& addres
   
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
-    PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
+    PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
                          "Cannot refuse connection; cannot determine connection state "
                          "for the connection to the specified address " << address.ToString() << ".");
     
@@ -210,7 +213,7 @@ void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& addres
   }
   
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
-    PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
+    PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
                          "Cannot refuse connection; not in correct state to refuse the "
                          "connection to the specified address " << address.ToString() << ".");
     return;
@@ -238,7 +241,7 @@ void ReliableUDPChannel::RemoveAllConnections()
   UnreliableUDPChannel::RemoveAllConnections();
   
   // swap not actually necessary, but just in case Disconnect triggers unexpected callbacks
-  std::map<TransportAddress, ConnectionData> dataMapping;
+  std::unordered_map<TransportAddress, ConnectionData> dataMapping;
   std::swap(dataMapping, _connectionDataMapping);
   
   for (auto entry : dataMapping) {

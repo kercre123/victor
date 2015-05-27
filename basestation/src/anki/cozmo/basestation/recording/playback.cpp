@@ -11,7 +11,7 @@
  *
  **/
 
-#if 0
+#if COZMO_RECORDING_PLAYBACK
 
 //#include "basestation/version.h"
 #include "anki/messaging/basestation/IComms.h"

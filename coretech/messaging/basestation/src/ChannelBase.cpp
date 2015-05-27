@@ -57,7 +57,7 @@ void ChannelBase::AddConnection(ConnectionId connectionId, const TransportAddres
     }
     
     PRINT_STREAM_WARNING("ChannelBase.AddConnection",
-                         "Already registered address " << address.ToString() <<
+                         "Already registered address " << address <<
                          " with existing id " << foundAddress->second <<
                          "; will disconnect existing id and overwrite with id " << connectionId << ".");
     
@@ -70,7 +70,7 @@ void ChannelBase::AddConnection(ConnectionId connectionId, const TransportAddres
     PRINT_STREAM_WARNING("ChannelBase.AddConnection",
                          "Already registered connection id " << connectionId <<
                          " with existing address " << foundConnectionId->second.ToString() <<
-                         "; will disconnect existing address and overwrite with address " << address.ToString() << ".");
+                         "; will disconnect existing address and overwrite with address " << address << ".");
     
     // call that should invoke the correct disconnection methods
     RemoveConnectionForOverwrite(connectionId);
@@ -115,11 +115,6 @@ bool ChannelBase::GetAddress(TransportAddress& address, ConnectionId connectionI
   return false;
 }
 
-bool ChannelBase::AddressEquals(const TransportAddress& a, const TransportAddress& b)
-{
-  return !(a < b || b < a);
-}
-
 void ChannelBase::PushIncomingPacket(const IncomingPacket& packet)
 {
   _incomingPacketQueue.push_back(packet);
@@ -145,7 +140,7 @@ void ChannelBase::ClearPacketsForAddress(const TransportAddress& address)
   auto remove_from = std::remove_if(begin, end,
                  [address](const IncomingPacket& packet) -> bool
                  {
-                   return AddressEquals(address, packet.sourceAddress);
+                   return (packet.sourceAddress == address);
                  });
   _incomingPacketQueue.erase(remove_from, end);
 }
@@ -181,7 +176,7 @@ void ChannelBase::ClearPacketsForAddressUntilNewestConnection(const TransportAdd
   auto gap_start_location = std::remove_if(begin, past_last_disconnect,
                                            [address](const IncomingPacket& packet) -> bool
                                            {
-                                             return AddressEquals(packet.sourceAddress, address);
+                                             return (packet.sourceAddress ==  address);
                                            });
   
   // throw away the gap
@@ -213,7 +208,7 @@ void ChannelBase::ClearPacketsForAddressAfterEarliestDisconnect(const TransportA
   auto gap_start_location = std::remove_if(first_disconnect, end,
                                            [address](const IncomingPacket& packet) -> bool
                                            {
-                                             return AddressEquals(packet.sourceAddress, address);
+                                             return (packet.sourceAddress ==  address);
                                            });
   
   // throw away the gap

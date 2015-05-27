@@ -49,7 +49,7 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) = 0;
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) = 0;
 
       virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID) = 0;
       
@@ -71,13 +71,13 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg);
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) override;
       
       virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID);
       
     protected:
       
-      Comms::IChannel* comms_;
+      Comms::IChannel* channel_;
       RobotManager* robotMgr_;
       
       bool isInitialized_;
@@ -132,7 +132,8 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) {
+      Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) override
+      {
         return RESULT_OK;
       }
 

@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2012
  *
  **/
-#if 0
+#if COZMO_RECORDING_PLAYBACK
 
 #include <stdlib.h>
 

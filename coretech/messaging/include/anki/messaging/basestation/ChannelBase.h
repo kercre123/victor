@@ -77,7 +77,7 @@ namespace Anki {
       // Removes the connection, but doesn't mess with packets
       bool RemoveConnectionInternal(TransportAddress& address, ConnectionId connectionId);
 
-      std::map<TransportAddress, ConnectionId> _addressLookup;
+      std::unordered_map<TransportAddress, ConnectionId> _addressLookup;
       std::unordered_map<ConnectionId, TransportAddress> _connectionIdLookup;
       std::deque<IncomingPacket> _incomingPacketQueue;
     };

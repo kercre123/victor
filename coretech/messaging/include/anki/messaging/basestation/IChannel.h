@@ -139,6 +139,8 @@ namespace Anki {
       
       // Manually adds a connection to a specified address.
       // Should warn, but allow, overriding an old connection.
+      // Use IsConnectionActive/GetConnectionId if you want to keep a
+      // ConnectionId or TransportAddress mapping up to date.
       // Some IChannel implementations may have other ways of adding connections or auto-determining ids. This is sometimes just used for force-adding.
       virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) = 0;
       // Manually removes a connection, completely cleaning it up, including disconnecting.

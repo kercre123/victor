@@ -11,7 +11,7 @@
  *
  **/
 
-#if 0
+#if COZMO_RECORDING_PLAYBACK
 
 #include "anki/common/basestation/utils/timer.h"
 #include "recording.h"

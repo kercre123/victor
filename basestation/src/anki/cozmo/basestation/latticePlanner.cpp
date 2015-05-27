@@ -15,7 +15,7 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -451,7 +451,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         f32 turnDir = angDiff > 0 ? 1.f : -1.f;
         f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
         
-        PRINT_INFO("LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.\n", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
+        PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.", "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
         
         path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                              rotSpeed,
