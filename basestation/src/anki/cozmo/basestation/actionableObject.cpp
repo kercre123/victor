@@ -56,10 +56,7 @@ namespace Anki {
     {
       const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
       
-      // No pre-action poses are valid for carried objects
-      // (Something may have to change here if two robots share state and in some magical
-      //  future world we want to hand an object off from one robot to the other)
-      bool isValid = !IsBeingCarried();
+      bool isValid = true;
       
       // Overloaded validity checks may use reachableFromPose, but for now, we're
       // going to disable the default check based on height
