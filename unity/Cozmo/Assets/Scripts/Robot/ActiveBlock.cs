@@ -118,7 +118,7 @@ public class ActiveBlock : ObservedObject
 	{
 		get
 		{
-			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY || delete ) return true;
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
 
 			for( int i = 0; i < lights.Length; ++i )
 			{
@@ -139,8 +139,6 @@ public class ActiveBlock : ObservedObject
 
 	public Mode mode = Mode.Off;
 
-	public bool delete { get; private set; }
-	
 	public event Action<ActiveBlock> OnAxisChange;
 
 	public ActiveBlock( int objectID, uint objectFamily, uint objectType )
@@ -152,7 +150,6 @@ public class ActiveBlock : ObservedObject
 		yAccel = byte.MaxValue;
 		zAccel = byte.MaxValue;
 		isMoving = false;
-		delete = false;
 
 		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
@@ -164,8 +161,6 @@ public class ActiveBlock : ObservedObject
 		}
 
 		SetLEDs();
-
-		if( SignificantChangeDetected != null ) SignificantChangeDetected();
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )
@@ -194,8 +189,6 @@ public class ActiveBlock : ObservedObject
 
 	public void SetAllLEDs() // should only be called from update loop
 	{
-		if( delete ) SetLEDs(); // turn off LEDs if deleted
-
 		SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
 		SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
@@ -286,12 +279,5 @@ public class ActiveBlock : ObservedObject
 		{
 			lights[i].ForceRefresh();
 		}
-	}
-
-	public override void Delete()
-	{
-		base.Delete();
-
-		delete = true;
 	}
 }
