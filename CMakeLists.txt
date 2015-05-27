@@ -67,7 +67,9 @@ include_directories(
 add_subdirectory(clad)
 add_subdirectory(basestation)
 add_subdirectory(coretech)
-add_subdirectory(tools/anki-util)
+
+# anki-util is a submodule we don't want to stick cmake in
+add_subdirectory(tools) #tools/anki-util)
 
 
 # Don't build these if ANKI_IOS_BUILD is defined:
