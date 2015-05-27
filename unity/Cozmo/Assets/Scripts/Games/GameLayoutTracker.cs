@@ -171,7 +171,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 
-		forceLEDRefreshTimer = 1f;
+		//forceLEDRefreshTimer = 1f;
 	}
 
 	void SignificantChangeDetectedInObservedObject() {
@@ -210,7 +210,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 	}
 
-	float forceLEDRefreshTimer = 1f;
+	//float forceLEDRefreshTimer = 1f;
 	void Update () {
 
 		if(Input.GetKeyDown(KeyCode.V)) {
@@ -421,7 +421,7 @@ public class GameLayoutTracker : MonoBehaviour {
 //				}
 
 				
-				if(forceLEDRefreshTimer > 0f) {
+				/*if(forceLEDRefreshTimer > 0f) {
 					forceLEDRefreshTimer -= Time.deltaTime;
 					
 					if(forceLEDRefreshTimer <= 0f) {
@@ -432,7 +432,7 @@ public class GameLayoutTracker : MonoBehaviour {
 						
 						forceLEDRefreshTimer = 1f;
 					}
-				}
+				}*/
 
 				break;
 
@@ -993,9 +993,18 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void ForceLightCubeToCorrectColor(ActiveBlock activeBlock) {
 		BuildInstructionsCube layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
-		activeBlock.mode = layoutActiveCube.activeBlockMode;
-		activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
-		activeBlock.ForceLEDsRefresh();
+
+		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
+	}
+
+	IEnumerator CycleLightCubeModes( ActiveBlock activeBlock, ActiveBlock.Mode mode )
+	{
+		while( activeBlock != null && activeBlock.mode != mode )
+		{
+			activeBlock.CycleMode();
+
+			yield return new WaitForSeconds(activeBlock.modeDelay > 0f ? activeBlock.modeDelay : 0.25f);
+		}
 	}
 
 	public bool AttemptAssistedPlacement() {
@@ -1072,8 +1081,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if (bestBlock.isActive) {
 			ActiveBlock activeBlock = objectToPlace as ActiveBlock;
 			if(activeBlock.mode != bestBlock.activeBlockMode) {
-				activeBlock.mode = bestBlock.activeBlockMode;
-				activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+				activeBlock.SetMode(bestBlock.activeBlockMode);
 			}
 		}
 
@@ -1120,8 +1128,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(objectToStack.isActive) {
 			ActiveBlock activeBlock = objectToStack as ActiveBlock;
 			if(activeBlock.mode != layoutBlockToStack.activeBlockMode) {
-				activeBlock.mode = layoutBlockToStack.activeBlockMode;
-				activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
+				activeBlock.SetMode(layoutBlockToStack.activeBlockMode);
 			}
 		}
 
@@ -1288,7 +1295,6 @@ public class GameLayoutTracker : MonoBehaviour {
 	public void SetMessage(string message, Color color) {
 
 		screenMessage.ShowMessage(message, color);
-
 	}
 
 	public List<ObservedObject> GetTrackedObjectsInOrder() {
@@ -1305,7 +1311,4 @@ public class GameLayoutTracker : MonoBehaviour {
 		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
 		return objects;
 	}
-
-
-
 }
