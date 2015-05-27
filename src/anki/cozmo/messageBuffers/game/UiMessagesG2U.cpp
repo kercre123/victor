@@ -423,6 +423,7 @@ size_t RobotState::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->carryingObjectOnTopID);
 	buffer.Write(this->headTrackingObjectID);
 	buffer.Write(this->status);
+	buffer.Write(this->gameStatus);
 	buffer.Write(this->robotID);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
@@ -453,6 +454,7 @@ size_t RobotState::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->carryingObjectOnTopID);
 	buffer.Read(this->headTrackingObjectID);
 	buffer.Read(this->status);
+	buffer.Read(this->gameStatus);
 	buffer.Read(this->robotID);
 	return buffer.GetBytesRead();
 }
@@ -494,6 +496,8 @@ size_t RobotState::Size() const
 	result += 4; // = int_32
 	//status
 	result += 4; // = uint_32
+	//gameStatus
+	result += 4; // = uint_32
 	//robotID
 	result += 1; // = uint_8
 	return result;
@@ -518,6 +522,7 @@ bool RobotState::operator==(const RobotState& other) const
 	|| carryingObjectOnTopID != other.carryingObjectOnTopID
 	|| headTrackingObjectID != other.headTrackingObjectID
 	|| status != other.status
+	|| gameStatus != other.gameStatus
 	|| robotID != other.robotID) {
 		return false;
 	}
