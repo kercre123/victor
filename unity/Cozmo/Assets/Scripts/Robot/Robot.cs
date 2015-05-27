@@ -142,8 +142,6 @@ public class Robot
 	public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
 	public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
-	private List<ActiveBlock> toDelete { get; set; }
-
 	public Light[] lights { get; private set; }
 
 	private bool lightsChanged
@@ -348,7 +346,6 @@ public class Robot
 		lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
 		knownObjects = new List<ObservedObject>(initialSize);
 		activeBlocks = new Dictionary<int, ActiveBlock>();
-		toDelete = new List<ActiveBlock>();
 
 		DriveWheelsMessage = new U2G.DriveWheels();
 		PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
@@ -434,6 +431,10 @@ public class Robot
 	
 	public void ClearData( bool initializing = false )
 	{
+		TurnOffAllLights( true );
+		SetObjectAdditionAndDeletion( true, true );
+		
+
 		selectedObjects.Clear();
 		lastSelectedObjects.Clear();
 		observedObjects.Clear();
@@ -442,7 +443,6 @@ public class Robot
 		lastMarkersVisibleObjects.Clear();
 		knownObjects.Clear();
 		activeBlocks.Clear();
-		toDelete.Clear();
 		status = StatusFlag.NONE;
 		WorldPosition = Vector3.zero;
 		Rotation = Quaternion.identity;
@@ -516,32 +516,23 @@ public class Robot
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
 	}
 
-	public void UpdateLightMessages()
+	public void UpdateLightMessages( bool now = false )
 	{
-		if( Time.time > ActiveBlock.Light.messageDelay )
+		if( RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected ) return;
+
+		if( Time.time > ActiveBlock.Light.messageDelay || now )
 		{
-			toDelete.Clear();
 			var enumerator = activeBlocks.GetEnumerator();
 
 			while( enumerator.MoveNext() )
 			{
 				ActiveBlock activeBlock = enumerator.Current.Value;
 
-				if( activeBlock.lightsChanged )
-				{
-					activeBlock.SetAllLEDs();
-
-					if( activeBlock.delete ) toDelete.Add( activeBlock ); // send message to turn off lights before deleting
-				}
-			}
-
-			for( int i = 0; i < toDelete.Count; ++i )
-			{
-				activeBlocks.Remove( toDelete[i] );
+				if( activeBlock.lightsChanged ) activeBlock.SetAllLEDs();
 			}
 		}
 
-		if( Time.time > Light.messageDelay )
+		if( Time.time > Light.messageDelay || now )
 		{
 			if( lightsChanged ) SetAllBackpackLEDs();
 		}
@@ -978,7 +969,7 @@ public class Robot
 		RobotEngineManager.instance.SendMessage();
 	}
 
-	public void TurnOffAllLights()
+	public void TurnOffAllLights( bool now = false )
 	{
 		var enumerator = activeBlocks.GetEnumerator();
 		
@@ -990,5 +981,7 @@ public class Robot
 		}
 
 		SetBackpackLEDs();
+
+		if( now ) UpdateLightMessages( now );
 	}
 }
