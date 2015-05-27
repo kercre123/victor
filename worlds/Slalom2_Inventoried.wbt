@@ -130,29 +130,29 @@ CozmoMat {
   ySize 1.5
 }
 FlagCube {
-  translation 0.3 0.2 0.0219969
+  translation 0.2 0 0.0219969
   rotation 0 1 0 0
 }
 TargetCube {
-  translation 0.4 -0.2 0.0219969
+  translation 0.2 -0.05 0.0219969
 }
 FlagCube {
-  translation 0.3 -0.2 0.0219969
+  translation 0.2 0 0.066
   rotation 0 1 0 0
   useInverted TRUE
 }
 LightCube {
-  translation 0.3 0.3 0.0219969
+  translation 0.2 0.05 0.0219969
   rotation 0 1 0 0
   ID 1
 }
 LightCube {
-  translation 0.3 -0.3 0.0219969
+  translation 0.2 -0.05 0.066
   rotation 0 1 0 0
   ID 2
 }
 LightCube {
-  translation 0.4 -0.3 0.0219969
+  translation 0.2 0.05 0.066
   rotation 0 1 0 0
 }
 BlockWorldComms {
