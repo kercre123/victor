@@ -71,6 +71,9 @@ burn-bench :
 burn-hat :
 	($(ESPTOOL_PY) --port com8 --baud 460800 write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
 
+burn-3 :
+	($(ESPTOOL_PY) --port com11 --baud 460800 write_flash 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
+
 burn-4 :
 	($(ESPTOOL_PY) --port com16 --baud $(BAUD) write_flash --flash_size $(FLASH_SIZE) 0x00000 0x00000.bin 0x40000 0x40000.bin)||(true)
 

@@ -3,7 +3,8 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"
 
-#define BAUDRATE 5000000
+#define BAUDRATE 115200
+//#define BAUDRATE 5000000
 //#define BAUDRATE 3000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOC

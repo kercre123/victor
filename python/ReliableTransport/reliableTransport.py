@@ -20,7 +20,7 @@ class IDataReceiver:
         raise Exception("IDataReceiver subclasses must implement their own ReceiveData callback")
 
 class IUnreliableTransport:
-    PACKET_HEADER = b'ANK\x03\x00\x00' # Using protocol 3 for cozmo and zeroed out CRC field
+    PACKET_HEADER = b'COZ\x03'
 
     def OpenSocket(self, port, interface):
         return True # Optional to implement
@@ -73,6 +73,9 @@ class AnkiReliablePacketHeader(struct.Struct):
     def HasCorrectPrefix(cls, buffer):
         "Check if a buffer has the right prefix to be a reliable packet header"
         return buffer.startswith(cls.PREFIX)
+
+    def __repr__(self):
+        return "AnkiReliablePacketHeader(%d, %d, %d, %d)" % (self.type, self.seqIdMin, self.seqIdMax, self.lastReceivedId)
 
 class ReliableTransport(threading.Thread):
     "Class for managing reliable transport streams"
@@ -134,6 +137,7 @@ class ReliableTransport(threading.Thread):
 
     def SendMessage(self, hot, destAddress, buffer, messageType):
         "Send a message over UDP"
+        print("TX:", messageType)
         assert len(buffer) <= self.maxTotalBytesPerMessage # We don't support multi-part messages in this implementation
         # Find the connection associated with this destination, or make a new one
         connectionInfo = self.FindConnection(destAddress, True)
@@ -150,7 +154,7 @@ class ReliableTransport(threading.Thread):
 
     def SendData(self, reliable, hot, destAddress, buffer):
         "Wrapps data in a message and queues for sending"
-        msgType = EReliableMessageType.ReliableMessage if reliable else EReliableMessageType.UnreliableMessage
+        msgType = EReliableMessageType.SingleReliableMessage if reliable else EReliableMessageType.SingleUnreliableMessage
         self.QueueMessage(hot, destAddress, buffer, msgType)
 
     def Connect(self, destAddress):
@@ -167,6 +171,7 @@ class ReliableTransport(threading.Thread):
 
     def HandleSubMessage(self, innerMessage, messageType, seqId, connectionInfo, sourceAddress):
         "Handle a single message from inside a multi-part message"
+        print("RX:", messageType)
         if messageType in RELIABLE_MESSAGE_TYPES:
             if connectionInfo.IsNextInSequenceId(seqId):
                 connectionInfo.AdvanceNextInSequenceId()
@@ -183,15 +188,15 @@ class ReliableTransport(threading.Thread):
         elif messageType == EReliableMessageType.DisconnectRequest:
             if self.receiver:
                 self.receiver.OnDisconnected(sourceAddress)
-        elif messageType == EReliableMessageType.ReliableMessage:
+        elif messageType == EReliableMessageType.SingleReliableMessage:
             if self.receiver:
                 self.receiver.ReceiveData(innerMessage, sourceAddress)
-        elif messageType == EReliableMessageType.UnreliableMessage:
+        elif messageType == EReliableMessageType.SingleUnreliableMessage:
             if self.receiver:
                 self.receiver.ReceiveData(innerMessage, sourceAddress)
         elif messageType == EReliableMessageType.MultiPartMessage:
             raise ValueError("Multi-part messages not handled by this implementation")
-        elif messageType == EReliableMessageType.MultipleMessages:
+        elif messageType in (EReliableMessageType.MultipleReliableMessages, EReliableMessageType.MultipleUnreliableMessages, EReliableMessageType.MultipleMixedMessages):
             raise ValueError("MultipleMessages flag should have been handled by ReceiveData not passed here")
         elif messageType == EReliableMessageType.ACK:
             pass # Already handled for all messages from the header earlier, nothing left to do
@@ -212,7 +217,7 @@ class ReliableTransport(threading.Thread):
             try:
                 reliablePacketHeader = AnkiReliablePacketHeader(buffer=buffer)
             except:
-                sys.stderr.write("ReceiveData incorrect header: %02x%02x%02x%02x" % [ord(x) for x in buffer[:4]])
+                sys.stderr.write("ReceiveData incorrect header: %02x%02x%02x%02x" % tuple(buffer[:4]))
             else:
                 connectionInfo = self.FindConnection(sourceAddress, True)
                 handledMessageType = True
@@ -227,27 +232,32 @@ class ReliableTransport(threading.Thread):
                         self.SendMessage(True, sourceAddress, b"", EReliableMessageType.ACK)
                 # Unpack payload
                 innerMessage = buffer[reliablePacketHeader.LENGTH:]
-                if reliablePacketHeader.type == EReliableMessageType.MultipleMessages:
-                    seqId = reliablePacketHeader.seqIdMin
+                if reliablePacketHeader.type in (EReliableMessageType.MultipleReliableMessages, \
+                                                 EReliableMessageType.MultipleUnreliableMessages, \
+                                                 EReliableMessageType.MultipleMixedMessages):
+                    seqIdCounter = reliablePacketHeader.seqIdMin
                     bytesProcessed = 0
                     while bytesProcessed < len(innerMessage):
                         try:
                             subMessageHeader = MultiPartSubMessageHeader(buffer=innerMessage, offset=bytesProcessed)
                         except:
                             sys.stderr.write("ReceiveData couldn't unpack submessage header: %02x%02x%02x\r\n" % \
-                                             [ord(x) for x in buffer[bytesProcessed:bytesProcessed+3]])
+                                             tuple(buffer[bytesProcessed:bytesProcessed+3]))
                             break
                         else:
                             bytesProcessed += MultiPartSubMessageHeader.LENGTH
                             assert bytesProcessed <= len(innerMessage)
                             submessageStart = bytesProcessed
                             bytesProcessed += subMessageHeader.messageLength
-                            self.HandleSubMessage(innerMessage[submessageStart:bytesProcessed], subMessageHeader.messageType, \
-                                                  seqId, connectionInfo, sourceAddress)
                             if subMessageHeader.messageType in RELIABLE_MESSAGE_TYPES:
-                                seqId = NextSequenceId(seqId)
+                                msgSeqId = seqIdCounter
+                                seqIdCounter = NextSequenceId(seqIdCounter)
+                            else:
+                                msgSeqId = INVALID_RELIABLE_SEQ_ID
+                            self.HandleSubMessage(innerMessage[submessageStart:bytesProcessed], subMessageHeader.messageType, \
+                                                  msgSeqId, connectionInfo, sourceAddress)
                     assert bytesProcessed == len(innerMessage), (bytesProcessed, len(innerMessage))
-                    assert (reliablePacketHeader.seqIdMax == INVALID_RELIABLE_SEQ_ID) or (seqId == NextSequenceId(reliablePacketHeader.seqIdMax))
+                    assert (reliablePacketHeader.seqIdMax == INVALID_RELIABLE_SEQ_ID) or (seqIdCounter == NextSequenceId(reliablePacketHeader.seqIdMax)), (seqIdCounter, reliablePacketHeader)
                 else:
                     assert reliablePacketHeader.seqIdMin == reliablePacketHeader.seqIdMax, (reliablePacketHeader.type, reliablePacketHeader.seqIdMin, reliablePacketHeader.seqIdMax)
                     self.HandleSubMessage(innerMessage, reliablePacketHeader.type, reliablePacketHeader.seqIdMin, \

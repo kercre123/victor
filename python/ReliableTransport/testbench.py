@@ -33,54 +33,110 @@ class TestDataReceiver(reliableTransport.IDataReceiver):
     def __repr__(self):
         return threading.currentThread().name
 
-class SimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
+class UartSimRadio(serial.Serial, reliableTransport.IUnreliableTransport):
     "A simulated radio / unreliable transport link via serial"
 
     MAX_MESSAGE_SIZE = 1472 # Match UDP
-    def __init__(self, port, printOther=True):
+
+    SERIAL_PREFIX = b"\xbe\xef"
+
+    PACKET_PREFIX = b"COZ\x03"
+
+    def __init__(self, port, baud, printOther=True, printAll=False):
         serial.Serial.__init__(self, port     = port,
-                                     baudrate = 5000000,
+                                     baudrate = baud,
                                      parity   = serial.PARITY_NONE,
                                      stopbits = serial.STOPBITS_ONE,
                                      bytesize = serial.EIGHTBITS,
-                                     timeoout = 0.001)
+                                     timeout  = 0.001)
         reliableTransport.IUnreliableTransport.__init__(self)
-        self.printOther = True
+        self.printOther = printOther
+        self.printAll   = printAll
         self.buffer = b""
+        self.pktLenPacker = struct.Struct("I")
+        self.SERIAL_PACKET_HEADER_LEN = len(self.SERIAL_PREFIX) + self.pktLenPacker.size
+
+    def __del__(self):
+        self.close()
 
     def SendData(self, destAddress, message):
-        self.write(b"\xbe\xef%s%s%s" % (struct.pack("I", len(message)+len(self.PACKET_HEADER)), self.PACKET_HEADER, message))
+        assert destAddress == self.port
+        serPkt = b"".join([self.SERIAL_PREFIX, self.pktLenPacker.pack(len(message)+len(self.PACKET_HEADER)), self.PACKET_HEADER, message])
+        if self.printAll:
+            sys.stdout.write("TX: %s\r\n" % serPkt.decode("ASCII", "replace"))
+        self.write(serPkt)
 
-def robotSetup(host=("172.31.1.1", 5551)):
-    sock = udpTransport.UDPTransport()
-    sock.OpenSocket(("", 6551))
+    def ReceiveData(self):
+        self.buffer += self.read(1500)
+        pktStart = self.buffer.find(self.SERIAL_PREFIX)
+        if pktStart < 0: # Header not found
+            if self.printOther:
+                sys.stdout.write(self.buffer[:-len(self.SERIAL_PREFIX)].decode("ASCII", "replace"))
+            self.buffer = self.buffer[-len(self.SERIAL_PREFIX):]
+            return None, None
+        elif pktStart > 0: # bytes before header
+            if self.printOther:
+                sys.stdout.write(self.buffer[:pktStart].decode("ASCII", "replace"))
+            self.buffer = self.buffer[pktStart:]
+        if len(self.buffer) < self.SERIAL_PACKET_HEADER_LEN: # Not enough bytes yet
+            return None, None
+        else:
+            pktLen = self.pktLenPacker.unpack(self.buffer[len(self.SERIAL_PREFIX):self.SERIAL_PACKET_HEADER_LEN])[0]
+            if pktLen > self.MAX_MESSAGE_SIZE:
+                sys.stderr.write("Bad serial packet length %d\r\n" % pktLen)
+                self.buffer = self.buffer[self.SERIAL_PACKET_HEADER_LEN:]
+                return None, None
+            elif pktLen + self.SERIAL_PACKET_HEADER_LEN > len(self.buffer):
+                return None, None # Not enough bytes yet
+            else:
+                ret = self.buffer[self.SERIAL_PACKET_HEADER_LEN:self.SERIAL_PACKET_HEADER_LEN + pktLen]
+                self.buffer = self.buffer[self.SERIAL_PACKET_HEADER_LEN + pktLen:]
+                if self.printAll:
+                    sys.stdout.write("RX: %s\r\n" % ret.decode("ASCII", "replace"))
+                if ret.startswith(self.PACKET_PREFIX):
+                    return ret[len(self.PACKET_PREFIX):], self.port
+                else:
+                    sys.stderr.write("UartSimRadio got packet with incorrect header:\r\n\t%s\r\n" % ret.decode("ASCII", "replace"))
+                    return None, None
+
+
+def robotSetup(host=("172.31.1.1", 5551), *args):
+    if type(host) is tuple:
+        sock = udpTransport.UDPTransport()
+        sock.OpenSocket(("", 6551), *args)
+    elif type(host) is str:
+        sock = UartSimRadio(host, *args)
     rcvr = TestDataReceiver(sock)
     rcvr.transport.Connect(host)
     return rcvr
 
+
 if __name__ == '__main__':
-    localhost = "127.0.0.1"
-    urt1 = udpTransport.UDPTransport()
-    urt1.OpenSocket(6551, localhost)
-    urt2 = udpTransport.UDPTransport()
-    urt2.OpenSocket(6552, localhost)
+    if False:
+        localhost = "127.0.0.1"
+        urt1 = udpTransport.UDPTransport()
+        urt1.OpenSocket(6551, localhost)
+        urt2 = udpTransport.UDPTransport()
+        urt2.OpenSocket(6552, localhost)
 
-    tdr1 = TestDataReceiver(urt1)
-    tdr2 = TestDataReceiver(urt2)
+        tdr1 = TestDataReceiver(urt1)
+        tdr2 = TestDataReceiver(urt2)
 
-    tdr1.transport.Connect((localhost, 6552))
+        tdr1.transport.Connect((localhost, 6552))
 
-    time.sleep(0.5)
+        time.sleep(0.5)
 
-    tdr1.send(False, False, (localhost, 6552), b"This is an unreliable bessage from 1 to 2")
-    tdr1.send(True,  False, (localhost, 6552), b"This is a reliable message from 1 to 2")
-    tdr2.send(True,  False, (localhost, 6551), b"And this is a reliable message from 2 to 1")
+        tdr1.send(False, False, (localhost, 6552), b"This is an unreliable bessage from 1 to 2")
+        tdr1.send(True,  False, (localhost, 6552), b"This is a reliable message from 1 to 2")
+        tdr2.send(True,  False, (localhost, 6551), b"And this is a reliable message from 2 to 1")
 
-    time.sleep(6)
+        time.sleep(6)
 
-    sys.stdout.write(tdr1.transport.Print())
-    sys.stdout.write(tdr2.transport.Print())
+        sys.stdout.write(tdr1.transport.Print())
+        sys.stdout.write(tdr2.transport.Print())
 
-    tdr1.transport.KillThread()
-    tdr2.transport.KillThread()
-    sys.exit()
+        tdr1.transport.KillThread()
+        tdr2.transport.KillThread()
+        sys.exit()
+    if True:
+        r = robotSetup("com4", 115200, True, False)

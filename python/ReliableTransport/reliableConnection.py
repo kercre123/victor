@@ -111,7 +111,7 @@ class ReliableConnection:
         self._nextInSequenceId = NextSequenceId(self._nextInSequenceId)
 
     def UpdateLastAckedMessage(self, seqId):
-        #print("%s UpdateLastAckedMessage to %d" % (threading.currentThread().name, seqId))
+        print("%s UpdateLastAckedMessage to %d" % (threading.currentThread().name, seqId))
         updated = False
         if seqId != INVALID_RELIABLE_SEQ_ID and len(self.pendingMessageList) > 0:
             while IsSequenceIdInRange(seqId, self.GetFirstUnackedOutId(), self.GetLastUnackedOutId()):
@@ -210,6 +210,7 @@ class ReliableConnection:
                 seqIdMax = self.pendingMessageList[i].sequenceNumber
                 break
         if numMessagesToSend == 1:
+            print("TXr:", self.pendingMessageList[k].type)
             transport.ReSendReliableMessage(self, self.pendingMessageList[k].message, self.pendingMessageList[k].type, \
                                             seqIdMin, seqIdMax)
             if self.pendingMessageList[k].type in UNRELIABLE_MESSAGE_TYPES:
@@ -217,6 +218,7 @@ class ReliableConnection:
         else:
             buffer = b""
             toRemove = []
+            print("TXr:", ", ".join(str(pm.type) for pm in self.pendingMessageList[loInd:hiInd]))
             for i in range(loInd, hiInd):
                 pm = self.pendingMessageList[i]
                 buffer += MultiPartSubMessageHeader(pm.type, len(pm.message)).serialize() + pm.message
@@ -225,7 +227,7 @@ class ReliableConnection:
             for pm in toRemove:
                 self.pendingMessageList.remove(pm) # Remove all the unreliable messages from the queue
             assert len(buffer) == numBytesToSend, (len(buffer), numBytesToSend)
-            transport.ReSendReliableMessage(self, buffer, EReliableMessageType.MultipleMessages, seqIdMin, seqIdMax)
+            transport.ReSendReliableMessage(self, buffer, EReliableMessageType.MultipleMixedMessages, seqIdMin, seqIdMax)
         self.latestUnackedMessageSentTime = GetCurrentTime()
         return numMessagesToSend
 

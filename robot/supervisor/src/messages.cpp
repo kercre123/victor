@@ -35,7 +35,8 @@ namespace Anki {
         const u32 size = Messages::GetSize(msgID);
         if (RadioIsConnected())
         {
-          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, reliable, hot, msgID);
+          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
+          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
         }
         else
         {
@@ -307,7 +308,7 @@ namespace Anki {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
             PRINT("WARN: Reliable transport has timed out\n");
-            ReliableTransport_Disconnect(&connection);
+            Receiver_OnDisconnect(&connection);
             HAL::RadioUpdateState(0, 0);
           }
         }
@@ -1099,7 +1100,6 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport new connection\n");
-  ReliableConnection_Init(connection, NULL); // Re-initalize the connection
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
@@ -1113,5 +1113,6 @@ void Receiver_OnConnected(ReliableConnection* connection)
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+  ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }

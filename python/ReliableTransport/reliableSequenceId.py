@@ -38,23 +38,25 @@ class EReliableMessageType:
     ConnectionRequest = 1
     ConnectionResponse = 2
     DisconnectRequest = 3
-    ReliableMessage = 4
-    UnreliableMessage = 5 # XXX Added for Cozmo version
+    SingleReliableMessage = 4
+    SingleUnreliableMessage = 5
     MultiPartMessage = 6 # Big message in n pieces
-    MultipleMessages = 7 # Several messages grouped for easier ack sequencing
-    ACK = 8
-    Ping = 9
-    Count = 10
+    MultipleReliableMessages = 7 # several reliable messages grouped grouped into 1 packet (increase chance of acking all together)
+    MultipleUnreliableMessages = 8 # several unreliable messages grouped into 1 packet (reduce number of packets sent)
+    MultipleMixedMessages = 9 # several (reliable and unreliable) messages grouped into 1 packet (combo of above)
+    ACK = 10
+    Ping = 11
+    Count = 12
 
 RELIABLE_MESSAGE_TYPES = [
     EReliableMessageType.ConnectionRequest,
     EReliableMessageType.ConnectionResponse,
     EReliableMessageType.DisconnectRequest,
-    EReliableMessageType.ReliableMessage,
+    EReliableMessageType.SingleReliableMessage,
     EReliableMessageType.MultiPartMessage
 ]
 UNRELIABLE_MESSAGE_TYPES = [
-    EReliableMessageType.UnreliableMessage,
+    EReliableMessageType.SingleUnreliableMessage,
     EReliableMessageType.ACK,
     EReliableMessageType.Ping,
 ]
