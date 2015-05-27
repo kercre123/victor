@@ -679,7 +679,7 @@ public class SlalomController : GameController {
 		for(int obstacleIndex = 0; obstacleIndex < obstacles.Count; ++obstacleIndex) {
 			ActiveBlock obstacle = obstacles[obstacleIndex];
 			obstacle.relativeMode = 0;
-			random = Random.Range(1, (int)ActiveBlock.Mode.Count-1);
+			random = Random.Range(1, (int)ActiveBlock.Mode.Count - 3);
 
 			for(int i = 0; i < obstacle.lights.Length; ++i) {
 				obstacle.lights[i].onColor = CycleColors(i);
@@ -707,6 +707,6 @@ public class SlalomController : GameController {
 	{
 		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
 
-		return CozmoPalette.instance.GetUIntColorForActiveBlockType( index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2 );
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType(index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2);
 	}
 }

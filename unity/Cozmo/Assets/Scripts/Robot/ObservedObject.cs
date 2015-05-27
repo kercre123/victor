@@ -142,10 +142,10 @@ public class ObservedObject
 		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
 	}
 
-	public void Delete()
+	public virtual void Delete()
 	{
 		if( OnDelete != null ) OnDelete( this );
-		if(SignificantChangeDetected != null) SignificantChangeDetected();
+		if( SignificantChangeDetected != null ) SignificantChangeDetected();
 	}
 
 	public Vector2 GetBestFaceVector(Vector3 initialVector) {

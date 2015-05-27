@@ -444,29 +444,17 @@ public class RobotEngineManager : MonoBehaviour {
 
 		deleted = current.selectedObjects.Find( x=> x == message.objectID );
 
-		if( deleted != null )
-		{
-			current.selectedObjects.Remove( deleted );
-		}
+		if( deleted != null ) current.selectedObjects.Remove( deleted );
 
 		deleted = current.observedObjects.Find( x=> x == message.objectID );
 		
-		if( deleted != null )
-		{
-			current.observedObjects.Remove( deleted );
-		}
+		if( deleted != null ) current.observedObjects.Remove( deleted );
 
 		deleted = current.markersVisibleObjects.Find( x=> x == message.objectID );
 		
-		if( deleted != null )
-		{
-			current.markersVisibleObjects.Remove( deleted );
-		}
+		if( deleted != null ) current.markersVisibleObjects.Remove( deleted );
 
-		if( current.activeBlocks.ContainsKey( (int)message.objectID ) )
-		{
-			current.activeBlocks.Remove( (int)message.objectID );
-		}
+		//if( current.activeBlocks.ContainsKey( (int)message.objectID ) ) current.activeBlocks.Remove( (int)message.objectID );
 	}
 
 	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )
