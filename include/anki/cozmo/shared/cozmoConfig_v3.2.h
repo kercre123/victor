@@ -28,7 +28,7 @@ const f32 DRIVE_CENTER_OFFSET = -15.f;
 // Cozmo v3.2, with clutch-less lift and stronger motor
 // These are heights of the wrist joint.
 const f32 LIFT_HEIGHT_LOWDOCK  = 31.f;
-const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
+const f32 LIFT_HEIGHT_HIGHDOCK = 76.5f;
 const f32 LIFT_HEIGHT_CARRY    = 92.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
@@ -81,15 +81,6 @@ const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM};
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
 
 
-// Motor speed / accel limits
-// TODO: These were plucked out of the sky.
-const f32 MAX_HEAD_SPEED_RAD_PER_S = 1000;
-const f32 MAX_HEAD_ACCEL_RAD_PER_S2 = 10000;
-const f32 MAX_LIFT_SPEED_RAD_PER_S = 1000;
-const f32 MAX_LIFT_ACCEL_RAD_PER_S2 = 10000;
-
-// How fast (in mm/sec) can a wheel spin at max
-const f32 MAX_WHEEL_SPEED_MMPS = 150.f;
 
 /***************************************************************************
  *
@@ -128,16 +119,5 @@ const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
   0.00203f
 };
 
-/***************************************************************************
- *
- *                          Communications
- *
- **************************************************************************/
 
-// Timeout for how long we are willing to wait to get a state message from
-// the robot to the basestation
-const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 3.0f;
 
-// Timeout for how long the robot is willing to wait before receiving a ping
-// (or any message) from basestatin
-const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000;

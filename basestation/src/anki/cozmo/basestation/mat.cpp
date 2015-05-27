@@ -58,8 +58,6 @@ namespace Anki {
     {
       // "Thin" mats: don't use half the thickness as the height tolerance (too strict)
       Point3f distTol(_size.x()*.5f, _size.y()*.5f, std::max(25.f, _size.z()*.5f));
-      distTol = GetPose().GetRotation() * distTol;
-      distTol.Abs();
       return distTol;
     }
     
@@ -116,7 +114,7 @@ namespace Anki {
     } // IsPoseOn()
         
     
-    void MatPiece::GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const
+    void MatPiece::GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const
     {
       // Put the canonical regions created above at the current pose, and add them
       // to the given vector
@@ -128,7 +126,7 @@ namespace Anki {
         
         // Note we are constructing a 2D quad here from the 3D one and just
         // dropping the z coordinate
-        unsafeRegions.emplace_back(regionAtPose);
+        unsafeRegions.emplace_back(regionAtPose, this->GetID());
       }
       
     } // GetUnsafeRegions()

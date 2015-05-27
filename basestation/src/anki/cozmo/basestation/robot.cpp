@@ -1309,7 +1309,7 @@ namespace Anki {
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
 
-        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(10))) {
+        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
           PRINT_NAMED_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
                               "Refusing to localize to %s because "
                               "Robot %d's Z axis would not be well aligned with the world Z axis. "
@@ -1902,8 +1902,8 @@ namespace Anki {
     Result Robot::SetCarriedObjectAsUnattached()
     {
       if(IsCarryingObject() == false) {
-        PRINT_NAMED_WARNING("Robot.PlaceCarriedObject.CarryingObjectNotSpecified",
-                            "Robot not carrying object, but told to place one.\n");
+        PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
+                            "Robot not carrying object, but told to place one. (Possibly actually rolling.\n");
         return RESULT_FAIL;
       }
       
@@ -1912,20 +1912,20 @@ namespace Anki {
       if(object == nullptr)
       {
         // This really should not happen.  How can a object being carried get deleted?
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.CarryingObjectDoesNotExist",
+        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.CarryingObjectDoesNotExist",
                           "Carrying object with ID=%d no longer exists.\n", _carryingObjectID.GetValue());
         return RESULT_FAIL;
       }
      
       Pose3d placedPose;
       if(object->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
-        PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                           "Could not get carrying object's pose relative to robot's origin.\n");
         return RESULT_FAIL;
       }
       object->SetPose(placedPose);
       
-      PRINT_NAMED_INFO("Robot.PlaceCarriedObject.ObjectPlaced",
+      PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
                        "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).\n",
                        _ID, object->GetID().GetValue(),
                        object->GetPose().GetTranslation().x(),
@@ -1948,7 +1948,7 @@ namespace Anki {
         
         Pose3d placedPoseOnTop;
         if(objectOnTop->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPoseOnTop) == false) {
-          PRINT_NAMED_ERROR("Robot.PlaceCarriedObject.OriginMisMatch",
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                             "Could not get carrying object's pose relative to robot's origin.\n");
           return RESULT_FAIL;
           
@@ -1956,7 +1956,7 @@ namespace Anki {
         objectOnTop->SetPose(placedPoseOnTop);
         objectOnTop->SetBeingCarried(false);
         _carryingObjectOnTopID.UnSet();
-        PRINT_NAMED_INFO("Robot.PlaceCarriedObject", "Updated object %d on top of carried object.\n",
+        PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.\n",
                          objectOnTop->GetID().GetValue());
       }
       
@@ -2000,6 +2000,16 @@ namespace Anki {
         m.imageSendMode = ISM_STREAM;
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
+        
+        
+        // Send client connection status message
+        // TODO: This message isn't supposed to be sent from the basestation
+        //       but it's the quickest way to let the robot know its radio is connected.
+        MessageClientConnectionStatus ccsMsg;
+        ccsMsg.wifiState = 1;
+        ccsMsg.bluetoothState = 0;
+        result = _msgHandler->SendMessage(_ID, ccsMsg);
+        
         
         // Reset pose on connect
         PRINT_INFO("Setting pose to (0,0,0)\n");
@@ -2536,6 +2546,8 @@ namespace Anki {
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
+      
+      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
       
       return RESULT_OK;
       

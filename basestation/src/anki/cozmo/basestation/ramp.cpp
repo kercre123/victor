@@ -214,15 +214,14 @@ namespace Anki {
     // TODO: Make these dependent on ramp type/size?
     Point3f Ramp::GetSameDistanceTolerance() const {
       Point3f distTol((SlopeLength + PlatformLength)*.5f, Width*.5f, Height*.5f);
-      distTol = GetPose().GetRotation() * distTol;
-      distTol.Abs();
       return distTol;
     }
         
     bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                    const Pose3d* reachableFromPose) const
+                                    const Pose3d* reachableFromPose,
+                                    const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
-      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose);
+      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose, obstacles);
       if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
         // Valid according to default check, now continue with checking reachability:
         // Make sure reachableFrom pose is at about the same height of the ENTRY pose.

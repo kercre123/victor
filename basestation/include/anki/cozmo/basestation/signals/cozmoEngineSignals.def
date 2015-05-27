@@ -18,7 +18,8 @@ DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 vo
 
 DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
       
-      
+DEF_SIGNAL(RobotWorldOriginChanged, RobotID_t robotID)
+
 // Vision signals
 DEF_SIGNAL(RobotImageAvailable,
            uint8_t robotID)

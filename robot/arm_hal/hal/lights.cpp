@@ -1,5 +1,6 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
 namespace Anki
@@ -8,6 +9,10 @@ namespace Anki
   {
     namespace HAL
     {
+
+      extern volatile GlobalDataToBody g_dataToBody;
+      char const backpackLightLUT[5] = {0, 1, 2, 2, 3};
+
       GPIO_PIN_SOURCE(IRLED, GPIOE, 0);
 
       // Initialize LED head/face light hardware
@@ -25,12 +30,12 @@ namespace Anki
 
       }
 
-      // Light up one of the eye LEDs to the specified 24-bit RGB color
+      
+
+      // Light up one of the backpack LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
-        // KEVIN: Disabled for now since there are no eye LEDs anymore
-        //if (led_id < NUM_LEDS)  // Unsigned, so always >= 0
-        //  m_channels[HW_CHANNELS[led_id]].asColor = color;
+        g_dataToBody.backpackColors[ backpackLightLUT[led_id] ] = color;    
       }
 
       // Turn headlights on (true) and off (false)

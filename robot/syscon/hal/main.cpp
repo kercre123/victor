@@ -3,6 +3,7 @@
 #include "spi.h"
 #include "uart.h"
 #include "timer.h"
+#include "lights.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "anki/cozmo/robot/spineData.h"
@@ -10,6 +11,7 @@
 //#define DO_MOTOR_TESTING
 //#define DO_GEAR_RATIO_TESTING
 //#define DO_FIXED_DISTANCE_TESTING
+//#define DO_LIGHTS_TESTING
 
 const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
@@ -95,8 +97,6 @@ void TestMode(void)
   }
 }
 
-const u8 PIN_LED1 = 18;
-const u8 PIN_LED2 = 19;
 
 void encoderAnalyzer(void);
 int main(void)
@@ -129,16 +129,16 @@ int main(void)
   g_dataToHead.tail = 0x84;
 
   // Status LED hack
-  nrf_gpio_cfg_output(PIN_LED1);
-  nrf_gpio_cfg_output(PIN_LED2);
+//  nrf_gpio_cfg_output(PIN_LED1);
+//  nrf_gpio_cfg_output(PIN_LED2);
   // LED1 set means on, LED1 clear means off
-  nrf_gpio_pin_clear(PIN_LED2);
-  nrf_gpio_pin_set(PIN_LED1);
+//  nrf_gpio_pin_clear(PIN_LED2);
+//  nrf_gpio_pin_set(PIN_LED1);
 
 #if defined(DO_MOTOR_TESTING)
   // Motor testing, loop forever
-  nrf_gpio_pin_clear(PIN_LED1);
-  nrf_gpio_pin_set(PIN_LED2);
+//  nrf_gpio_pin_clear(PIN_LED1);
+//  nrf_gpio_pin_set(PIN_LED2);
 	MicroWait(2000000);
   while (1)
   {
@@ -206,6 +206,23 @@ int main(void)
   }
 
 #else
+#ifdef DO_LIGHTS_TESTING	
+	int j = 0;
+	while(1)
+	{
+		for(int i = 0; i < 200; i++)
+		{
+			u32 timerStart = GetCounter();
+			g_dataToBody.backpackColors[(j % 4)] = 0x00FF0000;
+			g_dataToBody.backpackColors[(j+1) % 4] = 0x0000FF00;
+			g_dataToBody.backpackColors[(j+2) % 4] = 0x000000FF;
+			g_dataToBody.backpackColors[(j+3) % 4] = 0x00FF00FF;
+			ManageLights(g_dataToBody.backpackColors);
+			while ((GetCounter() - timerStart) < 41666)	;
+		}
+		j++;
+	}
+#endif	
   while (1)
   {
     u32 timerStart = GetCounter();
@@ -237,8 +254,8 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
-      nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
-      nrf_gpio_pin_clear(PIN_LED2);   // Force LED on to indicate problems
+//      nrf_gpio_pin_set(PIN_LED1);   // Force LED on to indicate problems
+//      nrf_gpio_pin_clear(PIN_LED2);   // Force LED on to indicate problems
       // TODO: Remove 0. For now, needed to do head debugging
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
@@ -257,18 +274,19 @@ int main(void)
         MotorsSetPower(i, g_dataToBody.motorPWM[i]);
       }
 
-      static u8 s_blink = 0;
-      nrf_gpio_pin_clear(PIN_LED1);
-      nrf_gpio_pin_clear(PIN_LED2);
-      if (++s_blink > 40) {
-        nrf_gpio_pin_set(PIN_LED2);
-        s_blink = 0;
-      }
+//      static u8 s_blink = 0;
+//      nrf_gpio_pin_clear(PIN_LED1);
+//      nrf_gpio_pin_clear(PIN_LED2);
+//      if (++s_blink > 40) {
+//        nrf_gpio_pin_set(PIN_LED2);      
+//        s_blink = 0;
+ //     }
     }
 
     // Only call every loop through - not all the time
     MotorsUpdate();
     BatteryUpdate();
+    ManageLights(g_dataToBody.backpackColors);
 
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms

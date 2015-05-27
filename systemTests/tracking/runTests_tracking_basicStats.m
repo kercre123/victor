@@ -10,7 +10,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
     g_rotationList = rotationList;
     
     lastTestId = -1;
-    
+        
     % Go through every item in the work list, and compute the accuracy of
     % the tracking algorithm
     tic;
@@ -26,6 +26,8 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
             jsonData.Poses = makeCellArray(jsonData.Poses);
             
             lastTestId = workQueue{iWork}.iTest;
+            
+            trackerIsValid = true;
             
             fprintf('Starting basicStats %d ', lastTestId);
         end
@@ -106,7 +108,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                 currentQuad = snapToClosestQuads(image, currentQuad, algorithmParameters);
             end
             
-            if iPose == 1 || algorithmParameters.track_maxSnapToClosestQuadDistance > 0
+            if trackerIsValid && (iPose == 1 || algorithmParameters.track_maxSnapToClosestQuadDistance > 0)
                 trackerIsValid = false;
                 if strcmp(algorithmParameters.whichAlgorithm, 'c_6dof')
                     try
@@ -135,6 +137,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                         trackerIsValid = true;
                     catch exception
                         disp(getReport(exception));
+                        trackerIsValid = false;
                         currentQuad = [30,20; 20,20; 30,30; 20,30];
                     end % try ... catch
                 elseif strcmp(algorithmParameters.whichAlgorithm, 'matlab_klt')
@@ -144,7 +147,7 @@ function runTests_tracking_basicStats(workQueue, allTestData, rotationList, algo
                     keyboard
                     assert(false);
                 end
-            end
+            end % if trackerIsValid && (iPose == 1 || algorithmParameters.track_maxSnapToClosestQuadDistance > 0)
             
             if ~isfield(jsonData.Poses{iPose}, 'VisionMarkers')
                 keyboard;

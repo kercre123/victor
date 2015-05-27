@@ -7,8 +7,8 @@ function quad2 = trackQuadWithKLT(image1, quad1, image2, varargin)
     
     numPointsPerDimension = 10;
     
-    xRange = [min(quad1(:,1)), max(quad1(:,1))];
-    yRange = [min(quad1(:,2)), max(quad1(:,2))];
+    xRange = [max(1,min(quad1(:,1))), min(size(image1,2), max(quad1(:,1)))];
+    yRange = [max(1,min(quad1(:,2))), min(size(image1,1), max(quad1(:,2)))];
     
     quadLongWidth = max([abs(xRange(2)-xRange(1)), abs(yRange(2)-yRange(1))]);
     

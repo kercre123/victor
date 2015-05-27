@@ -23,6 +23,12 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
 
+#define SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG 0
+
+#if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+#  include <fstream>
+#endif
+
 namespace Anki {
   namespace Cozmo {
 
@@ -516,6 +522,27 @@ namespace Anki {
         _ledState[iLED].offColor     = offColors[iLED];
         _ledState[iLED].onPeriod_ms  = onPeriods_ms[iLED];
         _ledState[iLED].offPeriod_ms = offPeriods_ms[iLED];
+
+        // Handle some special cases (we want to avoid on/off times of 0 for the
+        // sake of the real active blocks)
+        if(onPeriods_ms[iLED] == 0 && offPeriods_ms[iLED] > 0) {
+          // Looks like we mean for this LED to be solid "off" color
+          _ledState[iLED].onColor = offColors[iLED];
+          _ledState[iLED].onPeriod_ms = u32_MAX/2;
+        }
+        else if(offPeriods_ms[iLED] == 0 && onPeriods_ms[iLED] > 0) {
+          // Looks like we mean for this LED to be solid "on" color
+          _ledState[iLED].offColor = onColors[iLED];
+          _ledState[iLED].offPeriod_ms = u32_MAX/2;
+        }
+        else if(onPeriods_ms[iLED]==0 && offPeriods_ms[iLED]==0) {
+          // Looks like we mean for this LED to actually turn off
+          _ledState[iLED].onColor = 0;
+          _ledState[iLED].offColor = 0;
+          _ledState[iLED].onPeriod_ms = u32_MAX/2;
+          _ledState[iLED].offPeriod_ms = u32_MAX/2;
+        }
+        
         _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
         _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
       }
@@ -662,12 +689,24 @@ namespace Anki {
       switch(_markers.front().GetCode())
       {
         case Vision::MARKER_1:
-          _activeID = 1;
+        case Vision::MARKER_LIGHTNINGBOLT_01:
+          _activeID = 0;
           break;
           
         case Vision::MARKER_INVERTED_1:
+        case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
+          _activeID = 1;
+          break;
+          
+        case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
           _activeID = 2;
           break;
+
+          /*
+        case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_000:
+          _activeID = 3;
+          break;
+          */
           
         default:
           _activeID = -1;
@@ -894,6 +933,18 @@ namespace Anki {
         m.transitionOnPeriod_ms[iLED]  = _ledState[iLED].transitionOnPeriod_ms;
         m.transitionOffPeriod_ms[iLED] = _ledState[iLED].transitionOffPeriod_ms;
       }
+      
+#     if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+      {
+        static int saveCtr=0;
+        Json::Value jsonMsg = m.CreateJson();
+        std::ofstream jsonFile("SetBlockLights_" + std::to_string(saveCtr++) + ".json", std::ofstream::out);
+        fprintf(stdout, "Writing SetBlockLights message to JSON file.\n");
+        jsonFile << jsonMsg.toStyledString();
+        jsonFile.close();
+      }
+#     endif 
+      
     }
     
   } // namespace Cozmo

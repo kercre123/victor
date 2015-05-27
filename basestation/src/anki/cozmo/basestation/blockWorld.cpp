@@ -104,6 +104,7 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
 
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2_INVERTED));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
       
@@ -113,7 +114,7 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::STAR5));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
       
       /*
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
@@ -127,17 +128,24 @@ namespace Anki
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG_INVERTED));
+      
       // For CREEP Test
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
       
       //////////////////////////////////////////////////////////////////////////
-      // 1x1 Active Cubes
+      // 1x1 Light Cubes
       //
-      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::ANGRYFACE));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::NUMBER_INVERTED));
+
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE1));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE2));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE3));
+      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE4));
+
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
@@ -150,14 +158,15 @@ namespace Anki
       // Mat Pieces
       //
       
-      // Webots mat:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
+      // Flag mats:
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
+      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::GEARS_4x4));
       
       // Platform piece:
-      _objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
       
       // Long Bridge
-      _objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
+      //_objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
       
       // Short Bridge
       // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
@@ -167,7 +176,7 @@ namespace Anki
       //////////////////////////////////////////////////////////////////////////
       // Ramps
       //
-      _objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
+      //_objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
       
     } // BlockWorld() Constructor
     
@@ -288,6 +297,13 @@ namespace Anki
         Vision::ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
                                                                              objSeen->GetSameDistanceTolerance(),
                                                                              objSeen->GetSameAngleTolerance());
+        
+        // If this is the object we're carrying, do nothing and continue to the next observed object
+        if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
+          delete objSeen;
+          continue;
+        }
+        
         
         // As of now the object will be w.r.t. the robot's origin.  If we
         // observed it to be on a mat, however, make it relative to that mat.
@@ -839,7 +855,7 @@ namespace Anki
       }
     }
 
-    void BlockWorld::GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const
+    void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
       std::set<ObjectID> ignoreIDs = {
         _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
@@ -886,7 +902,7 @@ namespace Anki
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
                                               const f32 maxHeight,
                                               const f32 padding,
-                                              std::vector<Quad2f>& rectangles,
+                                              std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
                                               const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
                                               const std::set<ObjectID>& ignoreIDs) const
@@ -913,7 +929,7 @@ namespace Anki
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
-                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding));
+                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding), objectAndId.first);
                     }
                   }
                 } // if useID
@@ -969,7 +985,20 @@ namespace Anki
           MatPiece* mat = dynamic_cast<MatPiece*>(object);
           CORETECH_ASSERT(mat != nullptr);
           
-          if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
+          // Does this mat pose make sense? I.e., is the top surface flat enough
+          // that we could drive on it?
+          Vec3f rotAxis;
+          Radians rotAngle;
+          mat->GetPose().GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+          if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
+             !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
+          {
+            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                             "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                             mat->GetType().GetName().c_str(),
+                             rotAngle.getDegrees(),
+                             rotAxis.x(), rotAxis.y(), rotAxis.z());
+          }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
                                   "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
@@ -1754,6 +1783,13 @@ namespace Anki
           _robot->DisableTrackHeadToObject();
         }
         
+        if(object->IsActive()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
+                           "Sending message to turn off active object %d's lights because "
+                           "it is being deleted.\n", object->GetID().GetValue());
+          _robot->TurnOffObjectLights(object->GetID());
+        }
+        
         // Notify any listeners that this object is being deleted
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
           CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
@@ -1925,27 +1961,30 @@ namespace Anki
 
     bool BlockWorld::ClearObject(const ObjectID withID)
     {
-      if(_canDeleteObjects) {
-        for(auto & objectsByFamily : _existingObjects) {
-          for(auto & objectsByType : objectsByFamily.second) {
-            auto objectWithIdIter = objectsByType.second.find(withID);
-            if(objectWithIdIter != objectsByType.second.end()) {
-              
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          auto objectWithIdIter = objectsByType.second.find(withID);
+          if(objectWithIdIter != objectsByType.second.end()) {
+            
+            // Allow deletion of specific object ID iff deletion is enable OR if
+            // this object is being deleted because it wasn't observed enought times
+            if(_canDeleteObjects ||
+               objectWithIdIter->second->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
+            {
               // Remove the object from the world
               ClearObjectHelper(objectWithIdIter->second);
               objectsByType.second.erase(objectWithIdIter);
               
               // IDs are unique, so we can return as soon as the ID is found and cleared
               return true;
+            } else {
+              PRINT_NAMED_WARNING("BlockWorld.ClearObject",
+                                  "Will not delete object %d because object deletion is disabled.\n",
+                                  withID.GetValue());
+              return false;
             }
           }
         }
-        
-      } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                            "Will not delete object %d because object deletion is disabled.\n",
-                            withID.GetValue());
-
       }
       
       // Never found the specified ID
@@ -1960,7 +1999,7 @@ namespace Anki
     {
       Vision::ObservableObject* object = objIter->second;
       
-      if(_canDeleteObjects) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ClearObjectHelper(object);
         
         return _existingObjects[fromFamily][withType].erase(objIter);
@@ -1977,7 +2016,7 @@ namespace Anki
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      if(_canDeleteObjects) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ObjectID objID = object->GetID();
         ClearObjectHelper(object);
         
@@ -2048,7 +2087,8 @@ namespace Anki
             for (auto const & objectsByID : objectsByType.second) {
               
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
+                 object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
               {
                 //PRINT_INFO("currID: %d\n", block.first);
                 if (currSelectedObjectFound) {
@@ -2088,7 +2128,8 @@ namespace Anki
           for (auto const & objectsByType : objectsByFamily.second) {
             for (auto const & objectsByID : objectsByType.second) {
               const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
-              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried())
+              if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
+                object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
               {
                 firstObject = objectsByID.first;
                 break;
@@ -2186,7 +2227,10 @@ namespace Anki
                                 "Object %d is selected in BlockWorld but does not have its "
                                 "selection flag set.\n", GetSelectedObject().GetValue());
           }
-          selectedObject->VisualizePreActionPoses(&_robot->GetPose());
+          
+          std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+          _robot->GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+          selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
         }
       } // if selected object is set
       

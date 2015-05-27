@@ -54,8 +54,8 @@ struct GlobalDataToBody
 {
   GlobalCommon common;
   int16_t motorPWM[4];
-
-  uint8_t RESERVED[51];  // Pad out to 64 bytes
+  u32 backpackColors[4];
+  uint8_t RESERVED[35];  // Pad out to 64 bytes
   char tail;
 };
 
