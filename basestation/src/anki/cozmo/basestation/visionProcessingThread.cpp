@@ -20,7 +20,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -270,7 +270,7 @@ namespace Cozmo {
 
   void VisionProcessingThread::Processor()
   {
-    PRINT_INFO("Starting Robot VisionProcessingThread::Processor thread...\n");
+    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
     
     _visionSystem = new VisionSystem();
     _visionSystem->Init(_camCalib);
@@ -318,7 +318,7 @@ namespace Cozmo {
       _visionSystem = nullptr;
     }
     
-    PRINT_INFO("Terminated Robot VisionProcessingThread::Processor thread\n");
+    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Terminated Robot VisionProcessingThread::Processor thread");
   } // Processor()
 
   

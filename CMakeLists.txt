@@ -57,6 +57,7 @@ include_directories(
   ${CLAD_DIR}/support/cpp/include
   "${ANKI_UTIL_DIR}/source/3rd"
   "${ANKI_UTIL_DIR}/source/3rd/jsoncpp"
+  "${ANKI_UTIL_DIR}/source"
   "${ANKI_UTIL_DIR}/source/anki"
   "${ANKI_UTIL_DIR}/libs/packaged/include"
 )

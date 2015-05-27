@@ -1053,10 +1053,10 @@ namespace Anki
             }
             else {
               if(overlappingMatsSeen.size() > 1) {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
-                                    "Robot %d is seeing %d (i.e. more than one) mats "
+                PRINT_STREAM_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
+                                    "Robot " << _robot->GetID() << " is seeing " << overlappingMatsSeen.size() << " (i.e. more than one) mats "
                                     "overlapping with the existing mat it is localized to. "
-                                    "Will use first.\n", _robot->GetID(), overlappingMatsSeen.size());
+                                    "Will use first.");
               }
               
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
@@ -1129,8 +1129,8 @@ namespace Anki
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
             // origin as its pose
-            PRINT_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
-                       "Instantiating first mat piece in the world.\n");
+            PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
+                       "Instantiating first mat piece in the world.");
             
             existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
             assert(existingMatPiece != nullptr);
@@ -1162,10 +1162,9 @@ namespace Anki
               AddNewObject(existingMatPieces, existingMatPiece);
               existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
-              PRINT_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                         "Robot %d localizing to new %s mat with ID=%d.\n",
-                         _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                         existingMatPiece->GetID().GetValue());
+              PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
+                         "Robot " << _robot->GetID() << " localizing to new "
+                                << existingMatPiece->GetType().GetName() << " mat with ID=" << existingMatPiece->GetID().GetValue() << ".");
               
             } else {
               if(existingObjects.size() > 1) {
@@ -2040,13 +2039,12 @@ namespace Anki
         
         newSelection->SetSelected(true);
         _selectedObject = objectID;
-        PRINT_INFO("Selected Object with ID=%d\n", objectID.GetValue());
+        PRINT_STREAM_INFO("BlockWorld.SelectObject", "Selected Object with ID=" << objectID.GetValue());
         
         return true;
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.SelectObject.InvalidID",
-                            "Object with ID=%d not found. Not updating selected object.\n",
-                            objectID.GetValue());
+        PRINT_STREAM_WARNING("BlockWorld.SelectObject.InvalidID",
+                            "Object with ID=" << objectID.GetValue() << " not found. Not updating selected object.");
         return false;
       }
     } // SelectObject()
@@ -2150,9 +2148,9 @@ namespace Anki
       ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
       if (object != nullptr) {
         object->SetSelected(true);
-        PRINT_INFO("Object of interest: ID = %d\n", _selectedObject.GetValue());
+        PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "Object of interest: ID = " << _selectedObject.GetValue());
       } else {
-        PRINT_INFO("No object of interest found\n");
+        PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "No object of interest found");
       }
   
     } // CycleSelectedObject()
