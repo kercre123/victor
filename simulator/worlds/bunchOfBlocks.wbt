@@ -133,11 +133,10 @@ Block1x1 {
   blockColor 0.296223 0.860273 0.323583
   markerImg "symbols/squarePlusCorners.png"
 }
-Block1x1 {
+FlagCube {
   translation 0.0274715 0.221123 0.072
   rotation 0 0 1 2.87979
-  blockColor 0.296223 0.860273 0.323583
-  markerImg "symbols/squarePlusCorners.png"
+  swapCheckers TRUE
 }
 Block1x1 {
   translation 0.0334384 -0.287731 0.022
