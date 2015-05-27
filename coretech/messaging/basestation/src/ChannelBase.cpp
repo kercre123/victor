@@ -40,9 +40,7 @@ bool ChannelBase::PopIncomingPacket(IncomingPacket& packet)
     
     // assign address if there is one
     // may return false and still leave it as default
-    ConnectionId sourceId = DEFAULT_CONNECTION_ID;
-    GetConnectionId(sourceId, packet.sourceAddress);
-    packet.sourceId = sourceId;
+    GetConnectionId(packet.sourceId, packet.sourceAddress);
     
     return true;
   }

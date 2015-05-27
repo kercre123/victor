@@ -366,9 +366,6 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
     return;
   }
   
-  // returns false and not set on connection requests; that's expected behavior
-  GetConnectionId(packet.sourceId, packet.sourceAddress);
-  
   // asserts are for state that is queued by this class, so any error is an error within this class
   switch (packet.tag) {
     case IncomingPacket::Tag::ConnectionRequest:

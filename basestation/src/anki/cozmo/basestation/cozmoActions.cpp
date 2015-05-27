@@ -26,6 +26,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
+#include <iomanip>
+
 namespace Anki {
   
   namespace Cozmo {
@@ -1537,9 +1539,7 @@ namespace Anki {
                                                                carryObject->GetSameAngleTolerance(), true,
                                                                Tdiff, angleDiff))
             {
-              PRINT_INFO("Seeing object %d in original pose. (Tdiff = (%.1f,%.1f,%.1f), AngleDiff=%.1fdeg\n",
-                         object.first.GetValue(),
-                         Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
+              PRINT_STREAM_INFO("PickAndPlaceObjectAction::Verify", std::setprecision(3) << "Seeing object " << object.first.GetValue() << " in original pose. (Tdiff = (" << Tdiff.x() << "," << Tdiff.y() << "," << Tdiff.z() << "), AngleDiff=" << angleDiff.getDegrees() << "deg");
               objectInOriginalPose = object.second;
               break;
             }

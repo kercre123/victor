@@ -261,6 +261,25 @@ bool MultiClientComms::Send(const Anki::Comms::OutgoingPacket &packet)
 //  
 //}
 
+bool MultiClientComms::PopIncomingPacket(IncomingPacket& packet)
+{
+  // technically you really should modify packet if we're going to end up
+  // returning false; this just costs some stack and copying
+  IncomingPacket bufferPacket;
+  
+  bool result = _reliableChannel.PopIncomingPacket(bufferPacket);
+  if (result) {
+    // refuse all incoming connections
+    if (packet.tag == IncomingPacket::Tag::ConnectionRequest) {
+      _reliableChannel.RefuseIncomingConnection(packet.sourceAddress);
+      return false;
+    }
+    
+    packet = bufferPacket;
+  }
+  return result;
+}
+
 bool MultiClientComms::IsConnectionAdvertising(ConnectionId connectionId) const
 {
   return (_advertisingConnections.count(connectionId) != 0);

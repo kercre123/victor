@@ -146,8 +146,14 @@ namespace Cozmo {
     }
     
     Result lastResult = RESULT_OK;
-    lastResult = _robotComms.Start(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt(),
+    const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
+    int ipAddress = Anki::Util::TransportAddress::IPAddressStringToU32(ipString);
+    int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
+    
+    Anki::Util::TransportAddress address(ipAddress, static_cast<uint16_t>(port));
+    
+    lastResult = _robotComms.Start(,
+                                  ,
                                   MAX_SENT_BYTES_PER_TIC_TO_ROBOT);
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.\n");
