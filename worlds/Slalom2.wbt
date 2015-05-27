@@ -133,8 +133,10 @@ FlagCube {
   translation 0.3 0.2 0.0219969
   rotation 0 1 0 0
 }
-TargetCube {
-  translation 0.4 -0.2 0.0219969
+FlagCube {
+  translation 0.4 0.2 0.0219969
+  rotation 0 1 0 0
+  swapCheckers TRUE
 }
 FlagCube {
   translation 0.3 -0.2 0.0219969
