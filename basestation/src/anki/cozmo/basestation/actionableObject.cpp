@@ -51,7 +51,8 @@ namespace Anki {
     
     
     bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                                const Pose3d* reachableFromPose) const
+                                                const Pose3d* reachableFromPose,
+                                                const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
       const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
       
@@ -76,6 +77,57 @@ namespace Anki {
         isValid = NEAR(checkPose.GetRotationMatrix()(2,2), 1.f, vertAlignThresh);
       }
       
+      if(isValid && !obstacles.empty()) {
+        // Cheap hack for now (until we use the planner to do this check for us):
+        //   Walk a straight line from this preActionPose to the parent object
+        //   and check for intersections with the obstacle list.
+        //   (Assumes obstacles are w.r.t. origin...)
+        const Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
+        const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToOrigin().GetTranslation());
+        
+        const f32 stepSize = 10.f; // 1cm
+        Vec2f   stepVec(xyEnd);
+        stepVec -= xyStart;
+        const f32 lineLength = stepVec.MakeUnitLength();
+        const s32 numSteps = std::floor(lineLength / stepSize);
+        stepVec *= stepSize;
+
+        bool pathClear = true;
+        Point2f currentPoint(xyStart);
+        for(s32 i=0; i<numSteps && pathClear; ++i) {
+          // Check whether the current point along the line is inside any obstacles
+          // (excluding this ActionableObject as an obstacle)
+          
+          // DEBUG VIZ
+          //          VizManager::getInstance()->DrawGenericQuad(i+1000+(0xffff & (long)preActionPose.GetMarker()),
+          //                                                     Quad2f(currentPoint+Point2f(-1.f,-1.f),
+          //                                                            currentPoint+Point2f(-1.f, 1.f),
+          //                                                            currentPoint+Point2f( 1.f,-1.f),
+          //                                                            currentPoint+Point2f( 1.f, 1.f)),
+          //                                                     1.f, NamedColors::BLUE);
+          
+          for(auto & obstacle : obstacles) {
+            
+            // DEBUG VIZ
+            //            VizManager::getInstance()->DrawGenericQuad(obstacle.second.GetValue(), obstacle.first, 1.f, NamedColors::ORANGE);
+            
+            
+            if(obstacle.second != this->GetID() && obstacle.first.Contains(currentPoint)) {
+              pathClear = false;
+              break;
+            }
+          }
+          // Take a step along the line
+          assert( ((currentPoint+stepVec)-xyEnd).Length() < (currentPoint-xyEnd).Length());
+          currentPoint += stepVec;
+        }
+
+        if(pathClear == false) {
+          isValid = false;
+        }
+      
+      }
+      
       return isValid;
       
     } // IsPreActionPoseValid()
@@ -84,6 +136,7 @@ namespace Anki {
     void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode,
+                                                    const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
                                                     const Pose3d* reachableFromPose)
     {
       const Pose3d& relToObjectPose = GetPose();
@@ -95,7 +148,7 @@ namespace Anki {
         {
           PreActionPose currentPose(preActionPose, relToObjectPose);
           
-          if(IsPreActionPoseValid(currentPose, reachableFromPose)) {
+          if(IsPreActionPoseValid(currentPose, reachableFromPose, obstacles)) {
             preActionPoses.emplace_back(currentPose);
           }
         } // if preActionPose has correct code/action
@@ -115,10 +168,12 @@ namespace Anki {
       }
     }
     
-    void ActionableObject::VisualizePreActionPoses(const Pose3d* reachableFrom)
+    void ActionableObject::VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
+                                                   const Pose3d* reachableFrom)
     {
       // Draw the main object:
       //Visualize();
+      ActionableObject::EraseVisualization();
       
       // Draw the pre-action poses, using a different color for each type of action
       u32 poseID = 0;
@@ -126,9 +181,9 @@ namespace Anki {
       
       for(PreActionPose::ActionType actionType : {PreActionPose::DOCKING, PreActionPose::ENTRY})
       {
-        GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), reachableFrom);
+        GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), obstacles, reachableFrom);
         for(auto & pose : poses) {
-          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID,
+          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*100,
                                                                                            pose.GetPose().GetWithRespectToOrigin(),
                                                                                            PreActionPose::GetVisualizeColor(actionType)));
           ++poseID;

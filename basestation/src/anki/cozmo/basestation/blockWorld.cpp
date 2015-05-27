@@ -854,7 +854,7 @@ namespace Anki
       }
     }
 
-    void BlockWorld::GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const
+    void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
       std::set<ObjectID> ignoreIDs = {
         _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
@@ -901,7 +901,7 @@ namespace Anki
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
                                               const f32 maxHeight,
                                               const f32 padding,
-                                              std::vector<Quad2f>& rectangles,
+                                              std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
                                               const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
                                               const std::set<ObjectID>& ignoreIDs) const
@@ -928,7 +928,7 @@ namespace Anki
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
-                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding));
+                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding), objectAndId.first);
                     }
                   }
                 } // if useID
@@ -2219,7 +2219,10 @@ namespace Anki
                                 "Object %d is selected in BlockWorld but does not have its "
                                 "selection flag set.\n", GetSelectedObject().GetValue());
           }
-          selectedObject->VisualizePreActionPoses(&_robot->GetPose());
+          
+          std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+          _robot->GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+          selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
         }
       } // if selected object is set
       
