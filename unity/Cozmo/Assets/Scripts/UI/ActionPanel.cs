@@ -136,17 +136,19 @@ public class ActionPanel : MonoBehaviour
 		
 		float screenHeightInches = (float)Screen.height / (float)dpi;
 		IsSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		if(IsSmallScreen && anchorToScaleOnSmallScreens != null) {
+		if(IsSmallScreen) {
+			if(anchorToScaleOnSmallScreens != null) {
 			
-			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
-			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
-			
-			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
-			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
-			anchor.y = 0f;
-			anchorToScaleOnSmallScreens.anchoredPosition = anchor;
+				Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
+				float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
+				
+				anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
+				Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
+				anchor.y = 0f;
+				anchorToScaleOnSmallScreens.anchoredPosition = anchor;
+			}
 		}
-		
+
 	}
 
 	protected virtual void OnDisable()

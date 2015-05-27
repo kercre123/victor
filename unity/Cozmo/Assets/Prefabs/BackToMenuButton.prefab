@@ -668,7 +668,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 25
+  m_SortingOrder: 20
 --- !u!224 &22405478
 RectTransform:
   m_ObjectHideFlags: 1
@@ -686,7 +686,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: .5, y: 1}
   m_AnchorMax: {x: .5, y: 1}
-  m_AnchoredPosition: {x: -208, y: 4}
+  m_AnchoredPosition: {x: -388, y: 3}
   m_SizeDelta: {x: 128, y: 128}
   m_Pivot: {x: .5, y: 1}
 --- !u!224 &22405480
