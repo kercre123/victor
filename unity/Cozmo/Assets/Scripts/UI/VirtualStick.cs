@@ -11,6 +11,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 	[SerializeField] bool hideEvenIfNotDynamic = false; //recenter the stick from touchdown position
 	[SerializeField] bool staticOnSmallScreens = true;
 	[SerializeField] bool snapWidthToSideBar = true;
+
 	[SerializeField] float sideBarSnapScaler = 1f;
 	[SerializeField] RectTransform bg = null;
 	[SerializeField] RectTransform stick = null;
@@ -352,7 +353,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			}
 
 			bg.anchoredPosition = smallScreenAnchorPos;
-			Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
+			//Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
 		}
 
 		//Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");

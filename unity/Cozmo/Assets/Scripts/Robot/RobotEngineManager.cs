@@ -231,7 +231,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void LateUpdate()
 	{
-		if( current == null || !isRobotConnected ) return;
+		if( current == null ) return;
 
 		current.UpdateLightMessages();
 	}
@@ -290,6 +290,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void SendMessage()
 	{
+		if( !IsConnected ) return;
+
 		channel.Send( Message );
 	}
 
@@ -454,7 +456,7 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		if( deleted != null ) current.markersVisibleObjects.Remove( deleted );
 
-		//if( current.activeBlocks.ContainsKey( (int)message.objectID ) ) current.activeBlocks.Remove( (int)message.objectID );
+		if( current.activeBlocks.ContainsKey( (int)message.objectID ) ) current.activeBlocks.Remove( (int)message.objectID );
 	}
 
 	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )

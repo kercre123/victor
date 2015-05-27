@@ -36,6 +36,7 @@ public class GoldRushController : GameController {
 	[SerializeField] float findRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float lostRadius;	//leaving lost radius will put you back in searching mode
 	[SerializeField] float returnRadius;	//dropping cube within find radius will trigger transmutation/score
+	[SerializeField] float autoReturnRadius;	//dropping cube within find radius will trigger transmutation/score
 	[SerializeField] float detectRadius; //pulsing will accelerate from detect to find ranges
 	[SerializeField] int numDropsForBonusTime = 1;
 
@@ -666,7 +667,7 @@ public class GoldRushController : GameController {
 		}
 	}
 
-	void UpdateReturning()
+	void UpdateReturning(bool auto_returning = false)
 	{
 		robot.SetHeadAngle();
 		Vector2 home_base_pos = Vector2.zero;
@@ -678,18 +679,18 @@ public class GoldRushController : GameController {
 		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
 		float distance = (home_base_pos - collector_pos).magnitude;
 		//Debug.Log ("distance: " + distance);
-		if (distance < returnRadius) 
+		float return_distance = auto_returning ? autoReturnRadius : returnRadius;
+		if (distance < return_distance) 
 		{
 			EnterPlayState(PlayState.RETURNED);
 		}
-		else
+		else if( !auto_returning )
 		{
 			float dist_percent = 1 - ((detectRadius-returnRadius)-(distance-returnRadius))/(detectRadius-returnRadius);
 			float current_rate = Mathf.Lerp(detectRangeDelayClose, detectRangeDelayFar, dist_percent);
 			UpdateLocatorSound(current_rate);
 		}
-		
-		
+			
 		totalActiveTime += Time.deltaTime;
 	}
 
@@ -907,7 +908,7 @@ public class GoldRushController : GameController {
 		float signed_angle = angle * sign;
 		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
 
-		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*3*(returnRadius/4));
+		Vector3 depositSpot = robot.WorldPosition + to_collector;// - (to_collector.normalized*3*(returnRadius/4));
 
 		signed_angle = Mathf.Deg2Rad*signed_angle;
 
@@ -915,7 +916,7 @@ public class GoldRushController : GameController {
 
 		while(!inDepositRange)
 		{
-			UpdateReturning();
+			UpdateReturning(true);
 			yield return 0;
 		}
 		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
@@ -980,7 +981,7 @@ public class GoldRushController : GameController {
 	{
 		for(int i=0; i<robot.lights.Length; ++i)
 		{
-			if( i < num_bars || (i == 3 && num_bars == 3) ) // hack to get around two off the lights being tied together
+			if( i < num_bars ) 
 			{
 				robot.lights[i].onColor = color;
 			}

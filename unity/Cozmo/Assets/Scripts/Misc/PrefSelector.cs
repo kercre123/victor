@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -15,7 +15,7 @@ public class PrefSelector : GameObjectSelector {
 
 	void Update() {
 
-		bool optionsOpenThisFrame = OptionsScreen.Open;
+		bool optionsOpenThisFrame = OptionsScreen.IsOpen;
 
 		if(optionsMenuWasOpenLastFrame && !optionsOpenThisFrame) {
 			RefreshFromPref();

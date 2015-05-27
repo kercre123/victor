@@ -15,7 +15,7 @@ public class ObjectkSymbolInfo {
 public class CozmoPalette : MonoBehaviour {
 
 	[SerializeField] Color[] activeBlockColors = new Color[(int)ActiveBlock.Mode.Count];
-	[SerializeField] ObjectkSymbolInfo[] objectSymbolInfos = new ObjectkSymbolInfo[3];
+	[SerializeField] ObjectkSymbolInfo[] objectSymbolInfos = new ObjectkSymbolInfo[(int)CubeType.Count];
 
 	public static CozmoPalette instance = null;
 
@@ -47,11 +47,15 @@ public class CozmoPalette : MonoBehaviour {
 	}
 
 	public Sprite GetSpriteForObjectType(CubeType objType) {
-		return objectSymbolInfos[(int)objType].sprite;
+		int index = (int)objType;
+		if(index < 0 || index > objectSymbolInfos.Length - 1) return null;
+		return objectSymbolInfos[index].sprite;
 	}
 
 	public string GetNameForObjectType(CubeType objType) {
-		return objectSymbolInfos[(int)objType].Name;
+		int index = (int)objType;
+		if(index < 0 || index > objectSymbolInfos.Length - 1) return "Unknown Object";
+		return objectSymbolInfos[index].Name;
 	}
 
 }

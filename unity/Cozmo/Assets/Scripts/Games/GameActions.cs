@@ -24,6 +24,8 @@ public class GameActions : MonoBehaviour
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
+	public float actionButtonnDelay { get { return actionButtonSound != null ? actionButtonSound.length: 0f; } }
+
 	public static GameActions instance = null;
 
 	protected virtual void Awake()
@@ -59,7 +61,7 @@ public class GameActions : MonoBehaviour
 	{
 		return activeBlockModeSounds[(int)mode];
 	}
-
+	
 	private void CheckChangedButtons()
 	{
 		for( int i = 0; i < buttons.Length; ++i )
@@ -237,25 +239,15 @@ public class GameActions : MonoBehaviour
 	
 	public virtual void Change( bool onRelease, ObservedObject selectedObject )
 	{
-		if( !onRelease ) return;
+		if( !onRelease || selectedObject == null || !selectedObject.isActive ) return;
 
 		ActionButtonClick();
 
 		Debug.Log( "Change" );
 
-		if( selectedObject != null && selectedObject.isActive )
-		{
-			ActiveBlock activeBlock = selectedObject as ActiveBlock;
+		ActiveBlock activeBlock = selectedObject as ActiveBlock;
 
-			int typeIndex = (int)activeBlock.mode + 1;
-			if(typeIndex >= (int)ActiveBlock.Mode.Count) typeIndex = 0;
-
-			Debug.Log("Changed active block id("+activeBlock+") from " + activeBlock + " to " + (ActiveBlock.Mode)typeIndex );
-
-			activeBlock.mode = (ActiveBlock.Mode)typeIndex;
-			activeBlock.SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( activeBlock.mode ) );
-			AudioManager.PlayAudioClip( GetActiveBlockModeSound( activeBlock.mode ), actionButtonSound != null ? actionButtonSound.length: 0f );
-		}
+		activeBlock.CycleMode();
 	}
 
 	public virtual void Cancel( bool onRelease, ObservedObject selectedObject )

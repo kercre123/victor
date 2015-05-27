@@ -30,7 +30,7 @@ public class OptionsScreen : MonoBehaviour {
 		Robot.ObservedObjectListType.KNOWN.ToString() };
 
 	public static OptionsScreen instance = null;
-	public static bool Open {
+	public static bool IsOpen {
 		get {
 			if(instance == null) return false;
 			if(instance.optionsAnchor == null) return false;
@@ -293,5 +293,9 @@ public class OptionsScreen : MonoBehaviour {
 		RemoveListeners();
 		Init();
 		AddListeners();
+	}
+
+	public void Toggle(bool toggle) {
+		optionsAnchor.SetActive(toggle);
 	}
 }

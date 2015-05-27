@@ -112,13 +112,16 @@ public class ActiveBlock : ObservedObject
 
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
+	public AudioClip modeSound { get { return GameActions.instance != null ? GameActions.instance.GetActiveBlockModeSound( mode ) : null; } } 
+	public float modeDelay { get { return modeSound != null ? modeSound.length : 0f; } }
+
 	public Light[] lights { get; private set; }
 
 	public bool lightsChanged
 	{
 		get
 		{
-			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY || delete ) return true;
+			if( lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY ) return true;
 
 			for( int i = 0; i < lights.Length; ++i )
 			{
@@ -137,10 +140,8 @@ public class ActiveBlock : ObservedObject
 	private float lastRelativeToY;
 	public float relativeToY;
 
-	public Mode mode = Mode.Off;
+	public Mode mode { get; private set; }
 
-	public bool delete { get; private set; }
-	
 	public event Action<ActiveBlock> OnAxisChange;
 
 	public ActiveBlock( int objectID, uint objectFamily, uint objectType )
@@ -152,7 +153,6 @@ public class ActiveBlock : ObservedObject
 		yAccel = byte.MaxValue;
 		zAccel = byte.MaxValue;
 		isMoving = false;
-		delete = false;
 
 		SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
@@ -163,9 +163,7 @@ public class ActiveBlock : ObservedObject
 			lights[i] = new Light( i );
 		}
 
-		SetLEDs();
-
-		if( SignificantChangeDetected != null ) SignificantChangeDetected();
+		SetMode( Mode.Off );
 	}
 
 	public void Moving( G2U.ActiveObjectMoved message )
@@ -194,8 +192,6 @@ public class ActiveBlock : ObservedObject
 
 	public void SetAllLEDs() // should only be called from update loop
 	{
-		if( delete ) SetLEDs(); // turn off LEDs if deleted
-
 		SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
 		SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
@@ -280,18 +276,21 @@ public class ActiveBlock : ObservedObject
 		this.relativeToY = relativeToY;
 	}
 
-	public void ForceLEDsRefresh()
+	public void SetMode( Mode m )
 	{
-		for( int i = 0; i < lights.Length; ++i )
-		{
-			lights[i].ForceRefresh();
-		}
+		mode = m;
+
+		if( CozmoPalette.instance != null ) SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( mode ) );
+		if( GameActions.instance != null ) AudioManager.PlayOneShot( modeSound, GameActions.instance.actionButtonnDelay );
 	}
 
-	public override void Delete()
+	public void CycleMode()
 	{
-		base.Delete();
-
-		delete = true;
+		int typeIndex = (int)mode + 1;
+		if(typeIndex >= (int)Mode.Count) typeIndex = 0;
+		
+		Debug.Log("active block id("+ID+") from " + mode + " to " + (ActiveBlock.Mode)typeIndex );
+		
+		SetMode( (ActiveBlock.Mode)typeIndex );
 	}
 }
