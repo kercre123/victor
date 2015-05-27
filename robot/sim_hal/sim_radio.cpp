@@ -149,23 +149,20 @@ namespace Anki {
       recvBufSize_ = 0;
     }
 
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length)
     {
       if (server.HasClient()) {
 
-        const u16 size = Messages::GetSize(msgID);
-
 #if(USE_UDP_ROBOT_COMMS==0)
-        // Send the message header (0xBEEF + size(of following bytes) + msgID)
+        // Send the message header (0xBEEF + size(of following bytes)
         // For TCP comms, send timestamp immediately after the header.
         // This is needed on the basestation side to properly order messages.
-        const u8 HEADER_LENGTH = 7;
+        const u8 HEADER_LENGTH = 6;
         u8 header[HEADER_LENGTH];
-        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "ccic",
+        UtilMsgError packRes = SafeUtilMsgPack(header, HEADER_LENGTH, NULL, "cci",
                     RADIO_PACKET_HEADER[0],
                     RADIO_PACKET_HEADER[1],
-                    size + 1,
-                    msgID);
+                    length);
 
         assert (packRes == UTILMSG_OK);
 
@@ -175,14 +172,11 @@ namespace Anki {
         if (bytesSent < HEADER_LENGTH) {
           printf("ERROR: Failed to send header (%d bytes sent)\n", bytesSent);
         }
-        bytesSent = server.Send((char*)buffer, size);
+        bytesSent = server.Send((char*)buffer, length);
 #else
-        char buffWithID[size+1];
-        buffWithID[0] = msgID;
-        memcpy(buffWithID+1, buffer, size);
-        u32 bytesSent = server.Send((char*)buffWithID, size+1);
+        u32 bytesSent = server.Send((char*)buffer, length);
 #endif
-        if (bytesSent < size) {
+        if (bytesSent < length) {
           printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
           DisconnectRadio();
           return false;
@@ -265,9 +259,9 @@ namespace Anki {
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
-    Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
+    u32 HAL::RadioGetNextPacket(u8* buffer);
     {
-      Messages::ID retVal = Messages::NO_MESSAGE_ID;
+      u32 retVal = 0;
 
 #if(USE_UDP_ROBOT_COMMS==0)
       if (server.HasClient()) {
@@ -306,21 +300,12 @@ namespace Anki {
                                 (recvBuf_[headerSize+3] << 24);
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
 
-              // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
-              const u16 size = Messages::GetSize(msgID);
-              const u32 msgLen = dataLen - 1;  // Doesn't include msgID
-
-              if (msgLen != size) {
-                PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
-              }
-
               // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
-              retVal = msgID;
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
+              retVal = dataLen;
 
               // Shift recvBuf contents down
-              const u32 entireMsgSize = headerSize + 4 + 1 + msgLen;
+              const u32 entireMsgSize = headerSize + 4 + dataLen;
               memcpy(recvBuf_, recvBuf_ + entireMsgSize, recvBufSize_ - entireMsgSize);
               recvBufSize_ -= entireMsgSize;
             }
@@ -330,10 +315,10 @@ namespace Anki {
 #else
 
       // Read available datagram
-      int dataSize = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
-      if (dataSize > 0) {
-        recvBufSize_ = dataSize;
-      } else if (dataSize < 0) {
+      int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+      if (dataLen > 0) {
+        recvBufSize_ = dataLen;
+      } else if (dataLen < 0) {
         // Something went wrong
         DisconnectRadio();
         return retVal;
@@ -341,16 +326,9 @@ namespace Anki {
         return retVal;
       }
 
-      Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[0]);
-      const u16 expectedSize = Messages::GetSize(msgID);
-
-      if ((recvBufSize_ - 1) != expectedSize) {
-        PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, expectedSize, recvBufSize_ - 1);
-      }
-
       // Copy message contents to buffer
-      std::memcpy((void*)buffer, recvBuf_+1, expectedSize);
-      retVal = msgID;
+      std::memcpy((void*)buffer, recvBuf_, dataLen);
+      retVal = dataLen;
 
 #endif
 
