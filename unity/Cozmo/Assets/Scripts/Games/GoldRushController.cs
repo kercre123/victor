@@ -502,7 +502,7 @@ public class GoldRushController : GameController {
 			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187);
-				AudioManager.PlayAudioClipLooping(foundBeep, 0f, AudioManager.Source.Gameplay, 0.3f);
+				AudioManager.PlayAudioClipLooping(foundBeep, 0f, AudioManager.Source.Gameplay);
 			}
 			break;
 		case PlayState.EXTRACTING:
@@ -531,7 +531,7 @@ public class GoldRushController : GameController {
 			else if ( goldExtractingObject != null )
 			{
 				goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 188, 187); 
-				AudioManager.PlayAudioClipLooping(foundBeep, 0f, AudioManager.Source.Gameplay, 0.3f);
+				AudioManager.PlayAudioClipLooping(foundBeep, 0f, AudioManager.Source.Gameplay);
 			}
 			//hintMessage.ShowMessage("Deposit the energy!", Color.black);
 			break;
