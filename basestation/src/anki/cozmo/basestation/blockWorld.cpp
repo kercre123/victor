@@ -2230,7 +2230,7 @@ namespace Anki
           }
           
           std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-          _robot->GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+          _robot->GetBlockWorld().GetObstacles(obstacles);
           selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
         }
       } // if selected object is set

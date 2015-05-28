@@ -19,6 +19,8 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
+
 namespace Anki {
   namespace Cozmo {
         
@@ -80,7 +82,12 @@ namespace Anki {
       if(isValid && !obstacles.empty()) {
         // Cheap hack for now (until we use the planner to do this check for us):
         //   Walk a straight line from this preActionPose to the parent object
-        //   and check for intersections with the obstacle list.
+        //   and check for intersections with the obstacle list. Actually, we will
+        //   walk three lines (center, left, and right) so the caller doesn't
+        //   have to do some kind of oriented padding of the obstacles to deal
+        //   with objects close to the action-object unnecessarily blocking
+        //   paths on other sides of the object unnecessarily.
+        
         //   (Assumes obstacles are w.r.t. origin...)
         const Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
         const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToOrigin().GetTranslation());
@@ -89,11 +96,15 @@ namespace Anki {
         Vec2f   stepVec(xyEnd);
         stepVec -= xyStart;
         const f32 lineLength = stepVec.MakeUnitLength();
+        Vec2f offsetVec(stepVec.y(), -stepVec.x());
         const s32 numSteps = std::floor(lineLength / stepSize);
         stepVec *= stepSize;
+        offsetVec *= 0.5f*ROBOT_BOUNDING_Y;
 
         bool pathClear = true;
         Point2f currentPoint(xyStart);
+        Point2f currentPointL(xyStart + offsetVec);
+        Point2f currentPointR(xyStart - offsetVec);
         for(s32 i=0; i<numSteps && pathClear; ++i) {
           // Check whether the current point along the line is inside any obstacles
           // (excluding this ActionableObject as an obstacle)
@@ -105,6 +116,18 @@ namespace Anki {
           //                                                            currentPoint+Point2f( 1.f,-1.f),
           //                                                            currentPoint+Point2f( 1.f, 1.f)),
           //                                                     1.f, NamedColors::BLUE);
+          //          VizManager::getInstance()->DrawGenericQuad(i+2000+(0xffff & (long)preActionPose.GetMarker()),
+          //                                                     Quad2f(currentPointL+Point2f(-1.f,-1.f),
+          //                                                            currentPointL+Point2f(-1.f, 1.f),
+          //                                                            currentPointL+Point2f( 1.f,-1.f),
+          //                                                            currentPointL+Point2f( 1.f, 1.f)),
+          //                                                     1.f, NamedColors::RED);
+          //          VizManager::getInstance()->DrawGenericQuad(i+3000+(0xffff & (long)preActionPose.GetMarker()),
+          //                                                     Quad2f(currentPointR+Point2f(-1.f,-1.f),
+          //                                                            currentPointR+Point2f(-1.f, 1.f),
+          //                                                            currentPointR+Point2f( 1.f,-1.f),
+          //                                                            currentPointR+Point2f( 1.f, 1.f)),
+          //                                                     1.f, NamedColors::GREEN);
           
           // Technically, this quad is already in the list of obstacles, so we could
           // find it rather than recomputing it...
@@ -117,9 +140,13 @@ namespace Anki {
             
             // Make sure this obstacle is not from this object (the one we are trying to interact with).
             if(obstacle.second != this->GetID()) {
-              // Also make sure the obstacle is not part of a stack this one belongs to.
+              // Also make sure the obstacle is not part of a stack this one belongs
+              // to, by seeing if its centroid is contained within this object's
+              // bounding quad
               if(boundingQuad.Contains(obstacle.first.ComputeCentroid()) == false) {
-                if(obstacle.first.Contains(currentPoint)) {
+                if(obstacle.first.Contains(currentPoint)  ||
+                   obstacle.first.Contains(currentPointR) ||
+                   obstacle.first.Contains(currentPointL)) {
                   pathClear = false;
                   break;
                 }
@@ -127,8 +154,12 @@ namespace Anki {
             }
           }
           // Take a step along the line
-          assert( ((currentPoint+stepVec)-xyEnd).Length() < (currentPoint-xyEnd).Length());
-          currentPoint += stepVec;
+          assert( ((currentPoint +stepVec)-xyEnd).Length() < (currentPoint -xyEnd).Length());
+          assert( ((currentPointL+stepVec)-xyEnd).Length() < (currentPointL-xyEnd).Length());
+          assert( ((currentPointR+stepVec)-xyEnd).Length() < (currentPointR-xyEnd).Length());
+          currentPoint  += stepVec;
+          currentPointR += stepVec;
+          currentPointL += stepVec;
         }
 
         if(pathClear == false) {
