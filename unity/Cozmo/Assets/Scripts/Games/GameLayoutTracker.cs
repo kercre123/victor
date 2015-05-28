@@ -61,6 +61,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] AudioClip layoutValidatedSound = null;
 	[SerializeField] AudioClip validPredictedDropSound = null;
 	[SerializeField] AudioClip invalidPredictedDropSound = null;
+	[SerializeField] AudioClip cubePlaced = null;
+	[SerializeField] AudioClip buildComplete = null;
 
 	[SerializeField] Image image_cozmoTD;
 	[SerializeField] LayoutBlock2d carriedBlock2d;
@@ -292,6 +294,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if((Phase == LayoutTrackerPhase.BUILDING || Phase == LayoutTrackerPhase.AUTO_BUILDING) && completed) {
 			Phase = LayoutTrackerPhase.COMPLETE;
+			AudioManager.PlayAudioClip(buildComplete, 0, AudioManager.Source.Notification);
 		}
 
 		switch(Phase) {
@@ -436,7 +439,6 @@ public class GameLayoutTracker : MonoBehaviour {
 				layoutInstructionsCamera.gameObject.SetActive(!hidden);
 				carriedBlock2d.gameObject.SetActive(false);
 				button_change.gameObject.SetActive(false);
-
 				break;
 
 		}
@@ -696,6 +698,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		validCount = validated.Count;
+
+		if( validCount > lastValidCount && validCount < layout.blocks.Count )
+		{
+			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
+		}
+
 
 		return error;
 	}
